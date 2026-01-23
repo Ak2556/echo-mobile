@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ArrowLeft, CheckCircle, Eye, FloppyDisk, Globe, Lock, MagicWand, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
+import { ArrowLeft, CheckCircle, Eye, FloppyDisk, Globe, GitBranch, Lock, MagicWand, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { FeedItem } from '../types';
@@ -11,7 +11,10 @@ import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId } from '../lib/supabaseEchoApi';
 import { usePublishRemoteEcho } from '../hooks/queries/useSupabaseSocial';
 import { coerceFeedItem } from '../lib/localFeedSeed';
+import { consumePendingPublishContext, peekPendingPublishContext } from '../lib/publishContext';
+import { CelebrationOverlay } from '../components/ui/CelebrationOverlay';
 import { TextInput } from '../components/ui/TextInput';
+import { XP_REWARDS } from '../lib/retention';
 import {
   EDITORIAL_ACTIONS,
   applyEditorialAction,
@@ -30,9 +33,15 @@ export default function ShareScreen() {
   const { colors, radius, fontSizes } = useTheme();
   const [publishing, setPublishing] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const [title, setTitle] = useState(() => buildEditorialTitle(String(prompt ?? ''), String(response ?? '')));
+  const [celebration, setCelebration] = useState<null | { headline: string; subtitle: string; variant: 'remix' | 'evolutions' | 'forYou' | 'achievement' }>(null);
+  // Snapshot of context staged by chat/remix screens. Peek (not consume) so the
+  // user can leave + return without losing remix lineage; consume only on publish.
+  const pendingCtx = useRef(peekPendingPublishContext()).current;
+  const [title, setTitle] = useState(() =>
+    pendingCtx?.initialTitle || buildEditorialTitle(String(prompt ?? ''), String(response ?? ''))
+  );
   const [editedResponse, setEditedResponse] = useState(String(response ?? ''));
-  const [authorNote, setAuthorNote] = useState('');
+  const [authorNote, setAuthorNote] = useState(pendingCtx?.initialAuthorNote ?? '');
   const [tagsRaw, setTagsRaw] = useState(() => inferTopics({
     hashtags: [],
     prompt: String(prompt ?? ''),
@@ -41,6 +50,7 @@ export default function ShareScreen() {
   const [visibility, setVisibility] = useState<'public' | 'followers'>('public');
   const remotePublish = usePublishRemoteEcho();
   const remote = isSupabaseRemote();
+  const isRemix = !!pendingCtx?.parentEchoId;
 
   const checklist = useMemo(() => evaluatePublishChecklist({ title, response: editedResponse, authorNote }), [authorNote, editedResponse, title]);
   const checklistItems = [
@@ -87,15 +97,25 @@ export default function ShareScreen() {
       }
       setPublishing(true);
       try {
+        const ctx = consumePendingPublishContext();
+        const isRemixPublish = !!ctx?.parentEchoId;
         await remotePublish.mutateAsync({
           authorId: uid,
           prompt: String(prompt),
           response: editedResponse.trim(),
+          title: title.trim() || undefined,
+          parentEchoId: ctx?.parentEchoId,
+          sourceConversationId: ctx?.sourceConversationId,
+          conversationSnapshot: ctx?.conversationSnapshot,
         });
         await AsyncStorage.removeItem(SHARE_DRAFT_KEY);
-        Alert.alert('Published', 'Your Echo is live in Discover.', [
-          { text: 'Open Discover', onPress: () => router.replace('/(tabs)/discover') },
-        ]);
+        // Celebrate first, then route. Overlay calls onDone after ~1.6s.
+        const xpDelta = isRemixPublish ? XP_REWARDS.publishRemix : XP_REWARDS.publishEcho;
+        setCelebration({
+          headline: isRemixPublish ? 'REMIXED!' : 'PUBLISHED!',
+          subtitle: `+${xpDelta} XP · It's live in Discover`,
+          variant: isRemixPublish ? 'remix' : 'achievement',
+        });
       } catch (e) {
         Alert.alert('Could not publish', (e as Error).message);
       } finally {
@@ -144,6 +164,18 @@ export default function ShareScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      {celebration && (
+        <CelebrationOverlay
+          visible
+          headline={celebration.headline}
+          subtitle={celebration.subtitle}
+          variant={celebration.variant}
+          onDone={() => {
+            setCelebration(null);
+            router.replace('/(tabs)/discover');
+          }}
+        />
+      )}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
           <ArrowLeft color={colors.text} size={24} />
@@ -160,6 +192,21 @@ export default function ShareScreen() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {isRemix && (
+          <View style={{ padding: 14, marginBottom: 14, borderRadius: radius.card, backgroundColor: colors.accentMuted, borderWidth: 1, borderColor: colors.accent, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <GitBranch color={colors.accent} size={20} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
+                Remixing @{pendingCtx?.parentAuthorUsername ?? 'their'} Echo
+              </Text>
+              {pendingCtx?.parentTitle && (
+                <Text style={{ color: colors.textSecondary, marginTop: 2, fontSize: 12 }} numberOfLines={1}>
+                  ↳ {pendingCtx.parentTitle}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
         <View style={{ padding: 16, marginBottom: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Original prompt</Text>
           <View style={{ padding: 12, borderRadius: radius.lg, backgroundColor: colors.surfaceHover }}>

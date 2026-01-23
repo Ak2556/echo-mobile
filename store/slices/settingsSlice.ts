@@ -64,8 +64,8 @@ export interface SettingsSlice {
   setNotInterestedIds: (v: string[]) => void;
   feedFeedback: Record<string, 'less' | 'more'>;
   setFeedFeedback: (v: Record<string, 'less' | 'more'>) => void;
-  feedScope: 'forYou' | 'following';
-  setFeedScope: (v: 'forYou' | 'following') => void;
+  feedScope: 'semantic' | 'forYou' | 'following';
+  setFeedScope: (v: 'semantic' | 'forYou' | 'following') => void;
   // ── Recent searches ──
   recentSearches: string[];
   setRecentSearches: (v: string[]) => void;
@@ -145,7 +145,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setNotInterestedIds: (v) => { persistSet('notInterestedIds', v); set({ notInterestedIds: v }); },
     feedFeedback: persistGet<Record<string, 'less' | 'more'>>('feedFeedback', {}),
     setFeedFeedback: (v) => { persistSet('feedFeedback', v); set({ feedFeedback: v }); },
-    feedScope: persistGet<'forYou' | 'following'>('feedScope', 'forYou'),
+    feedScope: persistGet<'semantic' | 'forYou' | 'following'>('feedScope', 'forYou'),
     setFeedScope: (v) => { persistSet('feedScope', v); set({ feedScope: v }); },
     recentSearches: persistGet<string[]>('recentSearches', []),
     setRecentSearches: (v) => { persistSet('recentSearches', v.slice(0, 10)); set({ recentSearches: v.slice(0, 10) }); },

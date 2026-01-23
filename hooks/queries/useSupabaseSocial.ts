@@ -7,6 +7,7 @@ import {
   setRemoteRepost,
 } from '../../lib/supabaseEchoApi';
 import { patchBookmarkCaches, patchFollowCaches, patchLikeCaches, patchRepostCaches } from '../../lib/queryCache';
+import { awardXp } from '../../lib/retention';
 
 export function useToggleRemoteLike() {
   const qc = useQueryClient();
@@ -81,10 +82,30 @@ export function useToggleRemoteFollow() {
 export function usePublishRemoteEcho() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { authorId: string; prompt: string; response: string; mediaUrls?: string[] }) =>
-      insertRemoteEcho(params),
-    onSettled: () => {
+    mutationFn: async (params: {
+      authorId: string;
+      prompt: string;
+      response: string;
+      title?: string;
+      mediaUrls?: string[];
+      parentEchoId?: string;
+      sourceConversationId?: string;
+      conversationSnapshot?: { role: 'user' | 'assistant'; content: string }[];
+    }) => insertRemoteEcho(params),
+    onSuccess: (_, vars) => {
+      // Reward XP for the publish. Remixes earn slightly less than fresh
+      // posts so the gamification doesn't accidentally encourage low-effort
+      // forking. Retention is local-only; backend mirror can come later.
+      awardXp(vars.parentEchoId ? 'publishRemix' : 'publishEcho');
+    },
+    onSettled: (_, __, vars) => {
       qc.invalidateQueries({ queryKey: ['feed'] });
+      qc.invalidateQueries({ queryKey: ['semantic-feed'] });
+      qc.invalidateQueries({ queryKey: ['trending-evolutions'] });
+      if (vars?.parentEchoId) {
+        qc.invalidateQueries({ queryKey: ['remix-tree', vars.parentEchoId] });
+        qc.invalidateQueries({ queryKey: ['echo', vars.parentEchoId] });
+      }
     },
   });
 }
