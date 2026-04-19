@@ -8,8 +8,8 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2,
-      staleTime: 1000 * 60 * 5, 
-      gcTime: 1000 * 60 * 30, 
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
       refetchOnWindowFocus: false,
     },
   },
@@ -18,9 +18,9 @@ const queryClient = new QueryClient({
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
     <View className="flex-1 items-center justify-center bg-black p-4">
-      <Text className="text-red-500 font-bold mb-2">Fatal Error</Text>
-      <Text className="text-white mb-4">{error.message}</Text>
-      <Text className="text-blue-400" onPress={retry}>Retry</Text>
+      <Text className="text-red-500 font-bold mb-2">Something went wrong</Text>
+      <Text className="text-white mb-4 text-center">{error.message}</Text>
+      <Text className="text-blue-400 font-semibold" onPress={retry}>Try Again</Text>
     </View>
   );
 }
@@ -28,8 +28,12 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="thread/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       </Stack>
     </QueryClientProvider>
   );

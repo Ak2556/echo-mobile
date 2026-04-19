@@ -17,7 +17,6 @@ export function MessageList({ messages }: MessageListProps) {
         ref={listRef}
         data={messages}
         renderItem={({ item }) => <MessageBubble message={item} />}
-        estimatedItemSize={100}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: 16 }}
       />
