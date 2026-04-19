@@ -1,24 +1,36 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ErrorBoundaryProps } from 'expo-router';
+import { View, Text } from 'react-native';
+import '../global.css';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, 
+      gcTime: 1000 * 60 * 30, 
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View className="flex-1 items-center justify-center bg-black p-4">
+      <Text className="text-red-500 font-bold mb-2">Fatal Error</Text>
+      <Text className="text-white mb-4">{error.message}</Text>
+      <Text className="text-blue-400" onPress={retry}>Retry</Text>
+    </View>
+  );
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    <QueryClientProvider client={queryClient}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    </QueryClientProvider>
   );
 }
