@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Text } from 'react-native';
-import { Heart } from 'lucide-react-native';
+import { Heart } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence, withDelay, withTiming } from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
@@ -96,9 +96,9 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
     >
       <Animated.View style={heartStyle}>
         <Heart
-          size={20}
+          size={22}
           color={liked ? '#EF4444' : '#A1A1AA'}
-          fill={liked ? '#EF4444' : 'transparent'}
+          weight={liked ? 'fill' : 'regular'}
         />
       </Animated.View>
       <Text className={`font-medium ${liked ? 'text-red-500' : 'text-zinc-400'}`}>{count}</Text>

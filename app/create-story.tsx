@@ -3,7 +3,7 @@ import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import { ArrowLeft, Send, Sparkles, Radio, Clock } from 'lucide-react-native';
+import { ArrowLeft, PaperPlaneTilt, Lightning, Broadcast, Clock } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
@@ -61,7 +61,7 @@ export default function CreateStoryScreen() {
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <View className="flex-row items-center gap-2">
-          <Radio color={colors.accent} size={16} />
+          <Broadcast color={colors.accent} size={16} />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>New Story</Text>
         </View>
         <AnimatedPressable
@@ -76,7 +76,7 @@ export default function CreateStoryScreen() {
             opacity: canPublish ? 1 : 0.6,
           }}
         >
-          <Send color="#fff" size={14} />
+          <PaperPlaneTilt color="#fff" size={14} />
           <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>
             {publishing ? 'Sharing...' : 'Share'}
           </Text>
@@ -137,7 +137,7 @@ export default function CreateStoryScreen() {
 
           <Animated.View entering={animation(FadeInDown.delay(150).springify())}>
             <View className="flex-row items-center mb-2 ml-1 gap-1.5">
-              <Sparkles color={colors.accent} size={12} />
+              <Lightning color={colors.accent} size={12} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Echo</Text>
             </View>
             <View
@@ -174,7 +174,7 @@ export default function CreateStoryScreen() {
                 borderLeftColor: colors.accent,
               }}
             >
-              <Radio color={colors.accent} size={14} />
+              <Broadcast color={colors.accent} size={14} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, flex: 1 }}>
                 Stories appear in the home feed circles and disappear after 24 hours.
               </Text>

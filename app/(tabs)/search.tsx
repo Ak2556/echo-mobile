@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import { TrendingUp, Hash } from 'lucide-react-native';
+import { TrendUp, Hash } from 'phosphor-react-native';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
@@ -143,7 +143,7 @@ export default function SearchScreen() {
           {/* Trending Echoes */}
           <Animated.View entering={FadeInDown.delay(300).springify()} className="mb-6">
             <View className="flex-row items-center px-4 mb-3">
-              <TrendingUp color="#EF4444" size={16} />
+              <TrendUp color="#EF4444" size={16} />
               <Text className="text-zinc-400 text-xs font-semibold uppercase tracking-wider ml-1">Trending Echoes</Text>
             </View>
             {trendingEchoes.map((item, index) => (

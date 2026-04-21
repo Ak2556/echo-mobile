@@ -3,7 +3,7 @@ import { View, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Send } from 'lucide-react-native';
+import { ArrowLeft, PaperPlaneTilt } from 'phosphor-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { FeedItem } from '../types';
@@ -91,7 +91,7 @@ export default function ShareScreen() {
           className="flex-row items-center px-4 py-2"
           style={{ borderRadius: radius.lg, backgroundColor: publishing ? colors.surfaceHover : colors.accent }}
         >
-          <Send color="#fff" size={16} />
+          <PaperPlaneTilt color="#fff" size={16} />
           <Text style={{ color: '#fff', fontWeight: '600', marginLeft: 8 }}>Post</Text>
         </Pressable>
       </View>

@@ -5,9 +5,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
-  ArrowLeft, BadgeCheck, MoreHorizontal, Mail,
-  UserX, Flag, Share2,
-} from 'lucide-react-native';
+  ArrowLeft, SealCheck, DotsThreeOutline, Envelope,
+  UserMinus, Flag, ShareNetwork,
+} from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -43,7 +43,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <AnimatedPressable onPress={() => setShowMenu(!showMenu)} className="p-1" scaleValue={0.88} haptic="light">
-          <MoreHorizontal color={colors.text} size={24} />
+          <DotsThreeOutline color={colors.text} size={24} />
         </AnimatedPressable>
       </View>
 
@@ -55,7 +55,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
           </AnimatedPressable>
           <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
           <AnimatedPressable onPress={() => { setShowMenu(false); onBlock(); }} className="flex-row items-center px-4 py-3 gap-3" scaleValue={0.97} haptic="medium">
-            <UserX color={colors.danger} size={16} />
+            <UserMinus color={colors.danger} size={16} />
             <Text style={{ color: colors.danger, fontSize: 14 }}>{blocked ? 'Unblock' : 'Block'}</Text>
           </AnimatedPressable>
         </Animated.View>
@@ -79,7 +79,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
         </AnimatedPressable>
         <View className="flex-row items-center gap-1.5 mb-1">
           <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>{user.displayName}</Text>
-          {user.isVerified && <BadgeCheck color={colors.accent} size={20} fill={colors.accent} />}
+          {user.isVerified && <SealCheck color={colors.accent} size={20} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: 14, marginBottom: 8 }}>@{user.username}</Text>
         {online && <Text style={{ color: colors.success, fontSize: 12, marginBottom: 8 }}>Active now</Text>}
@@ -121,10 +121,10 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
               </AnimatedPressable>
             </Animated.View>
             <AnimatedPressable onPress={onMessage} className="py-2.5 px-4" style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }} scaleValue={0.92} haptic="light">
-              <Mail color={colors.text} size={20} />
+              <Envelope color={colors.text} size={20} />
             </AnimatedPressable>
             <AnimatedPressable className="py-2.5 px-4" style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }} scaleValue={0.92} haptic="light">
-              <Share2 color={colors.text} size={20} />
+              <ShareNetwork color={colors.text} size={20} />
             </AnimatedPressable>
           </View>
         )}

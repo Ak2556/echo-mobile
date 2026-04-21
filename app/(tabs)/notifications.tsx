@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { Bell, CheckCheck } from 'lucide-react-native';
+import { Bell, Checks } from 'phosphor-react-native';
 import Animated, { FadeIn, Layout } from 'react-native-reanimated';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -43,7 +43,7 @@ export default function NotificationsScreen() {
           scaleValue={0.93}
           haptic="medium"
         >
-          <CheckCheck color={colors.accent} size={16} />
+          <Checks color={colors.accent} size={16} />
           <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>Read All</Text>
         </AnimatedPressable>
       </View>

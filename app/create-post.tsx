@@ -9,9 +9,9 @@ import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import {
-  ArrowLeft, Send, Sparkles, Hash, Image as ImageIcon,
-  Video, BarChart2, X, Plus, Clock, Link,
-} from 'lucide-react-native';
+  ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
+  VideoCamera, ChartBar, X, Plus, Clock, Link,
+} from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
@@ -23,10 +23,10 @@ import { playSoundEffect } from '../lib/sound';
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
 const POST_TYPES: { key: PostType; label: string; Icon: React.ComponentType<any> }[] = [
-  { key: 'text', label: 'Text', Icon: Sparkles },
+  { key: 'text', label: 'Text', Icon: Lightning },
   { key: 'photo', label: 'Photo', Icon: ImageIcon },
-  { key: 'video', label: 'Video', Icon: Video },
-  { key: 'poll', label: 'Poll', Icon: BarChart2 },
+  { key: 'video', label: 'Video', Icon: VideoCamera },
+  { key: 'poll', label: 'Poll', Icon: ChartBar },
 ];
 
 const POLL_DURATIONS = [
@@ -144,7 +144,7 @@ export default function CreatePostScreen() {
           onPress={handlePublish} disabled={!canPublish} scaleValue={0.92} haptic="medium"
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
         >
-          <Send color="#fff" size={14} />
+          <PaperPlaneTilt color="#fff" size={14} />
           <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{publishing ? 'Posting…' : 'Post'}</Text>
         </AnimatedPressable>
       </View>
@@ -185,7 +185,7 @@ export default function CreatePostScreen() {
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
-                <Sparkles color={colors.accent} size={12} />
+                <Lightning color={colors.accent} size={12} />
                 <Text style={[s.label, { marginBottom: 0 }]}>Echo Response</Text>
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
@@ -259,7 +259,7 @@ export default function CreatePostScreen() {
               </View>
               {videoUrl.trim().length > 0 && (
                 <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden', height: 160, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-                  <Video color={colors.textMuted} size={40} />
+                  <VideoCamera color={colors.textMuted} size={40} />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>Video URL set ✓</Text>
                 </View>
               )}

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, FlatList, TextInput as RNTextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Send, BadgeCheck } from 'lucide-react-native';
+import { ArrowLeft, PaperPlaneTilt, SealCheck } from 'phosphor-react-native';
 import Animated, { SlideInRight, SlideInLeft, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -109,7 +109,7 @@ export default function DMScreen() {
         <View className="flex-1">
           <View className="flex-row items-center gap-1">
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{conversation.displayName}</Text>
-            {conversation.isVerified && <BadgeCheck color={colors.accent} size={14} fill={colors.accent} />}
+            {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
           </View>
           <Text style={{ color: online ? colors.success : colors.textMuted, fontSize: 12 }}>
             {online ? 'Online' : `@${conversation.username}`}
@@ -153,7 +153,7 @@ export default function DMScreen() {
               scaleValue={0.88}
               haptic="none"
             >
-              <Send color="#fff" size={18} />
+              <PaperPlaneTilt color="#fff" size={18} />
             </AnimatedPressable>
           </Animated.View>
         </View>

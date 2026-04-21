@@ -62,7 +62,8 @@ export interface FeedItem {
   // Rich media
   postType?: 'text' | 'photo' | 'video' | 'poll';
   mediaUris?: string[];   // up to 4 local photo URIs
-  videoUri?: string;      // single video URI
+  videoUri?: string;      // single video URI (default / auto quality)
+  videoQualities?: { label: string; uri: string }[]; // quality tiers for picker
   poll?: Poll;
   // If this is a repost
   repostedBy?: string;

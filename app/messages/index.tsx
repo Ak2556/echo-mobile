@@ -4,9 +4,9 @@ import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PenSquare, Mail } from 'lucide-react-native';
+import { ArrowLeft, PencilSimple, Envelope } from 'phosphor-react-native';
 import Animated, { FadeInRight, SlideInRight } from 'react-native-reanimated';
-import { BadgeCheck } from 'lucide-react-native';
+import { SealCheck } from 'phosphor-react-native';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
@@ -62,7 +62,7 @@ function ConversationCard({ conversation, index, onPress }: {
             }}>
               {conversation.displayName}
             </Text>
-            {conversation.isVerified && <BadgeCheck color={colors.accent} size={14} fill={colors.accent} />}
+            {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
             {online && <Text style={{ color: colors.success, fontSize: fontSizes.caption }}>online</Text>}
           </View>
           <Text
@@ -100,13 +100,13 @@ export default function MessagesListScreen() {
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Messages</Text>
         <AnimatedPressable className="p-1" scaleValue={0.88} haptic="light">
-          <PenSquare color={colors.accent} size={22} />
+          <PencilSimple color={colors.accent} size={22} />
         </AnimatedPressable>
       </View>
 
       {sorted.length === 0 ? (
         <EmptyState
-          icon={Mail}
+          icon={Envelope}
           title="No messages yet"
           subtitle="Start a conversation by visiting someone's profile and tapping the message button."
         />

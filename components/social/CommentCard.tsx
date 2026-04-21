@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Heart, BadgeCheck, MessageCircle } from 'lucide-react-native';
+import { Heart, SealCheck, ChatCircle } from 'phosphor-react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -62,7 +62,7 @@ export function CommentCard({ comment, echoId }: CommentCardProps) {
       <View className="flex-1">
         <View className="flex-row items-center gap-1 mb-1">
           <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{comment.displayName}</Text>
-          {comment.isVerified && <BadgeCheck color={colors.accent} size={14} fill={colors.accent} />}
+          {comment.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{'\u00B7'} {getTimeAgo(comment.createdAt)}</Text>
         </View>
 
@@ -79,7 +79,7 @@ export function CommentCard({ comment, echoId }: CommentCardProps) {
               <Heart
                 color={comment.isLiked ? colors.danger : colors.textMuted}
                 size={14}
-                fill={comment.isLiked ? colors.danger : 'transparent'}
+                weight="regular"
               />
             </Animated.View>
             <Text style={{ fontSize: fontSizes.caption, color: comment.isLiked ? colors.danger : colors.textMuted }}>
@@ -87,7 +87,7 @@ export function CommentCard({ comment, echoId }: CommentCardProps) {
             </Text>
           </AnimatedPressable>
           <AnimatedPressable className="flex-row items-center gap-1" scaleValue={0.85} haptic="light">
-            <MessageCircle color={colors.textMuted} size={14} />
+            <ChatCircle color={colors.textMuted} size={14} />
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Reply</Text>
           </AnimatedPressable>
         </View>

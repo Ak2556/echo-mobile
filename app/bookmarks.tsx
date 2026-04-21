@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, Bookmark } from 'lucide-react-native';
+import { ArrowLeft, BookmarkSimple } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { FeedCard } from '../components/social/FeedCard';
 import { FeedCardSkeleton } from '../components/ui/Skeleton';
@@ -48,7 +48,7 @@ export default function BookmarksScreen() {
         </Animated.View>
       ) : bookmarked.length === 0 ? (
         <EmptyState
-          icon={Bookmark}
+          icon={BookmarkSimple}
           title="No bookmarks yet"
           subtitle="Save echoes you want to revisit later by tapping the bookmark icon."
           actionLabel="Explore"

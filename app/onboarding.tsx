@@ -3,7 +3,7 @@ import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { MessageSquare, Sparkles, Users } from 'lucide-react-native';
+import { ChatTeardropDots, Star, Users } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -12,9 +12,9 @@ import { supabase } from '../lib/supabase';
 import { upsertRemoteProfileOnSignIn } from '../lib/supabaseEchoApi';
 
 const FEATURES = [
-  { icon: MessageSquare, title: 'AI Conversations', desc: 'Chat with Echo, your personal AI assistant' },
+  { icon: ChatTeardropDots, title: 'AI Conversations', desc: 'Chat with Echo, your personal AI assistant' },
   { icon: Users, title: 'Social Discovery', desc: 'Share and explore conversations from the community' },
-  { icon: Sparkles, title: 'Smart & Fast', desc: 'Powered by streaming AI with real-time responses' },
+  { icon: Star, title: 'Smart & Fast', desc: 'Powered by streaming AI with real-time responses' },
 ];
 
 export default function OnboardingScreen() {
@@ -70,7 +70,7 @@ export default function OnboardingScreen() {
             <Animated.View entering={animation(FadeInUp.delay(100).springify())}>
               <View className="items-center mb-8">
                 <View className="w-20 h-20 items-center justify-center mb-4" style={{ backgroundColor: colors.accent, borderRadius: radius.xl }}>
-                  <MessageSquare color="#fff" size={40} />
+                  <ChatTeardropDots color="#fff" size={40} weight="fill" />
                 </View>
                 <Text style={{ color: colors.text, fontSize: 40, fontWeight: '700' }}>Echo</Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 18, marginTop: 8, textAlign: 'center', lineHeight: 26 }}>AI conversations,{'\n'}shared with the world.</Text>

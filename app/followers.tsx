@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, Users } from 'lucide-react-native';
+import { ArrowLeft, Users } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { UserRow } from '../components/social/UserRow';
 import { UserRowSkeleton } from '../components/ui/Skeleton';

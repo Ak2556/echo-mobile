@@ -71,6 +71,7 @@ export function coerceFeedItem(e: FeedItem): FeedItem {
     postType: e.postType,
     mediaUris: e.mediaUris,
     videoUri: e.videoUri,
+    videoQualities: e.videoQualities,
     poll: e.poll,
     repostedBy: e.repostedBy,
     repostedByUsername: e.repostedByUsername,
@@ -198,7 +199,7 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
     createdAt: new Date(Date.now() - 5400000).toISOString(),
   },
 
-  // Video post
+  // Video post — multiple quality tiers
   {
     id: 'video1',
     userId: 'u_seed_crypto',
@@ -209,7 +210,14 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
     postType: 'video',
     prompt: 'How zero-knowledge proofs work — 60s explainer',
     response: '',
-    videoUri: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    // Apple HLS test streams — load instantly in iOS AVPlayer (expo-av)
+    videoUri: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8',
+    videoQualities: [
+      { label: 'Auto',  uri: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8' },
+      { label: '1080p', uri: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8' },
+      { label: '720p',  uri: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8' },
+      { label: '480p',  uri: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8' },
+    ],
     hashtags: ['web3', 'zkp', 'crypto'],
     likes: 224,
     commentCount: 33,

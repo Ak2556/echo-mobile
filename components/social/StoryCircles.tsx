@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
-import { Plus } from 'lucide-react-native';
+import { Plus } from 'phosphor-react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';

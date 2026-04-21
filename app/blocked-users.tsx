@@ -4,7 +4,7 @@ import { View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, ShieldOff, UserX } from 'lucide-react-native';
+import { ArrowLeft, ShieldSlash, UserMinus } from 'phosphor-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { EmptyState } from '../components/common/EmptyState';
@@ -51,7 +51,7 @@ export default function BlockedUsersScreen() {
 
       {blockedUsers.length === 0 ? (
         <EmptyState
-          icon={ShieldOff}
+          icon={ShieldSlash}
           title="No blocked users"
           subtitle="Users you block won't be able to see your content or contact you."
         />

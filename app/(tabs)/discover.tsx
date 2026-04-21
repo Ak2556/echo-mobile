@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
-import { Plus } from 'lucide-react-native';
+import { Plus } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';

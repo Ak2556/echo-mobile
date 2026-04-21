@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { BadgeCheck } from 'lucide-react-native';
+import { SealCheck } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
@@ -58,7 +58,7 @@ export function UserRow({ user, onPress, showFollowButton = false }: UserRowProp
       <View className="flex-1">
         <View className="flex-row items-center gap-1">
           <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>{user.displayName}</Text>
-          {user.isVerified && <BadgeCheck color={colors.accent} size={16} fill={colors.accent} />}
+          {user.isVerified && <SealCheck color={colors.accent} size={16} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{user.username}</Text>
         {user.bio ? (

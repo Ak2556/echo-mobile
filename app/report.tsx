@@ -3,7 +3,7 @@ import { View, Text, Alert, TextInput as RNTextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, Warning } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 
@@ -45,7 +45,7 @@ export default function ReportScreen() {
 
       <View className="px-4 pt-6">
         <Animated.View entering={FadeInDown.delay(50).springify()} className="flex-row items-center mb-2">
-          <AlertTriangle color="#F59E0B" size={20} />
+          <Warning color="#F59E0B" size={20} />
           <Text className="text-white text-lg font-bold ml-2">
             Report {targetType === 'user' ? `@${targetName}` : 'this content'}
           </Text>

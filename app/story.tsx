@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming, FadeInDown } from 'react-native-reanimated';
-import { X, Eye } from 'lucide-react-native';
+import { X, Eye } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';

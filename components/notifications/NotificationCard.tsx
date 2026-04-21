@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Heart, MessageCircle, UserPlus, Repeat2, AtSign, Mail } from 'lucide-react-native';
+import { Heart, ChatCircle, UserPlus, ArrowsClockwise, AtSign, Envelope } from 'phosphor-react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Notification } from '../../types';
@@ -8,11 +8,11 @@ import { useTheme } from '../../lib/theme';
 
 const ICON_MAP = {
   like: { icon: Heart, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
-  comment: { icon: MessageCircle, color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
+  comment: { icon: ChatCircle, color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
   follow: { icon: UserPlus, color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
-  repost: { icon: Repeat2, color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
+  repost: { icon: ArrowsClockwise, color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
   mention: { icon: AtSign, color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
-  dm: { icon: Mail, color: '#06B6D4', bg: 'rgba(6,182,212,0.15)' },
+  dm: { icon: Envelope, color: '#06B6D4', bg: 'rgba(6,182,212,0.15)' },
 };
 
 const ACTION_TEXT = {
@@ -41,8 +41,10 @@ interface NotificationCardProps {
   onPress: () => void;
 }
 
+const FALLBACK_CONFIG = { icon: Heart, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' };
+
 export function NotificationCard({ notification, onPress }: NotificationCardProps) {
-  const config = ICON_MAP[notification.type];
+  const config = ICON_MAP[notification.type as keyof typeof ICON_MAP] ?? FALLBACK_CONFIG;
   const Icon = config.icon;
   const { colors, fontSizes, showAvatars, animation } = useTheme();
 
@@ -59,7 +61,7 @@ export function NotificationCard({ notification, onPress }: NotificationCardProp
       haptic="light"
     >
       <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: config.bg }}>
-        <Icon color={config.color} size={18} fill={notification.type === 'like' ? config.color : 'transparent'} />
+        <Icon color={config.color} size={18} weight="regular" />
       </View>
 
       {showAvatars && (
@@ -76,7 +78,7 @@ export function NotificationCard({ notification, onPress }: NotificationCardProp
       <View className="flex-1">
         <Text style={{ color: colors.text, fontSize: fontSizes.small }} numberOfLines={2}>
           <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
-          {' '}{ACTION_TEXT[notification.type]}
+          {' '}{ACTION_TEXT[notification.type as keyof typeof ACTION_TEXT] ?? 'interacted with you'}
         </Text>
         {notification.targetPreview && (
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
