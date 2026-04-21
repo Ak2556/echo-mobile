@@ -7,7 +7,9 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import * as ImagePicker from 'expo-image-picker';
+const getImagePicker = () => {
+  try { return require('expo-image-picker'); } catch { return null; }
+};
 import {
   ArrowLeft, Check, Sparkles, Hash, Image as ImageIcon,
   Video, BarChart2, X, Plus, Clock,
@@ -80,15 +82,19 @@ export default function EditPostScreen() {
   })();
 
   const pickImages = useCallback(async () => {
+    const ImagePicker = getImagePicker();
+    if (!ImagePicker) { Alert.alert('Not available', 'Requires a development build.'); return; }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Allow photo access.'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 4, quality: 0.85,
     });
-    if (!result.canceled) setMediaUris(result.assets.map(a => a.uri).slice(0, 4));
+    if (!result.canceled) setMediaUris(result.assets.map((a: any) => a.uri).slice(0, 4));
   }, []);
 
   const pickVideo = useCallback(async () => {
+    const ImagePicker = getImagePicker();
+    if (!ImagePicker) { Alert.alert('Not available', 'Requires a development build.'); return; }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Allow photo access.'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], quality: 0.8 });

@@ -8,7 +8,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import * as ImagePicker from 'expo-image-picker';
+// Dynamic require avoids crashing Expo Go when native module is unavailable
+const getImagePicker = () => {
+  try { return require('expo-image-picker'); } catch { return null; }
+};
 import {
   ArrowLeft, Send, Sparkles, Hash, Image as ImageIcon,
   Video, BarChart2, X, Plus, Play, Clock,
@@ -70,6 +73,11 @@ export default function CreatePostScreen() {
   })();
 
   const pickImages = useCallback(async () => {
+    const ImagePicker = getImagePicker();
+    if (!ImagePicker) {
+      Alert.alert('Not available', 'Image picking requires a development build (run expo prebuild).');
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Allow photo access to add images.');
@@ -82,11 +90,16 @@ export default function CreatePostScreen() {
       quality: 0.85,
     });
     if (!result.canceled) {
-      setMediaUris(result.assets.map(a => a.uri).slice(0, 4));
+      setMediaUris(result.assets.map((a: any) => a.uri).slice(0, 4));
     }
   }, []);
 
   const pickVideo = useCallback(async () => {
+    const ImagePicker = getImagePicker();
+    if (!ImagePicker) {
+      Alert.alert('Not available', 'Video picking requires a development build (run expo prebuild).');
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Allow photo access to add a video.');
