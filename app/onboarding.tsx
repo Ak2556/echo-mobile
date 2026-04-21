@@ -6,6 +6,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { MessageSquare, Sparkles, Users } from 'lucide-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { useAppStore } from '../store/useAppStore';
+import { useTheme } from '../lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { supabase } from '../lib/supabase';
 import { upsertRemoteProfileOnSignIn } from '../lib/supabaseEchoApi';
@@ -19,6 +20,7 @@ const FEATURES = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const { setUsername, setDisplayName, setUserId, setHasSeenOnboarding } = useAppStore();
+  const { colors, radius, animation } = useTheme();
   const [name, setName] = useState('');
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -61,40 +63,41 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <View className="flex-1 px-6 justify-center">
         {step === 0 ? (
           <>
-            <Animated.View entering={FadeInUp.delay(100).springify()}>
+            <Animated.View entering={animation(FadeInUp.delay(100).springify())}>
               <View className="items-center mb-8">
-                <View className="w-20 h-20 rounded-3xl bg-blue-600 items-center justify-center mb-4">
+                <View className="w-20 h-20 items-center justify-center mb-4" style={{ backgroundColor: colors.accent, borderRadius: radius.xl }}>
                   <MessageSquare color="#fff" size={40} />
                 </View>
-                <Text className="text-white text-4xl font-bold">Echo</Text>
-                <Text className="text-zinc-400 text-lg mt-2 text-center">AI conversations,{'\n'}shared with the world.</Text>
+                <Text style={{ color: colors.text, fontSize: 40, fontWeight: '700' }}>Echo</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 18, marginTop: 8, textAlign: 'center', lineHeight: 26 }}>AI conversations,{'\n'}shared with the world.</Text>
               </View>
             </Animated.View>
 
             {FEATURES.map((f, i) => (
               <Animated.View
                 key={f.title}
-                entering={FadeInDown.delay(300 + i * 150).springify()}
-                className="flex-row items-center bg-zinc-900 rounded-2xl p-4 mb-3 border border-zinc-800"
+                entering={animation(FadeInDown.delay(300 + i * 150).springify())}
+                className="flex-row items-center p-4 mb-3"
+                style={{ backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}
               >
-                <View className="w-12 h-12 rounded-xl bg-zinc-800 items-center justify-center mr-4">
-                  <f.icon color="#3B82F6" size={24} />
+                <View className="w-12 h-12 items-center justify-center mr-4" style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.lg }}>
+                  <f.icon color={colors.accent} size={24} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-white font-semibold text-base">{f.title}</Text>
-                  <Text className="text-zinc-400 text-sm mt-0.5">{f.desc}</Text>
+                  <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16 }}>{f.title}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 2 }}>{f.desc}</Text>
                 </View>
               </Animated.View>
             ))}
           </>
         ) : (
-          <Animated.View entering={FadeInUp.springify()}>
-            <Text className="text-white text-3xl font-bold mb-2">What should we call you?</Text>
-            <Text className="text-zinc-400 text-base mb-8">Pick a username for your Echo profile.</Text>
+          <Animated.View entering={animation(FadeInUp.springify())}>
+            <Text style={{ color: colors.text, fontSize: 30, fontWeight: '700', marginBottom: 8 }}>What should we call you?</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 16, marginBottom: 32 }}>Pick a username for your Echo profile.</Text>
             <TextInput
               placeholder="Username"
               value={name}
@@ -104,7 +107,7 @@ export default function OnboardingScreen() {
               maxLength={20}
             />
             {name.trim().length > 0 && name.trim().length < 2 && (
-              <Text className="text-red-400 text-sm mt-2 ml-1">At least 2 characters</Text>
+              <Text style={{ color: colors.danger, fontSize: 14, marginTop: 8, marginLeft: 4 }}>At least 2 characters</Text>
             )}
           </Animated.View>
         )}
@@ -114,14 +117,16 @@ export default function OnboardingScreen() {
         <Pressable
           onPress={() => { void handleContinue(); }}
           disabled={busy || (step === 1 && name.trim().length < 2)}
-          className={`py-4 rounded-2xl items-center ${
-            busy || (step === 1 && name.trim().length < 2) ? 'bg-zinc-800' : 'bg-blue-600'
-          }`}
+          className="py-4 items-center"
+          style={{
+            borderRadius: radius.card,
+            backgroundColor: busy || (step === 1 && name.trim().length < 2) ? colors.surfaceHover : colors.accent,
+          }}
         >
           {busy ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text className="text-white font-bold text-lg">
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>
               {step === 0 ? 'Get Started' : 'Continue'}
             </Text>
           )}

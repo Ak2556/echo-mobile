@@ -7,6 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, Bookmark, Share2, MessageCircle } from 'lucide-react-native';
 import { LikeButton } from '../../components/social/LikeButton';
 import { useAppStore } from '../../store/useAppStore';
+import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
@@ -18,6 +19,7 @@ export default function ThreadDetailScreen() {
   const remote = isSupabaseRemote();
   const { data: feed } = useFeed();
   const { isBookmarked, toggleBookmark } = useAppStore();
+  const { colors, radius, fontSizes, showAvatars, animation } = useTheme();
   const remoteBm = useToggleRemoteBookmark();
 
   const item = feed?.find(f => f.id === id);
@@ -39,65 +41,68 @@ export default function ThreadDetailScreen() {
 
   if (!item) {
     return (
-      <SafeAreaView className="flex-1 bg-black items-center justify-center">
-        <Text className="text-zinc-400">Echo not found</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} className="items-center justify-center">
+        <Text style={{ color: colors.textSecondary }}>Echo not found</Text>
         <Pressable onPress={() => router.back()} className="mt-4">
-          <Text className="text-blue-400">Go Back</Text>
+          <Text style={{ color: colors.accent }}>Go Back</Text>
         </Pressable>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-black">
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-zinc-900">
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <Pressable onPress={() => router.back()} className="p-1">
-          <ArrowLeft color="#fff" size={24} />
+          <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text className="text-white font-semibold text-lg">Echo Thread</Text>
+        <Text style={{ color: colors.text, fontWeight: '600', fontSize: 18 }}>Echo Thread</Text>
         <View className="flex-row gap-3">
           <Pressable onPress={toggleBm}>
-            <Bookmark color={bookmarked ? '#3B82F6' : '#A1A1AA'} size={22} fill={bookmarked ? '#3B82F6' : 'transparent'} />
+            <Bookmark color={bookmarked ? colors.accent : colors.textSecondary} size={22} fill={bookmarked ? colors.accent : 'transparent'} />
           </Pressable>
         </View>
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-        <Animated.View entering={FadeInDown.delay(100).springify()} className="flex-row items-center mb-6">
-          <View
-            className="w-12 h-12 rounded-full items-center justify-center mr-3"
-            style={{ backgroundColor: item.avatarColor || '#3B82F6' }}
-          >
-            <Text className="text-white font-bold text-lg">{item.username.charAt(0).toUpperCase()}</Text>
-          </View>
+        <Animated.View entering={animation(FadeInDown.delay(100).springify())} className="flex-row items-center mb-6">
+          {showAvatars && (
+            <View
+              className="w-12 h-12 rounded-full items-center justify-center mr-3"
+              style={{ backgroundColor: item.avatarColor || colors.accent }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.title * 0.9 }}>{item.username.charAt(0).toUpperCase()}</Text>
+            </View>
+          )}
           <View className="flex-1">
-            <Text className="text-white font-bold text-lg">{item.displayName || item.username}</Text>
-            <Text className="text-zinc-500 text-sm">@{item.username}</Text>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{item.displayName || item.username}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{item.username}</Text>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(200).springify()} className="bg-zinc-900 rounded-2xl p-4 mb-4 border border-zinc-800">
-          <Text className="text-zinc-400 font-semibold text-sm mb-2">Prompt</Text>
-          <Text className="text-white text-base leading-7">{item.prompt}</Text>
+        <Animated.View entering={animation(FadeInDown.delay(200).springify())} className="p-4 mb-4" style={{ backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
+          <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: fontSizes.small, marginBottom: 8 }}>Prompt</Text>
+          <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{item.prompt}</Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(300).springify()} className="bg-zinc-900 rounded-2xl p-4 mb-6 border border-blue-900/30">
-          <Text className="text-blue-400 font-semibold text-sm mb-2">Echo</Text>
-          <Text className="text-zinc-200 text-base leading-7">{item.response}</Text>
+        <Animated.View entering={animation(FadeInDown.delay(300).springify())} className="p-4 mb-6" style={{ backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.accentMuted }}>
+          <Text style={{ color: colors.accent, fontWeight: '600', fontSize: fontSizes.small, marginBottom: 8 }}>Echo</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{item.response}</Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(400).springify()} className="flex-row items-center justify-between pt-2">
+        <Animated.View entering={animation(FadeInDown.delay(400).springify())} className="flex-row items-center justify-between pt-2">
           <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
           <View className="flex-row gap-3">
             <Pressable
               onPress={() => id && router.push(`/comments/${id}`)}
-              className="p-2 rounded-full bg-zinc-900 flex-row items-center gap-1.5 px-3"
+              className="p-2 flex-row items-center gap-1.5 px-3"
+              style={{ borderRadius: radius.full, backgroundColor: colors.surface }}
             >
-              <MessageCircle color="#A1A1AA" size={18} />
-              <Text className="text-zinc-400 text-sm">{item.commentCount ?? 0}</Text>
+              <MessageCircle color={colors.textSecondary} size={18} />
+              <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{item.commentCount ?? 0}</Text>
             </Pressable>
-            <Pressable onPress={toggleBm} className="p-2 rounded-full bg-zinc-900">
-              <Bookmark color={bookmarked ? '#3B82F6' : '#A1A1AA'} size={20} fill={bookmarked ? '#3B82F6' : 'transparent'} />
+            <Pressable onPress={toggleBm} className="p-2" style={{ borderRadius: radius.full, backgroundColor: colors.surface }}>
+              <Bookmark color={bookmarked ? colors.accent : colors.textSecondary} size={20} fill={bookmarked ? colors.accent : 'transparent'} />
             </Pressable>
             <Pressable
               onPress={() =>
@@ -106,9 +111,10 @@ export default function ThreadDetailScreen() {
                   params: { prompt: item.prompt, response: item.response },
                 })
               }
-              className="p-2 rounded-full bg-zinc-900"
+              className="p-2"
+              style={{ borderRadius: radius.full, backgroundColor: colors.surface }}
             >
-              <Share2 color="#A1A1AA" size={20} />
+              <Share2 color={colors.textSecondary} size={20} />
             </Pressable>
           </View>
         </Animated.View>

@@ -137,6 +137,54 @@ interface AppState {
   setPrivateAccount: (v: boolean) => void;
   darkMode: boolean;
   setDarkMode: (v: boolean) => void;
+
+  // Notification preferences (granular)
+  notifyLikes: boolean; setNotifyLikes: (v: boolean) => void;
+  notifyComments: boolean; setNotifyComments: (v: boolean) => void;
+  notifyFollows: boolean; setNotifyFollows: (v: boolean) => void;
+  notifyDMs: boolean; setNotifyDMs: (v: boolean) => void;
+  notifyReposts: boolean; setNotifyReposts: (v: boolean) => void;
+  notifyMentions: boolean; setNotifyMentions: (v: boolean) => void;
+  soundEnabled: boolean; setSoundEnabled: (v: boolean) => void;
+
+  // Privacy
+  readReceipts: boolean; setReadReceipts: (v: boolean) => void;
+  onlineStatus: boolean; setOnlineStatus: (v: boolean) => void;
+  dmPrivacy: 'everyone' | 'followers' | 'nobody'; setDmPrivacy: (v: 'everyone' | 'followers' | 'nobody') => void;
+  activityStatus: boolean; setActivityStatus: (v: boolean) => void;
+
+  // Appearance
+  theme: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender';
+  setTheme: (v: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender') => void;
+  fontSize: 'small' | 'medium' | 'large'; setFontSize: (v: 'small' | 'medium' | 'large') => void;
+  compactFeed: boolean; setCompactFeed: (v: boolean) => void;
+  reduceAnimations: boolean; setReduceAnimations: (v: boolean) => void;
+  accentColor: string; setAccentColor: (v: string) => void;
+  showAvatars: boolean; setShowAvatars: (v: boolean) => void;
+  showPreviewCards: boolean; setShowPreviewCards: (v: boolean) => void;
+  pureBlackBackground: boolean; setPureBlackBackground: (v: boolean) => void;
+  roundedCorners: 'small' | 'medium' | 'large'; setRoundedCorners: (v: 'small' | 'medium' | 'large') => void;
+
+  // Chat & AI
+  aiModel: 'gpt-3.5' | 'gpt-4' | 'gpt-4o'; setAiModel: (v: 'gpt-3.5' | 'gpt-4' | 'gpt-4o') => void;
+  autoSaveChats: boolean; setAutoSaveChats: (v: boolean) => void;
+  chatBubbleStyle: 'modern' | 'classic' | 'minimal'; setChatBubbleStyle: (v: 'modern' | 'classic' | 'minimal') => void;
+  showTypingIndicator: boolean; setShowTypingIndicator: (v: boolean) => void;
+  streamResponses: boolean; setStreamResponses: (v: boolean) => void;
+
+  // Content & Feed
+  autoplayStories: boolean; setAutoplayStories: (v: boolean) => void;
+  dataSaver: boolean; setDataSaver: (v: boolean) => void;
+  sensitiveContentFilter: boolean; setSensitiveContentFilter: (v: boolean) => void;
+  contentLanguage: string; setContentLanguage: (v: string) => void;
+  feedSort: 'latest' | 'popular' | 'following'; setFeedSort: (v: 'latest' | 'popular' | 'following') => void;
+
+  // Data management
+  clearChatHistory: () => void;
+  clearAllBookmarks: () => void;
+  clearNotifications: () => void;
+  clearAllData: () => void;
+  getCacheSize: () => string;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -454,4 +502,113 @@ export const useAppStore = create<AppState>((set, get) => ({
   setPrivateAccount: (v) => { persistSet('privateAccount', v); set({ privateAccount: v }); },
   darkMode: persistGet('darkMode', true),
   setDarkMode: (v) => { persistSet('darkMode', v); set({ darkMode: v }); },
+
+  // Notification preferences
+  notifyLikes: persistGet('notifyLikes', true),
+  setNotifyLikes: (v) => { persistSet('notifyLikes', v); set({ notifyLikes: v }); },
+  notifyComments: persistGet('notifyComments', true),
+  setNotifyComments: (v) => { persistSet('notifyComments', v); set({ notifyComments: v }); },
+  notifyFollows: persistGet('notifyFollows', true),
+  setNotifyFollows: (v) => { persistSet('notifyFollows', v); set({ notifyFollows: v }); },
+  notifyDMs: persistGet('notifyDMs', true),
+  setNotifyDMs: (v) => { persistSet('notifyDMs', v); set({ notifyDMs: v }); },
+  notifyReposts: persistGet('notifyReposts', true),
+  setNotifyReposts: (v) => { persistSet('notifyReposts', v); set({ notifyReposts: v }); },
+  notifyMentions: persistGet('notifyMentions', true),
+  setNotifyMentions: (v) => { persistSet('notifyMentions', v); set({ notifyMentions: v }); },
+  soundEnabled: persistGet('soundEnabled', true),
+  setSoundEnabled: (v) => { persistSet('soundEnabled', v); set({ soundEnabled: v }); },
+
+  // Privacy
+  readReceipts: persistGet('readReceipts', true),
+  setReadReceipts: (v) => { persistSet('readReceipts', v); set({ readReceipts: v }); },
+  onlineStatus: persistGet('onlineStatus', true),
+  setOnlineStatus: (v) => { persistSet('onlineStatus', v); set({ onlineStatus: v }); },
+  dmPrivacy: persistGet<'everyone' | 'followers' | 'nobody'>('dmPrivacy', 'everyone'),
+  setDmPrivacy: (v) => { persistSet('dmPrivacy', v); set({ dmPrivacy: v }); },
+  activityStatus: persistGet('activityStatus', true),
+  setActivityStatus: (v) => { persistSet('activityStatus', v); set({ activityStatus: v }); },
+
+  // Appearance
+  theme: persistGet<'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender'>('theme', 'midnight'),
+  setTheme: (v) => { persistSet('theme', v); set({ theme: v }); },
+  fontSize: persistGet<'small' | 'medium' | 'large'>('fontSize', 'medium'),
+  setFontSize: (v) => { persistSet('fontSize', v); set({ fontSize: v }); },
+  compactFeed: persistGet('compactFeed', false),
+  setCompactFeed: (v) => { persistSet('compactFeed', v); set({ compactFeed: v }); },
+  reduceAnimations: persistGet('reduceAnimations', false),
+  setReduceAnimations: (v) => { persistSet('reduceAnimations', v); set({ reduceAnimations: v }); },
+  accentColor: persistGet('accentColor', '#3B82F6'),
+  setAccentColor: (v) => { persistSet('accentColor', v); set({ accentColor: v }); },
+  showAvatars: persistGet('showAvatars', true),
+  setShowAvatars: (v) => { persistSet('showAvatars', v); set({ showAvatars: v }); },
+  showPreviewCards: persistGet('showPreviewCards', true),
+  setShowPreviewCards: (v) => { persistSet('showPreviewCards', v); set({ showPreviewCards: v }); },
+  pureBlackBackground: persistGet('pureBlackBackground', true),
+  setPureBlackBackground: (v) => { persistSet('pureBlackBackground', v); set({ pureBlackBackground: v }); },
+  roundedCorners: persistGet<'small' | 'medium' | 'large'>('roundedCorners', 'medium'),
+  setRoundedCorners: (v) => { persistSet('roundedCorners', v); set({ roundedCorners: v }); },
+
+  // Chat & AI
+  aiModel: persistGet<'gpt-3.5' | 'gpt-4' | 'gpt-4o'>('aiModel', 'gpt-3.5'),
+  setAiModel: (v) => { persistSet('aiModel', v); set({ aiModel: v }); },
+  autoSaveChats: persistGet('autoSaveChats', true),
+  setAutoSaveChats: (v) => { persistSet('autoSaveChats', v); set({ autoSaveChats: v }); },
+  chatBubbleStyle: persistGet<'modern' | 'classic' | 'minimal'>('chatBubbleStyle', 'modern'),
+  setChatBubbleStyle: (v) => { persistSet('chatBubbleStyle', v); set({ chatBubbleStyle: v }); },
+  showTypingIndicator: persistGet('showTypingIndicator', true),
+  setShowTypingIndicator: (v) => { persistSet('showTypingIndicator', v); set({ showTypingIndicator: v }); },
+  streamResponses: persistGet('streamResponses', true),
+  setStreamResponses: (v) => { persistSet('streamResponses', v); set({ streamResponses: v }); },
+
+  // Content & Feed
+  autoplayStories: persistGet('autoplayStories', true),
+  setAutoplayStories: (v) => { persistSet('autoplayStories', v); set({ autoplayStories: v }); },
+  dataSaver: persistGet('dataSaver', false),
+  setDataSaver: (v) => { persistSet('dataSaver', v); set({ dataSaver: v }); },
+  sensitiveContentFilter: persistGet('sensitiveContentFilter', true),
+  setSensitiveContentFilter: (v) => { persistSet('sensitiveContentFilter', v); set({ sensitiveContentFilter: v }); },
+  contentLanguage: persistGet('contentLanguage', 'English'),
+  setContentLanguage: (v) => { persistSet('contentLanguage', v); set({ contentLanguage: v }); },
+  feedSort: persistGet<'latest' | 'popular' | 'following'>('feedSort', 'latest'),
+  setFeedSort: (v) => { persistSet('feedSort', v); set({ feedSort: v }); },
+
+  // Data management
+  clearChatHistory: () => {
+    persistSet('sessions', []);
+    persistSet('messagesBySession', {});
+    set({ sessions: [], messagesBySession: {}, currentSessionId: null });
+  },
+  clearAllBookmarks: () => {
+    persistSet('bookmarkedIds', []);
+    set({ bookmarkedIds: [] });
+  },
+  clearNotifications: () => {
+    persistSet('notifications', []);
+    set({ notifications: [] });
+  },
+  clearAllData: () => {
+    storage.clearAll();
+    set({
+      sessions: [], messagesBySession: {}, currentSessionId: null,
+      publishedEchoes: [], likedIds: [], bookmarkedIds: [], repostedIds: [],
+      commentsByEcho: {}, followingIds: [], notifications: [],
+      conversations: [], messagesByConversation: {},
+      stories: [], blockedIds: [],
+      hasSeenOnboarding: false, username: '', displayName: '', bio: '',
+      avatarColor: '#3B82F6',
+    });
+  },
+  getCacheSize: () => {
+    const keys = ['sessions', 'messagesBySession', 'publishedEchoes', 'notifications',
+      'conversations', 'messagesByConversation', 'commentsByEcho', 'stories'];
+    let total = 0;
+    for (const k of keys) {
+      const raw = storage.getString(k);
+      if (raw) total += raw.length;
+    }
+    if (total < 1024) return `${total} B`;
+    if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`;
+    return `${(total / (1024 * 1024)).toFixed(1)} MB`;
+  },
 }));

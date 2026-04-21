@@ -1,12 +1,16 @@
 import React from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, Bookmark } from 'lucide-react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { FeedCard } from '../components/social/FeedCard';
+import { FeedCardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
+import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
+import { useTheme } from '../lib/theme';
 import { useFeed } from '../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
@@ -17,6 +21,7 @@ export default function BookmarksScreen() {
   const { bookmarkedIds } = useAppStore();
   const { data: feed } = useFeed();
   const remoteQ = useRemoteBookmarks();
+  const { colors, animation } = useTheme();
 
   const bookmarked = remote
     ? (remoteQ.data ?? [])
@@ -25,20 +30,22 @@ export default function BookmarksScreen() {
   const loading = remote && remoteQ.isPending;
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-black">
-      <View className="flex-row items-center px-4 py-3 border-b border-zinc-900">
-        <Pressable onPress={() => router.back()} className="p-1 mr-3">
-          <ArrowLeft color="#fff" size={24} />
-        </Pressable>
-        <Text className="text-white font-bold text-lg">Bookmarks</Text>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light">
+          <ArrowLeft color={colors.text} size={24} />
+        </AnimatedPressable>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Bookmarks</Text>
         <View className="flex-1" />
-        <Text className="text-zinc-500 text-sm">{bookmarked.length}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 14 }}>{bookmarked.length}</Text>
       </View>
 
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#3B82F6" size="large" />
-        </View>
+        <Animated.View entering={animation(FadeIn.duration(300))} className="pt-2">
+          <FeedCardSkeleton />
+          <FeedCardSkeleton />
+          <FeedCardSkeleton />
+        </Animated.View>
       ) : bookmarked.length === 0 ? (
         <EmptyState
           icon={Bookmark}

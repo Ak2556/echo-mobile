@@ -1,15 +1,18 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { Heart, MessageCircle, UserPlus, Repeat2, AtSign, Mail } from 'lucide-react-native';
+import Animated, { FadeInRight } from 'react-native-reanimated';
+import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Notification } from '../../types';
+import { useTheme } from '../../lib/theme';
 
 const ICON_MAP = {
-  like: { icon: Heart, color: '#EF4444', bg: 'bg-red-900/30' },
-  comment: { icon: MessageCircle, color: '#3B82F6', bg: 'bg-blue-900/30' },
-  follow: { icon: UserPlus, color: '#10B981', bg: 'bg-green-900/30' },
-  repost: { icon: Repeat2, color: '#8B5CF6', bg: 'bg-purple-900/30' },
-  mention: { icon: AtSign, color: '#F59E0B', bg: 'bg-amber-900/30' },
-  dm: { icon: Mail, color: '#06B6D4', bg: 'bg-cyan-900/30' },
+  like: { icon: Heart, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
+  comment: { icon: MessageCircle, color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
+  follow: { icon: UserPlus, color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
+  repost: { icon: Repeat2, color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
+  mention: { icon: AtSign, color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+  dm: { icon: Mail, color: '#06B6D4', bg: 'rgba(6,182,212,0.15)' },
 };
 
 const ACTION_TEXT = {
@@ -41,45 +44,51 @@ interface NotificationCardProps {
 export function NotificationCard({ notification, onPress }: NotificationCardProps) {
   const config = ICON_MAP[notification.type];
   const Icon = config.icon;
+  const { colors, fontSizes, showAvatars, animation } = useTheme();
 
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
-      className={`flex-row items-center px-4 py-3.5 border-b border-zinc-900 ${!notification.isRead ? 'bg-blue-950/20' : ''}`}
+      className="flex-row items-center px-4 py-3.5"
+      style={{
+        borderBottomWidth: 0.5,
+        borderBottomColor: colors.border,
+        backgroundColor: !notification.isRead ? colors.accentMuted : 'transparent',
+      }}
+      scaleValue={0.98}
+      haptic="light"
     >
-      {/* Icon */}
-      <View className={`w-10 h-10 rounded-full ${config.bg} items-center justify-center mr-3`}>
+      <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: config.bg }}>
         <Icon color={config.color} size={18} fill={notification.type === 'like' ? config.color : 'transparent'} />
       </View>
 
-      {/* Avatar */}
-      <View
-        className="w-9 h-9 rounded-full items-center justify-center mr-3"
-        style={{ backgroundColor: notification.fromAvatarColor }}
-      >
-        <Text className="text-white font-bold text-sm">
-          {notification.fromDisplayName.charAt(0).toUpperCase()}
-        </Text>
-      </View>
+      {showAvatars && (
+        <View
+          className="w-9 h-9 rounded-full items-center justify-center mr-3"
+          style={{ backgroundColor: notification.fromAvatarColor }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
+            {notification.fromDisplayName.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
 
-      {/* Content */}
       <View className="flex-1">
-        <Text className="text-white text-sm" numberOfLines={2}>
-          <Text className="font-bold">{notification.fromDisplayName}</Text>
+        <Text style={{ color: colors.text, fontSize: fontSizes.small }} numberOfLines={2}>
+          <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
           {' '}{ACTION_TEXT[notification.type]}
         </Text>
         {notification.targetPreview && (
-          <Text className="text-zinc-500 text-xs mt-0.5" numberOfLines={1}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
             {notification.targetPreview}
           </Text>
         )}
       </View>
 
-      {/* Time + unread dot */}
       <View className="items-end ml-2">
-        <Text className="text-zinc-600 text-xs">{getTimeAgo(notification.createdAt)}</Text>
-        {!notification.isRead && <View className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />}
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(notification.createdAt)}</Text>
+        {!notification.isRead && <View className="w-2 h-2 rounded-full mt-1.5" style={{ backgroundColor: colors.accent }} />}
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
