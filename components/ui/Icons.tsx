@@ -29,7 +29,7 @@ export {
   SquaresFour,
 
   // Social actions
-  Heart,
+  HeartStraight,
   ChatCircle,
   BookmarkSimple,
   ShareNetwork,

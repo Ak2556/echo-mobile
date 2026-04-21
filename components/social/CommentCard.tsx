@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Heart, SealCheck, ChatCircle } from 'phosphor-react-native';
+import { HeartStraight, SealCheck, ChatCircle } from 'phosphor-react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -76,7 +76,7 @@ export function CommentCard({ comment, echoId }: CommentCardProps) {
             haptic="none"
           >
             <Animated.View style={heartAnim}>
-              <Heart
+              <HeartStraight
                 color={comment.isLiked ? colors.danger : colors.textMuted}
                 size={14}
                 weight="regular"

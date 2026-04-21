@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  ArrowLeft, Heart, ChatCircle, UserPlus, ArrowsClockwise,
+  ArrowLeft, HeartStraight, ChatCircle, UserPlus, ArrowsClockwise,
   AtSign, Envelope, SpeakerHigh, Bell,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
@@ -95,7 +95,7 @@ export default function NotificationPrefsScreen() {
               borderColor: colors.border,
             }}
           >
-            <ToggleRow icon={Heart} iconColor={colors.danger} label="Likes" subtitle="When someone likes your echo" value={notifyLikes} onValueChange={setNotifyLikes} />
+            <ToggleRow icon={HeartStraight} iconColor={colors.danger} label="Likes" subtitle="When someone likes your echo" value={notifyLikes} onValueChange={setNotifyLikes} />
             {divider}
             <ToggleRow icon={ChatCircle} iconColor={colors.accent} label="Comments" subtitle="When someone comments on your echo" value={notifyComments} onValueChange={setNotifyComments} />
             {divider}

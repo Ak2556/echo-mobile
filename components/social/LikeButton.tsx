@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Text } from 'react-native';
-import { Heart } from 'phosphor-react-native';
+import { HeartStraight } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence, withDelay, withTiming } from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
@@ -95,7 +95,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
       haptic="none"
     >
       <Animated.View style={heartStyle}>
-        <Heart
+        <HeartStraight
           size={22}
           color={liked ? '#EF4444' : '#A1A1AA'}
           weight={liked ? 'fill' : 'regular'}

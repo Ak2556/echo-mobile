@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Heart, ChatCircle, UserPlus, ArrowsClockwise, AtSign, Envelope } from 'phosphor-react-native';
+import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, AtSign, Envelope } from 'phosphor-react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Notification } from '../../types';
 import { useTheme } from '../../lib/theme';
 
 const ICON_MAP = {
-  like: { icon: Heart, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
+  like: { icon: HeartStraight, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
   comment: { icon: ChatCircle, color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
   follow: { icon: UserPlus, color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
   repost: { icon: ArrowsClockwise, color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
@@ -41,7 +41,7 @@ interface NotificationCardProps {
   onPress: () => void;
 }
 
-const FALLBACK_CONFIG = { icon: Heart, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' };
+const FALLBACK_CONFIG = { icon: HeartStraight, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' };
 
 export function NotificationCard({ notification, onPress }: NotificationCardProps) {
   const config = ICON_MAP[notification.type as keyof typeof ICON_MAP] ?? FALLBACK_CONFIG;
