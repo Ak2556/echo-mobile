@@ -1,20 +1,13 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
-import { createMMKV } from 'react-native-mmkv';
 
-const storage = createMMKV({ id: 'supabase-session-storage' });
-
+// In-memory storage shim — Expo Go compatible (no NitroModules).
+// Replace with react-native-mmkv after expo prebuild / bare workflow.
+const _map = new Map<string, string>();
 const mmkvStorage = {
-  getItem: (key: string): string | null => {
-    const value = storage.getString(key);
-    return value ?? null;
-  },
-  setItem: (key: string, value: string): void => {
-    storage.set(key, value);
-  },
-  removeItem: (key: string): void => {
-    storage.remove(key);
-  },
+  getItem: (key: string): string | null => _map.get(key) ?? null,
+  setItem: (key: string, value: string): void => { _map.set(key, value); },
+  removeItem: (key: string): void => { _map.delete(key); },
 };
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
