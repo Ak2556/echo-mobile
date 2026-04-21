@@ -1,11 +1,17 @@
 import { create } from 'zustand';
-import { createMMKV } from 'react-native-mmkv';
 import {
   ChatMessage, ChatSession, FeedItem, Comment,
   Notification, Conversation, DirectMessage, Story, User
 } from '../types';
 
-const storage = createMMKV({ id: 'echo-app-storage' });
+// In-memory storage shim — compatible with Expo Go (no NitroModules required).
+// Swap back to react-native-mmkv after running `expo prebuild` / bare workflow.
+const _map = new Map<string, string>();
+const storage = {
+  getString: (key: string): string | undefined => _map.get(key),
+  set: (key: string, value: string): void => { _map.set(key, value); },
+  clearAll: (): void => { _map.clear(); },
+};
 
 function persistGet<T>(key: string, fallback: T): T {
   const raw = storage.getString(key);
