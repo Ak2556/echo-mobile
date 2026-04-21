@@ -6,6 +6,7 @@ import {
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -38,6 +39,7 @@ const POLL_DURATIONS = [
 
 export default function CreatePostScreen() {
   const router = useRouter();
+  const qc = useQueryClient();
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, displayName, publishEcho } = useAppStore();
 
@@ -181,6 +183,7 @@ export default function CreatePostScreen() {
     setPublishing(true);
     setTimeout(() => {
       publishEcho(echo!);
+      qc.invalidateQueries({ queryKey: ['feed'] });
       playSoundEffect('success');
       showToast('Echo published!', '✨');
       setPublishing(false);

@@ -37,7 +37,7 @@ function seedItem(p: {
   };
 }
 
-/** Fill missing fields for items saved from share or older shapes. */
+/** Fill missing fields for items saved from share or older shapes. Preserves all media/poll fields. */
 export function coerceFeedItem(e: FeedItem): FeedItem {
   const hashtags =
     e.hashtags?.length ? e.hashtags : extractHashtags(`${e.prompt} ${e.response}`);
@@ -59,6 +59,11 @@ export function coerceFeedItem(e: FeedItem): FeedItem {
     viewCount: e.viewCount ?? 0,
     hashtags,
     createdAt: e.createdAt || new Date().toISOString(),
+    // Rich media — must be forwarded or they get silently dropped
+    postType: e.postType,
+    mediaUris: e.mediaUris,
+    videoUri: e.videoUri,
+    poll: e.poll,
     repostedBy: e.repostedBy,
     repostedByUsername: e.repostedByUsername,
   };

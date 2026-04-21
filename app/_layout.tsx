@@ -48,6 +48,9 @@ export default function RootLayout() {
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />
           <Stack.Screen name="notification-prefs" options={{ presentation: 'card' }} />
           <Stack.Screen name="story" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+          <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="edit-post" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         </Stack>
         <ToastProvider />
       </View>

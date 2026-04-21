@@ -32,7 +32,7 @@ export function StoryCircles() {
       contentContainerStyle={{ paddingHorizontal: 12, gap: 12 }}
     >
       <Animated.View entering={animation(FadeInRight.delay(0).springify())}>
-        <AnimatedPressable className="items-center w-[68px]" scaleValue={0.9} haptic="light">
+        <AnimatedPressable onPress={() => router.push('/create-story' as any)} className="items-center w-[68px]" scaleValue={0.9} haptic="light">
           <View className="relative">
             <View
               className="w-[60px] h-[60px] rounded-full items-center justify-center"
