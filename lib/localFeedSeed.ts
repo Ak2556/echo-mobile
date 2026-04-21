@@ -15,6 +15,10 @@ function seedItem(p: {
   repostCount?: number;
   viewCount?: number;
   createdAt: string;
+  postType?: FeedItem['postType'];
+  mediaUris?: string[];
+  videoUri?: string;
+  poll?: FeedItem['poll'];
 }): FeedItem {
   return {
     id: p.id,
@@ -34,6 +38,10 @@ function seedItem(p: {
     viewCount: p.viewCount ?? 0,
     hashtags: extractHashtags(`${p.prompt} ${p.response}`),
     createdAt: p.createdAt,
+    postType: p.postType,
+    mediaUris: p.mediaUris,
+    videoUri: p.videoUri,
+    poll: p.poll,
   };
 }
 
@@ -134,4 +142,115 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
     commentCount: 8,
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   }),
+
+  // ── Rich media seed items ────────────────────────────────────────────────
+
+  // Photo post — 4 images
+  {
+    id: 'photo1',
+    userId: 'u_seed_ml',
+    username: 'ml_engineer',
+    displayName: 'ML Maya',
+    avatarColor: '#F59E0B',
+    isVerified: true,
+    postType: 'photo',
+    prompt: 'Our GPU cluster visualized 🔥',
+    response: '',
+    mediaUris: [
+      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80',
+      'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80',
+      'https://images.unsplash.com/photo-1551808525-51a94da548ce?w=600&q=80',
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&q=80',
+    ],
+    hashtags: ['ai', 'ml', 'hardware'],
+    likes: 312,
+    commentCount: 28,
+    repostCount: 14,
+    viewCount: 4800,
+    isLiked: false,
+    isBookmarked: false,
+    isReposted: false,
+    createdAt: new Date(Date.now() - 1800000).toISOString(),
+  },
+
+  // Photo post — single image
+  {
+    id: 'photo2',
+    userId: 'u_seed_design',
+    username: 'design_lead',
+    displayName: 'Design Dan',
+    avatarColor: '#EF4444',
+    isVerified: true,
+    postType: 'photo',
+    prompt: 'Dark mode palette study — OLED optimised',
+    response: '',
+    mediaUris: [
+      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80',
+    ],
+    hashtags: ['design', 'darkmode', 'ui'],
+    likes: 189,
+    commentCount: 17,
+    repostCount: 9,
+    viewCount: 2600,
+    isLiked: false,
+    isBookmarked: false,
+    isReposted: false,
+    createdAt: new Date(Date.now() - 5400000).toISOString(),
+  },
+
+  // Video post
+  {
+    id: 'video1',
+    userId: 'u_seed_crypto',
+    username: 'crypto_kate',
+    displayName: 'Kate Web3',
+    avatarColor: '#EC4899',
+    isVerified: false,
+    postType: 'video',
+    prompt: 'How zero-knowledge proofs work — 60s explainer',
+    response: '',
+    videoUri: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    hashtags: ['web3', 'zkp', 'crypto'],
+    likes: 224,
+    commentCount: 33,
+    repostCount: 21,
+    viewCount: 8900,
+    isLiked: false,
+    isBookmarked: false,
+    isReposted: false,
+    createdAt: new Date(Date.now() - 10800000).toISOString(),
+  },
+
+  // Poll post
+  {
+    id: 'poll1',
+    userId: 'u_seed_aena',
+    username: 'aena_dev',
+    displayName: 'Aena',
+    avatarColor: '#3B82F6',
+    isVerified: true,
+    postType: 'poll',
+    prompt: 'Which AI model do you use most for coding?',
+    response: '',
+    poll: {
+      question: 'Which AI model do you use most for coding?',
+      options: [
+        { id: 'opt_0', text: 'Claude (Anthropic)', votes: 148 },
+        { id: 'opt_1', text: 'GPT-4o (OpenAI)', votes: 112 },
+        { id: 'opt_2', text: 'Gemini (Google)', votes: 54 },
+        { id: 'opt_3', text: 'Other / local model', votes: 38 },
+      ],
+      totalVotes: 352,
+      endsAt: new Date(Date.now() + 72000000).toISOString(),
+    },
+    hashtags: ['ai', 'coding', 'poll'],
+    likes: 97,
+    commentCount: 42,
+    repostCount: 7,
+    viewCount: 3400,
+    isLiked: false,
+    isBookmarked: false,
+    isReposted: false,
+    createdAt: new Date(Date.now() - 900000).toISOString(),
+  },
 ];
