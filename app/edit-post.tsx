@@ -1,24 +1,22 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
   Platform, Alert, TouchableOpacity, Pressable,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  ArrowLeft, Send, Sparkles, Hash, Image as ImageIcon,
-  Video, BarChart2, X, Plus, Play, Clock,
+  ArrowLeft, Check, Sparkles, Hash, Image as ImageIcon,
+  Video, BarChart2, X, Plus, Clock,
 } from 'lucide-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
-import { FeedItem, PollOption } from '../types';
-import { coerceFeedItem } from '../lib/localFeedSeed';
-import { playSoundEffect } from '../lib/sound';
+import { PollOption } from '../types';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
@@ -36,29 +34,43 @@ const POLL_DURATIONS = [
   { label: '7d', hours: 168 },
 ];
 
-export default function CreatePostScreen() {
+export default function EditPostScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { username, userId, avatarColor, displayName, publishEcho } = useAppStore();
+  const { publishedEchoes, updateEcho, username, avatarColor, displayName } = useAppStore();
 
-  const [postType, setPostType] = useState<PostType>('text');
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('');
-  const [caption, setCaption] = useState('');
-  const [tagsRaw, setTagsRaw] = useState('');
-  const [publishing, setPublishing] = useState(false);
+  const echo = publishedEchoes.find(e => e.id === id);
+
+  const [postType, setPostType] = useState<PostType>((echo?.postType as PostType) ?? 'text');
+  const [prompt, setPrompt] = useState(echo?.prompt ?? '');
+  const [response, setResponse] = useState(echo?.response ?? '');
+  const [caption, setCaption] = useState(
+    (echo?.postType === 'photo' || echo?.postType === 'video') ? (echo?.prompt ?? '') : ''
+  );
+  const [tagsRaw, setTagsRaw] = useState((echo?.hashtags ?? []).join(', '));
+  const [saving, setSaving] = useState(false);
 
   // Photo / video state
-  const [mediaUris, setMediaUris] = useState<string[]>([]);
-  const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [mediaUris, setMediaUris] = useState<string[]>(echo?.mediaUris ?? []);
+  const [videoUri, setVideoUri] = useState<string | null>(echo?.videoUri ?? null);
 
   // Poll state
-  const [pollQuestion, setPollQuestion] = useState('');
-  const [pollOptions, setPollOptions] = useState(['', '']);
+  const [pollQuestion, setPollQuestion] = useState(echo?.poll?.question ?? '');
+  const [pollOptions, setPollOptions] = useState<string[]>(
+    echo?.poll?.options.map(o => o.text) ?? ['', '']
+  );
   const [pollDurationHours, setPollDurationHours] = useState(24);
 
-  const canPublish = (() => {
-    if (publishing) return false;
+  useEffect(() => {
+    if (!echo) {
+      Alert.alert('Not found', 'This echo no longer exists.');
+      router.back();
+    }
+  }, []);
+
+  const canSave = (() => {
+    if (saving) return false;
     switch (postType) {
       case 'text': return prompt.trim().length > 0 && response.trim().length > 0;
       case 'photo': return mediaUris.length > 0;
@@ -69,124 +81,66 @@ export default function CreatePostScreen() {
 
   const pickImages = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Allow photo access to add images.');
-      return;
-    }
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Allow photo access.'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      selectionLimit: 4,
-      quality: 0.85,
+      mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 4, quality: 0.85,
     });
-    if (!result.canceled) {
-      setMediaUris(result.assets.map(a => a.uri).slice(0, 4));
-    }
+    if (!result.canceled) setMediaUris(result.assets.map(a => a.uri).slice(0, 4));
   }, []);
 
   const pickVideo = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Allow photo access to add a video.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['videos'],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setVideoUri(result.assets[0].uri);
-    }
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Allow photo access.'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], quality: 0.8 });
+    if (!result.canceled && result.assets[0]) setVideoUri(result.assets[0].uri);
   }, []);
 
-  const addPollOption = () => {
-    if (pollOptions.length < 4) setPollOptions(prev => [...prev, '']);
-  };
+  const addPollOption = () => { if (pollOptions.length < 4) setPollOptions(prev => [...prev, '']); };
+  const updatePollOption = (idx: number, text: string) => setPollOptions(prev => prev.map((o, i) => i === idx ? text : o));
+  const removePollOption = (idx: number) => { if (pollOptions.length > 2) setPollOptions(prev => prev.filter((_, i) => i !== idx)); };
 
-  const updatePollOption = (idx: number, text: string) => {
-    setPollOptions(prev => prev.map((o, i) => i === idx ? text : o));
-  };
+  const handleSave = () => {
+    if (!canSave || !echo) return;
+    const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
 
-  const removePollOption = (idx: number) => {
-    if (pollOptions.length <= 2) return;
-    setPollOptions(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const handlePublish = () => {
-    if (!canPublish) return;
-
-    const hashtags = tagsRaw
-      .split(/[\s,]+/)
-      .map(t => t.replace(/^#/, '').trim())
-      .filter(Boolean);
-
-    const base = {
-      id: Date.now().toString(),
-      userId,
-      username: username || 'anonymous',
-      displayName: displayName || username || 'anonymous',
-      avatarColor: avatarColor || colors.accent,
-      isVerified: false,
-      likes: 0,
-      isLiked: false,
-      isBookmarked: false,
-      isReposted: false,
-      repostCount: 0,
-      commentCount: 0,
-      viewCount: 0,
-      hashtags,
-      createdAt: new Date().toISOString(),
-    };
-
-    let echo: FeedItem;
+    const updates: Partial<typeof echo> = { postType, hashtags };
 
     switch (postType) {
       case 'text':
-        echo = coerceFeedItem({ ...base, postType: 'text', prompt: prompt.trim(), response: response.trim() });
+        Object.assign(updates, { prompt: prompt.trim(), response: response.trim(), mediaUris: undefined, videoUri: undefined, poll: undefined });
         break;
       case 'photo':
-        echo = coerceFeedItem({
-          ...base,
-          postType: 'photo',
-          prompt: caption.trim() || 'Photo',
-          response: '',
-          mediaUris,
-        });
+        Object.assign(updates, { prompt: caption.trim() || 'Photo', response: '', mediaUris, videoUri: undefined, poll: undefined });
         break;
       case 'video':
-        echo = coerceFeedItem({
-          ...base,
-          postType: 'video',
-          prompt: caption.trim() || 'Video',
-          response: '',
-          videoUri: videoUri!,
-        });
+        Object.assign(updates, { prompt: caption.trim() || 'Video', response: '', videoUri: videoUri!, mediaUris: undefined, poll: undefined });
         break;
       case 'poll': {
         const options: PollOption[] = pollOptions
           .filter(o => o.trim())
-          .map((o, i) => ({ id: `opt_${i}`, text: o.trim(), votes: 0 }));
-        const endsAt = new Date(Date.now() + pollDurationHours * 3600 * 1000).toISOString();
-        echo = coerceFeedItem({
-          ...base,
-          postType: 'poll',
-          prompt: pollQuestion.trim(),
-          response: '',
-          poll: { question: pollQuestion.trim(), options, totalVotes: 0, endsAt },
+          .map((o, i) => {
+            const existing = echo.poll?.options[i];
+            return { id: existing?.id ?? `opt_${i}`, text: o.trim(), votes: existing?.votes ?? 0 };
+          });
+        const endsAt = echo.poll?.endsAt ?? new Date(Date.now() + pollDurationHours * 3600 * 1000).toISOString();
+        Object.assign(updates, {
+          prompt: pollQuestion.trim(), response: '', mediaUris: undefined, videoUri: undefined,
+          poll: { question: pollQuestion.trim(), options, totalVotes: echo.poll?.totalVotes ?? 0, userVote: echo.poll?.userVote, endsAt },
         });
         break;
       }
     }
 
-    setPublishing(true);
+    setSaving(true);
     setTimeout(() => {
-      publishEcho(echo!);
-      playSoundEffect('success');
-      showToast('Echo published!', '✨');
-      setPublishing(false);
+      updateEcho(echo.id, updates);
+      showToast('Echo updated!', '✅');
+      setSaving(false);
       router.back();
-    }, 300);
+    }, 250);
   };
+
+  if (!echo) return null;
 
   const s = {
     surface: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border },
@@ -200,23 +154,23 @@ export default function CreatePostScreen() {
         <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>New Echo</Text>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Edit Echo</Text>
         <AnimatedPressable
-          onPress={handlePublish}
-          disabled={!canPublish}
+          onPress={handleSave}
+          disabled={!canSave}
           scaleValue={0.92}
           haptic="medium"
           style={{
             flexDirection: 'row', alignItems: 'center',
             paddingHorizontal: 14, paddingVertical: 8,
             borderRadius: radius.full,
-            backgroundColor: canPublish ? colors.accent : colors.surfaceHover,
-            opacity: canPublish ? 1 : 0.5,
+            backgroundColor: canSave ? colors.accent : colors.surfaceHover,
+            opacity: canSave ? 1 : 0.5,
           }}
         >
-          <Send color="#fff" size={14} />
+          <Check color="#fff" size={15} />
           <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>
-            {publishing ? 'Posting…' : 'Post'}
+            {saving ? 'Saving…' : 'Save'}
           </Text>
         </AnimatedPressable>
       </View>
@@ -249,7 +203,7 @@ export default function CreatePostScreen() {
         <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
           {/* Author row */}
-          <Animated.View entering={animation(FadeInDown.delay(40).springify())} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
+          <Animated.View entering={animation(FadeInDown.delay(30).springify())} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(username || '?').charAt(0).toUpperCase()}</Text>
             </View>
@@ -259,16 +213,12 @@ export default function CreatePostScreen() {
             </View>
           </Animated.View>
 
-          {/* ── TEXT panel ── */}
+          {/* TEXT */}
           {postType === 'text' && (
-            <Animated.View entering={animation(FadeIn.duration(200))}>
+            <Animated.View entering={animation(FadeIn.duration(180))}>
               <Text style={s.label}>Prompt</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput
-                  multiline value={prompt} onChangeText={setPrompt}
-                  placeholder="What did you ask Echo?" placeholderTextColor={colors.textMuted}
-                  maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }}
-                />
+                <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What did you ask Echo?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
@@ -276,26 +226,18 @@ export default function CreatePostScreen() {
                 <Text style={[s.label, { marginBottom: 0 }]}>Echo Response</Text>
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput
-                  multiline value={response} onChangeText={setResponse}
-                  placeholder="Share what the AI said, your insights, or anything worth echoing…"
-                  placeholderTextColor={colors.textMuted} maxLength={1000}
-                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }}
-                />
+                <TextInput multiline value={response} onChangeText={setResponse} placeholder="Share what the AI said…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{response.length}/1000</Text>
               </View>
             </Animated.View>
           )}
 
-          {/* ── PHOTO panel ── */}
+          {/* PHOTO */}
           {postType === 'photo' && (
-            <Animated.View entering={animation(FadeIn.duration(200))}>
+            <Animated.View entering={animation(FadeIn.duration(180))}>
               <Text style={s.label}>Photos (up to 4)</Text>
               {mediaUris.length === 0 ? (
-                <TouchableOpacity
-                  onPress={pickImages}
-                  style={[s.surface, { height: 180, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}
-                >
+                <TouchableOpacity onPress={pickImages} style={[s.surface, { height: 180, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
                   <ImageIcon color={colors.textMuted} size={36} />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>Tap to pick photos</Text>
                 </TouchableOpacity>
@@ -305,19 +247,13 @@ export default function CreatePostScreen() {
                     {mediaUris.map((uri, idx) => (
                       <View key={uri} style={{ width: '48%', aspectRatio: 1, borderRadius: radius.card, overflow: 'hidden', position: 'relative' }}>
                         <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                        <Pressable
-                          onPress={() => setMediaUris(prev => prev.filter((_, i) => i !== idx))}
-                          style={{ position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, padding: 3 }}
-                        >
+                        <Pressable onPress={() => setMediaUris(prev => prev.filter((_, i) => i !== idx))} style={{ position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, padding: 3 }}>
                           <X color="#fff" size={14} />
                         </Pressable>
                       </View>
                     ))}
                     {mediaUris.length < 4 && (
-                      <TouchableOpacity
-                        onPress={pickImages}
-                        style={{ width: '48%', aspectRatio: 1, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}
-                      >
+                      <TouchableOpacity onPress={pickImages} style={{ width: '48%', aspectRatio: 1, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
                         <Plus color={colors.textMuted} size={28} />
                       </TouchableOpacity>
                     )}
@@ -326,24 +262,17 @@ export default function CreatePostScreen() {
               )}
               <Text style={s.label}>Caption (optional)</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput
-                  multiline value={caption} onChangeText={setCaption}
-                  placeholder="Add a caption…" placeholderTextColor={colors.textMuted}
-                  maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 60 }}
-                />
+                <TextInput multiline value={caption} onChangeText={setCaption} placeholder="Add a caption…" placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 60 }} />
               </View>
             </Animated.View>
           )}
 
-          {/* ── VIDEO panel ── */}
+          {/* VIDEO */}
           {postType === 'video' && (
-            <Animated.View entering={animation(FadeIn.duration(200))}>
+            <Animated.View entering={animation(FadeIn.duration(180))}>
               <Text style={s.label}>Video</Text>
               {!videoUri ? (
-                <TouchableOpacity
-                  onPress={pickVideo}
-                  style={[s.surface, { height: 200, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}
-                >
+                <TouchableOpacity onPress={pickVideo} style={[s.surface, { height: 200, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
                   <Video color={colors.textMuted} size={40} />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>Tap to pick a video</Text>
                 </TouchableOpacity>
@@ -351,44 +280,29 @@ export default function CreatePostScreen() {
                 <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden', backgroundColor: colors.surface, height: 200, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                   <Video color={colors.textMuted} size={48} />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>Video selected</Text>
-                  <Pressable
-                    onPress={() => setVideoUri(null)}
-                    style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 14, padding: 5 }}
-                  >
+                  <Pressable onPress={() => setVideoUri(null)} style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 14, padding: 5 }}>
                     <X color="#fff" size={15} />
                   </Pressable>
                 </View>
               )}
               <Text style={s.label}>Caption (optional)</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput
-                  multiline value={caption} onChangeText={setCaption}
-                  placeholder="Add a caption…" placeholderTextColor={colors.textMuted}
-                  maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 60 }}
-                />
+                <TextInput multiline value={caption} onChangeText={setCaption} placeholder="Add a caption…" placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 60 }} />
               </View>
             </Animated.View>
           )}
 
-          {/* ── POLL panel ── */}
+          {/* POLL */}
           {postType === 'poll' && (
-            <Animated.View entering={animation(FadeIn.duration(200))}>
+            <Animated.View entering={animation(FadeIn.duration(180))}>
               <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 16 }]}>
-                <TextInput
-                  value={pollQuestion} onChangeText={setPollQuestion}
-                  placeholder="Ask your community something…" placeholderTextColor={colors.textMuted}
-                  maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }}
-                />
+                <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder="Ask your community something…" placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />
               </View>
               <Text style={s.label}>Options</Text>
               {pollOptions.map((opt, idx) => (
                 <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 2, marginBottom: 8 }]}>
-                  <TextInput
-                    value={opt} onChangeText={t => updatePollOption(idx, t)}
-                    placeholder={`Option ${idx + 1}`} placeholderTextColor={colors.textMuted}
-                    maxLength={80} style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 12 }}
-                  />
+                  <TextInput value={opt} onChangeText={t => updatePollOption(idx, t)} placeholder={`Option ${idx + 1}`} placeholderTextColor={colors.textMuted} maxLength={80} style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 12 }} />
                   {pollOptions.length > 2 && (
                     <Pressable onPress={() => removePollOption(idx)} style={{ padding: 4 }}>
                       <X color={colors.textMuted} size={16} />
@@ -397,53 +311,40 @@ export default function CreatePostScreen() {
                 </View>
               ))}
               {pollOptions.length < 4 && (
-                <TouchableOpacity
-                  onPress={addPollOption}
-                  style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 16, gap: 6, borderStyle: 'dashed' }]}
-                >
+                <TouchableOpacity onPress={addPollOption} style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 16, gap: 6, borderStyle: 'dashed' }]}>
                   <Plus color={colors.textMuted} size={16} />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>Add option</Text>
                 </TouchableOpacity>
               )}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-                <Clock color={colors.textMuted} size={13} />
-                <Text style={[s.label, { marginBottom: 0 }]}>Poll Duration</Text>
-              </View>
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-                {POLL_DURATIONS.map(d => {
-                  const active = pollDurationHours === d.hours;
-                  return (
-                    <Pressable
-                      key={d.hours}
-                      onPress={() => setPollDurationHours(d.hours)}
-                      style={{
-                        flex: 1, alignItems: 'center', paddingVertical: 10,
-                        borderRadius: radius.full,
-                        backgroundColor: active ? colors.accent : colors.surface,
-                        borderWidth: 1, borderColor: active ? colors.accent : colors.border,
-                      }}
-                    >
-                      <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: fontSizes.small }}>{d.label}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+              {!echo.poll?.endsAt && (
+                <>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
+                    <Clock color={colors.textMuted} size={13} />
+                    <Text style={[s.label, { marginBottom: 0 }]}>Duration</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                    {POLL_DURATIONS.map(d => {
+                      const active = pollDurationHours === d.hours;
+                      return (
+                        <Pressable key={d.hours} onPress={() => setPollDurationHours(d.hours)} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: 1, borderColor: active ? colors.accent : colors.border }}>
+                          <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: fontSizes.small }}>{d.label}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
             </Animated.View>
           )}
 
-          {/* Shared tags field */}
-          <Animated.View entering={animation(FadeInDown.delay(60).springify())}>
+          {/* Tags */}
+          <Animated.View entering={animation(FadeInDown.delay(50).springify())}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
               <Hash color={colors.textMuted} size={13} />
               <Text style={[s.label, { marginBottom: 0 }]}>Tags</Text>
             </View>
             <View style={[s.surface, { padding: 12, marginBottom: 16 }]}>
-              <TextInput
-                value={tagsRaw} onChangeText={setTagsRaw}
-                placeholder="ai, react, tips (comma-separated)"
-                placeholderTextColor={colors.textMuted} autoCapitalize="none"
-                style={{ color: colors.text, fontSize: fontSizes.body }}
-              />
+              <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder="ai, react, tips" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ color: colors.text, fontSize: fontSizes.body }} />
             </View>
           </Animated.View>
 

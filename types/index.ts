@@ -27,6 +27,20 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
+export interface Poll {
+  question: string;
+  options: PollOption[];
+  totalVotes: number;
+  userVote?: string;  // option id the current user voted for
+  endsAt?: string;   // ISO string — poll expiry
+}
+
 export interface FeedItem {
   id: string;
   userId: string;
@@ -45,6 +59,11 @@ export interface FeedItem {
   viewCount: number;
   hashtags: string[];
   createdAt: string;
+  // Rich media
+  postType?: 'text' | 'photo' | 'video' | 'poll';
+  mediaUris?: string[];   // up to 4 local photo URIs
+  videoUri?: string;      // single video URI
+  poll?: Poll;
   // If this is a repost
   repostedBy?: string;
   repostedByUsername?: string;
