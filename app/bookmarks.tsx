@@ -48,7 +48,7 @@ export default function BookmarksScreen() {
         </Animated.View>
       ) : bookmarked.length === 0 ? (
         <EmptyState
-          icon={BookmarkSimple}
+          icon={<BookmarkSimple color="#6366F1" size={32} />}
           title="No bookmarks yet"
           subtitle="Save echoes you want to revisit later by tapping the bookmark icon."
           actionLabel="Explore"
