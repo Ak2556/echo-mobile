@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Home, Search, MessageSquare, Bell, User } from 'lucide-react-native';
+import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour } from 'phosphor-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, FadeIn } from 'react-native-reanimated';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
@@ -85,23 +85,23 @@ export default function TabLayout() {
         name="discover"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Home color={color} size={22} />,
+          tabBarIcon: ({ color, focused }) => <House color={color} size={24} weight={focused ? 'fill' : 'regular'} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color }) => <Search color={color} size={22} />,
+          tabBarIcon: ({ color, focused }) => <MagnifyingGlass color={color} size={24} weight={focused ? 'bold' : 'regular'} />,
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
           title: 'Echo',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <BadgeIcon count={unreadDMs}>
-              <MessageSquare color={color} size={22} />
+              <ChatTeardropDots color={color} size={24} weight={focused ? 'fill' : 'regular'} />
             </BadgeIcon>
           ),
         }}
@@ -110,18 +110,25 @@ export default function TabLayout() {
         name="notifications"
         options={{
           title: 'Activity',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <BadgeIcon count={unreadNotifications}>
-              <Bell color={color} size={22} />
+              <Bell color={color} size={24} weight={focused ? 'fill' : 'regular'} />
             </BadgeIcon>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="apps"
+        options={{
+          title: 'Apps',
+          tabBarIcon: ({ color, focused }) => <SquaresFour color={color} size={24} weight={focused ? 'fill' : 'regular'} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <User color={color} size={22} />,
+          tabBarIcon: ({ color, focused }) => <User color={color} size={24} weight={focused ? 'fill' : 'regular'} />,
         }}
       />
       <Tabs.Screen

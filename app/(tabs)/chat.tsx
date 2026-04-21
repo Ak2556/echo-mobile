@@ -11,7 +11,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useChatStream } from '../../hooks/queries/useChatStream';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { Share2, Plus, Sparkles, Clock } from 'lucide-react-native';
+import { ShareNetwork, Plus, Lightning, Clock } from 'phosphor-react-native';
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -123,11 +123,11 @@ export default function ChatScreen() {
           </AnimatedPressable>
         </View>
         <View className="flex-row items-center absolute left-0 right-0 justify-center pointer-events-none">
-          <Sparkles color={colors.accent} size={18} />
+          <Lightning color={colors.accent} size={18} weight="fill" />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginLeft: 8 }}>Echo</Text>
         </View>
         <AnimatedPressable onPress={handleShare} className="p-1.5 rounded-lg z-10" style={{ backgroundColor: colors.surface }} scaleValue={0.88} haptic="light">
-          <Share2 color={colors.textSecondary} size={20} />
+          <ShareNetwork color={colors.textSecondary} size={20} />
         </AnimatedPressable>
       </Animated.View>
 

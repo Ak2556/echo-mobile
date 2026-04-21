@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
-import { MessageCircle, Bookmark, Repeat2, Share2, BadgeCheck, MoreHorizontal, Flag, UserX, BarChart2 } from 'lucide-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar } from 'phosphor-react-native';
 import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
@@ -92,7 +92,7 @@ function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollVie
         );
       })}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <BarChart2 color={colors.textMuted} size={12} />
+        <ChartBar color={colors.textMuted} size={14} />
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
           {poll.totalVotes} vote{poll.totalVotes !== 1 ? 's' : ''}
           {getTimeLeft() ? ` · ${getTimeLeft()}` : ''}
@@ -190,7 +190,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {/* Repost badge */}
         {item.repostedByUsername && (
           <View className="flex-row items-center mb-2 ml-1 gap-1.5">
-            <Repeat2 color={colors.textMuted} size={13} />
+            <ArrowsClockwise color={colors.textMuted} size={14} />
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.repostedByUsername} re-echoed</Text>
           </View>
         )}
@@ -221,7 +221,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           >
             <View className="flex-row items-center gap-1">
               <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
-              {item.isVerified && <BadgeCheck color={colors.accent} size={14} fill={colors.accent} />}
+              {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
@@ -231,7 +231,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             scaleValue={reduceAnimations ? 1 : 0.85}
             haptic="light"
           >
-            <MoreHorizontal color={colors.textMuted} size={18} />
+            <DotsThreeOutline color={colors.textMuted} size={20} />
           </AnimatedPressable>
         </View>
 
@@ -249,7 +249,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             }}
           >
             <AnimatedPressable onPress={handleReport} className="flex-row items-center px-4 py-2.5 gap-2.5" scaleValue={0.97} haptic="medium">
-              <Flag color="#F59E0B" size={14} />
+              <Flag color="#F59E0B" size={16} weight="fill" />
               <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Report</Text>
             </AnimatedPressable>
             <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
@@ -259,7 +259,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               scaleValue={0.97}
               haptic="light"
             >
-              <UserX color={colors.textSecondary} size={14} />
+              <UserMinus color={colors.textSecondary} size={16} />
               <Text style={{ color: colors.text, fontSize: fontSizes.small }}>View Profile</Text>
             </AnimatedPressable>
           </Animated.View>
@@ -297,7 +297,11 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
         {/* ── VIDEO post ── */}
         {item.postType === 'video' && item.videoUri && (
-          <InlineVideo uri={item.videoUri} caption={item.prompt || undefined} />
+          <InlineVideo
+            uri={item.videoUri}
+            caption={item.prompt || undefined}
+            qualities={item.videoQualities}
+          />
         )}
 
         {/* ── POLL post ── */}
@@ -343,7 +347,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               scaleValue={reduceAnimations ? 1 : 0.85}
               haptic="light"
             >
-              <MessageCircle color={colors.textMuted} size={17} />
+              <ChatCircle color={colors.textMuted} size={19} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.commentCount || 0}</Text>
             </AnimatedPressable>
 
@@ -354,7 +358,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               haptic="medium"
             >
               <Animated.View style={repostAnim}>
-                <Repeat2 color={reposted ? colors.success : colors.textMuted} size={17} />
+                <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
               </Animated.View>
               <Text style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }}>
                 {(item.repostCount || 0) + (reposted ? 1 : 0)}
@@ -363,17 +367,17 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
             <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="medium">
               <Animated.View style={bookmarkAnim}>
-                <Bookmark
+                <BookmarkSimple
                   color={bookmarked ? colors.accent : colors.textMuted}
-                  size={17}
-                  fill={bookmarked ? colors.accent : 'transparent'}
+                  size={19}
+                  weight={bookmarked ? 'fill' : 'regular'}
                 />
               </Animated.View>
             </AnimatedPressable>
 
             <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="light">
               <Animated.View style={shareAnim}>
-                <Share2 color={colors.textMuted} size={17} />
+                <ShareNetwork color={colors.textMuted} size={19} />
               </Animated.View>
             </AnimatedPressable>
           </View>

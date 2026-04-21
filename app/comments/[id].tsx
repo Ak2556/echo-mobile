@@ -3,7 +3,7 @@ import { View, Text, Pressable, KeyboardAvoidingView, Platform, ActivityIndicato
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, Send, MessageCircle } from 'lucide-react-native';
+import { ArrowLeft, PaperPlaneTilt, ChatCircle } from 'phosphor-react-native';
 import { TextInput } from '../../components/ui/TextInput';
 import { CommentCard } from '../../components/social/CommentCard';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -75,7 +75,7 @@ export default function CommentsScreen() {
           </View>
         ) : comments.length === 0 ? (
           <EmptyState
-            icon={MessageCircle}
+            icon={ChatCircle}
             title="No comments yet"
             subtitle="Be the first to share your thoughts on this echo."
           />
@@ -112,7 +112,7 @@ export default function CommentsScreen() {
             disabled={!text.trim() || addRemote.isPending}
             className={`p-2.5 rounded-full ${text.trim() && !addRemote.isPending ? 'bg-blue-600' : 'bg-zinc-800'}`}
           >
-            <Send color="#fff" size={18} />
+            <PaperPlaneTilt color="#fff" size={18} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>

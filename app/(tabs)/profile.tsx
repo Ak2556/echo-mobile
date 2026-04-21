@@ -4,16 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  Settings, Bookmark, MessageSquare, ChevronRight, Bell, Vibrate, Info, LogOut, Shield,
-  UserPen, Users, Mail, Sparkles,
-} from 'lucide-react-native';
+  Gear, BookmarkSimple, ChatTeardropDots, CaretRight, Bell, Vibration, Info, SignOut, Shield,
+  PencilSimple, Users, Envelope, Lightning,
+} from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
-import { supabase } from '../../lib/supabase';
+import { signOut } from '../../lib/auth';
 
-function StatCard({ label, value, icon: Icon }: { label: string; value: number; icon: typeof MessageSquare }) {
+function StatCard({ label, value, icon: Icon }: { label: string; value: number; icon: React.ComponentType<any> }) {
   const { colors, radius } = useTheme();
   return (
     <AnimatedPressable scaleValue={0.95} haptic="light" className="flex-1 p-4 items-center" style={{ backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
@@ -25,7 +24,7 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: number; 
 }
 
 function SettingsRow({ icon: Icon, label, right, onPress }: {
-  icon: typeof Settings; label: string; right?: React.ReactNode; onPress?: () => void;
+  icon: React.ComponentType<any>; label: string; right?: React.ReactNode; onPress?: () => void;
 }) {
   const { colors } = useTheme();
   return (
@@ -39,7 +38,7 @@ function SettingsRow({ icon: Icon, label, right, onPress }: {
         <Icon color={colors.textSecondary} size={18} />
       </View>
       <Text style={{ color: colors.text, fontSize: 16, flex: 1 }}>{label}</Text>
-      {right || <ChevronRight color={colors.textMuted} size={18} />}
+      {right || <CaretRight color={colors.textMuted} size={18} />}
     </AnimatedPressable>
   );
 }
@@ -55,12 +54,8 @@ export default function ProfileScreen() {
   } = useAppStore();
 
   const handleSignOut = async () => {
-    if (isSupabaseRemote()) {
-      await supabase.auth.signOut();
-    }
-    setHasSeenOnboarding(false);
-    setUsername('');
-    router.replace('/onboarding');
+    await signOut();
+    // onAuthStateChange in _layout.tsx will handle redirect to /auth/login
   };
 
   const savedCount = bookmarkedIds.length;
@@ -79,23 +74,23 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(200).springify())} className="flex-row gap-3 px-4 mb-6">
-          <StatCard label="Chats" value={sessions.length} icon={MessageSquare} />
-          <StatCard label="Echoes" value={publishedEchoes.length} icon={Sparkles} />
-          <StatCard label="Saved" value={savedCount} icon={Bookmark} />
+          <StatCard label="Chats" value={sessions.length} icon={ChatTeardropDots} />
+          <StatCard label="Echoes" value={publishedEchoes.length} icon={Lightning} />
+          <StatCard label="Saved" value={savedCount} icon={BookmarkSimple} />
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(250).springify())} className="px-4 mb-4">
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Account</Text>
           <View style={{ backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }} className="px-4">
-            <SettingsRow icon={UserPen} label="Edit profile" onPress={() => router.push('/edit-profile')} />
+            <SettingsRow icon={PencilSimple} label="Edit profile" onPress={() => router.push('/edit-profile')} />
             <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-            <SettingsRow icon={Bookmark} label="Bookmarks" onPress={() => router.push('/bookmarks')} />
+            <SettingsRow icon={BookmarkSimple} label="Bookmarks" onPress={() => router.push('/bookmarks')} />
             <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-            <SettingsRow icon={Mail} label="Messages" onPress={() => router.push('/messages')} />
+            <SettingsRow icon={Envelope} label="Messages" onPress={() => router.push('/messages')} />
             <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
             <SettingsRow icon={Users} label="Connections" onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })} />
             <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-            <SettingsRow icon={Settings} label="Settings" onPress={() => router.push('/settings')} />
+            <SettingsRow icon={Gear} label="Settings" onPress={() => router.push('/settings')} />
           </View>
         </Animated.View>
 
@@ -103,7 +98,7 @@ export default function ProfileScreen() {
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Preferences</Text>
           <View style={{ backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }} className="px-4 mb-4">
             <SettingsRow
-              icon={Vibrate}
+              icon={Vibration}
               label="Haptic Feedback"
               right={
                 <Switch
@@ -148,7 +143,7 @@ export default function ProfileScreen() {
             haptic="medium"
           >
             <View className="w-9 h-9 rounded-lg items-center justify-center mr-3" style={{ backgroundColor: colors.dangerMuted }}>
-              <LogOut color={colors.danger} size={18} />
+              <SignOut color={colors.danger} size={18} />
             </View>
             <Text style={{ color: colors.danger, fontSize: 16, fontWeight: '500' }}>Sign Out</Text>
           </AnimatedPressable>

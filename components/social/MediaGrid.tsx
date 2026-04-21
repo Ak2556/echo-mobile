@@ -3,7 +3,7 @@ import {
   View, Modal, Pressable, Dimensions, StatusBar,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { X, ZoomIn } from 'lucide-react-native';
+import { X, MagnifyingGlassPlus } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -110,7 +110,7 @@ export function MediaGrid({ uris }: MediaGridProps) {
 function ZoomHint() {
   return (
     <View style={{ position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 12, padding: 5 }}>
-      <ZoomIn color="#fff" size={14} />
+      <MagnifyingGlassPlus color="#fff" size={14} />
     </View>
   );
 }

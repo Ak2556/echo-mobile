@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeInDown, FadeIn, FadeOut } from 'react-native-reanimated';
-import { ArrowLeft, Bookmark, Share2, MessageCircle, MoreHorizontal, Pencil, Trash2, Flag, BarChart2 } from 'lucide-react-native';
+import { ArrowLeft, BookmarkSimple, ShareNetwork, ChatCircle, DotsThreeOutline, PencilSimple, Trash, Flag, ChartBar } from 'phosphor-react-native';
 import { LikeButton } from '../../components/social/LikeButton';
 import { MediaGrid } from '../../components/social/MediaGrid';
 import { InlineVideo } from '../../components/social/InlineVideo';
@@ -75,11 +75,11 @@ export default function ThreadDetailScreen() {
         <Text style={{ color: colors.text, fontWeight: '600', fontSize: 18 }}>Echo Thread</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <Pressable onPress={toggleBm}>
-            <Bookmark color={bookmarked ? colors.accent : colors.textSecondary} size={22} fill={bookmarked ? colors.accent : 'transparent'} />
+            <BookmarkSimple color={bookmarked ? colors.accent : colors.textSecondary} size={22} weight="fill" />
           </Pressable>
           {isOwner && (
             <Pressable onPress={() => setShowMenu(m => !m)} style={{ padding: 2 }}>
-              <MoreHorizontal color={colors.textSecondary} size={22} />
+              <DotsThreeOutline color={colors.textSecondary} size={24} />
             </Pressable>
           )}
         </View>
@@ -102,7 +102,7 @@ export default function ThreadDetailScreen() {
             onPress={() => { setShowMenu(false); router.push({ pathname: '/edit-post' as any, params: { id: item.id } }); }}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 13 }}
           >
-            <Pencil color={colors.accent} size={15} />
+            <PencilSimple color={colors.accent} size={18} />
             <Text style={{ color: colors.text, fontSize: fontSizes.body }}>Edit Echo</Text>
           </Pressable>
           <View style={{ borderTopWidth: 1, borderTopColor: colors.border }} />
@@ -110,7 +110,7 @@ export default function ThreadDetailScreen() {
             onPress={() => { setShowMenu(false); handleDelete(); }}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 13 }}
           >
-            <Trash2 color="#EF4444" size={15} />
+            <Trash color="#EF4444" size={18} />
             <Text style={{ color: '#EF4444', fontSize: fontSizes.body }}>Delete Echo</Text>
           </Pressable>
           <View style={{ borderTopWidth: 1, borderTopColor: colors.border }} />
@@ -156,7 +156,11 @@ export default function ThreadDetailScreen() {
         {/* Video */}
         {item.postType === 'video' && item.videoUri && (
           <Animated.View entering={animation(FadeInDown.delay(250).springify())}>
-            <InlineVideo uri={item.videoUri} height={260} />
+            <InlineVideo
+              uri={item.videoUri}
+              height={300}
+              qualities={item.videoQualities}
+            />
           </Animated.View>
         )}
 
@@ -182,17 +186,17 @@ export default function ThreadDetailScreen() {
               onPress={() => id && router.push(`/comments/${id}`)}
               style={{ padding: 8, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: colors.surface }}
             >
-              <MessageCircle color={colors.textSecondary} size={18} />
+              <ChatCircle color={colors.textSecondary} size={20} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{item.commentCount ?? 0}</Text>
             </Pressable>
             <Pressable onPress={toggleBm} style={{ padding: 8, borderRadius: radius.full, backgroundColor: colors.surface }}>
-              <Bookmark color={bookmarked ? colors.accent : colors.textSecondary} size={20} fill={bookmarked ? colors.accent : 'transparent'} />
+              <BookmarkSimple color={bookmarked ? colors.accent : colors.textSecondary} size={20} weight="fill" />
             </Pressable>
             <Pressable
               onPress={() => router.push({ pathname: '/share', params: { prompt: item.prompt, response: item.response } })}
               style={{ padding: 8, borderRadius: radius.full, backgroundColor: colors.surface }}
             >
-              <Share2 color={colors.textSecondary} size={20} />
+              <ShareNetwork color={colors.textSecondary} size={22} />
             </Pressable>
           </View>
         </Animated.View>
@@ -234,7 +238,7 @@ function ThreadPollView({ poll, echoId, colors, radius, fontSizes }: { poll: any
         );
       })}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-        <BarChart2 color={colors.textMuted} size={13} />
+        <ChartBar color={colors.textMuted} size={15} />
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
           {poll.totalVotes} vote{poll.totalVotes !== 1 ? 's' : ''}
           {poll.endsAt && !isExpired ? ` · ${Math.ceil((new Date(poll.endsAt).getTime() - Date.now()) / 3600000)}h left` : ''}

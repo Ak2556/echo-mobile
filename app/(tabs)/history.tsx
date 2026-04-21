@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInRight } from 'react-native-reanimated';
-import { MessageSquare, Trash2, Plus, Clock } from 'lucide-react-native';
+import { ChatTeardropDots, Trash, Plus, Clock } from 'phosphor-react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ChatSession } from '../../types';
@@ -28,7 +28,7 @@ function SessionCard({ session, index, onPress, onDelete }: {
         className="bg-zinc-900 mx-4 my-1.5 p-4 rounded-2xl border border-zinc-800 flex-row items-center"
       >
         <View className="w-10 h-10 rounded-xl bg-zinc-800 items-center justify-center mr-3">
-          <MessageSquare color="#3B82F6" size={20} />
+          <ChatTeardropDots color="#3B82F6" size={20} />
         </View>
         <View className="flex-1">
           <Text className="text-white font-semibold text-base" numberOfLines={1}>{session.title}</Text>

@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { LucideIcon } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useTheme } from '../../lib/theme';
 
 interface EmptyStateProps {
-  icon: LucideIcon;
+  icon: React.ComponentType<{ color: string; size: number; weight?: string }>;
   title: string;
   subtitle: string;
   actionLabel?: string;

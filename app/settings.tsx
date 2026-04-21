@@ -4,20 +4,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import {
-  ArrowLeft, ChevronRight, Bell, Vibrate, Lock, Moon, Volume2,
-  Shield, Info, HelpCircle, LogOut, Trash2, Eye, EyeOff,
-  MessageSquare, Zap, Languages, WifiOff, ShieldCheck,
-  Palette, Type, LayoutGrid, Sparkles, Bot, Save,
-  MessageCircle, Radio, Database, Eraser, BookmarkX,
-  BellOff, RectangleHorizontal,
-  Check, Smartphone, Users, Mail, SunMoon,
-} from 'lucide-react-native';
+  ArrowLeft, CaretRight, Bell, Vibration, Lock, Moon, SpeakerHigh,
+  Shield, Info, Question, SignOut, Trash, Eye, EyeSlash,
+  ChatTeardropDots, Lightning, Translate, WifiSlash, ShieldCheck,
+  Palette, TextT, SquaresFour, Star, Robot, FloppyDisk,
+  ChatCircle, Broadcast, Database, Eraser, BookmarkSlash,
+  BellSlash, Rectangle,
+  Check, DeviceMobile, Users, Envelope, SunHorizon,
+} from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
-import { isSupabaseRemote } from '../lib/remoteConfig';
-import { supabase } from '../lib/supabase';
+import { signOut } from '../lib/auth';
 
 // ── Shared Components ──
 
@@ -42,7 +41,7 @@ function SettingsRow({ icon: Icon, iconColor, label, subtitle, right, onPress, d
         <Text style={{ color: destructive ? colors.danger : colors.text, fontSize: fontSizes.body }}>{label}</Text>
         {subtitle && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>{subtitle}</Text>}
       </View>
-      {right || (onPress && <ChevronRight color={colors.textMuted} size={18} />)}
+      {right || (onPress && <CaretRight color={colors.textMuted} size={18} />)}
     </AnimatedPressable>
   );
 }
@@ -278,10 +277,8 @@ export default function SettingsScreen() {
       {
         text: 'Sign Out', style: 'destructive',
         onPress: async () => {
-          if (isSupabaseRemote()) await supabase.auth.signOut();
-          s.setHasSeenOnboarding(false);
-          s.setUsername('');
-          router.replace('/onboarding');
+          await signOut();
+          // onAuthStateChange in _layout.tsx handles redirect to /auth/login
         },
       },
     ]);
@@ -293,9 +290,9 @@ export default function SettingsScreen() {
       'This action is permanent and cannot be undone. All your data will be lost.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete Forever', style: 'destructive', onPress: () => {
+        { text: 'Delete Forever', style: 'destructive', onPress: async () => {
           s.clearAllData();
-          router.replace('/onboarding');
+          await signOut();
         }},
       ]
     );
@@ -376,7 +373,7 @@ export default function SettingsScreen() {
   const chevronValue = (label: string) => (
     <View className="flex-row items-center">
       <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginRight: 4 }}>{label}</Text>
-      <ChevronRight color={colors.textMuted} size={18} />
+      <CaretRight color={colors.textMuted} size={18} />
     </View>
   );
 
@@ -397,9 +394,9 @@ export default function SettingsScreen() {
           <View className="px-4 mb-5" style={cardStyle}>
             <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, s.setNotificationsEnabled)} />
             {divider}
-            <SettingsRow theme={theme} icon={Vibrate} label="Haptic Feedback" subtitle="Vibration on interactions" right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
+            <SettingsRow theme={theme} icon={Vibration} label="Haptic Feedback" subtitle="Vibration on interactions" right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
             {divider}
-            <SettingsRow theme={theme} icon={Volume2} label="Sound Effects" subtitle="Play sounds for actions" right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
+            <SettingsRow theme={theme} icon={SpeakerHigh} label="Sound Effects" subtitle="Play sounds for actions" right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
             {divider}
             <SettingsRow theme={theme} icon={Bell} label="Notification Preferences" subtitle="Customize which notifications you receive" onPress={() => router.push('/notification-prefs')} />
           </View>
@@ -413,11 +410,11 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, s.setActivityStatus)} />
             {divider}
-            <SettingsRow theme={theme} icon={EyeOff} label="Online Status" subtitle="Let others see your online indicator" right={SwitchEl(s.onlineStatus, s.setOnlineStatus)} />
+            <SettingsRow theme={theme} icon={EyeSlash} label="Online Status" subtitle="Let others see your online indicator" right={SwitchEl(s.onlineStatus, s.setOnlineStatus)} />
             {divider}
-            <SettingsRow theme={theme} icon={MessageCircle} label="Read Receipts" subtitle="Show when you've read messages" right={SwitchEl(s.readReceipts, s.setReadReceipts)} />
+            <SettingsRow theme={theme} icon={ChatCircle} label="Read Receipts" subtitle="Show when you've read messages" right={SwitchEl(s.readReceipts, s.setReadReceipts)} />
             {divider}
-            <SettingsRow theme={theme} icon={Mail} label="Who Can Message You" subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
+            <SettingsRow theme={theme} icon={Envelope} label="Who Can Message You" subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, s.setSensitiveContentFilter)} />
             {divider}
@@ -431,7 +428,7 @@ export default function SettingsScreen() {
           <View className="px-4 mb-5" style={cardStyle}>
             <SettingsRow
               theme={theme}
-              icon={SunMoon}
+              icon={SunHorizon}
               iconColor={colors.accent}
               label="Theme"
               subtitle={`${themeLabel} — tap to change`}
@@ -451,14 +448,14 @@ export default function SettingsScreen() {
                   >
                     <View style={{ position: 'absolute', top: 3, left: 3, width: 16, height: 16, borderRadius: 999, backgroundColor: THEMES[s.theme]?.accent ?? colors.accent }} />
                   </View>
-                  <ChevronRight color={colors.textMuted} size={18} />
-                </View>
+      <CaretRight color={colors.textMuted} size={18} />
+            </View>
               }
             />
             {divider}
             <SettingsRow theme={theme} icon={Moon} iconColor="#8B5CF6" label="Dark Mode" subtitle="Always on for OLED savings" right={SwitchEl(s.darkMode, s.setDarkMode)} />
             {divider}
-            <SettingsRow theme={theme} icon={Smartphone} label="Pure Black Background" subtitle="True black for AMOLED screens" right={SwitchEl(s.pureBlackBackground, s.setPureBlackBackground)} />
+            <SettingsRow theme={theme} icon={DeviceMobile} label="Pure Black Background" subtitle="True black for AMOLED screens" right={SwitchEl(s.pureBlackBackground, s.setPureBlackBackground)} />
             {divider}
             <SettingsRow
               theme={theme}
@@ -470,20 +467,20 @@ export default function SettingsScreen() {
               right={
                 <View className="flex-row items-center">
                   <View style={{ width: 20, height: 20, borderRadius: 999, marginRight: 8, backgroundColor: s.accentColor }} />
-                  <ChevronRight color={colors.textMuted} size={18} />
+                  <CaretRight color={colors.textMuted} size={18} />
                 </View>
               }
             />
             {divider}
-            <SettingsRow theme={theme} icon={Type} label="Font Size" subtitle={fontLabel} onPress={() => setShowFontPicker(true)} right={chevronValue(fontLabel)} />
+            <SettingsRow theme={theme} icon={TextT} label="Font Size" subtitle={fontLabel} onPress={() => setShowFontPicker(true)} right={chevronValue(fontLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={RectangleHorizontal} label="Corner Radius" subtitle={`${cornerLabel} rounded corners`} onPress={() => setShowCornerPicker(true)} right={chevronValue(cornerLabel)} />
+            <SettingsRow theme={theme} icon={Rectangle} label="Corner Radius" subtitle={`${cornerLabel} rounded corners`} onPress={() => setShowCornerPicker(true)} right={chevronValue(cornerLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={Eye} label="Show Avatars" subtitle="Display user avatar icons" right={SwitchEl(s.showAvatars, s.setShowAvatars)} />
             {divider}
-            <SettingsRow theme={theme} icon={LayoutGrid} label="Show Preview Cards" subtitle="Show response previews in feed" right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
+            <SettingsRow theme={theme} icon={SquaresFour} label="Show Preview Cards" subtitle="Show response previews in feed" right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
             {divider}
-            <SettingsRow theme={theme} icon={Zap} label="Reduce Animations" subtitle="Minimize motion effects" right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
+            <SettingsRow theme={theme} icon={Lightning} label="Reduce Animations" subtitle="Minimize motion effects" right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
           </View>
         </Animated.View>
 
@@ -491,15 +488,15 @@ export default function SettingsScreen() {
         <Animated.View entering={animation(FadeInDown.delay(200).springify())}>
           <Text style={sectionHeaderStyle}>Content & Feed</Text>
           <View className="px-4 mb-5" style={cardStyle}>
-            <SettingsRow theme={theme} icon={LayoutGrid} label="Feed Sort" subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
+            <SettingsRow theme={theme} icon={SquaresFour} label="Feed Sort" subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={LayoutGrid} label="Compact Feed" subtitle="Show smaller cards in the feed" right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
+            <SettingsRow theme={theme} icon={SquaresFour} label="Compact Feed" subtitle="Show smaller cards in the feed" right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
             {divider}
-            <SettingsRow theme={theme} icon={Radio} label="Autoplay Stories" subtitle="Auto-advance through stories" right={SwitchEl(s.autoplayStories, s.setAutoplayStories)} />
+            <SettingsRow theme={theme} icon={Broadcast} label="Autoplay Stories" subtitle="Auto-advance through stories" right={SwitchEl(s.autoplayStories, s.setAutoplayStories)} />
             {divider}
-            <SettingsRow theme={theme} icon={Languages} label="Content Language" subtitle={s.contentLanguage} onPress={() => setShowLanguagePicker(true)} right={chevronValue(s.contentLanguage)} />
+            <SettingsRow theme={theme} icon={Translate} label="Content Language" subtitle={s.contentLanguage} onPress={() => setShowLanguagePicker(true)} right={chevronValue(s.contentLanguage)} />
             {divider}
-            <SettingsRow theme={theme} icon={WifiOff} label="Data Saver" subtitle="Reduce data usage on mobile" right={SwitchEl(s.dataSaver, s.setDataSaver)} />
+            <SettingsRow theme={theme} icon={WifiSlash} label="Data Saver" subtitle="Reduce data usage on mobile" right={SwitchEl(s.dataSaver, s.setDataSaver)} />
           </View>
         </Animated.View>
 
@@ -507,15 +504,15 @@ export default function SettingsScreen() {
         <Animated.View entering={animation(FadeInDown.delay(250).springify())}>
           <Text style={sectionHeaderStyle}>Chat & AI</Text>
           <View className="px-4 mb-5" style={cardStyle}>
-            <SettingsRow theme={theme} icon={Bot} iconColor={colors.accent} label="AI Model" subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
+            <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label="AI Model" subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={MessageSquare} label="Chat Bubble Style" subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
+            <SettingsRow theme={theme} icon={ChatTeardropDots} label="Chat Bubble Style" subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Sparkles} label="Stream Responses" subtitle="Show AI responses as they're generated" right={SwitchEl(s.streamResponses, s.setStreamResponses)} />
+            <SettingsRow theme={theme} icon={Star} label="Stream Responses" subtitle="Show AI responses as they're generated" right={SwitchEl(s.streamResponses, s.setStreamResponses)} />
             {divider}
-            <SettingsRow theme={theme} icon={Zap} label="Typing Indicator" subtitle="Show dots while AI is thinking" right={SwitchEl(s.showTypingIndicator, s.setShowTypingIndicator)} />
+            <SettingsRow theme={theme} icon={Lightning} label="Typing Indicator" subtitle="Show dots while AI is thinking" right={SwitchEl(s.showTypingIndicator, s.setShowTypingIndicator)} />
             {divider}
-            <SettingsRow theme={theme} icon={Save} label="Auto-save Chats" subtitle="Automatically save conversations" right={SwitchEl(s.autoSaveChats, s.setAutoSaveChats)} />
+            <SettingsRow theme={theme} icon={FloppyDisk} label="Auto-save Chats" subtitle="Automatically save conversations" right={SwitchEl(s.autoSaveChats, s.setAutoSaveChats)} />
           </View>
         </Animated.View>
 
@@ -527,11 +524,11 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Eraser} label="Clear Cache" subtitle="Free up storage space" onPress={handleClearCache} />
             {divider}
-            <SettingsRow theme={theme} icon={MessageSquare} label={`Clear Chat History (${s.sessions.length})`} subtitle="Delete all AI conversations" onPress={handleClearChats} />
+            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`Clear Chat History (${s.sessions.length})`} subtitle="Delete all AI conversations" onPress={handleClearChats} />
             {divider}
-            <SettingsRow theme={theme} icon={BookmarkX} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle="Remove all saved echoes" onPress={handleClearBookmarks} />
+            <SettingsRow theme={theme} icon={BookmarkSlash} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle="Remove all saved echoes" onPress={handleClearBookmarks} />
             {divider}
-            <SettingsRow theme={theme} icon={BellOff} label="Clear Notifications" subtitle="Remove all notifications" onPress={handleClearNotifications} />
+            <SettingsRow theme={theme} icon={BellSlash} label="Clear Notifications" subtitle="Remove all notifications" onPress={handleClearNotifications} />
           </View>
         </Animated.View>
 
@@ -541,11 +538,11 @@ export default function SettingsScreen() {
           <View className="px-4 mb-5" style={cardStyle}>
             <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => Alert.alert('Privacy Policy', 'Echo respects your privacy. We collect minimal data to provide the best experience. Your chats are processed via encrypted connections and are never stored on our servers permanently.')} />
             {divider}
-            <SettingsRow theme={theme} icon={HelpCircle} label="Help & Support" onPress={() => Alert.alert('Help & Support', 'For help, contact echo-support@example.com\n\nFAQ:\n\u2022 Swipe on feed cards for actions\n\u2022 Long-press messages to copy\n\u2022 Tap avatars to view profiles\n\u2022 Pull down to refresh feeds')} />
+            <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => Alert.alert('Help & Support', 'For help, contact echo-support@example.com\n\nFAQ:\n\u2022 Swipe on feed cards for actions\n\u2022 Long-press messages to copy\n\u2022 Tap avatars to view profiles\n\u2022 Pull down to refresh feeds')} />
             {divider}
             <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.2.0 (42)</Text>} />
             {divider}
-            <SettingsRow theme={theme} icon={Sparkles} label="What's New" onPress={() => Alert.alert("What's New in 1.2.0", '\u2022 Multi-theme system (6 themes)\n\u2022 Every setting is now live\n\u2022 Online status indicators\n\u2022 Accent color customization\n\u2022 Font size + corner radius controls\n\u2022 Reduce animations respected everywhere')} />
+            <SettingsRow theme={theme} icon={Star} label="What's New" onPress={() => Alert.alert("What's New in 1.2.0", '\u2022 Multi-theme system (6 themes)\n\u2022 Every setting is now live\n\u2022 Online status indicators\n\u2022 Accent color customization\n\u2022 Font size + corner radius controls\n\u2022 Reduce animations respected everywhere')} />
           </View>
         </Animated.View>
 
@@ -553,9 +550,9 @@ export default function SettingsScreen() {
         <Animated.View entering={animation(FadeInDown.delay(400).springify())}>
           <Text style={sectionHeaderStyle}>Danger Zone</Text>
           <View className="px-4 mb-5" style={cardStyle}>
-            <SettingsRow theme={theme} icon={LogOut} label="Sign Out" onPress={handleSignOut} destructive />
+            <SettingsRow theme={theme} icon={SignOut} label="Sign Out" onPress={handleSignOut} destructive />
             {divider}
-            <SettingsRow theme={theme} icon={Trash2} label="Delete Account" subtitle="Permanently delete all data" onPress={handleDeleteAccount} destructive />
+            <SettingsRow theme={theme} icon={Trash} label="Delete Account" subtitle="Permanently delete all data" onPress={handleDeleteAccount} destructive />
           </View>
         </Animated.View>
 

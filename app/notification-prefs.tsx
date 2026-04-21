@@ -4,9 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  ArrowLeft, Heart, MessageCircle, UserPlus, Repeat2,
-  AtSign, Mail, Volume2, Bell,
-} from 'lucide-react-native';
+  ArrowLeft, Heart, ChatCircle, UserPlus, ArrowsClockwise,
+  AtSign, Envelope, SpeakerHigh, Bell,
+} from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -97,13 +97,13 @@ export default function NotificationPrefsScreen() {
           >
             <ToggleRow icon={Heart} iconColor={colors.danger} label="Likes" subtitle="When someone likes your echo" value={notifyLikes} onValueChange={setNotifyLikes} />
             {divider}
-            <ToggleRow icon={MessageCircle} iconColor={colors.accent} label="Comments" subtitle="When someone comments on your echo" value={notifyComments} onValueChange={setNotifyComments} />
+            <ToggleRow icon={ChatCircle} iconColor={colors.accent} label="Comments" subtitle="When someone comments on your echo" value={notifyComments} onValueChange={setNotifyComments} />
             {divider}
             <ToggleRow icon={UserPlus} iconColor={colors.success} label="New Followers" subtitle="When someone follows you" value={notifyFollows} onValueChange={setNotifyFollows} />
             {divider}
-            <ToggleRow icon={Mail} iconColor={colors.accent} label="Direct Messages" subtitle="When you receive a new message" value={notifyDMs} onValueChange={setNotifyDMs} />
+            <ToggleRow icon={Envelope} iconColor={colors.accent} label="Direct Messages" subtitle="When you receive a new message" value={notifyDMs} onValueChange={setNotifyDMs} />
             {divider}
-            <ToggleRow icon={Repeat2} iconColor={colors.accent} label="Re-echoes" subtitle="When someone re-echoes your post" value={notifyReposts} onValueChange={setNotifyReposts} />
+            <ToggleRow icon={ArrowsClockwise} iconColor={colors.accent} label="Re-echoes" subtitle="When someone re-echoes your post" value={notifyReposts} onValueChange={setNotifyReposts} />
             {divider}
             <ToggleRow icon={AtSign} iconColor={colors.accent} label="Mentions" subtitle="When someone mentions you" value={notifyMentions} onValueChange={setNotifyMentions} />
           </View>
@@ -120,7 +120,7 @@ export default function NotificationPrefsScreen() {
               borderColor: colors.border,
             }}
           >
-            <ToggleRow icon={Volume2} iconColor={colors.textSecondary} label="Sound Effects" subtitle="Play sounds for notifications and actions" value={soundEnabled} onValueChange={setSoundEnabled} />
+            <ToggleRow icon={SpeakerHigh} iconColor={colors.textSecondary} label="Sound Effects" subtitle="Play sounds for notifications and actions" value={soundEnabled} onValueChange={setSoundEnabled} />
             {divider}
             <ToggleRow icon={Bell} iconColor={colors.textSecondary} label="Haptic Feedback" subtitle="Vibration feedback on interactions" value={hapticEnabled} onValueChange={setHapticEnabled} />
           </View>
