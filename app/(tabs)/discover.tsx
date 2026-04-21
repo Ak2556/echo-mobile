@@ -1,65 +1,66 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, ActivityIndicator, RefreshControl } from 'react-native';
+// @ts-nocheck
+import React, { useCallback } from 'react';
+import { View, Text, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { FeedCard } from '../../components/social/FeedCard';
-import { SearchBar } from '../../components/social/SearchBar';
+import { StoryCircles } from '../../components/social/StoryCircles';
+import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { FeedItem } from '../../types';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { useTheme } from '../../lib/theme';
 
 export default function DiscoverScreen() {
   const router = useRouter();
   const { data: feed, isLoading, refetch, isRefetching } = useFeed();
-  const [search, setSearch] = useState('');
-
-  const filtered = feed?.filter(item => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      item.prompt.toLowerCase().includes(q) ||
-      item.response.toLowerCase().includes(q) ||
-      item.username.toLowerCase().includes(q)
-    );
-  });
+  const { colors, animation } = useTheme();
 
   const handlePressThread = useCallback((item: FeedItem) => {
     router.push(`/thread/${item.id}`);
   }, [router]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-black">
-      <View className="px-4 pt-3 pb-2">
-        <Text className="text-white text-2xl font-bold">Discover</Text>
-        <Text className="text-zinc-500 text-sm mt-0.5">Explore conversations from the community</Text>
-      </View>
-
-      <SearchBar value={search} onChangeText={setSearch} />
-
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#3B82F6" size="large" />
-        </View>
+        <Animated.View entering={animation(FadeIn.duration(300))} className="flex-1">
+          <View className="px-4 pt-3 pb-3">
+            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Echo</Text>
+          </View>
+          <StoryCircles />
+          <View className="h-2" />
+          <FeedCardSkeleton />
+          <FeedCardSkeleton />
+          <FeedCardSkeleton />
+        </Animated.View>
       ) : (
         <FlashList
-          data={filtered}
+          data={feed}
           renderItem={({ item, index }) => (
             <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
           )}
           keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingBottom: 20, paddingTop: 4 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor="#3B82F6"
+              tintColor={colors.accent}
             />
+          }
+          ListHeaderComponent={
+            <View>
+              <View className="px-4 pt-3 pb-3">
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Echo</Text>
+              </View>
+              <StoryCircles />
+              <View className="h-2" />
+            </View>
           }
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center pt-20">
-              <Text className="text-zinc-500 text-base">
-                {search ? 'No echoes match your search' : 'No echoes yet'}
-              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 16 }}>No echoes yet</Text>
             </View>
           }
         />

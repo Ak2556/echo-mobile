@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, Users } from 'lucide-react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { UserRow } from '../components/social/UserRow';
+import { UserRowSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
+import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
+import { useTheme } from '../lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useRemoteFollowersList } from '../hooks/queries/useRemoteFollowers';
 
@@ -15,6 +19,7 @@ export default function FollowersScreen() {
   const { tab: initialTab, userId: paramUserId } = useLocalSearchParams<{ userId?: string; tab?: string }>();
   const storeUserId = useAppStore(s => s.userId);
   const targetUserId = paramUserId || storeUserId;
+  const { colors, animation } = useTheme();
 
   const [activeTab, setActiveTab] = useState<'followers' | 'following'>(
     initialTab === 'following' ? 'following' : 'followers'
@@ -40,36 +45,47 @@ export default function FollowersScreen() {
   const followingCount = remote ? (followingRemote.data?.length ?? 0) : followingLocal.length;
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-black">
-      <View className="flex-row items-center px-4 py-3 border-b border-zinc-900">
-        <Pressable onPress={() => router.back()} className="p-1 mr-3">
-          <ArrowLeft color="#fff" size={24} />
-        </Pressable>
-        <Text className="text-white font-bold text-lg">Connections</Text>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light">
+          <ArrowLeft color={colors.text} size={24} />
+        </AnimatedPressable>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Connections</Text>
       </View>
 
-      <View className="flex-row border-b border-zinc-900">
+      <View className="flex-row" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
         {(['followers', 'following'] as const).map(tab => (
-          <Pressable
+          <AnimatedPressable
             key={tab}
             onPress={() => setActiveTab(tab)}
-            className={`flex-1 py-3 items-center border-b-2 ${
-              activeTab === tab ? 'border-blue-500' : 'border-transparent'
-            }`}
+            className="flex-1 py-3 items-center"
+            style={{
+              borderBottomWidth: 2,
+              borderBottomColor: activeTab === tab ? colors.accent : 'transparent',
+            }}
+            scaleValue={0.97}
+            haptic="light"
           >
-            <Text className={`font-semibold capitalize ${
-              activeTab === tab ? 'text-white' : 'text-zinc-500'
-            }`}>
+            <Text
+              style={{
+                color: activeTab === tab ? colors.text : colors.textMuted,
+                fontWeight: '600',
+                textTransform: 'capitalize',
+              }}
+            >
               {tab} ({tab === 'followers' ? followersCount : followingCount})
             </Text>
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </View>
 
       {loading ? (
-        <View className="flex-1 items-center justify-center pt-20">
-          <ActivityIndicator color="#3B82F6" size="large" />
-        </View>
+        <Animated.View entering={animation(FadeIn.duration(300))} className="pt-2">
+          <UserRowSkeleton />
+          <UserRowSkeleton />
+          <UserRowSkeleton />
+          <UserRowSkeleton />
+        </Animated.View>
       ) : data.length === 0 ? (
         <EmptyState
           icon={Users}

@@ -1,8 +1,12 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { Heart, BadgeCheck, MessageCircle } from 'lucide-react-native';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Comment } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { useTheme } from '../../lib/theme';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -22,50 +26,72 @@ interface CommentCardProps {
 
 export function CommentCard({ comment, echoId }: CommentCardProps) {
   const { likeComment } = useAppStore();
+  const hapticEnabled = useAppStore(s => s.hapticEnabled);
+  const { colors, fontSizes, showAvatars, animation } = useTheme();
+  const heartScale = useSharedValue(1);
+
+  const heartAnim = useAnimatedStyle(() => ({
+    transform: [{ scale: heartScale.value }],
+  }));
+
+  const handleLike = () => {
+    heartScale.value = withSequence(
+      withSpring(0.7, { damping: 8, stiffness: 500 }),
+      withSpring(1.2, { damping: 8, stiffness: 300 }),
+      withSpring(1, { damping: 12, stiffness: 300 })
+    );
+    if (hapticEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    likeComment(echoId, comment.id);
+  };
 
   return (
-    <View className="flex-row px-4 py-3 border-b border-zinc-900/50">
-      {/* Avatar */}
-      <View
-        className="w-9 h-9 rounded-full items-center justify-center mr-3 mt-0.5"
-        style={{ backgroundColor: comment.avatarColor }}
-      >
-        <Text className="text-white font-bold text-sm">
-          {comment.displayName.charAt(0).toUpperCase()}
-        </Text>
-      </View>
+    <Animated.View entering={animation(FadeInDown.springify())} className="flex-row px-4 py-3" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border }}>
+      {showAvatars && (
+        <View
+          className="w-9 h-9 rounded-full items-center justify-center mr-3 mt-0.5"
+          style={{ backgroundColor: comment.avatarColor }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
+            {comment.displayName.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
 
-      {/* Content */}
       <View className="flex-1">
         <View className="flex-row items-center gap-1 mb-1">
-          <Text className="text-white font-semibold text-sm">{comment.displayName}</Text>
-          {comment.isVerified && <BadgeCheck color="#3B82F6" size={14} fill="#3B82F6" />}
-          <Text className="text-zinc-600 text-xs">· {getTimeAgo(comment.createdAt)}</Text>
+          <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{comment.displayName}</Text>
+          {comment.isVerified && <BadgeCheck color={colors.accent} size={14} fill={colors.accent} />}
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{'\u00B7'} {getTimeAgo(comment.createdAt)}</Text>
         </View>
 
-        <Text className="text-zinc-200 text-sm leading-5">{comment.content}</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: fontSizes.small * 1.5 }}>{comment.content}</Text>
 
-        {/* Actions */}
         <View className="flex-row items-center gap-5 mt-2">
-          <Pressable
-            onPress={() => likeComment(echoId, comment.id)}
+          <AnimatedPressable
+            onPress={handleLike}
             className="flex-row items-center gap-1"
+            scaleValue={0.85}
+            haptic="none"
           >
-            <Heart
-              color={comment.isLiked ? '#EF4444' : '#71717A'}
-              size={14}
-              fill={comment.isLiked ? '#EF4444' : 'transparent'}
-            />
-            <Text className={`text-xs ${comment.isLiked ? 'text-red-400' : 'text-zinc-500'}`}>
+            <Animated.View style={heartAnim}>
+              <Heart
+                color={comment.isLiked ? colors.danger : colors.textMuted}
+                size={14}
+                fill={comment.isLiked ? colors.danger : 'transparent'}
+              />
+            </Animated.View>
+            <Text style={{ fontSize: fontSizes.caption, color: comment.isLiked ? colors.danger : colors.textMuted }}>
               {comment.likes}
             </Text>
-          </Pressable>
-          <Pressable className="flex-row items-center gap-1">
-            <MessageCircle color="#71717A" size={14} />
-            <Text className="text-zinc-500 text-xs">Reply</Text>
-          </Pressable>
+          </AnimatedPressable>
+          <AnimatedPressable className="flex-row items-center gap-1" scaleValue={0.85} haptic="light">
+            <MessageCircle color={colors.textMuted} size={14} />
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Reply</Text>
+          </AnimatedPressable>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }

@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { useTheme } from '../../lib/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -14,6 +15,7 @@ interface ButtonProps extends PressableProps {
 }
 
 export function Button({ label, variant = 'primary', ...props }: ButtonProps) {
+  const { colors, radius, reduceAnimations } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -21,34 +23,49 @@ export function Button({ label, variant = 'primary', ...props }: ButtonProps) {
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+    if (!reduceAnimations) {
+      scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+    }
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    if (!reduceAnimations) {
+      scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    }
   };
 
-  const baseClasses = 'px-4 py-3 rounded-xl flex-row items-center justify-center';
-  const variantClasses = {
-    primary: 'bg-blue-600',
-    secondary: 'bg-zinc-800',
-    ghost: 'bg-transparent',
-  };
-  const textClasses = {
-    primary: 'text-white font-semibold',
-    secondary: 'text-white font-semibold',
-    ghost: 'text-zinc-300 font-medium',
-  };
+  const bgColor = {
+    primary: colors.accent,
+    secondary: colors.surface,
+    ghost: 'transparent',
+  }[variant];
+
+  const textColor = {
+    primary: '#fff',
+    secondary: colors.text,
+    ghost: colors.textSecondary,
+  }[variant];
 
   return (
     <AnimatedPressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      className={`${baseClasses} ${variantClasses[variant]}`}
       {...props}
-      style={[animatedStyle, props.style]}
+      style={[
+        animatedStyle,
+        {
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderRadius: radius.lg,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bgColor,
+        },
+        props.style,
+      ]}
     >
-      <Text className={textClasses[variant]}>{label}</Text>
+      <Text style={{ color: textColor, fontWeight: '600' }}>{label}</Text>
     </AnimatedPressable>
   );
 }

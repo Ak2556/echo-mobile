@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { TrendingUp, Hash } from 'lucide-react-native';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useFeed } from '../../hooks/queries/useFeed';
 
 const TRENDING_TAGS = ['#AI', '#ReactNative', '#MachineLearning', '#WebDev', '#Design', '#Python', '#Crypto', '#DevOps'];
 
 const CATEGORIES = [
-  { label: 'Technology', color: '#3B82F6', icon: '💻' },
-  { label: 'Science', color: '#10B981', icon: '🔬' },
-  { label: 'Design', color: '#F59E0B', icon: '🎨' },
-  { label: 'Business', color: '#8B5CF6', icon: '📊' },
-  { label: 'Health', color: '#EF4444', icon: '🏥' },
-  { label: 'Education', color: '#06B6D4', icon: '📚' },
+  { label: 'Technology', color: '#3B82F6', icon: '\u{1F4BB}' },
+  { label: 'Science', color: '#10B981', icon: '\u{1F52C}' },
+  { label: 'Design', color: '#F59E0B', icon: '\u{1F3A8}' },
+  { label: 'Business', color: '#8B5CF6', icon: '\u{1F4CA}' },
+  { label: 'Health', color: '#EF4444', icon: '\u{1F3E5}' },
+  { label: 'Education', color: '#06B6D4', icon: '\u{1F4DA}' },
 ];
 
 export default function SearchScreen() {
@@ -53,17 +54,19 @@ export default function SearchScreen() {
       </View>
 
       {isSearching ? (
-        <>
+        <Animated.View entering={FadeIn.duration(200)} className="flex-1">
           {/* Search tabs */}
           <View className="flex-row px-4 mb-3 gap-2">
             {(['top', 'users', 'tags'] as const).map(tab => (
-              <Pressable
+              <AnimatedPressable
                 key={tab}
                 onPress={() => setActiveTab(tab)}
                 className={`px-4 py-2 rounded-full ${activeTab === tab ? 'bg-white' : 'bg-zinc-900'}`}
+                scaleValue={0.93}
+                haptic="light"
               >
                 <Text className={`text-sm font-semibold capitalize ${activeTab === tab ? 'text-black' : 'text-zinc-400'}`}>{tab}</Text>
-              </Pressable>
+              </AnimatedPressable>
             ))}
           </View>
 
@@ -94,7 +97,7 @@ export default function SearchScreen() {
               }
             />
           )}
-        </>
+        </Animated.View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Categories */}
@@ -102,14 +105,16 @@ export default function SearchScreen() {
             <Text className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-3">Categories</Text>
             <View className="flex-row flex-wrap gap-2">
               {CATEGORIES.map(cat => (
-                <Pressable
+                <AnimatedPressable
                   key={cat.label}
                   onPress={() => setQuery(cat.label)}
                   className="bg-zinc-900 rounded-xl px-4 py-3 flex-row items-center border border-zinc-800"
+                  scaleValue={0.94}
+                  haptic="light"
                 >
                   <Text className="text-lg mr-2">{cat.icon}</Text>
                   <Text className="text-white font-medium text-sm">{cat.label}</Text>
-                </Pressable>
+                </AnimatedPressable>
               ))}
             </View>
           </Animated.View>
@@ -122,13 +127,15 @@ export default function SearchScreen() {
             </View>
             <View className="flex-row flex-wrap gap-2">
               {TRENDING_TAGS.map(tag => (
-                <Pressable
+                <AnimatedPressable
                   key={tag}
                   onPress={() => setQuery(tag.slice(1))}
                   className="bg-zinc-900 rounded-full px-4 py-2 border border-zinc-800"
+                  scaleValue={0.93}
+                  haptic="light"
                 >
                   <Text className="text-blue-400 font-medium text-sm">{tag}</Text>
-                </Pressable>
+                </AnimatedPressable>
               ))}
             </View>
           </Animated.View>
@@ -140,17 +147,19 @@ export default function SearchScreen() {
               <Text className="text-zinc-400 text-xs font-semibold uppercase tracking-wider ml-1">Trending Echoes</Text>
             </View>
             {trendingEchoes.map((item, index) => (
-              <Pressable
+              <AnimatedPressable
                 key={item.id}
                 onPress={() => router.push(`/thread/${item.id}`)}
                 className="flex-row items-center px-4 py-3 border-b border-zinc-900"
+                scaleValue={0.98}
+                haptic="light"
               >
                 <Text className="text-zinc-600 font-bold text-lg w-8">{index + 1}</Text>
                 <View className="flex-1">
                   <Text className="text-white font-medium text-sm" numberOfLines={1}>{item.prompt}</Text>
-                  <Text className="text-zinc-500 text-xs mt-0.5">{item.username} · {item.likes} likes</Text>
+                  <Text className="text-zinc-500 text-xs mt-0.5">{item.username} \u00B7 {item.likes} likes</Text>
                 </View>
-              </Pressable>
+              </AnimatedPressable>
             ))}
           </Animated.View>
 

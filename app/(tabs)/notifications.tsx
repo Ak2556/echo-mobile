@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Bell, CheckCheck } from 'lucide-react-native';
+import Animated, { FadeIn, Layout } from 'react-native-reanimated';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { EmptyState } from '../../components/common/EmptyState';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { NotificationSkeleton } from '../../components/ui/Skeleton';
 import { useAppStore } from '../../store/useAppStore';
+import { useTheme } from '../../lib/theme';
 import { Notification } from '../../types';
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const { notifications, markAllNotificationsRead, markNotificationRead } = useAppStore();
+  const { colors, animation } = useTheme();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   const filtered = filter === 'unread'
@@ -28,34 +33,47 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-black">
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View className="flex-row items-center justify-between px-4 py-3">
-        <Text className="text-white text-2xl font-bold">Activity</Text>
-        <Pressable onPress={markAllNotificationsRead} className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900">
-          <CheckCheck color="#3B82F6" size={16} />
-          <Text className="text-blue-400 text-xs font-semibold">Read All</Text>
-        </Pressable>
+        <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Activity</Text>
+        <AnimatedPressable
+          onPress={markAllNotificationsRead}
+          className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full"
+          style={{ backgroundColor: colors.surface }}
+          scaleValue={0.93}
+          haptic="medium"
+        >
+          <CheckCheck color={colors.accent} size={16} />
+          <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>Read All</Text>
+        </AnimatedPressable>
       </View>
 
-      {/* Filter tabs */}
       <View className="flex-row px-4 mb-3 gap-2">
         {(['all', 'unread'] as const).map(tab => (
-          <Pressable
+          <AnimatedPressable
             key={tab}
             onPress={() => setFilter(tab)}
-            className={`px-4 py-2 rounded-full ${filter === tab ? 'bg-white' : 'bg-zinc-900'}`}
+            className="px-4 py-2 rounded-full"
+            style={{ backgroundColor: filter === tab ? colors.accent : colors.surface }}
+            scaleValue={0.93}
+            haptic="light"
           >
-            <Text className={`text-sm font-semibold capitalize ${filter === tab ? 'text-black' : 'text-zinc-400'}`}>{tab}</Text>
-          </Pressable>
+            <Text style={{
+              fontSize: 14, fontWeight: '600', textTransform: 'capitalize',
+              color: filter === tab ? '#fff' : colors.textSecondary,
+            }}>{tab}</Text>
+          </AnimatedPressable>
         ))}
       </View>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={Bell}
-          title={filter === 'unread' ? 'All caught up!' : 'No activity yet'}
-          subtitle={filter === 'unread' ? 'You have no unread notifications.' : 'When people interact with your echoes, you\'ll see it here.'}
-        />
+        <Animated.View entering={animation(FadeIn.duration(300))} className="flex-1">
+          <EmptyState
+            icon={Bell}
+            title={filter === 'unread' ? 'All caught up!' : 'No activity yet'}
+            subtitle={filter === 'unread' ? 'You have no unread notifications.' : 'When people interact with your echoes, you\'ll see it here.'}
+          />
+        </Animated.View>
       ) : (
         <FlashList
           data={filtered}

@@ -1,14 +1,16 @@
 // @ts-nocheck
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, PenSquare, Mail } from 'lucide-react-native';
-import Animated, { FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeInRight, SlideInRight } from 'react-native-reanimated';
 import { BadgeCheck } from 'lucide-react-native';
 import { EmptyState } from '../../components/common/EmptyState';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
+import { useTheme } from '../../lib/theme';
 import { Conversation } from '../../types';
 
 function getTimeAgo(dateStr: string): string {
@@ -25,45 +27,58 @@ function getTimeAgo(dateStr: string): string {
 function ConversationCard({ conversation, index, onPress }: {
   conversation: Conversation; index: number; onPress: () => void;
 }) {
-  return (
-    <Animated.View entering={FadeInRight.delay(index * 50).springify()}>
-      <Pressable onPress={onPress} className="flex-row items-center px-4 py-3.5 border-b border-zinc-900">
-        {/* Avatar */}
-        <View className="relative">
-          <View
-            className="w-12 h-12 rounded-full items-center justify-center mr-3"
-            style={{ backgroundColor: conversation.avatarColor }}
-          >
-            <Text className="text-white font-bold text-lg">
-              {conversation.displayName.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          {conversation.unreadCount > 0 && (
-            <View className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-blue-500 items-center justify-center border-2 border-black">
-              <Text className="text-white text-[9px] font-bold">{conversation.unreadCount}</Text>
-            </View>
-          )}
-        </View>
+  const { colors, fontSizes, showAvatars, animation, isUserOnline } = useTheme();
+  const online = isUserOnline(conversation.userId);
 
-        {/* Content */}
+  return (
+    <Animated.View entering={animation(SlideInRight.delay(index * 50).springify().damping(16))}>
+      <AnimatedPressable onPress={onPress} className="flex-row items-center px-4 py-3.5" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border }} scaleValue={0.98} haptic="light">
+        {showAvatars && (
+          <View className="relative">
+            <View
+              className="w-12 h-12 rounded-full items-center justify-center mr-3"
+              style={{ backgroundColor: conversation.avatarColor }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.title * 0.9 }}>
+                {conversation.displayName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            {online && (
+              <View className="absolute bottom-0 right-2 w-3.5 h-3.5 rounded-full" style={{ backgroundColor: colors.success, borderWidth: 2, borderColor: colors.bg }} />
+            )}
+            {conversation.unreadCount > 0 && (
+              <Animated.View entering={animation(FadeInRight.springify())} className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full items-center justify-center" style={{ backgroundColor: colors.accent, borderWidth: 2, borderColor: colors.bg }}>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{conversation.unreadCount}</Text>
+              </Animated.View>
+            )}
+          </View>
+        )}
+
         <View className="flex-1">
           <View className="flex-row items-center gap-1">
-            <Text className={`font-semibold text-base ${conversation.unreadCount > 0 ? 'text-white' : 'text-zinc-300'}`}>
+            <Text style={{
+              fontWeight: '600', fontSize: fontSizes.body,
+              color: conversation.unreadCount > 0 ? colors.text : colors.textSecondary,
+            }}>
               {conversation.displayName}
             </Text>
-            {conversation.isVerified && <BadgeCheck color="#3B82F6" size={14} fill="#3B82F6" />}
+            {conversation.isVerified && <BadgeCheck color={colors.accent} size={14} fill={colors.accent} />}
+            {online && <Text style={{ color: colors.success, fontSize: fontSizes.caption }}>online</Text>}
           </View>
           <Text
-            className={`text-sm mt-0.5 ${conversation.unreadCount > 0 ? 'text-zinc-300 font-medium' : 'text-zinc-500'}`}
+            style={{
+              fontSize: fontSizes.small, marginTop: 2,
+              color: conversation.unreadCount > 0 ? colors.textSecondary : colors.textMuted,
+              fontWeight: conversation.unreadCount > 0 ? '500' : '400',
+            }}
             numberOfLines={1}
           >
             {conversation.lastMessage}
           </Text>
         </View>
 
-        {/* Time */}
-        <Text className="text-zinc-600 text-xs ml-2">{getTimeAgo(conversation.lastMessageAt)}</Text>
-      </Pressable>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8 }}>{getTimeAgo(conversation.lastMessageAt)}</Text>
+      </AnimatedPressable>
     </Animated.View>
   );
 }
@@ -71,21 +86,22 @@ function ConversationCard({ conversation, index, onPress }: {
 export default function MessagesListScreen() {
   const router = useRouter();
   const { conversations } = useAppStore();
+  const { colors } = useTheme();
 
   const sorted = [...conversations].sort(
     (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
   );
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-black">
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-zinc-900">
-        <Pressable onPress={() => router.back()} className="p-1">
-          <ArrowLeft color="#fff" size={24} />
-        </Pressable>
-        <Text className="text-white font-bold text-lg">Messages</Text>
-        <Pressable className="p-1">
-          <PenSquare color="#3B82F6" size={22} />
-        </Pressable>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
+          <ArrowLeft color={colors.text} size={24} />
+        </AnimatedPressable>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Messages</Text>
+        <AnimatedPressable className="p-1" scaleValue={0.88} haptic="light">
+          <PenSquare color={colors.accent} size={22} />
+        </AnimatedPressable>
       </View>
 
       {sorted.length === 0 ? (

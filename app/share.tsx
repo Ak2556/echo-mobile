@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, Send } from 'lucide-react-native';
 import { useAppStore } from '../store/useAppStore';
+import { useTheme } from '../lib/theme';
 import { FeedItem } from '../types';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId } from '../lib/supabaseEchoApi';
@@ -15,6 +16,7 @@ export default function ShareScreen() {
   const router = useRouter();
   const { prompt, response } = useLocalSearchParams<{ prompt: string; response: string }>();
   const { username, userId, avatarColor, displayName, publishEcho } = useAppStore();
+  const { colors, radius, fontSizes, animation } = useTheme();
   const [publishing, setPublishing] = useState(false);
   const remotePublish = usePublishRemoteEcho();
   const remote = isSupabaseRemote();
@@ -77,50 +79,51 @@ export default function ShareScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-black">
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-zinc-900">
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <Pressable onPress={() => router.back()} className="p-1">
-          <ArrowLeft color="#fff" size={24} />
+          <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text className="text-white font-semibold text-lg">Share Echo</Text>
+        <Text style={{ color: colors.text, fontWeight: '600', fontSize: 18 }}>Share Echo</Text>
         <Pressable
           onPress={handlePublish}
           disabled={publishing}
-          className={`flex-row items-center px-4 py-2 rounded-xl ${publishing ? 'bg-zinc-700' : 'bg-blue-600'}`}
+          className="flex-row items-center px-4 py-2"
+          style={{ borderRadius: radius.lg, backgroundColor: publishing ? colors.surfaceHover : colors.accent }}
         >
           <Send color="#fff" size={16} />
-          <Text className="text-white font-semibold ml-2">Post</Text>
+          <Text style={{ color: '#fff', fontWeight: '600', marginLeft: 8 }}>Post</Text>
         </Pressable>
       </View>
 
       <View className="flex-1 p-4">
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <Text className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-2">Preview</Text>
+        <Animated.View entering={animation(FadeInDown.delay(100).springify())}>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Preview</Text>
 
-          <View className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800 mb-4">
+          <View className="p-4 mb-4" style={{ backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
             <View className="flex-row items-center mb-3">
-              <View className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center mr-3">
-                <Text className="text-white font-bold text-sm">
+              <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: colors.accent }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
                   {(username || '?').charAt(0).toUpperCase()}
                 </Text>
               </View>
-              <Text className="text-white font-semibold">{username || 'anonymous'}</Text>
+              <Text style={{ color: colors.text, fontWeight: '600' }}>{username || 'anonymous'}</Text>
             </View>
 
-            <View className="bg-zinc-800 rounded-xl p-3 mb-3">
-              <Text className="text-zinc-300 font-medium text-sm">You</Text>
-              <Text className="text-white mt-1">{prompt}</Text>
+            <View className="p-3 mb-3" style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.lg }}>
+              <Text style={{ color: colors.textSecondary, fontWeight: '500', fontSize: fontSizes.small }}>You</Text>
+              <Text style={{ color: colors.text, marginTop: 4 }}>{prompt}</Text>
             </View>
 
             <View>
-              <Text className="text-blue-400 font-medium text-sm mb-1">Echo</Text>
-              <Text className="text-zinc-200 leading-6">{response}</Text>
+              <Text style={{ color: colors.accent, fontWeight: '500', fontSize: fontSizes.small, marginBottom: 4 }}>Echo</Text>
+              <Text style={{ color: colors.textSecondary, lineHeight: 24 }}>{response}</Text>
             </View>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <Text className="text-zinc-500 text-sm text-center">
+        <Animated.View entering={animation(FadeInDown.delay(200).springify())}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, textAlign: 'center' }}>
             This will be visible to everyone in the Discover feed.
           </Text>
         </Animated.View>

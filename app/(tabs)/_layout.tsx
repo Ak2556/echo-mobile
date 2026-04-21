@@ -1,18 +1,58 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Home, Search, MessageSquare, Bell, User } from 'lucide-react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, FadeIn } from 'react-native-reanimated';
+import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 
 function BadgeIcon({ children, count }: { children: React.ReactNode; count: number }) {
+  const { colors, reduceAnimations } = useTheme();
+  const scale = useSharedValue(0);
+
+  useEffect(() => {
+    if (count > 0) {
+      if (reduceAnimations) {
+        scale.value = 1;
+      } else {
+        scale.value = withSequence(
+          withSpring(1.3, { damping: 6, stiffness: 300 }),
+          withSpring(1, { damping: 10, stiffness: 300 })
+        );
+      }
+    } else {
+      scale.value = reduceAnimations ? 0 : withSpring(0, { damping: 12, stiffness: 300 });
+    }
+  }, [count]);
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
     <View>
       {children}
-      {count > 0 && (
-        <View className="absolute -top-1 -right-2 bg-red-500 rounded-full min-w-[16px] h-4 items-center justify-center px-1">
-          <Text className="text-white text-[10px] font-bold">{count > 99 ? '99+' : count}</Text>
-        </View>
-      )}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: -4,
+            right: -8,
+            backgroundColor: colors.danger,
+            borderRadius: 999,
+            minWidth: 16,
+            height: 16,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 4,
+          },
+          badgeStyle,
+        ]}
+      >
+        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>
+          {count > 99 ? '99+' : count}
+        </Text>
+      </Animated.View>
     </View>
   );
 }
@@ -20,20 +60,21 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
 export default function TabLayout() {
   const unreadNotifications = useAppStore(s => s.unreadNotificationCount());
   const unreadDMs = useAppStore(s => s.totalUnreadDMs());
+  const { colors } = useTheme();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#000',
-          borderTopColor: '#1C1C1E',
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.tabBorder,
           borderTopWidth: 0.5,
           height: 85,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#fff',
-        tabBarInactiveTintColor: '#71717A',
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '600',
