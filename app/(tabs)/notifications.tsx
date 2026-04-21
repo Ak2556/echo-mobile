@@ -69,7 +69,7 @@ export default function NotificationsScreen() {
       {filtered.length === 0 ? (
         <Animated.View entering={animation(FadeIn.duration(300))} className="flex-1">
           <EmptyState
-            icon={Bell}
+            icon={<Bell color={colors.accent} size={32} />}
             title={filter === 'unread' ? 'All caught up!' : 'No activity yet'}
             subtitle={filter === 'unread' ? 'You have no unread notifications.' : 'When people interact with your echoes, you\'ll see it here.'}
           />

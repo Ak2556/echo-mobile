@@ -75,7 +75,7 @@ export default function CommentsScreen() {
           </View>
         ) : comments.length === 0 ? (
           <EmptyState
-            icon={ChatCircle}
+            icon={<ChatCircle color="#6366F1" size={32} />}
             title="No comments yet"
             subtitle="Be the first to share your thoughts on this echo."
           />

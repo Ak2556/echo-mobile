@@ -82,7 +82,7 @@ export default function HistoryScreen() {
 
       {sessions.length === 0 ? (
         <EmptyState
-          icon={Clock}
+          icon={<Clock color="#6366F1" size={32} />}
           title="No conversations yet"
           subtitle="Start chatting with Echo and your conversations will appear here."
           actionLabel="Start Chatting"

@@ -51,7 +51,7 @@ export default function BlockedUsersScreen() {
 
       {blockedUsers.length === 0 ? (
         <EmptyState
-          icon={ShieldSlash}
+          icon={<ShieldSlash color="#6366F1" size={32} />}
           title="No blocked users"
           subtitle="Users you block won't be able to see your content or contact you."
         />

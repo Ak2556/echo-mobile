@@ -88,7 +88,7 @@ export default function FollowersScreen() {
         </Animated.View>
       ) : data.length === 0 ? (
         <EmptyState
-          icon={Users}
+          icon={<Users color="#6366F1" size={32} />}
           title={activeTab === 'followers' ? 'No followers yet' : 'Not following anyone'}
           subtitle={activeTab === 'followers'
             ? 'Share great echoes and people will follow you!'
