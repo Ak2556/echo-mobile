@@ -264,59 +264,78 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </Animated.View>
         )}
 
-        {/* Prompt */}
-        <View
-          className={compactFeed ? 'mb-2' : 'mb-3'}
-          style={{
-            backgroundColor: colors.surfaceHover,
-            borderRadius: radius.md,
-            padding: compactFeed ? 8 : 12,
-          }}
-        >
-          <Text style={{ color: colors.textSecondary, fontWeight: '500', fontSize: fontSizes.caption, marginBottom: 4 }}>Prompt</Text>
-          <Text style={{ fontSize: textSize, color: colors.text }} numberOfLines={compactFeed ? 2 : undefined}>{item.prompt}</Text>
-        </View>
-
-        {/* Response */}
-        {showPreviewCards && (
-          <View className={compactFeed ? 'mb-2' : 'mb-3'}>
-            <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '500', marginBottom: 2 }}>Echo</Text>
-            <Text style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6 }} numberOfLines={compactFeed ? 2 : 3}>{item.response}</Text>
-          </View>
+        {/* ── TEXT post ── */}
+        {(!item.postType || item.postType === 'text') && (
+          <>
+            <View
+              style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.md, padding: compactFeed ? 8 : 12, marginBottom: compactFeed ? 8 : 12 }}
+            >
+              <Text style={{ color: colors.textSecondary, fontWeight: '500', fontSize: fontSizes.caption, marginBottom: 4 }}>Prompt</Text>
+              <Text style={{ fontSize: textSize, color: colors.text }} numberOfLines={compactFeed ? 2 : undefined}>{item.prompt}</Text>
+            </View>
+            {showPreviewCards && !!item.response && (
+              <View style={{ marginBottom: compactFeed ? 8 : 12 }}>
+                <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '500', marginBottom: 2 }}>Echo</Text>
+                <Text style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6 }} numberOfLines={compactFeed ? 2 : 3}>{item.response}</Text>
+              </View>
+            )}
+          </>
         )}
 
-        {/* ── Photo grid ── */}
-        {item.postType === 'photo' && item.mediaUris && item.mediaUris.length > 0 && !compactFeed && (
+        {/* ── PHOTO post ── */}
+        {item.postType === 'photo' && (
           <View style={{ marginBottom: 12 }}>
-            {item.mediaUris.length === 1 ? (
-              <View style={{ borderRadius: radius.card, overflow: 'hidden', height: 200 }}>
-                <Image source={{ uri: item.mediaUris[0] }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-              </View>
-            ) : (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                {item.mediaUris.map((uri, idx) => (
-                  <View key={idx} style={{ width: item.mediaUris!.length === 2 ? '48.5%' : '48.5%', aspectRatio: item.mediaUris!.length <= 2 ? 1.4 : 1, borderRadius: radius.md, overflow: 'hidden' }}>
-                    <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                  </View>
-                ))}
-              </View>
+            {/* Caption */}
+            {!!item.prompt && (
+              <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 3}>{item.prompt}</Text>
+            )}
+            {/* Image grid */}
+            {item.mediaUris && item.mediaUris.length > 0 && (
+              item.mediaUris.length === 1 ? (
+                <View style={{ borderRadius: radius.card, overflow: 'hidden', height: 220 }}>
+                  <Image source={{ uri: item.mediaUris[0] }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+                  {item.mediaUris.map((uri, idx) => (
+                    <View key={idx} style={{ width: '48.5%', aspectRatio: item.mediaUris!.length <= 2 ? 1.4 : 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceHover }}>
+                      <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                    </View>
+                  ))}
+                </View>
+              )
             )}
           </View>
         )}
 
-        {/* ── Video thumbnail ── */}
-        {item.postType === 'video' && item.videoUri && !compactFeed && (
-          <View style={{ marginBottom: 12, borderRadius: radius.card, overflow: 'hidden', height: 180, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
-              <Play color="#fff" size={24} fill="#fff" />
+        {/* ── VIDEO post ── */}
+        {item.postType === 'video' && (
+          <View style={{ marginBottom: 12 }}>
+            {!!item.prompt && (
+              <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 2}>{item.prompt}</Text>
+            )}
+            <View style={{ borderRadius: radius.card, overflow: 'hidden', height: 200, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}>
+                <Play color="#fff" size={26} fill="#fff" />
+              </View>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 10 }}>Tap to play video</Text>
             </View>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>Video</Text>
           </View>
         )}
 
-        {/* ── Poll ── */}
-        {item.postType === 'poll' && item.poll && !compactFeed && (
-          <PollView poll={item.poll} echoId={item.id} votePoll={votePoll} colors={colors} radius={radius} fontSizes={fontSizes} />
+        {/* ── POLL post ── */}
+        {item.postType === 'poll' && item.poll && (
+          <View style={{ marginBottom: 4 }}>
+            {!!item.prompt && (
+              <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600', marginBottom: 12 }} numberOfLines={compactFeed ? 1 : undefined}>{item.prompt}</Text>
+            )}
+            {!compactFeed && (
+              <PollView poll={item.poll} echoId={item.id} votePoll={votePoll} colors={colors} radius={radius} fontSizes={fontSizes} />
+            )}
+            {compactFeed && (
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.poll.options.length} options · {item.poll.totalVotes} votes</Text>
+            )}
+          </View>
         )}
 
         {/* Hashtags */}
