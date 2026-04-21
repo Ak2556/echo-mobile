@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, Share, Pressable } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { MediaGrid } from './MediaGrid';
+import { InlineVideo } from './InlineVideo';
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
-import { MessageCircle, Bookmark, Repeat2, Share2, BadgeCheck, MoreHorizontal, Flag, UserX, Play, BarChart2 } from 'lucide-react-native';
+import { MessageCircle, Bookmark, Repeat2, Share2, BadgeCheck, MoreHorizontal, Flag, UserX, BarChart2 } from 'lucide-react-native';
 import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
@@ -285,42 +286,18 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {/* ── PHOTO post ── */}
         {item.postType === 'photo' && (
           <View style={{ marginBottom: 12 }}>
-            {/* Caption */}
             {!!item.prompt && (
               <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 3}>{item.prompt}</Text>
             )}
-            {/* Image grid */}
             {item.mediaUris && item.mediaUris.length > 0 && (
-              item.mediaUris.length === 1 ? (
-                <View style={{ borderRadius: radius.card, overflow: 'hidden', height: 220 }}>
-                  <Image source={{ uri: item.mediaUris[0] }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                </View>
-              ) : (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                  {item.mediaUris.map((uri, idx) => (
-                    <View key={idx} style={{ width: '48.5%', aspectRatio: item.mediaUris!.length <= 2 ? 1.4 : 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceHover }}>
-                      <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                    </View>
-                  ))}
-                </View>
-              )
+              <MediaGrid uris={item.mediaUris} />
             )}
           </View>
         )}
 
         {/* ── VIDEO post ── */}
-        {item.postType === 'video' && (
-          <View style={{ marginBottom: 12 }}>
-            {!!item.prompt && (
-              <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 2}>{item.prompt}</Text>
-            )}
-            <View style={{ borderRadius: radius.card, overflow: 'hidden', height: 200, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}>
-                <Play color="#fff" size={26} fill="#fff" />
-              </View>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 10 }}>Tap to play video</Text>
-            </View>
-          </View>
+        {item.postType === 'video' && item.videoUri && (
+          <InlineVideo uri={item.videoUri} caption={item.prompt || undefined} />
         )}
 
         {/* ── POLL post ── */}
