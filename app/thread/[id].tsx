@@ -5,8 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeInDown, FadeIn, FadeOut } from 'react-native-reanimated';
-import { ArrowLeft, Bookmark, Share2, MessageCircle, MoreHorizontal, Pencil, Trash2, Flag, Play, BarChart2 } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, Share2, MessageCircle, MoreHorizontal, Pencil, Trash2, Flag, BarChart2 } from 'lucide-react-native';
 import { LikeButton } from '../../components/social/LikeButton';
+import { MediaGrid } from '../../components/social/MediaGrid';
+import { InlineVideo } from '../../components/social/InlineVideo';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
@@ -147,28 +149,14 @@ export default function ThreadDetailScreen() {
         {/* Photo grid */}
         {item.postType === 'photo' && item.mediaUris && item.mediaUris.length > 0 && (
           <Animated.View entering={animation(FadeInDown.delay(250).springify())} style={{ marginBottom: 12 }}>
-            {item.mediaUris.length === 1 ? (
-              <View style={{ borderRadius: radius.card, overflow: 'hidden', height: 240 }}>
-                <Image source={{ uri: item.mediaUris[0] }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-              </View>
-            ) : (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                {item.mediaUris.map((uri, idx) => (
-                  <View key={idx} style={{ width: '48.5%', aspectRatio: item.mediaUris!.length <= 2 ? 1.4 : 1, borderRadius: radius.md, overflow: 'hidden' }}>
-                    <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                  </View>
-                ))}
-              </View>
-            )}
+            <MediaGrid uris={item.mediaUris} />
           </Animated.View>
         )}
 
         {/* Video */}
         {item.postType === 'video' && item.videoUri && (
-          <Animated.View entering={animation(FadeInDown.delay(250).springify())} style={{ marginBottom: 12, borderRadius: radius.card, overflow: 'hidden', height: 220, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
-              <Play color="#fff" size={28} fill="#fff" />
-            </View>
+          <Animated.View entering={animation(FadeInDown.delay(250).springify())}>
+            <InlineVideo uri={item.videoUri} height={260} />
           </Animated.View>
         )}
 
