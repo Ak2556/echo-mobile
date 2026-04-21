@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, Share } from 'react-native';
+import { View, Text, Share, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
-import { MessageCircle, Bookmark, Repeat2, Share2, BadgeCheck, MoreHorizontal, Flag, UserX } from 'lucide-react-native';
-import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout } from 'react-native-reanimated';
-import { FeedItem } from '../../types';
+import { MessageCircle, Bookmark, Repeat2, Share2, BadgeCheck, MoreHorizontal, Flag, UserX, Play, BarChart2 } from 'lucide-react-native';
+import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout, withTiming } from 'react-native-reanimated';
+import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -31,6 +32,75 @@ function getTimeAgo(dateStr: string): string {
   return `${Math.floor(days / 7)}w`;
 }
 
+function PollBar({ pct }: { pct: number }) {
+  const width = useSharedValue(0);
+  React.useEffect(() => {
+    width.value = withTiming(pct, { duration: 500 });
+  }, [pct]);
+  const style = useAnimatedStyle(() => ({ width: `${width.value}%` as any }));
+  return <Animated.View style={[{ height: '100%', borderRadius: 4, backgroundColor: 'rgba(99,102,241,0.4)' }, style]} />;
+}
+
+interface PollViewProps {
+  poll: Poll;
+  echoId: string;
+  votePoll: (echoId: string, optionId: string) => void;
+  colors: any;
+  radius: any;
+  fontSizes: any;
+}
+
+function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollViewProps) {
+  const isExpired = poll.endsAt ? new Date(poll.endsAt) < new Date() : false;
+  const hasVoted = !!poll.userVote || isExpired;
+
+  const getTimeLeft = () => {
+    if (!poll.endsAt) return null;
+    const ms = new Date(poll.endsAt).getTime() - Date.now();
+    if (ms <= 0) return 'Ended';
+    const mins = Math.floor(ms / 60000);
+    if (mins < 60) return `${mins}m left`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h left`;
+    return `${Math.floor(hrs / 24)}d left`;
+  };
+
+  return (
+    <View style={{ marginBottom: 12 }}>
+      {poll.options.map(opt => {
+        const pct = poll.totalVotes > 0 ? Math.round((opt.votes / poll.totalVotes) * 100) : 0;
+        const isWinner = hasVoted && opt.votes === Math.max(...poll.options.map(o => o.votes)) && opt.votes > 0;
+        const isVoted = poll.userVote === opt.id;
+        return (
+          <Pressable
+            key={opt.id}
+            onPress={() => { if (!hasVoted) votePoll(echoId, opt.id); }}
+            style={{
+              marginBottom: 8, borderRadius: radius.md, overflow: 'hidden',
+              borderWidth: 1.5,
+              borderColor: isVoted ? colors.accent : isWinner ? colors.accent + '66' : colors.border,
+              backgroundColor: colors.surfaceHover,
+            }}
+          >
+            {hasVoted && <PollBar pct={pct} />}
+            <View style={{ position: hasVoted ? 'absolute' : 'relative', inset: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 }}>
+              <Text style={{ color: isVoted ? colors.accent : colors.text, fontWeight: isVoted ? '700' : '500', fontSize: fontSizes.body, flex: 1 }}>{opt.text}</Text>
+              {hasVoted && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8 }}>{pct}%</Text>}
+            </View>
+          </Pressable>
+        );
+      })}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <BarChart2 color={colors.textMuted} size={12} />
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+          {poll.totalVotes} vote{poll.totalVotes !== 1 ? 's' : ''}
+          {getTimeLeft() ? ` · ${getTimeLeft()}` : ''}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -38,7 +108,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const remoteBm = useToggleRemoteBookmark();
   const { colors, radius, fontSizes, reduceAnimations, showAvatars } = useTheme();
   const { isBookmarked, toggleBookmark, isReposted, toggleRepost,
-    compactFeed, showPreviewCards,
+    compactFeed, showPreviewCards, votePoll,
   } = useAppStore();
   const bookmarked = remote ? item.isBookmarked : isBookmarked(item.id);
   const reposted = isReposted(item.id);
@@ -213,6 +283,40 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '500', marginBottom: 2 }}>Echo</Text>
             <Text style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6 }} numberOfLines={compactFeed ? 2 : 3}>{item.response}</Text>
           </View>
+        )}
+
+        {/* ── Photo grid ── */}
+        {item.postType === 'photo' && item.mediaUris && item.mediaUris.length > 0 && !compactFeed && (
+          <View style={{ marginBottom: 12 }}>
+            {item.mediaUris.length === 1 ? (
+              <View style={{ borderRadius: radius.card, overflow: 'hidden', height: 200 }}>
+                <Image source={{ uri: item.mediaUris[0] }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+                {item.mediaUris.map((uri, idx) => (
+                  <View key={idx} style={{ width: item.mediaUris!.length === 2 ? '48.5%' : '48.5%', aspectRatio: item.mediaUris!.length <= 2 ? 1.4 : 1, borderRadius: radius.md, overflow: 'hidden' }}>
+                    <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* ── Video thumbnail ── */}
+        {item.postType === 'video' && item.videoUri && !compactFeed && (
+          <View style={{ marginBottom: 12, borderRadius: radius.card, overflow: 'hidden', height: 180, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
+              <Play color="#fff" size={24} fill="#fff" />
+            </View>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>Video</Text>
+          </View>
+        )}
+
+        {/* ── Poll ── */}
+        {item.postType === 'poll' && item.poll && !compactFeed && (
+          <PollView poll={item.poll} echoId={item.id} votePoll={votePoll} colors={colors} radius={radius} fontSizes={fontSizes} />
         )}
 
         {/* Hashtags */}

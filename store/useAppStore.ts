@@ -76,7 +76,9 @@ interface AppState {
   // ── Published Echoes ──
   publishedEchoes: FeedItem[];
   publishEcho: (echo: FeedItem) => void;
+  updateEcho: (id: string, updates: Partial<FeedItem>) => void;
   deleteEcho: (id: string) => void;
+  votePoll: (echoId: string, optionId: string) => void;
 
   // ── Likes ──
   likedIds: string[];
@@ -280,8 +282,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     persistSet('publishedEchoes', echoes);
     set({ publishedEchoes: echoes });
   },
+  updateEcho: (id, updates) => {
+    const echoes = get().publishedEchoes.map(e => e.id === id ? { ...e, ...updates } : e);
+    persistSet('publishedEchoes', echoes);
+    set({ publishedEchoes: echoes });
+  },
   deleteEcho: (id) => {
     const echoes = get().publishedEchoes.filter(e => e.id !== id);
+    persistSet('publishedEchoes', echoes);
+    set({ publishedEchoes: echoes });
+  },
+  votePoll: (echoId, optionId) => {
+    const echoes = get().publishedEchoes.map(e => {
+      if (e.id !== echoId || !e.poll || e.poll.userVote) return e;
+      const options = e.poll.options.map(o =>
+        o.id === optionId ? { ...o, votes: o.votes + 1 } : o
+      );
+      return { ...e, poll: { ...e.poll, options, totalVotes: e.poll.totalVotes + 1, userVote: optionId } };
+    });
     persistSet('publishedEchoes', echoes);
     set({ publishedEchoes: echoes });
   },
