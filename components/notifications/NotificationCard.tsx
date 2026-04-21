@@ -6,16 +6,16 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Notification } from '../../types';
 import { useTheme } from '../../lib/theme';
 
-const ICON_MAP = {
-  like: { icon: HeartStraight, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
-  comment: { icon: ChatCircle, color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
-  follow: { icon: UserPlus, color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
-  repost: { icon: ArrowsClockwise, color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
-  mention: { icon: AtSign, color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
-  dm: { icon: Envelope, color: '#06B6D4', bg: 'rgba(6,182,212,0.15)' },
+const BG_MAP: Record<string, string> = {
+  like: 'rgba(239,68,68,0.15)',
+  comment: 'rgba(59,130,246,0.15)',
+  follow: 'rgba(16,185,129,0.15)',
+  repost: 'rgba(139,92,246,0.15)',
+  mention: 'rgba(245,158,11,0.15)',
+  dm: 'rgba(6,182,212,0.15)',
 };
 
-const ACTION_TEXT = {
+const ACTION_TEXT: Record<string, string> = {
   like: 'liked your echo',
   comment: 'commented on your echo',
   follow: 'started following you',
@@ -23,6 +23,21 @@ const ACTION_TEXT = {
   mention: 'mentioned you',
   dm: 'sent you a message',
 };
+
+// Render icon inline (never store component refs in module-level objects —
+// phosphor v3 circular imports cause them to resolve as undefined at init time)
+function NotifIcon({ type }: { type: string }) {
+  const p = { size: 18, weight: 'regular' as const };
+  switch (type) {
+    case 'like':    return <HeartStraight    {...p} color="#EF4444" />;
+    case 'comment': return <ChatCircle       {...p} color="#3B82F6" />;
+    case 'follow':  return <UserPlus         {...p} color="#10B981" />;
+    case 'repost':  return <ArrowsClockwise  {...p} color="#8B5CF6" />;
+    case 'mention': return <AtSign           {...p} color="#F59E0B" />;
+    case 'dm':      return <Envelope         {...p} color="#06B6D4" />;
+    default:        return <HeartStraight    {...p} color="#EF4444" />;
+  }
+}
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -41,12 +56,9 @@ interface NotificationCardProps {
   onPress: () => void;
 }
 
-const FALLBACK_CONFIG = { icon: HeartStraight, color: '#EF4444', bg: 'rgba(239,68,68,0.15)' };
-
 export function NotificationCard({ notification, onPress }: NotificationCardProps) {
-  const config = ICON_MAP[notification.type as keyof typeof ICON_MAP] ?? FALLBACK_CONFIG;
-  const Icon = config.icon;
-  const { colors, fontSizes, showAvatars, animation } = useTheme();
+  const { colors, fontSizes, showAvatars } = useTheme();
+  const bg = BG_MAP[notification.type] ?? 'rgba(239,68,68,0.15)';
 
   return (
     <AnimatedPressable
@@ -60,8 +72,8 @@ export function NotificationCard({ notification, onPress }: NotificationCardProp
       scaleValue={0.98}
       haptic="light"
     >
-      <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: config.bg }}>
-        <Icon color={config.color} size={18} weight="regular" />
+      <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: bg }}>
+        <NotifIcon type={notification.type} />
       </View>
 
       {showAvatars && (
@@ -78,7 +90,7 @@ export function NotificationCard({ notification, onPress }: NotificationCardProp
       <View className="flex-1">
         <Text style={{ color: colors.text, fontSize: fontSizes.small }} numberOfLines={2}>
           <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
-          {' '}{ACTION_TEXT[notification.type as keyof typeof ACTION_TEXT] ?? 'interacted with you'}
+          {' '}{ACTION_TEXT[notification.type] ?? 'interacted with you'}
         </Text>
         {notification.targetPreview && (
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
