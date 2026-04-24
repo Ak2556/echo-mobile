@@ -9,7 +9,7 @@ import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 
-const HIDDEN_ROUTES = new Set(['history']);
+const HIDDEN_ROUTES = new Set(['history', 'apps']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
   discover: House,
@@ -96,7 +96,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             const IconComp = TAB_ICONS[route.name];
             if (!IconComp) return null;
 
-            const color = isFocused ? colors.text : colors.textMuted;
+            const color = isFocused ? colors.accent : colors.textMuted;
             const badgeCount = badges[route.name] ?? 0;
 
             return (
@@ -119,6 +119,18 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 accessibilityState={{ selected: isFocused }}
                 style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
               >
+                {/* Active glow circle */}
+                {isFocused && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      width: 42,
+                      height: 42,
+                      borderRadius: 21,
+                      backgroundColor: colors.accentMuted,
+                    }}
+                  />
+                )}
                 {badgeCount > 0 ? (
                   <BadgeIcon count={badgeCount}>
                     <IconComp color={color} size={22} weight={isFocused ? 'fill' : 'regular'} />
