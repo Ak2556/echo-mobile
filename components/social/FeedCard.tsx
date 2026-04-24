@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Share, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MediaGrid } from './MediaGrid';
 import { InlineVideo } from './InlineVideo';
 import { useQueryClient } from '@tanstack/react-query';
@@ -171,6 +172,197 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const textSize = fontSizes.body;
   const cardPadding = compactFeed ? 12 : 16;
 
+  const isHero =
+    (item.postType === 'photo' && (item.mediaUris?.length ?? 0) > 0) ||
+    (item.postType === 'video' && !!item.videoUri);
+
+  const heroRadius = radius.card + 4;
+
+  // ── Shared sub-sections ──
+
+  const MenuOverlay = showMenu ? (
+    <Animated.View
+      entering={reduceAnimations ? undefined : FadeIn.duration(200)}
+      exiting={reduceAnimations ? undefined : FadeOut.duration(150)}
+      style={{
+        marginBottom: 12,
+        borderRadius: radius.md,
+        backgroundColor: colors.surfaceHover,
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: 'hidden',
+      }}
+    >
+      <AnimatedPressable onPress={handleReport} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} scaleValue={0.97} haptic="medium">
+        <Flag color="#F59E0B" size={16} weight="fill" />
+        <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Report</Text>
+      </AnimatedPressable>
+      <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
+      <AnimatedPressable
+        onPress={() => { setShowMenu(false); router.push(`/user/${item.userId}`); }}
+        style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }}
+        scaleValue={0.97}
+        haptic="light"
+      >
+        <UserMinus color={colors.textSecondary} size={16} />
+        <Text style={{ color: colors.text, fontSize: fontSizes.small }}>View Profile</Text>
+      </AnimatedPressable>
+    </Animated.View>
+  ) : null;
+
+  const ActionsRow = (
+    <View
+      style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}
+    >
+      <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <AnimatedPressable
+          onPress={(e) => { e.stopPropagation?.(); router.push(`/comments/${item.id}`); }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+          scaleValue={reduceAnimations ? 1 : 0.85}
+          haptic="light"
+        >
+          <ChatCircle color={colors.textMuted} size={19} />
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.commentCount || 0}</Text>
+        </AnimatedPressable>
+
+        <AnimatedPressable
+          onPress={(e) => { e.stopPropagation?.(); handleRepost(); }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+          scaleValue={reduceAnimations ? 1 : 0.85}
+          haptic="medium"
+        >
+          <Animated.View style={repostAnim}>
+            <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
+          </Animated.View>
+          <Text style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }}>
+            {(item.repostCount || 0) + (reposted ? 1 : 0)}
+          </Text>
+        </AnimatedPressable>
+
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="medium">
+          <Animated.View style={bookmarkAnim}>
+            <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
+          </Animated.View>
+        </AnimatedPressable>
+
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="light">
+          <Animated.View style={shareAnim}>
+            <ShareNetwork color={colors.textMuted} size={19} />
+          </Animated.View>
+        </AnimatedPressable>
+      </View>
+    </View>
+  );
+
+  // ── Hero layout (photo / video with media) ──
+  if (isHero && !compactFeed) {
+    return (
+      <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()}>
+        <AnimatedPressable
+          onPress={onPress}
+          scaleValue={reduceAnimations ? 1 : 0.98}
+          haptic="light"
+          style={{
+            backgroundColor: colors.surface,
+            marginHorizontal: 16,
+            marginVertical: 6,
+            borderRadius: heroRadius,
+            borderWidth: 1,
+            borderColor: colors.border,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Repost badge */}
+          {item.repostedByUsername && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, marginHorizontal: cardPadding, marginBottom: 0, gap: 6 }}>
+              <ArrowsClockwise color={colors.textMuted} size={14} />
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.repostedByUsername} re-echoed</Text>
+            </View>
+          )}
+
+          {/* Hero media block — full bleed */}
+          <View style={{ minHeight: 240, position: 'relative' }}>
+            {item.postType === 'photo' && (
+              <MediaGrid uris={item.mediaUris!} />
+            )}
+            {item.postType === 'video' && item.videoUri && (
+              <InlineVideo uri={item.videoUri} caption={undefined} qualities={item.videoQualities} />
+            )}
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.65)']}
+              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 72 }}
+              pointerEvents="none"
+            />
+          </View>
+
+          {/* Author + content + actions */}
+          <View style={{ padding: cardPadding }}>
+            {/* Author row */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+              {showAvatars && (
+                <AnimatedPressable
+                  onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
+                  scaleValue={reduceAnimations ? 1 : 0.9}
+                  haptic="light"
+                >
+                  <View
+                    style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
+                      {(item.displayName || item.username).charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                </AnimatedPressable>
+              )}
+              <AnimatedPressable
+                onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
+                style={{ flex: 1 }}
+                scaleValue={reduceAnimations ? 1 : 0.98}
+                haptic="none"
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
+                  {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
+              </AnimatedPressable>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
+              <AnimatedPressable
+                onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
+                scaleValue={reduceAnimations ? 1 : 0.85}
+                haptic="light"
+              >
+                <DotsThreeOutline color={colors.textMuted} size={20} />
+              </AnimatedPressable>
+            </View>
+
+            {MenuOverlay}
+
+            {/* Caption / prompt text */}
+            {!!item.prompt && (
+              <Text style={{ fontSize: fontSizes.small, color: colors.textSecondary, marginBottom: 10 }} numberOfLines={2}>
+                {item.prompt}
+              </Text>
+            )}
+
+            {/* Hashtags */}
+            {item.hashtags && item.hashtags.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                {item.hashtags.slice(0, 3).map(tag => (
+                  <Text key={tag} style={{ color: colors.accent, fontSize: fontSizes.caption }}>#{tag}</Text>
+                ))}
+              </View>
+            )}
+
+            {ActionsRow}
+          </View>
+        </AnimatedPressable>
+      </Animated.View>
+    );
+  }
+
+  // ── Standard layout (text / poll / compact) ──
   return (
     <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()}>
       <AnimatedPressable
@@ -235,42 +427,12 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </AnimatedPressable>
         </View>
 
-        {/* Menu */}
-        {showMenu && (
-          <Animated.View
-            entering={reduceAnimations ? undefined : FadeIn.duration(200)}
-            exiting={reduceAnimations ? undefined : FadeOut.duration(150)}
-            className="mb-3 overflow-hidden"
-            style={{
-              borderRadius: radius.md,
-              backgroundColor: colors.surfaceHover,
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            <AnimatedPressable onPress={handleReport} className="flex-row items-center px-4 py-2.5 gap-2.5" scaleValue={0.97} haptic="medium">
-              <Flag color="#F59E0B" size={16} weight="fill" />
-              <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Report</Text>
-            </AnimatedPressable>
-            <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-            <AnimatedPressable
-              onPress={() => { setShowMenu(false); router.push(`/user/${item.userId}`); }}
-              className="flex-row items-center px-4 py-2.5 gap-2.5"
-              scaleValue={0.97}
-              haptic="light"
-            >
-              <UserMinus color={colors.textSecondary} size={16} />
-              <Text style={{ color: colors.text, fontSize: fontSizes.small }}>View Profile</Text>
-            </AnimatedPressable>
-          </Animated.View>
-        )}
+        {MenuOverlay}
 
         {/* ── TEXT post ── */}
         {(!item.postType || item.postType === 'text') && (
           <>
-            <View
-              style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.md, padding: compactFeed ? 8 : 12, marginBottom: compactFeed ? 8 : 12 }}
-            >
+            <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.md, padding: compactFeed ? 8 : 12, marginBottom: compactFeed ? 8 : 12 }}>
               <Text style={{ color: colors.textSecondary, fontWeight: '500', fontSize: fontSizes.caption, marginBottom: 4 }}>Prompt</Text>
               <Text style={{ fontSize: textSize, color: colors.text }} numberOfLines={compactFeed ? 2 : undefined}>{item.prompt}</Text>
             </View>
@@ -283,7 +445,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </>
         )}
 
-        {/* ── PHOTO post ── */}
+        {/* ── PHOTO post (compact or no media) ── */}
         {item.postType === 'photo' && (
           <View style={{ marginBottom: 12 }}>
             {!!item.prompt && (
@@ -295,13 +457,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </View>
         )}
 
-        {/* ── VIDEO post ── */}
+        {/* ── VIDEO post (compact) ── */}
         {item.postType === 'video' && item.videoUri && (
-          <InlineVideo
-            uri={item.videoUri}
-            caption={item.prompt || undefined}
-            qualities={item.videoQualities}
-          />
+          <InlineVideo uri={item.videoUri} caption={item.prompt || undefined} qualities={item.videoQualities} />
         )}
 
         {/* ── POLL post ── */}
@@ -333,55 +491,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginBottom: 8 }}>{item.viewCount?.toLocaleString()} views</Text>
         )}
 
-        {/* Actions */}
-        <View
-          className="flex-row justify-between items-center pt-3"
-          style={{ borderTopWidth: 1, borderTopColor: colors.border }}
-        >
-          <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
-
-          <View className="flex-row items-center gap-3">
-            <AnimatedPressable
-              onPress={(e) => { e.stopPropagation?.(); router.push(`/comments/${item.id}`); }}
-              className="flex-row items-center gap-1"
-              scaleValue={reduceAnimations ? 1 : 0.85}
-              haptic="light"
-            >
-              <ChatCircle color={colors.textMuted} size={19} />
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.commentCount || 0}</Text>
-            </AnimatedPressable>
-
-            <AnimatedPressable
-              onPress={(e) => { e.stopPropagation?.(); handleRepost(); }}
-              className="flex-row items-center gap-1"
-              scaleValue={reduceAnimations ? 1 : 0.85}
-              haptic="medium"
-            >
-              <Animated.View style={repostAnim}>
-                <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
-              </Animated.View>
-              <Text style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }}>
-                {(item.repostCount || 0) + (reposted ? 1 : 0)}
-              </Text>
-            </AnimatedPressable>
-
-            <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="medium">
-              <Animated.View style={bookmarkAnim}>
-                <BookmarkSimple
-                  color={bookmarked ? colors.accent : colors.textMuted}
-                  size={19}
-                  weight={bookmarked ? 'fill' : 'regular'}
-                />
-              </Animated.View>
-            </AnimatedPressable>
-
-            <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="light">
-              <Animated.View style={shareAnim}>
-                <ShareNetwork color={colors.textMuted} size={19} />
-              </Animated.View>
-            </AnimatedPressable>
-          </View>
-        </View>
+        {ActionsRow}
       </AnimatedPressable>
     </Animated.View>
   );

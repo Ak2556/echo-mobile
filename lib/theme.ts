@@ -23,6 +23,9 @@ export interface ThemeColors {
   tabBorder: string;
   inputBg: string;
   inputBorder: string;
+  glassFill?: string;
+  glassBorder?: string;
+  glassHighlight?: string;
 }
 
 const THEMES: Record<ThemeName, ThemeColors> = {
@@ -195,6 +198,9 @@ export function useTheme() {
     accent: accentColor || base.accent,
     accentMuted: hexToRgba(accentColor || base.accent, 0.15),
     bg: pureBlackBg ? base.bgPure : base.bg,
+    glassFill: 'rgba(255,255,255,0.07)',
+    glassBorder: 'rgba(255,255,255,0.13)',
+    glassHighlight: 'rgba(255,255,255,0.09)',
   };
 
   const fontSizes = FONT_SIZE_MAP[fontSize] || FONT_SIZE_MAP.medium;

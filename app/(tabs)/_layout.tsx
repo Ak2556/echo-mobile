@@ -1,10 +1,24 @@
 import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { Tabs } from 'expo-router';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour } from 'phosphor-react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, FadeIn } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
+import { GlassPanel } from '../../components/ui/GlassPanel';
+
+const HIDDEN_ROUTES = new Set(['history']);
+
+const TAB_ICONS: Record<string, React.ComponentType<any>> = {
+  discover: House,
+  search: MagnifyingGlass,
+  chat: ChatTeardropDots,
+  notifications: Bell,
+  apps: SquaresFour,
+  profile: User,
+};
 
 function BadgeIcon({ children, count }: { children: React.ReactNode; count: number }) {
   const { colors, reduceAnimations } = useTheme();
@@ -12,22 +26,18 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
 
   useEffect(() => {
     if (count > 0) {
-      if (reduceAnimations) {
-        scale.value = 1;
-      } else {
-        scale.value = withSequence(
-          withSpring(1.3, { damping: 6, stiffness: 300 }),
-          withSpring(1, { damping: 10, stiffness: 300 })
-        );
-      }
+      scale.value = reduceAnimations
+        ? 1
+        : withSequence(
+            withSpring(1.3, { damping: 6, stiffness: 300 }),
+            withSpring(1, { damping: 10, stiffness: 300 })
+          );
     } else {
       scale.value = reduceAnimations ? 0 : withSpring(0, { damping: 12, stiffness: 300 });
     }
   }, [count]);
 
-  const badgeStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
     <View>
@@ -40,16 +50,16 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
             right: -8,
             backgroundColor: colors.danger,
             borderRadius: 999,
-            minWidth: 16,
-            height: 16,
+            minWidth: 15,
+            height: 15,
             alignItems: 'center',
             justifyContent: 'center',
-            paddingHorizontal: 4,
+            paddingHorizontal: 3,
           },
           badgeStyle,
         ]}
       >
-        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>
+        <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
           {count > 99 ? '99+' : count}
         </Text>
       </Animated.View>
@@ -57,86 +67,89 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
   );
 }
 
-export default function TabLayout() {
+function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { colors, reduceAnimations } = useTheme();
+  const insets = useSafeAreaInsets();
   const unreadNotifications = useAppStore(s => s.unreadNotificationCount());
   const unreadDMs = useAppStore(s => s.totalUnreadDMs());
-  const { colors } = useTheme();
+
+  const badges: Record<string, number> = { chat: unreadDMs, notifications: unreadNotifications };
+
+  const visibleRoutes = state.routes.filter(r => !HIDDEN_ROUTES.has(r.name));
+  const bottom = insets.bottom > 0 ? insets.bottom + 8 : 16;
 
   return (
+    <View
+      style={{
+        position: 'absolute',
+        bottom,
+        left: 16,
+        right: 16,
+        height: 64,
+      }}
+      pointerEvents="box-none"
+    >
+      <GlassPanel borderRadius={32} intensity={60} style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
+          {visibleRoutes.map(route => {
+            const isFocused = state.routes[state.index].name === route.name;
+            const IconComp = TAB_ICONS[route.name];
+            if (!IconComp) return null;
+
+            const color = isFocused ? colors.text : colors.textMuted;
+            const badgeCount = badges[route.name] ?? 0;
+
+            return (
+              <Pressable
+                key={route.key}
+                onPress={() => {
+                  const event = navigation.emit({
+                    type: 'tabPress',
+                    target: route.key,
+                    canPreventDefault: true,
+                  });
+                  if (!isFocused && !event.defaultPrevented) {
+                    navigation.navigate(route.name);
+                  }
+                }}
+                onLongPress={() =>
+                  navigation.emit({ type: 'tabLongPress', target: route.key })
+                }
+                accessibilityRole="button"
+                accessibilityState={{ selected: isFocused }}
+                style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
+              >
+                {badgeCount > 0 ? (
+                  <BadgeIcon count={badgeCount}>
+                    <IconComp color={color} size={22} weight={isFocused ? 'fill' : 'regular'} />
+                  </BadgeIcon>
+                ) : (
+                  <IconComp color={color} size={22} weight={isFocused ? 'fill' : 'regular'} />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      </GlassPanel>
+    </View>
+  );
+}
+
+export default function TabLayout() {
+  return (
     <Tabs
+      tabBar={props => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.tabBorder,
-          borderTopWidth: 0.5,
-          height: 85,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: colors.text,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '600',
-        },
       }}
     >
-      <Tabs.Screen
-        name="discover"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => <House color={color} size={24} weight={focused ? 'fill' : 'regular'} />,
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, focused }) => <MagnifyingGlass color={color} size={24} weight={focused ? 'bold' : 'regular'} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Echo',
-          tabBarIcon: ({ color, focused }) => (
-            <BadgeIcon count={unreadDMs}>
-              <ChatTeardropDots color={color} size={24} weight={focused ? 'fill' : 'regular'} />
-            </BadgeIcon>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: 'Activity',
-          tabBarIcon: ({ color, focused }) => (
-            <BadgeIcon count={unreadNotifications}>
-              <Bell color={color} size={24} weight={focused ? 'fill' : 'regular'} />
-            </BadgeIcon>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="apps"
-        options={{
-          title: 'Apps',
-          tabBarIcon: ({ color, focused }) => <SquaresFour color={color} size={24} weight={focused ? 'fill' : 'regular'} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, focused }) => <User color={color} size={24} weight={focused ? 'fill' : 'regular'} />,
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="discover" options={{ title: 'Home' }} />
+      <Tabs.Screen name="search" options={{ title: 'Explore' }} />
+      <Tabs.Screen name="chat" options={{ title: 'Echo' }} />
+      <Tabs.Screen name="notifications" options={{ title: 'Activity' }} />
+      <Tabs.Screen name="apps" options={{ title: 'Apps' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="history" options={{ href: null }} />
     </Tabs>
   );
 }
