@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, AtSign, Envelope } from 'phosphor-react-native';
+import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope } from 'phosphor-react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Notification } from '../../types';
@@ -33,7 +33,7 @@ function NotifIcon({ type }: { type: string }) {
     case 'comment': return <ChatCircle       {...p} color="#3B82F6" />;
     case 'follow':  return <UserPlus         {...p} color="#10B981" />;
     case 'repost':  return <ArrowsClockwise  {...p} color="#8B5CF6" />;
-    case 'mention': return <AtSign           {...p} color="#F59E0B" />;
+    case 'mention': return <At               {...p} color="#F59E0B" />;
     case 'dm':      return <Envelope         {...p} color="#06B6D4" />;
     default:        return <HeartStraight    {...p} color="#EF4444" />;
   }
