@@ -6,12 +6,11 @@ import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { GlassPanel } from '../ui/GlassPanel';
 
 export function StoryCircles() {
   const router = useRouter();
   const { getActiveStories, username, avatarColor } = useAppStore();
-  const { colors, animation } = useTheme();
+  const { colors, animation, isUserOnline } = useTheme();
   const stories = getActiveStories();
 
   const userStories = stories.reduce((acc, story) => {
@@ -26,61 +25,133 @@ export function StoryCircles() {
   const storyUsers = Object.values(userStories);
 
   return (
-    <GlassPanel borderRadius={0} style={{ borderWidth: 0, borderBottomWidth: 1, borderBottomColor: colors.border }}>
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ paddingBottom: 12 }}
-      contentContainerStyle={{ paddingHorizontal: 12, gap: 12, paddingTop: 6 }}
+      contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
     >
+      {/* Your story */}
       <Animated.View entering={animation(FadeInRight.delay(0).springify())}>
-        <AnimatedPressable onPress={() => router.push('/create-story' as any)} className="items-center w-[68px]" scaleValue={0.9} haptic="light">
-          <View className="relative">
+        <AnimatedPressable
+          onPress={() => router.push('/create-story' as any)}
+          style={{ alignItems: 'center', width: 68 }}
+          scaleValue={0.9}
+          haptic="light"
+        >
+          <View style={{ position: 'relative' }}>
             <View
-              className="w-[60px] h-[60px] rounded-full items-center justify-center"
-              style={{ backgroundColor: avatarColor, borderWidth: 2, borderColor: colors.border }}
+              style={{
+                width: 62,
+                height: 62,
+                borderRadius: 31,
+                backgroundColor: avatarColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                borderColor: 'rgba(255,255,255,0.15)',
+              }}
             >
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: 20 }}>
                 {(username || '?').charAt(0).toUpperCase()}
               </Text>
             </View>
-            <View className="absolute bottom-0 right-0 w-5 h-5 rounded-full items-center justify-center" style={{ backgroundColor: colors.accent, borderWidth: 2, borderColor: colors.bg }}>
-              <Plus color="#fff" size={12} strokeWidth={3} />
+            {/* Add button */}
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                width: 20,
+                height: 20,
+                borderRadius: 10,
+                backgroundColor: colors.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                borderColor: colors.bg,
+              }}
+            >
+              <Plus color="#fff" size={11} weight="bold" />
             </View>
           </View>
-          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 6, fontWeight: '500' }}>Your story</Text>
+          <Text
+            style={{ color: colors.textSecondary, fontSize: 10, marginTop: 6, fontWeight: '500' }}
+          >
+            Your story
+          </Text>
         </AnimatedPressable>
       </Animated.View>
 
+      {/* Other users' stories */}
       {storyUsers.map((story: any, idx: number) => {
         const hasUnviewed = !story.isViewed;
+        const online = isUserOnline(story.userId);
+
         return (
-          <Animated.View key={story.userId} entering={animation(FadeInRight.delay((idx + 1) * 60).springify())}>
+          <Animated.View
+            key={story.userId}
+            entering={animation(FadeInRight.delay((idx + 1) * 60).springify())}
+          >
             <AnimatedPressable
-              onPress={() => router.push({ pathname: '/story', params: { userId: story.userId } })}
-              className="items-center w-[68px]"
+              onPress={() =>
+                router.push({ pathname: '/story', params: { userId: story.userId } })
+              }
+              style={{ alignItems: 'center', width: 68 }}
               scaleValue={0.9}
               haptic="light"
             >
-              <View
-                className="w-[64px] h-[64px] rounded-full items-center justify-center p-[2.5px]"
-                style={{
-                  borderWidth: 2.5,
-                  borderColor: hasUnviewed ? colors.accent : colors.surfaceHover,
-                  borderRadius: 999,
-                }}
-              >
+              <View style={{ position: 'relative' }}>
+                {/* Ring for unviewed */}
                 <View
-                  className="w-full h-full rounded-full items-center justify-center"
-                  style={{ backgroundColor: story.avatarColor }}
+                  style={{
+                    width: 66,
+                    height: 66,
+                    borderRadius: 33,
+                    padding: 2.5,
+                    borderWidth: 2.5,
+                    borderColor: hasUnviewed ? colors.accent : 'rgba(255,255,255,0.12)',
+                  }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>
-                    {story.displayName.charAt(0).toUpperCase()}
-                  </Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      borderRadius: 30,
+                      backgroundColor: story.avatarColor,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>
+                      {story.displayName.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
+
+                {/* Green online dot */}
+                {online && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      bottom: 2,
+                      right: 2,
+                      width: 13,
+                      height: 13,
+                      borderRadius: 7,
+                      backgroundColor: '#22C55E',
+                      borderWidth: 2,
+                      borderColor: colors.bg,
+                    }}
+                  />
+                )}
               </View>
+
               <Text
-                style={{ fontSize: 10, marginTop: 6, fontWeight: '500', color: hasUnviewed ? colors.text : colors.textMuted }}
+                style={{
+                  fontSize: 10,
+                  marginTop: 6,
+                  fontWeight: '500',
+                  color: hasUnviewed ? '#fff' : colors.textMuted,
+                }}
                 numberOfLines={1}
               >
                 {story.username}
@@ -90,6 +161,5 @@ export function StoryCircles() {
         );
       })}
     </ScrollView>
-    </GlassPanel>
   );
 }
