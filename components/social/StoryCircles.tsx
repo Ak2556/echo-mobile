@@ -6,6 +6,7 @@ import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { GlassPanel } from '../ui/GlassPanel';
 
 export function StoryCircles() {
   const router = useRouter();
@@ -25,11 +26,12 @@ export function StoryCircles() {
   const storyUsers = Object.values(userStories);
 
   return (
+    <GlassPanel borderRadius={0} style={{ borderWidth: 0, borderBottomWidth: 1, borderBottomColor: colors.border }}>
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 12 }}
-      contentContainerStyle={{ paddingHorizontal: 12, gap: 12 }}
+      style={{ paddingBottom: 12 }}
+      contentContainerStyle={{ paddingHorizontal: 12, gap: 12, paddingTop: 6 }}
     >
       <Animated.View entering={animation(FadeInRight.delay(0).springify())}>
         <AnimatedPressable onPress={() => router.push('/create-story' as any)} className="items-center w-[68px]" scaleValue={0.9} haptic="light">
@@ -88,5 +90,6 @@ export function StoryCircles() {
         );
       })}
     </ScrollView>
+    </GlassPanel>
   );
 }

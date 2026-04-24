@@ -9,9 +9,47 @@ import { Plus } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
+import { GlassPanel } from '../../components/ui/GlassPanel';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
+
+function DiscoverHeader({ onCreatePress }: { onCreatePress: () => void }) {
+  const { colors, radius } = useTheme();
+  return (
+    <GlassPanel
+      borderRadius={20}
+      style={{ marginHorizontal: 16, marginTop: 8, marginBottom: 8 }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+        }}
+      >
+        <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700', letterSpacing: -0.5 }}>
+          Echo
+        </Text>
+        <Pressable
+          onPress={onCreatePress}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: colors.accent,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Plus color="#fff" size={18} />
+        </Pressable>
+      </View>
+    </GlassPanel>
+  );
+}
 
 export default function DiscoverScreen() {
   const router = useRouter();
@@ -22,13 +60,13 @@ export default function DiscoverScreen() {
     router.push(`/thread/${item.id}`);
   }, [router]);
 
+  const handleCreatePress = useCallback(() => router.push('/create-post'), [router]);
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       {isLoading ? (
         <Animated.View entering={animation(FadeIn.duration(300))} style={{ flex: 1 }}>
-          <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Echo</Text>
-          </View>
+          <DiscoverHeader onCreatePress={handleCreatePress} />
           <StoryCircles />
           <View style={{ height: 8 }} />
           <FeedCardSkeleton />
@@ -42,7 +80,7 @@ export default function DiscoverScreen() {
             <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
           )}
           keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 110 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -52,15 +90,7 @@ export default function DiscoverScreen() {
           }
           ListHeaderComponent={
             <View>
-              <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Echo</Text>
-                <Pressable
-                  onPress={() => router.push('/create-post')}
-                  style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <Plus color="#fff" size={20} strokeWidth={2.5} />
-                </Pressable>
-              </View>
+              <DiscoverHeader onCreatePress={handleCreatePress} />
               <StoryCircles />
               <View style={{ height: 8 }} />
             </View>
@@ -72,35 +102,6 @@ export default function DiscoverScreen() {
           }
         />
       )}
-
-      {/* Floating Action Button */}
-      <Animated.View
-        entering={animation(FadeInUp.delay(300).springify())}
-        style={{
-          position: 'absolute',
-          bottom: 24,
-          right: 20,
-        }}
-      >
-        <Pressable
-          onPress={() => router.push('/create-post')}
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: colors.accent,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: colors.accent,
-            shadowOpacity: 0.45,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: 8,
-          }}
-        >
-          <Plus color="#fff" size={26} strokeWidth={2.5} />
-        </Pressable>
-      </Animated.View>
     </SafeAreaView>
   );
 }
