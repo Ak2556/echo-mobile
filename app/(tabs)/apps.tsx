@@ -7,6 +7,7 @@ import {
   Calculator, ArrowsLeftRight, Receipt, Timer,
   Key, Globe, Braces, FileText,
   Palette, Activity,
+  Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 
@@ -36,6 +37,12 @@ const APPS: MiniApp[] = [
   { id: 'markdown', name: 'Markdown', description: 'Write & preview', icon: FileText, color: '#64748B', route: '/mini-apps/markdown', emoji: '✍️' },
   { id: 'color-tools', name: 'Colors', description: 'HEX · RGB · palettes', icon: Palette, color: '#EC4899', route: '/mini-apps/color-tools', emoji: '🎨' },
   { id: 'bmi', name: 'BMI Calc', description: 'Health & body metrics', icon: Activity, color: '#22C55E', route: '/mini-apps/bmi', emoji: '⚖️' },
+  { id: 'camera', name: 'Camera', description: 'Photo & video capture', icon: Camera, color: '#6366F1', route: '/mini-apps/camera', emoji: '📸' },
+  { id: 'voice-memo', name: 'Voice Memo', description: 'Record & play audio', icon: Microphone, color: '#EF4444', route: '/mini-apps/voice-memo', emoji: '🎙' },
+  { id: 'notes', name: 'Notes', description: 'Quick notes & ideas', icon: NotePencil, color: '#F59E0B', route: '/mini-apps/notes', emoji: '📝' },
+  { id: 'habits', name: 'Habits', description: 'Daily streaks & goals', icon: CheckCircle, color: '#10B981', route: '/mini-apps/habits', emoji: '🔥' },
+  { id: 'expenses', name: 'Expenses', description: 'Income & budget log', icon: Wallet, color: '#8B5CF6', route: '/mini-apps/expenses', emoji: '💰' },
+  { id: 'dice', name: 'Dice & Coin', description: 'Roll dice, flip coins', icon: DiceSix, color: '#F97316', route: '/mini-apps/dice', emoji: '🎲' },
 ];
 
 function AppCard({ app, index }: { app: MiniApp; index: number }) {
@@ -96,7 +103,7 @@ export default function AppsScreen() {
       {/* Header */}
       <View style={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 8 }}>
         <Text style={{ color: colors.text, fontSize: 32, fontWeight: '800', letterSpacing: -1 }}>Mini Apps</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 2 }}>10 built-in utilities, always offline</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 2 }}>16 built-in utilities, always offline</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: PAD, gap: GAP }} showsVerticalScrollIndicator={false}>
