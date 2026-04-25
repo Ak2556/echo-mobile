@@ -9,7 +9,7 @@ import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 
-const HIDDEN_ROUTES = new Set(['history', 'apps']);
+const HIDDEN_ROUTES = new Set(['history']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
   discover: House,
