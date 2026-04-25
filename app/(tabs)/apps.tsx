@@ -7,7 +7,7 @@ import {
   Calculator, ArrowsLeftRight, Receipt, Timer,
   Key, Globe, BracketsCurly, FileText,
   Palette, Pulse,
-  Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix,
+  Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix, VideoCamera,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 
@@ -41,6 +41,7 @@ const APPS: MiniApp[] = [
   { id: 'habits',       name: 'Habits',      description: 'Daily streaks & goals',   color: '#10B981', route: '/mini-apps/habits' },
   { id: 'expenses',     name: 'Expenses',    description: 'Income & budget log',     color: '#8B5CF6', route: '/mini-apps/expenses' },
   { id: 'dice',         name: 'Dice & Coin', description: 'Roll dice, flip coins',   color: '#F97316', route: '/mini-apps/dice' },
+  { id: 'video-player', name: 'Video Player', description: 'Pick & play videos',    color: '#0EA5E9', route: '/mini-apps/video-player' },
 ];
 
 // Never store phosphor component refs in module-level objects — v3 circular
@@ -64,6 +65,7 @@ function AppIcon({ id, color }: { id: string; color: string }) {
     case 'habits':        return <CheckCircle    {...p} />;
     case 'expenses':      return <Wallet         {...p} />;
     case 'dice':          return <DiceSix        {...p} />;
+    case 'video-player': return <VideoCamera    {...p} />;
     default:              return <Calculator     {...p} />;
   }
 }
@@ -122,7 +124,7 @@ export default function AppsScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
       <View style={{ paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 8 }}>
         <Text style={{ color: colors.text, fontSize: 32, fontWeight: '800', letterSpacing: -1 }}>Mini Apps</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 2 }}>16 built-in utilities, always offline</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 2 }}>17 built-in utilities, always offline</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: PAD, gap: GAP }} showsVerticalScrollIndicator={false}>

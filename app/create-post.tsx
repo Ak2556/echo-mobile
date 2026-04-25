@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
-  Platform, TouchableOpacity, Pressable,
+  Platform, TouchableOpacity, Pressable, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import {
   ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
-  VideoCamera, ChartBar, X, Plus, Clock, Link,
+  VideoCamera, ChartBar, X, Plus, Clock, Camera, Images,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
@@ -49,32 +50,89 @@ export default function CreatePostScreen() {
   const [tagsRaw, setTagsRaw] = useState('');
   const [publishing, setPublishing] = useState(false);
 
-  // Photo state — up to 4 URLs
-  const [imageUrls, setImageUrls] = useState<string[]>(['']);
+  // Photo state — up to 4 device URIs
+  const [imageUris, setImageUris] = useState<string[]>([]);
 
-  // Video state — single URL
-  const [videoUrl, setVideoUrl] = useState('');
+  // Video state — single device URI
+  const [videoUri, setVideoUri] = useState('');
 
   // Poll state
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [pollDurationHours, setPollDurationHours] = useState(24);
 
-  const validImages = imageUrls.filter(u => u.trim().length > 0);
-
   const canPublish = (() => {
     if (publishing) return false;
     switch (postType) {
       case 'text': return prompt.trim().length > 0 && response.trim().length > 0;
-      case 'photo': return validImages.length > 0;
-      case 'video': return videoUrl.trim().length > 0;
+      case 'photo': return imageUris.length > 0;
+      case 'video': return videoUri.length > 0;
       case 'poll': return pollQuestion.trim().length > 0 && pollOptions.filter(o => o.trim()).length >= 2;
     }
   })();
 
-  const addImageUrl = () => { if (imageUrls.length < 4) setImageUrls(p => [...p, '']); };
-  const updateImageUrl = (idx: number, val: string) => setImageUrls(p => p.map((u, i) => i === idx ? val : u));
-  const removeImageUrl = (idx: number) => setImageUrls(p => p.filter((_, i) => i !== idx).concat(p.length === 1 ? [''] : []));
+  const pickImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Photo library access is required to pick images.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: 4 - imageUris.length,
+      quality: 0.88,
+    });
+    if (!result.canceled) {
+      setImageUris(prev => [...prev, ...result.assets.map(a => a.uri)].slice(0, 4));
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Camera access is required to take photos.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.88,
+    });
+    if (!result.canceled) {
+      setImageUris(prev => [...prev, result.assets[0].uri].slice(0, 4));
+    }
+  };
+
+  const removeImage = (idx: number) => setImageUris(prev => prev.filter((_, i) => i !== idx));
+
+  const pickVideo = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Photo library access is required to pick videos.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      videoMaxDuration: 120,
+      quality: 1,
+    });
+    if (!result.canceled) setVideoUri(result.assets[0].uri);
+  };
+
+  const recordVideo = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Camera access is required to record videos.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      videoMaxDuration: 120,
+      videoQuality: ImagePicker.UIImagePickerControllerQualityType.High,
+    });
+    if (!result.canceled) setVideoUri(result.assets[0].uri);
+  };
 
   const addPollOption = () => { if (pollOptions.length < 4) setPollOptions(p => [...p, '']); };
   const updatePollOption = (idx: number, t: string) => setPollOptions(p => p.map((o, i) => i === idx ? t : o));
@@ -101,10 +159,10 @@ export default function CreatePostScreen() {
         echo = coerceFeedItem({ ...base, postType: 'text', prompt: prompt.trim(), response: response.trim() });
         break;
       case 'photo':
-        echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: validImages });
+        echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: imageUris });
         break;
       case 'video':
-        echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri: videoUrl.trim() });
+        echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri });
         break;
       case 'poll': {
         const options: PollOption[] = pollOptions.filter(o => o.trim()).map((o, i) => ({ id: `opt_${i}`, text: o.trim(), votes: 0 }));
@@ -198,42 +256,61 @@ export default function CreatePostScreen() {
           {/* ── PHOTO ── */}
           {postType === 'photo' && (
             <Animated.View entering={animation(FadeIn.duration(200))}>
-              <Text style={s.label}>Image URLs (up to 4)</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-                <Link color={colors.textMuted} size={12} />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Paste a direct image link (Unsplash, imgur, etc.)</Text>
+              {/* Picker buttons */}
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+                <Pressable
+                  onPress={pickImages}
+                  disabled={imageUris.length >= 4}
+                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= 4 ? 0.4 : 1 }]}
+                >
+                  <Images color={colors.accent} size={20} />
+                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>Library</Text>
+                </Pressable>
+                <Pressable
+                  onPress={takePhoto}
+                  disabled={imageUris.length >= 4}
+                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= 4 ? 0.4 : 1 }]}
+                >
+                  <Camera color={colors.text} size={20} />
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>Camera</Text>
+                </Pressable>
               </View>
-              {imageUrls.map((url, idx) => (
-                <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 4, marginBottom: 8 }]}>
-                  <TextInput
-                    value={url} onChangeText={v => updateImageUrl(idx, v)}
-                    placeholder={`https://... (image ${idx + 1})`}
-                    placeholderTextColor={colors.textMuted} autoCapitalize="none" autoCorrect={false}
-                    style={{ flex: 1, color: colors.text, fontSize: fontSizes.small, paddingVertical: 12 }}
-                  />
-                  {imageUrls.length > 1 && (
-                    <Pressable onPress={() => removeImageUrl(idx)} style={{ padding: 4 }}>
-                      <X color={colors.textMuted} size={16} />
-                    </Pressable>
-                  )}
-                </View>
-              ))}
-              {/* Live preview */}
-              {validImages.length > 0 && (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-                  {validImages.map((uri, idx) => (
-                    <View key={idx} style={{ width: validImages.length === 1 ? '100%' : '48%', aspectRatio: validImages.length === 1 ? 16 / 9 : 1, borderRadius: radius.card, overflow: 'hidden', backgroundColor: colors.surfaceHover }}>
+
+              {/* Count */}
+              <Text style={[s.label, { color: imageUris.length >= 4 ? colors.accent : colors.textMuted }]}>
+                {imageUris.length}/4 selected
+              </Text>
+
+              {/* Thumbnail grid */}
+              {imageUris.length > 0 ? (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                  {imageUris.map((uri, idx) => (
+                    <View
+                      key={idx}
+                      style={{
+                        width: imageUris.length === 1 ? '100%' : '48%',
+                        aspectRatio: imageUris.length === 1 ? 16 / 9 : 1,
+                        borderRadius: radius.card, overflow: 'hidden',
+                        backgroundColor: colors.surfaceHover,
+                      }}
+                    >
                       <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                      <Pressable
+                        onPress={() => removeImage(idx)}
+                        style={{ position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4 }}
+                      >
+                        <X color="#fff" size={14} />
+                      </Pressable>
                     </View>
                   ))}
                 </View>
+              ) : (
+                <View style={[s.surface, { height: 140, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
+                  <ImageIcon color={colors.border} size={40} weight="thin" />
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>No photos selected</Text>
+                </View>
               )}
-              {imageUrls.length < 4 && (
-                <TouchableOpacity onPress={addImageUrl} style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 14, gap: 6, borderStyle: 'dashed' }]}>
-                  <Plus color={colors.textMuted} size={16} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>Add image URL</Text>
-                </TouchableOpacity>
-              )}
+
               <Text style={s.label}>Caption (optional)</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={caption} onChangeText={setCaption} placeholder="Add a caption…" placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
@@ -244,25 +321,45 @@ export default function CreatePostScreen() {
           {/* ── VIDEO ── */}
           {postType === 'video' && (
             <Animated.View entering={animation(FadeIn.duration(200))}>
-              <Text style={s.label}>Video URL</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-                <Link color={colors.textMuted} size={12} />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Paste a direct .mp4 or video link</Text>
+              {/* Picker buttons */}
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+                <Pressable
+                  onPress={pickVideo}
+                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 }]}
+                >
+                  <Images color={colors.accent} size={20} />
+                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>Library</Text>
+                </Pressable>
+                <Pressable
+                  onPress={recordVideo}
+                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 }]}
+                >
+                  <VideoCamera color="#EF4444" size={20} />
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>Record</Text>
+                </Pressable>
               </View>
-              <View style={[s.surface, { paddingHorizontal: 14, paddingVertical: 4, marginBottom: 14 }]}>
-                <TextInput
-                  value={videoUrl} onChangeText={setVideoUrl}
-                  placeholder="https://example.com/video.mp4"
-                  placeholderTextColor={colors.textMuted} autoCapitalize="none" autoCorrect={false}
-                  style={{ color: colors.text, fontSize: fontSizes.small, paddingVertical: 14 }}
-                />
-              </View>
-              {videoUrl.trim().length > 0 && (
-                <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden', height: 160, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-                  <VideoCamera color={colors.textMuted} size={40} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>Video URL set ✓</Text>
+
+              {/* Preview / empty state */}
+              {videoUri ? (
+                <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden', backgroundColor: '#000', height: 180, alignItems: 'center', justifyContent: 'center' }}>
+                  <VideoCamera color="#fff" size={40} weight="thin" />
+                  <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: fontSizes.small, marginTop: 8 }}>
+                    Video selected ✓
+                  </Text>
+                  <Pressable
+                    onPress={() => setVideoUri('')}
+                    style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 6 }}
+                  >
+                    <X color="#fff" size={16} />
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={[s.surface, { height: 160, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
+                  <VideoCamera color={colors.border} size={44} weight="thin" />
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>No video selected</Text>
                 </View>
               )}
+
               <Text style={s.label}>Caption (optional)</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={caption} onChangeText={setCaption} placeholder="Add a caption…" placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
