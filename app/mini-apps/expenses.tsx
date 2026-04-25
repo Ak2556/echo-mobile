@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TextInput, Pressable, Alert, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ArrowLeft, Plus, Wallet, ArrowUp, ArrowDown, Trash, X,
 } from 'phosphor-react-native';
@@ -13,7 +13,7 @@ import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 
-const storage = new MMKV({ id: 'expenses-store' });
+const TX_KEY = 'mini:expenses';
 
 type TxType = 'income' | 'expense';
 
@@ -44,10 +44,10 @@ const INCOME_CATS = [
   { label: 'Other', emoji: '💰' },
 ];
 
-function load(): Transaction[] {
-  try { return JSON.parse(storage.getString('txs') ?? '[]'); } catch { return []; }
+async function load(): Promise<Transaction[]> {
+  try { return JSON.parse((await AsyncStorage.getItem(TX_KEY)) ?? '[]'); } catch { return []; }
 }
-function save(txs: Transaction[]) { storage.set('txs', JSON.stringify(txs)); }
+function save(txs: Transaction[]) { AsyncStorage.setItem(TX_KEY, JSON.stringify(txs)); }
 
 function formatMoney(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -165,7 +165,8 @@ function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClos
 export default function ExpensesApp() {
   const { colors } = useTheme();
   const router = useRouter();
-  const [txs, setTxs] = useState<Transaction[]>(load);
+  const [txs, setTxs] = useState<Transaction[]>([]);
+  useEffect(() => { load().then(setTxs); }, []);
   const [showAdd, setShowAdd] = useState(false);
   const [filter, setFilter] = useState<'all' | TxType>('all');
 

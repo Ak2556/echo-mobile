@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TextInput, Pressable,
   KeyboardAvoidingView, Platform, Alert, Modal,
@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn, ZoomIn } from 'react-native-reanimated';
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ArrowLeft, NotePencil, Plus, Trash, MagnifyingGlass, X, PencilSimple,
 } from 'phosphor-react-native';
@@ -14,7 +14,7 @@ import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 
-const storage = new MMKV({ id: 'notes-store' });
+const NOTES_KEY = 'mini:notes';
 
 interface Note {
   id: string;
@@ -26,10 +26,10 @@ interface Note {
 
 const NOTE_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899'];
 
-function loadNotes(): Note[] {
-  try { return JSON.parse(storage.getString('notes') ?? '[]'); } catch { return []; }
+async function loadNotes(): Promise<Note[]> {
+  try { return JSON.parse((await AsyncStorage.getItem(NOTES_KEY)) ?? '[]'); } catch { return []; }
 }
-function saveNotes(notes: Note[]) { storage.set('notes', JSON.stringify(notes)); }
+function saveNotes(notes: Note[]) { AsyncStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -126,7 +126,8 @@ function NoteEditor({
 export default function NotesApp() {
   const { colors } = useTheme();
   const router = useRouter();
-  const [notes, setNotes] = useState<Note[]>(loadNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
+  useEffect(() => { loadNotes().then(setNotes); }, []);
   const [editing, setEditing] = useState<Note | null | 'new'>('new' as any);
   const [showEditor, setShowEditor] = useState(false);
   const [search, setSearch] = useState('');
