@@ -4,11 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import {
-  ArrowLeft, CaretRight, Bell, Vibration, Lock, Moon, SpeakerHigh,
+  ArrowLeft, CaretRight, Bell, Vibrate, Lock, Moon, SpeakerHigh,
   Shield, Info, Question, SignOut, Trash, Eye, EyeSlash,
   ChatTeardropDots, Lightning, Translate, WifiSlash, ShieldCheck,
   Palette, TextT, SquaresFour, Star, Robot, FloppyDisk,
-  ChatCircle, Broadcast, Database, Eraser, BookmarkSlash,
+  ChatCircle, Broadcast, Database, Eraser, BookmarkSimple,
   BellSlash, Rectangle,
   Check, DeviceMobile, Users, Envelope, SunHorizon,
 } from 'phosphor-react-native';
@@ -394,7 +394,7 @@ export default function SettingsScreen() {
           <View className="px-4 mb-5" style={cardStyle}>
             <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, s.setNotificationsEnabled)} />
             {divider}
-            <SettingsRow theme={theme} icon={Vibration} label="Haptic Feedback" subtitle="Vibration on interactions" right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
+            <SettingsRow theme={theme} icon={Vibrate} label="Haptic Feedback" subtitle="Vibration on interactions" right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
             {divider}
             <SettingsRow theme={theme} icon={SpeakerHigh} label="Sound Effects" subtitle="Play sounds for actions" right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
             {divider}
@@ -526,7 +526,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={ChatTeardropDots} label={`Clear Chat History (${s.sessions.length})`} subtitle="Delete all AI conversations" onPress={handleClearChats} />
             {divider}
-            <SettingsRow theme={theme} icon={BookmarkSlash} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle="Remove all saved echoes" onPress={handleClearBookmarks} />
+            <SettingsRow theme={theme} icon={BookmarkSimple} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle="Remove all saved echoes" onPress={handleClearBookmarks} />
             {divider}
             <SettingsRow theme={theme} icon={BellSlash} label="Clear Notifications" subtitle="Remove all notifications" onPress={handleClearNotifications} />
           </View>
