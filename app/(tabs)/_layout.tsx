@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Tabs } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour } from 'phosphor-react-native';
+import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, FilmStrip } from 'phosphor-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
@@ -14,6 +14,7 @@ const HIDDEN_ROUTES = new Set(['history']);
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
   discover: House,
   search: MagnifyingGlass,
+  echoes: FilmStrip,
   chat: ChatTeardropDots,
   notifications: Bell,
   apps: SquaresFour,
@@ -157,6 +158,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="discover" options={{ title: 'Home' }} />
       <Tabs.Screen name="search" options={{ title: 'Explore' }} />
+      <Tabs.Screen name="echoes" options={{ title: 'Echoes' }} />
       <Tabs.Screen name="chat" options={{ title: 'Echo' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Activity' }} />
       <Tabs.Screen name="apps" options={{ title: 'Apps' }} />
