@@ -9,7 +9,7 @@ import Animated, {
   FadeInDown, useSharedValue, useAnimatedStyle,
   withRepeat, withSequence, withTiming, cancelAnimation,
 } from 'react-native-reanimated';
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ArrowLeft, Microphone, Stop, Play, Pause,
   Trash, MicrophoneStage,
@@ -18,7 +18,7 @@ import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 
-const storage = new MMKV({ id: 'voice-memo-store' });
+const MEMOS_KEY = 'mini:memos';
 
 interface Memo {
   id: string;
@@ -43,17 +43,16 @@ function formatDate(iso: string) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-function loadMemos(): Memo[] {
-  try { return JSON.parse(storage.getString('memos') ?? '[]'); } catch { return []; }
+async function loadMemos(): Promise<Memo[]> {
+  try { return JSON.parse((await AsyncStorage.getItem(MEMOS_KEY)) ?? '[]'); } catch { return []; }
 }
-function saveMemos(memos: Memo[]) {
-  storage.set('memos', JSON.stringify(memos));
-}
+function saveMemos(memos: Memo[]) { AsyncStorage.setItem(MEMOS_KEY, JSON.stringify(memos)); }
 
 export default function VoiceMemoApp() {
   const { colors } = useTheme();
   const router = useRouter();
-  const [memos, setMemos] = useState<Memo[]>(loadMemos);
+  const [memos, setMemos] = useState<Memo[]>([]);
+  useEffect(() => { loadMemos().then(setMemos); }, []);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);

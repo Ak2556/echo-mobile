@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TextInput, Pressable, Alert, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ArrowLeft, Plus, CheckCircle, Circle, Fire, Trash, X,
 } from 'phosphor-react-native';
@@ -13,7 +13,7 @@ import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 
-const storage = new MMKV({ id: 'habits-store' });
+const HABITS_KEY = 'mini:habits';
 
 interface Habit {
   id: string;
@@ -50,10 +50,10 @@ function getStreak(completedDates: string[]): number {
   return streak;
 }
 
-function loadHabits(): Habit[] {
-  try { return JSON.parse(storage.getString('habits') ?? '[]'); } catch { return []; }
+async function loadHabits(): Promise<Habit[]> {
+  try { return JSON.parse((await AsyncStorage.getItem(HABITS_KEY)) ?? '[]'); } catch { return []; }
 }
-function saveHabits(habits: Habit[]) { storage.set('habits', JSON.stringify(habits)); }
+function saveHabits(habits: Habit[]) { AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -195,7 +195,8 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
 export default function HabitsApp() {
   const { colors } = useTheme();
   const router = useRouter();
-  const [habits, setHabits] = useState<Habit[]>(loadHabits);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  useEffect(() => { loadHabits().then(setHabits); }, []);
   const [showAdd, setShowAdd] = useState(false);
   const today = todayStr();
 
