@@ -5,8 +5,8 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   Calculator, ArrowsLeftRight, Receipt, Timer,
-  Key, Globe, Braces, FileText,
-  Palette, Activity,
+  Key, Globe, BracketsCurly, FileText,
+  Palette, Pulse,
   Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
@@ -54,10 +54,10 @@ function AppIcon({ id, color }: { id: string; color: string }) {
     case 'pomodoro':      return <Timer          {...p} />;
     case 'password-gen':  return <Key            {...p} />;
     case 'world-clock':   return <Globe          {...p} />;
-    case 'json-formatter':return <Braces         {...p} />;
+    case 'json-formatter':return <BracketsCurly   {...p} />;
     case 'markdown':      return <FileText       {...p} />;
     case 'color-tools':   return <Palette        {...p} />;
-    case 'bmi':           return <Activity       {...p} />;
+    case 'bmi':           return <Pulse           {...p} />;
     case 'camera':        return <Camera         {...p} />;
     case 'voice-memo':    return <Microphone     {...p} />;
     case 'notes':         return <NotePencil     {...p} />;

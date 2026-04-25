@@ -101,7 +101,7 @@ export {
 
   // Files & content
   FileText,
-  Braces,
+  BracketsCurly as Braces,
   TextT,
 
   // Misc
@@ -118,7 +118,7 @@ export {
   Timer,
   Receipt,
   Calculator,
-  Activity,
+  Pulse as Activity,
   Brain,
   Coffee,
   Desktop,
