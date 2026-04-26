@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TextInput, Pressable } from 'react-native';
 import { MagnifyingGlass, X } from 'phosphor-react-native';
+import { useTheme } from '../../lib/theme';
 
 interface SearchBarProps {
   value: string;
@@ -9,13 +10,26 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...' }: SearchBarProps) {
+  const { colors, radius } = useTheme();
+
   return (
-    <View className="flex-row items-center bg-zinc-900 rounded-xl px-3 py-2.5 mx-4 mb-3 border border-zinc-800">
-      <MagnifyingGlass color="#71717A" size={18} />
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.surface,
+        borderRadius: radius.xl,
+        paddingHorizontal: 12,
+        paddingVertical: 14,
+        borderWidth: 1,
+        borderColor: colors.border,
+      }}
+    >
+      <MagnifyingGlass color={colors.textMuted} size={18} />
       <TextInput
-        className="flex-1 text-white text-base ml-2"
+        style={{ flex: 1, color: colors.text, fontSize: 16, marginLeft: 8 }}
         placeholder={placeholder}
-        placeholderTextColor="#71717A"
+        placeholderTextColor={colors.textMuted}
         value={value}
         onChangeText={onChangeText}
         autoCapitalize="none"
@@ -23,7 +37,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...
       />
       {value.length > 0 && (
         <Pressable onPress={() => onChangeText('')}>
-          <X color="#71717A" size={18} />
+          <X color={colors.textMuted} size={18} />
         </Pressable>
       )}
     </View>

@@ -67,7 +67,9 @@ export function NotificationCard({ notification, onPress }: NotificationCardProp
       style={{
         borderBottomWidth: 0.5,
         borderBottomColor: colors.border,
-        backgroundColor: !notification.isRead ? colors.accentMuted : 'transparent',
+        backgroundColor: !notification.isRead ? colors.accent + '0A' : 'transparent',
+        borderLeftWidth: !notification.isRead ? 2.5 : 0,
+        borderLeftColor: colors.accent,
       }}
       scaleValue={0.98}
       haptic="light"
