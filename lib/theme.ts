@@ -12,10 +12,11 @@ export const ANIM = {
 
 // ── Theme Definitions ──
 
-export type ThemeName = 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender';
+export type ThemeName = 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic';
 
 export interface ThemeColors {
   name: string;
+  isDark: boolean;
   bg: string;
   bgPure: string;
   surface: string;
@@ -33,14 +34,21 @@ export interface ThemeColors {
   tabBorder: string;
   inputBg: string;
   inputBorder: string;
-  glassFill?: string;
-  glassBorder?: string;
-  glassHighlight?: string;
+  glassFill: string;
+  glassBorder: string;
+  glassHighlight: string;
 }
+
+const DARK_GLASS = {
+  glassFill: 'rgba(255,255,255,0.07)',
+  glassBorder: 'rgba(255,255,255,0.13)',
+  glassHighlight: 'rgba(255,255,255,0.09)',
+} as const;
 
 const THEMES: Record<ThemeName, ThemeColors> = {
   midnight: {
     name: 'Midnight',
+    isDark: true,
     bg: '#09090B',
     bgPure: '#000000',
     surface: '#18181B',
@@ -58,9 +66,11 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#1C1C1E',
     inputBg: '#18181B',
     inputBorder: '#27272A',
+    ...DARK_GLASS,
   },
   amoled: {
     name: 'AMOLED',
+    isDark: true,
     bg: '#000000',
     bgPure: '#000000',
     surface: '#0A0A0A',
@@ -78,9 +88,11 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#111111',
     inputBg: '#0A0A0A',
     inputBorder: '#1A1A1A',
+    ...DARK_GLASS,
   },
   ocean: {
     name: 'Ocean',
+    isDark: true,
     bg: '#0B1120',
     bgPure: '#000000',
     surface: '#111B2E',
@@ -98,9 +110,11 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#152035',
     inputBg: '#111B2E',
     inputBorder: '#1E3050',
+    ...DARK_GLASS,
   },
   sunset: {
     name: 'Sunset',
+    isDark: true,
     bg: '#1A0E0A',
     bgPure: '#000000',
     surface: '#261510',
@@ -118,9 +132,11 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#2D1A12',
     inputBg: '#261510',
     inputBorder: '#3D2318',
+    ...DARK_GLASS,
   },
   forest: {
     name: 'Forest',
+    isDark: true,
     bg: '#0A1410',
     bgPure: '#000000',
     surface: '#101F18',
@@ -138,9 +154,11 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#142B1E',
     inputBg: '#101F18',
     inputBorder: '#1C3528',
+    ...DARK_GLASS,
   },
   lavender: {
     name: 'Lavender',
+    isDark: true,
     bg: '#100E1A',
     bgPure: '#000000',
     surface: '#1A1726',
@@ -158,6 +176,82 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#211E32',
     inputBg: '#1A1726',
     inputBorder: '#2D2842',
+    ...DARK_GLASS,
+  },
+
+  // ── Light themes ──
+
+  light: {
+    name: 'Light',
+    isDark: false,
+    bg: '#F2F2F7',
+    bgPure: '#FFFFFF',
+    surface: '#FFFFFF',
+    surfaceHover: '#E5E5EA',
+    border: '#D1D1D6',
+    text: '#09090B',
+    textSecondary: '#6B7280',
+    textMuted: '#9CA3AF',
+    accent: '#3B82F6',
+    accentMuted: 'rgba(59,130,246,0.12)',
+    danger: '#EF4444',
+    dangerMuted: 'rgba(239,68,68,0.12)',
+    success: '#16A34A',
+    tabBar: '#FFFFFF',
+    tabBorder: '#D1D1D6',
+    inputBg: '#FFFFFF',
+    inputBorder: '#D1D1D6',
+    glassFill: 'rgba(255,255,255,0.72)',
+    glassBorder: 'rgba(0,0,0,0.08)',
+    glassHighlight: 'rgba(255,255,255,0.95)',
+  },
+  sepia: {
+    name: 'Sepia',
+    isDark: false,
+    bg: '#F5ECD7',
+    bgPure: '#FEF9EE',
+    surface: '#FEF9EE',
+    surfaceHover: '#EDE0C8',
+    border: '#D9C8AA',
+    text: '#2C1810',
+    textSecondary: '#7A5C40',
+    textMuted: '#A68B6B',
+    accent: '#B45309',
+    accentMuted: 'rgba(180,83,9,0.12)',
+    danger: '#DC2626',
+    dangerMuted: 'rgba(220,38,38,0.12)',
+    success: '#15803D',
+    tabBar: '#FEF9EE',
+    tabBorder: '#D9C8AA',
+    inputBg: '#FEF9EE',
+    inputBorder: '#D9C8AA',
+    glassFill: 'rgba(254,249,238,0.75)',
+    glassBorder: 'rgba(44,24,16,0.1)',
+    glassHighlight: 'rgba(255,255,255,0.6)',
+  },
+  arctic: {
+    name: 'Arctic',
+    isDark: false,
+    bg: '#EFF6FF',
+    bgPure: '#FFFFFF',
+    surface: '#FFFFFF',
+    surfaceHover: '#DBEAFE',
+    border: '#BFDBFE',
+    text: '#0C1B2E',
+    textSecondary: '#3B6080',
+    textMuted: '#6B92B8',
+    accent: '#0284C7',
+    accentMuted: 'rgba(2,132,199,0.12)',
+    danger: '#DC2626',
+    dangerMuted: 'rgba(220,38,38,0.12)',
+    success: '#15803D',
+    tabBar: '#FFFFFF',
+    tabBorder: '#BFDBFE',
+    inputBg: '#FFFFFF',
+    inputBorder: '#BFDBFE',
+    glassFill: 'rgba(255,255,255,0.72)',
+    glassBorder: 'rgba(12,27,46,0.08)',
+    glassHighlight: 'rgba(255,255,255,0.95)',
   },
 };
 
@@ -206,11 +300,8 @@ export function useTheme() {
   const colors: ThemeColors = {
     ...base,
     accent: accentColor || base.accent,
-    accentMuted: hexToRgba(accentColor || base.accent, 0.15),
-    bg: pureBlackBg ? base.bgPure : base.bg,
-    glassFill: 'rgba(255,255,255,0.07)',
-    glassBorder: 'rgba(255,255,255,0.13)',
-    glassHighlight: 'rgba(255,255,255,0.09)',
+    accentMuted: hexToRgba(accentColor || base.accent, base.isDark ? 0.15 : 0.12),
+    bg: (pureBlackBg && base.isDark) ? base.bgPure : base.bg,
   };
 
   const fontSizes = FONT_SIZE_MAP[fontSize] || FONT_SIZE_MAP.medium;

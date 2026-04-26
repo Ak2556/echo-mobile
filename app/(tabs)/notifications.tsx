@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as _FlashList } from '@shopify/flash-list';
+const FlashList = _FlashList as React.ComponentType<any>;
 import { useRouter } from 'expo-router';
 import { Bell, Checks } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -59,6 +60,21 @@ export default function NotificationsScreen() {
 
   const listData = useMemo(() => groupNotifications(filtered), [filtered]);
   const unreadCount = unreadNotificationCount();
+
+  const renderItem = ({ item }: { item: ListItem }) => {
+    if (item.type === 'header') {
+      return (
+        <View style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 8 }}>
+          <Text style={{ fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, color: colors.textMuted }}>
+            {item.label}
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <NotificationCard notification={item.data} onPress={() => handlePress(item.data)} />
+    );
+  };
 
   const handlePress = (n: Notification) => {
     markNotificationRead(n.id);
@@ -140,44 +156,14 @@ export default function NotificationsScreen() {
           />
         </Animated.View>
       ) : (
-        <FlashList<ListItem>
+        <FlashList
           data={listData}
-          keyExtractor={(item) =>
+          keyExtractor={(item: ListItem) =>
             item.type === 'header' ? `header-${item.label}` : `notif-${item.data.id}`
           }
-          getItemType={(item) => item.type}
+          getItemType={(item: ListItem) => item.type}
           estimatedItemSize={72}
-          renderItem={({ item }: { item: ListItem }) => {
-            if (item.type === 'header') {
-              return (
-                <View
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingTop: 20,
-                    paddingBottom: 8,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: 1,
-                      color: colors.textMuted,
-                    }}
-                  >
-                    {item.label}
-                  </Text>
-                </View>
-              );
-            }
-            return (
-              <NotificationCard
-                notification={item.data}
-                onPress={() => handlePress(item.data)}
-              />
-            );
-          }}
+          renderItem={renderItem}
         />
       )}
     </SafeAreaView>
