@@ -1,33 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { TrendUp, Hash } from 'phosphor-react-native';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
+import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
+
+const { width: SW } = Dimensions.get('window');
 
 const TRENDING_TAGS = ['#AI', '#ReactNative', '#MachineLearning', '#WebDev', '#Design', '#Python', '#Crypto', '#DevOps'];
 
 const CATEGORIES = [
   { label: 'Technology', color: '#3B82F6', icon: '\u{1F4BB}' },
-  { label: 'Science', color: '#10B981', icon: '\u{1F52C}' },
-  { label: 'Design', color: '#F59E0B', icon: '\u{1F3A8}' },
-  { label: 'Business', color: '#8B5CF6', icon: '\u{1F4CA}' },
-  { label: 'Health', color: '#EF4444', icon: '\u{1F3E5}' },
-  { label: 'Education', color: '#06B6D4', icon: '\u{1F4DA}' },
+  { label: 'Science',    color: '#10B981', icon: '\u{1F52C}' },
+  { label: 'Design',     color: '#F59E0B', icon: '\u{1F3A8}' },
+  { label: 'Business',   color: '#8B5CF6', icon: '\u{1F4CA}' },
+  { label: 'Health',     color: '#EF4444', icon: '\u{1F3E5}' },
+  { label: 'Education',  color: '#06B6D4', icon: '\u{1F4DA}' },
 ];
+
+const CARD_WIDTH = (SW - 48) / 2;
 
 export default function SearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'top' | 'users' | 'tags'>('top');
   const { searchUsers } = useAppStore();
+  const { colors, radius } = useTheme();
   const { data: feed } = useFeed();
 
   const isSearching = query.trim().length > 0;
@@ -35,10 +42,12 @@ export default function SearchScreen() {
   const matchedEchoes = isSearching
     ? (feed || []).filter(item => {
         const q = query.toLowerCase();
-        return item.prompt.toLowerCase().includes(q) ||
-               item.response.toLowerCase().includes(q) ||
-               item.username.toLowerCase().includes(q) ||
-               item.hashtags?.some(h => h.toLowerCase().includes(q));
+        return (
+          item.prompt.toLowerCase().includes(q) ||
+          item.response.toLowerCase().includes(q) ||
+          item.username.toLowerCase().includes(q) ||
+          item.hashtags?.some(h => h.toLowerCase().includes(q))
+        );
       })
     : [];
 
@@ -47,25 +56,44 @@ export default function SearchScreen() {
     .slice(0, 5);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-black">
-      <View className="px-4 pt-3 pb-1">
-        <Text className="text-white text-2xl font-bold mb-3">Explore</Text>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+        <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -1.2 }}>
+          Explore
+        </Text>
+        <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2, marginBottom: 12 }}>
+          Discover what's resonating
+        </Text>
         <SearchBar value={query} onChangeText={setQuery} placeholder="Search users, echoes, hashtags..." />
       </View>
 
       {isSearching ? (
-        <Animated.View entering={FadeIn.duration(80)} className="flex-1">
-          {/* Search tabs */}
-          <View className="flex-row px-4 mb-3 gap-2">
+        <Animated.View entering={FadeIn.duration(80)} style={{ flex: 1 }}>
+          {/* Search tabs — theme-aware */}
+          <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 12, gap: 8 }}>
             {(['top', 'users', 'tags'] as const).map(tab => (
               <AnimatedPressable
                 key={tab}
                 onPress={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full ${activeTab === tab ? 'bg-white' : 'bg-zinc-900'}`}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 99,
+                  backgroundColor: activeTab === tab ? colors.accent : colors.surface,
+                }}
                 scaleValue={0.93}
                 haptic="light"
               >
-                <Text className={`text-sm font-semibold capitalize ${activeTab === tab ? 'text-black' : 'text-zinc-400'}`}>{tab}</Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '600',
+                    textTransform: 'capitalize',
+                    color: activeTab === tab ? '#fff' : colors.textSecondary,
+                  }}
+                >
+                  {tab}
+                </Text>
               </AnimatedPressable>
             ))}
           </View>
@@ -78,8 +106,8 @@ export default function SearchScreen() {
               )}
               keyExtractor={item => item.id}
               ListEmptyComponent={
-                <View className="items-center pt-20">
-                  <Text className="text-zinc-500">No users found</Text>
+                <View style={{ alignItems: 'center', paddingTop: 80 }}>
+                  <Text style={{ color: colors.textMuted }}>No users found</Text>
                 </View>
               }
             />
@@ -91,8 +119,8 @@ export default function SearchScreen() {
               )}
               keyExtractor={item => item.id}
               ListEmptyComponent={
-                <View className="items-center pt-20">
-                  <Text className="text-zinc-500">No echoes found</Text>
+                <View style={{ alignItems: 'center', paddingTop: 80 }}>
+                  <Text style={{ color: colors.textMuted }}>No echoes found</Text>
                 </View>
               }
             />
@@ -100,74 +128,181 @@ export default function SearchScreen() {
         </Animated.View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Categories */}
-          <Animated.View entering={FadeInDown.delay(100).springify()} className="px-4 mb-5">
-            <Text className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-3">Categories</Text>
-            <View className="flex-row flex-wrap gap-2">
+          {/* 2-column Category Grid */}
+          <Animated.View
+            entering={FadeInDown.delay(100).springify()}
+            style={{ paddingHorizontal: 16, marginBottom: 24 }}
+          >
+            <Text
+              style={{
+                color: colors.textMuted,
+                fontSize: 11,
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                marginBottom: 12,
+              }}
+            >
+              Categories
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
               {CATEGORIES.map(cat => (
                 <AnimatedPressable
                   key={cat.label}
                   onPress={() => setQuery(cat.label)}
-                  className="bg-zinc-900 rounded-xl px-4 py-3 flex-row items-center border border-zinc-800"
+                  style={{
+                    width: CARD_WIDTH,
+                    height: 80,
+                    borderRadius: radius.card,
+                    overflow: 'hidden',
+                    borderWidth: 1,
+                    borderColor: cat.color + '33',
+                  }}
                   scaleValue={0.94}
                   haptic="light"
                 >
-                  <Text className="text-lg mr-2">{cat.icon}</Text>
-                  <Text className="text-white font-medium text-sm">{cat.label}</Text>
+                  <LinearGradient
+                    colors={[cat.color + 'CC', cat.color + '44']}
+                    style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={{ fontSize: 26 }}>{cat.icon}</Text>
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>
+                      {cat.label}
+                    </Text>
+                  </LinearGradient>
                 </AnimatedPressable>
               ))}
             </View>
           </Animated.View>
 
-          {/* Trending Hashtags */}
-          <Animated.View entering={FadeInDown.delay(200).springify()} className="px-4 mb-5">
-            <View className="flex-row items-center mb-3">
-              <Hash color="#3B82F6" size={16} />
-              <Text className="text-zinc-400 text-xs font-semibold uppercase tracking-wider ml-1">Trending Tags</Text>
+          {/* Trending Tags — theme-aware */}
+          <Animated.View
+            entering={FadeInDown.delay(200).springify()}
+            style={{ paddingHorizontal: 16, marginBottom: 24 }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Hash color={colors.accent} size={16} />
+              <Text
+                style={{
+                  color: colors.textMuted,
+                  fontSize: 11,
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                  marginLeft: 6,
+                }}
+              >
+                Trending Tags
+              </Text>
             </View>
-            <View className="flex-row flex-wrap gap-2">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {TRENDING_TAGS.map(tag => (
                 <AnimatedPressable
                   key={tag}
                   onPress={() => setQuery(tag.slice(1))}
-                  className="bg-zinc-900 rounded-full px-4 py-2 border border-zinc-800"
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderRadius: 99,
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    flexDirection: 'row',
+                  }}
                   scaleValue={0.93}
                   haptic="light"
                 >
-                  <Text className="text-blue-400 font-medium text-sm">{tag}</Text>
+                  <Text style={{ color: colors.accent, fontWeight: '600', fontSize: 14 }}>
+                    {'#'}
+                  </Text>
+                  <Text style={{ color: colors.text, fontWeight: '500', fontSize: 14 }}>
+                    {tag.slice(1)}
+                  </Text>
                 </AnimatedPressable>
               ))}
             </View>
           </Animated.View>
 
           {/* Trending Echoes */}
-          <Animated.View entering={FadeInDown.delay(300).springify()} className="mb-6">
-            <View className="flex-row items-center px-4 mb-3">
-              <TrendUp color="#EF4444" size={16} />
-              <Text className="text-zinc-400 text-xs font-semibold uppercase tracking-wider ml-1">Trending Echoes</Text>
+          <Animated.View entering={FadeInDown.delay(300).springify()} style={{ marginBottom: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
+              <TrendUp color={colors.danger} size={16} />
+              <Text
+                style={{
+                  color: colors.textMuted,
+                  fontSize: 11,
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                  marginLeft: 6,
+                }}
+              >
+                Trending Echoes
+              </Text>
             </View>
             {trendingEchoes.map((item, index) => (
               <AnimatedPressable
                 key={item.id}
                 onPress={() => router.push(`/thread/${item.id}`)}
-                className="flex-row items-center px-4 py-3 border-b border-zinc-900"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.border,
+                }}
                 scaleValue={0.98}
                 haptic="light"
               >
-                <Text className="text-zinc-600 font-bold text-lg w-8">{index + 1}</Text>
-                <View className="flex-1">
-                  <Text className="text-white font-medium text-sm" numberOfLines={1}>{item.prompt}</Text>
-                  <Text className="text-zinc-500 text-xs mt-0.5">{item.username} \u00B7 {item.likes} likes</Text>
+                <Text
+                  style={{
+                    color: colors.textMuted,
+                    fontWeight: '700',
+                    fontSize: 18,
+                    width: 32,
+                  }}
+                >
+                  {index + 1}
+                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontWeight: '500', fontSize: 14 }} numberOfLines={1}>
+                    {item.prompt}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+                    {item.username} · {item.likes} likes
+                  </Text>
                 </View>
               </AnimatedPressable>
             ))}
           </Animated.View>
 
           {/* Suggested Users */}
-          <Animated.View entering={FadeInDown.delay(400).springify()} className="px-4 mb-8">
-            <Text className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-3">Suggested for You</Text>
+          <Animated.View
+            entering={FadeInDown.delay(400).springify()}
+            style={{ paddingHorizontal: 16, marginBottom: 32 }}
+          >
+            <Text
+              style={{
+                color: colors.textMuted,
+                fontSize: 11,
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                marginBottom: 12,
+              }}
+            >
+              Suggested for You
+            </Text>
             {useAppStore.getState().users.slice(0, 4).map(user => (
-              <UserRow key={user.id} user={user} onPress={() => router.push(`/user/${user.id}`)} showFollowButton />
+              <UserRow
+                key={user.id}
+                user={user}
+                onPress={() => router.push(`/user/${user.id}`)}
+                showFollowButton
+              />
             ))}
           </Animated.View>
         </ScrollView>

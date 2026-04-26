@@ -1,27 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Bell, Checks } from 'phosphor-react-native';
-import Animated, { FadeIn, Layout } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { NotificationSkeleton } from '../../components/ui/Skeleton';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { Notification } from '../../types';
 
+type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' };
+type SectionItem = { type: 'item'; data: Notification };
+type ListItem = SectionHeader | SectionItem;
+
+function groupNotifications(notifications: Notification[]): ListItem[] {
+  const now = Date.now();
+  const dayMs = 86400000;
+
+  const today: Notification[] = [];
+  const thisWeek: Notification[] = [];
+  const earlier: Notification[] = [];
+
+  for (const n of notifications) {
+    const age = now - new Date(n.createdAt).getTime();
+    if (age < dayMs) today.push(n);
+    else if (age < 7 * dayMs) thisWeek.push(n);
+    else earlier.push(n);
+  }
+
+  const result: ListItem[] = [];
+  if (today.length > 0) {
+    result.push({ type: 'header', label: 'Today' });
+    today.forEach(n => result.push({ type: 'item', data: n }));
+  }
+  if (thisWeek.length > 0) {
+    result.push({ type: 'header', label: 'This Week' });
+    thisWeek.forEach(n => result.push({ type: 'item', data: n }));
+  }
+  if (earlier.length > 0) {
+    result.push({ type: 'header', label: 'Earlier' });
+    earlier.forEach(n => result.push({ type: 'item', data: n }));
+  }
+  return result;
+}
+
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { notifications, markAllNotificationsRead, markNotificationRead } = useAppStore();
+  const { notifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount } = useAppStore();
   const { colors, animation } = useTheme();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   const filtered = filter === 'unread'
     ? notifications.filter(n => !n.isRead)
     : notifications;
+
+  const listData = useMemo(() => groupNotifications(filtered), [filtered]);
+  const unreadCount = unreadNotificationCount();
 
   const handlePress = (n: Notification) => {
     markNotificationRead(n.id);
@@ -34,8 +71,23 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3">
-        <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Activity</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Activity</Text>
+          {unreadCount > 0 && (
+            <View
+              style={{
+                backgroundColor: colors.accent,
+                borderRadius: 99,
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{unreadCount}</Text>
+            </View>
+          )}
+        </View>
         <AnimatedPressable
           onPress={markAllNotificationsRead}
           className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full"
@@ -48,6 +100,7 @@ export default function NotificationsScreen() {
         </AnimatedPressable>
       </View>
 
+      {/* Filter tabs */}
       <View className="flex-row px-4 mb-3 gap-2">
         {(['all', 'unread'] as const).map(tab => (
           <AnimatedPressable
@@ -58,10 +111,16 @@ export default function NotificationsScreen() {
             scaleValue={0.93}
             haptic="light"
           >
-            <Text style={{
-              fontSize: 14, fontWeight: '600', textTransform: 'capitalize',
-              color: filter === tab ? '#fff' : colors.textSecondary,
-            }}>{tab}</Text>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                textTransform: 'capitalize',
+                color: filter === tab ? '#fff' : colors.textSecondary,
+              }}
+            >
+              {tab}
+            </Text>
           </AnimatedPressable>
         ))}
       </View>
@@ -71,16 +130,54 @@ export default function NotificationsScreen() {
           <EmptyState
             icon={<Bell color={colors.accent} size={32} />}
             title={filter === 'unread' ? 'All caught up!' : 'No activity yet'}
-            subtitle={filter === 'unread' ? 'You have no unread notifications.' : 'When people interact with your echoes, you\'ll see it here.'}
+            subtitle={
+              filter === 'unread'
+                ? 'You have no unread notifications.'
+                : "When people interact with your echoes, you'll see it here."
+            }
+            actionLabel={filter === 'all' ? 'Explore' : undefined}
+            onAction={filter === 'all' ? () => router.push('/(tabs)/discover') : undefined}
           />
         </Animated.View>
       ) : (
-        <FlashList
-          data={filtered}
-          renderItem={({ item }) => (
-            <NotificationCard notification={item} onPress={() => handlePress(item)} />
-          )}
-          keyExtractor={item => item.id}
+        <FlashList<ListItem>
+          data={listData}
+          keyExtractor={(item) =>
+            item.type === 'header' ? `header-${item.label}` : `notif-${item.data.id}`
+          }
+          getItemType={(item) => item.type}
+          estimatedItemSize={72}
+          renderItem={({ item }: { item: ListItem }) => {
+            if (item.type === 'header') {
+              return (
+                <View
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingTop: 20,
+                    paddingBottom: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: 1,
+                      color: colors.textMuted,
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
+              );
+            }
+            return (
+              <NotificationCard
+                notification={item.data}
+                onPress={() => handlePress(item.data)}
+              />
+            );
+          }}
         />
       )}
     </SafeAreaView>

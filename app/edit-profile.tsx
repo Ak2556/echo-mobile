@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, Check } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -16,6 +17,9 @@ const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
   '#EC4899', '#06B6D4', '#14B8A6', '#F97316', '#6366F1',
 ];
+
+const BIO_MAX = 160;
+const BIO_WARN = 140;
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -28,8 +32,12 @@ export default function EditProfileScreen() {
   const [newColor, setNewColor] = useState(avatarColor);
   const [saving, setSaving] = useState(false);
 
+  const usernameValid = newUsername.trim().length >= 2;
+  const bioProgress = newBio.length / BIO_MAX;
+  const bioNearLimit = newBio.length > BIO_WARN;
+
   const handleSave = async () => {
-    if (newUsername.trim().length < 2) {
+    if (!usernameValid) {
       Alert.alert('Error', 'Username must be at least 2 characters.');
       return;
     }
@@ -59,7 +67,10 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+      <View
+        className="flex-row items-center justify-between px-4 py-3"
+        style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
+      >
         <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
@@ -85,17 +96,16 @@ export default function EditProfileScreen() {
       </View>
 
       <ScrollView className="flex-1 px-4 pt-6" showsVerticalScrollIndicator={false}>
+        {/* Avatar preview with glow ring */}
         <Animated.View entering={animation(FadeInDown.delay(100).springify())} className="items-center mb-8">
-          <AnimatedPressable scaleValue={0.93} haptic="light">
-            <View
-              className="w-24 h-24 rounded-full items-center justify-center mb-4"
-              style={{ backgroundColor: newColor }}
-            >
-              <Text style={{ color: '#fff', fontSize: 36, fontWeight: '700' }}>
-                {(newDisplayName || newUsername || '?').charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          </AnimatedPressable>
+          <View style={{ marginBottom: 16 }}>
+            <ProfileAvatar
+              displayName={newDisplayName || newUsername || '?'}
+              avatarColor={newColor}
+              size={84}
+              showGlow
+            />
+          </View>
           <View className="flex-row gap-2.5 flex-wrap justify-center">
             {AVATAR_COLORS.map(color => (
               <AnimatedPressable
@@ -114,8 +124,19 @@ export default function EditProfileScreen() {
           </View>
         </Animated.View>
 
+        {/* Display Name */}
         <Animated.View entering={animation(FadeInDown.delay(200).springify())} className="mb-4">
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Display Name</Text>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: fontSizes.small,
+              fontWeight: '500',
+              marginBottom: 8,
+              marginLeft: 4,
+            }}
+          >
+            Display Name
+          </Text>
           <TextInput
             value={newDisplayName}
             onChangeText={setNewDisplayName}
@@ -124,8 +145,19 @@ export default function EditProfileScreen() {
           />
         </Animated.View>
 
+        {/* Username */}
         <Animated.View entering={animation(FadeInDown.delay(250).springify())} className="mb-4">
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Username</Text>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: fontSizes.small,
+              fontWeight: '500',
+              marginBottom: 8,
+              marginLeft: 4,
+            }}
+          >
+            Username
+          </Text>
           <TextInput
             value={newUsername}
             onChangeText={setNewUsername}
@@ -133,18 +165,61 @@ export default function EditProfileScreen() {
             autoCapitalize="none"
             maxLength={20}
           />
+          {newUsername.trim().length > 0 && (
+            <Text
+              style={{
+                fontSize: fontSizes.caption,
+                marginTop: 4,
+                marginLeft: 4,
+                color: usernameValid ? '#10B981' : colors.danger,
+              }}
+            >
+              {usernameValid ? 'Username looks good' : 'At least 2 characters required'}
+            </Text>
+          )}
         </Animated.View>
 
+        {/* Bio */}
         <Animated.View entering={animation(FadeInDown.delay(300).springify())} className="mb-4">
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Bio</Text>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: fontSizes.small,
+              fontWeight: '500',
+              marginBottom: 8,
+              marginLeft: 4,
+            }}
+          >
+            Bio
+          </Text>
           <TextInput
             value={newBio}
             onChangeText={setNewBio}
             placeholder="Tell people about yourself..."
-            maxLength={160}
+            maxLength={BIO_MAX}
             multiline
           />
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4, marginLeft: 4 }}>{newBio.length}/160</Text>
+          {/* Bio progress bar */}
+          <View style={{ height: 2, backgroundColor: colors.border, borderRadius: 1, marginTop: 8, marginHorizontal: 4 }}>
+            <View
+              style={{
+                height: 2,
+                borderRadius: 1,
+                width: `${Math.min(bioProgress * 100, 100)}%`,
+                backgroundColor: bioNearLimit ? colors.danger : colors.accent,
+              }}
+            />
+          </View>
+          <Text
+            style={{
+              color: bioNearLimit ? colors.danger : colors.textMuted,
+              fontSize: fontSizes.caption,
+              marginTop: 4,
+              marginLeft: 4,
+            }}
+          >
+            {newBio.length}/{BIO_MAX}
+          </Text>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
