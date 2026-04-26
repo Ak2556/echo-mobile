@@ -7,6 +7,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
+import { useCommandPalette } from '../../lib/commandPalette';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 
 const HIDDEN_ROUTES = new Set(['history']);
@@ -113,9 +114,14 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                     navigation.navigate(route.name);
                   }
                 }}
-                onLongPress={() =>
-                  navigation.emit({ type: 'tabLongPress', target: route.key })
-                }
+                onLongPress={() => {
+                  // Long-press the chat (Echo) tab anywhere = open AI command palette.
+                  if (route.name === 'chat') {
+                    useCommandPalette.getState().open();
+                    return;
+                  }
+                  navigation.emit({ type: 'tabLongPress', target: route.key });
+                }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isFocused }}
                 style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
