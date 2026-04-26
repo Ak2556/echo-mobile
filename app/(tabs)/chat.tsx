@@ -211,7 +211,7 @@ export default function ChatScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <Animated.View
-        entering={animation(FadeIn.duration(400))}
+        entering={animation(FadeIn.duration(80))}
         className="flex-row items-center justify-between px-4 py-3"
         style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
       >

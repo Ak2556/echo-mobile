@@ -88,7 +88,7 @@ export default function ThreadDetailScreen() {
       {/* Owner actions menu */}
       {showMenu && isOwner && (
         <Animated.View
-          entering={FadeIn.duration(180)}
+          entering={FadeIn.duration(80)}
           exiting={FadeOut.duration(120)}
           style={{
             position: 'absolute', top: 60, right: 16, zIndex: 50,

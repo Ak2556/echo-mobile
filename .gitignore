@@ -44,3 +44,4 @@ app-example
 
 # Claude Code local state
 .claude/
+supabase/.temp/

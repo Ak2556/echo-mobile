@@ -67,7 +67,7 @@ export default function NotificationsScreen() {
       </View>
 
       {filtered.length === 0 ? (
-        <Animated.View entering={animation(FadeIn.duration(300))} className="flex-1">
+        <Animated.View entering={animation(FadeIn.duration(80))} className="flex-1">
           <EmptyState
             icon={<Bell color={colors.accent} size={32} />}
             title={filter === 'unread' ? 'All caught up!' : 'No activity yet'}
