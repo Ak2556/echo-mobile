@@ -75,7 +75,7 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
   const router = useRouter();
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 50).springify().damping(14)} style={{ width: CARD }}>
+    <Animated.View entering={FadeInDown.delay(index * 20).springify().damping(22).stiffness(600)} style={{ width: CARD }}>
       <Pressable
         onPress={() => router.push(app.route as any)}
         style={({ pressed }) => ({

@@ -18,8 +18,8 @@ function Dot({ delay }: { delay: number }) {
       delay,
       withRepeat(
         withSequence(
-          withTiming(1, { duration: 400 }),
-          withTiming(0.4, { duration: 400 })
+          withTiming(1, { duration: 200 }),
+          withTiming(0.4, { duration: 200 })
         ),
         -1
       )
@@ -28,8 +28,8 @@ function Dot({ delay }: { delay: number }) {
       delay,
       withRepeat(
         withSequence(
-          withTiming(1, { duration: 400 }),
-          withTiming(0.3, { duration: 400 })
+          withTiming(1, { duration: 200 }),
+          withTiming(0.3, { duration: 200 })
         ),
         -1
       )
@@ -62,8 +62,8 @@ export function TypingIndicator() {
     <View className="flex-row justify-start px-4 my-2">
       <View className="bg-zinc-800 rounded-2xl rounded-tl-sm px-5 py-4 flex-row items-center">
         <Dot delay={0} />
-        <Dot delay={150} />
-        <Dot delay={300} />
+        <Dot delay={80} />
+        <Dot delay={160} />
       </View>
     </View>
   );

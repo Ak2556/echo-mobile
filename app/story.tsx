@@ -118,7 +118,7 @@ export default function StoryScreen() {
       </View>
 
       <Animated.View
-        entering={animation(FadeIn.duration(300))}
+        entering={animation(FadeIn.duration(80))}
         className="flex-1 mx-4 mb-6"
       >
         <View

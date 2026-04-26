@@ -31,11 +31,11 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
       scale.value = reduceAnimations
         ? 1
         : withSequence(
-            withSpring(1.3, { damping: 6, stiffness: 300 }),
-            withSpring(1, { damping: 10, stiffness: 300 })
+            withSpring(1.15, { damping: 22, stiffness: 600 }),
+            withSpring(1, { damping: 22, stiffness: 600 })
           );
     } else {
-      scale.value = reduceAnimations ? 0 : withSpring(0, { damping: 12, stiffness: 300 });
+      scale.value = reduceAnimations ? 0 : withSpring(0, { damping: 22, stiffness: 600 });
     }
   }, [count]);
 

@@ -80,7 +80,7 @@ export default function FollowersScreen() {
       </View>
 
       {loading ? (
-        <Animated.View entering={animation(FadeIn.duration(300))} className="pt-2">
+        <Animated.View entering={animation(FadeIn.duration(80))} className="pt-2">
           <UserRowSkeleton />
           <UserRowSkeleton />
           <UserRowSkeleton />

@@ -29,7 +29,7 @@ export function AnimatedPressable({
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(scaleValue, { damping: 15, stiffness: 400 });
+    scale.value = withSpring(scaleValue, { damping: 18, stiffness: 500 });
   };
 
   const handlePressOut = () => {

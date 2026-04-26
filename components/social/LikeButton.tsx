@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Text } from 'react-native';
 import { HeartStraight } from 'phosphor-react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -25,7 +25,6 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialLikes);
   const heartScale = useSharedValue(1);
-  const heartRotate = useSharedValue(0);
 
   useEffect(() => {
     setLiked(initialLiked);
@@ -34,29 +33,14 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
 
   const bump = (isLiking: boolean) => {
     if (isLiking) {
-      // Satisfying multi-stage bounce for liking
       heartScale.value = withSequence(
-        withSpring(0.6, { damping: 8, stiffness: 500 }),
-        withSpring(1.3, { damping: 6, stiffness: 300 }),
-        withSpring(0.95, { damping: 10, stiffness: 400 }),
-        withSpring(1, { damping: 12, stiffness: 300 })
+        withSpring(0.85, { damping: 20, stiffness: 600 }),
+        withSpring(1, { damping: 18, stiffness: 500 })
       );
-      heartRotate.value = withSequence(
-        withTiming(-0.15, { duration: 80 }),
-        withTiming(0.15, { duration: 80 }),
-        withSpring(0, { damping: 10, stiffness: 300 })
-      );
-      if (hapticEnabled) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
-      heartScale.value = withSequence(
-        withSpring(0.85, { damping: 12, stiffness: 400 }),
-        withSpring(1, { damping: 12, stiffness: 300 })
-      );
-      if (hapticEnabled) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
+      heartScale.value = withSpring(1, { damping: 18, stiffness: 500 });
+      if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
@@ -81,10 +65,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
   };
 
   const heartStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: heartScale.value },
-      { rotate: `${heartRotate.value}rad` },
-    ],
+    transform: [{ scale: heartScale.value }],
   }));
 
   return (
