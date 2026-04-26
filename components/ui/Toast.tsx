@@ -41,14 +41,14 @@ export function ToastProvider() {
 
   useEffect(() => {
     if (message) {
-      translateY.value = withSpring(0, { damping: 14, stiffness: 200 });
-      opacity.value = withTiming(1, { duration: 200 });
+      translateY.value = withSpring(0, { damping: 20, stiffness: 500 });
+      opacity.value = withTiming(1, { duration: 80 });
 
       // Auto-dismiss after 2s
       const timer = setTimeout(() => {
-        translateY.value = withSpring(-100, { damping: 14, stiffness: 200 });
-        opacity.value = withDelay(100, withTiming(0, { duration: 200 }));
-        setTimeout(dismissToast, 400);
+        translateY.value = withSpring(-100, { damping: 20, stiffness: 500 });
+        opacity.value = withDelay(60, withTiming(0, { duration: 80 }));
+        setTimeout(dismissToast, 200);
       }, 2000);
 
       return () => clearTimeout(timer);

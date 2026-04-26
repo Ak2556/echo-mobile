@@ -31,7 +31,7 @@ function ConversationCard({ conversation, index, onPress }: {
   const online = isUserOnline(conversation.userId);
 
   return (
-    <Animated.View entering={animation(SlideInRight.delay(index * 50).springify().damping(16))}>
+    <Animated.View entering={animation(FadeIn.delay(index * 20).duration(80))}>
       <AnimatedPressable onPress={onPress} className="flex-row items-center px-4 py-3.5" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border }} scaleValue={0.98} haptic="light">
         {showAvatars && (
           <View className="relative">

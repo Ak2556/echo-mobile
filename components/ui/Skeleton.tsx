@@ -22,7 +22,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 8, classN
 
   useEffect(() => {
     shimmer.value = withRepeat(
-      withTiming(1, { duration: 1200, easing: Easing.bezier(0.4, 0, 0.6, 1) }),
+      withTiming(1, { duration: 400, easing: Easing.bezier(0.4, 0, 0.6, 1) }),
       -1,
       true
     );

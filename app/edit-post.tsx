@@ -163,7 +163,7 @@ export default function EditPostScreen() {
           </Animated.View>
 
           {postType === 'text' && (
-            <Animated.View entering={animation(FadeIn.duration(180))}>
+            <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Prompt</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What did you ask Echo?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
@@ -181,7 +181,7 @@ export default function EditPostScreen() {
           )}
 
           {postType === 'photo' && (
-            <Animated.View entering={animation(FadeIn.duration(180))}>
+            <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Image URLs (up to 4)</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
                 <Link color={colors.textMuted} size={12} />
@@ -216,7 +216,7 @@ export default function EditPostScreen() {
           )}
 
           {postType === 'video' && (
-            <Animated.View entering={animation(FadeIn.duration(180))}>
+            <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Video URL</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
                 <Link color={colors.textMuted} size={12} />
@@ -239,7 +239,7 @@ export default function EditPostScreen() {
           )}
 
           {postType === 'poll' && (
-            <Animated.View entering={animation(FadeIn.duration(180))}>
+            <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 16 }]}>
                 <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder="Ask your community something…" placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />

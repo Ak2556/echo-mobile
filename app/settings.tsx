@@ -61,7 +61,7 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}
       >
         <Animated.View
-          entering={animation(FadeIn.duration(200))}
+          entering={animation(FadeIn.duration(80))}
           className="px-4 pb-10 pt-4"
           style={{
             backgroundColor: colors.surface,
@@ -132,7 +132,7 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}
       >
         <Animated.View
-          entering={animation(FadeIn.duration(200))}
+          entering={animation(FadeIn.duration(80))}
           className="px-4 pb-10 pt-4"
           style={{
             backgroundColor: colors.surface,
@@ -192,7 +192,7 @@ function ThemePicker({ value, onChange, onClose, theme }: {
         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}
       >
         <Animated.View
-          entering={animation(FadeIn.duration(200))}
+          entering={animation(FadeIn.duration(80))}
           className="px-4 pb-10 pt-4"
           style={{
             backgroundColor: colors.surface,

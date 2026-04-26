@@ -236,7 +236,7 @@ export default function CreatePostScreen() {
 
           {/* ── TEXT ── */}
           {postType === 'text' && (
-            <Animated.View entering={animation(FadeIn.duration(200))}>
+            <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Prompt</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What did you ask Echo?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
@@ -255,7 +255,7 @@ export default function CreatePostScreen() {
 
           {/* ── PHOTO ── */}
           {postType === 'photo' && (
-            <Animated.View entering={animation(FadeIn.duration(200))}>
+            <Animated.View entering={animation(FadeIn.duration(80))}>
               {/* Picker buttons */}
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                 <Pressable
@@ -320,7 +320,7 @@ export default function CreatePostScreen() {
 
           {/* ── VIDEO ── */}
           {postType === 'video' && (
-            <Animated.View entering={animation(FadeIn.duration(200))}>
+            <Animated.View entering={animation(FadeIn.duration(80))}>
               {/* Picker buttons */}
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                 <Pressable
@@ -369,7 +369,7 @@ export default function CreatePostScreen() {
 
           {/* ── POLL ── */}
           {postType === 'poll' && (
-            <Animated.View entering={animation(FadeIn.duration(200))}>
+            <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 16 }]}>
                 <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder="Ask your community something…" placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />

@@ -4,6 +4,7 @@ import { Linking, View, Text } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundaryProps } from 'expo-router';
 import { ToastProvider } from '../components/ui/Toast';
+import { CommandPalette } from '../components/ai/CommandPalette';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import '../global.css';
@@ -136,6 +137,7 @@ export default function RootLayout() {
           <Stack.Screen name="mini-apps/bmi" options={{ presentation: 'card' }} />
         </Stack>
         <ToastProvider />
+        <CommandPalette />
       </View>
     </QueryClientProvider>
   );
