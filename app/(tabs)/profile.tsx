@@ -18,7 +18,7 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { PostsGrid } from '../../components/profile/PostsGrid';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
+import { useTheme, ANIM } from '../../lib/theme';
 import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
 
@@ -77,11 +77,14 @@ export default function ProfileScreen() {
     router.push(`/thread/${item.id}`);
   };
 
+  const gradientEnd = colors.isDark ? colors.bgPure : colors.bg;
+  const gradientAlpha = colors.isDark ? '70' : '28';
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#000' }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Full-screen gradient background */}
       <LinearGradient
-        colors={[`${avatarColor || colors.accent}70`, '#0a0a0f', '#000']}
+        colors={[`${avatarColor || colors.accent}${gradientAlpha}`, colors.bg, gradientEnd] as const}
         locations={[0, 0.42, 1]}
         start={{ x: 0.1, y: 0 }}
         end={{ x: 0.9, y: 1 }}
@@ -104,7 +107,7 @@ export default function ProfileScreen() {
             justifyContent: 'center',
           }}
         >
-          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '600' }}>
+          <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>
             @{username || 'user'}
           </Text>
           <AnimatedPressable
@@ -112,17 +115,17 @@ export default function ProfileScreen() {
             style={{
               position: 'absolute',
               right: 16,
-              backgroundColor: 'rgba(255,255,255,0.11)',
+              backgroundColor: colors.surfaceHover,
               borderRadius: 20,
               paddingHorizontal: 14,
               paddingVertical: 6,
               borderWidth: StyleSheet.hairlineWidth,
-              borderColor: 'rgba(255,255,255,0.22)',
+              borderColor: colors.border,
             }}
             scaleValue={0.93}
             haptic="light"
           >
-            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>Edit Profile</Text>
+            <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>Edit Profile</Text>
           </AnimatedPressable>
         </View>
 
@@ -189,7 +192,7 @@ export default function ProfileScreen() {
         >
           <Text
             style={{
-              color: '#fff',
+              color: colors.text,
               fontSize: 26,
               fontWeight: '800',
               letterSpacing: -0.8,
@@ -220,7 +223,7 @@ export default function ProfileScreen() {
         <Animated.View
           entering={animation(FadeIn.delay(100).duration(80))}
           style={{
-            backgroundColor: '#000',
+            backgroundColor: colors.bg,
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
           }}
@@ -328,7 +331,7 @@ export default function ProfileScreen() {
         >
           <Text
             style={{
-              color: 'rgba(255,255,255,0.35)',
+              color: 'colors.textMuted',
               fontSize: 11,
               fontWeight: '600',
               textTransform: 'uppercase',
@@ -359,22 +362,22 @@ export default function ProfileScreen() {
                         width: 34,
                         height: 34,
                         borderRadius: 9,
-                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        backgroundColor: colors.surfaceHover,
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: 12,
                       }}
                     >
-                      <Icon color="rgba(255,255,255,0.65)" size={17} />
+                      <Icon color={colors.textSecondary} size={17} />
                     </View>
-                    <Text style={{ color: '#fff', fontSize: 15, flex: 1 }}>{label}</Text>
-                    <CaretRight color="rgba(255,255,255,0.3)" size={16} />
+                    <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>{label}</Text>
+                    <CaretRight color={colors.textMuted} size={16} />
                   </AnimatedPressable>
                   {i < SETTINGS_ROWS.length - 1 && (
                     <View
                       style={{
                         height: StyleSheet.hairlineWidth,
-                        backgroundColor: 'rgba(255,255,255,0.07)',
+                        backgroundColor: colors.border,
                       }}
                     />
                   )}
@@ -386,7 +389,7 @@ export default function ProfileScreen() {
           {/* Preferences */}
           <Text
             style={{
-              color: 'rgba(255,255,255,0.35)',
+              color: 'colors.textMuted',
               fontSize: 11,
               fontWeight: '600',
               textTransform: 'uppercase',
@@ -405,15 +408,15 @@ export default function ProfileScreen() {
                     width: 34,
                     height: 34,
                     borderRadius: 9,
-                    backgroundColor: 'rgba(255,255,255,0.08)',
+                    backgroundColor: colors.surfaceHover,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: 12,
                   }}
                 >
-                  <Bell color="rgba(255,255,255,0.65)" size={17} />
+                  <Bell color={colors.textSecondary} size={17} />
                 </View>
-                <Text style={{ color: '#fff', fontSize: 15, flex: 1 }}>Notifications</Text>
+                <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>Notifications</Text>
                 <Switch
                   value={notificationsEnabled}
                   onValueChange={setNotificationsEnabled}

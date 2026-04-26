@@ -162,8 +162,8 @@ interface AppState {
   activityStatus: boolean; setActivityStatus: (v: boolean) => void;
 
   // Appearance
-  theme: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender';
-  setTheme: (v: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender') => void;
+  theme: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic';
+  setTheme: (v: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic') => void;
   fontSize: 'small' | 'medium' | 'large'; setFontSize: (v: 'small' | 'medium' | 'large') => void;
   compactFeed: boolean; setCompactFeed: (v: boolean) => void;
   reduceAnimations: boolean; setReduceAnimations: (v: boolean) => void;
@@ -554,7 +554,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setActivityStatus: (v) => { persistSet('activityStatus', v); set({ activityStatus: v }); },
 
   // Appearance
-  theme: persistGet<'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender'>('theme', 'midnight'),
+  theme: persistGet<'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic'>('theme', 'midnight'),
   setTheme: (v) => { persistSet('theme', v); set({ theme: v }); },
   fontSize: persistGet<'small' | 'medium' | 'large'>('fontSize', 'medium'),
   setFontSize: (v) => { persistSet('fontSize', v); set({ fontSize: v }); },

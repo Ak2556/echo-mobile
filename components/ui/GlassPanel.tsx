@@ -31,7 +31,7 @@ export function GlassPanel({
   if (Platform.OS === 'ios' && !reduceAnimations) {
     return (
       <View style={outerStyle}>
-        <BlurView intensity={intensity} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={intensity} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View
           style={[
             StyleSheet.absoluteFill,

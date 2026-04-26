@@ -181,7 +181,7 @@ function ThemePicker({ value, onChange, onClose, theme }: {
   theme: ReturnType<typeof useTheme>;
 }) {
   const { colors, radius, fontSizes, animation } = theme;
-  const themeOrder: ThemeName[] = ['midnight', 'amoled', 'ocean', 'sunset', 'forest', 'lavender'];
+  const themeOrder: ThemeName[] = ['midnight', 'amoled', 'ocean', 'sunset', 'forest', 'lavender', 'light', 'sepia', 'arctic'];
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose}>
