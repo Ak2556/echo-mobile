@@ -155,7 +155,7 @@ export function CommandPalette() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1 }}
         >
-          <Pressable onPress={(e) => e.stopPropagation()} style={{ marginTop: 80, marginHorizontal: 16 }}>
+          <Pressable onPress={(e) => e.stopPropagation()} style={{ marginTop: 80, marginHorizontal: 16, marginBottom: 120 }}>
             <Animated.View
               entering={FadeIn.duration(120)}
               exiting={FadeOut.duration(80)}

@@ -209,7 +209,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <Animated.View
         entering={animation(FadeIn.duration(400))}
         className="flex-row items-center justify-between px-4 py-3"
@@ -271,12 +271,14 @@ export default function ChatScreen() {
                 <ToolCallCard item={item.tool} onConfirm={handleConfirm} onReject={handleReject} />
               )
             }
-            contentContainerStyle={{ paddingVertical: 16 }}
+            contentContainerStyle={{ paddingTop: 16, paddingBottom: 8 }}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           />
           {isStreaming && showTyping && <TypingIndicator />}
         </View>
-        <ChatInput onSend={handleSend} isLoading={isStreaming} />
+        <View style={{ paddingBottom: 110 }}>
+          <ChatInput onSend={handleSend} isLoading={isStreaming} />
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
