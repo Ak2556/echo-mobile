@@ -157,7 +157,7 @@ export default function DiscoverScreen() {
       </View>
 
       {isLoading ? (
-        <Animated.View entering={animation(FadeIn.duration(300))} style={{ flex: 1 }}>
+        <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1 }}>
           <SectionHeader label="Your Stories" />
           <StoryCircles />
           <SectionHeader label="Trending" sub="Live" />

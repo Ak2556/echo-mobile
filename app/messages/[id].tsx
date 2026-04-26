@@ -18,8 +18,8 @@ function DMBubble({ message, isMe, showReadReceipt }: { message: any; isMe: bool
   const entering = reduceAnimations
     ? undefined
     : isMe
-      ? SlideInRight.springify().damping(16).stiffness(140)
-      : SlideInLeft.springify().damping(16).stiffness(140);
+      ? FadeIn.duration(60)
+      : FadeIn.duration(60);
 
   return (
     <Animated.View

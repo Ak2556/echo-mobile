@@ -48,7 +48,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
       </View>
 
       {showMenu && (
-        <Animated.View entering={animation(FadeIn.duration(200))} exiting={FadeOut.duration(150)} className="absolute top-12 right-4 z-50 overflow-hidden" style={{ backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }}>
+        <Animated.View entering={animation(FadeIn.duration(80))} exiting={FadeOut.duration(150)} className="absolute top-12 right-4 z-50 overflow-hidden" style={{ backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }}>
           <AnimatedPressable onPress={() => { setShowMenu(false); onReport(); }} className="flex-row items-center px-4 py-3 gap-3" scaleValue={0.97} haptic="medium">
             <Flag color="#F59E0B" size={16} />
             <Text style={{ color: colors.text, fontSize: 14 }}>Report</Text>

@@ -21,9 +21,8 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
     if (text.trim() && !isLoading) {
       // Punch animation on send
       sendScale.value = withSequence(
-        withSpring(0.75, { damping: 8, stiffness: 500 }),
-        withSpring(1.1, { damping: 8, stiffness: 300 }),
-        withSpring(1, { damping: 12, stiffness: 300 })
+        withSpring(0.88, { damping: 18, stiffness: 600 }),
+        withSpring(1, { damping: 18, stiffness: 500 })
       );
       if (hapticEnabled) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -34,7 +33,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
   };
 
   const buttonStyle = useAnimatedStyle(() => ({
-    opacity: withSpring(text.trim() ? 1 : 0.4, { damping: 15, stiffness: 200 }),
+    opacity: withSpring(text.trim() ? 1 : 0.4, { damping: 20, stiffness: 500 }),
     transform: [{ scale: sendScale.value }],
   }));
 

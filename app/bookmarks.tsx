@@ -41,7 +41,7 @@ export default function BookmarksScreen() {
       </View>
 
       {loading ? (
-        <Animated.View entering={animation(FadeIn.duration(300))} className="pt-2">
+        <Animated.View entering={animation(FadeIn.duration(80))} className="pt-2">
           <FeedCardSkeleton />
           <FeedCardSkeleton />
           <FeedCardSkeleton />

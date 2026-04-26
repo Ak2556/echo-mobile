@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import Animated, { SlideInRight, SlideInLeft, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useAppStore } from '../../store/useAppStore';
 
 export interface Message {
@@ -21,11 +21,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   const textSize = FONT_SIZES[fontSize];
 
-  const entering = reduceAnimations
-    ? FadeIn.duration(150)
-    : isUser
-      ? SlideInRight.springify().damping(16).stiffness(140)
-      : SlideInLeft.springify().damping(16).stiffness(140);
+  const entering = FadeIn.duration(reduceAnimations ? 0 : 60);
 
   // Style variations based on chatBubbleStyle
   const bubbleClasses = (() => {

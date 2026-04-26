@@ -78,7 +78,7 @@ export default function EchoesScreen() {
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       {/* Floating header */}
       <Animated.View
-        entering={FadeIn.duration(300)}
+        entering={FadeIn.duration(80)}
         pointerEvents="none"
         style={{
           position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,

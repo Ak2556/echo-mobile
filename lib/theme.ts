@@ -1,5 +1,15 @@
 import { useAppStore } from '../store/useAppStore';
 
+// Global animation speed constants. Import ANIM in components instead of
+// hardcoding durations or spring configs.
+export const ANIM = {
+  duration: 80,
+  durationFast: 60,
+  springSnappy: { damping: 22, stiffness: 600, mass: 0.8 },
+  springPress:  { damping: 18, stiffness: 500 },
+  springBadge:  { damping: 22, stiffness: 600 },
+} as const;
+
 // ── Theme Definitions ──
 
 export type ThemeName = 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender';
@@ -209,6 +219,9 @@ export function useTheme() {
   const animation = <T>(anim: T): T | undefined => {
     return reduceAnimations ? undefined : anim;
   };
+
+  // Fast animation presets — use these instead of inline values.
+  // All durations ≤80ms; springs settle in <120ms.
 
   const switchTrack = { false: colors.surfaceHover, true: colors.accent };
 

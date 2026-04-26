@@ -54,7 +54,7 @@ export default function SearchScreen() {
       </View>
 
       {isSearching ? (
-        <Animated.View entering={FadeIn.duration(200)} className="flex-1">
+        <Animated.View entering={FadeIn.duration(80)} className="flex-1">
           {/* Search tabs */}
           <View className="flex-row px-4 mb-3 gap-2">
             {(['top', 'users', 'tags'] as const).map(tab => (
