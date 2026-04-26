@@ -1,29 +1,38 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, Switch, Pressable, StyleSheet, Dimensions } from 'react-native';
-import { Image } from 'expo-image';
+import React, { useState, useMemo } from 'react';
+import {
+  View, Text, ScrollView, Switch, StyleSheet, Dimensions, Pressable,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated, {
+  FadeInUp, FadeIn,
+  useSharedValue, useAnimatedStyle, withSpring,
+} from 'react-native-reanimated';
 import {
-  Gear, BookmarkSimple, ChatTeardropDots, CaretRight, Bell,
-  Info, SignOut, Shield, PencilSimple, Users, Envelope, Lightning,
+  Gear, BookmarkSimple, Envelope, Bell, SignOut, PencilSimple,
+  Users, CaretRight, CalendarBlank, Images,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
+import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
+import { PostsGrid } from '../../components/profile/PostsGrid';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { signOut } from '../../lib/auth';
+import { FeedItem } from '../../types';
 
 const { width: SW } = Dimensions.get('window');
 
 const SETTINGS_ROWS = [
-  { key: 'edit', Icon: PencilSimple, label: 'Edit Profile', route: '/edit-profile' },
-  { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
-  { key: 'messages', Icon: Envelope, label: 'Messages', route: '/messages' },
-  { key: 'connections', Icon: Users, label: 'Connections', route: null },
-  { key: 'settings', Icon: Gear, label: 'Settings', route: '/settings' },
+  { key: 'edit',        Icon: PencilSimple,   label: 'Edit Profile',  route: '/edit-profile' },
+  { key: 'bookmarks',   Icon: BookmarkSimple, label: 'Bookmarks',     route: '/bookmarks' },
+  { key: 'messages',    Icon: Envelope,       label: 'Messages',      route: '/messages' },
+  { key: 'connections', Icon: Users,          label: 'Connections',   route: null },
+  { key: 'settings',    Icon: Gear,           label: 'Settings',      route: '/settings' },
 ];
+
+const TAB_WIDTH = SW / 2;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -32,31 +41,40 @@ export default function ProfileScreen() {
   const {
     userId,
     username, displayName, bio, avatarColor,
-    sessions, bookmarkedIds, publishedEchoes,
-    hapticEnabled, setHapticEnabled,
+    publishedEchoes,
     notificationsEnabled, setNotificationsEnabled,
+    getFollowers, getFollowing,
   } = useAppStore();
 
-  const savedCount = bookmarkedIds.length;
-  const displayLabel = displayName || username || 'User';
+  const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
+  const tabIndicatorX = useSharedValue(0);
 
-  // Extract unique hashtags from user's echoes
+  const displayLabel = displayName || username || 'User';
+  const followers = getFollowers();
+  const following = getFollowing();
+
   const interestTags = useMemo(() => {
     const tags = publishedEchoes.flatMap(e => e.hashtags ?? []);
-    return [...new Set(tags)].slice(0, 6);
+    return [...new Set(tags)].slice(0, 8);
   }, [publishedEchoes]);
 
-  // Extract media images from user's echoes
-  const mediaImages = useMemo(
-    () => publishedEchoes.flatMap(e => e.mediaUris ?? []).slice(0, 5),
-    [publishedEchoes]
-  );
+  const joinedYear = useMemo(() => new Date().getFullYear(), []);
 
-  // Most recent published echo for activity card
-  const recentEcho = publishedEchoes[0];
+  const handleTabPress = (tab: 'posts' | 'about', index: number) => {
+    setActiveTab(tab);
+    tabIndicatorX.value = withSpring(index * TAB_WIDTH, ANIM.springSnappy);
+  };
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: tabIndicatorX.value }],
+  }));
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handlePressEcho = (item: FeedItem) => {
+    router.push(`/thread/${item.id}`);
   };
 
   return (
@@ -70,27 +88,12 @@ export default function ProfileScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Large initial watermark */}
-      <Text
-        style={{
-          position: 'absolute',
-          top: -30,
-          right: -24,
-          fontSize: 300,
-          fontWeight: '900',
-          color: 'rgba(255,255,255,0.025)',
-          lineHeight: 300,
-        }}
-        numberOfLines={1}
-      >
-        {(username || '?').charAt(0).toUpperCase()}
-      </Text>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
+        stickyHeaderIndices={[3]}
       >
-        {/* Nav row */}
+        {/* 0: Nav Bar */}
         <View
           style={{
             paddingTop: insets.top + 10,
@@ -104,7 +107,7 @@ export default function ProfileScreen() {
           <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '600' }}>
             @{username || 'user'}
           </Text>
-          <Pressable
+          <AnimatedPressable
             onPress={() => router.push('/edit-profile')}
             style={{
               position: 'absolute',
@@ -116,171 +119,212 @@ export default function ProfileScreen() {
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: 'rgba(255,255,255,0.22)',
             }}
+            scaleValue={0.93}
+            haptic="light"
           >
             <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>Edit Profile</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
 
-        {/* Large display name */}
+        {/* 1: Hero Row — avatar + social stats */}
         <Animated.View
-          entering={animation(FadeInUp.delay(60).springify())}
-          style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 6 }}
+          entering={animation(FadeInUp.delay(40).springify())}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 20,
+            paddingTop: 20,
+            paddingBottom: 16,
+            gap: 20,
+          }}
+        >
+          <ProfileAvatar
+            displayName={displayLabel}
+            avatarColor={avatarColor || colors.accent}
+            size={78}
+          />
+
+          {/* Stats */}
+          <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-around' }}>
+            {/* Posts */}
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.8 }}>
+                {publishedEchoes.length}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>Posts</Text>
+            </View>
+
+            {/* Followers */}
+            <AnimatedPressable
+              onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })}
+              style={{ alignItems: 'center' }}
+              scaleValue={0.93}
+              haptic="light"
+            >
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.8 }}>
+                {followers.length}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>Followers</Text>
+            </AnimatedPressable>
+
+            {/* Following */}
+            <AnimatedPressable
+              onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'following' } })}
+              style={{ alignItems: 'center' }}
+              scaleValue={0.93}
+              haptic="light"
+            >
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.8 }}>
+                {following.length}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>Following</Text>
+            </AnimatedPressable>
+          </View>
+        </Animated.View>
+
+        {/* 2: Identity Block */}
+        <Animated.View
+          entering={animation(FadeInUp.delay(80).springify())}
+          style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}
         >
           <Text
             style={{
               color: '#fff',
-              fontSize: 46,
-              fontWeight: '900',
-              letterSpacing: -1.8,
-              lineHeight: 52,
+              fontSize: 26,
+              fontWeight: '800',
+              letterSpacing: -0.8,
             }}
-            numberOfLines={2}
+            numberOfLines={1}
           >
             {displayLabel}
           </Text>
-          <Text style={{ color: 'rgba(255,255,255,0.48)', fontSize: 14, marginTop: 6 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 2 }}>
             @{username || 'user'}
           </Text>
-          {(bio || 'Echo member — sharing thoughts and experiences.') ? (
+          {bio ? (
             <Text
               style={{
-                color: 'rgba(255,255,255,0.68)',
-                fontSize: 13,
-                lineHeight: 19,
-                marginTop: 10,
+                color: colors.textSecondary,
+                fontSize: 14,
+                lineHeight: 21,
+                marginTop: 8,
               }}
               numberOfLines={3}
             >
-              {bio || 'Echo member — sharing thoughts and experiences with the community.'}
+              {bio}
             </Text>
           ) : null}
         </Animated.View>
 
-        {/* Stats row */}
+        {/* 3: Tab Strip (STICKY) */}
         <Animated.View
-          entering={animation(FadeInUp.delay(120).springify())}
+          entering={animation(FadeIn.delay(100).duration(80))}
           style={{
-            flexDirection: 'row',
-            paddingHorizontal: 16,
-            gap: 28,
-            marginTop: 20,
-            marginBottom: 20,
+            backgroundColor: '#000',
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
           }}
         >
-          {[
-            { value: sessions.length, label: 'Chats' },
-            { value: publishedEchoes.length, label: 'Echoes' },
-            { value: savedCount, label: 'Saved' },
-          ].map(stat => (
-            <View key={stat.label}>
-              <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', lineHeight: 30 }}>
-                {stat.value}
-              </Text>
-              <Text style={{ color: 'rgba(255,255,255,0.48)', fontSize: 12, marginTop: 2 }}>
-                {stat.label}
-              </Text>
-            </View>
-          ))}
-        </Animated.View>
-
-        {/* Interest tags */}
-        {interestTags.length > 0 && (
-          <Animated.View
-            entering={animation(FadeInUp.delay(160).springify())}
-            style={{
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              paddingHorizontal: 16,
-              gap: 8,
-              marginBottom: 24,
-            }}
-          >
-            {interestTags.map(tag => (
-              <View
-                key={tag}
+          <View style={{ flexDirection: 'row' }}>
+            {(['posts', 'about'] as const).map((tab, i) => (
+              <Pressable
+                key={tab}
+                onPress={() => handleTabPress(tab, i)}
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.09)',
-                  borderRadius: 20,
-                  paddingHorizontal: 13,
-                  paddingVertical: 5,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: 'rgba(255,255,255,0.18)',
+                  flex: 1,
+                  height: 44,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12, fontWeight: '500' }}>
-                  @{tag}
-                </Text>
-              </View>
-            ))}
-          </Animated.View>
-        )}
-
-        {/* Image grid */}
-        {mediaImages.length > 0 && (
-          <Animated.View
-            entering={animation(FadeInUp.delay(200).springify())}
-            style={{ marginBottom: 26 }}
-          >
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}
-            >
-              {mediaImages.map((uri, i) => (
-                <View
-                  key={i}
-                  style={{ width: 88, height: 88, borderRadius: 14, overflow: 'hidden' }}
-                >
-                  <Image source={{ uri }} style={{ flex: 1 }} contentFit="cover" />
-                </View>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        )}
-
-        {/* Recent echo card */}
-        {recentEcho && (
-          <Animated.View
-            entering={animation(FadeInUp.delay(240).springify())}
-            style={{ paddingHorizontal: 16, marginBottom: 28 }}
-          >
-            <GlassPanel borderRadius={18} intensity={50}>
-              <View style={{ padding: 16, flexDirection: 'row', gap: 12 }}>
-                <View
+                <Text
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: avatarColor || colors.accent,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    fontSize: 14,
+                    fontWeight: activeTab === tab ? '700' : '500',
+                    color: activeTab === tab ? colors.text : colors.textMuted,
+                    textTransform: 'capitalize',
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
-                    {(username || '?').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{ color: 'rgba(255,255,255,0.82)', fontSize: 13, lineHeight: 19 }}
-                    numberOfLines={3}
-                  >
-                    {recentEcho.response || recentEcho.prompt}
-                  </Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 8 }}>
-                    {username || 'you'} · @{username || 'user'}
-                  </Text>
-                </View>
-              </View>
-            </GlassPanel>
-          </Animated.View>
-        )}
+                  {tab}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          {/* Sliding indicator */}
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                bottom: 0,
+                width: TAB_WIDTH,
+                height: 2,
+                backgroundColor: colors.accent,
+                borderRadius: 1,
+              },
+              indicatorStyle,
+            ]}
+          />
+        </Animated.View>
 
-        {/* Settings */}
+        {/* 4: Tab Content */}
+        <View>
+          {activeTab === 'posts' ? (
+            <PostsGrid
+              echoes={publishedEchoes}
+              onPressEcho={handlePressEcho}
+              avatarColor={avatarColor || colors.accent}
+            />
+          ) : (
+            <View style={{ padding: 16, gap: 12 }}>
+              {/* Full bio */}
+              <GlassPanel borderRadius={radius.card} intensity={40}>
+                <View style={{ padding: 16 }}>
+                  <Text style={{ color: colors.text, fontSize: 15, lineHeight: 23 }}>
+                    {bio || 'Echo member — sharing thoughts and experiences with the community.'}
+                  </Text>
+                </View>
+              </GlassPanel>
+
+              {/* Interest tags */}
+              {interestTags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {interestTags.map(tag => (
+                    <View
+                      key={tag}
+                      style={{
+                        backgroundColor: colors.accentMuted,
+                        borderRadius: 20,
+                        paddingHorizontal: 13,
+                        paddingVertical: 5,
+                        borderWidth: StyleSheet.hairlineWidth,
+                        borderColor: colors.accent + '44',
+                      }}
+                    >
+                      <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '500' }}>
+                        #{tag}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Joined row */}
+              <GlassPanel borderRadius={radius.card} intensity={30}>
+                <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <CalendarBlank color={colors.textMuted} size={18} />
+                  <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
+                    Joined Echo {joinedYear}
+                  </Text>
+                </View>
+              </GlassPanel>
+            </View>
+          )}
+        </View>
+
+        {/* 5: Account Section */}
         <Animated.View
-          entering={animation(FadeInUp.delay(280).springify())}
-          style={{ paddingHorizontal: 16 }}
+          entering={animation(FadeInUp.delay(160).springify())}
+          style={{ paddingHorizontal: 16, marginTop: 24 }}
         >
           <Text
             style={{
@@ -328,7 +372,10 @@ export default function ProfileScreen() {
                   </AnimatedPressable>
                   {i < SETTINGS_ROWS.length - 1 && (
                     <View
-                      style={{ height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.07)' }}
+                      style={{
+                        height: StyleSheet.hairlineWidth,
+                        backgroundColor: 'rgba(255,255,255,0.07)',
+                      }}
                     />
                   )}
                 </React.Fragment>
