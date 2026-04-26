@@ -3,108 +3,205 @@ import { View, Text, KeyboardAvoidingView, Platform, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { MessageList } from '../../components/ai/MessageList';
+import { FlashList } from '@shopify/flash-list';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MessageBubble, Message } from '../../components/ai/MessageBubble';
 import { ChatInput } from '../../components/ai/ChatInput';
-import { Message } from '../../components/ai/MessageBubble';
+import { ToolCallCard, ToolCallItem } from '../../components/ai/ToolCallCard';
 import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useChatStream } from '../../hooks/queries/useChatStream';
+import { streamEchoAI } from '../../lib/api';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, Clock } from 'phosphor-react-native';
 
+const CONVERSATION_KEY = 'echo-ai/last-conversation-id';
+
+type ChatItem =
+  | { kind: 'text'; message: Message }
+  | { kind: 'tool'; tool: ToolCallItem };
+
 export default function ChatScreen() {
   const router = useRouter();
   const { colors, animation } = useTheme();
-  const {
-    currentSessionId, createSession, setCurrentSessionId,
-    getMessages, addMessage, updateMessage,
-    updateSessionLastMessage, updateSessionTitle,
-  } = useAppStore();
+  const showTyping = useAppStore(s => s.showTypingIndicator);
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const sessionIdRef = useRef(currentSessionId);
+  const [items, setItems] = useState<ChatItem[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const conversationIdRef = useRef<string | null>(null);
+  const listRef = useRef<any>(null);
 
+  // Restore last conversation id on mount.
   useEffect(() => {
-    if (!currentSessionId) {
-      const id = createSession();
-      sessionIdRef.current = id;
-    } else {
-      sessionIdRef.current = currentSessionId;
-      const existing = getMessages(currentSessionId);
-      if (existing.length > 0) {
-        setMessages(existing.map(m => ({ id: m.id, role: m.role, content: m.content })));
+    AsyncStorage.getItem(CONVERSATION_KEY).then(id => {
+      if (id) {
+        setConversationId(id);
+        conversationIdRef.current = id;
       }
-    }
-  }, [currentSessionId]);
+    });
+  }, []);
 
   useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([{ id: 'welcome', role: 'assistant', content: 'Hello! I\'m Echo. How can I help you today?' }]);
+    if (items.length === 0) {
+      setItems([
+        {
+          kind: 'text',
+          message: {
+            id: 'welcome',
+            role: 'assistant',
+            content: "Hello! I'm Echo. I can post for you, search the feed, follow people, edit your profile — just ask.",
+          },
+        },
+      ]);
     }
   }, []);
 
-  const chatMutation = useChatStream();
+  const setConvId = (id: string) => {
+    setConversationId(id);
+    conversationIdRef.current = id;
+    AsyncStorage.setItem(CONVERSATION_KEY, id).catch(() => {});
+  };
 
-  const handleSend = useCallback((text: string) => {
-    const sid = sessionIdRef.current || currentSessionId;
-    if (!sid) return;
-
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text };
-    const aiId = (Date.now() + 1).toString();
-
-    setMessages(prev => [...prev.filter(m => m.id !== 'welcome'), userMsg]);
-    setIsTyping(true);
-
-    addMessage(sid, { id: userMsg.id, role: 'user', content: text, createdAt: new Date().toISOString() });
-
-    const currentMsgs = getMessages(sid);
-    if (currentMsgs.length <= 1) {
-      updateSessionTitle(sid, text.slice(0, 40) + (text.length > 40 ? '...' : ''));
-    }
-
-    chatMutation.mutate({
-      message: text,
-      onChunk: (chunk: string) => {
-        setIsTyping(false);
-        setMessages(prev => {
-          const existing = prev.find(m => m.id === aiId);
-          if (existing) {
-            return prev.map(m => m.id === aiId ? { ...m, content: chunk } : m);
-          }
-          return [...prev, { id: aiId, role: 'assistant' as const, content: chunk }];
-        });
+  const upsertText = (id: string, role: 'user' | 'assistant', delta: string) => {
+    setItems(prev => {
+      const idx = prev.findIndex(
+        i => i.kind === 'text' && i.message.id === id,
+      );
+      if (idx >= 0) {
+        const next = prev.slice();
+        const existing = next[idx] as Extract<ChatItem, { kind: 'text' }>;
+        next[idx] = {
+          kind: 'text',
+          message: { ...existing.message, content: existing.message.content + delta },
+        };
+        return next;
       }
-    }, {
-      onSuccess: (result: any) => {
-        setIsTyping(false);
-        const finalContent = result?.content || 'Response received.';
-        addMessage(sid, { id: aiId, role: 'assistant', content: finalContent, createdAt: new Date().toISOString() });
-        updateSessionLastMessage(sid, finalContent.slice(0, 60), getMessages(sid).length);
-      },
-      onError: () => {
-        setIsTyping(false);
-        setMessages(prev => [...prev, { id: aiId, role: 'assistant', content: 'Sorry, I couldn\'t connect to the server. Please try again.' }]);
-      }
+      return [
+        ...prev.filter(i => !(i.kind === 'text' && i.message.id === 'welcome')),
+        { kind: 'text', message: { id, role, content: delta } },
+      ];
     });
-  }, [currentSessionId]);
+  };
+
+  const upsertTool = (tool: ToolCallItem) => {
+    setItems(prev => {
+      const idx = prev.findIndex(i => i.kind === 'tool' && i.tool.id === tool.id);
+      if (idx >= 0) {
+        const next = prev.slice();
+        next[idx] = { kind: 'tool', tool };
+        return next;
+      }
+      return [...prev, { kind: 'tool', tool }];
+    });
+  };
+
+  const runStream = useCallback(
+    async (opts: Parameters<typeof streamEchoAI>[0]) => {
+      const assistantId = `a-${Date.now()}`;
+      setIsStreaming(true);
+      try {
+        await streamEchoAI({
+          ...opts,
+          onEvent: (e) => {
+            if (e.type === 'conversation') {
+              setConvId(e.id);
+            } else if (e.type === 'text_delta') {
+              upsertText(assistantId, 'assistant', e.delta);
+            } else if (e.type === 'tool_call_pending') {
+              upsertTool({
+                id: e.id,
+                name: e.name,
+                preview: e.preview,
+                args: e.args,
+                status: 'pending_confirm',
+              });
+            } else if (e.type === 'tool_result') {
+              upsertTool({
+                id: e.id,
+                name: e.name,
+                preview: '',
+                args: undefined,
+                status: e.ok ? 'ok' : 'error',
+                resultSummary: summarizeResult(e.name, e.result),
+                errorMessage: e.error,
+              });
+            }
+            // forward to caller's onEvent if they passed one
+            opts.onEvent?.(e);
+          },
+        });
+      } catch (err: any) {
+        upsertText(`err-${Date.now()}`, 'assistant', `Error: ${err?.message ?? 'unknown'}`);
+      } finally {
+        setIsStreaming(false);
+      }
+    },
+    [],
+  );
+
+  const handleSend = useCallback(
+    (text: string) => {
+      const userId = `u-${Date.now()}`;
+      setItems(prev => [
+        ...prev.filter(i => !(i.kind === 'text' && i.message.id === 'welcome')),
+        { kind: 'text', message: { id: userId, role: 'user', content: text } },
+      ]);
+      runStream({
+        message: text,
+        conversationId: conversationIdRef.current ?? undefined,
+        onEvent: () => {},
+      });
+    },
+    [runStream],
+  );
+
+  const handleConfirm = useCallback(
+    (tool: ToolCallItem) => {
+      // Mark as running locally while server executes.
+      upsertTool({ ...tool, status: 'running' });
+      runStream({
+        conversationId: conversationIdRef.current ?? undefined,
+        confirm: { tool_call_id: tool.id, tool_name: tool.name, args: tool.args, approve: true },
+        onEvent: () => {},
+      });
+    },
+    [runStream],
+  );
+
+  const handleReject = useCallback(
+    (tool: ToolCallItem) => {
+      upsertTool({ ...tool, status: 'rejected' });
+      runStream({
+        conversationId: conversationIdRef.current ?? undefined,
+        confirm: { tool_call_id: tool.id, tool_name: tool.name, args: tool.args, approve: false },
+        onEvent: () => {},
+      });
+    },
+    [runStream],
+  );
 
   const handleNewChat = () => {
-    const id = createSession();
-    sessionIdRef.current = id;
-    setMessages([{ id: 'welcome', role: 'assistant', content: 'Hello! I\'m Echo. How can I help you today?' }]);
+    AsyncStorage.removeItem(CONVERSATION_KEY).catch(() => {});
+    setConversationId(null);
+    conversationIdRef.current = null;
+    setItems([
+      {
+        kind: 'text',
+        message: { id: 'welcome', role: 'assistant', content: "New chat. What's on your mind?" },
+      },
+    ]);
   };
 
   const handleShare = () => {
-    const userMsgs = messages.filter(m => m.role === 'user');
-    const aiMsgs = messages.filter(m => m.role === 'assistant' && m.id !== 'welcome');
+    const userMsgs = items.filter((i): i is Extract<ChatItem, { kind: 'text' }> => i.kind === 'text' && i.message.role === 'user');
+    const aiMsgs = items.filter((i): i is Extract<ChatItem, { kind: 'text' }> => i.kind === 'text' && i.message.role === 'assistant' && i.message.id !== 'welcome');
     if (userMsgs.length === 0 || aiMsgs.length === 0) {
       Alert.alert('Nothing to share', 'Have a conversation first, then share it.');
       return;
     }
-    const lastUser = userMsgs[userMsgs.length - 1];
-    const lastAi = aiMsgs[aiMsgs.length - 1];
+    const lastUser = userMsgs[userMsgs.length - 1].message;
+    const lastAi = aiMsgs[aiMsgs.length - 1].message;
     router.push({
       pathname: '/share',
       params: { prompt: lastUser.content, response: lastAi.content },
@@ -113,20 +210,44 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Animated.View entering={animation(FadeIn.duration(400))} className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+      <Animated.View
+        entering={animation(FadeIn.duration(400))}
+        className="flex-row items-center justify-between px-4 py-3"
+        style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
+      >
         <View className="flex-row items-center gap-1.5">
-          <AnimatedPressable onPress={() => router.push('/(tabs)/history')} className="p-1.5 rounded-lg" style={{ backgroundColor: colors.surface }} scaleValue={0.88} haptic="light">
+          <AnimatedPressable
+            onPress={() => router.push('/(tabs)/history')}
+            className="p-1.5 rounded-lg"
+            style={{ backgroundColor: colors.surface }}
+            scaleValue={0.88}
+            haptic="light"
+          >
             <Clock color={colors.textSecondary} size={20} />
           </AnimatedPressable>
-          <AnimatedPressable onPress={handleNewChat} className="p-1.5 rounded-lg" style={{ backgroundColor: colors.surface }} scaleValue={0.88} haptic="light">
+          <AnimatedPressable
+            onPress={handleNewChat}
+            className="p-1.5 rounded-lg"
+            style={{ backgroundColor: colors.surface }}
+            scaleValue={0.88}
+            haptic="light"
+          >
             <Plus color={colors.textSecondary} size={20} />
           </AnimatedPressable>
         </View>
         <View className="flex-row items-center absolute left-0 right-0 justify-center pointer-events-none">
           <Lightning color={colors.accent} size={18} weight="fill" />
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginLeft: 8 }}>Echo</Text>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginLeft: 8 }}>
+            Echo
+          </Text>
         </View>
-        <AnimatedPressable onPress={handleShare} className="p-1.5 rounded-lg z-10" style={{ backgroundColor: colors.surface }} scaleValue={0.88} haptic="light">
+        <AnimatedPressable
+          onPress={handleShare}
+          className="p-1.5 rounded-lg z-10"
+          style={{ backgroundColor: colors.surface }}
+          scaleValue={0.88}
+          haptic="light"
+        >
           <ShareNetwork color={colors.textSecondary} size={20} />
         </AnimatedPressable>
       </Animated.View>
@@ -137,11 +258,46 @@ export default function ChatScreen() {
         keyboardVerticalOffset={0}
       >
         <View style={{ flex: 1 }}>
-          <MessageList messages={messages} />
-          {isTyping && useAppStore.getState().showTypingIndicator && <TypingIndicator />}
+          <FlashList
+            ref={listRef as any}
+            data={items}
+            keyExtractor={(item) =>
+              item.kind === 'text' ? `t-${item.message.id}` : `c-${item.tool.id}`
+            }
+            renderItem={({ item }) =>
+              item.kind === 'text' ? (
+                <MessageBubble message={item.message} />
+              ) : (
+                <ToolCallCard item={item.tool} onConfirm={handleConfirm} onReject={handleReject} />
+              )
+            }
+            contentContainerStyle={{ paddingVertical: 16 }}
+            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          />
+          {isStreaming && showTyping && <TypingIndicator />}
         </View>
-        <ChatInput onSend={handleSend} isLoading={chatMutation.isPending} />
+        <ChatInput onSend={handleSend} isLoading={isStreaming} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+// Compact human-readable summary of a tool's result for the card subtitle.
+function summarizeResult(name: string, result: any): string {
+  if (!result) return 'Done';
+  switch (name) {
+    case 'compose_post':
+      return `Posted "${result.title ?? ''}"`;
+    case 'search_feed':
+    case 'summarize_feed':
+      return `${Array.isArray(result) ? result.length : 0} posts`;
+    case 'find_user':
+      return `${Array.isArray(result) ? result.length : 0} matches`;
+    case 'list_my_followers':
+      return `${Array.isArray(result) ? result.length : 0} followers`;
+    case 'update_profile':
+      return `Updated ${result.updated?.join(', ') ?? ''}`;
+    default:
+      return result.ok ? 'Done' : 'Done';
+  }
 }
