@@ -18,15 +18,19 @@ export type EchoAIEvent =
 interface StreamArgs {
   message?: string;
   conversationId?: string;
+  language?: string;
   confirm?: { tool_call_id: string; tool_name: string; args: any; approve: boolean };
   onEvent: (event: EchoAIEvent) => void;
+  signal?: AbortSignal;
 }
 
 export async function streamEchoAI({
   message,
   conversationId,
+  language,
   confirm,
   onEvent,
+  signal,
 }: StreamArgs): Promise<void> {
   const {
     data: { session },
@@ -38,6 +42,7 @@ export async function streamEchoAI({
   if (message) body.message = message;
   if (conversationId) body.conversation_id = conversationId;
   if (confirm) body.confirm = confirm;
+  if (language) body.language = language;
 
   return new Promise<void>((resolve, reject) => {
     const es = new EventSource(ECHO_AI_URL, {
@@ -54,6 +59,9 @@ export async function streamEchoAI({
       es.removeAllEventListeners();
       es.close();
     };
+
+    // Close the stream cleanly when the caller aborts (e.g. screen unmount).
+    signal?.addEventListener('abort', () => { cleanup(); resolve(); }, { once: true });
 
     es.addEventListener('message', (event: any) => {
       if (!event.data || event.data === '[DONE]') return;
@@ -73,6 +81,7 @@ export async function streamEchoAI({
     });
 
     es.addEventListener('error', (event: any) => {
+      if (signal?.aborted) { cleanup(); resolve(); return; }
       cleanup();
       reject(new Error(event?.message || 'SSE connection error'));
     });

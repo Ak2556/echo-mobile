@@ -15,6 +15,7 @@ import {
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
+import { useShallow } from 'zustand/react/shallow';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
 import { signOut } from '../lib/auth';
 
@@ -257,7 +258,72 @@ function ThemePicker({ value, onChange, onClose, theme }: {
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const s = useAppStore();
+  const s = useAppStore(useShallow(state => ({
+    notificationsEnabled: state.notificationsEnabled,
+    hapticEnabled: state.hapticEnabled,
+    soundEnabled: state.soundEnabled,
+    privateAccount: state.privateAccount,
+    activityStatus: state.activityStatus,
+    onlineStatus: state.onlineStatus,
+    readReceipts: state.readReceipts,
+    dmPrivacy: state.dmPrivacy,
+    sensitiveContentFilter: state.sensitiveContentFilter,
+    blockedIds: state.blockedIds,
+    theme: state.theme,
+    darkMode: state.darkMode,
+    pureBlackBackground: state.pureBlackBackground,
+    accentColor: state.accentColor,
+    fontSize: state.fontSize,
+    roundedCorners: state.roundedCorners,
+    showAvatars: state.showAvatars,
+    showPreviewCards: state.showPreviewCards,
+    reduceAnimations: state.reduceAnimations,
+    compactFeed: state.compactFeed,
+    autoplayStories: state.autoplayStories,
+    contentLanguage: state.contentLanguage,
+    dataSaver: state.dataSaver,
+    streamResponses: state.streamResponses,
+    showTypingIndicator: state.showTypingIndicator,
+    autoSaveChats: state.autoSaveChats,
+    sessions: state.sessions,
+    bookmarkedIds: state.bookmarkedIds,
+    aiModel: state.aiModel,
+    chatBubbleStyle: state.chatBubbleStyle,
+    feedSort: state.feedSort,
+    setNotificationsEnabled: state.setNotificationsEnabled,
+    setHapticEnabled: state.setHapticEnabled,
+    setSoundEnabled: state.setSoundEnabled,
+    setPrivateAccount: state.setPrivateAccount,
+    setActivityStatus: state.setActivityStatus,
+    setOnlineStatus: state.setOnlineStatus,
+    setReadReceipts: state.setReadReceipts,
+    setSensitiveContentFilter: state.setSensitiveContentFilter,
+    setTheme: state.setTheme,
+    setDarkMode: state.setDarkMode,
+    setPureBlackBackground: state.setPureBlackBackground,
+    setShowAvatars: state.setShowAvatars,
+    setShowPreviewCards: state.setShowPreviewCards,
+    setReduceAnimations: state.setReduceAnimations,
+    setCompactFeed: state.setCompactFeed,
+    setAutoplayStories: state.setAutoplayStories,
+    setContentLanguage: state.setContentLanguage,
+    setDataSaver: state.setDataSaver,
+    setStreamResponses: state.setStreamResponses,
+    setShowTypingIndicator: state.setShowTypingIndicator,
+    setAutoSaveChats: state.setAutoSaveChats,
+    setFontSize: state.setFontSize,
+    setAiModel: state.setAiModel,
+    setChatBubbleStyle: state.setChatBubbleStyle,
+    setDmPrivacy: state.setDmPrivacy,
+    setFeedSort: state.setFeedSort,
+    setRoundedCorners: state.setRoundedCorners,
+    setAccentColor: state.setAccentColor,
+    clearAllData: state.clearAllData,
+    getCacheSize: state.getCacheSize,
+    clearChatHistory: state.clearChatHistory,
+    clearNotifications: state.clearNotifications,
+    clearAllBookmarks: state.clearAllBookmarks,
+  })));
   const theme = useTheme();
   const { colors, radius, fontSizes, switchTrack, animation } = theme;
 

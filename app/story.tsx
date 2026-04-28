@@ -13,7 +13,9 @@ const PAUSED_DURATION = 999999;
 export default function StoryScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
-  const { getActiveStories, markStoryViewed, autoplayStories } = useAppStore();
+  const getActiveStories = useAppStore(s => s.getActiveStories);
+  const markStoryViewed  = useAppStore(s => s.markStoryViewed);
+  const autoplayStories  = useAppStore(s => s.autoplayStories);
   const { colors, radius, fontSizes, animation } = useTheme();
 
   const allStories = getActiveStories();

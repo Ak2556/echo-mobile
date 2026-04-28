@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   ArrowLeft, HeartStraight, ChatCircle, UserPlus, ArrowsClockwise,
-  AtSign, Envelope, SpeakerHigh, Bell,
+  At, Envelope, SpeakerHigh, Bell,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
@@ -14,17 +14,24 @@ import { useTheme } from '../lib/theme';
 export default function NotificationPrefsScreen() {
   const router = useRouter();
   const { colors, radius, fontSizes, switchTrack, animation } = useTheme();
-  const {
-    notificationsEnabled, setNotificationsEnabled,
-    notifyLikes, setNotifyLikes,
-    notifyComments, setNotifyComments,
-    notifyFollows, setNotifyFollows,
-    notifyDMs, setNotifyDMs,
-    notifyReposts, setNotifyReposts,
-    notifyMentions, setNotifyMentions,
-    soundEnabled, setSoundEnabled,
-    hapticEnabled, setHapticEnabled,
-  } = useAppStore();
+  const notificationsEnabled   = useAppStore(s => s.notificationsEnabled);
+  const setNotificationsEnabled = useAppStore(s => s.setNotificationsEnabled);
+  const notifyLikes            = useAppStore(s => s.notifyLikes);
+  const setNotifyLikes         = useAppStore(s => s.setNotifyLikes);
+  const notifyComments         = useAppStore(s => s.notifyComments);
+  const setNotifyComments      = useAppStore(s => s.setNotifyComments);
+  const notifyFollows          = useAppStore(s => s.notifyFollows);
+  const setNotifyFollows       = useAppStore(s => s.setNotifyFollows);
+  const notifyDMs              = useAppStore(s => s.notifyDMs);
+  const setNotifyDMs           = useAppStore(s => s.setNotifyDMs);
+  const notifyReposts          = useAppStore(s => s.notifyReposts);
+  const setNotifyReposts       = useAppStore(s => s.setNotifyReposts);
+  const notifyMentions         = useAppStore(s => s.notifyMentions);
+  const setNotifyMentions      = useAppStore(s => s.setNotifyMentions);
+  const soundEnabled           = useAppStore(s => s.soundEnabled);
+  const setSoundEnabled        = useAppStore(s => s.setSoundEnabled);
+  const hapticEnabled          = useAppStore(s => s.hapticEnabled);
+  const setHapticEnabled       = useAppStore(s => s.setHapticEnabled);
 
   const ToggleRow = ({ icon: Icon, iconColor, label, subtitle, value, onValueChange }: {
     icon: any; iconColor: string; label: string; subtitle?: string;
@@ -105,7 +112,7 @@ export default function NotificationPrefsScreen() {
             {divider}
             <ToggleRow icon={ArrowsClockwise} iconColor={colors.accent} label="Re-echoes" subtitle="When someone re-echoes your post" value={notifyReposts} onValueChange={setNotifyReposts} />
             {divider}
-            <ToggleRow icon={AtSign} iconColor={colors.accent} label="Mentions" subtitle="When someone mentions you" value={notifyMentions} onValueChange={setNotifyMentions} />
+            <ToggleRow icon={At} iconColor={colors.accent} label="Mentions" subtitle="When someone mentions you" value={notifyMentions} onValueChange={setNotifyMentions} />
           </View>
         </Animated.View>
 

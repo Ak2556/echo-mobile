@@ -50,7 +50,10 @@ function groupNotifications(notifications: Notification[]): ListItem[] {
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { notifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount } = useAppStore();
+  const notifications             = useAppStore(s => s.notifications);
+  const markAllNotificationsRead  = useAppStore(s => s.markAllNotificationsRead);
+  const markNotificationRead      = useAppStore(s => s.markNotificationRead);
+  const unreadNotificationCount   = useAppStore(s => s.unreadNotificationCount);
   const { colors, animation } = useTheme();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 

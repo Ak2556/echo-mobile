@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { Text, Dimensions } from 'react-native';
+import { useTheme } from '../../lib/theme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -32,6 +33,7 @@ export function showToast(message: string, icon?: string) {
 
 export function ToastProvider() {
   const { message, icon, hide } = useToastStore();
+  const { colors } = useTheme();
   const translateY = useSharedValue(-100);
   const opacity = useSharedValue(0);
 
@@ -74,12 +76,12 @@ export function ToastProvider() {
           left: 20,
           right: 20,
           zIndex: 9999,
-          backgroundColor: '#18181b',
+          backgroundColor: colors.surface,
           borderRadius: 16,
           paddingVertical: 14,
           paddingHorizontal: 20,
           borderWidth: 1,
-          borderColor: '#3f3f46',
+          borderColor: colors.border,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.3,
@@ -93,7 +95,7 @@ export function ToastProvider() {
       ]}
     >
       {icon ? <Text style={{ fontSize: 16, marginRight: 8 }}>{icon}</Text> : null}
-      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{message}</Text>
+      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>{message}</Text>
     </Animated.View>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -18,7 +18,7 @@ import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
 export default function BookmarksScreen() {
   const router = useRouter();
   const remote = isSupabaseRemote();
-  const { bookmarkedIds } = useAppStore();
+  const bookmarkedIds = useAppStore(s => s.bookmarkedIds);
   const { data: feed } = useFeed();
   const remoteQ = useRemoteBookmarks();
   const { colors, animation } = useTheme();
@@ -62,6 +62,15 @@ export default function BookmarksScreen() {
           )}
           keyExtractor={item => item.id}
           contentContainerStyle={{ paddingVertical: 8 }}
+          refreshControl={
+            remote ? (
+              <RefreshControl
+                refreshing={remoteQ.isRefetching}
+                onRefresh={() => remoteQ.refetch()}
+                tintColor={colors.textMuted}
+              />
+            ) : undefined
+          }
         />
       )}
     </SafeAreaView>

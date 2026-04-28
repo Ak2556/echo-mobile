@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, Share, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MediaGrid } from './MediaGrid';
 import { InlineVideo } from './InlineVideo';
-import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar, DownloadSimple } from 'phosphor-react-native';
+import { saveToMediaLibrary } from '../../lib/mediaUtils';
 import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
+import { useTheme, ThemeColors } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
 
@@ -43,13 +43,16 @@ function PollBar({ pct }: { pct: number }) {
   return <Animated.View style={[{ height: '100%', borderRadius: 4, backgroundColor: 'rgba(99,102,241,0.4)' }, style]} />;
 }
 
+type FontSizes = ReturnType<typeof useTheme>['fontSizes'];
+type Radius = ReturnType<typeof useTheme>['radius'];
+
 interface PollViewProps {
   poll: Poll;
   echoId: string;
   votePoll: (echoId: string, optionId: string) => void;
-  colors: any;
-  radius: any;
-  fontSizes: any;
+  colors: ThemeColors;
+  radius: Radius;
+  fontSizes: FontSizes;
 }
 
 function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollViewProps) {
@@ -103,15 +106,19 @@ function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollVie
   );
 }
 
-export function FeedCard({ item, index, onPress }: FeedCardProps) {
+function FeedCardInner({ item, index, onPress }: FeedCardProps) {
   const router = useRouter();
-  const qc = useQueryClient();
   const remote = isSupabaseRemote();
   const remoteBm = useToggleRemoteBookmark();
   const { colors, radius, fontSizes, reduceAnimations, showAvatars } = useTheme();
-  const { isBookmarked, toggleBookmark, isReposted, toggleRepost,
-    compactFeed, showPreviewCards, votePoll,
-  } = useAppStore();
+  // Granular selectors — each only triggers re-render when its own slice changes
+  const isBookmarked    = useAppStore(s => s.isBookmarked);
+  const toggleBookmark  = useAppStore(s => s.toggleBookmark);
+  const isReposted      = useAppStore(s => s.isReposted);
+  const toggleRepost    = useAppStore(s => s.toggleRepost);
+  const compactFeed     = useAppStore(s => s.compactFeed);
+  const showPreviewCards = useAppStore(s => s.showPreviewCards);
+  const votePoll        = useAppStore(s => s.votePoll);
   const bookmarked = remote ? item.isBookmarked : isBookmarked(item.id);
   const reposted = isReposted(item.id);
   const [showMenu, setShowMenu] = useState(false);
@@ -124,16 +131,16 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const repostAnim = useAnimatedStyle(() => ({ transform: [{ scale: repostScale.value }] }));
   const shareAnim = useAnimatedStyle(() => ({ transform: [{ scale: shareScale.value }] }));
 
-  const bounceIcon = (sv: { value: number }) => {
+  const bounceIcon = useCallback((sv: { value: number }) => {
     if (reduceAnimations) return;
     sv.value = withSequence(
       withSpring(0.7, { damping: 10, stiffness: 400 }),
       withSpring(1.15, { damping: 10, stiffness: 400 }),
       withSpring(1, { damping: 12, stiffness: 300 })
     );
-  };
+  }, [reduceAnimations]);
 
-  const toggleBookmarkPress = () => {
+  const toggleBookmarkPress = useCallback(() => {
     bounceIcon(bookmarkScale);
     if (remote) {
       remoteBm.mutate({ echoId: item.id, bookmark: !bookmarked });
@@ -141,29 +148,36 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
       return;
     }
     toggleBookmark(item.id);
-    qc.invalidateQueries({ queryKey: ['feed'] });
+    // No feed invalidation — useFeed's select() applies bookmarkedIds reactively
     showToast(!bookmarked ? 'Bookmarked' : 'Removed bookmark', !bookmarked ? '\u{1F516}' : '');
-  };
+  }, [item.id, bookmarked, remote, remoteBm, toggleBookmark, bounceIcon]);
 
-  const handleRepost = () => {
+  const handleRepost = useCallback(() => {
     bounceIcon(repostScale);
     toggleRepost(item.id);
     showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? '\u{1F501}' : '');
-  };
+  }, [item.id, reposted, toggleRepost, bounceIcon]);
 
-  const handleNativeShare = async () => {
+  const handleNativeShare = useCallback(async () => {
     bounceIcon(shareScale);
     try {
       await Share.share({
         message: `"${item.prompt}"\n\nEcho: ${item.response}\n\n\u2014 @${item.username} on Echo`,
       });
     } catch {}
-  };
+  }, [item.prompt, item.response, item.username, bounceIcon]);
 
-  const handleReport = () => {
+  const handleReport = useCallback(() => {
     setShowMenu(false);
     router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } });
-  };
+  }, [item.id, item.username]);
+
+  const handleSavePhotos = useCallback(() => {
+    setShowMenu(false);
+    saveToMediaLibrary(item.mediaUris ?? []);
+  }, [item.mediaUris]);
+
+  const timeAgo = useMemo(() => getTimeAgo(item.createdAt), [item.createdAt]);
 
   const entering = reduceAnimations
     ? FadeIn.duration(150)
@@ -207,6 +221,15 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         <UserMinus color={colors.textSecondary} size={16} />
         <Text style={{ color: colors.text, fontSize: fontSizes.small }}>View Profile</Text>
       </AnimatedPressable>
+      {item.postType === 'photo' && (item.mediaUris?.length ?? 0) > 0 && (
+        <>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
+          <AnimatedPressable onPress={handleSavePhotos} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} scaleValue={0.97} haptic="light">
+            <DownloadSimple color={colors.accent} size={16} />
+            <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Save Photo{(item.mediaUris?.length ?? 0) > 1 ? 's' : ''}</Text>
+          </AnimatedPressable>
+        </>
+      )}
     </Animated.View>
   ) : null;
 
@@ -221,6 +244,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
           scaleValue={reduceAnimations ? 1 : 0.85}
           haptic="light"
+          accessibilityLabel="Comment"
+          accessibilityRole="button"
         >
           <ChatCircle color={colors.textMuted} size={19} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.commentCount || 0}</Text>
@@ -231,6 +256,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
           scaleValue={reduceAnimations ? 1 : 0.85}
           haptic="medium"
+          accessibilityLabel={reposted ? 'Undo repost' : 'Repost'}
+          accessibilityRole="button"
         >
           <Animated.View style={repostAnim}>
             <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
@@ -240,13 +267,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </Text>
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="medium">
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="medium" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
           <Animated.View style={bookmarkAnim}>
             <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
           </Animated.View>
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="light">
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="light" accessibilityLabel="Share" accessibilityRole="button">
           <Animated.View style={shareAnim}>
             <ShareNetwork color={colors.textMuted} size={19} />
           </Animated.View>
@@ -305,6 +332,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                   onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
                   scaleValue={reduceAnimations ? 1 : 0.9}
                   haptic="light"
+                  accessibilityLabel={`View ${item.displayName || item.username}'s profile`}
+                  accessibilityRole="link"
                 >
                   <View
                     style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}
@@ -320,6 +349,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 style={{ flex: 1 }}
                 scaleValue={reduceAnimations ? 1 : 0.98}
                 haptic="none"
+                accessibilityLabel={`View ${item.displayName || item.username}'s profile`}
+                accessibilityRole="link"
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
@@ -327,7 +358,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 </View>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
               </AnimatedPressable>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{timeAgo}</Text>
               <AnimatedPressable
                 onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
                 scaleValue={reduceAnimations ? 1 : 0.85}
@@ -394,6 +425,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
               scaleValue={reduceAnimations ? 1 : 0.9}
               haptic="light"
+              accessibilityLabel={`View ${item.displayName || item.username}'s profile`}
+              accessibilityRole="link"
             >
               <View
                 className={`${compactFeed ? 'w-7 h-7' : 'w-9 h-9'} rounded-full items-center justify-center mr-3`}
@@ -410,6 +443,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             className="flex-1"
             scaleValue={reduceAnimations ? 1 : 0.98}
             haptic="none"
+            accessibilityLabel={`View ${item.displayName || item.username}'s profile`}
+            accessibilityRole="link"
           >
             <View className="flex-row items-center gap-1">
               <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
@@ -417,7 +452,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{timeAgo}</Text>
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
             scaleValue={reduceAnimations ? 1 : 0.85}
@@ -496,3 +531,12 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     </Animated.View>
   );
 }
+
+export const FeedCard = React.memo(FeedCardInner, (prev, next) =>
+  prev.item.id            === next.item.id &&
+  prev.item.isLiked       === next.item.isLiked &&
+  prev.item.isBookmarked  === next.item.isBookmarked &&
+  prev.item.likes         === next.item.likes &&
+  prev.item.commentCount  === next.item.commentCount &&
+  prev.index              === next.index,
+);

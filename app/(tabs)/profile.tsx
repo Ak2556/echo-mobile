@@ -28,7 +28,7 @@ const SETTINGS_ROWS = [
   { key: 'edit',        Icon: PencilSimple,   label: 'Edit Profile',  route: '/edit-profile' },
   { key: 'bookmarks',   Icon: BookmarkSimple, label: 'Bookmarks',     route: '/bookmarks' },
   { key: 'messages',    Icon: Envelope,       label: 'Messages',      route: '/messages' },
-  { key: 'connections', Icon: Users,          label: 'Connections',   route: null },
+  { key: 'connections', Icon: Users,          label: 'Connections',   route: '/followers' },
   { key: 'settings',    Icon: Gear,           label: 'Settings',      route: '/settings' },
 ];
 
@@ -38,13 +38,16 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors, radius, switchTrack, animation } = useTheme();
   const insets = useSafeAreaInsets();
-  const {
-    userId,
-    username, displayName, bio, avatarColor,
-    publishedEchoes,
-    notificationsEnabled, setNotificationsEnabled,
-    getFollowers, getFollowing,
-  } = useAppStore();
+  const userId                = useAppStore(s => s.userId);
+  const username              = useAppStore(s => s.username);
+  const displayName           = useAppStore(s => s.displayName);
+  const bio                   = useAppStore(s => s.bio);
+  const avatarColor           = useAppStore(s => s.avatarColor);
+  const publishedEchoes       = useAppStore(s => s.publishedEchoes);
+  const notificationsEnabled  = useAppStore(s => s.notificationsEnabled);
+  const setNotificationsEnabled = useAppStore(s => s.setNotificationsEnabled);
+  const getFollowers          = useAppStore(s => s.getFollowers);
+  const getFollowing          = useAppStore(s => s.getFollowing);
 
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const tabIndicatorX = useSharedValue(0);
@@ -349,9 +352,9 @@ export default function ProfileScreen() {
                 <React.Fragment key={key}>
                   <AnimatedPressable
                     onPress={() =>
-                      route
-                        ? router.push(route as any)
-                        : router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })
+                      key === 'connections'
+                        ? router.push({ pathname: '/followers', params: { userId, tab: 'following' } })
+                        : router.push(route as any)
                     }
                     style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13 }}
                     scaleValue={0.98}

@@ -6,6 +6,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, Warning } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
+import { supabase } from '../lib/supabase';
+import { getSessionUserId } from '../lib/supabaseEchoApi';
+import { useTheme } from '../lib/theme';
 
 const REASONS = [
   'Spam or misleading',
@@ -19,19 +22,33 @@ const REASONS = [
 
 export default function ReportScreen() {
   const router = useRouter();
+  const { animation } = useTheme();
   const { targetType, targetId, targetName } = useLocalSearchParams<{
     targetType: string; targetId: string; targetName: string;
   }>();
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [details, setDetails] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedReason) {
       Alert.alert('Select a reason', 'Please select a reason for your report.');
       return;
     }
-    showToast('Report submitted. Thank you!', '\u{2705}');
-    router.back();
+    try {
+      const reporterId = await getSessionUserId();
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: reporterId,
+        target_type: targetType,
+        target_id: targetId,
+        reason: selectedReason,
+        details: details.trim() || null,
+      });
+      if (error) throw error;
+      showToast('Report submitted. Thank you!', '\u{2705}');
+      router.back();
+    } catch {
+      showToast('Failed to submit report. Try again.', '❌');
+    }
   };
 
   return (
@@ -44,20 +61,20 @@ export default function ReportScreen() {
       </View>
 
       <View className="px-4 pt-6">
-        <Animated.View entering={FadeInDown.delay(50).springify()} className="flex-row items-center mb-2">
+        <Animated.View entering={animation(FadeInDown.delay(50).springify())} className="flex-row items-center mb-2">
           <Warning color="#F59E0B" size={20} />
           <Text className="text-white text-lg font-bold ml-2">
             Report {targetType === 'user' ? `@${targetName}` : 'this content'}
           </Text>
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
+        <Animated.View entering={animation(FadeInDown.delay(100).springify())}>
           <Text className="text-zinc-400 text-sm mb-6">
             Select the reason that best describes the issue. Your report is confidential.
           </Text>
         </Animated.View>
 
         {REASONS.map((reason, i) => (
-          <Animated.View key={reason} entering={FadeInDown.delay(120 + i * 40).springify()}>
+          <Animated.View key={reason} entering={animation(FadeInDown.delay(120 + i * 40).springify())}>
             <AnimatedPressable
               onPress={() => setSelectedReason(reason)}
               className={`flex-row items-center py-3.5 px-4 rounded-xl mb-2 border ${
@@ -77,7 +94,7 @@ export default function ReportScreen() {
         ))}
 
         {selectedReason === 'Other' && (
-          <Animated.View entering={FadeInDown.springify()} className="mt-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+          <Animated.View entering={animation(FadeInDown.springify())} className="mt-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
             <RNTextInput
               className="text-white text-base"
               placeholder="Describe the issue..."
@@ -90,7 +107,7 @@ export default function ReportScreen() {
           </Animated.View>
         )}
 
-        <Animated.View entering={FadeInDown.delay(400).springify()}>
+        <Animated.View entering={animation(FadeInDown.delay(400).springify())}>
           <AnimatedPressable
             onPress={handleSubmit}
             className={`mt-6 py-4 rounded-xl items-center ${selectedReason ? 'bg-red-600' : 'bg-zinc-800'}`}

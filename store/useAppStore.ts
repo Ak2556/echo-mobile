@@ -1,26 +1,33 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ChatMessage, ChatSession, FeedItem, Comment,
   Notification, Conversation, DirectMessage, Story, User
 } from '../types';
 
-// In-memory storage shim — compatible with Expo Go (no NitroModules required).
-// Swap back to react-native-mmkv after running `expo prebuild` / bare workflow.
-const _map = new Map<string, string>();
-const storage = {
-  getString: (key: string): string | undefined => _map.get(key),
-  set: (key: string, value: string): void => { _map.set(key, value); },
-  clearAll: (): void => { _map.clear(); },
-};
+// AsyncStorage write-behind: batches writes within a 50ms window, then flushes.
+// Initial values come from synchronous fallbacks; hydrateStore() overwrites async on startup.
+const _pending = new Map<string, string>();
+let _flushTimer: ReturnType<typeof setTimeout> | null = null;
 
-function persistGet<T>(key: string, fallback: T): T {
-  const raw = storage.getString(key);
-  if (!raw) return fallback;
-  try { return JSON.parse(raw) as T; } catch { return fallback; }
+function flushPending() {
+  if (!_pending.size) return;
+  const pairs = [..._pending.entries()] as [string, string][];
+  _pending.clear();
+  AsyncStorage.multiSet(pairs).catch(() => {});
+}
+
+function persistGet<T>(_key: string, fallback: T): T {
+  return fallback;
 }
 
 function persistSet<T>(key: string, value: T) {
-  storage.set(key, JSON.stringify(value));
+  _pending.set(key, JSON.stringify(value));
+  if (_flushTimer) return;
+  _flushTimer = setTimeout(() => {
+    _flushTimer = null;
+    flushPending();
+  }, 50);
 }
 
 // ── Mock user database ──
@@ -612,7 +619,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ notifications: [] });
   },
   clearAllData: () => {
-    storage.clearAll();
+    // Best-effort AsyncStorage wipe (fire-and-forget)
+    AsyncStorage.clear().catch(() => {});
+    _pending.clear();
     set({
       sessions: [], messagesBySession: {}, currentSessionId: null,
       publishedEchoes: [], likedIds: [], bookmarkedIds: [], repostedIds: [],
@@ -624,13 +633,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
   getCacheSize: () => {
-    const keys = ['sessions', 'messagesBySession', 'publishedEchoes', 'notifications',
-      'conversations', 'messagesByConversation', 'commentsByEcho', 'stories'];
+    // Estimate from the in-flight pending write buffer (AsyncStorage is async so we can't read synchronously)
     let total = 0;
-    for (const k of keys) {
-      const raw = storage.getString(k);
-      if (raw) total += raw.length;
-    }
+    for (const v of _pending.values()) total += v.length;
     if (total < 1024) return `${total} B`;
     if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`;
     return `${(total / (1024 * 1024)).toFixed(1)} MB`;

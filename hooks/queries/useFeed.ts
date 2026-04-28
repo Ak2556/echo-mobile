@@ -1,48 +1,67 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { FeedItem } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { fetchRemoteFeed } from '../../lib/supabaseEchoApi';
 import { LOCAL_SEED_FEED, coerceFeedItem } from '../../lib/localFeedSeed';
 
+function sortFeed(items: FeedItem[], feedSort: string, followingIds: string[]): FeedItem[] {
+  const merged = [...items];
+  switch (feedSort) {
+    case 'popular':
+      return merged.sort(
+        (a, b) =>
+          b.likes + b.repostCount + b.commentCount -
+          (a.likes + a.repostCount + a.commentCount),
+      );
+    case 'following':
+      return merged.filter(i => followingIds.includes(i.userId) || i.userId === 'me');
+    default:
+      return merged.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+  }
+}
+
 export function useFeed() {
   const publishedEchoes = useAppStore(s => s.publishedEchoes);
-  const likeSig = useAppStore(s => s.likedIds.join('|'));
-  const bmSig = useAppStore(s => s.bookmarkedIds.join('|'));
-  const feedSort = useAppStore(s => s.feedSort);
-  const followingIds = useAppStore(s => s.followingIds);
-  const remote = isSupabaseRemote();
+  const feedSort        = useAppStore(s => s.feedSort);
+  const followingIds    = useAppStore(s => s.followingIds);
+  // likedIds / bookmarkedIds are NOT in the query key — they are applied via select()
+  // so toggling a like never triggers a refetch, only a synchronous remap.
+  const likedIds        = useAppStore(s => s.likedIds);
+  const bookmarkedIds   = useAppStore(s => s.bookmarkedIds);
+  const remote          = isSupabaseRemote();
+
+  // Stable set references — only rebuild when the underlying arrays change, not on every render.
+  const likedSet      = useMemo(() => new Set(likedIds), [likedIds]);
+  const bookmarkedSet = useMemo(() => new Set(bookmarkedIds), [bookmarkedIds]);
 
   return useQuery({
-    queryKey: remote ? ['feed', feedSort] : ['feed', 'local', publishedEchoes.length, likeSig, bmSig, feedSort],
+    queryKey: remote
+      ? ['feed', feedSort]
+      : ['feed', 'local', publishedEchoes.length, feedSort],
     queryFn: async (): Promise<FeedItem[]> => {
       if (remote) {
-        return fetchRemoteFeed();
+        try {
+          return await fetchRemoteFeed();
+        } catch {
+          // Network unavailable — fall back to local seed so the feed never errors out
+        }
       }
-      await new Promise(r => setTimeout(r, 600));
-      const { likedIds, bookmarkedIds } = useAppStore.getState();
-      const liked = new Set(likedIds);
-      const bookmarked = new Set(bookmarkedIds);
-      let merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED].map(item => ({
-        ...item,
-        isLiked: liked.has(item.id),
-        isBookmarked: bookmarked.has(item.id),
-      }));
-
-      // Apply feed sort
-      switch (feedSort) {
-        case 'popular':
-          merged.sort((a, b) => (b.likes + b.repostCount + b.commentCount) - (a.likes + a.repostCount + a.commentCount));
-          break;
-        case 'following':
-          merged = merged.filter(item => followingIds.includes(item.userId) || item.userId === 'me');
-          break;
-        default: // 'latest'
-          merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          break;
-      }
-
-      return merged;
+      return sortFeed(
+        [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED],
+        feedSort,
+        followingIds,
+      );
     },
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    select: (items) => items.map(item => ({
+      ...item,
+      isLiked:      likedSet.has(item.id),
+      isBookmarked: bookmarkedSet.has(item.id),
+    })),
   });
 }

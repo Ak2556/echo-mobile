@@ -23,7 +23,14 @@ const BIO_WARN = 140;
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { username, displayName, bio, avatarColor, setUsername, setDisplayName, setBio, setAvatarColor } = useAppStore();
+  const username      = useAppStore(s => s.username);
+  const displayName   = useAppStore(s => s.displayName);
+  const bio           = useAppStore(s => s.bio);
+  const avatarColor   = useAppStore(s => s.avatarColor);
+  const setUsername   = useAppStore(s => s.setUsername);
+  const setDisplayName = useAppStore(s => s.setDisplayName);
+  const setBio        = useAppStore(s => s.setBio);
+  const setAvatarColor = useAppStore(s => s.setAvatarColor);
   const { colors, radius, fontSizes, animation } = useTheme();
 
   const [newUsername, setNewUsername] = useState(username);

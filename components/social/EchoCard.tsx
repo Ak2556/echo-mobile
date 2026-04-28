@@ -18,17 +18,19 @@ import { FeedItem } from '../../types';
 
 interface EchoCardProps {
   item: FeedItem;
-  isActive: boolean;
+  index: number;
+  activeIdxRef: React.RefObject<number>;
   onCommentPress?: (item: FeedItem) => void;
 }
 
 function SidebarButton({
-  icon, label, color, onPress,
+  icon, label, color, onPress, accessibilityLabel,
 }: {
   icon: React.ReactNode;
   label?: string | number;
   color?: string;
   onPress: () => void;
+  accessibilityLabel?: string;
 }) {
   const scale = useSharedValue(1);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -41,7 +43,7 @@ function SidebarButton({
   };
 
   return (
-    <Pressable onPress={handlePress} style={{ alignItems: 'center', gap: 4 }}>
+    <Pressable onPress={handlePress} style={{ alignItems: 'center', gap: 4 }} accessibilityLabel={accessibilityLabel} accessibilityRole="button">
       <Animated.View style={style}>{icon}</Animated.View>
       {label !== undefined && label !== 0 && (
         <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>
@@ -52,19 +54,25 @@ function SidebarButton({
   );
 }
 
-export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
+export function EchoCardInner({ item, index, activeIdxRef, onCommentPress }: EchoCardProps) {
   const { colors } = useTheme();
   const { height: SCREEN_H } = useWindowDimensions();
-  const toggleLike = useAppStore(s => s.toggleLike);
+  const toggleLike     = useAppStore(s => s.toggleLike);
   const toggleBookmark = useAppStore(s => s.toggleBookmark);
+
+  // Derive isActive from ref so renderItem doesn't need activeIdx as a dep
+  const isActive = index === activeIdxRef.current;
 
   const videoRef = useRef<Video>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
-  const [isLiked, setIsLiked] = useState(item.isLiked);
+  // Optimistic like count — keeps the displayed number in sync during rapid taps.
+  // isLiked and isBookmarked are derived directly from the item prop (fed by useFeed's select())
+  // so Zustand → select → prop is the single source of truth; no sync effect needed.
   const [likeCount, setLikeCount] = useState(item.likes);
-  const [isBookmarked, setIsBookmarked] = useState(item.isBookmarked);
+  const isLiked     = item.isLiked;
+  const isBookmarked = item.isBookmarked;
 
   const lastTapRef = useRef(0);
 
@@ -115,9 +123,8 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
   const handleTap = async () => {
     const now = Date.now();
     if (now - lastTapRef.current < 320) {
-      // Double-tap — like
+      // Double-tap — like (only if not already liked)
       if (!isLiked) {
-        setIsLiked(true);
         setLikeCount(c => c + 1);
         toggleLike(item.id);
         burstHeart();
@@ -136,21 +143,17 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
   };
 
   const handleLike = () => {
-    const next = !isLiked;
-    setIsLiked(next);
-    setLikeCount(c => next ? c + 1 : c - 1);
+    setLikeCount(c => isLiked ? c - 1 : c + 1);
     toggleLike(item.id);
-    if (next) {
+    if (!isLiked) {
       burstHeart();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
   const handleBookmark = () => {
-    const next = !isBookmarked;
-    setIsBookmarked(next);
     toggleBookmark(item.id);
-    showToast(next ? 'Saved to bookmarks' : 'Removed from bookmarks', next ? '🔖' : '✓');
+    showToast(!isBookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks', !isBookmarked ? '🔖' : '✓');
   };
 
   const handleShare = () => {
@@ -203,6 +206,8 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
       <Pressable
         onPress={handleTap}
         style={{ position: 'absolute', inset: 0 }}
+        accessibilityLabel={playing ? 'Pause video' : 'Play video'}
+        accessibilityRole="button"
       />
 
       {/* Paused indicator */}
@@ -273,27 +278,36 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
           icon={<HeartStraight color={isLiked ? '#FF4D6D' : '#fff'} size={30} weight={isLiked ? 'fill' : 'regular'} />}
           label={likeCount}
           onPress={handleLike}
+          accessibilityLabel="Like"
         />
         <SidebarButton
           icon={<ChatCircle color="#fff" size={30} />}
           label={item.commentCount}
           onPress={() => onCommentPress?.(item)}
+          accessibilityLabel="Comment"
         />
         <SidebarButton
           icon={<BookmarkSimple color={isBookmarked ? '#FBBF24' : '#fff'} size={30} weight={isBookmarked ? 'fill' : 'regular'} />}
           onPress={handleBookmark}
+          accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
         />
         <SidebarButton
           icon={<ShareNetwork color="#fff" size={28} />}
           onPress={handleShare}
+          accessibilityLabel="Share"
         />
         <SidebarButton
           icon={muted
             ? <SpeakerSlash color="#fff" size={26} />
             : <SpeakerHigh color="#fff" size={26} />}
           onPress={toggleMute}
+          accessibilityLabel={muted ? 'Unmute' : 'Mute'}
         />
       </View>
     </View>
   );
 }
+
+export const EchoCard = React.memo(EchoCardInner,
+  (prev, next) => prev.item.id === next.item.id && prev.index === next.index,
+);

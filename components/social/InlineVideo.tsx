@@ -8,8 +8,10 @@ import {
   View,
 } from 'react-native';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
-import { CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
+import { CornersOut, DownloadSimple, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { useAppStore } from '../../store/useAppStore';
+import { saveToMediaLibrary } from '../../lib/mediaUtils';
 
 export interface QualityOption {
   label: string;
@@ -31,6 +33,7 @@ const PILL = {
 
 export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVideoProps) {
   const { colors, radius, fontSizes } = useTheme();
+  const dataSaver = useAppStore(s => s.dataSaver);
   const videoRef = useRef<Video>(null);
 
   const [activeUri, setActiveUri] = useState(uri);
@@ -100,6 +103,8 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
       await videoRef.current.presentFullscreenPlayer();
     } catch {}
   };
+
+  const handleSave = () => saveToMediaLibrary([activeUri]);
 
   const pickQuality = async () => {
     if (qualityList.length <= 1) return;
@@ -194,14 +199,21 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
                 style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}
               >
                 {!playing && (
-                  <View style={{ width: 66, height: 66, borderRadius: 33, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
-                    <Play size={30} color="#fff" fill="#fff" />
+                  <View style={{ alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <View style={{ width: 66, height: 66, borderRadius: 33, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Play size={30} color="#fff" weight="fill" />
+                    </View>
+                    {dataSaver && (
+                      <View style={{ backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11 }}>Tap to play · Data Saver on</Text>
+                      </View>
+                    )}
                   </View>
                 )}
               </Pressable>
             )}
 
-            {/* ── Top-right: quality + fullscreen ─────────────────── */}
+            {/* ── Top-right: quality + fullscreen + save ───────────── */}
             {loadState === 'ready' && (
               <View style={{ position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                 <Pressable
@@ -210,6 +222,9 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
                 >
                   <SlidersHorizontal size={13} color="#fff" />
                   <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', letterSpacing: 0.2 }}>{activeLabel}</Text>
+                </Pressable>
+                <Pressable onPress={handleSave} style={PILL} accessibilityLabel="Save video" accessibilityRole="button">
+                  <DownloadSimple size={16} color="#fff" />
                 </Pressable>
                 <Pressable onPress={openFullscreen} style={PILL}>
                   <CornersOut size={16} color="#fff" />
