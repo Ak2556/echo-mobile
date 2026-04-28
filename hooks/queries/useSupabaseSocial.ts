@@ -73,6 +73,11 @@ export function useToggleRemoteFollow() {
   return useMutation({
     mutationFn: ({ userId, follow }: { userId: string; follow: boolean }) =>
       setRemoteFollow(userId, follow),
+    onError: (_err, vars) => {
+      qc.invalidateQueries({ queryKey: ['profile', vars.userId] });
+      qc.invalidateQueries({ queryKey: ['followers', vars.userId] });
+      showToast('Failed to update. Please try again.', '❌');
+    },
     onSettled: (_data, _err, vars) => {
       if (vars?.userId) qc.invalidateQueries({ queryKey: ['profile', vars.userId] });
       qc.invalidateQueries({ queryKey: ['followers', vars?.userId] });

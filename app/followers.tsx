@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -106,6 +106,18 @@ export default function FollowersScreen() {
             />
           )}
           keyExtractor={item => item.id}
+          refreshControl={
+            remote ? (
+              <RefreshControl
+                refreshing={followersRemote.isRefetching || followingRemote.isRefetching}
+                onRefresh={() => {
+                  followersRemote.refetch();
+                  followingRemote.refetch();
+                }}
+                tintColor={colors.textMuted}
+              />
+            ) : undefined
+          }
         />
       )}
     </SafeAreaView>

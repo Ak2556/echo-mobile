@@ -1,77 +1,34 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, KeyboardAvoidingView, Platform,
-  ScrollView, Pressable, ActivityIndicator,
+  ScrollView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { Eye, EyeSlash, EnvelopeSimple, LockKey, ArrowLeft, Phone } from 'phosphor-react-native';
+import { EnvelopeSimple, Phone, ArrowLeft } from 'phosphor-react-native';
 import { supabase } from '../../lib/supabase';
 import { EMAIL_RE } from '../../lib/validation';
 import { signInWithGoogle, signInWithApple } from '../../lib/auth';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
-import { useTheme } from '../../lib/theme';
+import { useTheme, SPACING, FONT_WEIGHT } from '../../lib/theme';
+import { TabSwitcher } from '../../components/auth/TabSwitcher';
+import { GoogleIcon } from '../../components/auth/GoogleIcon';
+import { PasswordField } from '../../components/auth/PasswordField';
+import { PasswordStrengthBar } from '../../components/auth/PasswordStrengthBar';
 
 type Mode = 'email' | 'phone';
 
-function TabSwitcher({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
-  return (
-    <View style={{
-      flexDirection: 'row',
-      backgroundColor: '#18181B',
-      borderRadius: 12,
-      padding: 4,
-      marginBottom: 24,
-    }}>
-      {(['email', 'phone'] as Mode[]).map(tab => (
-        <Pressable
-          key={tab}
-          onPress={() => onChange(tab)}
-          style={{
-            flex: 1,
-            paddingVertical: 10,
-            borderRadius: 9,
-            alignItems: 'center',
-            backgroundColor: mode === tab ? '#6366F1' : 'transparent',
-          }}
-        >
-          <Text style={{
-            color: mode === tab ? '#fff' : '#71717A',
-            fontWeight: '600',
-            fontSize: 14,
-          }}>
-            {tab === 'email' ? 'Email' : 'Phone'}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
-const inputRow = {
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-  backgroundColor: '#18181B',
-  borderRadius: 14,
-  borderWidth: 1,
-  borderColor: '#27272A',
-  paddingHorizontal: 14,
-  paddingVertical: 4,
-};
-
 export default function SignupScreen() {
   const router = useRouter();
-  const { animation } = useTheme();
+  const { colors, radius, animation } = useTheme();
   const [mode, setMode] = useState<Mode>('email');
 
   // Email state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Phone state
@@ -83,15 +40,20 @@ export default function SignupScreen() {
   const [appleLoading, setAppleLoading] = useState(false);
 
   const passwordsMatch = password === confirmPassword;
+  const mismatch = confirmPassword.length > 0 && !passwordsMatch;
   const canSubmitEmail = EMAIL_RE.test(email.trim()) && password.length >= 8 && passwordsMatch && !loading;
-
-  let passwordStrength = 0;
-  if (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)) passwordStrength = 3;
-  else if (password.length >= 8) passwordStrength = 2;
-  else if (password.length > 0) passwordStrength = 1;
-  const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][passwordStrength];
-  const strengthColor = ['', '#EF4444', '#F59E0B', '#10B981'][passwordStrength];
   const canSubmitPhone = phone.trim().length >= 8 && !phoneSending;
+
+  const inputRowStyle = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: colors.inputBg,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.inputBorder,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 4,
+  };
 
   const handleSignup = async () => {
     if (!canSubmitEmail) return;
@@ -139,189 +101,164 @@ export default function SignupScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: SPACING.lg }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {/* Back button */}
           <AnimatedPressable
             onPress={() => router.back()}
-            style={{ position: 'absolute', top: 16, left: 0, padding: 8 }}
+            style={{ position: 'absolute', top: SPACING.md, left: 0, padding: SPACING.sm }}
             scaleValue={0.9}
             haptic="light"
           >
-            <ArrowLeft color="#71717A" size={24} />
+            <ArrowLeft color={colors.textMuted} size={24} />
           </AnimatedPressable>
 
           {/* Header */}
-          <Animated.View entering={animation(FadeInDown.delay(60).springify())} style={{ alignItems: 'center', marginBottom: 36, marginTop: 60 }}>
+          <Animated.View
+            entering={animation(FadeInDown.delay(60).springify())}
+            style={{ alignItems: 'center', marginBottom: SPACING.xl, marginTop: 60 }}
+          >
             <View style={{
-              width: 72, height: 72, borderRadius: 22, backgroundColor: '#6366F1',
-              alignItems: 'center', justifyContent: 'center', marginBottom: 20,
-              shadowColor: '#6366F1', shadowOpacity: 0.5, shadowRadius: 20, shadowOffset: { width: 0, height: 8 },
+              width: 72, height: 72, borderRadius: 22, backgroundColor: colors.accent,
+              alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.md,
+              shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 20, shadowOffset: { width: 0, height: 8 },
             }}>
-              <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>e</Text>
+              <Text style={{ color: '#fff', fontSize: 32, fontWeight: FONT_WEIGHT.extrabold }}>e</Text>
             </View>
-            <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>Create account</Text>
-            <Text style={{ color: '#71717A', fontSize: 15, marginTop: 6 }}>Join the Echo community</Text>
+            <Text style={{ color: colors.text, fontSize: 28, fontWeight: FONT_WEIGHT.extrabold, letterSpacing: -0.5 }}>Create account</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: 6 }}>Join the Echo community</Text>
           </Animated.View>
 
           <Animated.View entering={animation(FadeInDown.delay(120).springify())}>
-            <TabSwitcher mode={mode} onChange={m => setMode(m)} />
+            <TabSwitcher mode={mode} onChange={setMode} />
 
-            {/* ── EMAIL form ── */}
-            {mode === 'email' && (
-              <>
-                <View style={{ marginBottom: 14 }}>
-                  <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>EMAIL</Text>
-                  <View style={inputRow}>
-                    <EnvelopeSimple color="#52525B" size={18} style={{ marginRight: 10 }} />
-                    <TextInput
-                      value={email}
-                      onChangeText={setEmail}
-                      placeholder="you@example.com"
-                      placeholderTextColor="#52525B"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      keyboardType="email-address"
-                      style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
-                    />
-                  </View>
-                  {email.length > 3 && !EMAIL_RE.test(email.trim()) && (
-                    <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4, marginLeft: 2 }}>
-                      Enter a valid email address
-                    </Text>
-                  )}
+            {/* ── EMAIL form — kept mounted ── */}
+            <View style={{ display: mode === 'email' ? 'flex' : 'none' }}>
+              <View style={{ marginBottom: SPACING.md }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: FONT_WEIGHT.semibold, marginBottom: SPACING.xs, marginLeft: 2 }}>EMAIL</Text>
+                <View style={inputRowStyle}>
+                  <EnvelopeSimple color={colors.textMuted} size={18} style={{ marginRight: SPACING.sm }} />
+                  <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="you@example.com"
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                    style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 14 }}
+                  />
                 </View>
-
-                <View style={{ marginBottom: 14 }}>
-                  <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>PASSWORD</Text>
-                  <View style={inputRow}>
-                    <LockKey color="#52525B" size={18} style={{ marginRight: 10 }} />
-                    <TextInput
-                      value={password}
-                      onChangeText={setPassword}
-                      placeholder="Min. 8 characters"
-                      placeholderTextColor="#52525B"
-                      secureTextEntry={!showPassword}
-                      style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
-                    />
-                    <Pressable onPress={() => setShowPassword(v => !v)} style={{ padding: 4 }}>
-                      {showPassword ? <EyeSlash color="#52525B" size={18} /> : <Eye color="#52525B" size={18} />}
-                    </Pressable>
-                  </View>
-                  {password.length > 0 && (
-                    <View style={{ marginTop: 8 }}>
-                      <View style={{ flexDirection: 'row', gap: 4, marginBottom: 4 }}>
-                        {[1, 2, 3].map(level => (
-                          <View key={level} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: passwordStrength >= level ? strengthColor : '#3F3F46' }} />
-                        ))}
-                      </View>
-                      <Text style={{ color: strengthColor, fontSize: 12, marginLeft: 2 }}>{strengthLabel}</Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={{ marginBottom: 24 }}>
-                  <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>CONFIRM PASSWORD</Text>
-                  <View style={[inputRow, {
-                    borderColor: confirmPassword.length > 0 && !passwordsMatch ? '#EF4444' : '#27272A',
-                  }]}>
-                    <LockKey color="#52525B" size={18} style={{ marginRight: 10 }} />
-                    <TextInput
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      placeholder="Re-enter password"
-                      placeholderTextColor="#52525B"
-                      secureTextEntry={!showConfirm}
-                      style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
-                    />
-                    <Pressable onPress={() => setShowConfirm(v => !v)} style={{ padding: 4 }}>
-                      {showConfirm ? <EyeSlash color="#52525B" size={18} /> : <Eye color="#52525B" size={18} />}
-                    </Pressable>
-                  </View>
-                  {confirmPassword.length > 0 && !passwordsMatch && (
-                    <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 6, marginLeft: 2 }}>Passwords don't match</Text>
-                  )}
-                </View>
-
-                <AnimatedPressable
-                  onPress={handleSignup}
-                  disabled={!canSubmitEmail}
-                  scaleValue={0.97}
-                  haptic="medium"
-                  style={{
-                    backgroundColor: canSubmitEmail ? '#6366F1' : '#27272A',
-                    borderRadius: 14, paddingVertical: 16,
-                    alignItems: 'center', justifyContent: 'center',
-                    opacity: canSubmitEmail ? 1 : 0.6,
-                    shadowColor: '#6366F1', shadowOpacity: canSubmitEmail ? 0.4 : 0,
-                    shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
-                    marginBottom: 24,
-                  }}
-                >
-                  {loading
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Create Account</Text>}
-                </AnimatedPressable>
-              </>
-            )}
-
-            {/* ── PHONE form ── */}
-            {mode === 'phone' && (
-              <>
-                <View style={{ marginBottom: 24 }}>
-                  <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>PHONE NUMBER</Text>
-                  <View style={inputRow}>
-                    <Phone color="#52525B" size={18} style={{ marginRight: 10 }} />
-                    <TextInput
-                      value={phone}
-                      onChangeText={setPhone}
-                      placeholder="+1 234 567 8900"
-                      placeholderTextColor="#52525B"
-                      keyboardType="phone-pad"
-                      style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
-                    />
-                  </View>
-                  <Text style={{ color: '#52525B', fontSize: 12, marginTop: 6, marginLeft: 2 }}>
-                    Include country code · e.g. +44 7700 900000
+                {email.length > 3 && !EMAIL_RE.test(email.trim()) && (
+                  <Text style={{ color: colors.danger, fontSize: 12, marginTop: 4, marginLeft: 2 }}>
+                    Enter a valid email address
                   </Text>
-                </View>
+                )}
+              </View>
 
-                <AnimatedPressable
-                  onPress={handleSendCode}
-                  disabled={!canSubmitPhone}
-                  scaleValue={0.97}
-                  haptic="medium"
-                  style={{
-                    backgroundColor: canSubmitPhone ? '#6366F1' : '#27272A',
-                    borderRadius: 14, paddingVertical: 16,
-                    alignItems: 'center', justifyContent: 'center',
-                    opacity: canSubmitPhone ? 1 : 0.6,
-                    shadowColor: '#6366F1', shadowOpacity: canSubmitPhone ? 0.4 : 0,
-                    shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
-                    marginBottom: 24,
-                  }}
-                >
-                  {phoneSending
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Send Code</Text>}
-                </AnimatedPressable>
-              </>
-            )}
+              <PasswordField
+                label="PASSWORD"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Min. 8 characters"
+                style={{ marginBottom: SPACING.xs }}
+              />
+              <PasswordStrengthBar password={password} />
+
+              <View style={{ height: SPACING.md }} />
+
+              <PasswordField
+                label="CONFIRM PASSWORD"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Re-enter password"
+                errorBorderColor={mismatch ? colors.danger : undefined}
+                style={{ marginBottom: 4 }}
+              />
+              {mismatch && (
+                <Text style={{ color: colors.danger, fontSize: 12, marginTop: 4, marginLeft: 2 }}>
+                  Passwords don't match
+                </Text>
+              )}
+
+              <View style={{ height: SPACING.lg }} />
+
+              <AnimatedPressable
+                onPress={handleSignup}
+                disabled={!canSubmitEmail}
+                scaleValue={0.97}
+                haptic="medium"
+                style={{
+                  backgroundColor: canSubmitEmail ? colors.accent : colors.surfaceHover,
+                  borderRadius: radius.lg, paddingVertical: SPACING.md,
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: canSubmitEmail ? 1 : 0.6,
+                  shadowColor: colors.accent, shadowOpacity: canSubmitEmail ? 0.4 : 0,
+                  shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+                  marginBottom: SPACING.lg,
+                }}
+              >
+                {loading
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={{ color: '#fff', fontWeight: FONT_WEIGHT.bold, fontSize: 16 }}>Create Account</Text>}
+              </AnimatedPressable>
+            </View>
+
+            {/* ── PHONE form — kept mounted ── */}
+            <View style={{ display: mode === 'phone' ? 'flex' : 'none' }}>
+              <View style={{ marginBottom: SPACING.lg }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: FONT_WEIGHT.semibold, marginBottom: SPACING.xs, marginLeft: 2 }}>PHONE NUMBER</Text>
+                <View style={inputRowStyle}>
+                  <Phone color={colors.textMuted} size={18} style={{ marginRight: SPACING.sm }} />
+                  <TextInput
+                    value={phone}
+                    onChangeText={setPhone}
+                    placeholder="+1 234 567 8900"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="phone-pad"
+                    style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 14 }}
+                  />
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 6, marginLeft: 2 }}>
+                  Include country code · e.g. +44 7700 900000
+                </Text>
+              </View>
+
+              <AnimatedPressable
+                onPress={handleSendCode}
+                disabled={!canSubmitPhone}
+                scaleValue={0.97}
+                haptic="medium"
+                style={{
+                  backgroundColor: canSubmitPhone ? colors.accent : colors.surfaceHover,
+                  borderRadius: radius.lg, paddingVertical: SPACING.md,
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: canSubmitPhone ? 1 : 0.6,
+                  shadowColor: colors.accent, shadowOpacity: canSubmitPhone ? 0.4 : 0,
+                  shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+                  marginBottom: SPACING.lg,
+                }}
+              >
+                {phoneSending
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={{ color: '#fff', fontWeight: FONT_WEIGHT.bold, fontSize: 16 }}>Send Code</Text>}
+              </AnimatedPressable>
+            </View>
 
             {/* Divider */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: '#27272A' }} />
-              <Text style={{ color: '#52525B', paddingHorizontal: 12, fontSize: 13 }}>or continue with</Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: '#27272A' }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.lg }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+              <Text style={{ color: colors.textMuted, paddingHorizontal: 12, fontSize: 13 }}>or continue with</Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
             </View>
 
             {/* Social buttons */}
-            <View style={{ gap: 12, marginBottom: 32 }}>
+            <View style={{ gap: SPACING.sm, marginBottom: SPACING.xl }}>
               <AnimatedPressable
                 onPress={handleGoogle}
                 disabled={googleLoading}
@@ -329,14 +266,15 @@ export default function SignupScreen() {
                 haptic="light"
                 style={{
                   flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1, borderColor: '#27272A',
+                  backgroundColor: colors.surface, borderRadius: radius.lg,
+                  borderWidth: 1, borderColor: colors.border,
                   paddingVertical: 14, gap: 10,
                 }}
               >
-                {googleLoading ? <ActivityIndicator color="#fff" size="small" /> : (
+                {googleLoading ? <ActivityIndicator color={colors.text} size="small" /> : (
                   <>
-                    <Text style={{ fontSize: 20 }}>G</Text>
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 15 }}>Continue with Google</Text>
+                    <GoogleIcon size={20} />
+                    <Text style={{ color: colors.text, fontWeight: FONT_WEIGHT.semibold, fontSize: 15 }}>Continue with Google</Text>
                   </>
                 )}
               </AnimatedPressable>
@@ -349,14 +287,14 @@ export default function SignupScreen() {
                   haptic="light"
                   style={{
                     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: '#fff', borderRadius: 14,
+                    backgroundColor: '#fff', borderRadius: radius.lg,
                     paddingVertical: 14, gap: 10,
                   }}
                 >
                   {appleLoading ? <ActivityIndicator color="#000" size="small" /> : (
                     <>
                       <Text style={{ fontSize: 20 }}></Text>
-                      <Text style={{ color: '#000', fontWeight: '600', fontSize: 15 }}>Continue with Apple</Text>
+                      <Text style={{ color: '#000', fontWeight: FONT_WEIGHT.semibold, fontSize: 15 }}>Continue with Apple</Text>
                     </>
                   )}
                 </AnimatedPressable>
@@ -364,10 +302,13 @@ export default function SignupScreen() {
             </View>
 
             {/* Login link */}
-            <Animated.View entering={animation(FadeInUp.delay(200).springify())} style={{ flexDirection: 'row', justifyContent: 'center', paddingBottom: 16 }}>
-              <Text style={{ color: '#71717A', fontSize: 15 }}>Already have an account? </Text>
+            <Animated.View
+              entering={animation(FadeInUp.delay(200).springify())}
+              style={{ flexDirection: 'row', justifyContent: 'center', paddingBottom: SPACING.md }}
+            >
+              <Text style={{ color: colors.textMuted, fontSize: 15 }}>Already have an account? </Text>
               <AnimatedPressable onPress={() => router.replace('/auth/login')} scaleValue={0.95} haptic="light">
-                <Text style={{ color: '#6366F1', fontSize: 15, fontWeight: '700' }}>Sign in</Text>
+                <Text style={{ color: colors.accent, fontSize: 15, fontWeight: FONT_WEIGHT.bold }}>Sign in</Text>
               </AnimatedPressable>
             </Animated.View>
           </Animated.View>
