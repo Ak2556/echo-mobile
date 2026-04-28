@@ -8,6 +8,7 @@ export function useEchoComments(echoId: string | undefined) {
   return useQuery({
     queryKey: ['comments', echoId],
     enabled: !!echoId && remote,
+    staleTime: 30_000,
     queryFn: async (): Promise<Comment[]> => {
       if (!echoId) return [];
       return fetchRemoteComments(echoId);

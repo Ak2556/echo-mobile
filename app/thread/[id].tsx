@@ -10,7 +10,8 @@ import { LikeButton } from '../../components/social/LikeButton';
 import { MediaGrid } from '../../components/social/MediaGrid';
 import { InlineVideo } from '../../components/social/InlineVideo';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
+import { useTheme, ThemeColors } from '../../lib/theme';
+import { Poll } from '../../types';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
@@ -21,7 +22,10 @@ export default function ThreadDetailScreen() {
   const qc = useQueryClient();
   const remote = isSupabaseRemote();
   const { data: feed } = useFeed();
-  const { isBookmarked, toggleBookmark, deleteEcho, userId: currentUserId } = useAppStore();
+  const isBookmarked  = useAppStore(s => s.isBookmarked);
+  const toggleBookmark = useAppStore(s => s.toggleBookmark);
+  const deleteEcho    = useAppStore(s => s.deleteEcho);
+  const currentUserId = useAppStore(s => s.userId);
   const { colors, radius, fontSizes, showAvatars, animation } = useTheme();
   const remoteBm = useToggleRemoteBookmark();
   const [showMenu, setShowMenu] = useState(false);
@@ -205,8 +209,11 @@ export default function ThreadDetailScreen() {
   );
 }
 
-function ThreadPollView({ poll, echoId, colors, radius, fontSizes }: { poll: any; echoId: string; colors: any; radius: any; fontSizes: any }) {
-  const { votePoll } = useAppStore();
+type FontSizes = ReturnType<typeof useTheme>['fontSizes'];
+type Radius = ReturnType<typeof useTheme>['radius'];
+
+function ThreadPollView({ poll, echoId, colors, radius, fontSizes }: { poll: Poll; echoId: string; colors: ThemeColors; radius: Radius; fontSizes: FontSizes }) {
+  const votePoll = useAppStore(s => s.votePoll);
   const isExpired = poll.endsAt ? new Date(poll.endsAt) < new Date() : false;
   const hasVoted = !!poll.userVote || isExpired;
 

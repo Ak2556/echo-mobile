@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useRef } from 'react';
 import { View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
@@ -16,7 +15,7 @@ export function MessageList({ messages }: MessageListProps) {
       <FlashList
         ref={listRef}
         data={messages}
-        renderItem={({ item }) => <MessageBubble message={item} />}
+        renderItem={({ item }: { item: Message }) => <MessageBubble message={item} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: 16 }}
       />

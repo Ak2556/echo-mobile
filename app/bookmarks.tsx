@@ -18,7 +18,7 @@ import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
 export default function BookmarksScreen() {
   const router = useRouter();
   const remote = isSupabaseRemote();
-  const { bookmarkedIds } = useAppStore();
+  const bookmarkedIds = useAppStore(s => s.bookmarkedIds);
   const { data: feed } = useFeed();
   const remoteQ = useRemoteBookmarks();
   const { colors, animation } = useTheme();

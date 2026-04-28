@@ -18,6 +18,7 @@ export type EchoAIEvent =
 interface StreamArgs {
   message?: string;
   conversationId?: string;
+  language?: string;
   confirm?: { tool_call_id: string; tool_name: string; args: any; approve: boolean };
   onEvent: (event: EchoAIEvent) => void;
 }
@@ -25,6 +26,7 @@ interface StreamArgs {
 export async function streamEchoAI({
   message,
   conversationId,
+  language,
   confirm,
   onEvent,
 }: StreamArgs): Promise<void> {
@@ -38,6 +40,7 @@ export async function streamEchoAI({
   if (message) body.message = message;
   if (conversationId) body.conversation_id = conversationId;
   if (confirm) body.confirm = confirm;
+  if (language) body.language = language;
 
   return new Promise<void>((resolve, reject) => {
     const es = new EventSource(ECHO_AI_URL, {

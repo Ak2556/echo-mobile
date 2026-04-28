@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, FlatList, useWindowDimensions, ViewToken, Pressable,
 } from 'react-native';
@@ -16,25 +16,28 @@ export default function EchoesScreen() {
   const { height: SCREEN_H } = useWindowDimensions();
   const router = useRouter();
   const { data: feed, isLoading } = useFeed();
-  const [activeIdx, setActiveIdx] = useState(0);
+  const activeIdxRef = useRef(0);
 
-  const videos = (feed ?? []).filter(item => item.postType === 'video' && !!item.videoUri);
+  const videos = useMemo(
+    () => (feed ?? []).filter(item => item.postType === 'video' && !!item.videoUri),
+    [feed],
+  );
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 });
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0 && viewableItems[0].index != null) {
-        setActiveIdx(viewableItems[0].index);
+        activeIdxRef.current = viewableItems[0].index;
       }
     }
   );
 
   const renderItem = useCallback(
     ({ item, index }: { item: FeedItem; index: number }) => (
-      <EchoCard item={item} isActive={index === activeIdx} />
+      <EchoCard item={item} index={index} activeIdxRef={activeIdxRef} />
     ),
-    [activeIdx]
+    [],
   );
 
   const getItemLayout = useCallback(
@@ -100,6 +103,8 @@ export default function EchoesScreen() {
           position: 'absolute', top: 52, right: 16, zIndex: 11,
           backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: 8,
         }}
+        accessibilityLabel="Create video Echo"
+        accessibilityRole="button"
       >
         <Plus color="#fff" size={20} weight="bold" />
       </Pressable>

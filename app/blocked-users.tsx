@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,17 +10,21 @@ import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
+import { User } from '../types';
 
 export default function BlockedUsersScreen() {
   const router = useRouter();
-  const { blockedIds, toggleBlock, getUser, users } = useAppStore();
+  const blockedIds  = useAppStore(s => s.blockedIds);
+  const toggleBlock = useAppStore(s => s.toggleBlock);
+  const getUser     = useAppStore(s => s.getUser);
+  const users       = useAppStore(s => s.users);
   const { colors, radius, fontSizes, animation, showAvatars } = useTheme();
 
   const blockedUsers = blockedIds
     .map(id => getUser(id))
-    .filter(Boolean) as typeof users;
+    .filter(Boolean) as User[];
 
-  const handleUnblock = (user: typeof users[0]) => {
+  const handleUnblock = (user: User) => {
     Alert.alert(
       'Unblock User',
       `Unblock @${user.username}? They will be able to see your content and contact you again.`,
@@ -58,7 +61,7 @@ export default function BlockedUsersScreen() {
       ) : (
         <FlashList
           data={blockedUsers}
-          renderItem={({ item, index }) => (
+          renderItem={({ item, index }: { item: User; index: number }) => (
             <Animated.View entering={animation(FadeInDown.delay(index * 50).springify())}>
               <View
                 className="flex-row items-center px-4 py-3.5"
@@ -95,7 +98,7 @@ export default function BlockedUsersScreen() {
               </View>
             </Animated.View>
           )}
-          keyExtractor={item => item.id}
+          keyExtractor={(item: User) => item.id}
           estimatedItemSize={72}
         />
       )}

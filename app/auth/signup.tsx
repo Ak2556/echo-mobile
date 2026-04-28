@@ -81,7 +81,17 @@ export default function SignupScreen() {
   const [appleLoading, setAppleLoading] = useState(false);
 
   const passwordsMatch = password === confirmPassword;
-  const canSubmitEmail = email.trim().length > 0 && password.length >= 8 && passwordsMatch && !loading;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const canSubmitEmail = EMAIL_RE.test(email.trim()) && password.length >= 8 && passwordsMatch && !loading;
+
+  const passwordStrength = (() => {
+    if (password.length === 0) return 0;
+    if (password.length < 8) return 1;
+    if (/[A-Z]/.test(password) && /[0-9]/.test(password)) return 3;
+    return 2;
+  })();
+  const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][passwordStrength];
+  const strengthColor = ['', '#EF4444', '#F59E0B', '#10B981'][passwordStrength];
   const canSubmitPhone = phone.trim().length >= 8 && !phoneSending;
 
   const handleSignup = async () => {
@@ -181,6 +191,11 @@ export default function SignupScreen() {
                       style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
                     />
                   </View>
+                  {email.length > 3 && !EMAIL_RE.test(email.trim()) && (
+                    <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4, marginLeft: 2 }}>
+                      Enter a valid email address
+                    </Text>
+                  )}
                 </View>
 
                 <View style={{ marginBottom: 14 }}>
@@ -199,6 +214,16 @@ export default function SignupScreen() {
                       {showPassword ? <EyeSlash color="#52525B" size={18} /> : <Eye color="#52525B" size={18} />}
                     </Pressable>
                   </View>
+                  {password.length > 0 && (
+                    <View style={{ marginTop: 8 }}>
+                      <View style={{ flexDirection: 'row', gap: 4, marginBottom: 4 }}>
+                        {[1, 2, 3].map(level => (
+                          <View key={level} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: passwordStrength >= level ? strengthColor : '#3F3F46' }} />
+                        ))}
+                      </View>
+                      <Text style={{ color: strengthColor, fontSize: 12, marginLeft: 2 }}>{strengthLabel}</Text>
+                    </View>
+                  )}
                 </View>
 
                 <View style={{ marginBottom: 24 }}>

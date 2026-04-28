@@ -18,17 +18,19 @@ import { FeedItem } from '../../types';
 
 interface EchoCardProps {
   item: FeedItem;
-  isActive: boolean;
+  index: number;
+  activeIdxRef: React.RefObject<number>;
   onCommentPress?: (item: FeedItem) => void;
 }
 
 function SidebarButton({
-  icon, label, color, onPress,
+  icon, label, color, onPress, accessibilityLabel,
 }: {
   icon: React.ReactNode;
   label?: string | number;
   color?: string;
   onPress: () => void;
+  accessibilityLabel?: string;
 }) {
   const scale = useSharedValue(1);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -41,7 +43,7 @@ function SidebarButton({
   };
 
   return (
-    <Pressable onPress={handlePress} style={{ alignItems: 'center', gap: 4 }}>
+    <Pressable onPress={handlePress} style={{ alignItems: 'center', gap: 4 }} accessibilityLabel={accessibilityLabel} accessibilityRole="button">
       <Animated.View style={style}>{icon}</Animated.View>
       {label !== undefined && label !== 0 && (
         <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>
@@ -52,11 +54,14 @@ function SidebarButton({
   );
 }
 
-export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
+export function EchoCardInner({ item, index, activeIdxRef, onCommentPress }: EchoCardProps) {
   const { colors } = useTheme();
   const { height: SCREEN_H } = useWindowDimensions();
-  const toggleLike = useAppStore(s => s.toggleLike);
+  const toggleLike     = useAppStore(s => s.toggleLike);
   const toggleBookmark = useAppStore(s => s.toggleBookmark);
+
+  // Derive isActive from ref so renderItem doesn't need activeIdx as a dep
+  const isActive = index === activeIdxRef.current;
 
   const videoRef = useRef<Video>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -65,6 +70,13 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
   const [isLiked, setIsLiked] = useState(item.isLiked);
   const [likeCount, setLikeCount] = useState(item.likes);
   const [isBookmarked, setIsBookmarked] = useState(item.isBookmarked);
+
+  // Sync local state when query cache updates (e.g. after a remote like via Track 1 select)
+  useEffect(() => {
+    setIsLiked(item.isLiked);
+    setLikeCount(item.likes);
+    setIsBookmarked(item.isBookmarked);
+  }, [item.id, item.isLiked, item.likes, item.isBookmarked]);
 
   const lastTapRef = useRef(0);
 
@@ -273,27 +285,36 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
           icon={<HeartStraight color={isLiked ? '#FF4D6D' : '#fff'} size={30} weight={isLiked ? 'fill' : 'regular'} />}
           label={likeCount}
           onPress={handleLike}
+          accessibilityLabel="Like"
         />
         <SidebarButton
           icon={<ChatCircle color="#fff" size={30} />}
           label={item.commentCount}
           onPress={() => onCommentPress?.(item)}
+          accessibilityLabel="Comment"
         />
         <SidebarButton
           icon={<BookmarkSimple color={isBookmarked ? '#FBBF24' : '#fff'} size={30} weight={isBookmarked ? 'fill' : 'regular'} />}
           onPress={handleBookmark}
+          accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
         />
         <SidebarButton
           icon={<ShareNetwork color="#fff" size={28} />}
           onPress={handleShare}
+          accessibilityLabel="Share"
         />
         <SidebarButton
           icon={muted
             ? <SpeakerSlash color="#fff" size={26} />
             : <SpeakerHigh color="#fff" size={26} />}
           onPress={toggleMute}
+          accessibilityLabel={muted ? 'Unmute' : 'Mute'}
         />
       </View>
     </View>
   );
 }
+
+export const EchoCard = React.memo(EchoCardInner,
+  (prev, next) => prev.item.id === next.item.id && prev.index === next.index,
+);

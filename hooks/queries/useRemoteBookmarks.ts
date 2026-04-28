@@ -6,6 +6,7 @@ export function useRemoteBookmarks() {
   return useQuery({
     queryKey: ['bookmarks'],
     enabled: isSupabaseRemote(),
+    staleTime: 60_000,
     queryFn: () => fetchRemoteBookmarkedFeed(),
   });
 }

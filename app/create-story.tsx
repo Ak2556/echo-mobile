@@ -16,7 +16,11 @@ const STORY_DURATION_HOURS = 24;
 export default function CreateStoryScreen() {
   const router = useRouter();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { username, userId, avatarColor, displayName, addStory } = useAppStore();
+  const username    = useAppStore(s => s.username);
+  const userId      = useAppStore(s => s.userId);
+  const avatarColor = useAppStore(s => s.avatarColor);
+  const displayName = useAppStore(s => s.displayName);
+  const addStory    = useAppStore(s => s.addStory);
 
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');

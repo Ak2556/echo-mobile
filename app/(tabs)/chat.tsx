@@ -24,13 +24,22 @@ type ChatItem =
 export default function ChatScreen() {
   const router = useRouter();
   const { colors, animation } = useTheme();
-  const showTyping = useAppStore(s => s.showTypingIndicator);
+  const showTyping       = useAppStore(s => s.showTypingIndicator);
+  const streamResponses  = useAppStore(s => s.streamResponses);
+  const contentLanguage  = useAppStore(s => s.contentLanguage);
+
+  const streamResponsesRef = useRef(streamResponses);
+  useEffect(() => { streamResponsesRef.current = streamResponses; }, [streamResponses]);
+  const contentLanguageRef = useRef(contentLanguage);
+  useEffect(() => { contentLanguageRef.current = contentLanguage; }, [contentLanguage]);
 
   const [items, setItems] = useState<ChatItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const listRef = useRef<any>(null);
+  const scrollScheduled = useRef(false);
+  const pendingContentRef = useRef('');
 
   // Restore last conversation id on mount.
   useEffect(() => {
@@ -96,18 +105,41 @@ export default function ChatScreen() {
     });
   };
 
+  // Collapses every onContentSizeChange call into one rAF per frame,
+  // and uses animated:false so we snap rather than chase the content during streaming.
+  const scheduleScrollToEnd = useCallback(() => {
+    if (scrollScheduled.current) return;
+    scrollScheduled.current = true;
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToEnd({ animated: false });
+      scrollScheduled.current = false;
+    });
+  }, []);
+
   const runStream = useCallback(
     async (opts: Parameters<typeof streamEchoAI>[0]) => {
       const assistantId = `a-${Date.now()}`;
+      pendingContentRef.current = '';
       setIsStreaming(true);
       try {
+        const lang = contentLanguageRef.current;
         await streamEchoAI({
           ...opts,
+          language: lang && lang !== 'English' ? lang : undefined,
           onEvent: (e) => {
             if (e.type === 'conversation') {
               setConvId(e.id);
             } else if (e.type === 'text_delta') {
-              upsertText(assistantId, 'assistant', e.delta);
+              if (streamResponsesRef.current) {
+                upsertText(assistantId, 'assistant', e.delta);
+              } else {
+                pendingContentRef.current += e.delta;
+              }
+            } else if (e.type === 'done' && !streamResponsesRef.current) {
+              if (pendingContentRef.current) {
+                upsertText(assistantId, 'assistant', pendingContentRef.current);
+                pendingContentRef.current = '';
+              }
             } else if (e.type === 'tool_call_pending') {
               upsertTool({
                 id: e.id,
@@ -222,6 +254,8 @@ export default function ChatScreen() {
             style={{ backgroundColor: colors.surface }}
             scaleValue={0.88}
             haptic="light"
+            accessibilityLabel="Chat history"
+            accessibilityRole="button"
           >
             <Clock color={colors.textSecondary} size={20} />
           </AnimatedPressable>
@@ -231,6 +265,8 @@ export default function ChatScreen() {
             style={{ backgroundColor: colors.surface }}
             scaleValue={0.88}
             haptic="light"
+            accessibilityLabel="New chat"
+            accessibilityRole="button"
           >
             <Plus color={colors.textSecondary} size={20} />
           </AnimatedPressable>
@@ -247,6 +283,8 @@ export default function ChatScreen() {
           style={{ backgroundColor: colors.surface }}
           scaleValue={0.88}
           haptic="light"
+          accessibilityLabel="Share conversation"
+          accessibilityRole="button"
         >
           <ShareNetwork color={colors.textSecondary} size={20} />
         </AnimatedPressable>
@@ -272,7 +310,7 @@ export default function ChatScreen() {
               )
             }
             contentContainerStyle={{ paddingTop: 16, paddingBottom: 8 }}
-            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+            onContentSizeChange={scheduleScrollToEnd}
           />
           {isStreaming && showTyping && <TypingIndicator />}
         </View>
