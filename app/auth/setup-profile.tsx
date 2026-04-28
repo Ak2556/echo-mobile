@@ -19,7 +19,11 @@ const AVATAR_COLORS = [
 
 export default function SetupProfileScreen() {
   const router = useRouter();
-  const { setUsername, setDisplayName, setUserId, setAvatarColor, setHasSeenOnboarding } = useAppStore();
+  const setUsername         = useAppStore(s => s.setUsername);
+  const setDisplayName      = useAppStore(s => s.setDisplayName);
+  const setUserId           = useAppStore(s => s.setUserId);
+  const setAvatarColor      = useAppStore(s => s.setAvatarColor);
+  const setHasSeenOnboarding = useAppStore(s => s.setHasSeenOnboarding);
   const [displayName, setDisplayNameLocal] = useState('');
   const [username, setUsernameLocal] = useState('');
   const [selectedColor, setSelectedColor] = useState(AVATAR_COLORS[0]);

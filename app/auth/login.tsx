@@ -79,7 +79,8 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
 
-  const canSubmitEmail = email.trim().length > 0 && password.length >= 6 && !loading;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const canSubmitEmail = EMAIL_RE.test(email.trim()) && password.length >= 8 && !loading;
   const canSubmitPhone = phone.trim().length >= 8 && !phoneSending;
 
   const handleLogin = async () => {
@@ -162,6 +163,11 @@ export default function LoginScreen() {
                       style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
                     />
                   </View>
+                  {email.length > 3 && !EMAIL_RE.test(email.trim()) && (
+                    <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4, marginLeft: 2 }}>
+                      Enter a valid email address
+                    </Text>
+                  )}
                 </View>
 
                 <View style={{ marginBottom: 8 }}>

@@ -6,6 +6,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, Warning } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
+import { supabase } from '../lib/supabase';
+import { getSessionUserId } from '../lib/supabaseEchoApi';
 
 const REASONS = [
   'Spam or misleading',
@@ -25,13 +27,26 @@ export default function ReportScreen() {
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [details, setDetails] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedReason) {
       Alert.alert('Select a reason', 'Please select a reason for your report.');
       return;
     }
-    showToast('Report submitted. Thank you!', '\u{2705}');
-    router.back();
+    try {
+      const reporterId = await getSessionUserId();
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: reporterId,
+        target_type: targetType,
+        target_id: targetId,
+        reason: selectedReason,
+        details: details.trim() || null,
+      });
+      if (error) throw error;
+      showToast('Report submitted. Thank you!', '\u{2705}');
+      router.back();
+    } catch {
+      showToast('Failed to submit report. Try again.', '❌');
+    }
   };
 
   return (

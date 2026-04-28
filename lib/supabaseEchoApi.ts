@@ -4,84 +4,153 @@ import {
   mapEchoRowToFeedItem,
   SupabaseEchoRow,
   SupabaseProfileRow,
+  extractHashtags,
 } from './mapSupabaseEcho';
 
+// ── Session UID cache ──────────────────────────────────────────────────────────
+// Avoids a redundant async getSession() call on every API function.
+// Cleared on SIGNED_OUT (see app/_layout.tsx AuthListener).
+
+let _uidCache: { uid: string; exp: number } | null = null;
+
 export async function getSessionUserId(): Promise<string | null> {
+  const now = Date.now() / 1000;
+  if (_uidCache && _uidCache.exp > now + 60) return _uidCache.uid;
   const { data: { session } } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
+  if (!session) { _uidCache = null; return null; }
+  _uidCache = { uid: session.user.id, exp: session.expires_at ?? now + 3600 };
+  return _uidCache.uid;
+}
+
+export function clearSessionCache(): void {
+  _uidCache = null;
+}
+
+// ── Shared view row type ───────────────────────────────────────────────────────
+
+type ViewRow = SupabaseEchoRow & {
+  username: string;
+  display_name: string;
+  avatar_color: string;
+  is_verified: boolean;
+};
+
+function mapViewRowToFeedItem(
+  row: ViewRow,
+  liked: Set<string>,
+  bookmarked: Set<string>,
+): FeedItem {
+  const username = row.username ?? 'unknown';
+  return {
+    id: row.id,
+    userId: row.author_id,
+    username,
+    displayName: row.display_name || username,
+    avatarColor: row.avatar_color || '#3B82F6',
+    isVerified: row.is_verified ?? false,
+    prompt: row.prompt,
+    response: row.response,
+    mediaUris: (row as any).media_uris ?? undefined,
+    videoUri: (row as any).video_uri ?? undefined,
+    likes: row.likes_count ?? 0,
+    isLiked: liked.has(row.id),
+    isBookmarked: bookmarked.has(row.id),
+    isReposted: false,
+    repostCount: row.repost_count ?? 0,
+    commentCount: row.comment_count ?? 0,
+    viewCount: row.view_count ?? 0,
+    hashtags: extractHashtags(`${row.prompt} ${row.response}`),
+    createdAt: row.created_at,
+  };
+}
+
+const VIEW_COLUMNS =
+  'id, author_id, title, prompt, response, media_uris, video_uri, likes_count, comment_count, repost_count, view_count, created_at, username, display_name, avatar_color, is_verified';
+
+// ── Feed ──────────────────────────────────────────────────────────────────────
+
+export async function fetchRemoteFeed(): Promise<FeedItem[]> {
+  const uid = await getSessionUserId();
+
+  // All three queries run in parallel — view collapses the former echoes+profiles waterfall
+  const [echoRes, likeRes, bmRes] = await Promise.all([
+    supabase
+      .from('public_echoes_with_author')
+      .select(VIEW_COLUMNS)
+      .order('created_at', { ascending: false }),
+    uid
+      ? supabase.from('echo_likes').select('echo_id').eq('user_id', uid)
+      : Promise.resolve({ data: [] as { echo_id: string }[], error: null }),
+    uid
+      ? supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid)
+      : Promise.resolve({ data: [] as { echo_id: string }[], error: null }),
+  ]);
+
+  if (echoRes.error) throw echoRes.error;
+  const rows = (echoRes.data ?? []) as ViewRow[];
+  if (!rows.length) return [];
+
+  const liked      = new Set((likeRes.data ?? []).map(r => r.echo_id));
+  const bookmarked = new Set((bmRes.data  ?? []).map(r => r.echo_id));
+
+  return rows.map(r => mapViewRowToFeedItem(r, liked, bookmarked));
 }
 
 export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
   const uid = await getSessionUserId();
   if (!uid) return [];
+
+  // Fetch bookmark IDs then the joined view rows in parallel with likes
   const { data: bms, error: e0 } = await supabase
     .from('echo_bookmarks')
     .select('echo_id')
     .eq('user_id', uid);
   if (e0) throw e0;
-  const ids = (bms || []).map((r: { echo_id: string }) => r.echo_id);
+
+  const ids = (bms || []).map(r => r.echo_id);
   if (!ids.length) return [];
 
-  const { data: echoes, error: e1 } = await supabase
-    .from('public_echoes')
-    .select('id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at')
-    .in('id', ids);
-  if (e1) throw e1;
-  const rows = (echoes || []) as SupabaseEchoRow[];
+  const [echoRes, likeRes] = await Promise.all([
+    supabase
+      .from('public_echoes_with_author')
+      .select(VIEW_COLUMNS)
+      .in('id', ids),
+    supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
+  ]);
+
+  if (echoRes.error) throw echoRes.error;
+  const rows = (echoRes.data ?? []) as ViewRow[];
   if (!rows.length) return [];
 
-  const authorIds = [...new Set(rows.map(r => r.author_id))];
-  const { data: profiles, error: e2 } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
-    .in('id', authorIds);
-  if (e2) throw e2;
-  const profileById = new Map((profiles as SupabaseProfileRow[] || []).map(p => [p.id, p]));
-
-  const { data: likeRows } = await supabase.from('echo_likes').select('echo_id').eq('user_id', uid);
-  const liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
+  const liked      = new Set((likeRes.data ?? []).map(r => r.echo_id));
   const bookmarked = new Set(ids);
 
-  return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked)
-  );
+  return rows.map(r => mapViewRowToFeedItem(r, liked, bookmarked));
 }
 
-export async function fetchRemoteFeed(): Promise<FeedItem[]> {
+// ── Echoes ────────────────────────────────────────────────────────────────────
+
+export async function uploadMediaFile(
+  localUri: string,
+  mimeType: string,
+): Promise<string> {
   const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
 
-  const { data: echoes, error: e1 } = await supabase
-    .from('public_echoes')
-    .select('id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at')
-    .order('created_at', { ascending: false });
+  const ext = localUri.split('.').pop()?.split('?')[0] ?? 'jpg';
+  const path = `${uid}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-  if (e1) throw e1;
-  const rows = (echoes || []) as SupabaseEchoRow[];
-  if (rows.length === 0) return [];
+  const response = await fetch(localUri);
+  const blob = await response.blob();
 
-  const authorIds = [...new Set(rows.map(r => r.author_id))];
-  const { data: profiles, error: e2 } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
-    .in('id', authorIds);
+  const { error } = await supabase.storage
+    .from('media')
+    .upload(path, blob, { contentType: mimeType, upsert: false });
 
-  if (e2) throw e2;
-  const profileById = new Map((profiles as SupabaseProfileRow[] || []).map(p => [p.id, p]));
+  if (error) throw error;
 
-  let liked = new Set<string>();
-  let bookmarked = new Set<string>();
-  if (uid) {
-    const [{ data: likeRows }, { data: bmRows }] = await Promise.all([
-      supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
-      supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid),
-    ]);
-    liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
-    bookmarked = new Set((bmRows || []).map((r: { echo_id: string }) => r.echo_id));
-  }
-
-  return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked)
-  );
+  const { data } = supabase.storage.from('media').getPublicUrl(path);
+  return data.publicUrl;
 }
 
 export async function insertRemoteEcho(params: {
@@ -89,6 +158,8 @@ export async function insertRemoteEcho(params: {
   prompt: string;
   response: string;
   title?: string;
+  mediaUris?: string[];
+  videoUri?: string;
 }): Promise<void> {
   const title =
     params.title?.trim() ||
@@ -98,9 +169,40 @@ export async function insertRemoteEcho(params: {
     title,
     prompt: params.prompt,
     response: params.response,
+    media_uris: params.mediaUris ?? null,
+    video_uri: params.videoUri ?? null,
   });
   if (error) throw error;
 }
+
+export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedItem[]> {
+  const uid = await getSessionUserId();
+
+  const [echoRes, likeRes, bmRes] = await Promise.all([
+    supabase
+      .from('public_echoes_with_author')
+      .select(VIEW_COLUMNS)
+      .eq('author_id', authorId)
+      .order('created_at', { ascending: false }),
+    uid
+      ? supabase.from('echo_likes').select('echo_id').eq('user_id', uid)
+      : Promise.resolve({ data: [] as { echo_id: string }[], error: null }),
+    uid
+      ? supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid)
+      : Promise.resolve({ data: [] as { echo_id: string }[], error: null }),
+  ]);
+
+  if (echoRes.error) throw echoRes.error;
+  const rows = (echoRes.data ?? []) as ViewRow[];
+  if (!rows.length) return [];
+
+  const liked      = new Set((likeRes.data ?? []).map(r => r.echo_id));
+  const bookmarked = new Set((bmRes.data  ?? []).map(r => r.echo_id));
+
+  return rows.map(r => mapViewRowToFeedItem(r, liked, bookmarked));
+}
+
+// ── Likes & Bookmarks ─────────────────────────────────────────────────────────
 
 export async function setRemoteLike(echoId: string, like: boolean): Promise<void> {
   const uid = await getSessionUserId();
@@ -133,6 +235,8 @@ export async function setRemoteBookmark(echoId: string, bookmark: boolean): Prom
     if (error) throw error;
   }
 }
+
+// ── Comments ──────────────────────────────────────────────────────────────────
 
 export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
   const { data: rows, error } = await supabase
@@ -190,6 +294,8 @@ export async function insertRemoteComment(echoId: string, content: string): Prom
   if (error) throw error;
 }
 
+// ── Profiles ──────────────────────────────────────────────────────────────────
+
 export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfileRow | null> {
   const { data, error } = await supabase
     .from('profiles')
@@ -200,40 +306,33 @@ export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfil
   return data as SupabaseProfileRow | null;
 }
 
-export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedItem[]> {
-  const { data: echoes, error } = await supabase
-    .from('public_echoes')
-    .select('id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at')
-    .eq('author_id', authorId)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  const rows = (echoes || []) as SupabaseEchoRow[];
-  if (rows.length === 0) return [];
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
-    .eq('id', authorId)
-    .maybeSingle();
-  const author = profile as SupabaseProfileRow | null | undefined;
-
+export async function updateRemoteProfile(updates: {
+  username?: string;
+  display_name?: string;
+  bio?: string;
+  avatar_color?: string;
+}): Promise<void> {
   const uid = await getSessionUserId();
-  let liked = new Set<string>();
-  let bookmarked = new Set<string>();
-  if (uid && rows.length) {
-    const ids = rows.map(r => r.id);
-    const [{ data: likeRows }, { data: bmRows }] = await Promise.all([
-      supabase.from('echo_likes').select('echo_id').eq('user_id', uid).in('echo_id', ids),
-      supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid).in('echo_id', ids),
-    ]);
-    liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
-    bookmarked = new Set((bmRows || []).map((r: { echo_id: string }) => r.echo_id));
-  }
-
-  return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, author || undefined, liked, bookmarked)
-  );
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase.from('profiles').update(updates).eq('id', uid);
+  if (error) throw error;
 }
+
+export async function upsertRemoteProfileOnSignIn(username: string, displayName: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase.from('profiles').upsert(
+    {
+      id: uid,
+      username: username.trim().toLowerCase(),
+      display_name: displayName.trim() || username.trim(),
+    },
+    { onConflict: 'id' }
+  );
+  if (error) throw error;
+}
+
+// ── Follows ───────────────────────────────────────────────────────────────────
 
 export async function isRemoteFollowing(targetUserId: string): Promise<boolean> {
   const uid = await getSessionUserId();
@@ -285,60 +384,44 @@ export async function fetchRemoteFollowingCount(userId: string): Promise<number>
   return count ?? 0;
 }
 
+// Collapsed to a single JOIN query via Supabase embedded select.
+// Requires FK: follows.follower_id → profiles.id (named follows_follower_id_fkey).
 export async function fetchRemoteFollowers(userId: string): Promise<SupabaseProfileRow[]> {
-  const { data: rows, error } = await supabase
+  const { data, error } = await supabase
     .from('follows')
-    .select('follower_id')
+    .select('profiles!follows_follower_id_fkey(id, username, display_name, bio, avatar_color, is_verified)')
     .eq('following_id', userId);
-  if (error) throw error;
-  const ids = (rows || []).map((r: { follower_id: string }) => r.follower_id);
-  if (!ids.length) return [];
-  const { data: profiles, error: e2 } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
-    .in('id', ids);
-  if (e2) throw e2;
-  return (profiles || []) as SupabaseProfileRow[];
+  if (error) {
+    // Fallback to two-step query if FK name differs in this project's schema
+    const { data: rows, error: e2 } = await supabase
+      .from('follows').select('follower_id').eq('following_id', userId);
+    if (e2) throw e2;
+    const ids = (rows || []).map((r: { follower_id: string }) => r.follower_id);
+    if (!ids.length) return [];
+    const { data: profiles, error: e3 } = await supabase
+      .from('profiles').select('id, username, display_name, bio, avatar_color, is_verified').in('id', ids);
+    if (e3) throw e3;
+    return (profiles || []) as SupabaseProfileRow[];
+  }
+  return ((data ?? []).map((r: any) => r.profiles).filter(Boolean)) as SupabaseProfileRow[];
 }
 
 export async function fetchRemoteFollowingProfiles(userId: string): Promise<SupabaseProfileRow[]> {
-  const { data: rows, error } = await supabase
+  const { data, error } = await supabase
     .from('follows')
-    .select('following_id')
+    .select('profiles!follows_following_id_fkey(id, username, display_name, bio, avatar_color, is_verified)')
     .eq('follower_id', userId);
-  if (error) throw error;
-  const ids = (rows || []).map((r: { following_id: string }) => r.following_id);
-  if (!ids.length) return [];
-  const { data: profiles, error: e2 } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
-    .in('id', ids);
-  if (e2) throw e2;
-  return (profiles || []) as SupabaseProfileRow[];
-}
-
-export async function updateRemoteProfile(updates: {
-  username?: string;
-  display_name?: string;
-  bio?: string;
-  avatar_color?: string;
-}): Promise<void> {
-  const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
-  const { error } = await supabase.from('profiles').update(updates).eq('id', uid);
-  if (error) throw error;
-}
-
-export async function upsertRemoteProfileOnSignIn(username: string, displayName: string): Promise<void> {
-  const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
-  const { error } = await supabase.from('profiles').upsert(
-    {
-      id: uid,
-      username: username.trim().toLowerCase(),
-      display_name: displayName.trim() || username.trim(),
-    },
-    { onConflict: 'id' }
-  );
-  if (error) throw error;
+  if (error) {
+    // Fallback to two-step query if FK name differs
+    const { data: rows, error: e2 } = await supabase
+      .from('follows').select('following_id').eq('follower_id', userId);
+    if (e2) throw e2;
+    const ids = (rows || []).map((r: { following_id: string }) => r.following_id);
+    if (!ids.length) return [];
+    const { data: profiles, error: e3 } = await supabase
+      .from('profiles').select('id, username, display_name, bio, avatar_color, is_verified').in('id', ids);
+    if (e3) throw e3;
+    return (profiles || []) as SupabaseProfileRow[];
+  }
+  return ((data ?? []).map((r: any) => r.profiles).filter(Boolean)) as SupabaseProfileRow[];
 }

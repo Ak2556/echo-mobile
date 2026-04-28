@@ -15,7 +15,8 @@ interface UserRowProps {
 }
 
 export function UserRow({ user, onPress, showFollowButton = false }: UserRowProps) {
-  const { isFollowing, toggleFollow } = useAppStore();
+  const isFollowing   = useAppStore(s => s.isFollowing);
+  const toggleFollow  = useAppStore(s => s.toggleFollow);
   const { colors, fontSizes, showAvatars, reduceAnimations } = useTheme();
   const following = isFollowing(user.id);
   const btnScale = useSharedValue(1);

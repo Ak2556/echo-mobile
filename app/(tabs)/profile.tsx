@@ -38,13 +38,16 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors, radius, switchTrack, animation } = useTheme();
   const insets = useSafeAreaInsets();
-  const {
-    userId,
-    username, displayName, bio, avatarColor,
-    publishedEchoes,
-    notificationsEnabled, setNotificationsEnabled,
-    getFollowers, getFollowing,
-  } = useAppStore();
+  const userId                = useAppStore(s => s.userId);
+  const username              = useAppStore(s => s.username);
+  const displayName           = useAppStore(s => s.displayName);
+  const bio                   = useAppStore(s => s.bio);
+  const avatarColor           = useAppStore(s => s.avatarColor);
+  const publishedEchoes       = useAppStore(s => s.publishedEchoes);
+  const notificationsEnabled  = useAppStore(s => s.notificationsEnabled);
+  const setNotificationsEnabled = useAppStore(s => s.setNotificationsEnabled);
+  const getFollowers          = useAppStore(s => s.getFollowers);
+  const getFollowing          = useAppStore(s => s.getFollowing);
 
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const tabIndicatorX = useSharedValue(0);

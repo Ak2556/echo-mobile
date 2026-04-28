@@ -30,6 +30,10 @@
     "plugins": [
       "expo-router",
       "expo-apple-authentication",
+      ["expo-media-library", {
+        "photosPermission": "Allow Echo to save photos to your library.",
+        "savePhotosPermission": "Allow Echo to save photos to your library."
+      }],
       [
         "expo-splash-screen",
         {

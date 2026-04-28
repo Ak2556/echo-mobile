@@ -19,7 +19,11 @@ export default function CommentsScreen() {
   const remoteQ = useEchoComments(remote ? id : undefined);
   const addRemote = useAddRemoteComment(remote ? id : undefined);
 
-  const { getComments, addComment, username, displayName, avatarColor } = useAppStore();
+  const getComments = useAppStore(s => s.getComments);
+  const addComment  = useAppStore(s => s.addComment);
+  const username    = useAppStore(s => s.username);
+  const displayName = useAppStore(s => s.displayName);
+  const avatarColor = useAppStore(s => s.avatarColor);
   const [text, setText] = useState('');
 
   const localComments = !remote && id ? getComments(id) : [];

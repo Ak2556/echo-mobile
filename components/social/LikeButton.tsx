@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Text } from 'react-native';
 import { HeartStraight } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
-import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -17,7 +16,6 @@ interface LikeButtonProps {
 
 export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeButtonProps) {
   const remote = isSupabaseRemote();
-  const qc = useQueryClient();
   const toggleLocalLike = useAppStore(s => s.toggleLike);
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const remoteMut = useToggleRemoteLike();
@@ -61,7 +59,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
     setLiked(next);
     setCount(c => (next ? c + 1 : Math.max(0, c - 1)));
     bump(next);
-    qc.invalidateQueries({ queryKey: ['feed'] });
+    // No feed invalidation — useFeed's select() applies likedIds reactively
   };
 
   const heartStyle = useAnimatedStyle(() => ({

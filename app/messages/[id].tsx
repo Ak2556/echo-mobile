@@ -1,25 +1,23 @@
-// @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, FlatList, TextInput as RNTextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, PaperPlaneTilt, SealCheck } from 'phosphor-react-native';
-import Animated, { SlideInRight, SlideInLeft, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
+import { DirectMessage } from '../../types';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 
-function DMBubble({ message, isMe, showReadReceipt }: { message: any; isMe: boolean; showReadReceipt: boolean }) {
-  const { reduceAnimations, accentColor, fontSize: fontSizeSetting } = useAppStore();
+function DMBubble({ message, isMe, showReadReceipt }: { message: DirectMessage; isMe: boolean; showReadReceipt: boolean }) {
+  const reduceAnimations  = useAppStore(s => s.reduceAnimations);
+  const accentColor       = useAppStore(s => s.accentColor);
+  const fontSizeSetting   = useAppStore(s => s.fontSize);
   const { colors } = useTheme();
   const textSize = { small: 14, medium: 16, large: 18 }[fontSizeSetting];
 
-  const entering = reduceAnimations
-    ? undefined
-    : isMe
-      ? FadeIn.duration(60)
-      : FadeIn.duration(60);
+  const entering = reduceAnimations ? undefined : FadeIn.duration(60);
 
   return (
     <Animated.View
@@ -49,9 +47,13 @@ function DMBubble({ message, isMe, showReadReceipt }: { message: any; isMe: bool
 export default function DMScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { conversations, getDMs, sendDM, markConversationRead } = useAppStore();
+  const conversations        = useAppStore(s => s.conversations);
+  const getDMs               = useAppStore(s => s.getDMs);
+  const sendDM               = useAppStore(s => s.sendDM);
+  const markConversationRead = useAppStore(s => s.markConversationRead);
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const readReceipts = useAppStore(s => s.readReceipts);
+  const currentUserId = useAppStore(s => s.userId);
   const { colors, isUserOnline } = useTheme();
   const [text, setText] = useState('');
   const listRef = useRef<FlatList>(null);
@@ -124,8 +126,8 @@ export default function DMScreen() {
         <FlatList
           ref={listRef}
           data={messages}
-          renderItem={({ item }) => (
-            <DMBubble message={item} isMe={item.senderId === 'me'} showReadReceipt={readReceipts} />
+          renderItem={({ item }: { item: DirectMessage }) => (
+            <DMBubble message={item} isMe={item.senderId === currentUserId || item.senderId === 'me'} showReadReceipt={readReceipts} />
           )}
           keyExtractor={item => item.id}
           contentContainerStyle={{ paddingVertical: 12 }}

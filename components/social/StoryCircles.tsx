@@ -9,7 +9,9 @@ import { useTheme } from '../../lib/theme';
 
 export function StoryCircles() {
   const router = useRouter();
-  const { getActiveStories, username, avatarColor } = useAppStore();
+  const getActiveStories = useAppStore(s => s.getActiveStories);
+  const username         = useAppStore(s => s.username);
+  const avatarColor      = useAppStore(s => s.avatarColor);
   const { colors, animation, isUserOnline } = useTheme();
   const stories = getActiveStories();
 

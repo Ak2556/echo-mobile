@@ -146,9 +146,12 @@ export default function UserProfileScreen() {
   const followMut = useToggleRemoteFollow();
   const { colors } = useTheme();
 
-  const {
-    getUser, isFollowing, toggleFollow, isBlocked, toggleBlock, getOrCreateConversation,
-  } = useAppStore();
+  const getUser               = useAppStore(s => s.getUser);
+  const isFollowing           = useAppStore(s => s.isFollowing);
+  const toggleFollow          = useAppStore(s => s.toggleFollow);
+  const isBlocked             = useAppStore(s => s.isBlocked);
+  const toggleBlock           = useAppStore(s => s.toggleBlock);
+  const getOrCreateConversation = useAppStore(s => s.getOrCreateConversation);
   const { data: feed } = useFeed();
   const [showMenu, setShowMenu] = useState(false);
 

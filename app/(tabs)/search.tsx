@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -33,27 +33,30 @@ export default function SearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'top' | 'users' | 'tags'>('top');
-  const { searchUsers } = useAppStore();
+  const searchUsers = useAppStore(s => s.searchUsers);
   const { colors, radius } = useTheme();
   const { data: feed } = useFeed();
 
   const isSearching = query.trim().length > 0;
   const matchedUsers = isSearching ? searchUsers(query) : [];
-  const matchedEchoes = isSearching
-    ? (feed || []).filter(item => {
-        const q = query.toLowerCase();
-        return (
-          item.prompt.toLowerCase().includes(q) ||
-          item.response.toLowerCase().includes(q) ||
-          item.username.toLowerCase().includes(q) ||
-          item.hashtags?.some(h => h.toLowerCase().includes(q))
-        );
-      })
-    : [];
 
-  const trendingEchoes = (feed || [])
-    .sort((a, b) => (b.likes + b.repostCount + b.commentCount) - (a.likes + a.repostCount + a.commentCount))
-    .slice(0, 5);
+  const matchedEchoes = useMemo(() => {
+    if (!isSearching) return [];
+    const q = query.toLowerCase();
+    return (feed || []).filter(item =>
+      item.prompt.toLowerCase().includes(q) ||
+      item.response.toLowerCase().includes(q) ||
+      item.username.toLowerCase().includes(q) ||
+      item.hashtags?.some(h => h.toLowerCase().includes(q))
+    );
+  }, [isSearching, query, feed]);
+
+  const trendingEchoes = useMemo(() =>
+    [...(feed || [])]
+      .sort((a, b) => (b.likes + b.repostCount + b.commentCount) - (a.likes + a.repostCount + a.commentCount))
+      .slice(0, 5),
+    [feed],
+  );
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>

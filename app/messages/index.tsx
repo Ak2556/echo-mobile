@@ -1,11 +1,10 @@
-// @ts-nocheck
 import React from 'react';
 import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, PencilSimple, Envelope } from 'phosphor-react-native';
-import Animated, { FadeInRight, SlideInRight } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
 import { SealCheck } from 'phosphor-react-native';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -85,7 +84,7 @@ function ConversationCard({ conversation, index, onPress }: {
 
 export default function MessagesListScreen() {
   const router = useRouter();
-  const { conversations } = useAppStore();
+  const conversations = useAppStore(s => s.conversations);
   const { colors } = useTheme();
 
   const sorted = [...conversations].sort(
@@ -99,7 +98,7 @@ export default function MessagesListScreen() {
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Messages</Text>
-        <AnimatedPressable className="p-1" scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => router.push('/(tabs)/search')} className="p-1" scaleValue={0.88} haptic="light" accessibilityLabel="New message" accessibilityRole="button">
           <PencilSimple color={colors.accent} size={22} />
         </AnimatedPressable>
       </View>
@@ -113,14 +112,15 @@ export default function MessagesListScreen() {
       ) : (
         <FlashList
           data={sorted}
-          renderItem={({ item, index }) => (
+          renderItem={({ item, index }: { item: Conversation; index: number }) => (
             <ConversationCard
               conversation={item}
               index={index}
               onPress={() => router.push(`/messages/${item.id}`)}
             />
           )}
-          keyExtractor={item => item.id}
+          keyExtractor={(item: Conversation) => item.id}
+          estimatedItemSize={72}
         />
       )}
     </SafeAreaView>

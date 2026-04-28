@@ -15,7 +15,11 @@ import { coerceFeedItem } from '../lib/localFeedSeed';
 export default function ShareScreen() {
   const router = useRouter();
   const { prompt, response } = useLocalSearchParams<{ prompt: string; response: string }>();
-  const { username, userId, avatarColor, displayName, publishEcho } = useAppStore();
+  const username    = useAppStore(s => s.username);
+  const userId      = useAppStore(s => s.userId);
+  const avatarColor = useAppStore(s => s.avatarColor);
+  const displayName = useAppStore(s => s.displayName);
+  const publishEcho = useAppStore(s => s.publishEcho);
   const { colors, radius, fontSizes, animation } = useTheme();
   const [publishing, setPublishing] = useState(false);
   const remotePublish = usePublishRemoteEcho();

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback } from 'react';
 import { View, Text, RefreshControl, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -69,9 +68,10 @@ function SectionHeader({
 
 export default function DiscoverScreen() {
   const router = useRouter();
-  const { data: feed, isLoading, refetch, isRefetching } = useFeed();
+  const { data: feed, isLoading, isError, refetch, isRefetching } = useFeed();
   const { colors, animation } = useTheme();
-  const { username, avatarColor } = useAppStore();
+  const username    = useAppStore(s => s.username);
+  const avatarColor = useAppStore(s => s.avatarColor);
 
   const handlePressThread = useCallback(
     (item: FeedItem) => router.push(`/thread/${item.id}`),
@@ -131,12 +131,14 @@ export default function DiscoverScreen() {
         <Pressable
           onPress={() => router.push('/notifications')}
           style={{ padding: 6, marginRight: 4 }}
+          accessibilityLabel="Notifications"
+          accessibilityRole="button"
         >
           <Bell color={colors.textSecondary} size={22} />
         </Pressable>
 
         {/* Avatar / create */}
-        <Pressable onPress={() => router.push('/create-post')}>
+        <Pressable onPress={() => router.push('/create-post')} accessibilityLabel="My profile" accessibilityRole="button">
           <View
             style={{
               width: 34,
@@ -156,6 +158,14 @@ export default function DiscoverScreen() {
         </Pressable>
       </View>
 
+      {isError && (
+        <View style={{ backgroundColor: '#7F1D1D33', padding: 12, marginHorizontal: 16, marginTop: 8, borderRadius: 10, borderWidth: 1, borderColor: '#EF444433' }}>
+          <Text style={{ color: '#EF4444', textAlign: 'center', fontSize: 14 }}>
+            Couldn't load feed. Pull to refresh.
+          </Text>
+        </View>
+      )}
+
       {isLoading ? (
         <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1 }}>
           <SectionHeader label="Your Stories" />
@@ -167,7 +177,7 @@ export default function DiscoverScreen() {
       ) : (
         <FlashList
           data={popularItems}
-          renderItem={({ item, index }) => (
+          renderItem={({ item, index }: { item: FeedItem; index: number }) => (
             <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
           )}
           keyExtractor={item => item.id}

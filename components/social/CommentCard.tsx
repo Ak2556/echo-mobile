@@ -25,7 +25,7 @@ interface CommentCardProps {
 }
 
 export function CommentCard({ comment, echoId }: CommentCardProps) {
-  const { likeComment } = useAppStore();
+  const likeComment   = useAppStore(s => s.likeComment);
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const { colors, fontSizes, showAvatars, animation } = useTheme();
   const heartScale = useSharedValue(1);

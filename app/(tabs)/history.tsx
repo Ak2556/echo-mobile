@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -58,7 +57,10 @@ function getTimeAgo(dateStr: string): string {
 
 export default function HistoryScreen() {
   const router = useRouter();
-  const { sessions, createSession, deleteSession, setCurrentSessionId } = useAppStore();
+  const sessions            = useAppStore(s => s.sessions);
+  const createSession       = useAppStore(s => s.createSession);
+  const deleteSession       = useAppStore(s => s.deleteSession);
+  const setCurrentSessionId = useAppStore(s => s.setCurrentSessionId);
 
   const handleNewChat = () => {
     const id = createSession();
@@ -91,7 +93,7 @@ export default function HistoryScreen() {
       ) : (
         <FlashList
           data={sessions}
-          renderItem={({ item, index }) => (
+          renderItem={({ item, index }: { item: ChatSession; index: number }) => (
             <SessionCard
               session={item}
               index={index}
@@ -99,8 +101,9 @@ export default function HistoryScreen() {
               onDelete={() => deleteSession(item.id)}
             />
           )}
-          keyExtractor={item => item.id}
+          keyExtractor={(item: ChatSession) => item.id}
           contentContainerStyle={{ paddingVertical: 8 }}
+          estimatedItemSize={72}
         />
       )}
     </SafeAreaView>

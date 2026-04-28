@@ -19,7 +19,10 @@ const FEATURES = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { setUsername, setDisplayName, setUserId, setHasSeenOnboarding } = useAppStore();
+  const setUsername         = useAppStore(s => s.setUsername);
+  const setDisplayName      = useAppStore(s => s.setDisplayName);
+  const setUserId           = useAppStore(s => s.setUserId);
+  const setHasSeenOnboarding = useAppStore(s => s.setHasSeenOnboarding);
   const { colors, radius, animation } = useTheme();
   const [name, setName] = useState('');
   const [step, setStep] = useState(0);

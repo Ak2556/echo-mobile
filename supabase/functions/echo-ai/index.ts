@@ -57,9 +57,36 @@ interface ORTool {
   };
 }
 
+// Merge streaming tool_call delta fragments (OpenRouter sends them split by index).
+function mergeToolCallDeltas(
+  acc: ORToolCall[] | undefined,
+  deltas: Array<{
+    index: number;
+    id?: string;
+    type?: string;
+    function?: { name?: string; arguments?: string };
+  }>,
+): ORToolCall[] {
+  const result: ORToolCall[] = acc ? [...acc] : [];
+  for (const d of deltas) {
+    if (!result[d.index]) {
+      result[d.index] = {
+        id: d.id ?? "",
+        type: "function",
+        function: { name: d.function?.name ?? "", arguments: "" },
+      };
+    }
+    if (d.function?.arguments) result[d.index].function.arguments += d.function.arguments;
+    if (d.id) result[d.index].id = d.id;
+    if (d.function?.name) result[d.index].function.name = d.function.name;
+  }
+  return result;
+}
+
 async function openRouterChat(
   messages: ORMessage[],
   tools: ORTool[],
+  onDelta?: (delta: string) => void, // called per token chunk for real-time streaming
 ): Promise<{ content: string; tool_calls?: ORToolCall[] }> {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -74,18 +101,44 @@ async function openRouterChat(
       messages,
       tools: tools.length ? tools : undefined,
       tool_choice: tools.length ? "auto" : undefined,
-      stream: false, // we re-stream the final text deltas ourselves; tool loops aren't streamable cleanly
+      stream: true,
     }),
   });
   if (!res.ok) {
     throw new Error(`OpenRouter ${res.status}: ${await res.text()}`);
   }
-  const json = await res.json();
-  const choice = json.choices?.[0]?.message;
-  if (!choice) throw new Error("OpenRouter returned no message");
+
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let accContent = "";
+  let accToolCalls: ORToolCall[] | undefined;
+
+  outer: while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const text = decoder.decode(value, { stream: true });
+    for (const line of text.split("\n")) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (payload === "[DONE]") break outer;
+      try {
+        const chunk = JSON.parse(payload);
+        const delta = chunk.choices?.[0]?.delta;
+        if (!delta) continue;
+        if (delta.content) {
+          accContent += delta.content;
+          onDelta?.(delta.content);
+        }
+        if (delta.tool_calls) {
+          accToolCalls = mergeToolCallDeltas(accToolCalls, delta.tool_calls);
+        }
+      } catch { /* ignore malformed SSE lines */ }
+    }
+  }
+
   return {
-    content: choice.content ?? "",
-    tool_calls: choice.tool_calls,
+    content: accContent,
+    tool_calls: accToolCalls?.length ? accToolCalls : undefined,
   };
 }
 
@@ -499,6 +552,7 @@ async function logToolCall(
 interface RequestBody {
   message?: string;
   conversation_id?: string;
+  language?: string;
   confirm?: {
     tool_call_id: string;
     tool_name: string;
@@ -552,6 +606,11 @@ async function handleRequest(req: Request): Promise<Response> {
         if (isNew) send({ type: "conversation", id: conversationId });
 
         // ── Confirm branch: user approved/rejected a previously paused tool ──
+        const languageInstruction = body.language
+          ? `\nAlways respond in ${body.language}.`
+          : '';
+        const effectiveSystemPrompt = SYSTEM_PROMPT + languageInstruction;
+
         if (body.confirm) {
           await runToolAndContinue(
             supabase,
@@ -564,7 +623,7 @@ async function handleRequest(req: Request): Promise<Response> {
           // ── Fresh user turn ──
           const userMsg: ORMessage = { role: "user", content: body.message };
           await persistMessage(supabase, conversationId, userId, userMsg);
-          await runAgentLoop(supabase, userId, conversationId, send);
+          await runAgentLoop(supabase, userId, conversationId, send, 6, undefined, effectiveSystemPrompt);
         } else {
           send({ type: "error", message: "missing message or confirm" });
         }
@@ -593,54 +652,72 @@ async function handleRequest(req: Request): Promise<Response> {
 
 // Core loop: call model → if tool calls, execute (or pause), loop. Stops when
 // the model returns plain content or a confirmation is pending.
+// `cachedHistory` is passed in on recursive calls to avoid reloading from DB
+// on every tool-loop iteration.
 async function runAgentLoop(
   supabase: SupabaseClient,
   userId: string,
   conversationId: string,
   send: (e: SSEEvent) => void,
   maxSteps = 6,
+  cachedHistory?: ORMessage[],
+  systemPromptOverride?: string,
 ): Promise<void> {
+  const systemPrompt = systemPromptOverride ?? SYSTEM_PROMPT;
   for (let step = 0; step < maxSteps; step++) {
-    const history = await loadHistory(supabase, conversationId);
+    // Only hit the DB on the first step (or if cache wasn't provided).
+    const history = step === 0 && cachedHistory
+      ? cachedHistory
+      : await loadHistory(supabase, conversationId);
+
     const messages: ORMessage[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       ...history,
     ];
 
-    const { content, tool_calls } = await openRouterChat(messages, ORTOOL_DEFS);
+    // Pass onDelta so text tokens are emitted to the SSE client in real time.
+    const { content, tool_calls } = await openRouterChat(
+      messages,
+      ORTOOL_DEFS,
+      (delta) => send({ type: "text_delta", delta }),
+    );
 
     // Persist the assistant turn (with tool_calls if any).
-    await persistMessage(supabase, conversationId, userId, {
+    const assistantMsg: ORMessage = {
       role: "assistant",
-      content: tool_calls ? null : content,
+      content: tool_calls?.length ? null : content,
       tool_calls,
-    });
+    };
+    await persistMessage(supabase, conversationId, userId, assistantMsg);
 
     if (!tool_calls || tool_calls.length === 0) {
-      // Stream the final text out as one delta. (Real token streaming would
-      // require a streaming OpenRouter call; v1 keeps the loop simple.)
-      if (content) send({ type: "text_delta", delta: content });
+      // Text was already streamed token-by-token via onDelta above.
       return;
     }
+
+    // Build updated history in memory so the next step doesn't reload from DB.
+    const nextHistory: ORMessage[] = [...history, assistantMsg];
 
     // For each tool call: confirm-required → pause and exit; auto → execute.
     let pausedForConfirm = false;
     for (const call of tool_calls) {
       const spec = TOOL_BY_NAME.get(call.function.name);
       if (!spec) {
-        await persistMessage(supabase, conversationId, userId, {
+        const errMsg: ORMessage = {
           role: "tool",
           tool_call_id: call.id,
           name: call.function.name,
           content: JSON.stringify({ error: "unknown tool" }),
-        });
+        };
+        await persistMessage(supabase, conversationId, userId, errMsg);
+        nextHistory.push(errMsg);
         continue;
       }
 
       let args: Record<string, unknown> = {};
       try {
         args = call.function.arguments ? JSON.parse(call.function.arguments) : {};
-      } catch (e) {
+      } catch (_e) {
         args = {};
       }
 
@@ -664,7 +741,7 @@ async function runAgentLoop(
         // Do not record a tool result yet — the next turn from the client
         // will arrive with a `confirm` payload.
       } else {
-        await executeAndRecord(
+        const toolContent = await executeAndRecord(
           supabase,
           userId,
           conversationId,
@@ -673,10 +750,20 @@ async function runAgentLoop(
           args,
           send,
         );
+        // Append tool result to in-memory history for the next step (avoids DB reload).
+        nextHistory.push({
+          role: "tool",
+          tool_call_id: call.id,
+          name: spec.name,
+          content: toolContent,
+        });
       }
     }
 
     if (pausedForConfirm) return;
+
+    // Pass accumulated history to avoid a DB reload on the next step.
+    cachedHistory = nextHistory;
   }
 }
 
@@ -738,6 +825,8 @@ async function runToolAndContinue(
   await runAgentLoop(supabase, userId, conversationId, send);
 }
 
+// Returns the tool result content string so callers can append it to in-memory
+// history without hitting the DB again.
 async function executeAndRecord(
   supabase: SupabaseClient,
   userId: string,
@@ -746,7 +835,7 @@ async function executeAndRecord(
   spec: ToolSpec,
   args: Record<string, unknown>,
   send: (e: SSEEvent) => void,
-): Promise<void> {
+): Promise<string> {
   try {
     const result = await spec.execute(args, { supabase, userId });
     await logToolCall(
@@ -758,13 +847,15 @@ async function executeAndRecord(
       "executed",
       result as unknown,
     );
+    const content = JSON.stringify(result).slice(0, 8000);
     await persistMessage(supabase, conversationId, userId, {
       role: "tool",
       tool_call_id: toolCallId,
       name: spec.name,
-      content: JSON.stringify(result).slice(0, 8000),
+      content,
     });
     send({ type: "tool_result", id: toolCallId, name: spec.name, ok: true, result });
+    return content;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await logToolCall(
@@ -777,13 +868,15 @@ async function executeAndRecord(
       null,
       msg,
     );
+    const content = JSON.stringify({ error: msg });
     await persistMessage(supabase, conversationId, userId, {
       role: "tool",
       tool_call_id: toolCallId,
       name: spec.name,
-      content: JSON.stringify({ error: msg }),
+      content,
     });
     send({ type: "tool_result", id: toolCallId, name: spec.name, ok: false, error: msg });
+    return content;
   }
 }
 

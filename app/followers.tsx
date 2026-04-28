@@ -29,7 +29,8 @@ export default function FollowersScreen() {
   const followersRemote = useRemoteFollowersList(remote ? targetUserId : undefined, 'followers');
   const followingRemote = useRemoteFollowersList(remote ? targetUserId : undefined, 'following');
 
-  const { getFollowers, getFollowing } = useAppStore();
+  const getFollowers = useAppStore(s => s.getFollowers);
+  const getFollowing = useAppStore(s => s.getFollowing);
   const followersLocal = getFollowers();
   const followingLocal = getFollowing();
 

@@ -39,7 +39,11 @@ export default function EditPostScreen() {
   const qc = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { publishedEchoes, updateEcho, username, avatarColor, displayName } = useAppStore();
+  const publishedEchoes = useAppStore(s => s.publishedEchoes);
+  const updateEcho      = useAppStore(s => s.updateEcho);
+  const username        = useAppStore(s => s.username);
+  const avatarColor     = useAppStore(s => s.avatarColor);
+  const displayName     = useAppStore(s => s.displayName);
 
   const echo = publishedEchoes.find(e => e.id === id);
 

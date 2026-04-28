@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
-  Platform, TouchableOpacity, Pressable, Alert,
+  Platform, TouchableOpacity, Pressable, Alert, ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,6 +20,8 @@ import { useTheme } from '../lib/theme';
 import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { playSoundEffect } from '../lib/sound';
+import { isSupabaseRemote } from '../lib/remoteConfig';
+import { insertRemoteEcho, uploadMediaFile } from '../lib/supabaseEchoApi';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
@@ -41,7 +43,11 @@ export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { username, userId, avatarColor, displayName, publishEcho } = useAppStore();
+  const username    = useAppStore(s => s.username);
+  const userId      = useAppStore(s => s.userId);
+  const avatarColor = useAppStore(s => s.avatarColor);
+  const displayName = useAppStore(s => s.displayName);
+  const publishEcho = useAppStore(s => s.publishEcho);
 
   const [postType, setPostType] = useState<PostType>('text');
   const [prompt, setPrompt] = useState('');
@@ -138,51 +144,81 @@ export default function CreatePostScreen() {
   const updatePollOption = (idx: number, t: string) => setPollOptions(p => p.map((o, i) => i === idx ? t : o));
   const removePollOption = (idx: number) => { if (pollOptions.length > 2) setPollOptions(p => p.filter((_, i) => i !== idx)); };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!canPublish) return;
-    const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
-
-    const base = {
-      id: Date.now().toString(),
-      userId, username: username || 'anonymous',
-      displayName: displayName || username || 'anonymous',
-      avatarColor: avatarColor || colors.accent,
-      isVerified: false,
-      likes: 0, isLiked: false, isBookmarked: false, isReposted: false,
-      repostCount: 0, commentCount: 0, viewCount: 0,
-      hashtags, createdAt: new Date().toISOString(),
-    };
-
-    let echo: FeedItem;
-    switch (postType) {
-      case 'text':
-        echo = coerceFeedItem({ ...base, postType: 'text', prompt: prompt.trim(), response: response.trim() });
-        break;
-      case 'photo':
-        echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: imageUris });
-        break;
-      case 'video':
-        echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri });
-        break;
-      case 'poll': {
-        const options: PollOption[] = pollOptions.filter(o => o.trim()).map((o, i) => ({ id: `opt_${i}`, text: o.trim(), votes: 0 }));
-        echo = coerceFeedItem({
-          ...base, postType: 'poll', prompt: pollQuestion.trim(), response: '',
-          poll: { question: pollQuestion.trim(), options, totalVotes: 0, endsAt: new Date(Date.now() + pollDurationHours * 3600000).toISOString() },
-        });
-        break;
-      }
-    }
-
     setPublishing(true);
-    setTimeout(() => {
-      publishEcho(echo!);
-      qc.invalidateQueries({ queryKey: ['feed'] });
+    try {
+      const remote = isSupabaseRemote();
+      const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
+
+      const base = {
+        id: Date.now().toString(),
+        userId, username: username || 'anonymous',
+        displayName: displayName || username || 'anonymous',
+        avatarColor: avatarColor || colors.accent,
+        isVerified: false,
+        likes: 0, isLiked: false, isBookmarked: false, isReposted: false,
+        repostCount: 0, commentCount: 0, viewCount: 0,
+        hashtags, createdAt: new Date().toISOString(),
+      };
+
+      let remoteImageUris: string[] | undefined;
+      let remoteVideoUri: string | undefined;
+
+      if (remote) {
+        if (postType === 'photo' && imageUris.length > 0) {
+          remoteImageUris = await Promise.all(
+            imageUris.map(uri => uploadMediaFile(uri, 'image/jpeg'))
+          );
+        }
+        if (postType === 'video' && videoUri) {
+          remoteVideoUri = await uploadMediaFile(videoUri, 'video/mp4');
+        }
+      }
+
+      let echo: FeedItem;
+      switch (postType) {
+        case 'text':
+          echo = coerceFeedItem({ ...base, postType: 'text', prompt: prompt.trim(), response: response.trim() });
+          break;
+        case 'photo':
+          echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: remoteImageUris ?? imageUris });
+          break;
+        case 'video':
+          echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri: remoteVideoUri ?? videoUri });
+          break;
+        case 'poll': {
+          const options: PollOption[] = pollOptions.filter(o => o.trim()).map((o, i) => ({ id: `opt_${i}`, text: o.trim(), votes: 0 }));
+          echo = coerceFeedItem({
+            ...base, postType: 'poll', prompt: pollQuestion.trim(), response: '',
+            poll: { question: pollQuestion.trim(), options, totalVotes: 0, endsAt: new Date(Date.now() + pollDurationHours * 3600000).toISOString() },
+          });
+          break;
+        }
+      }
+
+      if (remote) {
+        await insertRemoteEcho({
+          authorId: userId,
+          prompt: echo!.prompt,
+          response: echo!.response,
+          mediaUris: echo!.mediaUris,
+          videoUri: echo!.videoUri,
+        });
+        await qc.invalidateQueries({ queryKey: ['feed'] });
+      } else {
+        publishEcho(echo!);
+        qc.invalidateQueries({ queryKey: ['feed'] });
+      }
+
       playSoundEffect('success');
       showToast('Echo published!', '✨');
-      setPublishing(false);
       router.back();
-    }, 300);
+    } catch {
+      showToast('Failed to publish. Try again.', '❌');
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const s = {
@@ -422,6 +458,17 @@ export default function CreatePostScreen() {
           <View style={{ height: 32 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {publishing && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <ActivityIndicator color="#fff" size="large" />
+          <Text style={{ color: '#fff', marginTop: 14, fontWeight: '600', fontSize: 15 }}>
+            {(postType === 'photo' || postType === 'video') && isSupabaseRemote()
+              ? 'Uploading media…'
+              : 'Publishing…'}
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
