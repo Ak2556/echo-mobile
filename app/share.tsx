@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
+import { View, Text, Pressable, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, PaperPlaneTilt } from 'phosphor-react-native';
+import { ArrowLeft, PaperPlaneTilt, Export } from 'phosphor-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { FeedItem } from '../types';
@@ -24,6 +24,14 @@ export default function ShareScreen() {
   const [publishing, setPublishing] = useState(false);
   const remotePublish = usePublishRemoteEcho();
   const remote = isSupabaseRemote();
+
+  const handleNativeShare = async () => {
+    if (!prompt || !response) return;
+    await Share.share({
+      message: `${prompt}\n\n${response}\n\nShared via Echo`,
+      title: String(prompt).slice(0, 80),
+    });
+  };
 
   const handlePublish = async () => {
     if (!prompt || !response) return;
@@ -127,8 +135,19 @@ export default function ShareScreen() {
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(200).springify())}>
+          <Pressable
+            onPress={handleNativeShare}
+            style={{
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+              paddingVertical: 14, borderRadius: radius.lg, marginBottom: 12,
+              backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, gap: 8,
+            }}
+          >
+            <Export color={colors.text} size={18} />
+            <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>Share externally</Text>
+          </Pressable>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, textAlign: 'center' }}>
-            This will be visible to everyone in the Discover feed.
+            Posting will make this visible to everyone in the Discover feed.
           </Text>
         </Animated.View>
       </View>

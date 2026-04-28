@@ -3,7 +3,7 @@ import { View, Text, Pressable, KeyboardAvoidingView, Platform, ActivityIndicato
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PaperPlaneTilt, ChatCircle } from 'phosphor-react-native';
+import { ArrowLeft, PaperPlaneTilt, ChatCircle, Warning } from 'phosphor-react-native';
 import { TextInput } from '../../components/ui/TextInput';
 import { CommentCard } from '../../components/social/CommentCard';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -29,6 +29,7 @@ export default function CommentsScreen() {
   const localComments = !remote && id ? getComments(id) : [];
   const comments: Comment[] = remote ? (remoteQ.data ?? []) : localComments;
   const loadingRemote = remote && remoteQ.isPending;
+  const errorRemote = remote && remoteQ.isError;
 
   const handleSend = async () => {
     if (!text.trim() || !id) return;
@@ -76,6 +77,14 @@ export default function CommentsScreen() {
         {loadingRemote ? (
           <View className="flex-1 items-center justify-center pt-20">
             <ActivityIndicator color="#3B82F6" size="large" />
+          </View>
+        ) : errorRemote ? (
+          <View className="flex-1 items-center justify-center pt-20 px-8 gap-3">
+            <Warning color="#EF4444" size={32} />
+            <Text className="text-zinc-400 text-center">Couldn't load comments. Pull to refresh.</Text>
+            <Pressable onPress={() => remoteQ.refetch()} className="mt-2 px-5 py-2 rounded-xl bg-zinc-800">
+              <Text className="text-white font-semibold">Try again</Text>
+            </Pressable>
           </View>
         ) : comments.length === 0 ? (
           <EmptyState

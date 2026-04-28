@@ -10,6 +10,7 @@ export default function AuthLayout() {
       <Stack.Screen name="setup-profile" />
       <Stack.Screen name="callback" />
       <Stack.Screen name="verify-phone" />
+      <Stack.Screen name="reset-password" options={{ title: 'Set new password' }} />
     </Stack>
   );
 }

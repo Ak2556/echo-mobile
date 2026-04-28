@@ -1,4 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { FeedItem } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -33,6 +34,10 @@ export function useFeed() {
   const bookmarkedIds   = useAppStore(s => s.bookmarkedIds);
   const remote          = isSupabaseRemote();
 
+  // Stable set references — only rebuild when the underlying arrays change, not on every render.
+  const likedSet      = useMemo(() => new Set(likedIds), [likedIds]);
+  const bookmarkedSet = useMemo(() => new Set(bookmarkedIds), [bookmarkedIds]);
+
   return useQuery({
     queryKey: remote
       ? ['feed', feedSort]
@@ -53,14 +58,10 @@ export function useFeed() {
     },
     staleTime: 60_000,
     placeholderData: keepPreviousData,
-    select: (items) => {
-      const liked      = new Set(likedIds);
-      const bookmarked = new Set(bookmarkedIds);
-      return items.map(item => ({
-        ...item,
-        isLiked:      liked.has(item.id),
-        isBookmarked: bookmarked.has(item.id),
-      }));
-    },
+    select: (items) => items.map(item => ({
+      ...item,
+      isLiked:      likedSet.has(item.id),
+      isBookmarked: bookmarkedSet.has(item.id),
+    })),
   });
 }

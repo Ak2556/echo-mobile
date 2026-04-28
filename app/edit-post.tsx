@@ -17,6 +17,8 @@ import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { PollOption } from '../types';
+import { isSupabaseRemote } from '../lib/remoteConfig';
+import { updateRemoteEcho } from '../lib/supabaseEchoApi';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
@@ -84,7 +86,7 @@ export default function EditPostScreen() {
   const updatePollOption = (idx: number, t: string) => setPollOptions(p => p.map((o, i) => i === idx ? t : o));
   const removePollOption = (idx: number) => { if (pollOptions.length > 2) setPollOptions(p => p.filter((_, i) => i !== idx)); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave || !echo) return;
     const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
     const updates: Partial<typeof echo> = { postType, hashtags };
@@ -111,13 +113,23 @@ export default function EditPostScreen() {
     }
 
     setSaving(true);
-    setTimeout(() => {
+    try {
+      if (isSupabaseRemote()) {
+        const remoteUpdates: { prompt?: string; response?: string; title?: string } = {};
+        if (updates.prompt !== undefined) remoteUpdates.prompt = updates.prompt as string;
+        if (updates.response !== undefined) remoteUpdates.response = updates.response as string;
+        await updateRemoteEcho(echo.id, remoteUpdates);
+        await qc.invalidateQueries({ queryKey: ['feed'] });
+      }
       updateEcho(echo.id, updates);
-      qc.invalidateQueries({ queryKey: ['feed'] });
+      if (!isSupabaseRemote()) qc.invalidateQueries({ queryKey: ['feed'] });
       showToast('Echo updated!', '✅');
-      setSaving(false);
       router.back();
-    }, 250);
+    } catch {
+      showToast('Failed to save. Try again.', '❌');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!echo) return null;

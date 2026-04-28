@@ -1,5 +1,25 @@
 import { useAppStore } from '../store/useAppStore';
 
+// Shared spacing scale — import instead of hardcoding numeric padding/margin values.
+export const SPACING = {
+  xs:  4,
+  sm:  8,
+  md:  16,
+  lg:  24,
+  xl:  32,
+  xxl: 48,
+} as const;
+
+// Shared font-weight scale — keeps weights consistent and type-safe.
+export const FONT_WEIGHT = {
+  regular:   '400',
+  medium:    '500',
+  semibold:  '600',
+  bold:      '700',
+  extrabold: '800',
+  black:     '900',
+} as const;
+
 // Global animation speed constants. Import ANIM in components instead of
 // hardcoding durations or spring configs.
 export const ANIM = {
