@@ -11,8 +11,7 @@ import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { CornersOut, DownloadSimple, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
-import { showToast } from '../ui/Toast';
-import * as MediaLibrary from 'expo-media-library';
+import { saveToMediaLibrary } from '../../lib/mediaUtils';
 
 export interface QualityOption {
   label: string;
@@ -105,19 +104,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
     } catch {}
   };
 
-  const handleSave = async () => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') {
-      showToast('Permission required to save videos', '🔒');
-      return;
-    }
-    try {
-      await MediaLibrary.saveToLibraryAsync(activeUri);
-      showToast('Video saved to camera roll', '✅');
-    } catch {
-      showToast('Failed to save video', '❌');
-    }
-  };
+  const handleSave = () => saveToMediaLibrary([activeUri]);
 
   const pickQuality = async () => {
     if (qualityList.length <= 1) return;

@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  ArrowLeft, Plus, CheckCircle, Circle, Fire, Trash, X,
+  ArrowLeft, Plus, CheckCircle, CircleNotch, Fire, Trash, X,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -326,7 +326,7 @@ export default function HabitsApp() {
                   <AnimatedPressable onPress={() => toggleHabit(habit.id)} scaleValue={0.85} haptic="medium" style={{ marginLeft: 8 }}>
                     {done
                       ? <CheckCircle color={habit.color} size={36} weight="fill" />
-                      : <Circle color={colors.border} size={36} weight="regular" />}
+                      : <CircleNotch color={colors.border} size={36} weight="regular" />}
                   </AnimatedPressable>
 
                   {/* Delete */}

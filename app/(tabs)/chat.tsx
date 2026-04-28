@@ -28,10 +28,8 @@ export default function ChatScreen() {
   const streamResponses  = useAppStore(s => s.streamResponses);
   const contentLanguage  = useAppStore(s => s.contentLanguage);
 
-  const streamResponsesRef = useRef(streamResponses);
-  useEffect(() => { streamResponsesRef.current = streamResponses; }, [streamResponses]);
-  const contentLanguageRef = useRef(contentLanguage);
-  useEffect(() => { contentLanguageRef.current = contentLanguage; }, [contentLanguage]);
+  const settingsRef = useRef({ streamResponses, contentLanguage });
+  useEffect(() => { settingsRef.current = { streamResponses, contentLanguage }; }, [streamResponses, contentLanguage]);
 
   const [items, setItems] = useState<ChatItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -122,7 +120,7 @@ export default function ChatScreen() {
       pendingContentRef.current = '';
       setIsStreaming(true);
       try {
-        const lang = contentLanguageRef.current;
+        const { contentLanguage: lang, streamResponses: streaming } = settingsRef.current;
         await streamEchoAI({
           ...opts,
           language: lang && lang !== 'English' ? lang : undefined,
@@ -130,12 +128,12 @@ export default function ChatScreen() {
             if (e.type === 'conversation') {
               setConvId(e.id);
             } else if (e.type === 'text_delta') {
-              if (streamResponsesRef.current) {
+              if (streaming) {
                 upsertText(assistantId, 'assistant', e.delta);
               } else {
                 pendingContentRef.current += e.delta;
               }
-            } else if (e.type === 'done' && !streamResponsesRef.current) {
+            } else if (e.type === 'done' && !streaming) {
               if (pendingContentRef.current) {
                 upsertText(assistantId, 'assistant', pendingContentRef.current);
                 pendingContentRef.current = '';

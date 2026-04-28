@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { View } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, FlashListRef } from '@shopify/flash-list';
 import { Message, MessageBubble } from './MessageBubble';
 
 interface MessageListProps {
@@ -8,7 +8,7 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages }: MessageListProps) {
-  const listRef = useRef<FlashList<Message>>(null);
+  const listRef = useRef<FlashListRef<Message>>(null);
 
   return (
     <View className="flex-1 w-full bg-black">

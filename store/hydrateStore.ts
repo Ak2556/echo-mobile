@@ -25,6 +25,6 @@ export async function hydrateStore(): Promise<void> {
     try { patch[key] = JSON.parse(raw); } catch {}
   }
   if (Object.keys(patch).length > 0) {
-    useAppStore.setState(patch as Parameters<typeof useAppStore.setState>[0]);
+    useAppStore.setState(patch as unknown as Parameters<typeof useAppStore.setState>[0]);
   }
 }

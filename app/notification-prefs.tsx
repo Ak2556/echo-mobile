@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   ArrowLeft, HeartStraight, ChatCircle, UserPlus, ArrowsClockwise,
-  AtSign, Envelope, SpeakerHigh, Bell,
+  At, Envelope, SpeakerHigh, Bell,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
@@ -112,7 +112,7 @@ export default function NotificationPrefsScreen() {
             {divider}
             <ToggleRow icon={ArrowsClockwise} iconColor={colors.accent} label="Re-echoes" subtitle="When someone re-echoes your post" value={notifyReposts} onValueChange={setNotifyReposts} />
             {divider}
-            <ToggleRow icon={AtSign} iconColor={colors.accent} label="Mentions" subtitle="When someone mentions you" value={notifyMentions} onValueChange={setNotifyMentions} />
+            <ToggleRow icon={At} iconColor={colors.accent} label="Mentions" subtitle="When someone mentions you" value={notifyMentions} onValueChange={setNotifyMentions} />
           </View>
         </Animated.View>
 
