@@ -23,6 +23,9 @@ import { playSoundEffect } from '../lib/sound';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { insertRemoteEcho, uploadMediaFile } from '../lib/supabaseEchoApi';
 
+// Stable for the lifetime of the app — env vars are set at build time
+const IS_REMOTE = isSupabaseRemote();
+
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
 const POST_TYPES: { key: PostType; label: string; Icon: React.ComponentType<any> }[] = [
@@ -148,7 +151,7 @@ export default function CreatePostScreen() {
     if (!canPublish) return;
     setPublishing(true);
     try {
-      const remote = isSupabaseRemote();
+      const remote = IS_REMOTE;
       const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
 
       const base = {
@@ -463,7 +466,7 @@ export default function CreatePostScreen() {
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <ActivityIndicator color="#fff" size="large" />
           <Text style={{ color: '#fff', marginTop: 14, fontWeight: '600', fontSize: 15 }}>
-            {(postType === 'photo' || postType === 'video') && isSupabaseRemote()
+            {(postType === 'photo' || postType === 'video') && IS_REMOTE
               ? 'Uploading media…'
               : 'Publishing…'}
           </Text>

@@ -71,7 +71,7 @@ export {
   CheckCircle,
   Info,
   Question,
-  SmileyStar,
+  SmileySticker,
 
   // Analytics & data
   ChartBar,

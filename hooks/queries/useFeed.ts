@@ -43,12 +43,13 @@ export function useFeed() {
           return await fetchRemoteFeed();
         } catch {
           // Network unavailable — fall back to local seed so the feed never errors out
-          const merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED];
-          return sortFeed(merged, feedSort, followingIds);
         }
       }
-      const merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED];
-      return sortFeed(merged, feedSort, followingIds);
+      return sortFeed(
+        [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED],
+        feedSort,
+        followingIds,
+      );
     },
     staleTime: 60_000,
     placeholderData: keepPreviousData,

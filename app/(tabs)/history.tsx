@@ -103,7 +103,6 @@ export default function HistoryScreen() {
           )}
           keyExtractor={(item: ChatSession) => item.id}
           contentContainerStyle={{ paddingVertical: 8 }}
-          estimatedItemSize={72}
         />
       )}
     </SafeAreaView>

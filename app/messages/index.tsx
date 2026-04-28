@@ -120,7 +120,6 @@ export default function MessagesListScreen() {
             />
           )}
           keyExtractor={(item: Conversation) => item.id}
-          estimatedItemSize={72}
         />
       )}
     </SafeAreaView>

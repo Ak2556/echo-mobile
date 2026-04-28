@@ -181,7 +181,6 @@ export default function DiscoverScreen() {
             <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
           )}
           keyExtractor={item => item.id}
-          estimatedItemSize={160}
           contentContainerStyle={{ paddingBottom: 110 }}
           refreshControl={
             <RefreshControl

@@ -15,21 +15,20 @@ export function useToggleRemoteLike() {
       setRemoteLike(echoId, like),
     onMutate: async ({ echoId, like }) => {
       await qc.cancelQueries({ queryKey: ['feed'] });
-      const prev = qc.getQueryData<FeedItem[]>(['feed']);
-      qc.setQueryData<FeedItem[]>(['feed'], old =>
+      // setQueriesData (plural) patches all ['feed', ...] variants — not just exact ['feed']
+      qc.setQueriesData<FeedItem[]>({ queryKey: ['feed'] }, old =>
         old?.map(item =>
           item.id === echoId
             ? { ...item, isLiked: like, likes: item.likes + (like ? 1 : -1) }
             : item,
         ),
       );
-      return { prev };
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(['feed'], ctx.prev);
+    onError: () => {
+      // Refetch the real data rather than trying to restore a snapshot
+      qc.invalidateQueries({ queryKey: ['feed'] });
       showToast('Action failed. Please try again.', '❌');
     },
-    // No onSettled invalidation — useFeed's select() applies likedIds reactively
   });
 }
 
@@ -40,27 +39,31 @@ export function useToggleRemoteBookmark() {
       setRemoteBookmark(echoId, bookmark),
     onMutate: async ({ echoId, bookmark }) => {
       await qc.cancelQueries({ queryKey: ['feed'] });
-      const prev = qc.getQueryData<FeedItem[]>(['feed']);
-      qc.setQueryData<FeedItem[]>(['feed'], old =>
-        old?.map(item =>
-          item.id === echoId ? { ...item, isBookmarked: bookmark } : item,
-        ),
+      await qc.cancelQueries({ queryKey: ['bookmarks'] });
+
+      qc.setQueriesData<FeedItem[]>({ queryKey: ['feed'] }, old =>
+        old?.map(item => item.id === echoId ? { ...item, isBookmarked: bookmark } : item),
       );
-      // Also patch the bookmarks cache if it exists
-      const prevBm = qc.getQueryData<FeedItem[]>(['bookmarks']);
-      if (prevBm) {
-        if (!bookmark) {
-          qc.setQueryData<FeedItem[]>(['bookmarks'], old =>
-            old?.filter(item => item.id !== echoId),
-          );
-        }
-      }
-      return { prev, prevBm };
+
+      // Keep bookmarks list in sync for both add and remove
+      qc.setQueriesData<FeedItem[]>({ queryKey: ['bookmarks'] }, old => {
+        if (!old) return old;
+        if (!bookmark) return old.filter(item => item.id !== echoId);
+        // Adding: item may already be in the list; only append if missing
+        const exists = old.some(item => item.id === echoId);
+        if (exists) return old;
+        // We don't have the full item here, so invalidate after settle instead
+        return old;
+      });
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(['feed'], ctx.prev);
-      if (ctx?.prevBm) qc.setQueryData(['bookmarks'], ctx.prevBm);
+    onError: () => {
+      qc.invalidateQueries({ queryKey: ['feed'] });
+      qc.invalidateQueries({ queryKey: ['bookmarks'] });
       showToast('Action failed. Please try again.', '❌');
+    },
+    onSettled: () => {
+      // Ensure bookmarks cache stays in sync after the server round-trip
+      qc.invalidateQueries({ queryKey: ['bookmarks'] });
     },
   });
 }
@@ -71,7 +74,6 @@ export function useToggleRemoteFollow() {
     mutationFn: ({ userId, follow }: { userId: string; follow: boolean }) =>
       setRemoteFollow(userId, follow),
     onSettled: (_data, _err, vars) => {
-      // Follow changes affect counts and feed ordering — still invalidate, but targeted
       if (vars?.userId) qc.invalidateQueries({ queryKey: ['profile', vars.userId] });
       qc.invalidateQueries({ queryKey: ['followers', vars?.userId] });
     },

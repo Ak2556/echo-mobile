@@ -55,7 +55,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
           scaleValue={0.88}
           haptic="none"
         >
-          <ArrowUp color="#000" size={24} strokeWidth={2.5} />
+          <ArrowUp color="#000" size={24} weight="bold" />
         </AnimatedPressable>
       </Animated.View>
     </View>

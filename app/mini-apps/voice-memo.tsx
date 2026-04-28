@@ -199,7 +199,6 @@ export default function VoiceMemoApp() {
                   backgroundColor: isRecording
                     ? (i % 3 === 0 ? '#EF4444' : i % 3 === 1 ? '#EF444499' : '#EF444455')
                     : colors.border,
-                  transition: 'height 0.3s',
                 }} />
               </Animated.View>
             );

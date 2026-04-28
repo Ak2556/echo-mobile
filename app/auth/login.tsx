@@ -7,8 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Eye, EyeSlash, EnvelopeSimple, LockKey, Phone } from 'phosphor-react-native';
-import { Platform as RNPlatform } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import { EMAIL_RE } from '../../lib/validation';
 import { signInWithGoogle, signInWithApple } from '../../lib/auth';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -79,7 +79,6 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
 
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const canSubmitEmail = EMAIL_RE.test(email.trim()) && password.length >= 8 && !loading;
   const canSubmitPhone = phone.trim().length >= 8 && !phoneSending;
 
@@ -290,7 +289,7 @@ export default function LoginScreen() {
                 )}
               </AnimatedPressable>
 
-              {RNPlatform.OS === 'ios' && (
+              {Platform.OS === 'ios' && (
                 <AnimatedPressable
                   onPress={handleApple}
                   disabled={appleLoading}

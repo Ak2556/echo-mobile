@@ -99,7 +99,6 @@ export default function BlockedUsersScreen() {
             </Animated.View>
           )}
           keyExtractor={(item: User) => item.id}
-          estimatedItemSize={72}
         />
       )}
     </SafeAreaView>

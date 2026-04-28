@@ -27,14 +27,15 @@ interface HistoryEntry {
 }
 
 function DieFace({ value, sides, color }: { value: number; sides: number; color: string }) {
-  const dots: [number, number][] = {
+  const DOT_MAP: Record<number, [number, number][]> = {
     1: [[50, 50]],
     2: [[25, 50], [75, 50]],
     3: [[25, 50], [50, 50], [75, 50]],
     4: [[25, 35], [75, 35], [25, 65], [75, 65]],
     5: [[25, 35], [75, 35], [50, 50], [25, 65], [75, 65]],
     6: [[25, 30], [75, 30], [25, 50], [75, 50], [25, 70], [75, 70]],
-  }[value] ?? [];
+  };
+  const dots: [number, number][] = DOT_MAP[value] ?? [];
 
   if (sides === 6 && value <= 6) {
     return (

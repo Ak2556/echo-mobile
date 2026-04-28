@@ -8,7 +8,7 @@ import { LikeButton } from './LikeButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
 import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar, DownloadSimple } from 'phosphor-react-native';
-import * as MediaLibrary from 'expo-media-library';
+import { saveToMediaLibrary } from '../../lib/mediaUtils';
 import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
@@ -172,19 +172,9 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
     router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } });
   };
 
-  const handleSavePhotos = async () => {
+  const handleSavePhotos = () => {
     setShowMenu(false);
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') {
-      showToast('Permission required to save photos', '🔒');
-      return;
-    }
-    try {
-      await Promise.all((item.mediaUris ?? []).map(uri => MediaLibrary.saveToLibraryAsync(uri)));
-      showToast(`${(item.mediaUris ?? []).length} photo(s) saved`, '✅');
-    } catch {
-      showToast('Failed to save photos', '❌');
-    }
+    saveToMediaLibrary(item.mediaUris ?? []);
   };
 
   const entering = reduceAnimations
