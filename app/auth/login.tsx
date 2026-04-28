@@ -12,6 +12,7 @@ import { EMAIL_RE } from '../../lib/validation';
 import { signInWithGoogle, signInWithApple } from '../../lib/auth';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
+import { useTheme } from '../../lib/theme';
 
 type Mode = 'email' | 'phone';
 
@@ -63,6 +64,7 @@ const inputRow = {
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { animation } = useTheme();
   const [mode, setMode] = useState<Mode>('email');
 
   // Email state
@@ -129,7 +131,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <Animated.View entering={FadeInDown.delay(60).springify()} style={{ alignItems: 'center', marginBottom: 40 }}>
+          <Animated.View entering={animation(FadeInDown.delay(60).springify())} style={{ alignItems: 'center', marginBottom: 40 }}>
             <View style={{
               width: 72, height: 72, borderRadius: 22, backgroundColor: '#6366F1',
               alignItems: 'center', justifyContent: 'center', marginBottom: 20,
@@ -141,7 +143,7 @@ export default function LoginScreen() {
             <Text style={{ color: '#71717A', fontSize: 15, marginTop: 6 }}>Sign in to your Echo account</Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(120).springify()}>
+          <Animated.View entering={animation(FadeInDown.delay(120).springify())}>
             <TabSwitcher mode={mode} onChange={m => { setMode(m); }} />
 
             {/* ── EMAIL form ── */}
@@ -312,7 +314,7 @@ export default function LoginScreen() {
             </View>
 
             {/* Sign up link */}
-            <Animated.View entering={FadeInUp.delay(200).springify()} style={{ flexDirection: 'row', justifyContent: 'center', paddingBottom: 16 }}>
+            <Animated.View entering={animation(FadeInUp.delay(200).springify())} style={{ flexDirection: 'row', justifyContent: 'center', paddingBottom: 16 }}>
               <Text style={{ color: '#71717A', fontSize: 15 }}>Don't have an account? </Text>
               <AnimatedPressable onPress={() => router.push('/auth/signup')} scaleValue={0.95} haptic="light">
                 <Text style={{ color: '#6366F1', fontSize: 15, fontWeight: '700' }}>Sign up</Text>

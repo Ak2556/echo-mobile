@@ -175,6 +175,17 @@ export async function insertRemoteEcho(params: {
   if (error) throw error;
 }
 
+export async function updateRemoteEcho(
+  id: string,
+  patch: { prompt?: string; response?: string; title?: string },
+): Promise<void> {
+  const { error } = await supabase
+    .from('public_echoes')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedItem[]> {
   const uid = await getSessionUserId();
 
@@ -239,32 +250,18 @@ export async function setRemoteBookmark(echoId: string, bookmark: boolean): Prom
 // ── Comments ──────────────────────────────────────────────────────────────────
 
 export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
+  // Single query with embedded profile join — eliminates N+1 profile fetches.
   const { data: rows, error } = await supabase
     .from('echo_comments')
-    .select('id, echo_id, author_id, content, likes_count, created_at')
+    .select('id, echo_id, author_id, content, likes_count, created_at, profiles!author_id(id, username, display_name, avatar_color, is_verified)')
     .eq('echo_id', echoId)
     .order('created_at', { ascending: true });
 
   if (error) throw error;
   const list = rows || [];
-  if (list.length === 0) return [];
 
-  const authorIds = [...new Set(list.map((r: { author_id: string }) => r.author_id))];
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, avatar_color, is_verified')
-    .in('id', authorIds);
-  const profileById = new Map((profiles as SupabaseProfileRow[] || []).map(p => [p.id, p]));
-
-  return list.map((r: {
-    id: string;
-    echo_id: string;
-    author_id: string;
-    content: string;
-    likes_count: number;
-    created_at: string;
-  }) => {
-    const p = profileById.get(r.author_id);
+  return list.map((r: any) => {
+    const p = r.profiles as SupabaseProfileRow | null;
     const username = p?.username ?? 'user';
     return {
       id: r.id,

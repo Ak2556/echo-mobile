@@ -32,6 +32,8 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
   return (
     <Pressable
       onPress={onPress}
+      accessibilityLabel={`Open post by ${item.displayName || item.username}`}
+      accessibilityRole="button"
       style={{
         width: HERO_CARD_WIDTH,
         height: HERO_CARD_HEIGHT,
@@ -109,13 +111,17 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
 
         {/* Glass Follow button */}
         <View
+          accessibilityLabel={`Follow ${item.displayName || item.username}`}
+          accessibilityRole="button"
           style={{
             backgroundColor: 'rgba(255,255,255,0.13)',
             borderRadius: 20,
             paddingHorizontal: 13,
-            paddingVertical: 5,
+            paddingVertical: 11,
+            minHeight: 44,
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: 'rgba(255,255,255,0.28)',
+            justifyContent: 'center',
           }}
         >
           <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>Follow</Text>

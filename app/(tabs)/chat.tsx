@@ -31,6 +31,10 @@ export default function ChatScreen() {
   const settingsRef = useRef({ streamResponses, contentLanguage });
   useEffect(() => { settingsRef.current = { streamResponses, contentLanguage }; }, [streamResponses, contentLanguage]);
 
+  // Abort the active SSE stream when the chat screen unmounts.
+  const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
+
   const [items, setItems] = useState<ChatItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -116,6 +120,11 @@ export default function ChatScreen() {
 
   const runStream = useCallback(
     async (opts: Parameters<typeof streamEchoAI>[0]) => {
+      // Cancel any in-flight stream before starting a new one.
+      abortRef.current?.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+
       const assistantId = `a-${Date.now()}`;
       pendingContentRef.current = '';
       setIsStreaming(true);
@@ -123,6 +132,7 @@ export default function ChatScreen() {
         const { contentLanguage: lang, streamResponses: streaming } = settingsRef.current;
         await streamEchoAI({
           ...opts,
+          signal: ctrl.signal,
           language: lang && lang !== 'English' ? lang : undefined,
           onEvent: (e) => {
             if (e.type === 'conversation') {
@@ -162,7 +172,10 @@ export default function ChatScreen() {
           },
         });
       } catch (err: any) {
-        upsertText(`err-${Date.now()}`, 'assistant', `Error: ${err?.message ?? 'unknown'}`);
+        // Don't surface an error message if the stream was intentionally aborted.
+        if (!ctrl.signal.aborted) {
+          upsertText(`err-${Date.now()}`, 'assistant', `Error: ${err?.message ?? 'unknown'}`);
+        }
       } finally {
         setIsStreaming(false);
       }

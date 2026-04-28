@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, Share, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -131,16 +131,16 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
   const repostAnim = useAnimatedStyle(() => ({ transform: [{ scale: repostScale.value }] }));
   const shareAnim = useAnimatedStyle(() => ({ transform: [{ scale: shareScale.value }] }));
 
-  const bounceIcon = (sv: { value: number }) => {
+  const bounceIcon = useCallback((sv: { value: number }) => {
     if (reduceAnimations) return;
     sv.value = withSequence(
       withSpring(0.7, { damping: 10, stiffness: 400 }),
       withSpring(1.15, { damping: 10, stiffness: 400 }),
       withSpring(1, { damping: 12, stiffness: 300 })
     );
-  };
+  }, [reduceAnimations]);
 
-  const toggleBookmarkPress = () => {
+  const toggleBookmarkPress = useCallback(() => {
     bounceIcon(bookmarkScale);
     if (remote) {
       remoteBm.mutate({ echoId: item.id, bookmark: !bookmarked });
@@ -150,32 +150,34 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
     toggleBookmark(item.id);
     // No feed invalidation — useFeed's select() applies bookmarkedIds reactively
     showToast(!bookmarked ? 'Bookmarked' : 'Removed bookmark', !bookmarked ? '\u{1F516}' : '');
-  };
+  }, [item.id, bookmarked, remote, remoteBm, toggleBookmark, bounceIcon]);
 
-  const handleRepost = () => {
+  const handleRepost = useCallback(() => {
     bounceIcon(repostScale);
     toggleRepost(item.id);
     showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? '\u{1F501}' : '');
-  };
+  }, [item.id, reposted, toggleRepost, bounceIcon]);
 
-  const handleNativeShare = async () => {
+  const handleNativeShare = useCallback(async () => {
     bounceIcon(shareScale);
     try {
       await Share.share({
         message: `"${item.prompt}"\n\nEcho: ${item.response}\n\n\u2014 @${item.username} on Echo`,
       });
     } catch {}
-  };
+  }, [item.prompt, item.response, item.username, bounceIcon]);
 
-  const handleReport = () => {
+  const handleReport = useCallback(() => {
     setShowMenu(false);
     router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } });
-  };
+  }, [item.id, item.username]);
 
-  const handleSavePhotos = () => {
+  const handleSavePhotos = useCallback(() => {
     setShowMenu(false);
     saveToMediaLibrary(item.mediaUris ?? []);
-  };
+  }, [item.mediaUris]);
+
+  const timeAgo = useMemo(() => getTimeAgo(item.createdAt), [item.createdAt]);
 
   const entering = reduceAnimations
     ? FadeIn.duration(150)
@@ -330,6 +332,8 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
                   onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
                   scaleValue={reduceAnimations ? 1 : 0.9}
                   haptic="light"
+                  accessibilityLabel={`View ${item.displayName || item.username}'s profile`}
+                  accessibilityRole="link"
                 >
                   <View
                     style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}
@@ -345,6 +349,8 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
                 style={{ flex: 1 }}
                 scaleValue={reduceAnimations ? 1 : 0.98}
                 haptic="none"
+                accessibilityLabel={`View ${item.displayName || item.username}'s profile`}
+                accessibilityRole="link"
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
@@ -352,7 +358,7 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
                 </View>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
               </AnimatedPressable>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{timeAgo}</Text>
               <AnimatedPressable
                 onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
                 scaleValue={reduceAnimations ? 1 : 0.85}
@@ -419,6 +425,8 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
               onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
               scaleValue={reduceAnimations ? 1 : 0.9}
               haptic="light"
+              accessibilityLabel={`View ${item.displayName || item.username}'s profile`}
+              accessibilityRole="link"
             >
               <View
                 className={`${compactFeed ? 'w-7 h-7' : 'w-9 h-9'} rounded-full items-center justify-center mr-3`}
@@ -435,6 +443,8 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
             className="flex-1"
             scaleValue={reduceAnimations ? 1 : 0.98}
             haptic="none"
+            accessibilityLabel={`View ${item.displayName || item.username}'s profile`}
+            accessibilityRole="link"
           >
             <View className="flex-row items-center gap-1">
               <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
@@ -442,7 +452,7 @@ function FeedCardInner({ item, index, onPress }: FeedCardProps) {
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{timeAgo}</Text>
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
             scaleValue={reduceAnimations ? 1 : 0.85}

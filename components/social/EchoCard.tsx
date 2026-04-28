@@ -67,16 +67,12 @@ export function EchoCardInner({ item, index, activeIdxRef, onCommentPress }: Ech
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
-  const [isLiked, setIsLiked] = useState(item.isLiked);
+  // Optimistic like count — keeps the displayed number in sync during rapid taps.
+  // isLiked and isBookmarked are derived directly from the item prop (fed by useFeed's select())
+  // so Zustand → select → prop is the single source of truth; no sync effect needed.
   const [likeCount, setLikeCount] = useState(item.likes);
-  const [isBookmarked, setIsBookmarked] = useState(item.isBookmarked);
-
-  // Sync local state when query cache updates (e.g. after a remote like via Track 1 select)
-  useEffect(() => {
-    setIsLiked(item.isLiked);
-    setLikeCount(item.likes);
-    setIsBookmarked(item.isBookmarked);
-  }, [item.id, item.isLiked, item.likes, item.isBookmarked]);
+  const isLiked     = item.isLiked;
+  const isBookmarked = item.isBookmarked;
 
   const lastTapRef = useRef(0);
 
@@ -127,9 +123,8 @@ export function EchoCardInner({ item, index, activeIdxRef, onCommentPress }: Ech
   const handleTap = async () => {
     const now = Date.now();
     if (now - lastTapRef.current < 320) {
-      // Double-tap — like
+      // Double-tap — like (only if not already liked)
       if (!isLiked) {
-        setIsLiked(true);
         setLikeCount(c => c + 1);
         toggleLike(item.id);
         burstHeart();
@@ -148,21 +143,17 @@ export function EchoCardInner({ item, index, activeIdxRef, onCommentPress }: Ech
   };
 
   const handleLike = () => {
-    const next = !isLiked;
-    setIsLiked(next);
-    setLikeCount(c => next ? c + 1 : c - 1);
+    setLikeCount(c => isLiked ? c - 1 : c + 1);
     toggleLike(item.id);
-    if (next) {
+    if (!isLiked) {
       burstHeart();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
   const handleBookmark = () => {
-    const next = !isBookmarked;
-    setIsBookmarked(next);
     toggleBookmark(item.id);
-    showToast(next ? 'Saved to bookmarks' : 'Removed from bookmarks', next ? '🔖' : '✓');
+    showToast(!isBookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks', !isBookmarked ? '🔖' : '✓');
   };
 
   const handleShare = () => {
@@ -215,6 +206,8 @@ export function EchoCardInner({ item, index, activeIdxRef, onCommentPress }: Ech
       <Pressable
         onPress={handleTap}
         style={{ position: 'absolute', inset: 0 }}
+        accessibilityLabel={playing ? 'Pause video' : 'Play video'}
+        accessibilityRole="button"
       />
 
       {/* Paused indicator */}

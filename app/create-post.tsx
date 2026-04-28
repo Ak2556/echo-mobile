@@ -20,6 +20,7 @@ import { useTheme } from '../lib/theme';
 import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { playSoundEffect } from '../lib/sound';
+import * as FileSystem from 'expo-file-system';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { insertRemoteEcho, uploadMediaFile } from '../lib/supabaseEchoApi';
 
@@ -169,6 +170,17 @@ export default function CreatePostScreen() {
       let remoteVideoUri: string | undefined;
 
       if (remote) {
+        // Enforce 50 MB per-file limit before uploading.
+        const urisToCheck = postType === 'photo' ? imageUris : postType === 'video' && videoUri ? [videoUri] : [];
+        for (const uri of urisToCheck) {
+          const info = await FileSystem.getInfoAsync(uri);
+          if (info.exists && (info as any).size > 50 * 1024 * 1024) {
+            showToast('Each file must be under 50 MB', '⚠️');
+            setPublishing(false);
+            return;
+          }
+        }
+
         if (postType === 'photo' && imageUris.length > 0) {
           remoteImageUris = await Promise.all(
             imageUris.map(uri => uploadMediaFile(uri, 'image/jpeg'))

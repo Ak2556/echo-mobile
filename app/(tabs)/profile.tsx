@@ -28,7 +28,7 @@ const SETTINGS_ROWS = [
   { key: 'edit',        Icon: PencilSimple,   label: 'Edit Profile',  route: '/edit-profile' },
   { key: 'bookmarks',   Icon: BookmarkSimple, label: 'Bookmarks',     route: '/bookmarks' },
   { key: 'messages',    Icon: Envelope,       label: 'Messages',      route: '/messages' },
-  { key: 'connections', Icon: Users,          label: 'Connections',   route: null },
+  { key: 'connections', Icon: Users,          label: 'Connections',   route: '/followers' },
   { key: 'settings',    Icon: Gear,           label: 'Settings',      route: '/settings' },
 ];
 
@@ -352,9 +352,9 @@ export default function ProfileScreen() {
                 <React.Fragment key={key}>
                   <AnimatedPressable
                     onPress={() =>
-                      route
-                        ? router.push(route as any)
-                        : router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })
+                      key === 'connections'
+                        ? router.push({ pathname: '/followers', params: { userId, tab: 'following' } })
+                        : router.push(route as any)
                     }
                     style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13 }}
                     scaleValue={0.98}
