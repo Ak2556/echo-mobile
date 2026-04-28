@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import {
   Calculator, ArrowsLeftRight, Receipt, Timer,
   Key, Globe, BracketsCurly, FileText,
@@ -75,7 +75,10 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
   const router = useRouter();
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 20).springify().damping(22).stiffness(600)} style={{ width: CARD }}>
+    <Animated.View
+      entering={FadeIn.delay(index * 30).duration(220)}
+      style={{ width: CARD, borderRadius: 24, overflow: 'hidden' }}
+    >
       <Pressable
         onPress={() => router.push(app.route as any)}
         style={({ pressed }) => ({
@@ -89,7 +92,6 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
           shadowOpacity: pressed ? 0.25 : 0,
           shadowRadius: 16,
           shadowOffset: { width: 0, height: 4 },
-          overflow: 'hidden',
         })}
       >
         {/* Glow spot */}

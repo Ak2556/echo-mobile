@@ -38,7 +38,15 @@ export function useFeed() {
       ? ['feed', feedSort]
       : ['feed', 'local', publishedEchoes.length, feedSort],
     queryFn: async (): Promise<FeedItem[]> => {
-      if (remote) return fetchRemoteFeed();
+      if (remote) {
+        try {
+          return await fetchRemoteFeed();
+        } catch {
+          // Network unavailable — fall back to local seed so the feed never errors out
+          const merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED];
+          return sortFeed(merged, feedSort, followingIds);
+        }
+      }
       const merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED];
       return sortFeed(merged, feedSort, followingIds);
     },
