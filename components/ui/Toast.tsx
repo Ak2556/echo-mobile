@@ -93,7 +93,7 @@ export function ToastProvider() {
       ]}
     >
       {icon ? <Text style={{ fontSize: 16, marginRight: 8 }}>{icon}</Text> : null}
-      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{message}</Text>
+      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }} accessibilityLiveRegion="polite">{message}</Text>
     </Animated.View>
   );
 }

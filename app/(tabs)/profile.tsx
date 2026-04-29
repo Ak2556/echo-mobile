@@ -271,12 +271,39 @@ export default function ProfileScreen() {
 
         {/* 4: Tab Content */}
         <View>
+          <Animated.View key={activeTab} entering={animation(FadeIn.duration(120))}>
           {activeTab === 'posts' ? (
-            <PostsGrid
-              echoes={publishedEchoes}
-              onPressEcho={handlePressEcho}
-              avatarColor={avatarColor || colors.accent}
-            />
+            publishedEchoes.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 52, paddingHorizontal: 32, gap: 12 }}>
+                <Images color={colors.textMuted} size={44} weight="duotone" />
+                <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', textAlign: 'center' }}>
+                  No echoes yet
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
+                  Share your first thought with the community.
+                </Text>
+                <AnimatedPressable
+                  onPress={() => router.push('/create-post')}
+                  scaleValue={0.97}
+                  haptic="medium"
+                  style={{
+                    marginTop: 4,
+                    backgroundColor: colors.accent,
+                    borderRadius: 12,
+                    paddingHorizontal: 24,
+                    paddingVertical: 12,
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Create Echo</Text>
+                </AnimatedPressable>
+              </View>
+            ) : (
+              <PostsGrid
+                echoes={publishedEchoes}
+                onPressEcho={handlePressEcho}
+                avatarColor={avatarColor || colors.accent}
+              />
+            )
           ) : (
             <View style={{ padding: 16, gap: 12 }}>
               {/* Full bio */}
@@ -322,6 +349,7 @@ export default function ProfileScreen() {
               </GlassPanel>
             </View>
           )}
+          </Animated.View>
         </View>
 
         {/* 5: Account Section */}
@@ -331,7 +359,7 @@ export default function ProfileScreen() {
         >
           <Text
             style={{
-              color: 'colors.textMuted',
+              color: colors.textMuted,
               fontSize: 11,
               fontWeight: '600',
               textTransform: 'uppercase',
@@ -389,7 +417,7 @@ export default function ProfileScreen() {
           {/* Preferences */}
           <Text
             style={{
-              color: 'colors.textMuted',
+              color: colors.textMuted,
               fontSize: 11,
               fontWeight: '600',
               textTransform: 'uppercase',

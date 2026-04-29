@@ -19,6 +19,7 @@ export function AnimatedPressable({
   scaleValue = 0.96,
   haptic = 'light',
   style,
+  disabled,
   ...props
 }: AnimatedPressableProps) {
   const scale = useSharedValue(1);
@@ -29,6 +30,7 @@ export function AnimatedPressable({
   }));
 
   const handlePressIn = () => {
+    if (disabled) return;
     scale.value = withSpring(scaleValue, { damping: 18, stiffness: 500 });
   };
 
@@ -53,6 +55,7 @@ export function AnimatedPressable({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
+      disabled={disabled}
       style={[animStyle, style]}
       {...props}
     >
