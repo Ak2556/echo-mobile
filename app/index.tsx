@@ -29,7 +29,7 @@ export default function Index() {
   }
 
   if (!username) {
-    return <Redirect href="/auth/setup-profile" />;
+    return <Redirect href="/auth/signup-wizard" />;
   }
 
   return <Redirect href="/(tabs)/discover" />;

@@ -54,7 +54,7 @@ export default function VerifyPhoneScreen() {
       setCode('');
       return;
     }
-    router.replace(fromSignup === '1' ? '/auth/setup-profile' : '/');
+    router.replace(fromSignup === '1' ? '/auth/signup-wizard' : '/');
   };
 
   const handleResend = async () => {

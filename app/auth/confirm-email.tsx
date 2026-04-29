@@ -22,7 +22,7 @@ export default function ConfirmEmailScreen() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
-        router.replace('/auth/setup-profile');
+        router.replace('/auth/signup-wizard');
       }
     });
     return () => subscription.unsubscribe();
