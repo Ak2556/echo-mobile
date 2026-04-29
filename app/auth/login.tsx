@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, KeyboardAvoidingView, Platform,
   ScrollView, Pressable, ActivityIndicator,
@@ -79,6 +79,9 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
 
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const passwordRef = useRef<TextInput>(null);
+
   const canSubmitEmail = email.trim().length > 0 && password.length >= 6 && !loading;
   const canSubmitPhone = phone.trim().length >= 8 && !phoneSending;
 
@@ -149,7 +152,7 @@ export default function LoginScreen() {
               <>
                 <View style={{ marginBottom: 14 }}>
                   <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>EMAIL</Text>
-                  <View style={inputRow}>
+                  <View style={[inputRow, { borderColor: focusedField === 'email' ? '#6366F1' : '#27272A' }]}>
                     <EnvelopeSimple color="#52525B" size={18} style={{ marginRight: 10 }} />
                     <TextInput
                       value={email}
@@ -159,6 +162,10 @@ export default function LoginScreen() {
                       autoCapitalize="none"
                       autoCorrect={false}
                       keyboardType="email-address"
+                      returnKeyType="next"
+                      onSubmitEditing={() => passwordRef.current?.focus()}
+                      onFocus={() => setFocusedField('email')}
+                      onBlur={() => setFocusedField(null)}
                       style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
                     />
                   </View>
@@ -166,14 +173,19 @@ export default function LoginScreen() {
 
                 <View style={{ marginBottom: 8 }}>
                   <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>PASSWORD</Text>
-                  <View style={inputRow}>
+                  <View style={[inputRow, { borderColor: focusedField === 'password' ? '#6366F1' : '#27272A' }]}>
                     <LockKey color="#52525B" size={18} style={{ marginRight: 10 }} />
                     <TextInput
+                      ref={passwordRef}
                       value={password}
                       onChangeText={setPassword}
                       placeholder="••••••••"
                       placeholderTextColor="#52525B"
                       secureTextEntry={!showPassword}
+                      returnKeyType="done"
+                      onSubmitEditing={handleLogin}
+                      onFocus={() => setFocusedField('password')}
+                      onBlur={() => setFocusedField(null)}
                       style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
                     />
                     <Pressable onPress={() => setShowPassword(v => !v)} style={{ padding: 4 }}>

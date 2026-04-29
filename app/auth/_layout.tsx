@@ -8,6 +8,7 @@ export default function AuthLayout() {
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="confirm-email" />
       <Stack.Screen name="setup-profile" />
+      <Stack.Screen name="signup-wizard" />
       <Stack.Screen name="callback" />
       <Stack.Screen name="verify-phone" />
     </Stack>
