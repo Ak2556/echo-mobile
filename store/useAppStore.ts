@@ -187,6 +187,10 @@ interface AppState {
   contentLanguage: string; setContentLanguage: (v: string) => void;
   feedSort: 'latest' | 'popular' | 'following'; setFeedSort: (v: 'latest' | 'popular' | 'following') => void;
 
+  // Interests
+  interests: string[];
+  setInterests: (v: string[]) => void;
+
   // Data management
   clearChatHistory: () => void;
   clearAllBookmarks: () => void;
@@ -597,6 +601,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   feedSort: persistGet<'latest' | 'popular' | 'following'>('feedSort', 'latest'),
   setFeedSort: (v) => { persistSet('feedSort', v); set({ feedSort: v }); },
 
+  // Interests
+  interests: persistGet<string[]>('interests', []),
+  setInterests: (v) => { persistSet('interests', v); set({ interests: v }); },
+
   // Data management
   clearChatHistory: () => {
     persistSet('sessions', []);
@@ -620,7 +628,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       conversations: [], messagesByConversation: {},
       stories: [], blockedIds: [],
       hasSeenOnboarding: false, username: '', displayName: '', bio: '',
-      avatarColor: '#3B82F6',
+      avatarColor: '#3B82F6', interests: [],
     });
   },
   getCacheSize: () => {

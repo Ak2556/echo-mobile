@@ -57,7 +57,7 @@ function SectionHeader({
         marginBottom: 14,
       }}
     >
-      <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>{label}</Text>
+      <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>{label}</Text>
       {sub && (
         <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 6 }}>
           {sub}
@@ -69,7 +69,7 @@ function SectionHeader({
 
 export default function DiscoverScreen() {
   const router = useRouter();
-  const { data: feed, isLoading, refetch, isRefetching } = useFeed();
+  const { data: feed, isLoading, refetch, isRefetching, isError } = useFeed();
   const { colors, animation } = useTheme();
   const { username, avatarColor } = useAppStore();
 
@@ -121,7 +121,7 @@ export default function DiscoverScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
           <DiamondLogo />
           <Text
-            style={{ color: '#fff', fontSize: 20, fontWeight: '700', letterSpacing: -0.5 }}
+            style={{ color: colors.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.5 }}
           >
             Echo
           </Text>
@@ -146,10 +146,10 @@ export default function DiscoverScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               borderWidth: 2,
-              borderColor: 'rgba(255,255,255,0.18)',
+              borderColor: colors.glassBorder,
             }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
               {(username || '?').charAt(0).toUpperCase()}
             </Text>
           </View>
@@ -164,6 +164,16 @@ export default function DiscoverScreen() {
           <FeedCardSkeleton />
           <FeedCardSkeleton />
         </Animated.View>
+      ) : isError ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 16 }}>Something went wrong</Text>
+          <Pressable
+            onPress={refetch}
+            style={{ backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Try again</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlashList
           data={popularItems}

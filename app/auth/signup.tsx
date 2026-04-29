@@ -99,7 +99,7 @@ export default function SignupScreen() {
       router.replace('/auth/confirm-email');
       return;
     }
-    router.replace('/auth/setup-profile');
+    router.replace('/auth/signup-wizard');
   };
 
   const handleSendCode = async () => {

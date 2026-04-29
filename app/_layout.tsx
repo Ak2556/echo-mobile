@@ -77,7 +77,7 @@ function AuthListener() {
             setHasSeenOnboarding(true);
             router.replace('/(tabs)/discover');
           } else {
-            router.replace('/auth/setup-profile');
+            router.replace('/auth/signup-wizard');
           }
         } else {
           router.replace('/(tabs)/discover');
