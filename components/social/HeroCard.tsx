@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Dimensions, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
 
@@ -15,7 +16,7 @@ interface HeroCardProps {
 }
 
 export function HeroCard({ item, onPress }: HeroCardProps) {
-  const { colors } = useTheme();
+  const { colors, reduceAnimations } = useTheme();
 
   const hasImage = (item.mediaUris?.length ?? 0) > 0;
 
@@ -29,6 +30,8 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
       ? `${Math.floor((item.viewCount ?? 0) / 1000)}k`
       : String(item.viewCount ?? 0);
 
+  const useBlur = Platform.OS === 'ios' && !reduceAnimations;
+
   return (
     <Pressable
       onPress={onPress}
@@ -39,7 +42,7 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
         overflow: 'hidden',
       }}
     >
-      {/* Background — image or gradient */}
+      {/* Background */}
       {hasImage ? (
         <Image
           source={{ uri: item.mediaUris![0] }}
@@ -69,7 +72,7 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
         pointerEvents="none"
       />
 
-      {/* Author row — top */}
+      {/* Author row — glass pill */}
       <View
         style={{
           position: 'absolute',
@@ -107,57 +110,87 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
           </Text>
         </View>
 
-        {/* Glass Follow button */}
+        {/* Frosted glass Follow button */}
         <View
           style={{
-            backgroundColor: 'rgba(255,255,255,0.13)',
             borderRadius: 20,
-            paddingHorizontal: 13,
-            paddingVertical: 5,
+            overflow: 'hidden',
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: 'rgba(255,255,255,0.28)',
+            borderColor: 'rgba(255,255,255,0.35)',
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>Follow</Text>
+          {useBlur ? (
+            <>
+              <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+            </>
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.2)' }]} />
+          )}
+          <View style={{ paddingHorizontal: 13, paddingVertical: 5 }}>
+            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>Follow</Text>
+          </View>
         </View>
       </View>
 
-      {/* Bottom content */}
-      <View style={{ position: 'absolute', bottom: 18, left: 16, right: 16 }}>
-        {/* Badge + stats row */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <View
-            style={{
-              backgroundColor: colors.accent,
-              borderRadius: 6,
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
-              ECHO
+      {/* Bottom content — frosted glass panel */}
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden' }}>
+        {useBlur && (
+          <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+        )}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: useBlur ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.65)' },
+          ]}
+        />
+        {/* Top glass edge */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: StyleSheet.hairlineWidth,
+            backgroundColor: 'rgba(255,255,255,0.18)',
+          }}
+        />
+        <View style={{ padding: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <View
+              style={{
+                backgroundColor: colors.accent,
+                borderRadius: 6,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                ECHO
+              </Text>
+            </View>
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22C55E' }} />
+            <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11 }}>
+              {likeLabel} · {viewLabel}
             </Text>
           </View>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22C55E' }} />
-          <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11 }}>
-            {likeLabel} · {viewLabel}
-          </Text>
-        </View>
 
-        {/* Big bold title */}
-        <Text
-          style={{
-            color: '#fff',
-            fontSize: 22,
-            fontWeight: '900',
-            textTransform: 'uppercase',
-            lineHeight: 27,
-            letterSpacing: -0.4,
-          }}
-          numberOfLines={2}
-        >
-          {item.prompt}
-        </Text>
+          <Text
+            style={{
+              color: '#fff',
+              fontSize: 22,
+              fontWeight: '900',
+              textTransform: 'uppercase',
+              lineHeight: 27,
+              letterSpacing: -0.4,
+            }}
+            numberOfLines={2}
+          >
+            {item.prompt}
+          </Text>
+          {/* Bottom padding */}
+          <View style={{ height: 6 }} />
+        </View>
       </View>
     </Pressable>
   );

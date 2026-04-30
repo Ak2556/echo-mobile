@@ -1,16 +1,15 @@
 import React, { useEffect, useCallback } from 'react';
-import { Text, Dimensions } from 'react-native';
+import { Text, View, Platform, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withDelay,
   withTiming,
-  runOnJS,
 } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 import { create } from 'zustand';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { useTheme } from '../../lib/theme';
 
 interface ToastState {
   message: string | null;
@@ -32,6 +31,7 @@ export function showToast(message: string, icon?: string) {
 
 export function ToastProvider() {
   const { message, icon, hide } = useToastStore();
+  const { colors } = useTheme();
   const translateY = useSharedValue(-100);
   const opacity = useSharedValue(0);
 
@@ -44,7 +44,6 @@ export function ToastProvider() {
       translateY.value = withSpring(0, { damping: 20, stiffness: 500 });
       opacity.value = withTiming(1, { duration: 80 });
 
-      // Auto-dismiss after 2s
       const timer = setTimeout(() => {
         translateY.value = withSpring(-100, { damping: 20, stiffness: 500 });
         opacity.value = withDelay(60, withTiming(0, { duration: 80 }));
@@ -74,26 +73,81 @@ export function ToastProvider() {
           left: 20,
           right: 20,
           zIndex: 9999,
-          backgroundColor: '#18181b',
-          borderRadius: 16,
-          paddingVertical: 14,
-          paddingHorizontal: 20,
-          borderWidth: 1,
-          borderColor: '#3f3f46',
+          borderRadius: 20,
+          overflow: 'hidden',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.glassBorder,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-          alignItems: 'center',
-          flexDirection: 'row',
-          justifyContent: 'center',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: colors.isDark ? 0.45 : 0.18,
+          shadowRadius: 20,
+          elevation: 12,
         },
         animStyle,
       ]}
     >
-      {icon ? <Text style={{ fontSize: 16, marginRight: 8 }}>{icon}</Text> : null}
-      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }} accessibilityLiveRegion="polite">{message}</Text>
+      {Platform.OS === 'ios' ? (
+        <>
+          <BlurView
+            intensity={80}
+            tint={colors.isDark ? 'dark' : 'extraLight'}
+            style={StyleSheet.absoluteFill}
+          />
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: colors.glassHeavyFill ?? 'rgba(255,255,255,0.12)' },
+            ]}
+          />
+          {/* Top shine */}
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 1,
+              backgroundColor: colors.glassHighlight,
+            }}
+          />
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 14,
+              paddingHorizontal: 20,
+            }}
+          >
+            {icon ? <Text style={{ fontSize: 16, marginRight: 8 }}>{icon}</Text> : null}
+            <Text
+              style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}
+              accessibilityLiveRegion="polite"
+            >
+              {message}
+            </Text>
+          </View>
+        </>
+      ) : (
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+          }}
+        >
+          {icon ? <Text style={{ fontSize: 16, marginRight: 8 }}>{icon}</Text> : null}
+          <Text
+            style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}
+            accessibilityLiveRegion="polite"
+          >
+            {message}
+          </Text>
+        </View>
+      )}
     </Animated.View>
   );
 }

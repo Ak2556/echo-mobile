@@ -8,7 +8,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Lightning, X, ArrowUp } from 'phosphor-react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useCommandPalette } from '../../lib/commandPalette';
@@ -16,10 +18,7 @@ import { streamEchoAI } from '../../lib/api';
 import { useTheme } from '../../lib/theme';
 import { ToolCallCard, ToolCallItem } from './ToolCallCard';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
-
-// One-shot ask-anything sheet. Reuses the same edge function & conversation
-// concept as the chat tab, but starts fresh each open so the palette stays
-// snappy and unscarred by the day's history.
+import { GlassPanel } from '../ui/GlassPanel';
 
 type Item =
   | { kind: 'text'; id: string; role: 'user' | 'assistant'; content: string }
@@ -27,7 +26,7 @@ type Item =
 
 export function CommandPalette() {
   const { isOpen, close } = useCommandPalette();
-  const { colors } = useTheme();
+  const { colors, radius, reduceAnimations } = useTheme();
   const [input, setInput] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
@@ -36,11 +35,9 @@ export function CommandPalette() {
 
   useEffect(() => {
     if (isOpen) {
-      // Reset the palette each open.
       setInput('');
       setItems([]);
       conversationIdRef.current = null;
-      // Defer focus so the modal is mounted first.
       setTimeout(() => inputRef.current?.focus(), 80);
     }
   }, [isOpen]);
@@ -147,104 +144,116 @@ export function CommandPalette() {
       onRequestClose={close}
       statusBarTranslucent
     >
+      {/* Blurred backdrop */}
+      <View style={StyleSheet.absoluteFill}>
+        {Platform.OS === 'ios' && !reduceAnimations ? (
+          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : null}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: 'rgba(0,0,0,0.55)' },
+          ]}
+        />
+      </View>
+
       <Pressable
         onPress={close}
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-start' }}
+        style={{ flex: 1, justifyContent: 'flex-start' }}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1 }}
         >
-          <Pressable onPress={(e) => e.stopPropagation()} style={{ marginTop: 80, marginHorizontal: 16, marginBottom: 120 }}>
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{ marginTop: 80, marginHorizontal: 16, marginBottom: 120 }}
+          >
             <Animated.View
               entering={FadeIn.duration(120)}
               exiting={FadeOut.duration(80)}
-              style={{
-                backgroundColor: colors.bg,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: colors.border,
-                overflow: 'hidden',
-                maxHeight: '80%',
-              }}
+              style={{ maxHeight: '80%' }}
             >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  padding: 14,
-                  gap: 10,
-                  borderBottomWidth: items.length > 0 ? 1 : 0,
-                  borderBottomColor: colors.border,
-                }}
-              >
-                <Lightning color={colors.accent} size={20} weight="fill" />
-                <TextInput
-                  ref={inputRef}
-                  value={input}
-                  onChangeText={setInput}
-                  onSubmitEditing={send}
-                  placeholder="Ask Echo anything…"
-                  placeholderTextColor={colors.textMuted}
-                  returnKeyType="send"
-                  style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 6 }}
-                  editable={!busy}
-                  autoFocus
-                />
-                <AnimatedPressable
-                  onPress={input.trim() ? send : close}
+              <GlassPanel variant="ultra" borderRadius={20} elevated>
+                {/* Header / input row */}
+                <View
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: input.trim() ? colors.accent : colors.surface,
+                    flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'center',
+                    padding: 14,
+                    gap: 10,
+                    borderBottomWidth: items.length > 0 ? StyleSheet.hairlineWidth : 0,
+                    borderBottomColor: colors.glassBorder,
                   }}
-                  haptic="light"
                 >
-                  {input.trim() ? (
-                    <ArrowUp size={18} color="#fff" weight="bold" />
-                  ) : (
-                    <X size={16} color={colors.textSecondary} />
-                  )}
-                </AnimatedPressable>
-              </View>
-
-              {items.length > 0 && (
-                <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={{ paddingVertical: 8 }}>
-                  {items.map((item) =>
-                    item.kind === 'text' ? (
-                      <View
-                        key={`t-${item.id}`}
-                        style={{
-                          paddingHorizontal: 16,
-                          paddingVertical: 6,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: item.role === 'user' ? colors.textMuted : colors.text,
-                            fontSize: 14,
-                            fontWeight: item.role === 'user' ? '500' : '400',
-                            lineHeight: 20,
-                          }}
-                        >
-                          {item.role === 'user' ? '› ' : ''}
-                          {item.content}
-                        </Text>
-                      </View>
+                  <Lightning color={colors.accent} size={20} weight="fill" />
+                  <TextInput
+                    ref={inputRef}
+                    value={input}
+                    onChangeText={setInput}
+                    onSubmitEditing={send}
+                    placeholder="Ask Echo anything…"
+                    placeholderTextColor={colors.textMuted}
+                    returnKeyType="send"
+                    style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 6 }}
+                    editable={!busy}
+                    autoFocus
+                  />
+                  <AnimatedPressable
+                    onPress={input.trim() ? send : close}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: input.trim() ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    haptic="light"
+                  >
+                    {input.trim() ? (
+                      <ArrowUp size={18} color="#fff" weight="bold" />
                     ) : (
-                      <ToolCallCard
-                        key={`c-${item.tool.id}`}
-                        item={item.tool}
-                        onConfirm={(t) => confirmTool(t, true)}
-                        onReject={(t) => confirmTool(t, false)}
-                      />
-                    ),
-                  )}
-                </ScrollView>
-              )}
+                      <X size={16} color={colors.textSecondary} />
+                    )}
+                  </AnimatedPressable>
+                </View>
+
+                {items.length > 0 && (
+                  <ScrollView
+                    style={{ maxHeight: 420 }}
+                    contentContainerStyle={{ paddingVertical: 8 }}
+                  >
+                    {items.map((item) =>
+                      item.kind === 'text' ? (
+                        <View
+                          key={`t-${item.id}`}
+                          style={{ paddingHorizontal: 16, paddingVertical: 6 }}
+                        >
+                          <Text
+                            style={{
+                              color: item.role === 'user' ? colors.textMuted : colors.text,
+                              fontSize: 14,
+                              fontWeight: item.role === 'user' ? '500' : '400',
+                              lineHeight: 20,
+                            }}
+                          >
+                            {item.role === 'user' ? '› ' : ''}
+                            {item.content}
+                          </Text>
+                        </View>
+                      ) : (
+                        <ToolCallCard
+                          key={`c-${item.tool.id}`}
+                          item={item.tool}
+                          onConfirm={(t) => confirmTool(t, true)}
+                          onReject={(t) => confirmTool(t, false)}
+                        />
+                      ),
+                    )}
+                  </ScrollView>
+                )}
+              </GlassPanel>
             </Animated.View>
           </Pressable>
         </KeyboardAvoidingView>
