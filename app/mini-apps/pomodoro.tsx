@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Pressable, ScrollView, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { ArrowLeft, Play, Pause, ArrowCounterClockwise } from 'phosphor-react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { Play, Pause, ArrowCounterClockwise } from 'phosphor-react-native';
+import Animated, { useSharedValue, withTiming, Easing } from 'react-native-reanimated';
+import { GlassPanel } from '../../components/ui/GlassPanel';
+import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
 
 type Mode = 'focus' | 'short' | 'long';
@@ -18,8 +18,7 @@ const { width } = Dimensions.get('window');
 const RING = Math.min(width - 80, 260);
 
 export default function PomodoroScreen() {
-  const { colors, radius, fontSizes } = useTheme();
-  const router = useRouter();
+  const { colors } = useTheme();
 
   const [mode, setMode] = useState<Mode>('focus');
   const [seconds, setSeconds] = useState(25 * 60);
@@ -74,128 +73,97 @@ export default function PomodoroScreen() {
   const secs = String(seconds % 60).padStart(2, '0');
   const pct = Math.round(((totalSecs - seconds) / totalSecs) * 100);
 
-  // Animated progress arc using border trick
-  const arcStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ scaleX: progress.value }],
-  }));
+  const CycleCounter = (
+    <View style={{ backgroundColor: accent + '22', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: accent + '44' }}>
+      <Text style={{ color: accent, fontWeight: '800', fontSize: 20, lineHeight: 24 }}>{cycles}</Text>
+      <Text style={{ color: accent, fontSize: 10, fontWeight: '600', opacity: 0.8 }}>cycles</Text>
+    </View>
+  );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
-        <Pressable onPress={() => router.back()} style={{ marginRight: 16, width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-          <ArrowLeft color={colors.text} size={20} weight="bold" />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontWeight: '800', fontSize: fontSizes.title }}>Pomodoro</Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Stay in the zone</Text>
-        </View>
-        {/* Cycle counter */}
-        <View style={{ alignItems: 'center', backgroundColor: accent + '22', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: accent + '44' }}>
-          <Text style={{ color: accent, fontWeight: '800', fontSize: 20, lineHeight: 24 }}>{cycles}</Text>
-          <Text style={{ color: accent, fontSize: 10, fontWeight: '600', opacity: 0.8 }}>cycles</Text>
+    <MiniAppShell title="Pomodoro" subtitle="Stay in the zone" headerRight={CycleCounter}>
+      {/* Mode tabs */}
+      <GlassPanel variant="light" borderRadius={16} style={{ marginBottom: 28 }} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }}>
+        {MODES.map(m => (
+          <Pressable
+            key={m.id}
+            onPress={() => switchMode(m.id)}
+            style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: mode === m.id ? m.color : 'transparent' }}
+          >
+            <Text style={{ fontSize: 14 }}>{m.emoji}</Text>
+            <Text style={{ color: mode === m.id ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 11, marginTop: 2 }}>{m.label.split(' ')[0]}</Text>
+          </Pressable>
+        ))}
+      </GlassPanel>
+
+      {/* Ring */}
+      <View style={{ width: RING, height: RING, alignItems: 'center', justifyContent: 'center', marginBottom: 32, alignSelf: 'center' }}>
+        <View style={{ position: 'absolute', width: RING, height: RING, borderRadius: RING / 2, borderWidth: 16, borderColor: accent + '18' }} />
+        <View style={{ position: 'absolute', width: RING - 16, height: RING - 16, borderRadius: (RING - 16) / 2, borderWidth: 4, borderColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+        <View style={{ position: 'absolute', width: RING - 16, height: RING - 16, borderRadius: (RING - 16) / 2, borderWidth: 4, borderColor: accent, borderRightColor: 'transparent', borderBottomColor: pct > 25 ? accent : 'transparent', borderLeftColor: pct > 50 ? accent : 'transparent', borderTopColor: pct > 75 ? 'transparent' : accent }} />
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ color: colors.text, fontSize: RING * 0.26, fontWeight: '200', letterSpacing: -4, lineHeight: RING * 0.28 }}>
+            {mins}:{secs}
+          </Text>
+          <View style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: accent + '22', borderRadius: 20, borderWidth: 1, borderColor: accent + '44', marginTop: 8 }}>
+            <Text style={{ color: accent, fontSize: 12, fontWeight: '700' }}>
+              {running ? `${pct}% done` : pct === 0 ? modeData.emoji + ' Ready' : `${pct}% done`}
+            </Text>
+          </View>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20 }}>
-        {/* Mode tabs */}
-        <View style={{ flexDirection: 'row', backgroundColor: colors.surfaceHover, borderRadius: 16, padding: 4, gap: 4, marginTop: 20, marginBottom: 32, width: '100%' }}>
-          {MODES.map(m => (
-            <Pressable
-              key={m.id}
-              onPress={() => switchMode(m.id)}
-              style={{
-                flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center',
-                backgroundColor: mode === m.id ? m.color : 'transparent',
-              }}
-            >
-              <Text style={{ fontSize: 14 }}>{m.emoji}</Text>
-              <Text style={{ color: mode === m.id ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 11, marginTop: 2 }}>{m.label.split(' ')[0]}</Text>
-            </Pressable>
-          ))}
+      {/* Controls */}
+      <View style={{ flexDirection: 'row', gap: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 32 }}>
+        <Pressable
+          onPress={reset}
+          style={{
+            width: 56, height: 56, borderRadius: 28,
+            backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            alignItems: 'center', justifyContent: 'center',
+            borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
+          }}
+        >
+          <ArrowCounterClockwise color={colors.textMuted} size={22} weight="bold" />
+        </Pressable>
+        <Pressable
+          onPress={() => setRunning(r => !r)}
+          style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 6 } }}
+        >
+          {running ? <Pause color="#fff" size={34} weight="fill" /> : <Play color="#fff" size={34} weight="fill" />}
+        </Pressable>
+        <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <Text style={{ fontSize: 24 }}>{MODES.find(m => m.id !== mode)?.emoji ?? '⏭️'}</Text>
         </View>
+      </View>
 
-        {/* Ring */}
-        <View style={{ width: RING, height: RING, alignItems: 'center', justifyContent: 'center', marginBottom: 32 }}>
-          {/* Outer glow */}
-          <View style={{ position: 'absolute', width: RING, height: RING, borderRadius: RING / 2, borderWidth: 16, borderColor: accent + '18' }} />
-          {/* Track */}
-          <View style={{ position: 'absolute', width: RING - 16, height: RING - 16, borderRadius: (RING - 16) / 2, borderWidth: 4, borderColor: colors.surfaceHover }} />
-          {/* Progress ring — colored */}
-          <View style={{ position: 'absolute', width: RING - 16, height: RING - 16, borderRadius: (RING - 16) / 2, borderWidth: 4, borderColor: accent, borderRightColor: 'transparent', borderBottomColor: pct > 25 ? accent : 'transparent', borderLeftColor: pct > 50 ? accent : 'transparent', borderTopColor: pct > 75 ? 'transparent' : accent }} />
+      {/* Stats */}
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
+        {[
+          { label: 'Session', value: modeData.minutes + 'm' },
+          { label: 'Remaining', value: `${mins}m ${secs}s` },
+          { label: 'Today', value: `${cycles} 🍅` },
+        ].map(s => (
+          <GlassPanel key={s.label} variant="light" borderRadius={16} style={{ flex: 1 }} contentStyle={{ padding: 14, alignItems: 'center' }}>
+            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>{s.value}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>{s.label}</Text>
+          </GlassPanel>
+        ))}
+      </View>
 
-          {/* Center content */}
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ color: colors.text, fontSize: RING * 0.26, fontWeight: '200', letterSpacing: -4, lineHeight: RING * 0.28 }}>
-              {mins}:{secs}
-            </Text>
-            <View style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: accent + '22', borderRadius: 20, borderWidth: 1, borderColor: accent + '44', marginTop: 8 }}>
-              <Text style={{ color: accent, fontSize: 12, fontWeight: '700' }}>
-                {running ? `${pct}% done` : pct === 0 ? modeData.emoji + ' Ready' : `${pct}% done`}
-              </Text>
-            </View>
+      {/* Log */}
+      {log.length > 0 && (
+        <GlassPanel variant="light" borderRadius={20} contentStyle={{ overflow: 'hidden' }}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>SESSION LOG</Text>
           </View>
-        </View>
-
-        {/* Controls */}
-        <View style={{ flexDirection: 'row', gap: 20, alignItems: 'center', marginBottom: 32 }}>
-          <Pressable
-            onPress={reset}
-            style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border }}
-          >
-            <ArrowCounterClockwise color={colors.textMuted} size={22} weight="bold" />
-          </Pressable>
-
-          <Pressable
-            onPress={() => setRunning(r => !r)}
-            style={{
-              width: 88, height: 88, borderRadius: 44,
-              backgroundColor: accent, alignItems: 'center', justifyContent: 'center',
-              shadowColor: accent, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 6 },
-            }}
-          >
-            {running
-              ? <Pause color="#fff" size={34} weight="fill" />
-              : <Play color="#fff" size={34} weight="fill" />
-            }
-          </Pressable>
-
-          {/* Next mode hint */}
-          <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border }}>
-            <Text style={{ fontSize: 24 }}>{MODES.find(m => m.id !== mode)?.emoji ?? '⏭️'}</Text>
-          </View>
-        </View>
-
-        {/* Stats row */}
-        <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginBottom: 28 }}>
-          {[
-            { label: 'Session', value: modeData.minutes + 'm' },
-            { label: 'Remaining', value: `${mins}m ${secs}s` },
-            { label: 'Today', value: `${cycles} 🍅` },
-          ].map(s => (
-            <View key={s.label} style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border }}>
-              <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>{s.value}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>{s.label}</Text>
+          {log.map((entry, i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: i < log.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, flex: 1 }}>{entry}</Text>
             </View>
           ))}
-        </View>
-
-        {/* Session log */}
-        {log.length > 0 && (
-          <View style={{ width: '100%', backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
-            <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>SESSION LOG</Text>
-            </View>
-            {log.map((entry, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: i < log.length - 1 ? 1 : 0, borderBottomColor: colors.border }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, flex: 1 }}>{entry}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-        <View style={{ height: 24 }} />
-      </ScrollView>
-    </SafeAreaView>
+        </GlassPanel>
+      )}
+    </MiniAppShell>
   );
 }

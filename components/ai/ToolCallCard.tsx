@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { CheckCircle, XCircle, Wrench } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { GlassPanel } from '../ui/GlassPanel';
 import { useTheme } from '../../lib/theme';
 
 export type ToolCallStatus = 'pending_confirm' | 'running' | 'ok' | 'error' | 'rejected';
@@ -24,7 +25,7 @@ interface Props {
 }
 
 export function ToolCallCard({ item, onConfirm, onReject }: Props) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
 
   const statusIcon = (() => {
     switch (item.status) {
@@ -60,61 +61,54 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
       entering={FadeIn.duration(180)}
       style={{ marginHorizontal: 16, marginVertical: 6 }}
     >
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: colors.border,
-          padding: 12,
-          gap: 8,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {statusIcon}
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-              {item.preview}
-            </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
-              {item.name} · {subtitle}
-            </Text>
+      <GlassPanel borderRadius={radius.card} elevated>
+        <View style={{ padding: 12, gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {statusIcon}
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
+                {item.preview}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+                {item.name} · {subtitle}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {item.status === 'pending_confirm' && (
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-            <AnimatedPressable
-              onPress={() => onReject?.(item)}
-              style={{
-                flex: 1,
-                backgroundColor: colors.bg,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 10,
-                paddingVertical: 8,
-                alignItems: 'center',
-              }}
-              haptic="light"
-            >
-              <Text style={{ color: colors.text, fontWeight: '600' }}>Reject</Text>
-            </AnimatedPressable>
-            <AnimatedPressable
-              onPress={() => onConfirm?.(item)}
-              style={{
-                flex: 1,
-                backgroundColor: colors.accent,
-                borderRadius: 10,
-                paddingVertical: 8,
-                alignItems: 'center',
-              }}
-              haptic="medium"
-            >
-              <Text style={{ color: '#fff', fontWeight: '700' }}>Confirm</Text>
-            </AnimatedPressable>
-          </View>
-        )}
-      </View>
+          {item.status === 'pending_confirm' && (
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+              <AnimatedPressable
+                onPress={() => onReject?.(item)}
+                style={{
+                  flex: 1,
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  borderRadius: radius.md,
+                  borderWidth: 1,
+                  borderColor: colors.glassBorder,
+                  paddingVertical: 8,
+                  alignItems: 'center',
+                }}
+                haptic="light"
+              >
+                <Text style={{ color: colors.text, fontWeight: '600' }}>Reject</Text>
+              </AnimatedPressable>
+              <AnimatedPressable
+                onPress={() => onConfirm?.(item)}
+                style={{
+                  flex: 1,
+                  backgroundColor: colors.accent,
+                  borderRadius: radius.md,
+                  paddingVertical: 8,
+                  alignItems: 'center',
+                }}
+                haptic="medium"
+              >
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Confirm</Text>
+              </AnimatedPressable>
+            </View>
+          )}
+        </View>
+      </GlassPanel>
     </Animated.View>
   );
 }

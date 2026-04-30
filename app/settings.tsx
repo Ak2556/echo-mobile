@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Switch, Alert, Modal } from 'react-native';
+import { View, Text, ScrollView, Switch, Alert, Modal, Platform, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 import {
   ArrowLeft, CaretRight, Bell, Vibrate, Lock, Moon, SpeakerHigh,
   Shield, Info, Question, SignOut, Trash, Eye, EyeSlash,
@@ -13,6 +14,7 @@ import {
   Check, DeviceMobile, Users, Envelope, SunHorizon,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
@@ -53,50 +55,70 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
 }) {
   const { colors, radius, fontSizes, animation } = theme;
   return (
-    <Modal transparent animationType="fade" onRequestClose={onClose}>
+    <Modal transparent animationType="slide" onRequestClose={onClose}>
+      {/* Blurred backdrop */}
+      <View style={StyleSheet.absoluteFill}>
+        {Platform.OS === 'ios' && (
+          <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+        )}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]} />
+      </View>
       <AnimatedPressable
         onPress={onClose}
         scaleValue={1}
         haptic="none"
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}
+        style={{ flex: 1, justifyContent: 'flex-end' }}
       >
         <Animated.View
           entering={animation(FadeIn.duration(80))}
-          className="px-4 pb-10 pt-4"
           style={{
-            backgroundColor: colors.surface,
+            overflow: 'hidden',
             borderTopLeftRadius: radius.xl,
             borderTopRightRadius: radius.xl,
-            borderTopWidth: 1,
-            borderColor: colors.border,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.glassBorder,
           }}
         >
-          <View className="w-10 h-1 rounded-full self-center mb-4" style={{ backgroundColor: colors.surfaceHover }} />
-          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 16, marginLeft: 4 }}>{title}</Text>
-          {options.map(opt => {
-            const active = value === opt.value;
-            return (
-              <AnimatedPressable
-                key={opt.value}
-                onPress={() => { onChange(opt.value); onClose(); }}
-                className="flex-row items-center py-3.5 px-4 mb-1.5"
-                style={{
-                  borderRadius: radius.md,
-                  backgroundColor: active ? colors.accentMuted : colors.surfaceHover,
-                  borderWidth: active ? 1 : 0,
-                  borderColor: active ? colors.accent : 'transparent',
-                }}
-                scaleValue={0.97}
-                haptic="light"
-              >
-                <View className="flex-1">
-                  <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '500' }}>{opt.label}</Text>
-                  {opt.desc && <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, marginTop: 2 }}>{opt.desc}</Text>}
-                </View>
-                {active && <Check color={colors.accent} size={20} />}
-              </AnimatedPressable>
-            );
-          })}
+          {Platform.OS === 'ios' ? (
+            <>
+              <BlurView intensity={80} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassHeavyFill ?? 'rgba(255,255,255,0.1)' }]} />
+            </>
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
+          )}
+          <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 16, marginLeft: 4 }}>{title}</Text>
+            {options.map(opt => {
+              const active = value === opt.value;
+              return (
+                <AnimatedPressable
+                  key={opt.value}
+                  onPress={() => { onChange(opt.value); onClose(); }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
+                    marginBottom: 6,
+                    borderRadius: radius.md,
+                    backgroundColor: active ? colors.accentMuted : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                    borderWidth: active ? 1 : StyleSheet.hairlineWidth,
+                    borderColor: active ? colors.accent : colors.glassBorder,
+                  }}
+                  scaleValue={0.97}
+                  haptic="light"
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '500' }}>{opt.label}</Text>
+                    {opt.desc && <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, marginTop: 2 }}>{opt.desc}</Text>}
+                  </View>
+                  {active && <Check color={colors.accent} size={20} />}
+                </AnimatedPressable>
+              );
+            })}
+          </View>
         </Animated.View>
       </AnimatedPressable>
     </Modal>
@@ -124,25 +146,39 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
 }) {
   const { colors, radius, fontSizes, animation } = theme;
   return (
-    <Modal transparent animationType="fade" onRequestClose={onClose}>
+    <Modal transparent animationType="slide" onRequestClose={onClose}>
+      <View style={StyleSheet.absoluteFill}>
+        {Platform.OS === 'ios' && (
+          <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+        )}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]} />
+      </View>
       <AnimatedPressable
         onPress={onClose}
         scaleValue={1}
         haptic="none"
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}
+        style={{ flex: 1, justifyContent: 'flex-end' }}
       >
         <Animated.View
           entering={animation(FadeIn.duration(80))}
-          className="px-4 pb-10 pt-4"
           style={{
-            backgroundColor: colors.surface,
+            overflow: 'hidden',
             borderTopLeftRadius: radius.xl,
             borderTopRightRadius: radius.xl,
-            borderTopWidth: 1,
-            borderColor: colors.border,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.glassBorder,
           }}
         >
-          <View className="w-10 h-1 rounded-full self-center mb-4" style={{ backgroundColor: colors.surfaceHover }} />
+          {Platform.OS === 'ios' ? (
+            <>
+              <BlurView intensity={80} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassHeavyFill ?? 'rgba(255,255,255,0.1)' }]} />
+            </>
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
+          )}
+          <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
+          <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
           <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>Accent Color</Text>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>Choose the accent color used throughout the app</Text>
           <View className="flex-row flex-wrap gap-3 justify-center">
@@ -168,6 +204,7 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
               </AnimatedPressable>
             ))}
           </View>
+          </View>
         </Animated.View>
       </AnimatedPressable>
     </Modal>
@@ -184,68 +221,83 @@ function ThemePicker({ value, onChange, onClose, theme }: {
   const themeOrder: ThemeName[] = ['midnight', 'amoled', 'ocean', 'sunset', 'forest', 'lavender', 'light', 'sepia', 'arctic'];
 
   return (
-    <Modal transparent animationType="fade" onRequestClose={onClose}>
+    <Modal transparent animationType="slide" onRequestClose={onClose}>
+      <View style={StyleSheet.absoluteFill}>
+        {Platform.OS === 'ios' && (
+          <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+        )}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]} />
+      </View>
       <AnimatedPressable
         onPress={onClose}
         scaleValue={1}
         haptic="none"
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}
+        style={{ flex: 1, justifyContent: 'flex-end' }}
       >
         <Animated.View
           entering={animation(FadeIn.duration(80))}
-          className="px-4 pb-10 pt-4"
           style={{
-            backgroundColor: colors.surface,
+            overflow: 'hidden',
             borderTopLeftRadius: radius.xl,
             borderTopRightRadius: radius.xl,
-            borderTopWidth: 1,
-            borderColor: colors.border,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.glassBorder,
           }}
         >
-          <View className="w-10 h-1 rounded-full self-center mb-4" style={{ backgroundColor: colors.surfaceHover }} />
-          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>Choose Theme</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>Pick a color palette that matches your vibe</Text>
+          {Platform.OS === 'ios' ? (
+            <>
+              <BlurView intensity={80} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassHeavyFill ?? 'rgba(255,255,255,0.1)' }]} />
+            </>
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
+          )}
+          <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>Choose Theme</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>Pick a color palette that matches your vibe</Text>
 
-          <View className="flex-row flex-wrap justify-between">
-            {themeOrder.map(key => {
-              const t = THEMES[key];
-              const active = value === key;
-              return (
-                <AnimatedPressable
-                  key={key}
-                  onPress={() => { onChange(key); onClose(); showToast(`Theme: ${t.name}`, '\u{1F3A8}'); }}
-                  scaleValue={0.95}
-                  haptic="medium"
-                  style={{
-                    width: '48%',
-                    marginBottom: 12,
-                    borderRadius: radius.card,
-                    overflow: 'hidden',
-                    borderWidth: 2,
-                    borderColor: active ? t.accent : 'transparent',
-                  }}
-                >
-                  <View style={{ backgroundColor: t.bg, padding: 12 }}>
-                    <View className="flex-row items-center mb-3">
-                      <View style={{ backgroundColor: t.accent, width: 24, height: 24, borderRadius: 999, marginRight: 8 }} />
-                      <Text style={{ color: t.text, fontWeight: '700', fontSize: fontSizes.body, flex: 1 }}>{t.name}</Text>
-                      {active && <Check color={t.accent} size={18} />}
-                    </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+              {themeOrder.map(key => {
+                const t = THEMES[key];
+                const active = value === key;
+                return (
+                  <AnimatedPressable
+                    key={key}
+                    onPress={() => { onChange(key); onClose(); showToast(`Theme: ${t.name}`, '\u{1F3A8}'); }}
+                    scaleValue={0.95}
+                    haptic="medium"
+                    style={{
+                      width: '48%',
+                      marginBottom: 12,
+                      borderRadius: radius.card,
+                      overflow: 'hidden',
+                      borderWidth: 2,
+                      borderColor: active ? t.accent : 'transparent',
+                    }}
+                  >
+                    <View style={{ backgroundColor: t.bg, padding: 12 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                        <View style={{ backgroundColor: t.accent, width: 24, height: 24, borderRadius: 999, marginRight: 8 }} />
+                        <Text style={{ color: t.text, fontWeight: '700', fontSize: fontSizes.body, flex: 1 }}>{t.name}</Text>
+                        {active && <Check color={t.accent} size={18} />}
+                      </View>
 
-                    <View style={{ backgroundColor: t.surface, padding: 8, borderRadius: 8, marginBottom: 6, borderWidth: 1, borderColor: t.border }}>
-                      <View style={{ backgroundColor: t.textSecondary, height: 4, borderRadius: 2, marginBottom: 4, width: '80%' }} />
-                      <View style={{ backgroundColor: t.textMuted, height: 3, borderRadius: 2, width: '60%' }} />
-                    </View>
+                      <View style={{ backgroundColor: t.surface, padding: 8, borderRadius: 8, marginBottom: 6, borderWidth: 1, borderColor: t.border }}>
+                        <View style={{ backgroundColor: t.textSecondary, height: 4, borderRadius: 2, marginBottom: 4, width: '80%' }} />
+                        <View style={{ backgroundColor: t.textMuted, height: 3, borderRadius: 2, width: '60%' }} />
+                      </View>
 
-                    <View className="flex-row gap-1.5">
-                      <View style={{ backgroundColor: t.accent, height: 6, borderRadius: 3, flex: 2 }} />
-                      <View style={{ backgroundColor: t.danger, height: 6, borderRadius: 3, flex: 1 }} />
-                      <View style={{ backgroundColor: t.success, height: 6, borderRadius: 3, flex: 1 }} />
+                      <View style={{ flexDirection: 'row', gap: 6 }}>
+                        <View style={{ backgroundColor: t.accent, height: 6, borderRadius: 3, flex: 2 }} />
+                        <View style={{ backgroundColor: t.danger, height: 6, borderRadius: 3, flex: 1 }} />
+                        <View style={{ backgroundColor: t.success, height: 6, borderRadius: 3, flex: 1 }} />
+                      </View>
                     </View>
-                  </View>
-                </AnimatedPressable>
-              );
-            })}
+                  </AnimatedPressable>
+                );
+              })}
+            </View>
           </View>
         </Animated.View>
       </AnimatedPressable>
@@ -357,14 +409,7 @@ export default function SettingsScreen() {
     marginLeft: 4,
   };
 
-  const cardStyle = {
-    borderRadius: radius.card,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  };
-
-  const divider = <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />;
+  const divider = <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }} />;
 
   const SwitchEl = (v: boolean, onChange: (val: boolean) => void) => (
     <Switch value={v} onValueChange={onChange} trackColor={switchTrack} thumbColor="#fff" />
@@ -379,11 +424,14 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Settings</Text>
+      {/* Glass header */}
+      <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
+          <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
+            <ArrowLeft color={colors.text} size={24} />
+          </AnimatedPressable>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Settings</Text>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
@@ -391,7 +439,7 @@ export default function SettingsScreen() {
         {/* NOTIFICATIONS */}
         <Animated.View entering={animation(FadeInDown.delay(50).springify())}>
           <Text style={sectionHeaderStyle}>Notifications</Text>
-          <View className="px-4 mb-5" style={cardStyle}>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, s.setNotificationsEnabled)} />
             {divider}
             <SettingsRow theme={theme} icon={Vibrate} label="Haptic Feedback" subtitle="Vibration on interactions" right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
@@ -399,13 +447,13 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={SpeakerHigh} label="Sound Effects" subtitle="Play sounds for actions" right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
             {divider}
             <SettingsRow theme={theme} icon={Bell} label="Notification Preferences" subtitle="Customize which notifications you receive" onPress={() => router.push('/notification-prefs')} />
-          </View>
+          </GlassPanel>
         </Animated.View>
 
         {/* PRIVACY & SAFETY */}
         <Animated.View entering={animation(FadeInDown.delay(100).springify())}>
           <Text style={sectionHeaderStyle}>Privacy & Safety</Text>
-          <View className="px-4 mb-5" style={cardStyle}>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Lock} iconColor="#F59E0B" label="Private Account" subtitle="Only followers can see your echoes" right={SwitchEl(s.privateAccount, s.setPrivateAccount)} />
             {divider}
             <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, s.setActivityStatus)} />
@@ -419,13 +467,13 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, s.setSensitiveContentFilter)} />
             {divider}
             <SettingsRow theme={theme} icon={Users} label={`Blocked Users (${s.blockedIds.length})`} subtitle="Manage users you've blocked" onPress={() => router.push('/blocked-users')} />
-          </View>
+          </GlassPanel>
         </Animated.View>
 
         {/* APPEARANCE & DISPLAY */}
         <Animated.View entering={animation(FadeInDown.delay(150).springify())}>
           <Text style={sectionHeaderStyle}>Appearance & Display</Text>
-          <View className="px-4 mb-5" style={cardStyle}>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow
               theme={theme}
               icon={SunHorizon}
@@ -481,13 +529,13 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={SquaresFour} label="Show Preview Cards" subtitle="Show response previews in feed" right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
             {divider}
             <SettingsRow theme={theme} icon={Lightning} label="Reduce Animations" subtitle="Minimize motion effects" right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
-          </View>
+          </GlassPanel>
         </Animated.View>
 
         {/* CONTENT & FEED */}
         <Animated.View entering={animation(FadeInDown.delay(200).springify())}>
           <Text style={sectionHeaderStyle}>Content & Feed</Text>
-          <View className="px-4 mb-5" style={cardStyle}>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={SquaresFour} label="Feed Sort" subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={SquaresFour} label="Compact Feed" subtitle="Show smaller cards in the feed" right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
@@ -497,13 +545,13 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={Translate} label="Content Language" subtitle={s.contentLanguage} onPress={() => setShowLanguagePicker(true)} right={chevronValue(s.contentLanguage)} />
             {divider}
             <SettingsRow theme={theme} icon={WifiSlash} label="Data Saver" subtitle="Reduce data usage on mobile" right={SwitchEl(s.dataSaver, s.setDataSaver)} />
-          </View>
+          </GlassPanel>
         </Animated.View>
 
         {/* CHAT & AI */}
         <Animated.View entering={animation(FadeInDown.delay(250).springify())}>
           <Text style={sectionHeaderStyle}>Chat & AI</Text>
-          <View className="px-4 mb-5" style={cardStyle}>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label="AI Model" subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={ChatTeardropDots} label="Chat Bubble Style" subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
@@ -513,13 +561,13 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={Lightning} label="Typing Indicator" subtitle="Show dots while AI is thinking" right={SwitchEl(s.showTypingIndicator, s.setShowTypingIndicator)} />
             {divider}
             <SettingsRow theme={theme} icon={FloppyDisk} label="Auto-save Chats" subtitle="Automatically save conversations" right={SwitchEl(s.autoSaveChats, s.setAutoSaveChats)} />
-          </View>
+          </GlassPanel>
         </Animated.View>
 
         {/* STORAGE & DATA */}
         <Animated.View entering={animation(FadeInDown.delay(300).springify())}>
           <Text style={sectionHeaderStyle}>Storage & Data</Text>
-          <View className="px-4 mb-5" style={cardStyle}>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Database} label="Storage Used" right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
             {divider}
             <SettingsRow theme={theme} icon={Eraser} label="Clear Cache" subtitle="Free up storage space" onPress={handleClearCache} />
@@ -529,13 +577,13 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={BookmarkSimple} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle="Remove all saved echoes" onPress={handleClearBookmarks} />
             {divider}
             <SettingsRow theme={theme} icon={BellSlash} label="Clear Notifications" subtitle="Remove all notifications" onPress={handleClearNotifications} />
-          </View>
+          </GlassPanel>
         </Animated.View>
 
         {/* ABOUT */}
         <Animated.View entering={animation(FadeInDown.delay(350).springify())}>
           <Text style={sectionHeaderStyle}>About</Text>
-          <View className="px-4 mb-5" style={cardStyle}>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => Alert.alert('Privacy Policy', 'Echo respects your privacy. We collect minimal data to provide the best experience. Your chats are processed via encrypted connections and are never stored on our servers permanently.')} />
             {divider}
             <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => Alert.alert('Help & Support', 'For help, contact echo-support@example.com\n\nFAQ:\n\u2022 Swipe on feed cards for actions\n\u2022 Long-press messages to copy\n\u2022 Tap avatars to view profiles\n\u2022 Pull down to refresh feeds')} />
@@ -543,17 +591,17 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.2.0 (42)</Text>} />
             {divider}
             <SettingsRow theme={theme} icon={Star} label="What's New" onPress={() => Alert.alert("What's New in 1.2.0", '\u2022 Multi-theme system (6 themes)\n\u2022 Every setting is now live\n\u2022 Online status indicators\n\u2022 Accent color customization\n\u2022 Font size + corner radius controls\n\u2022 Reduce animations respected everywhere')} />
-          </View>
+          </GlassPanel>
         </Animated.View>
 
         {/* DANGER ZONE */}
         <Animated.View entering={animation(FadeInDown.delay(400).springify())}>
           <Text style={sectionHeaderStyle}>Danger Zone</Text>
-          <View className="px-4 mb-5" style={cardStyle}>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={SignOut} label="Sign Out" onPress={handleSignOut} destructive />
             {divider}
             <SettingsRow theme={theme} icon={Trash} label="Delete Account" subtitle="Permanently delete all data" onPress={handleDeleteAccount} destructive />
-          </View>
+          </GlassPanel>
         </Animated.View>
 
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 8 }}>Echo v1.2.0</Text>

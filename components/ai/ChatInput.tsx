@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
-import { TextInput } from '../ui/TextInput';
+import { View, TextInput, StyleSheet, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { ArrowUp } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
+import { useTheme } from '../../lib/theme';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -15,11 +16,11 @@ interface ChatInputProps {
 export function ChatInput({ onSend, isLoading }: ChatInputProps) {
   const [text, setText] = useState('');
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
+  const { colors, reduceAnimations } = useTheme();
   const sendScale = useSharedValue(1);
 
   const handleSend = () => {
     if (text.trim() && !isLoading) {
-      // Punch animation on send
       sendScale.value = withSequence(
         withSpring(0.88, { damping: 18, stiffness: 600 }),
         withSpring(1, { damping: 18, stiffness: 500 })
@@ -37,27 +38,99 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
     transform: [{ scale: sendScale.value }],
   }));
 
+  const canSend = !!text.trim() && !isLoading;
+  const sendBg = canSend ? colors.accent : colors.surfaceHover;
+
   return (
-    <View className="flex-row items-end px-4 py-3 bg-black border-t border-zinc-900">
-      <View className="flex-1 mr-2">
-        <TextInput
-          placeholder="Message Echo..."
-          value={text}
-          onChangeText={setText}
-          maxLength={1000}
-        />
-      </View>
-      <Animated.View style={buttonStyle}>
-        <AnimatedPressable
-          onPress={handleSend}
-          disabled={!text.trim() || isLoading}
-          className="bg-white h-[50px] w-[50px] rounded-full items-center justify-center mb-[1px]"
-          scaleValue={0.88}
-          haptic="none"
+    <View
+      style={{
+        overflow: 'hidden',
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: colors.glassBorder,
+      }}
+    >
+      {Platform.OS === 'ios' && !reduceAnimations ? (
+        <>
+          <BlurView
+            intensity={70}
+            tint={colors.isDark ? 'dark' : 'extraLight'}
+            style={StyleSheet.absoluteFill}
+          />
+          <View
+            style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassHeavyFill ?? 'rgba(255,255,255,0.10)' }]}
+          />
+        </>
+      ) : (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
+      )}
+
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+        }}
+      >
+        {/* Input bubble */}
+        <View
+          style={{
+            flex: 1,
+            marginRight: 8,
+            borderRadius: 22,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.glassBorder,
+            backgroundColor: colors.isDark
+              ? 'rgba(255,255,255,0.06)'
+              : 'rgba(0,0,0,0.04)',
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            minHeight: 44,
+            justifyContent: 'center',
+          }}
         >
-          <ArrowUp color="#000" size={24} strokeWidth={2.5} />
-        </AnimatedPressable>
-      </Animated.View>
+          <TextInput
+            placeholder="Message Echo..."
+            value={text}
+            onChangeText={setText}
+            onSubmitEditing={handleSend}
+            returnKeyType="send"
+            blurOnSubmit={false}
+            maxLength={1000}
+            multiline
+            placeholderTextColor={colors.textMuted}
+            style={{
+              color: colors.text,
+              fontSize: 16,
+              maxHeight: 120,
+              paddingTop: 0,
+              paddingBottom: 0,
+            }}
+          />
+        </View>
+
+        {/* Send button */}
+        <Animated.View style={buttonStyle}>
+          <AnimatedPressable
+            onPress={handleSend}
+            disabled={!canSend}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: sendBg,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: canSend ? 0 : StyleSheet.hairlineWidth,
+              borderColor: colors.glassBorder,
+            }}
+            scaleValue={0.88}
+            haptic="none"
+          >
+            <ArrowUp color={canSend ? '#fff' : colors.textMuted} size={20} weight="bold" />
+          </AnimatedPressable>
+        </Animated.View>
+      </View>
     </View>
   );
 }

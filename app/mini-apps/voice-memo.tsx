@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, ScrollView, Pressable, Alert, TextInput,
+  View, Text, Pressable, Alert, TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Audio } from 'expo-av';
 import Animated, {
   FadeInDown, useSharedValue, useAnimatedStyle,
@@ -11,20 +9,23 @@ import Animated, {
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  ArrowLeft, Microphone, Stop, Play, Pause,
+  Microphone, Stop, Play, Pause,
   Trash, MicrophoneStage,
 } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
+import { GlassPanel } from '../../components/ui/GlassPanel';
+import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 
 const MEMOS_KEY = 'mini:memos';
+const REC_COLOR = '#EF4444';
 
 interface Memo {
   id: string;
   title: string;
   uri: string;
-  duration: number; // seconds
+  duration: number;
   createdAt: string;
 }
 
@@ -50,7 +51,7 @@ function saveMemos(memos: Memo[]) { AsyncStorage.setItem(MEMOS_KEY, JSON.stringi
 
 export default function VoiceMemoApp() {
   const { colors } = useTheme();
-  const router = useRouter();
+  const accent = colors.accent;
   const [memos, setMemos] = useState<Memo[]>([]);
   useEffect(() => { loadMemos().then(setMemos); }, []);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -82,9 +83,7 @@ export default function VoiceMemoApp() {
       return;
     }
     await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-    const { recording: rec } = await Audio.Recording.createAsync(
-      Audio.RecordingOptionsPresets.HIGH_QUALITY,
-    );
+    const { recording: rec } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
     setRecording(rec);
     setIsRecording(true);
     setRecordDuration(0);
@@ -106,12 +105,11 @@ export default function VoiceMemoApp() {
     setRecording(null);
     setIsRecording(false);
     if (!uri) { showToast('Recording failed', '❌'); return; }
-    const duration = recordDuration;
     const memo: Memo = {
       id: Date.now().toString(),
       title: `Recording ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
       uri,
-      duration,
+      duration: recordDuration,
       createdAt: new Date().toISOString(),
     };
     const updated = [memo, ...memos];
@@ -163,43 +161,41 @@ export default function VoiceMemoApp() {
     setRenamingId(null);
   };
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
-        <AnimatedPressable onPress={() => router.back()} scaleValue={0.88} haptic="light" style={{ marginRight: 12 }}>
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', flex: 1 }}>Voice Memo</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 13 }}>{memos.length} saved</Text>
-      </View>
+  const CountBadge = (
+    <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>
+      {memos.length} saved
+    </Text>
+  );
 
+  return (
+    <MiniAppShell title="Voice Memo" subtitle="Tap to record" headerRight={CountBadge}>
       {/* Recording widget */}
-      <Animated.View
-        entering={FadeInDown.springify()}
+      <GlassPanel
+        variant="medium"
+        borderRadius={28}
+        contentStyle={{ padding: 28, alignItems: 'center', gap: 20 }}
         style={{
-          marginHorizontal: 16, marginBottom: 24,
-          backgroundColor: colors.surface,
-          borderRadius: 28, padding: 28,
-          borderWidth: 1, borderColor: isRecording ? '#EF444444' : colors.border,
-          alignItems: 'center', gap: 20,
-          shadowColor: isRecording ? '#EF4444' : 'transparent',
-          shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 4 },
+          marginBottom: 20,
+          borderColor: isRecording ? REC_COLOR + '44' : colors.glassBorder,
+          shadowColor: isRecording ? REC_COLOR : 'transparent',
+          shadowOpacity: 0.25,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 4 },
         }}
       >
         {/* Waveform bars */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 48 }}>
           {Array.from({ length: 18 }).map((_, i) => {
             const heights = [12, 20, 32, 18, 38, 24, 14, 42, 28, 36, 16, 44, 22, 34, 18, 28, 40, 14];
-            const h = isRecording ? heights[i % heights.length] : 8;
             return (
-              <Animated.View key={i} style={[isRecording && pulseStyle]}>
+              <Animated.View key={i} style={isRecording ? pulseStyle : undefined}>
                 <View style={{
-                  width: 3, height: isRecording ? heights[i] : 8, borderRadius: 2,
+                  width: 3,
+                  height: isRecording ? heights[i % heights.length] : 8,
+                  borderRadius: 2,
                   backgroundColor: isRecording
-                    ? (i % 3 === 0 ? '#EF4444' : i % 3 === 1 ? '#EF444499' : '#EF444455')
-                    : colors.border,
-                  transition: 'height 0.3s',
+                    ? (i % 3 === 0 ? REC_COLOR : i % 3 === 1 ? REC_COLOR + '99' : REC_COLOR + '55')
+                    : colors.glassBorder,
                 }} />
               </Animated.View>
             );
@@ -208,8 +204,8 @@ export default function VoiceMemoApp() {
 
         {/* Duration */}
         <Text style={{
-          color: isRecording ? '#EF4444' : colors.textMuted,
-          fontSize: 38, fontWeight: '900', letterSpacing: -1, fontVariant: ['tabular-nums'],
+          color: isRecording ? REC_COLOR : colors.textMuted,
+          fontSize: 38, fontWeight: '900', letterSpacing: -1,
         }}>
           {formatTime(recordDuration)}
         </Text>
@@ -222,11 +218,11 @@ export default function VoiceMemoApp() {
             haptic="heavy"
             style={{
               width: 80, height: 80, borderRadius: 40,
-              backgroundColor: isRecording ? '#EF4444' : '#6366F1',
+              backgroundColor: isRecording ? REC_COLOR : accent,
               alignItems: 'center', justifyContent: 'center',
-              shadowColor: isRecording ? '#EF4444' : '#6366F1',
+              shadowColor: isRecording ? REC_COLOR : accent,
               shadowOpacity: 0.5, shadowRadius: 20, shadowOffset: { width: 0, height: 6 },
-              borderWidth: 4, borderColor: isRecording ? '#EF444433' : '#6366F133',
+              borderWidth: 4, borderColor: isRecording ? REC_COLOR + '33' : accent + '33',
             }}
           >
             {isRecording
@@ -238,37 +234,39 @@ export default function VoiceMemoApp() {
         <Text style={{ color: colors.textMuted, fontSize: 13 }}>
           {isRecording ? 'Tap to stop recording' : 'Tap to start recording'}
         </Text>
-      </Animated.View>
+      </GlassPanel>
 
       {/* Memo list */}
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, gap: 10, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {memos.length === 0 && (
-          <View style={{ alignItems: 'center', paddingVertical: 60, gap: 12 }}>
-            <MicrophoneStage color={colors.border} size={48} weight="thin" />
-            <Text style={{ color: colors.textMuted, fontSize: 15 }}>No recordings yet</Text>
-          </View>
-        )}
-        {memos.map((memo, i) => (
-          <Animated.View key={memo.id} entering={FadeInDown.delay(i * 40).springify()}>
-            <View style={{
-              backgroundColor: colors.surface, borderRadius: 18,
-              borderWidth: 1, borderColor: playingId === memo.id ? '#6366F144' : colors.border,
-              padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14,
-            }}>
+      {memos.length === 0 ? (
+        <View style={{ alignItems: 'center', paddingVertical: 60, gap: 12 }}>
+          <MicrophoneStage color={colors.glassBorder} size={48} weight="thin" />
+          <Text style={{ color: colors.textMuted, fontSize: 15 }}>No recordings yet</Text>
+        </View>
+      ) : (
+        memos.map((memo, i) => (
+          <Animated.View key={memo.id} entering={FadeInDown.delay(i * 40).springify()} style={{ marginBottom: 10 }}>
+            <GlassPanel
+              variant="medium"
+              borderRadius={18}
+              contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}
+              style={{ borderColor: playingId === memo.id ? accent + '44' : colors.glassBorder }}
+            >
               {/* Play button */}
               <AnimatedPressable
                 onPress={() => playMemo(memo)}
-                scaleValue={0.88} haptic="medium"
+                scaleValue={0.88}
+                haptic="medium"
                 style={{
                   width: 48, height: 48, borderRadius: 24,
-                  backgroundColor: playingId === memo.id ? '#6366F1' : colors.bg,
+                  backgroundColor: playingId === memo.id ? accent : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
                   alignItems: 'center', justifyContent: 'center',
-                  borderWidth: 1.5, borderColor: playingId === memo.id ? '#6366F1' : colors.border,
+                  borderWidth: 1.5,
+                  borderColor: playingId === memo.id ? accent : colors.glassBorder,
                 }}
               >
                 {playingId === memo.id
                   ? <Pause color="#fff" size={20} weight="fill" />
-                  : <Play color="#6366F1" size={20} weight="fill" />}
+                  : <Play color={accent} size={20} weight="fill" />}
               </AnimatedPressable>
 
               {/* Info */}
@@ -296,10 +294,10 @@ export default function VoiceMemoApp() {
               <AnimatedPressable onPress={() => confirmDelete(memo)} scaleValue={0.85} haptic="light">
                 <Trash color={colors.textMuted} size={18} />
               </AnimatedPressable>
-            </View>
+            </GlassPanel>
           </Animated.View>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+        ))
+      )}
+    </MiniAppShell>
   );
 }

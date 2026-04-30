@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope } from 'phosphor-react-native';
-import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { GlassPanel } from '../ui/GlassPanel';
 import { Notification } from '../../types';
 import { useTheme } from '../../lib/theme';
 
@@ -24,8 +24,6 @@ const ACTION_TEXT: Record<string, string> = {
   dm: 'sent you a message',
 };
 
-// Render icon inline (never store component refs in module-level objects —
-// phosphor v3 circular imports cause them to resolve as undefined at init time)
 function NotifIcon({ type }: { type: string }) {
   const p = { size: 18, weight: 'regular' as const };
   switch (type) {
@@ -57,54 +55,95 @@ interface NotificationCardProps {
 }
 
 export function NotificationCard({ notification, onPress }: NotificationCardProps) {
-  const { colors, fontSizes, showAvatars } = useTheme();
+  const { colors, fontSizes, showAvatars, radius } = useTheme();
   const bg = BG_MAP[notification.type] ?? 'rgba(239,68,68,0.15)';
 
   return (
-    <AnimatedPressable
-      onPress={onPress}
-      className="flex-row items-center px-4 py-3.5"
-      style={{
-        borderBottomWidth: 0.5,
-        borderBottomColor: colors.border,
-        backgroundColor: !notification.isRead ? colors.accent + '0A' : 'transparent',
-        borderLeftWidth: !notification.isRead ? 2.5 : 0,
-        borderLeftColor: colors.accent,
-      }}
-      scaleValue={0.98}
-      haptic="light"
-    >
-      <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: bg }}>
-        <NotifIcon type={notification.type} />
-      </View>
-
-      {showAvatars && (
-        <View
-          className="w-9 h-9 rounded-full items-center justify-center mr-3"
-          style={{ backgroundColor: notification.fromAvatarColor }}
+    <View style={{ marginHorizontal: 16, marginVertical: 4 }}>
+      <GlassPanel
+        variant="light"
+        borderRadius={radius.card}
+        tintOverride={
+          !notification.isRead
+            ? (colors.isDark
+                ? `${colors.accent}18`
+                : `${colors.accent}0F`)
+            : undefined
+        }
+      >
+        <AnimatedPressable
+          onPress={onPress}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            borderLeftWidth: !notification.isRead ? 2.5 : 0,
+            borderLeftColor: colors.accent,
+          }}
+          scaleValue={0.98}
+          haptic="light"
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-            {notification.fromDisplayName.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-      )}
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 12,
+              backgroundColor: bg,
+            }}
+          >
+            <NotifIcon type={notification.type} />
+          </View>
 
-      <View className="flex-1">
-        <Text style={{ color: colors.text, fontSize: fontSizes.small }} numberOfLines={2}>
-          <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
-          {' '}{ACTION_TEXT[notification.type] ?? 'interacted with you'}
-        </Text>
-        {notification.targetPreview && (
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
-            {notification.targetPreview}
-          </Text>
-        )}
-      </View>
+          {showAvatars && (
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 12,
+                backgroundColor: notification.fromAvatarColor,
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
+                {notification.fromDisplayName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
 
-      <View className="items-end ml-2">
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(notification.createdAt)}</Text>
-        {!notification.isRead && <View className="w-2 h-2 rounded-full mt-1.5" style={{ backgroundColor: colors.accent }} />}
-      </View>
-    </AnimatedPressable>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontSize: fontSizes.small }} numberOfLines={2}>
+              <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
+              {' '}{ACTION_TEXT[notification.type] ?? 'interacted with you'}
+            </Text>
+            {notification.targetPreview && (
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
+                {notification.targetPreview}
+              </Text>
+            )}
+          </View>
+
+          <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(notification.createdAt)}</Text>
+            {!notification.isRead && (
+              <View
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: colors.accent,
+                  marginTop: 6,
+                }}
+              />
+            )}
+          </View>
+        </AnimatedPressable>
+      </GlassPanel>
+    </View>
   );
 }

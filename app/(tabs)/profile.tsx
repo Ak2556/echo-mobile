@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, ScrollView, Switch, StyleSheet, Dimensions, Pressable,
+  View, Text, ScrollView, Switch, StyleSheet, Dimensions, Pressable, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
   FadeInUp, FadeIn,
-  useSharedValue, useAnimatedStyle, withSpring,
+  useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, useAnimatedReaction,
+  withSpring,
 } from 'react-native-reanimated';
 import {
   Gear, BookmarkSimple, Envelope, Bell, SignOut, PencilSimple,
@@ -48,6 +50,26 @@ export default function ProfileScreen() {
 
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const tabIndicatorX = useSharedValue(0);
+
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const useBlurHeader = Platform.OS === 'ios';
+  const tint = colors.isDark ? 'dark' : 'extraLight';
+
+  // Spring-physics tab strip opacity — fades in the glassBorder as user scrolls past hero
+  const tabStripBlur = useSharedValue(0.28);
+  useAnimatedReaction(
+    () => Math.min(1, Math.max(0.28, scrollY.value / 120)),
+    (target) => { tabStripBlur.value = withSpring(target, { damping: 20, stiffness: 220, mass: 0.4 }); },
+  );
+  const tabStripOverlayStyle = useAnimatedStyle(() => ({
+    opacity: tabStripBlur.value,
+  }));
 
   const displayLabel = displayName || username || 'User';
   const followers = getFollowers();
@@ -91,10 +113,12 @@ export default function ProfileScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      <ScrollView
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
         stickyHeaderIndices={[3]}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         {/* 0: Nav Bar */}
         <View
@@ -219,15 +243,25 @@ export default function ProfileScreen() {
           ) : null}
         </Animated.View>
 
-        {/* 3: Tab Strip (STICKY) */}
+        {/* 3: Tab Strip (STICKY) — glass */}
         <Animated.View
           entering={animation(FadeIn.delay(100).duration(80))}
-          style={{
-            backgroundColor: colors.bg,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
-          }}
+          style={{ overflow: 'hidden' }}
         >
+          {useBlurHeader && (
+            <BlurView
+              intensity={60}
+              tint={tint}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: colors.bg },
+              useBlurHeader ? tabStripOverlayStyle : { opacity: 0.97 },
+            ]}
+          />
           <View style={{ flexDirection: 'row' }}>
             {(['posts', 'about'] as const).map((tab, i) => (
               <Pressable
@@ -253,7 +287,18 @@ export default function ProfileScreen() {
               </Pressable>
             ))}
           </View>
-          {/* Sliding indicator */}
+          {/* Bottom glass border */}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: StyleSheet.hairlineWidth,
+              backgroundColor: colors.glassBorder,
+            }}
+          />
+          {/* Sliding accent indicator */}
           <Animated.View
             style={[
               {
@@ -488,7 +533,7 @@ export default function ProfileScreen() {
             <Text style={{ color: colors.danger, fontSize: 15, fontWeight: '500' }}>Sign Out</Text>
           </AnimatedPressable>
         </Animated.View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
