@@ -8,8 +8,10 @@ import Animated, {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
+import { GlassPanel } from './GlassPanel';
+import { useTheme } from '../../lib/theme';
 
-function Dot({ delay }: { delay: number }) {
+function Dot({ delay, color }: { delay: number; color: string }) {
   const scale = useSharedValue(0.4);
   const opacity = useSharedValue(0.3);
 
@@ -48,7 +50,7 @@ function Dot({ delay }: { delay: number }) {
           width: 8,
           height: 8,
           borderRadius: 4,
-          backgroundColor: '#71717A',
+          backgroundColor: color,
           marginHorizontal: 2,
         },
         style,
@@ -58,13 +60,19 @@ function Dot({ delay }: { delay: number }) {
 }
 
 export function TypingIndicator() {
+  const { colors } = useTheme();
   return (
-    <View className="flex-row justify-start px-4 my-2">
-      <View className="bg-zinc-800 rounded-2xl rounded-tl-sm px-5 py-4 flex-row items-center">
-        <Dot delay={0} />
-        <Dot delay={80} />
-        <Dot delay={160} />
-      </View>
+    <View style={{ flexDirection: 'row', justifyContent: 'flex-start', paddingHorizontal: 16, marginVertical: 8 }}>
+      <GlassPanel
+        variant="medium"
+        borderRadius={20}
+        style={{ borderBottomLeftRadius: 4 }}
+        contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 }}
+      >
+        <Dot delay={0} color={colors.textMuted} />
+        <Dot delay={80} color={colors.textMuted} />
+        <Dot delay={160} color={colors.textMuted} />
+      </GlassPanel>
     </View>
   );
 }

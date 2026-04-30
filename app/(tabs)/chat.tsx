@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
@@ -23,8 +25,11 @@ type ChatItem =
 
 export default function ChatScreen() {
   const router = useRouter();
-  const { colors, animation } = useTheme();
+  const { colors, animation, reduceAnimations } = useTheme();
   const showTyping = useAppStore(s => s.showTypingIndicator);
+  const insets = useSafeAreaInsets();
+  const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
+  const tint = colors.isDark ? 'dark' : 'extraLight';
 
   const [items, setItems] = useState<ChatItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -208,49 +213,18 @@ export default function ChatScreen() {
     });
   };
 
+  const headerHeight = insets.top + 52;
+
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Animated.View
-        entering={animation(FadeIn.duration(80))}
-        className="flex-row items-center justify-between px-4 py-3"
-        style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
-      >
-        <View className="flex-row items-center gap-1.5">
-          <AnimatedPressable
-            onPress={() => router.push('/(tabs)/history')}
-            className="p-1.5 rounded-lg"
-            style={{ backgroundColor: colors.surface }}
-            scaleValue={0.88}
-            haptic="light"
-          >
-            <Clock color={colors.textSecondary} size={20} />
-          </AnimatedPressable>
-          <AnimatedPressable
-            onPress={handleNewChat}
-            className="p-1.5 rounded-lg"
-            style={{ backgroundColor: colors.surface }}
-            scaleValue={0.88}
-            haptic="light"
-          >
-            <Plus color={colors.textSecondary} size={20} />
-          </AnimatedPressable>
-        </View>
-        <View className="flex-row items-center absolute left-0 right-0 justify-center pointer-events-none">
-          <Lightning color={colors.accent} size={18} weight="fill" />
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginLeft: 8 }}>
-            Echo
-          </Text>
-        </View>
-        <AnimatedPressable
-          onPress={handleShare}
-          className="p-1.5 rounded-lg z-10"
-          style={{ backgroundColor: colors.surface }}
-          scaleValue={0.88}
-          haptic="light"
-        >
-          <ShareNetwork color={colors.textSecondary} size={20} />
-        </AnimatedPressable>
-      </Animated.View>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Ambient gradient bg */}
+      <LinearGradient
+        colors={colors.ambientGradient}
+        start={{ x: 0.3, y: 0 }}
+        end={{ x: 0.7, y: 0.5 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -271,7 +245,7 @@ export default function ChatScreen() {
                 <ToolCallCard item={item.tool} onConfirm={handleConfirm} onReject={handleReject} />
               )
             }
-            contentContainerStyle={{ paddingTop: 16, paddingBottom: 8 }}
+            contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: 8 }}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           />
           {isStreaming && showTyping && <TypingIndicator />}
@@ -280,7 +254,122 @@ export default function ChatScreen() {
           <ChatInput onSend={handleSend} isLoading={isStreaming} />
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+
+      {/* Glass header — always fully blurred (chat doesn't need scroll-reactive since messages start at bottom) */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: headerHeight,
+          overflow: 'hidden',
+          zIndex: 10,
+        }}
+      >
+        {useBlurHeader ? (
+          <BlurView
+            intensity={70}
+            tint={tint}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: colors.bg,
+              opacity: useBlurHeader ? 0.28 : 0.96,
+            },
+          ]}
+        />
+
+        {/* Header content */}
+        <Animated.View
+          entering={animation(FadeIn.duration(80))}
+          style={{
+            paddingTop: insets.top,
+            height: headerHeight,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingBottom: 4,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <AnimatedPressable
+              onPress={() => router.push('/(tabs)/history')}
+              style={{
+                padding: 6,
+                borderRadius: 10,
+                backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+              }}
+              scaleValue={0.88}
+              haptic="light"
+            >
+              <Clock color={colors.textSecondary} size={20} />
+            </AnimatedPressable>
+            <AnimatedPressable
+              onPress={handleNewChat}
+              style={{
+                padding: 6,
+                borderRadius: 10,
+                backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+              }}
+              scaleValue={0.88}
+              haptic="light"
+            >
+              <Plus color={colors.textSecondary} size={20} />
+            </AnimatedPressable>
+          </View>
+
+          {/* Centered title */}
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              paddingTop: insets.top,
+              gap: 6,
+            }}
+            pointerEvents="none"
+          >
+            <Lightning color={colors.accent} size={18} weight="fill" />
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Echo</Text>
+          </View>
+
+          <AnimatedPressable
+            onPress={handleShare}
+            style={{
+              padding: 6,
+              borderRadius: 10,
+              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+              zIndex: 1,
+            }}
+            scaleValue={0.88}
+            haptic="light"
+          >
+            <ShareNetwork color={colors.textSecondary} size={20} />
+          </AnimatedPressable>
+        </Animated.View>
+
+        {/* Bottom border */}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: StyleSheet.hairlineWidth,
+            backgroundColor: colors.glassBorder,
+          }}
+        />
+      </View>
+    </View>
   );
 }
 

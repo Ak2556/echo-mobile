@@ -4,7 +4,7 @@ import { View, Text, KeyboardAvoidingView, Platform, FlatList, TextInput as RNTe
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, PaperPlaneTilt, SealCheck } from 'phosphor-react-native';
-import Animated, { SlideInRight, SlideInLeft, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInRight, SlideInLeft, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';

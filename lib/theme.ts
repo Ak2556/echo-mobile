@@ -37,12 +37,18 @@ export interface ThemeColors {
   glassFill: string;
   glassBorder: string;
   glassHighlight: string;
+  glassHeavyFill: string;
+  glassLightFill: string;
+  /** Two-stop ambient gradient [accentTint, bg] for screen backgrounds */
+  ambientGradient: readonly [string, string];
 }
 
 const DARK_GLASS = {
-  glassFill: 'rgba(255,255,255,0.07)',
-  glassBorder: 'rgba(255,255,255,0.13)',
-  glassHighlight: 'rgba(255,255,255,0.09)',
+  glassFill:      'rgba(255,255,255,0.04)',
+  glassBorder:    'rgba(255,255,255,0.18)',
+  glassHighlight: 'rgba(255,255,255,0.14)',
+  glassHeavyFill: 'rgba(255,255,255,0.08)',
+  glassLightFill: 'rgba(255,255,255,0.02)',
 } as const;
 
 const THEMES: Record<ThemeName, ThemeColors> = {
@@ -66,6 +72,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#1C1C1E',
     inputBg: '#18181B',
     inputBorder: '#27272A',
+    ambientGradient: ['rgba(59,130,246,0.28)', '#09090B'] as const,
     ...DARK_GLASS,
   },
   amoled: {
@@ -88,6 +95,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#111111',
     inputBg: '#0A0A0A',
     inputBorder: '#1A1A1A',
+    ambientGradient: ['rgba(59,130,246,0.22)', '#000000'] as const,
     ...DARK_GLASS,
   },
   ocean: {
@@ -110,6 +118,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#152035',
     inputBg: '#111B2E',
     inputBorder: '#1E3050',
+    ambientGradient: ['rgba(56,189,248,0.30)', '#0B1120'] as const,
     ...DARK_GLASS,
   },
   sunset: {
@@ -132,6 +141,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#2D1A12',
     inputBg: '#261510',
     inputBorder: '#3D2318',
+    ambientGradient: ['rgba(249,115,22,0.32)', '#1A0E0A'] as const,
     ...DARK_GLASS,
   },
   forest: {
@@ -154,6 +164,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#142B1E',
     inputBg: '#101F18',
     inputBorder: '#1C3528',
+    ambientGradient: ['rgba(16,185,129,0.30)', '#0A1410'] as const,
     ...DARK_GLASS,
   },
   lavender: {
@@ -176,6 +187,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#211E32',
     inputBg: '#1A1726',
     inputBorder: '#2D2842',
+    ambientGradient: ['rgba(167,139,250,0.32)', '#100E1A'] as const,
     ...DARK_GLASS,
   },
 
@@ -201,9 +213,12 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#D1D1D6',
     inputBg: '#FFFFFF',
     inputBorder: '#D1D1D6',
-    glassFill: 'rgba(255,255,255,0.72)',
-    glassBorder: 'rgba(0,0,0,0.08)',
-    glassHighlight: 'rgba(255,255,255,0.95)',
+    glassFill:      'rgba(255,255,255,0.30)',
+    glassBorder:    'rgba(0,0,0,0.10)',
+    glassHighlight: 'rgba(255,255,255,1.0)',
+    glassHeavyFill: 'rgba(255,255,255,0.44)',
+    glassLightFill: 'rgba(255,255,255,0.18)',
+    ambientGradient: ['rgba(59,130,246,0.22)', '#F2F2F7'] as const,
   },
   sepia: {
     name: 'Sepia',
@@ -225,9 +240,12 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#D9C8AA',
     inputBg: '#FEF9EE',
     inputBorder: '#D9C8AA',
-    glassFill: 'rgba(254,249,238,0.75)',
-    glassBorder: 'rgba(44,24,16,0.1)',
-    glassHighlight: 'rgba(255,255,255,0.6)',
+    glassFill:      'rgba(254,249,238,0.30)',
+    glassBorder:    'rgba(44,24,16,0.12)',
+    glassHighlight: 'rgba(255,255,255,0.95)',
+    glassHeavyFill: 'rgba(254,249,238,0.44)',
+    glassLightFill: 'rgba(254,249,238,0.18)',
+    ambientGradient: ['rgba(180,83,9,0.22)', '#F5ECD7'] as const,
   },
   arctic: {
     name: 'Arctic',
@@ -249,9 +267,12 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     tabBorder: '#BFDBFE',
     inputBg: '#FFFFFF',
     inputBorder: '#BFDBFE',
-    glassFill: 'rgba(255,255,255,0.72)',
-    glassBorder: 'rgba(12,27,46,0.08)',
-    glassHighlight: 'rgba(255,255,255,0.95)',
+    glassFill:      'rgba(255,255,255,0.30)',
+    glassBorder:    'rgba(12,27,46,0.10)',
+    glassHighlight: 'rgba(255,255,255,1.0)',
+    glassHeavyFill: 'rgba(255,255,255,0.44)',
+    glassLightFill: 'rgba(255,255,255,0.18)',
+    ambientGradient: ['rgba(2,132,199,0.22)', '#EFF6FF'] as const,
   },
 };
 
@@ -279,6 +300,7 @@ const ONLINE_USER_IDS = new Set(['u1', 'u4', 'u5', 'u7']);
 
 export function useTheme() {
   const themeName = useAppStore(s => s.theme);
+  const darkMode = useAppStore(s => s.darkMode);
   const accentColor = useAppStore(s => s.accentColor);
   const pureBlackBg = useAppStore(s => s.pureBlackBackground);
   const fontSize = useAppStore(s => s.fontSize);
@@ -287,7 +309,9 @@ export function useTheme() {
   const roundedCorners = useAppStore(s => s.roundedCorners);
   const onlineStatus = useAppStore(s => s.onlineStatus);
 
-  const base = THEMES[themeName] || THEMES.midnight;
+  const selectedBase = THEMES[themeName] || THEMES.midnight;
+  // darkMode=false forces the light theme when a dark theme is active
+  const base = (!darkMode && selectedBase.isDark) ? THEMES.light : selectedBase;
 
   // Build accent muted from accentColor
   const hexToRgba = (hex: string, alpha: number) => {

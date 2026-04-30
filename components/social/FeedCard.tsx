@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Share, Pressable } from 'react-native';
+import { View, Text, Share, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MediaGrid } from './MediaGrid';
@@ -7,6 +7,7 @@ import { InlineVideo } from './InlineVideo';
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { GlassPanel } from '../ui/GlassPanel';
 import { showToast } from '../ui/Toast';
 import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar } from 'phosphor-react-native';
 import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout, withTiming } from 'react-native-reanimated';
@@ -184,29 +185,24 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     <Animated.View
       entering={reduceAnimations ? undefined : FadeIn.duration(200)}
       exiting={reduceAnimations ? undefined : FadeOut.duration(150)}
-      style={{
-        marginBottom: 12,
-        borderRadius: radius.md,
-        backgroundColor: colors.surfaceHover,
-        borderWidth: 1,
-        borderColor: colors.border,
-        overflow: 'hidden',
-      }}
+      style={{ marginBottom: 12 }}
     >
-      <AnimatedPressable onPress={handleReport} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} scaleValue={0.97} haptic="medium">
-        <Flag color="#F59E0B" size={16} weight="fill" />
-        <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Report</Text>
-      </AnimatedPressable>
-      <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-      <AnimatedPressable
-        onPress={() => { setShowMenu(false); router.push(`/user/${item.userId}`); }}
-        style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }}
-        scaleValue={0.97}
-        haptic="light"
-      >
-        <UserMinus color={colors.textSecondary} size={16} />
-        <Text style={{ color: colors.text, fontSize: fontSizes.small }}>View Profile</Text>
-      </AnimatedPressable>
+      <GlassPanel variant="ultra" borderRadius={radius.md} elevated>
+        <AnimatedPressable onPress={handleReport} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} scaleValue={0.97} haptic="medium">
+          <Flag color="#F59E0B" size={16} weight="fill" />
+          <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Report</Text>
+        </AnimatedPressable>
+        <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }} />
+        <AnimatedPressable
+          onPress={() => { setShowMenu(false); router.push(`/user/${item.userId}`); }}
+          style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }}
+          scaleValue={0.97}
+          haptic="light"
+        >
+          <UserMinus color={colors.textSecondary} size={16} />
+          <Text style={{ color: colors.text, fontSize: fontSizes.small }}>View Profile</Text>
+        </AnimatedPressable>
+      </GlassPanel>
     </Animated.View>
   ) : null;
 
@@ -264,13 +260,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           scaleValue={reduceAnimations ? 1 : 0.98}
           haptic="light"
           style={{
-            backgroundColor: colors.surface,
             marginHorizontal: 16,
             marginVertical: 6,
             borderRadius: heroRadius,
-            borderWidth: 1,
-            borderColor: colors.border,
             overflow: 'hidden',
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.glassBorder,
+            backgroundColor: colors.surface,
           }}
         >
           {/* Repost badge */}
@@ -364,19 +360,14 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   // ── Standard layout (text / poll / compact) ──
   return (
-    <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()}>
+    <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()} style={{ marginHorizontal: 16, marginVertical: 6 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} elevated>
       <AnimatedPressable
         onPress={onPress}
         scaleValue={reduceAnimations ? 1 : 0.98}
         haptic="light"
         style={{
-          backgroundColor: colors.surface,
-          marginHorizontal: 16,
-          marginVertical: 6,
           padding: cardPadding,
-          borderRadius: radius.card,
-          borderWidth: 1,
-          borderColor: colors.border,
         }}
       >
         {/* Repost badge */}
@@ -432,7 +423,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {/* ── TEXT post ── */}
         {(!item.postType || item.postType === 'text') && (
           <>
-            <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.md, padding: compactFeed ? 8 : 12, marginBottom: compactFeed ? 8 : 12 }}>
+            <View style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: radius.md, padding: compactFeed ? 8 : 12, marginBottom: compactFeed ? 8 : 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
               <Text style={{ color: colors.textSecondary, fontWeight: '500', fontSize: fontSizes.caption, marginBottom: 4 }}>Prompt</Text>
               <Text style={{ fontSize: textSize, color: colors.text }} numberOfLines={compactFeed ? 2 : undefined}>{item.prompt}</Text>
             </View>
@@ -493,6 +484,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
         {ActionsRow}
       </AnimatedPressable>
+      </GlassPanel>
     </Animated.View>
   );
 }

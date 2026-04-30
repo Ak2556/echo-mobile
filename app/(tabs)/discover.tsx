@@ -1,10 +1,20 @@
 // @ts-nocheck
 import React, { useCallback } from 'react';
-import { View, Text, RefreshControl, ScrollView, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, RefreshControl, ScrollView, Pressable, Platform, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  useSharedValue,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useAnimatedReaction,
+  interpolate,
+  Extrapolation,
+  withSpring,
+} from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 import { Bell } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FeedCard } from '../../components/social/FeedCard';
@@ -17,6 +27,8 @@ import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 
 const HERO_COUNT = 5;
+const NAV_BAR_HEIGHT = 50;
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 function DiamondLogo() {
   return (
@@ -39,13 +51,7 @@ function DiamondLogo() {
   );
 }
 
-function SectionHeader({
-  label,
-  sub,
-}: {
-  label: string;
-  sub?: string;
-}) {
+function SectionHeader({ label, sub }: { label: string; sub?: string }) {
   const { colors } = useTheme();
   return (
     <View
@@ -70,8 +76,49 @@ function SectionHeader({
 export default function DiscoverScreen() {
   const router = useRouter();
   const { data: feed, isLoading, refetch, isRefetching, isError } = useFeed();
-  const { colors, animation } = useTheme();
+  const { colors, animation, reduceAnimations } = useTheme();
   const { username, avatarColor } = useAppStore();
+  const insets = useSafeAreaInsets();
+
+  const scrollY = useSharedValue(0);
+  const handleScroll = useCallback((event: any) => {
+    scrollY.value = event.nativeEvent.contentOffset.y;
+  }, [scrollY]);
+
+  const headerHeight = insets.top + NAV_BAR_HEIGHT;
+  const useBlur = Platform.OS === 'ios' && !reduceAnimations;
+  const tint = colors.isDark ? 'dark' : 'extraLight';
+
+  // Spring-physics shared values — these settle naturally when scroll stops
+  const blurIntensity = useSharedValue(0);
+  const overlayOpacity = useSharedValue(0);
+  const borderOpacity = useSharedValue(0);
+
+  // Spring config: snappy settle, physically weighted
+  const SPRING = { damping: 18, stiffness: 200, mass: 0.4 };
+
+  useAnimatedReaction(
+    () => interpolate(scrollY.value, [0, 80], [0, 90], Extrapolation.CLAMP),
+    (target) => { blurIntensity.value = withSpring(target, SPRING); },
+  );
+  useAnimatedReaction(
+    () => interpolate(scrollY.value, [0, 80], [0, 0.35], Extrapolation.CLAMP),
+    (target) => { overlayOpacity.value = withSpring(target, SPRING); },
+  );
+  useAnimatedReaction(
+    () => interpolate(scrollY.value, [20, 80], [0, 1], Extrapolation.CLAMP),
+    (target) => { borderOpacity.value = withSpring(target, { damping: 22, stiffness: 260, mass: 0.3 }); },
+  );
+
+  const blurAnimatedProps = useAnimatedProps(() => ({
+    intensity: blurIntensity.value,
+  }));
+  const headerBgStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
+  }));
+  const headerBorderStyle = useAnimatedStyle(() => ({
+    opacity: borderOpacity.value,
+  }));
 
   const handlePressThread = useCallback(
     (item: FeedItem) => router.push(`/thread/${item.id}`),
@@ -83,11 +130,8 @@ export default function DiscoverScreen() {
 
   const ListHeader = (
     <View>
-      {/* Story circles */}
       <SectionHeader label="Your Stories" />
       <StoryCircles />
-
-      {/* Trending hero cards — horizontal snap scroll */}
       <SectionHeader label="Trending" sub="Live" />
       <ScrollView
         horizontal
@@ -100,64 +144,24 @@ export default function DiscoverScreen() {
           <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} />
         ))}
       </ScrollView>
-
-      {/* Popular section */}
       <SectionHeader label="Popular" />
     </View>
   );
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Top bar */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-          paddingVertical: 10,
-        }}
-      >
-        {/* Logo + name */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-          <DiamondLogo />
-          <Text
-            style={{ color: colors.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.5 }}
-          >
-            Echo
-          </Text>
-        </View>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Ambient gradient — gives blur something to render over */}
+      <LinearGradient
+        colors={colors.ambientGradient}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 0.8, y: 0.6 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
 
-        {/* Bell */}
-        <Pressable
-          onPress={() => router.push('/notifications')}
-          style={{ padding: 6, marginRight: 4 }}
-        >
-          <Bell color={colors.textSecondary} size={22} />
-        </Pressable>
-
-        {/* Avatar / create */}
-        <Pressable onPress={() => router.push('/create-post')}>
-          <View
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 17,
-              backgroundColor: avatarColor || colors.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 2,
-              borderColor: colors.glassBorder,
-            }}
-          >
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
-              {(username || '?').charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        </Pressable>
-      </View>
-
+      {/* Scrollable content */}
       {isLoading ? (
-        <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1 }}>
+        <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1, paddingTop: headerHeight }}>
           <SectionHeader label="Your Stories" />
           <StoryCircles />
           <SectionHeader label="Trending" sub="Live" />
@@ -182,12 +186,15 @@ export default function DiscoverScreen() {
           )}
           keyExtractor={item => item.id}
           estimatedItemSize={160}
-          contentContainerStyle={{ paddingBottom: 110 }}
+          contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
+          onScroll={handleScroll}
+          scrollEventThrottle={1}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
               tintColor={colors.accent}
+              progressViewOffset={headerHeight}
             />
           }
           ListHeaderComponent={ListHeader}
@@ -198,6 +205,96 @@ export default function DiscoverScreen() {
           }
         />
       )}
-    </SafeAreaView>
+
+      {/* Floating glass header — absolutely positioned over content */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: headerHeight,
+          overflow: 'hidden',
+          zIndex: 10,
+        }}
+      >
+        {useBlur ? (
+          <AnimatedBlurView
+            animatedProps={blurAnimatedProps}
+            tint={tint}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
+
+        {/* Solid fill that fades in — Android fallback + extra readability on iOS */}
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: colors.bg },
+            useBlur ? headerBgStyle : { opacity: 0.95 },
+          ]}
+        />
+
+        {/* Nav bar content */}
+        <View
+          style={{
+            paddingTop: insets.top,
+            height: headerHeight,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            paddingBottom: 6,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+            <DiamondLogo />
+            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.5 }}>
+              Echo
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => router.push('/notifications')}
+            style={{ padding: 6, marginRight: 4 }}
+          >
+            <Bell color={colors.textSecondary} size={22} />
+          </Pressable>
+
+          <Pressable onPress={() => router.push('/create-post')}>
+            <View
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 17,
+                backgroundColor: avatarColor || colors.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                borderColor: colors.glassBorder,
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
+                {(username || '?').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Bottom edge — fades in as content scrolls under */}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: StyleSheet.hairlineWidth,
+              backgroundColor: colors.glassBorder,
+            },
+            headerBorderStyle,
+          ]}
+        />
+      </View>
+    </View>
   );
 }

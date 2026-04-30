@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'phosphor-react-native';
+import { View, Text, Pressable, ScrollView, Dimensions, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
 
 const { width } = Dimensions.get('window');
@@ -24,19 +23,18 @@ const ROWS: Btn[][] = [
 
 const SCI = ['sin', 'cos', 'tan', '√', 'x²', 'π'];
 
-function CalcBtn({ btn, accent, onPress }: { btn: Btn; accent: string; onPress: () => void }) {
+function CalcBtn({ btn, accent, colors, onPress }: { btn: Btn; accent: string; colors: any; onPress: () => void }) {
   const scale = useSharedValue(1);
   const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
-  const bgColor = btn.type === 'op' ? accent
-    : btn.type === 'equals' ? accent
-    : btn.type === 'action' ? 'rgba(120,120,128,0.22)'
-    : 'rgba(58,58,60,0.94)';
-
-  const textColor = btn.type === 'op' || btn.type === 'equals' ? '#fff'
-    : btn.type === 'action' ? '#000' : '#fff';
-
   const w = btn.wide ? BTN * 2 + GAP : BTN;
+
+  const bgColor = btn.type === 'op' || btn.type === 'equals'
+    ? accent
+    : btn.type === 'action'
+    ? (colors.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.10)')
+    : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
+
+  const textColor = btn.type === 'op' || btn.type === 'equals' ? '#fff' : colors.text;
 
   return (
     <Pressable
@@ -51,6 +49,8 @@ function CalcBtn({ btn, accent, onPress }: { btn: Btn; accent: string; onPress: 
           width: '100%', height: '100%', borderRadius: BTN / 2,
           backgroundColor: bgColor, alignItems: btn.wide ? 'flex-start' : 'center',
           justifyContent: 'center', paddingLeft: btn.wide ? BTN / 2 : 0,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: btn.type === 'op' || btn.type === 'equals' ? 'transparent' : colors.glassBorder,
           shadowColor: btn.type === 'op' || btn.type === 'equals' ? accent : 'transparent',
           shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
         }, aStyle]}
@@ -65,7 +65,6 @@ function CalcBtn({ btn, accent, onPress }: { btn: Btn; accent: string; onPress: 
 
 export default function CalculatorScreen() {
   const { colors } = useTheme();
-  const router = useRouter();
   const accent = colors.accent;
 
   const [display, setDisplay] = useState('0');
@@ -109,44 +108,47 @@ export default function CalculatorScreen() {
   const fontSize = display.length > 12 ? 36 : display.length > 8 ? 48 : 68;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top', 'bottom']}>
-      {/* Back button */}
-      <Pressable onPress={() => router.back()} style={{ position: 'absolute', top: 56, left: 16, zIndex: 10, padding: 8 }}>
-        <ArrowLeft color="rgba(255,255,255,0.5)" size={22} weight="bold" />
-      </Pressable>
-
-      {/* History + Display */}
-      <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: PAD }}>
+    <MiniAppShell title="Calculator" subtitle="Scientific & history" scrollable={false}>
+      <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: PAD, paddingBottom: 24 }}>
+        {/* History */}
         {history.length > 0 && (
           <ScrollView style={{ maxHeight: 72 }} showsVerticalScrollIndicator={false}>
             {history.map((h, i) => (
-              <Text key={i} style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13, textAlign: 'right', marginBottom: 2 }} numberOfLines={1}>{h}</Text>
+              <Text key={i} style={{ color: colors.textMuted, fontSize: 13, textAlign: 'right', marginBottom: 2 }} numberOfLines={1}>{h}</Text>
             ))}
           </ScrollView>
         )}
         {expression ? (
-          <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 22, textAlign: 'right', marginBottom: 4 }}>{expression}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 22, textAlign: 'right', marginBottom: 4 }}>{expression}</Text>
         ) : null}
-        <Text style={{ color: '#fff', fontSize, fontWeight: '200', textAlign: 'right', letterSpacing: -2, marginBottom: 20 }} numberOfLines={1} adjustsFontSizeToFit>{display}</Text>
+        <Text style={{ color: colors.text, fontSize, fontWeight: '200', textAlign: 'right', letterSpacing: -2, marginBottom: 20 }} numberOfLines={1} adjustsFontSizeToFit>{display}</Text>
 
         {/* Scientific row */}
         <View style={{ flexDirection: 'row', gap: GAP, marginBottom: 16 }}>
           {SCI.map(s => (
-            <Pressable key={s} onPress={() => handleBtn(s)} style={{ flex: 1, paddingVertical: 12, borderRadius: 14, backgroundColor: 'rgba(120,120,128,0.15)', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
+            <Pressable key={s} onPress={() => handleBtn(s)}
+              style={{
+                flex: 1, paddingVertical: 12, borderRadius: 14,
+                backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                alignItems: 'center',
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: colors.glassBorder,
+              }}
+            >
               <Text style={{ color: accent, fontSize: 13, fontWeight: '600' }}>{s}</Text>
             </Pressable>
           ))}
         </View>
 
         {/* Numpad */}
-        <View style={{ gap: GAP, paddingBottom: 8 }}>
+        <View style={{ gap: GAP }}>
           {ROWS.map((row, ri) => (
             <View key={ri} style={{ flexDirection: 'row', gap: GAP }}>
-              {row.map(btn => <CalcBtn key={btn.label} btn={btn} accent={accent} onPress={() => handleBtn(btn.label)} />)}
+              {row.map(btn => <CalcBtn key={btn.label} btn={btn} accent={accent} colors={colors} onPress={() => handleBtn(btn.label)} />)}
             </View>
           ))}
         </View>
       </View>
-    </SafeAreaView>
+    </MiniAppShell>
   );
 }
