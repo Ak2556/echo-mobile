@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, X, Globe, Sun, Moon } from 'phosphor-react-native';
+import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
+import { Plus, X, Globe, Sun, Moon } from 'phosphor-react-native';
+import { GlassPanel } from '../../components/ui/GlassPanel';
+import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
 
 interface City { name: string; timezone: string; flag: string; region: string }
@@ -42,11 +42,9 @@ function getTimeInZone(tz: string) {
   return { time: t, date: d, hour: h };
 }
 
-const { width } = Dimensions.get('window');
-
 export default function WorldClockScreen() {
-  const { colors, radius, fontSizes } = useTheme();
-  const router = useRouter();
+  const { colors } = useTheme();
+  const accent = colors.accent;
 
   const [selected, setSelected] = useState<string[]>(DEFAULT);
   const [, setTick] = useState(0);
@@ -67,61 +65,58 @@ export default function WorldClockScreen() {
   const { time: localTime, date: localDate, hour: localHour } = getTimeInZone(localTz);
   const isLocalDay = localHour >= 6 && localHour < 20;
 
+  const AddButton = (
+    <Pressable
+      onPress={() => setShowSearch(s => !s)}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, backgroundColor: accent, shadowColor: accent, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 3 } }}
+    >
+      <Plus color="#fff" size={18} weight="bold" />
+      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Add</Text>
+    </Pressable>
+  );
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
-          <ArrowLeft color={colors.text} size={20} weight="bold" />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontWeight: '800', fontSize: fontSizes.title }}>World Clock</Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{selected.length} cities tracked</Text>
-        </View>
-        <Pressable
-          onPress={() => setShowSearch(s => !s)}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 3 } }}
+    <MiniAppShell title="World Clock" subtitle={`${selected.length} cities`} headerRight={AddButton} scrollPadding={0}>
+      {/* Local hero */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+        <GlassPanel
+          variant="medium"
+          borderRadius={28}
+          contentStyle={{ padding: 20 }}
+          style={{ marginBottom: 12, borderColor: (isLocalDay ? '#F59E0B' : '#3B82F6') + '33' }}
         >
-          <Plus color="#fff" size={18} weight="bold" />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Add</Text>
-        </Pressable>
-      </View>
-
-      {/* My time — hero */}
-      <View style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: isLocalDay ? '#F59E0B18' : '#3B82F618', borderRadius: 28, borderWidth: 1.5, borderColor: isLocalDay ? '#F59E0B33' : '#3B82F633', padding: 20 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          {isLocalDay ? <Sun color="#F59E0B" size={18} weight="fill" /> : <Moon color="#3B82F6" size={18} weight="fill" />}
-          <Text style={{ color: isLocalDay ? '#F59E0B' : '#3B82F6', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 }}>MY LOCATION</Text>
-        </View>
-        <Text style={{ color: colors.text, fontSize: 52, fontWeight: '200', letterSpacing: -3, lineHeight: 56 }}>{localTime.slice(0, 5)}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 14 }}>{localDate}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{localTz.split('/').pop()?.replace(/_/g, ' ')}</Text>
-        </View>
-      </View>
-
-      {/* Search sheet */}
-      {showSearch && (
-        <View style={{ marginHorizontal: 20, marginBottom: 12, backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.border, maxHeight: 280, overflow: 'hidden' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 10 }}>
-            <Globe color={colors.textMuted} size={18} />
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Search cities or regions…"
-              placeholderTextColor={colors.textMuted}
-              autoFocus
-              style={{ flex: 1, color: colors.text, fontSize: 15 }}
-            />
-            <Pressable onPress={() => { setShowSearch(false); setSearch(''); }}>
-              <X color={colors.textMuted} size={18} weight="bold" />
-            </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            {isLocalDay ? <Sun color="#F59E0B" size={18} weight="fill" /> : <Moon color="#3B82F6" size={18} weight="fill" />}
+            <Text style={{ color: isLocalDay ? '#F59E0B' : '#3B82F6', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 }}>MY LOCATION</Text>
           </View>
-          <ScrollView>
+          <Text style={{ color: colors.text, fontSize: 52, fontWeight: '200', letterSpacing: -3, lineHeight: 56 }}>{localTime.slice(0, 5)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 14 }}>{localDate}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{localTz.split('/').pop()?.replace(/_/g, ' ')}</Text>
+          </View>
+        </GlassPanel>
+
+        {/* Search panel */}
+        {showSearch && (
+          <GlassPanel variant="heavy" borderRadius={20} style={{ marginBottom: 12, maxHeight: 280 }} contentStyle={{ overflow: 'hidden' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, gap: 10 }}>
+              <Globe color={colors.textMuted} size={18} />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Search cities or regions…"
+                placeholderTextColor={colors.textMuted}
+                autoFocus
+                style={{ flex: 1, color: colors.text, fontSize: 15 }}
+              />
+              <Pressable onPress={() => { setShowSearch(false); setSearch(''); }}>
+                <X color={colors.textMuted} size={18} weight="bold" />
+              </Pressable>
+            </View>
             {ALL_CITIES.filter(c => !selected.includes(c.name) && (c.name.toLowerCase().includes(search.toLowerCase()) || c.region.toLowerCase().includes(search.toLowerCase()))).map(city => {
               const { time } = getTimeInZone(city.timezone);
               return (
-                <Pressable key={city.name} onPress={() => addCity(city)} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <Pressable key={city.name} onPress={() => addCity(city)} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
                   <Text style={{ fontSize: 26, marginRight: 12 }}>{city.flag}</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: colors.text, fontWeight: '600', fontSize: 15 }}>{city.name}</Text>
@@ -131,11 +126,12 @@ export default function WorldClockScreen() {
                 </Pressable>
               );
             })}
-          </ScrollView>
-        </View>
-      )}
+          </GlassPanel>
+        )}
+      </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, gap: 10, paddingBottom: 24 }}>
+      {/* Cities list */}
+      <View style={{ paddingHorizontal: 20, paddingBottom: 32, gap: 10 }}>
         {selected.map(name => {
           const city = ALL_CITIES.find(c => c.name === name);
           if (!city) return null;
@@ -144,12 +140,12 @@ export default function WorldClockScreen() {
           const timeOfDay = hour < 6 ? 'Late Night' : hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : hour < 20 ? 'Evening' : 'Night';
 
           return (
-            <View key={name} style={{ backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, borderColor: colors.border, padding: 18, flexDirection: 'row', alignItems: 'center' }}>
+            <GlassPanel key={name} variant="medium" borderRadius={24} contentStyle={{ padding: 18, flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 36, marginRight: 14 }}>{city.flag}</Text>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                   <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{city.name}</Text>
-                  <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: day ? '#F59E0B18' : '#3B82F618' }}>
+                  <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: (day ? '#F59E0B' : '#3B82F6') + '18' }}>
                     <Text style={{ color: day ? '#F59E0B' : '#3B82F6', fontSize: 10, fontWeight: '700' }}>{timeOfDay}</Text>
                   </View>
                 </View>
@@ -159,13 +155,16 @@ export default function WorldClockScreen() {
                 <Text style={{ color: colors.text, fontSize: 28, fontWeight: '200', letterSpacing: -1 }}>{time.slice(0, 5)}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 11 }}>{time.slice(6)}</Text>
               </View>
-              <Pressable onPress={() => setSelected(s => s.filter(x => x !== name))} style={{ marginLeft: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable
+                onPress={() => setSelected(s => s.filter(x => x !== name))}
+                style={{ marginLeft: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center' }}
+              >
                 <X color={colors.textMuted} size={14} weight="bold" />
               </Pressable>
-            </View>
+            </GlassPanel>
           );
         })}
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </MiniAppShell>
   );
 }

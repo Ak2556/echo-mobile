@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, Clipboard } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { ArrowLeft, Copy, Check, Shuffle } from 'phosphor-react-native';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { Check, Copy, Shuffle } from 'phosphor-react-native';
+import { Clipboard } from 'react-native';
+import { GlassPanel } from '../../components/ui/GlassPanel';
+import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
 
 function hexToRgb(hex: string) {
@@ -39,8 +40,7 @@ const PALETTES = [
 const RANDOMS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1'];
 
 export default function ColorToolsScreen() {
-  const { colors, fontSizes } = useTheme();
-  const router = useRouter();
+  const { colors } = useTheme();
   const [hex, setHex] = useState('#3B82F6');
   const [inputHex, setInputHex] = useState('#3B82F6');
   const [copied, setCopied] = useState('');
@@ -59,85 +59,82 @@ export default function ColorToolsScreen() {
   const randomize = () => { const c = RANDOMS[Math.floor(Math.random()*RANDOMS.length)]; setHex(c); setInputHex(c); };
   const save = () => { if (!saved.includes(hex)) setSaved(s=>[hex,...s].slice(0,20)); };
 
-  const CRow = ({ label, value }: { label: string; value: string }) => (
-    <Pressable onPress={() => copyVal(value)} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', width: 52 }}>{label}</Text>
-      <Text style={{ color: colors.text, fontSize: 14, fontFamily: 'monospace', flex: 1 }}>{value}</Text>
-      {copied === value ? <Check color="#10B981" size={16} weight="bold" /> : <Copy color={colors.textMuted} size={16} />}
-    </Pressable>
-  );
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
-          <ArrowLeft color={colors.text} size={20} weight="bold" />
-        </Pressable>
-        <View>
-          <Text style={{ color: colors.text, fontWeight: '800', fontSize: fontSizes.title }}>Color Tools</Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>HEX · RGB · HSL · palettes</Text>
+    <MiniAppShell title="Color Tools" subtitle="HEX · RGB · HSL · palettes">
+      {/* Hero swatch */}
+      <View style={{ height: 160, borderRadius: 28, backgroundColor: hex, alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, shadowColor: hex, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 } }}>
+        <TextInput
+          value={inputHex}
+          onChangeText={applyHex}
+          autoCapitalize="characters"
+          style={{ color: textColor, fontSize: 32, fontWeight: '700', fontFamily: 'monospace', textAlign: 'center' }}
+        />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Pressable onPress={randomize} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
+            <Shuffle color={textColor} size={15} weight="bold" />
+            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>Random</Text>
+          </Pressable>
+          <Pressable onPress={save} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
+            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>💾 Save</Text>
+          </Pressable>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }} showsVerticalScrollIndicator={false}>
-        {/* Hero swatch */}
-        <View style={{ height: 160, borderRadius: 28, backgroundColor: hex, alignItems: 'center', justifyContent: 'center', gap: 12, shadowColor: hex, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 } }}>
-          <TextInput
-            value={inputHex}
-            onChangeText={applyHex}
-            autoCapitalize="characters"
-            style={{ color: textColor, fontSize: 32, fontWeight: '700', fontFamily: 'monospace', textAlign: 'center' }}
-          />
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Pressable onPress={randomize} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
-              <Shuffle color={textColor} size={15} weight="bold" />
-              <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>Random</Text>
+      {/* Conversions */}
+      {rgb && hsl && (
+        <GlassPanel variant="medium" borderRadius={24} contentStyle={{ paddingHorizontal: 20, paddingTop: 16 }} style={{ marginBottom: 14 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>FORMATS — tap to copy</Text>
+          {[
+            { label: 'HEX', value: hex.toUpperCase() },
+            { label: 'RGB', value: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` },
+            { label: 'HSL', value: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` },
+            { label: 'Contrast', value: contrast(hex) },
+          ].map((row, i, arr) => (
+            <Pressable
+              key={row.label}
+              onPress={() => copyVal(row.value)}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: i < arr.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}
+            >
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', width: 52 }}>{row.label}</Text>
+              <Text style={{ color: colors.text, fontSize: 14, fontFamily: 'monospace', flex: 1 }}>{row.value}</Text>
+              {copied === row.value ? <Check color="#10B981" size={16} weight="bold" /> : <Copy color={colors.textMuted} size={16} />}
             </Pressable>
-            <Pressable onPress={save} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
-              <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>💾 Save</Text>
-            </Pressable>
-          </View>
-        </View>
+          ))}
+          <View style={{ height: 4 }} />
+        </GlassPanel>
+      )}
 
-        {/* Conversions */}
-        {rgb && hsl && (
-          <View style={{ backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 20, paddingTop: 16 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>FORMATS — tap to copy</Text>
-            <CRow label="HEX" value={hex.toUpperCase()} />
-            <CRow label="RGB" value={`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`} />
-            <CRow label="HSL" value={`hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`} />
-            <CRow label="Contrast" value={contrast(hex)} />
-            <View style={{ height: 4 }} />
+      {/* Saved */}
+      {saved.length > 0 && (
+        <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>SAVED</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {saved.map(c => (
+              <Pressable
+                key={c}
+                onPress={() => { setHex(c); setInputHex(c); }}
+                style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c, borderWidth: hex===c ? 3 : 0, borderColor: '#fff', shadowColor: c, shadowOpacity: hex===c ? 0.5 : 0, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}
+              />
+            ))}
           </View>
-        )}
+        </GlassPanel>
+      )}
 
-        {/* Saved */}
-        {saved.length > 0 && (
-          <View style={{ backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, borderColor: colors.border, padding: 20 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>SAVED</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {saved.map(c => (
-                <Pressable key={c} onPress={() => { setHex(c); setInputHex(c); }}
-                  style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c, borderWidth: hex===c ? 3 : 0, borderColor: '#fff', shadowColor: c, shadowOpacity: hex===c ? 0.5 : 0, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }} />
-              ))}
-            </View>
+      {/* Palettes */}
+      {PALETTES.map(pal => (
+        <GlassPanel key={pal.name} variant="light" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 10 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{pal.name.toUpperCase()}</Text>
+          <View style={{ flexDirection: 'row', gap: 6, height: 48 }}>
+            {pal.colors.map(c => (
+              <Pressable
+                key={c}
+                onPress={() => { setHex(c); setInputHex(c); }}
+                style={{ flex: 1, borderRadius: 12, backgroundColor: c, borderWidth: hex===c ? 3 : 0, borderColor: '#fff' }}
+              />
+            ))}
           </View>
-        )}
-
-        {/* Palettes */}
-        {PALETTES.map(pal => (
-          <View key={pal.name} style={{ backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, borderColor: colors.border, padding: 20 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{pal.name.toUpperCase()}</Text>
-            <View style={{ flexDirection: 'row', gap: 6, height: 48 }}>
-              {pal.colors.map(c => (
-                <Pressable key={c} onPress={() => { setHex(c); setInputHex(c); }}
-                  style={{ flex: 1, borderRadius: 12, backgroundColor: c, borderWidth: hex===c ? 3 : 0, borderColor: '#fff' }} />
-              ))}
-            </View>
-          </View>
-        ))}
-        <View style={{ height: 8 }} />
-      </ScrollView>
-    </SafeAreaView>
+        </GlassPanel>
+      ))}
+    </MiniAppShell>
   );
 }

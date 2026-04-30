@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, PencilSimple, Envelope } from 'phosphor-react-native';
-import Animated, { FadeInRight, SlideInRight } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInRight, SlideInRight } from 'react-native-reanimated';
 import { SealCheck } from 'phosphor-react-native';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';

@@ -8,6 +8,7 @@ import Animated, {
   interpolate,
   Easing,
 } from 'react-native-reanimated';
+import { useTheme } from '../../lib/theme';
 
 interface SkeletonProps {
   width?: number | string;
@@ -18,6 +19,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ width = '100%', height = 16, borderRadius = 8, className, style }: SkeletonProps) {
+  const { colors } = useTheme();
   const shimmer = useSharedValue(0);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 8, classN
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(shimmer.value, [0, 1], [0.3, 0.7]),
+    opacity: interpolate(shimmer.value, [0, 1], [0.4, 0.9]),
   }));
 
   return (
@@ -40,7 +42,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 8, classN
           width: width as any,
           height,
           borderRadius,
-          backgroundColor: '#27272a',
+          backgroundColor: colors.surfaceHover,
         },
         animStyle,
         style,
@@ -50,8 +52,9 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 8, classN
 }
 
 export function FeedCardSkeleton() {
+  const { colors } = useTheme();
   return (
-    <View className="bg-zinc-900 mx-4 my-1.5 p-4 rounded-2xl border border-zinc-800">
+    <View style={{ backgroundColor: colors.surface, marginHorizontal: 16, marginVertical: 6, padding: 16, borderRadius: 20, borderWidth: 1, borderColor: colors.border }}>
       {/* Author row */}
       <View className="flex-row items-center mb-3">
         <Skeleton width={36} height={36} borderRadius={18} />
@@ -62,7 +65,7 @@ export function FeedCardSkeleton() {
         <Skeleton width={30} height={12} />
       </View>
       {/* Prompt */}
-      <View className="bg-zinc-800/50 rounded-xl p-3 mb-3">
+      <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 12, padding: 12, marginBottom: 12 }}>
         <Skeleton width={50} height={10} className="mb-2" />
         <Skeleton width="90%" height={14} className="mb-1" />
         <Skeleton width="60%" height={14} />
@@ -75,7 +78,7 @@ export function FeedCardSkeleton() {
         <Skeleton width="40%" height={14} />
       </View>
       {/* Actions */}
-      <View className="flex-row justify-between items-center pt-3 border-t border-zinc-800">
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
         <Skeleton width={70} height={32} borderRadius={16} />
         <View className="flex-row gap-4">
           <Skeleton width={20} height={20} borderRadius={10} />

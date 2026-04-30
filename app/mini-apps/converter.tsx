@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { ArrowLeft, ArrowsLeftRight } from 'phosphor-react-native';
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { ArrowsLeftRight } from 'phosphor-react-native';
+import { GlassPanel } from '../../components/ui/GlassPanel';
+import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
 
 interface Unit { label: string; toBase: number }
@@ -36,20 +36,19 @@ const CATEGORIES: Category[] = [
 ];
 
 function convertTemp(val: number, from: string, to: string): number {
-  let c = from === '°Fahrenheit' ? (val-32)*5/9 : from === 'Kelvin' ? val-273.15 : val;
-  return to === '°Celsius' ? c : to === '°Fahrenheit' ? c*9/5+32 : c+273.15;
+  const c = from === '°Fahrenheit' ? (val - 32) * 5 / 9 : from === 'Kelvin' ? val - 273.15 : val;
+  return to === '°Celsius' ? c : to === '°Fahrenheit' ? c * 9 / 5 + 32 : c + 273.15;
 }
 
 export default function ConverterScreen() {
-  const { colors, radius, fontSizes } = useTheme();
-  const router = useRouter();
-
+  const { colors } = useTheme();
   const [catIdx, setCatIdx] = useState(0);
   const [fromIdx, setFromIdx] = useState(0);
   const [toIdx, setToIdx] = useState(1);
   const [input, setInput] = useState('1');
 
   const cat = CATEGORIES[catIdx];
+  const accent = colors.accent;
 
   const convert = (): string => {
     const v = parseFloat(input);
@@ -62,33 +61,31 @@ export default function ConverterScreen() {
   const result = convert();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
-          <ArrowLeft color={colors.text} size={20} weight="bold" />
-        </Pressable>
-        <View>
-          <Text style={{ color: colors.text, fontWeight: '800', fontSize: fontSizes.title }}>Converter</Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Units & measures</Text>
-        </View>
-      </View>
-
+    <MiniAppShell title="Converter" subtitle="Units & measures" scrollPadding={0}>
       {/* Category pills */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingBottom: 16 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingBottom: 12, paddingTop: 4 }}>
         {CATEGORIES.map((c, i) => (
-          <Pressable key={c.name} onPress={() => { setCatIdx(i); setFromIdx(0); setToIdx(1); setInput('1'); }}
-            style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16, backgroundColor: i === catIdx ? colors.accent : colors.surfaceHover, borderWidth: 1.5, borderColor: i === catIdx ? colors.accent : colors.border, shadowColor: i === catIdx ? colors.accent : 'transparent', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}
+          <Pressable
+            key={c.name}
+            onPress={() => { setCatIdx(i); setFromIdx(0); setToIdx(1); setInput('1'); }}
+            style={{
+              paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16,
+              backgroundColor: i === catIdx ? accent : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: i === catIdx ? 'transparent' : colors.glassBorder,
+              shadowColor: i === catIdx ? accent : 'transparent',
+              shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+            }}
           >
             <Text style={{ color: i === catIdx ? '#fff' : colors.text, fontWeight: '700', fontSize: 14 }}>{c.emoji} {c.name}</Text>
           </Pressable>
         ))}
       </ScrollView>
 
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, gap: 14 }} showsVerticalScrollIndicator={false}>
         {/* FROM */}
-        <View style={{ backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1.5, borderColor: colors.accent + '55', padding: 20 }}>
-          <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>FROM</Text>
+        <GlassPanel variant="medium" borderRadius={24} style={{ borderColor: accent + '55', borderWidth: 1 }} contentStyle={{ padding: 20 }}>
+          <Text style={{ color: accent, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>FROM</Text>
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -99,48 +96,68 @@ export default function ConverterScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {cat.units.map((u, i) => (
-                <Pressable key={u.label} onPress={() => setFromIdx(i)}
-                  style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, backgroundColor: i === fromIdx ? colors.accent : colors.surfaceHover, borderWidth: 1, borderColor: i === fromIdx ? colors.accent : colors.border }}
+                <Pressable
+                  key={u.label}
+                  onPress={() => setFromIdx(i)}
+                  style={{
+                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12,
+                    backgroundColor: i === fromIdx ? accent : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: i === fromIdx ? 'transparent' : colors.glassBorder,
+                  }}
                 >
                   <Text style={{ color: i === fromIdx ? '#fff' : colors.text, fontSize: 13, fontWeight: '600' }}>{u.label}</Text>
                 </Pressable>
               ))}
             </View>
           </ScrollView>
-        </View>
+        </GlassPanel>
 
-        {/* Swap button */}
-        <Pressable onPress={swap} style={{ alignSelf: 'center', width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 4 } }}>
+        {/* Swap */}
+        <Pressable
+          onPress={swap}
+          style={{
+            alignSelf: 'center', width: 52, height: 52, borderRadius: 26,
+            backgroundColor: accent, alignItems: 'center', justifyContent: 'center',
+            shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 4 },
+          }}
+        >
           <ArrowsLeftRight color="#fff" size={22} weight="bold" />
         </Pressable>
 
         {/* TO */}
-        <View style={{ backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, borderColor: colors.border, padding: 20 }}>
+        <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>TO</Text>
-          <Text style={{ color: colors.accent, fontSize: 44, fontWeight: '200', letterSpacing: -1, marginBottom: 14 }} numberOfLines={1} adjustsFontSizeToFit>{result}</Text>
+          <Text style={{ color: accent, fontSize: 44, fontWeight: '200', letterSpacing: -1, marginBottom: 14 }} numberOfLines={1} adjustsFontSizeToFit>{result}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {cat.units.map((u, i) => (
-                <Pressable key={u.label} onPress={() => setToIdx(i)}
-                  style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, backgroundColor: i === toIdx ? colors.accent : colors.surfaceHover, borderWidth: 1, borderColor: i === toIdx ? colors.accent : colors.border }}
+                <Pressable
+                  key={u.label}
+                  onPress={() => setToIdx(i)}
+                  style={{
+                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12,
+                    backgroundColor: i === toIdx ? accent : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: i === toIdx ? 'transparent' : colors.glassBorder,
+                  }}
                 >
                   <Text style={{ color: i === toIdx ? '#fff' : colors.text, fontSize: 13, fontWeight: '600' }}>{u.label}</Text>
                 </Pressable>
               ))}
             </View>
           </ScrollView>
-        </View>
+        </GlassPanel>
 
-        {/* Formula card */}
-        <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}>
+        {/* Formula */}
+        <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 16, alignItems: 'center' }}>
           <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center' }}>
             <Text style={{ color: colors.text, fontWeight: '700' }}>{input || '0'} {cat.units[fromIdx]?.label}</Text>
             {'  =  '}
-            <Text style={{ color: colors.accent, fontWeight: '700' }}>{result} {cat.units[toIdx]?.label}</Text>
+            <Text style={{ color: accent, fontWeight: '700' }}>{result} {cat.units[toIdx]?.label}</Text>
           </Text>
-        </View>
-        <View style={{ height: 8 }} />
+        </GlassPanel>
       </ScrollView>
-    </SafeAreaView>
+    </MiniAppShell>
   );
 }
