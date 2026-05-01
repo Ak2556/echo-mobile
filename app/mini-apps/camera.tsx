@@ -42,9 +42,7 @@ export default function CameraApp() {
     captureScale.value = withSpring(0.88, {}, () => { captureScale.value = withSpring(1); });
     setLoading(true);
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: mode === 'photo'
-        ? ImagePicker.MediaTypeOptions.Images
-        : ImagePicker.MediaTypeOptions.Videos,
+      mediaTypes: mode === 'photo' ? ['images'] : ['videos'],
       quality: 0.92,
       allowsEditing: mode === 'photo',
       videoMaxDuration: 60,
@@ -59,7 +57,7 @@ export default function CameraApp() {
 
   const launchGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ['images', 'videos'],
       allowsEditing: false,
       quality: 1,
     });

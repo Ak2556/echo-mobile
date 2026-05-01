@@ -406,7 +406,7 @@ export default function LoginScreen() {
 
               {/* Sign up link */}
               <Animated.View entering={FadeInUp.delay(200).springify()} style={{ flexDirection: 'row', justifyContent: 'center', paddingBottom: 16 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 15 }}>Don't have an account? </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 15 }}>{`Don't have an account? `}</Text>
                 <AnimatedPressable onPress={() => router.push('/auth/signup')} scaleValue={0.95} haptic="light">
                   <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '700' }}>Sign up</Text>
                 </AnimatedPressable>

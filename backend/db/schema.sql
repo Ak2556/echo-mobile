@@ -1,10 +1,17 @@
 -- Echo: Supabase schema (run in SQL Editor or via migration CLI)
 -- Requires: auth schema (built-in). Enable Anonymous sign-in in Dashboard if using anon auth.
-
+--
+-- Maintainer checklist (prod / preview):
+--   - Apply repo migrations: supabase db push (see supabase/migrations/).
+--   - Storage buckets `avatars` + `echo-media`: migration 20260501044859_storage_avatars_echo_media.sql
+--   - Social RLS: policies below; echo_reposts / echo_views: same file as core schema + 20260502100000.
+--   - ERD naming: public_echoes.likes_count (not like_count); ai_tool_calls uses args, result, status, error.
+--   - User IDs: social tables reference profiles.id; AI tables (ai_*) reference auth.users.id — same UUID as profiles.id.
+--
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- ── AI chat log (embeddings) — not wired from RN yet; session_id is app-local id ──
-CREATE TABLE IF NOT EXISTS messages (
+-- ── RAG / embedding log — not wired from RN yet; session_id is app-local id ──
+CREATE TABLE IF NOT EXISTS rag_embedding_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
@@ -13,7 +20,7 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS messages_embedding_idx ON messages USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS rag_embedding_messages_embedding_idx ON rag_embedding_messages USING hnsw (embedding vector_cosine_ops);
 
 -- ── Profiles (1:1 with auth.users) ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -22,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     display_name TEXT NOT NULL DEFAULT '',
     bio TEXT NOT NULL DEFAULT '',
     avatar_color TEXT NOT NULL DEFAULT '#3B82F6',
+    avatar_url TEXT,
     is_verified BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -67,6 +75,7 @@ CREATE TABLE IF NOT EXISTS public.public_echoes (
     comment_count INT NOT NULL DEFAULT 0,
     repost_count INT NOT NULL DEFAULT 0,
     view_count INT NOT NULL DEFAULT 0,
+    media_urls TEXT[],
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -104,6 +113,71 @@ DROP TRIGGER IF EXISTS on_echo_like_change ON public.echo_likes;
 CREATE TRIGGER on_echo_like_change
   AFTER INSERT OR DELETE ON public.echo_likes
   FOR EACH ROW EXECUTE PROCEDURE public.adjust_echo_likes_count();
+
+-- ── Reposts ───────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.echo_reposts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    echo_id UUID NOT NULL REFERENCES public.public_echoes (id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (echo_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS echo_reposts_echo_idx ON public.echo_reposts (echo_id);
+CREATE INDEX IF NOT EXISTS echo_reposts_user_idx ON public.echo_reposts (user_id);
+
+CREATE OR REPLACE FUNCTION public.adjust_echo_repost_count()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.public_echoes SET repost_count = repost_count + 1 WHERE id = NEW.echo_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE public.public_echoes SET repost_count = greatest(0, repost_count - 1) WHERE id = OLD.echo_id;
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_echo_repost_change ON public.echo_reposts;
+CREATE TRIGGER on_echo_repost_change
+  AFTER INSERT OR DELETE ON public.echo_reposts
+  FOR EACH ROW EXECUTE PROCEDURE public.adjust_echo_repost_count();
+
+-- ── Views (deduped: one increment per user per echo) ─────────────────────────
+CREATE TABLE IF NOT EXISTS public.echo_views (
+    echo_id UUID NOT NULL REFERENCES public.public_echoes (id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (echo_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS echo_views_user_idx ON public.echo_views (user_id);
+
+CREATE OR REPLACE FUNCTION public.adjust_echo_view_count()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.public_echoes SET view_count = view_count + 1 WHERE id = NEW.echo_id;
+    RETURN NEW;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_echo_view_insert ON public.echo_views;
+CREATE TRIGGER on_echo_view_insert
+  AFTER INSERT ON public.echo_views
+  FOR EACH ROW EXECUTE PROCEDURE public.adjust_echo_view_count();
 
 -- ── Comments ────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.echo_comments (
@@ -166,6 +240,8 @@ ALTER TABLE public.public_echoes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.echo_likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.echo_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.echo_bookmarks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.echo_reposts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.echo_views ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: everyone can read (public app); users update own
@@ -237,6 +313,28 @@ DROP POLICY IF EXISTS "Users delete own bookmarks" ON public.echo_bookmarks;
 CREATE POLICY "Users delete own bookmarks"
   ON public.echo_bookmarks FOR DELETE USING (auth.uid() = user_id);
 
+-- Reposts: read all; manage own rows
+DROP POLICY IF EXISTS "Reposts are viewable" ON public.echo_reposts;
+CREATE POLICY "Reposts are viewable"
+  ON public.echo_reposts FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Users insert own reposts" ON public.echo_reposts;
+CREATE POLICY "Users insert own reposts"
+  ON public.echo_reposts FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users delete own reposts" ON public.echo_reposts;
+CREATE POLICY "Users delete own reposts"
+  ON public.echo_reposts FOR DELETE USING (auth.uid() = user_id);
+
+-- Echo views: insert own; read own rows only
+DROP POLICY IF EXISTS "Users insert own echo views" ON public.echo_views;
+CREATE POLICY "Users insert own echo views"
+  ON public.echo_views FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users view own echo_views rows" ON public.echo_views;
+CREATE POLICY "Users view own echo_views rows"
+  ON public.echo_views FOR SELECT USING (auth.uid() = user_id);
+
 -- Follows: read all; manage own follower_id rows
 DROP POLICY IF EXISTS "Follows are viewable" ON public.follows;
 CREATE POLICY "Follows are viewable"
@@ -270,3 +368,7 @@ CREATE POLICY "Anon can read likes"
 DROP POLICY IF EXISTS "Anon can read follows" ON public.follows;
 CREATE POLICY "Anon can read follows"
   ON public.follows FOR SELECT TO anon USING (true);
+
+DROP POLICY IF EXISTS "Anon can read reposts" ON public.echo_reposts;
+CREATE POLICY "Anon can read reposts"
+  ON public.echo_reposts FOR SELECT TO anon USING (true);

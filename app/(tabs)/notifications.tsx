@@ -3,7 +3,6 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
-const FlashList = _FlashList as React.ComponentType<any>;
 import { useRouter } from 'expo-router';
 import { Bell, Checks } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -15,6 +14,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { Notification } from '../../types';
+const FlashList = _FlashList as React.ComponentType<any>;
 
 type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' };
 type SectionItem = { type: 'item'; data: Notification };

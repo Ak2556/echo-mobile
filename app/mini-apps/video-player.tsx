@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, Pressable, Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   VideoCamera, Images, Play, Pause,
@@ -33,8 +33,12 @@ interface VideoMeta {
 export default function VideoPlayerApp() {
   const { colors } = useTheme();
   const accent = colors.accent;
-  const videoRef = useRef<Video>(null);
+  const videoRef = useRef<VideoView>(null);
   const [video, setVideo] = useState<VideoMeta | null>(null);
+  const player = useVideoPlayer(video?.uri ?? null, p => {
+    p.muted = false;
+    p.timeUpdateEventInterval = 0.25;
+  });
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [position, setPosition] = useState(0);
@@ -47,7 +51,7 @@ export default function VideoPlayerApp() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      mediaTypes: ['videos'],
       quality: 1,
     });
     if (result.canceled) return;
@@ -67,7 +71,7 @@ export default function VideoPlayerApp() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      mediaTypes: ['videos'],
       videoMaxDuration: 120,
       videoQuality: ImagePicker.UIImagePickerControllerQualityType.High,
     });
@@ -80,23 +84,36 @@ export default function VideoPlayerApp() {
     showToast('Video recorded', '🎥');
   };
 
-  const onPlaybackUpdate = (status: AVPlaybackStatus) => {
-    if (!status.isLoaded) return;
-    setIsPlaying(status.isPlaying);
-    setPosition(status.positionMillis);
-    if (status.durationMillis) setDuration(status.durationMillis);
-    if (status.didJustFinish) setIsPlaying(false);
-  };
+  useEffect(() => {
+    player.muted = isMuted;
+  }, [isMuted, player]);
+
+  useEffect(() => {
+    const playingSub = player.addListener('playingChange', ({ isPlaying: nextPlaying }) => {
+      setIsPlaying(nextPlaying);
+    });
+    const timeSub = player.addListener('timeUpdate', ({ currentTime }) => {
+      setPosition(currentTime * 1000);
+      if (player.duration) setDuration(player.duration * 1000);
+    });
+    const endSub = player.addListener('playToEnd', () => setIsPlaying(false));
+    const sourceSub = player.addListener('sourceLoad', ({ duration: sourceDuration }) => {
+      setDuration(sourceDuration * 1000);
+    });
+    return () => {
+      playingSub.remove();
+      timeSub.remove();
+      endSub.remove();
+      sourceSub.remove();
+    };
+  }, [player]);
 
   const togglePlay = async () => {
-    if (!videoRef.current) return;
-    if (isPlaying) await videoRef.current.pauseAsync();
-    else await videoRef.current.playAsync();
+    if (isPlaying) player.pause();
+    else player.play();
   };
 
   const toggleMute = async () => {
-    if (!videoRef.current) return;
-    await videoRef.current.setIsMutedAsync(!isMuted);
     setIsMuted(m => !m);
   };
 
@@ -132,14 +149,13 @@ export default function VideoPlayerApp() {
         <Animated.View entering={FadeInDown.delay(60).springify()}>
           {/* Video player */}
           <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: '#000', marginBottom: 14 }}>
-            <Video
+            <VideoView
               ref={videoRef}
-              source={{ uri: video.uri }}
+              player={player}
               style={{ width: '100%', aspectRatio: (video.width && video.height) ? video.width / video.height : 16 / 9 }}
-              resizeMode={ResizeMode.CONTAIN}
-              onPlaybackStatusUpdate={onPlaybackUpdate}
-              shouldPlay={false}
-              isMuted={isMuted}
+              contentFit="contain"
+              nativeControls={false}
+              fullscreenOptions={{ enable: true }}
             />
           </View>
 

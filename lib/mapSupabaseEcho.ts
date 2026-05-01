@@ -30,14 +30,20 @@ export function extractHashtags(text: string): string[] {
   return m ? [...new Set(m)] : [];
 }
 
+function isVideoUrl(url: string): boolean {
+  return /\.(mp4|m4v|mov|webm|m3u8)(?:[?#]|$)/i.test(url);
+}
+
 export function mapEchoRowToFeedItem(
   echo: SupabaseEchoRow,
   author: SupabaseProfileRow | undefined,
   likedSet: Set<string>,
-  bookmarkedSet: Set<string>
+  bookmarkedSet: Set<string>,
+  repostedSet: Set<string>
 ): FeedItem {
   const username = author?.username ?? 'unknown';
   const mediaUris = echo.media_urls?.length ? echo.media_urls : undefined;
+  const videoUri = mediaUris?.find(isVideoUrl);
   return {
     id: echo.id,
     userId: echo.author_id,
@@ -51,13 +57,14 @@ export function mapEchoRowToFeedItem(
     likes: echo.likes_count ?? 0,
     isLiked: likedSet.has(echo.id),
     isBookmarked: bookmarkedSet.has(echo.id),
-    isReposted: false,
+    isReposted: repostedSet.has(echo.id),
     repostCount: echo.repost_count ?? 0,
     commentCount: echo.comment_count ?? 0,
     viewCount: echo.view_count ?? 0,
     hashtags: extractHashtags(`${echo.prompt} ${echo.response}`),
     createdAt: echo.created_at,
-    postType: mediaUris ? 'photo' : 'text',
-    mediaUris,
+    postType: videoUri ? 'video' : mediaUris ? 'photo' : 'text',
+    mediaUris: videoUri ? undefined : mediaUris,
+    videoUri,
   };
 }

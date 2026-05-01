@@ -97,7 +97,7 @@ export default function ConfirmEmailScreen() {
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={{ color: '#F59E0B', fontSize: 13, fontWeight: '700' }}>Check your spam folder</Text>
               <Text style={{ color: '#A1A1AA', fontSize: 12, lineHeight: 17 }}>
-                Confirmation emails can land in spam or promotions. If it still hasn't arrived after a minute, tap Resend below.
+                {`Confirmation emails can land in spam or promotions. If it still hasn't arrived after a minute, tap Resend below.`}
               </Text>
             </View>
           </View>

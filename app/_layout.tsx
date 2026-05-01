@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter , ErrorBoundaryProps } from 'expo-router';
 import { Linking, View, Text } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ErrorBoundaryProps } from 'expo-router';
 import { ToastProvider } from '../components/ui/Toast';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { supabase } from '../lib/supabase';
@@ -57,11 +56,11 @@ function AuthListener() {
     // Handle deep link while app is already open
     const sub = Linking.addEventListener('url', ({ url }) => handleDeepLink(url));
     return () => sub.remove();
-  }, []);
+  }, [router, setAvatarColor, setDisplayName, setHasSeenOnboarding, setUserId, setUsername]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
         setUserId(session.user.id);
         if (!useAppStore.getState().username) {
           const { data: profile } = await supabase
@@ -92,7 +91,7 @@ function AuthListener() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router, setAvatarColor, setDisplayName, setHasSeenOnboarding, setUserId, setUsername]);
 
   return null;
 }

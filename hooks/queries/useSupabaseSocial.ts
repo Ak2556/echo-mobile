@@ -4,6 +4,7 @@ import {
   setRemoteBookmark,
   setRemoteFollow,
   setRemoteLike,
+  setRemoteRepost,
 } from '../../lib/supabaseEchoApi';
 
 export function useToggleRemoteLike() {
@@ -32,6 +33,20 @@ export function useToggleRemoteBookmark() {
   });
 }
 
+export function useToggleRemoteRepost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ echoId, repost }: { echoId: string; repost: boolean }) => {
+      await setRemoteRepost(echoId, repost);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['feed'] });
+      qc.invalidateQueries({ queryKey: ['bookmarks'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
 export function useToggleRemoteFollow() {
   const qc = useQueryClient();
   return useMutation({
@@ -49,9 +64,8 @@ export function useToggleRemoteFollow() {
 export function usePublishRemoteEcho() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { authorId: string; prompt: string; response: string }) => {
-      await insertRemoteEcho(params);
-    },
+    mutationFn: async (params: { authorId: string; prompt: string; response: string; mediaUrls?: string[] }) =>
+      insertRemoteEcho(params),
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
     },

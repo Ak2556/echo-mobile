@@ -5,7 +5,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Plus, CheckCircle, Circle, Fire, Trash, X } from 'phosphor-react-native';
+import { Plus, CheckCircle, CircleDashed, Fire, Trash, X } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -219,7 +219,7 @@ export default function HabitsApp() {
                   </View>
                 </View>
                 <AnimatedPressable onPress={() => toggleHabit(habit.id)} scaleValue={0.85} haptic="medium" style={{ marginLeft: 8 }}>
-                  {done ? <CheckCircle color={habit.color} size={36} weight="fill" /> : <Circle color={colors.glassBorder} size={36} weight="regular" />}
+                  {done ? <CheckCircle color={habit.color} size={36} weight="fill" /> : <CircleDashed color={colors.glassBorder} size={36} weight="regular" />}
                 </AnimatedPressable>
                 <AnimatedPressable onPress={() => deleteHabit(habit.id)} scaleValue={0.85} haptic="light" style={{ marginLeft: 10 }}>
                   <Trash color={colors.textMuted} size={17} />

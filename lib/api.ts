@@ -15,11 +15,33 @@ export type EchoAIEvent =
   | { type: 'done' }
   | { type: 'error'; message: string };
 
-// Map the in-app model key to the OpenRouter model identifier.
-const AI_MODEL_MAP: Record<string, string> = {
-  'gpt-3.5': 'openai/gpt-3.5-turbo',
-  'gpt-4':   'openai/gpt-4-turbo',
-  'gpt-4o':  'openai/gpt-4o',
+export function normalizeEchoAIError(message: string): string {
+  const prefix = message.match(/^OpenRouter\s+\d+:\s*/)?.[0] ?? '';
+  const raw = prefix ? message.slice(prefix.length) : message;
+
+  try {
+    const parsed = JSON.parse(raw);
+    const inner = parsed?.error;
+    if (typeof inner?.message === 'string') {
+      return prefix ? `${prefix}${inner.message}` : inner.message;
+    }
+    if (typeof parsed?.message === 'string') {
+      return prefix ? `${prefix}${parsed.message}` : parsed.message;
+    }
+  } catch {
+    // Keep original text when this is not a JSON error payload.
+  }
+
+  return message;
+}
+
+export type EchoAIModel = 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.0-flash-lite';
+
+// Map the in-app model key to Google models routed through Google AI Studio.
+const AI_MODEL_MAP: Record<EchoAIModel, string> = {
+  'gemini-2.5-flash': 'google/gemini-2.5-flash',
+  'gemini-2.5-pro': 'google/gemini-2.5-pro',
+  'gemini-2.0-flash-lite': 'google/gemini-2.0-flash-lite-001',
 };
 
 interface StreamArgs {
@@ -27,7 +49,7 @@ interface StreamArgs {
   conversationId?: string;
   confirm?: { tool_call_id: string; tool_name: string; args: any; approve: boolean };
   /** When set, overrides the default model on the Edge Function side. */
-  preferredModel?: 'gpt-3.5' | 'gpt-4' | 'gpt-4o';
+  preferredModel?: EchoAIModel;
   onEvent: (event: EchoAIEvent) => void;
 }
 
@@ -82,7 +104,7 @@ function openStream(
           resolve();
         } else if (parsed.type === 'error') {
           cleanup();
-          reject(new Error(parsed.message));
+          reject(new Error(normalizeEchoAIError(parsed.message)));
         }
       } catch {
         // ignore malformed SSE lines
@@ -93,7 +115,7 @@ function openStream(
       cleanup();
       const status: number | undefined = event?.xhrStatus;
       const rawMsg: string | undefined = event?.message;
-      const msg = parseErrorMessage(rawMsg, status);
+      const msg = normalizeEchoAIError(parseErrorMessage(rawMsg, status));
       console.error(`[EchoAI] SSE error — status:${status ?? 'N/A'} raw:${rawMsg ?? '(empty)'}`);
       // Tag 401s so the caller can decide whether to refresh + retry.
       const err: StreamError = new Error(msg);

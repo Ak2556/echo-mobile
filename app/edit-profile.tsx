@@ -42,13 +42,15 @@ export default function EditProfileScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.85,
+      base64: true,
     });
     if (result.canceled) return;
-    const localUri = result.assets[0].uri;
+    const asset = result.assets[0];
+    const localUri = asset.uri;
 
     if (!isSupabaseRemote()) {
       // Offline-only: just use local URI as preview (won't persist beyond session)
@@ -58,7 +60,12 @@ export default function EditProfileScreen() {
 
     setUploadingAvatar(true);
     try {
-      const publicUrl = await uploadAvatar(localUri);
+      const publicUrl = await uploadAvatar({
+        uri: asset.uri,
+        base64: asset.base64,
+        mimeType: asset.mimeType,
+        fileName: asset.fileName,
+      });
       setNewAvatarUrl(publicUrl);
     } catch (e) {
       Alert.alert('Upload failed', (e as Error).message);

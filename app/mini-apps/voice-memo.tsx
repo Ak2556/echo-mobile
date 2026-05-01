@@ -2,7 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, Pressable, Alert, TextInput,
 } from 'react-native';
-import { Audio } from 'expo-av';
+import {
+  createAudioPlayer,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  type AudioPlayer,
+} from 'expo-audio';
 import Animated, {
   FadeInDown, useSharedValue, useAnimatedStyle,
   withRepeat, withSequence, withTiming, cancelAnimation,
@@ -54,14 +61,15 @@ export default function VoiceMemoApp() {
   const accent = colors.accent;
   const [memos, setMemos] = useState<Memo[]>([]);
   useEffect(() => { loadMemos().then(setMemos); }, []);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [sound, setSound] = useState<AudioPlayer | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playbackSubscriptionRef = useRef<{ remove: () => void } | null>(null);
 
   const pulseScale = useSharedValue(1);
   const pulseStyle = useAnimatedStyle(() => ({
@@ -71,20 +79,21 @@ export default function VoiceMemoApp() {
 
   useEffect(() => {
     return () => {
-      sound?.unloadAsync();
+      playbackSubscriptionRef.current?.remove();
+      sound?.remove();
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [sound]);
 
   const startRecording = async () => {
-    const { status } = await Audio.requestPermissionsAsync();
+    const { status } = await requestRecordingPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Microphone access is required to record voice memos.');
       return;
     }
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-    const { recording: rec } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-    setRecording(rec);
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+    await recorder.prepareToRecordAsync();
+    recorder.record();
     setIsRecording(true);
     setRecordDuration(0);
     timerRef.current = setInterval(() => setRecordDuration(d => d + 1), 1000);
@@ -95,14 +104,13 @@ export default function VoiceMemoApp() {
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
+    if (!isRecording) return;
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     cancelAnimation(pulseScale);
     pulseScale.value = withTiming(1);
-    await recording.stopAndUnloadAsync();
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-    const uri = recording.getURI();
-    setRecording(null);
+    await recorder.stop();
+    await setAudioModeAsync({ allowsRecording: false });
+    const uri = recorder.uri;
     setIsRecording(false);
     if (!uri) { showToast('Recording failed', '❌'); return; }
     const memo: Memo = {
@@ -120,27 +128,35 @@ export default function VoiceMemoApp() {
 
   const playMemo = async (memo: Memo) => {
     if (playingId === memo.id) {
-      await sound?.pauseAsync();
+      sound?.pause();
       setPlayingId(null);
       return;
     }
-    if (sound) { await sound.unloadAsync(); setSound(null); }
-    const { sound: s } = await Audio.Sound.createAsync(
-      { uri: memo.uri },
-      { shouldPlay: true },
-      (status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setPlayingId(null);
-          s.unloadAsync();
-        }
-      },
-    );
-    setSound(s);
+    playbackSubscriptionRef.current?.remove();
+    if (sound) { sound.remove(); setSound(null); }
+    const nextSound = createAudioPlayer({ uri: memo.uri });
+    playbackSubscriptionRef.current = nextSound.addListener('playbackStatusUpdate', status => {
+      if (status.didJustFinish) {
+        setPlayingId(null);
+        playbackSubscriptionRef.current?.remove();
+        playbackSubscriptionRef.current = null;
+        nextSound.remove();
+        setSound(null);
+      }
+    });
+    nextSound.play();
+    setSound(nextSound);
     setPlayingId(memo.id);
   };
 
   const deleteMemo = (id: string) => {
-    if (playingId === id) { sound?.unloadAsync(); setPlayingId(null); setSound(null); }
+    if (playingId === id) {
+      playbackSubscriptionRef.current?.remove();
+      playbackSubscriptionRef.current = null;
+      sound?.remove();
+      setPlayingId(null);
+      setSound(null);
+    }
     const updated = memos.filter(m => m.id !== id);
     setMemos(updated);
     saveMemos(updated);

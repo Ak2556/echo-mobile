@@ -313,7 +313,7 @@ export default function SignupScreen() {
                       </View>
                     </View>
                     {confirmPassword.length > 0 && !passwordsMatch && (
-                      <Text style={{ color: colors.danger, fontSize: 12, marginTop: 6, marginLeft: 2 }}>Passwords don't match</Text>
+                      <Text style={{ color: colors.danger, fontSize: 12, marginTop: 6, marginLeft: 2 }}>{`Passwords don't match`}</Text>
                     )}
                   </View>
 

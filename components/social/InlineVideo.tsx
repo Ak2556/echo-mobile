@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActionSheetIOS,
   ActivityIndicator,
@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 
@@ -31,13 +31,16 @@ const PILL = {
 
 export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVideoProps) {
   const { colors, radius, fontSizes } = useTheme();
-  const videoRef = useRef<Video>(null);
+  const videoRef = useRef<VideoView>(null);
 
   const [activeUri, setActiveUri] = useState(uri);
+  const player = useVideoPlayer(activeUri, p => {
+    p.muted = true;
+    p.loop = false;
+  });
   // Three-state load: 'loading' → 'ready' → 'error'
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [playing, setPlaying] = useState(false);
-  const [buffering, setBuffering] = useState(false);
   const [muted, setMuted] = useState(true);
 
   const qualityList: QualityOption[] = qualities?.length
@@ -45,6 +48,34 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
     : [{ label: 'Auto', uri }];
 
   const activeLabel = qualityList.find(q => q.uri === activeUri)?.label ?? 'Auto';
+
+  useEffect(() => {
+    setActiveUri(uri);
+  }, [uri]);
+
+  useEffect(() => {
+    player.muted = muted;
+  }, [muted, player]);
+
+  useEffect(() => {
+    const statusSub = player.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay') setLoadState('ready');
+      if (status === 'error') setLoadState('error');
+    });
+    const playingSub = player.addListener('playingChange', ({ isPlaying }) => {
+      setPlaying(isPlaying);
+    });
+    const endSub = player.addListener('playToEnd', () => {
+      player.replay();
+      player.pause();
+      setPlaying(false);
+    });
+    return () => {
+      statusSub.remove();
+      playingSub.remove();
+      endSub.remove();
+    };
+  }, [player]);
 
   // ── Safety-net: if metadata never loads within 12 s, show error ────────
   useEffect(() => {
@@ -55,41 +86,20 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
     return () => clearTimeout(t);
   }, [activeUri, loadState]);
 
-  // ── Single source of truth for all playback state ──────────────────────
-  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (!status.isLoaded) {
-      // error field may or may not exist depending on expo-av version
-      const hasError = 'error' in status && !!status.error;
-      if (hasError) setLoadState('error');
-      return;
-    }
-    // Video metadata is loaded — show the player
-    setLoadState('ready');
-    setPlaying(status.isPlaying);
-    setBuffering(status.isBuffering);
-
-    if (status.didJustFinish) {
-      videoRef.current?.setPositionAsync(0);
-      setPlaying(false);
-    }
-  }, []);
-
   // ── Actions ────────────────────────────────────────────────────────────
   const togglePlay = async () => {
-    if (!videoRef.current || loadState === 'loading') return;
+    if (loadState === 'loading') return;
     try {
       if (playing) {
-        await videoRef.current.pauseAsync();
+        player.pause();
       } else {
-        await videoRef.current.playAsync();
+        player.play();
       }
     } catch {}
   };
 
   const toggleMute = async () => {
-    if (!videoRef.current) return;
     try {
-      await videoRef.current.setIsMutedAsync(!muted);
       setMuted(m => !m);
     } catch {}
   };
@@ -97,7 +107,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
   const openFullscreen = async () => {
     if (!videoRef.current) return;
     try {
-      await videoRef.current.presentFullscreenPlayer();
+      await videoRef.current.enterFullscreen();
     } catch {}
   };
 
@@ -113,19 +123,14 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
           const chosen = qualityList[idx];
           if (chosen.uri === activeUri) return;
 
-          let pos = 0;
-          try {
-            const s = await videoRef.current?.getStatusAsync();
-            if (s?.isLoaded) pos = s.positionMillis;
-          } catch {}
-
+          const pos = player.currentTime;
           setLoadState('loading');
           setActiveUri(chosen.uri);
 
           setTimeout(async () => {
             try {
-              await videoRef.current?.setPositionAsync(pos);
-              if (playing) await videoRef.current?.playAsync();
+              player.currentTime = pos;
+              if (playing) player.play();
             } catch {}
           }, 500);
         },
@@ -148,7 +153,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
         {loadState === 'error' ? (
           /* ── Error ───────────────────────────────────────────────── */
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.surfaceHover }}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>Couldn't load video</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{`Couldn't load video`}</Text>
             <Pressable
               onPress={() => { setLoadState('loading'); setActiveUri(uri); }}
               style={{ paddingHorizontal: 20, paddingVertical: 9, borderRadius: radius.full, backgroundColor: colors.accent }}
@@ -159,15 +164,13 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
         ) : (
           <>
             {/* ── Video element — always mounted so it starts loading ── */}
-            <Video
+            <VideoView
               ref={videoRef}
-              source={{ uri: activeUri }}
+              player={player}
               style={{ flex: 1 }}
-              resizeMode={ResizeMode.COVER}
-              isMuted={muted}
-              shouldPlay={false}
-              useNativeControls={false}
-              onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+              contentFit="cover"
+              nativeControls={false}
+              fullscreenOptions={{ enable: true }}
             />
 
             {/* ── Initial loading spinner (full overlay, blocks nothing — no play yet) ── */}
@@ -180,13 +183,6 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
               </View>
             )}
 
-            {/* ── Buffering spinner (small, bottom-left — controls still usable) ── */}
-            {loadState === 'ready' && buffering && playing && (
-              <View style={{ position: 'absolute', bottom: 12, left: 12 }}>
-                <ActivityIndicator color="rgba(255,255,255,0.8)" size="small" />
-              </View>
-            )}
-
             {/* ── Centre tap: play / pause ─────────────────────────── */}
             {loadState === 'ready' && (
               <Pressable
@@ -195,7 +191,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
               >
                 {!playing && (
                   <View style={{ width: 66, height: 66, borderRadius: 33, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
-                    <Play size={30} color="#fff" fill="#fff" />
+                    <Play size={30} color="#fff" weight="fill" />
                   </View>
                 )}
               </Pressable>
