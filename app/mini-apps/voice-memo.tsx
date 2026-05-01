@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, Pressable, Alert, TextInput,
 } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import {
   createAudioPlayer,
   RecordingPresets,
@@ -14,7 +15,6 @@ import Animated, {
   FadeInDown, useSharedValue, useAnimatedStyle,
   withRepeat, withSequence, withTiming, cancelAnimation,
 } from 'react-native-reanimated';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Microphone, Stop, Play, Pause,
   Trash, MicrophoneStage,
@@ -24,43 +24,20 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
+import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/voiceMemos';
 
-const MEMOS_KEY = 'mini:memos';
 const REC_COLOR = '#EF4444';
-
-interface Memo {
-  id: string;
-  title: string;
-  uri: string;
-  duration: number;
-  createdAt: string;
-}
-
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
-  if (diffDays === 0) return 'Today ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (diffDays === 1) return 'Yesterday';
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-}
-
-async function loadMemos(): Promise<Memo[]> {
-  try { return JSON.parse((await AsyncStorage.getItem(MEMOS_KEY)) ?? '[]'); } catch { return []; }
-}
-function saveMemos(memos: Memo[]) { AsyncStorage.setItem(MEMOS_KEY, JSON.stringify(memos)); }
 
 export default function VoiceMemoApp() {
   const { colors } = useTheme();
   const accent = colors.accent;
   const [memos, setMemos] = useState<Memo[]>([]);
   useEffect(() => { loadMemos().then(setMemos); }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadMemos().then(setMemos);
+    }, []),
+  );
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
@@ -223,7 +200,7 @@ export default function VoiceMemoApp() {
           color: isRecording ? REC_COLOR : colors.textMuted,
           fontSize: 38, fontWeight: '900', letterSpacing: -1,
         }}>
-          {formatTime(recordDuration)}
+          {formatMemoTime(recordDuration)}
         </Text>
 
         {/* Record / Stop button */}
@@ -302,7 +279,7 @@ export default function VoiceMemoApp() {
                   </Pressable>
                 )}
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-                  {formatTime(memo.duration)} · {formatDate(memo.createdAt)}
+                  {formatMemoTime(memo.duration)} · {formatMemoDate(memo.createdAt)}
                 </Text>
               </View>
 

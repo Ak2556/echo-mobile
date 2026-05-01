@@ -4,45 +4,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 import { Plus, CheckCircle, CircleDashed, Fire, Trash, X } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
-
-const HABITS_KEY = 'mini:habits';
-
-interface Habit {
-  id: string; name: string; emoji: string; color: string;
-  completedDates: string[]; createdAt: string;
-}
-
-const COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#F97316'];
-const EMOJIS = ['💧', '🏃', '📚', '🧘', '🥗', '😴', '💊', '✍️', '🎯', '🧹', '🌱', '💪'];
-
-function todayStr() { return new Date().toISOString().slice(0, 10); }
-
-function getStreak(completedDates: string[]): number {
-  if (completedDates.length === 0) return 0;
-  const sorted = [...completedDates].sort().reverse();
-  const today = todayStr();
-  let streak = 0, check = today;
-  for (const d of sorted) {
-    if (d === check) {
-      streak++;
-      const prev = new Date(check); prev.setDate(prev.getDate() - 1);
-      check = prev.toISOString().slice(0, 10);
-    } else if (d < check) break;
-  }
-  return streak;
-}
-
-async function loadHabits(): Promise<Habit[]> {
-  try { return JSON.parse((await AsyncStorage.getItem(HABITS_KEY)) ?? '[]'); } catch { return []; }
-}
-function saveHabits(habits: Habit[]) { AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }
+import { HABIT_COLORS, HABIT_EMOJIS, Habit, getStreak, loadHabits, saveHabits, todayStr } from '../../lib/habits';
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -77,7 +46,7 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
   const insets = useSafeAreaInsets();
   const accent = colors.accent;
   const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState(EMOJIS[0]);
+  const [emoji, setEmoji] = useState(HABIT_EMOJIS[0]);
   const [color, setColor] = useState(accent);
 
   const submit = () => {
@@ -101,7 +70,7 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>ICON</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {EMOJIS.map(e => (
+              {HABIT_EMOJIS.map(e => (
                 <Pressable key={e} onPress={() => setEmoji(e)}>
                   <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: emoji === e ? color + '22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: emoji === e ? 2 : StyleSheet.hairlineWidth, borderColor: emoji === e ? color : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ fontSize: 22 }}>{e}</Text>
@@ -113,7 +82,7 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>COLOR</Text>
             <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
-              {COLORS.map(c => (
+              {HABIT_COLORS.map(c => (
                 <Pressable key={c} onPress={() => setColor(c)}>
                   <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c, borderWidth: color === c ? 3 : 0, borderColor: '#fff', transform: [{ scale: color === c ? 1.15 : 1 }] }} />
                 </Pressable>
@@ -134,6 +103,11 @@ export default function HabitsApp() {
   const accent = colors.accent;
   const [habits, setHabits] = useState<Habit[]>([]);
   useEffect(() => { loadHabits().then(setHabits); }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadHabits().then(setHabits);
+    }, []),
+  );
   const [showAdd, setShowAdd] = useState(false);
   const today = todayStr();
 
