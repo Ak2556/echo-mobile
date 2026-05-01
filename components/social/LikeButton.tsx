@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Text } from 'react-native';
 import { HeartStraight } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { SpringCounter } from '../ui/SpringCounter';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteLike } from '../../hooks/queries/useSupabaseSocial';
 import { useAppStore } from '../../store/useAppStore';
@@ -72,7 +72,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
   return (
     <AnimatedPressable
       onPress={handlePress}
-      className="flex-row items-center gap-2 px-3 py-2 rounded-full bg-zinc-800/60"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 99 }}
       depth="medium"
       fadeOnPress
       haptic="none"
@@ -84,7 +84,10 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
           weight={liked ? 'fill' : 'regular'}
         />
       </Animated.View>
-      <Text className={`font-medium ${liked ? 'text-red-500' : 'text-zinc-400'}`}>{count}</Text>
+      <SpringCounter
+        value={count}
+        style={{ fontWeight: '500', color: liked ? '#EF4444' : '#A1A1AA', fontSize: 14 }}
+      />
     </AnimatedPressable>
   );
 }

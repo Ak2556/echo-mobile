@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, TextInput, Pressable } from 'react-native';
+import { TextInput, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { MagnifyingGlass, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { MOTION } from '../../lib/motion';
 
 interface SearchBarProps {
   value: string;
@@ -10,18 +12,23 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...' }: SearchBarProps) {
-  const { colors } = useTheme();
+  const { colors, reduceAnimations } = useTheme();
+  const focused = useSharedValue(0);
+
+  const shellStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: reduceAnimations ? 1 : withSpring(focused.value ? 1.012 : 1, MOTION.settle) }],
+  }));
 
   return (
-    <View
-      style={{
+    <Animated.View
+      style={[{
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.surfaceHover,
         borderRadius: 9999,
         paddingHorizontal: 20,
         height: 52,
-      }}
+      }, shellStyle]}
     >
       <MagnifyingGlass
         color={colors.textMuted}
@@ -40,6 +47,8 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...
         placeholderTextColor={colors.textMuted}
         value={value}
         onChangeText={onChangeText}
+        onFocus={() => { focused.value = withSpring(1, MOTION.snap); }}
+        onBlur={() => { focused.value = withSpring(0, MOTION.settle); }}
         autoCapitalize="none"
         returnKeyType="search"
       />
@@ -58,6 +67,6 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...
           <X color={colors.surface} size={12} weight="bold" />
         </Pressable>
       )}
-    </View>
+    </Animated.View>
   );
 }

@@ -4,11 +4,13 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
+  withSequence,
+  withSpring,
   withTiming,
   interpolate,
-  Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '../../lib/theme';
+import { MOTION } from '../../lib/motion';
 
 interface SkeletonProps {
   width?: number | string;
@@ -19,19 +21,27 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ width = '100%', height = 16, borderRadius = 8, className, style }: SkeletonProps) {
-  const { colors } = useTheme();
-  const shimmer = useSharedValue(0);
+  const { colors, reduceAnimations } = useTheme();
+  const shimmer = useSharedValue(0.4);
 
   useEffect(() => {
+    if (reduceAnimations) {
+      shimmer.value = 0.5;
+      return;
+    }
+    // Asymmetric spring pulse: snap bright, decay slow — feels organic vs linear bezier
     shimmer.value = withRepeat(
-      withTiming(1, { duration: 400, easing: Easing.bezier(0.4, 0, 0.6, 1) }),
+      withSequence(
+        withSpring(0.92, MOTION.snap),
+        withSpring(0.32, { damping: 28, stiffness: 240, mass: 1.2 })
+      ),
       -1,
-      true
+      false
     );
-  }, []);
+  }, [reduceAnimations]);
 
   const animStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(shimmer.value, [0, 1], [0.4, 0.9]),
+    opacity: shimmer.value,
   }));
 
   return (

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Pressable, PressableProps } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -13,6 +13,7 @@ interface AnimatedPressableProps extends PressableProps {
   fadeOnPress?: boolean;
   sinkOnPress?: boolean;
   dimWhenDisabled?: boolean;
+  tilt3D?: boolean;
   haptic?: 'light' | 'medium' | 'heavy' | 'none';
   className?: string;
   style?: any;
@@ -26,6 +27,7 @@ export function AnimatedPressable({
   fadeOnPress = false,
   sinkOnPress = true,
   dimWhenDisabled = true,
+  tilt3D = false,
   haptic = 'light',
   style,
   disabled,
@@ -34,19 +36,36 @@ export function AnimatedPressable({
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(disabled && dimWhenDisabled ? 0.45 : 1);
+  const rotateX = useSharedValue(0);
+  const rotateY = useSharedValue(0);
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const reduceAnimations = useAppStore(s => s.reduceAnimations);
+  const layoutRef = useRef({ width: 1, height: 1 });
 
   useEffect(() => {
     opacity.value = withSpring(disabled && dimWhenDisabled ? 0.45 : 1, MOTION.settle);
   }, [disabled, dimWhenDisabled, opacity]);
 
-  const animStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }, { translateY: translateY.value }],
-  }));
+  const animStyle = useAnimatedStyle(() => {
+    if (tilt3D && !reduceAnimations) {
+      return {
+        opacity: opacity.value,
+        transform: [
+          { perspective: 800 },
+          { rotateX: `${rotateX.value}deg` },
+          { rotateY: `${rotateY.value}deg` },
+          { scale: scale.value },
+          { translateY: translateY.value },
+        ],
+      };
+    }
+    return {
+      opacity: opacity.value,
+      transform: [{ scale: scale.value }, { translateY: translateY.value }],
+    };
+  });
 
-  const handlePressIn = () => {
+  const handlePressIn = (e: any) => {
     if (disabled) return;
     if (reduceAnimations) {
       opacity.value = fadeOnPress ? 0.82 : 1;
@@ -56,12 +75,25 @@ export function AnimatedPressable({
     scale.value = withSpring(preset?.scale ?? scaleValue, preset?.spring ?? MOTION.pressFirm);
     translateY.value = withSpring(sinkOnPress ? (preset?.translateY ?? 1) : 0, preset?.spring ?? MOTION.pressFirm);
     opacity.value = withSpring(fadeOnPress ? (preset?.opacity ?? 0.9) : 1, MOTION.pressSoft);
+
+    if (tilt3D) {
+      const { locationX, locationY } = e.nativeEvent;
+      const { width, height } = layoutRef.current;
+      const rx = -((locationY - height / 2) / (height / 2)) * 4;
+      const ry = ((locationX - width / 2) / (width / 2)) * 4;
+      rotateX.value = withSpring(rx, MOTION.pressFirm);
+      rotateY.value = withSpring(ry, MOTION.pressFirm);
+    }
   };
 
   const handlePressOut = () => {
     scale.value = reduceAnimations ? 1 : withSpring(1, MOTION.release);
     translateY.value = reduceAnimations ? 0 : withSpring(0, MOTION.release);
     opacity.value = withSpring(disabled && dimWhenDisabled ? 0.45 : 1, MOTION.release);
+    if (tilt3D) {
+      rotateX.value = withSpring(0, MOTION.release);
+      rotateY.value = withSpring(0, MOTION.release);
+    }
   };
 
   const handlePress = (e: any) => {
@@ -81,6 +113,12 @@ export function AnimatedPressable({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
+      onLayout={(e) => {
+        layoutRef.current = {
+          width: e.nativeEvent.layout.width,
+          height: e.nativeEvent.layout.height,
+        };
+      }}
       disabled={disabled}
       style={[animStyle, style]}
       {...props}
