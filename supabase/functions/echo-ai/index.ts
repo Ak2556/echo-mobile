@@ -378,6 +378,53 @@ const TOOLS: ToolSpec[] = [
     },
   },
   {
+    name: "create_note",
+    description:
+      "Create a note in the user's local Notes mini-app. Use when the user asks to save, jot down, remember, or create a note.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short note title. Omit to derive from the body." },
+        body: { type: "string", description: "The note body." },
+        color: { type: "string", description: "Optional note color hex from the app palette." },
+      },
+      required: [],
+    },
+    requiresConfirm: true,
+    preview: (a) => {
+      const label = (a.title as string | undefined) ?? (a.body as string | undefined) ?? "Untitled";
+      return `Create note "${label.slice(0, 60)}"`;
+    },
+    execute: async () => {
+      throw new Error("create_note is a local device tool");
+    },
+  },
+  {
+    name: "update_note",
+    description:
+      "Update an existing note in the user's local Notes mini-app. Use only for Notes, not for other mini-apps.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Exact local note id, if known." },
+        match_title: { type: "string", description: "Existing note title or search text to find the note." },
+        title: { type: "string", description: "New title, if changing it." },
+        body: { type: "string", description: "New note body or text to append." },
+        mode: { type: "string", enum: ["replace", "append"], default: "replace" },
+        color: { type: "string", description: "Optional note color hex from the app palette." },
+      },
+      required: [],
+    },
+    requiresConfirm: true,
+    preview: (a) => {
+      const target = (a.match_title as string | undefined) ?? (a.id as string | undefined) ?? "latest note";
+      return `Update note "${target}"`;
+    },
+    execute: async () => {
+      throw new Error("update_note is a local device tool");
+    },
+  },
+  {
     name: "list_my_followers",
     description: "List followers of the current user.",
     parameters: { type: "object", properties: {} },
@@ -409,10 +456,11 @@ const ORTOOL_DEFS: ORTool[] = TOOLS.map((t) => ({
 
 const SYSTEM_PROMPT = `You are Echo, an in-app assistant for a social network called Echo.
 Help the user accomplish things in the app — composing posts, searching/summarizing the feed,
-following people, liking/commenting, editing their profile.
+following people, liking/commenting, editing their profile, and creating or updating Notes.
 
 Rules:
 - Use tools whenever the user wants to act on the app. Don't pretend to do things; call the tool.
+- Use create_note and update_note only for the local Notes mini-app. Do not infer tools for other mini-apps.
 - Be concise. Don't restate the user's request.
 - For destructive or write actions, the system will pause for the user to confirm — don't ask
   for confirmation in chat, the UI handles it.

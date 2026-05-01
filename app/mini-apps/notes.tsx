@@ -5,24 +5,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 import { NotePencil, Plus, Trash, MagnifyingGlass, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { showToast } from '../../components/ui/Toast';
-
-const NOTES_KEY = 'mini:notes';
-
-interface Note { id: string; title: string; body: string; color: string; updatedAt: string }
-
-const NOTE_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899'];
-
-async function loadNotes(): Promise<Note[]> {
-  try { return JSON.parse((await AsyncStorage.getItem(NOTES_KEY)) ?? '[]'); } catch { return []; }
-}
-function saveNotes(notes: Note[]) { AsyncStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
+import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/notes';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -88,6 +78,11 @@ export default function NotesApp() {
   const accent = colors.accent;
   const [notes, setNotes] = useState<Note[]>([]);
   useEffect(() => { loadNotes().then(setNotes); }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadNotes().then(setNotes);
+    }, []),
+  );
   const [editing, setEditing] = useState<Note | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [search, setSearch] = useState('');
