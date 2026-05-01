@@ -61,6 +61,39 @@ export async function logExpenseTransaction(input: {
   return tx;
 }
 
+export interface ExpenseSummary {
+  income: number;
+  expense: number;
+  balance: number;
+  byCategory: Array<{ category: string; amount: number; type: TxType }>;
+  transactions: Transaction[];
+}
+
+export async function summarizeExpenses(input: {
+  range?: 'week' | 'month' | 'all';
+} = {}): Promise<ExpenseSummary> {
+  const txs = await loadTransactions();
+  const range = input.range ?? 'week';
+  const from = rangeStart(range);
+  const transactions = from ? txs.filter(tx => new Date(tx.date) >= from) : txs;
+  const income = transactions.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
+  const expense = transactions.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
+  const categoryMap = new Map<string, { category: string; amount: number; type: TxType }>();
+  for (const tx of transactions) {
+    const key = `${tx.type}:${tx.category}`;
+    const existing = categoryMap.get(key) ?? { category: tx.category, amount: 0, type: tx.type };
+    existing.amount += tx.amount;
+    categoryMap.set(key, existing);
+  }
+  return {
+    income,
+    expense,
+    balance: income - expense,
+    byCategory: [...categoryMap.values()].sort((a, b) => b.amount - a.amount),
+    transactions,
+  };
+}
+
 export function formatMoney(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -92,4 +125,12 @@ function normalizeDate(date?: string): string {
   if (!trimmed) return new Date().toISOString();
   const parsed = new Date(trimmed);
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+}
+
+function rangeStart(range: 'week' | 'month' | 'all'): Date | null {
+  if (range === 'all') return null;
+  const d = new Date();
+  if (range === 'week') d.setDate(d.getDate() - 7);
+  else d.setMonth(d.getMonth() - 1);
+  return d;
 }

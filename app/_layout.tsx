@@ -115,6 +115,7 @@ export default function RootLayout() {
           <Stack.Screen name="followers" options={{ presentation: 'card' }} />
           <Stack.Screen name="bookmarks" options={{ presentation: 'card' }} />
           <Stack.Screen name="settings" options={{ presentation: 'card' }} />
+          <Stack.Screen name="ai-memory" options={{ presentation: 'card' }} />
           <Stack.Screen name="edit-profile" options={{ presentation: 'card' }} />
           <Stack.Screen name="report" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />

@@ -9,6 +9,7 @@ import { FlashList } from '@shopify/flash-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
 import { ChatInput } from '../../components/ai/ChatInput';
+import { ActionCenter } from '../../components/ai/ActionCenter';
 import { ToolCallCard, ToolCallItem } from '../../components/ai/ToolCallCard';
 import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -16,7 +17,7 @@ import { streamEchoAI } from '../../lib/api';
 import { executeLocalTool, isLocalTool, localToolFailureMessage } from '../../lib/localTools';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { ShareNetwork, Plus, Lightning, Clock } from 'phosphor-react-native';
+import { ShareNetwork, Plus, Lightning, Clock, Question } from 'phosphor-react-native';
 
 const CONVERSATION_KEY = 'echo-ai/last-conversation-id';
 
@@ -35,6 +36,7 @@ export default function ChatScreen() {
 
   const [items, setItems] = useState<ChatItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [showActionCenter, setShowActionCenter] = useState(false);
   const [, setConversationId] = useState<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const listRef = useRef<any>(null);
@@ -103,6 +105,70 @@ export default function ChatScreen() {
     });
   };
 
+  const continueWithLocalResult = useCallback(
+    async (tool: ToolCallItem, ok: boolean, result?: any, error?: string) => {
+      const assistantId = `a-${Date.now()}`;
+      setIsStreaming(true);
+      try {
+        await streamEchoAI({
+          preferredModel: aiModel,
+          conversationId: conversationIdRef.current ?? undefined,
+          localResult: {
+            tool_call_id: tool.id,
+            tool_name: tool.name,
+            args: tool.args,
+            ok,
+            result,
+            error,
+          },
+          onEvent: (e) => {
+            if (e.type === 'conversation') {
+              setConvId(e.id);
+            } else if (e.type === 'text_delta') {
+              upsertText(assistantId, 'assistant', e.delta);
+            } else if (e.type === 'tool_result') {
+              upsertTool({
+                id: e.id,
+                name: e.name,
+                preview: tool.preview,
+                args: tool.args,
+                status: e.ok ? 'ok' : 'error',
+                resultSummary: summarizeResult(e.name, e.result),
+                errorMessage: e.error,
+              });
+            }
+          },
+        });
+      } catch (err: any) {
+        const prefix = ok
+          ? (tool.requiresConfirm === false ? 'I finished the local lookup' : 'Saved locally')
+          : 'The local action failed';
+        upsertText(`local-stream-err-${Date.now()}`, 'assistant', `${prefix}, but I couldn't continue the AI response: ${err?.message ?? 'unknown error'}`);
+      } finally {
+        setIsStreaming(false);
+      }
+    },
+    [aiModel],
+  );
+
+  const runLocalTool = useCallback(
+    async (tool: ToolCallItem) => {
+      if (!isLocalTool(tool.name)) return;
+      upsertTool({ ...tool, status: 'running' });
+      try {
+        const result = await executeLocalTool(tool.name, tool.args);
+        upsertTool({ ...tool, status: 'ok', resultSummary: result.summary });
+        continueWithLocalResult(tool, true, result.result);
+      } catch (err: any) {
+        const message = err?.message ?? 'unknown error';
+        upsertTool({ ...tool, status: 'error', errorMessage: message });
+        upsertText(`local-err-${Date.now()}`, 'assistant', localToolFailureMessage(tool.name, message));
+        continueWithLocalResult(tool, false, undefined, message);
+      }
+    },
+    [continueWithLocalResult],
+  );
+
   const runStream = useCallback(
     async (opts: Parameters<typeof streamEchoAI>[0]) => {
       const assistantId = `a-${Date.now()}`;
@@ -117,13 +183,18 @@ export default function ChatScreen() {
             } else if (e.type === 'text_delta') {
               upsertText(assistantId, 'assistant', e.delta);
             } else if (e.type === 'tool_call_pending') {
-              upsertTool({
+              const tool: ToolCallItem = {
                 id: e.id,
                 name: e.name,
                 preview: e.preview,
                 args: e.args,
                 status: 'pending_confirm',
-              });
+                requiresConfirm: e.requiresConfirm,
+              };
+              upsertTool(tool);
+              if (e.requiresConfirm === false && isLocalTool(e.name)) {
+                runLocalTool(tool);
+              }
             } else if (e.type === 'tool_result') {
               upsertTool({
                 id: e.id,
@@ -145,7 +216,7 @@ export default function ChatScreen() {
         setIsStreaming(false);
       }
     },
-    [aiModel],
+    [aiModel, runLocalTool],
   );
 
   const handleSend = useCallback(
@@ -167,45 +238,7 @@ export default function ChatScreen() {
   const handleConfirm = useCallback(
     async (tool: ToolCallItem) => {
       if (isLocalTool(tool.name)) {
-        upsertTool({ ...tool, status: 'running' });
-        try {
-          const result = await executeLocalTool(tool.name, tool.args);
-          upsertTool({
-            ...tool,
-            status: 'ok',
-            resultSummary: result.summary,
-          });
-          runStream({
-            conversationId: conversationIdRef.current ?? undefined,
-            localResult: {
-              tool_call_id: tool.id,
-              tool_name: tool.name,
-              args: tool.args,
-              ok: true,
-              result: result.result,
-            },
-            onEvent: () => {},
-          });
-        } catch (err: any) {
-          const message = err?.message ?? 'unknown error';
-          upsertTool({
-            ...tool,
-            status: 'error',
-            errorMessage: message,
-          });
-          upsertText(`local-err-${Date.now()}`, 'assistant', localToolFailureMessage(tool.name, message));
-          runStream({
-            conversationId: conversationIdRef.current ?? undefined,
-            localResult: {
-              tool_call_id: tool.id,
-              tool_name: tool.name,
-              args: tool.args,
-              ok: false,
-              error: message,
-            },
-            onEvent: () => {},
-          });
-        }
+        runLocalTool(tool);
         return;
       }
 
@@ -217,7 +250,7 @@ export default function ChatScreen() {
         onEvent: () => {},
       });
     },
-    [runStream],
+    [runLocalTool, runStream],
   );
 
   const handleReject = useCallback(
@@ -368,6 +401,18 @@ export default function ChatScreen() {
             >
               <Plus color={colors.textSecondary} size={20} />
             </AnimatedPressable>
+            <AnimatedPressable
+              onPress={() => setShowActionCenter(true)}
+              style={{
+                padding: 6,
+                borderRadius: 10,
+                backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+              }}
+              scaleValue={0.88}
+              haptic="light"
+            >
+              <Question color={colors.textSecondary} size={20} />
+            </AnimatedPressable>
           </View>
 
           {/* Centered title */}
@@ -415,6 +460,7 @@ export default function ChatScreen() {
           }}
         />
       </View>
+      <ActionCenter visible={showActionCenter} onClose={() => setShowActionCenter(false)} />
     </View>
   );
 }

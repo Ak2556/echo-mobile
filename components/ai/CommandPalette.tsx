@@ -11,8 +11,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Lightning, X, ArrowUp } from 'phosphor-react-native';
+import { Lightning, X, ArrowUp, Question } from 'phosphor-react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { ActionCenter } from './ActionCenter';
 import { useCommandPalette } from '../../lib/commandPalette';
 import { streamEchoAI } from '../../lib/api';
 import { executeLocalTool, isLocalTool, localToolFailureMessage } from '../../lib/localTools';
@@ -31,6 +32,7 @@ export function CommandPalette() {
   const [input, setInput] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
+  const [showActionCenter, setShowActionCenter] = useState(false);
   const conversationIdRef = useRef<string | null>(null);
   const inputRef = useRef<TextInput>(null);
 
@@ -83,14 +85,42 @@ export function CommandPalette() {
         onEvent: (e) => {
           if (e.type === 'conversation') conversationIdRef.current = e.id;
           else if (e.type === 'text_delta') upsertText(aid, 'assistant', e.delta);
-          else if (e.type === 'tool_call_pending')
-            upsertTool({
+          else if (e.type === 'tool_call_pending') {
+            const tool: ToolCallItem = {
               id: e.id,
               name: e.name,
               preview: e.preview,
               args: e.args,
               status: 'pending_confirm',
-            });
+              requiresConfirm: e.requiresConfirm,
+            };
+            upsertTool(tool);
+            if (e.requiresConfirm === false && isLocalTool(e.name)) {
+              upsertTool({ ...tool, status: 'running' });
+              executeLocalTool(e.name, e.args)
+                .then(async (result) => {
+                  upsertTool({ ...tool, status: 'ok', resultSummary: result.summary });
+                  await streamEchoAI({
+                    conversationId: conversationIdRef.current ?? undefined,
+                    localResult: {
+                      tool_call_id: tool.id,
+                      tool_name: tool.name,
+                      args: tool.args,
+                      ok: true,
+                      result: result.result,
+                    },
+                    onEvent: (next) => {
+                      if (next.type === 'text_delta') upsertText(`a-${Date.now()}`, 'assistant', next.delta);
+                    },
+                  });
+                })
+                .catch((err: any) => {
+                  const message = err?.message ?? 'unknown error';
+                  upsertTool({ ...tool, status: 'error', errorMessage: message });
+                  upsertText(`local-err-${Date.now()}`, 'assistant', localToolFailureMessage(tool.name, message));
+                });
+            }
+          }
           else if (e.type === 'tool_result')
             upsertTool({
               id: e.id,
@@ -270,6 +300,20 @@ export function CommandPalette() {
                   }}
                 >
                   <Lightning color={colors.accent} size={20} weight="fill" />
+                  <AnimatedPressable
+                    onPress={() => setShowActionCenter(true)}
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 15,
+                      backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    haptic="light"
+                  >
+                    <Question size={16} color={colors.textSecondary} />
+                  </AnimatedPressable>
                   <TextInput
                     ref={inputRef}
                     value={input}
@@ -341,6 +385,7 @@ export function CommandPalette() {
           </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
+      <ActionCenter visible={showActionCenter} onClose={() => setShowActionCenter(false)} />
     </Modal>
   );
 }

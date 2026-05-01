@@ -24,7 +24,7 @@ const CORS_HEADERS: Record<string, string> = {
 type SSEEvent =
   | { type: "conversation"; id: string }
   | { type: "text_delta"; delta: string }
-  | { type: "tool_call_pending"; id: string; name: string; args: unknown; preview: string }
+  | { type: "tool_call_pending"; id: string; name: string; args: unknown; preview: string; requiresConfirm?: boolean }
   | { type: "tool_result"; id: string; name: string; ok: boolean; result?: unknown; error?: string }
   | { type: "done" }
   | { type: "error"; message: string };
@@ -120,6 +120,7 @@ interface ToolSpec {
   description: string;
   parameters: Record<string, unknown>;
   requiresConfirm: boolean;
+  localDevice?: boolean;
   preview: (args: Record<string, unknown>) => string;
   execute: (
     args: Record<string, unknown>,
@@ -391,6 +392,7 @@ const TOOLS: ToolSpec[] = [
       required: [],
     },
     requiresConfirm: true,
+    localDevice: true,
     preview: (a) => {
       const label = (a.title as string | undefined) ?? (a.body as string | undefined) ?? "Untitled";
       return `Create note "${label.slice(0, 60)}"`;
@@ -416,6 +418,7 @@ const TOOLS: ToolSpec[] = [
       required: [],
     },
     requiresConfirm: true,
+    localDevice: true,
     preview: (a) => {
       const target = (a.match_title as string | undefined) ?? (a.id as string | undefined) ?? "latest note";
       return `Update note "${target}"`;
@@ -438,6 +441,7 @@ const TOOLS: ToolSpec[] = [
       required: ["name"],
     },
     requiresConfirm: true,
+    localDevice: true,
     preview: (a) => `Create habit "${(a.name as string | undefined) ?? "Untitled"}"`,
     execute: async () => {
       throw new Error("create_habit is a local device tool");
@@ -457,6 +461,7 @@ const TOOLS: ToolSpec[] = [
       required: [],
     },
     requiresConfirm: true,
+    localDevice: true,
     preview: (a) => `Complete habit "${(a.name as string | undefined) ?? (a.id as string | undefined) ?? "habit"}"`,
     execute: async () => {
       throw new Error("complete_habit is a local device tool");
@@ -476,6 +481,7 @@ const TOOLS: ToolSpec[] = [
       required: [],
     },
     requiresConfirm: true,
+    localDevice: true,
     preview: (a) => `Uncomplete habit "${(a.name as string | undefined) ?? (a.id as string | undefined) ?? "habit"}"`,
     execute: async () => {
       throw new Error("uncomplete_habit is a local device tool");
@@ -497,6 +503,7 @@ const TOOLS: ToolSpec[] = [
       required: ["amount"],
     },
     requiresConfirm: true,
+    localDevice: true,
     preview: (a) => `Log ${(a.type as string | undefined) ?? "expense"} ${a.amount ?? ""}`,
     execute: async () => {
       throw new Error("log_expense_transaction is a local device tool");
@@ -517,6 +524,7 @@ const TOOLS: ToolSpec[] = [
       required: [],
     },
     requiresConfirm: true,
+    localDevice: true,
     preview: (a) => `Rename voice memo "${(a.match_title as string | undefined) ?? (a.id as string | undefined) ?? "memo"}"`,
     execute: async () => {
       throw new Error("rename_voice_memo is a local device tool");
@@ -536,9 +544,109 @@ const TOOLS: ToolSpec[] = [
       required: [],
     },
     requiresConfirm: true,
+    localDevice: true,
     preview: (a) => `Delete voice memo "${(a.match_title as string | undefined) ?? (a.title as string | undefined) ?? (a.id as string | undefined) ?? "memo"}"`,
     execute: async () => {
       throw new Error("delete_voice_memo is a local device tool");
+    },
+  },
+  {
+    name: "search_local_productivity",
+    description:
+      "Search the user's local Notes, Habits, Expenses, and Voice Memo metadata. Read-only and local-device only.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search text." },
+        limit: { type: "integer", default: 12, maximum: 25 },
+      },
+      required: ["query"],
+    },
+    requiresConfirm: false,
+    localDevice: true,
+    preview: (a) => `Search local productivity for "${a.query ?? ""}"`,
+    execute: async () => {
+      throw new Error("search_local_productivity is a local device tool");
+    },
+  },
+  {
+    name: "summarize_expenses",
+    description:
+      "Summarize local Expenses transactions for a recent range. Read-only and local-device only.",
+    parameters: {
+      type: "object",
+      properties: {
+        range: { type: "string", enum: ["week", "month", "all"], default: "week" },
+      },
+      required: [],
+    },
+    requiresConfirm: false,
+    localDevice: true,
+    preview: (a) => `Summarize ${a.range ?? "week"} expenses`,
+    execute: async () => {
+      throw new Error("summarize_expenses is a local device tool");
+    },
+  },
+  {
+    name: "get_today_productivity",
+    description:
+      "Read today's local productivity dashboard: habits, recent notes, expense summary, and voice memo metadata.",
+    parameters: { type: "object", properties: {}, required: [] },
+    requiresConfirm: false,
+    localDevice: true,
+    preview: () => "Read today's productivity dashboard",
+    execute: async () => {
+      throw new Error("get_today_productivity is a local device tool");
+    },
+  },
+  {
+    name: "remember_preference",
+    description:
+      "Remember a user-approved local preference, such as preferred currency, common category, or recurring goal.",
+    parameters: {
+      type: "object",
+      properties: {
+        key: { type: "string" },
+        value: { type: "string" },
+      },
+      required: ["key", "value"],
+    },
+    requiresConfirm: true,
+    localDevice: true,
+    preview: (a) => `Remember ${a.key ?? "preference"}`,
+    execute: async () => {
+      throw new Error("remember_preference is a local device tool");
+    },
+  },
+  {
+    name: "forget_preference",
+    description:
+      "Forget a local AI memory/preference by id or key.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        key: { type: "string" },
+      },
+      required: [],
+    },
+    requiresConfirm: true,
+    localDevice: true,
+    preview: (a) => `Forget ${a.key ?? a.id ?? "memory"}`,
+    execute: async () => {
+      throw new Error("forget_preference is a local device tool");
+    },
+  },
+  {
+    name: "list_memory",
+    description:
+      "List local AI memories/preferences. Read-only and local-device only.",
+    parameters: { type: "object", properties: {}, required: [] },
+    requiresConfirm: false,
+    localDevice: true,
+    preview: () => "List local AI memory",
+    execute: async () => {
+      throw new Error("list_memory is a local device tool");
     },
   },
   {
@@ -581,6 +689,8 @@ Rules:
 - Use create_habit, complete_habit, and uncomplete_habit only for Habits.
 - Use log_expense_transaction only for Expenses.
 - Use rename_voice_memo and delete_voice_memo only for saved Voice Memo metadata; you cannot record audio for the user.
+- Use search_local_productivity, summarize_expenses, get_today_productivity, and list_memory for read-only local context.
+- Use remember_preference and forget_preference only when the user clearly wants Echo to remember or forget a preference.
 - Be concise. Don't restate the user's request.
 - For destructive or write actions, the system will pause for the user to confirm — don't ask
   for confirmation in chat, the UI handles it.
@@ -867,7 +977,7 @@ async function runAgentLoop(
       return;
     }
 
-    // For each tool call: confirm-required → pause and exit; auto → execute.
+    // For each tool call: local-device → client executes, confirm-required → pause, auto server tools → execute.
     let pausedForConfirm = false;
     for (const call of tool_calls) {
       const spec = TOOL_BY_NAME.get(call.function.name);
@@ -888,7 +998,29 @@ async function runAgentLoop(
         args = {};
       }
 
-      if (spec.requiresConfirm) {
+      if (spec.localDevice) {
+        if (spec.requiresConfirm) {
+          await logToolCall(
+            supabase,
+            userId,
+            conversationId,
+            spec.name,
+            args,
+            "pending_confirm",
+          );
+        }
+        send({
+          type: "tool_call_pending",
+          id: call.id,
+          name: spec.name,
+          args,
+          preview: spec.preview(args),
+          requiresConfirm: spec.requiresConfirm,
+        });
+        pausedForConfirm = true;
+        // Do not record a tool result yet — the next client turn will carry
+        // either a confirmation or a local_result payload.
+      } else if (spec.requiresConfirm) {
         await logToolCall(
           supabase,
           userId,
@@ -903,10 +1035,9 @@ async function runAgentLoop(
           name: spec.name,
           args,
           preview: spec.preview(args),
+          requiresConfirm: true,
         });
         pausedForConfirm = true;
-        // Do not record a tool result yet — the next turn from the client
-        // will arrive with a `confirm` payload.
       } else {
         await executeAndRecord(
           supabase,
