@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { Image } from 'expo-image';
 import { SealCheck } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 
 interface ProfileAvatarProps {
   displayName: string;
   avatarColor: string;
+  avatarUrl?: string;
   size?: number;
   showGlow?: boolean;
   isVerified?: boolean;
@@ -14,6 +16,7 @@ interface ProfileAvatarProps {
 export function ProfileAvatar({
   displayName,
   avatarColor,
+  avatarUrl,
   size = 74,
   showGlow = true,
   isVerified = false,
@@ -47,20 +50,33 @@ export function ProfileAvatar({
           justifyContent: 'center',
         }}
       >
-        <View
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: avatarColor,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontSize: size * 0.43, fontWeight: '700' }}>
-            {initial}
-          </Text>
-        </View>
+        {avatarUrl ? (
+          <Image
+            source={{ uri: avatarUrl }}
+            style={{
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+            }}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View
+            style={{
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              backgroundColor: avatarColor,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: size * 0.43, fontWeight: '700' }}>
+              {initial}
+            </Text>
+          </View>
+        )}
       </View>
       {isVerified && (
         <View style={{ position: 'absolute', bottom: 2, right: 2 }}>

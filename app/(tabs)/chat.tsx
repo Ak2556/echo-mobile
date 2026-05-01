@@ -27,6 +27,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const { colors, animation, reduceAnimations } = useTheme();
   const showTyping = useAppStore(s => s.showTypingIndicator);
+  const aiModel = useAppStore(s => s.aiModel);
   const insets = useSafeAreaInsets();
   const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
@@ -108,6 +109,7 @@ export default function ChatScreen() {
       try {
         await streamEchoAI({
           ...opts,
+          preferredModel: aiModel,
           onEvent: (e) => {
             if (e.type === 'conversation') {
               setConvId(e.id);

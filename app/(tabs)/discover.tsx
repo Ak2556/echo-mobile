@@ -1,6 +1,5 @@
-// @ts-nocheck
 import React, { useCallback } from 'react';
-import { View, Text, RefreshControl, ScrollView, Pressable, Platform, StyleSheet } from 'react-native';
+import { View, Text, RefreshControl, ScrollView, Pressable, Platform, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -81,7 +80,7 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
 
   const scrollY = useSharedValue(0);
-  const handleScroll = useCallback((event: any) => {
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollY.value = event.nativeEvent.contentOffset.y;
   }, [scrollY]);
 
@@ -172,7 +171,7 @@ export default function DiscoverScreen() {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
           <Text style={{ color: colors.textMuted, fontSize: 16 }}>Something went wrong</Text>
           <Pressable
-            onPress={refetch}
+            onPress={() => { refetch(); }}
             style={{ backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}
           >
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Try again</Text>
@@ -185,7 +184,6 @@ export default function DiscoverScreen() {
             <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
           )}
           keyExtractor={item => item.id}
-          estimatedItemSize={160}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
           onScroll={handleScroll}
           scrollEventThrottle={1}

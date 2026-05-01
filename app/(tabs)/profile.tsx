@@ -23,6 +23,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme, ANIM } from '../../lib/theme';
 import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
+import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -42,7 +43,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const {
     userId,
-    username, displayName, bio, avatarColor,
+    username, displayName, bio, avatarColor, avatarUrl,
     publishedEchoes,
     notificationsEnabled, setNotificationsEnabled,
     getFollowers, getFollowing,
@@ -80,7 +81,13 @@ export default function ProfileScreen() {
     return [...new Set(tags)].slice(0, 8);
   }, [publishedEchoes]);
 
-  const joinedYear = useMemo(() => new Date().getFullYear(), []);
+  // Use remote profile createdAt when available; fall back to current year.
+  const { data: remoteBundle } = useRemoteProfileBundle(userId);
+  const joinedYear = useMemo(() => {
+    const createdAt = remoteBundle?.user?.createdAt;
+    if (createdAt) return new Date(createdAt).getFullYear();
+    return new Date().getFullYear();
+  }, [remoteBundle]);
 
   const handleTabPress = (tab: 'posts' | 'about', index: number) => {
     setActiveTab(tab);
@@ -168,6 +175,7 @@ export default function ProfileScreen() {
           <ProfileAvatar
             displayName={displayLabel}
             avatarColor={avatarColor || colors.accent}
+            avatarUrl={avatarUrl || undefined}
             size={78}
           />
 

@@ -6,7 +6,9 @@ export type SupabaseProfileRow = {
   display_name: string;
   bio?: string;
   avatar_color: string;
+  avatar_url?: string | null;
   is_verified: boolean;
+  created_at: string;
 };
 
 export type SupabaseEchoRow = {
@@ -20,6 +22,7 @@ export type SupabaseEchoRow = {
   repost_count: number;
   view_count: number;
   created_at: string;
+  media_urls?: string[] | null;
 };
 
 export function extractHashtags(text: string): string[] {
@@ -34,12 +37,14 @@ export function mapEchoRowToFeedItem(
   bookmarkedSet: Set<string>
 ): FeedItem {
   const username = author?.username ?? 'unknown';
+  const mediaUris = echo.media_urls?.length ? echo.media_urls : undefined;
   return {
     id: echo.id,
     userId: echo.author_id,
     username,
     displayName: author?.display_name || username,
     avatarColor: author?.avatar_color || '#3B82F6',
+    avatarUrl: author?.avatar_url ?? undefined,
     isVerified: author?.is_verified ?? false,
     prompt: echo.prompt,
     response: echo.response,
@@ -52,5 +57,7 @@ export function mapEchoRowToFeedItem(
     viewCount: echo.view_count ?? 0,
     hashtags: extractHashtags(`${echo.prompt} ${echo.response}`),
     createdAt: echo.created_at,
+    postType: mediaUris ? 'photo' : 'text',
+    mediaUris,
   };
 }
