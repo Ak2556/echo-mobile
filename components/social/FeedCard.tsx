@@ -18,6 +18,7 @@ import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
+import { MOTION } from '../../lib/motion';
 
 interface FeedCardProps {
   item: FeedItem;
@@ -136,9 +137,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const bounceIcon = (sv: { value: number }) => {
     if (reduceAnimations) return;
     sv.value = withSequence(
-      withSpring(0.7, { damping: 10, stiffness: 400 }),
-      withSpring(1.15, { damping: 10, stiffness: 400 }),
-      withSpring(1, { damping: 12, stiffness: 300 })
+      withSpring(0.74, MOTION.pressDeep),
+      withSpring(1.16, MOTION.overshoot),
+      withSpring(1, MOTION.release)
     );
   };
 
@@ -205,7 +206,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
       style={{ marginBottom: 12 }}
     >
       <GlassPanel variant="ultra" borderRadius={radius.md} elevated>
-        <AnimatedPressable onPress={handleReport} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} scaleValue={0.97} haptic="medium">
+        <AnimatedPressable onPress={handleReport} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} depth="medium" fadeOnPress haptic="medium">
           <Flag color="#F59E0B" size={16} weight="fill" />
           <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Report</Text>
         </AnimatedPressable>
@@ -213,7 +214,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         <AnimatedPressable
           onPress={() => { setShowMenu(false); router.push(`/user/${item.userId}`); }}
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }}
-          scaleValue={0.97}
+          depth="soft"
+          fadeOnPress
           haptic="light"
         >
           <UserMinus color={colors.textSecondary} size={16} />
@@ -232,7 +234,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         <AnimatedPressable
           onPress={(e) => { e.stopPropagation?.(); router.push(`/comments/${item.id}`); }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-          scaleValue={reduceAnimations ? 1 : 0.85}
+          depth="medium"
+          fadeOnPress
           haptic="light"
         >
           <ChatCircle color={colors.textMuted} size={19} />
@@ -242,7 +245,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         <AnimatedPressable
           onPress={(e) => { e.stopPropagation?.(); handleRepost(); }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-          scaleValue={reduceAnimations ? 1 : 0.85}
+          depth="medium"
+          fadeOnPress
           haptic="medium"
         >
           <Animated.View style={repostAnim}>
@@ -253,13 +257,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </Text>
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="medium">
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium">
           <Animated.View style={bookmarkAnim}>
             <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
           </Animated.View>
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} scaleValue={reduceAnimations ? 1 : 0.85} haptic="light">
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light">
           <Animated.View style={shareAnim}>
             <ShareNetwork color={colors.textMuted} size={19} />
           </Animated.View>
@@ -274,7 +278,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
       <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()}>
         <AnimatedPressable
           onPress={handleMainPress}
-          scaleValue={reduceAnimations ? 1 : 0.98}
+          depth="soft"
+          fadeOnPress
           haptic="light"
           style={{
             marginHorizontal: 16,
@@ -316,7 +321,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               {showAvatars && (
                 <AnimatedPressable
                   onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
-                  scaleValue={reduceAnimations ? 1 : 0.9}
+                  depth="medium"
+                  fadeOnPress
                   haptic="light"
                 >
                   {item.avatarUrl ? (
@@ -339,7 +345,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               <AnimatedPressable
                 onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
                 style={{ flex: 1 }}
-                scaleValue={reduceAnimations ? 1 : 0.98}
+                depth="soft"
                 haptic="none"
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -351,7 +357,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
               <AnimatedPressable
                 onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
-                scaleValue={reduceAnimations ? 1 : 0.85}
+                depth="medium"
+                fadeOnPress
                 haptic="light"
               >
                 <DotsThreeOutline color={colors.textMuted} size={20} />
@@ -389,7 +396,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
       <GlassPanel variant="light" borderRadius={radius.card} elevated>
       <AnimatedPressable
         onPress={handleMainPress}
-        scaleValue={reduceAnimations ? 1 : 0.98}
+        depth="soft"
+        fadeOnPress
         haptic="light"
         style={{
           padding: cardPadding,
@@ -408,7 +416,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           {showAvatars && (
             <AnimatedPressable
               onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
-              scaleValue={reduceAnimations ? 1 : 0.9}
+              depth="medium"
+              fadeOnPress
               haptic="light"
             >
               {item.avatarUrl ? (
@@ -432,7 +441,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
             className="flex-1"
-            scaleValue={reduceAnimations ? 1 : 0.98}
+            depth="soft"
             haptic="none"
           >
             <View className="flex-row items-center gap-1">
@@ -444,7 +453,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
-            scaleValue={reduceAnimations ? 1 : 0.85}
+            depth="medium"
+            fadeOnPress
             haptic="light"
           >
             <DotsThreeOutline color={colors.textMuted} size={20} />

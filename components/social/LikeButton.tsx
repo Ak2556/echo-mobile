@@ -8,6 +8,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteLike } from '../../hooks/queries/useSupabaseSocial';
 import { useAppStore } from '../../store/useAppStore';
+import { MOTION } from '../../lib/motion';
 
 interface LikeButtonProps {
   echoId: string;
@@ -34,12 +35,12 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
   const bump = (isLiking: boolean) => {
     if (isLiking) {
       heartScale.value = withSequence(
-        withSpring(0.85, { damping: 20, stiffness: 600 }),
-        withSpring(1, { damping: 18, stiffness: 500 })
+        withSpring(0.84, MOTION.pressFirm),
+        withSpring(1, MOTION.overshoot)
       );
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
-      heartScale.value = withSpring(1, { damping: 18, stiffness: 500 });
+      heartScale.value = withSpring(1, MOTION.release);
       if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -72,7 +73,8 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
     <AnimatedPressable
       onPress={handlePress}
       className="flex-row items-center gap-2 px-3 py-2 rounded-full bg-zinc-800/60"
-      scaleValue={0.92}
+      depth="medium"
+      fadeOnPress
       haptic="none"
     >
       <Animated.View style={heartStyle}>

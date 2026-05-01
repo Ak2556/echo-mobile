@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, Pressable, Dimensions, StyleSheet, Platform } from 'react-native';
+import { View, Text, Dimensions, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
 import { VideoPreview } from './VideoPreview';
+import { AnimatedPressable } from '../ui/AnimatedPressable';
 
 const { width: SW } = Dimensions.get('window');
 export const HERO_CARD_WIDTH = SW * 0.72;
@@ -35,8 +36,10 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
 
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      depth="soft"
+      fadeOnPress
       style={{
         width: HERO_CARD_WIDTH,
         height: HERO_CARD_HEIGHT,
@@ -200,6 +203,6 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
           <View style={{ height: 6 }} />
         </View>
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }

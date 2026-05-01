@@ -1,9 +1,11 @@
 import React from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { X } from 'phosphor-react-native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
+import { MOTION } from '../../lib/motion';
 
 interface Props {
   visible: boolean;
@@ -32,7 +34,7 @@ const GROUPS = [
 ];
 
 export function ActionCenter({ visible, onClose, onSelectExample }: Props) {
-  const { colors } = useTheme();
+  const { colors, reduceAnimations } = useTheme();
   const selectExample = (prompt: string) => {
     onSelectExample?.(prompt);
     onClose();
@@ -41,8 +43,11 @@ export function ActionCenter({ visible, onClose, onSelectExample }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={StyleSheet.absoluteFill}>
-        <Pressable onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]} />
+        <Animated.View entering={reduceAnimations ? undefined : FadeIn.duration(120)} style={StyleSheet.absoluteFill}>
+          <Pressable onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]} />
+        </Animated.View>
         <View style={{ flex: 1, justifyContent: 'center', padding: 18 }}>
+          <Animated.View entering={reduceAnimations ? undefined : FadeInDown.springify().damping(MOTION.modalEntrance.damping).stiffness(MOTION.modalEntrance.stiffness).mass(MOTION.modalEntrance.mass)}>
           <GlassPanel variant="ultra" borderRadius={22} elevated>
             <View style={{ padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ flex: 1 }}>
@@ -59,18 +64,21 @@ export function ActionCenter({ visible, onClose, onSelectExample }: Props) {
                 <View key={group.title} style={{ borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
                   <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 8 }}>{group.title}</Text>
                   {group.examples.map(example => (
-                    <Pressable
+                    <AnimatedPressable
                       key={example}
                       onPress={() => selectExample(example)}
-                      style={{ borderRadius: 10, paddingVertical: 6, paddingHorizontal: 8, marginHorizontal: -8 }}
+                      depth="soft"
+                      fadeOnPress
+                      style={{ borderRadius: 999, paddingVertical: 7, paddingHorizontal: 10, marginHorizontal: -2, marginVertical: 2, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.035)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}
                     >
                       <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19 }}>- {example}</Text>
-                    </Pressable>
+                    </AnimatedPressable>
                   ))}
                 </View>
               ))}
             </ScrollView>
           </GlassPanel>
+          </Animated.View>
         </View>
       </View>
     </Modal>
