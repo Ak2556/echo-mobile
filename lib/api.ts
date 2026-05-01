@@ -10,7 +10,7 @@ const ECHO_AI_URL = `${SUPABASE_URL}/functions/v1/echo-ai`;
 export type EchoAIEvent =
   | { type: 'conversation'; id: string }
   | { type: 'text_delta'; delta: string }
-  | { type: 'tool_call_pending'; id: string; name: string; args: any; preview: string }
+  | { type: 'tool_call_pending'; id: string; name: string; args: any; preview: string; requiresConfirm?: boolean }
   | { type: 'tool_result'; id: string; name: string; ok: boolean; result?: any; error?: string }
   | { type: 'done' }
   | { type: 'error'; message: string };

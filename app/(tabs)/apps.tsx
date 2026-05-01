@@ -1,8 +1,8 @@
 // @ts-nocheck
-import React from 'react';
-import { View, Text, ScrollView, Pressable, Dimensions, StyleSheet, Platform } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, ScrollView, Pressable, Dimensions, StyleSheet, Platform, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,9 @@ import {
   Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix, VideoCamera,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { getTodayProductivity, searchLocalProductivity } from '../../lib/localSearch';
+import { formatMoney } from '../../lib/expenses';
+import { formatMemoTime } from '../../lib/voiceMemos';
 
 const { width } = Dimensions.get('window');
 const PAD = 20;
@@ -174,6 +177,10 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
 export default function AppsScreen() {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const [dashboard, setDashboard] = useState(null);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
 
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
@@ -182,6 +189,21 @@ export default function AppsScreen() {
 
   const rows: MiniApp[][] = [];
   for (let i = 0; i < APPS.length; i += 2) rows.push(APPS.slice(i, i + 2));
+
+  useFocusEffect(
+    useCallback(() => {
+      getTodayProductivity().then(setDashboard).catch(() => setDashboard(null));
+    }, []),
+  );
+
+  const runLocalSearch = (text: string) => {
+    setQuery(text);
+    if (!text.trim()) {
+      setResults([]);
+      return;
+    }
+    searchLocalProductivity(text, 6).then(setResults).catch(() => setResults([]));
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -198,6 +220,53 @@ export default function AppsScreen() {
         contentContainerStyle={{ paddingTop: HEADER_HEIGHT, padding: PAD, gap: GAP }}
         showsVerticalScrollIndicator={false}
       >
+        {dashboard && (
+          <Animated.View entering={FadeInDown.delay(40).springify()} style={{ gap: 12, marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>Today</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Local dashboard</Text>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
+              <Pressable onPress={() => router.push('/mini-apps/habits')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#10B98118', borderWidth: StyleSheet.hairlineWidth, borderColor: '#10B98144' }}>
+                <Text style={{ color: '#10B981', fontWeight: '900', fontSize: 24 }}>{dashboard.habits.percent}%</Text>
+                <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Habits</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.habits.done}/{dashboard.habits.total} done</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/mini-apps/expenses')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#8B5CF618', borderWidth: StyleSheet.hairlineWidth, borderColor: '#8B5CF644' }}>
+                <Text style={{ color: dashboard.expenses.balance >= 0 ? '#10B981' : '#EF4444', fontWeight: '900', fontSize: 22 }}>${formatMoney(Math.abs(dashboard.expenses.balance))}</Text>
+                <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Weekly balance</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>${formatMoney(dashboard.expenses.expense)} spent</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/mini-apps/notes')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#F59E0B18', borderWidth: StyleSheet.hairlineWidth, borderColor: '#F59E0B44' }}>
+                <Text style={{ color: '#F59E0B', fontWeight: '900', fontSize: 24 }}>{dashboard.notes.total}</Text>
+                <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Notes</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>{dashboard.notes.recent[0]?.title ?? 'No recent notes'}</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/mini-apps/voice-memo')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#EF444418', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EF444444' }}>
+                <Text style={{ color: '#EF4444', fontWeight: '900', fontSize: 24 }}>{dashboard.voiceMemos.total}</Text>
+                <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Voice memos</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.voiceMemos.recent[0] ? formatMemoTime(dashboard.voiceMemos.recent[0].duration) : 'No recordings'}</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        )}
+
+        <Animated.View entering={FadeInDown.delay(70).springify()} style={{ gap: 10, marginBottom: 8 }}>
+          <TextInput
+            value={query}
+            onChangeText={runLocalSearch}
+            placeholder="Search notes, habits, expenses, memos..."
+            placeholderTextColor={colors.textMuted}
+            style={{ color: colors.text, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
+          />
+          {results.map(result => (
+            <Pressable key={`${result.app}-${result.id}`} onPress={() => router.push(result.route)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
+              <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{result.title}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{result.app} · {result.subtitle}</Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+
         {rows.map((row, ri) => (
           <View key={ri} style={{ flexDirection: 'row', gap: GAP }}>
             {row.map((app, ci) => <AppCard key={app.id} app={app} index={ri * 2 + ci} />)}

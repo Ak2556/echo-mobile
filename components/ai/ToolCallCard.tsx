@@ -16,6 +16,7 @@ export interface ToolCallItem {
   args: any;
   resultSummary?: string;
   errorMessage?: string;
+  requiresConfirm?: boolean;
 }
 
 interface Props {
@@ -52,7 +53,7 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
       case 'running':
         return 'Running…';
       default:
-        return 'Awaiting your confirmation';
+        return item.requiresConfirm === false ? 'Running locally' : 'Awaiting your confirmation';
     }
   })();
 
@@ -75,7 +76,7 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
             </View>
           </View>
 
-          {item.status === 'pending_confirm' && (
+          {item.status === 'pending_confirm' && item.requiresConfirm !== false && (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
               <AnimatedPressable
                 onPress={() => onReject?.(item)}

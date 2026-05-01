@@ -558,6 +558,8 @@ export default function SettingsScreen() {
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label="AI Model" subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
             {divider}
+            <SettingsRow theme={theme} icon={Database} iconColor={colors.accent} label="AI Memory" subtitle="View and clear remembered preferences" onPress={() => router.push('/ai-memory')} />
+            {divider}
             <SettingsRow theme={theme} icon={ChatTeardropDots} label="Chat Bubble Style" subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={Star} label="Stream Responses" subtitle="Show AI responses as they're generated" right={SwitchEl(s.streamResponses, s.setStreamResponses)} />
