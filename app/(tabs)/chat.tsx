@@ -21,6 +21,7 @@ import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, Clock, Question } from 'phosphor-react-native';
 
 const CONVERSATION_KEY = 'echo-ai/last-conversation-id';
+const EMPTY_SUGGESTIONS = ['Create a note', 'Mark a habit done', 'Log an expense', 'Search local'];
 
 type ChatItem =
   | { kind: 'text'; message: Message }
@@ -286,6 +287,7 @@ export default function ChatScreen() {
   };
 
   const headerHeight = insets.top + 52;
+  const showEmptySuggestions = items.length === 1 && items[0]?.kind === 'text' && items[0].message.id === 'welcome';
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -323,6 +325,28 @@ export default function ChatScreen() {
           {isStreaming && showTyping && <TypingIndicator />}
         </View>
         <View style={{ paddingBottom: 110 }}>
+          {showEmptySuggestions ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingBottom: 8 }}>
+              {EMPTY_SUGGESTIONS.map(suggestion => (
+                <AnimatedPressable
+                  key={suggestion}
+                  onPress={() => setDraft(suggestion)}
+                  depth="soft"
+                  fadeOnPress
+                  style={{
+                    borderRadius: 999,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: colors.glassBorder,
+                    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                  }}
+                >
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>{suggestion}</Text>
+                </AnimatedPressable>
+              ))}
+            </View>
+          ) : null}
           <ChatInput onSend={handleSend} isLoading={isStreaming} draft={draft} onDraftChange={setDraft} />
         </View>
       </KeyboardAvoidingView>

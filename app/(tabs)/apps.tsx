@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Dimensions, StyleSheet, Platform, TextInput } from 'react-native';
+import { View, Text, ScrollView, Dimensions, StyleSheet, Platform, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { Extrapolation, FadeInDown, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -15,11 +15,15 @@ import { useTheme } from '../../lib/theme';
 import { getTodayProductivity, LocalProductivityApp, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
 import { formatMoney } from '../../lib/expenses';
 import { formatMemoTime } from '../../lib/voiceMemos';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { EmptyState, Pill, SectionTitle } from '../../components/ui/Polish';
+import { MOTION } from '../../lib/motion';
 
 const { width } = Dimensions.get('window');
 const PAD = 20;
 const GAP = 12;
 const CARD = (width - PAD * 2 - GAP) / 2;
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 type SearchFilter = 'all' | LocalProductivityApp;
 
 const SEARCH_FILTERS: { label: string; value: SearchFilter }[] = [
@@ -90,23 +94,24 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(index * 20).springify().damping(22).stiffness(600)}
+      entering={FadeInDown.delay(Math.min(index, 8) * 24).springify().damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
       style={{ width: CARD }}
     >
-      <Pressable
+      <AnimatedPressable
         onPress={() => router.push(app.route as any)}
-        style={({ pressed }) => ({
+        depth="medium"
+        fadeOnPress
+        style={{
           borderRadius: 24,
           overflow: 'hidden',
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: pressed ? app.color + '66' : colors.glassBorder,
-          transform: [{ scale: pressed ? 0.95 : 1 }],
+          borderColor: colors.glassBorder,
           shadowColor: app.color,
-          shadowOpacity: pressed ? 0.28 : 0.08,
+          shadowOpacity: 0.1,
           shadowRadius: 16,
           shadowOffset: { width: 0, height: 4 },
           elevation: 4,
-        })}
+        }}
       >
         {/* Glass base */}
         {useBlur && (
@@ -177,7 +182,7 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
             }}
           />
         </View>
-      </Pressable>
+      </AnimatedPressable>
     </Animated.View>
   );
 }
@@ -195,6 +200,29 @@ export default function AppsScreen() {
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
   const HEADER_HEIGHT = insets.top + 70;
+  const scrollY = useSharedValue(0);
+  const blurIntensity = useSharedValue(0);
+  const overlayOpacity = useSharedValue(useBlur ? 0.28 : 0.97);
+  const borderOpacity = useSharedValue(0);
+  const headerBgStyle = useAnimatedStyle(() => ({ opacity: overlayOpacity.value }));
+  const headerBorderStyle = useAnimatedStyle(() => ({ opacity: borderOpacity.value }));
+  const blurAnimatedProps = useAnimatedProps(() => ({ intensity: blurIntensity.value }));
+
+  useAnimatedReaction(
+    () => interpolate(scrollY.value, [0, 80], [0, 72], Extrapolation.CLAMP),
+    target => { blurIntensity.value = reduceAnimations ? target : withSpring(target, MOTION.settle); },
+  );
+  useAnimatedReaction(
+    () => interpolate(scrollY.value, [0, 80], [useBlur ? 0.28 : 0.97, 0.96], Extrapolation.CLAMP),
+    target => { overlayOpacity.value = reduceAnimations ? target : withSpring(target, MOTION.settle); },
+  );
+  useAnimatedReaction(
+    () => interpolate(scrollY.value, [12, 80], [0, 1], Extrapolation.CLAMP),
+    target => { borderOpacity.value = reduceAnimations ? target : withSpring(target, MOTION.settle); },
+  );
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollY.value = event.nativeEvent.contentOffset.y;
+  }, [scrollY]);
 
   const rows: MiniApp[][] = [];
   for (let i = 0; i < APPS.length; i += 2) rows.push(APPS.slice(i, i + 2));
@@ -228,53 +256,52 @@ export default function AppsScreen() {
 
       <ScrollView
         contentContainerStyle={{ paddingTop: HEADER_HEIGHT, padding: PAD, gap: GAP }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
         {dashboard && (
           <Animated.View entering={FadeInDown.delay(40).springify()} style={{ gap: 12, marginBottom: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>Today</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Local dashboard</Text>
-            </View>
+            <SectionTitle title="Today" caption="Local dashboard" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
-              <Pressable onPress={() => router.push('/mini-apps/habits')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#10B98118', borderWidth: StyleSheet.hairlineWidth, borderColor: '#10B98144' }}>
+              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/habits')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#10B98118', borderWidth: StyleSheet.hairlineWidth, borderColor: '#10B98144' }}>
                 <Text style={{ color: '#10B981', fontWeight: '900', fontSize: 24 }}>{dashboard.habits.percent}%</Text>
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Habits</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.habits.done}/{dashboard.habits.total} done</Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/mini-apps/expenses')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#8B5CF618', borderWidth: StyleSheet.hairlineWidth, borderColor: '#8B5CF644' }}>
+              </AnimatedPressable>
+              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/expenses')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#8B5CF618', borderWidth: StyleSheet.hairlineWidth, borderColor: '#8B5CF644' }}>
                 <Text style={{ color: dashboard.expenses.balance >= 0 ? '#10B981' : '#EF4444', fontWeight: '900', fontSize: 22 }}>${formatMoney(Math.abs(dashboard.expenses.balance))}</Text>
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Weekly balance</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>${formatMoney(dashboard.expenses.expense)} spent</Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/mini-apps/notes')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#F59E0B18', borderWidth: StyleSheet.hairlineWidth, borderColor: '#F59E0B44' }}>
+              </AnimatedPressable>
+              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/notes')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#F59E0B18', borderWidth: StyleSheet.hairlineWidth, borderColor: '#F59E0B44' }}>
                 <Text style={{ color: '#F59E0B', fontWeight: '900', fontSize: 24 }}>{dashboard.notes.total}</Text>
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Notes</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>{dashboard.notes.recent[0]?.title ?? 'No recent notes'}</Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/mini-apps/voice-memo')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#EF444418', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EF444444' }}>
+              </AnimatedPressable>
+              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/voice-memo')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#EF444418', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EF444444' }}>
                 <Text style={{ color: '#EF4444', fontWeight: '900', fontSize: 24 }}>{dashboard.voiceMemos.total}</Text>
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Voice memos</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.voiceMemos.recent[0] ? formatMemoTime(dashboard.voiceMemos.recent[0].duration) : 'No recordings'}</Text>
-              </Pressable>
+              </AnimatedPressable>
             </View>
             <View style={{ gap: 8 }}>
-              <Pressable onPress={() => router.push('/mini-apps/habits' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/habits' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Habits due today</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.habits.remaining.length ? dashboard.habits.remaining.join(', ') : 'All habits complete'}</Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/mini-apps/notes' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              </AnimatedPressable>
+              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/notes' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Recent notes</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.notes.recent.map(note => note.title).join(', ') || 'No recent notes'}</Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/mini-apps/expenses' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              </AnimatedPressable>
+              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/expenses' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Biggest expense category</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }}>{dashboard.expenses.biggestCategory ? `${dashboard.expenses.biggestCategory.category} - $${formatMoney(dashboard.expenses.biggestCategory.amount)}` : 'No expenses this week'}</Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/mini-apps/voice-memo' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              </AnimatedPressable>
+              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/voice-memo' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Latest voice memo</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.voiceMemos.recent[0] ? `${dashboard.voiceMemos.recent[0].title} - ${formatMemoTime(dashboard.voiceMemos.recent[0].duration)}` : 'No recordings'}</Text>
-              </Pressable>
+              </AnimatedPressable>
             </View>
           </Animated.View>
         )}
@@ -291,18 +318,17 @@ export default function AppsScreen() {
             {SEARCH_FILTERS.map(item => {
               const active = filter === item.value;
               return (
-                <Pressable key={item.value} onPress={() => setFilter(item.value)} style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: active ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)') }}>
-                  <Text style={{ color: active ? '#fff' : colors.textMuted, fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
-                </Pressable>
+                <Pill key={item.value} label={item.label} active={active} onPress={() => setFilter(item.value)} />
               );
             })}
           </ScrollView>
           {filteredResults.map(result => (
-            <Pressable key={`${result.app}-${result.id}`} onPress={() => router.push(result.route as any)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
+            <AnimatedPressable depth="soft" fadeOnPress key={`${result.app}-${result.id}`} onPress={() => router.push(result.route as any)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
               <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{result.title}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{result.app} · {result.subtitle}</Text>
-            </Pressable>
+            </AnimatedPressable>
           ))}
+          {query.trim() && filteredResults.length === 0 ? <EmptyState title="No local matches" caption="Try a different note, habit, expense, or memo term." /> : null}
         </Animated.View>
 
         {rows.map((row, ri) => (
@@ -332,16 +358,17 @@ export default function AppsScreen() {
         }}
       >
         {useBlur && (
-          <BlurView
-            intensity={70}
+          <AnimatedBlurView
+            animatedProps={blurAnimatedProps}
             tint={tint}
             style={StyleSheet.absoluteFill}
           />
         )}
-        <View
+        <Animated.View
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: colors.bg, opacity: useBlur ? 0.28 : 0.97 },
+            { backgroundColor: colors.bg },
+            headerBgStyle,
           ]}
         />
 
@@ -354,15 +381,15 @@ export default function AppsScreen() {
           </Text>
         </View>
 
-        <View
-          style={{
+        <Animated.View
+          style={[{
             position: 'absolute',
             bottom: 0,
             left: 0,
             right: 0,
             height: StyleSheet.hairlineWidth,
             backgroundColor: colors.glassBorder,
-          }}
+          }, headerBorderStyle]}
         />
       </View>
     </View>

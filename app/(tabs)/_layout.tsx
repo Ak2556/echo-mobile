@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, FilmStrip } from 'phosphor-react-native';
@@ -9,6 +9,8 @@ import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
 import { GlassPanel } from '../../components/ui/GlassPanel';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { MOTION } from '../../lib/motion';
 
 const HIDDEN_ROUTES = new Set(['history']);
 
@@ -31,11 +33,11 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
       scale.value = reduceAnimations
         ? 1
         : withSequence(
-            withSpring(1.15, { damping: 22, stiffness: 600 }),
-            withSpring(1, { damping: 22, stiffness: 600 })
+            withSpring(1.15, MOTION.overshoot),
+            withSpring(1, MOTION.snap)
           );
     } else {
-      scale.value = reduceAnimations ? 0 : withSpring(0, { damping: 22, stiffness: 600 });
+      scale.value = reduceAnimations ? 0 : withSpring(0, MOTION.snap);
     }
   }, [count]);
 
@@ -102,7 +104,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             const badgeCount = badges[route.name] ?? 0;
 
             return (
-              <Pressable
+              <AnimatedPressable
                 key={route.key}
                 onPress={() => {
                   const event = navigation.emit({
@@ -124,7 +126,9 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isFocused }}
-                style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
+                depth="soft"
+                fadeOnPress
+                style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}
               >
                 {/* Active glow circle */}
                 {isFocused && (
@@ -145,7 +149,12 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 ) : (
                   <IconComp color={color} size={22} weight={isFocused ? 'fill' : 'regular'} />
                 )}
-              </Pressable>
+                {isFocused ? (
+                  <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', marginTop: 1 }} numberOfLines={1}>
+                    {descriptors[route.key]?.options.title ?? route.name}
+                  </Text>
+                ) : null}
+              </AnimatedPressable>
             );
           })}
         </View>

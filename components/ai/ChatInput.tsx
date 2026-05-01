@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { ArrowUp } from 'phosphor-react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
+import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { MOTION } from '../../lib/motion';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -20,6 +21,7 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const { colors, reduceAnimations } = useTheme();
   const sendScale = useSharedValue(1);
+  const focus = useSharedValue(0);
 
   useEffect(() => {
     if (draft !== undefined && draft !== text) setText(draft);
@@ -33,8 +35,8 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
   const handleSend = () => {
     if (text.trim() && !isLoading) {
       sendScale.value = withSequence(
-        withSpring(0.88, { damping: 18, stiffness: 600 }),
-        withSpring(1, { damping: 18, stiffness: 500 })
+        withSpring(0.86, MOTION.pressDeep),
+        withSpring(1, MOTION.overshoot)
       );
       if (hapticEnabled) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -47,6 +49,10 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
   const buttonStyle = useAnimatedStyle(() => ({
     opacity: withSpring(text.trim() ? 1 : 0.4, { damping: 20, stiffness: 500 }),
     transform: [{ scale: sendScale.value }],
+  }));
+  const inputShellStyle = useAnimatedStyle(() => ({
+    borderColor: interpolateColor(focus.value, [0, 1], [colors.glassBorder, colors.accent]),
+    transform: [{ scale: reduceAnimations ? 1 : withSpring(focus.value ? 1.006 : 1, MOTION.settle) }],
   }));
 
   const canSend = !!text.trim() && !isLoading;
@@ -84,8 +90,8 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
         }}
       >
         {/* Input bubble */}
-        <View
-          style={{
+        <Animated.View
+          style={[{
             flex: 1,
             marginRight: 8,
             borderRadius: 22,
@@ -98,12 +104,14 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
             paddingVertical: 10,
             minHeight: 44,
             justifyContent: 'center',
-          }}
+          }, inputShellStyle]}
         >
           <TextInput
             placeholder="Message Echo..."
             value={text}
             onChangeText={updateText}
+            onFocus={() => { focus.value = withSpring(1, MOTION.snap); }}
+            onBlur={() => { focus.value = withSpring(0, MOTION.settle); }}
             onSubmitEditing={handleSend}
             returnKeyType="send"
             blurOnSubmit={false}
@@ -118,13 +126,15 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
               paddingBottom: 0,
             }}
           />
-        </View>
+        </Animated.View>
 
         {/* Send button */}
         <Animated.View style={buttonStyle}>
           <AnimatedPressable
             onPress={handleSend}
             disabled={!canSend}
+            depth="deep"
+            fadeOnPress
             style={{
               width: 44,
               height: 44,

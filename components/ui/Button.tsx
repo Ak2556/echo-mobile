@@ -1,39 +1,21 @@
 import React from 'react';
-import { Pressable, Text, PressableProps, View, Platform, StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import { PressableProps, Text, View, Platform, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { AnimatedPressable } from './AnimatedPressable';
 
 interface ButtonProps extends PressableProps {
   label: string;
   variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'compact' | 'regular';
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
-export function Button({ label, variant = 'primary', ...props }: ButtonProps) {
+export function Button({ label, variant = 'primary', size = 'regular', leftIcon, rightIcon, ...props }: ButtonProps) {
   const { colors, radius, reduceAnimations } = useTheme();
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    if (!reduceAnimations) {
-      scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-    }
-  };
-
-  const handlePressOut = () => {
-    if (!reduceAnimations) {
-      scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-    }
-  };
+  const paddingHorizontal = size === 'compact' ? 12 : 16;
+  const paddingVertical = size === 'compact' ? 8 : 12;
 
   const textColor = {
     primary: '#fff',
@@ -44,11 +26,11 @@ export function Button({ label, variant = 'primary', ...props }: ButtonProps) {
   if ((variant === 'secondary' || variant === 'ghost') && Platform.OS === 'ios' && !reduceAnimations) {
     return (
       <AnimatedPressable
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         {...props}
+        depth="soft"
+        fadeOnPress
+        sinkOnPress={!reduceAnimations}
         style={[
-          animatedStyle,
           {
             borderRadius: radius.lg,
             overflow: 'hidden',
@@ -76,14 +58,17 @@ export function Button({ label, variant = 'primary', ...props }: ButtonProps) {
         />
         <View
           style={{
-            paddingHorizontal: 16,
-            paddingVertical: 12,
+            paddingHorizontal,
+            paddingVertical,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 8,
           }}
         >
+          {leftIcon}
           <Text style={{ color: textColor, fontWeight: '600' }}>{label}</Text>
+          {rightIcon}
         </View>
       </AnimatedPressable>
     );
@@ -91,18 +76,19 @@ export function Button({ label, variant = 'primary', ...props }: ButtonProps) {
 
   return (
     <AnimatedPressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       {...props}
+      depth={variant === 'primary' ? 'medium' : 'soft'}
+      fadeOnPress={variant !== 'primary'}
+      sinkOnPress={!reduceAnimations}
       style={[
-        animatedStyle,
         {
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          paddingHorizontal,
+          paddingVertical,
           borderRadius: radius.lg,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
+          gap: 8,
           backgroundColor:
             variant === 'primary'
               ? colors.accent
@@ -115,7 +101,9 @@ export function Button({ label, variant = 'primary', ...props }: ButtonProps) {
         props.style,
       ]}
     >
+      {leftIcon}
       <Text style={{ color: textColor, fontWeight: '600' }}>{label}</Text>
+      {rightIcon}
     </AnimatedPressable>
   );
 }
