@@ -60,7 +60,9 @@ interface ORTool {
 async function openRouterChat(
   messages: ORMessage[],
   tools: ORTool[],
+  modelOverride?: string,
 ): Promise<{ content: string; tool_calls?: ORToolCall[] }> {
+  const model = modelOverride ?? ECHO_AI_MODEL;
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -70,7 +72,7 @@ async function openRouterChat(
       "X-Title": "Echo AI",
     },
     body: JSON.stringify({
-      model: ECHO_AI_MODEL,
+      model,
       messages,
       tools: tools.length ? tools : undefined,
       tool_choice: tools.length ? "auto" : undefined,
@@ -425,25 +427,52 @@ async function getOrCreateConversation(
   return { id: data.id, isNew: true };
 }
 
+/** Rough token estimator: ~4 chars per token (OpenAI BPE average). */
+function estimateTokens(msg: ORMessage): number {
+  const text = [
+    msg.content ?? "",
+    msg.tool_calls ? JSON.stringify(msg.tool_calls) : "",
+    msg.tool_call_id ?? "",
+  ].join(" ");
+  return Math.ceil(text.length / 4);
+}
+
+/**
+ * Load conversation history with a token budget.
+ * Fetches up to `fetchLimit` recent messages, then trims from the oldest
+ * non-system messages until the total fits within `maxTokens`.
+ * Leaves room for system prompt (~500 tokens) and response (~2000 tokens).
+ */
 async function loadHistory(
   supabase: SupabaseClient,
   conversationId: string,
-  limit = 30,
+  maxTokens = 8000,
+  fetchLimit = 60,
 ): Promise<ORMessage[]> {
   const { data, error } = await supabase
     .from("ai_messages")
     .select("role, content, tool_calls, tool_call_id, tool_name")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true })
-    .limit(limit);
+    .limit(fetchLimit);
   if (error) throw error;
-  return (data ?? []).map((r): ORMessage => ({
+
+  const messages: ORMessage[] = (data ?? []).map((r): ORMessage => ({
     role: r.role,
     content: r.content,
     tool_calls: r.tool_calls ?? undefined,
     tool_call_id: r.tool_call_id ?? undefined,
     name: r.tool_name ?? undefined,
   }));
+
+  // Trim oldest messages until we're under the token budget.
+  let total = messages.reduce((sum, m) => sum + estimateTokens(m), 0);
+  let start = 0;
+  while (total > maxTokens && start < messages.length) {
+    total -= estimateTokens(messages[start]);
+    start++;
+  }
+  return messages.slice(start);
 }
 
 async function persistMessage(
@@ -505,6 +534,8 @@ interface RequestBody {
     args: Record<string, unknown>;
     approve: boolean;
   };
+  /** Optional OpenRouter model ID override (e.g. "openai/gpt-4o"). Falls back to ECHO_AI_MODEL env var. */
+  preferred_model?: string;
 }
 
 async function handleRequest(req: Request): Promise<Response> {
@@ -551,6 +582,10 @@ async function handleRequest(req: Request): Promise<Response> {
         );
         if (isNew) send({ type: "conversation", id: conversationId });
 
+        const modelOverride = typeof body.preferred_model === "string" && body.preferred_model
+          ? body.preferred_model
+          : undefined;
+
         // ── Confirm branch: user approved/rejected a previously paused tool ──
         if (body.confirm) {
           await runToolAndContinue(
@@ -559,12 +594,13 @@ async function handleRequest(req: Request): Promise<Response> {
             conversationId,
             body.confirm,
             send,
+            modelOverride,
           );
         } else if (body.message) {
           // ── Fresh user turn ──
           const userMsg: ORMessage = { role: "user", content: body.message };
           await persistMessage(supabase, conversationId, userId, userMsg);
-          await runAgentLoop(supabase, userId, conversationId, send);
+          await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
         } else {
           send({ type: "error", message: "missing message or confirm" });
         }
@@ -599,6 +635,7 @@ async function runAgentLoop(
   conversationId: string,
   send: (e: SSEEvent) => void,
   maxSteps = 6,
+  modelOverride?: string,
 ): Promise<void> {
   for (let step = 0; step < maxSteps; step++) {
     const history = await loadHistory(supabase, conversationId);
@@ -607,7 +644,7 @@ async function runAgentLoop(
       ...history,
     ];
 
-    const { content, tool_calls } = await openRouterChat(messages, ORTOOL_DEFS);
+    const { content, tool_calls } = await openRouterChat(messages, ORTOOL_DEFS, modelOverride);
 
     // Persist the assistant turn (with tool_calls if any).
     await persistMessage(supabase, conversationId, userId, {
@@ -686,6 +723,7 @@ async function runToolAndContinue(
   conversationId: string,
   confirm: NonNullable<RequestBody["confirm"]>,
   send: (e: SSEEvent) => void,
+  modelOverride?: string,
 ): Promise<void> {
   const spec = TOOL_BY_NAME.get(confirm.tool_name);
   if (!spec) {
@@ -722,7 +760,7 @@ async function runToolAndContinue(
       error: "rejected",
     });
     // Continue loop so the model can recover (e.g. apologize or offer alternative).
-    await runAgentLoop(supabase, userId, conversationId, send);
+    await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
     return;
   }
 
@@ -735,7 +773,7 @@ async function runToolAndContinue(
     confirm.args,
     send,
   );
-  await runAgentLoop(supabase, userId, conversationId, send);
+  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
 }
 
 async function executeAndRecord(

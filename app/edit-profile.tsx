@@ -3,7 +3,8 @@ import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Check } from 'phosphor-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { ArrowLeft, Check, Camera } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
@@ -11,7 +12,7 @@ import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
-import { updateRemoteProfile } from '../lib/supabaseEchoApi';
+import { updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
 
 const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
@@ -23,14 +24,48 @@ const BIO_WARN = 140;
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { username, displayName, bio, avatarColor, setUsername, setDisplayName, setBio, setAvatarColor } = useAppStore();
+  const { username, displayName, bio, avatarColor, avatarUrl, userId, setUsername, setDisplayName, setBio, setAvatarColor, setAvatarUrl } = useAppStore();
   const { colors, radius, fontSizes, animation } = useTheme();
 
   const [newUsername, setNewUsername] = useState(username);
   const [newDisplayName, setNewDisplayName] = useState(displayName || username);
   const [newBio, setNewBio] = useState(bio);
   const [newColor, setNewColor] = useState(avatarColor);
+  const [newAvatarUrl, setNewAvatarUrl] = useState(avatarUrl || '');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Photo library access is required to change your profile picture.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+    if (result.canceled) return;
+    const localUri = result.assets[0].uri;
+
+    if (!isSupabaseRemote()) {
+      // Offline-only: just use local URI as preview (won't persist beyond session)
+      setNewAvatarUrl(localUri);
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const publicUrl = await uploadAvatar(localUri, userId);
+      setNewAvatarUrl(publicUrl);
+    } catch (e) {
+      Alert.alert('Upload failed', (e as Error).message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const usernameValid = newUsername.trim().length >= 2;
   const bioProgress = newBio.length / BIO_MAX;
@@ -49,6 +84,7 @@ export default function EditProfileScreen() {
           display_name: newDisplayName.trim() || newUsername.trim(),
           bio: newBio.trim(),
           avatar_color: newColor,
+          ...(newAvatarUrl ? { avatar_url: newAvatarUrl } : {}),
         });
       } catch (e) {
         Alert.alert('Could not save', (e as Error).message);
@@ -61,6 +97,7 @@ export default function EditProfileScreen() {
     setDisplayName(newDisplayName.trim() || newUsername.trim());
     setBio(newBio.trim());
     setAvatarColor(newColor);
+    if (newAvatarUrl) setAvatarUrl(newAvatarUrl);
     showToast('Profile updated!', '\u{2728}');
     router.back();
   };
@@ -98,14 +135,32 @@ export default function EditProfileScreen() {
       <ScrollView className="flex-1 px-4 pt-6" showsVerticalScrollIndicator={false}>
         {/* Avatar preview with glow ring */}
         <Animated.View entering={animation(FadeInDown.delay(100).springify())} className="items-center mb-8">
-          <View style={{ marginBottom: 16 }}>
+          <AnimatedPressable
+            onPress={() => { void handlePickAvatar(); }}
+            disabled={uploadingAvatar}
+            style={{ marginBottom: 16, position: 'relative' }}
+            scaleValue={0.95}
+            haptic="light"
+          >
             <ProfileAvatar
               displayName={newDisplayName || newUsername || '?'}
               avatarColor={newColor}
+              avatarUrl={newAvatarUrl || undefined}
               size={84}
               showGlow
             />
-          </View>
+            {/* "Change Photo" badge */}
+            <View style={{
+              position: 'absolute', bottom: 2, right: 2,
+              backgroundColor: colors.accent, borderRadius: 14, padding: 5,
+              borderWidth: 2, borderColor: colors.bg,
+            }}>
+              {uploadingAvatar
+                ? <ActivityIndicator size="small" color="#fff" style={{ width: 14, height: 14 }} />
+                : <Camera size={14} color="#fff" weight="fill" />
+              }
+            </View>
+          </AnimatedPressable>
           <View className="flex-row gap-2.5 flex-wrap justify-center">
             {AVATAR_COLORS.map(color => (
               <AnimatedPressable

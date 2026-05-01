@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Share, Pressable, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MediaGrid } from './MediaGrid';
@@ -302,13 +303,21 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                   scaleValue={reduceAnimations ? 1 : 0.9}
                   haptic="light"
                 >
-                  <View
-                    style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-                      {(item.displayName || item.username).charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
+                  {item.avatarUrl ? (
+                    <Image
+                      source={{ uri: item.avatarUrl }}
+                      style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View
+                      style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}
+                    >
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
+                        {(item.displayName || item.username).charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
                 </AnimatedPressable>
               )}
               <AnimatedPressable
@@ -386,14 +395,22 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               scaleValue={reduceAnimations ? 1 : 0.9}
               haptic="light"
             >
-              <View
-                className={`${compactFeed ? 'w-7 h-7' : 'w-9 h-9'} rounded-full items-center justify-center mr-3`}
-                style={{ backgroundColor: item.avatarColor || colors.accent }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-                  {(item.displayName || item.username).charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              {item.avatarUrl ? (
+                <Image
+                  source={{ uri: item.avatarUrl }}
+                  style={{ width: compactFeed ? 28 : 36, height: compactFeed ? 28 : 36, borderRadius: compactFeed ? 14 : 18, marginRight: 12 }}
+                  contentFit="cover"
+                />
+              ) : (
+                <View
+                  className={`${compactFeed ? 'w-7 h-7' : 'w-9 h-9'} rounded-full items-center justify-center mr-3`}
+                  style={{ backgroundColor: item.avatarColor || colors.accent }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
+                    {(item.displayName || item.username).charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
             </AnimatedPressable>
           )}
           <AnimatedPressable

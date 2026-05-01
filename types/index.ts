@@ -3,6 +3,7 @@ export interface User {
   username: string;
   displayName: string;
   avatarColor: string;
+  avatarUrl?: string;
   bio: string;
   isVerified: boolean;
   followerCount: number;
@@ -47,6 +48,7 @@ export interface FeedItem {
   username: string;
   displayName: string;
   avatarColor: string;
+  avatarUrl?: string;
   isVerified: boolean;
   prompt: string;
   response: string;
@@ -61,8 +63,8 @@ export interface FeedItem {
   createdAt: string;
   // Rich media
   postType?: 'text' | 'photo' | 'video' | 'poll';
-  mediaUris?: string[];   // up to 4 local photo URIs
-  videoUri?: string;      // single video URI (default / auto quality)
+  mediaUris?: string[];   // up to 4 photo URIs (local device or remote Supabase Storage)
+  videoUri?: string;      // single video URI (local or remote)
   videoQualities?: { label: string; uri: string }[]; // quality tiers for picker
   poll?: Poll;
   // If this is a repost
@@ -77,6 +79,7 @@ export interface Comment {
   username: string;
   displayName: string;
   avatarColor: string;
+  avatarUrl?: string;
   isVerified: boolean;
   content: string;
   likes: number;
@@ -93,6 +96,7 @@ export interface Notification {
   fromUsername: string;
   fromDisplayName: string;
   fromAvatarColor: string;
+  fromAvatarUrl?: string;
   targetId?: string; // echo or comment id
   targetPreview?: string;
   isRead: boolean;
@@ -113,6 +117,7 @@ export interface Conversation {
   username: string;
   displayName: string;
   avatarColor: string;
+  avatarUrl?: string;
   isVerified: boolean;
   lastMessage: string;
   lastMessageAt: string;
@@ -125,6 +130,7 @@ export interface Story {
   username: string;
   displayName: string;
   avatarColor: string;
+  avatarUrl?: string;
   prompt: string;
   response: string;
   viewCount: number;
