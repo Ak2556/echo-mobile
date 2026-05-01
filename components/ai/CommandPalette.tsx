@@ -15,6 +15,7 @@ import { Lightning, X, ArrowUp } from 'phosphor-react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useCommandPalette } from '../../lib/commandPalette';
 import { streamEchoAI } from '../../lib/api';
+import { executeLocalNoteTool, isLocalNoteTool } from '../../lib/localNoteTools';
 import { useTheme } from '../../lib/theme';
 import { ToolCallCard, ToolCallItem } from './ToolCallCard';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -26,7 +27,7 @@ type Item =
 
 export function CommandPalette() {
   const { isOpen, close } = useCommandPalette();
-  const { colors, radius, reduceAnimations } = useTheme();
+  const { colors, reduceAnimations } = useTheme();
   const [input, setInput] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
@@ -111,6 +112,30 @@ export function CommandPalette() {
   const confirmTool = useCallback(
     async (tool: ToolCallItem, approve: boolean) => {
       upsertTool({ ...tool, status: approve ? 'running' : 'rejected' });
+      if (isLocalNoteTool(tool.name)) {
+        if (!approve) return;
+        setBusy(true);
+        try {
+          const result = await executeLocalNoteTool(tool.name, tool.args);
+          upsertTool({
+            ...tool,
+            status: 'ok',
+            resultSummary: result.summary,
+          });
+          upsertText(`local-${Date.now()}`, 'assistant', `${result.summary}.`);
+        } catch (err: any) {
+          upsertTool({
+            ...tool,
+            status: 'error',
+            errorMessage: err?.message ?? 'Failed',
+          });
+          upsertText(`local-err-${Date.now()}`, 'assistant', `I couldn't update Notes: ${err?.message ?? 'unknown error'}`);
+        } finally {
+          setBusy(false);
+        }
+        return;
+      }
+
       setBusy(true);
       try {
         await streamEchoAI({

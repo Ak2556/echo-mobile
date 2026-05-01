@@ -13,6 +13,7 @@ import { ToolCallCard, ToolCallItem } from '../../components/ai/ToolCallCard';
 import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { streamEchoAI } from '../../lib/api';
+import { executeLocalNoteTool, isLocalNoteTool } from '../../lib/localNoteTools';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, Clock } from 'phosphor-react-native';
@@ -164,7 +165,28 @@ export default function ChatScreen() {
   );
 
   const handleConfirm = useCallback(
-    (tool: ToolCallItem) => {
+    async (tool: ToolCallItem) => {
+      if (isLocalNoteTool(tool.name)) {
+        upsertTool({ ...tool, status: 'running' });
+        try {
+          const result = await executeLocalNoteTool(tool.name, tool.args);
+          upsertTool({
+            ...tool,
+            status: 'ok',
+            resultSummary: result.summary,
+          });
+          upsertText(`local-${Date.now()}`, 'assistant', `${result.summary}.`);
+        } catch (err: any) {
+          upsertTool({
+            ...tool,
+            status: 'error',
+            errorMessage: err?.message ?? 'Failed',
+          });
+          upsertText(`local-err-${Date.now()}`, 'assistant', `I couldn't update Notes: ${err?.message ?? 'unknown error'}`);
+        }
+        return;
+      }
+
       // Mark as running locally while server executes.
       upsertTool({ ...tool, status: 'running' });
       runStream({
@@ -379,6 +401,10 @@ export default function ChatScreen() {
 function summarizeResult(name: string, result: any): string {
   if (!result) return 'Done';
   switch (name) {
+    case 'create_note':
+      return `Created "${result.title ?? 'note'}"`;
+    case 'update_note':
+      return `Updated "${result.title ?? 'note'}"`;
     case 'compose_post':
       return `Posted "${result.title ?? ''}"`;
     case 'search_feed':
