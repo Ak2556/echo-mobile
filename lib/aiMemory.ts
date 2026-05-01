@@ -38,6 +38,18 @@ export async function rememberPreference(input: { key?: string; value?: string }
   return next;
 }
 
+export async function updatePreference(input: { id: string; key?: string; value?: string }): Promise<MemoryItem> {
+  const items = await loadMemory();
+  const existing = items.find(item => item.id === input.id);
+  if (!existing) throw new Error('No matching memory found');
+  const key = input.key?.trim();
+  const value = input.value?.trim();
+  if (!key || !value) throw new Error('Memory key and value are required');
+  const updated: MemoryItem = { ...existing, key, value };
+  await saveMemory(items.map(item => item.id === input.id ? updated : item));
+  return updated;
+}
+
 export async function forgetPreference(input: { id?: string; key?: string }): Promise<MemoryItem> {
   const items = await loadMemory();
   const item = input.id

@@ -41,7 +41,7 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
       });
       return {
         ok: true,
-        summary: formatNoteResult('create', note),
+        summary: `${formatNoteResult('create', note)} (${note.id})`,
         result: { id: note.id, title: note.title, updatedAt: note.updatedAt },
       };
     }
@@ -56,7 +56,7 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
       });
       return {
         ok: true,
-        summary: formatNoteResult('update', note),
+        summary: `${formatNoteResult('update', note)} (${note.id})`,
         result: { id: note.id, title: note.title, updatedAt: note.updatedAt },
       };
     }
@@ -68,7 +68,7 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
       });
       return {
         ok: true,
-        summary: `Created habit "${habit.name}"`,
+        summary: `Created habit "${habit.name}" (${habit.id})`,
         result: { id: habit.id, name: habit.name, emoji: habit.emoji },
       };
     }
@@ -83,7 +83,7 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
       });
       return {
         ok: true,
-        summary: `${completed ? 'Completed' : 'Uncompleted'} "${habit.name}"`,
+        summary: `${completed ? 'Completed' : 'Uncompleted'} "${habit.name}" (${habit.id})`,
         result: { id: habit.id, name: habit.name, completedDates: habit.completedDates },
       };
     }
@@ -97,7 +97,7 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
       });
       return {
         ok: true,
-        summary: `Logged ${tx.type} $${formatMoney(tx.amount)} for ${tx.category}`,
+        summary: `Logged ${tx.type} $${formatMoney(tx.amount)} for ${tx.category} (${tx.id})`,
         result: { id: tx.id, type: tx.type, amount: tx.amount, category: tx.category, date: tx.date },
       };
     }
@@ -109,7 +109,7 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
       });
       return {
         ok: true,
-        summary: `Renamed voice memo to "${memo.title}"`,
+        summary: `Renamed voice memo to "${memo.title}" (${memo.id})`,
         result: { id: memo.id, title: memo.title },
       };
     }
@@ -121,7 +121,7 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
       });
       return {
         ok: true,
-        summary: `Deleted voice memo "${memo.title}"`,
+        summary: `Deleted voice memo "${memo.title}" (${memo.id})`,
         result: { id: memo.id, title: memo.title },
       };
     }
