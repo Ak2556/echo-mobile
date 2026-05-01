@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Alert, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -64,14 +65,22 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
       <Animated.View entering={animation(FadeInDown.delay(100).springify())} className="items-center px-4 pt-2 pb-4">
         <AnimatedPressable scaleValue={0.93} haptic="light">
           <View className="relative">
-            <View
-              className="w-20 h-20 rounded-full items-center justify-center mb-3"
-              style={{ backgroundColor: user.avatarColor }}
-            >
-              <Text style={{ color: '#fff', fontSize: 30, fontWeight: '700' }}>
-                {user.displayName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            {user.avatarUrl ? (
+              <Image
+                source={{ uri: user.avatarUrl }}
+                style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 12 }}
+                contentFit="cover"
+              />
+            ) : (
+              <View
+                className="w-20 h-20 rounded-full items-center justify-center mb-3"
+                style={{ backgroundColor: user.avatarColor }}
+              >
+                <Text style={{ color: '#fff', fontSize: 30, fontWeight: '700' }}>
+                  {user.displayName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
             {online && (
               <View className="absolute bottom-3 right-0 w-4 h-4 rounded-full" style={{ backgroundColor: colors.success, borderWidth: 2.5, borderColor: colors.bg }} />
             )}

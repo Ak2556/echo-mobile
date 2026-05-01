@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, Pressable, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
@@ -235,9 +236,17 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 70, paddingHorizontal: 16, paddingBottom: 100 }}>
         {/* Author row */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: item.avatarColor || '#6366F1', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initials}</Text>
-          </View>
+          {item.avatarUrl ? (
+            <Image
+              source={{ uri: item.avatarUrl }}
+              style={{ width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: '#fff' }}
+              contentFit="cover"
+            />
+          ) : (
+            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: item.avatarColor || '#6366F1', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initials}</Text>
+            </View>
+          )}
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}>

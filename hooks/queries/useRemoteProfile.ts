@@ -27,7 +27,7 @@ function profileRowToUser(
     followerCount,
     followingCount,
     echoCount,
-    createdAt: new Date().toISOString(),
+    createdAt: p.created_at,
   };
 }
 
