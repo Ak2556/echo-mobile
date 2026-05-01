@@ -4,41 +4,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
-
-const TX_KEY = 'mini:expenses';
-type TxType = 'income' | 'expense';
-
-interface Transaction {
-  id: string; type: TxType; amount: number;
-  category: string; note: string; date: string;
-}
-
-const EXPENSE_CATS = [
-  { label: 'Food', emoji: '🍔' }, { label: 'Transport', emoji: '🚗' },
-  { label: 'Shopping', emoji: '🛍' }, { label: 'Health', emoji: '💊' },
-  { label: 'Bills', emoji: '📱' }, { label: 'Entertainment', emoji: '🎮' },
-  { label: 'Travel', emoji: '✈️' }, { label: 'Other', emoji: '📦' },
-];
-const INCOME_CATS = [
-  { label: 'Salary', emoji: '💼' }, { label: 'Freelance', emoji: '💻' },
-  { label: 'Gift', emoji: '🎁' }, { label: 'Investment', emoji: '📈' },
-  { label: 'Other', emoji: '💰' },
-];
-
-async function load(): Promise<Transaction[]> {
-  try { return JSON.parse((await AsyncStorage.getItem(TX_KEY)) ?? '[]'); } catch { return []; }
-}
-function save(txs: Transaction[]) { AsyncStorage.setItem(TX_KEY, JSON.stringify(txs)); }
-
-function formatMoney(n: number) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-function formatDate(iso: string) { return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }); }
+import { EXPENSE_CATS, INCOME_CATS, Transaction, TxType, categoryEmoji, formatDate, formatMoney, loadTransactions, saveTransactions } from '../../lib/expenses';
 
 function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClose: () => void }) {
   const { colors } = useTheme();
@@ -119,7 +92,12 @@ export default function ExpensesApp() {
   const { colors } = useTheme();
   const accent = colors.accent;
   const [txs, setTxs] = useState<Transaction[]>([]);
-  useEffect(() => { load().then(setTxs); }, []);
+  useEffect(() => { loadTransactions().then(setTxs); }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadTransactions().then(setTxs);
+    }, []),
+  );
   const [showAdd, setShowAdd] = useState(false);
   const [filter, setFilter] = useState<'all' | TxType>('all');
 
@@ -129,18 +107,16 @@ export default function ExpensesApp() {
   const filtered = filter === 'all' ? txs : txs.filter(t => t.type === filter);
 
   const addTx = (tx: Transaction) => {
-    const updated = [tx, ...txs]; setTxs(updated); save(updated);
+    const updated = [tx, ...txs]; setTxs(updated); saveTransactions(updated);
     showToast(`${tx.type === 'expense' ? 'Expense' : 'Income'} added`, tx.type === 'expense' ? '📉' : '📈');
   };
 
   const deleteTx = (id: string) => {
     Alert.alert('Delete?', 'Remove this transaction?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { const updated = txs.filter(t => t.id !== id); setTxs(updated); save(updated); } },
+      { text: 'Delete', style: 'destructive', onPress: () => { const updated = txs.filter(t => t.id !== id); setTxs(updated); saveTransactions(updated); } },
     ]);
   };
-
-  const catEmoji = (cat: string) => [...EXPENSE_CATS, ...INCOME_CATS].find(c => c.label === cat)?.emoji ?? '💰';
 
   const AddBtn = (
     <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ backgroundColor: accent, borderRadius: 12, padding: 10 }}>
@@ -195,7 +171,7 @@ export default function ExpensesApp() {
         <Animated.View key={tx.id} entering={FadeInDown.delay(i * 40).springify()} style={{ marginBottom: 10 }}>
           <GlassPanel variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}>
             <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: tx.type === 'income' ? '#10B98118' : '#EF444418', borderWidth: 1, borderColor: tx.type === 'income' ? '#10B98133' : '#EF444433', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 22 }}>{catEmoji(tx.category)}</Text>
+              <Text style={{ fontSize: 22 }}>{categoryEmoji(tx.category)}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{tx.category}</Text>

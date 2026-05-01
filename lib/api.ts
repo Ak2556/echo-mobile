@@ -48,6 +48,14 @@ interface StreamArgs {
   message?: string;
   conversationId?: string;
   confirm?: { tool_call_id: string; tool_name: string; args: any; approve: boolean };
+  localResult?: {
+    tool_call_id: string;
+    tool_name: string;
+    args: any;
+    ok: boolean;
+    result?: any;
+    error?: string;
+  };
   /** When set, overrides the default model on the Edge Function side. */
   preferredModel?: EchoAIModel;
   onEvent: (event: EchoAIEvent) => void;
@@ -129,6 +137,7 @@ export async function streamEchoAI({
   message,
   conversationId,
   confirm,
+  localResult,
   preferredModel,
   onEvent,
 }: StreamArgs): Promise<void> {
@@ -156,6 +165,7 @@ export async function streamEchoAI({
   if (message) payload.message = message;
   if (conversationId) payload.conversation_id = conversationId;
   if (confirm) payload.confirm = confirm;
+  if (localResult) payload.local_result = localResult;
   if (preferredModel && AI_MODEL_MAP[preferredModel]) {
     payload.preferred_model = AI_MODEL_MAP[preferredModel];
   }

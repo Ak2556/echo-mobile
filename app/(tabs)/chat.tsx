@@ -13,7 +13,7 @@ import { ToolCallCard, ToolCallItem } from '../../components/ai/ToolCallCard';
 import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { streamEchoAI } from '../../lib/api';
-import { executeLocalNoteTool, isLocalNoteTool } from '../../lib/localNoteTools';
+import { executeLocalTool, isLocalTool, localToolFailureMessage } from '../../lib/localTools';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, Clock } from 'phosphor-react-native';
@@ -166,23 +166,45 @@ export default function ChatScreen() {
 
   const handleConfirm = useCallback(
     async (tool: ToolCallItem) => {
-      if (isLocalNoteTool(tool.name)) {
+      if (isLocalTool(tool.name)) {
         upsertTool({ ...tool, status: 'running' });
         try {
-          const result = await executeLocalNoteTool(tool.name, tool.args);
+          const result = await executeLocalTool(tool.name, tool.args);
           upsertTool({
             ...tool,
             status: 'ok',
             resultSummary: result.summary,
           });
-          upsertText(`local-${Date.now()}`, 'assistant', `${result.summary}.`);
+          runStream({
+            conversationId: conversationIdRef.current ?? undefined,
+            localResult: {
+              tool_call_id: tool.id,
+              tool_name: tool.name,
+              args: tool.args,
+              ok: true,
+              result: result.result,
+            },
+            onEvent: () => {},
+          });
         } catch (err: any) {
+          const message = err?.message ?? 'unknown error';
           upsertTool({
             ...tool,
             status: 'error',
-            errorMessage: err?.message ?? 'Failed',
+            errorMessage: message,
           });
-          upsertText(`local-err-${Date.now()}`, 'assistant', `I couldn't update Notes: ${err?.message ?? 'unknown error'}`);
+          upsertText(`local-err-${Date.now()}`, 'assistant', localToolFailureMessage(tool.name, message));
+          runStream({
+            conversationId: conversationIdRef.current ?? undefined,
+            localResult: {
+              tool_call_id: tool.id,
+              tool_name: tool.name,
+              args: tool.args,
+              ok: false,
+              error: message,
+            },
+            onEvent: () => {},
+          });
         }
         return;
       }
@@ -405,6 +427,18 @@ function summarizeResult(name: string, result: any): string {
       return `Created "${result.title ?? 'note'}"`;
     case 'update_note':
       return `Updated "${result.title ?? 'note'}"`;
+    case 'create_habit':
+      return `Created "${result.name ?? 'habit'}"`;
+    case 'complete_habit':
+      return `Completed "${result.name ?? 'habit'}"`;
+    case 'uncomplete_habit':
+      return `Uncompleted "${result.name ?? 'habit'}"`;
+    case 'log_expense_transaction':
+      return `Logged ${result.type ?? 'transaction'}`;
+    case 'rename_voice_memo':
+      return `Renamed "${result.title ?? 'voice memo'}"`;
+    case 'delete_voice_memo':
+      return `Deleted "${result.title ?? 'voice memo'}"`;
     case 'compose_post':
       return `Posted "${result.title ?? ''}"`;
     case 'search_feed':

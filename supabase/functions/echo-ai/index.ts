@@ -425,6 +425,123 @@ const TOOLS: ToolSpec[] = [
     },
   },
   {
+    name: "create_habit",
+    description:
+      "Create a habit in the user's local Habits mini-app.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Habit name." },
+        emoji: { type: "string", description: "Optional emoji icon." },
+        color: { type: "string", description: "Optional habit color hex from the app palette." },
+      },
+      required: ["name"],
+    },
+    requiresConfirm: true,
+    preview: (a) => `Create habit "${(a.name as string | undefined) ?? "Untitled"}"`,
+    execute: async () => {
+      throw new Error("create_habit is a local device tool");
+    },
+  },
+  {
+    name: "complete_habit",
+    description:
+      "Mark a habit complete for a date in the user's local Habits mini-app.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Exact local habit id, if known." },
+        name: { type: "string", description: "Existing habit name or search text." },
+        date: { type: "string", description: "Date to complete. Defaults to today." },
+      },
+      required: [],
+    },
+    requiresConfirm: true,
+    preview: (a) => `Complete habit "${(a.name as string | undefined) ?? (a.id as string | undefined) ?? "habit"}"`,
+    execute: async () => {
+      throw new Error("complete_habit is a local device tool");
+    },
+  },
+  {
+    name: "uncomplete_habit",
+    description:
+      "Mark a habit not complete for a date in the user's local Habits mini-app.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Exact local habit id, if known." },
+        name: { type: "string", description: "Existing habit name or search text." },
+        date: { type: "string", description: "Date to uncomplete. Defaults to today." },
+      },
+      required: [],
+    },
+    requiresConfirm: true,
+    preview: (a) => `Uncomplete habit "${(a.name as string | undefined) ?? (a.id as string | undefined) ?? "habit"}"`,
+    execute: async () => {
+      throw new Error("uncomplete_habit is a local device tool");
+    },
+  },
+  {
+    name: "log_expense_transaction",
+    description:
+      "Log an income or expense transaction in the user's local Expenses mini-app.",
+    parameters: {
+      type: "object",
+      properties: {
+        type: { type: "string", enum: ["income", "expense"], default: "expense" },
+        amount: { type: "number", description: "Positive transaction amount." },
+        category: { type: "string", description: "Transaction category." },
+        note: { type: "string", description: "Optional note." },
+        date: { type: "string", description: "Optional transaction date." },
+      },
+      required: ["amount"],
+    },
+    requiresConfirm: true,
+    preview: (a) => `Log ${(a.type as string | undefined) ?? "expense"} ${a.amount ?? ""}`,
+    execute: async () => {
+      throw new Error("log_expense_transaction is a local device tool");
+    },
+  },
+  {
+    name: "rename_voice_memo",
+    description:
+      "Rename a saved voice memo in the user's local Voice Memo mini-app. This changes metadata only.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Exact local memo id, if known." },
+        match_title: { type: "string", description: "Existing memo title or search text." },
+        title: { type: "string", description: "New memo title." },
+        new_title: { type: "string", description: "Alternate field for the new memo title." },
+      },
+      required: [],
+    },
+    requiresConfirm: true,
+    preview: (a) => `Rename voice memo "${(a.match_title as string | undefined) ?? (a.id as string | undefined) ?? "memo"}"`,
+    execute: async () => {
+      throw new Error("rename_voice_memo is a local device tool");
+    },
+  },
+  {
+    name: "delete_voice_memo",
+    description:
+      "Delete a saved voice memo metadata entry in the user's local Voice Memo mini-app.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Exact local memo id, if known." },
+        match_title: { type: "string", description: "Existing memo title or search text." },
+        title: { type: "string", description: "Existing memo title or search text." },
+      },
+      required: [],
+    },
+    requiresConfirm: true,
+    preview: (a) => `Delete voice memo "${(a.match_title as string | undefined) ?? (a.title as string | undefined) ?? (a.id as string | undefined) ?? "memo"}"`,
+    execute: async () => {
+      throw new Error("delete_voice_memo is a local device tool");
+    },
+  },
+  {
     name: "list_my_followers",
     description: "List followers of the current user.",
     parameters: { type: "object", properties: {} },
@@ -456,11 +573,14 @@ const ORTOOL_DEFS: ORTool[] = TOOLS.map((t) => ({
 
 const SYSTEM_PROMPT = `You are Echo, an in-app assistant for a social network called Echo.
 Help the user accomplish things in the app — composing posts, searching/summarizing the feed,
-following people, liking/commenting, editing their profile, and creating or updating Notes.
+following people, liking/commenting, editing their profile, and operating local productivity mini-apps.
 
 Rules:
 - Use tools whenever the user wants to act on the app. Don't pretend to do things; call the tool.
-- Use create_note and update_note only for the local Notes mini-app. Do not infer tools for other mini-apps.
+- Use create_note and update_note only for Notes.
+- Use create_habit, complete_habit, and uncomplete_habit only for Habits.
+- Use log_expense_transaction only for Expenses.
+- Use rename_voice_memo and delete_voice_memo only for saved Voice Memo metadata; you cannot record audio for the user.
 - Be concise. Don't restate the user's request.
 - For destructive or write actions, the system will pause for the user to confirm — don't ask
   for confirmation in chat, the UI handles it.
@@ -602,6 +722,14 @@ interface RequestBody {
     args: Record<string, unknown>;
     approve: boolean;
   };
+  local_result?: {
+    tool_call_id: string;
+    tool_name: string;
+    args: Record<string, unknown>;
+    ok: boolean;
+    result?: unknown;
+    error?: string;
+  };
   /** Optional Google AI Studio model override. Non-allowlisted values are ignored. */
   preferred_model?: string;
 }
@@ -657,7 +785,16 @@ async function handleRequest(req: Request): Promise<Response> {
         if (isNew) send({ type: "conversation", id: conversationId });
 
         // ── Confirm branch: user approved/rejected a previously paused tool ──
-        if (body.confirm) {
+        if (body.local_result) {
+          await recordLocalToolResultAndContinue(
+            supabase,
+            userId,
+            conversationId,
+            body.local_result,
+            send,
+            modelOverride,
+          );
+        } else if (body.confirm) {
           await runToolAndContinue(
             supabase,
             userId,
@@ -843,6 +980,79 @@ async function runToolAndContinue(
     confirm.args,
     send,
   );
+  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
+}
+
+async function recordLocalToolResultAndContinue(
+  supabase: SupabaseClient,
+  userId: string,
+  conversationId: string,
+  localResult: NonNullable<RequestBody["local_result"]>,
+  send: (e: SSEEvent) => void,
+  modelOverride?: string,
+): Promise<void> {
+  const spec = TOOL_BY_NAME.get(localResult.tool_name);
+  if (!spec) {
+    send({
+      type: "tool_result",
+      id: localResult.tool_call_id,
+      name: localResult.tool_name,
+      ok: false,
+      error: "unknown tool",
+    });
+    return;
+  }
+
+  if (localResult.ok) {
+    await logToolCall(
+      supabase,
+      userId,
+      conversationId,
+      spec.name,
+      localResult.args,
+      "executed",
+      localResult.result ?? { ok: true },
+    );
+    await persistMessage(supabase, conversationId, userId, {
+      role: "tool",
+      tool_call_id: localResult.tool_call_id,
+      name: spec.name,
+      content: JSON.stringify(localResult.result ?? { ok: true }).slice(0, 8000),
+    });
+    send({
+      type: "tool_result",
+      id: localResult.tool_call_id,
+      name: spec.name,
+      ok: true,
+      result: localResult.result ?? { ok: true },
+    });
+  } else {
+    const msg = localResult.error ?? "local tool failed";
+    await logToolCall(
+      supabase,
+      userId,
+      conversationId,
+      spec.name,
+      localResult.args,
+      "failed",
+      null,
+      msg,
+    );
+    await persistMessage(supabase, conversationId, userId, {
+      role: "tool",
+      tool_call_id: localResult.tool_call_id,
+      name: spec.name,
+      content: JSON.stringify({ error: msg }),
+    });
+    send({
+      type: "tool_result",
+      id: localResult.tool_call_id,
+      name: spec.name,
+      ok: false,
+      error: msg,
+    });
+  }
+
   await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
 }
 
