@@ -80,6 +80,7 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
 
   const scrollY = useSharedValue(0);
+  const heroScrollX = useSharedValue(0);
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollY.value = event.nativeEvent.contentOffset.y;
   }, [scrollY]);
@@ -138,9 +139,11 @@ export default function DiscoverScreen() {
         decelerationRate="fast"
         snapToInterval={HERO_CARD_WIDTH + 12}
         contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+        onScroll={(e) => { heroScrollX.value = e.nativeEvent.contentOffset.x; }}
+        scrollEventThrottle={16}
       >
-        {heroItems.map(item => (
-          <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} />
+        {heroItems.map((item, index) => (
+          <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} scrollX={heroScrollX} cardIndex={index} />
         ))}
       </ScrollView>
       <SectionHeader label="Popular" />

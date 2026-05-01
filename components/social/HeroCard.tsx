@@ -7,6 +7,8 @@ import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
 import { VideoPreview } from './VideoPreview';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 
 const { width: SW } = Dimensions.get('window');
 export const HERO_CARD_WIDTH = SW * 0.72;
@@ -15,9 +17,11 @@ export const HERO_CARD_HEIGHT = HERO_CARD_WIDTH * 1.44;
 interface HeroCardProps {
   item: FeedItem;
   onPress?: () => void;
+  scrollX?: SharedValue<number>;
+  cardIndex?: number;
 }
 
-export function HeroCard({ item, onPress }: HeroCardProps) {
+export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProps) {
   const { colors, reduceAnimations } = useTheme();
 
   const hasImage = (item.mediaUris?.length ?? 0) > 0;
@@ -35,6 +39,20 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
 
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
 
+  // Parallax: image layer moves at 0.35x inverse of scroll
+  const CARD_STEP = HERO_CARD_WIDTH + 12;
+  const parallaxStyle = useAnimatedStyle(() => {
+    if (!scrollX || reduceAnimations) return { transform: [{ translateX: 0 }] };
+    const cardOffset = cardIndex * CARD_STEP;
+    const dx = interpolate(
+      scrollX.value - cardOffset,
+      [-CARD_STEP, 0, CARD_STEP],
+      [CARD_STEP * 0.35, 0, -CARD_STEP * 0.35],
+      Extrapolation.CLAMP
+    );
+    return { transform: [{ translateX: dx }] };
+  });
+
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -47,27 +65,29 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
         overflow: 'hidden',
       }}
     >
-      {/* Background */}
-      {hasVideo ? (
-        <VideoPreview
-          uri={item.videoUri!}
-          height={HERO_CARD_HEIGHT}
-          borderRadius={0}
-        />
-      ) : hasImage ? (
-        <Image
-          source={{ uri: item.mediaUris![0] }}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-        />
-      ) : (
-        <LinearGradient
-          colors={[item.avatarColor ?? colors.accent, '#0a0a0a']}
-          start={{ x: 0.15, y: 0 }}
-          end={{ x: 0.85, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
+      {/* Background with parallax */}
+      <Animated.View style={[StyleSheet.absoluteFill, { width: HERO_CARD_WIDTH * 1.3, left: -HERO_CARD_WIDTH * 0.15 }, parallaxStyle]}>
+        {hasVideo ? (
+          <VideoPreview
+            uri={item.videoUri!}
+            height={HERO_CARD_HEIGHT}
+            borderRadius={0}
+          />
+        ) : hasImage ? (
+          <Image
+            source={{ uri: item.mediaUris![0] }}
+            style={[StyleSheet.absoluteFill]}
+            contentFit="cover"
+          />
+        ) : (
+          <LinearGradient
+            colors={[item.avatarColor ?? colors.accent, '#0a0a0a']}
+            start={{ x: 0.15, y: 0 }}
+            end={{ x: 0.85, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+      </Animated.View>
 
       {/* Top scrim */}
       <LinearGradient

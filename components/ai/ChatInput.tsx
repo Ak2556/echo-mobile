@@ -50,9 +50,10 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
     opacity: withSpring(text.trim() ? 1 : 0.4, { damping: 20, stiffness: 500 }),
     transform: [{ scale: sendScale.value }],
   }));
+
   const inputShellStyle = useAnimatedStyle(() => ({
     borderColor: interpolateColor(focus.value, [0, 1], [colors.glassBorder, colors.accent]),
-    transform: [{ scale: reduceAnimations ? 1 : withSpring(focus.value ? 1.006 : 1, MOTION.settle) }],
+    transform: [{ scale: reduceAnimations ? 1 : withSpring(focus.value ? 1.012 : 1, MOTION.settle) }],
   }));
 
   const canSend = !!text.trim() && !isLoading;
