@@ -34,7 +34,7 @@ export default function ChatScreen() {
 
   const [items, setItems] = useState<ChatItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [, setConversationId] = useState<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const listRef = useRef<any>(null);
 
@@ -61,7 +61,7 @@ export default function ChatScreen() {
         },
       ]);
     }
-  }, []);
+  }, [items.length]);
 
   const setConvId = (id: string) => {
     setConversationId(id);
@@ -144,7 +144,7 @@ export default function ChatScreen() {
         setIsStreaming(false);
       }
     },
-    [],
+    [aiModel],
   );
 
   const handleSend = useCallback(

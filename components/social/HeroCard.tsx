@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
+import { VideoPreview } from './VideoPreview';
 
 const { width: SW } = Dimensions.get('window');
 export const HERO_CARD_WIDTH = SW * 0.72;
@@ -19,6 +20,7 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
   const { colors, reduceAnimations } = useTheme();
 
   const hasImage = (item.mediaUris?.length ?? 0) > 0;
+  const hasVideo = item.postType === 'video' && !!item.videoUri;
 
   const likeLabel =
     (item.likes ?? 0) >= 1000
@@ -43,7 +45,13 @@ export function HeroCard({ item, onPress }: HeroCardProps) {
       }}
     >
       {/* Background */}
-      {hasImage ? (
+      {hasVideo ? (
+        <VideoPreview
+          uri={item.videoUri!}
+          height={HERO_CARD_HEIGHT}
+          borderRadius={0}
+        />
+      ) : hasImage ? (
         <Image
           source={{ uri: item.mediaUris![0] }}
           style={StyleSheet.absoluteFill}

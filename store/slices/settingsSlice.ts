@@ -1,4 +1,5 @@
 import { persistGet, persistSet, storage } from '../persist';
+import type { EchoAIModel } from '../../lib/api';
 
 export interface SettingsSlice {
   // ── Core ──
@@ -36,7 +37,7 @@ export interface SettingsSlice {
   pureBlackBackground: boolean; setPureBlackBackground: (v: boolean) => void;
   roundedCorners: 'small' | 'medium' | 'large'; setRoundedCorners: (v: 'small' | 'medium' | 'large') => void;
   // ── Chat & AI ──
-  aiModel: 'gpt-3.5' | 'gpt-4' | 'gpt-4o'; setAiModel: (v: 'gpt-3.5' | 'gpt-4' | 'gpt-4o') => void;
+  aiModel: EchoAIModel; setAiModel: (v: EchoAIModel) => void;
   autoSaveChats: boolean; setAutoSaveChats: (v: boolean) => void;
   chatBubbleStyle: 'modern' | 'classic' | 'minimal'; setChatBubbleStyle: (v: 'modern' | 'classic' | 'minimal') => void;
   showTypingIndicator: boolean; setShowTypingIndicator: (v: boolean) => void;
@@ -60,6 +61,15 @@ export interface SettingsSlice {
 function b(key: string, def: boolean) { return persistGet(key, def); }
 function s(set: (p: object) => void, key: string) {
   return (v: boolean) => { persistSet(key, v); set({ [key]: v }); };
+}
+
+function getAiModel(): EchoAIModel {
+  const value = persistGet<string>('aiModel', 'gemini-2.5-flash');
+  if (value === 'gemini-2.5-flash' || value === 'gemini-2.5-pro' || value === 'gemini-2.0-flash-lite') {
+    return value;
+  }
+  persistSet('aiModel', 'gemini-2.5-flash');
+  return 'gemini-2.5-flash';
 }
 
 export function createSettingsSlice(set: (partial: object) => void, _get: () => unknown): SettingsSlice {
@@ -93,7 +103,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     pureBlackBackground: b('pureBlackBackground', true), setPureBlackBackground: s(set, 'pureBlackBackground'),
     roundedCorners: persistGet<'small' | 'medium' | 'large'>('roundedCorners', 'medium'),
     setRoundedCorners: (v) => { persistSet('roundedCorners', v); set({ roundedCorners: v }); },
-    aiModel: persistGet<'gpt-3.5' | 'gpt-4' | 'gpt-4o'>('aiModel', 'gpt-3.5'),
+    aiModel: getAiModel(),
     setAiModel: (v) => { persistSet('aiModel', v); set({ aiModel: v }); },
     autoSaveChats: b('autoSaveChats', true), setAutoSaveChats: s(set, 'autoSaveChats'),
     chatBubbleStyle: persistGet<'modern' | 'classic' | 'minimal'>('chatBubbleStyle', 'modern'),

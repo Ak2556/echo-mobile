@@ -7,7 +7,8 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-const ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.0-flash-exp:free";
+const DEFAULT_ECHO_AI_MODEL = "google/gemini-2.5-flash";
+const CONFIGURED_ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? DEFAULT_ECHO_AI_MODEL;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
@@ -57,12 +58,29 @@ interface ORTool {
   };
 }
 
+const GOOGLE_AI_STUDIO_MODELS = new Set([
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-pro",
+  "google/gemini-2.0-flash-lite-001",
+]);
+
+function resolveEchoAIModel(modelOverride?: string): string {
+  if (modelOverride && GOOGLE_AI_STUDIO_MODELS.has(modelOverride)) return modelOverride;
+  if (GOOGLE_AI_STUDIO_MODELS.has(CONFIGURED_ECHO_AI_MODEL)) return CONFIGURED_ECHO_AI_MODEL;
+  return DEFAULT_ECHO_AI_MODEL;
+}
+
+function providerForModel(_model: string): { only: string[] } {
+  return { only: ["google-ai-studio"] };
+}
+
 async function openRouterChat(
   messages: ORMessage[],
   tools: ORTool[],
   modelOverride?: string,
 ): Promise<{ content: string; tool_calls?: ORToolCall[] }> {
-  const model = modelOverride ?? ECHO_AI_MODEL;
+  const model = resolveEchoAIModel(modelOverride);
+  const provider = providerForModel(model);
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -73,6 +91,7 @@ async function openRouterChat(
     },
     body: JSON.stringify({
       model,
+      provider,
       messages,
       tools: tools.length ? tools : undefined,
       tool_choice: tools.length ? "auto" : undefined,
@@ -408,6 +427,7 @@ async function getOrCreateConversation(
   supabase: SupabaseClient,
   userId: string,
   conversationId: string | null,
+  model: string,
 ): Promise<{ id: string; isNew: boolean }> {
   if (conversationId) {
     const { data } = await supabase
@@ -420,7 +440,7 @@ async function getOrCreateConversation(
   }
   const { data, error } = await supabase
     .from("ai_conversations")
-    .insert({ user_id: userId, model: ECHO_AI_MODEL })
+    .insert({ user_id: userId, model })
     .select("id")
     .single();
   if (error) throw error;
@@ -534,7 +554,7 @@ interface RequestBody {
     args: Record<string, unknown>;
     approve: boolean;
   };
-  /** Optional OpenRouter model ID override (e.g. "openai/gpt-4o"). Falls back to ECHO_AI_MODEL env var. */
+  /** Optional Google AI Studio model override. Non-allowlisted values are ignored. */
   preferred_model?: string;
 }
 
@@ -575,16 +595,18 @@ async function handleRequest(req: Request): Promise<Response> {
       const send = (e: SSEEvent) => controller.enqueue(sseEncode(e));
 
       try {
+        const modelOverride = typeof body.preferred_model === "string" && body.preferred_model
+          ? body.preferred_model
+          : undefined;
+        const selectedModel = resolveEchoAIModel(modelOverride);
+
         const { id: conversationId, isNew } = await getOrCreateConversation(
           supabase,
           userId,
           body.conversation_id ?? null,
+          selectedModel,
         );
         if (isNew) send({ type: "conversation", id: conversationId });
-
-        const modelOverride = typeof body.preferred_model === "string" && body.preferred_model
-          ? body.preferred_model
-          : undefined;
 
         // ── Confirm branch: user approved/rejected a previously paused tool ──
         if (body.confirm) {

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import * as FileSystem from 'expo-file-system/legacy';
 import { FeedItem, Comment } from '../types';
 import {
   mapEchoRowToFeedItem,
@@ -8,24 +9,143 @@ import {
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
 
+export type LocalImageUpload = {
+  uri: string;
+  base64?: string | null;
+  mimeType?: string | null;
+  fileName?: string | null;
+};
+
+export type LocalVideoUpload = {
+  uri: string;
+  mimeType?: string | null;
+  fileName?: string | null;
+};
+
+type UploadableImage = string | LocalImageUpload;
+type UploadableVideo = string | LocalVideoUpload;
+
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const clean = base64.replace(/^data:[^;]+;base64,/, '').replace(/[\r\n=]/g, '');
+  const bytes = new Uint8Array(Math.floor((clean.length * 3) / 4));
+  let buffer = 0;
+  let bits = 0;
+  let index = 0;
+
+  for (let i = 0; i < clean.length; i++) {
+    const value = chars.indexOf(clean[i]);
+    if (value === -1) continue;
+    buffer = (buffer << 6) | value;
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      bytes[index++] = (buffer >> bits) & 0xff;
+    }
+  }
+
+  return bytes.slice(0, index).buffer;
+}
+
+function imageExtension(image: UploadableImage): string {
+  if (typeof image !== 'string') {
+    const mimeExt = image.mimeType?.split('/')[1]?.toLowerCase();
+    if (mimeExt) return mimeExt === 'jpeg' ? 'jpg' : mimeExt;
+    const fileExt = image.fileName?.split('.').pop()?.toLowerCase();
+    if (fileExt) return fileExt;
+  }
+
+  const uri = typeof image === 'string' ? image : image.uri;
+  return uri.split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
+}
+
+function imageContentType(image: UploadableImage): string {
+  if (typeof image !== 'string' && image.mimeType) return image.mimeType;
+  const ext = imageExtension(image);
+  if (ext === 'png') return 'image/png';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'heic' || ext === 'heif') return 'image/heic';
+  return 'image/jpeg';
+}
+
+async function imageUploadBody(image: UploadableImage): Promise<Blob | ArrayBuffer> {
+  const uri = typeof image === 'string' ? image : image.uri;
+  if (!/^https?:\/\//i.test(uri)) {
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return base64ToArrayBuffer(base64);
+  }
+
+  const response = await fetch(uri);
+  return response.blob();
+}
+
+async function uploadLocalFileWithSignedUrl(
+  uri: string,
+  path: string,
+  contentType: string
+): Promise<void> {
+  const { data: signed, error: signedError } = await supabase.storage
+    .from('echo-media')
+    .createSignedUploadUrl(path);
+  if (signedError) throw signedError;
+
+  const result = await FileSystem.uploadAsync(signed.signedUrl, uri, {
+    httpMethod: 'PUT',
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    headers: {
+      'content-type': contentType,
+    },
+  });
+
+  if (result.status < 200 || result.status >= 300) {
+    if (result.status === 413 || /payload too large|maximum allowed size/i.test(result.body)) {
+      throw new Error('This file is larger than your Supabase project Storage limit. Raise Storage > Settings > Global file size limit, then try again.');
+    }
+    throw new Error(result.body || `Media upload failed (${result.status})`);
+  }
+}
+
+function videoExtension(video: UploadableVideo): string {
+  if (typeof video !== 'string') {
+    const mimeExt = video.mimeType?.split('/')[1]?.toLowerCase();
+    if (mimeExt) return mimeExt === 'quicktime' ? 'mov' : mimeExt;
+    const fileExt = video.fileName?.split('.').pop()?.toLowerCase();
+    if (fileExt) return fileExt;
+  }
+
+  const uri = typeof video === 'string' ? video : video.uri;
+  return uri.split('?')[0].split('.').pop()?.toLowerCase() || 'mp4';
+}
+
+function videoContentType(video: UploadableVideo): string {
+  if (typeof video !== 'string' && video.mimeType) return video.mimeType;
+  const ext = videoExtension(video);
+  if (ext === 'mov' || ext === 'qt') return 'video/quicktime';
+  if (ext === 'm4v') return 'video/x-m4v';
+  if (ext === 'webm') return 'video/webm';
+  return 'video/mp4';
+}
+
 /**
  * Upload a local image URI to the `avatars` bucket.
  * Uses the authenticated session UID as the folder name (required by RLS).
  * Returns the public URL of the uploaded file.
  */
-export async function uploadAvatar(localUri: string): Promise<string> {
+export async function uploadAvatar(image: UploadableImage): Promise<string> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
 
-  const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+  const ext = imageExtension(image);
   const path = `${uid}/avatar.${ext}`;
 
-  const response = await fetch(localUri);
-  const blob = await response.blob();
+  const body = await imageUploadBody(image);
+  const contentType = imageContentType(image);
 
   const { error } = await supabase.storage
     .from('avatars')
-    .upload(path, blob, { upsert: true, contentType: blob.type || 'image/jpeg' });
+    .upload(path, body, { upsert: true, contentType });
   if (error) throw error;
 
   const { data } = supabase.storage.from('avatars').getPublicUrl(path);
@@ -37,28 +157,53 @@ export async function uploadAvatar(localUri: string): Promise<string> {
  * Uses the authenticated session UID as the folder name (required by RLS).
  * Returns an array of public URLs in the same order.
  */
-export async function uploadEchoImages(localUris: string[]): Promise<string[]> {
+export async function uploadEchoImages(images: UploadableImage[]): Promise<string[]> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
 
   const urls: string[] = [];
-  for (let i = 0; i < Math.min(localUris.length, 4); i++) {
-    const localUri = localUris[i];
-    const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+  for (let i = 0; i < Math.min(images.length, 4); i++) {
+    const image = images[i];
+    const ext = imageExtension(image);
     const path = `${uid}/${Date.now()}_${i}.${ext}`;
 
-    const response = await fetch(localUri);
-    const blob = await response.blob();
+    const contentType = imageContentType(image);
+    const uri = typeof image === 'string' ? image : image.uri;
 
-    const { error } = await supabase.storage
-      .from('echo-media')
-      .upload(path, blob, { contentType: blob.type || 'image/jpeg' });
-    if (error) throw error;
+    if (/^https?:\/\//i.test(uri)) {
+      const body = await imageUploadBody(image);
+      const { error } = await supabase.storage
+        .from('echo-media')
+        .upload(path, body, { contentType });
+      if (error) throw error;
+    } else {
+      await uploadLocalFileWithSignedUrl(uri, path, contentType);
+    }
 
     const { data } = supabase.storage.from('echo-media').getPublicUrl(path);
     urls.push(data.publicUrl);
   }
   return urls;
+}
+
+/**
+ * Upload a local video URI to the `echo-media` bucket.
+ * Uses a signed upload URL plus native filesystem upload so large videos do not
+ * have to be loaded into JS memory.
+ */
+export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const uri = typeof video === 'string' ? video : video.uri;
+  const ext = videoExtension(video);
+  const path = `${uid}/${Date.now()}_video.${ext}`;
+  const contentType = videoContentType(video);
+
+  await uploadLocalFileWithSignedUrl(uri, path, contentType);
+
+  const { data } = supabase.storage.from('echo-media').getPublicUrl(path);
+  return data.publicUrl;
 }
 
 // ─── Profile select helper ────────────────────────────────────────────────────
@@ -98,12 +243,16 @@ export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
   if (e2) throw e2;
   const profileById = new Map((profiles as SupabaseProfileRow[] || []).map(p => [p.id, p]));
 
-  const { data: likeRows } = await supabase.from('echo_likes').select('echo_id').eq('user_id', uid);
+  const [{ data: likeRows }, { data: repostRows }] = await Promise.all([
+    supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
+    supabase.from('echo_reposts').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+  ]);
   const liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
   const bookmarked = new Set(ids);
+  const reposted = new Set((repostRows || []).map((r: { echo_id: string }) => r.echo_id));
 
   return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked)
+    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted)
   );
 }
 
@@ -131,16 +280,22 @@ export async function fetchRemoteFeed(): Promise<FeedItem[]> {
   let liked = new Set<string>();
   let bookmarked = new Set<string>();
   if (uid) {
-    const [{ data: likeRows }, { data: bmRows }] = await Promise.all([
+    const [{ data: likeRows }, { data: bmRows }, { data: repostRows }] = await Promise.all([
       supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
       supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid),
+      supabase.from('echo_reposts').select('echo_id').eq('user_id', uid),
     ]);
     liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
     bookmarked = new Set((bmRows || []).map((r: { echo_id: string }) => r.echo_id));
+    const reposted = new Set((repostRows || []).map((r: { echo_id: string }) => r.echo_id));
+    return rows.map(echo =>
+      mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted)
+    );
   }
 
+  const emptyReposted = new Set<string>();
   return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked)
+    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, emptyReposted)
   );
 }
 
@@ -150,18 +305,23 @@ export async function insertRemoteEcho(params: {
   response: string;
   title?: string;
   mediaUrls?: string[];
-}): Promise<void> {
+}): Promise<SupabaseEchoRow> {
   const title =
     params.title?.trim() ||
     (params.prompt.trim().slice(0, 80) + (params.prompt.length > 80 ? '…' : ''));
-  const { error } = await supabase.from('public_echoes').insert({
-    author_id: params.authorId,
-    title,
-    prompt: params.prompt,
-    response: params.response,
-    ...(params.mediaUrls?.length ? { media_urls: params.mediaUrls } : {}),
-  });
+  const { data, error } = await supabase
+    .from('public_echoes')
+    .insert({
+      author_id: params.authorId,
+      title,
+      prompt: params.prompt,
+      response: params.response,
+      ...(params.mediaUrls?.length ? { media_urls: params.mediaUrls } : {}),
+    })
+    .select(ECHO_SELECT)
+    .single();
   if (error) throw error;
+  return data as SupabaseEchoRow;
 }
 
 export async function setRemoteLike(echoId: string, like: boolean): Promise<void> {
@@ -194,6 +354,34 @@ export async function setRemoteBookmark(echoId: string, bookmark: boolean): Prom
       .eq('user_id', uid);
     if (error) throw error;
   }
+}
+
+export async function setRemoteRepost(echoId: string, repost: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (repost) {
+    const { error } = await supabase.from('echo_reposts').insert({ echo_id: echoId, user_id: uid });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase
+      .from('echo_reposts')
+      .delete()
+      .eq('echo_id', echoId)
+      .eq('user_id', uid);
+    if (error) throw error;
+  }
+}
+
+/** Records one deduplicated view per authenticated user per echo (PK echo_id,user_id). Ignores duplicates. */
+export async function recordRemoteEchoView(echoId: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const { error } = await supabase.from('echo_views').insert({ echo_id: echoId, user_id: uid });
+  if (!error) return;
+  const code = (error as { code?: string }).code;
+  if (code === '23505') return;
+  if (error.message?.includes('duplicate')) return;
+  throw error;
 }
 
 export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
@@ -283,18 +471,21 @@ export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedI
   const uid = await getSessionUserId();
   let liked = new Set<string>();
   let bookmarked = new Set<string>();
+  let reposted = new Set<string>();
   if (uid && rows.length) {
     const ids = rows.map(r => r.id);
-    const [{ data: likeRows }, { data: bmRows }] = await Promise.all([
+    const [{ data: likeRows }, { data: bmRows }, { data: repostRows }] = await Promise.all([
       supabase.from('echo_likes').select('echo_id').eq('user_id', uid).in('echo_id', ids),
       supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+      supabase.from('echo_reposts').select('echo_id').eq('user_id', uid).in('echo_id', ids),
     ]);
     liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
     bookmarked = new Set((bmRows || []).map((r: { echo_id: string }) => r.echo_id));
+    reposted = new Set((repostRows || []).map((r: { echo_id: string }) => r.echo_id));
   }
 
   return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, author || undefined, liked, bookmarked)
+    mapEchoRowToFeedItem(echo, author || undefined, liked, bookmarked, reposted)
   );
 }
 

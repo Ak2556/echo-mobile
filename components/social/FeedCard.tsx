@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, Share, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MediaGrid } from './MediaGrid';
-import { InlineVideo } from './InlineVideo';
+import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -16,7 +16,8 @@ import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
-import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
+import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
+import { useToggleRemoteBookmark, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
 
 interface FeedCardProps {
   item: FeedItem;
@@ -40,7 +41,7 @@ function PollBar({ pct }: { pct: number }) {
   const width = useSharedValue(0);
   React.useEffect(() => {
     width.value = withTiming(pct, { duration: 500 });
-  }, [pct]);
+  }, [pct, width]);
   const style = useAnimatedStyle(() => ({ width: `${width.value}%` as any }));
   return <Animated.View style={[{ height: '100%', borderRadius: 4, backgroundColor: 'rgba(99,102,241,0.4)' }, style]} />;
 }
@@ -110,12 +111,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const qc = useQueryClient();
   const remote = isSupabaseRemote();
   const remoteBm = useToggleRemoteBookmark();
+  const remoteRp = useToggleRemoteRepost();
   const { colors, radius, fontSizes, reduceAnimations, showAvatars } = useTheme();
   const { isBookmarked, toggleBookmark, isReposted, toggleRepost,
     compactFeed, showPreviewCards, votePoll,
   } = useAppStore();
   const bookmarked = remote ? item.isBookmarked : isBookmarked(item.id);
-  const reposted = isReposted(item.id);
+  const reposted = remote ? item.isReposted : isReposted(item.id);
   const [showMenu, setShowMenu] = useState(false);
 
   const bookmarkScale = useSharedValue(1);
@@ -125,6 +127,11 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const bookmarkAnim = useAnimatedStyle(() => ({ transform: [{ scale: bookmarkScale.value }] }));
   const repostAnim = useAnimatedStyle(() => ({ transform: [{ scale: repostScale.value }] }));
   const shareAnim = useAnimatedStyle(() => ({ transform: [{ scale: shareScale.value }] }));
+
+  const handleMainPress = useCallback(() => {
+    if (remote) void recordRemoteEchoView(item.id);
+    onPress?.();
+  }, [remote, item.id, onPress]);
 
   const bounceIcon = (sv: { value: number }) => {
     if (reduceAnimations) return;
@@ -149,9 +156,18 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   const handleRepost = () => {
     bounceIcon(repostScale);
+    if (remote) {
+      remoteRp.mutate({ echoId: item.id, repost: !reposted });
+      showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? '\u{1F501}' : '');
+      return;
+    }
     toggleRepost(item.id);
     showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? '\u{1F501}' : '');
   };
+
+  const displayRepostCount = remote
+    ? (item.repostCount || 0)
+    : (item.repostCount || 0) + (reposted ? 1 : 0);
 
   const handleNativeShare = async () => {
     bounceIcon(shareScale);
@@ -233,7 +249,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
           </Animated.View>
           <Text style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }}>
-            {(item.repostCount || 0) + (reposted ? 1 : 0)}
+            {displayRepostCount}
           </Text>
         </AnimatedPressable>
 
@@ -257,7 +273,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     return (
       <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()}>
         <AnimatedPressable
-          onPress={onPress}
+          onPress={handleMainPress}
           scaleValue={reduceAnimations ? 1 : 0.98}
           haptic="light"
           style={{
@@ -284,7 +300,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               <MediaGrid uris={item.mediaUris!} />
             )}
             {item.postType === 'video' && item.videoUri && (
-              <InlineVideo uri={item.videoUri} caption={undefined} qualities={item.videoQualities} />
+              <VideoPreview uri={item.videoUri} height={300} borderRadius={0} />
             )}
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.65)']}
@@ -372,7 +388,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()} style={{ marginHorizontal: 16, marginVertical: 6 }}>
       <GlassPanel variant="light" borderRadius={radius.card} elevated>
       <AnimatedPressable
-        onPress={onPress}
+        onPress={handleMainPress}
         scaleValue={reduceAnimations ? 1 : 0.98}
         haptic="light"
         style={{
@@ -467,7 +483,12 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
         {/* ── VIDEO post (compact) ── */}
         {item.postType === 'video' && item.videoUri && (
-          <InlineVideo uri={item.videoUri} caption={item.prompt || undefined} qualities={item.videoQualities} />
+          <View style={{ marginBottom: 12 }}>
+            {!!item.prompt && (
+              <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 3}>{item.prompt}</Text>
+            )}
+            <VideoPreview uri={item.videoUri} height={compactFeed ? 180 : 260} borderRadius={radius.md} />
+          </View>
         )}
 
         {/* ── POLL post ── */}

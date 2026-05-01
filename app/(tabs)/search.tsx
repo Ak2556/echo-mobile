@@ -353,7 +353,7 @@ export default function SearchScreen() {
             Explore
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 13, marginBottom: 10 }}>
-            Discover what's resonating
+            {`Discover what's resonating`}
           </Text>
           <SearchBar value={query} onChangeText={setQuery} placeholder="Search users, echoes, hashtags..." />
         </View>

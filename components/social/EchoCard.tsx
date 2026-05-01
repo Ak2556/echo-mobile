@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, Pressable, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
 } from 'react-native-reanimated';
@@ -12,7 +12,6 @@ import {
   HeartStraight, ChatCircle, BookmarkSimple, ShareNetwork,
   SpeakerHigh, SpeakerSlash, SealCheck, Play,
 } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { showToast } from '../ui/Toast';
 import { FeedItem } from '../../types';
@@ -54,12 +53,15 @@ function SidebarButton({
 }
 
 export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
-  const { colors } = useTheme();
   const { height: SCREEN_H } = useWindowDimensions();
   const toggleLike = useAppStore(s => s.toggleLike);
   const toggleBookmark = useAppStore(s => s.toggleBookmark);
 
-  const videoRef = useRef<Video>(null);
+  const videoUri = item.videoUri ?? '';
+  const player = useVideoPlayer(videoUri, p => {
+    p.muted = true;
+    p.loop = true;
+  });
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -84,25 +86,33 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
     return () => clearTimeout(t);
   }, [item.videoUri, loadState]);
 
+  useEffect(() => {
+    player.muted = muted;
+  }, [muted, player]);
+
+  useEffect(() => {
+    const statusSub = player.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay') setLoadState('ready');
+      if (status === 'error') setLoadState('error');
+    });
+    const playingSub = player.addListener('playingChange', ({ isPlaying }) => {
+      setPlaying(isPlaying);
+    });
+    return () => {
+      statusSub.remove();
+      playingSub.remove();
+    };
+  }, [player]);
+
   // Auto-play / pause based on visibility
   useEffect(() => {
     if (loadState !== 'ready') return;
     if (isActive) {
-      videoRef.current?.playAsync().catch(() => {});
+      player.play();
     } else {
-      videoRef.current?.pauseAsync().catch(() => {});
+      player.pause();
     }
-  }, [isActive, loadState]);
-
-  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (!status.isLoaded) return;
-    setLoadState('ready');
-    setPlaying(status.isPlaying);
-    if (status.didJustFinish) {
-      // Loop
-      videoRef.current?.setPositionAsync(0).then(() => videoRef.current?.playAsync()).catch(() => {});
-    }
-  }, []);
+  }, [isActive, loadState, player]);
 
   const burstHeart = () => {
     heartScale.value = 0;
@@ -128,9 +138,9 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
       // Single tap — play/pause
       if (loadState !== 'ready') return;
       if (playing) {
-        await videoRef.current?.pauseAsync().catch(() => {});
+        player.pause();
       } else {
-        await videoRef.current?.playAsync().catch(() => {});
+        player.play();
       }
     }
     lastTapRef.current = now;
@@ -159,25 +169,19 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
   };
 
   const toggleMute = async () => {
-    await videoRef.current?.setIsMutedAsync(!muted).catch(() => {});
     setMuted(m => !m);
   };
 
-  const videoUri = item.videoUri ?? '';
   const initials = (item.displayName || item.username || '?').charAt(0).toUpperCase();
 
   return (
     <View style={{ width: '100%', height: SCREEN_H, backgroundColor: '#000' }}>
       {/* ── Video ────────────────────────────────────── */}
-      <Video
-        ref={videoRef}
-        source={{ uri: videoUri }}
+      <VideoView
+        player={player}
         style={{ position: 'absolute', inset: 0 }}
-        resizeMode={ResizeMode.COVER}
-        isMuted={muted}
-        shouldPlay={false}
-        useNativeControls={false}
-        onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+        contentFit="cover"
+        nativeControls={false}
       />
 
       {/* ── Loading overlay ───────────────────────── */}
@@ -190,7 +194,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
       {/* ── Error state ───────────────────────────── */}
       {loadState === 'error' && (
         <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', gap: 12 }}>
-          <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15 }}>Couldn't load video</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15 }}>{`Couldn't load video`}</Text>
           <Pressable
             onPress={() => setLoadState('loading')}
             style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: '#6366F1' }}

@@ -200,7 +200,7 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
   },
 
   // ── Video posts (Echoes feed) ────────────────────────────────────────────
-  // All use Apple public HLS test streams (load instantly on iOS via expo-av AVPlayer)
+  // All use Apple public HLS test streams (load quickly through native video playback)
   {
     id: 'video1',
     userId: 'u_seed_crypto',

@@ -21,7 +21,8 @@ import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { playSoundEffect } from '../lib/sound';
 import { isSupabaseRemote } from '../lib/remoteConfig';
-import { uploadEchoImages, insertRemoteEcho } from '../lib/supabaseEchoApi';
+import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho } from '../lib/supabaseEchoApi';
+import type { LocalImageUpload, LocalVideoUpload } from '../lib/supabaseEchoApi';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
@@ -43,7 +44,7 @@ export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { username, userId, avatarColor, avatarUrl, displayName, publishEcho } = useAppStore();
+  const { username, userId, avatarColor, avatarUrl, displayName, publishEcho, setUserId } = useAppStore();
 
   const [postType, setPostType] = useState<PostType>('text');
   const [prompt, setPrompt] = useState('');
@@ -52,11 +53,13 @@ export default function CreatePostScreen() {
   const [tagsRaw, setTagsRaw] = useState('');
   const [publishing, setPublishing] = useState(false);
 
-  // Photo state — up to 4 device URIs
-  const [imageUris, setImageUris] = useState<string[]>([]);
+  // Photo state — up to 4 device assets
+  const [images, setImages] = useState<LocalImageUpload[]>([]);
+  const imageUris = images.map(image => image.uri);
 
   // Video state — single device URI
-  const [videoUri, setVideoUri] = useState('');
+  const [video, setVideo] = useState<LocalVideoUpload | null>(null);
+  const videoUri = video?.uri ?? '';
 
   // Poll state
   const [pollQuestion, setPollQuestion] = useState('');
@@ -80,13 +83,17 @@ export default function CreatePostScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsMultipleSelection: true,
       selectionLimit: 4 - imageUris.length,
       quality: 0.88,
     });
     if (!result.canceled) {
-      setImageUris(prev => [...prev, ...result.assets.map(a => a.uri)].slice(0, 4));
+      setImages(prev => [...prev, ...result.assets.map(asset => ({
+        uri: asset.uri,
+        mimeType: asset.mimeType,
+        fileName: asset.fileName,
+      }))].slice(0, 4));
     }
   };
 
@@ -97,16 +104,21 @@ export default function CreatePostScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.88,
     });
     if (!result.canceled) {
-      setImageUris(prev => [...prev, result.assets[0].uri].slice(0, 4));
+      const asset = result.assets[0];
+      setImages(prev => [...prev, {
+        uri: asset.uri,
+        mimeType: asset.mimeType,
+        fileName: asset.fileName,
+      }].slice(0, 4));
     }
   };
 
-  const removeImage = (idx: number) => setImageUris(prev => prev.filter((_, i) => i !== idx));
+  const removeImage = (idx: number) => setImages(prev => prev.filter((_, i) => i !== idx));
 
   const pickVideo = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -115,11 +127,17 @@ export default function CreatePostScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      videoMaxDuration: 120,
+      mediaTypes: ['videos'],
       quality: 1,
     });
-    if (!result.canceled) setVideoUri(result.assets[0].uri);
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      setVideo({
+        uri: asset.uri,
+        mimeType: asset.mimeType,
+        fileName: asset.fileName,
+      });
+    }
   };
 
   const recordVideo = async () => {
@@ -129,11 +147,17 @@ export default function CreatePostScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      videoMaxDuration: 120,
+      mediaTypes: ['videos'],
       videoQuality: ImagePicker.UIImagePickerControllerQualityType.High,
     });
-    if (!result.canceled) setVideoUri(result.assets[0].uri);
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      setVideo({
+        uri: asset.uri,
+        mimeType: asset.mimeType,
+        fileName: asset.fileName,
+      });
+    }
   };
 
   const addPollOption = () => { if (pollOptions.length < 4) setPollOptions(p => [...p, '']); };
@@ -146,10 +170,18 @@ export default function CreatePostScreen() {
 
     try {
       const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
+      const remoteAuthorId = isSupabaseRemote() ? await getSessionUserId() : null;
+      if (isSupabaseRemote() && !remoteAuthorId) {
+        Alert.alert('Session required', 'Please sign in again so we can publish your echo.');
+        return;
+      }
+      if (remoteAuthorId && remoteAuthorId !== userId) {
+        setUserId(remoteAuthorId);
+      }
 
       const base = {
         id: Date.now().toString(),
-        userId, username: username || 'anonymous',
+        userId: remoteAuthorId ?? userId, username: username || 'anonymous',
         displayName: displayName || username || 'anonymous',
         avatarColor: avatarColor || colors.accent,
         avatarUrl: avatarUrl || undefined,
@@ -161,29 +193,39 @@ export default function CreatePostScreen() {
 
       let echo: FeedItem;
       let remoteMediaUrls: string[] | undefined;
+      let remoteEchoId: string | undefined;
 
       switch (postType) {
         case 'text':
           echo = coerceFeedItem({ ...base, postType: 'text', prompt: prompt.trim(), response: response.trim() });
-          if (isSupabaseRemote()) {
-            await insertRemoteEcho({ authorId: userId, prompt: prompt.trim(), response: response.trim() });
+          if (remoteAuthorId) {
+            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: prompt.trim(), response: response.trim() });
+            remoteEchoId = row.id;
           }
           break;
         case 'photo': {
           // Upload images to Storage first if remote
-          if (isSupabaseRemote() && imageUris.length > 0) {
-            remoteMediaUrls = await uploadEchoImages(imageUris);
+          if (remoteAuthorId && imageUris.length > 0) {
+            remoteMediaUrls = await uploadEchoImages(images);
           }
           const finalUris = remoteMediaUrls ?? imageUris;
           echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: finalUris });
-          if (isSupabaseRemote()) {
-            await insertRemoteEcho({ authorId: userId, prompt: caption.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls });
+          if (remoteAuthorId) {
+            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: caption.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls });
+            remoteEchoId = row.id;
           }
           break;
         }
-        case 'video':
-          echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri });
+        case 'video': {
+          const remoteVideoUrl = remoteAuthorId && video ? await uploadEchoVideo(video) : undefined;
+          const finalVideoUri = remoteVideoUrl ?? videoUri;
+          echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri: finalVideoUri });
+          if (remoteAuthorId) {
+            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: caption.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : undefined });
+            remoteEchoId = row.id;
+          }
           break;
+        }
         case 'poll': {
           const options: PollOption[] = pollOptions.filter(o => o.trim()).map((o, i) => ({ id: `opt_${i}`, text: o.trim(), votes: 0 }));
           echo = coerceFeedItem({
@@ -194,7 +236,14 @@ export default function CreatePostScreen() {
         }
       }
 
-      publishEcho(echo!);
+      const publishedEcho = remoteEchoId ? { ...echo!, id: remoteEchoId } : echo!;
+      publishEcho(publishedEcho);
+      if (remoteAuthorId) {
+        qc.setQueriesData<FeedItem[]>({ queryKey: ['feed'] }, old => {
+          if (!old) return [publishedEcho];
+          return [publishedEcho, ...old.filter(item => item.id !== publishedEcho.id)];
+        });
+      }
       qc.invalidateQueries({ queryKey: ['feed'] });
       playSoundEffect('success');
       showToast('Echo published!', '✨');
@@ -376,7 +425,7 @@ export default function CreatePostScreen() {
                     Video selected ✓
                   </Text>
                   <Pressable
-                    onPress={() => setVideoUri('')}
+                    onPress={() => setVideo(null)}
                     style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 6 }}
                   >
                     <X color="#fff" size={16} />

@@ -392,7 +392,11 @@ export default function SettingsScreen() {
   };
 
   const fontLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.fontSize];
-  const modelLabel = { 'gpt-3.5': 'GPT-3.5 Turbo', 'gpt-4': 'GPT-4', 'gpt-4o': 'GPT-4o' }[s.aiModel];
+  const modelLabel = {
+    'gemini-2.5-flash': 'Gemini 2.5 Flash',
+    'gemini-2.5-pro': 'Gemini 2.5 Pro',
+    'gemini-2.0-flash-lite': 'Gemini 2.0 Flash Lite',
+  }[s.aiModel];
   const bubbleLabel = { modern: 'Modern', classic: 'Classic', minimal: 'Minimal' }[s.chatBubbleStyle];
   const dmLabel = { everyone: 'Everyone', followers: 'Followers Only', nobody: 'Nobody' }[s.dmPrivacy];
   const feedLabel = { latest: 'Latest', popular: 'Popular', following: 'Following' }[s.feedSort];
@@ -633,9 +637,9 @@ export default function SettingsScreen() {
           theme={theme}
           title="AI Model"
           options={[
-            { label: 'GPT-3.5 Turbo', value: 'gpt-3.5' as const, desc: 'Fast and efficient' },
-            { label: 'GPT-4', value: 'gpt-4' as const, desc: 'Most capable, slower' },
-            { label: 'GPT-4o', value: 'gpt-4o' as const, desc: 'Fast + capable (recommended)' },
+            { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash' as const, desc: 'Fast Google AI Studio model' },
+            { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro' as const, desc: 'More capable Google AI Studio model' },
+            { label: 'Gemini 2.0 Flash Lite', value: 'gemini-2.0-flash-lite' as const, desc: 'Lightweight Google AI Studio model' },
           ]}
           value={s.aiModel}
           onChange={(v) => { s.setAiModel(v); showToast(`Model: ${v}`, '\u{1F916}'); }}

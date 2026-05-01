@@ -187,7 +187,7 @@ export default function SetupProfileScreen() {
             >
               {loading
                 ? <ActivityIndicator color="#fff" />
-                : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Let's go →</Text>}
+                : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{`Let's go →`}</Text>}
             </AnimatedPressable>
           </Animated.View>
         </ScrollView>
