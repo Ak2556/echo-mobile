@@ -45,4 +45,7 @@ app-example
 
 # Claude Code local state
 .claude/
+
+# Codex local state
+.codex/
 supabase/.temp/
