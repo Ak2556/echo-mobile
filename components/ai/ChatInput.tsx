@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { ArrowUp } from 'phosphor-react-native';
@@ -11,13 +11,24 @@ import { useTheme } from '../../lib/theme';
 interface ChatInputProps {
   onSend: (message: string) => void;
   isLoading?: boolean;
+  draft?: string;
+  onDraftChange?: (text: string) => void;
 }
 
-export function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInputProps) {
   const [text, setText] = useState('');
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const { colors, reduceAnimations } = useTheme();
   const sendScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (draft !== undefined && draft !== text) setText(draft);
+  }, [draft, text]);
+
+  const updateText = (next: string) => {
+    setText(next);
+    onDraftChange?.(next);
+  };
 
   const handleSend = () => {
     if (text.trim() && !isLoading) {
@@ -29,7 +40,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
       onSend(text.trim());
-      setText('');
+      updateText('');
     }
   };
 
@@ -92,7 +103,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
           <TextInput
             placeholder="Message Echo..."
             value={text}
-            onChangeText={setText}
+            onChangeText={updateText}
             onSubmitEditing={handleSend}
             returnKeyType="send"
             blurOnSubmit={false}

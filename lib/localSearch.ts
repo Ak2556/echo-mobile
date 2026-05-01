@@ -28,6 +28,7 @@ export interface TodayProductivity {
     income: number;
     expense: number;
     balance: number;
+    biggestCategory?: { category: string; amount: number };
   };
   voiceMemos: {
     total: number;
@@ -118,6 +119,7 @@ export async function getTodayProductivity(): Promise<TodayProductivity> {
       income: expenseSummary.income,
       expense: expenseSummary.expense,
       balance: expenseSummary.balance,
+      biggestCategory: expenseSummary.byCategory.find(item => item.type === 'expense'),
     },
     voiceMemos: {
       total: memos.length,

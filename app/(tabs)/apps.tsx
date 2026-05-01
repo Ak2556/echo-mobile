@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Dimensions, StyleSheet, Platform, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +12,7 @@ import {
   Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix, VideoCamera,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
-import { getTodayProductivity, searchLocalProductivity } from '../../lib/localSearch';
+import { getTodayProductivity, LocalProductivityApp, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
 import { formatMoney } from '../../lib/expenses';
 import { formatMemoTime } from '../../lib/voiceMemos';
 
@@ -21,6 +20,15 @@ const { width } = Dimensions.get('window');
 const PAD = 20;
 const GAP = 12;
 const CARD = (width - PAD * 2 - GAP) / 2;
+type SearchFilter = 'all' | LocalProductivityApp;
+
+const SEARCH_FILTERS: { label: string; value: SearchFilter }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Notes', value: 'notes' },
+  { label: 'Habits', value: 'habits' },
+  { label: 'Expenses', value: 'expenses' },
+  { label: 'Memos', value: 'voice-memo' },
+];
 
 interface MiniApp {
   id: string;
@@ -178,9 +186,10 @@ export default function AppsScreen() {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [dashboard, setDashboard] = useState(null);
+  const [dashboard, setDashboard] = useState<TodayProductivity | null>(null);
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<LocalSearchResult[]>([]);
+  const [filter, setFilter] = useState<SearchFilter>('all');
 
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
@@ -204,6 +213,7 @@ export default function AppsScreen() {
     }
     searchLocalProductivity(text, 6).then(setResults).catch(() => setResults([]));
   };
+  const filteredResults = filter === 'all' ? results : results.filter(result => result.app === filter);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -248,6 +258,24 @@ export default function AppsScreen() {
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.voiceMemos.recent[0] ? formatMemoTime(dashboard.voiceMemos.recent[0].duration) : 'No recordings'}</Text>
               </Pressable>
             </View>
+            <View style={{ gap: 8 }}>
+              <Pressable onPress={() => router.push('/mini-apps/habits' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                <Text style={{ color: colors.text, fontWeight: '800' }}>Habits due today</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.habits.remaining.length ? dashboard.habits.remaining.join(', ') : 'All habits complete'}</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/mini-apps/notes' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                <Text style={{ color: colors.text, fontWeight: '800' }}>Recent notes</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.notes.recent.map(note => note.title).join(', ') || 'No recent notes'}</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/mini-apps/expenses' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                <Text style={{ color: colors.text, fontWeight: '800' }}>Biggest expense category</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }}>{dashboard.expenses.biggestCategory ? `${dashboard.expenses.biggestCategory.category} - $${formatMoney(dashboard.expenses.biggestCategory.amount)}` : 'No expenses this week'}</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/mini-apps/voice-memo' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                <Text style={{ color: colors.text, fontWeight: '800' }}>Latest voice memo</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.voiceMemos.recent[0] ? `${dashboard.voiceMemos.recent[0].title} - ${formatMemoTime(dashboard.voiceMemos.recent[0].duration)}` : 'No recordings'}</Text>
+              </Pressable>
+            </View>
           </Animated.View>
         )}
 
@@ -259,8 +287,18 @@ export default function AppsScreen() {
             placeholderTextColor={colors.textMuted}
             style={{ color: colors.text, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
           />
-          {results.map(result => (
-            <Pressable key={`${result.app}-${result.id}`} onPress={() => router.push(result.route)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {SEARCH_FILTERS.map(item => {
+              const active = filter === item.value;
+              return (
+                <Pressable key={item.value} onPress={() => setFilter(item.value)} style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: active ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)') }}>
+                  <Text style={{ color: active ? '#fff' : colors.textMuted, fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          {filteredResults.map(result => (
+            <Pressable key={`${result.app}-${result.id}`} onPress={() => router.push(result.route as any)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
               <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{result.title}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{result.app} · {result.subtitle}</Text>
             </Pressable>

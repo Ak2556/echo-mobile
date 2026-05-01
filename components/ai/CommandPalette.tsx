@@ -16,7 +16,8 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { ActionCenter } from './ActionCenter';
 import { useCommandPalette } from '../../lib/commandPalette';
 import { streamEchoAI } from '../../lib/api';
-import { executeLocalTool, isLocalTool, localToolFailureMessage } from '../../lib/localTools';
+import { isLocalTool } from '../../lib/localTools';
+import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { useTheme } from '../../lib/theme';
 import { ToolCallCard, ToolCallItem } from './ToolCallCard';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -70,6 +71,53 @@ export function CommandPalette() {
     });
   };
 
+  const continueWithLocalResult = useCallback(
+    async (tool: ToolCallItem, ok: boolean, result?: any, error?: string) => {
+      try {
+        await streamEchoAI({
+          conversationId: conversationIdRef.current ?? undefined,
+          localResult: {
+            tool_call_id: tool.id,
+            tool_name: tool.name,
+            args: tool.args,
+            ok,
+            result,
+            error,
+          },
+          onEvent: (e) => {
+            if (e.type === 'conversation') conversationIdRef.current = e.id;
+            else if (e.type === 'text_delta') upsertText(`a-${Date.now()}`, 'assistant', e.delta);
+            else if (e.type === 'tool_result') {
+              upsertTool({
+                id: e.id,
+                name: e.name,
+                preview: tool.preview,
+                args: tool.args,
+                status: e.ok ? 'ok' : 'error',
+                resultSummary: tool.resultSummary,
+                errorMessage: e.error,
+              });
+            }
+          },
+        });
+      } catch (err: any) {
+        upsertText(`local-stream-err-${Date.now()}`, 'assistant', localContinuationFailureMessage(tool, ok, err?.message ?? 'unknown error'));
+      }
+    },
+    [],
+  );
+
+  const runLocalTool = useCallback(
+    async (tool: ToolCallItem) => {
+      await runLocalToolFlow(tool, {
+        upsertTool,
+        appendAssistantText: (text) => upsertText(`local-err-${Date.now()}`, 'assistant', text),
+        continueWithLocalResult,
+      });
+    },
+    [continueWithLocalResult],
+  );
+
   const send = useCallback(async () => {
     const text = input.trim();
     if (!text || busy) return;
@@ -96,29 +144,7 @@ export function CommandPalette() {
             };
             upsertTool(tool);
             if (e.requiresConfirm === false && isLocalTool(e.name)) {
-              upsertTool({ ...tool, status: 'running' });
-              executeLocalTool(e.name, e.args)
-                .then(async (result) => {
-                  upsertTool({ ...tool, status: 'ok', resultSummary: result.summary });
-                  await streamEchoAI({
-                    conversationId: conversationIdRef.current ?? undefined,
-                    localResult: {
-                      tool_call_id: tool.id,
-                      tool_name: tool.name,
-                      args: tool.args,
-                      ok: true,
-                      result: result.result,
-                    },
-                    onEvent: (next) => {
-                      if (next.type === 'text_delta') upsertText(`a-${Date.now()}`, 'assistant', next.delta);
-                    },
-                  });
-                })
-                .catch((err: any) => {
-                  const message = err?.message ?? 'unknown error';
-                  upsertTool({ ...tool, status: 'error', errorMessage: message });
-                  upsertText(`local-err-${Date.now()}`, 'assistant', localToolFailureMessage(tool.name, message));
-                });
+              runLocalTool(tool);
             }
           }
           else if (e.type === 'tool_result')
@@ -137,7 +163,7 @@ export function CommandPalette() {
     } finally {
       setBusy(false);
     }
-  }, [input, busy]);
+  }, [input, busy, runLocalTool]);
 
   const confirmTool = useCallback(
     async (tool: ToolCallItem, approve: boolean) => {
@@ -160,64 +186,7 @@ export function CommandPalette() {
         }
         setBusy(true);
         try {
-          const result = await executeLocalTool(tool.name, tool.args);
-          upsertTool({
-            ...tool,
-            status: 'ok',
-            resultSummary: result.summary,
-          });
-          try {
-            await streamEchoAI({
-              conversationId: conversationIdRef.current ?? undefined,
-              localResult: {
-                tool_call_id: tool.id,
-                tool_name: tool.name,
-                args: tool.args,
-                ok: true,
-                result: result.result,
-              },
-              onEvent: (e) => {
-                if (e.type === 'text_delta') upsertText(`a-${Date.now()}`, 'assistant', e.delta);
-                else if (e.type === 'tool_result')
-                  upsertTool({
-                    id: e.id,
-                    name: e.name,
-                    preview: tool.preview,
-                    args: tool.args,
-                    status: e.ok ? 'ok' : 'error',
-                    resultSummary: result.summary,
-                    errorMessage: e.error,
-                  });
-              },
-            });
-          } catch (streamErr: any) {
-            upsertText(`local-stream-err-${Date.now()}`, 'assistant', `Saved locally, but I couldn't continue the AI response: ${streamErr?.message ?? 'unknown error'}`);
-          }
-        } catch (err: any) {
-          const message = err?.message ?? 'unknown error';
-          upsertTool({
-            ...tool,
-            status: 'error',
-            errorMessage: message,
-          });
-          upsertText(`local-err-${Date.now()}`, 'assistant', localToolFailureMessage(tool.name, message));
-          try {
-            await streamEchoAI({
-              conversationId: conversationIdRef.current ?? undefined,
-              localResult: {
-                tool_call_id: tool.id,
-                tool_name: tool.name,
-                args: tool.args,
-                ok: false,
-                error: message,
-              },
-              onEvent: (e) => {
-                if (e.type === 'text_delta') upsertText(`a-${Date.now()}`, 'assistant', e.delta);
-              },
-            });
-          } catch {
-            // The local error is already visible in the palette.
-          }
+          await runLocalTool(tool);
         } finally {
           setBusy(false);
         }
@@ -246,7 +215,7 @@ export function CommandPalette() {
         setBusy(false);
       }
     },
-    [],
+    [runLocalTool],
   );
 
   return (
@@ -385,7 +354,7 @@ export function CommandPalette() {
           </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
-      <ActionCenter visible={showActionCenter} onClose={() => setShowActionCenter(false)} />
+      <ActionCenter visible={showActionCenter} onClose={() => setShowActionCenter(false)} onSelectExample={setInput} />
     </Modal>
   );
 }

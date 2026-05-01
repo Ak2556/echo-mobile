@@ -1,13 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ArrowLeft, Database, Trash } from 'phosphor-react-native';
+import { ArrowLeft, Check, Database, PencilSimple, Trash, X } from 'phosphor-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
-import { clearMemory, forgetPreference, loadMemory, MemoryItem } from '../lib/aiMemory';
+import { clearMemory, forgetPreference, loadMemory, MemoryItem, updatePreference } from '../lib/aiMemory';
 import { useTheme } from '../lib/theme';
 
 export default function AIMemoryScreen() {
@@ -16,6 +16,9 @@ export default function AIMemoryScreen() {
   const { colors, radius, fontSizes, animation } = theme;
   const [items, setItems] = useState<MemoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editKey, setEditKey] = useState('');
+  const [editValue, setEditValue] = useState('');
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -58,6 +61,30 @@ export default function AIMemoryScreen() {
         },
       },
     ]);
+  };
+
+  const startEdit = (item: MemoryItem) => {
+    setEditingId(item.id);
+    setEditKey(item.key);
+    setEditValue(item.value);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditKey('');
+    setEditValue('');
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    try {
+      await updatePreference({ id: editingId, key: editKey, value: editValue });
+      cancelEdit();
+      await refresh();
+      showToast('Memory updated');
+    } catch (err: any) {
+      Alert.alert('Could not update memory', err?.message ?? 'Unknown error');
+    }
   };
 
   return (
@@ -127,18 +154,65 @@ export default function AIMemoryScreen() {
                   <GlassPanel key={item.id} borderRadius={radius.card} contentStyle={{ padding: 14 }}>
                     <View style={styles.memoryRow}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }}>{item.key}</Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, marginTop: 4 }}>{item.value}</Text>
+                        {editingId === item.id ? (
+                          <View style={{ gap: 8 }}>
+                            <TextInput
+                              value={editKey}
+                              onChangeText={setEditKey}
+                              placeholder="Key"
+                              placeholderTextColor={colors.textMuted}
+                              style={[styles.input, { borderColor: colors.glassBorder, color: colors.text, backgroundColor: colors.inputBg }]}
+                            />
+                            <TextInput
+                              value={editValue}
+                              onChangeText={setEditValue}
+                              placeholder="Value"
+                              placeholderTextColor={colors.textMuted}
+                              multiline
+                              style={[styles.input, { borderColor: colors.glassBorder, color: colors.text, backgroundColor: colors.inputBg, minHeight: 72, textAlignVertical: 'top' }]}
+                            />
+                          </View>
+                        ) : (
+                          <>
+                            <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }}>{item.key}</Text>
+                            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, marginTop: 4 }}>{item.value}</Text>
+                          </>
+                        )}
                         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>
                           Saved {new Date(item.createdAt).toLocaleDateString()}
                         </Text>
                       </View>
-                      <AnimatedPressable
-                        onPress={() => removeItem(item)}
-                        style={[styles.deleteButton, { backgroundColor: colors.dangerMuted, borderRadius: radius.md }]}
-                      >
-                        <Trash color={colors.danger} size={18} />
-                      </AnimatedPressable>
+                      {editingId === item.id ? (
+                        <View style={{ gap: 8 }}>
+                          <AnimatedPressable
+                            onPress={saveEdit}
+                            style={[styles.deleteButton, { backgroundColor: colors.accentMuted, borderRadius: radius.md }]}
+                          >
+                            <Check color={colors.accent} size={18} />
+                          </AnimatedPressable>
+                          <AnimatedPressable
+                            onPress={cancelEdit}
+                            style={[styles.deleteButton, { backgroundColor: colors.surfaceHover, borderRadius: radius.md }]}
+                          >
+                            <X color={colors.textMuted} size={18} />
+                          </AnimatedPressable>
+                        </View>
+                      ) : (
+                        <View style={{ gap: 8 }}>
+                          <AnimatedPressable
+                            onPress={() => startEdit(item)}
+                            style={[styles.deleteButton, { backgroundColor: colors.surfaceHover, borderRadius: radius.md }]}
+                          >
+                            <PencilSimple color={colors.textSecondary} size={18} />
+                          </AnimatedPressable>
+                          <AnimatedPressable
+                            onPress={() => removeItem(item)}
+                            style={[styles.deleteButton, { backgroundColor: colors.dangerMuted, borderRadius: radius.md }]}
+                          >
+                            <Trash color={colors.danger} size={18} />
+                          </AnimatedPressable>
+                        </View>
+                      )}
                     </View>
                   </GlassPanel>
                 ))}
@@ -191,6 +265,13 @@ const styles = StyleSheet.create({
     height: 38,
     justifyContent: 'center',
     width: 38,
+  },
+  input: {
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
   },
   emptyText: {
     lineHeight: 20,

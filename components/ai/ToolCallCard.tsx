@@ -51,9 +51,9 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
       case 'rejected':
         return 'Rejected';
       case 'running':
-        return 'Running…';
+        return item.requiresConfirm === false ? 'Reading local data...' : 'Running...';
       default:
-        return item.requiresConfirm === false ? 'Running locally' : 'Awaiting your confirmation';
+        return item.requiresConfirm === false ? 'Read-only local tool' : 'Awaiting your confirmation';
     }
   })();
 

@@ -14,7 +14,8 @@ import { ToolCallCard, ToolCallItem } from '../../components/ai/ToolCallCard';
 import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { streamEchoAI } from '../../lib/api';
-import { executeLocalTool, isLocalTool, localToolFailureMessage } from '../../lib/localTools';
+import { isLocalTool } from '../../lib/localTools';
+import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, Clock, Question } from 'phosphor-react-native';
@@ -37,6 +38,7 @@ export default function ChatScreen() {
   const [items, setItems] = useState<ChatItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [showActionCenter, setShowActionCenter] = useState(false);
+  const [draft, setDraft] = useState('');
   const [, setConversationId] = useState<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const listRef = useRef<any>(null);
@@ -140,10 +142,7 @@ export default function ChatScreen() {
           },
         });
       } catch (err: any) {
-        const prefix = ok
-          ? (tool.requiresConfirm === false ? 'I finished the local lookup' : 'Saved locally')
-          : 'The local action failed';
-        upsertText(`local-stream-err-${Date.now()}`, 'assistant', `${prefix}, but I couldn't continue the AI response: ${err?.message ?? 'unknown error'}`);
+        upsertText(`local-stream-err-${Date.now()}`, 'assistant', localContinuationFailureMessage(tool, ok, err?.message ?? 'unknown error'));
       } finally {
         setIsStreaming(false);
       }
@@ -154,17 +153,11 @@ export default function ChatScreen() {
   const runLocalTool = useCallback(
     async (tool: ToolCallItem) => {
       if (!isLocalTool(tool.name)) return;
-      upsertTool({ ...tool, status: 'running' });
-      try {
-        const result = await executeLocalTool(tool.name, tool.args);
-        upsertTool({ ...tool, status: 'ok', resultSummary: result.summary });
-        continueWithLocalResult(tool, true, result.result);
-      } catch (err: any) {
-        const message = err?.message ?? 'unknown error';
-        upsertTool({ ...tool, status: 'error', errorMessage: message });
-        upsertText(`local-err-${Date.now()}`, 'assistant', localToolFailureMessage(tool.name, message));
-        continueWithLocalResult(tool, false, undefined, message);
-      }
+      await runLocalToolFlow(tool, {
+        upsertTool,
+        appendAssistantText: (text) => upsertText(`local-err-${Date.now()}`, 'assistant', text),
+        continueWithLocalResult,
+      });
     },
     [continueWithLocalResult],
   );
@@ -330,7 +323,7 @@ export default function ChatScreen() {
           {isStreaming && showTyping && <TypingIndicator />}
         </View>
         <View style={{ paddingBottom: 110 }}>
-          <ChatInput onSend={handleSend} isLoading={isStreaming} />
+          <ChatInput onSend={handleSend} isLoading={isStreaming} draft={draft} onDraftChange={setDraft} />
         </View>
       </KeyboardAvoidingView>
 
@@ -460,7 +453,7 @@ export default function ChatScreen() {
           }}
         />
       </View>
-      <ActionCenter visible={showActionCenter} onClose={() => setShowActionCenter(false)} />
+      <ActionCenter visible={showActionCenter} onClose={() => setShowActionCenter(false)} onSelectExample={setDraft} />
     </View>
   );
 }
