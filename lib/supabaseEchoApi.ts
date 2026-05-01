@@ -10,11 +10,15 @@ import {
 
 /**
  * Upload a local image URI to the `avatars` bucket.
+ * Uses the authenticated session UID as the folder name (required by RLS).
  * Returns the public URL of the uploaded file.
  */
-export async function uploadAvatar(localUri: string, userId: string): Promise<string> {
+export async function uploadAvatar(localUri: string): Promise<string> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
   const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-  const path = `${userId}/avatar.${ext}`;
+  const path = `${uid}/avatar.${ext}`;
 
   const response = await fetch(localUri);
   const blob = await response.blob();
@@ -30,14 +34,18 @@ export async function uploadAvatar(localUri: string, userId: string): Promise<st
 
 /**
  * Upload up to 4 local image URIs to the `echo-media` bucket.
+ * Uses the authenticated session UID as the folder name (required by RLS).
  * Returns an array of public URLs in the same order.
  */
-export async function uploadEchoImages(localUris: string[], userId: string): Promise<string[]> {
+export async function uploadEchoImages(localUris: string[]): Promise<string[]> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
   const urls: string[] = [];
   for (let i = 0; i < Math.min(localUris.length, 4); i++) {
     const localUri = localUris[i];
     const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const path = `${userId}/${Date.now()}_${i}.${ext}`;
+    const path = `${uid}/${Date.now()}_${i}.${ext}`;
 
     const response = await fetch(localUri);
     const blob = await response.blob();

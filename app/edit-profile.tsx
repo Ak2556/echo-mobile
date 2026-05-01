@@ -24,7 +24,7 @@ const BIO_WARN = 140;
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { username, displayName, bio, avatarColor, avatarUrl, userId, setUsername, setDisplayName, setBio, setAvatarColor, setAvatarUrl } = useAppStore();
+  const { username, displayName, bio, avatarColor, avatarUrl, setUsername, setDisplayName, setBio, setAvatarColor, setAvatarUrl } = useAppStore();
   const { colors, radius, fontSizes, animation } = useTheme();
 
   const [newUsername, setNewUsername] = useState(username);
@@ -58,7 +58,7 @@ export default function EditProfileScreen() {
 
     setUploadingAvatar(true);
     try {
-      const publicUrl = await uploadAvatar(localUri, userId);
+      const publicUrl = await uploadAvatar(localUri);
       setNewAvatarUrl(publicUrl);
     } catch (e) {
       Alert.alert('Upload failed', (e as Error).message);

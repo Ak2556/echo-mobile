@@ -172,7 +172,7 @@ export default function CreatePostScreen() {
         case 'photo': {
           // Upload images to Storage first if remote
           if (isSupabaseRemote() && imageUris.length > 0) {
-            remoteMediaUrls = await uploadEchoImages(imageUris, userId);
+            remoteMediaUrls = await uploadEchoImages(imageUris);
           }
           const finalUris = remoteMediaUrls ?? imageUris;
           echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: finalUris });
