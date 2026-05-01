@@ -20,6 +20,8 @@ import { useTheme } from '../lib/theme';
 import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { playSoundEffect } from '../lib/sound';
+import { isSupabaseRemote } from '../lib/remoteConfig';
+import { uploadEchoImages, insertRemoteEcho } from '../lib/supabaseEchoApi';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
@@ -41,7 +43,7 @@ export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { username, userId, avatarColor, displayName, publishEcho } = useAppStore();
+  const { username, userId, avatarColor, avatarUrl, displayName, publishEcho } = useAppStore();
 
   const [postType, setPostType] = useState<PostType>('text');
   const [prompt, setPrompt] = useState('');
@@ -138,51 +140,70 @@ export default function CreatePostScreen() {
   const updatePollOption = (idx: number, t: string) => setPollOptions(p => p.map((o, i) => i === idx ? t : o));
   const removePollOption = (idx: number) => { if (pollOptions.length > 2) setPollOptions(p => p.filter((_, i) => i !== idx)); };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!canPublish) return;
-    const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
-
-    const base = {
-      id: Date.now().toString(),
-      userId, username: username || 'anonymous',
-      displayName: displayName || username || 'anonymous',
-      avatarColor: avatarColor || colors.accent,
-      isVerified: false,
-      likes: 0, isLiked: false, isBookmarked: false, isReposted: false,
-      repostCount: 0, commentCount: 0, viewCount: 0,
-      hashtags, createdAt: new Date().toISOString(),
-    };
-
-    let echo: FeedItem;
-    switch (postType) {
-      case 'text':
-        echo = coerceFeedItem({ ...base, postType: 'text', prompt: prompt.trim(), response: response.trim() });
-        break;
-      case 'photo':
-        echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: imageUris });
-        break;
-      case 'video':
-        echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri });
-        break;
-      case 'poll': {
-        const options: PollOption[] = pollOptions.filter(o => o.trim()).map((o, i) => ({ id: `opt_${i}`, text: o.trim(), votes: 0 }));
-        echo = coerceFeedItem({
-          ...base, postType: 'poll', prompt: pollQuestion.trim(), response: '',
-          poll: { question: pollQuestion.trim(), options, totalVotes: 0, endsAt: new Date(Date.now() + pollDurationHours * 3600000).toISOString() },
-        });
-        break;
-      }
-    }
-
     setPublishing(true);
-    setTimeout(() => {
+
+    try {
+      const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
+
+      const base = {
+        id: Date.now().toString(),
+        userId, username: username || 'anonymous',
+        displayName: displayName || username || 'anonymous',
+        avatarColor: avatarColor || colors.accent,
+        avatarUrl: avatarUrl || undefined,
+        isVerified: false,
+        likes: 0, isLiked: false, isBookmarked: false, isReposted: false,
+        repostCount: 0, commentCount: 0, viewCount: 0,
+        hashtags, createdAt: new Date().toISOString(),
+      };
+
+      let echo: FeedItem;
+      let remoteMediaUrls: string[] | undefined;
+
+      switch (postType) {
+        case 'text':
+          echo = coerceFeedItem({ ...base, postType: 'text', prompt: prompt.trim(), response: response.trim() });
+          if (isSupabaseRemote()) {
+            await insertRemoteEcho({ authorId: userId, prompt: prompt.trim(), response: response.trim() });
+          }
+          break;
+        case 'photo': {
+          // Upload images to Storage first if remote
+          if (isSupabaseRemote() && imageUris.length > 0) {
+            remoteMediaUrls = await uploadEchoImages(imageUris, userId);
+          }
+          const finalUris = remoteMediaUrls ?? imageUris;
+          echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: finalUris });
+          if (isSupabaseRemote()) {
+            await insertRemoteEcho({ authorId: userId, prompt: caption.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls });
+          }
+          break;
+        }
+        case 'video':
+          echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri });
+          break;
+        case 'poll': {
+          const options: PollOption[] = pollOptions.filter(o => o.trim()).map((o, i) => ({ id: `opt_${i}`, text: o.trim(), votes: 0 }));
+          echo = coerceFeedItem({
+            ...base, postType: 'poll', prompt: pollQuestion.trim(), response: '',
+            poll: { question: pollQuestion.trim(), options, totalVotes: 0, endsAt: new Date(Date.now() + pollDurationHours * 3600000).toISOString() },
+          });
+          break;
+        }
+      }
+
       publishEcho(echo!);
       qc.invalidateQueries({ queryKey: ['feed'] });
       playSoundEffect('success');
       showToast('Echo published!', '✨');
-      setPublishing(false);
       router.back();
-    }, 300);
+    } catch (e) {
+      Alert.alert('Publish failed', (e as Error).message);
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const s = {
@@ -199,7 +220,7 @@ export default function CreatePostScreen() {
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>New Echo</Text>
         <AnimatedPressable
-          onPress={handlePublish} disabled={!canPublish} scaleValue={0.92} haptic="medium"
+          onPress={() => { void handlePublish(); }} disabled={!canPublish} scaleValue={0.92} haptic="medium"
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
         >
           <PaperPlaneTilt color="#fff" size={14} />
@@ -225,9 +246,17 @@ export default function CreatePostScreen() {
 
           {/* Author */}
           <Animated.View entering={animation(FadeInDown.delay(40).springify())} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(username || '?').charAt(0).toUpperCase()}</Text>
-            </View>
+            {avatarUrl ? (
+              <Image
+                source={{ uri: avatarUrl }}
+                style={{ width: 40, height: 40, borderRadius: 20, marginRight: 10 }}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(username || '?').charAt(0).toUpperCase()}</Text>
+              </View>
+            )}
             <View>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{displayName || username || 'You'}</Text>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{username || 'anonymous'}</Text>

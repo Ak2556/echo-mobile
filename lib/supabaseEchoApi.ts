@@ -6,6 +6,58 @@ import {
   SupabaseProfileRow,
 } from './mapSupabaseEcho';
 
+// ─── Storage helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Upload a local image URI to the `avatars` bucket.
+ * Returns the public URL of the uploaded file.
+ */
+export async function uploadAvatar(localUri: string, userId: string): Promise<string> {
+  const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+  const path = `${userId}/avatar.${ext}`;
+
+  const response = await fetch(localUri);
+  const blob = await response.blob();
+
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(path, blob, { upsert: true, contentType: blob.type || 'image/jpeg' });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+/**
+ * Upload up to 4 local image URIs to the `echo-media` bucket.
+ * Returns an array of public URLs in the same order.
+ */
+export async function uploadEchoImages(localUris: string[], userId: string): Promise<string[]> {
+  const urls: string[] = [];
+  for (let i = 0; i < Math.min(localUris.length, 4); i++) {
+    const localUri = localUris[i];
+    const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const path = `${userId}/${Date.now()}_${i}.${ext}`;
+
+    const response = await fetch(localUri);
+    const blob = await response.blob();
+
+    const { error } = await supabase.storage
+      .from('echo-media')
+      .upload(path, blob, { contentType: blob.type || 'image/jpeg' });
+    if (error) throw error;
+
+    const { data } = supabase.storage.from('echo-media').getPublicUrl(path);
+    urls.push(data.publicUrl);
+  }
+  return urls;
+}
+
+// ─── Profile select helper ────────────────────────────────────────────────────
+
+const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at';
+const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls';
+
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.user?.id ?? null;
@@ -24,7 +76,7 @@ export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
 
   const { data: echoes, error: e1 } = await supabase
     .from('public_echoes')
-    .select('id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at')
+    .select(ECHO_SELECT)
     .in('id', ids);
   if (e1) throw e1;
   const rows = (echoes || []) as SupabaseEchoRow[];
@@ -33,7 +85,7 @@ export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
   const authorIds = [...new Set(rows.map(r => r.author_id))];
   const { data: profiles, error: e2 } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
+    .select(PROFILE_SELECT)
     .in('id', authorIds);
   if (e2) throw e2;
   const profileById = new Map((profiles as SupabaseProfileRow[] || []).map(p => [p.id, p]));
@@ -52,7 +104,7 @@ export async function fetchRemoteFeed(): Promise<FeedItem[]> {
 
   const { data: echoes, error: e1 } = await supabase
     .from('public_echoes')
-    .select('id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at')
+    .select(ECHO_SELECT)
     .order('created_at', { ascending: false });
 
   if (e1) throw e1;
@@ -62,7 +114,7 @@ export async function fetchRemoteFeed(): Promise<FeedItem[]> {
   const authorIds = [...new Set(rows.map(r => r.author_id))];
   const { data: profiles, error: e2 } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
+    .select(PROFILE_SELECT)
     .in('id', authorIds);
 
   if (e2) throw e2;
@@ -89,6 +141,7 @@ export async function insertRemoteEcho(params: {
   prompt: string;
   response: string;
   title?: string;
+  mediaUrls?: string[];
 }): Promise<void> {
   const title =
     params.title?.trim() ||
@@ -98,6 +151,7 @@ export async function insertRemoteEcho(params: {
     title,
     prompt: params.prompt,
     response: params.response,
+    ...(params.mediaUrls?.length ? { media_urls: params.mediaUrls } : {}),
   });
   if (error) throw error;
 }
@@ -148,7 +202,7 @@ export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
   const authorIds = [...new Set(list.map((r: { author_id: string }) => r.author_id))];
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, username, display_name, avatar_color, is_verified')
+    .select(PROFILE_SELECT)
     .in('id', authorIds);
   const profileById = new Map((profiles as SupabaseProfileRow[] || []).map(p => [p.id, p]));
 
@@ -169,6 +223,7 @@ export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
       username,
       displayName: p?.display_name || username,
       avatarColor: p?.avatar_color || '#3B82F6',
+      avatarUrl: p?.avatar_url ?? undefined,
       isVerified: p?.is_verified ?? false,
       content: r.content,
       likes: r.likes_count ?? 0,
@@ -193,7 +248,7 @@ export async function insertRemoteComment(echoId: string, content: string): Prom
 export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfileRow | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
+    .select(PROFILE_SELECT)
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
@@ -203,7 +258,7 @@ export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfil
 export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedItem[]> {
   const { data: echoes, error } = await supabase
     .from('public_echoes')
-    .select('id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at')
+    .select(ECHO_SELECT)
     .eq('author_id', authorId)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -212,7 +267,7 @@ export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedI
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
+    .select(PROFILE_SELECT)
     .eq('id', authorId)
     .maybeSingle();
   const author = profile as SupabaseProfileRow | null | undefined;
@@ -295,7 +350,7 @@ export async function fetchRemoteFollowers(userId: string): Promise<SupabaseProf
   if (!ids.length) return [];
   const { data: profiles, error: e2 } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
+    .select(PROFILE_SELECT)
     .in('id', ids);
   if (e2) throw e2;
   return (profiles || []) as SupabaseProfileRow[];
@@ -311,7 +366,7 @@ export async function fetchRemoteFollowingProfiles(userId: string): Promise<Supa
   if (!ids.length) return [];
   const { data: profiles, error: e2 } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, avatar_color, is_verified')
+    .select(PROFILE_SELECT)
     .in('id', ids);
   if (e2) throw e2;
   return (profiles || []) as SupabaseProfileRow[];
@@ -322,6 +377,7 @@ export async function updateRemoteProfile(updates: {
   display_name?: string;
   bio?: string;
   avatar_color?: string;
+  avatar_url?: string;
 }): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
