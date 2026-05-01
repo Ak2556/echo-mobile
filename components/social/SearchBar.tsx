@@ -10,24 +10,32 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...' }: SearchBarProps) {
-  const { colors, radius } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.surface,
-        borderRadius: radius.xl,
-        paddingHorizontal: 12,
-        paddingVertical: 14,
-        borderWidth: 1,
-        borderColor: colors.border,
+        backgroundColor: colors.surfaceHover,
+        borderRadius: 9999,
+        paddingHorizontal: 20,
+        height: 52,
       }}
     >
-      <MagnifyingGlass color={colors.textMuted} size={18} />
+      <MagnifyingGlass
+        color={colors.textMuted}
+        size={20}
+        weight="regular"
+      />
       <TextInput
-        style={{ flex: 1, color: colors.text, fontSize: 16, marginLeft: 8 }}
+        style={{
+          flex: 1,
+          color: colors.text,
+          fontSize: 16,
+          marginLeft: 10,
+          paddingVertical: 0,
+        }}
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         value={value}
@@ -36,8 +44,18 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...
         returnKeyType="search"
       />
       {value.length > 0 && (
-        <Pressable onPress={() => onChangeText('')}>
-          <X color={colors.textMuted} size={18} />
+        <Pressable
+          onPress={() => onChangeText('')}
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: 11,
+            backgroundColor: colors.textMuted,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <X color={colors.surface} size={12} weight="bold" />
         </Pressable>
       )}
     </View>
