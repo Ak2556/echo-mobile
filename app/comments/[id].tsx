@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PaperPlaneTilt, ChatCircle } from 'phosphor-react-native';
+import { ArrowLeft, PaperPlaneTilt, ChatCircle, X } from 'phosphor-react-native';
 import { TextInput } from '../../components/ui/TextInput';
 import { CommentCard } from '../../components/social/CommentCard';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -11,6 +11,12 @@ import { useAppStore } from '../../store/useAppStore';
 import { Comment } from '../../types';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useEchoComments, useAddRemoteComment } from '../../hooks/queries/useEchoComments';
+import { useTheme } from '../../lib/theme';
+
+interface ThreadedRow {
+  comment: Comment;
+  indented: boolean;
+}
 
 export default function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,20 +24,46 @@ export default function CommentsScreen() {
   const remote = isSupabaseRemote();
   const remoteQ = useEchoComments(remote ? id : undefined);
   const addRemote = useAddRemoteComment(remote ? id : undefined);
+  const { colors } = useTheme();
 
   const { getComments, addComment, username, displayName, avatarColor } = useAppStore();
   const [text, setText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
 
   const localComments = !remote && id ? getComments(id) : [];
   const comments: Comment[] = remote ? (remoteQ.data ?? []) : localComments;
   const loadingRemote = remote && remoteQ.isPending;
 
+  // Group: roots first, then their direct children below.
+  const threadedRows = useMemo<ThreadedRow[]>(() => {
+    const byParent = new Map<string, Comment[]>();
+    const roots: Comment[] = [];
+    for (const c of comments) {
+      if (c.parentId) {
+        const arr = byParent.get(c.parentId) ?? [];
+        arr.push(c);
+        byParent.set(c.parentId, arr);
+      } else {
+        roots.push(c);
+      }
+    }
+    const out: ThreadedRow[] = [];
+    for (const r of roots) {
+      out.push({ comment: r, indented: false });
+      const kids = byParent.get(r.id) ?? [];
+      for (const k of kids) out.push({ comment: k, indented: true });
+    }
+    return out;
+  }, [comments]);
+
   const handleSend = async () => {
     if (!text.trim() || !id) return;
+    const parentId = replyingTo?.id;
     if (remote) {
       try {
-        await addRemote.mutateAsync(text.trim());
+        await addRemote.mutateAsync({ content: text.trim(), parentId });
         setText('');
+        setReplyingTo(null);
       } catch (e) {
         Alert.alert('Could not post', (e as Error).message);
       }
@@ -49,10 +81,12 @@ export default function CommentsScreen() {
       likes: 0,
       isLiked: false,
       replyCount: 0,
+      parentId,
       createdAt: new Date().toISOString(),
     };
     addComment(id, comment);
     setText('');
+    setReplyingTo(null);
   };
 
   return (
@@ -73,7 +107,7 @@ export default function CommentsScreen() {
           <View className="flex-1 items-center justify-center pt-20">
             <ActivityIndicator color="#3B82F6" size="large" />
           </View>
-        ) : comments.length === 0 ? (
+        ) : threadedRows.length === 0 ? (
           <EmptyState
             icon={<ChatCircle color="#6366F1" size={32} />}
             title="No comments yet"
@@ -81,13 +115,36 @@ export default function CommentsScreen() {
           />
         ) : (
           <FlashList
-            data={comments}
+            data={threadedRows}
             renderItem={({ item }) => (
-              <CommentCard comment={item} echoId={id!} />
+              <CommentCard
+                comment={item.comment}
+                echoId={id!}
+                indented={item.indented}
+                onReply={(c) => setReplyingTo(c)}
+              />
             )}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.comment.id}
             contentContainerStyle={{ paddingVertical: 8 }}
+            refreshControl={
+              remote ? (
+                <RefreshControl
+                  refreshing={remoteQ.isFetching}
+                  onRefresh={() => remoteQ.refetch()}
+                  tintColor={colors.accent}
+                />
+              ) : undefined
+            }
           />
+        )}
+
+        {replyingTo && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, backgroundColor: colors.surface, borderTopWidth: 0.5, borderTopColor: colors.border }}>
+            <Text style={{ color: colors.textMuted, fontSize: 13, flex: 1 }}>Replying to @{replyingTo.username}</Text>
+            <Pressable onPress={() => setReplyingTo(null)} hitSlop={10}>
+              <X color={colors.textMuted} size={16} />
+            </Pressable>
+          </View>
         )}
 
         <View className="flex-row items-end px-4 py-3 border-t border-zinc-900 bg-black">
@@ -101,7 +158,7 @@ export default function CommentsScreen() {
           </View>
           <View className="flex-1 mr-2">
             <TextInput
-              placeholder="Add a comment..."
+              placeholder={replyingTo ? `Reply to @${replyingTo.username}…` : 'Add a comment...'}
               value={text}
               onChangeText={setText}
               maxLength={500}

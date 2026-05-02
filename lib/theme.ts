@@ -304,6 +304,7 @@ export function useTheme() {
   const accentColor = useAppStore(s => s.accentColor);
   const pureBlackBg = useAppStore(s => s.pureBlackBackground);
   const fontSize = useAppStore(s => s.fontSize);
+  const fontScale = useAppStore(s => s.fontScale);
   const reduceAnimations = useAppStore(s => s.reduceAnimations);
   const showAvatars = useAppStore(s => s.showAvatars);
   const roundedCorners = useAppStore(s => s.roundedCorners);
@@ -328,7 +329,11 @@ export function useTheme() {
     bg: (pureBlackBg && base.isDark) ? base.bgPure : base.bg,
   };
 
-  const fontSizes = FONT_SIZE_MAP[fontSize] || FONT_SIZE_MAP.medium;
+  const baseSizes = FONT_SIZE_MAP[fontSize] || FONT_SIZE_MAP.medium;
+  const scale = typeof fontScale === 'number' && fontScale > 0 ? fontScale : 1;
+  const fontSizes = scale === 1
+    ? baseSizes
+    : Object.fromEntries(Object.entries(baseSizes).map(([k, v]) => [k, Math.round((v as number) * scale)])) as typeof baseSizes;
   const radius = RADIUS_MAP[roundedCorners] || RADIUS_MAP.medium;
 
   const animation = <T>(anim: T): T | undefined => {

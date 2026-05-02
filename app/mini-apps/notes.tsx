@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { NotePencil, Plus, Trash, MagnifyingGlass, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -75,8 +75,12 @@ function NoteEditor({ note, onSave, onClose }: { note: Note | null; onSave: (n: 
 
 export default function NotesApp() {
   const { colors } = useTheme();
+  const router = useRouter();
   const accent = colors.accent;
   const [notes, setNotes] = useState<Note[]>([]);
+  const publishAsEcho = (n: Note) => {
+    router.push({ pathname: '/create-post', params: { prefillTitle: n.title, prefillBody: n.body } });
+  };
   useEffect(() => { loadNotes().then(setNotes); }, []);
   useFocusEffect(
     React.useCallback(() => {
@@ -161,6 +165,9 @@ export default function NotesApp() {
                   )}
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={{ color: colors.textMuted, fontSize: 12, flex: 1 }}>{formatDate(note.updatedAt)}</Text>
+                    <AnimatedPressable onPress={() => publishAsEcho(note)} scaleValue={0.85} haptic="light" style={{ padding: 4, marginRight: 4 }}>
+                      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700' }}>Echo</Text>
+                    </AnimatedPressable>
                     <AnimatedPressable onPress={() => deleteNote(note.id)} scaleValue={0.85} haptic="light" style={{ padding: 4 }}>
                       <Trash color={colors.textMuted} size={16} />
                     </AnimatedPressable>

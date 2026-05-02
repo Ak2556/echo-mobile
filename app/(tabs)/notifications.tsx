@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, Platform, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -20,6 +20,18 @@ const FlashList = _FlashList as React.ComponentType<any>;
 type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' };
 type SectionItem = { type: 'item'; data: Notification };
 type ListItem = SectionHeader | SectionItem;
+
+function labelForType(t: Notification['type']): string {
+  switch (t) {
+    case 'like': return 'liked your echo';
+    case 'comment': return 'commented';
+    case 'follow': return 'followed you';
+    case 'repost': return 're-echoed';
+    case 'mention': return 'mentioned you';
+    case 'dm': return 'sent a message';
+    default: return '';
+  }
+}
 
 function groupNotifications(notifications: Notification[]): ListItem[] {
   const now = Date.now();
@@ -55,16 +67,49 @@ function groupNotifications(notifications: Notification[]): ListItem[] {
 export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { notifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount } = useAppStore();
+  const { notifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount, mutedIds } = useAppStore();
   const { colors, animation, reduceAnimations } = useTheme();
   const performance = usePerformanceProfile('hot');
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'follows' | 'reposts'>('all');
 
-  const filtered = filter === 'unread'
-    ? notifications.filter(n => !n.isRead)
-    : notifications;
+  // Type filter: each chip narrows by Notification['type'].
+  const typeFilter = (n: Notification) => {
+    switch (filter) {
+      case 'unread': return !n.isRead;
+      case 'mentions': return n.type === 'mention';
+      case 'replies': return n.type === 'comment';
+      case 'likes': return n.type === 'like';
+      case 'follows': return n.type === 'follow';
+      case 'reposts': return n.type === 'repost';
+      default: return true;
+    }
+  };
 
-  const listData = useMemo(() => groupNotifications(filtered), [filtered]);
+  // Group by (type, targetId) to collapse repeated actions ("Alice and 11 others liked").
+  const groupedFlat = useMemo(() => {
+    const visible = notifications.filter(n => !mutedIds.includes(n.fromUserId)).filter(typeFilter);
+    type Bucket = { key: string; notifications: Notification[] };
+    const buckets = new Map<string, Bucket>();
+    for (const n of visible) {
+      const k = `${n.type}:${n.targetId ?? n.fromUserId}`;
+      const b = buckets.get(k) ?? { key: k, notifications: [] };
+      b.notifications.push(n);
+      buckets.set(k, b);
+    }
+    // Newest first by latest createdAt within bucket.
+    return Array.from(buckets.values())
+      .map(b => ({ ...b, latest: b.notifications.reduce((acc, x) => x.createdAt > acc ? x.createdAt : acc, b.notifications[0].createdAt) }))
+      .sort((a, b) => b.latest.localeCompare(a.latest))
+      .flatMap(b => {
+        const sample = b.notifications[0];
+        if (b.notifications.length === 1) return [sample];
+        // Synthesize a grouped notification preserving the most-recent metadata.
+        const others = b.notifications.length - 1;
+        return [{ ...sample, targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${labelForType(sample.type)}` }];
+      });
+  }, [notifications, mutedIds, filter]);
+
+  const listData = useMemo(() => groupNotifications(groupedFlat), [groupedFlat]);
   const unreadCount = unreadNotificationCount();
 
   const useBlur = performance.useBlur;
@@ -85,7 +130,11 @@ export default function NotificationsScreen() {
       );
     }
     return (
-      <NotificationCard notification={item.data} onPress={() => handlePress(item.data)} />
+      <NotificationCard
+        notification={item.data}
+        onPress={() => handlePress(item.data)}
+        onLongPress={() => useAppStore.getState().toggleMute(item.data.fromUserId)}
+      />
     );
   };
 
@@ -131,9 +180,19 @@ export default function NotificationsScreen() {
             item.type === 'header' ? `header-${item.label}` : `notif-${item.data.id}`
           }
           getItemType={(item: ListItem) => item.type}
-          estimatedItemSize={72}
           renderItem={renderItem}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={() => {
+                // Lightweight refresh: clears unread filter to re-evaluate.
+                setFilter(f => f);
+              }}
+              tintColor={colors.accent}
+              progressViewOffset={headerHeight}
+            />
+          }
         />
       )}
 
@@ -212,8 +271,8 @@ export default function NotificationsScreen() {
         </View>
 
         {/* Filter tabs */}
-        <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 8 }}>
-          {(['all', 'unread'] as const).map(tab => (
+        <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 16, gap: 8 }}>
+          {(['all', 'unread', 'mentions', 'replies', 'likes', 'follows', 'reposts'] as const).map(tab => (
             <AnimatedPressable
               key={tab}
               onPress={() => setFilter(tab)}
@@ -241,7 +300,7 @@ export default function NotificationsScreen() {
               </Text>
             </AnimatedPressable>
           ))}
-        </View>
+        </Animated.ScrollView>
 
         {/* Bottom border */}
         <View
