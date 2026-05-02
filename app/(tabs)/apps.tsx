@@ -262,7 +262,7 @@ export default function AppsScreen() {
       >
         {dashboard && (
           <Animated.View entering={FadeInDown.delay(40).springify()} style={{ gap: 12, marginBottom: 8 }}>
-            <SectionTitle title="Today" caption="Local dashboard" />
+            <SectionTitle title="Support Your Echoes" caption="Local tools that feed ideas back into chat and posts" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
               <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/habits')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#10B98118', borderWidth: StyleSheet.hairlineWidth, borderColor: '#10B98144' }}>
                 <Text style={{ color: '#10B981', fontWeight: '900', fontSize: 24 }}>{dashboard.habits.percent}%</Text>
@@ -305,6 +305,22 @@ export default function AppsScreen() {
             </View>
           </Animated.View>
         )}
+
+        <Animated.View entering={FadeInDown.delay(55).springify()} style={{ gap: 10, marginBottom: 8 }}>
+          <SectionTitle title="Best paired with Echo" caption="Use these when you want something worth posting or messaging about" />
+          <View style={{ gap: 8 }}>
+            {[
+              { title: 'Notes -> post ideas', body: 'Capture a thought, then turn the strongest line into a public Echo.', route: '/mini-apps/notes' },
+              { title: 'Voice memos -> conversation starters', body: 'Record messy thinking first, then ask Echo to shape it.', route: '/mini-apps/voice-memo' },
+              { title: 'Habits -> progress updates', body: 'Use streaks and milestones as material for creator updates.', route: '/mini-apps/habits' },
+            ].map(item => (
+              <AnimatedPressable key={item.title} depth="soft" fadeOnPress onPress={() => router.push(item.route as any)} style={{ borderRadius: 16, padding: 14, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                <Text style={{ color: colors.text, fontWeight: '800' }}>{item.title}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, lineHeight: 18 }}>{item.body}</Text>
+              </AnimatedPressable>
+            ))}
+          </View>
+        </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(70).springify()} style={{ gap: 10, marginBottom: 8 }}>
           <TextInput
@@ -374,10 +390,10 @@ export default function AppsScreen() {
 
         <View style={{ paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
           <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.8 }}>
-            Mini Apps
+            Echo Tools
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 1 }}>
-            17 built-in utilities, always offline
+            Utilities that help you think, capture, and post better
           </Text>
         </View>
 

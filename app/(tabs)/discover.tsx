@@ -11,7 +11,6 @@ import Animated, {
   useAnimatedReaction,
   interpolate,
   Extrapolation,
-  withSpring,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Bell } from 'phosphor-react-native';
@@ -24,6 +23,8 @@ import { useFeed } from '../../hooks/queries/useFeed';
 import { FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
+import { usePerformanceProfile } from '../../lib/performance';
+import { groupDiscovery } from '../../lib/echoUX';
 
 const HERO_COUNT = 5;
 const NAV_BAR_HEIGHT = 50;
@@ -76,7 +77,8 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const { data: feed, isLoading, refetch, isRefetching, isError } = useFeed();
   const { colors, animation, reduceAnimations } = useTheme();
-  const { username, avatarColor } = useAppStore();
+  const performance = usePerformanceProfile('hot');
+  const { username, avatarColor, interests, followingIds } = useAppStore();
   const insets = useSafeAreaInsets();
 
   const scrollY = useSharedValue(0);
@@ -86,7 +88,7 @@ export default function DiscoverScreen() {
   }, [scrollY]);
 
   const headerHeight = insets.top + NAV_BAR_HEIGHT;
-  const useBlur = Platform.OS === 'ios' && !reduceAnimations;
+  const useBlur = performance.useBlur;
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
   // Spring-physics shared values — these settle naturally when scroll stops
@@ -94,20 +96,17 @@ export default function DiscoverScreen() {
   const overlayOpacity = useSharedValue(0);
   const borderOpacity = useSharedValue(0);
 
-  // Spring config: snappy settle, physically weighted
-  const SPRING = { damping: 18, stiffness: 200, mass: 0.4 };
-
   useAnimatedReaction(
-    () => interpolate(scrollY.value, [0, 80], [0, 90], Extrapolation.CLAMP),
-    (target) => { blurIntensity.value = withSpring(target, SPRING); },
+    () => interpolate(scrollY.value, [0, 80], [0, performance.maxBlurIntensity], Extrapolation.CLAMP),
+    (target) => { blurIntensity.value = target; },
   );
   useAnimatedReaction(
     () => interpolate(scrollY.value, [0, 80], [0, 0.35], Extrapolation.CLAMP),
-    (target) => { overlayOpacity.value = withSpring(target, SPRING); },
+    (target) => { overlayOpacity.value = target; },
   );
   useAnimatedReaction(
     () => interpolate(scrollY.value, [20, 80], [0, 1], Extrapolation.CLAMP),
-    (target) => { borderOpacity.value = withSpring(target, { damping: 22, stiffness: 260, mass: 0.3 }); },
+    (target) => { borderOpacity.value = target; },
   );
 
   const blurAnimatedProps = useAnimatedProps(() => ({
@@ -125,14 +124,16 @@ export default function DiscoverScreen() {
     [router]
   );
 
-  const heroItems = feed?.slice(0, HERO_COUNT) ?? [];
-  const popularItems = feed?.slice(HERO_COUNT) ?? [];
+  const grouped = groupDiscovery(feed ?? [], interests, followingIds);
+  const heroItems = (grouped.forYou.length > 0 ? grouped.forYou : feed?.slice(0, HERO_COUNT)) ?? [];
+  const popularItems = (grouped.rising.length > 0 ? grouped.rising : feed?.slice(HERO_COUNT)) ?? [];
+  const starterItems = grouped.conversationStarters.slice(0, 3);
 
   const ListHeader = (
     <View>
       <SectionHeader label="Your Stories" />
       <StoryCircles />
-      <SectionHeader label="Trending" sub="Live" />
+      <SectionHeader label="For You" sub={interests.length > 0 ? `Because you follow ${interests[0]}` : 'Start here'} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -146,7 +147,37 @@ export default function DiscoverScreen() {
           <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} scrollX={heroScrollX} cardIndex={index} />
         ))}
       </ScrollView>
-      <SectionHeader label="Popular" />
+      {starterItems.length > 0 ? (
+        <>
+          <SectionHeader label="Conversation Starters" sub="Reply-worthy" />
+          <View style={{ paddingHorizontal: 16, gap: 10 }}>
+            {starterItems.map(item => (
+              <Pressable
+                key={item.id}
+                onPress={() => handlePressThread(item)}
+                style={{
+                  padding: 14,
+                  borderRadius: 16,
+                  backgroundColor: colors.surface,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.border,
+                }}
+              >
+                <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>
+                  {item.editorialTitle || item.prompt}
+                </Text>
+                <Text style={{ color: colors.textSecondary, marginTop: 6, lineHeight: 20 }} numberOfLines={2}>
+                  {item.authorNote || item.response}
+                </Text>
+                <Text style={{ color: colors.textMuted, marginTop: 8, fontSize: 12 }}>
+                  Open because this one already reads like a discussion, not just a post.
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </>
+      ) : null}
+      <SectionHeader label="Rising Now" sub="High conversation energy" />
     </View>
   );
 
@@ -189,7 +220,7 @@ export default function DiscoverScreen() {
           keyExtractor={item => item.id}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
           onScroll={handleScroll}
-          scrollEventThrottle={1}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}

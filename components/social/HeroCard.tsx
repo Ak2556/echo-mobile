@@ -9,6 +9,7 @@ import { VideoPreview } from './VideoPreview';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+import { usePerformanceProfile } from '../../lib/performance';
 
 const { width: SW } = Dimensions.get('window');
 export const HERO_CARD_WIDTH = SW * 0.72;
@@ -23,6 +24,7 @@ interface HeroCardProps {
 
 export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProps) {
   const { colors, reduceAnimations } = useTheme();
+  const performance = usePerformanceProfile('hero');
 
   const hasImage = (item.mediaUris?.length ?? 0) > 0;
   const hasVideo = item.postType === 'video' && !!item.videoUri;
@@ -37,12 +39,12 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       ? `${Math.floor((item.viewCount ?? 0) / 1000)}k`
       : String(item.viewCount ?? 0);
 
-  const useBlur = Platform.OS === 'ios' && !reduceAnimations;
+  const useBlur = performance.useBlur;
 
   // Parallax: image layer moves at 0.35x inverse of scroll
   const CARD_STEP = HERO_CARD_WIDTH + 12;
   const parallaxStyle = useAnimatedStyle(() => {
-    if (!scrollX || reduceAnimations) return { transform: [{ translateX: 0 }] };
+    if (!scrollX || reduceAnimations || !performance.listAnimations) return { transform: [{ translateX: 0 }] };
     const cardOffset = cardIndex * CARD_STEP;
     const dx = interpolate(
       scrollX.value - cardOffset,
@@ -58,6 +60,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       onPress={onPress}
       depth="soft"
       fadeOnPress
+      performanceMode="hot"
       style={{
         width: HERO_CARD_WIDTH,
         height: HERO_CARD_HEIGHT,
@@ -152,7 +155,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
         >
           {useBlur ? (
             <>
-              <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+              <BlurView intensity={performance.maxBlurIntensity} tint="dark" style={StyleSheet.absoluteFill} />
               <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
             </>
           ) : (
@@ -167,7 +170,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       {/* Bottom content — frosted glass panel */}
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden' }}>
         {useBlur && (
-          <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={performance.maxBlurIntensity} tint="dark" style={StyleSheet.absoluteFill} />
         )}
         <View
           style={[
