@@ -22,9 +22,11 @@ function getTimeAgo(dateStr: string): string {
 interface CommentCardProps {
   comment: Comment;
   echoId: string;
+  indented?: boolean;
+  onReply?: (c: Comment) => void;
 }
 
-export function CommentCard({ comment, echoId }: CommentCardProps) {
+export function CommentCard({ comment, echoId, indented, onReply }: CommentCardProps) {
   const { likeComment } = useAppStore();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const { colors, fontSizes, showAvatars, animation } = useTheme();
@@ -47,7 +49,7 @@ export function CommentCard({ comment, echoId }: CommentCardProps) {
   };
 
   return (
-    <Animated.View entering={animation(FadeInDown.springify())} className="flex-row px-4 py-3" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border }}>
+    <Animated.View entering={animation(FadeInDown.springify())} className="flex-row py-3" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingLeft: indented ? 48 : 16, paddingRight: 16 }}>
       {showAvatars && (
         <View
           className="w-9 h-9 rounded-full items-center justify-center mr-3 mt-0.5"
@@ -86,10 +88,12 @@ export function CommentCard({ comment, echoId }: CommentCardProps) {
               {comment.likes}
             </Text>
           </AnimatedPressable>
-          <AnimatedPressable className="flex-row items-center gap-1" scaleValue={0.85} haptic="light">
-            <ChatCircle color={colors.textMuted} size={14} />
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Reply</Text>
-          </AnimatedPressable>
+          {!indented && (
+            <AnimatedPressable className="flex-row items-center gap-1" scaleValue={0.85} haptic="light" onPress={() => onReply?.(comment)}>
+              <ChatCircle color={colors.textMuted} size={14} />
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Reply</Text>
+            </AnimatedPressable>
+          )}
         </View>
       </View>
     </Animated.View>

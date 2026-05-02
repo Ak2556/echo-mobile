@@ -73,9 +73,13 @@ function SectionHeader({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
+import { useRealtimeNewEchoes } from '../../lib/realtime';
+import { ErrorState, classifyError } from '../../components/common/ErrorState';
+
 export default function DiscoverScreen() {
   const router = useRouter();
-  const { data: feed, isLoading, refetch, isRefetching, isError } = useFeed();
+  const { data: feed, isLoading, refetch, isRefetching, isError, error } = useFeed();
+  const realtime = useRealtimeNewEchoes();
   const { colors, animation, reduceAnimations } = useTheme();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, interests, followingIds } = useAppStore();
@@ -129,8 +133,33 @@ export default function DiscoverScreen() {
   const popularItems = (grouped.rising.length > 0 ? grouped.rising : feed?.slice(HERO_COUNT)) ?? [];
   const starterItems = grouped.conversationStarters.slice(0, 3);
 
+  const feedScope = useAppStore.getState().feedScope;
+  const setFeedScope = useAppStore.getState().setFeedScope;
+
   const ListHeader = (
     <View>
+      {/* For You / Following toggle */}
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8, gap: 8 }}>
+        {(['forYou', 'following'] as const).map(scope => {
+          const active = feedScope === scope;
+          return (
+            <Pressable
+              key={scope}
+              onPress={() => setFeedScope(scope)}
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderRadius: 99,
+                backgroundColor: active ? '#6366F1' : 'rgba(255,255,255,0.06)',
+              }}
+            >
+              <Text style={{ color: active ? '#fff' : '#aaa', fontSize: 13, fontWeight: '600' }}>
+                {scope === 'forYou' ? 'For You' : 'Following'}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
       <SectionHeader label="Your Stories" />
       <StoryCircles />
       <SectionHeader label="For You" sub={interests.length > 0 ? `Because you follow ${interests[0]}` : 'Start here'} />
@@ -202,16 +231,24 @@ export default function DiscoverScreen() {
           <FeedCardSkeleton />
         </Animated.View>
       ) : isError ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 16 }}>Something went wrong</Text>
-          <Pressable
-            onPress={() => { refetch(); }}
-            style={{ backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Try again</Text>
-          </Pressable>
+        <View style={{ flex: 1, paddingTop: headerHeight, alignItems: 'center', justifyContent: 'center' }}>
+          <ErrorState kind={classifyError(error)} onRetry={() => refetch()} />
         </View>
       ) : (
+        <>
+        {realtime.count > 0 && (
+          <Pressable
+            onPress={() => { realtime.reset(); refetch(); }}
+            style={{
+              position: 'absolute', top: headerHeight + 6, alignSelf: 'center', zIndex: 30,
+              backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
+              {realtime.count} new echo{realtime.count > 1 ? 'es' : ''} · tap to refresh
+            </Text>
+          </Pressable>
+        )}
         <FlashList
           data={popularItems}
           renderItem={({ item, index }) => (
@@ -231,11 +268,27 @@ export default function DiscoverScreen() {
           }
           ListHeaderComponent={ListHeader}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 40 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 16 }}>No echoes yet</Text>
+            <View style={{ alignItems: 'center', paddingTop: 32, paddingHorizontal: 24 }}>
+              <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>
+                {feedScope === 'following' ? 'Your following feed is quiet' : 'Nothing to show yet'}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19, maxWidth: 320 }}>
+                {feedScope === 'following'
+                  ? 'Follow a few people to fill this up. Or switch to For You above.'
+                  : 'Be the first to publish an echo. Open Chat, ask Echo something real, then share the answer.'}
+              </Text>
+              <Pressable
+                onPress={() => router.push(feedScope === 'following' ? '/(tabs)/search' : '/(tabs)/chat')}
+                style={{ marginTop: 14, backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9 }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
+                  {feedScope === 'following' ? 'Find people to follow' : 'Open chat'}
+                </Text>
+              </Pressable>
             </View>
           }
         />
+        </>
       )}
 
       {/* Floating glass header — absolutely positioned over content */}

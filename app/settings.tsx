@@ -477,6 +477,8 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={Envelope} label="Who Can Message You" subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={Users} label={`Blocked Users (${s.blockedIds.length})`} subtitle="Manage users you've blocked" onPress={() => router.push('/blocked-users')} />
+            {divider}
+            <SettingsRow theme={theme} icon={Users} label={`Muted Users (${s.mutedIds.length})`} subtitle="Hide their echoes without notifying them" onPress={() => router.push('/muted-users')} />
           </GlassPanel>
         </Animated.View>
 

@@ -51,6 +51,24 @@ export interface SettingsSlice {
   // ── Interests ──
   interests: string[];
   setInterests: (v: string[]) => void;
+  // ── Accessibility ──
+  fontScale: number;
+  setFontScale: (v: number) => void;
+  // ── First-run hints ──
+  hasSeenChatTabHint: boolean;
+  setHasSeenChatTabHint: (v: boolean) => void;
+  hasSentFirstEcho: boolean;
+  setHasSentFirstEcho: (v: boolean) => void;
+  // ── Feed feedback signals ──
+  notInterestedIds: string[];
+  setNotInterestedIds: (v: string[]) => void;
+  feedFeedback: Record<string, 'less' | 'more'>;
+  setFeedFeedback: (v: Record<string, 'less' | 'more'>) => void;
+  feedScope: 'forYou' | 'following';
+  setFeedScope: (v: 'forYou' | 'following') => void;
+  // ── Recent searches ──
+  recentSearches: string[];
+  setRecentSearches: (v: string[]) => void;
   // ── Data management ──
   clearAllBookmarks: () => void;
   clearNotifications: () => void;
@@ -119,6 +137,18 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setFeedSort: (v) => { persistSet('feedSort', v); set({ feedSort: v }); },
     interests: persistGet<string[]>('interests', []),
     setInterests: (v) => { persistSet('interests', v); set({ interests: v }); },
+    fontScale: persistGet<number>('fontScale', 1),
+    setFontScale: (v) => { persistSet('fontScale', v); set({ fontScale: v }); },
+    hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
+    hasSentFirstEcho: b('hasSentFirstEcho', false), setHasSentFirstEcho: s(set, 'hasSentFirstEcho'),
+    notInterestedIds: persistGet<string[]>('notInterestedIds', []),
+    setNotInterestedIds: (v) => { persistSet('notInterestedIds', v); set({ notInterestedIds: v }); },
+    feedFeedback: persistGet<Record<string, 'less' | 'more'>>('feedFeedback', {}),
+    setFeedFeedback: (v) => { persistSet('feedFeedback', v); set({ feedFeedback: v }); },
+    feedScope: persistGet<'forYou' | 'following'>('feedScope', 'forYou'),
+    setFeedScope: (v) => { persistSet('feedScope', v); set({ feedScope: v }); },
+    recentSearches: persistGet<string[]>('recentSearches', []),
+    setRecentSearches: (v) => { persistSet('recentSearches', v.slice(0, 10)); set({ recentSearches: v.slice(0, 10) }); },
     clearAllBookmarks: () => { persistSet('bookmarkedIds', []); set({ bookmarkedIds: [] }); },
     clearNotifications: () => { persistSet('notifications', []); set({ notifications: [] }); },
     clearAllData: () => {

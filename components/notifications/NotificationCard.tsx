@@ -52,9 +52,10 @@ function getTimeAgo(dateStr: string): string {
 interface NotificationCardProps {
   notification: Notification;
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
-export function NotificationCard({ notification, onPress }: NotificationCardProps) {
+export function NotificationCard({ notification, onPress, onLongPress }: NotificationCardProps) {
   const { colors, fontSizes, showAvatars, radius } = useTheme();
   const bg = BG_MAP[notification.type] ?? 'rgba(239,68,68,0.15)';
 
@@ -73,6 +74,7 @@ export function NotificationCard({ notification, onPress }: NotificationCardProp
       >
         <AnimatedPressable
           onPress={onPress}
+          onLongPress={onLongPress}
           style={{
             flexDirection: 'row',
             alignItems: 'center',

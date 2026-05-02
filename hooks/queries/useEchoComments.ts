@@ -20,12 +20,14 @@ export function useEchoComments(echoId: string | undefined) {
 export function useAddRemoteComment(echoId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async (input: { content: string; parentId?: string } | string) => {
       if (!echoId) throw new Error('No echo');
-      await insertRemoteComment(echoId, content);
+      const arg = typeof input === 'string' ? { content: input } : input;
+      await insertRemoteComment(echoId, arg.content, arg.parentId);
     },
-    onMutate: async (content) => {
+    onMutate: async (input) => {
       if (!echoId) return;
+      const arg = typeof input === 'string' ? { content: input } : input;
       const uid = await getSessionUserId();
       const optimistic: Comment = {
         id: `pending-${Date.now()}`,
@@ -35,10 +37,11 @@ export function useAddRemoteComment(echoId: string | undefined) {
         displayName: 'You',
         avatarColor: '#3B82F6',
         isVerified: false,
-        content,
+        content: arg.content,
         likes: 0,
         isLiked: false,
         replyCount: 0,
+        parentId: arg.parentId,
         createdAt: new Date().toISOString(),
       };
       appendCommentCache(qc, echoId, optimistic);

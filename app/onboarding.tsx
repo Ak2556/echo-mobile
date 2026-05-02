@@ -80,15 +80,13 @@ export default function OnboardingScreen() {
     setDisplayName(trimmed);
     setHasSeenOnboarding(true);
 
-    if (selectedIntent === 'discover') {
-      router.replace('/(tabs)/discover');
-      return;
-    }
+    // Always land new users on Discover so they see content first.
+    // Honor "post" intent only if explicit, otherwise default to discover.
     if (selectedIntent === 'post') {
       router.replace('/create-post');
       return;
     }
-    router.replace('/(tabs)/chat');
+    router.replace('/(tabs)/discover');
   };
 
   const handleContinue = async () => {

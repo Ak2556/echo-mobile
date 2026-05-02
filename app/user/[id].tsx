@@ -20,7 +20,7 @@ import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { buildCreatorProfile } from '../../lib/echoUX';
 
-function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessage, onReport, onBlock, showMenu, setShowMenu, isSelf, router, creatorProfile }: any) {
+function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, onReport, onBlock, onMute, showMenu, setShowMenu, isSelf, router, creatorProfile }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
   const online = isUserOnline(user.id);
   const followScale = useSharedValue(1);
@@ -54,6 +54,11 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
           <AnimatedPressable onPress={() => { setShowMenu(false); onReport(); }} className="flex-row items-center px-4 py-3 gap-3" scaleValue={0.97} haptic="medium">
             <Flag color="#F59E0B" size={16} />
             <Text style={{ color: colors.text, fontSize: 14 }}>Report</Text>
+          </AnimatedPressable>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
+          <AnimatedPressable onPress={() => { setShowMenu(false); onMute(); }} className="flex-row items-center px-4 py-3 gap-3" scaleValue={0.97} haptic="medium">
+            <UserMinus color={colors.textSecondary} size={16} />
+            <Text style={{ color: colors.text, fontSize: 14 }}>{muted ? 'Unmute' : 'Mute'}</Text>
           </AnimatedPressable>
           <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
           <AnimatedPressable onPress={() => { setShowMenu(false); onBlock(); }} className="flex-row items-center px-4 py-3 gap-3" scaleValue={0.97} haptic="medium">
@@ -172,7 +177,7 @@ export default function UserProfileScreen() {
   const { colors } = useTheme();
 
   const {
-    getUser, isFollowing, toggleFollow, isBlocked, toggleBlock, getOrCreateConversation,
+    getUser, isFollowing, toggleFollow, isBlocked, toggleBlock, isMuted, toggleMute, getOrCreateConversation,
   } = useAppStore();
   const { data: feed } = useFeed();
   const [showMenu, setShowMenu] = useState(false);
@@ -198,6 +203,7 @@ export default function UserProfileScreen() {
 
     const { user, echoes, isFollowing: remoteFollowing, isSelf } = remoteBundle.data;
     const blocked = isBlocked(user.id);
+    const muted = isMuted(user.id);
     const creatorProfile = buildCreatorProfile(user, echoes);
 
     return (
@@ -214,9 +220,11 @@ export default function UserProfileScreen() {
               echoeCount={echoes.length}
               following={remoteFollowing}
               blocked={blocked}
+              muted={muted}
               onFollow={() => followMut.mutate({ userId: user.id, follow: !remoteFollowing })}
               onMessage={() => { const convId = getOrCreateConversation(user); router.push(`/messages/${convId}`); }}
               onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
+              onMute={() => toggleMute(user.id)}
               onBlock={() => {
                 Alert.alert(blocked ? 'Unblock User' : 'Block User',
                   blocked ? `Unblock @${user.username}?` : `Block @${user.username}?`,
@@ -238,6 +246,7 @@ export default function UserProfileScreen() {
   const user = id ? getUser(id) : undefined;
   const following = id ? isFollowing(id) : false;
   const blocked = id ? isBlocked(id) : false;
+  const muted = id ? isMuted(id) : false;
   const userEchoes = (feed || []).filter(item => item.username === user?.username);
   const creatorProfile = user ? buildCreatorProfile(user, userEchoes) : null;
 
@@ -266,9 +275,11 @@ export default function UserProfileScreen() {
             echoeCount={user.echoCount}
             following={following}
             blocked={blocked}
+            muted={muted}
             onFollow={() => toggleFollow(user.id)}
             onMessage={() => { const convId = getOrCreateConversation(user); router.push(`/messages/${convId}`); }}
             onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
+            onMute={() => toggleMute(user.id)}
             onBlock={() => {
               Alert.alert(blocked ? 'Unblock User' : 'Block User',
                 blocked ? `Unblock @${user.username}?` : `Block @${user.username}?`,

@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.echo"
+      "bundleIdentifier": "com.anonymous.echo",
+      "associatedDomains": ["applinks:echo.app"]
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +22,15 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.echo"
+      "package": "com.anonymous.echo",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "echo.app", "pathPrefix": "/e" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "output": "static",
