@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Platform, StyleSheet, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
+import { PerformanceMode, usePerformanceProfile } from '../../lib/performance';
 
 type GlassVariant = 'light' | 'medium' | 'heavy' | 'ultra';
 
@@ -27,6 +28,7 @@ interface GlassPanelProps {
   bottomHighlight?: boolean;
   /** Elevation shadow — depth perception */
   elevated?: boolean;
+  performanceMode?: PerformanceMode;
 }
 
 export function GlassPanel({
@@ -39,12 +41,15 @@ export function GlassPanel({
   tintOverride,
   bottomHighlight = false,
   elevated = false,
+  performanceMode = 'default',
 }: GlassPanelProps) {
-  const { colors, reduceAnimations } = useTheme();
+  const { colors } = useTheme();
+  const performance = usePerformanceProfile(performanceMode);
 
-  const blurIntensity = variant
+  const baseIntensity = variant
     ? VARIANT_INTENSITY[variant]
     : (intensity ?? VARIANT_INTENSITY.medium);
+  const blurIntensity = Math.min(baseIntensity, performance.maxBlurIntensity);
 
   const fill = tintOverride ?? (colors.glassFill ?? 'rgba(255,255,255,0.07)');
   const border = colors.glassBorder ?? 'rgba(255,255,255,0.13)';
@@ -64,7 +69,7 @@ export function GlassPanel({
     ...style,
   };
 
-  if (Platform.OS === 'ios' && !reduceAnimations) {
+  if (Platform.OS === 'ios' && performance.useBlur && blurIntensity > 0) {
     return (
       <View style={outerStyle}>
         <BlurView
@@ -103,7 +108,7 @@ export function GlassPanel({
     );
   }
 
-  // Android / reduce-motion: opaque surface with clear border
+  // Android / performance mode: opaque surface with clear border
   return (
     <View
       style={[

@@ -35,6 +35,7 @@ export function useRemoteProfileBundle(userId: string | undefined) {
   return useQuery({
     queryKey: ['profile', userId],
     enabled: !!userId && isSupabaseRemote(),
+    staleTime: 1000 * 30,
     queryFn: async (): Promise<{
       user: User;
       echoes: FeedItem[];

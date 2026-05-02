@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, Users } from 'phosphor-react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { UserRow } from '../components/social/UserRow';
 import { UserRowSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
@@ -19,7 +18,7 @@ export default function FollowersScreen() {
   const { tab: initialTab, userId: paramUserId } = useLocalSearchParams<{ userId?: string; tab?: string }>();
   const storeUserId = useAppStore(s => s.userId);
   const targetUserId = paramUserId || storeUserId;
-  const { colors, animation } = useTheme();
+  const { colors } = useTheme();
 
   const [activeTab, setActiveTab] = useState<'followers' | 'following'>(
     initialTab === 'following' ? 'following' : 'followers'
@@ -47,7 +46,7 @@ export default function FollowersScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light" performanceMode="hot">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Connections</Text>
@@ -58,6 +57,7 @@ export default function FollowersScreen() {
           <AnimatedPressable
             key={tab}
             onPress={() => setActiveTab(tab)}
+            performanceMode="hot"
             className="flex-1 py-3 items-center"
             style={{
               borderBottomWidth: 2,
@@ -80,12 +80,12 @@ export default function FollowersScreen() {
       </View>
 
       {loading ? (
-        <Animated.View entering={animation(FadeIn.duration(80))} className="pt-2">
+        <View className="pt-2">
           <UserRowSkeleton />
           <UserRowSkeleton />
           <UserRowSkeleton />
           <UserRowSkeleton />
-        </Animated.View>
+        </View>
       ) : data.length === 0 ? (
         <EmptyState
           icon={<Users color="#6366F1" size={32} />}

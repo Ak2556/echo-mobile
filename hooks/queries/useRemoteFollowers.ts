@@ -26,6 +26,7 @@ export function useRemoteFollowersList(
   return useQuery({
     queryKey: ['followers', targetUserId, tab],
     enabled: !!targetUserId && isSupabaseRemote(),
+    staleTime: 1000 * 30,
     queryFn: async (): Promise<User[]> => {
       if (!targetUserId) return [];
       const rows =
