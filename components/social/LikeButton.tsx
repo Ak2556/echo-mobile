@@ -76,6 +76,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
       depth="medium"
       fadeOnPress
       haptic="none"
+      performanceMode="hot"
     >
       <Animated.View style={heartStyle}>
         <HeartStraight
@@ -86,6 +87,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
       </Animated.View>
       <SpringCounter
         value={count}
+        performanceMode="hot"
         style={{ fontWeight: '500', color: liked ? '#EF4444' : '#A1A1AA', fontSize: 14 }}
       />
     </AnimatedPressable>

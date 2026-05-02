@@ -11,9 +11,8 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar, HeartStraight } from 'phosphor-react-native';
-import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout, withTiming, interpolate, runOnJS } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar } from 'phosphor-react-native';
+import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, Layout, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -21,6 +20,7 @@ import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
 import { MOTION } from '../../lib/motion';
+import { usePerformanceProfile } from '../../lib/performance';
 
 interface FeedCardProps {
   item: FeedItem;
@@ -116,6 +116,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const remoteBm = useToggleRemoteBookmark();
   const remoteRp = useToggleRemoteRepost();
   const { colors, radius, fontSizes, reduceAnimations, showAvatars } = useTheme();
+  const performance = usePerformanceProfile('hot');
   const { isBookmarked, toggleBookmark, isReposted, toggleRepost,
     compactFeed, showPreviewCards, votePoll,
   } = useAppStore();
@@ -131,53 +132,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const repostAnim = useAnimatedStyle(() => ({ transform: [{ scale: repostScale.value }] }));
   const shareAnim = useAnimatedStyle(() => ({ transform: [{ scale: shareScale.value }] }));
 
-  // ── Swipe-to-action gesture ──
-  const SWIPE_THRESHOLD = 72;
-  const swipeX = useSharedValue(0);
-
-  const likeIndicatorStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(swipeX.value, [0, SWIPE_THRESHOLD * 0.4, SWIPE_THRESHOLD], [0, 0.5, 1], 'clamp'),
-    transform: [{ scale: interpolate(swipeX.value, [0, SWIPE_THRESHOLD], [0.6, 1.15], 'clamp') }],
-  }));
-  const bookmarkIndicatorStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(swipeX.value, [-SWIPE_THRESHOLD, -SWIPE_THRESHOLD * 0.4, 0], [1, 0.5, 0], 'clamp'),
-    transform: [{ scale: interpolate(swipeX.value, [-SWIPE_THRESHOLD, 0], [1.15, 0.6], 'clamp') }],
-  }));
-  const cardSwipeStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: swipeX.value }],
-  }));
-
-  const triggerSwipeLike = () => {
-    showToast('Liked!', '\u2764\uFE0F');
-  };
-  const triggerSwipeBookmark = () => {
-    toggleBookmarkPress();
-  };
-
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-14, 14])
-    .failOffsetY([-10, 10])
-    .onUpdate((e) => {
-      const dx = e.translationX;
-      if (Math.abs(dx) <= SWIPE_THRESHOLD) {
-        swipeX.value = dx;
-      } else {
-        const excess = Math.abs(dx) - SWIPE_THRESHOLD;
-        const damped = SWIPE_THRESHOLD + Math.sqrt(excess) * 5;
-        swipeX.value = dx > 0 ? damped : -damped;
-      }
-    })
-    .onEnd((e) => {
-      const triggered = Math.abs(e.translationX) >= SWIPE_THRESHOLD || Math.abs(e.velocityX) >= 500;
-      if (triggered) {
-        if (e.translationX > 0 || e.velocityX > 500) {
-          runOnJS(triggerSwipeLike)();
-        } else {
-          runOnJS(triggerSwipeBookmark)();
-        }
-      }
-      swipeX.value = withSpring(0, MOTION.release);
-    });
 
   const handleMainPress = useCallback(() => {
     if (remote) void recordRemoteEchoView(item.id);
@@ -185,7 +139,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   }, [remote, item.id, onPress]);
 
   const bounceIcon = (sv: { value: number }) => {
-    if (reduceAnimations) return;
+    if (reduceAnimations || !performance.pressAnimations) return;
     sv.value = withSequence(
       withSpring(0.74, MOTION.pressDeep),
       withSpring(1.16, MOTION.overshoot),
@@ -235,8 +189,10 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   };
 
   const entering = reduceAnimations
-    ? FadeIn.duration(150)
-    : FadeInUp.delay(Math.min(index, 5) * 60).springify();
+    ? undefined
+    : performance.listAnimations
+      ? FadeInUp.delay(Math.min(index, 3) * 24).duration(80)
+      : undefined;
 
   const textSize = fontSizes.body;
   const cardPadding = compactFeed ? 12 : 16;
@@ -255,8 +211,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
       exiting={reduceAnimations ? undefined : FadeOut.duration(150)}
       style={{ marginBottom: 12 }}
     >
-      <GlassPanel variant="ultra" borderRadius={radius.md} elevated>
-        <AnimatedPressable onPress={handleReport} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} depth="medium" fadeOnPress haptic="medium">
+      <GlassPanel variant="ultra" borderRadius={radius.md} elevated performanceMode="hot">
+        <AnimatedPressable onPress={handleReport} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot">
           <Flag color="#F59E0B" size={16} weight="fill" />
           <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Report</Text>
         </AnimatedPressable>
@@ -267,6 +223,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           depth="soft"
           fadeOnPress
           haptic="light"
+          performanceMode="hot"
         >
           <UserMinus color={colors.textSecondary} size={16} />
           <Text style={{ color: colors.text, fontSize: fontSizes.small }}>View Profile</Text>
@@ -287,9 +244,10 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           depth="medium"
           fadeOnPress
           haptic="light"
+          performanceMode="hot"
         >
           <ChatCircle color={colors.textMuted} size={19} />
-          <SpringCounter value={item.commentCount || 0} style={{ color: colors.textMuted, fontSize: fontSizes.caption }} />
+          <SpringCounter value={item.commentCount || 0} performanceMode="hot" style={{ color: colors.textMuted, fontSize: fontSizes.caption }} />
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -298,20 +256,21 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           depth="medium"
           fadeOnPress
           haptic="medium"
+          performanceMode="hot"
         >
           <Animated.View style={repostAnim}>
             <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
           </Animated.View>
-          <SpringCounter value={displayRepostCount} style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }} />
+          <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }} />
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium">
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot">
           <Animated.View style={bookmarkAnim}>
             <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
           </Animated.View>
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light">
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light" performanceMode="hot">
           <Animated.View style={shareAnim}>
             <ShareNetwork color={colors.textMuted} size={19} />
           </Animated.View>
@@ -323,20 +282,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   // ── Hero layout (photo / video with media) ──
   if (isHero && !compactFeed) {
     return (
-      <GestureDetector gesture={panGesture}>
-      <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()} style={{ position: 'relative' }}>
-        <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 24, top: 0, bottom: 0, zIndex: 20, justifyContent: 'center' }, likeIndicatorStyle]}>
-          <HeartStraight size={30} color="#EF4444" weight="fill" />
-        </Animated.View>
-        <Animated.View pointerEvents="none" style={[{ position: 'absolute', right: 24, top: 0, bottom: 0, zIndex: 20, justifyContent: 'center' }, bookmarkIndicatorStyle]}>
-          <BookmarkSimple size={30} color={colors.accent} weight="fill" />
-        </Animated.View>
-        <Animated.View style={cardSwipeStyle}>
+      <Animated.View entering={entering} layout={undefined}>
         <AnimatedPressable
           onPress={handleMainPress}
           depth="soft"
           fadeOnPress
           haptic="light"
+          performanceMode="hot"
           style={{
             marginHorizontal: 16,
             marginVertical: 6,
@@ -380,6 +332,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                   depth="medium"
                   fadeOnPress
                   haptic="light"
+                  performanceMode="hot"
                 >
                   {item.avatarUrl ? (
                     <Image
@@ -403,6 +356,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 style={{ flex: 1 }}
                 depth="soft"
                 haptic="none"
+                performanceMode="hot"
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
@@ -416,6 +370,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 depth="medium"
                 fadeOnPress
                 haptic="light"
+                performanceMode="hot"
               >
                 <DotsThreeOutline color={colors.textMuted} size={20} />
               </AnimatedPressable>
@@ -443,28 +398,19 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </View>
         </AnimatedPressable>
       </Animated.View>
-      </Animated.View>
-    </GestureDetector>
     );
   }
 
   // ── Standard layout (text / poll / compact) ──
   return (
-    <GestureDetector gesture={panGesture}>
-    <Animated.View entering={entering} layout={reduceAnimations ? undefined : Layout.springify()} style={{ marginHorizontal: 16, marginVertical: 6, position: 'relative' }}>
-      <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 4, top: 0, bottom: 0, zIndex: 20, justifyContent: 'center' }, likeIndicatorStyle]}>
-        <HeartStraight size={28} color="#EF4444" weight="fill" />
-      </Animated.View>
-      <Animated.View pointerEvents="none" style={[{ position: 'absolute', right: 4, top: 0, bottom: 0, zIndex: 20, justifyContent: 'center' }, bookmarkIndicatorStyle]}>
-        <BookmarkSimple size={28} color={colors.accent} weight="fill" />
-      </Animated.View>
-      <Animated.View style={cardSwipeStyle}>
-      <GlassPanel variant="light" borderRadius={radius.card} elevated>
+    <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 16, marginVertical: 6 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} elevated performanceMode="hot">
       <AnimatedPressable
         onPress={handleMainPress}
         depth="soft"
         fadeOnPress
         haptic="light"
+        performanceMode="hot"
         style={{
           padding: cardPadding,
         }}
@@ -485,6 +431,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               depth="medium"
               fadeOnPress
               haptic="light"
+              performanceMode="hot"
             >
               {item.avatarUrl ? (
                 <Image
@@ -509,6 +456,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             className="flex-1"
             depth="soft"
             haptic="none"
+            performanceMode="hot"
           >
             <View className="flex-row items-center gap-1">
               <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
@@ -522,6 +470,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             depth="medium"
             fadeOnPress
             haptic="light"
+            performanceMode="hot"
           >
             <DotsThreeOutline color={colors.textMuted} size={20} />
           </AnimatedPressable>
@@ -599,8 +548,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {ActionsRow}
       </AnimatedPressable>
       </GlassPanel>
-      </Animated.View>
     </Animated.View>
-    </GestureDetector>
   );
 }

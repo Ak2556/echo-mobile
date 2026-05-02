@@ -21,7 +21,7 @@ import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, Clock, Question } from 'phosphor-react-native';
 
 const CONVERSATION_KEY = 'echo-ai/last-conversation-id';
-const EMPTY_SUGGESTIONS = ['Create a note', 'Mark a habit done', 'Log an expense', 'Search local'];
+const EMPTY_SUGGESTIONS = ['Ask for a better hook', 'Turn an idea into a post', 'Summarize a note', 'Find a conversation starter'];
 
 type ChatItem =
   | { kind: 'text'; message: Message }
@@ -59,13 +59,13 @@ export default function ChatScreen() {
       setItems([
         {
           kind: 'text',
-          message: {
-            id: 'welcome',
-            role: 'assistant',
-            content: "Hello! I'm Echo. I can post for you, search the feed, follow people, edit your profile — just ask.",
+            message: {
+              id: 'welcome',
+              role: 'assistant',
+              content: "I’m Echo. Ask something real, refine the strongest answer, and share the part worth publishing.",
+            },
           },
-        },
-      ]);
+        ]);
     }
   }, [items.length]);
 
@@ -326,25 +326,33 @@ export default function ChatScreen() {
         </View>
         <View style={{ paddingBottom: 110 }}>
           {showEmptySuggestions ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingBottom: 8 }}>
-              {EMPTY_SUGGESTIONS.map(suggestion => (
-                <AnimatedPressable
-                  key={suggestion}
-                  onPress={() => setDraft(suggestion)}
-                  depth="soft"
-                  fadeOnPress
-                  style={{
-                    borderRadius: 999,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: colors.glassBorder,
-                    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                  }}
-                >
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>{suggestion}</Text>
-                </AnimatedPressable>
-              ))}
+            <View style={{ paddingHorizontal: 12, paddingBottom: 8, gap: 10 }}>
+              <View style={{ borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', padding: 14 }}>
+                <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 4 }}>Best first chat</Text>
+                <Text style={{ color: colors.textMuted, lineHeight: 19 }}>
+                  Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {EMPTY_SUGGESTIONS.map(suggestion => (
+                  <AnimatedPressable
+                    key={suggestion}
+                    onPress={() => setDraft(suggestion)}
+                    depth="soft"
+                    fadeOnPress
+                    style={{
+                      borderRadius: 999,
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: colors.glassBorder,
+                      backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                    }}
+                  >
+                    <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>{suggestion}</Text>
+                  </AnimatedPressable>
+                ))}
+              </View>
             </View>
           ) : null}
           <ChatInput onSend={handleSend} isLoading={isStreaming} draft={draft} onDraftChange={setDraft} />

@@ -12,6 +12,7 @@ import { BlurView } from 'expo-blur';
 import { create } from 'zustand';
 import { useTheme } from '../../lib/theme';
 import { MOTION } from '../../lib/motion';
+import { usePerformanceProfile } from '../../lib/performance';
 
 interface ToastState {
   message: string | null;
@@ -34,6 +35,7 @@ export function showToast(message: string, icon?: string) {
 export function ToastProvider() {
   const { message, icon, hide } = useToastStore();
   const { colors, reduceAnimations } = useTheme();
+  const performance = usePerformanceProfile('overlay');
   const translateY = useSharedValue(-120);
   const dragY = useSharedValue(0);
   const opacity = useSharedValue(0);
@@ -54,7 +56,9 @@ export function ToastProvider() {
       translateY.value = -120;
       opacity.value = 0;
 
-      translateY.value = withSpring(0, { damping: 22, stiffness: 500, mass: 0.85 });
+      translateY.value = performance.pressAnimations
+        ? withSpring(0, { damping: 22, stiffness: 500, mass: 0.85 })
+        : 0;
       opacity.value = withTiming(1, { duration: 80 });
 
       const timer = setTimeout(animateOut, 2400);
@@ -114,10 +118,10 @@ export function ToastProvider() {
           animStyle,
         ]}
       >
-        {Platform.OS === 'ios' ? (
+        {performance.useBlur ? (
           <>
             <BlurView
-              intensity={80}
+              intensity={performance.maxBlurIntensity}
               tint={colors.isDark ? 'dark' : 'extraLight'}
               style={StyleSheet.absoluteFill}
             />

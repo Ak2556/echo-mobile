@@ -73,6 +73,9 @@ function ConversationCard({ conversation, index, onPress }: {
           >
             {conversation.lastMessage}
           </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>
+            Use DMs to continue the conversation behind an Echo, not just to say hi.
+          </Text>
         </View>
 
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8 }}>{getTimeAgo(conversation.lastMessageAt)}</Text>
@@ -84,7 +87,7 @@ function ConversationCard({ conversation, index, onPress }: {
 export default function MessagesListScreen() {
   const router = useRouter();
   const { conversations } = useAppStore();
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
 
   const sorted = [...conversations].sort(
     (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
@@ -100,6 +103,13 @@ export default function MessagesListScreen() {
         <AnimatedPressable className="p-1" scaleValue={0.88} haptic="light">
           <PencilSimple color={colors.accent} size={22} />
         </AnimatedPressable>
+      </View>
+
+      <View style={{ margin: 16, padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+        <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 6 }}>Best use of messages</Text>
+        <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
+          Ask follow-up questions about an Echo, share context privately, or turn a good reply into the start of another post.
+        </Text>
       </View>
 
       {sorted.length === 0 ? (

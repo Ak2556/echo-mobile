@@ -22,6 +22,7 @@ import { useTheme } from '../../lib/theme';
 import { ToolCallCard, ToolCallItem } from './ToolCallCard';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
+import { usePerformanceProfile } from '../../lib/performance';
 
 type Item =
   | { kind: 'text'; id: string; role: 'user' | 'assistant'; content: string }
@@ -30,6 +31,7 @@ type Item =
 export function CommandPalette() {
   const { isOpen, close } = useCommandPalette();
   const { colors, reduceAnimations } = useTheme();
+  const performance = usePerformanceProfile('overlay');
   const [input, setInput] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
@@ -228,8 +230,8 @@ export function CommandPalette() {
     >
       {/* Blurred backdrop */}
       <View style={StyleSheet.absoluteFill}>
-        {Platform.OS === 'ios' && !reduceAnimations ? (
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        {performance.useBlur ? (
+          <BlurView intensity={performance.maxBlurIntensity} tint="dark" style={StyleSheet.absoluteFill} />
         ) : null}
         <View
           style={[
@@ -252,11 +254,11 @@ export function CommandPalette() {
             style={{ marginTop: 80, marginHorizontal: 16, marginBottom: 120 }}
           >
             <Animated.View
-              entering={FadeIn.duration(120)}
-              exiting={FadeOut.duration(80)}
+              entering={reduceAnimations ? undefined : FadeIn.duration(80)}
+              exiting={reduceAnimations ? undefined : FadeOut.duration(60)}
               style={{ maxHeight: '80%' }}
             >
-              <GlassPanel variant="ultra" borderRadius={20} elevated>
+              <GlassPanel variant="ultra" borderRadius={20} elevated performanceMode="overlay">
                 {/* Header / input row */}
                 <View
                   style={{
@@ -271,6 +273,7 @@ export function CommandPalette() {
                   <Lightning color={colors.accent} size={20} weight="fill" />
                   <AnimatedPressable
                     onPress={() => setShowActionCenter(true)}
+                    performanceMode="overlay"
                     style={{
                       width: 30,
                       height: 30,
@@ -297,6 +300,7 @@ export function CommandPalette() {
                   />
                   <AnimatedPressable
                     onPress={input.trim() ? send : close}
+                    performanceMode="overlay"
                     style={{
                       width: 32,
                       height: 32,

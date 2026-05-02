@@ -6,6 +6,7 @@ import {
   setRemoteLike,
   setRemoteRepost,
 } from '../../lib/supabaseEchoApi';
+import { patchBookmarkCaches, patchFollowCaches, patchLikeCaches, patchRepostCaches } from '../../lib/queryCache';
 
 export function useToggleRemoteLike() {
   const qc = useQueryClient();
@@ -13,9 +14,13 @@ export function useToggleRemoteLike() {
     mutationFn: async ({ echoId, like }: { echoId: string; like: boolean }) => {
       await setRemoteLike(echoId, like);
     },
-    onSettled: () => {
+    onMutate: async ({ echoId, like }) => {
+      patchLikeCaches(qc, echoId, like);
+      return { echoId };
+    },
+    onSettled: (_, __, vars) => {
       qc.invalidateQueries({ queryKey: ['feed'] });
-      qc.invalidateQueries({ queryKey: ['bookmarks'] });
+      if (vars?.echoId) qc.invalidateQueries({ queryKey: ['comments', vars.echoId] });
     },
   });
 }
@@ -25,6 +30,10 @@ export function useToggleRemoteBookmark() {
   return useMutation({
     mutationFn: async ({ echoId, bookmark }: { echoId: string; bookmark: boolean }) => {
       await setRemoteBookmark(echoId, bookmark);
+    },
+    onMutate: async ({ echoId, bookmark }) => {
+      patchBookmarkCaches(qc, echoId, bookmark);
+      return { echoId };
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
@@ -39,6 +48,10 @@ export function useToggleRemoteRepost() {
     mutationFn: async ({ echoId, repost }: { echoId: string; repost: boolean }) => {
       await setRemoteRepost(echoId, repost);
     },
+    onMutate: async ({ echoId, repost }) => {
+      patchRepostCaches(qc, echoId, repost);
+      return { echoId };
+    },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['bookmarks'] });
@@ -52,6 +65,10 @@ export function useToggleRemoteFollow() {
   return useMutation({
     mutationFn: async ({ userId, follow }: { userId: string; follow: boolean }) => {
       await setRemoteFollow(userId, follow);
+    },
+    onMutate: async ({ userId, follow }) => {
+      patchFollowCaches(qc, userId, follow);
+      return { userId };
     },
     onSettled: (_, __, vars) => {
       qc.invalidateQueries({ queryKey: ['feed'] });

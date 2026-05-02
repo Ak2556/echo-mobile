@@ -7,54 +7,37 @@ import Animated, {
   withSequence,
   withTiming,
   withDelay,
+  interpolate,
 } from 'react-native-reanimated';
 import { GlassPanel } from './GlassPanel';
 import { useTheme } from '../../lib/theme';
 
+// Single shared value drives both scale + opacity — halves the animation count
 function Dot({ delay, color }: { delay: number; color: string }) {
-  const scale = useSharedValue(0.4);
-  const opacity = useSharedValue(0.3);
+  const t = useSharedValue(0);
 
   useEffect(() => {
-    scale.value = withDelay(
+    t.value = withDelay(
       delay,
       withRepeat(
         withSequence(
-          withTiming(1, { duration: 200 }),
-          withTiming(0.4, { duration: 200 })
+          withTiming(1, { duration: 280 }),
+          withTiming(0, { duration: 280 })
         ),
-        -1
-      )
-    );
-    opacity.value = withDelay(
-      delay,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 200 }),
-          withTiming(0.3, { duration: 200 })
-        ),
-        -1
+        -1,
+        false
       )
     );
   }, []);
 
   const style = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
+    transform: [{ scale: interpolate(t.value, [0, 1], [0.4, 1]) }],
+    opacity: interpolate(t.value, [0, 1], [0.3, 1]),
   }));
 
   return (
     <Animated.View
-      style={[
-        {
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: color,
-          marginHorizontal: 2,
-        },
-        style,
-      ]}
+      style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, marginHorizontal: 2 }, style]}
     />
   );
 }
@@ -70,8 +53,8 @@ export function TypingIndicator() {
         contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 }}
       >
         <Dot delay={0} color={colors.textMuted} />
-        <Dot delay={80} color={colors.textMuted} />
-        <Dot delay={160} color={colors.textMuted} />
+        <Dot delay={100} color={colors.textMuted} />
+        <Dot delay={200} color={colors.textMuted} />
       </GlassPanel>
     </View>
   );

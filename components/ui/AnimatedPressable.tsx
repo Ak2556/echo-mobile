@@ -4,6 +4,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../store/useAppStore';
 import { MOTION, PRESS_DEPTH, PressDepth } from '../../lib/motion';
+import { PerformanceMode, usePerformanceProfile } from '../../lib/performance';
 
 const AnimatedPress = Animated.createAnimatedComponent(Pressable);
 
@@ -17,6 +18,7 @@ interface AnimatedPressableProps extends PressableProps {
   haptic?: 'light' | 'medium' | 'heavy' | 'none';
   className?: string;
   style?: any;
+  performanceMode?: PerformanceMode;
 }
 
 export function AnimatedPressable({
@@ -31,6 +33,7 @@ export function AnimatedPressable({
   haptic = 'light',
   style,
   disabled,
+  performanceMode = 'default',
   ...props
 }: AnimatedPressableProps) {
   const scale = useSharedValue(1);
@@ -40,6 +43,7 @@ export function AnimatedPressable({
   const rotateY = useSharedValue(0);
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const reduceAnimations = useAppStore(s => s.reduceAnimations);
+  const performance = usePerformanceProfile(performanceMode);
   const layoutRef = useRef({ width: 1, height: 1 });
 
   useEffect(() => {
@@ -47,7 +51,7 @@ export function AnimatedPressable({
   }, [disabled, dimWhenDisabled, opacity]);
 
   const animStyle = useAnimatedStyle(() => {
-    if (tilt3D && !reduceAnimations) {
+    if (tilt3D && performance.pressAnimations) {
       return {
         opacity: opacity.value,
         transform: [
@@ -67,7 +71,7 @@ export function AnimatedPressable({
 
   const handlePressIn = (e: any) => {
     if (disabled) return;
-    if (reduceAnimations) {
+    if (reduceAnimations || !performance.pressAnimations) {
       opacity.value = fadeOnPress ? 0.82 : 1;
       return;
     }
@@ -87,10 +91,10 @@ export function AnimatedPressable({
   };
 
   const handlePressOut = () => {
-    scale.value = reduceAnimations ? 1 : withSpring(1, MOTION.release);
-    translateY.value = reduceAnimations ? 0 : withSpring(0, MOTION.release);
+    scale.value = reduceAnimations || !performance.pressAnimations ? 1 : withSpring(1, MOTION.release);
+    translateY.value = reduceAnimations || !performance.pressAnimations ? 0 : withSpring(0, MOTION.release);
     opacity.value = withSpring(disabled && dimWhenDisabled ? 0.45 : 1, MOTION.release);
-    if (tilt3D) {
+    if (tilt3D && performance.pressAnimations) {
       rotateX.value = withSpring(0, MOTION.release);
       rotateY.value = withSpring(0, MOTION.release);
     }

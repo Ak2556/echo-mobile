@@ -18,8 +18,9 @@ import { useFeed } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
+import { buildCreatorProfile } from '../../lib/echoUX';
 
-function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessage, onReport, onBlock, showMenu, setShowMenu, isSelf, router }: any) {
+function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessage, onReport, onBlock, showMenu, setShowMenu, isSelf, router, creatorProfile }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
   const online = isUserOnline(user.id);
   const followScale = useSharedValue(1);
@@ -93,6 +94,15 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
         <Text style={{ color: colors.textMuted, fontSize: 14, marginBottom: 8 }}>@{user.username}</Text>
         {online && <Text style={{ color: colors.success, fontSize: 12, marginBottom: 8 }}>Active now</Text>}
         {user.bio ? <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 14, marginBottom: 16 }}>{user.bio}</Text> : null}
+        {creatorProfile?.topics?.length ? (
+          <View className="flex-row flex-wrap justify-center gap-2 mb-4">
+            {creatorProfile.topics.map((topic: string) => (
+              <View key={topic} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.accentMuted }}>
+                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         <View className="flex-row gap-8 mb-4">
           <AnimatedPressable className="items-center" scaleValue={0.92} haptic="light">
@@ -140,6 +150,12 @@ function ProfileHeader({ user, echoeCount, following, blocked, onFollow, onMessa
       </Animated.View>
 
       <View className="mx-4 mb-2" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
+      {creatorProfile ? (
+        <View className="mx-4 mb-4 p-4" style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+          <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 6 }}>Why follow</Text>
+          <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>{creatorProfile.headline}</Text>
+        </View>
+      ) : null}
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 16, marginBottom: 8 }}>
         Echoes {'\u00B7'} {echoeCount}
       </Text>
@@ -182,6 +198,7 @@ export default function UserProfileScreen() {
 
     const { user, echoes, isFollowing: remoteFollowing, isSelf } = remoteBundle.data;
     const blocked = isBlocked(user.id);
+    const creatorProfile = buildCreatorProfile(user, echoes);
 
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -209,6 +226,7 @@ export default function UserProfileScreen() {
               setShowMenu={setShowMenu}
               isSelf={isSelf}
               router={router}
+              creatorProfile={creatorProfile}
             />
           }
           ListEmptyComponent={<View className="items-center pt-12"><Text style={{ color: colors.textMuted }}>No echoes yet</Text></View>}
@@ -221,6 +239,7 @@ export default function UserProfileScreen() {
   const following = id ? isFollowing(id) : false;
   const blocked = id ? isBlocked(id) : false;
   const userEchoes = (feed || []).filter(item => item.username === user?.username);
+  const creatorProfile = user ? buildCreatorProfile(user, userEchoes) : null;
 
   if (!user) {
     return (
@@ -259,6 +278,7 @@ export default function UserProfileScreen() {
             setShowMenu={setShowMenu}
             isSelf={false}
             router={router}
+            creatorProfile={creatorProfile}
           />
         }
         ListEmptyComponent={<View className="items-center pt-12"><Text style={{ color: colors.textMuted }}>No echoes yet</Text></View>}

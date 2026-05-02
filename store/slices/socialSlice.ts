@@ -69,6 +69,7 @@ export interface SocialSlice {
   conversations: Conversation[];
   messagesByConversation: Record<string, DirectMessage[]>;
   sendDM: (conversationId: string, content: string) => void;
+  shareEchoInDM: (conversationId: string, echo: FeedItem, intro?: string) => void;
   markConversationRead: (conversationId: string) => void;
   getOrCreateConversation: (user: User) => string;
   getDMs: (conversationId: string) => DirectMessage[];
@@ -258,6 +259,29 @@ export function createSocialSlice(
       const updatedMsgs = { ...prev, [conversationId]: msgs };
       const conversations = get().conversations.map(c =>
         c.id === conversationId ? { ...c, lastMessage: content, lastMessageAt: msg.createdAt } : c
+      );
+      persistSet('messagesByConversation', updatedMsgs);
+      persistSet('conversations', conversations);
+      set({ messagesByConversation: updatedMsgs, conversations });
+    },
+    shareEchoInDM: (conversationId, echo, intro) => {
+      const body = intro?.trim() || `Thought you'd like this Echo from @${echo.username}.`;
+      const msg: DirectMessage = {
+        id: Date.now().toString(),
+        senderId: 'me',
+        content: body,
+        isRead: true,
+        createdAt: new Date().toISOString(),
+        sharedEchoId: echo.id,
+        sharedEchoTitle: echo.editorialTitle || echo.prompt,
+        sharedEchoPreview: echo.response || echo.prompt,
+        sharedEchoAuthor: echo.displayName || echo.username,
+      };
+      const prev = get().messagesByConversation;
+      const msgs = [...(prev[conversationId] || []), msg];
+      const updatedMsgs = { ...prev, [conversationId]: msgs };
+      const conversations = get().conversations.map(c =>
+        c.id === conversationId ? { ...c, lastMessage: body, lastMessageAt: msg.createdAt } : c
       );
       persistSet('messagesByConversation', updatedMsgs);
       persistSet('conversations', conversations);

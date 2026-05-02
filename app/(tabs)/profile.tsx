@@ -1,547 +1,254 @@
-import React, { useState, useMemo } from 'react';
-import {
-  View, Text, ScrollView, Switch, StyleSheet, Dimensions, Pressable, Platform,
-} from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, Switch, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, {
-  FadeInUp, FadeIn,
-  useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, useAnimatedReaction,
-  withSpring,
-} from 'react-native-reanimated';
-import {
-  Gear, BookmarkSimple, Envelope, Bell, SignOut, PencilSimple,
-  Users, CaretRight, CalendarBlank, Images,
-} from 'phosphor-react-native';
+import { BookmarkSimple, Bell, CalendarBlank, CaretRight, Compass, Envelope, Gear, Images, NotePencil, SignOut, Sparkle, Users } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { PostsGrid } from '../../components/profile/PostsGrid';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme, ANIM } from '../../lib/theme';
+import { useTheme } from '../../lib/theme';
 import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
+import { buildCreatorProfile } from '../../lib/echoUX';
 
 const { width: SW } = Dimensions.get('window');
+const TAB_WIDTH = SW / 2;
 
 const SETTINGS_ROWS = [
-  { key: 'edit',        Icon: PencilSimple,   label: 'Edit Profile',  route: '/edit-profile' },
-  { key: 'bookmarks',   Icon: BookmarkSimple, label: 'Bookmarks',     route: '/bookmarks' },
-  { key: 'messages',    Icon: Envelope,       label: 'Messages',      route: '/messages' },
-  { key: 'connections', Icon: Users,          label: 'Connections',   route: null },
-  { key: 'settings',    Icon: Gear,           label: 'Settings',      route: '/settings' },
+  { key: 'edit', Icon: NotePencil, label: 'Edit Profile', route: '/edit-profile' },
+  { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
+  { key: 'messages', Icon: Envelope, label: 'Messages', route: '/messages' },
+  { key: 'connections', Icon: Users, label: 'Connections', route: null },
+  { key: 'settings', Icon: Gear, label: 'Settings', route: '/settings' },
 ];
-
-const TAB_WIDTH = SW / 2;
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { colors, radius, switchTrack, animation } = useTheme();
+  const { colors, radius, switchTrack, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
   const {
     userId,
-    username, displayName, bio, avatarColor, avatarUrl,
+    username,
+    displayName,
+    bio,
+    avatarColor,
+    avatarUrl,
     publishedEchoes,
-    notificationsEnabled, setNotificationsEnabled,
-    getFollowers, getFollowing,
+    notificationsEnabled,
+    setNotificationsEnabled,
+    getFollowers,
+    getFollowing,
   } = useAppStore();
-
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
-  const tabIndicatorX = useSharedValue(0);
-
-  const scrollY = useSharedValue(0);
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-    },
-  });
-
-  const useBlurHeader = Platform.OS === 'ios';
-  const tint = colors.isDark ? 'dark' : 'extraLight';
-
-  // Spring-physics tab strip opacity — fades in the glassBorder as user scrolls past hero
-  const tabStripBlur = useSharedValue(0.28);
-  useAnimatedReaction(
-    () => Math.min(1, Math.max(0.28, scrollY.value / 120)),
-    (target) => { tabStripBlur.value = withSpring(target, { damping: 20, stiffness: 220, mass: 0.4 }); },
-  );
-  const tabStripOverlayStyle = useAnimatedStyle(() => ({
-    opacity: tabStripBlur.value,
-  }));
-
   const displayLabel = displayName || username || 'User';
   const followers = getFollowers();
   const following = getFollowing();
-
-  const interestTags = useMemo(() => {
-    const tags = publishedEchoes.flatMap(e => e.hashtags ?? []);
-    return [...new Set(tags)].slice(0, 8);
-  }, [publishedEchoes]);
-
-  // Use remote profile createdAt when available; fall back to current year.
   const { data: remoteBundle } = useRemoteProfileBundle(userId);
-  const joinedYear = useMemo(() => {
-    const createdAt = remoteBundle?.user?.createdAt;
-    if (createdAt) return new Date(createdAt).getFullYear();
-    return new Date().getFullYear();
-  }, [remoteBundle]);
+  const createdAt = remoteBundle?.user?.createdAt ?? new Date().toISOString();
+  const creatorProfile = useMemo(
+    () => buildCreatorProfile({ displayName: displayLabel, bio, createdAt }, publishedEchoes),
+    [bio, createdAt, displayLabel, publishedEchoes],
+  );
 
-  const handleTabPress = (tab: 'posts' | 'about', index: number) => {
-    setActiveTab(tab);
-    tabIndicatorX.value = withSpring(index * TAB_WIDTH, ANIM.springSnappy);
-  };
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: tabIndicatorX.value }],
-  }));
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  const handlePressEcho = (item: FeedItem) => {
-    router.push(`/thread/${item.id}`);
-  };
-
-  const gradientEnd = colors.isDark ? colors.bgPure : colors.bg;
-  const gradientAlpha = colors.isDark ? '70' : '28';
+  const handlePressEcho = (item: FeedItem) => router.push(`/thread/${item.id}`);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Full-screen gradient background */}
       <LinearGradient
-        colors={[`${avatarColor || colors.accent}${gradientAlpha}`, colors.bg, gradientEnd] as const}
-        locations={[0, 0.42, 1]}
+        colors={[`${avatarColor || colors.accent}${colors.isDark ? '60' : '24'}`, colors.bg, colors.isDark ? colors.bgPure : colors.bg]}
+        locations={[0, 0.36, 1]}
         start={{ x: 0.1, y: 0 }}
         end={{ x: 0.9, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
 
-      <Animated.ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
-        stickyHeaderIndices={[3]}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-      >
-        {/* 0: Nav Bar */}
-        <View
-          style={{
-            paddingTop: insets.top + 10,
-            paddingHorizontal: 16,
-            paddingBottom: 6,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>
-            @{username || 'user'}
-          </Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}>
+        <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>@{username || 'user'}</Text>
           <AnimatedPressable
             onPress={() => router.push('/edit-profile')}
-            style={{
-              position: 'absolute',
-              right: 16,
-              backgroundColor: colors.surfaceHover,
-              borderRadius: 20,
-              paddingHorizontal: 14,
-              paddingVertical: 6,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.border,
-            }}
-            scaleValue={0.93}
-            haptic="light"
+            style={{ position: 'absolute', right: 16, backgroundColor: colors.surfaceHover, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
           >
-            <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>Edit Profile</Text>
+            <Text style={{ color: colors.text, fontSize: 12, fontWeight: '700' }}>Edit Profile</Text>
           </AnimatedPressable>
         </View>
 
-        {/* 1: Hero Row — avatar + social stats */}
-        <Animated.View
-          entering={animation(FadeInUp.delay(40).springify())}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 20,
-            paddingTop: 20,
-            paddingBottom: 16,
-            gap: 20,
-          }}
-        >
-          <ProfileAvatar
-            displayName={displayLabel}
-            avatarColor={avatarColor || colors.accent}
-            avatarUrl={avatarUrl || undefined}
-            size={78}
-          />
-
-          {/* Stats */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+          <ProfileAvatar displayName={displayLabel} avatarColor={avatarColor || colors.accent} avatarUrl={avatarUrl || undefined} size={78} />
           <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-around' }}>
-            {/* Posts */}
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.8 }}>
-                {publishedEchoes.length}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>Posts</Text>
-            </View>
-
-            {/* Followers */}
-            <AnimatedPressable
-              onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })}
-              style={{ alignItems: 'center' }}
-              scaleValue={0.93}
-              haptic="light"
-            >
-              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.8 }}>
-                {followers.length}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>Followers</Text>
-            </AnimatedPressable>
-
-            {/* Following */}
-            <AnimatedPressable
-              onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'following' } })}
-              style={{ alignItems: 'center' }}
-              scaleValue={0.93}
-              haptic="light"
-            >
-              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.8 }}>
-                {following.length}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>Following</Text>
-            </AnimatedPressable>
+            <Stat value={publishedEchoes.length} label="Echoes" />
+            <Pressable onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })}>
+              <Stat value={followers.length} label="Followers" />
+            </Pressable>
+            <Pressable onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'following' } })}>
+              <Stat value={following.length} label="Following" />
+            </Pressable>
           </View>
-        </Animated.View>
+        </View>
 
-        {/* 2: Identity Block */}
-        <Animated.View
-          entering={animation(FadeInUp.delay(80).springify())}
-          style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}
-        >
-          <Text
-            style={{
-              color: colors.text,
-              fontSize: 26,
-              fontWeight: '800',
-              letterSpacing: -0.8,
-            }}
-            numberOfLines={1}
-          >
-            {displayLabel}
+        <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
+          <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.8 }}>{displayLabel}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>@{username || 'user'}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 10 }}>
+            {creatorProfile.headline}
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 2 }}>
-            @{username || 'user'}
-          </Text>
-          {bio ? (
-            <Text
-              style={{
-                color: colors.textSecondary,
-                fontSize: 14,
-                lineHeight: 21,
-                marginTop: 8,
-              }}
-              numberOfLines={3}
-            >
-              {bio}
-            </Text>
-          ) : null}
-        </Animated.View>
+        </View>
 
-        {/* 3: Tab Strip (STICKY) — glass */}
-        <Animated.View
-          entering={animation(FadeIn.delay(100).duration(80))}
-          style={{ overflow: 'hidden' }}
-        >
-          {useBlurHeader && (
-            <BlurView
-              intensity={60}
-              tint={tint}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: colors.bg },
-              useBlurHeader ? tabStripOverlayStyle : { opacity: 0.97 },
-            ]}
-          />
-          <View style={{ flexDirection: 'row' }}>
-            {(['posts', 'about'] as const).map((tab, i) => (
-              <Pressable
-                key={tab}
-                onPress={() => handleTabPress(tab, i)}
-                style={{
-                  flex: 1,
-                  height: 44,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: activeTab === tab ? '700' : '500',
-                    color: activeTab === tab ? colors.text : colors.textMuted,
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {tab}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          {/* Bottom glass border */}
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: StyleSheet.hairlineWidth,
-              backgroundColor: colors.glassBorder,
-            }}
-          />
-          {/* Sliding accent indicator */}
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                bottom: 0,
-                width: TAB_WIDTH,
-                height: 2,
-                backgroundColor: colors.accent,
-                borderRadius: 1,
-              },
-              indicatorStyle,
-            ]}
-          />
-        </Animated.View>
-
-        {/* 4: Tab Content */}
-        <View>
-          <Animated.View key={activeTab} entering={animation(FadeIn.duration(120))}>
-          {activeTab === 'posts' ? (
-            publishedEchoes.length === 0 ? (
-              <View style={{ alignItems: 'center', paddingVertical: 52, paddingHorizontal: 32, gap: 12 }}>
-                <Images color={colors.textMuted} size={44} weight="duotone" />
-                <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', textAlign: 'center' }}>
-                  No echoes yet
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
-                  Share your first thought with the community.
-                </Text>
-                <AnimatedPressable
-                  onPress={() => router.push('/create-post')}
-                  scaleValue={0.97}
-                  haptic="medium"
-                  style={{
-                    marginTop: 4,
-                    backgroundColor: colors.accent,
-                    borderRadius: 12,
-                    paddingHorizontal: 24,
-                    paddingVertical: 12,
-                  }}
-                >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Create Echo</Text>
-                </AnimatedPressable>
+        <View style={{ paddingHorizontal: 16, gap: 12 }}>
+          <GlassPanel borderRadius={radius.card}>
+            <View style={{ padding: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <Sparkle color={colors.accent} size={16} />
+                <Text style={{ color: colors.text, fontWeight: '700' }}>Why follow</Text>
               </View>
-            ) : (
-              <PostsGrid
-                echoes={publishedEchoes}
-                onPressEcho={handlePressEcho}
-                avatarColor={avatarColor || colors.accent}
-              />
-            )
-          ) : (
-            <View style={{ padding: 16, gap: 12 }}>
-              {/* Full bio */}
-              <GlassPanel borderRadius={radius.card} intensity={40}>
-                <View style={{ padding: 16 }}>
-                  <Text style={{ color: colors.text, fontSize: 15, lineHeight: 23 }}>
-                    {bio || 'Echo member — sharing thoughts and experiences with the community.'}
-                  </Text>
-                </View>
-              </GlassPanel>
-
-              {/* Interest tags */}
-              {interestTags.length > 0 && (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {interestTags.map(tag => (
-                    <View
-                      key={tag}
-                      style={{
-                        backgroundColor: colors.accentMuted,
-                        borderRadius: 20,
-                        paddingHorizontal: 13,
-                        paddingVertical: 5,
-                        borderWidth: StyleSheet.hairlineWidth,
-                        borderColor: colors.accent + '44',
-                      }}
-                    >
-                      <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '500' }}>
-                        #{tag}
-                      </Text>
+              <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
+                Posts mostly about {creatorProfile.topics[0]?.toLowerCase() || 'AI conversations'}, with a focus on turning useful prompts into sharable takeaways.
+              </Text>
+              {creatorProfile.topics.length > 0 ? (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                  {creatorProfile.topics.map(topic => (
+                    <View key={topic} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '40' }}>
+                      <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
                     </View>
                   ))}
                 </View>
-              )}
-
-              {/* Joined row */}
-              <GlassPanel borderRadius={radius.card} intensity={30}>
-                <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <CalendarBlank color={colors.textMuted} size={18} />
-                  <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
-                    Joined Echo {joinedYear}
-                  </Text>
-                </View>
-              </GlassPanel>
+              ) : null}
             </View>
-          )}
-          </Animated.View>
+          </GlassPanel>
+
+          {creatorProfile.pinned.length > 0 ? (
+            <GlassPanel borderRadius={radius.card}>
+              <View style={{ padding: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <Compass color={colors.accent} size={16} />
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>Pinned highlights</Text>
+                </View>
+                {creatorProfile.pinned.map(item => (
+                  <Pressable key={item.id} onPress={() => handlePressEcho(item)} style={{ paddingVertical: 10 }}>
+                    <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{item.editorialTitle || item.prompt}</Text>
+                    <Text style={{ color: colors.textSecondary, marginTop: 4, lineHeight: 20 }} numberOfLines={2}>
+                      {item.authorNote || item.response || 'Open to view the full Echo.'}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </GlassPanel>
+          ) : null}
         </View>
 
-        {/* 5: Account Section */}
-        <Animated.View
-          entering={animation(FadeInUp.delay(160).springify())}
-          style={{ paddingHorizontal: 16, marginTop: 24 }}
-        >
-          <Text
-            style={{
-              color: colors.textMuted,
-              fontSize: 11,
-              fontWeight: '600',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              marginBottom: 10,
-              marginLeft: 4,
-            }}
-          >
-            Account
-          </Text>
+        <View style={{ marginTop: 20, flexDirection: 'row' }}>
+          {(['posts', 'about'] as const).map((tab, index) => {
+            const active = activeTab === tab;
+            return (
+              <Pressable key={tab} onPress={() => setActiveTab(tab)} style={{ flex: 1, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 14, fontWeight: active ? '700' : '500', color: active ? colors.text : colors.textMuted, textTransform: 'capitalize' }}>{tab}</Text>
+                {active ? <View style={{ position: 'absolute', bottom: 0, width: TAB_WIDTH, height: 2, backgroundColor: colors.accent }} /> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
 
+        {activeTab === 'posts' ? (
+          publishedEchoes.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 56, paddingHorizontal: 32, gap: 12 }}>
+              <Images color={colors.textMuted} size={44} weight="duotone" />
+              <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>No Echoes yet</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
+                Publish one strong conversation or idea so people can understand what you are about.
+              </Text>
+              <AnimatedPressable onPress={() => router.push('/create-post')} style={{ marginTop: 4, backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Create Echo</Text>
+              </AnimatedPressable>
+            </View>
+          ) : (
+            <PostsGrid echoes={publishedEchoes} onPressEcho={handlePressEcho} avatarColor={avatarColor || colors.accent} />
+          )
+        ) : (
+          <View style={{ padding: 16, gap: 12 }}>
+            <GlassPanel borderRadius={radius.card}>
+              <View style={{ padding: 16 }}>
+                <Text style={{ color: colors.text, fontSize: 15, lineHeight: 23 }}>
+                  {bio || 'Building a profile around useful Echoes, clear prompts, and conversation-led posts.'}
+                </Text>
+              </View>
+            </GlassPanel>
+            <GlassPanel borderRadius={radius.card}>
+              <View style={{ padding: 16, gap: 12 }}>
+                <InfoRow icon={<CalendarBlank color={colors.textMuted} size={18} />} label={`Joined Echo ${creatorProfile.joinedYear}`} colors={colors} />
+                <InfoRow icon={<Sparkle color={colors.textMuted} size={18} />} label={`Best known for ${creatorProfile.topics[0] || 'AI conversations'}`} colors={colors} />
+                <InfoRow icon={<Compass color={colors.textMuted} size={18} />} label={creatorProfile.series[0] ? `Current series: ${creatorProfile.series[0]}` : 'No public series yet'} colors={colors} />
+              </View>
+            </GlassPanel>
+          </View>
+        )}
+
+        <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginLeft: 4 }}>Account</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 16 }}>
             <View style={{ paddingHorizontal: 16 }}>
-              {SETTINGS_ROWS.map(({ key, Icon, label, route }, i) => (
+              {SETTINGS_ROWS.map(({ key, Icon, label, route }, index) => (
                 <React.Fragment key={key}>
                   <AnimatedPressable
-                    onPress={() =>
-                      route
-                        ? router.push(route as any)
-                        : router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })
-                    }
+                    onPress={() => route ? router.push(route as any) : router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })}
                     style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13 }}
-                    scaleValue={0.98}
-                    haptic="light"
                   >
-                    <View
-                      style={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: 9,
-                        backgroundColor: colors.surfaceHover,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: 12,
-                      }}
-                    >
+                    <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                       <Icon color={colors.textSecondary} size={17} />
                     </View>
                     <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>{label}</Text>
                     <CaretRight color={colors.textMuted} size={16} />
                   </AnimatedPressable>
-                  {i < SETTINGS_ROWS.length - 1 && (
-                    <View
-                      style={{
-                        height: StyleSheet.hairlineWidth,
-                        backgroundColor: colors.border,
-                      }}
-                    />
-                  )}
+                  {index < SETTINGS_ROWS.length - 1 ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} /> : null}
                 </React.Fragment>
               ))}
             </View>
           </GlassPanel>
 
-          {/* Preferences */}
-          <Text
-            style={{
-              color: colors.textMuted,
-              fontSize: 11,
-              fontWeight: '600',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              marginBottom: 10,
-              marginLeft: 4,
-            }}
-          >
-            Preferences
-          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginLeft: 4 }}>Quick controls</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 16 }}>
             <View style={{ paddingHorizontal: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13 }}>
-                <View
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 9,
-                    backgroundColor: colors.surfaceHover,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: 12,
-                  }}
-                >
+                <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                   <Bell color={colors.textSecondary} size={17} />
                 </View>
                 <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>Notifications</Text>
-                <Switch
-                  value={notificationsEnabled}
-                  onValueChange={setNotificationsEnabled}
-                  trackColor={switchTrack}
-                  thumbColor="#fff"
-                />
+                <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={switchTrack} thumbColor="#fff" />
               </View>
             </View>
           </GlassPanel>
 
-          {/* Sign out */}
-          <AnimatedPressable
-            onPress={() => { void handleSignOut(); }}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 16,
-              paddingVertical: 13,
-              backgroundColor: 'rgba(239,68,68,0.1)',
-              borderRadius: radius.card,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: 'rgba(239,68,68,0.28)',
-              marginBottom: 8,
-            }}
-            scaleValue={0.97}
-            haptic="medium"
-          >
-            <View
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 9,
-                backgroundColor: 'rgba(239,68,68,0.12)',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 12,
-              }}
-            >
+          <AnimatedPressable onPress={() => { void signOut(); }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(239,68,68,0.28)', marginBottom: 8 }}>
+            <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: 'rgba(239,68,68,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
               <SignOut color={colors.danger} size={17} />
             </View>
             <Text style={{ color: colors.danger, fontSize: 15, fontWeight: '500' }}>Sign Out</Text>
           </AnimatedPressable>
-        </Animated.View>
-      </Animated.ScrollView>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.8 }}>{value}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{label}</Text>
+    </View>
+  );
+}
+
+function InfoRow({ icon, label, colors }: { icon: React.ReactNode; label: string; colors: any }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      {icon}
+      <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{label}</Text>
     </View>
   );
 }

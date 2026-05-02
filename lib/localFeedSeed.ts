@@ -19,6 +19,15 @@ function seedItem(p: {
   mediaUris?: string[];
   videoUri?: string;
   poll?: FeedItem['poll'];
+  postOrigin?: FeedItem['postOrigin'];
+  topicLabels?: FeedItem['topicLabels'];
+  editorialTitle?: FeedItem['editorialTitle'];
+  authorNote?: FeedItem['authorNote'];
+  visibility?: FeedItem['visibility'];
+  pinned?: FeedItem['pinned'];
+  series?: FeedItem['series'];
+  conversationContext?: FeedItem['conversationContext'];
+  publishChecklist?: FeedItem['publishChecklist'];
 }): FeedItem {
   return {
     id: p.id,
@@ -38,6 +47,15 @@ function seedItem(p: {
     viewCount: p.viewCount ?? 0,
     hashtags: extractHashtags(`${p.prompt} ${p.response}`),
     createdAt: p.createdAt,
+    postOrigin: p.postOrigin,
+    topicLabels: p.topicLabels,
+    editorialTitle: p.editorialTitle,
+    authorNote: p.authorNote,
+    visibility: p.visibility,
+    pinned: p.pinned,
+    series: p.series,
+    conversationContext: p.conversationContext,
+    publishChecklist: p.publishChecklist,
     postType: p.postType,
     mediaUris: p.mediaUris,
     videoUri: p.videoUri,
@@ -67,6 +85,15 @@ export function coerceFeedItem(e: FeedItem): FeedItem {
     viewCount: e.viewCount ?? 0,
     hashtags,
     createdAt: e.createdAt || new Date().toISOString(),
+    postOrigin: e.postOrigin,
+    topicLabels: e.topicLabels,
+    editorialTitle: e.editorialTitle,
+    authorNote: e.authorNote,
+    visibility: e.visibility,
+    pinned: e.pinned,
+    series: e.series,
+    conversationContext: e.conversationContext,
+    publishChecklist: e.publishChecklist,
     // Rich media — must be forwarded or they get silently dropped
     postType: e.postType,
     mediaUris: e.mediaUris,
