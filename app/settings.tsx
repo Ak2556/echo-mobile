@@ -439,10 +439,16 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
+        <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ padding: 16 }}>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 8 }}>Recommended first</Text>
+          <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
+            Set privacy, notifications, and accessibility first. The rest is advanced polish once your posting rhythm feels right.
+          </Text>
+        </GlassPanel>
 
         {/* NOTIFICATIONS */}
         <Animated.View entering={animation(FadeInDown.delay(50).springify())}>
-          <Text style={sectionHeaderStyle}>Notifications</Text>
+          <Text style={sectionHeaderStyle}>Essentials</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, s.setNotificationsEnabled)} />
             {divider}
@@ -451,6 +457,10 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={SpeakerHigh} label="Sound Effects" subtitle="Play sounds for actions" right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
             {divider}
             <SettingsRow theme={theme} icon={Bell} label="Notification Preferences" subtitle="Customize which notifications you receive" onPress={() => router.push('/notification-prefs')} />
+            {divider}
+            <SettingsRow theme={theme} icon={Lock} iconColor="#F59E0B" label="Private Account" subtitle="Safer default while you're learning the app" right={SwitchEl(s.privateAccount, s.setPrivateAccount)} />
+            {divider}
+            <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, s.setSensitiveContentFilter)} />
           </GlassPanel>
         </Animated.View>
 
@@ -458,8 +468,6 @@ export default function SettingsScreen() {
         <Animated.View entering={animation(FadeInDown.delay(100).springify())}>
           <Text style={sectionHeaderStyle}>Privacy & Safety</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Lock} iconColor="#F59E0B" label="Private Account" subtitle="Only followers can see your echoes" right={SwitchEl(s.privateAccount, s.setPrivateAccount)} />
-            {divider}
             <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, s.setActivityStatus)} />
             {divider}
             <SettingsRow theme={theme} icon={EyeSlash} label="Online Status" subtitle="Let others see your online indicator" right={SwitchEl(s.onlineStatus, s.setOnlineStatus)} />
@@ -468,15 +476,13 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Envelope} label="Who Can Message You" subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, s.setSensitiveContentFilter)} />
-            {divider}
             <SettingsRow theme={theme} icon={Users} label={`Blocked Users (${s.blockedIds.length})`} subtitle="Manage users you've blocked" onPress={() => router.push('/blocked-users')} />
           </GlassPanel>
         </Animated.View>
 
         {/* APPEARANCE & DISPLAY */}
         <Animated.View entering={animation(FadeInDown.delay(150).springify())}>
-          <Text style={sectionHeaderStyle}>Appearance & Display</Text>
+          <Text style={sectionHeaderStyle}>Accessibility & Display</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow
               theme={theme}
@@ -572,7 +578,7 @@ export default function SettingsScreen() {
 
         {/* STORAGE & DATA */}
         <Animated.View entering={animation(FadeInDown.delay(300).springify())}>
-          <Text style={sectionHeaderStyle}>Storage & Data</Text>
+          <Text style={sectionHeaderStyle}>Advanced Data Controls</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Database} label="Storage Used" right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
             {divider}

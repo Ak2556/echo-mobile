@@ -1,20 +1,24 @@
 import { useEffect } from 'react';
 import { Stack, useRouter , ErrorBoundaryProps } from 'expo-router';
 import { Linking, View, Text } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '../components/ui/Toast';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { supabase } from '../lib/supabase';
+import { useCommandPalette } from '../lib/commandPalette';
 import { useAppStore } from '../store/useAppStore';
 import '../global.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
-      staleTime: 0,
-      gcTime: 1000 * 60 * 10,
+      retry: 1,
+      staleTime: 1000 * 30,
+      gcTime: 1000 * 60 * 30,
+      refetchOnMount: true,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
     },
   },
 });
@@ -97,17 +101,19 @@ function AuthListener() {
 }
 
 export default function RootLayout() {
+  const commandPaletteOpen = useCommandPalette(s => s.isOpen);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <View style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthListener />
-        <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
           <Stack.Screen name="auth" options={{ animation: 'fade' }} />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="thread/[id]" options={{ presentation: 'card' }} />
-          <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="comments/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="user/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="messages/index" options={{ presentation: 'card' }} />
@@ -117,13 +123,13 @@ export default function RootLayout() {
           <Stack.Screen name="settings" options={{ presentation: 'card' }} />
           <Stack.Screen name="ai-memory" options={{ presentation: 'card' }} />
           <Stack.Screen name="edit-profile" options={{ presentation: 'card' }} />
-          <Stack.Screen name="report" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="report" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />
           <Stack.Screen name="notification-prefs" options={{ presentation: 'card' }} />
           <Stack.Screen name="story" options={{ presentation: 'transparentModal', animation: 'fade' }} />
-          <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="edit-post" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="edit-post" options={{ presentation: 'modal', animation: 'fade' }} />
           {/* Mini Apps */}
           <Stack.Screen name="mini-apps/calculator" options={{ presentation: 'card' }} />
           <Stack.Screen name="mini-apps/converter" options={{ presentation: 'card' }} />
@@ -137,8 +143,8 @@ export default function RootLayout() {
           <Stack.Screen name="mini-apps/bmi" options={{ presentation: 'card' }} />
         </Stack>
         <ToastProvider />
-        <CommandPalette />
-      </View>
+        {commandPaletteOpen ? <CommandPalette /> : null}
+      </GestureHandlerRootView>
     </QueryClientProvider>
   );
 }

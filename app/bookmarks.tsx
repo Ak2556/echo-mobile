@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, BookmarkSimple } from 'phosphor-react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { FeedCard } from '../components/social/FeedCard';
 import { FeedCardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
@@ -21,7 +20,7 @@ export default function BookmarksScreen() {
   const { bookmarkedIds } = useAppStore();
   const { data: feed } = useFeed();
   const remoteQ = useRemoteBookmarks();
-  const { colors, animation } = useTheme();
+  const { colors } = useTheme();
 
   const bookmarked = remote
     ? (remoteQ.data ?? [])
@@ -32,7 +31,7 @@ export default function BookmarksScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light" performanceMode="hot">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Bookmarks</Text>
@@ -41,11 +40,11 @@ export default function BookmarksScreen() {
       </View>
 
       {loading ? (
-        <Animated.View entering={animation(FadeIn.duration(80))} className="pt-2">
+        <View className="pt-2">
           <FeedCardSkeleton />
           <FeedCardSkeleton />
           <FeedCardSkeleton />
-        </Animated.View>
+        </View>
       ) : bookmarked.length === 0 ? (
         <EmptyState
           icon={<BookmarkSimple color="#6366F1" size={32} />}

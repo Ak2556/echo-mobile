@@ -7,20 +7,19 @@ import { LOCAL_SEED_FEED, coerceFeedItem } from '../../lib/localFeedSeed';
 
 export function useFeed() {
   const publishedEchoes = useAppStore(s => s.publishedEchoes);
-  const likeSig = useAppStore(s => s.likedIds.join('|'));
-  const bmSig = useAppStore(s => s.bookmarkedIds.join('|'));
+  const likedIds = useAppStore(s => s.likedIds);
+  const bookmarkedIds = useAppStore(s => s.bookmarkedIds);
   const feedSort = useAppStore(s => s.feedSort);
   const followingIds = useAppStore(s => s.followingIds);
   const remote = isSupabaseRemote();
 
   return useQuery({
-    queryKey: remote ? ['feed', feedSort] : ['feed', 'local', publishedEchoes.length, likeSig, bmSig, feedSort],
+    queryKey: remote ? ['feed', feedSort] : ['feed', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort],
+    staleTime: remote ? 1000 * 30 : Infinity,
     queryFn: async (): Promise<FeedItem[]> => {
       if (remote) {
         return fetchRemoteFeed();
       }
-      await new Promise(r => setTimeout(r, 600));
-      const { likedIds, bookmarkedIds } = useAppStore.getState();
       const liked = new Set(likedIds);
       const bookmarked = new Set(bookmarkedIds);
       let merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED].map(item => ({

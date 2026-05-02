@@ -61,6 +61,20 @@ export interface FeedItem {
   viewCount: number;
   hashtags: string[];
   createdAt: string;
+  postOrigin?: 'chat' | 'manual' | 'remix';
+  topicLabels?: string[];
+  editorialTitle?: string;
+  authorNote?: string;
+  visibility?: 'public' | 'followers';
+  pinned?: boolean;
+  series?: string;
+  conversationContext?: string;
+  publishChecklist?: {
+    clarity: boolean;
+    relevance: boolean;
+    privacy: boolean;
+    completeness: boolean;
+  };
   // Rich media
   postType?: 'text' | 'photo' | 'video' | 'poll';
   mediaUris?: string[];   // up to 4 photo URIs (local device or remote Supabase Storage)
@@ -109,6 +123,10 @@ export interface DirectMessage {
   content: string;
   isRead: boolean;
   createdAt: string;
+  sharedEchoId?: string;
+  sharedEchoTitle?: string;
+  sharedEchoPreview?: string;
+  sharedEchoAuthor?: string;
 }
 
 export interface Conversation {

@@ -8,15 +8,18 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAppStore } from '../../store/useAppStore';
 import { MOTION } from '../../lib/motion';
+import { PerformanceMode, usePerformanceProfile } from '../../lib/performance';
 
 interface SpringCounterProps {
   value: number;
   style?: TextStyle;
   formatter?: (n: number) => string;
+  performanceMode?: PerformanceMode;
 }
 
-export function SpringCounter({ value, style, formatter }: SpringCounterProps) {
+export function SpringCounter({ value, style, formatter, performanceMode = 'default' }: SpringCounterProps) {
   const reduceAnimations = useAppStore(s => s.reduceAnimations);
+  const performance = usePerformanceProfile(performanceMode);
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
   const prevRef = useRef(value);
@@ -24,7 +27,7 @@ export function SpringCounter({ value, style, formatter }: SpringCounterProps) {
   useEffect(() => {
     const prev = prevRef.current;
     prevRef.current = value;
-    if (reduceAnimations || prev === value) return;
+    if (reduceAnimations || !performance.pressAnimations || prev === value) return;
 
     const going = value > prev;
     scale.value = withSequence(

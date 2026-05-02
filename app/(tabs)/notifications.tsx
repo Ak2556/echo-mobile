@@ -14,6 +14,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { Notification } from '../../types';
+import { usePerformanceProfile } from '../../lib/performance';
 const FlashList = _FlashList as React.ComponentType<any>;
 
 type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' };
@@ -56,6 +57,7 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { notifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount } = useAppStore();
   const { colors, animation, reduceAnimations } = useTheme();
+  const performance = usePerformanceProfile('hot');
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   const filtered = filter === 'unread'
@@ -65,7 +67,7 @@ export default function NotificationsScreen() {
   const listData = useMemo(() => groupNotifications(filtered), [filtered]);
   const unreadCount = unreadNotificationCount();
 
-  const useBlur = Platform.OS === 'ios' && !reduceAnimations;
+  const useBlur = performance.useBlur;
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
   // Header: title row + filter tabs
@@ -149,7 +151,7 @@ export default function NotificationsScreen() {
       >
         {useBlur && (
           <BlurView
-            intensity={70}
+            intensity={performance.maxBlurIntensity}
             tint={tint}
             style={StyleSheet.absoluteFill}
           />
@@ -189,6 +191,7 @@ export default function NotificationsScreen() {
           </View>
           <AnimatedPressable
             onPress={markAllNotificationsRead}
+            performanceMode="hot"
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -214,6 +217,7 @@ export default function NotificationsScreen() {
             <AnimatedPressable
               key={tab}
               onPress={() => setFilter(tab)}
+              performanceMode="hot"
               style={{
                 paddingHorizontal: 16,
                 paddingVertical: 7,
