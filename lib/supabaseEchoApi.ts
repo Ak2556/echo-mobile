@@ -305,6 +305,7 @@ export async function insertRemoteEcho(params: {
   response: string;
   title?: string;
   mediaUrls?: string[];
+  quotedEchoId?: string;
 }): Promise<SupabaseEchoRow> {
   const title =
     params.title?.trim() ||
@@ -317,6 +318,7 @@ export async function insertRemoteEcho(params: {
       prompt: params.prompt,
       response: params.response,
       ...(params.mediaUrls?.length ? { media_urls: params.mediaUrls } : {}),
+      ...(params.quotedEchoId ? { quoted_echo_id: params.quotedEchoId } : {}),
     })
     .select(ECHO_SELECT)
     .single();
@@ -387,7 +389,7 @@ export async function recordRemoteEchoView(echoId: string): Promise<void> {
 export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
   const { data: rows, error } = await supabase
     .from('echo_comments')
-    .select('id, echo_id, author_id, content, likes_count, created_at')
+    .select('id, echo_id, author_id, content, likes_count, created_at, parent_comment_id')
     .eq('echo_id', echoId)
     .order('created_at', { ascending: true });
 
@@ -409,6 +411,7 @@ export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
     content: string;
     likes_count: number;
     created_at: string;
+    parent_comment_id: string | null;
   }) => {
     const p = profileById.get(r.author_id);
     const username = p?.username ?? 'user';
@@ -425,18 +428,20 @@ export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
       likes: r.likes_count ?? 0,
       isLiked: false,
       replyCount: 0,
+      parentId: r.parent_comment_id ?? undefined,
       createdAt: r.created_at,
     };
   });
 }
 
-export async function insertRemoteComment(echoId: string, content: string): Promise<void> {
+export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase.from('echo_comments').insert({
     echo_id: echoId,
     author_id: uid,
     content,
+    ...(parentCommentId ? { parent_comment_id: parentCommentId } : {}),
   });
   if (error) throw error;
 }

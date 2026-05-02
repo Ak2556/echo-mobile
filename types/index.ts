@@ -84,6 +84,18 @@ export interface FeedItem {
   // If this is a repost
   repostedBy?: string;
   repostedByUsername?: string;
+  // Quote-repost: a reference to the original echo this echo is quoting.
+  quotedEchoId?: string;
+  quotedEcho?: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarColor: string;
+    avatarUrl?: string;
+    prompt: string;
+    response: string;
+    isVerified?: boolean;
+  };
 }
 
 export interface Comment {

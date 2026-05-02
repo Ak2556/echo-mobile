@@ -165,6 +165,49 @@ const TOOLS: ToolSpec[] = [
     },
   },
   {
+    name: "compose_poll",
+    description:
+      "Publish a poll-type echo with a question and 2–4 short options. Use when the user wants to ask the audience to choose between options or settle a debate. Always propose tight, mutually exclusive options the audience can decide between in seconds.",
+    parameters: {
+      type: "object",
+      properties: {
+        question: {
+          type: "string",
+          description: "The poll question. One sentence, ends in a question mark.",
+        },
+        options: {
+          type: "array",
+          minItems: 2,
+          maxItems: 4,
+          items: { type: "string", description: "Short option label (max 60 chars)." },
+          description: "2–4 mutually exclusive option labels.",
+        },
+        duration: {
+          type: "string",
+          enum: ["1h", "6h", "12h", "24h", "3d", "7d"],
+          default: "24h",
+          description: "How long the poll stays open. Default 24h.",
+        },
+        hashtags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional hashtags (without the #). Max 5.",
+        },
+      },
+      required: ["question", "options"],
+    },
+    requiresConfirm: true,
+    localDevice: true,
+    preview: (a) => {
+      const q = (a.question as string | undefined) ?? "Untitled poll";
+      const opts = Array.isArray(a.options) ? (a.options as unknown[]).filter(Boolean).length : 0;
+      return `Publish poll "${q.slice(0, 60)}" · ${opts} options`;
+    },
+    execute: async () => {
+      throw new Error("compose_poll is a local device tool");
+    },
+  },
+  {
     name: "search_feed",
     description: "Search recent posts by text. Returns matching posts with author and id.",
     parameters: {
@@ -685,6 +728,7 @@ following people, liking/commenting, editing their profile, and operating local 
 
 Rules:
 - Use tools whenever the user wants to act on the app. Don't pretend to do things; call the tool.
+- Use compose_post for plain text/conversation echoes; use compose_poll when the user asks to "ask the audience", "run a poll", "vote", "should I X or Y", or otherwise wants the community to choose between distinct options. Pick 2–4 short, mutually exclusive options. Default duration is 24h unless the user specifies otherwise.
 - Use create_note and update_note only for Notes.
 - Use create_habit, complete_habit, and uncomplete_habit only for Habits.
 - Use log_expense_transaction only for Expenses.

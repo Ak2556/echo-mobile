@@ -85,6 +85,27 @@ export interface SocialSlice {
   blockedIds: string[];
   toggleBlock: (userId: string) => void;
   isBlocked: (userId: string) => boolean;
+
+  // ── Muted Users / Threads ──
+  mutedIds: string[];
+  toggleMute: (userId: string) => void;
+  isMuted: (userId: string) => boolean;
+  mutedThreadIds: string[];
+  toggleThreadMute: (threadId: string) => void;
+  isThreadMuted: (threadId: string) => boolean;
+
+  // ── Pinned echoes (own profile) ──
+  pinnedEchoIds: string[];
+  togglePinEcho: (echoId: string) => void;
+  isPinned: (echoId: string) => boolean;
+
+  // ── Bookmark collections ──
+  bookmarkCollections: { id: string; name: string }[];
+  bookmarkCollectionByEchoId: Record<string, string>; // echoId → collectionId
+  createBookmarkCollection: (name: string) => string;
+  renameBookmarkCollection: (id: string, name: string) => void;
+  deleteBookmarkCollection: (id: string) => void;
+  setBookmarkCollection: (echoId: string, collectionId: string | null) => void;
 }
 
 export function createSocialSlice(
@@ -345,5 +366,72 @@ export function createSocialSlice(
       set({ blockedIds: ids });
     },
     isBlocked: (userId) => get().blockedIds.includes(userId),
+
+    // ── Muted Users / Threads ──
+    mutedIds: persistGet<string[]>('mutedIds', []),
+    toggleMute: (userId) => {
+      const ids = [...get().mutedIds];
+      const idx = ids.indexOf(userId);
+      if (idx >= 0) ids.splice(idx, 1); else ids.push(userId);
+      persistSet('mutedIds', ids);
+      set({ mutedIds: ids });
+    },
+    isMuted: (userId) => get().mutedIds.includes(userId),
+    mutedThreadIds: persistGet<string[]>('mutedThreadIds', []),
+    toggleThreadMute: (threadId) => {
+      const ids = [...get().mutedThreadIds];
+      const idx = ids.indexOf(threadId);
+      if (idx >= 0) ids.splice(idx, 1); else ids.push(threadId);
+      persistSet('mutedThreadIds', ids);
+      set({ mutedThreadIds: ids });
+    },
+    isThreadMuted: (threadId) => get().mutedThreadIds.includes(threadId),
+
+    // ── Bookmark collections ──
+    bookmarkCollections: persistGet<{ id: string; name: string }[]>('bookmarkCollections', []),
+    bookmarkCollectionByEchoId: persistGet<Record<string, string>>('bookmarkCollectionByEchoId', {}),
+    createBookmarkCollection: (name) => {
+      const id = `bc_${Date.now()}`;
+      const list = [...get().bookmarkCollections, { id, name: name.trim() || 'Untitled' }];
+      persistSet('bookmarkCollections', list);
+      set({ bookmarkCollections: list });
+      return id;
+    },
+    renameBookmarkCollection: (id, name) => {
+      const list = get().bookmarkCollections.map(c => c.id === id ? { ...c, name } : c);
+      persistSet('bookmarkCollections', list);
+      set({ bookmarkCollections: list });
+    },
+    deleteBookmarkCollection: (id) => {
+      const list = get().bookmarkCollections.filter(c => c.id !== id);
+      const map = { ...get().bookmarkCollectionByEchoId };
+      for (const k of Object.keys(map)) if (map[k] === id) delete map[k];
+      persistSet('bookmarkCollections', list);
+      persistSet('bookmarkCollectionByEchoId', map);
+      set({ bookmarkCollections: list, bookmarkCollectionByEchoId: map });
+    },
+    setBookmarkCollection: (echoId, collectionId) => {
+      const map = { ...get().bookmarkCollectionByEchoId };
+      if (collectionId) map[echoId] = collectionId; else delete map[echoId];
+      persistSet('bookmarkCollectionByEchoId', map);
+      set({ bookmarkCollectionByEchoId: map });
+    },
+
+    // ── Pinned echoes ──
+    pinnedEchoIds: persistGet<string[]>('pinnedEchoIds', []),
+    togglePinEcho: (echoId) => {
+      const ids = [...get().pinnedEchoIds];
+      const idx = ids.indexOf(echoId);
+      if (idx >= 0) {
+        ids.splice(idx, 1);
+      } else if (ids.length < 3) {
+        ids.unshift(echoId);
+      } else {
+        return; // 3-pin cap
+      }
+      persistSet('pinnedEchoIds', ids);
+      set({ pinnedEchoIds: ids });
+    },
+    isPinned: (echoId) => get().pinnedEchoIds.includes(echoId),
   };
 }
