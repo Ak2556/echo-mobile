@@ -4,6 +4,7 @@ import { logExpenseTransaction, formatMoney, summarizeExpenses } from './expense
 import { getTodayProductivity, searchLocalProductivity } from './localSearch';
 import { createNote, formatNoteResult, updateNote } from './notes';
 import { deleteVoiceMemo, renameVoiceMemo } from './voiceMemos';
+import { publishPollFromArgs } from './polls';
 
 export type LocalToolName =
   | 'create_note'
@@ -19,7 +20,8 @@ export type LocalToolName =
   | 'get_today_productivity'
   | 'remember_preference'
   | 'forget_preference'
-  | 'list_memory';
+  | 'list_memory'
+  | 'compose_poll';
 
 export interface LocalToolExecution {
   ok: true;
@@ -180,12 +182,26 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
         result: { items },
       };
     }
+    case 'compose_poll': {
+      const published = publishPollFromArgs(args ?? {});
+      return {
+        ok: true,
+        summary: `Published poll "${published.question.slice(0, 60)}" with ${published.options.length} options`,
+        result: {
+          id: published.id,
+          question: published.question,
+          options: published.options,
+          endsAt: published.endsAt,
+        },
+      };
+    }
     default:
       throw new Error('Unknown local tool');
   }
 }
 
 export function localToolFailureMessage(name: string, error: string): string {
+  if (name === 'compose_poll') return `I couldn't publish that poll: ${error}`;
   if (name.includes('habit')) return `I couldn't update Habits: ${error}`;
   if (name.includes('expense')) return `I couldn't update Expenses: ${error}`;
   if (name.includes('voice_memo')) return `I couldn't update Voice Memo: ${error}`;
@@ -209,6 +225,7 @@ const LOCAL_TOOL_NAMES = new Set<LocalToolName>([
   'remember_preference',
   'forget_preference',
   'list_memory',
+  'compose_poll',
 ]);
 
 function stringArg(value: unknown): string | undefined {

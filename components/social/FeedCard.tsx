@@ -1,5 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, Share, Pressable, StyleSheet } from 'react-native';
+import { ShareSheet } from '../common/ShareSheet';
+import { ActionSheet, ActionItem } from '../common/ActionSheet';
+import { QuotedEchoCard } from './QuotedEchoCard';
+import { tap } from '../../lib/haptics';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -123,6 +127,15 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const bookmarked = remote ? item.isBookmarked : isBookmarked(item.id);
   const reposted = remote ? item.isReposted : isReposted(item.id);
   const [showMenu, setShowMenu] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [repostSheetOpen, setRepostSheetOpen] = useState(false);
+  const [feedFeedbackOpen, setFeedFeedbackOpen] = useState(false);
+  const toggleMute = useAppStore(s => s.toggleMute);
+  const isMuted = useAppStore(s => s.isMuted);
+  const notInterestedIds = useAppStore(s => s.notInterestedIds);
+  const setNotInterestedIds = useAppStore(s => s.setNotInterestedIds);
+  const feedFeedback = useAppStore(s => s.feedFeedback);
+  const setFeedFeedback = useAppStore(s => s.setFeedFeedback);
 
   const bookmarkScale = useSharedValue(1);
   const repostScale = useSharedValue(1);
@@ -176,12 +189,56 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   const handleNativeShare = async () => {
     bounceIcon(shareScale);
-    try {
-      await Share.share({
-        message: `"${item.prompt}"\n\nEcho: ${item.response}\n\n\u2014 @${item.username} on Echo`,
-      });
-    } catch {}
+    setShareOpen(true);
   };
+
+  const handleQuoteRepost = useCallback(() => {
+    setRepostSheetOpen(false);
+    router.push({ pathname: '/create-post', params: { quoted: item.id } });
+  }, [router, item.id]);
+
+  const handleLongPressCard = () => {
+    tap('medium');
+    setFeedFeedbackOpen(true);
+  };
+
+  const repostActions: ActionItem[] = [
+    {
+      key: 'repost',
+      label: reposted ? 'Undo re-echo' : 'Re-echo',
+      icon: <ArrowsClockwise color={colors.text} size={20} />,
+      onPress: () => handleRepost(),
+    },
+    {
+      key: 'quote',
+      label: 'Quote echo',
+      icon: <ArrowsClockwise color={colors.text} size={20} />,
+      onPress: handleQuoteRepost,
+    },
+  ];
+
+  const feedFeedbackActions: ActionItem[] = [
+    {
+      key: 'less',
+      label: 'Show less like this',
+      onPress: () => { setFeedFeedback({ ...feedFeedback, [item.id]: 'less' }); tap('success'); showToast('Got it — less like this', '👍'); },
+    },
+    {
+      key: 'mute',
+      label: isMuted(item.userId) ? `Unmute @${item.username}` : `Mute @${item.username}`,
+      onPress: () => {
+        const wasMuted = isMuted(item.userId);
+        toggleMute(item.userId);
+        tap(wasMuted ? 'light' : 'warning');
+        showToast(wasMuted ? `Unmuted @${item.username}` : `Muted @${item.username}`, wasMuted ? '🔔' : '🔕');
+      },
+    },
+    {
+      key: 'notinterested',
+      label: 'Not interested',
+      onPress: () => { setNotInterestedIds([...notInterestedIds, item.id]); tap('success'); showToast('Hidden', '✓'); },
+    },
+  ];
 
   const handleReport = () => {
     setShowMenu(false);
@@ -252,6 +309,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
         <AnimatedPressable
           onPress={(e) => { e.stopPropagation?.(); handleRepost(); }}
+          onLongPress={(e) => { e.stopPropagation?.(); setRepostSheetOpen(true); }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
           depth="medium"
           fadeOnPress
@@ -389,7 +447,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             {item.hashtags && item.hashtags.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                 {item.hashtags.slice(0, 3).map(tag => (
-                  <Text key={tag} style={{ color: colors.accent, fontSize: fontSizes.caption }}>#{tag}</Text>
+                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/search', params: { q: `#${tag}` } as any }); }}>
+                    <Text style={{ color: colors.accent, fontSize: fontSizes.caption }}>#{tag}</Text>
+                  </Pressable>
                 ))}
               </View>
             )}
@@ -407,6 +467,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
       <GlassPanel variant="light" borderRadius={radius.card} elevated performanceMode="hot">
       <AnimatedPressable
         onPress={handleMainPress}
+        onLongPress={handleLongPressCard}
         depth="soft"
         fadeOnPress
         haptic="light"
@@ -491,6 +552,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 <Text style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6 }} numberOfLines={compactFeed ? 2 : 3}>{item.response}</Text>
               </View>
             )}
+            {item.quotedEcho && <QuotedEchoCard echo={item.quotedEcho} compact={compactFeed} />}
           </>
         )}
 
@@ -548,6 +610,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {ActionsRow}
       </AnimatedPressable>
       </GlassPanel>
+      <ShareSheet visible={shareOpen} onClose={() => setShareOpen(false)} echo={item} />
+      <ActionSheet visible={repostSheetOpen} onClose={() => setRepostSheetOpen(false)} title="Re-echo or quote?" actions={repostActions} />
+      <ActionSheet visible={feedFeedbackOpen} onClose={() => setFeedFeedbackOpen(false)} actions={feedFeedbackActions} />
     </Animated.View>
   );
 }

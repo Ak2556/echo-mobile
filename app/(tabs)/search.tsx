@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, Dimensions, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Compass, Hash, MagnifyingGlass, Sparkle, TrendUp, UserCirclePlus } from 'phosphor-react-native';
@@ -27,8 +27,32 @@ const CATEGORY_FALLBACKS = [
 export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'people' | 'echoes' | 'topics'>('all');
+  const params = useLocalSearchParams<{ q?: string }>();
+  const [query, setQuery] = useState(typeof params.q === 'string' ? params.q : '');
+  const [activeTab, setActiveTab] = useState<'all' | 'people' | 'echoes' | 'topics' | 'mini-apps'>('all');
+  const recentSearches = useAppStore(s => s.recentSearches);
+  const setRecentSearches = useAppStore(s => s.setRecentSearches);
+
+  // Hydrate query when navigated to with ?q=tag
+  useEffect(() => {
+    if (typeof params.q === 'string' && params.q !== query) {
+      setQuery(params.q);
+      setActiveTab(params.q.startsWith('#') ? 'topics' : 'all');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.q]);
+
+  // Persist recent searches on commit (when query stabilizes for a moment).
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) return;
+    const t = setTimeout(() => {
+      const next = [q, ...recentSearches.filter(r => r !== q)].slice(0, 10);
+      setRecentSearches(next);
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
   const users = useAppStore(s => s.users);
   const interests = useAppStore(s => s.interests);
   const followingIds = useAppStore(s => s.followingIds);
@@ -191,6 +215,19 @@ export default function SearchScreen() {
         <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 14, paddingBottom: 8 }}>
           <SearchBar value={query} onChangeText={setQuery} placeholder="Search people, Echoes, prompts, and topics..." />
         </View>
+        {!isSearching && recentSearches.length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 14, paddingBottom: 8 }}>
+            {recentSearches.slice(0, 5).map(r => (
+              <AnimatedPressable
+                key={r}
+                onPress={() => setQuery(r)}
+                style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
+              >
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{r}</Text>
+              </AnimatedPressable>
+            ))}
+          </View>
+        )}
         <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
       </View>
     </View>

@@ -6,8 +6,9 @@ import {
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { QuotedEchoCard } from '../components/social/QuotedEchoCard';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import {
   ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
@@ -43,12 +44,24 @@ const POLL_DURATIONS = [
 export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
+  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string }>();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { username, userId, avatarColor, avatarUrl, displayName, publishEcho, setUserId } = useAppStore();
+  const { username, userId, avatarColor, avatarUrl, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore() as any;
+  const quotedId = typeof params.quoted === 'string' ? params.quoted : undefined;
+  const quotedEcho = React.useMemo(() => {
+    if (!quotedId) return undefined;
+    const e: FeedItem | undefined = (publishedEchoes as FeedItem[] | undefined)?.find(p => p.id === quotedId);
+    if (!e) return undefined;
+    return {
+      id: e.id, username: e.username, displayName: e.displayName,
+      avatarColor: e.avatarColor, avatarUrl: e.avatarUrl,
+      prompt: e.prompt, response: e.response, isVerified: e.isVerified,
+    };
+  }, [quotedId, publishedEchoes]);
 
   const [postType, setPostType] = useState<PostType>('text');
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('');
+  const [prompt, setPrompt] = useState(typeof params.prefillTitle === 'string' ? params.prefillTitle : '');
+  const [response, setResponse] = useState(typeof params.prefillBody === 'string' ? params.prefillBody : '');
   const [caption, setCaption] = useState('');
   const [tagsRaw, setTagsRaw] = useState('');
   const [publishing, setPublishing] = useState(false);
@@ -189,6 +202,8 @@ export default function CreatePostScreen() {
         likes: 0, isLiked: false, isBookmarked: false, isReposted: false,
         repostCount: 0, commentCount: 0, viewCount: 0,
         hashtags, createdAt: new Date().toISOString(),
+        quotedEchoId: quotedId,
+        quotedEcho,
       };
 
       let echo: FeedItem;
@@ -199,7 +214,7 @@ export default function CreatePostScreen() {
         case 'text':
           echo = coerceFeedItem({ ...base, postType: 'text', prompt: prompt.trim(), response: response.trim() });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: prompt.trim(), response: response.trim() });
+            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: prompt.trim(), response: response.trim(), quotedEchoId: quotedId });
             remoteEchoId = row.id;
           }
           break;
@@ -313,6 +328,12 @@ export default function CreatePostScreen() {
           </Animated.View>
 
           {/* ── TEXT ── */}
+          {quotedEcho && (
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>QUOTING</Text>
+              <QuotedEchoCard echo={quotedEcho} />
+            </View>
+          )}
           {postType === 'text' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Prompt</Text>
