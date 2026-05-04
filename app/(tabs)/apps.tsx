@@ -264,13 +264,13 @@ export default function AppsScreen() {
           <Animated.View entering={FadeInDown.delay(40).springify()} style={{ gap: 12, marginBottom: 8 }}>
             <SectionTitle title="Support Your Echoes" caption="Local tools that feed ideas back into chat and posts" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
-              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/habits')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#10B98118', borderWidth: StyleSheet.hairlineWidth, borderColor: '#10B98144' }}>
-                <Text style={{ color: '#10B981', fontWeight: '900', fontSize: 24 }}>{dashboard.habits.percent}%</Text>
+              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/habits')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: `${colors.success}18`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.success}44` }}>
+                <Text style={{ color: colors.success, fontWeight: '900', fontSize: 24 }}>{dashboard.habits.percent}%</Text>
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Habits</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.habits.done}/{dashboard.habits.total} done</Text>
               </AnimatedPressable>
               <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/expenses')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#8B5CF618', borderWidth: StyleSheet.hairlineWidth, borderColor: '#8B5CF644' }}>
-                <Text style={{ color: dashboard.expenses.balance >= 0 ? '#10B981' : '#EF4444', fontWeight: '900', fontSize: 22 }}>${formatMoney(Math.abs(dashboard.expenses.balance))}</Text>
+                <Text style={{ color: dashboard.expenses.balance >= 0 ? colors.success : colors.danger, fontWeight: '900', fontSize: 22 }}>${formatMoney(Math.abs(dashboard.expenses.balance))}</Text>
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Weekly balance</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>${formatMoney(dashboard.expenses.expense)} spent</Text>
               </AnimatedPressable>
@@ -279,8 +279,8 @@ export default function AppsScreen() {
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Notes</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>{dashboard.notes.recent[0]?.title ?? 'No recent notes'}</Text>
               </AnimatedPressable>
-              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/voice-memo')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#EF444418', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EF444444' }}>
-                <Text style={{ color: '#EF4444', fontWeight: '900', fontSize: 24 }}>{dashboard.voiceMemos.total}</Text>
+              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/voice-memo')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: `${colors.danger}18`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.danger}44` }}>
+                <Text style={{ color: colors.danger, fontWeight: '900', fontSize: 24 }}>{dashboard.voiceMemos.total}</Text>
                 <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Voice memos</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.voiceMemos.recent[0] ? formatMemoTime(dashboard.voiceMemos.recent[0].duration) : 'No recordings'}</Text>
               </AnimatedPressable>

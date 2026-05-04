@@ -53,7 +53,22 @@
       ],
       "expo-web-browser",
       "expo-video",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#6366F1",
+          "iosDisplayInForeground": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Echo to access your photos to share images.",
+          "cameraPermission": "Allow Echo to use your camera to take photos and videos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

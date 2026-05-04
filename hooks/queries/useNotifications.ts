@@ -18,10 +18,11 @@ export function useRemoteNotifications() {
   useEffect(() => {
     if (!remote || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
 
+    let mounted = true;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     getSessionUserId().then(uid => {
-      if (!uid) return;
+      if (!mounted || !uid) return;
       channel = supabase
         .channel(`notifications:${uid}`)
         .on(
@@ -40,6 +41,7 @@ export function useRemoteNotifications() {
     });
 
     return () => {
+      mounted = false;
       if (channel) void supabase.removeChannel(channel);
     };
   }, [remote, qc]);

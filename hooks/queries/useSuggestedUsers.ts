@@ -9,7 +9,7 @@ export function useSuggestedUsers() {
   const [uid, setUid] = useState<string | null>(null);
 
   useEffect(() => {
-    if (remote) getSessionUserId().then(setUid);
+    if (remote) getSessionUserId().then(setUid).catch(() => setUid(null));
   }, [remote]);
 
   return useQuery({

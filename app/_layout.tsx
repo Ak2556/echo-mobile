@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Stack, useRouter , ErrorBoundaryProps } from 'expo-router';
 import { Linking, View, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider } from '../components/ui/Toast';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { supabase } from '../lib/supabase';
@@ -10,6 +10,7 @@ import { useCommandPalette } from '../lib/commandPalette';
 import { useAppStore } from '../store/useAppStore';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes } from '../lib/supabaseEchoApi';
+import { showToast } from '../components/ui/Toast';
 import '../global.css';
 
 const queryClient = new QueryClient({
@@ -37,7 +38,8 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 function AuthListener() {
   const router = useRouter();
-  const { setUserId, setUsername, setDisplayName, setAvatarColor, setHasSeenOnboarding } = useAppStore();
+  const queryClient = useQueryClient();
+  const { setUserId, setUsername, setDisplayName, setAvatarColor, setHasSeenOnboarding, resetSocialData, clearChatHistory } = useAppStore();
 
   // Exchange token from deep-link URL (email confirmation / OAuth callback)
   const handleDeepLink = async (url: string) => {
@@ -48,11 +50,15 @@ function AuthListener() {
       fragment.split('&').map(p => p.split('=').map(decodeURIComponent))
     );
     if (params.access_token && params.refresh_token) {
-      await supabase.auth.setSession({
+      const { error } = await supabase.auth.setSession({
         access_token: params.access_token,
         refresh_token: params.refresh_token,
       });
-      // onAuthStateChange below will handle the redirect
+      if (error) {
+        showToast('Authentication failed. Please sign in again.', '❌');
+        router.replace('/auth/login');
+      }
+      // onAuthStateChange handles the redirect on success
     }
   };
 
@@ -110,12 +116,15 @@ function AuthListener() {
         setUsername('');
         setDisplayName('');
         setHasSeenOnboarding(false);
+        resetSocialData();
+        clearChatHistory();
+        queryClient.clear();
         router.replace('/auth/login');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [router, setAvatarColor, setDisplayName, setHasSeenOnboarding, setUserId, setUsername]);
+  }, [router, setAvatarColor, setDisplayName, setHasSeenOnboarding, setUserId, setUsername, resetSocialData, clearChatHistory, queryClient]);
 
   return null;
 }

@@ -106,6 +106,9 @@ export interface SocialSlice {
   renameBookmarkCollection: (id: string, name: string) => void;
   deleteBookmarkCollection: (id: string) => void;
   setBookmarkCollection: (echoId: string, collectionId: string | null) => void;
+
+  // ── Reset (call on sign-out) ──
+  resetSocialData: () => void;
 }
 
 export function createSocialSlice(
@@ -433,5 +436,24 @@ export function createSocialSlice(
       set({ pinnedEchoIds: ids });
     },
     isPinned: (echoId) => get().pinnedEchoIds.includes(echoId),
+
+    // ── Reset ──
+    resetSocialData: () => {
+      const keys = [
+        'publishedEchoes', 'likedIds', 'bookmarkedIds', 'repostedIds',
+        'commentsByEcho', 'followingIds', 'notifications', 'conversations',
+        'messagesByConversation', 'stories', 'blockedIds', 'mutedIds',
+        'mutedThreadIds', 'pinnedEchoIds', 'bookmarkCollections',
+        'bookmarkCollectionByEchoId',
+      ];
+      keys.forEach(k => persistSet(k, Array.isArray(persistGet(k, [])) ? [] : {}));
+      set({
+        publishedEchoes: [], likedIds: [], bookmarkedIds: [], repostedIds: [],
+        commentsByEcho: {}, followingIds: [], notifications: [],
+        conversations: [], messagesByConversation: {}, stories: [],
+        blockedIds: [], mutedIds: [], mutedThreadIds: [], pinnedEchoIds: [],
+        bookmarkCollections: [], bookmarkCollectionByEchoId: {},
+      });
+    },
   };
 }

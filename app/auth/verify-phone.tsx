@@ -26,6 +26,7 @@ export default function VerifyPhoneScreen() {
   }, []);
 
   const startCountdown = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
     setCountdown(30);
     setCanResend(false);
     timerRef.current = setInterval(() => {
