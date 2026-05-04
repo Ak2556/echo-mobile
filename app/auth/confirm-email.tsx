@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,7 @@ export default function ConfirmEmailScreen() {
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [userEmail, setUserEmail] = useState('');
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     // Grab email to show in the UI
@@ -28,12 +29,23 @@ export default function ConfirmEmailScreen() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Countdown for resend cooldown
-  useEffect(() => {
-    if (countdown <= 0) return;
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown]);
+  // Countdown for resend cooldown — single interval, no per-tick timeout chain
+  const startResendCountdown = (seconds: number) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setCountdown(seconds);
+    timerRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
   const handleResend = async () => {
     if (countdown > 0) return;
@@ -54,7 +66,7 @@ export default function ConfirmEmailScreen() {
     setResending(false);
     if (error) { showToast(error.message, '❌'); return; }
     showToast('Confirmation email resent', '📧');
-    setCountdown(60);
+    startResendCountdown(60);
   };
 
   return (
