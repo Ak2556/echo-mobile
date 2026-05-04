@@ -431,6 +431,8 @@ export default function ChatScreen() {
               style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
               scaleValue={0.88}
               haptic="light"
+              accessibilityLabel="Chat sessions"
+              accessibilityRole="button"
             >
               <List color={colors.textSecondary} size={20} />
             </AnimatedPressable>
@@ -439,6 +441,8 @@ export default function ChatScreen() {
               style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
               scaleValue={0.88}
               haptic="light"
+              accessibilityLabel="New chat"
+              accessibilityRole="button"
             >
               <Plus color={colors.textSecondary} size={20} />
             </AnimatedPressable>
@@ -447,6 +451,8 @@ export default function ChatScreen() {
               style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
               scaleValue={0.88}
               haptic="light"
+              accessibilityLabel="Quick actions"
+              accessibilityRole="button"
             >
               <Question color={colors.textSecondary} size={20} />
             </AnimatedPressable>
@@ -469,6 +475,8 @@ export default function ChatScreen() {
             style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', zIndex: 1 }}
             scaleValue={0.88}
             haptic="light"
+            accessibilityLabel="Share conversation"
+            accessibilityRole="button"
           >
             <ShareNetwork color={colors.textSecondary} size={20} />
           </AnimatedPressable>
