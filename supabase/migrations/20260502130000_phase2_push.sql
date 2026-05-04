@@ -26,7 +26,10 @@ create policy "notifications_update_own" on public.notifications
   for update using (auth.uid() = user_id);
 
 -- Aggregated view for the "Alice and 11 others liked your echo" UI.
-create or replace view public.notification_groups as
+-- security_invoker ensures the view respects RLS on the underlying notifications table.
+create or replace view public.notification_groups
+  with (security_invoker = true)
+as
   select
     user_id,
     type,

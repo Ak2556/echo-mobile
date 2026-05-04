@@ -7,6 +7,8 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Comment } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { useToggleRemoteCommentLike } from '../../hooks/queries/useEchoComments';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -31,6 +33,8 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const { colors, fontSizes, showAvatars, animation } = useTheme();
   const heartScale = useSharedValue(1);
+  const remote = isSupabaseRemote();
+  const toggleRemoteLike = useToggleRemoteCommentLike(echoId);
 
   const heartAnim = useAnimatedStyle(() => ({
     transform: [{ scale: heartScale.value }],
@@ -45,7 +49,11 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
     if (hapticEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    likeComment(echoId, comment.id);
+    if (remote) {
+      toggleRemoteLike.mutate({ commentId: comment.id, like: !comment.isLiked });
+    } else {
+      likeComment(echoId, comment.id);
+    }
   };
 
   return (
@@ -76,6 +84,8 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
             className="flex-row items-center gap-1"
             scaleValue={0.85}
             haptic="none"
+            accessibilityLabel={comment.isLiked ? 'Unlike comment' : 'Like comment'}
+            accessibilityRole="button"
           >
             <Animated.View style={heartAnim}>
               <HeartStraight
@@ -89,7 +99,7 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
             </Text>
           </AnimatedPressable>
           {!indented && (
-            <AnimatedPressable className="flex-row items-center gap-1" scaleValue={0.85} haptic="light" onPress={() => onReply?.(comment)}>
+            <AnimatedPressable className="flex-row items-center gap-1" scaleValue={0.85} haptic="light" onPress={() => onReply?.(comment)} accessibilityLabel="Reply to comment" accessibilityRole="button">
               <ChatCircle color={colors.textMuted} size={14} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Reply</Text>
             </AnimatedPressable>

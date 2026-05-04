@@ -77,6 +77,8 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
       fadeOnPress
       haptic="none"
       performanceMode="hot"
+      accessibilityLabel={liked ? 'Unlike' : 'Like'}
+      accessibilityRole="button"
     >
       <Animated.View style={heartStyle}>
         <HeartStraight

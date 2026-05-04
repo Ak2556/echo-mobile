@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import {
   UserMinus, Flag, ShareNetwork,
 } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
+import { ProfileHeaderSkeleton, FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
@@ -18,6 +19,7 @@ import { useFeed } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
+import { useToggleRemoteBlock, useToggleRemoteMute } from '../../hooks/queries/useBlockMute';
 import { buildCreatorProfile } from '../../lib/echoUX';
 
 function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, onReport, onBlock, onMute, showMenu, setShowMenu, isSelf, router, creatorProfile }: any) {
@@ -76,6 +78,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
                 source={{ uri: user.avatarUrl }}
                 style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 12 }}
                 contentFit="cover"
+                cachePolicy="memory-disk"
               />
             ) : (
               <View
@@ -174,6 +177,8 @@ export default function UserProfileScreen() {
   const remote = isSupabaseRemote();
   const remoteBundle = useRemoteProfileBundle(remote ? id : undefined);
   const followMut = useToggleRemoteFollow();
+  const blockMut = useToggleRemoteBlock();
+  const muteMut = useToggleRemoteMute();
   const { colors } = useTheme();
 
   const {
@@ -185,8 +190,10 @@ export default function UserProfileScreen() {
   if (remote) {
     if (remoteBundle.isPending) {
       return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} className="items-center justify-center">
-          <ActivityIndicator color={colors.accent} size="large" />
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+          <ProfileHeaderSkeleton />
+          <FeedCardSkeleton />
+          <FeedCardSkeleton />
         </SafeAreaView>
       );
     }
@@ -224,11 +231,27 @@ export default function UserProfileScreen() {
               onFollow={() => followMut.mutate({ userId: user.id, follow: !remoteFollowing })}
               onMessage={() => { const convId = getOrCreateConversation(user); router.push(`/messages/${convId}`); }}
               onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
-              onMute={() => toggleMute(user.id)}
+              onMute={() => {
+                if (remote) {
+                  muteMut.mutate({ targetUserId: user.id, mute: !muted });
+                } else {
+                  toggleMute(user.id);
+                }
+              }}
               onBlock={() => {
                 Alert.alert(blocked ? 'Unblock User' : 'Block User',
                   blocked ? `Unblock @${user.username}?` : `Block @${user.username}?`,
-                  [{ text: 'Cancel', style: 'cancel' }, { text: blocked ? 'Unblock' : 'Block', style: 'destructive', onPress: () => toggleBlock(user.id) }]);
+                  [{ text: 'Cancel', style: 'cancel' }, {
+                    text: blocked ? 'Unblock' : 'Block',
+                    style: 'destructive',
+                    onPress: () => {
+                      if (remote) {
+                        blockMut.mutate({ targetUserId: user.id, block: !blocked });
+                      } else {
+                        toggleBlock(user.id);
+                      }
+                    },
+                  }]);
               }}
               showMenu={showMenu}
               setShowMenu={setShowMenu}

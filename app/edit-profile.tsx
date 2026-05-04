@@ -45,7 +45,7 @@ export default function EditProfileScreen() {
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.85,
+      quality: 0.72,
       base64: true,
     });
     if (result.canceled) return;

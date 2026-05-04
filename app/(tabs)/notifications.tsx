@@ -15,6 +15,12 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { Notification } from '../../types';
 import { usePerformanceProfile } from '../../lib/performance';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
+import {
+  useRemoteNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from '../../hooks/queries/useNotifications';
 const FlashList = _FlashList as React.ComponentType<any>;
 
 type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' };
@@ -67,10 +73,18 @@ function groupNotifications(notifications: Notification[]): ListItem[] {
 export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { notifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount, mutedIds } = useAppStore();
+  const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
   const { colors, animation, reduceAnimations } = useTheme();
   const performance = usePerformanceProfile('hot');
   const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'follows' | 'reposts'>('all');
+
+  const remote = isSupabaseRemote();
+  const { data: remoteNotifications, refetch, isRefetching } = useRemoteNotifications();
+  const markAllRemote = useMarkAllNotificationsRead();
+  const markOneRemote = useMarkNotificationRead();
+
+  // Resolve notification source: real DB data when remote, seed data otherwise
+  const notifications = (remote && remoteNotifications) ? remoteNotifications : storeNotifications;
 
   // Type filter: each chip narrows by Notification['type'].
   const typeFilter = (n: Notification) => {
@@ -110,7 +124,10 @@ export default function NotificationsScreen() {
   }, [notifications, mutedIds, filter]);
 
   const listData = useMemo(() => groupNotifications(groupedFlat), [groupedFlat]);
-  const unreadCount = unreadNotificationCount();
+  // For remote notifications, count unread directly from resolved data
+  const unreadCount = remote
+    ? notifications.filter(n => !n.isRead).length
+    : unreadNotificationCount();
 
   const useBlur = performance.useBlur;
   const tint = colors.isDark ? 'dark' : 'extraLight';
@@ -139,7 +156,11 @@ export default function NotificationsScreen() {
   };
 
   const handlePress = (n: Notification) => {
-    markNotificationRead(n.id);
+    if (remote) {
+      markOneRemote.mutate(n.id);
+    } else {
+      storeMarkRead(n.id);
+    }
     if (n.type === 'follow') {
       router.push(`/user/${n.fromUserId}`);
     } else if (n.targetId) {
@@ -159,7 +180,7 @@ export default function NotificationsScreen() {
       />
 
       {/* Content */}
-      {filtered.length === 0 ? (
+      {groupedFlat.length === 0 ? (
         <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1, paddingTop: headerHeight }}>
           <EmptyState
             icon={<Bell color={colors.accent} size={32} />}
@@ -184,11 +205,8 @@ export default function NotificationsScreen() {
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
           refreshControl={
             <RefreshControl
-              refreshing={false}
-              onRefresh={() => {
-                // Lightweight refresh: clears unread filter to re-evaluate.
-                setFilter(f => f);
-              }}
+              refreshing={isRefetching}
+              onRefresh={remote ? refetch : () => setFilter(f => f)}
               tintColor={colors.accent}
               progressViewOffset={headerHeight}
             />
@@ -249,7 +267,7 @@ export default function NotificationsScreen() {
             )}
           </View>
           <AnimatedPressable
-            onPress={markAllNotificationsRead}
+            onPress={remote ? () => markAllRemote.mutate() : markAllNotificationsRead}
             performanceMode="hot"
             style={{
               flexDirection: 'row',
