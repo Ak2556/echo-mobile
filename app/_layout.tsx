@@ -10,6 +10,7 @@ import { useCommandPalette } from '../lib/commandPalette';
 import { useAppStore } from '../store/useAppStore';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes } from '../lib/supabaseEchoApi';
+import { showToast } from '../components/ui/Toast';
 import '../global.css';
 
 const queryClient = new QueryClient({
@@ -49,11 +50,15 @@ function AuthListener() {
       fragment.split('&').map(p => p.split('=').map(decodeURIComponent))
     );
     if (params.access_token && params.refresh_token) {
-      await supabase.auth.setSession({
+      const { error } = await supabase.auth.setSession({
         access_token: params.access_token,
         refresh_token: params.refresh_token,
       });
-      // onAuthStateChange below will handle the redirect
+      if (error) {
+        showToast('Authentication failed. Please sign in again.', '❌');
+        router.replace('/auth/login');
+      }
+      // onAuthStateChange handles the redirect on success
     }
   };
 
