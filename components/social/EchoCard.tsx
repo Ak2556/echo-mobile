@@ -245,6 +245,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
               source={{ uri: item.avatarUrl }}
               style={{ width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: '#fff' }}
               contentFit="cover"
+              cachePolicy="memory-disk"
             />
           ) : (
             <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: item.avatarColor || '#6366F1', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}>

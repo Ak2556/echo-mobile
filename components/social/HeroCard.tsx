@@ -81,6 +81,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
             source={{ uri: item.mediaUris![0] }}
             style={[StyleSheet.absoluteFill]}
             contentFit="cover"
+            cachePolicy="memory-disk"
           />
         ) : (
           <LinearGradient

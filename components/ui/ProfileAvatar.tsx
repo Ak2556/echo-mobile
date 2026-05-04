@@ -59,6 +59,7 @@ export function ProfileAvatar({
               borderRadius: size / 2,
             }}
             contentFit="cover"
+            cachePolicy="memory-disk"
             transition={200}
           />
         ) : (

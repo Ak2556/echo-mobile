@@ -33,6 +33,7 @@ function GridCell({ item, onPress }: { item: FeedItem; onPress: () => void }) {
           source={{ uri: item.mediaUris![0] }}
           style={{ flex: 1 }}
           contentFit="cover"
+          cachePolicy="memory-disk"
         />
       ) : (
         <LinearGradient

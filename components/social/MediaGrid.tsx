@@ -31,7 +31,7 @@ export function MediaGrid({ uris }: MediaGridProps) {
       {/* ── 1 image ── */}
       {count === 1 && (
         <Pressable onPress={() => open(0)} style={{ borderRadius: radius.card, overflow: 'hidden', height: 240 }}>
-          <Image source={{ uri: uris[0] }} style={imgStyle} contentFit="cover" />
+          <Image source={{ uri: uris[0] }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
           <ZoomHint />
         </Pressable>
       )}
@@ -41,7 +41,7 @@ export function MediaGrid({ uris }: MediaGridProps) {
         <View style={{ flexDirection: 'row', gap: 3, height: 200 }}>
           {uris.map((uri, i) => (
             <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: r, overflow: 'hidden' }}>
-              <Image source={{ uri }} style={imgStyle} contentFit="cover" />
+              <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
             </Pressable>
           ))}
         </View>
@@ -51,12 +51,12 @@ export function MediaGrid({ uris }: MediaGridProps) {
       {count === 3 && (
         <View style={{ flexDirection: 'row', gap: 3, height: 220 }}>
           <Pressable onPress={() => open(0)} style={{ flex: 1.4, borderRadius: r, overflow: 'hidden' }}>
-            <Image source={{ uri: uris[0] }} style={imgStyle} contentFit="cover" />
+            <Image source={{ uri: uris[0] }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
           </Pressable>
           <View style={{ flex: 1, gap: 3 }}>
             {uris.slice(1).map((uri, i) => (
               <Pressable key={i} onPress={() => open(i + 1)} style={{ flex: 1, borderRadius: r, overflow: 'hidden' }}>
-                <Image source={{ uri }} style={imgStyle} contentFit="cover" />
+                <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
               </Pressable>
             ))}
           </View>
@@ -69,14 +69,14 @@ export function MediaGrid({ uris }: MediaGridProps) {
           <View style={{ flexDirection: 'row', gap: 3, height: 160 }}>
             {uris.slice(0, 2).map((uri, i) => (
               <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: r, overflow: 'hidden' }}>
-                <Image source={{ uri }} style={imgStyle} contentFit="cover" />
+                <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
               </Pressable>
             ))}
           </View>
           <View style={{ flexDirection: 'row', gap: 3, height: 160 }}>
             {uris.slice(2, 4).map((uri, i) => (
               <Pressable key={i} onPress={() => open(i + 2)} style={{ flex: 1, borderRadius: r, overflow: 'hidden' }}>
-                <Image source={{ uri }} style={imgStyle} contentFit="cover" />
+                <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
                 {i === 1 && count > 4 && (
                   <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>+{count - 4}</Text>
@@ -111,6 +111,7 @@ export function MediaGrid({ uris }: MediaGridProps) {
             source={{ uri: uris[currentIdx] }}
             style={{ width: SCREEN_W, height: SCREEN_H * 0.75 }}
             contentFit="contain"
+            cachePolicy="memory-disk"
           />
 
           {/* Prev / Next arrows */}

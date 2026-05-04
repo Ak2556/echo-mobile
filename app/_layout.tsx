@@ -8,6 +8,8 @@ import { CommandPalette } from '../components/ai/CommandPalette';
 import { supabase } from '../lib/supabase';
 import { useCommandPalette } from '../lib/commandPalette';
 import { useAppStore } from '../store/useAppStore';
+import { isSupabaseRemote } from '../lib/remoteConfig';
+import { fetchRemoteBlocks, fetchRemoteMutes } from '../lib/supabaseEchoApi';
 import '../global.css';
 
 const queryClient = new QueryClient({
@@ -84,6 +86,24 @@ function AuthListener() {
           }
         } else {
           router.replace('/(tabs)/discover');
+        }
+
+        // Hydrate block/mute lists from Supabase so feed filtering is cross-device
+        if (isSupabaseRemote()) {
+          try {
+            const [blockedIds, mutedIds] = await Promise.all([
+              fetchRemoteBlocks(),
+              fetchRemoteMutes(),
+            ]);
+            const store = useAppStore.getState();
+            // Merge remote lists into local store (add any missing, keep existing)
+            const currentBlocked = new Set(store.blockedIds);
+            const currentMuted = new Set(store.mutedIds);
+            blockedIds.forEach(id => { if (!currentBlocked.has(id)) store.toggleBlock(id); });
+            mutedIds.forEach(id => { if (!currentMuted.has(id)) store.toggleMute(id); });
+          } catch {
+            // Non-fatal — local MMKV state is the fallback
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         setUserId('');

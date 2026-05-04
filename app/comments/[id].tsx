@@ -92,7 +92,7 @@ export default function CommentsScreen() {
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-black">
       <View className="flex-row items-center px-4 py-3 border-b border-zinc-900">
-        <Pressable onPress={() => router.back()} className="p-1 mr-3">
+        <Pressable onPress={() => router.back()} className="p-1 mr-3" accessibilityLabel="Go back" accessibilityRole="button">
           <ArrowLeft color="#fff" size={24} />
         </Pressable>
         <Text className="text-white font-bold text-lg flex-1">Comments</Text>
@@ -168,6 +168,8 @@ export default function CommentsScreen() {
             onPress={() => { void handleSend(); }}
             disabled={!text.trim() || addRemote.isPending}
             className={`p-2.5 rounded-full ${text.trim() && !addRemote.isPending ? 'bg-blue-600' : 'bg-zinc-800'}`}
+            accessibilityLabel="Send comment"
+            accessibilityRole="button"
           >
             <PaperPlaneTilt color="#fff" size={18} />
           </Pressable>

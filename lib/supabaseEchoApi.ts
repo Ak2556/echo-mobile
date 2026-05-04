@@ -256,13 +256,22 @@ export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
   );
 }
 
-export async function fetchRemoteFeed(): Promise<FeedItem[]> {
+export async function fetchRemoteFeed(
+  options: { limit?: number; cursor?: string } = {}
+): Promise<FeedItem[]> {
   const uid = await getSessionUserId();
 
-  const { data: echoes, error: e1 } = await supabase
+  let query = supabase
     .from('public_echoes')
     .select(ECHO_SELECT)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(options.limit ?? 50);
+
+  if (options.cursor) {
+    query = query.lt('created_at', options.cursor);
+  }
+
+  const { data: echoes, error: e1 } = await query;
 
   if (e1) throw e1;
   const rows = (echoes || []) as SupabaseEchoRow[];
@@ -397,12 +406,29 @@ export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
   const list = rows || [];
   if (list.length === 0) return [];
 
+  const commentIds = list.map((r: { id: string }) => r.id);
   const authorIds = [...new Set(list.map((r: { author_id: string }) => r.author_id))];
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select(PROFILE_SELECT)
-    .in('id', authorIds);
-  const profileById = new Map((profiles as SupabaseProfileRow[] || []).map(p => [p.id, p]));
+
+  // Fetch profiles and current user's likes in parallel
+  const uid = await getSessionUserId();
+  const [profilesRes, likesRes, repliesRes] = await Promise.all([
+    supabase.from('profiles').select(PROFILE_SELECT).in('id', authorIds),
+    uid
+      ? supabase.from('comment_likes').select('comment_id').in('comment_id', commentIds).eq('user_id', uid)
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from('echo_comments')
+      .select('parent_comment_id')
+      .in('parent_comment_id', commentIds),
+  ]);
+
+  const profileById = new Map((profilesRes.data as SupabaseProfileRow[] || []).map(p => [p.id, p]));
+  const likedSet = new Set<string>((likesRes.data || []).map((r: { comment_id: string }) => r.comment_id));
+  // Count replies per parent
+  const replyCountMap = new Map<string, number>();
+  for (const r of (repliesRes.data || []) as { parent_comment_id: string }[]) {
+    replyCountMap.set(r.parent_comment_id, (replyCountMap.get(r.parent_comment_id) ?? 0) + 1);
+  }
 
   return list.map((r: {
     id: string;
@@ -426,12 +452,40 @@ export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
       isVerified: p?.is_verified ?? false,
       content: r.content,
       likes: r.likes_count ?? 0,
-      isLiked: false,
-      replyCount: 0,
+      isLiked: likedSet.has(r.id),
+      replyCount: replyCountMap.get(r.id) ?? 0,
       parentId: r.parent_comment_id ?? undefined,
       createdAt: r.created_at,
     };
   });
+}
+
+export async function setRemoteCommentLike(commentId: string, like: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (like) {
+    await supabase.from('comment_likes').insert({ comment_id: commentId, user_id: uid });
+  } else {
+    await supabase.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', uid);
+  }
+}
+
+export async function submitRemoteReport(params: {
+  targetType: 'echo' | 'user' | 'comment';
+  targetId: string;
+  reason: string;
+  details?: string;
+}): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase.from('reports').insert({
+    reporter_id: uid,
+    target_type: params.targetType,
+    target_id: params.targetId,
+    reason: params.reason,
+    details: params.details ?? null,
+  });
+  if (error) throw error;
 }
 
 export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
@@ -601,4 +655,379 @@ export async function upsertRemoteProfileOnSignIn(username: string, displayName:
     { onConflict: 'id' }
   );
   if (error) throw error;
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+export async function fetchRemoteNotifications(): Promise<import('../types').Notification[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('id, type, actor_id, target_kind, target_id, preview, read_at, created_at')
+    .eq('user_id', uid)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const actorIds = [...new Set(rows.map((r: { actor_id: string }) => r.actor_id))];
+  const { data: profiles } = await supabase.from('profiles').select(PROFILE_SELECT).in('id', actorIds);
+  const profileById = new Map((profiles as SupabaseProfileRow[] ?? []).map(p => [p.id, p]));
+
+  return rows.map((r: {
+    id: string; type: string; actor_id: string; target_kind: string | null;
+    target_id: string | null; preview: string | null; read_at: string | null; created_at: string;
+  }) => {
+    const actor = profileById.get(r.actor_id);
+    return {
+      id: r.id,
+      type: r.type as import('../types').Notification['type'],
+      fromUserId: r.actor_id,
+      fromUsername: actor?.username ?? 'user',
+      fromDisplayName: actor?.display_name || actor?.username || 'User',
+      fromAvatarColor: actor?.avatar_color || '#3B82F6',
+      fromAvatarUrl: actor?.avatar_url ?? undefined,
+      targetId: r.target_id ?? undefined,
+      targetPreview: r.preview ?? undefined,
+      isRead: r.read_at !== null,
+      createdAt: r.created_at,
+    };
+  });
+}
+
+export async function markRemoteNotificationRead(notificationId: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', notificationId)
+    .eq('user_id', uid);
+}
+
+export async function markAllRemoteNotificationsRead(): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('user_id', uid)
+    .is('read_at', null);
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+export async function searchRemoteProfiles(query: string): Promise<import('../types').User[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT)
+    .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+    .limit(20);
+  if (error) throw error;
+  return (data as SupabaseProfileRow[] ?? []).map(p => ({
+    id: p.id,
+    username: p.username,
+    displayName: p.display_name || p.username,
+    avatarColor: p.avatar_color || '#3B82F6',
+    avatarUrl: p.avatar_url ?? undefined,
+    bio: p.bio ?? '',
+    isVerified: p.is_verified,
+    followerCount: 0,
+    followingCount: 0,
+    echoCount: 0,
+    createdAt: p.created_at,
+  }));
+}
+
+export async function searchRemoteEchoes(query: string): Promise<import('../types').FeedItem[]> {
+  const q = query.trim();
+  if (!q) return [];
+  // Strip leading # for hashtag searches
+  const bare = q.startsWith('#') ? q.slice(1) : q;
+  const { data: rows, error } = await supabase
+    .from('public_echoes')
+    .select(ECHO_SELECT)
+    .or(`title.ilike.%${bare}%,prompt.ilike.%${bare}%,response.ilike.%${bare}%`)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  if (error) throw error;
+  const list = rows as SupabaseEchoRow[] ?? [];
+  if (list.length === 0) return [];
+
+  const authorIds = [...new Set(list.map(r => r.author_id))];
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT)
+    .in('id', authorIds);
+  const profileById = new Map((profiles as SupabaseProfileRow[] ?? []).map(p => [p.id, p]));
+
+  const uid = await getSessionUserId();
+  const echoIds = list.map(r => r.id);
+  const [likesRes, bookmarksRes, repostsRes] = await Promise.all([
+    uid ? supabase.from('echo_likes').select('echo_id').in('echo_id', echoIds).eq('user_id', uid) : Promise.resolve({ data: [] }),
+    uid ? supabase.from('echo_bookmarks').select('echo_id').in('echo_id', echoIds).eq('user_id', uid) : Promise.resolve({ data: [] }),
+    uid ? supabase.from('echo_reposts').select('echo_id').in('echo_id', echoIds).eq('user_id', uid) : Promise.resolve({ data: [] }),
+  ]);
+  const likedSet = new Set<string>((likesRes.data ?? []).map((r: { echo_id: string }) => r.echo_id));
+  const bookmarkedSet = new Set<string>((bookmarksRes.data ?? []).map((r: { echo_id: string }) => r.echo_id));
+  const repostedSet = new Set<string>((repostsRes.data ?? []).map((r: { echo_id: string }) => r.echo_id));
+
+  return list.map(r => mapEchoRowToFeedItem(r, profileById.get(r.author_id), likedSet, bookmarkedSet, repostedSet));
+}
+
+// ── Edit Echo ─────────────────────────────────────────────────────────────────
+
+export async function updateRemoteEcho(
+  echoId: string,
+  updates: { title?: string; prompt?: string; response?: string; media_urls?: string[] }
+): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('public_echoes')
+    .update(updates)
+    .eq('id', echoId)
+    .eq('author_id', uid);
+  if (error) throw error;
+}
+
+// ── Direct Messages ──────────────────────────────────────────
+
+export interface RemoteConversation {
+  id: string;
+  otherUserId: string;
+  otherUsername: string;
+  otherDisplayName: string;
+  otherAvatarColor: string;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  unreadCount: number;
+}
+
+export interface RemoteDirectMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string | null;
+  kind: string;
+  createdAt: string;
+  readAt: string | null;
+}
+
+/** Upsert a conversation (order user_a < user_b per DB check) and insert a message */
+export async function sendRemoteDM(recipientId: string, content: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const userA = uid < recipientId ? uid : recipientId;
+  const userB = uid < recipientId ? recipientId : uid;
+
+  // Upsert conversation
+  const { data: conv, error: convErr } = await supabase
+    .from('dm_conversations')
+    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
+    .select('id')
+    .single();
+  if (convErr) throw convErr;
+
+  // Insert message
+  const { error: msgErr } = await supabase
+    .from('direct_messages')
+    .insert({ conversation_id: conv.id, sender_id: uid, kind: 'text', text: content });
+  if (msgErr) throw msgErr;
+
+  // Update last_message_at on the conversation
+  await supabase
+    .from('dm_conversations')
+    .update({ last_message_at: new Date().toISOString() })
+    .eq('id', conv.id);
+}
+
+/** Fetch all conversations the user is a participant in */
+export async function fetchRemoteConversations(): Promise<RemoteConversation[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+
+  const { data, error } = await supabase
+    .from('dm_conversations')
+    .select('id, user_a, user_b, last_message_at')
+    .or(`user_a.eq.${uid},user_b.eq.${uid}`)
+    .order('last_message_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw error;
+  if (!data || data.length === 0) return [];
+
+  // Get other user IDs
+  const otherIds = data.map((c: any) => c.user_a === uid ? c.user_b : c.user_a);
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_color')
+    .in('id', otherIds);
+
+  const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+
+  // Fetch last message per conversation (single round-trip via lateral-style: just get most recent per conv)
+  const convIds = data.map((c: any) => c.id);
+  const { data: lastMsgs } = await supabase
+    .from('direct_messages')
+    .select('conversation_id, text, created_at')
+    .in('conversation_id', convIds)
+    .order('created_at', { ascending: false })
+    .limit(convIds.length * 1); // PostgREST doesn't support DISTINCT ON; we'll dedupe client-side
+
+  // Build a map of conversationId -> most recent message text
+  const lastMsgMap = new Map<string, string>();
+  for (const msg of (lastMsgs ?? [])) {
+    if (!lastMsgMap.has(msg.conversation_id)) {
+      lastMsgMap.set(msg.conversation_id, msg.text ?? '');
+    }
+  }
+
+  return data.map((c: any) => {
+    const otherId = c.user_a === uid ? c.user_b : c.user_a;
+    const profile = profileMap.get(otherId);
+    return {
+      id: c.id,
+      otherUserId: otherId,
+      otherUsername: profile?.username ?? 'unknown',
+      otherDisplayName: profile?.display_name ?? profile?.username ?? 'User',
+      otherAvatarColor: profile?.avatar_color ?? '#6366F1',
+      lastMessage: lastMsgMap.get(c.id) ?? null,
+      lastMessageAt: c.last_message_at ?? null,
+      unreadCount: 0,
+    };
+  });
+}
+
+/** Fetch messages for a conversation (newest last, paginated) */
+export async function fetchRemoteMessages(
+  conversationId: string,
+  limit = 40,
+  cursor?: string,
+): Promise<RemoteDirectMessage[]> {
+  let q = supabase
+    .from('direct_messages')
+    .select('id, conversation_id, sender_id, text, kind, created_at, read_at')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (cursor) {
+    q = q.lt('created_at', cursor);
+  }
+
+  const { data, error } = await q;
+  if (error) throw error;
+
+  return ((data ?? []) as any[]).reverse().map(m => ({
+    id: m.id,
+    conversationId: m.conversation_id,
+    senderId: m.sender_id,
+    content: m.text ?? null,
+    kind: m.kind,
+    createdAt: m.created_at,
+    readAt: m.read_at ?? null,
+  }));
+}
+
+// ── Suggested Users ──────────────────────────────────────────
+
+export async function fetchSuggestedUsers(): Promise<import('../types').User[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+
+  // Fetch users the current user is already following
+  const { data: followingRows } = await supabase
+    .from('follows')
+    .select('following_id')
+    .eq('follower_id', uid);
+  const alreadyFollowing = new Set((followingRows ?? []).map((r: { following_id: string }) => r.following_id));
+  alreadyFollowing.add(uid); // Exclude self
+
+  // Fetch profiles not already followed, ordered by follower count desc
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_color, bio, follower_count')
+    .not('id', 'in', `(${Array.from(alreadyFollowing).join(',')})`)
+    .order('follower_count', { ascending: false })
+    .limit(8);
+
+  if (error) throw error;
+
+  return (data ?? []).map((p: any) => ({
+    id: p.id,
+    username: p.username ?? 'unknown',
+    displayName: p.display_name ?? p.username ?? 'User',
+    avatarColor: p.avatar_color ?? '#6366F1',
+    bio: p.bio ?? '',
+    followerCount: p.follower_count ?? 0,
+    followingCount: 0,
+    isVerified: false,
+    echoCount: 0,
+  }));
+}
+
+// ── Block / Mute ─────────────────────────────────────────────
+
+export async function fetchRemoteBlocks(): Promise<string[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase
+    .from('user_blocks')
+    .select('blocked_id')
+    .eq('blocker_id', uid);
+  if (error) throw error;
+  return (data ?? []).map((r: { blocked_id: string }) => r.blocked_id);
+}
+
+export async function fetchRemoteMutes(): Promise<string[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase
+    .from('user_mutes')
+    .select('muted_id')
+    .eq('muter_id', uid);
+  if (error) throw error;
+  return (data ?? []).map((r: { muted_id: string }) => r.muted_id);
+}
+
+export async function setRemoteBlock(targetUserId: string, block: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (block) {
+    const { error } = await supabase
+      .from('user_blocks')
+      .upsert({ blocker_id: uid, blocked_id: targetUserId }, { onConflict: 'blocker_id,blocked_id' });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from('user_blocks')
+      .delete()
+      .eq('blocker_id', uid)
+      .eq('blocked_id', targetUserId);
+    if (error) throw error;
+  }
+}
+
+export async function setRemoteMute(targetUserId: string, mute: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (mute) {
+    const { error } = await supabase
+      .from('user_mutes')
+      .upsert({ muter_id: uid, muted_id: targetUserId }, { onConflict: 'muter_id,muted_id' });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from('user_mutes')
+      .delete()
+      .eq('muter_id', uid)
+      .eq('muted_id', targetUserId);
+    if (error) throw error;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Dimensions, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -13,6 +13,8 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { buildSearchBuckets, deriveTopicFeed, groupDiscovery, inferTopics } from '../../lib/echoUX';
+import { useRemoteSearch } from '../../hooks/queries/useSearch';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
 
 const { width: SW } = Dimensions.get('window');
 const CARD_WIDTH = (SW - 48) / 2;
@@ -58,9 +60,25 @@ export default function SearchScreen() {
   const followingIds = useAppStore(s => s.followingIds);
   const { colors, radius } = useTheme();
   const { data: feed = [] } = useFeed();
+  const remote = isSupabaseRemote();
+
+  // Debounced query for remote search (avoids a round-trip per keystroke)
+  const [debouncedQuery, setDebouncedQuery] = React.useState(query);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const { data: remoteResults, isFetching: remoteSearching } = useRemoteSearch(debouncedQuery);
 
   const isSearching = query.trim().length > 0;
-  const searchBuckets = useMemo(() => buildSearchBuckets(feed, users, query), [feed, query, users]);
+  // Use Supabase results when available, fall back to local cache scan
+  const searchBuckets = useMemo(
+    () => remote && remoteResults
+      ? remoteResults
+      : buildSearchBuckets(feed, users, query),
+    [feed, query, users, remote, remoteResults],
+  );
   const topics = useMemo(() => deriveTopicFeed(feed), [feed]);
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
   const suggestedUsers = users.slice(0, 4);

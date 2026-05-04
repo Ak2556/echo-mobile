@@ -99,7 +99,7 @@ export default function CreatePostScreen() {
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
       selectionLimit: 4 - imageUris.length,
-      quality: 0.88,
+      quality: 0.72,
     });
     if (!result.canceled) {
       setImages(prev => [...prev, ...result.assets.map(asset => ({
@@ -119,7 +119,7 @@ export default function CreatePostScreen() {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      quality: 0.88,
+      quality: 0.72,
     });
     if (!result.canceled) {
       const asset = result.assets[0];
@@ -141,7 +141,7 @@ export default function CreatePostScreen() {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['videos'],
-      quality: 1,
+      quality: 0.6,
     });
     if (!result.canceled) {
       const asset = result.assets[0];
@@ -161,7 +161,7 @@ export default function CreatePostScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['videos'],
-      videoQuality: ImagePicker.UIImagePickerControllerQualityType.High,
+      videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium,
     });
     if (!result.canceled) {
       const asset = result.assets[0];
@@ -315,6 +315,7 @@ export default function CreatePostScreen() {
                 source={{ uri: avatarUrl }}
                 style={{ width: 40, height: 40, borderRadius: 20, marginRight: 10 }}
                 contentFit="cover"
+                cachePolicy="memory-disk"
               />
             ) : (
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
