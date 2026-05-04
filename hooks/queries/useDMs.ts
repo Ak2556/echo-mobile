@@ -20,9 +20,10 @@ export function useRemoteConversations() {
   useEffect(() => {
     if (!remote || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
 
+    let mounted = true;
     let channel: ReturnType<typeof supabase.channel> | null = null;
     getSessionUserId().then(uid => {
-      if (!uid) return;
+      if (!mounted || !uid) return;
       channel = supabase
         .channel(`dm_conversations:${uid}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, () => {
@@ -31,7 +32,10 @@ export function useRemoteConversations() {
         .subscribe();
     });
 
-    return () => { if (channel) void supabase.removeChannel(channel); };
+    return () => {
+      mounted = false;
+      if (channel) void supabase.removeChannel(channel);
+    };
   }, [remote, qc]);
 
   return useQuery<RemoteConversation[]>({
