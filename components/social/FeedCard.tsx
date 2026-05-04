@@ -130,6 +130,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const [repostSheetOpen, setRepostSheetOpen] = useState(false);
   const [feedFeedbackOpen, setFeedFeedbackOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const toggleMute = useAppStore(s => s.toggleMute);
   const isMuted = useAppStore(s => s.isMuted);
   const notInterestedIds = useAppStore(s => s.notInterestedIds);
@@ -396,12 +397,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                   haptic="light"
                   performanceMode="hot"
                 >
-                  {item.avatarUrl ? (
+                  {item.avatarUrl && !avatarError ? (
                     <Image
                       source={{ uri: item.avatarUrl }}
                       style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
                       contentFit="cover"
                       cachePolicy="memory-disk"
+                      onError={() => setAvatarError(true)}
                     />
                   ) : (
                     <View
