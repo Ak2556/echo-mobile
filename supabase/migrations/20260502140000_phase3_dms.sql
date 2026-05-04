@@ -1,5 +1,7 @@
 -- Phase 3 — direct messages with media, voice, and link previews
 
+create extension if not exists pg_trgm;
+
 create table if not exists public.dm_conversations (
   id uuid primary key default gen_random_uuid(),
   user_a uuid not null references auth.users (id) on delete cascade,
@@ -33,7 +35,6 @@ create table if not exists public.direct_messages (
 );
 create index if not exists idx_dm_conv_created on public.direct_messages (conversation_id, created_at);
 create index if not exists idx_dm_text_trgm on public.direct_messages using gin (text gin_trgm_ops);
-create extension if not exists pg_trgm;
 
 alter table public.direct_messages enable row level security;
 drop policy if exists "dm_select_participants" on public.direct_messages;
