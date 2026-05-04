@@ -1,0 +1,46 @@
+const { getDefaultConfig } = require("expo/metro-config");
+const { withNativeWind } = require("nativewind/metro");
+const path = require("path");
+
+const config = getDefaultConfig(__dirname);
+
+// phosphor-react-native v3 ships TypeScript source with circular `import { type }` statements.
+// Metro's Babel transform doesn't fully erase inline type-only imports, causing circular runtime
+// requires that make icon exports resolve as `undefined`. Force Metro to use the pre-compiled
+// CommonJS output which has no circular deps.
+const originalResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === "phosphor-react-native") {
+    return {
+      filePath: path.resolve(
+        __dirname,
+        "node_modules/phosphor-react-native/lib/commonjs/index.js"
+      ),
+      type: "sourceFile",
+    };
+  }
+  // expo-video requires a native module not available in Expo Go.
+  // Redirect every import to a pure-JS shim so the app doesn't crash.
+  if (moduleName === "expo-video") {
+    return {
+      filePath: path.resolve(__dirname, "lib/expoVideoShim.js"),
+      type: "sourceFile",
+    };
+  }
+  // 'ws' is a Node-only WebSocket library — it pulls in 'stream', 'http', etc.
+  // None of those exist in React Native. Redirect to an empty shim on native so
+  // the bundle doesn't crash. On web/Node (SSR pass), let the real 'ws' through
+  // so Supabase Realtime can use it as its transport in the SSR renderer.
+  if (moduleName === "ws" && (platform === "ios" || platform === "android")) {
+    return {
+      filePath: path.resolve(__dirname, "lib/emptyShim.js"),
+      type: "sourceFile",
+    };
+  }
+  if (originalResolveRequest) {
+    return originalResolveRequest(context, moduleName, platform);
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
+module.exports = withNativeWind(config, { input: "./global.css" });
