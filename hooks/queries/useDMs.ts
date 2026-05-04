@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useInfiniteQuery, useQueryClient, InfiniteData } from '@tanstack/react-query';
 import {
   fetchRemoteConversations,
   fetchRemoteMessages,
@@ -94,6 +94,33 @@ export function useSendRemoteDM(conversationId: string | undefined, recipientId:
     mutationFn: ({ content }: { content: string }) => {
       if (!recipientId) throw new Error('No recipient');
       return sendRemoteDM(recipientId, content);
+    },
+    onMutate: async ({ content }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId] });
+      const snapshot = qc.getQueryData(['messages', conversationId]);
+
+      const uid = await getSessionUserId();
+      const optimistic: RemoteDirectMessage = {
+        id: `pending-${Date.now()}`,
+        conversationId: conversationId ?? '',
+        senderId: uid ?? 'me',
+        content,
+        kind: 'text',
+        createdAt: new Date().toISOString(),
+        readAt: null,
+      };
+      qc.setQueryData<InfiniteData<RemoteDirectMessage[]>>(
+        ['messages', conversationId],
+        old => old
+          ? { ...old, pages: old.pages.map((p, i) => i === 0 ? [optimistic, ...p] : p) }
+          : old,
+      );
+      return { snapshot };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.snapshot !== undefined) {
+        qc.setQueryData(['messages', conversationId], ctx.snapshot);
+      }
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['messages', conversationId] });
