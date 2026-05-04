@@ -6,6 +6,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, Warning } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
+import { submitRemoteReport } from '../lib/supabaseEchoApi';
+import { isSupabaseRemote } from '../lib/remoteConfig';
 
 const REASONS = [
   'Spam or misleading',
@@ -25,13 +27,30 @@ export default function ReportScreen() {
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [details, setDetails] = useState('');
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     if (!selectedReason) {
       Alert.alert('Select a reason', 'Please select a reason for your report.');
       return;
     }
-    showToast('Report submitted. Thank you!', '\u{2705}');
-    router.back();
+    setSubmitting(true);
+    try {
+      if (isSupabaseRemote() && targetId && targetType) {
+        await submitRemoteReport({
+          targetType: targetType as 'echo' | 'user' | 'comment',
+          targetId,
+          reason: selectedReason,
+          details: details.trim() || undefined,
+        });
+      }
+      showToast('Report submitted. Thank you!', '✅');
+      router.back();
+    } catch (e) {
+      Alert.alert('Could not submit', (e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -92,12 +111,13 @@ export default function ReportScreen() {
 
         <Animated.View entering={FadeInDown.delay(400).springify()}>
           <AnimatedPressable
-            onPress={handleSubmit}
-            className={`mt-6 py-4 rounded-xl items-center ${selectedReason ? 'bg-red-600' : 'bg-zinc-800'}`}
+            onPress={() => { void handleSubmit(); }}
+            disabled={submitting}
+            className={`mt-6 py-4 rounded-xl items-center ${selectedReason && !submitting ? 'bg-red-600' : 'bg-zinc-800'}`}
             scaleValue={0.97}
             haptic="heavy"
           >
-            <Text className="text-white font-bold text-base">Submit Report</Text>
+            <Text className="text-white font-bold text-base">{submitting ? 'Submitting…' : 'Submit Report'}</Text>
           </AnimatedPressable>
         </Animated.View>
       </View>

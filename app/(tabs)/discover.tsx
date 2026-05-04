@@ -19,7 +19,7 @@ import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { HeroCard, HERO_CARD_WIDTH } from '../../components/social/HeroCard';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
-import { useFeed } from '../../hooks/queries/useFeed';
+import { useInfiniteFeed } from '../../hooks/queries/useFeed';
 import { FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
@@ -75,15 +75,33 @@ function SectionHeader({ label, sub }: { label: string; sub?: string }) {
 
 import { useRealtimeNewEchoes } from '../../lib/realtime';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
+import { UserRow } from '../../components/social/UserRow';
+import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
+import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
 
 export default function DiscoverScreen() {
   const router = useRouter();
-  const { data: feed, isLoading, refetch, isRefetching, isError, error } = useFeed();
+  const {
+    data: feedData,
+    isLoading,
+    refetch,
+    isRefetching,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteFeed();
+  const feed = feedData?.pages.flat() ?? [];
   const realtime = useRealtimeNewEchoes();
   const { colors, animation, reduceAnimations } = useTheme();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, interests, followingIds } = useAppStore();
   const insets = useSafeAreaInsets();
+  const remote = isSupabaseRemote();
+  const { data: suggestedUsers = [] } = useSuggestedUsers();
+  const followMut = useToggleRemoteFollow();
 
   const scrollY = useSharedValue(0);
   const heroScrollX = useSharedValue(0);
@@ -258,6 +276,8 @@ export default function DiscoverScreen() {
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
           onScroll={handleScroll}
           scrollEventThrottle={16}
+          onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+          onEndReachedThreshold={0.4}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -268,24 +288,52 @@ export default function DiscoverScreen() {
           }
           ListHeaderComponent={ListHeader}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 32, paddingHorizontal: 24 }}>
-              <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>
-                {feedScope === 'following' ? 'Your following feed is quiet' : 'Nothing to show yet'}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19, maxWidth: 320 }}>
-                {feedScope === 'following'
-                  ? 'Follow a few people to fill this up. Or switch to For You above.'
-                  : 'Be the first to publish an echo. Open Chat, ask Echo something real, then share the answer.'}
-              </Text>
-              <Pressable
-                onPress={() => router.push(feedScope === 'following' ? '/(tabs)/search' : '/(tabs)/chat')}
-                style={{ marginTop: 14, backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9 }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
-                  {feedScope === 'following' ? 'Find people to follow' : 'Open chat'}
+            feedScope === 'following' ? (
+              <View style={{ paddingTop: 24, paddingHorizontal: 16 }}>
+                <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', marginBottom: 4 }}>
+                  Your following feed is quiet
                 </Text>
-              </Pressable>
-            </View>
+                <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginBottom: 20 }}>
+                  Follow some people to fill this up.
+                </Text>
+                {remote && suggestedUsers.length > 0 ? (
+                  <>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                      Suggested people
+                    </Text>
+                    {suggestedUsers.map(user => (
+                      <UserRow
+                        key={user.id}
+                        user={user}
+                        onPress={() => router.push(`/user/${user.id}`)}
+                        showFollowButton
+                        onFollowPress={() => followMut.mutate({ userId: user.id, follow: true })}
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <Pressable
+                    onPress={() => router.push('/(tabs)/search')}
+                    style={{ backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, alignSelf: 'flex-start' }}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Find people to follow</Text>
+                  </Pressable>
+                )}
+              </View>
+            ) : (
+              <View style={{ alignItems: 'center', paddingTop: 32, paddingHorizontal: 24 }}>
+                <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>Nothing to show yet</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19, maxWidth: 320 }}>
+                  Be the first to publish an echo. Open Chat, ask Echo something real, then share the answer.
+                </Text>
+                <Pressable
+                  onPress={() => router.push('/(tabs)/chat')}
+                  style={{ marginTop: 14, backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9 }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Open chat</Text>
+                </Pressable>
+              </View>
+            )
           }
         />
         </>

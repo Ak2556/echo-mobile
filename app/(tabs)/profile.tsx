@@ -40,13 +40,9 @@ export default function ProfileScreen() {
     publishedEchoes,
     notificationsEnabled,
     setNotificationsEnabled,
-    getFollowers,
-    getFollowing,
   } = useAppStore();
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const displayLabel = displayName || username || 'User';
-  const followers = getFollowers();
-  const following = getFollowing();
   const { data: remoteBundle } = useRemoteProfileBundle(userId);
   const createdAt = remoteBundle?.user?.createdAt ?? new Date().toISOString();
   const creatorProfile = useMemo(
@@ -82,10 +78,10 @@ export default function ProfileScreen() {
           <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-around' }}>
             <Stat value={publishedEchoes.length} label="Echoes" />
             <Pressable onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })}>
-              <Stat value={followers.length} label="Followers" />
+              <Stat value={remoteBundle?.user?.followerCount ?? 0} label="Followers" />
             </Pressable>
             <Pressable onPress={() => router.push({ pathname: '/followers', params: { userId, tab: 'following' } })}>
-              <Stat value={following.length} label="Following" />
+              <Stat value={remoteBundle?.user?.followingCount ?? 0} label="Following" />
             </Pressable>
           </View>
         </View>

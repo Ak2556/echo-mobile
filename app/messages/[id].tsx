@@ -9,6 +9,8 @@ import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { useRemoteMessages, useSendRemoteDM } from '../../hooks/queries/useDMs';
 
 function EchoShareCard({ title, preview, author }: { title: string; preview: string; author?: string }) {
   const { colors, radius } = useTheme();
@@ -76,8 +78,26 @@ export default function DMScreen() {
   const [quickAction, setQuickAction] = useState<'followup' | 'summary' | 'draft' | null>(null);
   const listRef = useRef<FlatList>(null);
 
+  const remote = isSupabaseRemote();
   const conversation = conversations.find(c => c.id === id);
-  const messages = id ? getDMs(id) : [];
+
+  // Remote message stream — only active when remote flag is on
+  const { data: remoteMessagePages } = useRemoteMessages(remote ? id : undefined);
+  const remoteMessages = remoteMessagePages?.pages.flat() ?? [];
+  const sendRemote = useSendRemoteDM(id, conversation?.userId);
+
+  // Resolve messages: remote DB or local Zustand
+  const localMessages = id ? getDMs(id) : [];
+  const messages = remote && remoteMessages.length > 0
+    ? remoteMessages.map(m => ({
+        id: m.id,
+        senderId: m.senderId,
+        content: m.content ?? '',
+        createdAt: m.createdAt,
+        isRead: !!m.readAt,
+      }))
+    : localMessages;
+
   const online = conversation ? isUserOnline(conversation.userId) : false;
   const quickStarter = useMemo(() => {
     if (quickAction === 'followup') return 'Curious what part of this stood out to you most?';
@@ -121,9 +141,14 @@ export default function DMScreen() {
     if (hapticEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    sendDM(id, text.trim());
+    const content = text.trim();
     setText('');
     setQuickAction(null);
+    if (remote) {
+      sendRemote.mutate({ content });
+    } else {
+      sendDM(id, content);
+    }
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   };
 

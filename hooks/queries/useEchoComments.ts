@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
-import { fetchRemoteComments, getSessionUserId, insertRemoteComment } from '../../lib/supabaseEchoApi';
+import { fetchRemoteComments, getSessionUserId, insertRemoteComment, setRemoteCommentLike } from '../../lib/supabaseEchoApi';
 import { Comment } from '../../types';
 import { appendCommentCache } from '../../lib/queryCache';
 
@@ -52,6 +52,36 @@ export function useAddRemoteComment(echoId: string | undefined) {
         qc.invalidateQueries({ queryKey: ['comments', echoId] });
         qc.invalidateQueries({ queryKey: ['feed'] });
       }
+    },
+  });
+}
+
+export function useToggleRemoteCommentLike(echoId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, like }: { commentId: string; like: boolean }) => {
+      await setRemoteCommentLike(commentId, like);
+    },
+    onMutate: async ({ commentId, like }) => {
+      if (!echoId) return;
+      await qc.cancelQueries({ queryKey: ['comments', echoId] });
+      const previous = qc.getQueryData<Comment[]>(['comments', echoId]);
+      qc.setQueryData<Comment[]>(['comments', echoId], old =>
+        (old ?? []).map(c =>
+          c.id === commentId
+            ? { ...c, isLiked: like, likes: like ? c.likes + 1 : Math.max(0, c.likes - 1) }
+            : c,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (echoId && ctx?.previous) {
+        qc.setQueryData(['comments', echoId], ctx.previous);
+      }
+    },
+    onSettled: () => {
+      if (echoId) qc.invalidateQueries({ queryKey: ['comments', echoId] });
     },
   });
 }

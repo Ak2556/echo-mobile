@@ -114,3 +114,27 @@ export function UserRowSkeleton() {
     </View>
   );
 }
+
+export function ProfileHeaderSkeleton() {
+  return (
+    <View style={{ paddingHorizontal: 16, paddingTop: 20 }}>
+      {/* Avatar + follow button row */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 14 }}>
+        <Skeleton width={80} height={80} borderRadius={40} />
+        <Skeleton width={100} height={36} borderRadius={18} />
+      </View>
+      {/* Display name + username */}
+      <Skeleton width={160} height={18} borderRadius={9} style={{ marginBottom: 8 }} />
+      <Skeleton width={100} height={13} borderRadius={6} style={{ marginBottom: 12 }} />
+      {/* Bio lines */}
+      <Skeleton width="90%" height={13} borderRadius={6} style={{ marginBottom: 6 }} />
+      <Skeleton width="65%" height={13} borderRadius={6} style={{ marginBottom: 16 }} />
+      {/* Stats row */}
+      <View style={{ flexDirection: 'row', gap: 24, marginBottom: 20 }}>
+        <Skeleton width={60} height={40} borderRadius={8} />
+        <Skeleton width={60} height={40} borderRadius={8} />
+        <Skeleton width={60} height={40} borderRadius={8} />
+      </View>
+    </View>
+  );
+}

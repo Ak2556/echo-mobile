@@ -104,6 +104,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   navigation.emit({ type: 'tabLongPress', target: route.key });
                 }}
                 accessibilityRole="button"
+                accessibilityLabel={descriptors[route.key]?.options.title ?? route.name}
                 accessibilityState={{ selected: isFocused }}
                 style={{
                   flex: 1,
