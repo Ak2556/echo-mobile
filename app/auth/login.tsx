@@ -105,14 +105,16 @@ export default function LoginScreen() {
     setGoogleLoading(true);
     const { error } = await signInWithGoogle();
     setGoogleLoading(false);
-    if (error) showToast(error, '❌');
+    if (error) { showToast(error, '❌'); return; }
+    router.replace('/(tabs)/discover');
   };
 
   const handleApple = async () => {
     setAppleLoading(true);
     const { error } = await signInWithApple();
     setAppleLoading(false);
-    if (error) showToast(error, '❌');
+    if (error) { showToast(error, '❌'); return; }
+    router.replace('/(tabs)/discover');
   };
 
   const inputRowStyle = (focused: boolean): object => ({

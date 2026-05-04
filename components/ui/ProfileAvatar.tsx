@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { SealCheck } from 'phosphor-react-native';
@@ -22,6 +22,7 @@ export function ProfileAvatar({
   isVerified = false,
 }: ProfileAvatarProps) {
   const { colors } = useTheme();
+  const [imgError, setImgError] = useState(false);
   const glowSize = size + 20;
   const ringSize = size + 8;
   const initial = (displayName || '?').charAt(0).toUpperCase();
@@ -50,7 +51,7 @@ export function ProfileAvatar({
           justifyContent: 'center',
         }}
       >
-        {avatarUrl ? (
+        {avatarUrl && !imgError ? (
           <Image
             source={{ uri: avatarUrl }}
             style={{
@@ -61,6 +62,7 @@ export function ProfileAvatar({
             contentFit="cover"
             cachePolicy="memory-disk"
             transition={200}
+            onError={() => setImgError(true)}
           />
         ) : (
           <View
