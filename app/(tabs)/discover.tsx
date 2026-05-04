@@ -168,7 +168,7 @@ export default function DiscoverScreen() {
                 paddingHorizontal: 14,
                 paddingVertical: 7,
                 borderRadius: 99,
-                backgroundColor: active ? '#6366F1' : 'rgba(255,255,255,0.06)',
+                backgroundColor: active ? colors.accent : 'rgba(255,255,255,0.06)',
               }}
             >
               <Text style={{ color: active ? '#fff' : '#aaa', fontSize: 13, fontWeight: '600' }}>
