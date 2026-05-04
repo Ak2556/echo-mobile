@@ -9,18 +9,21 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+// In-memory fallback for private browsing or environments where
+// localStorage is disabled/throws (e.g. Safari private mode).
+const memStore: Record<string, string> = {};
 const webStorage = {
   getItem: (key: string) => {
-    if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem(key);
+    if (typeof window === 'undefined') return memStore[key] ?? null;
+    try { return window.localStorage.getItem(key); } catch { return memStore[key] ?? null; }
   },
   setItem: (key: string, value: string) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(key, value);
+    if (typeof window === 'undefined') { memStore[key] = value; return; }
+    try { window.localStorage.setItem(key, value); } catch { memStore[key] = value; }
   },
   removeItem: (key: string) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.removeItem(key);
+    if (typeof window === 'undefined') { delete memStore[key]; return; }
+    try { window.localStorage.removeItem(key); } catch { delete memStore[key]; }
   },
 };
 
