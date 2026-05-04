@@ -302,6 +302,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           fadeOnPress
           haptic="light"
           performanceMode="hot"
+          accessibilityLabel={`Comment. ${item.commentCount || 0} comments`}
+          accessibilityRole="button"
         >
           <ChatCircle color={colors.textMuted} size={19} />
           <SpringCounter value={item.commentCount || 0} performanceMode="hot" style={{ color: colors.textMuted, fontSize: fontSizes.caption }} />
@@ -315,6 +317,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           fadeOnPress
           haptic="medium"
           performanceMode="hot"
+          accessibilityLabel={reposted ? 'Undo re-echo' : 'Re-echo'}
+          accessibilityRole="button"
         >
           <Animated.View style={repostAnim}>
             <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
@@ -322,13 +326,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }} />
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot">
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
           <Animated.View style={bookmarkAnim}>
             <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
           </Animated.View>
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light" performanceMode="hot">
+        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light" performanceMode="hot" accessibilityLabel="Share" accessibilityRole="button">
           <Animated.View style={shareAnim}>
             <ShareNetwork color={colors.textMuted} size={19} />
           </Animated.View>
@@ -397,6 +401,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                       source={{ uri: item.avatarUrl }}
                       style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
                       contentFit="cover"
+                      cachePolicy="memory-disk"
                     />
                   ) : (
                     <View
@@ -429,6 +434,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 fadeOnPress
                 haptic="light"
                 performanceMode="hot"
+                accessibilityLabel="More options"
+                accessibilityRole="button"
               >
                 <DotsThreeOutline color={colors.textMuted} size={20} />
               </AnimatedPressable>
@@ -499,6 +506,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                   source={{ uri: item.avatarUrl }}
                   style={{ width: compactFeed ? 28 : 36, height: compactFeed ? 28 : 36, borderRadius: compactFeed ? 14 : 18, marginRight: 12 }}
                   contentFit="cover"
+                  cachePolicy="memory-disk"
                 />
               ) : (
                 <View

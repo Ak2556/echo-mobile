@@ -17,6 +17,8 @@ import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { PollOption } from '../types';
+import { isSupabaseRemote } from '../lib/remoteConfig';
+import { updateRemoteEcho } from '../lib/supabaseEchoApi';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
@@ -80,7 +82,7 @@ export default function EditPostScreen() {
   const updatePollOption = (idx: number, t: string) => setPollOptions(p => p.map((o, i) => i === idx ? t : o));
   const removePollOption = (idx: number) => { if (pollOptions.length > 2) setPollOptions(p => p.filter((_, i) => i !== idx)); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave || !echo) return;
     const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
     const updates: Partial<typeof echo> = { postType, hashtags };
@@ -107,13 +109,27 @@ export default function EditPostScreen() {
     }
 
     setSaving(true);
-    setTimeout(() => {
-      updateEcho(echo.id, updates);
-      qc.invalidateQueries({ queryKey: ['feed'] });
-      showToast('Echo updated!', '✅');
-      setSaving(false);
-      router.back();
-    }, 250);
+    // Optimistic local update immediately
+    updateEcho(echo.id, updates);
+
+    if (isSupabaseRemote()) {
+      try {
+        await updateRemoteEcho(echo.id, {
+          title: (updates as any).editorialTitle,
+          prompt: updates.prompt,
+          response: updates.response,
+          media_urls: updates.mediaUris,
+        });
+      } catch (err) {
+        Alert.alert('Save failed', 'Could not update echo on the server. Your changes are saved locally.');
+      }
+    }
+
+    qc.invalidateQueries({ queryKey: ['feed'] });
+    qc.invalidateQueries({ queryKey: ['profile'] });
+    showToast('Echo updated!', '✅');
+    setSaving(false);
+    router.back();
   };
 
   if (!echo) return null;
@@ -197,7 +213,7 @@ export default function EditPostScreen() {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                   {validImages.map((uri, idx) => (
                     <View key={idx} style={{ width: validImages.length === 1 ? '100%' : '48%', aspectRatio: validImages.length === 1 ? 16 / 9 : 1, borderRadius: radius.card, overflow: 'hidden', backgroundColor: colors.surfaceHover }}>
-                      <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                      <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" cachePolicy="memory-disk" />
                     </View>
                   ))}
                 </View>

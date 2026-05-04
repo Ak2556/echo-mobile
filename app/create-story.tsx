@@ -10,6 +10,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { Story } from '../types';
 import { playSoundEffect } from '../lib/sound';
+import { isSupabaseRemote } from '../lib/remoteConfig';
 
 const STORY_DURATION_HOURS = 24;
 
@@ -17,6 +18,33 @@ export default function CreateStoryScreen() {
   const router = useRouter();
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, displayName, addStory } = useAppStore();
+
+  if (isSupabaseRemote()) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
+            <ArrowLeft color={colors.text} size={24} />
+          </AnimatedPressable>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Create Story</Text>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+          <Broadcast color={colors.textMuted} size={48} />
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>Stories coming soon</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 21 }}>
+            We're working on server-backed stories. Check back in a future update.
+          </Text>
+          <AnimatedPressable
+            onPress={() => router.back()}
+            style={{ marginTop: 24, backgroundColor: colors.accent, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
+            haptic="medium"
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Go back</Text>
+          </AnimatedPressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');

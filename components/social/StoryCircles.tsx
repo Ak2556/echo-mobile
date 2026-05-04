@@ -6,12 +6,14 @@ import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
 
 export function StoryCircles() {
   const router = useRouter();
   const { getActiveStories, username, avatarColor } = useAppStore();
   const { colors, animation, isUserOnline } = useTheme();
   const stories = getActiveStories();
+  const remote = isSupabaseRemote();
 
   const userStories = stories.reduce((acc, story) => {
     if (!acc[story.userId]) {
@@ -30,7 +32,8 @@ export function StoryCircles() {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
     >
-      {/* Your story */}
+      {/* Your story — hide the create button when remote (stories not yet server-backed) */}
+      {!remote && (
       <Animated.View entering={animation(FadeInRight.delay(0).springify())}>
         <AnimatedPressable
           onPress={() => router.push('/create-story' as any)}
@@ -81,6 +84,7 @@ export function StoryCircles() {
           </Text>
         </AnimatedPressable>
       </Animated.View>
+      )}
 
       {/* Other users' stories */}
       {storyUsers.map((story: any, idx: number) => {

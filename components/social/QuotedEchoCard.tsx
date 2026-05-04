@@ -29,7 +29,7 @@ export function QuotedEchoCard({ echo, compact }: QuotedEchoCardProps) {
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         {echo.avatarUrl ? (
-          <Image source={{ uri: echo.avatarUrl }} style={{ width: 22, height: 22, borderRadius: 11 }} contentFit="cover" />
+          <Image source={{ uri: echo.avatarUrl }} style={{ width: 22, height: 22, borderRadius: 11 }} contentFit="cover" cachePolicy="memory-disk" />
         ) : (
           <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: echo.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>

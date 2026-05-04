@@ -10,6 +10,9 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { Conversation } from '../../types';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { useRemoteConversations } from '../../hooks/queries/useDMs';
+import { RemoteConversation } from '../../lib/supabaseEchoApi';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -86,8 +89,26 @@ function ConversationCard({ conversation, index, onPress }: {
 
 export default function MessagesListScreen() {
   const router = useRouter();
-  const { conversations } = useAppStore();
+  const { conversations: localConversations } = useAppStore();
   const { colors, radius } = useTheme();
+  const remote = isSupabaseRemote();
+  const { data: remoteConvs = [] } = useRemoteConversations();
+
+  // Resolve conversations: map remote shape to the ConversationCard-compatible format
+  const conversations: Conversation[] = remote && remoteConvs.length > 0
+    ? remoteConvs.map((rc: RemoteConversation) => ({
+        id: rc.id,
+        userId: rc.otherUserId,
+        username: rc.otherUsername,
+        displayName: rc.otherDisplayName,
+        avatarColor: rc.otherAvatarColor,
+        isVerified: false,
+        lastMessage: rc.lastMessage ?? '',
+        lastMessageAt: rc.lastMessageAt ?? new Date().toISOString(),
+        unreadCount: rc.unreadCount,
+        messages: [],
+      }))
+    : localConversations;
 
   const sorted = [...conversations].sort(
     (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()

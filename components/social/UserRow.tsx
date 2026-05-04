@@ -12,9 +12,11 @@ interface UserRowProps {
   user: User;
   onPress?: () => void;
   showFollowButton?: boolean;
+  /** Override the default follow handler (e.g. to use a remote mutation) */
+  onFollowPress?: () => void;
 }
 
-export function UserRow({ user, onPress, showFollowButton = false }: UserRowProps) {
+export function UserRow({ user, onPress, showFollowButton = false, onFollowPress }: UserRowProps) {
   const { isFollowing, toggleFollow } = useAppStore();
   const { colors, fontSizes, showAvatars, reduceAnimations } = useTheme();
   const following = isFollowing(user.id);
@@ -32,8 +34,12 @@ export function UserRow({ user, onPress, showFollowButton = false }: UserRowProp
         withSpring(1, { damping: 12, stiffness: 300 })
       );
     }
-    toggleFollow(user.id);
-    showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? '\u{1F91D}' : '');
+    if (onFollowPress) {
+      onFollowPress();
+    } else {
+      toggleFollow(user.id);
+      showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? '\u{1F91D}' : '');
+    }
   };
 
   return (
