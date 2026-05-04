@@ -1,8 +1,8 @@
-// @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as _FlashList } from '@shopify/flash-list';
+const FlashList = _FlashList as React.ComponentType<any>;
 import { useRouter } from 'expo-router';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { ChatTeardropDots, Trash, Plus, Clock } from 'phosphor-react-native';

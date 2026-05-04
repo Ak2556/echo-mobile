@@ -8,6 +8,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, EnvelopeSimple, CheckCircle } from 'phosphor-react-native';
 import { supabase } from '../../lib/supabase';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { showToast } from '../../components/ui/Toast';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -18,10 +19,11 @@ export default function ForgotPasswordScreen() {
   const handleReset = async () => {
     if (!email.trim()) return;
     setLoading(true);
-    await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: 'echo://auth/reset-password',
     });
     setLoading(false);
+    if (error) { showToast(error.message, '❌'); return; }
     setSent(true);
   };
 
