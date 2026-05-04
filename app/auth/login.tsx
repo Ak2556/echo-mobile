@@ -84,7 +84,8 @@ export default function LoginScreen() {
       password,
     });
     setLoading(false);
-    if (error) showToast(error.message, '❌');
+    if (error) { showToast(error.message, '❌'); return; }
+    router.replace('/(tabs)/discover');
   };
 
   const handleSendCode = async () => {
