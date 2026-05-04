@@ -14,6 +14,13 @@ export default function Index() {
       setHasSession(!!session);
       setChecking(false);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setHasSession(!!session);
+      setChecking(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (checking) {
