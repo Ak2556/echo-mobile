@@ -50,19 +50,22 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
 
   useEffect(() => {
     const s1 = player.addListener('statusChange', ({ status }) => {
-      if (status === 'readyToPlay') setLoadState('ready');
+      if (status === 'readyToPlay') {
+        setLoadState('ready');
+        if (player.duration > 0) setDuration(player.duration);
+      }
       if (status === 'error') setLoadState('error');
     });
     const s2 = player.addListener('playingChange', ({ isPlaying }) => setPlaying(isPlaying));
     const s3 = player.addListener('timeUpdate', ({ currentTime }) => {
       setPosition(currentTime);
-      if (player.duration) setDuration(player.duration);
+      const d = player.duration;
+      if (d > 0) setDuration(d);
     });
-    const s4 = player.addListener('sourceLoad', ({ duration: d }) => setDuration(d));
-    const s5 = player.addListener('playToEnd', () => {
+    const s4 = player.addListener('playToEnd', () => {
       if (!loop) { player.replay(); player.pause(); setPlaying(false); }
     });
-    return () => { s1.remove(); s2.remove(); s3.remove(); s4.remove(); s5.remove(); };
+    return () => { s1.remove(); s2.remove(); s3.remove(); s4.remove(); };
   }, [player, loop]);
 
   useEffect(() => {
