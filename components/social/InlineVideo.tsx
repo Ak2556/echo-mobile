@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActionSheetIOS, ActivityIndicator, Modal, Platform, Pressable, Text, View } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, Modal, Platform, Pressable, StatusBar, Text, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { ArrowsClockwise, CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
+import { ArrowsClockwise, CornersIn, CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 
 export interface QualityOption { label: string; uri: string; }
@@ -24,7 +24,8 @@ function fmt(s: number): string {
 
 export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVideoProps) {
   const { colors, radius, fontSizes } = useTheme();
-  const videoRef = useRef<VideoView>(null);
+  const inlineRef = useRef<VideoView>(null);
+  const fullscreenRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
   const player = useVideoPlayer(activeUri, p => { p.muted = true; p.loop = false; });
 
@@ -36,12 +37,13 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [barWidth, setBarWidth] = useState(1);
+  const [fsBarWidth, setFsBarWidth] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showQualityModal, setShowQualityModal] = useState(false);
 
   const qualityList: QualityOption[] = qualities?.length ? qualities : [{ label: 'Auto', uri }];
   const activeLabel = qualityList.find(q => q.uri === activeUri)?.label ?? 'Auto';
   const pct = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
-  const thumbLeft = (pct / 100) * barWidth;
 
   useEffect(() => { setActiveUri(uri); }, [uri]);
   useEffect(() => { player.muted = muted; }, [muted, player]);
@@ -78,11 +80,13 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
   const toggleMute = () => { try { setMuted(m => !m); } catch {} };
   const toggleLoop = () => setLoop(l => !l);
   const cycleSpeed = () => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]);
-  const openFullscreen = async () => { try { await videoRef.current?.enterFullscreen(); } catch {} };
 
-  const seekTo = (x: number) => {
+  const openFullscreen = () => setIsFullscreen(true);
+  const closeFullscreen = () => setIsFullscreen(false);
+
+  const seekTo = (x: number, barW: number) => {
     if (duration <= 0 || loadState !== 'ready') return;
-    try { player.currentTime = Math.max(0, Math.min(1, x / barWidth)) * duration; } catch {}
+    try { player.currentTime = Math.max(0, Math.min(1, x / barW)) * duration; } catch {}
   };
 
   const switchQuality = (q: QualityOption) => {
@@ -107,6 +111,42 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
     }
   };
 
+  const Controls = ({ barW, onBarLayout }: { barW: number; onBarLayout: (w: number) => void }) => {
+    const thumbLeft = (pct / 100) * barW;
+    return (
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 12, paddingBottom: 10 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+          <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '600' }}>{fmt(position)}</Text>
+          {duration > 0 && <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{fmt(duration)}</Text>}
+        </View>
+
+        <View
+          onLayout={e => onBarLayout(Math.max(1, e.nativeEvent.layout.width))}
+          onStartShouldSetResponder={() => true}
+          onMoveShouldSetResponder={() => true}
+          onResponderGrant={e => seekTo(e.nativeEvent.locationX, barW)}
+          onResponderMove={e => seekTo(e.nativeEvent.locationX, barW)}
+          style={{ height: 24, justifyContent: 'center', marginBottom: 6 }}
+        >
+          <View style={{ height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', overflow: 'hidden' }}>
+            <View style={{ height: '100%', width: `${pct}%`, backgroundColor: colors.accent, borderRadius: 2 }} />
+          </View>
+          <View pointerEvents="none" style={{ position: 'absolute', left: thumbLeft - 6, width: 13, height: 13, borderRadius: 7, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 4 }} />
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+          {playing && <Pressable onPress={togglePlay} style={PILL}><Pause size={16} color="#fff" /></Pressable>}
+          <Pressable onPress={toggleLoop} style={[PILL, loop && { backgroundColor: colors.accent + 'CC' }]}>
+            <ArrowsClockwise size={16} color="#fff" weight={loop ? 'fill' : 'regular'} />
+          </Pressable>
+          <Pressable onPress={toggleMute} style={PILL}>
+            {muted ? <SpeakerSlash size={16} color="#fff" /> : <SpeakerHigh size={16} color="#fff" />}
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={{ marginBottom: 12 }}>
       {!!caption && (
@@ -115,6 +155,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
         </Text>
       )}
 
+      {/* ── Inline player ── */}
       <View style={{ height, borderRadius: radius.card, overflow: 'hidden', backgroundColor: '#000' }}>
         {loadState === 'error' ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.surfaceHover }}>
@@ -126,7 +167,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
           </View>
         ) : (
           <>
-            <VideoView ref={videoRef} player={player} style={{ flex: 1 }} contentFit="cover" nativeControls={false} fullscreenOptions={{ enable: true }} />
+            <VideoView ref={inlineRef} player={player} style={{ flex: 1 }} contentFit="cover" nativeControls={false} />
 
             {loadState === 'loading' && (
               <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
@@ -163,41 +204,65 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
             )}
 
             {loadState === 'ready' && (
-              <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 12, paddingBottom: 10 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '600' }}>{fmt(position)}</Text>
-                  {duration > 0 && <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{fmt(duration)}</Text>}
-                </View>
-
-                <View
-                  onLayout={e => setBarWidth(Math.max(1, e.nativeEvent.layout.width))}
-                  onStartShouldSetResponder={() => true}
-                  onMoveShouldSetResponder={() => true}
-                  onResponderGrant={e => seekTo(e.nativeEvent.locationX)}
-                  onResponderMove={e => seekTo(e.nativeEvent.locationX)}
-                  style={{ height: 24, justifyContent: 'center', marginBottom: 6 }}
-                >
-                  <View style={{ height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', overflow: 'hidden' }}>
-                    <View style={{ height: '100%', width: `${pct}%`, backgroundColor: colors.accent, borderRadius: 2 }} />
-                  </View>
-                  <View pointerEvents="none" style={{ position: 'absolute', left: thumbLeft - 6, width: 13, height: 13, borderRadius: 7, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 4 }} />
-                </View>
-
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-                  {playing && <Pressable onPress={togglePlay} style={PILL}><Pause size={16} color="#fff" /></Pressable>}
-                  <Pressable onPress={toggleLoop} style={[PILL, loop && { backgroundColor: colors.accent + 'CC' }]}>
-                    <ArrowsClockwise size={16} color="#fff" weight={loop ? 'fill' : 'regular'} />
-                  </Pressable>
-                  <Pressable onPress={toggleMute} style={PILL}>
-                    {muted ? <SpeakerSlash size={16} color="#fff" /> : <SpeakerHigh size={16} color="#fff" />}
-                  </Pressable>
-                </View>
-              </View>
+              <Controls barW={barWidth} onBarLayout={setBarWidth} />
             )}
           </>
         )}
       </View>
 
+      {/* ── Fullscreen modal — same player, custom overlay ── */}
+      <Modal visible={isFullscreen} animationType="fade" statusBarTranslucent onRequestClose={closeFullscreen}>
+        <StatusBar hidden />
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
+          <VideoView ref={fullscreenRef} player={player} style={{ flex: 1 }} contentFit="contain" nativeControls={false} />
+
+          {/* top-left close button */}
+          <Pressable
+            onPress={closeFullscreen}
+            style={{ position: 'absolute', top: 16, left: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center' }}
+            accessibilityLabel="Exit fullscreen"
+            accessibilityRole="button"
+          >
+            <X size={20} color="#fff" />
+          </Pressable>
+
+          {/* top-right: quality, speed, minimize */}
+          {loadState === 'ready' && (
+            <View style={{ position: 'absolute', top: 16, right: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              {qualityList.length > 1 && (
+                <Pressable onPress={pickQuality} style={[PILL, { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10 }]}>
+                  <SlidersHorizontal size={13} color="#fff" />
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{activeLabel}</Text>
+                </Pressable>
+              )}
+              <Pressable onPress={cycleSpeed} style={[PILL, { paddingHorizontal: 10 }]}>
+                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{speed === 1 ? '1x' : `${speed}x`}</Text>
+              </Pressable>
+              <Pressable onPress={closeFullscreen} style={PILL}>
+                <CornersIn size={16} color="#fff" />
+              </Pressable>
+            </View>
+          )}
+
+          {/* tap to play/pause */}
+          {loadState === 'ready' && (
+            <Pressable onPress={togglePlay} style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
+              {!playing && (
+                <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Play size={34} color="#fff" weight="fill" />
+                </View>
+              )}
+            </Pressable>
+          )}
+
+          {/* progress bar */}
+          {loadState === 'ready' && (
+            <Controls barW={fsBarWidth} onBarLayout={setFsBarWidth} />
+          )}
+        </View>
+      </Modal>
+
+      {/* ── Android quality sheet ── */}
       {Platform.OS === 'android' && (
         <Modal visible={showQualityModal} transparent animationType="slide" onRequestClose={() => setShowQualityModal(false)}>
           <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowQualityModal(false)}>
