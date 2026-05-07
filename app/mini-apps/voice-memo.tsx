@@ -28,6 +28,17 @@ import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../.
 
 const REC_COLOR = '#EF4444';
 
+// Expo Router uses this when the route fails to load (e.g. Expo Go without native module)
+export function ErrorBoundary() {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+      <Text style={{ color: '#A1A1AA', fontSize: 14, textAlign: 'center' }}>
+        {'Voice Memo requires a development build.\nRun: npx expo run:ios'}
+      </Text>
+    </View>
+  );
+}
+
 export default function VoiceMemoApp() {
   const { colors } = useTheme();
   const accent = colors.accent;

@@ -6,8 +6,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PaperPlaneTilt, ShareNetwork, Sparkle, Trash } from 'phosphor-react-native';
 import { LikeButton } from '../../components/social/LikeButton';
 import { MediaGrid } from '../../components/social/MediaGrid';
-import { InlineVideo } from '../../components/social/InlineVideo';
+import { NativeModuleGuard } from '../../components/ui/NativeModuleGuard';
 import { useAppStore } from '../../store/useAppStore';
+
+const InlineVideo = React.lazy(() =>
+  import('../../components/social/InlineVideo')
+    .then(m => ({ default: m.InlineVideo }))
+    .catch(() => ({ default: () => null as any }))
+);
 import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -195,7 +201,9 @@ export default function ThreadDetailScreen() {
 
         {item.postType === 'video' && item.videoUri ? (
           <View style={{ marginBottom: 12 }}>
-            <InlineVideo uri={item.videoUri} height={300} qualities={item.videoQualities} />
+            <React.Suspense fallback={null}>
+              <InlineVideo uri={item.videoUri} height={300} qualities={item.videoQualities} />
+            </React.Suspense>
           </View>
         ) : null}
 

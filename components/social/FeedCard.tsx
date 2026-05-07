@@ -8,7 +8,12 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MediaGrid } from './MediaGrid';
-import { VideoPreview } from './VideoPreview';
+import { NativeModuleGuard } from '../ui/NativeModuleGuard';
+
+// Lazy-load so a missing ExpoVideo native module doesn't crash the whole feed
+const VideoPreview = React.lazy(() =>
+  import('./VideoPreview').catch(() => ({ default: () => null as any }))
+);
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -376,7 +381,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               <MediaGrid uris={item.mediaUris!} />
             )}
             {item.postType === 'video' && item.videoUri && (
-              <VideoPreview uri={item.videoUri} height={300} borderRadius={0} />
+              <React.Suspense fallback={null}>
+                <VideoPreview uri={item.videoUri} height={300} borderRadius={0} />
+              </React.Suspense>
             )}
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.65)']}
@@ -584,7 +591,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             {!!item.prompt && (
               <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 3}>{item.prompt}</Text>
             )}
-            <VideoPreview uri={item.videoUri} height={compactFeed ? 180 : 260} borderRadius={radius.md} />
+            <React.Suspense fallback={null}>
+              <VideoPreview uri={item.videoUri} height={compactFeed ? 180 : 260} borderRadius={radius.md} />
+            </React.Suspense>
           </View>
         )}
 
