@@ -9,7 +9,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 
-const HIDDEN_ROUTES = new Set(['history']);
+const HIDDEN_ROUTES = new Set(['history', 'echoes', 'apps']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
   discover: House,
@@ -149,8 +149,8 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="discover" options={{ title: 'Home' }} />
       <Tabs.Screen name="search" options={{ title: 'Explore' }} />
-      <Tabs.Screen name="echoes" options={{ title: 'Echoes' }} />
-      <Tabs.Screen name="chat" options={{ title: 'Echo' }} />
+      <Tabs.Screen name="echoes" options={{ title: 'My Echoes' }} />
+      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Activity' }} />
       <Tabs.Screen name="apps" options={{ title: 'Apps' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />

@@ -20,7 +20,7 @@ import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/loc
 import { generateSessionTitle } from '../../lib/aiTitle';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { ShareNetwork, Plus, Lightning, List, Question } from 'phosphor-react-native';
+import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 
 const EMPTY_SUGGESTIONS = ['Ask for a better hook', 'Turn an idea into a post', 'Run a poll for me', 'Summarize a note'];
@@ -332,6 +332,7 @@ export default function ChatScreen() {
 
   const headerHeight = insets.top + 52;
   const showEmptySuggestions = items.length === 0;
+  const showShareNudge = !isStreaming && messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -401,6 +402,33 @@ export default function ChatScreen() {
                 ))}
               </View>
             </View>
+          ) : null}
+          {showShareNudge ? (
+            <Animated.View
+              entering={animation(FadeIn.duration(200))}
+              style={{ paddingHorizontal: 12, paddingBottom: 8 }}
+            >
+              <AnimatedPressable
+                onPress={handleShare}
+                depth="soft"
+                haptic="light"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  borderRadius: 999,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.accent,
+                  backgroundColor: colors.isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)',
+                  paddingHorizontal: 16,
+                  paddingVertical: 9,
+                }}
+              >
+                <ArrowUpRight color={colors.accent} size={15} weight="bold" />
+                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>Share as Echo</Text>
+              </AnimatedPressable>
+            </Animated.View>
           ) : null}
           <ChatInput onSend={handleSend} isLoading={isStreaming} draft={draft} onDraftChange={setDraft} />
         </View>
@@ -503,7 +531,7 @@ export default function ChatScreen() {
             zIndex: 20,
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Tip · long-press the Chat tab for a command palette</Text>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Tip · long-press the Chat tab to open quick actions</Text>
         </Animated.View>
       )}
 
