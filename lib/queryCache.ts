@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { InfiniteData, QueryClient } from '@tanstack/react-query';
 import { Comment, FeedItem, User } from '../types';
 
 type ProfileBundle = {
@@ -21,7 +21,8 @@ function updateFeedList(
   echoId: string,
   updater: (item: FeedItem) => FeedItem
 ): FeedItem[] | undefined {
-  return list?.map(item => updateFeedItem(item, echoId, updater));
+  if (!Array.isArray(list)) return list;
+  return list.map(item => updateFeedItem(item, echoId, updater));
 }
 
 export function patchFeedCaches(
@@ -29,9 +30,18 @@ export function patchFeedCaches(
   echoId: string,
   updater: (item: FeedItem) => FeedItem
 ) {
+  // Flat feed (useFeed / useQuery)
   qc.setQueriesData<FeedItem[]>({ queryKey: ['feed'] }, (current) =>
     updateFeedList(current, echoId, updater)
   );
+  // Paginated feed (useInfiniteFeed / useInfiniteQuery) — patch within each page
+  qc.setQueriesData<InfiniteData<FeedItem[]>>({ queryKey: ['feed', 'paginated'] }, (current) => {
+    if (!current) return current;
+    return {
+      ...current,
+      pages: current.pages.map(page => page.map(item => updateFeedItem(item, echoId, updater))),
+    };
+  });
   qc.setQueryData<FeedItem[]>(['bookmarks'], (current) =>
     updateFeedList(current, echoId, updater)
   );
