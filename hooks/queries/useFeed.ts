@@ -98,8 +98,8 @@ export function useInfiniteFeed() {
 
   return useInfiniteQuery<FeedItem[], Error, { pages: FeedItem[][] }, unknown[], string | undefined>({
     queryKey: remote
-      ? ['feed', feedSort, feedScope, blockedIds, mutedIds, notInterestedIds]
-      : ['feed', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
+      ? ['feed', 'paginated', feedSort, feedScope, blockedIds, mutedIds, notInterestedIds]
+      : ['feed', 'paginated', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
     initialPageParam: undefined,
     getNextPageParam: (lastPage: FeedItem[]) =>
       lastPage.length === PAGE_SIZE ? lastPage[lastPage.length - 1].createdAt : undefined,
