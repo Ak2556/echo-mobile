@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Switch, StyleSheet, Dimensions, Pressable } fro
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { BookmarkSimple, Bell, CalendarBlank, CaretRight, Compass, Envelope, Gear, Images, NotePencil, SignOut, Sparkle, Users } from 'phosphor-react-native';
+import { BookmarkSimple, Bell, CalendarBlank, CaretRight, Compass, Envelope, FilmStrip, Gear, Images, NotePencil, SignOut, Sparkle, SquaresFour, Users } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
@@ -20,6 +20,8 @@ const TAB_WIDTH = SW / 2;
 
 const SETTINGS_ROWS = [
   { key: 'edit', Icon: NotePencil, label: 'Edit Profile', route: '/edit-profile' },
+  { key: 'myechoes', Icon: FilmStrip, label: 'My Echoes', route: '/(tabs)/echoes' },
+  { key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' },
   { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
   { key: 'messages', Icon: Envelope, label: 'Messages', route: '/messages' },
   { key: 'connections', Icon: Users, label: 'Connections', route: null },

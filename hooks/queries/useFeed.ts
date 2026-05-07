@@ -7,6 +7,11 @@ import { LOCAL_SEED_FEED, coerceFeedItem } from '../../lib/localFeedSeed';
 
 const PAGE_SIZE = 20;
 
+function interestBoost(item: FeedItem, interests: string[]): number {
+  if (!interests.length || !item.topicLabels?.length) return 0;
+  return item.topicLabels.some(t => interests.includes(t)) ? 1 : 0;
+}
+
 export function useFeed() {
   const publishedEchoes = useAppStore(s => s.publishedEchoes);
   const likedIds = useAppStore(s => s.likedIds);
@@ -17,12 +22,13 @@ export function useFeed() {
   const blockedIds = useAppStore(s => s.blockedIds);
   const mutedIds = useAppStore(s => s.mutedIds);
   const notInterestedIds = useAppStore(s => s.notInterestedIds);
+  const interests = useAppStore(s => s.interests);
   const remote = isSupabaseRemote();
 
   return useQuery({
     queryKey: remote
       ? ['feed', feedSort, feedScope, blockedIds, mutedIds, notInterestedIds]
-      : ['feed', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort, feedScope, blockedIds, mutedIds, notInterestedIds],
+      : ['feed', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
     staleTime: remote ? 1000 * 30 : Infinity,
     queryFn: async (): Promise<FeedItem[]> => {
       const blockSet = new Set([...blockedIds, ...mutedIds]);
@@ -54,8 +60,12 @@ export function useFeed() {
         case 'following':
           merged = merged.filter(item => followingIds.includes(item.userId) || item.userId === 'me');
           break;
-        default: // 'latest'
-          merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        default: // 'latest' — surface interest-matched items first, then by recency
+          merged.sort((a, b) => {
+            const diff = interestBoost(b, interests) - interestBoost(a, interests);
+            if (diff !== 0) return diff;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
           break;
       }
 
@@ -83,12 +93,13 @@ export function useInfiniteFeed() {
   const blockedIds = useAppStore(s => s.blockedIds);
   const mutedIds = useAppStore(s => s.mutedIds);
   const notInterestedIds = useAppStore(s => s.notInterestedIds);
+  const interests = useAppStore(s => s.interests);
   const remote = isSupabaseRemote();
 
   return useInfiniteQuery<FeedItem[], Error, { pages: FeedItem[][] }, unknown[], string | undefined>({
     queryKey: remote
       ? ['feed', feedSort, feedScope, blockedIds, mutedIds, notInterestedIds]
-      : ['feed', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort, feedScope, blockedIds, mutedIds, notInterestedIds],
+      : ['feed', 'local', publishedEchoes, likedIds, bookmarkedIds, followingIds, feedSort, feedScope, blockedIds, mutedIds, notInterestedIds, interests],
     initialPageParam: undefined,
     getNextPageParam: (lastPage: FeedItem[]) =>
       lastPage.length === PAGE_SIZE ? lastPage[lastPage.length - 1].createdAt : undefined,
@@ -125,7 +136,11 @@ export function useInfiniteFeed() {
           merged = merged.filter(item => followingIds.includes(item.userId) || item.userId === 'me');
           break;
         default:
-          merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          merged.sort((a, b) => {
+            const diff = interestBoost(b, interests) - interestBoost(a, interests);
+            if (diff !== 0) return diff;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
       }
       if (feedScope === 'following') {
         merged = merged.filter(item => followingIds.includes(item.userId) || item.userId === 'me');
