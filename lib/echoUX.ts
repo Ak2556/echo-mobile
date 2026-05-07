@@ -120,6 +120,7 @@ export function evaluatePublishChecklist(input: {
 }
 
 export function deriveTopicFeed(feed: FeedItem[]) {
+  if (!Array.isArray(feed)) return [];
   const counts = new Map<string, number>();
   feed.forEach(item => {
     inferTopics(item).forEach(topic => {
@@ -134,6 +135,7 @@ export function deriveTopicFeed(feed: FeedItem[]) {
 }
 
 export function groupDiscovery(feed: FeedItem[], interests: string[], followingIds: string[]) {
+  if (!Array.isArray(feed)) return { forYou: [], rising: [], conversationStarters: [], following: [] };
   const ranked = [...feed].sort((a, b) => (b.likes + b.repostCount + b.commentCount) - (a.likes + a.repostCount + a.commentCount));
   const forYou = ranked.filter(item => {
     const topics = inferTopics(item).map(topic => topic.toLowerCase());
