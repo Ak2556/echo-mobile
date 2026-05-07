@@ -15,8 +15,12 @@ export function useToggleRemoteLike() {
       await setRemoteLike(echoId, like);
     },
     onMutate: async ({ echoId, like }) => {
+      await qc.cancelQueries({ queryKey: ['feed'] });
       patchLikeCaches(qc, echoId, like);
-      return { echoId };
+      return { echoId, like };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx) patchLikeCaches(qc, ctx.echoId, !ctx.like);
     },
     onSettled: (_, __, vars) => {
       qc.invalidateQueries({ queryKey: ['feed'] });

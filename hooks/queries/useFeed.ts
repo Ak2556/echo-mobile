@@ -44,11 +44,16 @@ export function useFeed() {
       }
       const liked = new Set(likedIds);
       const bookmarked = new Set(bookmarkedIds);
-      let merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED].map(item => ({
-        ...item,
-        isLiked: liked.has(item.id),
-        isBookmarked: bookmarked.has(item.id),
-      }));
+      let merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED].map(item => {
+        const isLiked = liked.has(item.id);
+        return {
+          ...item,
+          isLiked,
+          isBookmarked: bookmarked.has(item.id),
+          // Seed data stores baseline likes (without current user); adjust so count stays accurate
+          likes: isLiked ? (item.likes ?? 0) + 1 : (item.likes ?? 0),
+        };
+      });
 
       merged = filterHidden(merged);
 
@@ -122,11 +127,15 @@ export function useInfiniteFeed() {
       if (pageParam) return [];
       const liked = new Set(likedIds);
       const bookmarked = new Set(bookmarkedIds);
-      let merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED].map(item => ({
-        ...item,
-        isLiked: liked.has(item.id),
-        isBookmarked: bookmarked.has(item.id),
-      }));
+      let merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED].map(item => {
+        const isLiked = liked.has(item.id);
+        return {
+          ...item,
+          isLiked,
+          isBookmarked: bookmarked.has(item.id),
+          likes: isLiked ? (item.likes ?? 0) + 1 : (item.likes ?? 0),
+        };
+      });
       merged = filterHidden(merged);
       switch (feedSort) {
         case 'popular':
