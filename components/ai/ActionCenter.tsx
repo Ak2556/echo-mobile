@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { X } from 'phosphor-react-native';
 import Animated, {
@@ -47,8 +47,6 @@ const SHEET_OFF = 700;
 export function ActionCenter({ visible, onClose, onSelectExample }: Props) {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
-  const [mounted, setMounted] = useState(false);
-
   const translateY = useSharedValue(SHEET_OFF);
   const backdropOpacity = useSharedValue(0);
   const dragY = useSharedValue(0);
@@ -77,14 +75,13 @@ export function ActionCenter({ visible, onClose, onSelectExample }: Props) {
 
   useEffect(() => {
     if (visible) {
-      setMounted(true);
       translateY.value = SHEET_OFF;
       dragY.value = 0;
       backdropOpacity.value = 0;
       // Small delay so Modal renders before animating
       setTimeout(animateIn, 16);
     }
-  }, [visible]);
+  }, [visible, animateIn, translateY, dragY, backdropOpacity]);
 
   const handleClose = useCallback(() => {
     animateOut(onClose);

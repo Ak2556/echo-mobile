@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChatTeardropDots, Compass, NotePencil, Sparkle, Star, TrendUp, Users } from 'phosphor-react-native';
+import { ChatTeardropDots, Compass, NotePencil, Sparkle, Star, TrendUp } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';

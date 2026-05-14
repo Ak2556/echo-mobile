@@ -2,13 +2,13 @@ import React from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
-const FlashList = _FlashList as React.ComponentType<any>;
 import { useRouter } from 'expo-router';
 import Animated, { FadeInRight } from 'react-native-reanimated';
-import { ChatTeardropDots, Trash, Plus, Clock } from 'phosphor-react-native';
+import { ChatTeardropDots, Plus, Clock } from 'phosphor-react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ChatSession } from '../../types';
+const FlashList = _FlashList as React.ComponentType<any>;
 
 function SessionCard({ session, index, onPress, onDelete }: {
   session: ChatSession; index: number; onPress: () => void; onDelete: () => void;

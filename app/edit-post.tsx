@@ -60,7 +60,7 @@ export default function EditPostScreen() {
 
   useEffect(() => {
     if (!echo) { Alert.alert('Not found', 'This echo no longer exists.'); router.back(); }
-  }, []);
+  }, [echo, router]);
 
   const validImages = imageUrls.filter(u => u.trim().length > 0);
 
@@ -120,7 +120,7 @@ export default function EditPostScreen() {
           response: updates.response,
           media_urls: updates.mediaUris,
         });
-      } catch (err) {
+      } catch {
         Alert.alert('Save failed', 'Could not update echo on the server. Your changes are saved locally.');
       }
     }

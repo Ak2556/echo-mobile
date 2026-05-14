@@ -31,7 +31,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 8, classN
       -1,
       true
     );
-  }, [reduceAnimations]);
+  }, [reduceAnimations, shimmer]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: shimmer.value,

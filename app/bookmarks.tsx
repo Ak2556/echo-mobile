@@ -24,14 +24,13 @@ export default function BookmarksScreen() {
   const { colors } = useTheme();
   const [activeCol, setActiveCol] = useState<string | 'all'>('all');
 
-  const allBookmarked = remote
-    ? (remoteQ.data ?? [])
-    : (feed || []).filter(item => bookmarkedIds.includes(item.id));
-
   const bookmarked = useMemo(() => {
+    const allBookmarked = remote
+      ? (remoteQ.data ?? [])
+      : (feed || []).filter(item => bookmarkedIds.includes(item.id));
     if (activeCol === 'all') return allBookmarked;
     return allBookmarked.filter(item => bookmarkCollectionByEchoId[item.id] === activeCol);
-  }, [allBookmarked, activeCol, bookmarkCollectionByEchoId]);
+  }, [remote, remoteQ.data, feed, bookmarkedIds, activeCol, bookmarkCollectionByEchoId]);
 
   const loading = remote && remoteQ.isPending;
   const [namingOpen, setNamingOpen] = useState(false);
@@ -75,7 +74,7 @@ export default function BookmarksScreen() {
 
       {/* Collection chips */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 14, paddingVertical: 10 }}>
-        {(['all', ...bookmarkCollections.map(c => c.id)] as Array<'all' | string>).map(key => {
+        {(['all', ...bookmarkCollections.map(c => c.id)] as ('all' | string)[]).map(key => {
           const label = key === 'all' ? 'All' : (bookmarkCollections.find(c => c.id === key)?.name ?? '');
           const active = activeCol === key;
           return (

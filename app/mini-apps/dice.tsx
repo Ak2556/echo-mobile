@@ -80,7 +80,7 @@ export default function DiceApp() {
       setResult(total); setRolling(false);
       setHistory(prev => [{ die: diceCount > 1 ? `${diceCount}×${selectedDie.label}` : selectedDie.label, result: total, color: selectedDie.color, ts: Date.now() }, ...prev.slice(0, 19)]);
     }, 320);
-  }, [rolling, selectedDie, diceCount]);
+  }, [rolling, selectedDie, diceCount, dieScale, dieRotate]);
 
   const flipCoin = () => {
     coinScale.value = withSequence(withTiming(0.5, { duration: 150 }), withSpring(1.1, { damping: 6 }), withSpring(1));

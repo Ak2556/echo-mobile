@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Dimensions, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
 

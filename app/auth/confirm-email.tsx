@@ -27,7 +27,7 @@ export default function ConfirmEmailScreen() {
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   // Countdown for resend cooldown — single interval, no per-tick timeout chain
   const startResendCountdown = (seconds: number) => {

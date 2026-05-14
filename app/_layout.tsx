@@ -3,14 +3,13 @@ import { Stack, useRouter , ErrorBoundaryProps } from 'expo-router';
 import { Linking, View, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { ToastProvider } from '../components/ui/Toast';
+import { ToastProvider, showToast } from '../components/ui/Toast';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { supabase } from '../lib/supabase';
 import { useCommandPalette } from '../lib/commandPalette';
 import { useAppStore } from '../store/useAppStore';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes } from '../lib/supabaseEchoApi';
-import { showToast } from '../components/ui/Toast';
 import '../global.css';
 
 const queryClient = new QueryClient({
@@ -68,7 +67,8 @@ function AuthListener() {
     // Handle deep link while app is already open
     const sub = Linking.addEventListener('url', ({ url }) => handleDeepLink(url));
     return () => sub.remove();
-  }, [router, setAvatarColor, setDisplayName, setHasSeenOnboarding, setUserId, setUsername]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, setAvatarColor, setDisplayName, setHasSeenOnboarding, setUserId, setUsername]); // handleDeepLink is stable — it only uses router and supabase which are stable
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
