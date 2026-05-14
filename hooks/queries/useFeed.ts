@@ -40,12 +40,18 @@ export function useFeed() {
       if (remote) {
         // Gravity: recency-heavy for 'latest', engagement-heavy for 'popular'.
         const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
-        const rows = await fetchRankedFeed({
-          limit: 50,
-          gravity,
-          followingOnly: feedScope === 'following',
-        });
-        return filterHidden(rows);
+        try {
+          const rows = await fetchRankedFeed({
+            limit: 50,
+            gravity,
+            followingOnly: feedScope === 'following',
+          });
+          return filterHidden(rows);
+        } catch (rankErr) {
+          console.warn('[useFeed] ranked RPC failed, falling back to chronological:', rankErr);
+          const rows = await fetchRemoteFeed({ limit: 50 });
+          return filterHidden(rows);
+        }
       }
 
       // ── Local / offline mode ──────────────────────────────────────────────
@@ -132,13 +138,20 @@ export function useInfiniteFeed() {
 
       if (remote) {
         const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
-        const rows = await fetchRankedFeed({
-          limit: PAGE_SIZE,
-          gravity,
-          cursor: pageParam,
-          followingOnly: feedScope === 'following',
-        });
-        return filterHidden(rows);
+        try {
+          const rows = await fetchRankedFeed({
+            limit: PAGE_SIZE,
+            gravity,
+            cursor: pageParam,
+            followingOnly: feedScope === 'following',
+          });
+          return filterHidden(rows);
+        } catch (rankErr) {
+          console.warn('[useInfiniteFeed] ranked RPC failed, falling back:', rankErr);
+          const cursor = typeof pageParam === 'object' && pageParam ? undefined : undefined;
+          const rows = await fetchRemoteFeed({ limit: PAGE_SIZE, cursor });
+          return filterHidden(rows);
+        }
       }
 
       // Local: single page only.
@@ -179,11 +192,20 @@ export function useInfiniteFeed() {
 
       return merged.slice(0, PAGE_SIZE);
     },
-    // Flatten all pages and deduplicate — handles edge case where a post
-    // jumps rank between fetches and appears in two consecutive pages.
-    select: (data) => ({
-      ...data,
-      pages: [deduplicateFeed(data.pages)],
-    }),
+    // Deduplicate across pages without changing the page count so React Query's
+    // internal pageParams array stays consistent with the pages array length.
+    select: (data) => {
+      const seen = new Set<string>();
+      return {
+        ...data,
+        pages: data.pages.map(page =>
+          page.filter(item => {
+            if (seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+          })
+        ),
+      };
+    },
   });
 }
