@@ -46,7 +46,6 @@ export default function ChatScreen() {
   const addMessage = useAppStore(s => s.addMessage);
   const updateMessage = useAppStore(s => s.updateMessage);
   const truncateMessagesAfter = useAppStore(s => s.truncateMessagesAfter);
-  const setMessages = useAppStore(s => s.setMessages);
   const branchSession = useAppStore(s => s.branchSession);
   const hasSeenChatTabHint = useAppStore(s => s.hasSeenChatTabHint);
   const setHasSeenChatTabHint = useAppStore(s => s.setHasSeenChatTabHint);
@@ -85,7 +84,10 @@ export default function ChatScreen() {
     }
   }, [hasSeenChatTabHint, setHasSeenChatTabHint]);
 
-  const messages: ChatMessage[] = currentSessionId ? messagesBySession[currentSessionId] || [] : [];
+  const messages: ChatMessage[] = useMemo(
+    () => (currentSessionId ? messagesBySession[currentSessionId] || [] : []),
+    [currentSessionId, messagesBySession],
+  );
   const conversationIdRef = useRef<string | null>(null);
   useEffect(() => {
     conversationIdRef.current = currentSessionId ? (conversationIdBySession[currentSessionId] ?? null) : null;

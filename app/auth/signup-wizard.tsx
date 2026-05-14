@@ -62,7 +62,7 @@ function SwatchItem({ color, selected, onPress }: {
 
   useEffect(() => {
     scale.value = withSpring(selected ? 1.08 : 1, { damping: 18, stiffness: 400 });
-  }, [selected]);
+  }, [selected, scale]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -243,7 +243,7 @@ export default function SignupWizard() {
   // Progress bar follows currentStep
   useEffect(() => {
     progressBarWidth.value = withSpring((currentStep / 4) * SCREEN_WIDTH, SPRING);
-  }, [currentStep]);
+  }, [currentStep, progressBarWidth]);
 
   // CTA glow pulse on step 4
   useEffect(() => {
@@ -257,7 +257,7 @@ export default function SignupWizard() {
         true,
       );
     }
-  }, [currentStep]);
+  }, [currentStep, ctaGlowOpacity]);
 
   // Auto-focus name input when on step 0
   useEffect(() => {
@@ -276,7 +276,7 @@ export default function SignupWizard() {
         withSpring(0.3, { damping: 15, stiffness: 200 }),
       );
     }
-  }, [avatarColor]);
+  }, [avatarColor, glowOpacity]);
 
   const goToStep = useCallback((n: number, instant = false) => {
     setCurrentStep(n);
@@ -288,7 +288,7 @@ export default function SignupWizard() {
     } else {
       tapeOffset.value = withSpring(-n * SCREEN_WIDTH, SPRING);
     }
-  }, [reduceAnimations]);
+  }, [reduceAnimations, backOpacity, counterOpacity, tapeOffset]);
 
   const toggleInterest = (id: string) => {
     setSelectedInterests(prev =>

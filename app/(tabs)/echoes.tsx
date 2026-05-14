@@ -2,17 +2,14 @@ import React, { useRef, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, useWindowDimensions, ViewToken, Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { VideoCamera, Plus } from 'phosphor-react-native';
 import { useRouter } from 'expo-router';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { EchoCard } from '../../components/social/EchoCard';
-import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
 
 export default function EchoesScreen() {
-  const { colors } = useTheme();
   const { height: SCREEN_H } = useWindowDimensions();
   const router = useRouter();
   const { data: feed, isLoading } = useFeed();

@@ -38,7 +38,7 @@ export function SpringCounter({ value, style, formatter, performanceMode = 'defa
       withSpring(going ? -4 : 4, MOTION.pressFirm),
       withSpring(0, MOTION.release)
     );
-  }, [value]);
+  }, [value, reduceAnimations, performance, scale, translateY]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { translateY: translateY.value }],

@@ -28,7 +28,7 @@ function Dot({ delay, color }: { delay: number; color: string }) {
         false
       )
     );
-  }, []);
+  }, [delay, t]);
 
   const style = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(t.value, [0, 1], [0.4, 1]) }],

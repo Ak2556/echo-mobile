@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, Dimensions, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -69,7 +69,7 @@ export default function SearchScreen() {
     return () => clearTimeout(t);
   }, [query]);
 
-  const { data: remoteResults, isFetching: remoteSearching } = useRemoteSearch(debouncedQuery);
+  const { data: remoteResults } = useRemoteSearch(debouncedQuery);
 
   const isSearching = query.trim().length > 0;
   // Use Supabase results when available, fall back to local cache scan

@@ -1,10 +1,9 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, FlatList, TextInput as RNTextInput, Pressable } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, FlatList, TextInput as RNTextInput, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, PaperPlaneTilt, Quote, SealCheck, Sparkle } from 'phosphor-react-native';
-import Animated from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';

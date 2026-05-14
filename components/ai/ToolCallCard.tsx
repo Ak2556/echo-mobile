@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { CheckCircle, XCircle, Wrench, ChartBar } from 'phosphor-react-native';
-import Animated, { FadeIn, Layout, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, Layout, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { useTheme } from '../../lib/theme';
@@ -59,7 +59,7 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
         withTiming(0, { duration: 45 })
       );
     }
-  }, [item.status]);
+  }, [item.status, iconScale, iconX]);
 
   const iconAnim = useAnimatedStyle(() => ({
     transform: [{ scale: iconScale.value }, { translateX: iconX.value }],

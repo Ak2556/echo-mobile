@@ -46,6 +46,9 @@ export default function StoryScreen() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
+    // currentIndex drives the timer; story?.id prevents re-running on unrelated renders.
+    // Adding userStories/router/etc. would cause infinite loops since they're recreated each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, story?.id]);
 
   const progressStyle = useAnimatedStyle(() => ({

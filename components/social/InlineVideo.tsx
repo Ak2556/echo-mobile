@@ -74,7 +74,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
     return () => clearTimeout(t);
   }, [activeUri, loadState]);
 
-  const togglePlay = () => { if (loadState !== 'ready') return; try { playing ? player.pause() : player.play(); } catch {} };
+  const togglePlay = () => { if (loadState !== 'ready') return; try { if (playing) { player.pause(); } else { player.play(); } } catch {} };
   const toggleMute = () => { try { setMuted(m => !m); } catch {} };
   const toggleLoop = () => setLoop(l => !l);
   const cycleSpeed = () => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]);

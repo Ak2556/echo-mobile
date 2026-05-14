@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { Play, Pause, ArrowCounterClockwise } from 'phosphor-react-native';
-import Animated, { useSharedValue, withTiming, Easing } from 'react-native-reanimated';
+import { useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
@@ -34,7 +34,7 @@ export default function PomodoroScreen() {
 
   useEffect(() => {
     progress.value = withTiming(seconds / totalSecs, { duration: 600, easing: Easing.out(Easing.ease) });
-  }, [seconds, totalSecs]);
+  }, [seconds, totalSecs, progress]);
 
   useEffect(() => {
     if (running) {
@@ -54,7 +54,7 @@ export default function PomodoroScreen() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [running, mode]);
+  }, [running, mode, modeData.label]);
 
   const switchMode = (m: Mode) => {
     setRunning(false);

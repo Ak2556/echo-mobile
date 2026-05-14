@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, RefreshControl, ScrollView, Pressable, Platform, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -25,6 +25,12 @@ import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { usePerformanceProfile } from '../../lib/performance';
 import { groupDiscovery } from '../../lib/echoUX';
+import { useRealtimeNewEchoes } from '../../lib/realtime';
+import { ErrorState, classifyError } from '../../components/common/ErrorState';
+import { UserRow } from '../../components/social/UserRow';
+import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
+import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
 
 const HERO_COUNT = 5;
 const NAV_BAR_HEIGHT = 50;
@@ -73,13 +79,6 @@ function SectionHeader({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
-import { useRealtimeNewEchoes } from '../../lib/realtime';
-import { ErrorState, classifyError } from '../../components/common/ErrorState';
-import { UserRow } from '../../components/social/UserRow';
-import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
-import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
-import { isSupabaseRemote } from '../../lib/remoteConfig';
-
 export default function DiscoverScreen() {
   const router = useRouter();
   const {
@@ -95,7 +94,7 @@ export default function DiscoverScreen() {
   } = useInfiniteFeed();
   const feed = feedData?.pages.flat() ?? [];
   const realtime = useRealtimeNewEchoes();
-  const { colors, animation, reduceAnimations } = useTheme();
+  const { colors, animation } = useTheme();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, interests, followingIds } = useAppStore();
   const insets = useSafeAreaInsets();

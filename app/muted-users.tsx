@@ -11,15 +11,16 @@ import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
+import { User } from '../types';
 
 export default function MutedUsersScreen() {
   const router = useRouter();
-  const { mutedIds, toggleMute, getUser, users } = useAppStore();
+  const { mutedIds, toggleMute, getUser } = useAppStore();
   const { colors, radius, fontSizes, animation, showAvatars } = useTheme();
 
   const mutedUsers = mutedIds
     .map(id => getUser(id))
-    .filter(Boolean) as typeof users;
+    .filter(Boolean) as User[];
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>

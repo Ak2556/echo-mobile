@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Platform, RefreshControl } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -73,7 +73,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
-  const { colors, animation, reduceAnimations } = useTheme();
+  const { colors, animation } = useTheme();
   const performance = usePerformanceProfile('hot');
   const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'follows' | 'reposts'>('all');
 
@@ -120,7 +120,8 @@ export default function NotificationsScreen() {
         const others = b.notifications.length - 1;
         return [{ ...sample, targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${labelForType(sample.type)}` }];
       });
-  }, [notifications, mutedIds, filter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifications, mutedIds, filter]); // typeFilter is recreated from `filter` which is already in deps
 
   const listData = useMemo(() => groupNotifications(groupedFlat), [groupedFlat]);
   // For remote notifications, count unread directly from resolved data

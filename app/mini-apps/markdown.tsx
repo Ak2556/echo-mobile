@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet , Clipboard } from 'react-native';
-import { Eye, Code, Trash } from 'phosphor-react-native';
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Trash } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';

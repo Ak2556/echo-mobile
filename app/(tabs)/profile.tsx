@@ -30,7 +30,7 @@ const SETTINGS_ROWS = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { colors, radius, switchTrack, fontSizes } = useTheme();
+  const { colors, radius, switchTrack } = useTheme();
   const insets = useSafeAreaInsets();
   const {
     userId,

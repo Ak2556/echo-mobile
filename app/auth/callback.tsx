@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 
 export default function AuthCallbackScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -19,7 +18,7 @@ export default function AuthCallbackScreen() {
       }
     };
     void handleCallback();
-  }, []);
+  }, [router]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' }}>

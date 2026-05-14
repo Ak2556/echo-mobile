@@ -19,6 +19,11 @@ export default function CreateStoryScreen() {
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, displayName, addStory } = useAppStore();
 
+  // Hooks must always be called unconditionally
+  const [prompt, setPrompt] = useState('');
+  const [response, setResponse] = useState('');
+  const [publishing, setPublishing] = useState(false);
+
   if (isSupabaseRemote()) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -32,7 +37,7 @@ export default function CreateStoryScreen() {
           <Broadcast color={colors.textMuted} size={48} />
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>Stories coming soon</Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 21 }}>
-            We're working on server-backed stories. Check back in a future update.
+            We&apos;re working on server-backed stories. Check back in a future update.
           </Text>
           <AnimatedPressable
             onPress={() => router.back()}
@@ -45,10 +50,6 @@ export default function CreateStoryScreen() {
       </SafeAreaView>
     );
   }
-
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('');
-  const [publishing, setPublishing] = useState(false);
 
   const canPublish = prompt.trim().length > 0 && response.trim().length > 0 && !publishing;
 

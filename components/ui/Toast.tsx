@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { Text, View, Platform, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -34,7 +34,7 @@ export function showToast(message: string, icon?: string) {
 
 export function ToastProvider() {
   const { message, icon, hide } = useToastStore();
-  const { colors, reduceAnimations } = useTheme();
+  const { colors } = useTheme();
   const performance = usePerformanceProfile('overlay');
   const translateY = useSharedValue(-120);
   const dragY = useSharedValue(0);
@@ -68,7 +68,7 @@ export function ToastProvider() {
       dragY.value = 0;
       opacity.value = 0;
     }
-  }, [message]);
+  }, [message, animateOut, performance, translateY, dragY, opacity]);
 
   const pan = Gesture.Pan()
     .activeOffsetY([-8, 8])

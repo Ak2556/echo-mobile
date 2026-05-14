@@ -30,9 +30,11 @@ export default function CommentsScreen() {
   const [text, setText] = useState('');
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
 
-  const localComments = !remote && id ? getComments(id) : [];
-  const comments: Comment[] = remote ? (remoteQ.data ?? []) : localComments;
   const loadingRemote = remote && remoteQ.isPending;
+  const comments = useMemo<Comment[]>(
+    () => remote ? (remoteQ.data ?? []) : (!remote && id ? getComments(id) : []),
+    [remote, remoteQ.data, id, getComments],
+  );
 
   // Group: roots first, then their direct children below.
   const threadedRows = useMemo<ThreadedRow[]>(() => {
