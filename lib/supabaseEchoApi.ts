@@ -208,8 +208,8 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 
 // ─── Profile select helper ────────────────────────────────────────────────────
 
-const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at';
-const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls';
+const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count';
+const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id';
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -253,6 +253,76 @@ export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
 
   return rows.map(echo =>
     mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted)
+  );
+}
+
+// ─── Ranked feed (server-scored) ─────────────────────────────────────────────
+
+// Row shape returned by the get_ranked_feed RPC (echo + profile joined).
+type RankedFeedRow = SupabaseEchoRow & SupabaseProfileRow & { rank_score: number };
+
+export type RankedFeedCursor = { score: number; id: string } | undefined;
+
+export async function fetchRankedFeed(options: {
+  limit?: number;
+  gravity?: number;
+  cursor?: RankedFeedCursor;
+  followingOnly?: boolean;
+} = {}): Promise<FeedItem[]> {
+  const uid = await getSessionUserId();
+
+  const { data, error } = await supabase.rpc('get_ranked_feed', {
+    p_user_id: uid ?? null,
+    p_limit: options.limit ?? 50,
+    p_gravity: options.gravity ?? 1.8,
+    p_cursor_score: options.cursor?.score ?? null,
+    p_cursor_id: options.cursor?.id ?? null,
+    p_following_only: options.followingOnly ?? false,
+  });
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as RankedFeedRow[];
+  if (rows.length === 0) return [];
+
+  // Profile data is already joined — build the Map directly.
+  const profileById = new Map<string, SupabaseProfileRow>(
+    rows.map(r => [r.author_id, {
+      id: r.author_id,
+      username: r.username,
+      display_name: r.display_name,
+      bio: r.bio,
+      avatar_color: r.avatar_color,
+      avatar_url: r.avatar_url,
+      is_verified: r.is_verified,
+      created_at: '',
+      follower_count: r.follower_count,
+    }])
+  );
+
+  // Fetch per-user engagement state in parallel (3 reads, all filtered to current page).
+  let liked = new Set<string>();
+  let bookmarked = new Set<string>();
+  let reposted = new Set<string>();
+
+  if (uid) {
+    const ids = rows.map(r => r.id);
+    const [{ data: likeRows }, { data: bmRows }, { data: repostRows }] = await Promise.all([
+      supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
+      supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid),
+      supabase.from('echo_reposts').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+    ]);
+    liked = new Set((likeRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+    bookmarked = new Set((bmRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+    reposted = new Set((repostRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+  }
+
+  return rows.map(row =>
+    mapEchoRowToFeedItem(
+      { ...row, rank_score: row.rank_score } as SupabaseEchoRow,
+      profileById.get(row.author_id),
+      liked, bookmarked, reposted
+    )
   );
 }
 
@@ -969,6 +1039,7 @@ export async function fetchSuggestedUsers(): Promise<import('../types').User[]> 
     followingCount: 0,
     isVerified: false,
     echoCount: 0,
+    createdAt: '',
   }));
 }
 
