@@ -9,6 +9,7 @@ export type SupabaseProfileRow = {
   avatar_url?: string | null;
   is_verified: boolean;
   created_at: string;
+  follower_count?: number;
 };
 
 export type SupabaseEchoRow = {
@@ -23,10 +24,12 @@ export type SupabaseEchoRow = {
   view_count: number;
   created_at: string;
   media_urls?: string[] | null;
+  quoted_echo_id?: string | null;
+  rank_score?: number;
 };
 
 export function extractHashtags(text: string): string[] {
-  const m = text.match(/#[\w\u00c0-\u024f]+/gi);
+  const m = text.match(/#[\wÀ-ɏ]+/gi);
   return m ? [...new Set(m)] : [];
 }
 
@@ -66,5 +69,7 @@ export function mapEchoRowToFeedItem(
     postType: videoUri ? 'video' : mediaUris ? 'photo' : 'text',
     mediaUris: videoUri ? undefined : mediaUris,
     videoUri,
+    quotedEchoId: echo.quoted_echo_id ?? undefined,
+    rankScore: echo.rank_score ?? undefined,
   };
 }

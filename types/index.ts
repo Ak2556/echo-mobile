@@ -96,6 +96,8 @@ export interface FeedItem {
     response: string;
     isVerified?: boolean;
   };
+  // Server-computed ranking score — present on remote items, absent on local/seed items.
+  rankScore?: number;
 }
 
 export interface Comment {
