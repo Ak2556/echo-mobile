@@ -91,7 +91,7 @@ export default function HistoryScreen() {
       ) : (
         <FlashList
           data={sessions}
-          renderItem={({ item, index }) => (
+          renderItem={({ item, index }: { item: ChatSession; index: number }) => (
             <SessionCard
               session={item}
               index={index}
@@ -99,7 +99,7 @@ export default function HistoryScreen() {
               onDelete={() => deleteSession(item.id)}
             />
           )}
-          keyExtractor={item => item.id}
+          keyExtractor={(item: ChatSession) => item.id}
           contentContainerStyle={{ paddingVertical: 8 }}
         />
       )}
