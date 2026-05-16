@@ -19,6 +19,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       type: "sourceFile",
     };
   }
+  // expo-video requires a native module not available in Expo Go.
+  // Redirect every import to a pure-JS shim so the app doesn't crash.
+  if (moduleName === "expo-video") {
+    return {
+      filePath: path.resolve(__dirname, "lib/expoVideoShim.js"),
+      type: "sourceFile",
+    };
+  }
   if (originalResolveRequest) {
     return originalResolveRequest(context, moduleName, platform);
   }
