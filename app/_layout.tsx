@@ -48,13 +48,19 @@ function AuthListener() {
   const queryClient = useQueryClient();
   const { setUserId, setUsername, setDisplayName, setAvatarColor, setHasSeenOnboarding, resetSocialData, clearChatHistory } = useAppStore();
 
-  // Exchange token from deep-link URL (email confirmation / OAuth callback)
+  // Exchange token from deep-link URL (email confirmation / OAuth callback).
+  // Works with both the production scheme (echo://) and Expo Go (exp://).
   const handleDeepLink = async (url: string) => {
-    if (!url.includes('echo://')) return;
-    // Extract the fragment/query that Supabase appends
-    const fragment = url.split('#')[1] ?? url.split('?')[1] ?? '';
+    // Only act on URLs that carry Supabase auth tokens.
+    if (!url.includes('access_token') && !url.includes('type=signup') && !url.includes('type=recovery')) return;
+
+    // Supabase appends tokens in the hash fragment (#) or query string (?).
+    const raw = url.split('#')[1] ?? url.split('?')[1] ?? '';
     const params = Object.fromEntries(
-      fragment.split('&').map(p => p.split('=').map(decodeURIComponent))
+      raw.split('&').map(p => {
+        const [k, ...v] = p.split('=');
+        return [decodeURIComponent(k ?? ''), decodeURIComponent(v.join('='))];
+      }),
     );
     if (params.access_token && params.refresh_token) {
       const { error } = await supabase.auth.setSession({
@@ -65,7 +71,7 @@ function AuthListener() {
         showToast('Authentication failed. Please sign in again.', '❌');
         router.replace('/auth/login');
       }
-      // onAuthStateChange handles the redirect on success
+      // onAuthStateChange fires on success and handles navigation.
     }
   };
 

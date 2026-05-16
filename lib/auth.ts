@@ -21,6 +21,10 @@ function getRedirectUri(): string {
 }
 
 export async function signInWithGoogle(): Promise<{ error: string | null }> {
+  // Warm up the browser process on Android for a snappier sheet.
+  if (Platform.OS === 'android') {
+    await WebBrowser.warmUpAsync().catch(() => {});
+  }
   try {
     const redirectUri = getRedirectUri();
 
@@ -54,6 +58,10 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
     return { error: null };
   } catch (e: any) {
     return { error: e?.message ?? 'Google sign-in failed' };
+  } finally {
+    if (Platform.OS === 'android') {
+      await WebBrowser.coolDownAsync().catch(() => {});
+    }
   }
 }
 

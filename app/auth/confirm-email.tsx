@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { EnvelopeSimple, ArrowClockwise, Warning } from 'phosphor-react-native';
+import * as Linking from 'expo-linking';
 import { supabase } from '../../lib/supabase';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -61,7 +62,7 @@ export default function ConfirmEmailScreen() {
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
-      options: { emailRedirectTo: 'echo://auth/callback' },
+      options: { emailRedirectTo: Linking.createURL('auth/callback') },
     });
     setResending(false);
     if (error) { showToast(error.message, '❌'); return; }
