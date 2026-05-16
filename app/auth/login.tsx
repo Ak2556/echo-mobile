@@ -14,12 +14,7 @@ import { signInWithGoogle, signInWithApple } from '../../lib/auth';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { showToast } from '../../components/ui/Toast';
-import Constants from 'expo-constants';
 import { useTheme } from '../../lib/theme';
-
-/** True when running inside Expo Go (the store client). Custom URL schemes
- *  like echo:// are not registered there, so OAuth redirect loops won't work. */
-const IS_EXPO_GO = Constants.appOwnership === 'expo';
 
 type Mode = 'email' | 'phone';
 

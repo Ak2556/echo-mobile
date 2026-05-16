@@ -9,6 +9,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, EyeSlash, EnvelopeSimple, LockKey, ArrowLeft, Phone } from 'phosphor-react-native';
+import * as Linking from 'expo-linking';
 import { supabase } from '../../lib/supabase';
 import { signInWithGoogle, signInWithApple } from '../../lib/auth';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -87,7 +88,7 @@ export default function SignupScreen() {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      options: { emailRedirectTo: 'echo://auth/callback' },
+      options: { emailRedirectTo: Linking.createURL('auth/callback') },
     });
     setLoading(false);
     if (error) { showToast(error.message, '❌'); return; }
