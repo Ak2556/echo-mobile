@@ -107,12 +107,8 @@ export default function LoginScreen() {
   };
 
   const handleGoogle = async () => {
-    if (IS_EXPO_GO) {
-      showToast('Google sign-in needs a dev build — use email instead', 'ℹ️');
-      return;
-    }
     setGoogleLoading(true);
-    // Safety timeout — if the OAuth browser never returns, unblock the UI after 30 s.
+    // Safety timeout — if the browser never returns, unblock the UI after 30 s.
     const bail = setTimeout(() => setGoogleLoading(false), 30_000);
     const { error } = await signInWithGoogle();
     clearTimeout(bail);
@@ -390,9 +386,7 @@ export default function LoginScreen() {
                     {googleLoading ? <ActivityIndicator color={colors.text} size="small" /> : (
                       <>
                         <Text style={{ fontSize: 20 }}>G</Text>
-                        <Text style={{ color: IS_EXPO_GO ? colors.textMuted : colors.text, fontWeight: '600', fontSize: 15 }}>
-                          {IS_EXPO_GO ? 'Google (needs dev build)' : 'Continue with Google'}
-                        </Text>
+                        <Text style={{ color: colors.text, fontWeight: '600', fontSize: 15 }}>Continue with Google</Text>
                       </>
                     )}
                   </View>

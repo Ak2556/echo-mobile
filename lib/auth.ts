@@ -1,26 +1,40 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
+import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const REDIRECT_URL = 'echo://auth/callback';
+/**
+ * Returns the correct OAuth redirect URI for the current environment.
+ *
+ *  • Expo Go (simulator / device)  → exp://127.0.0.1:8081/--/auth/callback
+ *  • Production / dev build        → echo://auth/callback
+ *
+ * Both URLs must be added to the Supabase "Redirect URLs" allowlist
+ * (Authentication → URL Configuration → Redirect URLs).
+ */
+function getRedirectUri(): string {
+  return Linking.createURL('auth/callback');
+}
 
 export async function signInWithGoogle(): Promise<{ error: string | null }> {
   try {
+    const redirectUri = getRedirectUri();
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: REDIRECT_URL,
+        redirectTo: redirectUri,
         skipBrowserRedirect: true,
       },
     });
     if (error) return { error: error.message };
     if (!data.url) return { error: 'No OAuth URL returned' };
 
-    const result = await WebBrowser.openAuthSessionAsync(data.url, REDIRECT_URL);
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
     if (result.type === 'cancel' || result.type === 'dismiss') {
       return { error: '__cancelled__' };
@@ -28,7 +42,9 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
 
     if (result.type === 'success') {
       const url = new URL(result.url);
-      const params = new URLSearchParams(url.hash.slice(1));
+      // Supabase returns tokens in the hash fragment; fall back to query string
+      const fragment = url.hash.slice(1) || url.search.slice(1);
+      const params = new URLSearchParams(fragment);
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
       if (accessToken && refreshToken) {
