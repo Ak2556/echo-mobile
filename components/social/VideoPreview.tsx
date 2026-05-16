@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { useVideoPlayer, VideoView } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play } from 'phosphor-react-native';
+
+// Safely attempt to load expo-video (unavailable in Expo Go).
+// In Expo Go this stays null and we render the static fallback.
+let ExpoVideoModule: { VideoView: any; useVideoPlayer: any } | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  ExpoVideoModule = require('expo-video');
+} catch {}
 
 interface VideoPreviewProps {
   uri: string;
@@ -18,14 +25,50 @@ function formatViewCount(n: number): string {
   return `${n}`;
 }
 
-export function VideoPreview({ uri, height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
+// ── Static fallback (Expo Go / no native module) ────────────────────────────
+function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
+  return (
+    <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden' }}>
+      <LinearGradient
+        colors={['#1E1B4B', '#312E81', '#0A0A0A']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <View style={{
+          width: 54, height: 54, borderRadius: 27,
+          backgroundColor: 'rgba(255,255,255,0.15)',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Play color="#fff" size={24} weight="fill" />
+        </View>
+      </LinearGradient>
+
+      {viewCount !== undefined && (
+        <View style={{
+          position: 'absolute', bottom: 10, left: 10,
+          flexDirection: 'row', alignItems: 'center', gap: 4,
+          paddingHorizontal: 8, paddingVertical: 4,
+          borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)',
+        }}>
+          <Eye size={13} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{formatViewCount(viewCount)}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+// ── Full video player (dev client / production build) ───────────────────────
+function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
+  const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const player = useVideoPlayer(uri, p => { p.muted = true; p.loop = true; });
+  const player = useVideoPlayer(uri, (p: any) => { p.muted = true; p.loop = true; });
 
   useEffect(() => { setLoadState('loading'); }, [uri]);
 
   useEffect(() => {
-    const sub = player.addListener('statusChange', ({ status }) => {
+    const sub = player.addListener('statusChange', ({ status }: { status: string }) => {
       if (status === 'readyToPlay') { setLoadState('ready'); player.play(); }
       if (status === 'error') setLoadState('error');
     });
@@ -69,4 +112,10 @@ export function VideoPreview({ uri, height = 260, borderRadius = 16, onPress, vi
       )}
     </Pressable>
   );
+}
+
+// ── Public export — auto-selects based on native module availability ─────────
+export function VideoPreview(props: VideoPreviewProps) {
+  if (!ExpoVideoModule) return <VideoFallback {...props} />;
+  return <VideoPlayer {...props} />;
 }
