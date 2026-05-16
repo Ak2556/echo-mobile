@@ -17,23 +17,13 @@
       "android": {
         "buildType": "apk"
       },
-      "channel": "preview",
-      "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "",
-        "EXPO_PUBLIC_API_URL": ""
-      }
+      "channel": "preview"
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
       },
-      "channel": "production",
-      "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "",
-        "EXPO_PUBLIC_API_URL": ""
-      }
+      "channel": "production"
     }
   },
   "submit": {
