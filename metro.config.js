@@ -27,6 +27,15 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       type: "sourceFile",
     };
   }
+  // 'ws' is a Node-only WebSocket library — it pulls in 'stream', 'http', etc.
+  // None of those exist in React Native. Redirect to an empty shim so any
+  // transitive import (e.g. from Supabase Realtime in SSR pass) is a no-op.
+  if (moduleName === "ws") {
+    return {
+      filePath: path.resolve(__dirname, "lib/emptyShim.js"),
+      type: "sourceFile",
+    };
+  }
   if (originalResolveRequest) {
     return originalResolveRequest(context, moduleName, platform);
   }
