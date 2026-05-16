@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, Pressable, Share } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import Markdown from 'react-native-markdown-display';
+import { Copy } from 'phosphor-react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
@@ -27,6 +29,8 @@ export interface Message {
 
 interface MessageBubbleProps {
   message: Message;
+  /** When true, renders plain text with blinking cursor instead of Markdown — faster during streaming. */
+  isStreaming?: boolean;
   onCopy?: (m: Message) => void;
   onEdit?: (m: Message) => void;
   onRegenerate?: (m: Message) => void;
@@ -35,11 +39,53 @@ interface MessageBubbleProps {
 
 const FONT_SIZES = { small: 14, medium: 16, large: 18 };
 
-export function MessageBubble({ message, onCopy, onEdit, onRegenerate, onBranch }: MessageBubbleProps) {
+function buildMarkdownStyles(colors: any, textSize: number) {
+  return StyleSheet.create({
+    body: { color: colors.text, fontSize: textSize, lineHeight: textSize * 1.55 },
+    heading1: { color: colors.text, fontSize: textSize * 1.25, fontWeight: '700' as const, marginBottom: 6, marginTop: 4 },
+    heading2: { color: colors.text, fontSize: textSize * 1.1, fontWeight: '700' as const, marginBottom: 4, marginTop: 4 },
+    heading3: { color: colors.text, fontSize: textSize, fontWeight: '700' as const, marginBottom: 4 },
+    bullet_list: { marginBottom: 4 },
+    ordered_list: { marginBottom: 4 },
+    list_item: { color: colors.text, fontSize: textSize, lineHeight: textSize * 1.5 },
+    code_inline: {
+      color: colors.accent,
+      backgroundColor: colors.surfaceHover,
+      borderRadius: 4,
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+      fontSize: textSize * 0.88,
+    },
+    fence: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: 10,
+      paddingRight: 36,
+      marginVertical: 6,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    code_block: { color: colors.text, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: textSize * 0.88 },
+    blockquote: { borderLeftColor: colors.accent, borderLeftWidth: 3, paddingLeft: 10, marginLeft: 0, opacity: 0.8, marginVertical: 4 },
+    link: { color: colors.accent },
+    strong: { fontWeight: '700' as const },
+    paragraph: { marginTop: 0, marginBottom: 4 },
+    hr: { backgroundColor: colors.border, height: 1, marginVertical: 8 },
+  });
+}
+
+export function MessageBubble({ message, isStreaming, onCopy, onEdit, onRegenerate, onBranch }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const { chatBubbleStyle, fontSize, reduceAnimations, accentColor, fontScale } = useAppStore();
   const { colors } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Blinking cursor during streaming
+  const [cursorOn, setCursorOn] = useState(true);
+  useEffect(() => {
+    if (!isStreaming || isUser) return;
+    const timer = setInterval(() => setCursorOn(v => !v), 530);
+    return () => clearInterval(timer);
+  }, [isStreaming, isUser]);
 
   const baseSize = FONT_SIZES[fontSize];
   const textSize = Math.round(baseSize * (fontScale ?? 1));
@@ -82,6 +128,54 @@ export function MessageBubble({ message, onCopy, onEdit, onRegenerate, onBranch 
     { key: 'branch', label: 'Branch from here', disabled: !onBranch, onPress: () => onBranch?.(message) },
   ];
 
+  // Code block copy button — injected via custom Markdown rules
+  const markdownRules = {
+    fence: (node: any) => {
+      const code: string = node.content ?? '';
+      return (
+        <View
+          key={node.key}
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: 8,
+            padding: 10,
+            marginVertical: 6,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.border,
+          }}
+        >
+          <Text
+            selectable
+            style={{
+              color: colors.text,
+              fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+              fontSize: textSize * 0.88,
+              lineHeight: textSize * 1.4,
+            }}
+          >
+            {code.trimEnd()}
+          </Text>
+          <Pressable
+            onPress={() => copyToClipboard(code)}
+            hitSlop={8}
+            style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              backgroundColor: colors.surfaceHover,
+              borderRadius: 6,
+              padding: 5,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+            }}
+          >
+            <Copy color={colors.textMuted} size={13} />
+          </Pressable>
+        </View>
+      );
+    },
+  };
+
   // User bubble — accent colored, always solid
   if (isUser) {
     const minimalStyle = chatBubbleStyle === 'minimal'
@@ -104,6 +198,18 @@ export function MessageBubble({ message, onCopy, onEdit, onRegenerate, onBranch 
       </>
     );
   }
+
+  // Assistant bubble content — plain text during streaming, Markdown after done
+  const bubbleContent = isStreaming ? (
+    <Text style={{ color: colors.text, fontSize: textSize, lineHeight: textSize * 1.55 }}>
+      {message.content}
+      <Text style={{ color: colors.accent, opacity: cursorOn ? 1 : 0 }}>▌</Text>
+    </Text>
+  ) : (
+    <Markdown style={buildMarkdownStyles(colors, textSize)} rules={markdownRules}>
+      {message.content || ' '}
+    </Markdown>
+  );
 
   // Assistant bubble — frosted glass on iOS
   const minimalStyle = chatBubbleStyle === 'minimal'
@@ -145,9 +251,7 @@ export function MessageBubble({ message, onCopy, onEdit, onRegenerate, onBranch 
               }}
             />
             <View style={padding}>
-              <Text style={{ color: textColor, fontSize: textSize, lineHeight: textSize * 1.5 }}>
-                {message.content}
-              </Text>
+              {bubbleContent}
             </View>
           </Pressable>
         </Animated.View>
@@ -172,9 +276,7 @@ export function MessageBubble({ message, onCopy, onEdit, onRegenerate, onBranch 
             { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
           ]}
         >
-          <Text style={{ color: textColor, fontSize: textSize, lineHeight: textSize * 1.5 }}>
-            {message.content}
-          </Text>
+          {bubbleContent}
         </Pressable>
       </Animated.View>
       <ActionSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} actions={actions} />

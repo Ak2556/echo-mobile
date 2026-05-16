@@ -16,7 +16,7 @@ import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
 import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar } from 'phosphor-react-native';
-import Animated, { FadeInUp, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -126,7 +126,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   } = useAppStore();
   const bookmarked = remote ? item.isBookmarked : isBookmarked(item.id);
   const reposted = remote ? item.isReposted : isReposted(item.id);
-  const [showMenu, setShowMenu] = useState(false);
+  const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [repostSheetOpen, setRepostSheetOpen] = useState(false);
   const [feedFeedbackOpen, setFeedFeedbackOpen] = useState(false);
@@ -242,7 +242,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   ];
 
   const handleReport = () => {
-    setShowMenu(false);
     router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } });
   };
 
@@ -263,32 +262,41 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   // ── Shared sub-sections ──
 
-  const MenuOverlay = showMenu ? (
-    <Animated.View
-      entering={reduceAnimations ? undefined : FadeIn.duration(200)}
-      exiting={reduceAnimations ? undefined : FadeOut.duration(150)}
-      style={{ marginBottom: 12 }}
-    >
-      <GlassPanel variant="ultra" borderRadius={radius.md} elevated performanceMode="hot">
-        <AnimatedPressable onPress={handleReport} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot">
-          <Flag color="#F59E0B" size={16} weight="fill" />
-          <Text style={{ color: colors.text, fontSize: fontSizes.small }}>Report</Text>
-        </AnimatedPressable>
-        <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }} />
-        <AnimatedPressable
-          onPress={() => { setShowMenu(false); router.push(`/user/${item.userId}`); }}
-          style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }}
-          depth="soft"
-          fadeOnPress
-          haptic="light"
-          performanceMode="hot"
-        >
-          <UserMinus color={colors.textSecondary} size={16} />
-          <Text style={{ color: colors.text, fontSize: fontSizes.small }}>View Profile</Text>
-        </AnimatedPressable>
-      </GlassPanel>
-    </Animated.View>
-  ) : null;
+  const menuActions: ActionItem[] = [
+    {
+      key: 'profile',
+      label: 'View Profile',
+      icon: <UserMinus color={colors.textSecondary} size={20} />,
+      onPress: () => router.push(`/user/${item.userId}`),
+    },
+    {
+      key: 'mute',
+      label: isMuted(item.userId) ? `Unmute @${item.username}` : `Mute @${item.username}`,
+      icon: <UserMinus color={colors.textSecondary} size={20} />,
+      onPress: () => {
+        const wasMuted = isMuted(item.userId);
+        toggleMute(item.userId);
+        tap(wasMuted ? 'light' : 'warning');
+        showToast(wasMuted ? `Unmuted @${item.username}` : `Muted @${item.username}`, wasMuted ? '🔔' : '🔕');
+      },
+    },
+    {
+      key: 'report',
+      label: 'Report',
+      icon: <Flag color="#F59E0B" size={20} weight="fill" />,
+      destructive: true,
+      onPress: handleReport,
+    },
+  ];
+
+  const AllModals = (
+    <>
+      <ShareSheet visible={shareOpen} onClose={() => setShareOpen(false)} echo={item} />
+      <ActionSheet visible={repostSheetOpen} onClose={() => setRepostSheetOpen(false)} title="Re-echo or quote?" actions={repostActions} />
+      <ActionSheet visible={feedFeedbackOpen} onClose={() => setFeedFeedbackOpen(false)} actions={feedFeedbackActions} />
+      <ActionSheet visible={menuSheetOpen} onClose={() => setMenuSheetOpen(false)} subtitle={`@${item.username}`} actions={menuActions} />
+    </>
+  );
 
   const ActionsRow = (
     <View
@@ -431,7 +439,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               </AnimatedPressable>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
               <AnimatedPressable
-                onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
+                onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
                 depth="medium"
                 fadeOnPress
                 haptic="light"
@@ -443,12 +451,15 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               </AnimatedPressable>
             </View>
 
-            {MenuOverlay}
-
-            {/* Caption / prompt text */}
-            {!!item.prompt && (
+            {/* Title + caption */}
+            {!!(item.editorialTitle ?? item.prompt) && (
+              <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '700', marginBottom: item.authorNote ? 4 : 10, lineHeight: textSize * 1.3 }} numberOfLines={2}>
+                {item.editorialTitle ?? item.prompt}
+              </Text>
+            )}
+            {!!item.authorNote && (
               <Text style={{ fontSize: fontSizes.small, color: colors.textSecondary, marginBottom: 10 }} numberOfLines={2}>
-                {item.prompt}
+                {item.authorNote}
               </Text>
             )}
 
@@ -466,6 +477,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             {ActionsRow}
           </View>
         </AnimatedPressable>
+        {AllModals}
       </Animated.View>
     );
   }
@@ -537,7 +549,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </AnimatedPressable>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
           <AnimatedPressable
-            onPress={(e) => { e.stopPropagation?.(); setShowMenu(!showMenu); }}
+            onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
             depth="medium"
             fadeOnPress
             haptic="light"
@@ -547,20 +559,16 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </AnimatedPressable>
         </View>
 
-        {MenuOverlay}
-
         {/* ── TEXT post ── */}
         {(!item.postType || item.postType === 'text') && (
           <>
-            <View style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: radius.md, padding: compactFeed ? 8 : 12, marginBottom: compactFeed ? 8 : 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-              <Text style={{ color: colors.textSecondary, fontWeight: '500', fontSize: fontSizes.caption, marginBottom: 4 }}>Prompt</Text>
-              <Text style={{ fontSize: textSize, color: colors.text }} numberOfLines={compactFeed ? 2 : undefined}>{item.prompt}</Text>
-            </View>
-            {showPreviewCards && !!item.response && (
-              <View style={{ marginBottom: compactFeed ? 8 : 12 }}>
-                <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '500', marginBottom: 2 }}>Echo</Text>
-                <Text style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6 }} numberOfLines={compactFeed ? 2 : 3}>{item.response}</Text>
-              </View>
+            <Text style={{ fontSize: textSize + 1, color: colors.text, fontWeight: '700', marginBottom: compactFeed ? 4 : 8, lineHeight: (textSize + 1) * 1.35 }} numberOfLines={compactFeed ? 2 : 3}>
+              {item.editorialTitle ?? item.prompt}
+            </Text>
+            {!!(item.authorNote ?? (showPreviewCards ? item.response : null)) && (
+              <Text style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6, marginBottom: compactFeed ? 8 : 12 }} numberOfLines={compactFeed ? 2 : 3}>
+                {item.authorNote ?? item.response}
+              </Text>
             )}
             {item.quotedEcho && <QuotedEchoCard echo={item.quotedEcho} compact={compactFeed} />}
           </>
@@ -620,9 +628,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {ActionsRow}
       </AnimatedPressable>
       </GlassPanel>
-      <ShareSheet visible={shareOpen} onClose={() => setShareOpen(false)} echo={item} />
-      <ActionSheet visible={repostSheetOpen} onClose={() => setRepostSheetOpen(false)} title="Re-echo or quote?" actions={repostActions} />
-      <ActionSheet visible={feedFeedbackOpen} onClose={() => setFeedFeedbackOpen(false)} actions={feedFeedbackActions} />
+      {AllModals}
     </Animated.View>
   );
 }

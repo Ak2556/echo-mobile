@@ -58,6 +58,11 @@ interface StreamArgs {
   };
   /** When set, overrides the default model on the Edge Function side. */
   preferredModel?: EchoAIModel;
+  /**
+   * Called immediately once the stream opens with a `stop()` function.
+   * Calling `stop()` closes the SSE connection and resolves the promise cleanly.
+   */
+  onAbortHandle?: (stop: () => void) => void;
   onEvent: (event: EchoAIEvent) => void;
 }
 
@@ -85,6 +90,7 @@ function openStream(
   jwt: string,
   payload: Record<string, unknown>,
   onEvent: StreamArgs['onEvent'],
+  onAbortHandle?: StreamArgs['onAbortHandle'],
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const es = new EventSource(ECHO_AI_URL, {
@@ -101,6 +107,12 @@ function openStream(
       es.removeAllEventListeners();
       es.close();
     };
+
+    // Expose a stop handle so callers can cancel mid-stream cleanly.
+    onAbortHandle?.(() => {
+      cleanup();
+      resolve();
+    });
 
     es.addEventListener('message', (event: any) => {
       if (!event.data || event.data === '[DONE]') return;
@@ -139,6 +151,7 @@ export async function streamEchoAI({
   confirm,
   localResult,
   preferredModel,
+  onAbortHandle,
   onEvent,
 }: StreamArgs): Promise<void> {
   // Get current cached session.
@@ -171,14 +184,14 @@ export async function streamEchoAI({
   }
 
   try {
-    await openStream(jwt, payload, onEvent);
+    await openStream(jwt, payload, onEvent, onAbortHandle);
   } catch (err: any) {
     // On 401: silently refresh the token and retry ONCE.
     if ((err as StreamError)?.status === 401) {
       console.warn('[EchoAI] 401 — attempting token refresh then retry');
       const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
       if (!refreshErr && refreshed.session?.access_token) {
-        await openStream(refreshed.session.access_token, payload, onEvent);
+        await openStream(refreshed.session.access_token, payload, onEvent, onAbortHandle);
         return;
       }
       // Refresh failed — sign the user out so they hit the login screen.

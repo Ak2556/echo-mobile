@@ -34,17 +34,24 @@ export default function CreateStoryScreen() {
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Create Story</Text>
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <Broadcast color={colors.textMuted} size={48} />
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>Stories coming soon</Text>
+          <Broadcast color={colors.accent} size={48} />
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>Stories are on their way</Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 21 }}>
-            We&apos;re working on server-backed stories. Check back in a future update.
+            Real-time Stories are coming soon. For now, share your thoughts as an Echo — they live in your feed permanently.
           </Text>
           <AnimatedPressable
-            onPress={() => router.back()}
+            onPress={() => router.replace('/create-post' as any)}
             style={{ marginTop: 24, backgroundColor: colors.accent, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
             haptic="medium"
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Go back</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Share an Echo instead</Text>
+          </AnimatedPressable>
+          <AnimatedPressable
+            onPress={() => router.back()}
+            style={{ marginTop: 12, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
+            haptic="light"
+          >
+            <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 14 }}>Go back</Text>
           </AnimatedPressable>
         </View>
       </SafeAreaView>

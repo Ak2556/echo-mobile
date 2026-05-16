@@ -9,6 +9,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { User, At } from 'phosphor-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
+import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 
@@ -19,6 +20,7 @@ const AVATAR_COLORS = [
 
 export default function SetupProfileScreen() {
   const router = useRouter();
+  const { colors, radius, fontSizes } = useTheme();
   const { setUsername, setDisplayName, setUserId, setAvatarColor, setHasSeenOnboarding } = useAppStore();
   const [displayName, setDisplayNameLocal] = useState('');
   const [username, setUsernameLocal] = useState('');
@@ -42,7 +44,6 @@ export default function SetupProfileScreen() {
 
     const userId = session.user.id;
 
-    // Upsert profile in Supabase
     const { error } = await supabase.from('profiles').upsert({
       id: userId,
       username: usernameClean,
@@ -61,7 +62,6 @@ export default function SetupProfileScreen() {
       return;
     }
 
-    // Sync to local store
     setUserId(userId);
     setUsername(usernameClean);
     setDisplayName(displayName.trim());
@@ -73,7 +73,7 @@ export default function SetupProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -94,8 +94,8 @@ export default function SetupProfileScreen() {
                 {displayName.trim().charAt(0).toUpperCase() || '?'}
               </Text>
             </View>
-            <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>Set up your profile</Text>
-            <Text style={{ color: '#71717A', fontSize: 15, marginTop: 6, textAlign: 'center' }}>
+            <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>Set up your profile</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: 6, textAlign: 'center' }}>
               Let others know who you are
             </Text>
           </Animated.View>
@@ -103,55 +103,55 @@ export default function SetupProfileScreen() {
           <Animated.View entering={FadeInDown.delay(120).springify()}>
             {/* Display Name */}
             <View style={{ marginBottom: 14 }}>
-              <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>DISPLAY NAME</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>DISPLAY NAME</Text>
               <View style={{
                 flexDirection: 'row', alignItems: 'center',
-                backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1, borderColor: '#27272A',
+                backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
                 paddingHorizontal: 14, paddingVertical: 4,
               }}>
-                <User color="#52525B" size={18} style={{ marginRight: 10 }} />
+                <User color={colors.textMuted} size={18} style={{ marginRight: 10 }} />
                 <TextInput
                   value={displayName}
                   onChangeText={setDisplayNameLocal}
                   placeholder="Your name"
-                  placeholderTextColor="#52525B"
+                  placeholderTextColor={colors.textMuted}
                   maxLength={40}
-                  style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
+                  style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 14 }}
                 />
               </View>
             </View>
 
             {/* Username */}
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>USERNAME</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>USERNAME</Text>
               <View style={{
                 flexDirection: 'row', alignItems: 'center',
-                backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1, borderColor: '#27272A',
+                backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
                 paddingHorizontal: 14, paddingVertical: 4,
               }}>
-                <At color="#52525B" size={18} style={{ marginRight: 6 }} />
+                <At color={colors.textMuted} size={18} style={{ marginRight: 6 }} />
                 <TextInput
                   value={username}
                   onChangeText={setUsernameLocal}
                   placeholder="yourhandle"
-                  placeholderTextColor="#52525B"
+                  placeholderTextColor={colors.textMuted}
                   autoCapitalize="none"
                   autoCorrect={false}
                   maxLength={20}
-                  style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 14 }}
+                  style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 14 }}
                 />
                 {usernameClean.length > 0 && (
-                  <Text style={{ color: '#52525B', fontSize: 13 }}>@{usernameClean}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>@{usernameClean}</Text>
                 )}
               </View>
-              <Text style={{ color: '#52525B', fontSize: 12, marginTop: 6, marginLeft: 2 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 6, marginLeft: 2 }}>
                 Only letters, numbers, and underscores. Min. 2 characters.
               </Text>
             </View>
 
             {/* Avatar color picker */}
             <View style={{ marginBottom: 32 }}>
-              <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '600', marginBottom: 12, marginLeft: 2 }}>AVATAR COLOR</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 12, marginLeft: 2 }}>AVATAR COLOR</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {AVATAR_COLORS.map(color => (
                   <AnimatedPressable
@@ -162,7 +162,7 @@ export default function SetupProfileScreen() {
                     style={{
                       width: 40, height: 40, borderRadius: 20, backgroundColor: color,
                       borderWidth: selectedColor === color ? 3 : 0,
-                      borderColor: '#fff',
+                      borderColor: colors.text,
                     }}
                   />
                 ))}
@@ -176,11 +176,11 @@ export default function SetupProfileScreen() {
               scaleValue={0.97}
               haptic="medium"
               style={{
-                backgroundColor: canSubmit ? '#6366F1' : '#27272A',
-                borderRadius: 14, paddingVertical: 16,
+                backgroundColor: canSubmit ? colors.accent : colors.surfaceHover,
+                borderRadius: radius.lg, paddingVertical: 16,
                 alignItems: 'center', justifyContent: 'center',
                 opacity: canSubmit ? 1 : 0.6,
-                shadowColor: '#6366F1', shadowOpacity: canSubmit ? 0.4 : 0,
+                shadowColor: colors.accent, shadowOpacity: canSubmit ? 0.4 : 0,
                 shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
                 marginBottom: 32,
               }}

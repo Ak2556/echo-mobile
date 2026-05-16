@@ -1,12 +1,5 @@
 import { FeedItem, Comment, Notification, Conversation, DirectMessage, Story, User } from '../../types';
 import { persistGet, persistSet } from '../persist';
-import {
-  MOCK_USERS,
-  SEED_NOTIFICATIONS,
-  SEED_CONVERSATIONS,
-  SEED_DMS,
-  SEED_STORIES,
-} from '../../lib/mockData';
 
 // Cross-slice dependency: toggleFollow reads auth fields from the shared store
 interface AuthFields {
@@ -116,17 +109,11 @@ export function createSocialSlice(
   get: () => SocialSlice & AuthFields,
 ): SocialSlice {
   return {
-    // ── Users Database ──
-    users: MOCK_USERS,
-    getUser: (id) => MOCK_USERS.find(u => u.id === id),
-    getUserByUsername: (username) => MOCK_USERS.find(u => u.username === username),
-    searchUsers: (query) => {
-      const q = query.toLowerCase();
-      return MOCK_USERS.filter(u =>
-        u.username.toLowerCase().includes(q) ||
-        u.displayName.toLowerCase().includes(q)
-      );
-    },
+    // ── Users Database (local-only fallback; remote mode uses Supabase queries) ──
+    users: [],
+    getUser: (_id) => undefined,
+    getUserByUsername: (_username) => undefined,
+    searchUsers: (_query) => [],
 
     // ── Published Echoes ──
     publishedEchoes: persistGet<FeedItem[]>('publishedEchoes', []),
@@ -245,11 +232,11 @@ export function createSocialSlice(
       set({ followingIds: ids });
     },
     isFollowing: (userId) => get().followingIds.includes(userId),
-    getFollowers: () => MOCK_USERS.slice(0, 4),
-    getFollowing: () => MOCK_USERS.filter(u => get().followingIds.includes(u.id)),
+    getFollowers: () => [] as User[],
+    getFollowing: () => [] as User[],
 
     // ── Notifications ──
-    notifications: persistGet<Notification[]>('notifications', SEED_NOTIFICATIONS),
+    notifications: persistGet<Notification[]>('notifications', []),
     addNotification: (n) => {
       const notifications = [n, ...get().notifications];
       persistSet('notifications', notifications);
@@ -268,8 +255,8 @@ export function createSocialSlice(
     unreadNotificationCount: () => get().notifications.filter(n => !n.isRead).length,
 
     // ── Direct Messages ──
-    conversations: persistGet<Conversation[]>('conversations', SEED_CONVERSATIONS),
-    messagesByConversation: persistGet<Record<string, DirectMessage[]>>('messagesByConversation', SEED_DMS),
+    conversations: persistGet<Conversation[]>('conversations', []),
+    messagesByConversation: persistGet<Record<string, DirectMessage[]>>('messagesByConversation', {}),
     sendDM: (conversationId, content) => {
       const msg: DirectMessage = {
         id: Date.now().toString(),
@@ -346,7 +333,7 @@ export function createSocialSlice(
     totalUnreadDMs: () => get().conversations.reduce((sum, c) => sum + c.unreadCount, 0),
 
     // ── Stories ──
-    stories: persistGet<Story[]>('stories', SEED_STORIES),
+    stories: persistGet<Story[]>('stories', []),
     addStory: (story) => {
       const stories = [story, ...get().stories];
       persistSet('stories', stories);

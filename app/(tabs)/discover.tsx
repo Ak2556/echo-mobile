@@ -177,9 +177,13 @@ export default function DiscoverScreen() {
           );
         })}
       </View>
-      <SectionHeader label="Your Stories" />
-      <StoryCircles />
-      <SectionHeader label="For You" sub={interests.length > 0 ? `Because you follow ${interests[0]}` : 'Start here'} />
+      {!remote && (
+        <>
+          <SectionHeader label="Your Stories" />
+          <StoryCircles />
+        </>
+      )}
+      <SectionHeader label="For You" sub={interests.length > 0 ? `Picked for ${interests[0]}` : 'Start here'} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -215,9 +219,6 @@ export default function DiscoverScreen() {
                 <Text style={{ color: colors.textSecondary, marginTop: 6, lineHeight: 20 }} numberOfLines={2}>
                   {item.authorNote || item.response}
                 </Text>
-                <Text style={{ color: colors.textMuted, marginTop: 8, fontSize: 12 }}>
-                  Open because this one already reads like a discussion, not just a post.
-                </Text>
               </Pressable>
             ))}
           </View>
@@ -241,8 +242,12 @@ export default function DiscoverScreen() {
       {/* Scrollable content */}
       {isLoading ? (
         <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1, paddingTop: headerHeight }}>
-          <SectionHeader label="Your Stories" />
-          <StoryCircles />
+          {!remote && (
+            <>
+              <SectionHeader label="Your Stories" />
+              <StoryCircles />
+            </>
+          )}
           <SectionHeader label="Trending" sub="Live" />
           <FeedCardSkeleton />
           <FeedCardSkeleton />

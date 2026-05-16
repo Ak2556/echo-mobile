@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { ArrowUp } from 'phosphor-react-native';
+import { ArrowUp, Stop } from 'phosphor-react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -12,11 +12,13 @@ import { MOTION } from '../../lib/motion';
 interface ChatInputProps {
   onSend: (message: string) => void;
   isLoading?: boolean;
+  /** Called when the user taps the stop button during streaming. */
+  onStop?: () => void;
   draft?: string;
   onDraftChange?: (text: string) => void;
 }
 
-export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInputProps) {
+export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: ChatInputProps) {
   const [text, setText] = useState('');
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const { colors, reduceAnimations } = useTheme();
@@ -46,8 +48,19 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
     }
   };
 
+  const handleStop = () => {
+    sendScale.value = withSequence(
+      withSpring(0.86, MOTION.pressDeep),
+      withSpring(1, MOTION.overshoot)
+    );
+    if (hapticEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onStop?.();
+  };
+
   const buttonStyle = useAnimatedStyle(() => ({
-    opacity: withSpring(text.trim() ? 1 : 0.4, { damping: 20, stiffness: 500 }),
+    opacity: withSpring(isLoading || text.trim() ? 1 : 0.4, { damping: 20, stiffness: 500 }),
     transform: [{ scale: sendScale.value }],
   }));
 
@@ -56,8 +69,9 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
     transform: [{ scale: reduceAnimations ? 1 : withSpring(focus.value ? 1.012 : 1, MOTION.settle) }],
   }));
 
+  const isStop = !!isLoading && !!onStop;
   const canSend = !!text.trim() && !isLoading;
-  const sendBg = canSend ? colors.accent : colors.surfaceHover;
+  const sendBg = isStop ? colors.danger : canSend ? colors.accent : colors.surfaceHover;
 
   return (
     <View
@@ -108,7 +122,7 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
           }, inputShellStyle]}
         >
           <TextInput
-            placeholder="Message Echo..."
+            placeholder={isLoading ? 'Responding...' : 'Message Echo...'}
             value={text}
             onChangeText={updateText}
             onFocus={() => { focus.value = withSpring(1, MOTION.snap); }}
@@ -129,11 +143,11 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
           />
         </Animated.View>
 
-        {/* Send button */}
+        {/* Send / Stop button */}
         <Animated.View style={buttonStyle}>
           <AnimatedPressable
-            onPress={handleSend}
-            disabled={!canSend}
+            onPress={isStop ? handleStop : handleSend}
+            disabled={!isStop && !canSend}
             depth="deep"
             fadeOnPress
             style={{
@@ -143,13 +157,17 @@ export function ChatInput({ onSend, isLoading, draft, onDraftChange }: ChatInput
               backgroundColor: sendBg,
               alignItems: 'center',
               justifyContent: 'center',
-              borderWidth: canSend ? 0 : StyleSheet.hairlineWidth,
+              borderWidth: (!isStop && !canSend) ? StyleSheet.hairlineWidth : 0,
               borderColor: colors.glassBorder,
             }}
             scaleValue={0.88}
             haptic="none"
           >
-            <ArrowUp color={canSend ? '#fff' : colors.textMuted} size={20} weight="bold" />
+            {isStop ? (
+              <Stop color="#fff" size={18} weight="fill" />
+            ) : (
+              <ArrowUp color={canSend ? '#fff' : colors.textMuted} size={20} weight="bold" />
+            )}
           </AnimatedPressable>
         </Animated.View>
       </View>
