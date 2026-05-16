@@ -12,7 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const PROJECT_REF = 'eyokhisijabitzjiydmz';
+const PROJECT_REF = 'xmjbhcyyqrjlvhluisfj';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SERVICE_KEY) {
