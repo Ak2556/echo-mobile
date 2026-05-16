@@ -71,6 +71,17 @@ export default function HistoryScreen() {
     router.push('/(tabs)/chat');
   };
 
+  const renderSession = (info: { item: ChatSession; index: number }) => (
+    <SessionCard
+      session={info.item}
+      index={info.index}
+      onPress={() => handleOpenSession(info.item)}
+      onDelete={() => deleteSession(info.item.id)}
+    />
+  );
+
+  const extractKey = (item: ChatSession) => item.id;
+
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-black">
       <View className="px-4 py-3 flex-row items-center justify-between border-b border-zinc-900">
@@ -91,15 +102,9 @@ export default function HistoryScreen() {
       ) : (
         <FlashList
           data={sessions}
-          renderItem={({ item, index }: { item: ChatSession; index: number }) => (
-            <SessionCard
-              session={item}
-              index={index}
-              onPress={() => handleOpenSession(item)}
-              onDelete={() => deleteSession(item.id)}
-            />
-          )}
-          keyExtractor={(item: ChatSession) => item.id}
+          estimatedItemSize={88}
+          renderItem={renderSession}
+          keyExtractor={extractKey}
           contentContainerStyle={{ paddingVertical: 8 }}
         />
       )}

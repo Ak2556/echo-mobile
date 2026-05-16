@@ -21,6 +21,11 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
     if (!data.url) return { error: 'No OAuth URL returned' };
 
     const result = await WebBrowser.openAuthSessionAsync(data.url, REDIRECT_URL);
+
+    if (result.type === 'cancel' || result.type === 'dismiss') {
+      return { error: '__cancelled__' };
+    }
+
     if (result.type === 'success') {
       const url = new URL(result.url);
       const params = new URLSearchParams(url.hash.slice(1));

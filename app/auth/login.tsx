@@ -14,7 +14,12 @@ import { signInWithGoogle, signInWithApple } from '../../lib/auth';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { showToast } from '../../components/ui/Toast';
+import Constants from 'expo-constants';
 import { useTheme } from '../../lib/theme';
+
+/** True when running inside Expo Go (the store client). Custom URL schemes
+ *  like echo:// are not registered there, so OAuth redirect loops won't work. */
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
 
 type Mode = 'email' | 'phone';
 
@@ -102,11 +107,21 @@ export default function LoginScreen() {
   };
 
   const handleGoogle = async () => {
+    if (IS_EXPO_GO) {
+      showToast('Google sign-in needs a dev build — use email instead', 'ℹ️');
+      return;
+    }
     setGoogleLoading(true);
+    // Safety timeout — if the OAuth browser never returns, unblock the UI after 30 s.
+    const bail = setTimeout(() => setGoogleLoading(false), 30_000);
     const { error } = await signInWithGoogle();
+    clearTimeout(bail);
     setGoogleLoading(false);
-    if (error) { showToast(error, '❌'); return; }
-    router.replace('/(tabs)/discover');
+    if (!error || error === '__cancelled__') {
+      if (!error) router.replace('/(tabs)/discover');
+      return;
+    }
+    showToast(error, '❌');
   };
 
   const handleApple = async () => {
@@ -375,7 +390,9 @@ export default function LoginScreen() {
                     {googleLoading ? <ActivityIndicator color={colors.text} size="small" /> : (
                       <>
                         <Text style={{ fontSize: 20 }}>G</Text>
-                        <Text style={{ color: colors.text, fontWeight: '600', fontSize: 15 }}>Continue with Google</Text>
+                        <Text style={{ color: IS_EXPO_GO ? colors.textMuted : colors.text, fontWeight: '600', fontSize: 15 }}>
+                          {IS_EXPO_GO ? 'Google (needs dev build)' : 'Continue with Google'}
+                        </Text>
                       </>
                     )}
                   </View>
