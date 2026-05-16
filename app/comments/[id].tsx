@@ -92,13 +92,13 @@ export default function CommentsScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-black">
-      <View className="flex-row items-center px-4 py-3 border-b border-zinc-900">
-        <Pressable onPress={() => router.back()} className="p-1 mr-3" accessibilityLabel="Go back" accessibilityRole="button">
-          <ArrowLeft color="#fff" size={24} />
+    <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <Pressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} accessibilityLabel="Go back" accessibilityRole="button">
+          <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text className="text-white font-bold text-lg flex-1">Comments</Text>
-        <Text className="text-zinc-500 text-sm">{comments.length}</Text>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }}>Comments</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 14 }}>{comments.length}</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -149,12 +149,11 @@ export default function CommentsScreen() {
           </View>
         )}
 
-        <View className="flex-row items-end px-4 py-3 border-t border-zinc-900 bg-black">
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg }}>
           <View
-            className="w-8 h-8 rounded-full items-center justify-center mr-2"
-            style={{ backgroundColor: avatarColor }}
+            style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: avatarColor }}
           >
-            <Text className="text-white font-bold text-xs">
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>
               {(username || '?').charAt(0).toUpperCase()}
             </Text>
           </View>

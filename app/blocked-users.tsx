@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,7 +31,7 @@ export default function BlockedUsersScreen() {
           text: 'Unblock',
           onPress: () => {
             toggleBlock(user.id);
-            showToast(`Unblocked @${user.username}`, '');
+            showToast(`Unblocked @${user.username}`, '🔓');
           },
         },
       ]
@@ -97,7 +96,6 @@ export default function BlockedUsersScreen() {
             </Animated.View>
           )}
           keyExtractor={item => item.id}
-          estimatedItemSize={72}
         />
       )}
     </SafeAreaView>

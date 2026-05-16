@@ -180,17 +180,17 @@ export default function EditPostScreen() {
 
           {postType === 'text' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <Text style={s.label}>Prompt</Text>
+              <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What did you ask Echo?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
+                <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What did you want to know?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
                 <Lightning color={colors.accent} size={12} />
-                <Text style={[s.label, { marginBottom: 0 }]}>Echo Response</Text>
+                <Text style={[s.label, { marginBottom: 0 }]}>Answer / Insight</Text>
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={response} onChangeText={setResponse} placeholder="Share what the AI said…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
+                <TextInput multiline value={response} onChangeText={setResponse} placeholder="The key insight or answer…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{response.length}/1000</Text>
               </View>
             </Animated.View>

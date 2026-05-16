@@ -91,32 +91,35 @@ export default function ProfileScreen() {
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.8 }}>{displayLabel}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>@{username || 'user'}</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 10 }}>
-            {creatorProfile.headline}
-          </Text>
+          {bio ? (
+            <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 10 }}>
+              {bio}
+            </Text>
+          ) : (
+            <AnimatedPressable onPress={() => router.push('/edit-profile')} style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 14, fontStyle: 'italic' }}>Add a bio</Text>
+            </AnimatedPressable>
+          )}
         </View>
 
         <View style={{ paddingHorizontal: 16, gap: 12 }}>
-          <GlassPanel borderRadius={radius.card}>
-            <View style={{ padding: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <Sparkle color={colors.accent} size={16} />
-                <Text style={{ color: colors.text, fontWeight: '700' }}>Why follow</Text>
-              </View>
-              <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
-                Posts mostly about {creatorProfile.topics[0]?.toLowerCase() || 'AI conversations'}, with a focus on turning useful prompts into sharable takeaways.
-              </Text>
-              {creatorProfile.topics.length > 0 ? (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+          {creatorProfile.topics.length > 0 && (
+            <GlassPanel borderRadius={radius.card}>
+              <View style={{ padding: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <Sparkle color={colors.accent} size={16} />
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>Topics</Text>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {creatorProfile.topics.map(topic => (
                     <View key={topic} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '40' }}>
                       <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
                     </View>
                   ))}
                 </View>
-              ) : null}
-            </View>
-          </GlassPanel>
+              </View>
+            </GlassPanel>
+          )}
 
           {creatorProfile.pinned.length > 0 ? (
             <GlassPanel borderRadius={radius.card}>
@@ -170,15 +173,19 @@ export default function ProfileScreen() {
           <View style={{ padding: 16, gap: 12 }}>
             <GlassPanel borderRadius={radius.card}>
               <View style={{ padding: 16 }}>
-                <Text style={{ color: colors.text, fontSize: 15, lineHeight: 23 }}>
-                  {bio || 'Building a profile around useful Echoes, clear prompts, and conversation-led posts.'}
-                </Text>
+                {bio ? (
+                  <Text style={{ color: colors.text, fontSize: 15, lineHeight: 23 }}>{bio}</Text>
+                ) : (
+                  <AnimatedPressable onPress={() => router.push('/edit-profile')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 15, fontStyle: 'italic' }}>No bio yet — tap to add one</Text>
+                  </AnimatedPressable>
+                )}
               </View>
             </GlassPanel>
             <GlassPanel borderRadius={radius.card}>
               <View style={{ padding: 16, gap: 12 }}>
                 <InfoRow icon={<CalendarBlank color={colors.textMuted} size={18} />} label={`Joined Echo ${creatorProfile.joinedYear}`} colors={colors} />
-                <InfoRow icon={<Sparkle color={colors.textMuted} size={18} />} label={`Best known for ${creatorProfile.topics[0] || 'AI conversations'}`} colors={colors} />
+                {creatorProfile.topics[0] ? <InfoRow icon={<Sparkle color={colors.textMuted} size={18} />} label={`Best known for ${creatorProfile.topics[0]}`} colors={colors} /> : null}
                 <InfoRow icon={<Compass color={colors.textMuted} size={18} />} label={creatorProfile.series[0] ? `Current series: ${creatorProfile.series[0]}` : 'No public series yet'} colors={colors} />
               </View>
             </GlassPanel>

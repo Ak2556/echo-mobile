@@ -203,29 +203,36 @@ export default function SearchScreen() {
             </View>
           </View>
 
-          <SectionHeader colors={colors} icon={<TrendUp color={colors.danger} size={16} />} label="Worth opening next" />
-          <View style={{ paddingHorizontal: 16, marginBottom: 24, gap: 10 }}>
-            {discovery.conversationStarters.slice(0, 4).map(item => (
-              <AnimatedPressable
-                key={item.id}
-                onPress={() => router.push(`/thread/${item.id}`)}
-                style={{ padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}
-              >
-                <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{item.editorialTitle || item.prompt}</Text>
-                <Text style={{ color: colors.textSecondary, marginTop: 6, lineHeight: 20 }} numberOfLines={2}>
-                  {item.authorNote || item.response || `Topics: ${inferTopics(item).join(', ')}`}
-                </Text>
-                <Text style={{ color: colors.textMuted, marginTop: 8, fontSize: 12 }}>Open because it already has discussion energy.</Text>
-              </AnimatedPressable>
-            ))}
-          </View>
+          {discovery.conversationStarters.length > 0 && (
+            <>
+              <SectionHeader colors={colors} icon={<TrendUp color={colors.danger} size={16} />} label="Worth opening next" />
+              <View style={{ paddingHorizontal: 16, marginBottom: 24, gap: 10 }}>
+                {discovery.conversationStarters.slice(0, 4).map(item => (
+                  <AnimatedPressable
+                    key={item.id}
+                    onPress={() => router.push(`/thread/${item.id}`)}
+                    style={{ padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}
+                  >
+                    <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{item.editorialTitle || item.prompt}</Text>
+                    <Text style={{ color: colors.textSecondary, marginTop: 6, lineHeight: 20 }} numberOfLines={2}>
+                      {item.authorNote || item.response || `Topics: ${inferTopics(item).join(', ')}`}
+                    </Text>
+                  </AnimatedPressable>
+                ))}
+              </View>
+            </>
+          )}
 
-          <SectionHeader colors={colors} icon={<MagnifyingGlass color={colors.accent} size={16} />} label="People to start with" />
-          <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-            {suggestedUsers.map(user => (
-              <UserRow key={user.id} user={user} onPress={() => router.push(`/user/${user.id}`)} showFollowButton />
-            ))}
-          </View>
+          {suggestedUsers.length > 0 && (
+            <>
+              <SectionHeader colors={colors} icon={<MagnifyingGlass color={colors.accent} size={16} />} label="People to start with" />
+              <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
+                {suggestedUsers.map(user => (
+                  <UserRow key={user.id} user={user} onPress={() => router.push(`/user/${user.id}`)} showFollowButton />
+                ))}
+              </View>
+            </>
+          )}
         </ScrollView>
       )}
 

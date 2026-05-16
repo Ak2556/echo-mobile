@@ -875,7 +875,15 @@ export interface RemoteConversation {
   otherAvatarColor: string;
   lastMessage: string | null;
   lastMessageAt: string | null;
+  lastMessageKind: string;
   unreadCount: number;
+}
+
+export interface RemoteMessageReaction {
+  id: string;
+  messageId: string;
+  userId: string;
+  emoji: string;
 }
 
 export interface RemoteDirectMessage {
@@ -883,20 +891,27 @@ export interface RemoteDirectMessage {
   conversationId: string;
   senderId: string;
   content: string | null;
-  kind: string;
+  kind: 'text' | 'echo' | 'image' | 'voice' | 'link';
   createdAt: string;
   readAt: string | null;
+  deletedAt: string | null;
+  sharedEchoId: string | null;
+  mediaUrl: string | null;
+  reactions: RemoteMessageReaction[];
 }
 
-/** Upsert a conversation (order user_a < user_b per DB check) and insert a message */
-export async function sendRemoteDM(recipientId: string, content: string): Promise<void> {
+/** Upsert a conversation (order user_a < user_b per DB check) and insert a message.
+ *  The DB trigger handles updating last_message_at / last_message_text. */
+export async function sendRemoteDM(
+  recipientId: string,
+  content: string,
+): Promise<{ conversationId: string }> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
 
   const userA = uid < recipientId ? uid : recipientId;
   const userB = uid < recipientId ? recipientId : uid;
 
-  // Upsert conversation
   const { data: conv, error: convErr } = await supabase
     .from('dm_conversations')
     .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
@@ -904,77 +919,115 @@ export async function sendRemoteDM(recipientId: string, content: string): Promis
     .single();
   if (convErr) throw convErr;
 
-  // Insert message
   const { error: msgErr } = await supabase
     .from('direct_messages')
     .insert({ conversation_id: conv.id, sender_id: uid, kind: 'text', text: content });
   if (msgErr) throw msgErr;
 
-  // Update last_message_at on the conversation
-  await supabase
-    .from('dm_conversations')
-    .update({ last_message_at: new Date().toISOString() })
-    .eq('id', conv.id);
+  return { conversationId: conv.id };
 }
 
-/** Fetch all conversations the user is a participant in */
+/** Fetch all conversations via RPC (correct last message + real unread count). */
 export async function fetchRemoteConversations(): Promise<RemoteConversation[]> {
   const uid = await getSessionUserId();
   if (!uid) return [];
 
-  const { data, error } = await supabase
-    .from('dm_conversations')
-    .select('id, user_a, user_b, last_message_at')
-    .or(`user_a.eq.${uid},user_b.eq.${uid}`)
-    .order('last_message_at', { ascending: false })
-    .limit(50);
-
+  const { data, error } = await supabase.rpc('get_dm_conversations', { p_user_id: uid });
   if (error) throw error;
-  if (!data || data.length === 0) return [];
 
-  // Get other user IDs
-  const otherIds = data.map((c: any) => c.user_a === uid ? c.user_b : c.user_a);
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, avatar_color')
-    .in('id', otherIds);
-
-  const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
-
-  // Fetch last message per conversation (single round-trip via lateral-style: just get most recent per conv)
-  const convIds = data.map((c: any) => c.id);
-  const { data: lastMsgs } = await supabase
-    .from('direct_messages')
-    .select('conversation_id, text, created_at')
-    .in('conversation_id', convIds)
-    .order('created_at', { ascending: false })
-    .limit(convIds.length * 1); // PostgREST doesn't support DISTINCT ON; we'll dedupe client-side
-
-  // Build a map of conversationId -> most recent message text
-  const lastMsgMap = new Map<string, string>();
-  for (const msg of (lastMsgs ?? [])) {
-    if (!lastMsgMap.has(msg.conversation_id)) {
-      lastMsgMap.set(msg.conversation_id, msg.text ?? '');
-    }
-  }
-
-  return data.map((c: any) => {
-    const otherId = c.user_a === uid ? c.user_b : c.user_a;
-    const profile = profileMap.get(otherId);
-    return {
-      id: c.id,
-      otherUserId: otherId,
-      otherUsername: profile?.username ?? 'unknown',
-      otherDisplayName: profile?.display_name ?? profile?.username ?? 'User',
-      otherAvatarColor: profile?.avatar_color ?? '#6366F1',
-      lastMessage: lastMsgMap.get(c.id) ?? null,
-      lastMessageAt: c.last_message_at ?? null,
-      unreadCount: 0,
-    };
-  });
+  return ((data ?? []) as Record<string, unknown>[]).map(r => ({
+    id: r.id as string,
+    otherUserId: r.other_user_id as string,
+    otherUsername: (r.other_username as string | null) ?? 'unknown',
+    otherDisplayName: (r.other_display_name as string | null) ?? (r.other_username as string | null) ?? 'User',
+    otherAvatarColor: (r.other_avatar_color as string | null) ?? '#6366F1',
+    lastMessage: (r.last_message_text as string | null) ?? null,
+    lastMessageAt: (r.last_message_at as string | null) ?? null,
+    lastMessageKind: (r.last_message_kind as string | null) ?? 'text',
+    unreadCount: Number(r.unread_count ?? 0),
+  }));
 }
 
-/** Fetch messages for a conversation (newest last, paginated) */
+/** Fetch a single conversation by UUID (used when local store doesn't have it). */
+export async function fetchConversationById(conversationId: string): Promise<RemoteConversation | null> {
+  const uid = await getSessionUserId();
+  if (!uid) return null;
+
+  const { data: conv } = await supabase
+    .from('dm_conversations')
+    .select('id, user_a, user_b, last_message_at, last_message_text, last_message_kind')
+    .eq('id', conversationId)
+    .single();
+  if (!conv) return null;
+
+  const otherId: string = (conv.user_a as string) === uid ? (conv.user_b as string) : (conv.user_a as string);
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_color')
+    .eq('id', otherId)
+    .single();
+
+  return {
+    id: conv.id as string,
+    otherUserId: otherId,
+    otherUsername: (profile?.username as string | null) ?? 'unknown',
+    otherDisplayName: (profile?.display_name as string | null) ?? (profile?.username as string | null) ?? 'User',
+    otherAvatarColor: (profile?.avatar_color as string | null) ?? '#6366F1',
+    lastMessage: (conv.last_message_text as string | null) ?? null,
+    lastMessageAt: (conv.last_message_at as string | null) ?? null,
+    lastMessageKind: (conv.last_message_kind as string | null) ?? 'text',
+    unreadCount: 0,
+  };
+}
+
+/** Mark all unread incoming messages in a conversation as read. */
+export async function markMessagesRead(conversationId: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  await supabase
+    .from('direct_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('conversation_id', conversationId)
+    .neq('sender_id', uid)
+    .is('read_at', null);
+}
+
+/** Soft-delete a message (sender only). */
+export async function deleteRemoteMessage(messageId: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('direct_messages')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', messageId)
+    .eq('sender_id', uid);
+  if (error) throw error;
+}
+
+/** Add an emoji reaction (idempotent upsert). */
+export async function addMessageReaction(messageId: string, emoji: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('message_reactions')
+    .upsert({ message_id: messageId, user_id: uid, emoji }, { onConflict: 'message_id,user_id,emoji' });
+  if (error) throw error;
+}
+
+/** Remove an emoji reaction. */
+export async function removeMessageReaction(messageId: string, emoji: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('message_reactions')
+    .delete()
+    .eq('message_id', messageId)
+    .eq('user_id', uid)
+    .eq('emoji', emoji);
+  if (error) throw error;
+}
+
+/** Fetch messages for a conversation (oldest-first, paginated by cursor). */
 export async function fetchRemoteMessages(
   conversationId: string,
   limit = 40,
@@ -982,26 +1035,37 @@ export async function fetchRemoteMessages(
 ): Promise<RemoteDirectMessage[]> {
   let q = supabase
     .from('direct_messages')
-    .select('id, conversation_id, sender_id, text, kind, created_at, read_at')
+    .select(`
+      id, conversation_id, sender_id, text, kind,
+      created_at, read_at, deleted_at, shared_echo_id, media_url,
+      reactions:message_reactions(id, user_id, emoji)
+    `)
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  if (cursor) {
-    q = q.lt('created_at', cursor);
-  }
+  if (cursor) q = q.lt('created_at', cursor);
 
   const { data, error } = await q;
   if (error) throw error;
 
-  return ((data ?? []) as any[]).reverse().map(m => ({
-    id: m.id,
-    conversationId: m.conversation_id,
-    senderId: m.sender_id,
-    content: m.text ?? null,
-    kind: m.kind,
-    createdAt: m.created_at,
-    readAt: m.read_at ?? null,
+  return ((data ?? []) as Record<string, unknown>[]).reverse().map(m => ({
+    id: m.id as string,
+    conversationId: m.conversation_id as string,
+    senderId: m.sender_id as string,
+    content: (m.text as string | null) ?? null,
+    kind: (m.kind as RemoteDirectMessage['kind']) ?? 'text',
+    createdAt: m.created_at as string,
+    readAt: (m.read_at as string | null) ?? null,
+    deletedAt: (m.deleted_at as string | null) ?? null,
+    sharedEchoId: (m.shared_echo_id as string | null) ?? null,
+    mediaUrl: (m.media_url as string | null) ?? null,
+    reactions: ((m.reactions as Record<string, unknown>[] | null) ?? []).map(r => ({
+      id: r.id as string,
+      messageId: m.id as string,
+      userId: r.user_id as string,
+      emoji: r.emoji as string,
+    })),
   }));
 }
 

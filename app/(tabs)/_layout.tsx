@@ -8,6 +8,7 @@ import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
 import { GlassPanel } from '../../components/ui/GlassPanel';
+import { tap } from '../../lib/haptics';
 
 const HIDDEN_ROUTES = new Set(['history', 'echoes', 'apps']);
 
@@ -87,6 +88,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               <Pressable
                 key={route.key}
                 onPress={() => {
+                  tap('light');
                   const event = navigation.emit({
                     type: 'tabPress',
                     target: route.key,

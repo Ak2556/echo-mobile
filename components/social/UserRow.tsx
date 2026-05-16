@@ -78,14 +78,14 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
             onPress={(e) => { e.stopPropagation?.(); handleFollow(); }}
             className="px-4 py-1.5 rounded-full"
             style={{
-              backgroundColor: following ? colors.surfaceHover : '#fff',
+              backgroundColor: following ? colors.surfaceHover : colors.accent,
               borderWidth: following ? 1 : 0,
               borderColor: colors.border,
             }}
             scaleValue={0.92}
             haptic="medium"
           >
-            <Text style={{ fontSize: fontSizes.small, fontWeight: '600', color: following ? colors.text : '#000' }}>
+            <Text style={{ fontSize: fontSizes.small, fontWeight: '600', color: following ? colors.text : '#fff' }}>
               {following ? 'Following' : 'Follow'}
             </Text>
           </AnimatedPressable>

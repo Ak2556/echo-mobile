@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PencilSimple, Envelope , SealCheck } from 'phosphor-react-native';
+import { ArrowLeft, PencilSimple, Envelope, SealCheck } from 'phosphor-react-native';
 import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -12,6 +12,7 @@ import { useTheme } from '../../lib/theme';
 import { Conversation } from '../../types';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useRemoteConversations } from '../../hooks/queries/useDMs';
+import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation } from '../../lib/supabaseEchoApi';
 
 function getTimeAgo(dateStr: string): string {
@@ -76,9 +77,6 @@ function ConversationCard({ conversation, index, onPress }: {
           >
             {conversation.lastMessage}
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>
-            Use DMs to continue the conversation behind an Echo, not just to say hi.
-          </Text>
         </View>
 
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8 }}>{getTimeAgo(conversation.lastMessageAt)}</Text>
@@ -90,12 +88,12 @@ function ConversationCard({ conversation, index, onPress }: {
 export default function MessagesListScreen() {
   const router = useRouter();
   const { conversations: localConversations } = useAppStore();
-  const { colors, radius } = useTheme();
+  const { colors } = useTheme();
   const remote = isSupabaseRemote();
-  const { data: remoteConvs = [] } = useRemoteConversations();
+  const { data: remoteConvs = [], isLoading: remoteLoading } = useRemoteConversations();
 
-  // Resolve conversations: map remote shape to the ConversationCard-compatible format
-  const conversations: Conversation[] = remote && remoteConvs.length > 0
+  // Resolve conversations: use remote when available, local only in non-remote mode
+  const conversations: Conversation[] = remote
     ? remoteConvs.map((rc: RemoteConversation) => ({
         id: rc.id,
         userId: rc.otherUserId,
@@ -106,13 +104,31 @@ export default function MessagesListScreen() {
         lastMessage: rc.lastMessage ?? '',
         lastMessageAt: rc.lastMessageAt ?? new Date().toISOString(),
         unreadCount: rc.unreadCount,
-        messages: [],
       }))
     : localConversations;
 
   const sorted = [...conversations].sort(
     (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
   );
+
+  if (remote && remoteLoading) {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
+            <ArrowLeft color={colors.text} size={24} />
+          </AnimatedPressable>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Messages</Text>
+          <AnimatedPressable onPress={() => router.push('/(tabs)/search')} className="p-1" scaleValue={0.88} haptic="light">
+            <PencilSimple color={colors.accent} size={22} />
+          </AnimatedPressable>
+        </View>
+        <FeedCardSkeleton />
+        <FeedCardSkeleton />
+        <FeedCardSkeleton />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -121,16 +137,9 @@ export default function MessagesListScreen() {
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Messages</Text>
-        <AnimatedPressable className="p-1" scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => router.push('/(tabs)/search')} className="p-1" scaleValue={0.88} haptic="light">
           <PencilSimple color={colors.accent} size={22} />
         </AnimatedPressable>
-      </View>
-
-      <View style={{ margin: 16, padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-        <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 6 }}>Best use of messages</Text>
-        <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
-          Ask follow-up questions about an Echo, share context privately, or turn a good reply into the start of another post.
-        </Text>
       </View>
 
       {sorted.length === 0 ? (

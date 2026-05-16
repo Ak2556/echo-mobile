@@ -14,19 +14,28 @@ import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
-import { streamEchoAI } from '../../lib/api';
+import { ActionSheet } from '../../components/common/ActionSheet';
+import { streamEchoAI, EchoAIModel } from '../../lib/api';
 import { isLocalTool } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { generateSessionTitle } from '../../lib/aiTitle';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight } from 'phosphor-react-native';
+import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, CaretDown } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 
 const EMPTY_SUGGESTIONS = ['Ask for a better hook', 'Turn an idea into a post', 'Run a poll for me', 'Summarize a note'];
 
+const MODEL_LABELS: Record<EchoAIModel, string> = {
+  'gemini-2.5-flash': 'Flash',
+  'gemini-2.5-pro': 'Pro',
+  'gemini-2.0-flash-lite': 'Lite',
+};
+
+const MODEL_OPTIONS: EchoAIModel[] = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash-lite'];
+
 type ChatItem =
-  | { kind: 'text'; message: Message }
+  | { kind: 'text'; message: Message; isStreaming?: boolean }
   | { kind: 'tool'; tool: ToolCallItem };
 
 export default function ChatScreen() {
@@ -34,6 +43,7 @@ export default function ChatScreen() {
   const { colors, animation, reduceAnimations } = useTheme();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
+  const setAiModel = useAppStore(s => s.setAiModel);
   const sessions = useAppStore(s => s.sessions);
   const currentSessionId = useAppStore(s => s.currentSessionId);
   const conversationIdBySession = useAppStore(s => s.conversationIdBySession);
@@ -56,12 +66,43 @@ export default function ChatScreen() {
   // Ephemeral live items: persisted text messages + transient tool cards.
   const [toolItems, setToolItems] = useState<Record<string, ToolCallItem>>({});
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMsgId, setStreamingMsgId] = useState<string | null>(null);
   const [showActionCenter, setShowActionCenter] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [showHint, setShowHint] = useState(false);
   const [editTarget, setEditTarget] = useState<Message | null>(null);
   const listRef = useRef<any>(null);
+
+  // Stop handle — set by openStream, called to cancel mid-stream.
+  const stopStreamRef = useRef<(() => void) | null>(null);
+
+  // Delta buffer: accumulates token deltas between 50ms flush ticks.
+  // Reduces Zustand + MMKV writes from ~per-token to 20/sec.
+  const deltaBufferRef = useRef<Map<string, { content: string; role: 'user' | 'assistant' }>>(new Map());
+  const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const flushDeltas = useCallback(() => {
+    if (!currentSessionId || deltaBufferRef.current.size === 0) return;
+    deltaBufferRef.current.forEach(({ content }, id) => {
+      updateMessage(currentSessionId, id, content);
+    });
+  }, [currentSessionId, updateMessage]);
+
+  const startFlush = useCallback(() => {
+    if (flushTimerRef.current) return;
+    flushTimerRef.current = setInterval(flushDeltas, 50);
+  }, [flushDeltas]);
+
+  const stopFlush = useCallback(() => {
+    if (flushTimerRef.current) {
+      clearInterval(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+    flushDeltas(); // final flush
+    deltaBufferRef.current.clear();
+  }, [flushDeltas]);
 
   // Bootstrap: ensure there is a current session.
   useEffect(() => {
@@ -97,25 +138,42 @@ export default function ChatScreen() {
     const textItems: ChatItem[] = messages.map(m => ({
       kind: 'text',
       message: { id: m.id, role: m.role, content: m.content },
+      isStreaming: isStreaming && m.id === streamingMsgId,
     }));
     const tools: ChatItem[] = Object.values(toolItems).map(t => ({ kind: 'tool', tool: t }));
     return [...textItems, ...tools];
-  }, [messages, toolItems]);
+  }, [messages, toolItems, isStreaming, streamingMsgId]);
+
+  // extraData includes content length of last message so FlashList re-renders during streaming
+  const extraData = useMemo(
+    () => items.length + (messages[messages.length - 1]?.content?.length ?? 0),
+    [items.length, messages],
+  );
 
   const setConvId = useCallback((id: string) => {
     if (currentSessionId) setSessionConversationId(currentSessionId, id);
     conversationIdRef.current = id;
   }, [currentSessionId, setSessionConversationId]);
 
+  // Accumulate deltas in buffer — only flush to Zustand/MMKV every 50ms
   const upsertText = useCallback((id: string, role: 'user' | 'assistant', delta: string) => {
     if (!currentSessionId) return;
-    const existing = (useAppStore.getState().messagesBySession[currentSessionId] || []).find(m => m.id === id);
-    if (existing) {
-      updateMessage(currentSessionId, id, existing.content + delta);
+
+    const buffered = deltaBufferRef.current.get(id);
+    if (buffered) {
+      // Accumulate
+      deltaBufferRef.current.set(id, { content: buffered.content + delta, role });
     } else {
-      addMessage(currentSessionId, { id, role, content: delta, createdAt: new Date().toISOString() });
+      const existing = (useAppStore.getState().messagesBySession[currentSessionId] || []).find(m => m.id === id);
+      if (existing) {
+        deltaBufferRef.current.set(id, { content: existing.content + delta, role });
+      } else {
+        // First token — create the message immediately so it appears
+        addMessage(currentSessionId, { id, role, content: delta, createdAt: new Date().toISOString() });
+        deltaBufferRef.current.set(id, { content: delta, role });
+      }
     }
-  }, [currentSessionId, addMessage, updateMessage]);
+  }, [currentSessionId, addMessage]);
 
   const upsertTool = useCallback((tool: ToolCallItem) => {
     setToolItems(prev => ({ ...prev, [tool.id]: tool }));
@@ -124,12 +182,15 @@ export default function ChatScreen() {
   const continueWithLocalResult = useCallback(
     async (tool: ToolCallItem, ok: boolean, result?: any, error?: string) => {
       const assistantId = `a-${Date.now()}`;
+      setStreamingMsgId(assistantId);
       setIsStreaming(true);
+      startFlush();
       try {
         await streamEchoAI({
           preferredModel: aiModel,
           conversationId: conversationIdRef.current ?? undefined,
           localResult: { tool_call_id: tool.id, tool_name: tool.name, args: tool.args, ok, result, error },
+          onAbortHandle: (stop) => { stopStreamRef.current = stop; },
           onEvent: (e) => {
             if (e.type === 'conversation') setConvId(e.id);
             else if (e.type === 'text_delta') upsertText(assistantId, 'assistant', e.delta);
@@ -146,10 +207,13 @@ export default function ChatScreen() {
       } catch (err: any) {
         upsertText(`local-stream-err-${Date.now()}`, 'assistant', localContinuationFailureMessage(tool, ok, err?.message ?? 'unknown error'));
       } finally {
+        stopFlush();
+        stopStreamRef.current = null;
         setIsStreaming(false);
+        setStreamingMsgId(null);
       }
     },
-    [aiModel, setConvId, upsertText, upsertTool],
+    [aiModel, setConvId, startFlush, stopFlush, upsertText, upsertTool],
   );
 
   const runLocalTool = useCallback(
@@ -167,11 +231,14 @@ export default function ChatScreen() {
   const runStream = useCallback(
     async (opts: Parameters<typeof streamEchoAI>[0]) => {
       const assistantId = `a-${Date.now()}`;
+      setStreamingMsgId(assistantId);
       setIsStreaming(true);
+      startFlush();
       try {
         await streamEchoAI({
           ...opts,
           preferredModel: aiModel,
+          onAbortHandle: (stop) => { stopStreamRef.current = stop; },
           onEvent: (e) => {
             if (e.type === 'conversation') setConvId(e.id);
             else if (e.type === 'text_delta') upsertText(assistantId, 'assistant', e.delta);
@@ -202,11 +269,18 @@ export default function ChatScreen() {
       } catch (err: any) {
         upsertText(`err-${Date.now()}`, 'assistant', `Error: ${err?.message ?? 'unknown'}`);
       } finally {
+        stopFlush();
+        stopStreamRef.current = null;
         setIsStreaming(false);
+        setStreamingMsgId(null);
       }
     },
-    [aiModel, currentSessionId, runLocalTool, setConvId, updateSessionLastMessage, upsertText, upsertTool],
+    [aiModel, currentSessionId, runLocalTool, setConvId, startFlush, stopFlush, updateSessionLastMessage, upsertText, upsertTool],
   );
+
+  const handleStop = useCallback(() => {
+    stopStreamRef.current?.();
+  }, []);
 
   const handleSend = useCallback(
     (text: string) => {
@@ -220,7 +294,6 @@ export default function ChatScreen() {
         onEvent: () => {},
       });
       // Auto-title on first user turn (best-effort, non-blocking).
-      // Delay slightly so it doesn't compete with the primary reply stream.
       if (isFirst) {
         setTimeout(() => {
           generateSessionTitle(text, aiModel)
@@ -283,7 +356,6 @@ export default function ChatScreen() {
     const all = useAppStore.getState().messagesBySession[currentSessionId] || [];
     const idx = all.findIndex(x => x.id === m.id);
     if (idx <= 0) return;
-    // Find the last user message before this assistant response.
     let priorUser: ChatMessage | undefined;
     for (let i = idx - 1; i >= 0; i--) {
       if (all[i].role === 'user') { priorUser = all[i]; break; }
@@ -311,7 +383,6 @@ export default function ChatScreen() {
     if (!currentSessionId) return;
     setToolItems({});
     branchSession(currentSessionId, m.id);
-    // Reset server-side conversation for the branch — new session, fresh thread.
     conversationIdRef.current = null;
   }, [branchSession, currentSessionId]);
 
@@ -336,6 +407,12 @@ export default function ChatScreen() {
   const showEmptySuggestions = items.length === 0;
   const showShareNudge = !isStreaming && messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
 
+  const modelActions = MODEL_OPTIONS.map(m => ({
+    key: m,
+    label: `${MODEL_LABELS[m]} ${m === aiModel ? '✓' : ''}`.trim(),
+    onPress: () => setAiModel(m),
+  }));
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <LinearGradient
@@ -355,12 +432,13 @@ export default function ChatScreen() {
           <FlashList
             ref={listRef as any}
             data={items}
-            extraData={items.length}
+            extraData={extraData}
             keyExtractor={(item) => item.kind === 'text' ? `t-${item.message.id}` : `c-${item.tool.id}`}
             renderItem={({ item }) =>
               item.kind === 'text' ? (
                 <MessageBubble
                   message={item.message}
+                  isStreaming={item.isStreaming}
                   onEdit={handleEdit}
                   onRegenerate={handleRegenerate}
                   onBranch={handleBranch}
@@ -370,7 +448,9 @@ export default function ChatScreen() {
               )
             }
             contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: 8 }}
-            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+            onContentSizeChange={() => {
+              listRef.current?.scrollToEnd({ animated: false });
+            }}
           />
           {isStreaming && showTyping && <TypingIndicator />}
         </View>
@@ -432,7 +512,13 @@ export default function ChatScreen() {
               </AnimatedPressable>
             </Animated.View>
           ) : null}
-          <ChatInput onSend={handleSend} isLoading={isStreaming} draft={draft} onDraftChange={setDraft} />
+          <ChatInput
+            onSend={handleSend}
+            isLoading={isStreaming}
+            onStop={handleStop}
+            draft={draft}
+            onDraftChange={setDraft}
+          />
         </View>
       </KeyboardAvoidingView>
 
@@ -488,16 +574,39 @@ export default function ChatScreen() {
             </AnimatedPressable>
           </View>
 
+          {/* Center: Echo title + model pill */}
           <View
             style={{
               position: 'absolute', left: 0, right: 0,
-              alignItems: 'center', flexDirection: 'row', justifyContent: 'center',
-              paddingTop: insets.top, gap: 6,
+              alignItems: 'center', paddingTop: insets.top,
             }}
-            pointerEvents="none"
+            pointerEvents="box-none"
           >
-            <Lightning color={colors.accent} size={18} weight="fill" />
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Echo</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} pointerEvents="box-none">
+              <Lightning color={colors.accent} size={16} weight="fill" />
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Echo</Text>
+              <AnimatedPressable
+                onPress={() => setModelSheetOpen(true)}
+                scaleValue={0.9}
+                haptic="light"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 2,
+                  backgroundColor: colors.isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.12)',
+                  borderRadius: 999,
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.accent + '55',
+                }}
+              >
+                <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700' }}>
+                  {MODEL_LABELS[aiModel]}
+                </Text>
+                <CaretDown color={colors.accent} size={9} weight="bold" />
+              </AnimatedPressable>
+            </View>
           </View>
 
           <AnimatedPressable
@@ -549,6 +658,12 @@ export default function ChatScreen() {
         initialValue={editTarget?.content ?? ''}
         onCancel={() => setEditTarget(null)}
         onSubmit={handleEditSubmit}
+      />
+      <ActionSheet
+        visible={modelSheetOpen}
+        onClose={() => setModelSheetOpen(false)}
+        actions={modelActions}
+        title="Switch model"
       />
     </View>
   );

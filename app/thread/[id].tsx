@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PaperPlaneTilt, ShareNetwork, Sparkle, Trash } from 'phosphor-react-native';
+import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { LikeButton } from '../../components/social/LikeButton';
 import { MediaGrid } from '../../components/social/MediaGrid';
 import { InlineVideo } from '../../components/social/InlineVideo';
@@ -12,7 +13,7 @@ import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
-import { buildCreatorProfile, inferTopics } from '../../lib/echoUX';
+import { inferTopics } from '../../lib/echoUX';
 
 export default function ThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -35,15 +36,6 @@ export default function ThreadDetailScreen() {
       .filter(entry => entry.id !== item.id && inferTopics(entry).some(topic => itemTopics.includes(topic.toLowerCase())))
       .slice(0, 3);
   }, [feed, item]);
-
-  const authorEchoes = useMemo(() => {
-    if (!item) return [];
-    return feed.filter(entry => entry.userId === item.userId);
-  }, [feed, item]);
-
-  const creatorProfile = item
-    ? buildCreatorProfile({ displayName: item.displayName, bio: item.authorNote || '', createdAt: item.createdAt }, authorEchoes)
-    : null;
 
   const toggleBm = () => {
     if (!id) return;
@@ -86,7 +78,7 @@ export default function ThreadDetailScreen() {
       isVerified: item.isVerified,
       followerCount: 0,
       followingCount: 0,
-      echoCount: authorEchoes.length,
+      echoCount: 0,
       createdAt: item.createdAt,
     };
     const conversationId = getOrCreateConversation(user);
@@ -121,24 +113,31 @@ export default function ThreadDetailScreen() {
         </View>
       </View>
 
-      {showMenu && isOwner ? (
-        <View style={{ position: 'absolute', top: 60, right: 16, zIndex: 50, backgroundColor: colors.surfaceHover, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, minWidth: 170 }}>
-          <Pressable onPress={() => { setShowMenu(false); router.push({ pathname: '/edit-post' as any, params: { id: item.id } }); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 13 }}>
-            <NotePencil color={colors.accent} size={18} />
-            <Text style={{ color: colors.text, fontSize: fontSizes.body }}>Edit Echo</Text>
-          </Pressable>
-          <View style={{ borderTopWidth: 1, borderTopColor: colors.border }} />
-          <Pressable onPress={() => { setShowMenu(false); handleDelete(); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 13 }}>
-            <Trash color="#EF4444" size={18} />
-            <Text style={{ color: '#EF4444', fontSize: fontSizes.body }}>Delete Echo</Text>
-          </Pressable>
-          <View style={{ borderTopWidth: 1, borderTopColor: colors.border }} />
-          <Pressable onPress={() => { setShowMenu(false); router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } }); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 13 }}>
-            <Flag color="#F59E0B" size={15} />
-            <Text style={{ color: colors.text, fontSize: fontSizes.body }}>Report</Text>
-          </Pressable>
-        </View>
-      ) : null}
+      {isOwner && (() => {
+        const menuActions: ActionItem[] = [
+          {
+            key: 'edit',
+            label: 'Edit Echo',
+            icon: <NotePencil color={colors.accent} size={18} />,
+            onPress: () => router.push({ pathname: '/edit-post' as any, params: { id: item.id } }),
+          },
+          {
+            key: 'delete',
+            label: 'Delete Echo',
+            icon: <Trash color="#EF4444" size={18} />,
+            destructive: true,
+            onPress: handleDelete,
+          },
+          {
+            key: 'report',
+            label: 'Report',
+            icon: <Flag color="#F59E0B" size={18} weight="fill" />,
+            destructive: true,
+            onPress: () => router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } }),
+          },
+        ];
+        return <ActionSheet visible={showMenu} onClose={() => setShowMenu(false)} subtitle={item.editorialTitle || item.prompt} actions={menuActions} />;
+      })()}
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 36 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
@@ -170,22 +169,26 @@ export default function ThreadDetailScreen() {
           <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{item.prompt}</Text>
         </View>
 
-        <View style={{ padding: 16, marginBottom: 12, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <Sparkle color={colors.accent} size={16} />
-            <Text style={{ color: colors.text, fontWeight: '700' }}>How this Echo was framed</Text>
+        {(item.conversationContext || (item.topicLabels?.length ?? 0) > 0 || inferTopics(item).length > 0) ? (
+          <View style={{ padding: 16, marginBottom: 12, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
+            {item.conversationContext ? (
+              <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <Sparkle color={colors.accent} size={16} />
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>How this Echo was framed</Text>
+                </View>
+                <Text style={{ color: colors.textSecondary, lineHeight: 20, marginBottom: 12 }}>{item.conversationContext}</Text>
+              </>
+            ) : null}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {(item.topicLabels?.length ? item.topicLabels : inferTopics(item)).slice(0, 4).map(topic => (
+                <View key={topic} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}>
+                  <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-          <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
-            {item.conversationContext || 'Started in chat, then refined into a public Echo with a clearer takeaway.'}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-            {(item.topicLabels?.length ? item.topicLabels : inferTopics(item)).slice(0, 4).map(topic => (
-              <View key={topic} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}>
-                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        ) : null}
 
         {item.postType === 'photo' && item.mediaUris && item.mediaUris.length > 0 ? (
           <View style={{ marginBottom: 12 }}>
@@ -234,15 +237,6 @@ export default function ThreadDetailScreen() {
             <PaperPlaneTilt color="#fff" size={18} />
             <Text style={{ color: '#fff', fontWeight: '800' }}>Message about this Echo</Text>
           </Pressable>
-        ) : null}
-
-        {creatorProfile ? (
-          <View style={{ padding: 16, marginTop: 18, marginBottom: 12, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
-            <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 8 }}>Why people follow @{item.username}</Text>
-            <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
-              {creatorProfile.headline}
-            </Text>
-          </View>
         ) : null}
 
         {relatedEchoes.length > 0 ? (

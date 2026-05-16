@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { QuotedEchoCard } from '../components/social/QuotedEchoCard';
+import { VideoPreview } from '../components/social/VideoPreview';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import {
   ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
@@ -337,17 +338,17 @@ export default function CreatePostScreen() {
           )}
           {postType === 'text' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <Text style={s.label}>Prompt</Text>
+              <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What did you ask Echo?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
+                <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What question or prompt started this?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
                 <Lightning color={colors.accent} size={12} />
-                <Text style={[s.label, { marginBottom: 0 }]}>Echo Response</Text>
+                <Text style={[s.label, { marginBottom: 0 }]}>Answer / Insight</Text>
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={response} onChangeText={setResponse} placeholder="Share what the AI said, your insights, or anything worth echoing…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
+                <TextInput multiline value={response} onChangeText={setResponse} placeholder="The response, your take, or what made this worth sharing…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{response.length}/1000</Text>
               </View>
             </Animated.View>
@@ -441,14 +442,11 @@ export default function CreatePostScreen() {
 
               {/* Preview / empty state */}
               {videoUri ? (
-                <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden', backgroundColor: '#000', height: 180, alignItems: 'center', justifyContent: 'center' }}>
-                  <VideoCamera color="#fff" size={40} weight="thin" />
-                  <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: fontSizes.small, marginTop: 8 }}>
-                    Video selected ✓
-                  </Text>
+                <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden' }}>
+                  <VideoPreview uri={videoUri} height={200} borderRadius={radius.card} />
                   <Pressable
                     onPress={() => setVideo(null)}
-                    style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 6 }}
+                    style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 14, padding: 6 }}
                   >
                     <X color="#fff" size={16} />
                   </Pressable>

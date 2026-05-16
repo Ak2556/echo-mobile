@@ -4,11 +4,12 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import Animated, { FadeInDown, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
   ArrowLeft, SealCheck, DotsThreeOutline, Envelope,
   UserMinus, Flag, ShareNetwork,
 } from 'phosphor-react-native';
+import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { FeedCard } from '../../components/social/FeedCard';
 import { ProfileHeaderSkeleton, FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -40,35 +41,45 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
     showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? '\u{1F91D}' : '');
   };
 
+  const menuActions: ActionItem[] = [
+    ...(!isSelf ? [{
+      key: 'mute',
+      label: muted ? 'Unmute' : 'Mute',
+      icon: <UserMinus color={colors.textSecondary} size={20} />,
+      onPress: onMute,
+    }, {
+      key: 'block',
+      label: blocked ? 'Unblock' : 'Block',
+      icon: <UserMinus color={colors.danger} size={20} />,
+      destructive: !blocked,
+      onPress: onBlock,
+    }] : []),
+    {
+      key: 'report',
+      label: 'Report',
+      icon: <Flag color="#F59E0B" size={20} weight="fill" />,
+      destructive: true,
+      onPress: onReport,
+    },
+  ];
+
   return (
     <View>
       <View className="flex-row items-center justify-between px-4 py-2">
         <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <AnimatedPressable onPress={() => setShowMenu(!showMenu)} className="p-1" scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => setShowMenu(true)} className="p-1" scaleValue={0.88} haptic="light">
           <DotsThreeOutline color={colors.text} size={24} />
         </AnimatedPressable>
       </View>
 
-      {showMenu && (
-        <Animated.View entering={animation(FadeIn.duration(80))} exiting={FadeOut.duration(150)} className="absolute top-12 right-4 z-50 overflow-hidden" style={{ backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }}>
-          <AnimatedPressable onPress={() => { setShowMenu(false); onReport(); }} className="flex-row items-center px-4 py-3 gap-3" scaleValue={0.97} haptic="medium">
-            <Flag color="#F59E0B" size={16} />
-            <Text style={{ color: colors.text, fontSize: 14 }}>Report</Text>
-          </AnimatedPressable>
-          <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-          <AnimatedPressable onPress={() => { setShowMenu(false); onMute(); }} className="flex-row items-center px-4 py-3 gap-3" scaleValue={0.97} haptic="medium">
-            <UserMinus color={colors.textSecondary} size={16} />
-            <Text style={{ color: colors.text, fontSize: 14 }}>{muted ? 'Unmute' : 'Mute'}</Text>
-          </AnimatedPressable>
-          <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-          <AnimatedPressable onPress={() => { setShowMenu(false); onBlock(); }} className="flex-row items-center px-4 py-3 gap-3" scaleValue={0.97} haptic="medium">
-            <UserMinus color={colors.danger} size={16} />
-            <Text style={{ color: colors.danger, fontSize: 14 }}>{blocked ? 'Unblock' : 'Block'}</Text>
-          </AnimatedPressable>
-        </Animated.View>
-      )}
+      <ActionSheet
+        visible={showMenu}
+        onClose={() => setShowMenu(false)}
+        subtitle={`@${user.username}`}
+        actions={menuActions}
+      />
 
       <Animated.View entering={animation(FadeInDown.delay(100).springify())} className="items-center px-4 pt-2 pb-4">
         <AnimatedPressable scaleValue={0.93} haptic="light">
@@ -158,12 +169,6 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
       </Animated.View>
 
       <View className="mx-4 mb-2" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-      {creatorProfile ? (
-        <View className="mx-4 mb-4 p-4" style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 6 }}>Why follow</Text>
-          <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>{creatorProfile.headline}</Text>
-        </View>
-      ) : null}
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 16, marginBottom: 8 }}>
         Echoes {'\u00B7'} {echoeCount}
       </Text>

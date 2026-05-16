@@ -10,7 +10,15 @@ import { useCommandPalette } from '../lib/commandPalette';
 import { useAppStore } from '../store/useAppStore';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes } from '../lib/supabaseEchoApi';
+import { persistGet, persistSet, persistDelete } from '../store/persist';
 import '../global.css';
+
+// One-time migration: evict stale seed/mock data persisted before v2.
+const DATA_VERSION = 2;
+if (persistGet<number>('_dataVersion', 0) < DATA_VERSION) {
+  ['notifications', 'conversations', 'messagesByConversation', 'stories'].forEach(persistDelete);
+  persistSet('_dataVersion', DATA_VERSION);
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {

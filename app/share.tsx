@@ -161,14 +161,10 @@ export default function ShareScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         <View style={{ padding: 16, marginBottom: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Conversation source</Text>
-          <View style={{ padding: 12, borderRadius: radius.lg, backgroundColor: colors.surfaceHover, marginBottom: 10 }}>
-            <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: fontSizes.small }}>Prompt</Text>
-            <Text style={{ color: colors.text, marginTop: 4, lineHeight: 22 }}>{prompt}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Original prompt</Text>
+          <View style={{ padding: 12, borderRadius: radius.lg, backgroundColor: colors.surfaceHover }}>
+            <Text style={{ color: colors.text, lineHeight: 22 }}>{prompt}</Text>
           </View>
-          <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20 }}>
-            Pick the strongest part of the answer, add framing, and publish the version you would want someone else to save.
-          </Text>
         </View>
 
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
