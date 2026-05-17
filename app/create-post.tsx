@@ -68,6 +68,8 @@ export default function CreatePostScreen() {
   );
   const [publishedEchoPreview, setPublishedEchoPreview] = useState<{ title: string } | null>(null);
   const ceremonyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Cancel the ceremony timer if the user navigates away before it fires
+  React.useEffect(() => () => { if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current); }, []);
   const [response, setResponse] = useState(typeof params.prefillBody === 'string' ? params.prefillBody : '');
   const [caption, setCaption] = useState('');
   const [tagsRaw, setTagsRaw] = useState('');
@@ -189,7 +191,7 @@ export default function CreatePostScreen() {
     setPublishing(true);
 
     try {
-      const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
+      const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#+/, '').trim()).filter(Boolean);
       const remoteAuthorId = isSupabaseRemote() ? await getSessionUserId() : null;
       if (isSupabaseRemote() && !remoteAuthorId) {
         Alert.alert(
@@ -390,7 +392,7 @@ export default function CreatePostScreen() {
               <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What question or prompt started this?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
+                <Text style={{ color: prompt.length > 260 ? colors.danger : prompt.length > 240 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
                 <Lightning color={colors.accent} size={12} />
@@ -398,7 +400,7 @@ export default function CreatePostScreen() {
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={response} onChangeText={setResponse} placeholder="The response, your take, or what made this worth sharing…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{response.length}/1000</Text>
+                <Text style={{ color: response.length > 950 ? colors.danger : response.length > 850 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{response.length}/1000</Text>
               </View>
             </Animated.View>
           )}

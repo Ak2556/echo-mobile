@@ -46,14 +46,15 @@ function getTimeAgo(dateStr: string): string {
   return `${Math.floor(days / 7)}w`;
 }
 
-function PollBar({ pct }: { pct: number }) {
+// PERF: re-animates on every parent render — wrap in React.memo
+const PollBar = React.memo(function PollBar({ pct }: { pct: number }) {
   const width = useSharedValue(0);
   React.useEffect(() => {
     width.value = withTiming(pct, { duration: 500 });
   }, [pct, width]);
   const style = useAnimatedStyle(() => ({ width: `${width.value}%` as any }));
   return <Animated.View style={[{ height: '100%', borderRadius: 4, backgroundColor: 'rgba(99,102,241,0.4)' }, style]} />;
-}
+});
 
 interface PollViewProps {
   poll: Poll;
@@ -83,7 +84,9 @@ function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollVie
     <View style={{ marginBottom: 12 }}>
       {poll.options.map(opt => {
         const pct = poll.totalVotes > 0 ? Math.round((opt.votes / poll.totalVotes) * 100) : 0;
-        const isWinner = hasVoted && opt.votes === Math.max(...poll.options.map(o => o.votes)) && opt.votes > 0;
+        const maxVotes = Math.max(...poll.options.map(o => o.votes));
+        const isWinner = hasVoted && opt.votes === maxVotes && opt.votes > 0
+          && poll.options.findIndex(o => o.votes === maxVotes) === poll.options.indexOf(opt);
         const isVoted = poll.userVote === opt.id;
         return (
           <Pressable
@@ -625,7 +628,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 {item.authorNote ?? item.response}
               </Text>
             )}
-            {item.quotedEcho && <QuotedEchoCard echo={item.quotedEcho} compact={compactFeed} />}
+            {item.quotedEcho && (() => { try { return <QuotedEchoCard echo={item.quotedEcho!} compact={compactFeed} />; } catch { return null; } })()}
           </>
         )}
 
