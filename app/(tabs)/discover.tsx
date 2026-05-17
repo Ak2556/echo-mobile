@@ -13,7 +13,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Bell } from 'phosphor-react-native';
+import { Bell, Question, TrendUp } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
@@ -57,21 +57,23 @@ function DiamondLogo() {
   );
 }
 
-function SectionHeader({ label, sub }: { label: string; sub?: string }) {
+function SectionHeader({ label, sub, icon }: { label: string; sub?: string; icon?: React.ReactNode }) {
   const { colors } = useTheme();
   return (
     <View
       style={{
         flexDirection: 'row',
-        alignItems: 'baseline',
+        alignItems: 'center',
         paddingHorizontal: 16,
         marginTop: 22,
         marginBottom: 14,
+        gap: 6,
       }}
     >
+      {icon}
       <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>{label}</Text>
       {sub && (
-        <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 6 }}>
+        <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 2 }}>
           {sub}
         </Text>
       )}
@@ -199,13 +201,19 @@ export default function DiscoverScreen() {
       </ScrollView>
       {starterItems.length > 0 ? (
         <>
-          <SectionHeader label="Conversation Starters" sub="Reply-worthy" />
-          <View style={{ paddingHorizontal: 16, gap: 10 }}>
+          <SectionHeader label="Open Questions" sub="Worth answering" icon={<Question color={colors.accent} size={16} weight="bold" />} />
+          {/* Horizontal scroll strip with "Answer →" CTA */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
+          >
             {starterItems.map(item => (
               <Pressable
                 key={item.id}
                 onPress={() => handlePressThread(item)}
                 style={{
+                  width: 220,
                   padding: 14,
                   borderRadius: 16,
                   backgroundColor: colors.surface,
@@ -213,18 +221,28 @@ export default function DiscoverScreen() {
                   borderColor: colors.border,
                 }}
               >
-                <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', lineHeight: 20 }} numberOfLines={2}>
                   {item.editorialTitle || item.prompt}
                 </Text>
-                <Text style={{ color: colors.textSecondary, marginTop: 6, lineHeight: 20 }} numberOfLines={2}>
-                  {item.authorNote || item.response}
-                </Text>
+                <Pressable
+                  onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/create-post', params: { prefillTitle: item.prompt ?? '' } } as any); }}
+                  style={{
+                    marginTop: 10,
+                    alignSelf: 'flex-start',
+                    backgroundColor: colors.accent + '18',
+                    borderRadius: 99,
+                    paddingHorizontal: 12,
+                    paddingVertical: 5,
+                  }}
+                >
+                  <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>Answer →</Text>
+                </Pressable>
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
         </>
       ) : null}
-      <SectionHeader label="Rising Now" sub="High conversation energy" />
+      <SectionHeader label="Trending Insights" sub="High energy" icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
     </View>
   );
 

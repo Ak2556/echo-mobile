@@ -15,7 +15,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar, Question, GitFork } from 'phosphor-react-native';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
@@ -212,8 +212,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     },
     {
       key: 'quote',
-      label: 'Quote echo',
-      icon: <ArrowsClockwise color={colors.text} size={20} />,
+      label: 'Remix',
+      icon: <GitFork color={colors.text} size={20} />,
       onPress: handleQuoteRepost,
     },
   ];
@@ -299,9 +299,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   );
 
   const ActionsRow = (
-    <View
-      style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}
-    >
+    <View style={{ paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <AnimatedPressable
@@ -347,6 +346,15 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </Animated.View>
         </AnimatedPressable>
       </View>
+      </View>
+      {/* ⚡ Echo identity chip */}
+      {(!item.postType || item.postType === 'text') && !compactFeed && (
+        <View style={{ alignItems: 'flex-end', marginTop: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, backgroundColor: colors.accent + '18' }}>
+            <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '700' }}>⚡ Echo</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 
@@ -486,6 +494,21 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   return (
     <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 16, marginVertical: 6 }}>
       <GlassPanel variant="light" borderRadius={radius.card} elevated performanceMode="hot">
+        {/* Left accent rail — the Echo identity stripe */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 3,
+            backgroundColor: colors.accent + '55',
+            borderTopLeftRadius: radius.card,
+            borderBottomLeftRadius: radius.card,
+            zIndex: 1,
+          }}
+        />
       <AnimatedPressable
         onPress={handleMainPress}
         onLongPress={handleLongPressCard}
@@ -562,6 +585,15 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {/* ── TEXT post ── */}
         {(!item.postType || item.postType === 'text') && (
           <>
+            {/* Prompt preview row — shows the original question when an editorial title exists */}
+            {!compactFeed && item.prompt && item.editorialTitle && item.prompt !== item.editorialTitle && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+                <Question color={colors.textMuted} size={11} />
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontStyle: 'italic', flex: 1 }} numberOfLines={1}>
+                  {item.prompt}
+                </Text>
+              </View>
+            )}
             <Text style={{ fontSize: textSize + 1, color: colors.text, fontWeight: '700', marginBottom: compactFeed ? 4 : 8, lineHeight: (textSize + 1) * 1.35 }} numberOfLines={compactFeed ? 2 : 3}>
               {item.editorialTitle ?? item.prompt}
             </Text>
