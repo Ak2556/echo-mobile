@@ -11,11 +11,13 @@ import { MediaGrid } from './MediaGrid';
 import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
+import { RemixButton } from './RemixButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar, GitBranch } from 'phosphor-react-native';
+import { NEON } from '../../lib/neonDesign';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
@@ -302,7 +304,16 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     <View
       style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}
     >
-      <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
+        <RemixButton
+          echoId={item.id}
+          remixCount={item.remixCount ?? 0}
+          authorUsername={item.username}
+          authorTitle={item.editorialTitle}
+          compact
+        />
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <AnimatedPressable
           onPress={(e) => { e.stopPropagation?.(); router.push(`/comments/${item.id}`); }}
@@ -503,6 +514,18 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             <ArrowsClockwise color={colors.textMuted} size={14} />
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.repostedByUsername} re-echoed</Text>
           </View>
+        )}
+        {/* Remix lineage chip — shows when this echo is a remix of another */}
+        {item.parentEchoId && (
+          <Pressable
+            onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/thread/[id]', params: { id: String(item.parentEchoId) } }); }}
+            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 2, gap: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: 'rgba(34,245,255,0.08)', borderWidth: 1, borderColor: 'rgba(34,245,255,0.28)' }}
+          >
+            <GitBranch color={NEON.cyan} size={12} weight="fill" />
+            <Text style={{ color: NEON.cyan, fontSize: 11, fontWeight: '800', letterSpacing: 0.3 }}>
+              REMIX{item.parentAuthorUsername ? ` · @${item.parentAuthorUsername}` : ''}
+            </Text>
+          </Pressable>
         )}
 
         {/* Author row */}

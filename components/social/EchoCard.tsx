@@ -8,13 +8,15 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import {
   HeartStraight, ChatCircle, BookmarkSimple, ShareNetwork,
-  SpeakerHigh, SpeakerSlash, SealCheck, Play,
+  SpeakerHigh, SpeakerSlash, SealCheck, Play, GitBranch,
 } from 'phosphor-react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { showToast } from '../ui/Toast';
 import { FeedItem } from '../../types';
+import { NEON, NEON_CHIP, neonGlow } from '../../lib/neonDesign';
 
 interface EchoCardProps {
   item: FeedItem;
@@ -53,6 +55,7 @@ function SidebarButton({
 }
 
 export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
+  const router = useRouter();
   const { height: SCREEN_H } = useWindowDimensions();
   const toggleLike = useAppStore(s => s.toggleLike);
   const toggleBookmark = useAppStore(s => s.toggleBookmark);
@@ -168,6 +171,11 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
     showToast('Link copied!', '🔗');
   };
 
+  const handleRemix = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({ pathname: '/remix/[id]', params: { id: item.id, author: item.username } });
+  };
+
   const toggleMute = async () => {
     setMuted(m => !m);
   };
@@ -238,6 +246,15 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
 
       {/* ── Author + caption (bottom-left) ───────── */}
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 70, paddingHorizontal: 16, paddingBottom: 100 }}>
+        {item.parentEchoId && (
+          <Pressable
+            onPress={() => router.push({ pathname: '/thread/[id]', params: { id: String(item.parentEchoId) } })}
+            style={[NEON_CHIP, { backgroundColor: NEON.cyanDim, marginBottom: 8 }, neonGlow(NEON.cyan, 'soft')]}
+          >
+            <GitBranch color={NEON.cyan} size={12} weight="fill" />
+            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>REMIX</Text>
+          </Pressable>
+        )}
         {/* Author row */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           {item.avatarUrl ? (
@@ -292,6 +309,11 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
           icon={<ChatCircle color="#fff" size={30} />}
           label={item.commentCount}
           onPress={() => onCommentPress?.(item)}
+        />
+        <SidebarButton
+          icon={<GitBranch color={item.parentEchoId ? '#A78BFA' : '#fff'} size={28} weight={item.parentEchoId ? 'fill' : 'regular'} />}
+          label={item.remixCount && item.remixCount > 0 ? item.remixCount : undefined}
+          onPress={handleRemix}
         />
         <SidebarButton
           icon={<BookmarkSimple color={isBookmarked ? '#FBBF24' : '#fff'} size={30} weight={isBookmarked ? 'fill' : 'regular'} />}

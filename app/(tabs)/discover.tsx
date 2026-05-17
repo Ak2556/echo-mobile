@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
@@ -31,8 +31,18 @@ import { UserRow } from '../../components/social/UserRow';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { neonHaptic } from '../../lib/neonDesign';
+import { pingDailyActivity } from '../../lib/retention';
 
 const HERO_COUNT = 5;
+
+// Neon gradients for the feed-scope pills (active state only).
+// "For You" = personalized semantic feed → violet→cyan→lime (cool/fresh).
+// "Trending" = engagement-ranked → magenta→amber→lime (hot/rising).
+// "Following" = follow-only chronology → cyan→violet (calm/established).
+const FOR_YOU_GRADIENT  = ['#9B5BFF', '#22F5FF', '#C6FF3D'] as const;
+const TRENDING_GRADIENT = ['#FF3DD8', '#FFB12B', '#C6FF3D'] as const;
+const FOLLOWING_GRADIENT = ['#22F5FF', '#9B5BFF'] as const;
 const NAV_BAR_HEIGHT = 50;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -102,6 +112,10 @@ export default function DiscoverScreen() {
   const { data: suggestedUsers = [] } = useSuggestedUsers();
   const followMut = useToggleRemoteFollow();
 
+  // Tick the daily streak once per day-mount of the home tab. Cheap no-op
+  // when already pinged today; awards a bonus + milestone XP on day rollover.
+  useEffect(() => { pingDailyActivity(); }, []);
+
   const scrollY = useSharedValue(0);
   const heroScrollX = useSharedValue(0);
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -150,29 +164,45 @@ export default function DiscoverScreen() {
   const popularItems = (grouped.rising.length > 0 ? grouped.rising : feed?.slice(HERO_COUNT)) ?? [];
   const starterItems = grouped.conversationStarters.slice(0, 3);
 
-  const feedScope = useAppStore.getState().feedScope;
-  const setFeedScope = useAppStore.getState().setFeedScope;
+  const feedScope = useAppStore(s => s.feedScope);
+  const setFeedScope = useAppStore(s => s.setFeedScope);
 
   const ListHeader = (
     <View>
-      {/* For You / Following toggle */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8, gap: 8 }}>
-        {(['forYou', 'following'] as const).map(scope => {
+      {/* For You (semantic) / Trending / Following toggle — neon when active */}
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10, gap: 8 }}>
+        {(['semantic', 'forYou', 'following'] as const).map(scope => {
           const active = feedScope === scope;
+          const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : 'Following';
+          const gradient = scope === 'semantic'
+            ? FOR_YOU_GRADIENT
+            : scope === 'forYou'
+              ? TRENDING_GRADIENT
+              : FOLLOWING_GRADIENT;
           return (
             <Pressable
               key={scope}
-              onPress={() => setFeedScope(scope)}
-              style={{
-                paddingHorizontal: 14,
-                paddingVertical: 7,
-                borderRadius: 99,
-                backgroundColor: active ? colors.accent : 'rgba(255,255,255,0.06)',
-              }}
+              onPress={() => { void neonHaptic('select'); setFeedScope(scope); }}
+              style={{ borderRadius: 999 }}
             >
-              <Text style={{ color: active ? '#fff' : '#aaa', fontSize: 13, fontWeight: '600' }}>
-                {scope === 'forYou' ? 'For You' : 'Following'}
-              </Text>
+              {active ? (
+                <LinearGradient
+                  colors={gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999 }}
+                >
+                  <Text style={{ color: '#000', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 }}>
+                    {label}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
+                  <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '700', letterSpacing: 0.3 }}>
+                    {label}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           );
         })}
