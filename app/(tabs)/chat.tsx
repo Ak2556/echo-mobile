@@ -23,6 +23,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, CaretDown } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
+import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
 
 const EMPTY_SUGGESTIONS = ['Ask for a better hook', 'Turn an idea into a post', 'Run a poll for me', 'Summarize a note'];
 
@@ -400,6 +401,19 @@ export default function ChatScreen() {
     }
     const lastUser = userMsgs[userMsgs.length - 1];
     const lastAi = aiMsgs[aiMsgs.length - 1];
+    // Stash the full conversation history so the share screen can persist it
+    // with the echo (powers remixing + better embeddings). URL params only
+    // carry the last exchange for back-compat with thread-based share entry.
+    // Preserve any pre-staged context (e.g. parentEchoId set by the remix
+    // entry screen) so the lineage isn't lost when the user finally publishes.
+    const existing = peekPendingPublishContext();
+    setPendingPublishContext({
+      ...(existing ?? {}),
+      sourceConversationId: conversationIdRef.current ?? undefined,
+      conversationSnapshot: messages
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    });
     router.push({ pathname: '/share', params: { prompt: lastUser.content, response: lastAi.content } });
   }, [messages, router]);
 

@@ -2,7 +2,15 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { FeedItem } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
-import { fetchRankedFeed, fetchRemoteFeed, RankedFeedCursor } from '../../lib/supabaseEchoApi';
+import {
+  fetchRankedFeed,
+  fetchRemoteFeed,
+  fetchSemanticFeed,
+  fetchSimilarEchoes,
+  fetchTrendingEvolutions,
+  fetchRemixTree,
+  RankedFeedCursor,
+} from '../../lib/supabaseEchoApi';
 import { LOCAL_SEED_FEED, coerceFeedItem } from '../../lib/localFeedSeed';
 import { computeScore, GRAVITY, deduplicateFeed } from '../../lib/feedScoring';
 
@@ -38,6 +46,21 @@ export function useFeed() {
         list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
+        // Semantic ("For You") scope routes to pgvector cosine similarity
+        // against the user's recent interaction embeddings. Falls back to
+        // ranked feed if the user has no embedding signal yet (the RPC
+        // handles that internally but we double-fallback on RPC error too).
+        if (feedScope === 'semantic') {
+          try {
+            const rows = await fetchSemanticFeed(50);
+            const filtered = filterHidden(rows);
+            if (filtered.length > 0) return filtered;
+            // No semantic results yet (e.g. fresh install) — fall through
+            // to ranked feed so the surface is never empty.
+          } catch (semErr) {
+            console.warn('[useFeed] semantic RPC failed, falling back to ranked:', semErr);
+          }
+        }
         // Gravity: recency-heavy for 'latest', engagement-heavy for 'popular'.
         const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
         try {
@@ -92,6 +115,42 @@ export function useFeed() {
 
       return merged;
     },
+  });
+}
+
+// ─── Similar echoes ("more like this" rail) ──────────────────────────────────
+
+export function useSimilarEchoes(echoId: string | undefined, limit = 6) {
+  const remote = isSupabaseRemote();
+  return useQuery({
+    queryKey: ['similar-echoes', echoId, limit],
+    enabled: !!echoId && remote,
+    staleTime: 60_000,
+    queryFn: () => fetchSimilarEchoes(String(echoId), limit),
+  });
+}
+
+// ─── Trending evolutions (Evolutions tab) ────────────────────────────────────
+
+export function useTrendingEvolutions(limit = 30) {
+  const remote = isSupabaseRemote();
+  return useQuery({
+    queryKey: ['trending-evolutions', limit],
+    enabled: remote,
+    staleTime: 60_000,
+    queryFn: () => fetchTrendingEvolutions(limit),
+  });
+}
+
+// ─── Single remix tree (Evolution detail view) ───────────────────────────────
+
+export function useRemixTree(rootId: string | undefined) {
+  const remote = isSupabaseRemote();
+  return useQuery({
+    queryKey: ['remix-tree', rootId],
+    enabled: !!rootId && remote,
+    staleTime: 30_000,
+    queryFn: () => fetchRemixTree(String(rootId)),
   });
 }
 

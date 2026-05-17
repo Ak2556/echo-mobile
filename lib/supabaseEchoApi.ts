@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import * as FileSystem from 'expo-file-system/legacy';
-import { FeedItem, Comment } from '../types';
+import { FeedItem, Comment, EvolutionGroup, RemixTreeNode } from '../types';
 import {
   mapEchoRowToFeedItem,
   SupabaseEchoRow,
@@ -209,7 +209,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 // ─── Profile select helper ────────────────────────────────────────────────────
 
 const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count';
-const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id';
+const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score';
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -385,6 +385,9 @@ export async function insertRemoteEcho(params: {
   title?: string;
   mediaUrls?: string[];
   quotedEchoId?: string;
+  parentEchoId?: string;
+  sourceConversationId?: string;
+  conversationSnapshot?: { role: 'user' | 'assistant'; content: string }[];
 }): Promise<SupabaseEchoRow> {
   const title =
     params.title?.trim() ||
@@ -398,11 +401,249 @@ export async function insertRemoteEcho(params: {
       response: params.response,
       ...(params.mediaUrls?.length ? { media_urls: params.mediaUrls } : {}),
       ...(params.quotedEchoId ? { quoted_echo_id: params.quotedEchoId } : {}),
+      ...(params.parentEchoId ? { parent_echo_id: params.parentEchoId } : {}),
+      ...(params.sourceConversationId ? { source_conversation_id: params.sourceConversationId } : {}),
+      ...(params.conversationSnapshot?.length ? { conversation_snapshot: params.conversationSnapshot } : {}),
     })
     .select(ECHO_SELECT)
     .single();
   if (error) throw error;
-  return data as SupabaseEchoRow;
+  const row = data as SupabaseEchoRow;
+  // Fire-and-forget: ask the edge function to generate the embedding and
+  // thoughtfulness score. Failure here must not block the publish flow.
+  triggerEmbedEcho(row.id).catch(() => undefined);
+  return row;
+}
+
+/**
+ * Asks the embed-echo edge function to compute and persist the embedding +
+ * thoughtfulness score for a published echo. Non-blocking; errors are swallowed
+ * so the publish UX is never gated on embedding success.
+ */
+export async function triggerEmbedEcho(echoId: string): Promise<void> {
+  try {
+    await supabase.functions.invoke('embed-echo', { body: { echo_id: echoId } });
+  } catch {
+    // Embedding is best-effort. Reconciliation can happen via a backfill job.
+  }
+}
+
+export async function fetchRemoteEchoById(echoId: string): Promise<FeedItem | null> {
+  const uid = await getSessionUserId();
+  const { data: echo, error } = await supabase
+    .from('public_echoes')
+    .select(ECHO_SELECT)
+    .eq('id', echoId)
+    .single();
+  if (error) {
+    if ((error as { code?: string }).code === 'PGRST116') return null;
+    throw error;
+  }
+  if (!echo) return null;
+  const row = echo as SupabaseEchoRow;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT)
+    .eq('id', row.author_id)
+    .single();
+  let liked = new Set<string>();
+  let bookmarked = new Set<string>();
+  let reposted = new Set<string>();
+  if (uid) {
+    const [{ data: likeRow }, { data: bmRow }, { data: rpRow }] = await Promise.all([
+      supabase.from('echo_likes').select('echo_id').eq('user_id', uid).eq('echo_id', row.id).maybeSingle(),
+      supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid).eq('echo_id', row.id).maybeSingle(),
+      supabase.from('echo_reposts').select('echo_id').eq('user_id', uid).eq('echo_id', row.id).maybeSingle(),
+    ]);
+    if (likeRow) liked = new Set([row.id]);
+    if (bmRow) bookmarked = new Set([row.id]);
+    if (rpRow) reposted = new Set([row.id]);
+  }
+  return mapEchoRowToFeedItem(row, profile as SupabaseProfileRow | undefined, liked, bookmarked, reposted);
+}
+
+/**
+ * Fetches the multi-turn snapshot a published echo was forged from. Returns
+ * an empty array if the echo was published before snapshots existed.
+ */
+export async function fetchEchoConversationSnapshot(
+  echoId: string
+): Promise<{ role: 'user' | 'assistant'; content: string }[]> {
+  const { data, error } = await supabase
+    .from('public_echoes')
+    .select('conversation_snapshot, prompt, response')
+    .eq('id', echoId)
+    .single();
+  if (error) throw error;
+  const snapshot = (data?.conversation_snapshot as { role: 'user' | 'assistant'; content: string }[] | null) ?? null;
+  if (snapshot && Array.isArray(snapshot) && snapshot.length > 0) return snapshot;
+  // Fallback: synthesize a two-message snapshot from prompt/response.
+  const prompt = (data?.prompt as string | undefined) ?? '';
+  const response = (data?.response as string | undefined) ?? '';
+  return [
+    { role: 'user', content: prompt },
+    { role: 'assistant', content: response },
+  ];
+}
+
+// ─── Semantic feed + similar echoes (For You / "more like this" rail) ────────
+
+type SemanticFeedRow = SupabaseEchoRow & SupabaseProfileRow & { distance: number };
+
+export async function fetchSemanticFeed(limit = 30): Promise<FeedItem[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase.rpc('get_semantic_feed', {
+    p_user_id: uid,
+    p_limit: limit,
+  });
+  if (error) throw error;
+  const rows = (data ?? []) as SemanticFeedRow[];
+  if (rows.length === 0) return [];
+
+  const profileById = new Map<string, SupabaseProfileRow>(
+    rows.map(r => [r.author_id, {
+      id: r.author_id,
+      username: r.username,
+      display_name: r.display_name,
+      bio: r.bio,
+      avatar_color: r.avatar_color,
+      avatar_url: r.avatar_url,
+      is_verified: r.is_verified,
+      created_at: '',
+      follower_count: r.follower_count,
+    }])
+  );
+
+  const ids = rows.map(r => r.id);
+  const [{ data: likeRows }, { data: bmRows }, { data: rpRows }] = await Promise.all([
+    supabase.from('echo_likes').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+    supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+    supabase.from('echo_reposts').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+  ]);
+  const liked = new Set((likeRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+  const bookmarked = new Set((bmRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+  const reposted = new Set((rpRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+
+  return rows.map(row =>
+    mapEchoRowToFeedItem(row as SupabaseEchoRow, profileById.get(row.author_id), liked, bookmarked, reposted)
+  );
+}
+
+export async function fetchSimilarEchoes(echoId: string, limit = 6): Promise<FeedItem[]> {
+  const { data, error } = await supabase.rpc('get_similar_echoes', {
+    p_echo_id: echoId,
+    p_limit: limit,
+  });
+  if (error) throw error;
+  const rows = (data ?? []) as (SupabaseEchoRow & SupabaseProfileRow & { distance: number })[];
+  if (rows.length === 0) return [];
+  const empty = new Set<string>();
+  return rows.map(row => {
+    const profile: SupabaseProfileRow = {
+      id: row.author_id,
+      username: row.username,
+      display_name: row.display_name,
+      bio: undefined,
+      avatar_color: row.avatar_color,
+      avatar_url: row.avatar_url,
+      is_verified: row.is_verified,
+      created_at: '',
+    };
+    return mapEchoRowToFeedItem(row as SupabaseEchoRow, profile, empty, empty, empty);
+  });
+}
+
+// ─── Evolutions (trending remix lineages) ────────────────────────────────────
+
+type TrendingEvolutionRow = {
+  root_id: string;
+  root_title: string | null;
+  root_prompt: string;
+  root_response: string;
+  root_created_at: string;
+  root_media_urls: string[] | null;
+  root_author_id: string;
+  root_username: string;
+  root_display_name: string;
+  root_avatar_color: string;
+  root_avatar_url: string | null;
+  root_is_verified: boolean;
+  branch_count: number;
+  unique_authors: number;
+  tree_engagement: number;
+  newest_remix_at: string | null;
+};
+
+export async function fetchTrendingEvolutions(limit = 30): Promise<EvolutionGroup[]> {
+  const { data, error } = await supabase.rpc('get_trending_evolutions', { p_limit: limit });
+  if (error) throw error;
+  const rows = (data ?? []) as TrendingEvolutionRow[];
+  return rows.map(r => ({
+    rootId: r.root_id,
+    rootTitle: r.root_title,
+    rootPrompt: r.root_prompt,
+    rootResponse: r.root_response,
+    rootCreatedAt: r.root_created_at,
+    rootMediaUrls: r.root_media_urls ?? undefined,
+    rootAuthorId: r.root_author_id,
+    rootUsername: r.root_username,
+    rootDisplayName: r.root_display_name,
+    rootAvatarColor: r.root_avatar_color,
+    rootAvatarUrl: r.root_avatar_url ?? undefined,
+    rootIsVerified: r.root_is_verified,
+    branchCount: r.branch_count,
+    uniqueAuthors: r.unique_authors,
+    treeEngagement: r.tree_engagement,
+    newestRemixAt: r.newest_remix_at,
+  }));
+}
+
+type RemixTreeRow = {
+  id: string;
+  parent_echo_id: string | null;
+  depth: number;
+  author_id: string;
+  title: string | null;
+  prompt: string;
+  response: string;
+  likes_count: number;
+  comment_count: number;
+  repost_count: number;
+  remix_count: number;
+  created_at: string;
+  media_urls: string[] | null;
+  username: string;
+  display_name: string;
+  avatar_color: string;
+  avatar_url: string | null;
+  is_verified: boolean;
+};
+
+export async function fetchRemixTree(rootId: string): Promise<RemixTreeNode[]> {
+  const { data, error } = await supabase.rpc('get_remix_tree', { p_root_id: rootId });
+  if (error) throw error;
+  const rows = (data ?? []) as RemixTreeRow[];
+  return rows.map(r => ({
+    id: r.id,
+    parentEchoId: r.parent_echo_id,
+    depth: r.depth,
+    authorId: r.author_id,
+    title: r.title,
+    prompt: r.prompt,
+    response: r.response,
+    likesCount: r.likes_count,
+    commentCount: r.comment_count,
+    repostCount: r.repost_count,
+    remixCount: r.remix_count,
+    createdAt: r.created_at,
+    mediaUrls: r.media_urls ?? undefined,
+    username: r.username,
+    displayName: r.display_name,
+    avatarColor: r.avatar_color,
+    avatarUrl: r.avatar_url ?? undefined,
+    isVerified: r.is_verified,
+  }));
 }
 
 export async function setRemoteLike(echoId: string, like: boolean): Promise<void> {

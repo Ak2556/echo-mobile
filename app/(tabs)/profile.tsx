@@ -14,6 +14,7 @@ import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { buildCreatorProfile } from '../../lib/echoUX';
+import { StreakXPBadge } from '../../components/social/StreakXPBadge';
 
 const { width: SW } = Dimensions.get('window');
 const TAB_WIDTH = SW / 2;
@@ -87,6 +88,9 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
         </View>
+
+        {/* Streak + XP/Level — the retention loop. Renders nothing for first-run users. */}
+        <StreakXPBadge />
 
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.8 }}>{displayLabel}</Text>

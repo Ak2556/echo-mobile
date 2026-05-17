@@ -8,6 +8,7 @@ import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { LikeButton } from '../../components/social/LikeButton';
 import { MediaGrid } from '../../components/social/MediaGrid';
 import { InlineVideo } from '../../components/social/InlineVideo';
+import { SimilarEchoesRail } from '../../components/social/SimilarEchoesRail';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
@@ -239,8 +240,10 @@ export default function ThreadDetailScreen() {
           </Pressable>
         ) : null}
 
+        <SimilarEchoesRail echoId={item.id} />
+
         {relatedEchoes.length > 0 ? (
-          <View style={{ marginTop: 8 }}>
+          <View style={{ marginTop: 20 }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
               Related Echoes
             </Text>

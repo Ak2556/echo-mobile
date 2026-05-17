@@ -98,6 +98,60 @@ export interface FeedItem {
   };
   // Server-computed ranking score — present on remote items, absent on local/seed items.
   rankScore?: number;
+  // Remix lineage
+  parentEchoId?: string;
+  remixRootId?: string;
+  remixCount?: number;
+  parentAuthorUsername?: string;
+  parentTitle?: string;
+  // Quality / discovery
+  thoughtfulnessScore?: number;
+  semanticDistance?: number;
+}
+
+export interface ConversationSnapshotMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface EvolutionGroup {
+  rootId: string;
+  rootTitle: string | null;
+  rootPrompt: string;
+  rootResponse: string;
+  rootCreatedAt: string;
+  rootMediaUrls?: string[];
+  rootAuthorId: string;
+  rootUsername: string;
+  rootDisplayName: string;
+  rootAvatarColor: string;
+  rootAvatarUrl?: string;
+  rootIsVerified: boolean;
+  branchCount: number;
+  uniqueAuthors: number;
+  treeEngagement: number;
+  newestRemixAt: string | null;
+}
+
+export interface RemixTreeNode {
+  id: string;
+  parentEchoId: string | null;
+  depth: number;
+  authorId: string;
+  title: string | null;
+  prompt: string;
+  response: string;
+  likesCount: number;
+  commentCount: number;
+  repostCount: number;
+  remixCount: number;
+  createdAt: string;
+  mediaUrls?: string[];
+  username: string;
+  displayName: string;
+  avatarColor: string;
+  avatarUrl?: string;
+  isVerified: boolean;
 }
 
 export interface Comment {

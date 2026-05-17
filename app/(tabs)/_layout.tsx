@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Tabs } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, FilmStrip } from 'phosphor-react-native';
+import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, FilmStrip, GitBranch } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
@@ -10,11 +10,16 @@ import { useCommandPalette } from '../../lib/commandPalette';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { tap } from '../../lib/haptics';
 
+// `apps` is hidden from the floating tab bar — mini-apps are now surfaced
+// from the Profile screen instead, freeing a slot for `evolutions` which
+// is the signature AI-native discovery surface. `history` and `echoes`
+// remain hidden as before (echoes is reachable from the profile flow).
 const HIDDEN_ROUTES = new Set(['history', 'echoes', 'apps']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
   discover: House,
   search: MagnifyingGlass,
+  evolutions: GitBranch,
   echoes: FilmStrip,
   chat: ChatTeardropDots,
   notifications: Bell,
@@ -151,10 +156,11 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="discover" options={{ title: 'Home' }} />
       <Tabs.Screen name="search" options={{ title: 'Explore' }} />
-      <Tabs.Screen name="echoes" options={{ title: 'My Echoes' }} />
+      <Tabs.Screen name="evolutions" options={{ title: 'Evolve' }} />
       <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Activity' }} />
-      <Tabs.Screen name="apps" options={{ title: 'Apps' }} />
+      <Tabs.Screen name="echoes" options={{ href: null }} />
+      <Tabs.Screen name="apps" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       <Tabs.Screen name="history" options={{ href: null }} />
     </Tabs>

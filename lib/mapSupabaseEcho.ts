@@ -25,7 +25,12 @@ export type SupabaseEchoRow = {
   created_at: string;
   media_urls?: string[] | null;
   quoted_echo_id?: string | null;
+  parent_echo_id?: string | null;
+  remix_root_id?: string | null;
+  remix_count?: number | null;
+  thoughtfulness_score?: number | null;
   rank_score?: number;
+  distance?: number;
 };
 
 export function extractHashtags(text: string): string[] {
@@ -71,5 +76,11 @@ export function mapEchoRowToFeedItem(
     videoUri,
     quotedEchoId: echo.quoted_echo_id ?? undefined,
     rankScore: echo.rank_score ?? undefined,
+    parentEchoId: echo.parent_echo_id ?? undefined,
+    remixRootId: echo.remix_root_id ?? undefined,
+    remixCount: echo.remix_count ?? undefined,
+    thoughtfulnessScore: echo.thoughtfulness_score ?? undefined,
+    semanticDistance: echo.distance ?? undefined,
+    postOrigin: echo.parent_echo_id ? 'remix' : undefined,
   };
 }
