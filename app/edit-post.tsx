@@ -115,7 +115,7 @@ export default function EditPostScreen() {
     if (isSupabaseRemote()) {
       try {
         await updateRemoteEcho(echo.id, {
-          title: (updates as any).editorialTitle,
+          title: (updates.prompt ?? '').trim().slice(0, 80) || undefined,
           prompt: updates.prompt,
           response: updates.response,
           media_urls: updates.mediaUris,

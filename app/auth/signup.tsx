@@ -115,15 +115,22 @@ export default function SignupScreen() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
+    const bail = setTimeout(() => setGoogleLoading(false), 30_000);
     const { error } = await signInWithGoogle();
+    clearTimeout(bail);
     setGoogleLoading(false);
-    if (error) { showToast(error, '❌'); return; }
-    router.replace('/(tabs)/discover');
+    if (!error || error === '__cancelled__') {
+      if (!error) router.replace('/(tabs)/discover');
+      return;
+    }
+    showToast(error, '❌');
   };
 
   const handleApple = async () => {
     setAppleLoading(true);
+    const bail = setTimeout(() => setAppleLoading(false), 30_000);
     const { error } = await signInWithApple();
+    clearTimeout(bail);
     setAppleLoading(false);
     if (error) { showToast(error, '❌'); return; }
     router.replace('/(tabs)/discover');

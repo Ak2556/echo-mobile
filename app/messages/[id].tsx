@@ -263,15 +263,15 @@ function MessageActionSheet({
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Animated.View
-        entering={reduceAnimations ? undefined : FadeIn.duration(160)}
+        entering={reduceAnimations ? undefined : FadeIn.duration(200)}
         style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.48)' }]}
       >
         <Pressable style={{ flex: 1 }} onPress={onClose} />
       </Animated.View>
 
       <Animated.View
-        entering={reduceAnimations ? undefined : SlideInDown.springify().damping(18)}
-        exiting={reduceAnimations ? undefined : SlideOutDown.duration(150)}
+        entering={reduceAnimations ? undefined : SlideInDown.springify().damping(26).stiffness(280)}
+        exiting={reduceAnimations ? undefined : SlideOutDown.duration(180)}
         style={{
           position: 'absolute', left: 0, right: 0, bottom: 0,
           paddingHorizontal: 12,
@@ -534,9 +534,13 @@ export default function DMScreen() {
     toggleReaction.mutate({ messageId: activeMessage.id, emoji, hasReacted });
   }, [activeMessage, remote, toggleReaction]);
 
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleTextChange = useCallback((t: string) => {
     setText(t);
-    if (remote && t.length > 0) sendTypingEvent();
+    if (!remote || !t.length) return;
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => sendTypingEvent(), 1500);
   }, [remote, sendTypingEvent]);
 
   // ── Loading / not found ─────────────────────────────────────────────────────

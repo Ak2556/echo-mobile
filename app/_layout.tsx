@@ -43,6 +43,10 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   );
 }
 
+// Module-level flag: set when a password-recovery deep link is being processed.
+// Prevents onAuthStateChange from immediately navigating away to /(tabs)/discover.
+let pendingPasswordRecovery = false;
+
 function AuthListener() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -63,15 +67,23 @@ function AuthListener() {
       }),
     );
     if (params.access_token && params.refresh_token) {
+      if (params.type === 'recovery') {
+        // Mark recovery so onAuthStateChange doesn't navigate to discover.
+        pendingPasswordRecovery = true;
+      }
       const { error } = await supabase.auth.setSession({
         access_token: params.access_token,
         refresh_token: params.refresh_token,
       });
       if (error) {
+        pendingPasswordRecovery = false;
         showToast('Authentication failed. Please sign in again.', '❌');
         router.replace('/auth/login');
+      } else if (params.type === 'recovery') {
+        // Navigate to the reset-password screen now that session is active.
+        router.replace('/auth/reset-password');
       }
-      // onAuthStateChange fires on success and handles navigation.
+      // For non-recovery flows, onAuthStateChange handles navigation.
     }
   };
 
@@ -86,6 +98,12 @@ function AuthListener() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Recovery flow: session was set by handleDeepLink, screen is /auth/reset-password.
+      // Don't redirect — let the reset-password screen handle it.
+      if (pendingPasswordRecovery && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        if (event === 'SIGNED_IN') pendingPasswordRecovery = false;
+        return;
+      }
       if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
         setUserId(session.user.id);
         if (!useAppStore.getState().username) {

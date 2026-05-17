@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, PencilSimple, Envelope, SealCheck } from 'phosphor-react-native';
-import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
@@ -49,7 +49,7 @@ function ConversationCard({ conversation, index, onPress }: {
               <View className="absolute bottom-0 right-2 w-3.5 h-3.5 rounded-full" style={{ backgroundColor: colors.success, borderWidth: 2, borderColor: colors.bg }} />
             )}
             {conversation.unreadCount > 0 && (
-              <Animated.View entering={animation(FadeInRight.springify())} className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full items-center justify-center" style={{ backgroundColor: colors.accent, borderWidth: 2, borderColor: colors.bg }}>
+              <Animated.View entering={animation(FadeIn.duration(120))} className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full items-center justify-center" style={{ backgroundColor: colors.accent, borderWidth: 2, borderColor: colors.bg }}>
                 <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{conversation.unreadCount}</Text>
               </Animated.View>
             )}
