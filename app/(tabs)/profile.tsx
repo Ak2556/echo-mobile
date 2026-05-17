@@ -8,6 +8,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { PostsGrid } from '../../components/profile/PostsGrid';
+import { FeedCard } from '../../components/social/FeedCard';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { signOut } from '../../lib/auth';
@@ -108,7 +109,7 @@ export default function ProfileScreen() {
               <View style={{ padding: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <Sparkle color={colors.accent} size={16} />
-                  <Text style={{ color: colors.text, fontWeight: '700' }}>Topics</Text>
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>Expertise</Text>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {creatorProfile.topics.map(topic => (
@@ -122,31 +123,23 @@ export default function ProfileScreen() {
           )}
 
           {creatorProfile.pinned.length > 0 ? (
-            <GlassPanel borderRadius={radius.card}>
-              <View style={{ padding: 16 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <Compass color={colors.accent} size={16} />
-                  <Text style={{ color: colors.text, fontWeight: '700' }}>Pinned highlights</Text>
-                </View>
-                {creatorProfile.pinned.map(item => (
-                  <Pressable key={item.id} onPress={() => handlePressEcho(item)} style={{ paddingVertical: 10 }}>
-                    <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{item.editorialTitle || item.prompt}</Text>
-                    <Text style={{ color: colors.textSecondary, marginTop: 4, lineHeight: 20 }} numberOfLines={2}>
-                      {item.authorNote || item.response || 'Open to view the full Echo.'}
-                    </Text>
-                  </Pressable>
-                ))}
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, marginLeft: 4 }}>
+                <Compass color={colors.accent} size={15} />
+                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 }}>Signature Echo</Text>
               </View>
-            </GlassPanel>
+              <FeedCard item={creatorProfile.pinned[0]} index={0} onPress={() => handlePressEcho(creatorProfile.pinned[0])} />
+            </View>
           ) : null}
         </View>
 
         <View style={{ marginTop: 20, flexDirection: 'row' }}>
           {(['posts', 'about'] as const).map((tab, index) => {
             const active = activeTab === tab;
+            const tabLabel = tab === 'posts' ? 'Echoes' : 'About';
             return (
               <Pressable key={tab} onPress={() => setActiveTab(tab)} style={{ flex: 1, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 14, fontWeight: active ? '700' : '500', color: active ? colors.text : colors.textMuted, textTransform: 'capitalize' }}>{tab}</Text>
+                <Text style={{ fontSize: 14, fontWeight: active ? '700' : '500', color: active ? colors.text : colors.textMuted }}>{tabLabel}</Text>
                 {active ? <View style={{ position: 'absolute', bottom: 0, width: TAB_WIDTH, height: 2, backgroundColor: colors.accent }} /> : null}
               </Pressable>
             );
