@@ -11,6 +11,7 @@ export default function AuthLayout() {
       <Stack.Screen name="signup-wizard" />
       <Stack.Screen name="callback" />
       <Stack.Screen name="verify-phone" />
+      <Stack.Screen name="reset-password" />
     </Stack>
   );
 }

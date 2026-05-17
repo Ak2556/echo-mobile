@@ -117,7 +117,9 @@ export default function LoginScreen() {
 
   const handleApple = async () => {
     setAppleLoading(true);
+    const bail = setTimeout(() => setAppleLoading(false), 30_000);
     const { error } = await signInWithApple();
+    clearTimeout(bail);
     setAppleLoading(false);
     if (error) { showToast(error, '❌'); return; }
     router.replace('/(tabs)/discover');

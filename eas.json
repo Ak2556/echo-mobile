@@ -10,7 +10,11 @@
       "android": {
         "buildType": "apk"
       },
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://xmjbhcyyqrjlvhluisfj.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtamJoY3l5cXJqbHZobHVpc2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NDYzMjIsImV4cCI6MjA5NDMyMjMyMn0.QvYMGaBA1U-CMdfEUi1zEVtlgqzdsPaAeJ3vaRlm_CI"
+      }
     },
     "preview": {
       "distribution": "internal",
