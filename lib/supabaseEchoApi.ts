@@ -359,14 +359,14 @@ export async function fetchRemoteFeed(
   let liked = new Set<string>();
   let bookmarked = new Set<string>();
   if (uid) {
-    const [{ data: likeRows }, { data: bmRows }, { data: repostRows }] = await Promise.all([
+    const [likesRes, bmRes, repostRes] = await Promise.allSettled([
       supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
       supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid),
       supabase.from('echo_reposts').select('echo_id').eq('user_id', uid),
     ]);
-    liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
-    bookmarked = new Set((bmRows || []).map((r: { echo_id: string }) => r.echo_id));
-    const reposted = new Set((repostRows || []).map((r: { echo_id: string }) => r.echo_id));
+    liked = new Set((likesRes.status === 'fulfilled' ? likesRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
+    bookmarked = new Set((bmRes.status === 'fulfilled' ? bmRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
+    const reposted = new Set((repostRes.status === 'fulfilled' ? repostRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
     return rows.map(echo =>
       mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted)
     );

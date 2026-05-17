@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
@@ -161,7 +161,10 @@ export default function DiscoverScreen() {
     [router]
   );
 
-  const grouped = groupDiscovery(feed ?? [], interests, followingIds);
+  const grouped = useMemo(
+    () => groupDiscovery(feed ?? [], interests, followingIds),
+    [feed, interests, followingIds],
+  );
   const heroItems = (grouped.forYou.length > 0 ? grouped.forYou : feed?.slice(0, HERO_COUNT)) ?? [];
   const popularItems = (grouped.rising.length > 0 ? grouped.rising : feed?.slice(HERO_COUNT)) ?? [];
   const starterItems = grouped.conversationStarters.slice(0, 3);
@@ -172,6 +175,7 @@ export default function DiscoverScreen() {
   const ListHeader = (
     <View>
       {/* For You (semantic) / Trending / Following toggle — neon when active */}
+      {/* a11y: add accessibilityRole="tab" + accessibilityState={{ selected: active }} to each Pressable */}
       <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10, gap: 8 }}>
         {(['semantic', 'forYou', 'following'] as const).map(scope => {
           const active = feedScope === scope;
@@ -186,6 +190,9 @@ export default function DiscoverScreen() {
               key={scope}
               onPress={() => { void neonHaptic('select'); setFeedScope(scope); }}
               style={{ borderRadius: 999 }}
+              accessibilityRole="tab"
+              accessibilityLabel={label}
+              accessibilityState={{ selected: active }}
             >
               {active ? (
                 <LinearGradient

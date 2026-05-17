@@ -116,11 +116,16 @@ export default function ProfileScreen() {
                   <Text style={{ color: colors.text, fontWeight: '700' }}>Expertise</Text>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {creatorProfile.topics.map(topic => (
+                  {creatorProfile.topics.slice(0, 8).map(topic => (
                     <View key={topic} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '40' }}>
                       <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
                     </View>
                   ))}
+                  {creatorProfile.topics.length > 8 && (
+                    <View style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+                      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600' }}>+{creatorProfile.topics.length - 8} more</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </GlassPanel>
@@ -171,7 +176,7 @@ export default function ProfileScreen() {
             <GlassPanel borderRadius={radius.card}>
               <View style={{ padding: 16 }}>
                 {bio ? (
-                  <Text style={{ color: colors.text, fontSize: 15, lineHeight: 23 }}>{bio}</Text>
+                  <Text style={{ color: colors.text, fontSize: 15, lineHeight: 23 }} numberOfLines={6} ellipsizeMode="tail">{bio}</Text>
                 ) : (
                   <AnimatedPressable onPress={() => router.push('/edit-profile')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={{ color: colors.textMuted, fontSize: 15, fontStyle: 'italic' }}>No bio yet — tap to add one</Text>
