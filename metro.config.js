@@ -28,9 +28,10 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     };
   }
   // 'ws' is a Node-only WebSocket library — it pulls in 'stream', 'http', etc.
-  // None of those exist in React Native. Redirect to an empty shim so any
-  // transitive import (e.g. from Supabase Realtime in SSR pass) is a no-op.
-  if (moduleName === "ws") {
+  // None of those exist in React Native. Redirect to an empty shim on native so
+  // the bundle doesn't crash. On web/Node (SSR pass), let the real 'ws' through
+  // so Supabase Realtime can use it as its transport in the SSR renderer.
+  if (moduleName === "ws" && (platform === "ios" || platform === "android")) {
     return {
       filePath: path.resolve(__dirname, "lib/emptyShim.js"),
       type: "sourceFile",

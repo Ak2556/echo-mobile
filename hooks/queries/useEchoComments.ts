@@ -47,6 +47,14 @@ export function useAddRemoteComment(echoId: string | undefined) {
       appendCommentCache(qc, echoId, optimistic);
       return { optimisticId: optimistic.id };
     },
+    onError: (_err, _vars, ctx) => {
+      // Remove the optimistic comment immediately on failure instead of waiting for refetch
+      if (echoId && ctx?.optimisticId) {
+        qc.setQueryData<Comment[]>(['comments', echoId], old =>
+          (old ?? []).filter(c => c.id !== ctx.optimisticId)
+        );
+      }
+    },
     onSettled: () => {
       if (echoId) {
         qc.invalidateQueries({ queryKey: ['comments', echoId] });

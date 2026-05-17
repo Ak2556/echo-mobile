@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
-  Platform, TouchableOpacity, Pressable, Alert,
+  Platform, TouchableOpacity, Pressable, Alert, Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -10,10 +10,10 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { QuotedEchoCard } from '../components/social/QuotedEchoCard';
 import { VideoPreview } from '../components/social/VideoPreview';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 import {
   ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
-  VideoCamera, ChartBar, X, Plus, Clock, Camera, Images,
+  VideoCamera, ChartBar, X, Plus, Clock, Camera, Images, CheckCircle,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
@@ -45,7 +45,7 @@ const POLL_DURATIONS = [
 export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
-  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string }>();
+  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string }>();
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, avatarUrl, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore() as any;
   const quotedId = typeof params.quoted === 'string' ? params.quoted : undefined;
@@ -61,7 +61,13 @@ export default function CreatePostScreen() {
   }, [quotedId, publishedEchoes]);
 
   const [postType, setPostType] = useState<PostType>('text');
-  const [prompt, setPrompt] = useState(typeof params.prefillTitle === 'string' ? params.prefillTitle : '');
+  const [prompt, setPrompt] = useState(
+    typeof params.prefillPrompt === 'string' ? params.prefillPrompt
+    : typeof params.prefillTitle === 'string' ? params.prefillTitle
+    : ''
+  );
+  const [publishedEchoPreview, setPublishedEchoPreview] = useState<{ title: string } | null>(null);
+  const ceremonyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [response, setResponse] = useState(typeof params.prefillBody === 'string' ? params.prefillBody : '');
   const [caption, setCaption] = useState('');
   const [tagsRaw, setTagsRaw] = useState('');
@@ -186,7 +192,14 @@ export default function CreatePostScreen() {
       const hashtags = tagsRaw.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean);
       const remoteAuthorId = isSupabaseRemote() ? await getSessionUserId() : null;
       if (isSupabaseRemote() && !remoteAuthorId) {
-        Alert.alert('Session required', 'Please sign in again so we can publish your echo.');
+        Alert.alert(
+          'Session expired',
+          'Please sign in again to publish your echo.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Sign In', onPress: () => router.replace('/auth/login') },
+          ]
+        );
         return;
       }
       if (remoteAuthorId && remoteAuthorId !== userId) {
@@ -248,6 +261,14 @@ export default function CreatePostScreen() {
             ...base, postType: 'poll', prompt: pollQuestion.trim(), response: '',
             poll: { question: pollQuestion.trim(), options, totalVotes: 0, endsAt: new Date(Date.now() + pollDurationHours * 3600000).toISOString() },
           });
+          if (remoteAuthorId) {
+            const row = await insertRemoteEcho({
+              authorId: remoteAuthorId,
+              prompt: pollQuestion.trim(),
+              response: JSON.stringify({ options: options.map(o => o.text), durationHours: pollDurationHours }),
+            });
+            remoteEchoId = row.id;
+          }
           break;
         }
       }
@@ -262,8 +283,12 @@ export default function CreatePostScreen() {
       }
       qc.invalidateQueries({ queryKey: ['feed'] });
       playSoundEffect('success');
-      showToast('Echo published!', '✨');
-      router.back();
+      const previewTitle = publishedEcho.editorialTitle ?? publishedEcho.prompt ?? 'Your echo is live.';
+      setPublishedEchoPreview({ title: previewTitle });
+      if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current);
+      ceremonyTimer.current = setTimeout(() => {
+        router.replace('/(tabs)/discover');
+      }, 1800);
     } catch (e) {
       Alert.alert('Publish failed', (e as Error).message);
     } finally {
@@ -278,12 +303,36 @@ export default function CreatePostScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Publish ceremony overlay */}
+      <Modal visible={!!publishedEchoPreview} transparent animationType="none">
+        <Animated.View
+          entering={FadeIn.duration(280)}
+          exiting={FadeOut.duration(200)}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.88)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
+        >
+          <Animated.View entering={ZoomIn.springify().damping(22).stiffness(260)} style={{ alignItems: 'center' }}>
+            <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(16,185,129,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+              <CheckCircle color="#10B981" size={38} weight="fill" />
+            </View>
+            <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5, marginBottom: 10, textAlign: 'center' }}>
+              Echo sent.
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 15, textAlign: 'center', lineHeight: 22 }} numberOfLines={2}>
+              {publishedEchoPreview?.title}
+            </Text>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>New Echo</Text>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>New Echo</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>Distil your take.</Text>
+        </View>
         <AnimatedPressable
           onPress={() => { void handlePublish(); }} disabled={!canPublish} scaleValue={0.92} haptic="medium"
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
@@ -345,7 +394,7 @@ export default function CreatePostScreen() {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
                 <Lightning color={colors.accent} size={12} />
-                <Text style={[s.label, { marginBottom: 0 }]}>Answer / Insight</Text>
+                <Text style={[s.label, { marginBottom: 0 }]}>Your Echo</Text>
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={response} onChangeText={setResponse} placeholder="The response, your take, or what made this worth sharing…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />

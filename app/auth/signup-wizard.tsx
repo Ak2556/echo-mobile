@@ -320,6 +320,7 @@ export default function SignupWizard() {
       const msg = error.message.toLowerCase();
       if (error.code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
         showToast('Username taken — pick another', '❌');
+        setUsernameRaw('');
         goToStep(0, true);
         setSaving(false);
         return;
