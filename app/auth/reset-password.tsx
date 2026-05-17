@@ -134,7 +134,7 @@ export default function ResetPasswordScreen() {
             </View>
             {confirm.length > 0 && !matches && (
               <Text style={{ color: colors.danger, fontSize: fontSizes.caption, marginBottom: 8, marginLeft: 2 }}>
-                Passwords don't match
+                Passwords do not match
               </Text>
             )}
 

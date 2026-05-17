@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['**/*.test.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/**', '.claire/**', '.codex/**', '.qodo/**'],
     passWithNoTests: true,
   },
   resolve: {

@@ -2,7 +2,7 @@
 /**
  * Runs backend/db/schema.sql against the Supabase project.
  * Usage:
- *   SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/setup-db.js
+ *   SUPABASE_PROJECT_REF=<project-ref> SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/setup-db.js
  *
  * Get your service role key from:
  *   Supabase dashboard → Project Settings → API → service_role (secret)
@@ -12,13 +12,14 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const PROJECT_REF = 'xmjbhcyyqrjlvhluisfj';
+const PROJECT_REF = process.env.SUPABASE_PROJECT_REF;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!SERVICE_KEY) {
-  console.error('❌  Missing SUPABASE_SERVICE_ROLE_KEY env var.');
+if (!PROJECT_REF || !SERVICE_KEY) {
+  if (!PROJECT_REF) console.error('❌  Missing SUPABASE_PROJECT_REF env var.');
+  if (!SERVICE_KEY) console.error('❌  Missing SUPABASE_SERVICE_ROLE_KEY env var.');
   console.error('   Get it from: Supabase dashboard → Project Settings → API → service_role');
-  console.error('   Then run: SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/setup-db.js');
+  console.error('   Then run: SUPABASE_PROJECT_REF=<project-ref> SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/setup-db.js');
   process.exit(1);
 }
 

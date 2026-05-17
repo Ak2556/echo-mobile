@@ -18,6 +18,9 @@
   "exclude": [
     "node_modules",
     ".claude/**",
+    ".claire/**",
+    ".codex/**",
+    ".qodo/**",
     "supabase/functions/**/*"
   ]
 }

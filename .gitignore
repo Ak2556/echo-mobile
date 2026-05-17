@@ -1,6 +1,6 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Dependencies
 node_modules/
 
 # Expo
@@ -21,31 +21,48 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
+# Logs and debug output
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
 
 # macOS
 .DS_Store
 *.pem
 
-# local env files (never commit secrets — use env.example)
+# Local env files. Keep examples tracked.
 .env
-.env*.local
+.env.*
+!.env.example
+!backend/.env.example
 
-# typescript
+# TypeScript and tests
 *.tsbuildinfo
+coverage/
+.vitest/
 
 app-example
 
-# generated native folders
+# Generated native folders
 /ios
 /android
 
-# Claude Code local state
+# Local assistant/tool state
 .claude/
-
-# Codex local state
+.claire/
 .codex/
+.qodo/
+.mcp.json
+
+# Python local state
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+backend/.venv/
+backend/venv/
+
+# Supabase local state
 supabase/.temp/

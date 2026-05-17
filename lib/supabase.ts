@@ -9,6 +9,18 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+// Expo static rendering runs in Node 20, where Supabase Realtime cannot find a
+// native WebSocket. Provide a server-render-only placeholder; real browser and
+// native runtimes keep their platform WebSocket implementations.
+if (Platform.OS === 'web' && typeof window === 'undefined' && typeof globalThis.WebSocket === 'undefined') {
+  (globalThis as any).WebSocket = class StaticRenderWebSocket {
+    close() {}
+    send() {}
+    addEventListener() {}
+    removeEventListener() {}
+  };
+}
+
 // In-memory fallback for private browsing or environments where
 // localStorage is disabled/throws (e.g. Safari private mode).
 const memStore: Record<string, string> = {};
