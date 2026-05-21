@@ -8,10 +8,11 @@ const mocks = vi.hoisted(() => {
       eq: vi.fn(() => ({ error: null as unknown })),
     })),
   }));
-  const fromMock = vi.fn(() => ({
+  const fromMock = vi.fn() as ReturnType<typeof vi.fn>;
+  fromMock.mockReturnValue({
     insert: insertMock,
     delete: deleteChainMock,
-  }));
+  });
   const rpcMock = vi.fn();
   const getSessionMock = vi.fn(() =>
     Promise.resolve({ data: { session: { user: { id: 'test-user' } } }, error: null })
