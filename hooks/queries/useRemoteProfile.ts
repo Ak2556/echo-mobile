@@ -45,14 +45,15 @@ export function useRemoteProfileBundle(userId: string | undefined) {
       if (!userId) return null;
       const profile = await fetchRemoteProfile(userId);
       if (!profile) return null;
+      const profileId = profile.id;
       const [echoes, followerCount, followingCount, sessionUid] = await Promise.all([
-        fetchRemoteEchoesByAuthor(userId),
-        fetchRemoteFollowersCount(userId),
-        fetchRemoteFollowingCount(userId),
+        fetchRemoteEchoesByAuthor(profileId),
+        fetchRemoteFollowersCount(profileId),
+        fetchRemoteFollowingCount(profileId),
         getSessionUserId(),
       ]);
-      const isSelf = sessionUid === userId;
-      const isFollowing = sessionUid && !isSelf ? await isRemoteFollowing(userId) : false;
+      const isSelf = sessionUid === profileId;
+      const isFollowing = sessionUid && !isSelf ? await isRemoteFollowing(profileId) : false;
       const user = profileRowToUser(profile, echoes.length, followerCount, followingCount);
       return { user, echoes, isFollowing, isSelf };
     },
