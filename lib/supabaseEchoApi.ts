@@ -210,6 +210,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 
 const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns';
 const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -262,6 +263,57 @@ export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
 type RankedFeedRow = SupabaseEchoRow & SupabaseProfileRow & { rank_score: number };
 
 export type RankedFeedCursor = { score: number; id: string } | undefined;
+
+async function fetchEchoReactionState(
+  echoIds: string[],
+  uid: string | null,
+): Promise<{
+  countsById: Map<string, Partial<SupabaseEchoRow>>;
+  userReactionsById: Map<string, import('../types').EchoReaction[]>;
+}> {
+  const countsById = new Map<string, Partial<SupabaseEchoRow>>();
+  const userReactionsById = new Map<string, import('../types').EchoReaction[]>();
+  if (!echoIds.length) return { countsById, userReactionsById };
+
+  const [countsRes, reactionsRes] = await Promise.all([
+    supabase
+      .from('public_echoes')
+      .select('id, mind_blown_count, taking_notes_count, agree_count, disagree_count')
+      .in('id', echoIds),
+    uid
+      ? supabase
+          .from('echo_reactions')
+          .select('echo_id, reaction')
+          .eq('user_id', uid)
+          .in('echo_id', echoIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (countsRes.error) {
+    console.warn('[reactions] fetch counters failed', countsRes.error.message);
+  } else {
+    for (const row of (countsRes.data ?? []) as Array<Partial<SupabaseEchoRow> & { id: string }>) {
+      countsById.set(row.id, {
+        mind_blown_count: row.mind_blown_count,
+        taking_notes_count: row.taking_notes_count,
+        agree_count: row.agree_count,
+        disagree_count: row.disagree_count,
+      });
+    }
+  }
+
+  if (reactionsRes.error) {
+    console.warn('[reactions] fetch user reactions failed', reactionsRes.error.message);
+  } else {
+    for (const row of reactionsRes.data ?? []) {
+      const list = userReactionsById.get(row.echo_id) ?? [];
+      list.push(row.reaction as import('../types').EchoReaction);
+      userReactionsById.set(row.echo_id, list);
+    }
+  }
+
+  return { countsById, userReactionsById };
+}
 
 export async function fetchRankedFeed(options: {
   limit?: number;
@@ -317,11 +369,14 @@ export async function fetchRankedFeed(options: {
     reposted = new Set((repostRows ?? []).map((r: { echo_id: string }) => r.echo_id));
   }
 
+  const { countsById, userReactionsById } = await fetchEchoReactionState(rows.map(r => r.id), uid);
+
   return rows.map(row =>
     mapEchoRowToFeedItem(
-      { ...row, rank_score: row.rank_score } as SupabaseEchoRow,
+      { ...row, ...(countsById.get(row.id) ?? {}), rank_score: row.rank_score } as SupabaseEchoRow,
       profileById.get(row.author_id),
-      liked, bookmarked, reposted
+      liked, bookmarked, reposted,
+      userReactionsById.get(row.id),
     )
   );
 }
@@ -539,9 +594,17 @@ export async function fetchSemanticFeed(limit = 30): Promise<FeedItem[]> {
   const liked = new Set((likeRows ?? []).map((r: { echo_id: string }) => r.echo_id));
   const bookmarked = new Set((bmRows ?? []).map((r: { echo_id: string }) => r.echo_id));
   const reposted = new Set((rpRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+  const { countsById, userReactionsById } = await fetchEchoReactionState(ids, uid);
 
   return rows.map(row =>
-    mapEchoRowToFeedItem(row as SupabaseEchoRow, profileById.get(row.author_id), liked, bookmarked, reposted)
+    mapEchoRowToFeedItem(
+      { ...row, ...(countsById.get(row.id) ?? {}) } as SupabaseEchoRow,
+      profileById.get(row.author_id),
+      liked,
+      bookmarked,
+      reposted,
+      userReactionsById.get(row.id),
+    )
   );
 }
 
@@ -918,11 +981,14 @@ export async function insertRemoteComment(echoId: string, content: string, paren
   }
 }
 
-export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfileRow | null> {
+export async function fetchRemoteProfile(identifier: string): Promise<SupabaseProfileRow | null> {
+  const value = identifier.trim();
+  if (!value) return null;
+  const isUuid = UUID_RE.test(value);
   const { data, error } = await supabase
     .from('profiles')
     .select(PROFILE_SELECT)
-    .eq('id', userId)
+    .eq(isUuid ? 'id' : 'username', isUuid ? value : value.replace(/^@+/, '').toLowerCase())
     .maybeSingle();
   if (error) throw error;
   return data as SupabaseProfileRow | null;

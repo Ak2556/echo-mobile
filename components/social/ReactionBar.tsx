@@ -14,9 +14,8 @@ import type { EchoReaction, ReactionCounts } from '../../types';
  *   🤯 mind-blown   📝 taking notes   💯 agree   🤔 disagree
  *
  * Tap a chip to toggle. Counts update optimistically; rollback on error.
- * Chips render only when count > 0 *or* the viewer has reacted that way,
- * keeping the bar clean on low-engagement echoes (one always-visible "+ react"
- * affordance still lets the viewer pick).
+ * Compact mode renders engaged chips when possible, but keeps the full set
+ * tappable on fresh echoes so someone can add the first reaction.
  */
 
 const REACTION_META: Record<EchoReaction, { emoji: string; label: string; tint: string }> = {
@@ -65,16 +64,16 @@ export function ReactionBar({ target, counts, userReactions, compact }: Reaction
     setLocalUserReactions(new Set(userReactions ?? []));
   }, [userReactions]);
 
-  const visible = ORDER.filter((r) => localCounts[r] > 0 || localUserReactions.has(r));
-  if (!visible.length && compact) return null;
+  const visible = compact
+    ? ORDER.filter((r) => localCounts[r] > 0 || localUserReactions.has(r))
+    : ORDER;
+  const reactionsToRender = compact && visible.length > 0 ? visible : ORDER;
 
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
-      {ORDER.map((reaction) => {
+      {reactionsToRender.map((reaction) => {
         const count = localCounts[reaction];
         const reactedByMe = localUserReactions.has(reaction);
-        // Hide chips with zero count unless the viewer has reacted, to keep the bar uncluttered.
-        if (count === 0 && !reactedByMe && compact) return null;
 
         return (
           <ReactionChip
