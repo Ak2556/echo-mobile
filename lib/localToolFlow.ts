@@ -1,4 +1,4 @@
-import { executeLocalTool, isLocalTool, localToolFailureMessage, LocalToolName } from './localTools';
+import { executeLocalTool, isLocalTool, localToolFailureMessage, LocalToolContext, LocalToolName } from './localTools';
 
 export type LocalToolStatus = 'pending_confirm' | 'running' | 'ok' | 'error' | 'rejected';
 
@@ -26,11 +26,12 @@ export function isReadOnlyLocalTool(name: string): boolean {
 export async function runLocalToolFlow<T extends LocalToolFlowItem>(
   tool: T,
   handlers: LocalToolFlowHandlers<T>,
+  context?: LocalToolContext,
 ): Promise<void> {
   if (!isLocalTool(tool.name)) return;
   handlers.upsertTool({ ...tool, status: 'running' });
   try {
-    const result = await executeLocalTool(tool.name, tool.args);
+    const result = await executeLocalTool(tool.name, tool.args, context);
     const okTool = { ...tool, status: 'ok' as const, resultSummary: result.summary };
     handlers.upsertTool(okTool);
     await handlers.continueWithLocalResult(okTool, true, result.result);

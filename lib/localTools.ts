@@ -21,7 +21,9 @@ export type LocalToolName =
   | 'remember_preference'
   | 'forget_preference'
   | 'list_memory'
-  | 'compose_poll';
+  | 'compose_poll'
+  | 'navigate_to'
+  | 'draft_echo';
 
 export interface LocalToolExecution {
   ok: true;
@@ -29,11 +31,18 @@ export interface LocalToolExecution {
   result: Record<string, unknown>;
 }
 
+export interface LocalToolContext {
+  /** Called by navigate_to — navigate the app to the given screen. */
+  navigateFn?: (screen: string) => void;
+  /** Called by draft_echo — open create-post pre-filled with prompt + response. */
+  draftFn?: (prompt: string, response: string) => void;
+}
+
 export function isLocalTool(name: string): name is LocalToolName {
   return LOCAL_TOOL_NAMES.has(name as LocalToolName);
 }
 
-export async function executeLocalTool(name: LocalToolName, args: any): Promise<LocalToolExecution> {
+export async function executeLocalTool(name: LocalToolName, args: any, context?: LocalToolContext): Promise<LocalToolExecution> {
   switch (name) {
     case 'create_note': {
       const note = await createNote({
@@ -195,6 +204,17 @@ export async function executeLocalTool(name: LocalToolName, args: any): Promise<
         },
       };
     }
+    case 'navigate_to': {
+      const screen = stringArg(args?.screen) || 'discover';
+      context?.navigateFn?.(screen);
+      return { ok: true, summary: `Navigated to ${screen}`, result: { screen } };
+    }
+    case 'draft_echo': {
+      const prompt = stringArg(args?.prompt) || '';
+      const response = stringArg(args?.response) || '';
+      context?.draftFn?.(prompt, response);
+      return { ok: true, summary: 'Opened compose screen', result: { prompt, response } };
+    }
     default:
       throw new Error('Unknown local tool');
   }
@@ -226,6 +246,8 @@ const LOCAL_TOOL_NAMES = new Set<LocalToolName>([
   'forget_preference',
   'list_memory',
   'compose_poll',
+  'navigate_to',
+  'draft_echo',
 ]);
 
 function stringArg(value: unknown): string | undefined {

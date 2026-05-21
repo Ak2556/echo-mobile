@@ -58,6 +58,8 @@ interface StreamArgs {
   };
   /** When set, overrides the default model on the Edge Function side. */
   preferredModel?: EchoAIModel;
+  /** Expo Router pathname of the screen the user is currently on (e.g. '/(tabs)/discover'). Injected into the system prompt so the AI knows context. */
+  currentScreen?: string;
   /**
    * Called immediately once the stream opens with a `stop()` function.
    * Calling `stop()` closes the SSE connection and resolves the promise cleanly.
@@ -151,6 +153,7 @@ export async function streamEchoAI({
   confirm,
   localResult,
   preferredModel,
+  currentScreen,
   onAbortHandle,
   onEvent,
 }: StreamArgs): Promise<void> {
@@ -182,6 +185,7 @@ export async function streamEchoAI({
   if (preferredModel && AI_MODEL_MAP[preferredModel]) {
     payload.preferred_model = AI_MODEL_MAP[preferredModel];
   }
+  if (currentScreen) payload.current_screen = currentScreen;
 
   try {
     await openStream(jwt, payload, onEvent, onAbortHandle);
