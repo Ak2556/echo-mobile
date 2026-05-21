@@ -10,6 +10,11 @@ export interface User {
   followingCount: number;
   echoCount: number;
   createdAt: string;
+  /** Optional pronouns shown on profile (he/him, she/her, they/them, …). */
+  pronouns?: string | null;
+  /** 60-char status that expires after 24 hours. Hidden when expired. */
+  mood?: string | null;
+  moodExpiresAt?: string | null;
 }
 
 export interface ChatSession {
@@ -42,6 +47,16 @@ export interface Poll {
   endsAt?: string;   // ISO string — poll expiry
 }
 
+/** Knowledge-curation reactions — distinct from the heart-like signal. */
+export type EchoReaction = 'mind_blown' | 'taking_notes' | 'agree' | 'disagree';
+
+export interface ReactionCounts {
+  mind_blown: number;
+  taking_notes: number;
+  agree: number;
+  disagree: number;
+}
+
 export interface FeedItem {
   id: string;
   userId: string;
@@ -59,6 +74,12 @@ export interface FeedItem {
   repostCount: number;
   commentCount: number;
   viewCount: number;
+  /** Reaction-pile counts (per reaction kind). Server-computed. */
+  reactionCounts?: ReactionCounts;
+  /** Reactions the current viewer has given to this echo. */
+  userReactions?: EchoReaction[];
+  /** Author's current mood/status — surfaces above name if not expired. */
+  authorMood?: string | null;
   hashtags: string[];
   createdAt: string;
   postOrigin?: 'chat' | 'manual' | 'remix';

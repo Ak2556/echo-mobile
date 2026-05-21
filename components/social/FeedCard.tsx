@@ -11,6 +11,7 @@ import { MediaGrid } from './MediaGrid';
 import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
+import { ReactionBar } from './ReactionBar';
 import { RemixButton } from './RemixButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
@@ -305,6 +306,15 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   const ActionsRow = (
     <View style={{ paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+      {/* Knowledge-reactions pile (rendered above the heart/comment row). */}
+      <View style={{ marginBottom: 8 }}>
+        <ReactionBar
+          target={{ kind: 'echo', echoId: item.id }}
+          counts={item.reactionCounts}
+          userReactions={item.userReactions}
+          compact
+        />
+      </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
@@ -457,7 +467,17 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                   <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
                   {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
                 </View>
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
+                {/* Mood chip — only renders when the author has an active mood. */}
+                {item.authorMood ? (
+                  <Text
+                    numberOfLines={1}
+                    style={{ color: colors.accent, fontSize: fontSizes.caption, fontStyle: 'italic', marginTop: 1 }}
+                  >
+                    · {item.authorMood}
+                  </Text>
+                ) : (
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
+                )}
               </AnimatedPressable>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
               <AnimatedPressable
