@@ -2,12 +2,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   insertRemoteEcho,
   setRemoteBookmark,
+  setRemoteCommentReaction,
+  setRemoteEchoReaction,
   setRemoteFollow,
   setRemoteLike,
   setRemoteRepost,
 } from '../../lib/supabaseEchoApi';
 import { patchBookmarkCaches, patchFollowCaches, patchLikeCaches, patchRepostCaches } from '../../lib/queryCache';
 import { awardXp } from '../../lib/retention';
+import type { EchoReaction } from '../../types';
 
 export function useToggleRemoteLike() {
   const qc = useQueryClient();
@@ -57,6 +60,33 @@ export function useToggleRemoteRepost() {
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['bookmarks'] });
       qc.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
+/** Toggle a knowledge reaction (mind_blown/taking_notes/agree/disagree) on an echo. */
+export function useToggleEchoReaction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ echoId, reaction, on }: { echoId: string; reaction: EchoReaction; on: boolean }) => {
+      await setRemoteEchoReaction(echoId, reaction, on);
+    },
+    onSettled: (_, __, vars) => {
+      qc.invalidateQueries({ queryKey: ['feed'] });
+      if (vars?.echoId) qc.invalidateQueries({ queryKey: ['echo', vars.echoId] });
+    },
+  });
+}
+
+/** Toggle a knowledge reaction on a comment. */
+export function useToggleCommentReaction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, reaction, on }: { commentId: string; reaction: EchoReaction; on: boolean }) => {
+      await setRemoteCommentReaction(commentId, reaction, on);
+    },
+    onSettled: (_, __, _vars) => {
+      qc.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 }

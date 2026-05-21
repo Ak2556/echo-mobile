@@ -208,8 +208,8 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 
 // ─── Profile select helper ────────────────────────────────────────────────────
 
-const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count';
-const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score';
+const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns';
+const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count';
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -359,16 +359,26 @@ export async function fetchRemoteFeed(
   let liked = new Set<string>();
   let bookmarked = new Set<string>();
   if (uid) {
-    const [likesRes, bmRes, repostRes] = await Promise.allSettled([
+    const [likesRes, bmRes, repostRes, reactionsRes] = await Promise.allSettled([
       supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
       supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid),
       supabase.from('echo_reposts').select('echo_id').eq('user_id', uid),
+      // Knowledge reactions the current viewer gave to anything in this feed.
+      supabase.from('echo_reactions').select('echo_id, reaction').eq('user_id', uid).in('echo_id', rows.map(r => r.id)),
     ]);
     liked = new Set((likesRes.status === 'fulfilled' ? likesRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
     bookmarked = new Set((bmRes.status === 'fulfilled' ? bmRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
     const reposted = new Set((repostRes.status === 'fulfilled' ? repostRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
+    const reactionMap = new Map<string, import('../types').EchoReaction[]>();
+    if (reactionsRes.status === 'fulfilled') {
+      for (const r of reactionsRes.value.data ?? []) {
+        const list = reactionMap.get(r.echo_id) ?? [];
+        list.push(r.reaction as import('../types').EchoReaction);
+        reactionMap.set(r.echo_id, list);
+      }
+    }
     return rows.map(echo =>
-      mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted)
+      mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted, reactionMap.get(echo.id)),
     );
   }
 
@@ -694,6 +704,88 @@ export async function setRemoteRepost(echoId: string, repost: boolean): Promise<
   }
 }
 
+// ─── Knowledge reactions ───────────────────────────────────────────────────
+// Four-emoji reaction pile: 🤯 mind_blown, 📝 taking_notes, 💯 agree, 🤔 disagree.
+// Each (echo, user, reaction) combo is unique; counter columns on public_echoes
+// are kept in sync by DB triggers (adjust_echo_reaction_count).
+
+import type { EchoReaction } from '../types';
+
+/** Toggle a reaction the current user has on an echo. */
+export async function setRemoteEchoReaction(
+  echoId: string,
+  reaction: EchoReaction,
+  on: boolean,
+): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (on) {
+    const { error } = await supabase
+      .from('echo_reactions')
+      .insert({ echo_id: echoId, user_id: uid, reaction });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase
+      .from('echo_reactions')
+      .delete()
+      .eq('echo_id', echoId)
+      .eq('user_id', uid)
+      .eq('reaction', reaction);
+    if (error) throw error;
+  }
+}
+
+/** Same shape but for comments. */
+export async function setRemoteCommentReaction(
+  commentId: string,
+  reaction: EchoReaction,
+  on: boolean,
+): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (on) {
+    const { error } = await supabase
+      .from('comment_reactions')
+      .insert({ comment_id: commentId, user_id: uid, reaction });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase
+      .from('comment_reactions')
+      .delete()
+      .eq('comment_id', commentId)
+      .eq('user_id', uid)
+      .eq('reaction', reaction);
+    if (error) throw error;
+  }
+}
+
+/** Fetch all reactions the current user has given on a set of echo IDs.
+ *  Returns a Map<echoId, EchoReaction[]> for efficient lookup when building
+ *  FeedItems. */
+export async function fetchUserReactions(
+  echoIds: string[],
+): Promise<Map<string, EchoReaction[]>> {
+  const result = new Map<string, EchoReaction[]>();
+  if (!echoIds.length) return result;
+  const uid = await getSessionUserId();
+  if (!uid) return result;
+  const { data, error } = await supabase
+    .from('echo_reactions')
+    .select('echo_id, reaction')
+    .eq('user_id', uid)
+    .in('echo_id', echoIds);
+  if (error) {
+    console.warn('[reactions] fetchUserReactions failed', error.message);
+    return result;
+  }
+  for (const row of data ?? []) {
+    const list = result.get(row.echo_id) ?? [];
+    list.push(row.reaction as EchoReaction);
+    result.set(row.echo_id, list);
+  }
+  return result;
+}
+
 /** Records one deduplicated view per authenticated user per echo (PK echo_id,user_id). Ignores duplicates. */
 export async function recordRemoteEchoView(echoId: string): Promise<void> {
   const uid = await getSessionUserId();
@@ -947,10 +1039,26 @@ export async function updateRemoteProfile(updates: {
   bio?: string;
   avatar_color?: string;
   avatar_url?: string;
+  pronouns?: string | null;
+  mood?: string | null;
+  mood_expires_at?: string | null;
 }): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase.from('profiles').update(updates).eq('id', uid);
+  if (error) throw error;
+}
+
+/** Set the viewer's current mood — auto-expires 24h from now. Clears the mood when text is empty. */
+export async function setRemoteMood(mood: string | null): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const trimmed = mood?.trim() ? mood.trim().slice(0, 60) : null;
+  const expiresAt = trimmed ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null;
+  const { error } = await supabase
+    .from('profiles')
+    .update({ mood: trimmed, mood_expires_at: expiresAt })
+    .eq('id', uid);
   if (error) throw error;
 }
 
