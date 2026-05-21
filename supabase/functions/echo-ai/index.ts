@@ -707,6 +707,47 @@ const TOOLS: ToolSpec[] = [
       return data ?? [];
     },
   },
+  {
+    name: "navigate_to",
+    description: "Navigate the app to a specific screen. Use whenever the user says 'go to', 'open', 'take me to', or 'show me' a screen. Call the tool — don't describe the navigation in chat.",
+    parameters: {
+      type: "object",
+      properties: {
+        screen: {
+          type: "string",
+          enum: ["discover", "profile", "search", "create-post", "messages", "bookmarks", "notifications"],
+          description: "The screen to navigate to.",
+        },
+      },
+      required: ["screen"],
+    },
+    requiresConfirm: false,
+    localDevice: true,
+    preview: (a: any) => `Opening ${a.screen}…`,
+    execute: async () => ({ screen: "handled_client_side" }),
+  },
+  {
+    name: "draft_echo",
+    description: "Open the create-post screen pre-filled with a question (prompt) and insight (response) for the user to review before publishing. Use when the user says 'draft', 'prepare a post', 'write but don't publish', or 'open compose'. Does NOT publish — the user taps Post themselves.",
+    parameters: {
+      type: "object",
+      properties: {
+        prompt: {
+          type: "string",
+          description: "The question or idea that sparked the echo (≤280 chars).",
+        },
+        response: {
+          type: "string",
+          description: "The insight, answer, or take (≤1000 chars).",
+        },
+      },
+      required: ["prompt", "response"],
+    },
+    requiresConfirm: false,
+    localDevice: true,
+    preview: (a: any) => `Drafting: "${String(a.prompt ?? "").slice(0, 55)}…"`,
+    execute: async () => ({ status: "opened_compose" }),
+  },
 ];
 
 const TOOL_BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
@@ -722,27 +763,74 @@ const ORTOOL_DEFS: ORTool[] = TOOLS.map((t) => ({
 
 // ─── System prompt ───────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are Echo, an in-app assistant for a social network called Echo.
-Help the user accomplish things in the app — composing posts, searching/summarizing the feed,
-following people, liking/commenting, editing their profile, and operating local productivity mini-apps.
+interface UserProfile {
+  username?: string | null;
+  display_name?: string | null;
+  followers_count?: number | null;
+  following_count?: number | null;
+}
+
+const SCREEN_LABELS: Record<string, string> = {
+  '/(tabs)/discover':  'Discover feed',
+  '/(tabs)/chat':      'AI Chat',
+  '/(tabs)/profile':   'Your profile',
+  '/(tabs)/search':    'Search',
+  '/messages':         'Messages',
+  '/create-post':      'Create Post',
+  '/bookmarks':        'Bookmarks',
+  '/notifications':    'Notifications',
+};
+
+function buildSystemPrompt(profile?: UserProfile | null, currentScreen?: string | null): string {
+  const name = profile?.display_name || profile?.username || 'the user';
+  const handle = profile?.username ? `@${profile.username}` : 'unknown';
+  const followers = profile?.followers_count ?? '?';
+  const following = profile?.following_count ?? '?';
+  const screenLabel = (currentScreen && SCREEN_LABELS[currentScreen]) || 'Echo app';
+
+  return `You are Echo — the AI built into Echo, a social network for curated knowledge.
+
+Echo's core concept: every post ("echo") is built from two parts:
+  • prompt   — the question or idea that sparked it (≤280 chars)
+  • response — the distilled insight, answer, or take (≤1000 chars)
+Users come to Echo to think out loud, share hard-won knowledge, and discover quality ideas.
+
+Current user: ${name} (${handle}) · ${followers} followers · ${following} following
+Current screen: ${screenLabel}
+
+Vocabulary — map what the user says to the right action:
+  "post / share / publish / echo something" → compose_post (always fill BOTH prompt AND response)
+  "draft / prepare / open compose / write but don't publish" → draft_echo
+  "poll / vote / ask the audience / should I X or Y" → compose_poll
+  "go to / open / take me to / show me [screen]" → navigate_to
+  "follow / unfollow" → follow_user / unfollow_user
+  "like / unlike" → like_post / unlike_post
+  "comment" → comment_on_post
+  "bookmark / save" → bookmark_post
+  "find / look up [person]" → find_user
+  "what's trending / what's popular / catch me up / what did I miss" → summarize_feed
+  "search for [topic]" → search_feed
+  "remember / forget [preference]" → remember_preference / forget_preference
 
 Rules:
-- Use tools whenever the user wants to act on the app. Don't pretend to do things; call the tool.
-- Use compose_post for plain text/conversation echoes; use compose_poll when the user asks to "ask the audience", "run a poll", "vote", "should I X or Y", or otherwise wants the community to choose between distinct options. Pick 2–4 short, mutually exclusive options. Default duration is 24h unless the user specifies otherwise.
-- Use create_note and update_note only for Notes.
-- Use create_habit, complete_habit, and uncomplete_habit only for Habits.
-- Use log_expense_transaction only for Expenses.
-- Use rename_voice_memo and delete_voice_memo only for saved Voice Memo metadata; you cannot record audio for the user.
-- Use search_local_productivity, summarize_expenses, get_today_productivity, and list_memory for read-only local context.
-- When list_memory influences an answer, briefly say which remembered preference you used.
-- Use remember_preference and forget_preference only when the user clearly wants Echo to remember or forget a preference.
-- Be concise. Don't restate the user's request.
-- For destructive or write actions, the system will pause for the user to confirm — don't ask
-  for confirmation in chat, the UI handles it.
-- If a tool returns an id, refer to it naturally in your reply, not as a raw uuid.
-- If you don't have enough info to call a tool (e.g. unknown user_id), use find_user / search_feed
-  first to resolve it.
+- Always call a tool when the user wants to act. Never describe what you would do — do it.
+- compose_post: ALWAYS fill BOTH fields — prompt (the question that sparked it) AND response (the insight). If the user only gives you one piece of text, infer a natural question from context or ask one short clarifying question before composing.
+- draft_echo: use this when the user says "draft", "prepare", "open compose", or "write but don't publish". Opens the create-post screen pre-filled — nothing is published until the user taps Post themselves.
+- navigate_to: call this immediately for any navigation request. Never say "go to X" in chat — just call the tool.
+- compose_poll: pick 2–4 short mutually exclusive options. Default duration 24h unless specified.
+- For write/destructive actions the UI will pause for user confirmation — never ask for it in chat.
+- Be concise. One short sentence max after a successful tool call.
+- Never restate the user's request.
+- If you need a user_id, call find_user first.
+- Refer to IDs naturally, never as raw UUIDs.
+- When list_memory influences your answer, briefly mention which remembered preference you used.
+- Use create_note / update_note only for Notes; create_habit / complete_habit / uncomplete_habit only for Habits; log_expense_transaction only for Expenses.
+- You cannot record audio for the user; rename_voice_memo and delete_voice_memo only work on saved memo metadata.
 `;
+}
+
+// Keep a static fallback for the continuation functions that don't carry profile context.
+const FALLBACK_SYSTEM_PROMPT = buildSystemPrompt();
 
 // ─── DB helpers ──────────────────────────────────────────────────────────────
 
@@ -887,6 +975,8 @@ interface RequestBody {
   };
   /** Optional Google AI Studio model override. Non-allowlisted values are ignored. */
   preferred_model?: string;
+  /** The Expo Router pathname the user is on when they send the message. */
+  current_screen?: string;
 }
 
 async function handleRequest(req: Request): Promise<Response> {
@@ -939,6 +1029,19 @@ async function handleRequest(req: Request): Promise<Response> {
         );
         if (isNew) send({ type: "conversation", id: conversationId });
 
+        // Fetch user profile for context injection (best-effort — don't fail the request if it errors).
+        let profile: UserProfile | null = null;
+        try {
+          const { data } = await supabase
+            .from("profiles")
+            .select("username, display_name, followers_count, following_count")
+            .eq("id", userId)
+            .single();
+          profile = data ?? null;
+        } catch { /* non-fatal */ }
+
+        const systemPrompt = buildSystemPrompt(profile, body.current_screen ?? null);
+
         // ── Confirm branch: user approved/rejected a previously paused tool ──
         if (body.local_result) {
           await recordLocalToolResultAndContinue(
@@ -948,6 +1051,7 @@ async function handleRequest(req: Request): Promise<Response> {
             body.local_result,
             send,
             modelOverride,
+            systemPrompt,
           );
         } else if (body.confirm) {
           await runToolAndContinue(
@@ -957,12 +1061,13 @@ async function handleRequest(req: Request): Promise<Response> {
             body.confirm,
             send,
             modelOverride,
+            systemPrompt,
           );
         } else if (body.message) {
           // ── Fresh user turn ──
           const userMsg: ORMessage = { role: "user", content: body.message };
           await persistMessage(supabase, conversationId, userId, userMsg);
-          await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
+          await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);
         } else {
           send({ type: "error", message: "missing message or confirm" });
         }
@@ -998,11 +1103,12 @@ async function runAgentLoop(
   send: (e: SSEEvent) => void,
   maxSteps = 6,
   modelOverride?: string,
+  systemPrompt = FALLBACK_SYSTEM_PROMPT,
 ): Promise<void> {
   for (let step = 0; step < maxSteps; step++) {
     const history = await loadHistory(supabase, conversationId);
     const messages: ORMessage[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       ...history,
     ];
 
@@ -1107,6 +1213,7 @@ async function runToolAndContinue(
   confirm: NonNullable<RequestBody["confirm"]>,
   send: (e: SSEEvent) => void,
   modelOverride?: string,
+  systemPrompt = FALLBACK_SYSTEM_PROMPT,
 ): Promise<void> {
   const spec = TOOL_BY_NAME.get(confirm.tool_name);
   if (!spec) {
@@ -1143,7 +1250,7 @@ async function runToolAndContinue(
       error: "rejected",
     });
     // Continue loop so the model can recover (e.g. apologize or offer alternative).
-    await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
+    await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);
     return;
   }
 
@@ -1156,7 +1263,7 @@ async function runToolAndContinue(
     confirm.args,
     send,
   );
-  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
+  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);
 }
 
 async function recordLocalToolResultAndContinue(
@@ -1166,6 +1273,7 @@ async function recordLocalToolResultAndContinue(
   localResult: NonNullable<RequestBody["local_result"]>,
   send: (e: SSEEvent) => void,
   modelOverride?: string,
+  systemPrompt = FALLBACK_SYSTEM_PROMPT,
 ): Promise<void> {
   const spec = TOOL_BY_NAME.get(localResult.tool_name);
   if (!spec) {
@@ -1229,7 +1337,7 @@ async function recordLocalToolResultAndContinue(
     });
   }
 
-  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride);
+  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);
 }
 
 async function executeAndRecord(
