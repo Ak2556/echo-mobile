@@ -422,6 +422,11 @@ export async function insertRemoteEcho(params: {
   // Fire-and-forget: ask the edge function to generate the embedding and
   // thoughtfulness score. Failure here must not block the publish flow.
   triggerEmbedEcho(row.id).catch(() => undefined);
+  // Insert any @-mentions found in prompt + response. Best-effort; doesn't block.
+  const usernames = parseMentions(`${params.prompt} ${params.response}`);
+  if (usernames.length) {
+    insertEchoMentions(row.id, usernames).catch(() => undefined);
+  }
   return row;
 }
 
@@ -894,13 +899,23 @@ export async function submitRemoteReport(params: {
 export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
-  const { error } = await supabase.from('echo_comments').insert({
-    echo_id: echoId,
-    author_id: uid,
-    content,
-    ...(parentCommentId ? { parent_comment_id: parentCommentId } : {}),
-  });
+  const { data, error } = await supabase
+    .from('echo_comments')
+    .insert({
+      echo_id: echoId,
+      author_id: uid,
+      content,
+      ...(parentCommentId ? { parent_comment_id: parentCommentId } : {}),
+    })
+    .select('id')
+    .single();
   if (error) throw error;
+
+  // Parse + wire @-mentions. Best-effort; never blocks comment insert.
+  const usernames = parseMentions(content);
+  if (usernames.length && data?.id) {
+    insertCommentMentions(data.id, usernames).catch(() => undefined);
+  }
 }
 
 export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfileRow | null> {
@@ -1047,6 +1062,82 @@ export async function updateRemoteProfile(updates: {
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase.from('profiles').update(updates).eq('id', uid);
   if (error) throw error;
+}
+
+// ─── User search & mentions ────────────────────────────────────────────────
+
+/** Lightweight profile snippet returned by user search (cheaper than a full SupabaseProfileRow). */
+export interface UserSearchHit {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_color: string;
+  avatar_url?: string | null;
+  is_verified: boolean;
+}
+
+/** Search profiles by username prefix or display-name substring. */
+export async function searchRemoteUsers(query: string, limit = 8): Promise<UserSearchHit[]> {
+  const q = query.trim().replace(/^@+/, '');
+  if (!q) return [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_color, avatar_url, is_verified')
+    .or(`username.ilike.${q}%,display_name.ilike.%${q}%`)
+    .order('follower_count', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.warn('[users] search failed', error.message);
+    return [];
+  }
+  return (data as UserSearchHit[]) ?? [];
+}
+
+/** Extract @-mentions from a free-form text (echo body, comment, etc). Returns unique lowercase usernames. */
+export function parseMentions(text: string): string[] {
+  const m = text.match(/@([a-zA-Z0-9_]{2,32})/g);
+  if (!m) return [];
+  const set = new Set(m.map(s => s.slice(1).toLowerCase()));
+  return [...set];
+}
+
+/** Insert echo_mentions rows for the given echo, resolving usernames to IDs. */
+export async function insertEchoMentions(echoId: string, usernames: string[]): Promise<void> {
+  if (!usernames.length) return;
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('username', usernames);
+  if (error) {
+    console.warn('[mentions] resolve failed', error.message);
+    return;
+  }
+  const rows = (profiles ?? []).map(p => ({ echo_id: echoId, mentioned_user_id: p.id }));
+  if (!rows.length) return;
+  const { error: insErr } = await supabase.from('echo_mentions').insert(rows);
+  // Duplicates are fine — PK on (echo_id, mentioned_user_id).
+  if (insErr && !insErr.message.includes('duplicate')) {
+    console.warn('[mentions] insert failed', insErr.message);
+  }
+}
+
+/** Insert comment_mentions rows for the given comment. */
+export async function insertCommentMentions(commentId: string, usernames: string[]): Promise<void> {
+  if (!usernames.length) return;
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('username', usernames);
+  if (error) {
+    console.warn('[mentions] resolve failed', error.message);
+    return;
+  }
+  const rows = (profiles ?? []).map(p => ({ comment_id: commentId, mentioned_user_id: p.id }));
+  if (!rows.length) return;
+  const { error: insErr } = await supabase.from('comment_mentions').insert(rows);
+  if (insErr && !insErr.message.includes('duplicate')) {
+    console.warn('[mentions] insert failed', insErr.message);
+  }
 }
 
 /** Set the viewer's current mood — auto-expires 24h from now. Clears the mood when text is empty. */
