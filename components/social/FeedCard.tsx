@@ -11,6 +11,7 @@ import { MediaGrid } from './MediaGrid';
 import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
+import { LinkifiedText } from './LinkifiedText';
 import { ReactionBar } from './ReactionBar';
 import { RemixButton } from './RemixButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -644,9 +645,11 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
               {item.editorialTitle ?? item.prompt}
             </Text>
             {!!(item.authorNote ?? (showPreviewCards ? item.response : null)) && (
-              <Text style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6, marginBottom: compactFeed ? 8 : 12 }} numberOfLines={compactFeed ? 2 : 3}>
-                {item.authorNote ?? item.response}
-              </Text>
+              <LinkifiedText
+                text={item.authorNote ?? item.response}
+                style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6, marginBottom: compactFeed ? 8 : 12 }}
+                numberOfLines={compactFeed ? 2 : 3}
+              />
             )}
             {item.quotedEcho && (() => { try { return <QuotedEchoCard echo={item.quotedEcho!} compact={compactFeed} />; } catch { return null; } })()}
           </>
