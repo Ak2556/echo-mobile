@@ -24,7 +24,7 @@ import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { playSoundEffect } from '../lib/sound';
 import { isSupabaseRemote } from '../lib/remoteConfig';
-import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
+import { CO_AUTHOR_CONSENT_REQUIRED_MESSAGE, getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
 import { Users, MagnifyingGlass } from 'phosphor-react-native';
 
@@ -43,6 +43,8 @@ const POLL_DURATIONS = [
   { label: '24h', hours: 24 },
   { label: '7d', hours: 168 },
 ];
+
+const CO_AUTHORING_ENABLED = false;
 
 export default function CreatePostScreen() {
   const router = useRouter();
@@ -98,7 +100,7 @@ export default function CreatePostScreen() {
   const [coAuthorHits, setCoAuthorHits] = useState<UserSearchHit[]>([]);
 
   React.useEffect(() => {
-    if (!coAuthorPickerOpen) return;
+    if (!coAuthorPickerOpen || !CO_AUTHORING_ENABLED) return;
     const t = setTimeout(async () => {
       const res = await searchRemoteUsers(coAuthorQuery, 8);
       setCoAuthorHits(res);
@@ -116,7 +118,7 @@ export default function CreatePostScreen() {
     switch (postType) {
       case 'text':
         if (coAuthor) {
-          return prompt.trim().length > 0 && response.trim().length > 0 && coAuthorResponse.trim().length > 0;
+          return false;
         }
         return prompt.trim().length > 0 && response.trim().length > 0;
       case 'photo': return imageUris.length > 0;
@@ -214,6 +216,10 @@ export default function CreatePostScreen() {
   const removePollOption = (idx: number) => { if (pollOptions.length > 2) setPollOptions(p => p.filter((_, i) => i !== idx)); };
 
   const handlePublish = async () => {
+    if (coAuthor) {
+      Alert.alert('Co-author unavailable', CO_AUTHOR_CONSENT_REQUIRED_MESSAGE);
+      return;
+    }
     if (!canPublish) return;
     setPublishing(true);
 
@@ -548,7 +554,7 @@ export default function CreatePostScreen() {
                     <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{coAuthorResponse.length}/1000</Text>
                   </View>
                 </View>
-              ) : (
+              ) : CO_AUTHORING_ENABLED ? (
                 <Pressable
                   onPress={() => { setCoAuthorPickerOpen(true); setCoAuthorQuery(''); }}
                   style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 14, gap: 6, borderStyle: 'dashed' }]}
@@ -556,6 +562,13 @@ export default function CreatePostScreen() {
                   <Users color={colors.textMuted} size={14} />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>Add a co-author</Text>
                 </Pressable>
+              ) : (
+                <View style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14, marginBottom: 14, gap: 8, opacity: 0.72 }]}>
+                  <Users color={colors.textMuted} size={14} />
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600', flex: 1 }}>
+                    Co-author posting is paused until approval is required.
+                  </Text>
+                </View>
               )}
             </Animated.View>
           )}
