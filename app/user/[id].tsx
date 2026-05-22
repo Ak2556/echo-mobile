@@ -7,9 +7,10 @@ import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
   ArrowLeft, SealCheck, DotsThreeOutline, Envelope,
-  UserMinus, Flag, ShareNetwork,
+  UserMinus, Flag, ShareNetwork, Images,
 } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
+import { EmptyState } from '../../components/common/EmptyState';
 import { FeedCard } from '../../components/social/FeedCard';
 import { ProfileHeaderSkeleton, FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -265,7 +266,15 @@ export default function UserProfileScreen() {
               creatorProfile={creatorProfile}
             />
           }
-          ListEmptyComponent={<View className="items-center pt-12"><Text style={{ color: colors.textMuted }}>No echoes yet</Text></View>}
+          ListEmptyComponent={
+            <View style={{ paddingTop: 56 }}>
+              <EmptyState
+                icon={<Images color={colors.accent} size={28} weight="duotone" />}
+                title="No echoes yet"
+                subtitle="When they publish, you’ll see it here."
+              />
+            </View>
+          }
         />
       </SafeAreaView>
     );

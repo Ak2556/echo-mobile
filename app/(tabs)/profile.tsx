@@ -14,6 +14,7 @@ import { useTheme } from '../../lib/theme';
 import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
+import { EmptyState } from '../../components/common/EmptyState';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { StreakXPBadge } from '../../components/social/StreakXPBadge';
 
@@ -159,15 +160,14 @@ export default function ProfileScreen() {
 
         {activeTab === 'posts' ? (
           publishedEchoes.length === 0 ? (
-            <View style={{ alignItems: 'center', paddingVertical: 56, paddingHorizontal: 32, gap: 12 }}>
-              <Images color={colors.textMuted} size={44} weight="duotone" />
-              <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>No Echoes yet</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
-                Publish one strong conversation or idea so people can understand what you are about.
-              </Text>
-              <AnimatedPressable onPress={() => router.push('/create-post')} style={{ marginTop: 4, backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Create Echo</Text>
-              </AnimatedPressable>
+            <View style={{ paddingVertical: 56 }}>
+              <EmptyState
+                icon={<Images color={colors.accent} size={28} weight="duotone" />}
+                title="No Echoes yet"
+                subtitle="Publish one strong conversation or idea so people can understand what you are about."
+                actionLabel="Create Echo"
+                onAction={() => router.push('/create-post')}
+              />
             </View>
           ) : (
             <PostsGrid echoes={publishedEchoes} onPressEcho={handlePressEcho} avatarColor={avatarColor || colors.accent} />
