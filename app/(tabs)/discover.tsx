@@ -13,7 +13,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Bell, Question, Sparkle, TrendUp } from 'phosphor-react-native';
+import { Bell, Question, Sparkle, TrendUp, PencilSimpleLine, X } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
@@ -104,6 +104,10 @@ export default function DiscoverScreen() {
   const { colors, animation } = useTheme();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, interests, followingIds } = useAppStore();
+  const publishedCount = useAppStore(s => s.publishedEchoes.length);
+  const dismissedCoach = useAppStore(s => s.dismissedFirstEchoCoach);
+  const setDismissedCoach = useAppStore(s => s.setDismissedFirstEchoCoach);
+  const showFirstEchoCoach = publishedCount === 0 && !dismissedCoach;
   const insets = useSafeAreaInsets();
   const remote = isSupabaseRemote();
   const { data: suggestedUsers = [] } = useSuggestedUsers();
@@ -208,6 +212,53 @@ export default function DiscoverScreen() {
           <SectionHeader label="Your Stories" />
           <StoryCircles />
         </>
+      )}
+      {/* First-Echo coach — pushes brand-new users toward their first publish.
+          Disappears the moment they publish OR explicitly dismiss. */}
+      {showFirstEchoCoach && (
+        <View
+          style={{
+            marginHorizontal: 16,
+            marginTop: 8,
+            marginBottom: 6,
+            padding: 14,
+            borderRadius: 14,
+            backgroundColor: colors.accent + '14',
+            borderWidth: 1,
+            borderColor: colors.accent + '30',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <View style={{
+            width: 36, height: 36, borderRadius: 18,
+            backgroundColor: colors.accent + '22',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            <PencilSimpleLine color={colors.accent} size={18} weight="bold" />
+          </View>
+          <Pressable
+            onPress={() => router.push('/create-post')}
+            style={{ flex: 1 }}
+            accessibilityRole="button"
+            accessibilityLabel="Drop your first Echo"
+          >
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
+              Drop your first Echo
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+              One question, one take. That&apos;s how Echo starts.
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setDismissedCoach(true)}
+            hitSlop={8}
+            accessibilityLabel="Dismiss"
+          >
+            <X color={colors.textMuted} size={16} />
+          </Pressable>
+        </View>
       )}
       {features.dailyQuestion && (
         <Pressable
