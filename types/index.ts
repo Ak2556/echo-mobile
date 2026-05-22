@@ -204,7 +204,7 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'dm';
+  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'dm' | 'reaction' | 'bookmark' | 'quote';
   fromUserId: string;
   fromUsername: string;
   fromDisplayName: string;
