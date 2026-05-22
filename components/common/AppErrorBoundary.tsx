@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Warning, ArrowClockwise, CaretDown, CaretUp } from 'phosphor-react-native';
 import type { ErrorBoundaryProps } from 'expo-router';
 import { useTheme } from '../../lib/theme';
+import { captureException } from '../../lib/monitoring';
 
 /**
  * Production error boundary used by Expo Router as the root fallback.
@@ -16,6 +17,12 @@ import { useTheme } from '../../lib/theme';
 export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const { colors, radius } = useTheme();
   const [showDetails, setShowDetails] = useState(false);
+
+  // Report once per error instance. The Expo Router error boundary remounts
+  // on `retry()`, so this fires per-render-error rather than per-render.
+  useEffect(() => {
+    captureException(error, { tags: { source: 'router_error_boundary' } });
+  }, [error]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
