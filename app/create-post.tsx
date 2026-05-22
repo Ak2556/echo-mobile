@@ -44,11 +44,14 @@ const POLL_DURATIONS = [
   { label: '7d', hours: 168 },
 ];
 
-const CO_AUTHORING_ENABLED: boolean = false;
+function isCoAuthoringEnabled(): boolean {
+  return false;
+}
 
 export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
+  const coAuthoringEnabled = isCoAuthoringEnabled();
   const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string }>();
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, avatarUrl, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore() as any;
@@ -100,13 +103,13 @@ export default function CreatePostScreen() {
   const [coAuthorHits, setCoAuthorHits] = useState<UserSearchHit[]>([]);
 
   React.useEffect(() => {
-    if (!coAuthorPickerOpen || !CO_AUTHORING_ENABLED) return;
+    if (!coAuthorPickerOpen || !coAuthoringEnabled) return;
     const t = setTimeout(async () => {
       const res = await searchRemoteUsers(coAuthorQuery, 8);
       setCoAuthorHits(res);
     }, 180);
     return () => clearTimeout(t);
-  }, [coAuthorQuery, coAuthorPickerOpen]);
+  }, [coAuthorQuery, coAuthorPickerOpen, coAuthoringEnabled]);
 
   // Poll state
   const [pollQuestion, setPollQuestion] = useState('');
@@ -554,7 +557,7 @@ export default function CreatePostScreen() {
                     <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{coAuthorResponse.length}/1000</Text>
                   </View>
                 </View>
-              ) : CO_AUTHORING_ENABLED ? (
+              ) : coAuthoringEnabled ? (
                 <Pressable
                   onPress={() => { setCoAuthorPickerOpen(true); setCoAuthorQuery(''); }}
                   style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 14, gap: 6, borderStyle: 'dashed' }]}
