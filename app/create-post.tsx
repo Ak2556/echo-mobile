@@ -44,7 +44,7 @@ const POLL_DURATIONS = [
   { label: '7d', hours: 168 },
 ];
 
-const CO_AUTHORING_ENABLED = false;
+const CO_AUTHORING_ENABLED: boolean = false;
 
 export default function CreatePostScreen() {
   const router = useRouter();
@@ -540,7 +540,7 @@ export default function CreatePostScreen() {
                       <X color={colors.textMuted} size={16} />
                     </Pressable>
                   </View>
-                  <Text style={s.label}>{coAuthor.display_name || coAuthor.username}'s take</Text>
+                  <Text style={s.label}>{`${coAuthor.display_name || coAuthor.username}'s take`}</Text>
                   <View style={[s.surface, { padding: 14, marginBottom: 4 }]}>
                     <TextInput
                       multiline
