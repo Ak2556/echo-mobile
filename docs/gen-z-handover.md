@@ -6,7 +6,7 @@ Copy-paste the prompt at the bottom into the next session.
 
 ## Where we are
 
-The "Gen Z features" feature pack is **partially shipped** on `main`. Four commits cover the work so far:
+The "Gen Z features" feature pack is **mostly shipped** on `main`. Eight commits cover the work so far:
 
 | Commit | What it shipped |
 |---|---|
@@ -14,6 +14,10 @@ The "Gen Z features" feature pack is **partially shipped** on `main`. Four commi
 | `3add3d8` | @-mentions API + LinkifiedText rendering |
 | `e209752` | Daily Question + Salons |
 | `4a6cf65` | Office Hours + Badges + Quests + Year in Echo |
+| `8ee320a` | @-mentions autocomplete dropdown (composer + comments) |
+| `98c5b2c` | Co-Echoes — side-by-side collab posts |
+| `c7e0b6e` | Activity tab upgrade — reaction/bookmark/quote notifs |
+| `f0307ad` | AI tools — react_to_echo, open_daily_question, join_salon, rsvp_office_hour |
 
 The master plan lives at `docs/gen-z-features-plan.md`. The DB schema lives at `supabase/migrations/20260521120000_gen_z_features.sql` (idempotent — safe to re-run on a fresh DB).
 
@@ -32,9 +36,17 @@ The master plan lives at `docs/gen-z-features-plan.md`. The DB schema lives at `
 
 ## What's still on the plan but **not shipped**
 
-These are smaller, more contained pieces of polish. The big infra is already in place — just UI/integration work remains.
+Only the three lower-priority items remain:
 
-### 1. @-mentions autocomplete in the composer
+### 3. Story replies / reactions
+### 6. Topic Leaderboards
+### 8. Office Hours status cron
+
+(See original item descriptions below — they are unchanged.)
+
+## ✅ Shipped in this session
+
+### 1. @-mentions autocomplete in the composer (DONE in `8ee320a`)
 
 **State:** `searchRemoteUsers(query, limit)` already exists in `lib/supabaseEchoApi.ts`. Just need a UI overlay that listens to the active text input and shows suggestions.
 
@@ -47,7 +59,7 @@ These are smaller, more contained pieces of polish. The big infra is already in 
 
 **Verification:** Type `@a` in create-post → see suggestions → tap one → username appears in the response field → publish → DB has an `echo_mentions` row + a `mention` notification fires.
 
-### 2. Threaded comment replies UI
+### 2. Threaded comment replies UI (already shipped before this session in `app/comments/[id].tsx` + `CommentCard`)
 
 **State:** DB column `echo_comments.parent_comment_id` already exists (from `phase1_social` migration). The Comments type already has `parentId` and `replyCount`. `insertRemoteComment` already accepts a `parentCommentId` parameter.
 
@@ -64,7 +76,7 @@ These are smaller, more contained pieces of polish. The big infra is already in 
 - New migration: `story_reactions` table (story_id, user_id, reaction) — mirror of `echo_reactions`
 - `app/story/[id].tsx` — bottom-bar reaction picker + "Reply via DM" CTA that opens a new DM with the story embedded
 
-### 4. Co-Echoes (collab posts)
+### 4. Co-Echoes (collab posts) (DONE in `98c5b2c`)
 
 **State:** `public_echoes.co_author_id` and `co_author_response` columns already exist.
 
@@ -73,7 +85,7 @@ These are smaller, more contained pieces of polish. The big infra is already in 
 - `components/social/FeedCard.tsx` — when `co_author_id` is set, render a side-by-side card (left = author's response, right = co-author's response) with both avatars
 - `lib/mapSupabaseEcho.ts` — extend `FeedItem` with `coAuthor` + `coAuthorResponse` fields
 
-### 5. Activity tab upgrade
+### 5. Activity tab upgrade (DONE in `c7e0b6e`)
 
 **State:** The `notifications` table already supports `mention`, `like`, `comment`, `follow`, `repost`. Just need broader grouping in the UI.
 
@@ -88,7 +100,7 @@ These are smaller, more contained pieces of polish. The big infra is already in 
 - New migration: `create or replace view topic_leaderboard as ...` — group by lower(tag), aggregate per author
 - New screen: `app/topic/[tag].tsx` — top contributors + a feed of recent echoes tagged with that topic
 
-### 7. AI tool integrations for new features
+### 7. AI tool integrations for new features (DONE in `f0307ad`)
 
 Add tools to the TOOLS array in `supabase/functions/echo-ai/index.ts`:
 - `react_to_echo(echo_id, reaction)` — requires confirm, server-side action via supabase client
@@ -107,7 +119,7 @@ A small edge function (`office-hours-status-rotator`) that flips `status` from `
 ## Operating tips for the next session
 
 1. **Working directory:** Always `cd /Users/aena/Developer/echo-ios` before any git commands. There's a worktree at `.claude/worktrees/laughing-mirzakhani-1a224c` that can confuse `git push` — commits go to the wrong branch from there.
-2. **Migrations:** Docker isn't running, so `supabase db push` can fail mid-transaction. Apply migrations via the `mcp__supabase__apply_migration` tool instead, in chunks for visibility.
+2. **Migrations:** **Use the CLI, not the MCP.** The MCP `mcp__supabase__*` tools are connected to a different Supabase project (`eyokhisijabitzjiydmz`) than the app uses (`xmjbhcyyqrjlvhluisfj`). For real migrations to the app's project, run `supabase db push --linked` — Docker is NOT required for `db push`; only `db start`/`db reset` need it. Same for edge functions: `supabase functions deploy <name>`.
 3. **Typecheck before commit:** `npx tsc --noEmit` is fast and catches the kind of prop-shape errors that surfaced when I plumbed ProfileAvatar (`avatarColor`, not `color`; `displayName`, not `username`).
 4. **Router pushes** to dynamic routes need `as any` cast: `router.push('/salon/foo' as any)` — Expo Router's static type doesn't know about runtime params.
 5. **FeedCard** requires an `index` prop now — pass it from any `.map((item, index) => <FeedCard …/>)`.
