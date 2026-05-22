@@ -498,6 +498,9 @@ export default function ChatScreen() {
                 <Text style={{ color: colors.textMuted, lineHeight: 19 }}>
                   Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
                 </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 10, opacity: 0.8 }}>
+                  Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
+                </Text>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {EMPTY_SUGGESTIONS.map(suggestion => (

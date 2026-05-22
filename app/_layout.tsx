@@ -183,6 +183,7 @@ export default function RootLayout() {
           <Stack.Screen name="report" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />
           <Stack.Screen name="notification-prefs" options={{ presentation: 'card' }} />
+          <Stack.Screen name="delete-account" options={{ presentation: 'card' }} />
           <Stack.Screen name="story" options={{ presentation: 'transparentModal', animation: 'fade' }} />
           <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'fade' }} />

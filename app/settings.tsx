@@ -337,17 +337,9 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'This action is permanent and cannot be undone. All your data will be lost.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete Forever', style: 'destructive', onPress: async () => {
-          s.clearAllData();
-          await signOut();
-        }},
-      ]
-    );
+    // Route to the dedicated delete-account screen — Apple wants a
+    // multi-step confirmation flow, not a one-tap alert.
+    router.push('/delete-account' as any);
   };
 
   const handleClearCache = () => {
