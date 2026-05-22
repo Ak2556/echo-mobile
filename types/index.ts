@@ -128,6 +128,16 @@ export interface FeedItem {
   // Quality / discovery
   thoughtfulnessScore?: number;
   semanticDistance?: number;
+  // Co-echo: a collaborative post — the co-author writes a parallel response.
+  coAuthor?: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarColor: string;
+    avatarUrl?: string;
+    isVerified?: boolean;
+  };
+  coAuthorResponse?: string;
 }
 
 export interface ConversationSnapshotMessage {

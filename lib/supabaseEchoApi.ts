@@ -209,7 +209,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 // ─── Profile select helper ────────────────────────────────────────────────────
 
 const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns';
-const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count';
+const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response';
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -347,7 +347,12 @@ export async function fetchRemoteFeed(
   const rows = (echoes || []) as SupabaseEchoRow[];
   if (rows.length === 0) return [];
 
-  const authorIds = [...new Set(rows.map(r => r.author_id))];
+  const authorIds = [
+    ...new Set([
+      ...rows.map(r => r.author_id),
+      ...rows.map(r => r.co_author_id).filter(Boolean) as string[],
+    ]),
+  ];
   const { data: profiles, error: e2 } = await supabase
     .from('profiles')
     .select(PROFILE_SELECT)
@@ -378,13 +383,13 @@ export async function fetchRemoteFeed(
       }
     }
     return rows.map(echo =>
-      mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted, reactionMap.get(echo.id)),
+      mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted, reactionMap.get(echo.id), echo.co_author_id ? profileById.get(echo.co_author_id) : undefined),
     );
   }
 
   const emptyReposted = new Set<string>();
   return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, emptyReposted)
+    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, emptyReposted, undefined, echo.co_author_id ? profileById.get(echo.co_author_id) : undefined)
   );
 }
 
@@ -398,6 +403,8 @@ export async function insertRemoteEcho(params: {
   parentEchoId?: string;
   sourceConversationId?: string;
   conversationSnapshot?: { role: 'user' | 'assistant'; content: string }[];
+  coAuthorId?: string;
+  coAuthorResponse?: string;
 }): Promise<SupabaseEchoRow> {
   const title =
     params.title?.trim() ||
@@ -414,6 +421,8 @@ export async function insertRemoteEcho(params: {
       ...(params.parentEchoId ? { parent_echo_id: params.parentEchoId } : {}),
       ...(params.sourceConversationId ? { source_conversation_id: params.sourceConversationId } : {}),
       ...(params.conversationSnapshot?.length ? { conversation_snapshot: params.conversationSnapshot } : {}),
+      ...(params.coAuthorId ? { co_author_id: params.coAuthorId } : {}),
+      ...(params.coAuthorResponse?.trim() ? { co_author_response: params.coAuthorResponse.trim() } : {}),
     })
     .select(ECHO_SELECT)
     .single();

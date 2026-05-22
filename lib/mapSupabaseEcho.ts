@@ -39,6 +39,9 @@ export type SupabaseEchoRow = {
   taking_notes_count?: number | null;
   agree_count?: number | null;
   disagree_count?: number | null;
+  /** Co-echo: collaborative post with a second author. */
+  co_author_id?: string | null;
+  co_author_response?: string | null;
 };
 
 /** Build a ReactionCounts object from a raw echo row's reaction columns. */
@@ -73,6 +76,7 @@ export function mapEchoRowToFeedItem(
   bookmarkedSet: Set<string>,
   repostedSet: Set<string>,
   userReactions?: EchoReaction[],
+  coAuthor?: SupabaseProfileRow | undefined,
 ): FeedItem {
   const username = author?.username ?? 'unknown';
   const mediaUris = echo.media_urls?.length ? echo.media_urls : undefined;
@@ -111,5 +115,14 @@ export function mapEchoRowToFeedItem(
     thoughtfulnessScore: echo.thoughtfulness_score ?? undefined,
     semanticDistance: echo.distance ?? undefined,
     postOrigin: echo.parent_echo_id ? 'remix' : undefined,
+    coAuthor: echo.co_author_id ? {
+      id: echo.co_author_id,
+      username: coAuthor?.username ?? 'unknown',
+      displayName: coAuthor?.display_name || coAuthor?.username || 'unknown',
+      avatarColor: coAuthor?.avatar_color || '#3B82F6',
+      avatarUrl: coAuthor?.avatar_url ?? undefined,
+      isVerified: coAuthor?.is_verified ?? false,
+    } : undefined,
+    coAuthorResponse: echo.co_author_response ?? undefined,
   };
 }
