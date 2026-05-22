@@ -12,9 +12,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.echo",
       "associatedDomains": [
-        "applinks:echo.app",
-        "applinks:echo.app",
-        "applinks:echo.app",
         "applinks:echo.app"
       ],
       "infoPlist": {
@@ -32,21 +29,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.echo",
       "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "echo.app",
-              "pathPrefix": "/e"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
-        },
         {
           "action": "VIEW",
           "autoVerify": true,
