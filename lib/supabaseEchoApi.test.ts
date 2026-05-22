@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { setRemoteRepost, recordRemoteEchoView } from './supabaseEchoApi';
+import {
+  CO_AUTHOR_CONSENT_REQUIRED_MESSAGE,
+  insertRemoteEcho,
+  setRemoteRepost,
+  recordRemoteEchoView,
+} from './supabaseEchoApi';
 
 const insertMock = vi.fn(() => ({ error: null as unknown }));
 const deleteChainMock = vi.fn(() => ({
@@ -63,5 +68,23 @@ describe('recordRemoteEchoView', () => {
       error: { code: '23505', message: 'duplicate key value violates unique constraint' },
     });
     await expect(recordRemoteEchoView('echo-9')).resolves.toBeUndefined();
+  });
+});
+
+describe('insertRemoteEcho', () => {
+  beforeEach(() => {
+    insertMock.mockReset();
+  });
+
+  it('rejects co-author attribution until consent is enforced', async () => {
+    await expect(insertRemoteEcho({
+      authorId: 'test-user',
+      prompt: 'Prompt',
+      response: 'Author response',
+      coAuthorId: 'other-user',
+      coAuthorResponse: 'Fabricated response',
+    })).rejects.toThrow(CO_AUTHOR_CONSENT_REQUIRED_MESSAGE);
+
+    expect(insertMock).not.toHaveBeenCalled();
   });
 });
