@@ -10,6 +10,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { QuotedEchoCard } from '../components/social/QuotedEchoCard';
 import { VideoPreview } from '../components/social/VideoPreview';
+import { MentionSuggestions, applyMentionPick } from '../components/social/MentionSuggestions';
 import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 import {
   ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
@@ -71,7 +72,11 @@ export default function CreatePostScreen() {
   // Cancel the ceremony timer if the user navigates away before it fires
   React.useEffect(() => () => { if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current); }, []);
   const [response, setResponse] = useState(typeof params.prefillBody === 'string' ? params.prefillBody : '');
+  const [responseCaret, setResponseCaret] = useState(0);
+  const [responseFocused, setResponseFocused] = useState(false);
   const [caption, setCaption] = useState('');
+  const [captionCaret, setCaptionCaret] = useState(0);
+  const [captionFocused, setCaptionFocused] = useState(false);
   const [tagsRaw, setTagsRaw] = useState('');
   const [publishing, setPublishing] = useState(false);
 
@@ -399,7 +404,18 @@ export default function CreatePostScreen() {
                 <Text style={[s.label, { marginBottom: 0 }]}>Your Echo</Text>
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={response} onChangeText={setResponse} placeholder="The response, your take, or what made this worth sharing…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
+                <TextInput
+                  multiline
+                  value={response}
+                  onChangeText={setResponse}
+                  onSelectionChange={e => setResponseCaret(e.nativeEvent.selection.start)}
+                  onFocus={() => setResponseFocused(true)}
+                  onBlur={() => setResponseFocused(false)}
+                  placeholder="The response, your take, or what made this worth sharing…"
+                  placeholderTextColor={colors.textMuted}
+                  maxLength={1000}
+                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }}
+                />
                 <Text style={{ color: response.length > 950 ? colors.danger : response.length > 850 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{response.length}/1000</Text>
               </View>
             </Animated.View>
@@ -465,7 +481,18 @@ export default function CreatePostScreen() {
 
               <Text style={s.label}>Caption (optional)</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={caption} onChangeText={setCaption} placeholder="Add a caption…" placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
+                <TextInput
+                  multiline
+                  value={caption}
+                  onChangeText={setCaption}
+                  onSelectionChange={e => setCaptionCaret(e.nativeEvent.selection.start)}
+                  onFocus={() => setCaptionFocused(true)}
+                  onBlur={() => setCaptionFocused(false)}
+                  placeholder="Add a caption…"
+                  placeholderTextColor={colors.textMuted}
+                  maxLength={300}
+                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }}
+                />
               </View>
             </Animated.View>
           )}
@@ -511,7 +538,18 @@ export default function CreatePostScreen() {
 
               <Text style={s.label}>Caption (optional)</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={caption} onChangeText={setCaption} placeholder="Add a caption…" placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
+                <TextInput
+                  multiline
+                  value={caption}
+                  onChangeText={setCaption}
+                  onSelectionChange={e => setCaptionCaret(e.nativeEvent.selection.start)}
+                  onFocus={() => setCaptionFocused(true)}
+                  onBlur={() => setCaptionFocused(false)}
+                  placeholder="Add a caption…"
+                  placeholderTextColor={colors.textMuted}
+                  maxLength={300}
+                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }}
+                />
               </View>
             </Animated.View>
           )}
@@ -570,6 +608,30 @@ export default function CreatePostScreen() {
 
           <View style={{ height: 32 }} />
         </ScrollView>
+
+        {/* @-mentions autocomplete — overlays the active input */}
+        {responseFocused && postType === 'text' && (
+          <MentionSuggestions
+            text={response}
+            caret={responseCaret}
+            onPick={(u) => {
+              const { text: nt } = applyMentionPick(response, responseCaret, u.username);
+              setResponse(nt);
+              setResponseCaret(nt.length);
+            }}
+          />
+        )}
+        {captionFocused && (postType === 'photo' || postType === 'video') && (
+          <MentionSuggestions
+            text={caption}
+            caret={captionCaret}
+            onPick={(u) => {
+              const { text: nt } = applyMentionPick(caption, captionCaret, u.username);
+              setCaption(nt);
+              setCaptionCaret(nt.length);
+            }}
+          />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
