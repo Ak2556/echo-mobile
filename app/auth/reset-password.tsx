@@ -40,7 +40,7 @@ export default function ResetPasswordScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <Animated.View entering={FadeInDown.springify()} style={{ alignItems: 'center' }}>
+          <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
             <View style={{
               width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(16,185,129,0.15)',
               alignItems: 'center', justifyContent: 'center', marginBottom: 24,
@@ -77,7 +77,7 @@ export default function ResetPasswordScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center' }}>
-          <Animated.View entering={FadeInDown.delay(60).springify()}>
+          <Animated.View entering={FadeInDown.duration(220)}>
             <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginBottom: 8 }}>
               Set new password
             </Text>

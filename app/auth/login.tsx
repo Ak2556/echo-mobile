@@ -152,7 +152,7 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             {/* Header */}
-            <Animated.View entering={FadeInDown.delay(60).springify()} style={{ alignItems: 'center', marginBottom: 40 }}>
+            <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center', marginBottom: 40 }}>
               <View
                 style={{
                   width: 72,
@@ -188,7 +188,7 @@ export default function LoginScreen() {
               <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: 6 }}>Sign in to your Echo account</Text>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(120).springify()}>
+            <Animated.View entering={FadeInDown.delay(80).duration(220)}>
               <TabSwitcher mode={mode} onChange={m => setMode(m)} colors={colors} radius={radius} />
 
               {/* ── EMAIL form ── */}
@@ -416,7 +416,7 @@ export default function LoginScreen() {
               </View>
 
               {/* Sign up link */}
-              <Animated.View entering={FadeInUp.delay(200).springify()} style={{ flexDirection: 'row', justifyContent: 'center', paddingBottom: 16 }}>
+              <Animated.View entering={FadeInUp.delay(140).duration(220)} style={{ flexDirection: 'row', justifyContent: 'center', paddingBottom: 16 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 15 }}>{`Don't have an account? `}</Text>
                 <AnimatedPressable onPress={() => router.push('/auth/signup')} scaleValue={0.95} haptic="light">
                   <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '700' }}>Sign up</Text>

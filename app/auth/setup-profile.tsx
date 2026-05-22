@@ -83,7 +83,7 @@ export default function SetupProfileScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Animated.View entering={FadeInDown.delay(60).springify()} style={{ alignItems: 'center', marginBottom: 40 }}>
+          <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center', marginBottom: 40 }}>
             {/* Avatar preview */}
             <View style={{
               width: 88, height: 88, borderRadius: 44, backgroundColor: selectedColor,
@@ -100,7 +100,7 @@ export default function SetupProfileScreen() {
             </Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(120).springify()}>
+          <Animated.View entering={FadeInDown.delay(80).duration(220)}>
             {/* Display Name */}
             <View style={{ marginBottom: 14 }}>
               <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>DISPLAY NAME</Text>
