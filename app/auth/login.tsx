@@ -6,13 +6,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, EyeSlash, EnvelopeSimple, LockKey, Phone } from 'phosphor-react-native';
 import { supabase } from '../../lib/supabase';
 import { signInWithGoogle, signInWithApple } from '../../lib/auth';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { GlassPanel } from '../../components/ui/GlassPanel';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
 
@@ -25,32 +22,40 @@ function TabSwitcher({ mode, onChange, colors, radius }: {
   radius: any;
 }) {
   return (
-    <GlassPanel variant="medium" borderRadius={radius.lg} style={{ marginBottom: 28 }}>
-      <View style={{ flexDirection: 'row', padding: 4 }}>
-        {(['email', 'phone'] as Mode[]).map(tab => (
-          <Pressable
-            key={tab}
-            onPress={() => onChange(tab)}
-            style={{
-              flex: 1,
-              paddingVertical: 10,
-              borderRadius: radius.md,
-              alignItems: 'center',
-              backgroundColor: mode === tab ? colors.accent : 'transparent',
-            }}
-          >
-            <Text style={{
-              color: mode === tab ? '#fff' : colors.textMuted,
-              fontWeight: '600',
-              fontSize: 14,
-              textTransform: 'capitalize',
-            }}>
-              {tab === 'email' ? 'Email' : 'Phone'}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </GlassPanel>
+    <View
+      style={{
+        flexDirection: 'row',
+        padding: 4,
+        marginBottom: 28,
+        borderRadius: radius.lg,
+        backgroundColor: colors.surfaceHover,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.border,
+      }}
+    >
+      {(['email', 'phone'] as Mode[]).map(tab => (
+        <Pressable
+          key={tab}
+          onPress={() => onChange(tab)}
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+            borderRadius: radius.md,
+            alignItems: 'center',
+            backgroundColor: mode === tab ? colors.accent : 'transparent',
+          }}
+        >
+          <Text style={{
+            color: mode === tab ? '#fff' : colors.textMuted,
+            fontWeight: '600',
+            fontSize: 14,
+            textTransform: 'capitalize',
+          }}>
+            {tab === 'email' ? 'Email' : 'Phone'}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
@@ -126,24 +131,19 @@ export default function LoginScreen() {
   };
 
   const inputRowStyle = (focused: boolean): object => ({
-    overflow: 'hidden' as const,
     borderRadius: radius.lg,
     borderWidth: focused ? 1.5 : StyleSheet.hairlineWidth,
     borderColor: focused ? colors.accent : colors.glassBorder,
+    backgroundColor: colors.inputBg,
     marginBottom: 0,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
   });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Ambient gradient bg */}
-      <LinearGradient
-        colors={[colors.ambientGradient[0], colors.bg]}
-        locations={[0, 0.6]}
-        start={{ x: 0.3, y: 0 }}
-        end={{ x: 0.7, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView
@@ -158,31 +158,17 @@ export default function LoginScreen() {
                   width: 72,
                   height: 72,
                   borderRadius: 22,
-                  overflow: 'hidden',
                   marginBottom: 20,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.glassBorder,
-                }}
-              >
-                {Platform.OS === 'ios' ? (
-                  <>
-                    <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: `${colors.accent}CC` }]} />
-                  </>
-                ) : (
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.accent }]} />
-                )}
-                <View style={{
-                  flex: 1,
+                  backgroundColor: colors.accent,
                   alignItems: 'center',
                   justifyContent: 'center',
                   shadowColor: colors.accent,
-                  shadowOpacity: 0.5,
-                  shadowRadius: 20,
+                  shadowOpacity: 0.35,
+                  shadowRadius: 18,
                   shadowOffset: { width: 0, height: 8 },
-                }}>
-                  <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>e</Text>
-                </View>
+                }}
+              >
+                <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>e</Text>
               </View>
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>Welcome back</Text>
               <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: 6 }}>Sign in to your Echo account</Text>
@@ -197,16 +183,7 @@ export default function LoginScreen() {
                   <View style={{ marginBottom: 14 }}>
                     <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>EMAIL</Text>
                     <View style={inputRowStyle(focusedField === 'email')}>
-                      {Platform.OS === 'ios' ? (
-                        <>
-                          <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
-                          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
-                        </>
-                      ) : (
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.inputBg }]} />
-                      )}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 4 }}>
-                        <EnvelopeSimple color={colors.textMuted} size={18} style={{ marginRight: 10 }} />
+                      <EnvelopeSimple color={colors.textMuted} size={18} style={{ marginRight: 10 }} />
                         <TextInput
                           value={email}
                           onChangeText={setEmail}
@@ -221,23 +198,13 @@ export default function LoginScreen() {
                           onBlur={() => setFocusedField(null)}
                           style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 14 }}
                         />
-                      </View>
                     </View>
                   </View>
 
                   <View style={{ marginBottom: 8 }}>
                     <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>PASSWORD</Text>
                     <View style={inputRowStyle(focusedField === 'password')}>
-                      {Platform.OS === 'ios' ? (
-                        <>
-                          <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
-                          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
-                        </>
-                      ) : (
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.inputBg }]} />
-                      )}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 4 }}>
-                        <LockKey color={colors.textMuted} size={18} style={{ marginRight: 10 }} />
+                      <LockKey color={colors.textMuted} size={18} style={{ marginRight: 10 }} />
                         <TextInput
                           ref={passwordRef}
                           value={password}
@@ -254,7 +221,6 @@ export default function LoginScreen() {
                         <Pressable onPress={() => setShowPassword(v => !v)} style={{ padding: 4 }}>
                           {showPassword ? <EyeSlash color={colors.textMuted} size={18} /> : <Eye color={colors.textMuted} size={18} />}
                         </Pressable>
-                      </View>
                     </View>
                   </View>
 
@@ -299,25 +265,15 @@ export default function LoginScreen() {
                   <View style={{ marginBottom: 24 }}>
                     <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8, marginLeft: 2 }}>PHONE NUMBER</Text>
                     <View style={inputRowStyle(false)}>
-                      {Platform.OS === 'ios' ? (
-                        <>
-                          <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
-                          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
-                        </>
-                      ) : (
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.inputBg }]} />
-                      )}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 4 }}>
-                        <Phone color={colors.textMuted} size={18} style={{ marginRight: 10 }} />
-                        <TextInput
-                          value={phone}
-                          onChangeText={setPhone}
-                          placeholder="+1 234 567 8900"
-                          placeholderTextColor={colors.textMuted}
-                          keyboardType="phone-pad"
-                          style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 14 }}
-                        />
-                      </View>
+                      <Phone color={colors.textMuted} size={18} style={{ marginRight: 10 }} />
+                      <TextInput
+                        value={phone}
+                        onChangeText={setPhone}
+                        placeholder="+1 234 567 8900"
+                        placeholderTextColor={colors.textMuted}
+                        keyboardType="phone-pad"
+                        style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 14 }}
+                      />
                     </View>
                     <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 6, marginLeft: 2 }}>
                       Include country code · e.g. +44 7700 900000
@@ -365,20 +321,12 @@ export default function LoginScreen() {
                   scaleValue={0.97}
                   haptic="light"
                   style={{
-                    overflow: 'hidden',
                     borderRadius: radius.lg,
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: colors.glassBorder,
+                    backgroundColor: colors.surface,
                   }}
                 >
-                  {Platform.OS === 'ios' ? (
-                    <>
-                      <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
-                    </>
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
-                  )}
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 10 }}>
                     {googleLoading ? <ActivityIndicator color={colors.text} size="small" /> : (
                       <>
