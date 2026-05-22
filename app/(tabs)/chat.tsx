@@ -219,6 +219,9 @@ export default function ChatScreen() {
   );
 
   const navigateFn = useCallback((screen: string) => {
+    // v1 navigation surface. Gen-Z feature routes (daily-question, salons,
+    // office-hours, year-in-echo, quests, badges) are still defined in the
+    // app but hidden from nav and AI navigation per `lib/featureFlags.ts`.
     const routeMap: Record<string, string> = {
       discover: '/(tabs)/discover',
       profile: '/(tabs)/profile',
@@ -227,13 +230,6 @@ export default function ChatScreen() {
       messages: '/messages',
       bookmarks: '/bookmarks',
       notifications: '/notifications',
-      // Gen Z feature routes
-      'daily-question': '/daily-question',
-      salons: '/salons',
-      'office-hours': '/office-hours',
-      'year-in-echo': '/year-in-echo',
-      quests: '/quests',
-      badges: '/badges',
     };
     router.push((routeMap[screen] ?? '/(tabs)/discover') as any);
   }, [router]);

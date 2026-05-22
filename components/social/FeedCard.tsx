@@ -145,31 +145,17 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const feedFeedback = useAppStore(s => s.feedFeedback);
   const setFeedFeedback = useAppStore(s => s.setFeedFeedback);
 
-  const bookmarkScale = useSharedValue(1);
-  const repostScale = useSharedValue(1);
-  const shareScale = useSharedValue(1);
-
-  const bookmarkAnim = useAnimatedStyle(() => ({ transform: [{ scale: bookmarkScale.value }] }));
-  const repostAnim = useAnimatedStyle(() => ({ transform: [{ scale: repostScale.value }] }));
-  const shareAnim = useAnimatedStyle(() => ({ transform: [{ scale: shareScale.value }] }));
-
-
+  // Press feedback comes from the AnimatedPressable wrapper that hosts each
+  // icon — we used to add per-icon bounce shared values (one each for
+  // bookmark/repost/share) but that costs three worklets and three
+  // useAnimatedStyle hooks per card. Across a feed of 20 cards that's 60 dead
+  // worklets just to redo a feedback the parent already provides.
   const handleMainPress = useCallback(() => {
     if (remote) void recordRemoteEchoView(item.id);
     onPress?.();
   }, [remote, item.id, onPress]);
 
-  const bounceIcon = (sv: { value: number }) => {
-    if (reduceAnimations || !performance.pressAnimations) return;
-    sv.value = withSequence(
-      withSpring(0.74, MOTION.pressDeep),
-      withSpring(1.16, MOTION.overshoot),
-      withSpring(1, MOTION.release)
-    );
-  };
-
   const toggleBookmarkPress = () => {
-    bounceIcon(bookmarkScale);
     if (remote) {
       remoteBm.mutate({ echoId: item.id, bookmark: !bookmarked });
       showToast(!bookmarked ? 'Bookmarked' : 'Removed bookmark', !bookmarked ? '\u{1F516}' : '');
@@ -181,7 +167,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   };
 
   const handleRepost = () => {
-    bounceIcon(repostScale);
     if (remote) {
       remoteRp.mutate({ echoId: item.id, repost: !reposted });
       showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? '\u{1F501}' : '');
@@ -196,7 +181,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     : (item.repostCount || 0) + (reposted ? 1 : 0);
 
   const handleNativeShare = async () => {
-    bounceIcon(shareScale);
     setShareOpen(true);
   };
 
@@ -353,22 +337,16 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           accessibilityLabel={reposted ? 'Undo re-echo' : 'Re-echo'}
           accessibilityRole="button"
         >
-          <Animated.View style={repostAnim}>
-            <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
-          </Animated.View>
+          <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
           <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }} />
         </AnimatedPressable>
 
         <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
-          <Animated.View style={bookmarkAnim}>
-            <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
-          </Animated.View>
+          <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
         </AnimatedPressable>
 
         <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light" performanceMode="hot" accessibilityLabel="Share" accessibilityRole="button">
-          <Animated.View style={shareAnim}>
-            <ShareNetwork color={colors.textMuted} size={19} />
-          </Animated.View>
+          <ShareNetwork color={colors.textMuted} size={19} />
         </AnimatedPressable>
       </View>
       </View>
