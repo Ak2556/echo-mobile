@@ -13,8 +13,13 @@
       "bundleIdentifier": "com.anonymous.echo",
       "associatedDomains": [
         "applinks:echo.app",
+        "applinks:echo.app",
+        "applinks:echo.app",
         "applinks:echo.app"
-      ]
+      ],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -59,8 +64,6 @@
         }
       ],
       "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
