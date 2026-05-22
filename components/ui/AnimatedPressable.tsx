@@ -9,19 +9,94 @@ import { PerformanceMode, usePerformanceProfile } from '../../lib/performance';
 const AnimatedPress = Animated.createAnimatedComponent(Pressable);
 
 interface AnimatedPressableProps extends PressableProps {
+  /** When set, the Pressable scales to this value on press-in. Setting any
+   *  of `scaleValue`, `depth`, or `tilt3D` opts into the heavy
+   *  reanimated spring path. Without them we use a cheap opacity-only
+   *  feedback that costs no shared values. */
   scaleValue?: number;
   depth?: PressDepth;
+  tilt3D?: boolean;
+
   fadeOnPress?: boolean;
   sinkOnPress?: boolean;
   dimWhenDisabled?: boolean;
-  tilt3D?: boolean;
   haptic?: 'light' | 'medium' | 'heavy' | 'none';
   className?: string;
   style?: any;
   performanceMode?: PerformanceMode;
 }
 
-export function AnimatedPressable({
+/**
+ * Pressable wrapper with two modes:
+ *
+ * 1. **Lite (default)** — plain Pressable with opacity feedback via the
+ *    `style` callback. Zero useSharedValue allocations. ~99% of call sites
+ *    only want a small press-in/press-out feedback and that's all this
+ *    delivers. This is the path taken when the caller omits scaleValue,
+ *    depth, and tilt3D.
+ *
+ * 2. **Heavy** — full reanimated spring animation on scale, translateY,
+ *    opacity, and optional 3D tilt. Opted into by explicitly passing
+ *    `scaleValue`, `depth`, or `tilt3D`. Reserved for hero CTAs.
+ *
+ * Across a 20-card feed, the lite path saves ~100 worklets compared with
+ * the previous always-on heavy path.
+ */
+export function AnimatedPressable(props: AnimatedPressableProps) {
+  const isHeavy = props.scaleValue !== undefined || props.depth !== undefined || props.tilt3D === true;
+  return isHeavy ? <HeavyPressable {...props} /> : <LitePressable {...props} />;
+}
+
+// ─── Lite path ──────────────────────────────────────────────────────────────
+
+function LitePressable({
+  children,
+  onPress,
+  fadeOnPress = false,
+  dimWhenDisabled = true,
+  haptic = 'light',
+  style,
+  disabled,
+  ...rest
+}: AnimatedPressableProps) {
+  const hapticEnabled = useAppStore(s => s.hapticEnabled);
+
+  const handlePress = (e: any) => {
+    if (hapticEnabled && haptic !== 'none' && !disabled) {
+      const impact = haptic === 'heavy'
+        ? Haptics.ImpactFeedbackStyle.Heavy
+        : haptic === 'medium'
+          ? Haptics.ImpactFeedbackStyle.Medium
+          : Haptics.ImpactFeedbackStyle.Light;
+      Haptics.impactAsync(impact);
+    }
+    onPress?.(e);
+  };
+
+  return (
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        {
+          opacity: (disabled && dimWhenDisabled)
+            ? 0.45
+            : pressed
+              ? (fadeOnPress ? 0.82 : 0.85)
+              : 1,
+        },
+        typeof style === 'function' ? style({ pressed: false }) : style,
+      ]}
+      {...rest}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
+// ─── Heavy path (kept for hero CTAs) ────────────────────────────────────────
+
+function HeavyPressable({
   children,
   onPress,
   scaleValue = 0.96,
