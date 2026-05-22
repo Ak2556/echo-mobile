@@ -23,6 +23,7 @@ import { useTheme } from '../lib/theme';
 import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { playSoundEffect } from '../lib/sound';
+import { track } from '../lib/analytics';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
@@ -324,6 +325,7 @@ export default function CreatePostScreen() {
       }
 
       const publishedEcho = remoteEchoId ? { ...echo!, id: remoteEchoId } : echo!;
+      const isFirst = (publishedEchoes?.length ?? 0) === 0;
       publishEcho(publishedEcho);
       if (remoteAuthorId) {
         qc.setQueriesData<FeedItem[]>({ queryKey: ['feed'] }, old => {
@@ -333,6 +335,12 @@ export default function CreatePostScreen() {
       }
       qc.invalidateQueries({ queryKey: ['feed'] });
       playSoundEffect('success');
+      track(isFirst ? 'first_echo_published' : 'echo_published', {
+        post_type: postType,
+        has_media: postType === 'photo' || postType === 'video',
+        is_quote: !!quotedId,
+        is_co_echo: !!(coAuthor && coAuthorResponse.trim()),
+      });
       const previewTitle = publishedEcho.editorialTitle ?? publishedEcho.prompt ?? 'Your echo is live.';
       setPublishedEchoPreview({ title: previewTitle });
       if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current);

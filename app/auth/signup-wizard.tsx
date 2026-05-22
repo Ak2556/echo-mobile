@@ -14,6 +14,7 @@ import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
+import { track, identify } from '../../lib/analytics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ACCENT = '#6366F1';
@@ -368,6 +369,9 @@ export default function SignupWizard() {
     storeSetBio(bioText.trim());
     setInterests(selectedInterests);
     setHasSeenOnboarding(true);
+
+    identify(session.user.id, { username: usernameClean });
+    track('signup_completed', { interests_count: selectedInterests.length });
 
     router.replace('/(tabs)/discover');
   };
