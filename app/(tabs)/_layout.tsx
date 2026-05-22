@@ -207,12 +207,12 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="discover" options={{ title: 'Home' }} />
       <Tabs.Screen name="search" options={{ title: 'Explore' }} />
-      <Tabs.Screen name="evolutions" options={{ title: 'Evolve' }} />
+      <Tabs.Screen name="evolutions" options={{ title: 'Echo' }} />
       <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Activity' }} />
       <Tabs.Screen name="echoes" options={{ href: null }} />
       <Tabs.Screen name="apps" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="profile" options={{ title: 'You' }} />
       <Tabs.Screen name="history" options={{ href: null }} />
     </Tabs>
   );

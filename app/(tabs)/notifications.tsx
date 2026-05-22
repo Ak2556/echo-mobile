@@ -6,7 +6,6 @@ import { useRouter } from 'expo-router';
 import { Bell, Checks } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -190,13 +189,6 @@ export default function NotificationsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Ambient gradient */}
-      <LinearGradient
-        colors={colors.ambientGradient}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 0.8, y: 0.55 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
 
       {/* Content */}
       {groupedFlat.length === 0 ? (

@@ -114,7 +114,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setFontSize: (v) => { persistSet('fontSize', v); set({ fontSize: v }); },
     compactFeed: b('compactFeed', true), setCompactFeed: s(set, 'compactFeed'),
     reduceAnimations: b('reduceAnimations', false), setReduceAnimations: s(set, 'reduceAnimations'),
-    accentColor: persistGet('accentColor', '#3B82F6'),
+    accentColor: persistGet('accentColor', '#5B5BF8'),
     setAccentColor: (v) => { persistSet('accentColor', v); set({ accentColor: v }); },
     showAvatars: b('showAvatars', true), setShowAvatars: s(set, 'showAvatars'),
     showPreviewCards: b('showPreviewCards', true), setShowPreviewCards: s(set, 'showPreviewCards'),
