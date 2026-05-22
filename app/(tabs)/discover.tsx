@@ -33,6 +33,7 @@ import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { neonHaptic } from '../../lib/neonDesign';
 import { pingDailyActivity } from '../../lib/retention';
+import { features } from '../../lib/featureFlags';
 
 const HERO_COUNT = 5;
 
@@ -216,44 +217,34 @@ export default function DiscoverScreen() {
           );
         })}
       </View>
-      {!remote && (
+      {features.stories && !remote && (
         <>
           <SectionHeader label="Your Stories" />
           <StoryCircles />
         </>
       )}
-      {/* Daily Question banner — earns the highest visual real estate, pre-feed. */}
-      <Pressable
-        onPress={() => router.push('/daily-question' as any)}
-        style={{
-          marginHorizontal: 16,
-          marginVertical: 12,
-          padding: 16,
-          borderRadius: 16,
-          backgroundColor: colors.accent + '14',
-          borderWidth: 1,
-          borderColor: colors.accent + '40',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <View style={{
-          width: 40, height: 40, borderRadius: 99,
-          backgroundColor: colors.accent + '33',
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Sparkle color={colors.accent} size={20} weight="fill" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 11, letterSpacing: 0.6, marginBottom: 2 }}>
-            DAILY QUESTION
+      {features.dailyQuestion && (
+        <Pressable
+          onPress={() => router.push('/daily-question' as any)}
+          style={{
+            marginHorizontal: 16,
+            marginVertical: 12,
+            padding: 14,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <Sparkle color={colors.accent} size={18} weight="fill" />
+          <Text style={{ color: colors.text, fontWeight: '600', fontSize: 14, flex: 1 }}>
+            Today&apos;s question — tap to answer
           </Text>
-          <Text style={{ color: colors.text, fontWeight: '600', fontSize: 14 }}>
-            One prompt. Everyone answers. Tap to see today's.
-          </Text>
-        </View>
-      </Pressable>
+        </Pressable>
+      )}
       <SectionHeader label="For You" sub={interests.length > 0 ? `Picked for ${interests[0]}` : 'Start here'} />
       <ScrollView
         horizontal
@@ -329,7 +320,7 @@ export default function DiscoverScreen() {
       {/* Scrollable content */}
       {isLoading ? (
         <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1, paddingTop: headerHeight }}>
-          {!remote && (
+          {features.stories && !remote && (
             <>
               <SectionHeader label="Your Stories" />
               <StoryCircles />

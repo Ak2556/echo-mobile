@@ -27,8 +27,13 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
 
+  // Don't keep a Modal portal mounted when invisible. RN keeps the portal in
+  // the view hierarchy even with `visible={false}` — across a feed of cards,
+  // that's hundreds of dead portals taking up the bridge.
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+    <Modal visible transparent animationType="none" onRequestClose={onClose}>
       <Animated.View
         entering={reduceAnimations ? undefined : FadeIn.duration(160)}
         exiting={reduceAnimations ? undefined : FadeOut.duration(120)}
