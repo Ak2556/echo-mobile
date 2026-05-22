@@ -26,14 +26,27 @@ type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' 
 type SectionItem = { type: 'item'; data: Notification };
 type ListItem = SectionHeader | SectionItem;
 
-function labelForType(t: Notification['type']): string {
-  switch (t) {
+const REACTION_EMOJI: Record<string, string> = {
+  mind_blown: '🤯',
+  taking_notes: '📝',
+  agree: '💯',
+  disagree: '🤔',
+};
+
+function labelForType(n: Notification): string {
+  switch (n.type) {
     case 'like': return 'liked your echo';
     case 'comment': return 'commented';
     case 'follow': return 'followed you';
     case 'repost': return 're-echoed';
     case 'mention': return 'mentioned you';
     case 'dm': return 'sent a message';
+    case 'reaction': {
+      const emoji = n.targetPreview ? REACTION_EMOJI[n.targetPreview] : '';
+      return emoji ? `reacted with ${emoji}` : 'reacted to your echo';
+    }
+    case 'bookmark': return 'saved your echo';
+    case 'quote': return 'quoted your echo';
     default: return '';
   }
 }
@@ -75,7 +88,7 @@ export default function NotificationsScreen() {
   const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
   const { colors, animation } = useTheme();
   const performance = usePerformanceProfile('hot');
-  const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'follows' | 'reposts'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'reactions' | 'saves' | 'quotes' | 'follows' | 'reposts'>('all');
 
   const remote = isSupabaseRemote();
   const { data: remoteNotifications, refetch, isRefetching } = useRemoteNotifications();
@@ -92,6 +105,9 @@ export default function NotificationsScreen() {
       case 'mentions': return n.type === 'mention';
       case 'replies': return n.type === 'comment';
       case 'likes': return n.type === 'like';
+      case 'reactions': return n.type === 'reaction';
+      case 'saves': return n.type === 'bookmark';
+      case 'quotes': return n.type === 'quote';
       case 'follows': return n.type === 'follow';
       case 'reposts': return n.type === 'repost';
       default: return true;
@@ -104,7 +120,10 @@ export default function NotificationsScreen() {
     type Bucket = { key: string; notifications: Notification[] };
     const buckets = new Map<string, Bucket>();
     for (const n of visible) {
-      const k = `${n.type}:${n.targetId ?? n.fromUserId}`;
+      // Reactions and the preview field together — so "🤯 on echo X" buckets
+      // separately from "📝 on echo X".
+      const subkey = n.type === 'reaction' ? `${n.targetId ?? n.fromUserId}:${n.targetPreview ?? ''}` : (n.targetId ?? n.fromUserId);
+      const k = `${n.type}:${subkey}`;
       const b = buckets.get(k) ?? { key: k, notifications: [] };
       b.notifications.push(n);
       buckets.set(k, b);
@@ -118,7 +137,7 @@ export default function NotificationsScreen() {
         if (b.notifications.length === 1) return [sample];
         // Synthesize a grouped notification preserving the most-recent metadata.
         const others = b.notifications.length - 1;
-        return [{ ...sample, targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${labelForType(sample.type)}` }];
+        return [{ ...sample, targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${labelForType(sample)}` }];
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications, mutedIds, filter]); // typeFilter is recreated from `filter` which is already in deps
@@ -290,7 +309,7 @@ export default function NotificationsScreen() {
 
         {/* Filter tabs */}
         <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 16, gap: 8 }}>
-          {(['all', 'unread', 'mentions', 'replies', 'likes', 'follows', 'reposts'] as const).map(tab => (
+          {(['all', 'unread', 'mentions', 'replies', 'reactions', 'saves', 'quotes', 'likes', 'follows', 'reposts'] as const).map(tab => (
             <AnimatedPressable
               key={tab}
               onPress={() => setFilter(tab)}
