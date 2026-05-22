@@ -24,7 +24,7 @@ export function useRemoteNotifications() {
     getSessionUserId().then(uid => {
       if (!mounted || !uid) return;
       channel = supabase
-        .channel(`notifications:${uid}`)
+        .channel(`notifications:${uid}:${Math.random().toString(36).slice(2, 10)}`)
         .on(
           'postgres_changes',
           {
