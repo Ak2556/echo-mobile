@@ -6,6 +6,7 @@ import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, PaperPlaneTilt, ChatCircle, X } from 'phosphor-react-native';
 import { TextInput } from '../../components/ui/TextInput';
 import { CommentCard } from '../../components/social/CommentCard';
+import { MentionSuggestions, applyMentionPick } from '../../components/social/MentionSuggestions';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { Comment } from '../../types';
@@ -28,6 +29,8 @@ export default function CommentsScreen() {
 
   const { getComments, addComment, username, displayName, avatarColor } = useAppStore();
   const [text, setText] = useState('');
+  const [caret, setCaret] = useState(0);
+  const [inputFocused, setInputFocused] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
 
   const loadingRemote = remote && remoteQ.isPending;
@@ -140,6 +143,19 @@ export default function CommentsScreen() {
           />
         )}
 
+        {inputFocused && (
+          <MentionSuggestions
+            text={text}
+            caret={caret}
+            bottom={replyingTo ? 110 : 78}
+            onPick={(u) => {
+              const { text: nt } = applyMentionPick(text, caret, u.username);
+              setText(nt);
+              setCaret(nt.length);
+            }}
+          />
+        )}
+
         {replyingTo && (
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, backgroundColor: colors.surface, borderTopWidth: 0.5, borderTopColor: colors.border }}>
             <Text style={{ color: colors.textMuted, fontSize: 13, flex: 1 }}>Replying to @{replyingTo.username}</Text>
@@ -162,6 +178,9 @@ export default function CommentsScreen() {
               placeholder={replyingTo ? `Reply to @${replyingTo.username}…` : 'Add a comment...'}
               value={text}
               onChangeText={setText}
+              onSelectionChange={e => setCaret(e.nativeEvent.selection.start)}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
               maxLength={500}
             />
           </View>
