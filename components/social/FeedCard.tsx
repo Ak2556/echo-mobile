@@ -644,12 +644,44 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             <Text style={{ fontSize: textSize + 1, color: colors.text, fontWeight: '700', marginBottom: compactFeed ? 4 : 8, lineHeight: (textSize + 1) * 1.35 }} numberOfLines={compactFeed ? 2 : 3}>
               {item.editorialTitle ?? item.prompt}
             </Text>
-            {!!(item.authorNote ?? (showPreviewCards ? item.response : null)) && (
+            {!!(item.authorNote ?? (showPreviewCards ? item.response : null)) && !item.coAuthor && (
               <LinkifiedText
                 text={item.authorNote ?? item.response}
                 style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6, marginBottom: compactFeed ? 8 : 12 }}
                 numberOfLines={compactFeed ? 2 : 3}
               />
+            )}
+            {/* Co-echo: two takes side by side. Falls back to a stacked layout
+                in compact mode so the cards don't get squashed. */}
+            {item.coAuthor && item.response && item.coAuthorResponse && (
+              <View style={{ flexDirection: compactFeed ? 'column' : 'row', gap: 8, marginBottom: 12 }}>
+                <View style={{ flex: 1, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.avatarColor, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>{item.displayName.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }} numberOfLines={1}>@{item.username}</Text>
+                  </View>
+                  <LinkifiedText
+                    text={item.response}
+                    style={{ fontSize: textSize - 1, color: colors.textSecondary, lineHeight: (textSize - 1) * 1.5 }}
+                    numberOfLines={compactFeed ? 3 : 5}
+                  />
+                </View>
+                <View style={{ flex: 1, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.coAuthor.avatarColor, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>{item.coAuthor.displayName.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }} numberOfLines={1}>@{item.coAuthor.username}</Text>
+                  </View>
+                  <LinkifiedText
+                    text={item.coAuthorResponse}
+                    style={{ fontSize: textSize - 1, color: colors.textSecondary, lineHeight: (textSize - 1) * 1.5 }}
+                    numberOfLines={compactFeed ? 3 : 5}
+                  />
+                </View>
+              </View>
             )}
             {item.quotedEcho && (() => { try { return <QuotedEchoCard echo={item.quotedEcho!} compact={compactFeed} />; } catch { return null; } })()}
           </>
