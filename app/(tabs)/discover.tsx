@@ -13,7 +13,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Bell, Question, TrendUp } from 'phosphor-react-native';
+import { Bell, Question, Sparkle, TrendUp } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
@@ -222,6 +222,38 @@ export default function DiscoverScreen() {
           <StoryCircles />
         </>
       )}
+      {/* Daily Question banner — earns the highest visual real estate, pre-feed. */}
+      <Pressable
+        onPress={() => router.push('/daily-question')}
+        style={{
+          marginHorizontal: 16,
+          marginVertical: 12,
+          padding: 16,
+          borderRadius: 16,
+          backgroundColor: colors.accent + '14',
+          borderWidth: 1,
+          borderColor: colors.accent + '40',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <View style={{
+          width: 40, height: 40, borderRadius: 99,
+          backgroundColor: colors.accent + '33',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Sparkle color={colors.accent} size={20} weight="fill" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 11, letterSpacing: 0.6, marginBottom: 2 }}>
+            DAILY QUESTION
+          </Text>
+          <Text style={{ color: colors.text, fontWeight: '600', fontSize: 14 }}>
+            One prompt. Everyone answers. Tap to see today's.
+          </Text>
+        </View>
+      </Pressable>
       <SectionHeader label="For You" sub={interests.length > 0 ? `Picked for ${interests[0]}` : 'Start here'} />
       <ScrollView
         horizontal

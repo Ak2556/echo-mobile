@@ -1064,6 +1064,251 @@ export async function updateRemoteProfile(updates: {
   if (error) throw error;
 }
 
+// ─── Salons (communities) ──────────────────────────────────────────────────
+
+export interface Salon {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  cover_color: string;
+  topic_tags: string[];
+  owner_id: string;
+  member_count: number;
+  echo_count: number;
+  created_at: string;
+  /** True when the current viewer is a member (computed client-side). */
+  is_member?: boolean;
+}
+
+/** Browse list — newest salons first. */
+export async function fetchSalons(limit = 30): Promise<Salon[]> {
+  const { data, error } = await supabase
+    .from('salons')
+    .select('id, slug, name, description, cover_color, topic_tags, owner_id, member_count, echo_count, created_at')
+    .order('member_count', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const list = (data as Salon[]) ?? [];
+  // Annotate membership for the current viewer.
+  const uid = await getSessionUserId();
+  if (!uid || !list.length) return list;
+  const ids = list.map(s => s.id);
+  const { data: memberRows } = await supabase
+    .from('salon_members')
+    .select('salon_id')
+    .eq('user_id', uid)
+    .in('salon_id', ids);
+  const memberOf = new Set((memberRows as { salon_id: string }[] ?? []).map(r => r.salon_id));
+  return list.map(s => ({ ...s, is_member: memberOf.has(s.id) }));
+}
+
+/** Single salon by slug (for the salon detail page). */
+export async function fetchSalonBySlug(slug: string): Promise<Salon | null> {
+  const { data, error } = await supabase
+    .from('salons')
+    .select('id, slug, name, description, cover_color, topic_tags, owner_id, member_count, echo_count, created_at')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) {
+    console.warn('[salons] fetchSalonBySlug failed', error.message);
+    return null;
+  }
+  if (!data) return null;
+  const uid = await getSessionUserId();
+  let is_member = false;
+  if (uid) {
+    const { data: m } = await supabase
+      .from('salon_members')
+      .select('salon_id')
+      .eq('salon_id', (data as Salon).id)
+      .eq('user_id', uid)
+      .maybeSingle();
+    is_member = !!m;
+  }
+  return { ...(data as Salon), is_member };
+}
+
+/** Create a salon. Owner is auto-added as the first member by DB trigger. */
+export async function createSalon(input: {
+  name: string;
+  slug: string;
+  description?: string;
+  cover_color?: string;
+  topic_tags?: string[];
+}): Promise<Salon> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const slug = input.slug.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32);
+  if (slug.length < 3) throw new Error('Slug must be at least 3 characters');
+  const { data, error } = await supabase
+    .from('salons')
+    .insert({
+      slug,
+      name: input.name.trim(),
+      description: input.description?.trim() || null,
+      cover_color: input.cover_color || '#7C3AED',
+      topic_tags: input.topic_tags ?? [],
+      owner_id: uid,
+    })
+    .select('id, slug, name, description, cover_color, topic_tags, owner_id, member_count, echo_count, created_at')
+    .single();
+  if (error) throw error;
+  return data as Salon;
+}
+
+/** Toggle membership. */
+export async function setSalonMembership(salonId: string, join: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (join) {
+    const { error } = await supabase
+      .from('salon_members')
+      .insert({ salon_id: salonId, user_id: uid });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase
+      .from('salon_members')
+      .delete()
+      .eq('salon_id', salonId)
+      .eq('user_id', uid);
+    if (error) throw error;
+  }
+}
+
+/** Fetch echoes scoped to a salon. Re-uses the same mapping as the global feed. */
+export async function fetchSalonEchoes(salonId: string, limit = 30): Promise<FeedItem[]> {
+  const { data: rows, error } = await supabase
+    .from('public_echoes')
+    .select(ECHO_SELECT)
+    .eq('salon_id', salonId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const list = (rows ?? []) as SupabaseEchoRow[];
+  if (!list.length) return [];
+  const authorIds = [...new Set(list.map(r => r.author_id))];
+  const { data: profiles } = await supabase.from('profiles').select(PROFILE_SELECT).in('id', authorIds);
+  const profileById = new Map((profiles as SupabaseProfileRow[] ?? []).map(p => [p.id, p]));
+  const empty = new Set<string>();
+  return list.map(r => mapEchoRowToFeedItem(r, profileById.get(r.author_id), empty, empty, empty));
+}
+
+// ─── Daily Question (BeReal-style ritual) ──────────────────────────────────
+
+export interface DailyQuestion {
+  id: string;
+  active_date: string;
+  question: string;
+}
+
+export interface DailyAnswerWithAuthor {
+  id: string;
+  question_id: string;
+  user_id: string;
+  answer: string;
+  echo_id: string | null;
+  created_at: string;
+  author: {
+    username: string;
+    display_name: string;
+    avatar_color: string;
+    avatar_url?: string | null;
+    is_verified: boolean;
+  };
+}
+
+/** Fetch today's daily question. Returns null when the seed is exhausted. */
+export async function fetchTodaysDailyQuestion(): Promise<DailyQuestion | null> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from('daily_questions')
+    .select('id, active_date, question')
+    .eq('active_date', today)
+    .maybeSingle();
+  if (error) {
+    console.warn('[daily] fetch question failed', error.message);
+    return null;
+  }
+  return (data as DailyQuestion) ?? null;
+}
+
+/** Fetch the viewer's answer (if any) to a given daily question. */
+export async function fetchOwnDailyAnswer(questionId: string): Promise<string | null> {
+  const uid = await getSessionUserId();
+  if (!uid) return null;
+  const { data, error } = await supabase
+    .from('daily_answers')
+    .select('answer')
+    .eq('question_id', questionId)
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (error || !data) return null;
+  return (data as { answer: string }).answer;
+}
+
+/** Submit (or replace) the viewer's answer to a daily question. */
+export async function submitDailyAnswer(questionId: string, answer: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const trimmed = answer.trim();
+  if (!trimmed) throw new Error('Answer cannot be empty');
+  const { error } = await supabase
+    .from('daily_answers')
+    .upsert(
+      { question_id: questionId, user_id: uid, answer: trimmed },
+      { onConflict: 'question_id,user_id' },
+    );
+  if (error) throw error;
+}
+
+/** Fetch all answers for a given daily question, with author profile snippets.
+ *  Reveal-after-answer is enforced client-side — callers should pass the viewer's
+ *  own answer state and only render this list when the viewer has answered. */
+export async function fetchDailyAnswers(questionId: string, limit = 100): Promise<DailyAnswerWithAuthor[]> {
+  const { data: rows, error } = await supabase
+    .from('daily_answers')
+    .select('id, question_id, user_id, answer, echo_id, created_at')
+    .eq('question_id', questionId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const list = (rows ?? []) as Array<{
+    id: string; question_id: string; user_id: string; answer: string;
+    echo_id: string | null; created_at: string;
+  }>;
+  if (!list.length) return [];
+
+  const authorIds = [...new Set(list.map(r => r.user_id))];
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_color, avatar_url, is_verified')
+    .in('id', authorIds);
+  const profileById = new Map((profiles as Array<{
+    id: string; username: string; display_name: string; avatar_color: string;
+    avatar_url?: string | null; is_verified: boolean;
+  }> ?? []).map(p => [p.id, p]));
+
+  return list.map((r) => {
+    const profile = profileById.get(r.user_id);
+    return {
+      id: r.id,
+      question_id: r.question_id,
+      user_id: r.user_id,
+      answer: r.answer,
+      echo_id: r.echo_id,
+      created_at: r.created_at,
+      author: {
+        username: profile?.username ?? 'unknown',
+        display_name: profile?.display_name ?? profile?.username ?? 'unknown',
+        avatar_color: profile?.avatar_color ?? '#3B82F6',
+        avatar_url: profile?.avatar_url ?? null,
+        is_verified: profile?.is_verified ?? false,
+      },
+    };
+  });
+}
+
 // ─── User search & mentions ────────────────────────────────────────────────
 
 /** Lightweight profile snippet returned by user search (cheaper than a full SupabaseProfileRow). */
