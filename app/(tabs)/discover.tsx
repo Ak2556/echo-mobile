@@ -37,13 +37,6 @@ import { features } from '../../lib/featureFlags';
 
 const HERO_COUNT = 5;
 
-// Neon gradients for the feed-scope pills (active state only).
-// "For You" = personalized semantic feed → violet→cyan→lime (cool/fresh).
-// "Trending" = engagement-ranked → magenta→amber→lime (hot/rising).
-// "Following" = follow-only chronology → cyan→violet (calm/established).
-const FOR_YOU_GRADIENT  = ['#9B5BFF', '#22F5FF', '#C6FF3D'] as const;
-const TRENDING_GRADIENT = ['#FF3DD8', '#FFB12B', '#C6FF3D'] as const;
-const FOLLOWING_GRADIENT = ['#22F5FF', '#9B5BFF'] as const;
 const NAV_BAR_HEIGHT = 50;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -181,38 +174,30 @@ export default function DiscoverScreen() {
         {(['semantic', 'forYou', 'following'] as const).map(scope => {
           const active = feedScope === scope;
           const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : 'Following';
-          const gradient = scope === 'semantic'
-            ? FOR_YOU_GRADIENT
-            : scope === 'forYou'
-              ? TRENDING_GRADIENT
-              : FOLLOWING_GRADIENT;
           return (
             <Pressable
               key={scope}
               onPress={() => { void neonHaptic('select'); setFeedScope(scope); }}
-              style={{ borderRadius: 999 }}
               accessibilityRole="tab"
               accessibilityLabel={label}
               accessibilityState={{ selected: active }}
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderRadius: 999,
+                backgroundColor: active ? colors.accent : 'transparent',
+                borderWidth: active ? 0 : StyleSheet.hairlineWidth,
+                borderColor: colors.border,
+              }}
             >
-              {active ? (
-                <LinearGradient
-                  colors={gradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999 }}
-                >
-                  <Text style={{ color: '#000', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 }}>
-                    {label}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
-                  <Text style={{ color: '#A1A1AA', fontSize: 13, fontWeight: '700', letterSpacing: 0.3 }}>
-                    {label}
-                  </Text>
-                </View>
-              )}
+              <Text style={{
+                color: active ? '#fff' : colors.textSecondary,
+                fontSize: 13,
+                fontWeight: '700',
+                letterSpacing: 0.2,
+              }}>
+                {label}
+              </Text>
             </Pressable>
           );
         })}
@@ -308,14 +293,6 @@ export default function DiscoverScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Ambient gradient — gives blur something to render over */}
-      <LinearGradient
-        colors={colors.ambientGradient}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 0.8, y: 0.6 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
 
       {/* Scrollable content */}
       {isLoading ? (

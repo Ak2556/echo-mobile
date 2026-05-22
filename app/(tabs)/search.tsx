@@ -3,7 +3,6 @@ import { View, Text, ScrollView, Dimensions, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Compass, Hash, MagnifyingGlass, Sparkle, TrendUp, UserCirclePlus } from 'phosphor-react-native';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
@@ -88,7 +87,6 @@ export default function SearchScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <LinearGradient colors={colors.ambientGradient} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 0.55 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
 
       {isSearching ? (
         <View style={{ flex: 1, paddingTop: headerHeight }}>

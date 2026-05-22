@@ -799,14 +799,14 @@ interface UserProfile {
 }
 
 const SCREEN_LABELS: Record<string, string> = {
-  '/(tabs)/discover':  'Discover feed',
-  '/(tabs)/chat':      'AI Chat',
-  '/(tabs)/profile':   'Your profile',
-  '/(tabs)/search':    'Search',
+  '/(tabs)/discover':  'Home',
+  '/(tabs)/chat':      'Chat',
+  '/(tabs)/profile':   'You',
+  '/(tabs)/search':    'Explore',
   '/messages':         'Messages',
-  '/create-post':      'Create Post',
+  '/create-post':      'Create Echo',
   '/bookmarks':        'Bookmarks',
-  '/notifications':    'Notifications',
+  '/notifications':    'Activity',
 };
 
 function buildSystemPrompt(profile?: UserProfile | null, currentScreen?: string | null): string {

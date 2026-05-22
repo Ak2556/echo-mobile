@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { Extrapolation, FadeInDown, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Calculator, ArrowsLeftRight, Receipt, Timer,
   Key, Globe, BracketsCurly, FileText,
@@ -246,13 +245,6 @@ export default function AppsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Ambient gradient */}
-      <LinearGradient
-        colors={colors.ambientGradient}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 0.8, y: 0.55 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
 
       <ScrollView
         contentContainerStyle={{ paddingTop: HEADER_HEIGHT, padding: PAD, gap: GAP }}
