@@ -42,7 +42,7 @@ export default function SalonsScreen() {
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Salons</Text>
         <AnimatedPressable
-          onPress={() => router.push('/create-salon')}
+          onPress={() => router.push('/create-salon' as any)}
           style={{ padding: 4 }}
           scaleValue={0.88}
           haptic="medium"
@@ -65,7 +65,7 @@ export default function SalonsScreen() {
             Start the first one — a circle of people thinking about a shared topic.
           </Text>
           <AnimatedPressable
-            onPress={() => router.push('/create-salon')}
+            onPress={() => router.push('/create-salon' as any)}
             style={{
               marginTop: 20,
               paddingHorizontal: 18,
