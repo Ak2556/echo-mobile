@@ -227,6 +227,13 @@ export default function ChatScreen() {
       messages: '/messages',
       bookmarks: '/bookmarks',
       notifications: '/notifications',
+      // Gen Z feature routes
+      'daily-question': '/daily-question',
+      salons: '/salons',
+      'office-hours': '/office-hours',
+      'year-in-echo': '/year-in-echo',
+      quests: '/quests',
+      badges: '/badges',
     };
     router.push((routeMap[screen] ?? '/(tabs)/discover') as any);
   }, [router]);

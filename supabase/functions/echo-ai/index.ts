@@ -715,7 +715,7 @@ const TOOLS: ToolSpec[] = [
       properties: {
         screen: {
           type: "string",
-          enum: ["discover", "profile", "search", "create-post", "messages", "bookmarks", "notifications"],
+          enum: ["discover", "profile", "search", "create-post", "messages", "bookmarks", "notifications", "daily-question", "salons", "office-hours", "year-in-echo", "quests", "badges"],
           description: "The screen to navigate to.",
         },
       },
