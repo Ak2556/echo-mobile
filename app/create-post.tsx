@@ -330,15 +330,6 @@ export default function CreatePostScreen() {
             postType: 'text',
             prompt: prompt.trim(),
             response: response.trim(),
-            coAuthor: coAuthor ? {
-              id: coAuthor.id,
-              username: coAuthor.username,
-              displayName: coAuthor.display_name || coAuthor.username,
-              avatarColor: coAuthor.avatar_color,
-              avatarUrl: coAuthor.avatar_url ?? undefined,
-              isVerified: coAuthor.is_verified,
-            } : undefined,
-            coAuthorResponse: coAuthor ? coAuthorResponse.trim() : undefined,
           });
           if (remoteAuthorId) {
             remoteEchoId = echoId;
@@ -351,8 +342,6 @@ export default function CreatePostScreen() {
               prompt: prompt.trim(),
               response: response.trim(),
               quotedEchoId: quotedId,
-              coAuthorId: coAuthor?.id,
-              coAuthorResponse: coAuthor ? coAuthorResponse.trim() : undefined,
             }).catch((err: unknown) => {
               qc.setQueriesData({ queryKey: ['feed'] }, (old: unknown) => removeEchoFromFeedCache(old, echoId));
               Alert.alert('Post didn’t go through', (err as Error)?.message ?? 'Please check your connection and try again.');
