@@ -28,6 +28,7 @@ import { groupDiscovery } from '../../lib/echoUX';
 import { useRealtimeNewEchoes } from '../../lib/realtime';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
 import { UserRow } from '../../components/social/UserRow';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -380,17 +381,14 @@ export default function DiscoverScreen() {
                 )}
               </View>
             ) : (
-              <View style={{ alignItems: 'center', paddingTop: 32, paddingHorizontal: 24 }}>
-                <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>Nothing to show yet</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19, maxWidth: 320 }}>
-                  Be the first to publish an echo. Open Chat, ask Echo something real, then share the answer.
-                </Text>
-                <Pressable
-                  onPress={() => router.push('/(tabs)/chat')}
-                  style={{ marginTop: 14, backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9 }}
-                >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Open chat</Text>
-                </Pressable>
+              <View style={{ paddingTop: 32 }}>
+                <EmptyState
+                  icon={<Sparkle color={colors.accent} size={28} weight="fill" />}
+                  title="Nothing to show yet"
+                  subtitle="Be the first to publish an echo. Open Chat, ask Echo something real, then share the answer."
+                  actionLabel="Open chat"
+                  onAction={() => router.push('/(tabs)/chat')}
+                />
               </View>
             )
           }
