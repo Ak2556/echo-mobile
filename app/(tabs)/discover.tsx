@@ -224,7 +224,7 @@ export default function DiscoverScreen() {
       )}
       {/* Daily Question banner — earns the highest visual real estate, pre-feed. */}
       <Pressable
-        onPress={() => router.push('/daily-question')}
+        onPress={() => router.push('/daily-question' as any)}
         style={{
           marginHorizontal: 16,
           marginVertical: 12,

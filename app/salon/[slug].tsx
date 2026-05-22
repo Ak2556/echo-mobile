@@ -156,7 +156,7 @@ export default function SalonDetailScreen() {
             </Text>
           </View>
         ) : (
-          feed.map(item => <FeedCard key={item.id} item={item} />)
+          feed.map((item, index) => <FeedCard key={item.id} item={item} index={index} />)
         )}
       </ScrollView>
     </SafeAreaView>

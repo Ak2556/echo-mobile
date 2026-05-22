@@ -289,11 +289,11 @@ function AnswerCard({ a }: { a: DailyAnswerWithAuthor }) {
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <ProfileAvatar
-          username={a.author.username}
           displayName={a.author.display_name}
-          color={a.author.avatar_color}
+          avatarColor={a.author.avatar_color}
           avatarUrl={a.author.avatar_url ?? undefined}
           size={32}
+          showGlow={false}
         />
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>

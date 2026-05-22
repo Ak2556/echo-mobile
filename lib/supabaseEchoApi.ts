@@ -427,6 +427,14 @@ export async function insertRemoteEcho(params: {
   if (usernames.length) {
     insertEchoMentions(row.id, usernames).catch(() => undefined);
   }
+  // Gen-Z gamification: bump daily_post quest, award first_echo if we just
+  // crossed the threshold. All fire-and-forget; never block the publish flow.
+  bumpQuestProgress('daily_post').catch(() => undefined);
+  if (usernames.length) {
+    bumpQuestProgress('weekly_mention', usernames.length).catch(() => undefined);
+  }
+  // First-echo badge — award once; idempotent via PK on (user_id, badge_id).
+  awardBadge('first_echo').catch(() => undefined);
   return row;
 }
 
@@ -729,6 +737,8 @@ export async function setRemoteEchoReaction(
       .from('echo_reactions')
       .insert({ echo_id: echoId, user_id: uid, reaction });
     if (error && !error.message.includes('duplicate')) throw error;
+    // Gen-Z gamification: bump daily_react quest.
+    bumpQuestProgress('daily_react').catch(() => undefined);
   } else {
     const { error } = await supabase
       .from('echo_reactions')
@@ -1064,6 +1074,471 @@ export async function updateRemoteProfile(updates: {
   if (error) throw error;
 }
 
+// ─── Badges ────────────────────────────────────────────────────────────────
+
+export interface Badge {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  tier: 'bronze' | 'silver' | 'gold' | 'special';
+  criteria: Record<string, unknown>;
+  earned?: boolean;
+  awarded_at?: string;
+}
+
+/** All defined badges + which ones the current viewer has earned. */
+export async function fetchBadges(): Promise<Badge[]> {
+  const { data: allBadges, error } = await supabase
+    .from('badges')
+    .select('id, slug, name, description, icon, tier, criteria')
+    .order('tier', { ascending: true });
+  if (error) throw error;
+  const list = (allBadges as Badge[]) ?? [];
+
+  const uid = await getSessionUserId();
+  if (!uid) return list;
+  const { data: earned } = await supabase
+    .from('user_badges')
+    .select('badge_id, awarded_at')
+    .eq('user_id', uid);
+  const earnedMap = new Map((earned as { badge_id: string; awarded_at: string }[] ?? []).map(e => [e.badge_id, e.awarded_at]));
+  return list.map(b => ({ ...b, earned: earnedMap.has(b.id), awarded_at: earnedMap.get(b.id) }));
+}
+
+/** Award a badge to the current viewer (idempotent). Used by auto-award engine
+ *  triggered on key actions like first echo, streak hits, mind-blown milestones. */
+export async function awardBadge(slug: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const { data: badge } = await supabase.from('badges').select('id').eq('slug', slug).maybeSingle();
+  if (!badge) return;
+  const { error } = await supabase
+    .from('user_badges')
+    .insert({ user_id: uid, badge_id: (badge as { id: string }).id });
+  if (error && !error.message.includes('duplicate')) {
+    console.warn('[badges] award failed', error.message);
+  }
+}
+
+// ─── Quests ────────────────────────────────────────────────────────────────
+
+export interface Quest {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  goal_type: 'post_count' | 'reaction_count' | 'streak_days' | 'mentions_count' | 'daily_answers';
+  goal_value: number;
+  reward_xp: number;
+  reward_badge_id: string | null;
+  recurrence: 'daily' | 'weekly' | 'monthly' | 'once';
+  active: boolean;
+  /** Viewer's progress on this quest (current period). */
+  progress?: number;
+  completed_at?: string | null;
+}
+
+/** Active quests + the viewer's progress on each (for the current recurrence window). */
+export async function fetchActiveQuests(): Promise<Quest[]> {
+  const { data: rows, error } = await supabase
+    .from('quests')
+    .select('id, slug, title, description, goal_type, goal_value, reward_xp, reward_badge_id, recurrence, active')
+    .eq('active', true)
+    .order('recurrence', { ascending: true });
+  if (error) throw error;
+  const list = (rows as Quest[]) ?? [];
+
+  const uid = await getSessionUserId();
+  if (!uid) return list;
+
+  // Pull all user_quests for this viewer; client filters by recurrence window
+  // (started_at within current day/week/month).
+  const { data: ups } = await supabase
+    .from('user_quests')
+    .select('quest_id, started_at, progress, completed_at')
+    .eq('user_id', uid);
+  const upsList = (ups as { quest_id: string; started_at: string; progress: number; completed_at: string | null }[] ?? []);
+
+  return list.map((q) => {
+    // Filter user_quest rows to the current recurrence window.
+    const now = Date.now();
+    const winStart = (() => {
+      const d = new Date();
+      if (q.recurrence === 'daily') { d.setHours(0, 0, 0, 0); return d.getTime(); }
+      if (q.recurrence === 'weekly') { d.setDate(d.getDate() - d.getDay()); d.setHours(0, 0, 0, 0); return d.getTime(); }
+      if (q.recurrence === 'monthly') { d.setDate(1); d.setHours(0, 0, 0, 0); return d.getTime(); }
+      return 0; // 'once' — any past row counts
+    })();
+    const match = upsList.find(r => r.quest_id === q.id && new Date(r.started_at).getTime() >= winStart);
+    return {
+      ...q,
+      progress: match?.progress ?? 0,
+      completed_at: match?.completed_at ?? null,
+    };
+  });
+}
+
+/** Update the viewer's progress on a quest. Upserts a user_quests row for the
+ *  current recurrence window. */
+export async function bumpQuestProgress(slug: string, delta = 1): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const { data: quest } = await supabase
+    .from('quests')
+    .select('id, goal_value, recurrence')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (!quest) return;
+  const q = quest as { id: string; goal_value: number; recurrence: string };
+
+  const winStartIso = (() => {
+    const d = new Date();
+    if (q.recurrence === 'daily') { d.setHours(0, 0, 0, 0); return d.toISOString(); }
+    if (q.recurrence === 'weekly') { d.setDate(d.getDate() - d.getDay()); d.setHours(0, 0, 0, 0); return d.toISOString(); }
+    if (q.recurrence === 'monthly') { d.setDate(1); d.setHours(0, 0, 0, 0); return d.toISOString(); }
+    return new Date(0).toISOString();
+  })();
+
+  // Find existing row in this window
+  const { data: existing } = await supabase
+    .from('user_quests')
+    .select('progress, completed_at, started_at')
+    .eq('user_id', uid)
+    .eq('quest_id', q.id)
+    .gte('started_at', winStartIso)
+    .maybeSingle();
+
+  if (existing) {
+    const ex = existing as { progress: number; completed_at: string | null; started_at: string };
+    const newProgress = Math.min(q.goal_value, ex.progress + delta);
+    const completed = newProgress >= q.goal_value;
+    await supabase
+      .from('user_quests')
+      .update({
+        progress: newProgress,
+        ...(completed && !ex.completed_at ? { completed_at: new Date().toISOString() } : {}),
+      })
+      .eq('user_id', uid)
+      .eq('quest_id', q.id)
+      .eq('started_at', ex.started_at);
+  } else {
+    const completed = delta >= q.goal_value;
+    await supabase.from('user_quests').insert({
+      user_id: uid,
+      quest_id: q.id,
+      started_at: winStartIso,
+      progress: Math.min(q.goal_value, delta),
+      ...(completed ? { completed_at: new Date().toISOString() } : {}),
+    });
+  }
+}
+
+// ─── Year in Echo ──────────────────────────────────────────────────────────
+
+export interface YearWrap {
+  user_id: string;
+  year: number;
+  total_echoes: number;
+  total_likes_received: number;
+  total_reactions: number;
+  top_topics: string[];
+  top_echo_id: string | null;
+  longest_streak: number;
+  computed_at: string;
+  /** When present (because we just computed it), this is the top echo's preview prompt. */
+  top_echo_prompt?: string | null;
+}
+
+/** Fetch the cached Year in Echo or compute it lazily by aggregating echoes. */
+export async function fetchOrComputeYearWrap(year: number = new Date().getFullYear()): Promise<YearWrap | null> {
+  const uid = await getSessionUserId();
+  if (!uid) return null;
+
+  // Try cached first
+  const { data: cached } = await supabase
+    .from('year_wraps')
+    .select('*')
+    .eq('user_id', uid)
+    .eq('year', year)
+    .maybeSingle();
+  if (cached) return cached as YearWrap;
+
+  // Compute on the fly: aggregate the viewer's echoes from this year.
+  const yearStart = new Date(year, 0, 1).toISOString();
+  const yearEnd = new Date(year + 1, 0, 1).toISOString();
+  const { data: rows } = await supabase
+    .from('public_echoes')
+    .select('id, prompt, response, likes_count, mind_blown_count, taking_notes_count, agree_count, disagree_count, created_at')
+    .eq('author_id', uid)
+    .gte('created_at', yearStart)
+    .lt('created_at', yearEnd);
+  const list = (rows as Array<{
+    id: string; prompt: string; response: string; likes_count: number;
+    mind_blown_count: number; taking_notes_count: number; agree_count: number; disagree_count: number;
+    created_at: string;
+  }> ?? []);
+
+  const total_echoes = list.length;
+  const total_likes_received = list.reduce((acc, r) => acc + (r.likes_count ?? 0), 0);
+  const total_reactions = list.reduce((acc, r) => acc + (r.mind_blown_count ?? 0) + (r.taking_notes_count ?? 0) + (r.agree_count ?? 0) + (r.disagree_count ?? 0), 0);
+
+  // Extract top topics from hashtags in prompt+response
+  const tagCount = new Map<string, number>();
+  for (const r of list) {
+    const tags = `${r.prompt} ${r.response}`.match(/#[\wÀ-ɏ]+/gi) ?? [];
+    for (const tag of tags) {
+      const t = tag.toLowerCase();
+      tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
+    }
+  }
+  const top_topics = [...tagCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([t]) => t);
+
+  // Pick the top echo by likes + reactions
+  const ranked = list.map(r => ({
+    id: r.id,
+    score: (r.likes_count ?? 0) + (r.mind_blown_count ?? 0) * 2 + (r.taking_notes_count ?? 0) + (r.agree_count ?? 0) + (r.disagree_count ?? 0),
+    prompt: r.prompt,
+  })).sort((a, b) => b.score - a.score);
+  const top = ranked[0];
+
+  // Persist for next time
+  const wrap: YearWrap = {
+    user_id: uid,
+    year,
+    total_echoes,
+    total_likes_received,
+    total_reactions,
+    top_topics,
+    top_echo_id: top?.id ?? null,
+    longest_streak: 0, // Computed from retention separately
+    computed_at: new Date().toISOString(),
+    top_echo_prompt: top?.prompt ?? null,
+  };
+  await supabase.from('year_wraps').upsert({
+    user_id: uid, year,
+    total_echoes,
+    total_likes_received,
+    total_reactions,
+    top_topics,
+    top_echo_id: top?.id ?? null,
+    longest_streak: 0,
+    computed_at: wrap.computed_at,
+  });
+  return wrap;
+}
+
+// ─── Office Hours (scheduled AMA) ──────────────────────────────────────────
+
+export interface OfficeHour {
+  id: string;
+  host_id: string;
+  topic: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string;
+  rsvp_count: number;
+  status: 'scheduled' | 'live' | 'ended' | 'cancelled';
+  created_at: string;
+  host?: {
+    username: string;
+    display_name: string;
+    avatar_color: string;
+    avatar_url?: string | null;
+    is_verified: boolean;
+  };
+  has_rsvp?: boolean;
+}
+
+export interface OfficeHourQuestion {
+  id: string;
+  office_hour_id: string;
+  asker_id: string;
+  question: string;
+  answer: string | null;
+  upvote_count: number;
+  created_at: string;
+  asker?: {
+    username: string;
+    display_name: string;
+    avatar_color: string;
+  };
+  has_upvoted?: boolean;
+}
+
+/** Upcoming + live office hours, sorted by start time. */
+export async function fetchUpcomingOfficeHours(limit = 30): Promise<OfficeHour[]> {
+  const now = new Date().toISOString();
+  const { data: rows, error } = await supabase
+    .from('office_hours')
+    .select('id, host_id, topic, description, starts_at, ends_at, rsvp_count, status, created_at')
+    .gte('ends_at', now)
+    .in('status', ['scheduled', 'live'])
+    .order('starts_at', { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  const list = (rows ?? []) as Array<Omit<OfficeHour, 'host' | 'has_rsvp'>>;
+  if (!list.length) return [];
+
+  const hostIds = [...new Set(list.map(r => r.host_id))];
+  const [profilesRes, rsvpsRes] = await Promise.allSettled([
+    supabase.from('profiles').select('id, username, display_name, avatar_color, avatar_url, is_verified').in('id', hostIds),
+    (async () => {
+      const uid = await getSessionUserId();
+      if (!uid) return { data: [] as { office_hour_id: string }[] };
+      return supabase.from('office_hour_rsvps').select('office_hour_id').eq('user_id', uid).in('office_hour_id', list.map(o => o.id));
+    })(),
+  ]);
+
+  const profileById = new Map<string, { username: string; display_name: string; avatar_color: string; avatar_url?: string | null; is_verified: boolean }>();
+  if (profilesRes.status === 'fulfilled') {
+    for (const p of (profilesRes.value.data as Array<{ id: string; username: string; display_name: string; avatar_color: string; avatar_url?: string | null; is_verified: boolean }> | null) ?? []) {
+      profileById.set(p.id, p);
+    }
+  }
+  const rsvpSet = new Set<string>(
+    (rsvpsRes.status === 'fulfilled' ? rsvpsRes.value.data ?? [] : []).map((r: { office_hour_id: string }) => r.office_hour_id),
+  );
+
+  return list.map(r => ({ ...r, host: profileById.get(r.host_id), has_rsvp: rsvpSet.has(r.id) }));
+}
+
+/** Single office hour with host + RSVP info. */
+export async function fetchOfficeHour(id: string): Promise<OfficeHour | null> {
+  const { data: row, error } = await supabase
+    .from('office_hours')
+    .select('id, host_id, topic, description, starts_at, ends_at, rsvp_count, status, created_at')
+    .eq('id', id)
+    .maybeSingle();
+  if (error || !row) return null;
+  const { data: host } = await supabase
+    .from('profiles')
+    .select('username, display_name, avatar_color, avatar_url, is_verified')
+    .eq('id', (row as Omit<OfficeHour, 'host' | 'has_rsvp'>).host_id)
+    .maybeSingle();
+  const uid = await getSessionUserId();
+  let has_rsvp = false;
+  if (uid) {
+    const { data: r } = await supabase
+      .from('office_hour_rsvps')
+      .select('office_hour_id')
+      .eq('office_hour_id', id)
+      .eq('user_id', uid)
+      .maybeSingle();
+    has_rsvp = !!r;
+  }
+  return {
+    ...(row as Omit<OfficeHour, 'host' | 'has_rsvp'>),
+    host: (host as { username: string; display_name: string; avatar_color: string; avatar_url?: string | null; is_verified: boolean } | null) ?? undefined,
+    has_rsvp,
+  };
+}
+
+export async function createOfficeHour(input: {
+  topic: string;
+  description?: string;
+  starts_at: string;
+  duration_minutes: number;
+}): Promise<OfficeHour> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const ends_at = new Date(new Date(input.starts_at).getTime() + input.duration_minutes * 60000).toISOString();
+  const { data, error } = await supabase
+    .from('office_hours')
+    .insert({
+      host_id: uid,
+      topic: input.topic.trim(),
+      description: input.description?.trim() || null,
+      starts_at: input.starts_at,
+      ends_at,
+    })
+    .select('id, host_id, topic, description, starts_at, ends_at, rsvp_count, status, created_at')
+    .single();
+  if (error) throw error;
+  return data as OfficeHour;
+}
+
+export async function setOfficeHourRSVP(officeHourId: string, going: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (going) {
+    const { error } = await supabase.from('office_hour_rsvps').insert({ office_hour_id: officeHourId, user_id: uid });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase.from('office_hour_rsvps').delete().eq('office_hour_id', officeHourId).eq('user_id', uid);
+    if (error) throw error;
+  }
+}
+
+export async function fetchOfficeHourQuestions(officeHourId: string): Promise<OfficeHourQuestion[]> {
+  const { data: rows, error } = await supabase
+    .from('office_hour_questions')
+    .select('id, office_hour_id, asker_id, question, answer, upvote_count, created_at')
+    .eq('office_hour_id', officeHourId)
+    .order('upvote_count', { ascending: false })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  const list = (rows ?? []) as Array<Omit<OfficeHourQuestion, 'asker' | 'has_upvoted'>>;
+  if (!list.length) return [];
+
+  const askerIds = [...new Set(list.map(r => r.asker_id))];
+  const [profilesRes, upvotesRes] = await Promise.allSettled([
+    supabase.from('profiles').select('id, username, display_name, avatar_color').in('id', askerIds),
+    (async () => {
+      const uid = await getSessionUserId();
+      if (!uid) return { data: [] as { question_id: string }[] };
+      return supabase
+        .from('office_hour_question_upvotes')
+        .select('question_id')
+        .eq('user_id', uid)
+        .in('question_id', list.map(r => r.id));
+    })(),
+  ]);
+
+  const pById = new Map<string, { username: string; display_name: string; avatar_color: string }>();
+  if (profilesRes.status === 'fulfilled') {
+    for (const p of (profilesRes.value.data as Array<{ id: string; username: string; display_name: string; avatar_color: string }> | null) ?? []) {
+      pById.set(p.id, p);
+    }
+  }
+  const upvoted = new Set<string>(
+    (upvotesRes.status === 'fulfilled' ? upvotesRes.value.data ?? [] : []).map((r: { question_id: string }) => r.question_id),
+  );
+
+  return list.map(r => ({
+    ...r,
+    asker: pById.get(r.asker_id),
+    has_upvoted: upvoted.has(r.id),
+  }));
+}
+
+export async function submitOfficeHourQuestion(officeHourId: string, question: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase.from('office_hour_questions').insert({
+    office_hour_id: officeHourId,
+    asker_id: uid,
+    question: question.trim(),
+  });
+  if (error) throw error;
+}
+
+export async function setOfficeHourQuestionUpvote(questionId: string, on: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (on) {
+    const { error } = await supabase.from('office_hour_question_upvotes').insert({ question_id: questionId, user_id: uid });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase.from('office_hour_question_upvotes').delete().eq('question_id', questionId).eq('user_id', uid);
+    if (error) throw error;
+  }
+}
+
 // ─── Salons (communities) ──────────────────────────────────────────────────
 
 export interface Salon {
@@ -1260,6 +1735,8 @@ export async function submitDailyAnswer(questionId: string, answer: string): Pro
       { onConflict: 'question_id,user_id' },
     );
   if (error) throw error;
+  // Bump the daily-answer quest. Best-effort.
+  bumpQuestProgress('daily_answer').catch(() => undefined);
 }
 
 /** Fetch all answers for a given daily question, with author profile snippets.
