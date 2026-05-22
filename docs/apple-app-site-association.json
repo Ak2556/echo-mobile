@@ -1,0 +1,27 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.anonymous.echo"],
+        "components": [
+          {
+            "/": "/e/*",
+            "comment": "Direct link to a single echo (thread)"
+          },
+          {
+            "/": "/u/*",
+            "comment": "Direct link to a user profile"
+          },
+          {
+            "/": "/c/*",
+            "comment": "Direct link to a comment"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.anonymous.echo"]
+  }
+}
