@@ -208,8 +208,8 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 
 // ─── Profile select helper ────────────────────────────────────────────────────
 
-const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count';
-const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score';
+const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns';
+const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response';
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -347,7 +347,12 @@ export async function fetchRemoteFeed(
   const rows = (echoes || []) as SupabaseEchoRow[];
   if (rows.length === 0) return [];
 
-  const authorIds = [...new Set(rows.map(r => r.author_id))];
+  const authorIds = [
+    ...new Set([
+      ...rows.map(r => r.author_id),
+      ...rows.map(r => r.co_author_id).filter(Boolean) as string[],
+    ]),
+  ];
   const { data: profiles, error: e2 } = await supabase
     .from('profiles')
     .select(PROFILE_SELECT)
@@ -359,22 +364,32 @@ export async function fetchRemoteFeed(
   let liked = new Set<string>();
   let bookmarked = new Set<string>();
   if (uid) {
-    const [{ data: likeRows }, { data: bmRows }, { data: repostRows }] = await Promise.all([
+    const [likesRes, bmRes, repostRes, reactionsRes] = await Promise.allSettled([
       supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
       supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid),
       supabase.from('echo_reposts').select('echo_id').eq('user_id', uid),
+      // Knowledge reactions the current viewer gave to anything in this feed.
+      supabase.from('echo_reactions').select('echo_id, reaction').eq('user_id', uid).in('echo_id', rows.map(r => r.id)),
     ]);
-    liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
-    bookmarked = new Set((bmRows || []).map((r: { echo_id: string }) => r.echo_id));
-    const reposted = new Set((repostRows || []).map((r: { echo_id: string }) => r.echo_id));
+    liked = new Set((likesRes.status === 'fulfilled' ? likesRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
+    bookmarked = new Set((bmRes.status === 'fulfilled' ? bmRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
+    const reposted = new Set((repostRes.status === 'fulfilled' ? repostRes.value.data ?? [] : []).map((r: { echo_id: string }) => r.echo_id));
+    const reactionMap = new Map<string, import('../types').EchoReaction[]>();
+    if (reactionsRes.status === 'fulfilled') {
+      for (const r of reactionsRes.value.data ?? []) {
+        const list = reactionMap.get(r.echo_id) ?? [];
+        list.push(r.reaction as import('../types').EchoReaction);
+        reactionMap.set(r.echo_id, list);
+      }
+    }
     return rows.map(echo =>
-      mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted)
+      mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted, reactionMap.get(echo.id), echo.co_author_id ? profileById.get(echo.co_author_id) : undefined),
     );
   }
 
   const emptyReposted = new Set<string>();
   return rows.map(echo =>
-    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, emptyReposted)
+    mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, emptyReposted, undefined, echo.co_author_id ? profileById.get(echo.co_author_id) : undefined)
   );
 }
 
@@ -388,6 +403,8 @@ export async function insertRemoteEcho(params: {
   parentEchoId?: string;
   sourceConversationId?: string;
   conversationSnapshot?: { role: 'user' | 'assistant'; content: string }[];
+  coAuthorId?: string;
+  coAuthorResponse?: string;
 }): Promise<SupabaseEchoRow> {
   const title =
     params.title?.trim() ||
@@ -404,6 +421,8 @@ export async function insertRemoteEcho(params: {
       ...(params.parentEchoId ? { parent_echo_id: params.parentEchoId } : {}),
       ...(params.sourceConversationId ? { source_conversation_id: params.sourceConversationId } : {}),
       ...(params.conversationSnapshot?.length ? { conversation_snapshot: params.conversationSnapshot } : {}),
+      ...(params.coAuthorId ? { co_author_id: params.coAuthorId } : {}),
+      ...(params.coAuthorResponse?.trim() ? { co_author_response: params.coAuthorResponse.trim() } : {}),
     })
     .select(ECHO_SELECT)
     .single();
@@ -412,6 +431,19 @@ export async function insertRemoteEcho(params: {
   // Fire-and-forget: ask the edge function to generate the embedding and
   // thoughtfulness score. Failure here must not block the publish flow.
   triggerEmbedEcho(row.id).catch(() => undefined);
+  // Insert any @-mentions found in prompt + response. Best-effort; doesn't block.
+  const usernames = parseMentions(`${params.prompt} ${params.response}`);
+  if (usernames.length) {
+    insertEchoMentions(row.id, usernames).catch(() => undefined);
+  }
+  // Gen-Z gamification: bump daily_post quest, award first_echo if we just
+  // crossed the threshold. All fire-and-forget; never block the publish flow.
+  bumpQuestProgress('daily_post').catch(() => undefined);
+  if (usernames.length) {
+    bumpQuestProgress('weekly_mention', usernames.length).catch(() => undefined);
+  }
+  // First-echo badge — award once; idempotent via PK on (user_id, badge_id).
+  awardBadge('first_echo').catch(() => undefined);
   return row;
 }
 
@@ -694,6 +726,90 @@ export async function setRemoteRepost(echoId: string, repost: boolean): Promise<
   }
 }
 
+// ─── Knowledge reactions ───────────────────────────────────────────────────
+// Four-emoji reaction pile: 🤯 mind_blown, 📝 taking_notes, 💯 agree, 🤔 disagree.
+// Each (echo, user, reaction) combo is unique; counter columns on public_echoes
+// are kept in sync by DB triggers (adjust_echo_reaction_count).
+
+import type { EchoReaction } from '../types';
+
+/** Toggle a reaction the current user has on an echo. */
+export async function setRemoteEchoReaction(
+  echoId: string,
+  reaction: EchoReaction,
+  on: boolean,
+): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (on) {
+    const { error } = await supabase
+      .from('echo_reactions')
+      .insert({ echo_id: echoId, user_id: uid, reaction });
+    if (error && !error.message.includes('duplicate')) throw error;
+    // Gen-Z gamification: bump daily_react quest.
+    bumpQuestProgress('daily_react').catch(() => undefined);
+  } else {
+    const { error } = await supabase
+      .from('echo_reactions')
+      .delete()
+      .eq('echo_id', echoId)
+      .eq('user_id', uid)
+      .eq('reaction', reaction);
+    if (error) throw error;
+  }
+}
+
+/** Same shape but for comments. */
+export async function setRemoteCommentReaction(
+  commentId: string,
+  reaction: EchoReaction,
+  on: boolean,
+): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (on) {
+    const { error } = await supabase
+      .from('comment_reactions')
+      .insert({ comment_id: commentId, user_id: uid, reaction });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase
+      .from('comment_reactions')
+      .delete()
+      .eq('comment_id', commentId)
+      .eq('user_id', uid)
+      .eq('reaction', reaction);
+    if (error) throw error;
+  }
+}
+
+/** Fetch all reactions the current user has given on a set of echo IDs.
+ *  Returns a Map<echoId, EchoReaction[]> for efficient lookup when building
+ *  FeedItems. */
+export async function fetchUserReactions(
+  echoIds: string[],
+): Promise<Map<string, EchoReaction[]>> {
+  const result = new Map<string, EchoReaction[]>();
+  if (!echoIds.length) return result;
+  const uid = await getSessionUserId();
+  if (!uid) return result;
+  const { data, error } = await supabase
+    .from('echo_reactions')
+    .select('echo_id, reaction')
+    .eq('user_id', uid)
+    .in('echo_id', echoIds);
+  if (error) {
+    console.warn('[reactions] fetchUserReactions failed', error.message);
+    return result;
+  }
+  for (const row of data ?? []) {
+    const list = result.get(row.echo_id) ?? [];
+    list.push(row.reaction as EchoReaction);
+    result.set(row.echo_id, list);
+  }
+  return result;
+}
+
 /** Records one deduplicated view per authenticated user per echo (PK echo_id,user_id). Ignores duplicates. */
 export async function recordRemoteEchoView(echoId: string): Promise<void> {
   const uid = await getSessionUserId();
@@ -802,13 +918,23 @@ export async function submitRemoteReport(params: {
 export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
-  const { error } = await supabase.from('echo_comments').insert({
-    echo_id: echoId,
-    author_id: uid,
-    content,
-    ...(parentCommentId ? { parent_comment_id: parentCommentId } : {}),
-  });
+  const { data, error } = await supabase
+    .from('echo_comments')
+    .insert({
+      echo_id: echoId,
+      author_id: uid,
+      content,
+      ...(parentCommentId ? { parent_comment_id: parentCommentId } : {}),
+    })
+    .select('id')
+    .single();
   if (error) throw error;
+
+  // Parse + wire @-mentions. Best-effort; never blocks comment insert.
+  const usernames = parseMentions(content);
+  if (usernames.length && data?.id) {
+    insertCommentMentions(data.id, usernames).catch(() => undefined);
+  }
 }
 
 export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfileRow | null> {
@@ -947,10 +1073,814 @@ export async function updateRemoteProfile(updates: {
   bio?: string;
   avatar_color?: string;
   avatar_url?: string;
+  pronouns?: string | null;
+  mood?: string | null;
+  mood_expires_at?: string | null;
 }): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase.from('profiles').update(updates).eq('id', uid);
+  if (error) throw error;
+}
+
+// ─── Badges ────────────────────────────────────────────────────────────────
+
+export interface Badge {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  tier: 'bronze' | 'silver' | 'gold' | 'special';
+  criteria: Record<string, unknown>;
+  earned?: boolean;
+  awarded_at?: string;
+}
+
+/** All defined badges + which ones the current viewer has earned. */
+export async function fetchBadges(): Promise<Badge[]> {
+  const { data: allBadges, error } = await supabase
+    .from('badges')
+    .select('id, slug, name, description, icon, tier, criteria')
+    .order('tier', { ascending: true });
+  if (error) throw error;
+  const list = (allBadges as Badge[]) ?? [];
+
+  const uid = await getSessionUserId();
+  if (!uid) return list;
+  const { data: earned } = await supabase
+    .from('user_badges')
+    .select('badge_id, awarded_at')
+    .eq('user_id', uid);
+  const earnedMap = new Map((earned as { badge_id: string; awarded_at: string }[] ?? []).map(e => [e.badge_id, e.awarded_at]));
+  return list.map(b => ({ ...b, earned: earnedMap.has(b.id), awarded_at: earnedMap.get(b.id) }));
+}
+
+/** Award a badge to the current viewer (idempotent). Used by auto-award engine
+ *  triggered on key actions like first echo, streak hits, mind-blown milestones. */
+export async function awardBadge(slug: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const { data: badge } = await supabase.from('badges').select('id').eq('slug', slug).maybeSingle();
+  if (!badge) return;
+  const { error } = await supabase
+    .from('user_badges')
+    .insert({ user_id: uid, badge_id: (badge as { id: string }).id });
+  if (error && !error.message.includes('duplicate')) {
+    console.warn('[badges] award failed', error.message);
+  }
+}
+
+// ─── Quests ────────────────────────────────────────────────────────────────
+
+export interface Quest {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  goal_type: 'post_count' | 'reaction_count' | 'streak_days' | 'mentions_count' | 'daily_answers';
+  goal_value: number;
+  reward_xp: number;
+  reward_badge_id: string | null;
+  recurrence: 'daily' | 'weekly' | 'monthly' | 'once';
+  active: boolean;
+  /** Viewer's progress on this quest (current period). */
+  progress?: number;
+  completed_at?: string | null;
+}
+
+/** Active quests + the viewer's progress on each (for the current recurrence window). */
+export async function fetchActiveQuests(): Promise<Quest[]> {
+  const { data: rows, error } = await supabase
+    .from('quests')
+    .select('id, slug, title, description, goal_type, goal_value, reward_xp, reward_badge_id, recurrence, active')
+    .eq('active', true)
+    .order('recurrence', { ascending: true });
+  if (error) throw error;
+  const list = (rows as Quest[]) ?? [];
+
+  const uid = await getSessionUserId();
+  if (!uid) return list;
+
+  // Pull all user_quests for this viewer; client filters by recurrence window
+  // (started_at within current day/week/month).
+  const { data: ups } = await supabase
+    .from('user_quests')
+    .select('quest_id, started_at, progress, completed_at')
+    .eq('user_id', uid);
+  const upsList = (ups as { quest_id: string; started_at: string; progress: number; completed_at: string | null }[] ?? []);
+
+  return list.map((q) => {
+    // Filter user_quest rows to the current recurrence window.
+    const now = Date.now();
+    const winStart = (() => {
+      const d = new Date();
+      if (q.recurrence === 'daily') { d.setHours(0, 0, 0, 0); return d.getTime(); }
+      if (q.recurrence === 'weekly') { d.setDate(d.getDate() - d.getDay()); d.setHours(0, 0, 0, 0); return d.getTime(); }
+      if (q.recurrence === 'monthly') { d.setDate(1); d.setHours(0, 0, 0, 0); return d.getTime(); }
+      return 0; // 'once' — any past row counts
+    })();
+    const match = upsList.find(r => r.quest_id === q.id && new Date(r.started_at).getTime() >= winStart);
+    return {
+      ...q,
+      progress: match?.progress ?? 0,
+      completed_at: match?.completed_at ?? null,
+    };
+  });
+}
+
+/** Update the viewer's progress on a quest. Upserts a user_quests row for the
+ *  current recurrence window. */
+export async function bumpQuestProgress(slug: string, delta = 1): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const { data: quest } = await supabase
+    .from('quests')
+    .select('id, goal_value, recurrence')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (!quest) return;
+  const q = quest as { id: string; goal_value: number; recurrence: string };
+
+  const winStartIso = (() => {
+    const d = new Date();
+    if (q.recurrence === 'daily') { d.setHours(0, 0, 0, 0); return d.toISOString(); }
+    if (q.recurrence === 'weekly') { d.setDate(d.getDate() - d.getDay()); d.setHours(0, 0, 0, 0); return d.toISOString(); }
+    if (q.recurrence === 'monthly') { d.setDate(1); d.setHours(0, 0, 0, 0); return d.toISOString(); }
+    return new Date(0).toISOString();
+  })();
+
+  // Find existing row in this window
+  const { data: existing } = await supabase
+    .from('user_quests')
+    .select('progress, completed_at, started_at')
+    .eq('user_id', uid)
+    .eq('quest_id', q.id)
+    .gte('started_at', winStartIso)
+    .maybeSingle();
+
+  if (existing) {
+    const ex = existing as { progress: number; completed_at: string | null; started_at: string };
+    const newProgress = Math.min(q.goal_value, ex.progress + delta);
+    const completed = newProgress >= q.goal_value;
+    await supabase
+      .from('user_quests')
+      .update({
+        progress: newProgress,
+        ...(completed && !ex.completed_at ? { completed_at: new Date().toISOString() } : {}),
+      })
+      .eq('user_id', uid)
+      .eq('quest_id', q.id)
+      .eq('started_at', ex.started_at);
+  } else {
+    const completed = delta >= q.goal_value;
+    await supabase.from('user_quests').insert({
+      user_id: uid,
+      quest_id: q.id,
+      started_at: winStartIso,
+      progress: Math.min(q.goal_value, delta),
+      ...(completed ? { completed_at: new Date().toISOString() } : {}),
+    });
+  }
+}
+
+// ─── Year in Echo ──────────────────────────────────────────────────────────
+
+export interface YearWrap {
+  user_id: string;
+  year: number;
+  total_echoes: number;
+  total_likes_received: number;
+  total_reactions: number;
+  top_topics: string[];
+  top_echo_id: string | null;
+  longest_streak: number;
+  computed_at: string;
+  /** When present (because we just computed it), this is the top echo's preview prompt. */
+  top_echo_prompt?: string | null;
+}
+
+/** Fetch the cached Year in Echo or compute it lazily by aggregating echoes. */
+export async function fetchOrComputeYearWrap(year: number = new Date().getFullYear()): Promise<YearWrap | null> {
+  const uid = await getSessionUserId();
+  if (!uid) return null;
+
+  // Try cached first
+  const { data: cached } = await supabase
+    .from('year_wraps')
+    .select('*')
+    .eq('user_id', uid)
+    .eq('year', year)
+    .maybeSingle();
+  if (cached) return cached as YearWrap;
+
+  // Compute on the fly: aggregate the viewer's echoes from this year.
+  const yearStart = new Date(year, 0, 1).toISOString();
+  const yearEnd = new Date(year + 1, 0, 1).toISOString();
+  const { data: rows } = await supabase
+    .from('public_echoes')
+    .select('id, prompt, response, likes_count, mind_blown_count, taking_notes_count, agree_count, disagree_count, created_at')
+    .eq('author_id', uid)
+    .gte('created_at', yearStart)
+    .lt('created_at', yearEnd);
+  const list = (rows as Array<{
+    id: string; prompt: string; response: string; likes_count: number;
+    mind_blown_count: number; taking_notes_count: number; agree_count: number; disagree_count: number;
+    created_at: string;
+  }> ?? []);
+
+  const total_echoes = list.length;
+  const total_likes_received = list.reduce((acc, r) => acc + (r.likes_count ?? 0), 0);
+  const total_reactions = list.reduce((acc, r) => acc + (r.mind_blown_count ?? 0) + (r.taking_notes_count ?? 0) + (r.agree_count ?? 0) + (r.disagree_count ?? 0), 0);
+
+  // Extract top topics from hashtags in prompt+response
+  const tagCount = new Map<string, number>();
+  for (const r of list) {
+    const tags = `${r.prompt} ${r.response}`.match(/#[\wÀ-ɏ]+/gi) ?? [];
+    for (const tag of tags) {
+      const t = tag.toLowerCase();
+      tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
+    }
+  }
+  const top_topics = [...tagCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([t]) => t);
+
+  // Pick the top echo by likes + reactions
+  const ranked = list.map(r => ({
+    id: r.id,
+    score: (r.likes_count ?? 0) + (r.mind_blown_count ?? 0) * 2 + (r.taking_notes_count ?? 0) + (r.agree_count ?? 0) + (r.disagree_count ?? 0),
+    prompt: r.prompt,
+  })).sort((a, b) => b.score - a.score);
+  const top = ranked[0];
+
+  // Persist for next time
+  const wrap: YearWrap = {
+    user_id: uid,
+    year,
+    total_echoes,
+    total_likes_received,
+    total_reactions,
+    top_topics,
+    top_echo_id: top?.id ?? null,
+    longest_streak: 0, // Computed from retention separately
+    computed_at: new Date().toISOString(),
+    top_echo_prompt: top?.prompt ?? null,
+  };
+  await supabase.from('year_wraps').upsert({
+    user_id: uid, year,
+    total_echoes,
+    total_likes_received,
+    total_reactions,
+    top_topics,
+    top_echo_id: top?.id ?? null,
+    longest_streak: 0,
+    computed_at: wrap.computed_at,
+  });
+  return wrap;
+}
+
+// ─── Office Hours (scheduled AMA) ──────────────────────────────────────────
+
+export interface OfficeHour {
+  id: string;
+  host_id: string;
+  topic: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string;
+  rsvp_count: number;
+  status: 'scheduled' | 'live' | 'ended' | 'cancelled';
+  created_at: string;
+  host?: {
+    username: string;
+    display_name: string;
+    avatar_color: string;
+    avatar_url?: string | null;
+    is_verified: boolean;
+  };
+  has_rsvp?: boolean;
+}
+
+export interface OfficeHourQuestion {
+  id: string;
+  office_hour_id: string;
+  asker_id: string;
+  question: string;
+  answer: string | null;
+  upvote_count: number;
+  created_at: string;
+  asker?: {
+    username: string;
+    display_name: string;
+    avatar_color: string;
+  };
+  has_upvoted?: boolean;
+}
+
+/** Upcoming + live office hours, sorted by start time. */
+export async function fetchUpcomingOfficeHours(limit = 30): Promise<OfficeHour[]> {
+  const now = new Date().toISOString();
+  const { data: rows, error } = await supabase
+    .from('office_hours')
+    .select('id, host_id, topic, description, starts_at, ends_at, rsvp_count, status, created_at')
+    .gte('ends_at', now)
+    .in('status', ['scheduled', 'live'])
+    .order('starts_at', { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  const list = (rows ?? []) as Array<Omit<OfficeHour, 'host' | 'has_rsvp'>>;
+  if (!list.length) return [];
+
+  const hostIds = [...new Set(list.map(r => r.host_id))];
+  const [profilesRes, rsvpsRes] = await Promise.allSettled([
+    supabase.from('profiles').select('id, username, display_name, avatar_color, avatar_url, is_verified').in('id', hostIds),
+    (async () => {
+      const uid = await getSessionUserId();
+      if (!uid) return { data: [] as { office_hour_id: string }[] };
+      return supabase.from('office_hour_rsvps').select('office_hour_id').eq('user_id', uid).in('office_hour_id', list.map(o => o.id));
+    })(),
+  ]);
+
+  const profileById = new Map<string, { username: string; display_name: string; avatar_color: string; avatar_url?: string | null; is_verified: boolean }>();
+  if (profilesRes.status === 'fulfilled') {
+    for (const p of (profilesRes.value.data as Array<{ id: string; username: string; display_name: string; avatar_color: string; avatar_url?: string | null; is_verified: boolean }> | null) ?? []) {
+      profileById.set(p.id, p);
+    }
+  }
+  const rsvpSet = new Set<string>(
+    (rsvpsRes.status === 'fulfilled' ? rsvpsRes.value.data ?? [] : []).map((r: { office_hour_id: string }) => r.office_hour_id),
+  );
+
+  return list.map(r => ({ ...r, host: profileById.get(r.host_id), has_rsvp: rsvpSet.has(r.id) }));
+}
+
+/** Single office hour with host + RSVP info. */
+export async function fetchOfficeHour(id: string): Promise<OfficeHour | null> {
+  const { data: row, error } = await supabase
+    .from('office_hours')
+    .select('id, host_id, topic, description, starts_at, ends_at, rsvp_count, status, created_at')
+    .eq('id', id)
+    .maybeSingle();
+  if (error || !row) return null;
+  const { data: host } = await supabase
+    .from('profiles')
+    .select('username, display_name, avatar_color, avatar_url, is_verified')
+    .eq('id', (row as Omit<OfficeHour, 'host' | 'has_rsvp'>).host_id)
+    .maybeSingle();
+  const uid = await getSessionUserId();
+  let has_rsvp = false;
+  if (uid) {
+    const { data: r } = await supabase
+      .from('office_hour_rsvps')
+      .select('office_hour_id')
+      .eq('office_hour_id', id)
+      .eq('user_id', uid)
+      .maybeSingle();
+    has_rsvp = !!r;
+  }
+  return {
+    ...(row as Omit<OfficeHour, 'host' | 'has_rsvp'>),
+    host: (host as { username: string; display_name: string; avatar_color: string; avatar_url?: string | null; is_verified: boolean } | null) ?? undefined,
+    has_rsvp,
+  };
+}
+
+export async function createOfficeHour(input: {
+  topic: string;
+  description?: string;
+  starts_at: string;
+  duration_minutes: number;
+}): Promise<OfficeHour> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const ends_at = new Date(new Date(input.starts_at).getTime() + input.duration_minutes * 60000).toISOString();
+  const { data, error } = await supabase
+    .from('office_hours')
+    .insert({
+      host_id: uid,
+      topic: input.topic.trim(),
+      description: input.description?.trim() || null,
+      starts_at: input.starts_at,
+      ends_at,
+    })
+    .select('id, host_id, topic, description, starts_at, ends_at, rsvp_count, status, created_at')
+    .single();
+  if (error) throw error;
+  return data as OfficeHour;
+}
+
+export async function setOfficeHourRSVP(officeHourId: string, going: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (going) {
+    const { error } = await supabase.from('office_hour_rsvps').insert({ office_hour_id: officeHourId, user_id: uid });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase.from('office_hour_rsvps').delete().eq('office_hour_id', officeHourId).eq('user_id', uid);
+    if (error) throw error;
+  }
+}
+
+export async function fetchOfficeHourQuestions(officeHourId: string): Promise<OfficeHourQuestion[]> {
+  const { data: rows, error } = await supabase
+    .from('office_hour_questions')
+    .select('id, office_hour_id, asker_id, question, answer, upvote_count, created_at')
+    .eq('office_hour_id', officeHourId)
+    .order('upvote_count', { ascending: false })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  const list = (rows ?? []) as Array<Omit<OfficeHourQuestion, 'asker' | 'has_upvoted'>>;
+  if (!list.length) return [];
+
+  const askerIds = [...new Set(list.map(r => r.asker_id))];
+  const [profilesRes, upvotesRes] = await Promise.allSettled([
+    supabase.from('profiles').select('id, username, display_name, avatar_color').in('id', askerIds),
+    (async () => {
+      const uid = await getSessionUserId();
+      if (!uid) return { data: [] as { question_id: string }[] };
+      return supabase
+        .from('office_hour_question_upvotes')
+        .select('question_id')
+        .eq('user_id', uid)
+        .in('question_id', list.map(r => r.id));
+    })(),
+  ]);
+
+  const pById = new Map<string, { username: string; display_name: string; avatar_color: string }>();
+  if (profilesRes.status === 'fulfilled') {
+    for (const p of (profilesRes.value.data as Array<{ id: string; username: string; display_name: string; avatar_color: string }> | null) ?? []) {
+      pById.set(p.id, p);
+    }
+  }
+  const upvoted = new Set<string>(
+    (upvotesRes.status === 'fulfilled' ? upvotesRes.value.data ?? [] : []).map((r: { question_id: string }) => r.question_id),
+  );
+
+  return list.map(r => ({
+    ...r,
+    asker: pById.get(r.asker_id),
+    has_upvoted: upvoted.has(r.id),
+  }));
+}
+
+export async function submitOfficeHourQuestion(officeHourId: string, question: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase.from('office_hour_questions').insert({
+    office_hour_id: officeHourId,
+    asker_id: uid,
+    question: question.trim(),
+  });
+  if (error) throw error;
+}
+
+export async function setOfficeHourQuestionUpvote(questionId: string, on: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (on) {
+    const { error } = await supabase.from('office_hour_question_upvotes').insert({ question_id: questionId, user_id: uid });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase.from('office_hour_question_upvotes').delete().eq('question_id', questionId).eq('user_id', uid);
+    if (error) throw error;
+  }
+}
+
+// ─── Salons (communities) ──────────────────────────────────────────────────
+
+export interface Salon {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  cover_color: string;
+  topic_tags: string[];
+  owner_id: string;
+  member_count: number;
+  echo_count: number;
+  created_at: string;
+  /** True when the current viewer is a member (computed client-side). */
+  is_member?: boolean;
+}
+
+/** Browse list — newest salons first. */
+export async function fetchSalons(limit = 30): Promise<Salon[]> {
+  const { data, error } = await supabase
+    .from('salons')
+    .select('id, slug, name, description, cover_color, topic_tags, owner_id, member_count, echo_count, created_at')
+    .order('member_count', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const list = (data as Salon[]) ?? [];
+  // Annotate membership for the current viewer.
+  const uid = await getSessionUserId();
+  if (!uid || !list.length) return list;
+  const ids = list.map(s => s.id);
+  const { data: memberRows } = await supabase
+    .from('salon_members')
+    .select('salon_id')
+    .eq('user_id', uid)
+    .in('salon_id', ids);
+  const memberOf = new Set((memberRows as { salon_id: string }[] ?? []).map(r => r.salon_id));
+  return list.map(s => ({ ...s, is_member: memberOf.has(s.id) }));
+}
+
+/** Single salon by slug (for the salon detail page). */
+export async function fetchSalonBySlug(slug: string): Promise<Salon | null> {
+  const { data, error } = await supabase
+    .from('salons')
+    .select('id, slug, name, description, cover_color, topic_tags, owner_id, member_count, echo_count, created_at')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) {
+    console.warn('[salons] fetchSalonBySlug failed', error.message);
+    return null;
+  }
+  if (!data) return null;
+  const uid = await getSessionUserId();
+  let is_member = false;
+  if (uid) {
+    const { data: m } = await supabase
+      .from('salon_members')
+      .select('salon_id')
+      .eq('salon_id', (data as Salon).id)
+      .eq('user_id', uid)
+      .maybeSingle();
+    is_member = !!m;
+  }
+  return { ...(data as Salon), is_member };
+}
+
+/** Create a salon. Owner is auto-added as the first member by DB trigger. */
+export async function createSalon(input: {
+  name: string;
+  slug: string;
+  description?: string;
+  cover_color?: string;
+  topic_tags?: string[];
+}): Promise<Salon> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const slug = input.slug.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32);
+  if (slug.length < 3) throw new Error('Slug must be at least 3 characters');
+  const { data, error } = await supabase
+    .from('salons')
+    .insert({
+      slug,
+      name: input.name.trim(),
+      description: input.description?.trim() || null,
+      cover_color: input.cover_color || '#7C3AED',
+      topic_tags: input.topic_tags ?? [],
+      owner_id: uid,
+    })
+    .select('id, slug, name, description, cover_color, topic_tags, owner_id, member_count, echo_count, created_at')
+    .single();
+  if (error) throw error;
+  return data as Salon;
+}
+
+/** Toggle membership. */
+export async function setSalonMembership(salonId: string, join: boolean): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  if (join) {
+    const { error } = await supabase
+      .from('salon_members')
+      .insert({ salon_id: salonId, user_id: uid });
+    if (error && !error.message.includes('duplicate')) throw error;
+  } else {
+    const { error } = await supabase
+      .from('salon_members')
+      .delete()
+      .eq('salon_id', salonId)
+      .eq('user_id', uid);
+    if (error) throw error;
+  }
+}
+
+/** Fetch echoes scoped to a salon. Re-uses the same mapping as the global feed. */
+export async function fetchSalonEchoes(salonId: string, limit = 30): Promise<FeedItem[]> {
+  const { data: rows, error } = await supabase
+    .from('public_echoes')
+    .select(ECHO_SELECT)
+    .eq('salon_id', salonId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const list = (rows ?? []) as SupabaseEchoRow[];
+  if (!list.length) return [];
+  const authorIds = [...new Set(list.map(r => r.author_id))];
+  const { data: profiles } = await supabase.from('profiles').select(PROFILE_SELECT).in('id', authorIds);
+  const profileById = new Map((profiles as SupabaseProfileRow[] ?? []).map(p => [p.id, p]));
+  const empty = new Set<string>();
+  return list.map(r => mapEchoRowToFeedItem(r, profileById.get(r.author_id), empty, empty, empty));
+}
+
+// ─── Daily Question (BeReal-style ritual) ──────────────────────────────────
+
+export interface DailyQuestion {
+  id: string;
+  active_date: string;
+  question: string;
+}
+
+export interface DailyAnswerWithAuthor {
+  id: string;
+  question_id: string;
+  user_id: string;
+  answer: string;
+  echo_id: string | null;
+  created_at: string;
+  author: {
+    username: string;
+    display_name: string;
+    avatar_color: string;
+    avatar_url?: string | null;
+    is_verified: boolean;
+  };
+}
+
+/** Fetch today's daily question. Returns null when the seed is exhausted. */
+export async function fetchTodaysDailyQuestion(): Promise<DailyQuestion | null> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from('daily_questions')
+    .select('id, active_date, question')
+    .eq('active_date', today)
+    .maybeSingle();
+  if (error) {
+    console.warn('[daily] fetch question failed', error.message);
+    return null;
+  }
+  return (data as DailyQuestion) ?? null;
+}
+
+/** Fetch the viewer's answer (if any) to a given daily question. */
+export async function fetchOwnDailyAnswer(questionId: string): Promise<string | null> {
+  const uid = await getSessionUserId();
+  if (!uid) return null;
+  const { data, error } = await supabase
+    .from('daily_answers')
+    .select('answer')
+    .eq('question_id', questionId)
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (error || !data) return null;
+  return (data as { answer: string }).answer;
+}
+
+/** Submit (or replace) the viewer's answer to a daily question. */
+export async function submitDailyAnswer(questionId: string, answer: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const trimmed = answer.trim();
+  if (!trimmed) throw new Error('Answer cannot be empty');
+  const { error } = await supabase
+    .from('daily_answers')
+    .upsert(
+      { question_id: questionId, user_id: uid, answer: trimmed },
+      { onConflict: 'question_id,user_id' },
+    );
+  if (error) throw error;
+  // Bump the daily-answer quest. Best-effort.
+  bumpQuestProgress('daily_answer').catch(() => undefined);
+}
+
+/** Fetch all answers for a given daily question, with author profile snippets.
+ *  Reveal-after-answer is enforced client-side — callers should pass the viewer's
+ *  own answer state and only render this list when the viewer has answered. */
+export async function fetchDailyAnswers(questionId: string, limit = 100): Promise<DailyAnswerWithAuthor[]> {
+  const { data: rows, error } = await supabase
+    .from('daily_answers')
+    .select('id, question_id, user_id, answer, echo_id, created_at')
+    .eq('question_id', questionId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const list = (rows ?? []) as Array<{
+    id: string; question_id: string; user_id: string; answer: string;
+    echo_id: string | null; created_at: string;
+  }>;
+  if (!list.length) return [];
+
+  const authorIds = [...new Set(list.map(r => r.user_id))];
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_color, avatar_url, is_verified')
+    .in('id', authorIds);
+  const profileById = new Map((profiles as Array<{
+    id: string; username: string; display_name: string; avatar_color: string;
+    avatar_url?: string | null; is_verified: boolean;
+  }> ?? []).map(p => [p.id, p]));
+
+  return list.map((r) => {
+    const profile = profileById.get(r.user_id);
+    return {
+      id: r.id,
+      question_id: r.question_id,
+      user_id: r.user_id,
+      answer: r.answer,
+      echo_id: r.echo_id,
+      created_at: r.created_at,
+      author: {
+        username: profile?.username ?? 'unknown',
+        display_name: profile?.display_name ?? profile?.username ?? 'unknown',
+        avatar_color: profile?.avatar_color ?? '#3B82F6',
+        avatar_url: profile?.avatar_url ?? null,
+        is_verified: profile?.is_verified ?? false,
+      },
+    };
+  });
+}
+
+// ─── User search & mentions ────────────────────────────────────────────────
+
+/** Lightweight profile snippet returned by user search (cheaper than a full SupabaseProfileRow). */
+export interface UserSearchHit {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_color: string;
+  avatar_url?: string | null;
+  is_verified: boolean;
+}
+
+/** Search profiles by username prefix or display-name substring. */
+export async function searchRemoteUsers(query: string, limit = 8): Promise<UserSearchHit[]> {
+  const q = query.trim().replace(/^@+/, '');
+  if (!q) return [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_color, avatar_url, is_verified')
+    .or(`username.ilike.${q}%,display_name.ilike.%${q}%`)
+    .order('follower_count', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.warn('[users] search failed', error.message);
+    return [];
+  }
+  return (data as UserSearchHit[]) ?? [];
+}
+
+/** Extract @-mentions from a free-form text (echo body, comment, etc). Returns unique lowercase usernames. */
+export function parseMentions(text: string): string[] {
+  const m = text.match(/@([a-zA-Z0-9_]{2,32})/g);
+  if (!m) return [];
+  const set = new Set(m.map(s => s.slice(1).toLowerCase()));
+  return [...set];
+}
+
+/** Insert echo_mentions rows for the given echo, resolving usernames to IDs. */
+export async function insertEchoMentions(echoId: string, usernames: string[]): Promise<void> {
+  if (!usernames.length) return;
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('username', usernames);
+  if (error) {
+    console.warn('[mentions] resolve failed', error.message);
+    return;
+  }
+  const rows = (profiles ?? []).map(p => ({ echo_id: echoId, mentioned_user_id: p.id }));
+  if (!rows.length) return;
+  const { error: insErr } = await supabase.from('echo_mentions').insert(rows);
+  // Duplicates are fine — PK on (echo_id, mentioned_user_id).
+  if (insErr && !insErr.message.includes('duplicate')) {
+    console.warn('[mentions] insert failed', insErr.message);
+  }
+}
+
+/** Insert comment_mentions rows for the given comment. */
+export async function insertCommentMentions(commentId: string, usernames: string[]): Promise<void> {
+  if (!usernames.length) return;
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('username', usernames);
+  if (error) {
+    console.warn('[mentions] resolve failed', error.message);
+    return;
+  }
+  const rows = (profiles ?? []).map(p => ({ comment_id: commentId, mentioned_user_id: p.id }));
+  if (!rows.length) return;
+  const { error: insErr } = await supabase.from('comment_mentions').insert(rows);
+  if (insErr && !insErr.message.includes('duplicate')) {
+    console.warn('[mentions] insert failed', insErr.message);
+  }
+}
+
+/** Set the viewer's current mood — auto-expires 24h from now. Clears the mood when text is empty. */
+export async function setRemoteMood(mood: string | null): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const trimmed = mood?.trim() ? mood.trim().slice(0, 60) : null;
+  const expiresAt = trimmed ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null;
+  const { error } = await supabase
+    .from('profiles')
+    .update({ mood: trimmed, mood_expires_at: expiresAt })
+    .eq('id', uid);
   if (error) throw error;
 }
 

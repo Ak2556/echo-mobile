@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
-import { Stack, useRouter , ErrorBoundaryProps } from 'expo-router';
-import { Linking, View, Text } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import type { ErrorBoundaryProps } from 'expo-router';
+import { Linking } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
+import { track, identify, resetIdentity } from '../lib/analytics';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider, showToast } from '../components/ui/Toast';
 import { CommandPalette } from '../components/ai/CommandPalette';
@@ -33,14 +36,8 @@ const queryClient = new QueryClient({
   },
 });
 
-export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
-  return (
-    <View className="flex-1 items-center justify-center bg-black p-4">
-      <Text className="text-red-500 font-bold mb-2">Something went wrong</Text>
-      <Text className="text-white mb-4 text-center">{error.message}</Text>
-      <Text className="text-blue-400 font-semibold" onPress={retry}>Try Again</Text>
-    </View>
-  );
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  return <AppErrorBoundary {...props} />;
 }
 
 // Module-level flag: set when a password-recovery deep link is being processed.
@@ -106,6 +103,10 @@ function AuthListener() {
       }
       if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
         setUserId(session.user.id);
+        if (event === 'SIGNED_IN') {
+          track('signin_completed');
+          identify(session.user.id);
+        }
         if (!useAppStore.getState().username) {
           const { data: profile } = await supabase
             .from('profiles')
@@ -144,6 +145,8 @@ function AuthListener() {
           }
         }
       } else if (event === 'SIGNED_OUT') {
+        track('signout');
+        resetIdentity();
         setUserId('');
         setUsername('');
         setDisplayName('');
@@ -163,6 +166,12 @@ function AuthListener() {
 
 export default function RootLayout() {
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
+
+  // One app_open per cold start. Background→foreground transitions are
+  // tracked separately via AppState in lib/supabase.ts (auto-refresh).
+  useEffect(() => {
+    track('app_open');
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -187,6 +196,7 @@ export default function RootLayout() {
           <Stack.Screen name="report" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />
           <Stack.Screen name="notification-prefs" options={{ presentation: 'card' }} />
+          <Stack.Screen name="delete-account" options={{ presentation: 'card' }} />
           <Stack.Screen name="story" options={{ presentation: 'transparentModal', animation: 'fade' }} />
           <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'fade' }} />

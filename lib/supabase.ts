@@ -1,6 +1,7 @@
+import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient } from '@supabase/supabase-js';
-import { Platform } from 'react-native';
+import { createClient, processLock } from '@supabase/supabase-js';
+import { AppState, Platform } from 'react-native';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -45,5 +46,24 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: Platform.OS === 'web',
+    // CRITICAL: supabase-js v2 deadlocks on React Native without an explicit
+    // lock — signInWithPassword / OAuth / signUp hang on the spinner forever.
+    // processLock is the supported RN implementation. Web uses the default
+    // navigatorLock.
+    ...(Platform.OS === 'web' ? {} : { lock: processLock }),
   },
 });
+
+// React Native: pause the token auto-refresher when the app backgrounds.
+// supabase-js can't detect AppState transitions on its own — without this it
+// keeps a refresh timer alive while the JS thread is suspended, which leads to
+// stale tokens and odd resume behavior.
+if (Platform.OS !== 'web') {
+  AppState.addEventListener('change', (state) => {
+    if (state === 'active') {
+      supabase.auth.startAutoRefresh();
+    } else {
+      supabase.auth.stopAutoRefresh();
+    }
+  });
+}

@@ -4,6 +4,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from './supabase';
 
+/** Generate a unique-per-mount channel suffix. supabase-realtime keeps a
+ *  channel registry keyed by topic name — re-using a name across Fast Refresh
+ *  or multiple component mounts returns the already-subscribed channel and
+ *  makes `.on()` throw "cannot add postgres_changes callbacks ... after
+ *  subscribe()". Append a random id so every hook instance gets a fresh
+ *  channel. */
+function uniqueChannelName(base: string): string {
+  return `${base}:${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function useRealtimeNewEchoes(): { count: number; reset: () => void } {
   const [count, setCount] = useState(0);
   const ref = useRef(0);
@@ -11,7 +21,7 @@ export function useRealtimeNewEchoes(): { count: number; reset: () => void } {
   useEffect(() => {
     if (!process.env.EXPO_PUBLIC_SUPABASE_URL) return;
     const ch = supabase
-      .channel('public_echoes_inserts')
+      .channel(uniqueChannelName('public_echoes_inserts'))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'public_echoes' }, () => {
         ref.current += 1;
         setCount(ref.current);
@@ -31,7 +41,7 @@ export function useRealtimeNewComments(echoId: string | undefined): { count: num
   useEffect(() => {
     if (!echoId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
     const ch = supabase
-      .channel(`echo_comments:${echoId}`)
+      .channel(uniqueChannelName(`echo_comments:${echoId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'echo_comments', filter: `echo_id=eq.${echoId}` }, () => {
         ref.current += 1;
         setCount(ref.current);
@@ -51,7 +61,7 @@ export function useDMPresence(conversationId: string | undefined, currentUserId:
 
   useEffect(() => {
     if (!conversationId || !currentUserId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
-    const ch = supabase.channel(`dm:${conversationId}`, {
+    const ch = supabase.channel(uniqueChannelName(`dm:${conversationId}`), {
       config: { presence: { key: currentUserId } },
     });
     ch

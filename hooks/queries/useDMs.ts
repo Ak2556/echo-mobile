@@ -35,7 +35,7 @@ export function useRemoteConversations() {
     getSessionUserId().then(uid => {
       if (!mounted || !uid) return;
       channel = supabase
-        .channel(`dm_conversations:${uid}`)
+        .channel(`dm_conversations:${uid}:${Math.random().toString(36).slice(2, 10)}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, () => {
           qc.invalidateQueries({ queryKey: ['conversations'] });
         })
@@ -84,7 +84,7 @@ export function useRemoteMessages(conversationId: string | undefined) {
     if (!remote || !conversationId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
 
     const channel = supabase
-      .channel(`direct_messages:${conversationId}`)
+      .channel(`direct_messages:${conversationId}:${Math.random().toString(36).slice(2, 10)}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `conversation_id=eq.${conversationId}` },
@@ -258,7 +258,7 @@ export function useTypingIndicator(
   useEffect(() => {
     if (!conversationId || !myUserId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
 
-    const channel = supabase.channel(`typing:${conversationId}`, {
+    const channel = supabase.channel(`typing:${conversationId}:${Math.random().toString(36).slice(2, 10)}`, {
       config: { broadcast: { self: false } },
     });
     channelRef.current = channel;

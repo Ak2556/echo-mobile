@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
 import { ChatInput } from '../../components/ai/ChatInput';
@@ -16,7 +15,7 @@ import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ActionSheet } from '../../components/common/ActionSheet';
 import { streamEchoAI, EchoAIModel } from '../../lib/api';
-import { isLocalTool } from '../../lib/localTools';
+import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { generateSessionTitle } from '../../lib/aiTitle';
 import { useAppStore } from '../../store/useAppStore';
@@ -41,6 +40,7 @@ type ChatItem =
 
 export default function ChatScreen() {
   const router = useRouter();
+  const pathname = usePathname();
   const { colors, animation, reduceAnimations } = useTheme();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
@@ -217,6 +217,34 @@ export default function ChatScreen() {
     [aiModel, setConvId, startFlush, stopFlush, upsertText, upsertTool],
   );
 
+  const navigateFn = useCallback((screen: string) => {
+    // v1 navigation surface. Gen-Z feature routes (daily-question, salons,
+    // office-hours, year-in-echo, quests, badges) are still defined in the
+    // app but hidden from nav and AI navigation per `lib/featureFlags.ts`.
+    const routeMap: Record<string, string> = {
+      discover: '/(tabs)/discover',
+      profile: '/(tabs)/profile',
+      search: '/(tabs)/search',
+      'create-post': '/create-post',
+      messages: '/messages',
+      bookmarks: '/bookmarks',
+      notifications: '/notifications',
+    };
+    router.push((routeMap[screen] ?? '/(tabs)/discover') as any);
+  }, [router]);
+
+  const draftFn = useCallback((prompt: string, response: string) => {
+    router.push({
+      pathname: '/create-post',
+      params: { prefillTitle: prompt, prefillBody: response },
+    } as any);
+  }, [router]);
+
+  const localToolContext = useMemo<LocalToolContext>(
+    () => ({ navigateFn, draftFn }),
+    [navigateFn, draftFn],
+  );
+
   const runLocalTool = useCallback(
     async (tool: ToolCallItem) => {
       if (!isLocalTool(tool.name)) return;
@@ -224,9 +252,9 @@ export default function ChatScreen() {
         upsertTool,
         appendAssistantText: (text) => upsertText(`local-err-${Date.now()}`, 'assistant', text),
         continueWithLocalResult,
-      });
+      }, localToolContext);
     },
-    [continueWithLocalResult, upsertText, upsertTool],
+    [continueWithLocalResult, localToolContext, upsertText, upsertTool],
   );
 
   const runStream = useCallback(
@@ -292,6 +320,7 @@ export default function ChatScreen() {
       runStream({
         message: text,
         conversationId: conversationIdRef.current ?? undefined,
+        currentScreen: pathname,
         onEvent: () => {},
       });
       // Auto-title on first user turn (best-effort, non-blocking).
@@ -307,7 +336,7 @@ export default function ChatScreen() {
         }, 1500);
       }
     },
-    [aiModel, addMessage, currentSessionId, runStream, updateSessionTitle],
+    [aiModel, addMessage, currentSessionId, pathname, runStream, updateSessionTitle],
   );
 
   const handleConfirm = useCallback(
@@ -429,13 +458,6 @@ export default function ChatScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <LinearGradient
-        colors={colors.ambientGradient}
-        start={{ x: 0.3, y: 0 }}
-        end={{ x: 0.7, y: 0.5 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -475,6 +497,9 @@ export default function ChatScreen() {
                 <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 4 }}>Best first chat</Text>
                 <Text style={{ color: colors.textMuted, lineHeight: 19 }}>
                   Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 10, opacity: 0.8 }}>
+                  Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

@@ -102,6 +102,8 @@ export function coerceFeedItem(e: FeedItem): FeedItem {
     poll: e.poll,
     repostedBy: e.repostedBy,
     repostedByUsername: e.repostedByUsername,
+    coAuthor: e.coAuthor,
+    coAuthorResponse: e.coAuthorResponse,
   };
 }
 

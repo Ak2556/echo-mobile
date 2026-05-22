@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,7 +12,8 @@ import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
-import { updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
+import { fetchRemoteProfile, updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
+import { supabase } from '../lib/supabase';
 
 const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
@@ -21,6 +22,8 @@ const AVATAR_COLORS = [
 
 const BIO_MAX = 160;
 const BIO_WARN = 140;
+const MOOD_MAX = 60;
+const PRONOUN_PRESETS = ['', 'she/her', 'he/him', 'they/them', 'she/they', 'he/they', 'any/all'];
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -32,8 +35,31 @@ export default function EditProfileScreen() {
   const [newBio, setNewBio] = useState(bio);
   const [newColor, setNewColor] = useState(avatarColor);
   const [newAvatarUrl, setNewAvatarUrl] = useState(avatarUrl || '');
+  const [newPronouns, setNewPronouns] = useState('');
+  const [newMood, setNewMood] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Hydrate pronouns + mood from the remote profile on mount.
+  // We keep these out of the local Zustand store for now — they're
+  // small fields and only relevant in this screen + the AI's system
+  // prompt (read on the server side).
+  useEffect(() => {
+    if (!isSupabaseRemote()) return;
+    void (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const profile = await fetchRemoteProfile(user.id);
+        if (profile?.pronouns) setNewPronouns(profile.pronouns);
+        if (profile?.mood && profile.mood_expires_at && new Date(profile.mood_expires_at).getTime() > Date.now()) {
+          setNewMood(profile.mood);
+        }
+      } catch {
+        /* non-fatal */
+      }
+    })();
+  }, []);
 
   const handlePickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -86,11 +112,17 @@ export default function EditProfileScreen() {
     if (isSupabaseRemote()) {
       setSaving(true);
       try {
+        const trimmedMood = newMood.trim().slice(0, MOOD_MAX);
         await updateRemoteProfile({
           username: newUsername.trim().toLowerCase(),
           display_name: newDisplayName.trim() || newUsername.trim(),
           bio: newBio.trim(),
           avatar_color: newColor,
+          pronouns: newPronouns.trim() ? newPronouns.trim() : null,
+          mood: trimmedMood || null,
+          mood_expires_at: trimmedMood
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            : null,
           ...(newAvatarUrl ? { avatar_url: newAvatarUrl } : {}),
         });
       } catch (e) {
@@ -281,6 +313,93 @@ export default function EditProfileScreen() {
             }}
           >
             {newBio.length}/{BIO_MAX}
+          </Text>
+        </Animated.View>
+
+        {/* Pronouns — small text field with quick presets */}
+        <Animated.View entering={animation(FadeInDown.delay(350).springify())} className="mb-4">
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: fontSizes.small,
+              fontWeight: '500',
+              marginBottom: 8,
+              marginLeft: 4,
+            }}
+          >
+            Pronouns
+          </Text>
+          <TextInput
+            value={newPronouns}
+            onChangeText={setNewPronouns}
+            placeholder="e.g. they/them"
+            maxLength={32}
+            autoCapitalize="none"
+          />
+          {/* Quick-pick presets */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginLeft: 4 }}>
+            {PRONOUN_PRESETS.filter(p => p).map((p) => {
+              const active = newPronouns === p;
+              return (
+                <AnimatedPressable
+                  key={p}
+                  onPress={() => setNewPronouns(active ? '' : p)}
+                  style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 99,
+                    borderWidth: 1,
+                    borderColor: active ? colors.accent : colors.border,
+                    backgroundColor: active ? colors.accent + '22' : 'transparent',
+                  }}
+                  scaleValue={0.94}
+                  haptic="light"
+                >
+                  <Text style={{ color: active ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>{p}</Text>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+        </Animated.View>
+
+        {/* Mood — 60-char status that auto-expires in 24h */}
+        <Animated.View entering={animation(FadeInDown.delay(400).springify())} className="mb-8">
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: fontSizes.small,
+              fontWeight: '500',
+              marginBottom: 4,
+              marginLeft: 4,
+            }}
+          >
+            Mood · 24h status
+          </Text>
+          <Text
+            style={{
+              color: colors.textMuted,
+              fontSize: fontSizes.caption,
+              marginBottom: 8,
+              marginLeft: 4,
+            }}
+          >
+            What's on your mind right now? Shows above your name for a day, then disappears.
+          </Text>
+          <TextInput
+            value={newMood}
+            onChangeText={(v) => setNewMood(v.slice(0, MOOD_MAX))}
+            placeholder="📚 deep-reading mode"
+            maxLength={MOOD_MAX}
+          />
+          <Text
+            style={{
+              color: newMood.length > MOOD_MAX * 0.9 ? colors.danger : colors.textMuted,
+              fontSize: fontSizes.caption,
+              marginTop: 4,
+              marginLeft: 4,
+            }}
+          >
+            {newMood.length}/{MOOD_MAX}
           </Text>
         </Animated.View>
       </ScrollView>

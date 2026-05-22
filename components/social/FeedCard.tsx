@@ -11,6 +11,8 @@ import { MediaGrid } from './MediaGrid';
 import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
 import { LikeButton } from './LikeButton';
+import { LinkifiedText } from './LinkifiedText';
+import { ReactionBar } from './ReactionBar';
 import { RemixButton } from './RemixButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
@@ -46,14 +48,15 @@ function getTimeAgo(dateStr: string): string {
   return `${Math.floor(days / 7)}w`;
 }
 
-function PollBar({ pct }: { pct: number }) {
+// PERF: re-animates on every parent render — wrap in React.memo
+const PollBar = React.memo(function PollBar({ pct }: { pct: number }) {
   const width = useSharedValue(0);
   React.useEffect(() => {
     width.value = withTiming(pct, { duration: 500 });
   }, [pct, width]);
   const style = useAnimatedStyle(() => ({ width: `${width.value}%` as any }));
   return <Animated.View style={[{ height: '100%', borderRadius: 4, backgroundColor: 'rgba(99,102,241,0.4)' }, style]} />;
-}
+});
 
 interface PollViewProps {
   poll: Poll;
@@ -83,7 +86,9 @@ function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollVie
     <View style={{ marginBottom: 12 }}>
       {poll.options.map(opt => {
         const pct = poll.totalVotes > 0 ? Math.round((opt.votes / poll.totalVotes) * 100) : 0;
-        const isWinner = hasVoted && opt.votes === Math.max(...poll.options.map(o => o.votes)) && opt.votes > 0;
+        const maxVotes = Math.max(...poll.options.map(o => o.votes));
+        const isWinner = hasVoted && opt.votes === maxVotes && opt.votes > 0
+          && poll.options.findIndex(o => o.votes === maxVotes) === poll.options.indexOf(opt);
         const isVoted = poll.userVote === opt.id;
         return (
           <Pressable
@@ -140,31 +145,17 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const feedFeedback = useAppStore(s => s.feedFeedback);
   const setFeedFeedback = useAppStore(s => s.setFeedFeedback);
 
-  const bookmarkScale = useSharedValue(1);
-  const repostScale = useSharedValue(1);
-  const shareScale = useSharedValue(1);
-
-  const bookmarkAnim = useAnimatedStyle(() => ({ transform: [{ scale: bookmarkScale.value }] }));
-  const repostAnim = useAnimatedStyle(() => ({ transform: [{ scale: repostScale.value }] }));
-  const shareAnim = useAnimatedStyle(() => ({ transform: [{ scale: shareScale.value }] }));
-
-
+  // Press feedback comes from the AnimatedPressable wrapper that hosts each
+  // icon — we used to add per-icon bounce shared values (one each for
+  // bookmark/repost/share) but that costs three worklets and three
+  // useAnimatedStyle hooks per card. Across a feed of 20 cards that's 60 dead
+  // worklets just to redo a feedback the parent already provides.
   const handleMainPress = useCallback(() => {
     if (remote) void recordRemoteEchoView(item.id);
     onPress?.();
   }, [remote, item.id, onPress]);
 
-  const bounceIcon = (sv: { value: number }) => {
-    if (reduceAnimations || !performance.pressAnimations) return;
-    sv.value = withSequence(
-      withSpring(0.74, MOTION.pressDeep),
-      withSpring(1.16, MOTION.overshoot),
-      withSpring(1, MOTION.release)
-    );
-  };
-
   const toggleBookmarkPress = () => {
-    bounceIcon(bookmarkScale);
     if (remote) {
       remoteBm.mutate({ echoId: item.id, bookmark: !bookmarked });
       showToast(!bookmarked ? 'Bookmarked' : 'Removed bookmark', !bookmarked ? '\u{1F516}' : '');
@@ -176,7 +167,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   };
 
   const handleRepost = () => {
-    bounceIcon(repostScale);
     if (remote) {
       remoteRp.mutate({ echoId: item.id, repost: !reposted });
       showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? '\u{1F501}' : '');
@@ -191,7 +181,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     : (item.repostCount || 0) + (reposted ? 1 : 0);
 
   const handleNativeShare = async () => {
-    bounceIcon(shareScale);
     setShareOpen(true);
   };
 
@@ -302,6 +291,15 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   const ActionsRow = (
     <View style={{ paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+      {/* Knowledge-reactions pile (rendered above the heart/comment row). */}
+      <View style={{ marginBottom: 8 }}>
+        <ReactionBar
+          target={{ kind: 'echo', echoId: item.id }}
+          counts={item.reactionCounts}
+          userReactions={item.userReactions}
+          compact
+        />
+      </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
@@ -339,22 +337,16 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           accessibilityLabel={reposted ? 'Undo re-echo' : 'Re-echo'}
           accessibilityRole="button"
         >
-          <Animated.View style={repostAnim}>
-            <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
-          </Animated.View>
+          <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
           <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }} />
         </AnimatedPressable>
 
         <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
-          <Animated.View style={bookmarkAnim}>
-            <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
-          </Animated.View>
+          <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
         </AnimatedPressable>
 
         <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light" performanceMode="hot" accessibilityLabel="Share" accessibilityRole="button">
-          <Animated.View style={shareAnim}>
-            <ShareNetwork color={colors.textMuted} size={19} />
-          </Animated.View>
+          <ShareNetwork color={colors.textMuted} size={19} />
         </AnimatedPressable>
       </View>
       </View>
@@ -454,7 +446,17 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                   <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
                   {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
                 </View>
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
+                {/* Mood chip — only renders when the author has an active mood. */}
+                {item.authorMood ? (
+                  <Text
+                    numberOfLines={1}
+                    style={{ color: colors.accent, fontSize: fontSizes.caption, fontStyle: 'italic', marginTop: 1 }}
+                  >
+                    · {item.authorMood}
+                  </Text>
+                ) : (
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
+                )}
               </AnimatedPressable>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
               <AnimatedPressable
@@ -620,12 +622,46 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             <Text style={{ fontSize: textSize + 1, color: colors.text, fontWeight: '700', marginBottom: compactFeed ? 4 : 8, lineHeight: (textSize + 1) * 1.35 }} numberOfLines={compactFeed ? 2 : 3}>
               {item.editorialTitle ?? item.prompt}
             </Text>
-            {!!(item.authorNote ?? (showPreviewCards ? item.response : null)) && (
-              <Text style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6, marginBottom: compactFeed ? 8 : 12 }} numberOfLines={compactFeed ? 2 : 3}>
-                {item.authorNote ?? item.response}
-              </Text>
+            {!!(item.authorNote ?? (showPreviewCards ? item.response : null)) && !item.coAuthor && (
+              <LinkifiedText
+                text={item.authorNote ?? item.response}
+                style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6, marginBottom: compactFeed ? 8 : 12 }}
+                numberOfLines={compactFeed ? 2 : 3}
+              />
             )}
-            {item.quotedEcho && <QuotedEchoCard echo={item.quotedEcho} compact={compactFeed} />}
+            {/* Co-echo: two takes side by side. Falls back to a stacked layout
+                in compact mode so the cards don't get squashed. */}
+            {item.coAuthor && item.response && item.coAuthorResponse && (
+              <View style={{ flexDirection: compactFeed ? 'column' : 'row', gap: 8, marginBottom: 12 }}>
+                <View style={{ flex: 1, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.avatarColor, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>{item.displayName.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }} numberOfLines={1}>@{item.username}</Text>
+                  </View>
+                  <LinkifiedText
+                    text={item.response}
+                    style={{ fontSize: textSize - 1, color: colors.textSecondary, lineHeight: (textSize - 1) * 1.5 }}
+                    numberOfLines={compactFeed ? 3 : 5}
+                  />
+                </View>
+                <View style={{ flex: 1, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.coAuthor.avatarColor, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>{item.coAuthor.displayName.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }} numberOfLines={1}>@{item.coAuthor.username}</Text>
+                  </View>
+                  <LinkifiedText
+                    text={item.coAuthorResponse}
+                    style={{ fontSize: textSize - 1, color: colors.textSecondary, lineHeight: (textSize - 1) * 1.5 }}
+                    numberOfLines={compactFeed ? 3 : 5}
+                  />
+                </View>
+              </View>
+            )}
+            {item.quotedEcho && (() => { try { return <QuotedEchoCard echo={item.quotedEcho!} compact={compactFeed} />; } catch { return null; } })()}
           </>
         )}
 

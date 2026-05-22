@@ -434,6 +434,10 @@ export function createSocialSlice(
         'bookmarkCollectionByEchoId',
       ];
       keys.forEach(k => persistSet(k, Array.isArray(persistGet(k, [])) ? [] : {}));
+      // Reset onboarding-coach flags so a fresh signup on the same device
+      // sees the first-Echo coach again. The settings slice owns these,
+      // but they're guarded against re-publishing accidental dismissals.
+      persistSet('dismissedFirstEchoCoach', false);
       set({
         publishedEchoes: [], likedIds: [], bookmarkedIds: [], repostedIds: [],
         commentsByEcho: {}, followingIds: [], notifications: [],

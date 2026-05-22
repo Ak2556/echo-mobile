@@ -14,6 +14,7 @@ import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
+import { track, identify } from '../../lib/analytics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ACCENT = '#6366F1';
@@ -200,10 +201,42 @@ export default function SignupWizard() {
   const [bioText, setBioText] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  // Username availability — debounced server check. 'idle' until 3+ chars,
+  // 'checking' while we query, 'available' if free, 'taken' if collision.
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
 
   const usernameClean = usernameRaw.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
   const firstName = displayName.trim().split(' ')[0] || 'you';
-  const canStep0 = displayName.trim().length >= 1 && usernameClean.length >= 2;
+  const canStep0 = displayName.trim().length >= 1 && usernameClean.length >= 3 && usernameStatus === 'available';
+
+  // Debounced availability check. Runs whenever the cleaned username changes
+  // and is at least 3 chars. The reqId guards against stale responses landing
+  // after the user typed something newer.
+  const usernameReqId = useRef(0);
+  useEffect(() => {
+    if (usernameClean.length < 3) {
+      setUsernameStatus('idle');
+      return;
+    }
+    setUsernameStatus('checking');
+    const myReq = ++usernameReqId.current;
+    const t = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', usernameClean)
+        .maybeSingle();
+      if (myReq !== usernameReqId.current) return; // stale
+      if (error) {
+        // Treat lookup errors as "idle" — don't block signup on a transient
+        // network failure; the insert-time constraint is the real backstop.
+        setUsernameStatus('idle');
+        return;
+      }
+      setUsernameStatus(data ? 'taken' : 'available');
+    }, 350);
+    return () => clearTimeout(t);
+  }, [usernameClean]);
 
   const nameInputRef = useRef<TextInput>(null);
   const prevColorRef = useRef(avatarColor);
@@ -337,6 +370,9 @@ export default function SignupWizard() {
     setInterests(selectedInterests);
     setHasSeenOnboarding(true);
 
+    identify(session.user.id, { username: usernameClean });
+    track('signup_completed', { interests_count: selectedInterests.length });
+
     router.replace('/(tabs)/discover');
   };
 
@@ -433,7 +469,10 @@ export default function SignupWizard() {
                 <View style={{
                   flexDirection: 'row', alignItems: 'center',
                   backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1,
-                  borderColor: usernameRaw ? '#3F3F46' : '#27272A',
+                  borderColor:
+                    usernameStatus === 'taken' ? '#EF4444'
+                    : usernameStatus === 'available' ? '#22C55E'
+                    : usernameRaw ? '#3F3F46' : '#27272A',
                   paddingHorizontal: 14, marginBottom: 8,
                 }}>
                   <At color="#52525B" size={18} style={{ marginRight: 8 }} />
@@ -450,18 +489,39 @@ export default function SignupWizard() {
                       paddingVertical: 14,
                     }}
                   />
+                  {usernameStatus === 'checking' && (
+                    <ActivityIndicator color="#52525B" size="small" style={{ marginLeft: 8 }} />
+                  )}
+                  {usernameStatus === 'available' && (
+                    <Check color="#22C55E" size={18} weight="bold" style={{ marginLeft: 8 }} />
+                  )}
                 </View>
                 {usernameClean.length > 0 && (
-                  <>
-                    <Text style={{ color: '#52525B', fontSize: 13, marginLeft: 2 }}>
-                      @{usernameClean}
+                  <View style={{ marginLeft: 2, gap: 2 }}>
+                    <Text style={{
+                      color:
+                        usernameStatus === 'taken' ? '#EF4444'
+                        : usernameStatus === 'available' ? '#22C55E'
+                        : '#52525B',
+                      fontSize: 13,
+                    }}>
+                      {usernameStatus === 'taken'
+                        ? `@${usernameClean} is taken`
+                        : usernameStatus === 'available'
+                          ? `@${usernameClean} is yours`
+                          : `@${usernameClean}`}
                     </Text>
+                    {usernameClean.length < 3 && (
+                      <Text style={{ color: '#3F3F46', fontSize: 12 }}>
+                        At least 3 characters
+                      </Text>
+                    )}
                     {usernameRaw !== usernameClean && (
-                      <Text style={{ color: '#3F3F46', fontSize: 12, marginLeft: 2, marginTop: 3 }}>
+                      <Text style={{ color: '#3F3F46', fontSize: 12 }}>
                         letters, numbers & _ only
                       </Text>
                     )}
-                  </>
+                  </View>
                 )}
               </View>
 

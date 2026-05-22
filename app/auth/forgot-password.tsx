@@ -50,7 +50,7 @@ export default function ForgotPasswordScreen() {
           </AnimatedPressable>
 
           {sent ? (
-            <Animated.View entering={FadeInDown.springify()} style={{ alignItems: 'center' }}>
+            <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
               <View style={{
                 width: 80, height: 80, borderRadius: 40,
                 backgroundColor: 'rgba(16,185,129,0.15)',
@@ -78,7 +78,7 @@ export default function ForgotPasswordScreen() {
               </AnimatedPressable>
             </Animated.View>
           ) : (
-            <Animated.View entering={FadeInDown.delay(60).springify()}>
+            <Animated.View entering={FadeInDown.duration(220)}>
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginBottom: 8 }}>
                 Reset password
               </Text>

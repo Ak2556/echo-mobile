@@ -73,7 +73,7 @@ export default function ConfirmEmailScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-        <Animated.View entering={FadeInDown.springify()} style={{ alignItems: 'center', width: '100%' }}>
+        <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center', width: '100%' }}>
           {/* Icon */}
           <View style={{
             width: 96, height: 96, borderRadius: 48,

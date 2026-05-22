@@ -30,6 +30,7 @@ export interface SettingsSlice {
   setTheme: (v: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic') => void;
   fontSize: 'small' | 'medium' | 'large'; setFontSize: (v: 'small' | 'medium' | 'large') => void;
   compactFeed: boolean; setCompactFeed: (v: boolean) => void;
+  dismissedFirstEchoCoach: boolean; setDismissedFirstEchoCoach: (v: boolean) => void;
   reduceAnimations: boolean; setReduceAnimations: (v: boolean) => void;
   accentColor: string; setAccentColor: (v: string) => void;
   showAvatars: boolean; setShowAvatars: (v: boolean) => void;
@@ -112,9 +113,10 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setTheme: (v) => { persistSet('theme', v); set({ theme: v }); },
     fontSize: persistGet<'small' | 'medium' | 'large'>('fontSize', 'medium'),
     setFontSize: (v) => { persistSet('fontSize', v); set({ fontSize: v }); },
-    compactFeed: b('compactFeed', false), setCompactFeed: s(set, 'compactFeed'),
+    compactFeed: b('compactFeed', true), setCompactFeed: s(set, 'compactFeed'),
+    dismissedFirstEchoCoach: b('dismissedFirstEchoCoach', false), setDismissedFirstEchoCoach: s(set, 'dismissedFirstEchoCoach'),
     reduceAnimations: b('reduceAnimations', false), setReduceAnimations: s(set, 'reduceAnimations'),
-    accentColor: persistGet('accentColor', '#3B82F6'),
+    accentColor: persistGet('accentColor', '#5B5BF8'),
     setAccentColor: (v) => { persistSet('accentColor', v); set({ accentColor: v }); },
     showAvatars: b('showAvatars', true), setShowAvatars: s(set, 'showAvatars'),
     showPreviewCards: b('showPreviewCards', true), setShowPreviewCards: s(set, 'showPreviewCards'),

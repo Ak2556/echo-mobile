@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope } from 'phosphor-react-native';
+import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope, BookmarkSimple, Sparkle, Quotes } from 'phosphor-react-native';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { Notification } from '../../types';
@@ -13,27 +13,49 @@ const BG_MAP: Record<string, string> = {
   repost: 'rgba(139,92,246,0.15)',
   mention: 'rgba(245,158,11,0.15)',
   dm: 'rgba(6,182,212,0.15)',
+  reaction: 'rgba(236,72,153,0.15)',
+  bookmark: 'rgba(234,179,8,0.15)',
+  quote: 'rgba(139,92,246,0.15)',
 };
 
-const ACTION_TEXT: Record<string, string> = {
-  like: 'liked your echo',
-  comment: 'commented on your echo',
-  follow: 'started following you',
-  repost: 're-echoed your post',
-  mention: 'mentioned you',
-  dm: 'sent you a message',
+const REACTION_EMOJI: Record<string, string> = {
+  mind_blown: '🤯',
+  taking_notes: '📝',
+  agree: '💯',
+  disagree: '🤔',
 };
+
+function actionTextFor(n: Notification): string {
+  switch (n.type) {
+    case 'like': return 'liked your echo';
+    case 'comment': return 'commented on your echo';
+    case 'follow': return 'started following you';
+    case 'repost': return 're-echoed your post';
+    case 'mention': return 'mentioned you';
+    case 'dm': return 'sent you a message';
+    case 'reaction': {
+      const emoji = n.targetPreview ? REACTION_EMOJI[n.targetPreview] : '';
+      return emoji ? `reacted with ${emoji}` : 'reacted to your echo';
+    }
+    case 'bookmark': return 'saved your echo';
+    case 'quote': return 'quoted your echo';
+    default: return 'interacted with you';
+  }
+}
 
 function NotifIcon({ type }: { type: string }) {
   const p = { size: 18, weight: 'regular' as const };
   switch (type) {
-    case 'like':    return <HeartStraight    {...p} color="#EF4444" />;
-    case 'comment': return <ChatCircle       {...p} color="#3B82F6" />;
-    case 'follow':  return <UserPlus         {...p} color="#10B981" />;
-    case 'repost':  return <ArrowsClockwise  {...p} color="#8B5CF6" />;
-    case 'mention': return <At               {...p} color="#F59E0B" />;
-    case 'dm':      return <Envelope         {...p} color="#06B6D4" />;
-    default:        return <HeartStraight    {...p} color="#EF4444" />;
+    case 'like':     return <HeartStraight    {...p} color="#EF4444" />;
+    case 'comment':  return <ChatCircle       {...p} color="#3B82F6" />;
+    case 'follow':   return <UserPlus         {...p} color="#10B981" />;
+    case 'repost':   return <ArrowsClockwise  {...p} color="#8B5CF6" />;
+    case 'mention':  return <At               {...p} color="#F59E0B" />;
+    case 'dm':       return <Envelope         {...p} color="#06B6D4" />;
+    case 'reaction': return <Sparkle          {...p} color="#EC4899" />;
+    case 'bookmark': return <BookmarkSimple   {...p} color="#EAB308" />;
+    case 'quote':    return <Quotes           {...p} color="#8B5CF6" />;
+    default:         return <HeartStraight    {...p} color="#EF4444" />;
   }
 }
 
@@ -121,9 +143,9 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontSize: fontSizes.small }} numberOfLines={2}>
               <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
-              {' '}{ACTION_TEXT[notification.type] ?? 'interacted with you'}
+              {' '}{actionTextFor(notification)}
             </Text>
-            {notification.targetPreview && (
+            {notification.targetPreview && notification.type !== 'reaction' && (
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
                 {notification.targetPreview}
               </Text>

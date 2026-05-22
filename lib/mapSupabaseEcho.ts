@@ -1,4 +1,4 @@
-import { FeedItem } from '../types';
+import { EchoReaction, FeedItem, ReactionCounts } from '../types';
 
 export type SupabaseProfileRow = {
   id: string;
@@ -10,6 +10,9 @@ export type SupabaseProfileRow = {
   is_verified: boolean;
   created_at: string;
   follower_count?: number;
+  mood?: string | null;
+  mood_expires_at?: string | null;
+  pronouns?: string | null;
 };
 
 export type SupabaseEchoRow = {
@@ -31,7 +34,31 @@ export type SupabaseEchoRow = {
   thoughtfulness_score?: number | null;
   rank_score?: number;
   distance?: number;
+  /** Knowledge-reaction counters (added by Gen Z feature pack). */
+  mind_blown_count?: number | null;
+  taking_notes_count?: number | null;
+  agree_count?: number | null;
+  disagree_count?: number | null;
+  /** Co-echo: collaborative post with a second author. */
+  co_author_id?: string | null;
+  co_author_response?: string | null;
 };
+
+/** Build a ReactionCounts object from a raw echo row's reaction columns. */
+export function rowToReactionCounts(echo: SupabaseEchoRow): ReactionCounts {
+  return {
+    mind_blown:   echo.mind_blown_count   ?? 0,
+    taking_notes: echo.taking_notes_count ?? 0,
+    agree:        echo.agree_count        ?? 0,
+    disagree:     echo.disagree_count     ?? 0,
+  };
+}
+
+/** Check whether a profile's mood field is still within its 24h window. */
+export function isMoodActive(mood?: string | null, expiresAt?: string | null): boolean {
+  if (!mood || !expiresAt) return false;
+  return new Date(expiresAt).getTime() > Date.now();
+}
 
 export function extractHashtags(text: string): string[] {
   const m = text.match(/#[\wÀ-ɏ]+/gi);
@@ -47,11 +74,14 @@ export function mapEchoRowToFeedItem(
   author: SupabaseProfileRow | undefined,
   likedSet: Set<string>,
   bookmarkedSet: Set<string>,
-  repostedSet: Set<string>
+  repostedSet: Set<string>,
+  userReactions?: EchoReaction[],
+  coAuthor?: SupabaseProfileRow | undefined,
 ): FeedItem {
   const username = author?.username ?? 'unknown';
   const mediaUris = echo.media_urls?.length ? echo.media_urls : undefined;
   const videoUri = mediaUris?.find(isVideoUrl);
+  const moodActive = isMoodActive(author?.mood, author?.mood_expires_at);
   return {
     id: echo.id,
     userId: echo.author_id,
@@ -69,6 +99,9 @@ export function mapEchoRowToFeedItem(
     repostCount: echo.repost_count ?? 0,
     commentCount: echo.comment_count ?? 0,
     viewCount: echo.view_count ?? 0,
+    reactionCounts: rowToReactionCounts(echo),
+    userReactions,
+    authorMood: moodActive ? (author?.mood ?? null) : null,
     hashtags: extractHashtags(`${echo.prompt} ${echo.response}`),
     createdAt: echo.created_at,
     postType: videoUri ? 'video' : mediaUris ? 'photo' : 'text',
@@ -82,5 +115,14 @@ export function mapEchoRowToFeedItem(
     thoughtfulnessScore: echo.thoughtfulness_score ?? undefined,
     semanticDistance: echo.distance ?? undefined,
     postOrigin: echo.parent_echo_id ? 'remix' : undefined,
+    coAuthor: echo.co_author_id ? {
+      id: echo.co_author_id,
+      username: coAuthor?.username ?? 'unknown',
+      displayName: coAuthor?.display_name || coAuthor?.username || 'unknown',
+      avatarColor: coAuthor?.avatar_color || '#3B82F6',
+      avatarUrl: coAuthor?.avatar_url ?? undefined,
+      isVerified: coAuthor?.is_verified ?? false,
+    } : undefined,
+    coAuthorResponse: echo.co_author_response ?? undefined,
   };
 }
