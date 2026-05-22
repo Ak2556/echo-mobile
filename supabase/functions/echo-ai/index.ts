@@ -748,6 +748,82 @@ const TOOLS: ToolSpec[] = [
     preview: (a: any) => `Drafting: "${String(a.prompt ?? "").slice(0, 55)}…"`,
     execute: async () => ({ status: "opened_compose" }),
   },
+  {
+    name: "react_to_echo",
+    description: "Add a knowledge-reaction to an echo. Use when the user says 'react with 🤯', 'mark as taking notes', 'agree with', etc.",
+    parameters: {
+      type: "object",
+      properties: {
+        echo_id: { type: "string" },
+        reaction: {
+          type: "string",
+          enum: ["mind_blown", "taking_notes", "agree", "disagree"],
+          description: "The reaction kind: mind_blown (🤯), taking_notes (📝), agree (💯), disagree (🤔).",
+        },
+      },
+      required: ["echo_id", "reaction"],
+    },
+    requiresConfirm: true,
+    preview: (a: any) => `React to ${a.echo_id} with ${a.reaction}`,
+    execute: async (a, { supabase, userId }) => {
+      const { error } = await supabase
+        .from("echo_reactions")
+        .insert({ echo_id: a.echo_id, user_id: userId, reaction: a.reaction });
+      if (error && !error.message.includes("duplicate")) throw error;
+      return { ok: true };
+    },
+  },
+  {
+    name: "open_daily_question",
+    description: "Open the Daily Question screen so the user can answer today's prompt. Use whenever the user mentions the daily question, today's prompt, or wants to answer.",
+    parameters: { type: "object", properties: {} },
+    requiresConfirm: false,
+    localDevice: true,
+    preview: () => "Opening today's question…",
+    execute: async () => ({ screen: "handled_client_side" }),
+  },
+  {
+    name: "join_salon",
+    description: "Join a salon (named community) by its slug. Use when the user says 'join the X salon' or 'add me to X'.",
+    parameters: {
+      type: "object",
+      properties: { slug: { type: "string", description: "Salon slug (kebab-case)." } },
+      required: ["slug"],
+    },
+    requiresConfirm: true,
+    preview: (a: any) => `Join salon "${a.slug}"`,
+    execute: async (a, { supabase, userId }) => {
+      const { data: salon, error: e1 } = await supabase
+        .from("salons")
+        .select("id")
+        .eq("slug", a.slug)
+        .single();
+      if (e1) throw e1;
+      const { error } = await supabase
+        .from("salon_members")
+        .insert({ salon_id: salon.id, user_id: userId });
+      if (error && !error.message.includes("duplicate")) throw error;
+      return { ok: true, salon_id: salon.id };
+    },
+  },
+  {
+    name: "rsvp_office_hour",
+    description: "RSVP yes to an Office Hour session by id. Use when the user wants to attend or sign up for an office hour.",
+    parameters: {
+      type: "object",
+      properties: { office_hour_id: { type: "string" } },
+      required: ["office_hour_id"],
+    },
+    requiresConfirm: true,
+    preview: (a: any) => `RSVP to office hour ${a.office_hour_id}`,
+    execute: async (a, { supabase, userId }) => {
+      const { error } = await supabase
+        .from("office_hour_rsvps")
+        .insert({ office_hour_id: a.office_hour_id, user_id: userId });
+      if (error && !error.message.includes("duplicate")) throw error;
+      return { ok: true };
+    },
+  },
 ];
 
 const TOOL_BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
@@ -811,6 +887,10 @@ Vocabulary — map what the user says to the right action:
   "what's trending / what's popular / catch me up / what did I miss" → summarize_feed
   "search for [topic]" → search_feed
   "remember / forget [preference]" → remember_preference / forget_preference
+  "react with 🤯 / 📝 / 💯 / 🤔 / mark as taking notes / mind blown" → react_to_echo
+  "today's question / daily prompt / answer the daily" → open_daily_question
+  "join the X salon / add me to X salon" → join_salon
+  "RSVP / sign up for / attend [office hour]" → rsvp_office_hour
 
 Rules:
 - Always call a tool when the user wants to act. Never describe what you would do — do it.

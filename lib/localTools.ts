@@ -23,7 +23,8 @@ export type LocalToolName =
   | 'list_memory'
   | 'compose_poll'
   | 'navigate_to'
-  | 'draft_echo';
+  | 'draft_echo'
+  | 'open_daily_question';
 
 export interface LocalToolExecution {
   ok: true;
@@ -215,6 +216,10 @@ export async function executeLocalTool(name: LocalToolName, args: any, context?:
       context?.draftFn?.(prompt, response);
       return { ok: true, summary: 'Opened compose screen', result: { prompt, response } };
     }
+    case 'open_daily_question': {
+      context?.navigateFn?.('daily-question');
+      return { ok: true, summary: "Opened today's question", result: { screen: 'daily-question' } };
+    }
     default:
       throw new Error('Unknown local tool');
   }
@@ -248,6 +253,7 @@ const LOCAL_TOOL_NAMES = new Set<LocalToolName>([
   'compose_poll',
   'navigate_to',
   'draft_echo',
+  'open_daily_question',
 ]);
 
 function stringArg(value: unknown): string | undefined {
