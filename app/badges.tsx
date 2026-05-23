@@ -7,6 +7,7 @@ import { ArrowLeft } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useTheme } from '../lib/theme';
 import { fetchBadges, type Badge } from '../lib/supabaseEchoApi';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 const TIER_COLOR: Record<Badge['tier'], string> = {
   bronze: '#B45309',
@@ -15,7 +16,7 @@ const TIER_COLOR: Record<Badge['tier'], string> = {
   special: '#A855F7',
 };
 
-export default function BadgesScreen() {
+function BadgesScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
   const [badges, setBadges] = useState<Badge[]>([]);
@@ -120,3 +121,5 @@ function BadgeCard({ badge, locked }: { badge: Badge; locked?: boolean }) {
     </View>
   );
 }
+
+export default function BadgesScreen() { return <V2FeatureGuard flag="badges"><BadgesScreenInner /></V2FeatureGuard>; }

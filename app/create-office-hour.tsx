@@ -9,6 +9,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { createOfficeHour } from '../lib/supabaseEchoApi';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 const DURATIONS = [
   { label: '30 min', value: 30 },
@@ -40,7 +41,7 @@ function computeStartAt(option: typeof START_OFFSETS[number]): Date {
   return new Date(now.getTime() + option.value * 60000);
 }
 
-export default function CreateOfficeHourScreen() {
+function CreateOfficeHourScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes, animation } = useTheme();
   const [topic, setTopic] = useState('');
@@ -157,3 +158,5 @@ export default function CreateOfficeHourScreen() {
     </SafeAreaView>
   );
 }
+
+export default function CreateOfficeHourScreen() { return <V2FeatureGuard flag="officeHours"><CreateOfficeHourScreenInner /></V2FeatureGuard>; }

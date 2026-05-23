@@ -9,6 +9,7 @@ import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { fetchUpcomingOfficeHours, setOfficeHourRSVP, type OfficeHour } from '../lib/supabaseEchoApi';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 /**
  * Office Hours — scheduled AMA sessions on a creator's profile.
@@ -26,7 +27,7 @@ function relativeStart(starts_at: string): string {
   return `In ${days}d`;
 }
 
-export default function OfficeHoursScreen() {
+function OfficeHoursScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
   const [list, setList] = useState<OfficeHour[]>([]);
@@ -185,3 +186,5 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
     </AnimatedPressable>
   );
 }
+
+export default function OfficeHoursScreen() { return <V2FeatureGuard flag="officeHours"><OfficeHoursScreenInner /></V2FeatureGuard>; }

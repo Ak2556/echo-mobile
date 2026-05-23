@@ -57,9 +57,17 @@ function LitePressable({
   haptic = 'light',
   style,
   disabled,
+  accessibilityRole,
+  accessibilityLabel,
   ...rest
 }: AnimatedPressableProps) {
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
+
+  // Infer an accessibility label from a string child when the caller didn't
+  // provide one. Covers the common case of `<AnimatedPressable><Text>Continue
+  // </Text></AnimatedPressable>` so VoiceOver announces "Continue" without
+  // needing every call site updated.
+  const inferredLabel = accessibilityLabel ?? (typeof children === 'function' ? undefined : extractStringLabel(children));
 
   const handlePress = (e: any) => {
     if (hapticEnabled && haptic !== 'none' && !disabled) {
@@ -77,6 +85,9 @@ function LitePressable({
     <Pressable
       onPress={handlePress}
       disabled={disabled}
+      accessibilityRole={accessibilityRole ?? 'button'}
+      accessibilityLabel={inferredLabel}
+      accessibilityState={disabled ? { disabled: true } : undefined}
       style={({ pressed }) => [
         {
           opacity: (disabled && dimWhenDisabled)
@@ -92,6 +103,22 @@ function LitePressable({
       {children}
     </Pressable>
   );
+}
+
+/** Pull the first string we can find out of a React tree — best-effort. */
+function extractStringLabel(node: React.ReactNode): string | undefined {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = extractStringLabel(child);
+      if (found) return found;
+    }
+  }
+  if (React.isValidElement(node)) {
+    const c = (node.props as { children?: React.ReactNode }).children;
+    if (c !== undefined) return extractStringLabel(c);
+  }
+  return undefined;
 }
 
 // ─── Heavy path (kept for hero CTAs) ────────────────────────────────────────

@@ -9,12 +9,13 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { createSalon } from '../lib/supabaseEchoApi';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 const COVER_COLORS = ['#7C3AED', '#EF4444', '#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#06B6D4', '#F97316'];
 const NAME_MAX = 40;
 const DESC_MAX = 240;
 
-export default function CreateSalonScreen() {
+function CreateSalonScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes, animation } = useTheme();
 
@@ -163,3 +164,5 @@ export default function CreateSalonScreen() {
     </SafeAreaView>
   );
 }
+
+export default function CreateSalonScreen() { return <V2FeatureGuard flag="salons"><CreateSalonScreenInner /></V2FeatureGuard>; }

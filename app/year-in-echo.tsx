@@ -8,6 +8,7 @@ import { ArrowLeft, ChartLineUp, Flame, Heart, Sparkle } from 'phosphor-react-na
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useTheme } from '../lib/theme';
 import { fetchOrComputeYearWrap, type YearWrap } from '../lib/supabaseEchoApi';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 /**
  * Year in Echo — Spotify-Wrapped-style recap of your year.
@@ -15,7 +16,7 @@ import { fetchOrComputeYearWrap, type YearWrap } from '../lib/supabaseEchoApi';
  * from this calendar year.
  */
 
-export default function YearInEchoScreen() {
+function YearInEchoScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
   const [wrap, setWrap] = useState<YearWrap | null>(null);
@@ -181,3 +182,5 @@ function StatCard({ icon, value, label }: { icon: React.ReactNode; value: number
     </View>
   );
 }
+
+export default function YearInEchoScreen() { return <V2FeatureGuard flag="yearInEcho"><YearInEchoScreenInner /></V2FeatureGuard>; }
