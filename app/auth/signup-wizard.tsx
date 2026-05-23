@@ -197,6 +197,8 @@ export default function SignupWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [displayName, setDisplayNameLocal] = useState('');
   const [usernameRaw, setUsernameRaw] = useState('');
+
+  useEffect(() => { track('signup_started'); }, []);
   const [avatarColor, setAvatarColorLocal] = useState(ACCENT);
   const [bioText, setBioText] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);

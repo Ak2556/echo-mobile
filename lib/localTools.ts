@@ -5,6 +5,7 @@ import { getTodayProductivity, searchLocalProductivity } from './localSearch';
 import { createNote, formatNoteResult, updateNote } from './notes';
 import { deleteVoiceMemo, renameVoiceMemo } from './voiceMemos';
 import { publishPollFromArgs } from './polls';
+import { track } from './analytics';
 
 export type LocalToolName =
   | 'create_note'
@@ -212,6 +213,7 @@ export async function executeLocalTool(name: LocalToolName, args: any, context?:
     case 'draft_echo': {
       const prompt = stringArg(args?.prompt) || '';
       const response = stringArg(args?.response) || '';
+      track('echo_drafted', { source: 'ai_chat', length_prompt: prompt.length, length_response: response.length });
       context?.draftFn?.(prompt, response);
       return { ok: true, summary: 'Opened compose screen', result: { prompt, response } };
     }

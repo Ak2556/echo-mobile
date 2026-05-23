@@ -5,6 +5,7 @@ import { Linking } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, identify, resetIdentity } from '../lib/analytics';
+import * as Notifications from 'expo-notifications';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider, showToast } from '../components/ui/Toast';
 import { CommandPalette } from '../components/ai/CommandPalette';
@@ -188,6 +189,49 @@ export default function RootLayout() {
   // tracked separately via AppState in lib/supabase.ts (auto-refresh).
   useEffect(() => {
     track('app_open');
+  }, []);
+
+  // Push notification taps. The send-push edge fn embeds {kind, target_id}
+  // in the notification's data payload; we route from those here. Cold-start
+  // taps come through getLastNotificationResponseAsync(); foreground taps
+  // come through the response listener. Treat both the same way.
+  const router = useRouter();
+  useEffect(() => {
+    let cancelled = false;
+    const route = (data: Record<string, unknown> | null | undefined) => {
+      if (!data) return;
+      const kind = String(data.kind ?? '');
+      const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
+      if (!targetId) return;
+      track('notification_tapped', { kind });
+      if (kind === 'follow') router.push(`/user/${targetId}` as any);
+      else if (kind === 'comment' || kind === 'reaction' || kind === 'like' || kind === 'quote' || kind === 'mention' || kind === 'repost' || kind === 'bookmark') {
+        router.push(`/thread/${targetId}` as any);
+      } else if (kind === 'dm') {
+        router.push(`/messages/${targetId}` as any);
+      } else {
+        router.push(`/thread/${targetId}` as any);
+      }
+    };
+
+    // Handle the case where the app was launched by tapping a notification
+    // while it was closed. Fire-and-forget; the route push needs the router
+    // to be mounted, which it is by the time this effect runs.
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (cancelled || !response) return;
+      route(response.notification.request.content.data as Record<string, unknown>);
+    });
+
+    // Foreground / background-to-foreground taps.
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      route(response.notification.request.content.data as Record<string, unknown>);
+    });
+
+    return () => {
+      cancelled = true;
+      sub.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
