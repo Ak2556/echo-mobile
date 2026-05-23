@@ -3,12 +3,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const configuredSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const configuredSupabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Keep the app bootable without a Supabase project. remoteConfig gates real
+// remote features off when these placeholders are in use, matching .env.example.
+const supabaseUrl = configuredSupabaseUrl || 'https://placeholder.supabase.co';
+const supabaseAnonKey = configuredSupabaseAnonKey || 'placeholder-key';
 
 // Expo static rendering runs in Node 20, where Supabase Realtime cannot find a
 // native WebSocket. Provide a server-render-only placeholder; real browser and

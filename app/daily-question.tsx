@@ -227,7 +227,7 @@ function DailyQuestionScreenInner() {
             <Animated.View entering={SlideInDown.duration(220)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginHorizontal: 4 }}>
                 <Text style={{ color: colors.text, fontWeight: '700', fontSize: 17 }}>
-                  Everyone's takes
+                  {"Everyone's takes"}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
                   {answers.length} answer{answers.length === 1 ? '' : 's'}

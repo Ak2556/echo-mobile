@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { EnvelopeSimple, ArrowClockwise, Warning } from 'phosphor-react-native';
 import * as Linking from 'expo-linking';
@@ -11,13 +11,15 @@ import { showToast } from '../../components/ui/Toast';
 
 export default function ConfirmEmailScreen() {
   const router = useRouter();
+  const { email } = useLocalSearchParams<{ email?: string }>();
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [userEmail, setUserEmail] = useState('');
+  const [userEmail, setUserEmail] = useState(typeof email === 'string' ? email : '');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    // Grab email to show in the UI
+    // Grab email to show in the UI. Email-confirmation signups often have no
+    // session yet, so keep the email routed from the signup screen as fallback.
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user?.email) setUserEmail(data.session.user.email);
     });
@@ -52,8 +54,8 @@ export default function ConfirmEmailScreen() {
     if (countdown > 0) return;
     setResending(true);
     const { data: { session } } = await supabase.auth.getSession();
-    const email = session?.user?.email;
-    if (!email) {
+    const resendEmail = session?.user?.email ?? userEmail;
+    if (!resendEmail) {
       showToast('Please sign up again', '❌');
       router.replace('/auth/signup');
       setResending(false);
@@ -61,7 +63,7 @@ export default function ConfirmEmailScreen() {
     }
     const { error } = await supabase.auth.resend({
       type: 'signup',
-      email,
+      email: resendEmail,
       options: { emailRedirectTo: Linking.createURL('auth/callback') },
     });
     setResending(false);

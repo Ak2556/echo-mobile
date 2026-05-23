@@ -74,7 +74,7 @@ function OfficeHoursScreenInner() {
             No upcoming Office Hours
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
-            Schedule a session — invite Q's on a topic you know cold.
+            {"Schedule a session — invite Q's on a topic you know cold."}
           </Text>
           <AnimatedPressable
             onPress={() => router.push('/create-office-hour' as any)}

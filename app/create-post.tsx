@@ -572,7 +572,7 @@ export default function CreatePostScreen() {
                       <X color={colors.textMuted} size={16} />
                     </Pressable>
                   </View>
-                  <Text style={s.label}>{coAuthor.display_name || coAuthor.username}'s take</Text>
+                  <Text style={s.label}>{`${coAuthor.display_name || coAuthor.username}'s take`}</Text>
                   <View style={[s.surface, { padding: 14, marginBottom: 4 }]}>
                     <TextInput
                       multiline

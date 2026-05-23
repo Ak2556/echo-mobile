@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
@@ -6,7 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LockSimple, Eye, EyeSlash, CheckCircle } from 'phosphor-react-native';
+import * as Linking from 'expo-linking';
 import { supabase } from '../../lib/supabase';
+import { consumeAuthCallbackUrl, hasAuthCallbackPayload } from '../../lib/authCallback';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
@@ -14,15 +16,49 @@ import { useTheme } from '../../lib/theme';
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
+  const url = Linking.useURL();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
   const isStrong = password.length >= 8;
   const matches = password === confirm;
   const canSubmit = isStrong && matches && !loading;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const prepareSession = async () => {
+      const callbackUrl = url ?? (await Linking.getInitialURL());
+      let { data: { session } } = await supabase.auth.getSession();
+
+      if (!session && callbackUrl && hasAuthCallbackPayload(callbackUrl)) {
+        const result = await consumeAuthCallbackUrl(callbackUrl);
+        if (cancelled) return;
+        if (result.status === 'error') {
+          showToast(result.error, '❌');
+          router.replace('/auth/forgot-password');
+          return;
+        }
+        ({ data: { session } } = await supabase.auth.getSession());
+      }
+
+      if (cancelled) return;
+      if (!session) {
+        showToast('Password reset link expired. Request a new one.', '❌');
+        router.replace('/auth/forgot-password');
+        return;
+      }
+
+      setCheckingSession(false);
+    };
+
+    void prepareSession();
+    return () => { cancelled = true; };
+  }, [router, url]);
 
   const handleReset = async () => {
     if (!canSubmit) return;
@@ -35,6 +71,16 @@ export default function ResetPasswordScreen() {
     }
     setDone(true);
   };
+
+  if (checkingSession) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={colors.accent} size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (done) {
     return (
