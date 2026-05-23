@@ -6,6 +6,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, identify, resetIdentity } from '../lib/analytics';
 import * as Notifications from 'expo-notifications';
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
+import { View, ActivityIndicator } from 'react-native';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider, showToast } from '../components/ui/Toast';
 import { CommandPalette } from '../components/ai/CommandPalette';
@@ -190,12 +192,32 @@ function AuthListener() {
 export default function RootLayout() {
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
 
+  // Load Inter — the body + display typeface. Block rendering for ~150ms
+  // worst case to avoid a font-swap flash. Once loaded, every Text component
+  // that reads `font.body` / `font.display` from theme renders in Inter.
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
+
   // One app_open per cold start. Background→foreground transitions are
   // tracked separately via AppState in lib/supabase.ts (auto-refresh).
   useEffect(() => {
     const coldMs = Date.now() - COLD_START_T0;
     track('app_open', { cold_ms: coldMs });
   }, []);
+
+  // Show a minimal black screen while Inter loads. Should be <150ms in practice.
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0a0a0a', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color="#5B5BF8" />
+      </View>
+    );
+  }
 
   // Push notification taps. The send-push edge fn embeds {kind, target_id}
   // in the notification's data payload; we route from those here. Cold-start

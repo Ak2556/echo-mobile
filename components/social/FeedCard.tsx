@@ -126,7 +126,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const remote = isSupabaseRemote();
   const remoteBm = useToggleRemoteBookmark();
   const remoteRp = useToggleRemoteRepost();
-  const { colors, radius, fontSizes, reduceAnimations, showAvatars } = useTheme();
+  const { colors, radius, fontSizes, font, reduceAnimations, showAvatars } = useTheme();
   const performance = usePerformanceProfile('hot');
   const { isBookmarked, toggleBookmark, isReposted, toggleRepost,
     compactFeed, showPreviewCards, votePoll,
@@ -443,7 +443,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 performanceMode="hot"
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
+                  <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: -0.1 }]}>{item.displayName || item.username}</Text>
                   {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
                 </View>
                 {/* Mood chip — only renders when the author has an active mood. */}
@@ -590,7 +590,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             performanceMode="hot"
           >
             <View className="flex-row items-center gap-1">
-              <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600' }}>{item.displayName || item.username}</Text>
+              <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: -0.1 }]}>{item.displayName || item.username}</Text>
               {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
@@ -607,26 +607,36 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           </AnimatedPressable>
         </View>
 
-        {/* ── TEXT post ── */}
+        {/* ── TEXT post ──
+            Signature treatment: the prompt is rendered as a small italic
+            pull-quote indented behind a 2px accent rule, with the response
+            as the larger body weight below it. This is the visual
+            differentiator that makes Echo not-Twitter — the two-part
+            framing reads as "question then take" at a glance. */}
         {(!item.postType || item.postType === 'text') && (
           <>
-            {/* Prompt preview row — shows the original question when an editorial title exists */}
-            {!compactFeed && item.prompt && item.editorialTitle && item.prompt !== item.editorialTitle && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 5 }}>
-                <Question color={colors.textMuted} size={11} />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontStyle: 'italic', flex: 1 }} numberOfLines={1}>
-                  {item.prompt}
+            {!!item.prompt && !item.coAuthor && (
+              <View style={{ flexDirection: 'row', marginBottom: compactFeed ? 8 : 10 }}>
+                <View style={{ width: 2, backgroundColor: colors.accent, borderRadius: 1, marginRight: 10, opacity: 0.8 }} />
+                <Text
+                  style={[
+                    font.quote,
+                    { color: colors.textSecondary, fontSize: textSize - 1, lineHeight: (textSize - 1) * 1.55, flex: 1 },
+                  ]}
+                  numberOfLines={compactFeed ? 2 : 3}
+                >
+                  {item.editorialTitle ?? item.prompt}
                 </Text>
               </View>
             )}
-            <Text style={{ fontSize: textSize + 1, color: colors.text, fontWeight: '700', marginBottom: compactFeed ? 4 : 8, lineHeight: (textSize + 1) * 1.35 }} numberOfLines={compactFeed ? 2 : 3}>
-              {item.editorialTitle ?? item.prompt}
-            </Text>
             {!!(item.authorNote ?? (showPreviewCards ? item.response : null)) && !item.coAuthor && (
               <LinkifiedText
                 text={item.authorNote ?? item.response}
-                style={{ fontSize: textSize, color: colors.textSecondary, lineHeight: textSize * 1.6, marginBottom: compactFeed ? 8 : 12 }}
-                numberOfLines={compactFeed ? 2 : 3}
+                style={[
+                  font.bodyMedium,
+                  { fontSize: textSize + 1, color: colors.text, lineHeight: (textSize + 1) * 1.5, marginBottom: compactFeed ? 8 : 12, letterSpacing: -0.1 },
+                ]}
+                numberOfLines={compactFeed ? 3 : 5}
               />
             )}
             {/* Co-echo: two takes side by side. Falls back to a stacked layout
