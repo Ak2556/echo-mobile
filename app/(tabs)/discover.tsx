@@ -14,7 +14,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Bell, Question, Sparkle, TrendUp, PencilSimpleLine, X } from 'phosphor-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { HeroCard, HERO_CARD_WIDTH } from '../../components/social/HeroCard';
@@ -41,44 +40,23 @@ const HERO_COUNT = 5;
 const NAV_BAR_HEIGHT = 50;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
-function DiamondLogo() {
-  return (
-    <View
-      style={{
-        width: 30,
-        height: 30,
-        borderRadius: 7,
-        transform: [{ rotate: '45deg' }],
-        overflow: 'hidden',
-      }}
-    >
-      <LinearGradient
-        colors={['#A78BFA', '#3B82F6', '#EC4899']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ flex: 1 }}
-      />
-    </View>
-  );
-}
-
 function SectionHeader({ label, sub, icon }: { label: string; sub?: string; icon?: React.ReactNode }) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   return (
     <View
       style={{
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'baseline',
         paddingHorizontal: 16,
-        marginTop: 22,
-        marginBottom: 14,
-        gap: 6,
+        marginTop: 24,
+        marginBottom: 12,
+        gap: 8,
       }}
     >
       {icon}
-      <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>{label}</Text>
+      <Text style={[font.display, { color: colors.text, fontSize: 19 }]}>{label}</Text>
       {sub && (
-        <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 2 }}>
+        <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 13 }]}>
           {sub}
         </Text>
       )}
@@ -101,7 +79,7 @@ export default function DiscoverScreen() {
   } = useInfiniteFeed();
   const feed = feedData?.pages.flat() ?? [];
   const realtime = useRealtimeNewEchoes();
-  const { colors, animation } = useTheme();
+  const { colors, animation, font } = useTheme();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, interests, followingIds } = useAppStore();
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
@@ -487,10 +465,12 @@ export default function DiscoverScreen() {
             paddingBottom: 6,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-            <DiamondLogo />
-            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.5 }}>
-              Echo
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', flex: 1 }}>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 24 }]}>
+              echo
+            </Text>
+            <Text style={[font.displayBlack, { color: colors.accent, fontSize: 24, marginLeft: 1 }]}>
+              .
             </Text>
           </View>
 
