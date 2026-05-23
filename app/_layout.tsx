@@ -203,6 +203,12 @@ export default function RootLayout() {
     Inter_800ExtraBold,
   });
 
+  // All hooks must run on every render — DO NOT add early returns above
+  // this block or React will throw "rendered more hooks than during the
+  // previous render" when fontsLoaded flips. The conditional render happens
+  // at the JSX level instead, further down.
+  const router = useRouter();
+
   // One app_open per cold start. Background→foreground transitions are
   // tracked separately via AppState in lib/supabase.ts (auto-refresh).
   useEffect(() => {
@@ -210,20 +216,10 @@ export default function RootLayout() {
     track('app_open', { cold_ms: coldMs });
   }, []);
 
-  // Show a minimal black screen while Inter loads. Should be <150ms in practice.
-  if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#0a0a0a', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#5B5BF8" />
-      </View>
-    );
-  }
-
   // Push notification taps. The send-push edge fn embeds {kind, target_id}
   // in the notification's data payload; we route from those here. Cold-start
   // taps come through getLastNotificationResponseAsync(); foreground taps
   // come through the response listener. Treat both the same way.
-  const router = useRouter();
   useEffect(() => {
     let cancelled = false;
     const route = (data: Record<string, unknown> | null | undefined) => {
@@ -261,6 +257,16 @@ export default function RootLayout() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Show a minimal black screen while Inter loads. Should be <150ms in practice.
+  // Conditional render happens AFTER all hooks above so the hook order is stable.
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0a0a0a', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color="#5B5BF8" />
+      </View>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
