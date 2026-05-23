@@ -64,4 +64,18 @@ describe('mapEchoRowToFeedItem', () => {
     expect(item.videoUri).toBe('https://x/video.mp4');
     expect(item.mediaUris).toBeUndefined();
   });
+
+  it('maps video/x-m4v media urls to video posts', () => {
+    const videoEcho = { ...echo, media_urls: ['https://x/video.x-m4v'] };
+    const item = mapEchoRowToFeedItem(videoEcho, author, new Set(), new Set(), new Set());
+    expect(item.postType).toBe('video');
+    expect(item.videoUri).toBe('https://x/video.x-m4v');
+  });
+
+  it('maps extensionless storage urls with video mime hints to video posts', () => {
+    const videoEcho = { ...echo, media_urls: ['https://x/object?id=1&contentType=video%2Fmp4'] };
+    const item = mapEchoRowToFeedItem(videoEcho, author, new Set(), new Set(), new Set());
+    expect(item.postType).toBe('video');
+    expect(item.videoUri).toBe('https://x/object?id=1&contentType=video%2Fmp4');
+  });
 });
