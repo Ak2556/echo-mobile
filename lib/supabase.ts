@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient, processLock } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -46,11 +46,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: Platform.OS === 'web',
-    // CRITICAL: supabase-js v2 deadlocks on React Native without an explicit
-    // lock — signInWithPassword / OAuth / signUp hang on the spinner forever.
-    // processLock is the supported RN implementation. Web uses the default
-    // navigatorLock.
-    ...(Platform.OS === 'web' ? {} : { lock: processLock }),
+    // We tried processLock — it deadlocked getSession() under certain
+    // post-OAuth conditions, leaving the app stuck on a buffer screen even
+    // after sign-in succeeded. The default no-lock behavior is fine for
+    // single-threaded JS in React Native.
   },
 });
 
