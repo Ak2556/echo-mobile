@@ -44,7 +44,44 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
       return { error: 'No OAuth URL returned from Supabase. Check that the Google provider is enabled in Supabase Auth → Providers.' };
     }
 
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
+    // iOS has a known SFAuthSession race where the WebBrowser promise can
+    // hang forever even after the redirect has already been consumed by the
+    // app's Linking handler in app/_layout.tsx (which calls setSession itself
+    // on auth-token URLs). To avoid stranding the caller on a spinner, race
+    // the WebBrowser promise against the next SIGNED_IN event from supabase.
+    // Whichever resolves first wins; the WebBrowser is dismissed if the auth
+    // event won.
+    type ExternalResult =
+      | { kind: 'browser'; result: WebBrowser.WebBrowserAuthSessionResult }
+      | { kind: 'session' };
+
+    let sessionResolved = false;
+    const sessionPromise = new Promise<ExternalResult>((resolve) => {
+      const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (sessionResolved) return;
+          sessionResolved = true;
+          sub.subscription.unsubscribe();
+          resolve({ kind: 'session' });
+        }
+      });
+    });
+
+    const browserPromise = WebBrowser.openAuthSessionAsync(data.url, redirectUri).then(
+      (r) => ({ kind: 'browser' as const, result: r }),
+    );
+
+    const winner = await Promise.race([browserPromise, sessionPromise]);
+
+    // If the Linking handler set the session first, just dismiss the
+    // dangling browser sheet and report success — the AuthListener in
+    // _layout.tsx is already navigating us forward.
+    if (winner.kind === 'session') {
+      WebBrowser.dismissAuthSession();
+      return { error: null };
+    }
+
+    const result = winner.result;
 
     if (result.type === 'cancel' || result.type === 'dismiss') {
       return { error: '__cancelled__' };
