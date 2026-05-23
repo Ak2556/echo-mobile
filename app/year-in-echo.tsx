@@ -61,7 +61,7 @@ export default function YearInEchoScreen() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
           {/* Hero gradient card */}
-          <Animated.View entering={FadeInUp.springify().damping(18).stiffness(140)} style={{ marginBottom: 16 }}>
+          <Animated.View entering={FadeInUp.duration(220)} style={{ marginBottom: 16 }}>
             <LinearGradient
               colors={['#A855F7', '#3B82F6', '#06B6D4']}
               start={{ x: 0, y: 0 }}
@@ -76,21 +76,21 @@ export default function YearInEchoScreen() {
 
           {/* Stat grid */}
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
-            <Animated.View entering={FadeInUp.delay(100).springify()} style={{ flex: 1 }}>
+            <Animated.View entering={FadeInUp.delay(100).duration(220)} style={{ flex: 1 }}>
               <StatCard
                 icon={<Heart color="#EF4444" size={20} weight="fill" />}
                 value={wrap.total_likes_received}
                 label="hearts"
               />
             </Animated.View>
-            <Animated.View entering={FadeInUp.delay(150).springify()} style={{ flex: 1 }}>
+            <Animated.View entering={FadeInUp.delay(150).duration(220)} style={{ flex: 1 }}>
               <StatCard
                 icon={<ChartLineUp color="#10B981" size={20} weight="fill" />}
                 value={wrap.total_reactions}
                 label="reactions"
               />
             </Animated.View>
-            <Animated.View entering={FadeInUp.delay(200).springify()} style={{ flex: 1 }}>
+            <Animated.View entering={FadeInUp.delay(200).duration(220)} style={{ flex: 1 }}>
               <StatCard
                 icon={<Flame color="#F59E0B" size={20} weight="fill" />}
                 value={wrap.longest_streak}
@@ -101,7 +101,7 @@ export default function YearInEchoScreen() {
 
           {/* Top topics */}
           {wrap.top_topics.length > 0 && (
-            <Animated.View entering={FadeInUp.delay(250).springify()} style={{ marginBottom: 16 }}>
+            <Animated.View entering={FadeInUp.delay(250).duration(220)} style={{ marginBottom: 16 }}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginLeft: 4 }}>
                 Top Topics
               </Text>
@@ -129,7 +129,7 @@ export default function YearInEchoScreen() {
 
           {/* Top echo */}
           {wrap.top_echo_prompt && (
-            <Animated.View entering={FadeInUp.delay(300).springify()}>
+            <Animated.View entering={FadeInUp.delay(300).duration(220)}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginLeft: 4 }}>
                 Most-loved echo
               </Text>

@@ -62,7 +62,7 @@ export default function NotificationPrefsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
-        <Animated.View entering={animation(FadeInDown.delay(50).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>General</Text>
           <View
             className="px-4 mb-5"
@@ -84,7 +84,7 @@ export default function NotificationPrefsScreen() {
           </View>
         </Animated.View>
 
-        <Animated.View entering={animation(FadeInDown.delay(100).springify())} style={{ opacity: notificationsEnabled ? 1 : 0.4 }} pointerEvents={notificationsEnabled ? 'auto' : 'none'}>
+        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={{ opacity: notificationsEnabled ? 1 : 0.4 }} pointerEvents={notificationsEnabled ? 'auto' : 'none'}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Activity Types</Text>
           <View
             className="px-4 mb-5"
@@ -109,7 +109,7 @@ export default function NotificationPrefsScreen() {
           </View>
         </Animated.View>
 
-        <Animated.View entering={animation(FadeInDown.delay(150).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Feedback</Text>
           <View
             className="px-4 mb-5"

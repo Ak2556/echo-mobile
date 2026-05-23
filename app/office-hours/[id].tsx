@@ -109,7 +109,7 @@ export default function OfficeHourDetailScreen() {
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
           {/* Session card */}
           <Animated.View
-            entering={FadeInUp.springify().damping(18).stiffness(140)}
+            entering={FadeInUp.duration(220)}
             style={{
               backgroundColor: colors.surface,
               borderRadius: radius.lg,

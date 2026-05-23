@@ -7,6 +7,7 @@ import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { MOTION } from '../../lib/motion';
 import { useToggleEchoReaction, useToggleCommentReaction } from '../../hooks/queries/useSupabaseSocial';
+import { track } from '../../lib/analytics';
 import type { EchoReaction, ReactionCounts } from '../../types';
 
 /**
@@ -100,6 +101,7 @@ export function ReactionBar({ target, counts, userReactions, compact }: Reaction
                   ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
                   : Haptics.selectionAsync();
               }
+              if (next) track('echo_reacted', { reaction, target_kind: target.kind });
 
               const rollback = () => {
                 setLocalUserReactions((prev) => {

@@ -122,7 +122,7 @@ export default function VideoPlayerApp() {
   return (
     <MiniAppShell title="Video Player" subtitle="Pick or record a video">
       {/* Pick / Record buttons */}
-      <Animated.View entering={FadeInDown.springify()} style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+      <Animated.View entering={FadeInDown.duration(220)} style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
         <GlassPanel
           variant="medium"
           borderRadius={18}
@@ -146,7 +146,7 @@ export default function VideoPlayerApp() {
       </Animated.View>
 
       {video ? (
-        <Animated.View entering={FadeInDown.delay(60).springify()}>
+        <Animated.View entering={FadeInDown.delay(60).duration(220)}>
           {/* Video player */}
           <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: '#000', marginBottom: 14 }}>
             <VideoView
@@ -208,7 +208,7 @@ export default function VideoPlayerApp() {
           </GlassPanel>
         </Animated.View>
       ) : (
-        <Animated.View entering={FadeInDown.delay(40).springify()} style={{ alignItems: 'center', paddingVertical: 80, gap: 16 }}>
+        <Animated.View entering={FadeInDown.delay(40).duration(220)} style={{ alignItems: 'center', paddingVertical: 80, gap: 16 }}>
           <View style={{ width: 88, height: 88, borderRadius: 28, backgroundColor: accent + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: accent + '30' }}>
             <VideoCamera color={accent} size={40} weight="duotone" />
           </View>

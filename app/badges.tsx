@@ -55,7 +55,7 @@ export default function BadgesScreen() {
             <>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginLeft: 4 }}>Earned</Text>
               {earned.map((b, i) => (
-                <Animated.View key={b.id} entering={FadeInUp.delay(i * 30).springify()}>
+                <Animated.View key={b.id} entering={FadeInUp.delay(i * 30).duration(220)}>
                   <BadgeCard badge={b} />
                 </Animated.View>
               ))}
@@ -67,7 +67,7 @@ export default function BadgesScreen() {
                 Locked
               </Text>
               {unearned.map((b, i) => (
-                <Animated.View key={b.id} entering={FadeInUp.delay((earned.length + i) * 30).springify()}>
+                <Animated.View key={b.id} entering={FadeInUp.delay((earned.length + i) * 30).duration(220)}>
                   <BadgeCard badge={b} locked />
                 </Animated.View>
               ))}

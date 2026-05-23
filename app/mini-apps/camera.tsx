@@ -85,7 +85,7 @@ export default function CameraApp() {
     <MiniAppShell title="Camera" subtitle="Capture photos & videos" headerRight={GalleryBtn}>
       {/* Viewfinder panel */}
       <Animated.View
-        entering={FadeInDown.springify()}
+        entering={FadeInDown.duration(220)}
         style={{
           borderRadius: 28,
           overflow: 'hidden',
@@ -217,7 +217,7 @@ export default function CameraApp() {
 
           {/* Full preview of selected */}
           {selected && (
-            <Animated.View entering={ZoomIn.springify()} style={{ marginBottom: 14, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
+            <Animated.View entering={ZoomIn.duration(220)} style={{ marginBottom: 14, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
               <Image source={{ uri: selected.uri }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 20 }} resizeMode="cover" />
               {selected.type === 'video' && (
                 <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
@@ -238,7 +238,7 @@ export default function CameraApp() {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
             {captured.map((item, i) => (
-              <Animated.View key={i} entering={ZoomIn.delay(i * 30).springify()}>
+              <Animated.View key={i} entering={ZoomIn.delay(i * 30).duration(220)}>
                 <Pressable
                   onPress={() => setSelected(selected?.uri === item.uri ? null : item)}
                   style={{

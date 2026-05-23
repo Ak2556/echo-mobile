@@ -149,7 +149,7 @@ export default function NotesApp() {
       ) : (
         <View style={{ gap: 12 }}>
           {filtered.map((note, i) => (
-            <Animated.View key={note.id} entering={FadeInDown.delay(i * 40).springify()}>
+            <Animated.View key={note.id} entering={FadeInDown.delay(i * 40).duration(220)}>
               <Pressable
                 onPress={() => openNote(note)}
                 style={({ pressed }) => ({

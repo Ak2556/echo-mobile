@@ -16,7 +16,7 @@ function SessionCard({ session, index, onPress, onDelete }: {
   const timeAgo = getTimeAgo(session.updatedAt);
 
   return (
-    <Animated.View entering={FadeInRight.delay(index * 60).springify()}>
+    <Animated.View entering={FadeInRight.delay(index * 60).duration(220)}>
       <Pressable
         onPress={onPress}
         onLongPress={() => {

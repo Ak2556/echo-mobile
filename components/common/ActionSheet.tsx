@@ -42,7 +42,7 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
         <Pressable style={{ flex: 1 }} onPress={onClose} />
       </Animated.View>
       <Animated.View
-        entering={reduceAnimations ? undefined : SlideInDown.springify().damping(18)}
+        entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
         exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
         style={{
           position: 'absolute',

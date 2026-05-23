@@ -270,7 +270,7 @@ function MessageActionSheet({
       </Animated.View>
 
       <Animated.View
-        entering={reduceAnimations ? undefined : SlideInDown.springify().damping(26).stiffness(280)}
+        entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
         exiting={reduceAnimations ? undefined : SlideOutDown.duration(180)}
         style={{
           position: 'absolute', left: 0, right: 0, bottom: 0,

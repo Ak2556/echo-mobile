@@ -439,7 +439,7 @@ export default function SettingsScreen() {
         </GlassPanel>
 
         {/* NOTIFICATIONS */}
-        <Animated.View entering={animation(FadeInDown.delay(50).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
           <Text style={sectionHeaderStyle}>Essentials</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, s.setNotificationsEnabled)} />
@@ -457,7 +457,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* PRIVACY & SAFETY */}
-        <Animated.View entering={animation(FadeInDown.delay(100).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))}>
           <Text style={sectionHeaderStyle}>Privacy & Safety</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, s.setActivityStatus)} />
@@ -475,7 +475,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* APPEARANCE & DISPLAY */}
-        <Animated.View entering={animation(FadeInDown.delay(150).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
           <Text style={sectionHeaderStyle}>Accessibility & Display</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow
@@ -537,7 +537,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* CONTENT & FEED */}
-        <Animated.View entering={animation(FadeInDown.delay(200).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))}>
           <Text style={sectionHeaderStyle}>Content & Feed</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={SquaresFour} label="Feed Sort" subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
@@ -553,7 +553,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* CHAT & AI */}
-        <Animated.View entering={animation(FadeInDown.delay(250).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(250).duration(220))}>
           <Text style={sectionHeaderStyle}>Chat & AI</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label="AI Model" subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
@@ -571,7 +571,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* STORAGE & DATA */}
-        <Animated.View entering={animation(FadeInDown.delay(300).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))}>
           <Text style={sectionHeaderStyle}>Advanced Data Controls</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Database} label="Storage Used" right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
@@ -587,7 +587,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* ABOUT */}
-        <Animated.View entering={animation(FadeInDown.delay(350).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(350).duration(220))}>
           <Text style={sectionHeaderStyle}>About</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => Alert.alert('Privacy Policy', 'Echo respects your privacy. We collect minimal data to provide the best experience. Your chats are processed via encrypted connections and are never stored on our servers permanently.')} />
@@ -601,7 +601,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* DANGER ZONE */}
-        <Animated.View entering={animation(FadeInDown.delay(400).springify())}>
+        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))}>
           <Text style={sectionHeaderStyle}>Danger Zone</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={SignOut} label="Sign Out" onPress={handleSignOut} destructive />
