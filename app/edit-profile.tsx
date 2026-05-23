@@ -383,7 +383,7 @@ export default function EditProfileScreen() {
               marginLeft: 4,
             }}
           >
-            What's on your mind right now? Shows above your name for a day, then disappears.
+            {"What's on your mind right now? Shows above your name for a day, then disappears."}
           </Text>
           <TextInput
             value={newMood}

@@ -99,7 +99,7 @@ export default function SignupScreen() {
     if (error) { showToast(error.message, '❌'); return; }
     if (data.session === null) {
       showToast('Check your email to confirm your account', '📧');
-      router.replace('/auth/confirm-email');
+      router.replace({ pathname: '/auth/confirm-email', params: { email: email.trim().toLowerCase() } });
       return;
     }
     router.replace('/auth/signup-wizard');
@@ -120,15 +120,11 @@ export default function SignupScreen() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
-    const bail = setTimeout(() => setGoogleLoading(false), 30_000);
     const { error } = await signInWithGoogle();
-    clearTimeout(bail);
     setGoogleLoading(false);
-    if (!error || error === '__cancelled__') {
-      if (!error) router.replace('/(tabs)/discover');
-      return;
-    }
-    showToast(error, '❌');
+    if (error === '__cancelled__') return;
+    if (error) { showToast(error, '❌'); return; }
+    router.replace('/');
   };
 
   const handleApple = async () => {
@@ -137,8 +133,9 @@ export default function SignupScreen() {
     const { error } = await signInWithApple();
     clearTimeout(bail);
     setAppleLoading(false);
+    if (error === '__cancelled__') return;
     if (error) { showToast(error, '❌'); return; }
-    router.replace('/(tabs)/discover');
+    router.replace('/');
   };
 
   const inputRowStyle = (focused: boolean): object => ({

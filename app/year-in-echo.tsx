@@ -56,7 +56,7 @@ function YearInEchoScreenInner() {
             Your year is just getting started
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
-            Post a few echoes and come back. We'll roll up your stats, top topics, and most-loved echo.
+            {"Post a few echoes and come back. We'll roll up your stats, top topics, and most-loved echo."}
           </Text>
         </View>
       ) : (

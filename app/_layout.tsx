@@ -16,6 +16,7 @@ import { useAppStore } from '../store/useAppStore';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes } from '../lib/supabaseEchoApi';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
+import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from '../lib/authCallback';
 import '../global.css';
 
 // One-time migration: evict stale seed/mock data persisted before v2.
@@ -54,7 +55,17 @@ let pendingPasswordRecovery = false;
 function AuthListener() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { setUserId, setUsername, setDisplayName, setAvatarColor, setHasSeenOnboarding, resetSocialData, clearChatHistory } = useAppStore();
+  const {
+    setUserId,
+    setUsername,
+    setDisplayName,
+    setBio,
+    setAvatarColor,
+    setAvatarUrl,
+    setHasSeenOnboarding,
+    resetSocialData,
+    clearChatHistory,
+  } = useAppStore();
 
   // Exchange token from deep-link URL (email confirmation / OAuth callback).
   // Works with both the production scheme (echo://) and Expo Go (exp://).
@@ -76,36 +87,33 @@ function AuthListener() {
       }
     } catch { /* malformed URL — fall through to auth handling */ }
 
-    // Only act on URLs that carry Supabase auth tokens.
-    if (!url.includes('access_token') && !url.includes('type=signup') && !url.includes('type=recovery')) return;
+    // Supabase can return implicit tokens in the hash or PKCE codes in the
+    // query string. Consume both here because the WebBrowser promise may never
+    // resolve on iOS once Linking has already received the redirect.
+    if (!hasAuthCallbackPayload(url)) return;
 
-    // Supabase appends tokens in the hash fragment (#) or query string (?).
-    const raw = url.split('#')[1] ?? url.split('?')[1] ?? '';
-    const params = Object.fromEntries(
-      raw.split('&').map(p => {
-        const [k, ...v] = p.split('=');
-        return [decodeURIComponent(k ?? ''), decodeURIComponent(v.join('='))];
-      }),
-    );
-    if (params.access_token && params.refresh_token) {
-      if (params.type === 'recovery') {
-        // Mark recovery so onAuthStateChange doesn't navigate to discover.
-        pendingPasswordRecovery = true;
-      }
-      const { error } = await supabase.auth.setSession({
-        access_token: params.access_token,
-        refresh_token: params.refresh_token,
-      });
-      if (error) {
-        pendingPasswordRecovery = false;
-        showToast('Authentication failed. Please sign in again.', '❌');
-        router.replace('/auth/login');
-      } else if (params.type === 'recovery') {
-        // Navigate to the reset-password screen now that session is active.
-        router.replace('/auth/reset-password');
-      }
-      // For non-recovery flows, onAuthStateChange handles navigation.
+    const params = parseAuthCallbackUrl(url);
+    if (params.type === 'recovery') {
+      // Mark recovery so onAuthStateChange doesn't navigate to discover.
+      pendingPasswordRecovery = true;
     }
+
+    const callback = await consumeAuthCallbackUrl(url);
+    if (callback.status === 'ignored') {
+      if (params.type === 'recovery') pendingPasswordRecovery = false;
+      return;
+    }
+    if (callback.status === 'error') {
+      pendingPasswordRecovery = false;
+      showToast(callback.error || 'Authentication failed. Please sign in again.', '❌');
+      router.replace('/auth/login');
+      return;
+    }
+    if (callback.type === 'recovery') {
+      // Navigate to the reset-password screen now that session is active.
+      router.replace('/auth/reset-password');
+    }
+    // For non-recovery flows, onAuthStateChange handles navigation.
   };
 
   useEffect(() => {
@@ -115,40 +123,67 @@ function AuthListener() {
     const sub = Linking.addEventListener('url', ({ url }) => handleDeepLink(url));
     return () => sub.remove();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, setAvatarColor, setDisplayName, setHasSeenOnboarding, setUserId, setUsername]); // handleDeepLink is stable — it only uses router and supabase which are stable
+  }, [router, setAvatarColor, setAvatarUrl, setBio, setDisplayName, setHasSeenOnboarding, setUserId, setUsername]); // handleDeepLink is stable — it only uses router and supabase which are stable
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Recovery flow: session was set by handleDeepLink, screen is /auth/reset-password.
       // Don't redirect — let the reset-password screen handle it.
-      if (pendingPasswordRecovery && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-        if (event === 'SIGNED_IN') pendingPasswordRecovery = false;
+      if (pendingPasswordRecovery && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'PASSWORD_RECOVERY')) {
+        if (event !== 'TOKEN_REFRESHED') pendingPasswordRecovery = false;
         return;
       }
       if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+        const cachedAuth = useAppStore.getState();
         setUserId(session.user.id);
         if (event === 'SIGNED_IN') {
           track('signin_completed');
           identify(session.user.id);
         }
-        if (!useAppStore.getState().username) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, display_name, avatar_color')
-            .eq('id', session.user.id)
-            .single();
 
-          if (profile?.username) {
-            setUsername(profile.username);
-            setDisplayName(profile.display_name ?? '');
-            setAvatarColor(profile.avatar_color ?? '#6366F1');
-            setHasSeenOnboarding(true);
-            router.replace('/(tabs)/discover');
+        let profile: {
+          username: string | null;
+          display_name: string | null;
+          bio: string | null;
+          avatar_color: string | null;
+          avatar_url: string | null;
+        } | null = null;
+        let profileLookupFailed = false;
+
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('username, display_name, bio, avatar_color, avatar_url')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          if (error) {
+            profileLookupFailed = true;
           } else {
-            router.replace('/auth/signup-wizard');
+            profile = data;
           }
-        } else {
+        } catch {
+          profileLookupFailed = true;
+        }
+
+        if (profile?.username) {
+          setUsername(profile.username);
+          setDisplayName(profile.display_name ?? '');
+          setBio(profile.bio ?? '');
+          setAvatarColor(profile.avatar_color ?? '#6366F1');
+          setAvatarUrl(profile.avatar_url ?? '');
+          setHasSeenOnboarding(true);
           router.replace('/(tabs)/discover');
+        } else if (profileLookupFailed && cachedAuth.userId === session.user.id && cachedAuth.username) {
+          // If the profile read flakes but we have cached data for this exact
+          // session user, keep the user moving and let later queries retry.
+          router.replace('/(tabs)/discover');
+        } else {
+          setUsername('');
+          setDisplayName('');
+          setBio('');
+          setAvatarUrl('');
+          setHasSeenOnboarding(false);
+          router.replace('/auth/signup-wizard');
         }
 
         // Hydrate block/mute lists from Supabase so feed filtering is cross-device
@@ -174,6 +209,9 @@ function AuthListener() {
         setUserId('');
         setUsername('');
         setDisplayName('');
+        setBio('');
+        setAvatarColor('#6366F1');
+        setAvatarUrl('');
         setHasSeenOnboarding(false);
         resetSocialData();
         clearChatHistory();
@@ -183,7 +221,7 @@ function AuthListener() {
     });
 
     return () => subscription.unsubscribe();
-  }, [router, setAvatarColor, setDisplayName, setHasSeenOnboarding, setUserId, setUsername, resetSocialData, clearChatHistory, queryClient]);
+  }, [router, setAvatarColor, setAvatarUrl, setBio, setDisplayName, setHasSeenOnboarding, setUserId, setUsername, resetSocialData, clearChatHistory, queryClient]);
 
   return null;
 }

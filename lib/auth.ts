@@ -4,6 +4,7 @@ import * as Crypto from 'expo-crypto';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
+import { consumeAuthCallbackUrl } from './authCallback';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -19,6 +20,8 @@ WebBrowser.maybeCompleteAuthSession();
 function getRedirectUri(): string {
   return Linking.createURL('auth/callback');
 }
+
+const OAUTH_TIMEOUT_MS = 90_000;
 
 export async function signInWithGoogle(): Promise<{ error: string | null }> {
   // Warm up the browser process on Android for a snappier sheet.
@@ -36,7 +39,6 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
       },
     });
     if (error) {
-      // eslint-disable-next-line no-console
       console.warn('[oauth] supabase signInWithOAuth failed', error);
       return { error: error.message };
     }
@@ -44,34 +46,38 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
       return { error: 'No OAuth URL returned from Supabase. Check that the Google provider is enabled in Supabase Auth → Providers.' };
     }
 
-    // iOS has a known SFAuthSession race where the WebBrowser promise can
-    // hang forever even after the redirect has already been consumed by the
-    // app's Linking handler in app/_layout.tsx (which calls setSession itself
-    // on auth-token URLs). To avoid stranding the caller on a spinner, race
-    // the WebBrowser promise against the next SIGNED_IN event from supabase.
-    // Whichever resolves first wins; the WebBrowser is dismissed if the auth
-    // event won.
+    // iOS can leave WebBrowser.openAuthSessionAsync unresolved even after the
+    // deep link has been consumed by Linking. Race the browser with Supabase's
+    // auth event and a hard timeout so the UI never spins forever.
     type ExternalResult =
       | { kind: 'browser'; result: WebBrowser.WebBrowserAuthSessionResult }
-      | { kind: 'session' };
+      | { kind: 'browser-error'; error: unknown }
+      | { kind: 'session' }
+      | { kind: 'timeout' };
 
-    let sessionResolved = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let resolveSessionEvent!: (value: ExternalResult) => void;
     const sessionPromise = new Promise<ExternalResult>((resolve) => {
-      const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          if (sessionResolved) return;
-          sessionResolved = true;
-          sub.subscription.unsubscribe();
-          resolve({ kind: 'session' });
-        }
-      });
+      resolveSessionEvent = resolve;
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session) {
+        resolveSessionEvent({ kind: 'session' });
+      }
     });
 
     const browserPromise = WebBrowser.openAuthSessionAsync(data.url, redirectUri).then(
       (r) => ({ kind: 'browser' as const, result: r }),
+      (error) => ({ kind: 'browser-error' as const, error }),
     );
 
-    const winner = await Promise.race([browserPromise, sessionPromise]);
+    const timeoutPromise = new Promise<ExternalResult>((resolve) => {
+      timeoutId = setTimeout(() => resolve({ kind: 'timeout' }), OAUTH_TIMEOUT_MS);
+    });
+
+    const winner = await Promise.race([browserPromise, sessionPromise, timeoutPromise]);
+    if (timeoutId) clearTimeout(timeoutId);
+    subscription.unsubscribe();
 
     // If the Linking handler set the session first, just dismiss the
     // dangling browser sheet and report success — the AuthListener in
@@ -81,6 +87,16 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
       return { error: null };
     }
 
+    if (winner.kind === 'timeout') {
+      WebBrowser.dismissAuthSession();
+      return { error: 'Google sign-in timed out. Please try again.' };
+    }
+
+    if (winner.kind === 'browser-error') {
+      console.warn('[oauth] WebBrowser failed', winner.error);
+      return { error: (winner.error as any)?.message ?? 'Google sign-in failed' };
+    }
+
     const result = winner.result;
 
     if (result.type === 'cancel' || result.type === 'dismiss') {
@@ -88,64 +104,28 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
     }
 
     if (result.type !== 'success') {
-      // eslint-disable-next-line no-console
       console.warn('[oauth] WebBrowser returned non-success:', result.type);
       return { error: `Google sign-in did not complete (${result.type}).` };
     }
 
-    const url = new URL(result.url);
-    // Two possible response shapes:
-    // 1. Implicit flow — tokens in the URL hash fragment (#access_token=…&refresh_token=…)
-    // 2. PKCE flow — single-use code in the query string (?code=…) that needs to be exchanged
-    const fragment = url.hash.slice(1);
-    const search = url.search.slice(1);
-    const hashParams = new URLSearchParams(fragment);
-    const queryParams = new URLSearchParams(search);
-
-    const accessToken = hashParams.get('access_token') ?? queryParams.get('access_token');
-    const refreshToken = hashParams.get('refresh_token') ?? queryParams.get('refresh_token');
-    const code = queryParams.get('code') ?? hashParams.get('code');
-    const oauthError = hashParams.get('error') ?? queryParams.get('error');
-    const oauthErrorDescription =
-      hashParams.get('error_description') ?? queryParams.get('error_description');
-
-    if (oauthError) {
-      // eslint-disable-next-line no-console
-      console.warn('[oauth] provider returned error', oauthError, oauthErrorDescription);
-      return { error: `${oauthError}: ${oauthErrorDescription ?? 'no description'}` };
-    }
-
-    if (accessToken && refreshToken) {
-      const { error: setErr } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-      if (setErr) {
-        // eslint-disable-next-line no-console
-        console.warn('[oauth] setSession failed', setErr);
-        return { error: setErr.message };
-      }
+    const callback = await consumeAuthCallbackUrl(result.url);
+    if (callback.status === 'success') {
       return { error: null };
     }
-
-    if (code) {
-      const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
-      if (exErr) {
-        // eslint-disable-next-line no-console
-        console.warn('[oauth] exchangeCodeForSession failed', exErr);
-        return { error: exErr.message };
-      }
-      return { error: null };
+    if (callback.status === 'error') {
+      console.warn('[oauth] callback failed', callback.error);
+      return { error: callback.error };
     }
 
-    // eslint-disable-next-line no-console
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) return { error: null };
+
     console.warn('[oauth] callback URL had neither tokens nor code', result.url);
     return {
       error:
         'Google sign-in returned without credentials. Check that the redirect URI is whitelisted in Supabase (Authentication → URL Configuration → Redirect URLs).',
     };
   } catch (e: any) {
-    // eslint-disable-next-line no-console
     console.warn('[oauth] exception', e);
     return { error: e?.message ?? 'Google sign-in failed' };
   } finally {
@@ -174,15 +154,19 @@ export async function signInWithApple(): Promise<{ error: string | null }> {
       nonce: hashedNonce,
     });
 
+    if (!credential.identityToken) {
+      return { error: 'Apple did not return an identity token. Please try again.' };
+    }
+
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
-      token: credential.identityToken!,
+      token: credential.identityToken,
       nonce: rawNonce,
     });
 
     return { error: error?.message ?? null };
   } catch (e: any) {
-    if (e?.code === 'ERR_REQUEST_CANCELED') return { error: null };
+    if (e?.code === 'ERR_REQUEST_CANCELED') return { error: '__cancelled__' };
     return { error: e?.message ?? 'Apple Sign-In failed' };
   }
 }
