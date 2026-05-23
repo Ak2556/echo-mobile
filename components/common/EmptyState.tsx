@@ -23,10 +23,10 @@ export function EmptyState({ icon, title, subtitle, actionLabel, onAction }: Emp
   return (
     <Animated.View
       entering={animation(FadeIn.duration(220))}
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingVertical: 32 }}
+      style={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingVertical: 48 }}
     >
       {icon && (
-        <View style={{ marginBottom: 18, opacity: 0.7 }}>
+        <View style={{ marginBottom: 18, opacity: 0.6 }}>
           {icon}
         </View>
       )}

@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Switch, StyleSheet, Dimensions, Pressable } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { BookmarkSimple, Bell, CalendarBlank, CaretRight, Compass, Envelope, FilmStrip, Gear, Images, SignOut, Sparkle, SquaresFour, Users } from 'phosphor-react-native';
@@ -34,7 +33,7 @@ const SETTINGS_ROWS = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { colors, radius, switchTrack } = useTheme();
+  const { colors, radius, switchTrack, font } = useTheme();
   const insets = useSafeAreaInsets();
   const {
     userId,
@@ -60,22 +59,14 @@ export default function ProfileScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <LinearGradient
-        colors={[`${avatarColor || colors.accent}${colors.isDark ? '60' : '24'}`, colors.bg, colors.isDark ? colors.bgPure : colors.bg]}
-        locations={[0, 0.36, 1]}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}>
-        <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>@{username || 'user'}</Text>
+        <View style={{ paddingTop: insets.top + 14, paddingHorizontal: 16, paddingBottom: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 13 }]}>@{username || 'user'}</Text>
           <AnimatedPressable
             onPress={() => router.push('/edit-profile')}
-            style={{ position: 'absolute', right: 16, backgroundColor: colors.surfaceHover, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
+            style={{ position: 'absolute', right: 16, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
           >
-            <Text style={{ color: colors.text, fontSize: 12, fontWeight: '700' }}>Edit Profile</Text>
+            <Text style={[font.bodySemibold, { color: colors.text, fontSize: 12 }]}>Edit Profile</Text>
           </AnimatedPressable>
         </View>
 
@@ -96,15 +87,15 @@ export default function ProfileScreen() {
         <StreakXPBadge />
 
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
-          <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.8 }}>{displayLabel}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>@{username || 'user'}</Text>
+          <Text style={[font.displayBlack, { color: colors.text, fontSize: 28 }]}>{displayLabel}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 14, marginTop: 4 }]}>@{username || 'user'}</Text>
           {bio ? (
-            <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 10 }}>
+            <Text style={[font.body, { color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 10 }]}>
               {bio}
             </Text>
           ) : (
             <AnimatedPressable onPress={() => router.push('/edit-profile')} style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 14, fontStyle: 'italic' }}>Add a bio</Text>
+              <Text style={[font.quote, { color: colors.textMuted, fontSize: 14 }]}>Add a bio</Text>
             </AnimatedPressable>
           )}
         </View>
@@ -196,45 +187,53 @@ export default function ProfileScreen() {
         )}
 
         <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginLeft: 4 }}>Account</Text>
-          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 16 }}>
+          <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10, marginLeft: 4 }]}>Account</Text>
+          <View style={{ marginBottom: 16, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface }}>
             <View style={{ paddingHorizontal: 16 }}>
               {SETTINGS_ROWS.map(({ key, Icon, label, route }, index) => (
                 <React.Fragment key={key}>
                   <AnimatedPressable
                     onPress={() => route ? router.push(route as any) : router.push({ pathname: '/followers', params: { userId, tab: 'followers' } })}
-                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14 }}
                   >
-                    <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                      <Icon color={colors.textSecondary} size={17} />
-                    </View>
-                    <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>{label}</Text>
+                    <Icon color={colors.textSecondary} size={18} />
+                    <Text style={[font.body, { color: colors.text, fontSize: 15, flex: 1 }]}>{label}</Text>
                     <CaretRight color={colors.textMuted} size={16} />
                   </AnimatedPressable>
-                  {index < SETTINGS_ROWS.length - 1 ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} /> : null}
+                  {index < SETTINGS_ROWS.length - 1 ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 32 }} /> : null}
                 </React.Fragment>
               ))}
             </View>
-          </GlassPanel>
+          </View>
 
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginLeft: 4 }}>Quick controls</Text>
-          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 16 }}>
+          <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10, marginLeft: 4 }]}>Quick controls</Text>
+          <View style={{ marginBottom: 16, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface }}>
             <View style={{ paddingHorizontal: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13 }}>
-                <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                  <Bell color={colors.textSecondary} size={17} />
-                </View>
-                <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>Notifications</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14 }}>
+                <Bell color={colors.textSecondary} size={18} />
+                <Text style={[font.body, { color: colors.text, fontSize: 15, flex: 1 }]}>Notifications</Text>
                 <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={switchTrack} thumbColor="#fff" />
               </View>
             </View>
-          </GlassPanel>
+          </View>
 
-          <AnimatedPressable onPress={() => { void signOut(); }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(239,68,68,0.28)', marginBottom: 8 }}>
-            <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: 'rgba(239,68,68,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-              <SignOut color={colors.danger} size={17} />
-            </View>
-            <Text style={{ color: colors.danger, fontSize: 15, fontWeight: '500' }}>Sign Out</Text>
+          <AnimatedPressable
+            onPress={() => { void signOut(); }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingHorizontal: 16,
+              paddingVertical: 13,
+              borderRadius: radius.full,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: 'rgba(239,68,68,0.32)',
+              marginBottom: 8,
+            }}
+          >
+            <SignOut color={colors.danger} size={15} />
+            <Text style={[font.bodySemibold, { color: colors.danger, fontSize: 14 }]}>Sign Out</Text>
           </AnimatedPressable>
         </View>
       </ScrollView>
@@ -243,11 +242,11 @@ export default function ProfileScreen() {
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   return (
     <View style={{ alignItems: 'center' }}>
-      <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.8 }}>{value}</Text>
-      <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{label}</Text>
+      <Text style={[font.display, { color: colors.text, fontSize: 22 }]}>{value}</Text>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{label}</Text>
     </View>
   );
 }
