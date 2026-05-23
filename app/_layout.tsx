@@ -24,6 +24,11 @@ if (persistGet<number>('_dataVersion', 0) < DATA_VERSION) {
   persistSet('_dataVersion', DATA_VERSION);
 }
 
+// Cold-start timing — module-load happens before any React render.
+// We compare against the first useEffect tick in RootLayout to get a
+// JS-load-to-mounted-tree duration. Reported via analytics as app_open.cold_ms.
+const COLD_START_T0 = Date.now();
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -188,7 +193,8 @@ export default function RootLayout() {
   // One app_open per cold start. Background→foreground transitions are
   // tracked separately via AppState in lib/supabase.ts (auto-refresh).
   useEffect(() => {
-    track('app_open');
+    const coldMs = Date.now() - COLD_START_T0;
+    track('app_open', { cold_ms: coldMs });
   }, []);
 
   // Push notification taps. The send-push edge fn embeds {kind, target_id}
