@@ -108,24 +108,45 @@ export default function LoginScreen() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
-    const bail = setTimeout(() => setGoogleLoading(false), 60_000);
-    const { error } = await signInWithGoogle();
-    clearTimeout(bail);
-    setGoogleLoading(false);
 
-    // Final fallback regardless of what error/event paths reported: if a
-    // session exists by the time we get here, the user IS signed in — bail
-    // out of error handling and navigate. Catches every silent-failure mode
-    // we've seen (WebBrowser race, listener miss, processLock contention).
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      router.replace('/(tabs)/discover');
-      return;
+    // Run signInWithGoogle in parallel with an active session poller. iOS has
+    // a known bug where WebBrowser.openAuthSessionAsync's promise never
+    // resolves even after the redirect has been consumed and the session is
+    // set. We don't wait for that promise — we just poll getSession() every
+    // 400ms for up to 60s. Whichever fires first wins.
+    const startedAt = Date.now();
+    let won = false;
+
+    const navIfSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && !won) {
+        won = true;
+        setGoogleLoading(false);
+        router.replace('/(tabs)/discover');
+        return true;
+      }
+      return false;
+    };
+
+    // Kick off the OAuth flow. We don't await its result for navigation —
+    // the poller below is the source of truth.
+    const signInPromise = signInWithGoogle();
+
+    // Poll session every 400ms.
+    while (!won && Date.now() - startedAt < 60_000) {
+      if (await navIfSession()) return;
+      await new Promise(r => setTimeout(r, 400));
     }
 
+    // If we got here without a session, signInWithGoogle either errored or
+    // was cancelled. Surface the message (if any).
+    if (won) return;
+    setGoogleLoading(false);
+    const { error } = await signInPromise;
     if (error === '__cancelled__') return;
     if (error) { showToast(error, '❌'); return; }
-    // No session and no error — treat as cancel.
+    // No error and no session — probably user dismissed Safari sheet without
+    // completing. Stay quiet.
   };
 
   const handleApple = async () => {
