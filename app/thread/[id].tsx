@@ -107,7 +107,13 @@ export default function ThreadDetailScreen() {
             <BookmarkSimple color={bookmarked ? colors.accent : colors.textSecondary} size={22} weight="fill" />
           </Pressable>
           {isOwner ? (
-            <Pressable onPress={() => setShowMenu(value => !value)} style={{ padding: 2 }}>
+            <Pressable
+              onPress={() => setShowMenu(value => !value)}
+              style={{ padding: 2 }}
+              accessibilityRole="button"
+              accessibilityLabel="Post options"
+              accessibilityHint="Opens edit, delete, and report menu"
+            >
               <DotsThreeOutline color={colors.textSecondary} size={24} />
             </Pressable>
           ) : null}

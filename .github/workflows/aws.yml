@@ -48,6 +48,8 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     environment: production
+    env:
+      API_HEALTHCHECK_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
 
     steps:
     - name: Checkout
@@ -92,3 +94,23 @@ jobs:
         service: ${{ env.ECS_SERVICE }}
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
+
+    # Post-deploy health check. Requires the EXPO_PUBLIC_API_URL secret to
+    # be set to the deployed FastAPI URL. The job fails the build if /health
+    # does not return 200 within 30s — that's our signal to roll back.
+    - name: Verify /health
+      if: ${{ env.API_HEALTHCHECK_URL != '' }}
+      env:
+        EXPO_PUBLIC_API_URL: ${{ env.API_HEALTHCHECK_URL }}
+      run: |
+        set -euo pipefail
+        echo "Polling ${EXPO_PUBLIC_API_URL%/}/health"
+        for i in $(seq 1 10); do
+          if curl --fail --silent --show-error --max-time 5 "${EXPO_PUBLIC_API_URL%/}/health" > /dev/null; then
+            echo "Healthcheck OK on attempt $i"
+            exit 0
+          fi
+          sleep 3
+        done
+        echo "Healthcheck failed after 10 attempts" >&2
+        exit 1

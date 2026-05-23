@@ -74,6 +74,22 @@ Frontend variables use the `EXPO_PUBLIC_` prefix because Expo embeds them into t
 
 Backend-only secrets belong in `backend/.env`, Supabase secrets, EAS environment variables, or GitHub Actions secrets depending on the runtime.
 
+### EAS Secrets (production/preview builds)
+
+`eas.json` deliberately ships **no** `env` blocks — every value is sourced
+from EAS Secrets at build time. Set them once per project:
+
+```bash
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://<ref>.supabase.co"
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<anon-key>"
+eas secret:create --scope project --name EXPO_PUBLIC_SENTRY_DSN --value "https://<key>@sentry.io/<project>"
+eas secret:create --scope project --name EXPO_PUBLIC_POSTHOG_KEY --value "phc_..."
+eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value "https://<your-fastapi>.up.railway.app"
+```
+
+List and rotate with `eas secret:list` / `eas secret:delete`. Local `.env`
+values are only used by `npm start` / Expo Go.
+
 See [docs/security/environment-and-secrets.md](docs/security/environment-and-secrets.md) for the full policy.
 
 ## Architecture
@@ -145,8 +161,11 @@ Tracking shipped vs. still-blocked work toward App Store submission.
 | Apple-app-site-association spec | shipped (needs hosting at echo.app) |
 | Privacy policy + Terms of Service drafts | shipped in `docs/` (need legal entity name + jurisdiction) |
 | App Store listing copy + reviewer notes | shipped in `docs/app-store-listing.md` |
-| Sentry SDK install + DSN | blocked on user — see `lib/monitoring.ts` |
-| Analytics SDK (PostHog / Amplitude) | blocked on user — see `lib/analytics.ts` |
+| Sentry SDK install + DSN | shipped — set `EXPO_PUBLIC_SENTRY_DSN` in EAS Secrets |
+| Analytics SDK (PostHog) | shipped — set `EXPO_PUBLIC_POSTHOG_KEY` in EAS Secrets, consent-gated |
+| Analytics consent banner (GDPR-friendly) | shipped — `components/ConsentBanner.tsx` |
+| AI rate limiting (Edge Function + Postgres) | shipped — see `supabase/migrations/*_add_ai_rate_limit.sql` |
+| Content moderation before publishing | shipped — see `supabase/functions/echo-ai/moderation.ts` |
 | APNs cert + Expo Push wiring | blocked on user (Apple Developer account) |
 | Production EAS build (Distribution Cert) | blocked on user (Apple Developer creds) |
 | App icon, screenshots, support + privacy URLs hosted | blocked on user |

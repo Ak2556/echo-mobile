@@ -15,6 +15,16 @@ export type EchoAIEvent =
   | { type: 'done' }
   | { type: 'error'; message: string };
 
+/**
+ * True when the message text matches the Edge Function's rate-limit error.
+ * Lets callers show a dedicated toast/inline UI instead of the generic
+ * red-banner treatment for other failures.
+ */
+export function isRateLimitError(message: string | undefined | null): boolean {
+  if (!message) return false;
+  return /rate limit reached/i.test(message);
+}
+
 export function normalizeEchoAIError(message: string): string {
   const prefix = message.match(/^OpenRouter\s+\d+:\s*/)?.[0] ?? '';
   const raw = prefix ? message.slice(prefix.length) : message;

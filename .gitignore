@@ -52,6 +52,7 @@ app-example
 .claude/
 .claire/
 .codex/
+.cursor/
 .qodo/
 .mcp.json
 

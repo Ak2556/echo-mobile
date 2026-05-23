@@ -86,7 +86,8 @@
           "photosPermission": "Allow Echo to access your photos to share images.",
           "cameraPermission": "Allow Echo to use your camera to take photos and videos."
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,16 +1,12 @@
 /**
- * Product analytics facade.
+ * Product analytics facade backed by posthog-react-native.
  *
- * For v1 launch we ship a no-op stub with a typed event vocabulary so call
- * sites are correct. Before submitting to the App Store, install your
- * preferred SDK and wire it up here:
+ * Initialisation is lazy and consent-gated: PostHog is only loaded if
+ * EXPO_PUBLIC_POSTHOG_KEY is set AND the user has accepted analytics in
+ * the consent banner. Until that happens every `track()` is a no-op.
  *
- *   PostHog:  npx expo install posthog-react-native
- *   Amplitude: npx expo install @amplitude/analytics-react-native
- *
- * Then replace the `track` body with the SDK call. The event vocabulary
- * below is the canonical list — adding a new event means adding it to the
- * union so we don't ship typos.
+ * The typed event vocabulary below is the canonical list — adding a new
+ * event means adding it to the union so we don't ship typos.
  */
 
 export type AnalyticsEvent =
@@ -42,40 +38,89 @@ export type AnalyticsEvent =
   | 'chat_message_sent'
   | 'chat_tool_executed'
   | 'chat_tool_rejected'
+  | 'chat_rate_limited'
   // ── Notifications ──
   | 'push_permission_granted'
   | 'push_permission_denied'
-  | 'notification_tapped';
+  | 'notification_tapped'
+  // ── Consent ──
+  | 'consent_accepted'
+  | 'consent_declined';
 
 export interface AnalyticsProps {
   [key: string]: string | number | boolean | undefined | null;
 }
 
-const ENABLED = false;
+// Optional dependency — only resolved when the native module is bundled.
+type PostHogModule = { default: new (key: string, options?: Record<string, unknown>) => PostHogInstance } | null;
+
+interface PostHogInstance {
+  capture(event: string, properties?: Record<string, unknown>): void;
+  identify(userId: string, traits?: Record<string, unknown>): void;
+  reset(): void;
+}
+
+let client: PostHogInstance | null = null;
+let initialised = false;
+
+function loadPostHog(): PostHogModule {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('posthog-react-native') as PostHogModule;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Initialise PostHog. Must only be called after the user has accepted
+ * analytics consent (see components/ConsentBanner). Safe to call multiple
+ * times — only the first call performs the underlying init.
+ */
+export function initAnalytics(): void {
+  if (initialised) return;
+  const key = process.env.EXPO_PUBLIC_POSTHOG_KEY;
+  if (!key) return;
+  const host = process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://app.posthog.com';
+  const mod = loadPostHog();
+  if (!mod) return;
+  try {
+    const PostHogCtor = mod.default;
+    client = new PostHogCtor(key, { host, flushAt: 20, flushInterval: 30000 });
+    initialised = true;
+  } catch (e) {
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.warn('[analytics] PostHog init failed', e);
+    }
+  }
+}
 
 export function track(event: AnalyticsEvent, props?: AnalyticsProps): void {
-  if (!ENABLED) {
+  if (!initialised || !client) {
     if (__DEV__) {
       // eslint-disable-next-line no-console
       console.log('[analytics]', event, props ?? '');
     }
     return;
   }
-  // SDK integration goes here.
+  client.capture(event, props as Record<string, unknown> | undefined);
 }
 
 /** Set the user id and any traits for subsequent events. */
 export function identify(userId: string, traits?: AnalyticsProps): void {
-  if (!ENABLED) {
+  if (!initialised || !client) {
     if (__DEV__) {
       // eslint-disable-next-line no-console
       console.log('[analytics] identify', userId, traits ?? '');
     }
     return;
   }
+  client.identify(userId, traits as Record<string, unknown> | undefined);
 }
 
 /** Drop the identity on sign-out. */
 export function resetIdentity(): void {
-  if (!ENABLED) return;
+  if (!initialised || !client) return;
+  client.reset();
 }

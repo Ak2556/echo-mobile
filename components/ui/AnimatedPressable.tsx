@@ -136,8 +136,11 @@ function HeavyPressable({
   style,
   disabled,
   performanceMode = 'default',
+  accessibilityRole,
+  accessibilityLabel,
   ...props
 }: AnimatedPressableProps) {
+  const inferredLabel = accessibilityLabel ?? (typeof children === 'function' ? undefined : extractStringLabel(children));
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(disabled && dimWhenDisabled ? 0.45 : 1);
@@ -226,6 +229,9 @@ function HeavyPressable({
         };
       }}
       disabled={disabled}
+      accessibilityRole={accessibilityRole ?? 'button'}
+      accessibilityLabel={inferredLabel}
+      accessibilityState={disabled ? { disabled: true } : undefined}
       style={[animStyle, style]}
       {...props}
     >
