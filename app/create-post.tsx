@@ -24,6 +24,8 @@ import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { playSoundEffect } from '../lib/sound';
 import { track } from '../lib/analytics';
+import { getPushPermissionStatus, registerForPush } from '../lib/push';
+import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
@@ -70,6 +72,7 @@ export default function CreatePostScreen() {
     : ''
   );
   const [publishedEchoPreview, setPublishedEchoPreview] = useState<{ title: string } | null>(null);
+  const [showPushPrePrompt, setShowPushPrePrompt] = useState(false);
   const ceremonyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Cancel the ceremony timer if the user navigates away before it fires
   React.useEffect(() => () => { if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current); }, []);
@@ -344,7 +347,20 @@ export default function CreatePostScreen() {
       const previewTitle = publishedEcho.editorialTitle ?? publishedEcho.prompt ?? 'Your echo is live.';
       setPublishedEchoPreview({ title: previewTitle });
       if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current);
-      ceremonyTimer.current = setTimeout(() => {
+      ceremonyTimer.current = setTimeout(async () => {
+        // After the first publish, ask once whether to enable push (pre-prompt
+        // before the OS prompt). If permission is already granted/denied we
+        // skip straight to the feed.
+        if (isFirst) {
+          try {
+            const status = await getPushPermissionStatus();
+            if (status === 'undetermined') {
+              setPublishedEchoPreview(null);
+              setShowPushPrePrompt(true);
+              return;
+            }
+          } catch { /* fall through to feed */ }
+        }
         router.replace('/(tabs)/discover');
       }, 1800);
     } catch (e) {
@@ -361,6 +377,20 @@ export default function CreatePostScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Post-publish push pre-prompt (first echo only, status === undetermined). */}
+      <PushPrePrompt
+        visible={showPushPrePrompt}
+        onAccept={async () => {
+          setShowPushPrePrompt(false);
+          await registerForPush();
+          router.replace('/(tabs)/discover');
+        }}
+        onDecline={() => {
+          setShowPushPrePrompt(false);
+          router.replace('/(tabs)/discover');
+        }}
+      />
+
       {/* Publish ceremony overlay */}
       <Modal visible={!!publishedEchoPreview} transparent animationType="none">
         <Animated.View

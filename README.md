@@ -125,6 +125,34 @@ Deployment surfaces are split by runtime:
 
 Deployment guide: [docs/deployment/deployment-guide.md](docs/deployment/deployment-guide.md).
 
+## Launch readiness (v1)
+
+Tracking shipped vs. still-blocked work toward App Store submission.
+
+| Area | Status |
+| --- | --- |
+| App stability — themed error boundary, Sentry-ready capture | shipped |
+| Auth lock, session restore, signup with live username check | shipped |
+| Account deletion (Apple Guideline 5.1.1(v)) | shipped — `app/delete-account.tsx` |
+| AI disclosure inline + in Privacy Policy | shipped |
+| Visual identity unified — indigo accent, no neon, no ambient gradients | shipped |
+| Tab vocabulary — Home / Explore / Echo / Chat / Activity / You | shipped |
+| Empty/loading states via EmptyState + skeletons | shipped (most surfaces) |
+| First-Echo launch coach + post-publish push pre-prompt | shipped |
+| Deep links — `/e/<id>`, `/u/<id>`, `/c/<id>` | shipped |
+| AnimatedPressable lite-default, lazy worklets | shipped |
+| Engagement analytics — track() wired across like, react, follow, chat, search | shipped (stub backend) |
+| Apple-app-site-association spec | shipped (needs hosting at echo.app) |
+| Privacy policy + Terms of Service drafts | shipped in `docs/` (need legal entity name + jurisdiction) |
+| App Store listing copy + reviewer notes | shipped in `docs/app-store-listing.md` |
+| Sentry SDK install + DSN | blocked on user — see `lib/monitoring.ts` |
+| Analytics SDK (PostHog / Amplitude) | blocked on user — see `lib/analytics.ts` |
+| APNs cert + Expo Push wiring | blocked on user (Apple Developer account) |
+| Production EAS build (Distribution Cert) | blocked on user (Apple Developer creds) |
+| App icon, screenshots, support + privacy URLs hosted | blocked on user |
+
+Open the launch plan in conversation history to see per-phase notes. See `docs/app-store-listing.md` for the full submission checklist.
+
 ## Maintainers
 
 Repository stewardship is assigned to `Ak2556`. Keep commits, PR descriptions, documentation, and release notes professional and free of unrelated personal metadata.
