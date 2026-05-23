@@ -168,7 +168,7 @@ export default function ExpensesApp() {
       )}
 
       {filtered.map((tx, i) => (
-        <Animated.View key={tx.id} entering={FadeInDown.delay(i * 40).springify()} style={{ marginBottom: 10 }}>
+        <Animated.View key={tx.id} entering={FadeInDown.delay(i * 40).duration(220)} style={{ marginBottom: 10 }}>
           <GlassPanel variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}>
             <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: tx.type === 'income' ? '#10B98118' : '#EF444418', borderWidth: 1, borderColor: tx.type === 'income' ? '#10B98133' : '#EF444433', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ fontSize: 22 }}>{categoryEmoji(tx.category)}</Text>

@@ -91,7 +91,7 @@ export default function OfficeHoursScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.accent} />}
         >
           {list.map((oh, i) => (
-            <Animated.View key={oh.id} entering={FadeInUp.delay(i * 30).springify().damping(18).stiffness(140)}>
+            <Animated.View key={oh.id} entering={FadeInUp.delay(i * 30).duration(220)}>
               <OfficeHourCard
                 oh={oh}
                 onRSVP={async (going) => {

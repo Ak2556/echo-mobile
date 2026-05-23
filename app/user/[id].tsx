@@ -82,7 +82,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         actions={menuActions}
       />
 
-      <Animated.View entering={animation(FadeInDown.delay(100).springify())} className="items-center px-4 pt-2 pb-4">
+      <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="items-center px-4 pt-2 pb-4">
         <AnimatedPressable scaleValue={0.93} haptic="light">
           <View className="relative">
             {user.avatarUrl ? (

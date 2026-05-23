@@ -71,7 +71,7 @@ function Section({ title, icon, quests }: { title: string; icon: React.ReactNode
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{title}</Text>
       </View>
       {quests.map((q, i) => (
-        <Animated.View key={q.id} entering={FadeInUp.delay(i * 30).springify()}>
+        <Animated.View key={q.id} entering={FadeInUp.delay(i * 30).duration(220)}>
           <QuestRow quest={q} />
         </Animated.View>
       ))}

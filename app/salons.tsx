@@ -89,7 +89,7 @@ export default function SalonsScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.accent} />}
         >
           {salons.map((salon, i) => (
-            <Animated.View key={salon.id} entering={FadeInUp.delay(i * 30).springify().damping(18).stiffness(140)}>
+            <Animated.View key={salon.id} entering={FadeInUp.delay(i * 30).duration(220)}>
               <SalonCard salon={salon} onToggle={async (join) => {
                 try {
                   await setSalonMembership(salon.id, join);

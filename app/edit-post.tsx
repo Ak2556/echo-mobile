@@ -168,7 +168,7 @@ export default function EditPostScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-          <Animated.View entering={animation(FadeInDown.delay(30).springify())} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
+          <Animated.View entering={animation(FadeInDown.delay(30).duration(220))} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(username || '?').charAt(0).toUpperCase()}</Text>
             </View>
@@ -294,7 +294,7 @@ export default function EditPostScreen() {
             </Animated.View>
           )}
 
-          <Animated.View entering={animation(FadeInDown.delay(50).springify())}>
+          <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
               <Hash color={colors.textMuted} size={13} />
               <Text style={[s.label, { marginBottom: 0 }]}>Tags</Text>

@@ -34,7 +34,7 @@ export function StoryCircles() {
     >
       {/* Your story — hide the create button when remote (stories not yet server-backed) */}
       {!remote && (
-      <Animated.View entering={animation(FadeInRight.delay(0).springify())}>
+      <Animated.View entering={animation(FadeInRight.delay(0).duration(220))}>
         <AnimatedPressable
           onPress={() => router.push('/create-story' as any)}
           style={{ alignItems: 'center', width: 68 }}
@@ -94,7 +94,7 @@ export function StoryCircles() {
         return (
           <Animated.View
             key={story.userId}
-            entering={animation(FadeInRight.delay((idx + 1) * 60).springify())}
+            entering={animation(FadeInRight.delay((idx + 1) * 60).duration(220))}
           >
             <AnimatedPressable
               onPress={() =>

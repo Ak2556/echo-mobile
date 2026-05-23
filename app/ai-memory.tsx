@@ -120,7 +120,7 @@ export default function AIMemoryScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Animated.View entering={animation(FadeInDown.delay(60).springify())}>
+          <Animated.View entering={animation(FadeInDown.delay(60).duration(220))}>
             <GlassPanel borderRadius={radius.card} contentStyle={{ padding: 16 }}>
               <View style={styles.summaryRow}>
                 <View style={[styles.summaryIcon, { backgroundColor: colors.surfaceHover, borderRadius: radius.md }]}>
@@ -138,7 +138,7 @@ export default function AIMemoryScreen() {
             </GlassPanel>
           </Animated.View>
 
-          <Animated.View entering={animation(FadeInDown.delay(120).springify())}>
+          <Animated.View entering={animation(FadeInDown.delay(120).duration(220))}>
             {loading ? (
               <Text style={[styles.emptyText, { color: colors.textMuted, fontSize: fontSizes.body }]}>Loading memory...</Text>
             ) : items.length === 0 ? (

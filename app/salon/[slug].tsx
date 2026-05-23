@@ -110,7 +110,7 @@ export default function SalonDetailScreen() {
       >
         {/* Salon header card */}
         <Animated.View
-          entering={FadeInUp.springify().damping(18).stiffness(140)}
+          entering={FadeInUp.duration(220)}
           style={{
             margin: 16,
             padding: 16,

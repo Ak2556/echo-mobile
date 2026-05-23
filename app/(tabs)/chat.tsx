@@ -23,6 +23,7 @@ import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, CaretDown } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
+import { track } from '../../lib/analytics';
 
 const EMPTY_SUGGESTIONS = ['Ask for a better hook', 'Turn an idea into a post', 'Run a poll for me', 'Summarize a note'];
 
@@ -316,6 +317,7 @@ export default function ChatScreen() {
       if (!currentSessionId) return;
       const userId = `u-${Date.now()}`;
       const isFirst = (useAppStore.getState().messagesBySession[currentSessionId] || []).length === 0;
+      track('chat_message_sent', { is_first_in_session: isFirst, length: text.length, model: aiModel });
       addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt: new Date().toISOString() });
       runStream({
         message: text,

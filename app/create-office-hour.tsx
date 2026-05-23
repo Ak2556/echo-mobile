@@ -91,17 +91,17 @@ export default function CreateOfficeHourScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
-        <Animated.View entering={animation(FadeInDown.springify())} style={{ marginBottom: 16 }}>
+        <Animated.View entering={animation(FadeInDown.duration(220))} style={{ marginBottom: 16 }}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Topic</Text>
           <TextInput value={topic} onChangeText={setTopic} placeholder="What's the conversation about?" maxLength={80} />
         </Animated.View>
 
-        <Animated.View entering={animation(FadeInDown.delay(100).springify())} style={{ marginBottom: 16 }}>
+        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={{ marginBottom: 16 }}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Description (optional)</Text>
           <TextInput value={description} onChangeText={setDescription} placeholder="Set expectations for what you'll cover" multiline />
         </Animated.View>
 
-        <Animated.View entering={animation(FadeInDown.delay(200).springify())} style={{ marginBottom: 16 }}>
+        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} style={{ marginBottom: 16 }}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>When</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {START_OFFSETS.map((opt) => {
@@ -129,7 +129,7 @@ export default function CreateOfficeHourScreen() {
           </Text>
         </Animated.View>
 
-        <Animated.View entering={animation(FadeInDown.delay(300).springify())} style={{ marginBottom: 24 }}>
+        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} style={{ marginBottom: 24 }}>
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Duration</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {DURATIONS.map(d => {

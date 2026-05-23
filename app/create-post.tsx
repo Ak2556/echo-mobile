@@ -368,7 +368,7 @@ export default function CreatePostScreen() {
           exiting={FadeOut.duration(200)}
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.88)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
         >
-          <Animated.View entering={ZoomIn.springify().damping(22).stiffness(260)} style={{ alignItems: 'center' }}>
+          <Animated.View entering={ZoomIn.duration(220)} style={{ alignItems: 'center' }}>
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(16,185,129,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
               <CheckCircle color="#10B981" size={38} weight="fill" />
             </View>
@@ -470,7 +470,7 @@ export default function CreatePostScreen() {
         <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
           {/* Author */}
-          <Animated.View entering={animation(FadeInDown.delay(40).springify())} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
+          <Animated.View entering={animation(FadeInDown.delay(40).duration(220))} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
             {avatarUrl ? (
               <Image
                 source={{ uri: avatarUrl }}
@@ -743,7 +743,7 @@ export default function CreatePostScreen() {
           )}
 
           {/* Shared tags */}
-          <Animated.View entering={animation(FadeInDown.delay(60).springify())}>
+          <Animated.View entering={animation(FadeInDown.delay(60).duration(220))}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
               <Hash color={colors.textMuted} size={13} />
               <Text style={[s.label, { marginBottom: 0 }]}>Tags</Text>

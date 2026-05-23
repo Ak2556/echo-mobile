@@ -153,7 +153,7 @@ export default function DiceApp() {
         </Animated.View>
 
         {result !== null && (
-          <Animated.View entering={FadeInDown.springify()} style={{ alignItems: 'center' }}>
+          <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
             <Text style={{ color: selectedDie.color, fontSize: 52, fontWeight: '900', letterSpacing: -2 }}>{result}</Text>
             {diceCount > 1 && <Text style={{ color: colors.textMuted, fontSize: 14 }}>{diceCount}× {selectedDie.label} · total</Text>}
           </Animated.View>
@@ -183,7 +183,7 @@ export default function DiceApp() {
           </Pressable>
         </Animated.View>
         {coinFace && (
-          <Animated.View entering={FadeInDown.springify()} style={{ alignItems: 'center' }}>
+          <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
             <Text style={{ color: coinFace === 'heads' ? '#F59E0B' : '#6366F1', fontSize: 28, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 }}>{coinFace}</Text>
           </Animated.View>
         )}

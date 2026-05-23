@@ -7,6 +7,7 @@ import { showToast } from '../ui/Toast';
 import { User } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { track } from '../../lib/analytics';
 
 interface UserRowProps {
   user: User;
@@ -34,6 +35,7 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
         withSpring(1, { damping: 12, stiffness: 300 })
       );
     }
+    if (!following) track('user_followed', { user_id: user.id });
     if (onFollowPress) {
       onFollowPress();
     } else {

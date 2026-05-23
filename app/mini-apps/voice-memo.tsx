@@ -237,7 +237,7 @@ export default function VoiceMemoApp() {
         </View>
       ) : (
         memos.map((memo, i) => (
-          <Animated.View key={memo.id} entering={FadeInDown.delay(i * 40).springify()} style={{ marginBottom: 10 }}>
+          <Animated.View key={memo.id} entering={FadeInDown.delay(i * 40).duration(220)} style={{ marginBottom: 10 }}>
             <GlassPanel
               variant="medium"
               borderRadius={18}

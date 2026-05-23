@@ -130,7 +130,7 @@ export default function DailyQuestionScreen() {
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
           {/* Prompt card — large, hero-feeling */}
           <Animated.View
-            entering={FadeInUp.delay(50).springify().damping(18).stiffness(140)}
+            entering={FadeInUp.delay(50).duration(220)}
             style={{
               backgroundColor: colors.surface,
               borderRadius: radius.lg,
@@ -153,7 +153,7 @@ export default function DailyQuestionScreen() {
 
           {/* Compose card */}
           <Animated.View
-            entering={FadeInUp.delay(150).springify().damping(18).stiffness(140)}
+            entering={FadeInUp.delay(150).duration(220)}
             style={{
               backgroundColor: colors.surface,
               borderRadius: radius.lg,
@@ -223,7 +223,7 @@ export default function DailyQuestionScreen() {
               </Text>
             </Animated.View>
           ) : (
-            <Animated.View entering={SlideInDown.springify().damping(16).stiffness(140)}>
+            <Animated.View entering={SlideInDown.duration(220)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginHorizontal: 4 }}>
                 <Text style={{ color: colors.text, fontWeight: '700', fontSize: 17 }}>
                   Everyone's takes

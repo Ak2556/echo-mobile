@@ -52,6 +52,23 @@ function AuthListener() {
   // Exchange token from deep-link URL (email confirmation / OAuth callback).
   // Works with both the production scheme (echo://) and Expo Go (exp://).
   const handleDeepLink = async (url: string) => {
+    // Universal Links: https://echo.app/e/<id> → /thread/<id>,
+    //                  https://echo.app/u/<id> → /user/<id>,
+    //                  https://echo.app/c/<id> → /comments/<id>.
+    // The web side hosts an apple-app-site-association file at
+    // /.well-known/apple-app-site-association so iOS opens these URLs in the
+    // app instead of Safari. The route table here mirrors that AASA file.
+    try {
+      const parsed = new URL(url);
+      const isUniversal = parsed.hostname === 'echo.app' || parsed.hostname === 'www.echo.app';
+      if (isUniversal) {
+        const [, prefix, id] = parsed.pathname.split('/');
+        if (prefix === 'e' && id) { router.push(`/thread/${id}` as any); return; }
+        if (prefix === 'u' && id) { router.push(`/user/${id}` as any); return; }
+        if (prefix === 'c' && id) { router.push(`/comments/${id}` as any); return; }
+      }
+    } catch { /* malformed URL — fall through to auth handling */ }
+
     // Only act on URLs that carry Supabase auth tokens.
     if (!url.includes('access_token') && !url.includes('type=signup') && !url.includes('type=recovery')) return;
 
