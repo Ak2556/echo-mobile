@@ -9,6 +9,7 @@ import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { TextInput } from '../../components/ui/TextInput';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
+import { V2FeatureGuard } from '../../components/common/V2FeatureGuard';
 import {
   fetchOfficeHour,
   fetchOfficeHourQuestions,
@@ -19,7 +20,7 @@ import {
   type OfficeHourQuestion,
 } from '../../lib/supabaseEchoApi';
 
-export default function OfficeHourDetailScreen() {
+function OfficeHourDetailScreenInner() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, radius, fontSizes } = useTheme();
@@ -280,3 +281,5 @@ export default function OfficeHourDetailScreen() {
     </SafeAreaView>
   );
 }
+
+export default function OfficeHourDetailScreen() { return <V2FeatureGuard flag="officeHours"><OfficeHourDetailScreenInner /></V2FeatureGuard>; }

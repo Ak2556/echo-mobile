@@ -10,6 +10,7 @@ import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { LinkifiedText } from '../components/social/LinkifiedText';
 import { useTheme } from '../lib/theme';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import {
   fetchTodaysDailyQuestion,
   fetchOwnDailyAnswer,
@@ -32,7 +33,7 @@ import {
 
 const MAX_ANSWER_LENGTH = 600;
 
-export default function DailyQuestionScreen() {
+function DailyQuestionScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
 
@@ -311,3 +312,5 @@ function AnswerCard({ a }: { a: DailyAnswerWithAuthor }) {
     </AnimatedPressable>
   );
 }
+
+export default function DailyQuestionScreen() { return <V2FeatureGuard flag="dailyQuestion"><DailyQuestionScreenInner /></V2FeatureGuard>; }
