@@ -108,29 +108,27 @@ export default function LoginScreen() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
-    // Safety timeout: if signInWithGoogle never resolves (Supabase hang,
-    // network stall, native WebBrowser stuck on a dismissed sheet), unblock
-    // the UI after 12s and surface a real error so the user isn't stranded.
-    let bailed = false;
-    const bail = setTimeout(() => {
-      bailed = true;
-      setGoogleLoading(false);
-      showToast('Google sign-in timed out — check your network and try again.', '❌');
-    }, 12_000);
+    // Safety net: clear the spinner if the call hangs longer than the user
+    // would normally wait (60s — Google sign-in on slow networks). We do NOT
+    // early-return when this fires — if signInWithGoogle eventually resolves
+    // with a real success, the AuthListener in app/_layout.tsx is the one
+    // that navigates anyway. The timeout only saves us from showing a
+    // forever-spinning button.
+    const bail = setTimeout(() => setGoogleLoading(false), 60_000);
     const { error } = await signInWithGoogle();
     clearTimeout(bail);
-    if (bailed) return;
     setGoogleLoading(false);
-    if (!error || error === '__cancelled__') {
-      if (!error) router.replace('/(tabs)/discover');
-      return;
-    }
-    showToast(error, '❌');
+    if (error === '__cancelled__') return;
+    if (error) { showToast(error, '❌'); return; }
+    // Best-effort: navigate eagerly. AuthListener will also navigate based on
+    // SIGNED_IN — whichever fires first wins, and both point to the same
+    // place (/discover or /signup-wizard for new accounts).
+    router.replace('/(tabs)/discover');
   };
 
   const handleApple = async () => {
     setAppleLoading(true);
-    const bail = setTimeout(() => setAppleLoading(false), 12_000);
+    const bail = setTimeout(() => setAppleLoading(false), 60_000);
     const { error } = await signInWithApple();
     clearTimeout(bail);
     setAppleLoading(false);
