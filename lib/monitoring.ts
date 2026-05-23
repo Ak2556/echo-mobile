@@ -1,19 +1,15 @@
 /**
- * Crash + error reporting facade.
+ * Crash + error reporting facade backed by @sentry/react-native.
  *
- * For v1 launch we ship this as a no-op stub so the call sites are correct
- * but the bundle stays small. Before submitting to the App Store, install:
+ * Initialisation is lazy: if EXPO_PUBLIC_SENTRY_DSN is unset we keep all
+ * functions as no-ops so local dev (and Expo Go without the native module)
+ * still works. Once a DSN is configured + the app is rebuilt with the
+ * native module included, calls flow through to Sentry.
  *
- *   npx expo install @sentry/react-native
- *
- * Then replace the body of `captureException` and `captureMessage` with
- *
- *   import * as Sentry from '@sentry/react-native';
- *   Sentry.captureException(error, ctx);
- *
- * And in app/_layout.tsx, call `Sentry.init({ dsn: …, tracesSampleRate: 0.1 })`
- * once before the QueryClientProvider mounts. The DSN goes in EAS env
- * vars (eas.json → build.production.env.SENTRY_DSN).
+ * Setup:
+ *   1. npx expo install @sentry/react-native           (already done)
+ *   2. Set EXPO_PUBLIC_SENTRY_DSN in EAS Secrets       (see README)
+ *   3. Rebuild the dev client / production build       (native module added)
  */
 
 interface CaptureContext {
@@ -25,45 +21,113 @@ interface CaptureContext {
   userId?: string;
 }
 
-/** Whether a real backend is wired up. Until then, we log to the console. */
-const ENABLED = false;
+// Optional dependency — only resolved when the native module is bundled.
+// In Expo Go (no native module) the require throws and Sentry stays null.
+type SentryModule = typeof import('@sentry/react-native') | null;
+
+let Sentry: SentryModule = null;
+let initialised = false;
+
+function loadSentry(): SentryModule {
+  if (Sentry) return Sentry;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    Sentry = require('@sentry/react-native');
+    return Sentry;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Initialise Sentry. Safe to call multiple times — only the first call
+ * with a valid DSN performs the underlying init.
+ */
+export function initMonitoring(): void {
+  if (initialised) return;
+  const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+  if (!dsn) return;
+  const mod = loadSentry();
+  if (!mod) return;
+  try {
+    mod.init({
+      dsn,
+      // Cut down on the verbose "you should upgrade" CI noise.
+      enableNativeNagger: false,
+      tracesSampleRate: 0.2,
+      environment: process.env.NODE_ENV ?? 'development',
+    });
+    initialised = true;
+  } catch (e) {
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.warn('[monitoring] Sentry init failed', e);
+    }
+  }
+}
+
+/**
+ * Wrap the root React component with Sentry's error boundary + perf
+ * instrumentation. No-op if Sentry isn't loaded; just returns the input.
+ */
+export function wrapRoot<T>(component: T): T {
+  const mod = loadSentry();
+  if (!mod || !initialised) return component;
+  try {
+    return mod.wrap(component as never) as unknown as T;
+  } catch {
+    return component;
+  }
+}
 
 export function captureException(error: unknown, ctx?: CaptureContext): void {
-  if (!ENABLED) {
-    // Keep a console.error fallback in development so we don't lose signal
-    // until Sentry is wired up. The fallback is silenced in production
-    // builds via __DEV__.
+  const mod = loadSentry();
+  if (!mod || !initialised) {
     if (__DEV__) {
       // eslint-disable-next-line no-console
       console.error('[monitoring]', error, ctx);
     }
     return;
   }
-  // Sentry integration goes here once installed.
+  mod.captureException(error, {
+    tags: ctx?.tags,
+    extra: ctx?.extra,
+    user: ctx?.userId ? { id: ctx.userId } : undefined,
+  });
 }
 
 export function captureMessage(message: string, ctx?: CaptureContext): void {
-  if (!ENABLED) {
+  const mod = loadSentry();
+  if (!mod || !initialised) {
     if (__DEV__) {
       // eslint-disable-next-line no-console
       console.log('[monitoring]', message, ctx);
     }
     return;
   }
+  mod.captureMessage(message, {
+    tags: ctx?.tags,
+    extra: ctx?.extra,
+    user: ctx?.userId ? { id: ctx.userId } : undefined,
+  });
 }
 
 /** Tag the current user against future events. Call after sign-in. */
 export function identifyUser(userId: string, traits?: Record<string, unknown>): void {
-  if (!ENABLED) {
+  const mod = loadSentry();
+  if (!mod || !initialised) {
     if (__DEV__) {
       // eslint-disable-next-line no-console
       console.log('[monitoring] identify', userId, traits);
     }
     return;
   }
+  mod.setUser({ id: userId, ...(traits as Record<string, unknown>) });
 }
 
 /** Drop the user association on sign-out. */
 export function clearUser(): void {
-  if (!ENABLED) return;
+  const mod = loadSentry();
+  if (!mod || !initialised) return;
+  mod.setUser(null);
 }

@@ -4,7 +4,10 @@ import type { ErrorBoundaryProps } from 'expo-router';
 import { Linking } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
-import { track, identify, resetIdentity } from '../lib/analytics';
+import { track, identify, resetIdentity, initAnalytics } from '../lib/analytics';
+import { initMonitoring, identifyUser, clearUser, wrapRoot } from '../lib/monitoring';
+import { getAnalyticsConsent } from '../lib/consent';
+import { ConsentBanner } from '../components/ConsentBanner';
 import * as Notifications from 'expo-notifications';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +33,18 @@ if (persistGet<number>('_dataVersion', 0) < DATA_VERSION) {
 // We compare against the first useEffect tick in RootLayout to get a
 // JS-load-to-mounted-tree duration. Reported via analytics as app_open.cold_ms.
 const COLD_START_T0 = Date.now();
+
+// Initialise crash reporting at module load — before any navigation renders
+// so we capture errors thrown during the first React commit. Safe no-op when
+// EXPO_PUBLIC_SENTRY_DSN is unset.
+initMonitoring();
+
+// Only initialise analytics if the user has previously accepted consent.
+// First-launch users see the ConsentBanner; accepting there calls
+// initAnalytics() inline so the very first event lands in PostHog.
+if (getAnalyticsConsent() === 'accepted') {
+  initAnalytics();
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -139,6 +154,7 @@ function AuthListener() {
         if (event === 'SIGNED_IN') {
           track('signin_completed');
           identify(session.user.id);
+          identifyUser(session.user.id);
         }
 
         let profile: {
@@ -206,6 +222,7 @@ function AuthListener() {
       } else if (event === 'SIGNED_OUT') {
         track('signout');
         resetIdentity();
+        clearUser();
         setUserId('');
         setUsername('');
         setDisplayName('');
@@ -226,7 +243,7 @@ function AuthListener() {
   return null;
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
 
   // Load Inter in the background. We DO NOT block render — system font is a
@@ -321,6 +338,7 @@ export default function RootLayout() {
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />
           <Stack.Screen name="notification-prefs" options={{ presentation: 'card' }} />
           <Stack.Screen name="delete-account" options={{ presentation: 'card' }} />
+          <Stack.Screen name="upgrade" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="story" options={{ presentation: 'transparentModal', animation: 'fade' }} />
           <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'fade' }} />
@@ -338,8 +356,13 @@ export default function RootLayout() {
           <Stack.Screen name="mini-apps/bmi" options={{ presentation: 'card' }} />
         </Stack>
         <ToastProvider />
+        <ConsentBanner />
         {commandPaletteOpen ? <CommandPalette /> : null}
       </GestureHandlerRootView>
     </QueryClientProvider>
   );
 }
+
+// Wrap with Sentry's error boundary + perf instrumentation when the native
+// module is available; otherwise this is a passthrough.
+export default wrapRoot(RootLayout);

@@ -67,10 +67,23 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
   return (
     <View>
       <View className="flex-row items-center justify-between px-4 py-2">
-        <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
+        <AnimatedPressable
+          onPress={() => router.back()}
+          className="p-1"
+          scaleValue={0.88}
+          haptic="light"
+          accessibilityLabel="Go back"
+        >
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <AnimatedPressable onPress={() => setShowMenu(true)} className="p-1" scaleValue={0.88} haptic="light">
+        <AnimatedPressable
+          onPress={() => setShowMenu(true)}
+          className="p-1"
+          scaleValue={0.88}
+          haptic="light"
+          accessibilityLabel="Profile options"
+          accessibilityHint="Opens block, mute, and report menu"
+        >
           <DotsThreeOutline color={colors.text} size={24} />
         </AnimatedPressable>
       </View>
