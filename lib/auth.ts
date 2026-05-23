@@ -35,8 +35,14 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
         skipBrowserRedirect: true,
       },
     });
-    if (error) return { error: error.message };
-    if (!data.url) return { error: 'No OAuth URL returned' };
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.warn('[oauth] supabase signInWithOAuth failed', error);
+      return { error: error.message };
+    }
+    if (!data.url) {
+      return { error: 'No OAuth URL returned from Supabase. Check that the Google provider is enabled in Supabase Auth → Providers.' };
+    }
 
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
@@ -44,19 +50,66 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
       return { error: '__cancelled__' };
     }
 
-    if (result.type === 'success') {
-      const url = new URL(result.url);
-      // Supabase returns tokens in the hash fragment; fall back to query string
-      const fragment = url.hash.slice(1) || url.search.slice(1);
-      const params = new URLSearchParams(fragment);
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      if (accessToken && refreshToken) {
-        await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-      }
+    if (result.type !== 'success') {
+      // eslint-disable-next-line no-console
+      console.warn('[oauth] WebBrowser returned non-success:', result.type);
+      return { error: `Google sign-in did not complete (${result.type}).` };
     }
-    return { error: null };
+
+    const url = new URL(result.url);
+    // Two possible response shapes:
+    // 1. Implicit flow — tokens in the URL hash fragment (#access_token=…&refresh_token=…)
+    // 2. PKCE flow — single-use code in the query string (?code=…) that needs to be exchanged
+    const fragment = url.hash.slice(1);
+    const search = url.search.slice(1);
+    const hashParams = new URLSearchParams(fragment);
+    const queryParams = new URLSearchParams(search);
+
+    const accessToken = hashParams.get('access_token') ?? queryParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token') ?? queryParams.get('refresh_token');
+    const code = queryParams.get('code') ?? hashParams.get('code');
+    const oauthError = hashParams.get('error') ?? queryParams.get('error');
+    const oauthErrorDescription =
+      hashParams.get('error_description') ?? queryParams.get('error_description');
+
+    if (oauthError) {
+      // eslint-disable-next-line no-console
+      console.warn('[oauth] provider returned error', oauthError, oauthErrorDescription);
+      return { error: `${oauthError}: ${oauthErrorDescription ?? 'no description'}` };
+    }
+
+    if (accessToken && refreshToken) {
+      const { error: setErr } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (setErr) {
+        // eslint-disable-next-line no-console
+        console.warn('[oauth] setSession failed', setErr);
+        return { error: setErr.message };
+      }
+      return { error: null };
+    }
+
+    if (code) {
+      const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
+      if (exErr) {
+        // eslint-disable-next-line no-console
+        console.warn('[oauth] exchangeCodeForSession failed', exErr);
+        return { error: exErr.message };
+      }
+      return { error: null };
+    }
+
+    // eslint-disable-next-line no-console
+    console.warn('[oauth] callback URL had neither tokens nor code', result.url);
+    return {
+      error:
+        'Google sign-in returned without credentials. Check that the redirect URI is whitelisted in Supabase (Authentication → URL Configuration → Redirect URLs).',
+    };
   } catch (e: any) {
+    // eslint-disable-next-line no-console
+    console.warn('[oauth] exception', e);
     return { error: e?.message ?? 'Google sign-in failed' };
   } finally {
     if (Platform.OS === 'android') {
