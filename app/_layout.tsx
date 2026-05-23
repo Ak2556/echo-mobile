@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import type { ErrorBoundaryProps } from 'expo-router';
 import { Linking } from 'react-native';
@@ -192,16 +192,24 @@ function AuthListener() {
 export default function RootLayout() {
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
 
-  // Load Inter — the body + display typeface. Block rendering for ~150ms
-  // worst case to avoid a font-swap flash. Once loaded, every Text component
-  // that reads `font.body` / `font.display` from theme renders in Inter.
-  const [fontsLoaded] = useFonts({
+  // Load Inter — the body + display typeface. We block render only briefly to
+  // avoid a font-swap flash on cold start. If the load takes longer than 1.5s
+  // (rare — usually first-install + asset registry warming), we fall through
+  // to system font rather than leaving the user on a spinner forever.
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
     Inter_800ExtraBold,
   });
+  const [fontTimeoutFired, setFontTimeoutFired] = useState(false);
+  useEffect(() => {
+    if (fontsLoaded) return;
+    const t = setTimeout(() => setFontTimeoutFired(true), 1500);
+    return () => clearTimeout(t);
+  }, [fontsLoaded]);
+  const canRender = fontsLoaded || fontTimeoutFired || !!fontError;
 
   // All hooks must run on every render — DO NOT add early returns above
   // this block or React will throw "rendered more hooks than during the
@@ -258,9 +266,9 @@ export default function RootLayout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Show a minimal black screen while Inter loads. Should be <150ms in practice.
-  // Conditional render happens AFTER all hooks above so the hook order is stable.
-  if (!fontsLoaded) {
+  // Show a minimal splash while Inter loads. Falls through after 1.5s so the
+  // app is never blocked by a font issue.
+  if (!canRender) {
     return (
       <View style={{ flex: 1, backgroundColor: '#0a0a0a', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color="#5B5BF8" />
