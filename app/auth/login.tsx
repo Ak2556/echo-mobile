@@ -14,6 +14,7 @@ import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
 
 type Mode = 'email' | 'phone';
+const GOOGLE_SPINNER_FAILSAFE_MS = 12_000;
 
 function TabSwitcher({ mode, onChange, colors, radius }: {
   mode: Mode;
@@ -108,10 +109,21 @@ export default function LoginScreen() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
+    let recoveredSpinner = false;
+    const spinnerFailsafe = setTimeout(() => {
+      recoveredSpinner = true;
+      setGoogleLoading(false);
+      showToast('Google sign-in is taking longer than expected. If the browser did not open, try again.', '⚠️');
+    }, GOOGLE_SPINNER_FAILSAFE_MS);
+
     const { error } = await signInWithGoogle();
+    clearTimeout(spinnerFailsafe);
     setGoogleLoading(false);
     if (error === '__cancelled__') return;
-    if (error) { showToast(error, '❌'); return; }
+    if (error) {
+      if (!recoveredSpinner) showToast(error, '❌');
+      return;
+    }
     router.replace('/');
   };
 

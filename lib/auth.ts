@@ -21,7 +21,19 @@ function getRedirectUri(): string {
   return Linking.createURL('auth/callback');
 }
 
-const OAUTH_TIMEOUT_MS = 90_000;
+const OAUTH_URL_TIMEOUT_MS = 12_000;
+const OAUTH_BROWSER_TIMEOUT_MS = 45_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+  });
+}
 
 export async function signInWithGoogle(): Promise<{ error: string | null }> {
   // Warm up the browser process on Android for a snappier sheet.
@@ -31,13 +43,17 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
   try {
     const redirectUri = getRedirectUri();
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUri,
-        skipBrowserRedirect: true,
-      },
-    });
+    const { data, error } = await withTimeout(
+      supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUri,
+          skipBrowserRedirect: true,
+        },
+      }),
+      OAUTH_URL_TIMEOUT_MS,
+      'Google sign-in could not reach Supabase. Check your connection and try again.',
+    );
     if (error) {
       console.warn('[oauth] supabase signInWithOAuth failed', error);
       return { error: error.message };
@@ -66,18 +82,23 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
       }
     });
 
+    WebBrowser.dismissAuthSession();
     const browserPromise = WebBrowser.openAuthSessionAsync(data.url, redirectUri).then(
       (r) => ({ kind: 'browser' as const, result: r }),
       (error) => ({ kind: 'browser-error' as const, error }),
     );
 
     const timeoutPromise = new Promise<ExternalResult>((resolve) => {
-      timeoutId = setTimeout(() => resolve({ kind: 'timeout' }), OAUTH_TIMEOUT_MS);
+      timeoutId = setTimeout(() => resolve({ kind: 'timeout' }), OAUTH_BROWSER_TIMEOUT_MS);
     });
 
-    const winner = await Promise.race([browserPromise, sessionPromise, timeoutPromise]);
-    if (timeoutId) clearTimeout(timeoutId);
-    subscription.unsubscribe();
+    let winner: ExternalResult;
+    try {
+      winner = await Promise.race([browserPromise, sessionPromise, timeoutPromise]);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    }
 
     // If the Linking handler set the session first, just dismiss the
     // dangling browser sheet and report success — the AuthListener in
@@ -89,7 +110,7 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
 
     if (winner.kind === 'timeout') {
       WebBrowser.dismissAuthSession();
-      return { error: 'Google sign-in timed out. Please try again.' };
+      return { error: 'Google sign-in did not finish. If the browser did not open, try again or use email sign-in.' };
     }
 
     if (winner.kind === 'browser-error') {
