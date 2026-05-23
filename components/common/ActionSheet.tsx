@@ -24,7 +24,7 @@ interface ActionSheetProps {
 }
 
 export function ActionSheet({ visible, onClose, title, subtitle, actions }: ActionSheetProps) {
-  const { colors, reduceAnimations } = useTheme();
+  const { colors, reduceAnimations, font } = useTheme();
   const insets = useSafeAreaInsets();
 
   // Don't keep a Modal portal mounted when invisible. RN keeps the portal in
@@ -71,9 +71,9 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
           )}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
           {(title || subtitle) && (
-            <View style={{ padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-              {title && <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', textAlign: 'center' }}>{title}</Text>}
-              {subtitle && <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 2 }}>{subtitle}</Text>}
+            <View style={{ paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+              {title && <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: 12, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }]}>{title}</Text>}
+              {subtitle && <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 4 }]}>{subtitle}</Text>}
             </View>
           )}
           {actions.map((a, i) => (
@@ -98,12 +98,14 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
             >
               {a.icon}
               <Text
-                style={{
-                  color: a.destructive ? '#ef4444' : colors.text,
-                  fontSize: 16,
-                  fontWeight: '600',
-                  flex: 1,
-                }}
+                style={[
+                  font.bodyMedium,
+                  {
+                    color: a.destructive ? '#ef4444' : colors.text,
+                    fontSize: 15,
+                    flex: 1,
+                  },
+                ]}
               >
                 {a.label}
               </Text>
@@ -123,7 +125,7 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>Cancel</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Cancel</Text>
         </Pressable>
       </Animated.View>
     </Modal>
