@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play } from 'phosphor-react-native';
+import { videoSourceForUri } from '../../lib/videoMedia';
 
 // Safely attempt to load expo-video (unavailable in Expo Go).
 // In Expo Go this stays null and we render the static fallback.
@@ -17,6 +18,17 @@ interface VideoPreviewProps {
   borderRadius?: number;
   onPress?: () => void;
   viewCount?: number;
+}
+
+const VIDEO_PREVIEW_TIMEOUT_MS = 45_000;
+
+type VideoLoadState = 'loading' | 'ready' | 'error';
+
+function loadStateFromStatus(status: string | undefined): VideoLoadState | null {
+  if (status === 'readyToPlay') return 'ready';
+  if (status === 'error') return 'error';
+  if (status === 'loading' || status === 'idle') return 'loading';
+  return null;
 }
 
 function formatViewCount(n: number): string {
@@ -62,43 +74,61 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount }: 
 // ── Full video player (dev client / production build) ───────────────────────
 function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
-  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const player = useVideoPlayer(uri, (p: any) => { p.muted = true; p.loop = true; });
+  const [loadState, setLoadState] = useState<VideoLoadState>('loading');
+  const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
 
   useEffect(() => { setLoadState('loading'); }, [uri]);
 
   useEffect(() => {
-    const sub = player.addListener('statusChange', ({ status }: { status: string }) => {
-      if (status === 'readyToPlay') { setLoadState('ready'); player.play(); }
-      if (status === 'error') setLoadState('error');
+    const initialState = loadStateFromStatus(player.status);
+    if (initialState) {
+      setLoadState(initialState);
+      if (initialState === 'ready') player.play();
+    }
+
+    const sub = player.addListener('statusChange', ({ status, error }: { status: string; error?: { message?: string } }) => {
+      const nextState = loadStateFromStatus(status);
+      if (!nextState) return;
+      if (nextState === 'ready') player.play();
+      if (nextState === 'error' && __DEV__) {
+        console.warn('[video-preview] load failed', error?.message ?? uri);
+      }
+      setLoadState(nextState);
     });
     return () => sub.remove();
-  }, [player]);
+  }, [player, uri]);
 
   useEffect(() => {
     if (loadState !== 'loading') return;
-    const t = setTimeout(() => setLoadState(s => s === 'loading' ? 'error' : s), 12000);
+    const t = setTimeout(() => setLoadState(s => s === 'loading' ? 'error' : s), VIDEO_PREVIEW_TIMEOUT_MS);
     return () => clearTimeout(t);
   }, [loadState, uri]);
 
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#09090B' }}>
-      <VideoView player={player} style={{ position: 'absolute', inset: 0 }} contentFit="cover" nativeControls={false} />
+      <VideoView
+        player={player}
+        style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+        contentFit="cover"
+        nativeControls={false}
+        onFirstFrameRender={() => setLoadState('ready')}
+      />
 
       {loadState === 'loading' && (
-        <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' }}>
+        <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' }}>
           <ActivityIndicator color="#fff" />
         </View>
       )}
 
       {loadState === 'error' && (
         <LinearGradient colors={['#3730A3', '#0A0A0A']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600' }}>Video preview unavailable</Text>
+          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Play color="#fff" size={24} weight="fill" />
+          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600' }}>Tap to open video</Text>
         </LinearGradient>
       )}
 
-      <LinearGradient colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.72)']} style={{ position: 'absolute', inset: 0 }} pointerEvents="none" />
+      <LinearGradient colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.72)']} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }} pointerEvents="none" />
 
       <View pointerEvents="none" style={{ position: 'absolute', top: '50%', left: '50%', width: 54, height: 54, marginLeft: -27, marginTop: -27, borderRadius: 27, backgroundColor: 'rgba(0,0,0,0.48)', alignItems: 'center', justifyContent: 'center' }}>
         <Play color="#fff" size={24} weight="fill" />

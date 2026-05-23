@@ -1,4 +1,5 @@
 import { EchoReaction, FeedItem, ReactionCounts } from '../types';
+import { isVideoUri } from './videoMedia';
 
 export type SupabaseProfileRow = {
   id: string;
@@ -65,10 +66,6 @@ export function extractHashtags(text: string): string[] {
   return m ? [...new Set(m)] : [];
 }
 
-function isVideoUrl(url: string): boolean {
-  return /\.(mp4|m4v|mov|webm|m3u8)(?:[?#]|$)/i.test(url);
-}
-
 export function mapEchoRowToFeedItem(
   echo: SupabaseEchoRow,
   author: SupabaseProfileRow | undefined,
@@ -80,7 +77,7 @@ export function mapEchoRowToFeedItem(
 ): FeedItem {
   const username = author?.username ?? 'unknown';
   const mediaUris = echo.media_urls?.length ? echo.media_urls : undefined;
-  const videoUri = mediaUris?.find(isVideoUrl);
+  const videoUri = mediaUris?.find(isVideoUri);
   const moodActive = isMoodActive(author?.mood, author?.mood_expires_at);
   return {
     id: echo.id,

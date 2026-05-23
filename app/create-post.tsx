@@ -47,6 +47,15 @@ const POLL_DURATIONS = [
   { label: '7d', hours: 168 },
 ];
 
+const MAX_VIDEO_DURATION_MS = 60_000;
+const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
+
+function formatBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}
+
 export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
@@ -92,6 +101,26 @@ export default function CreatePostScreen() {
   // Video state — single device URI
   const [video, setVideo] = useState<LocalVideoUpload | null>(null);
   const videoUri = video?.uri ?? '';
+
+  const setPickedVideo = (asset: ImagePicker.ImagePickerAsset) => {
+    if (asset.duration && asset.duration > MAX_VIDEO_DURATION_MS) {
+      Alert.alert('Video too long', 'Echo supports videos up to 60 seconds for reliable upload and playback.');
+      return;
+    }
+    if (asset.fileSize && asset.fileSize > MAX_VIDEO_UPLOAD_BYTES) {
+      Alert.alert('Video too large', `This video is ${formatBytes(asset.fileSize)}. Pick a video under ${formatBytes(MAX_VIDEO_UPLOAD_BYTES)}.`);
+      return;
+    }
+    setVideo({
+      uri: asset.uri,
+      mimeType: asset.mimeType,
+      fileName: asset.fileName,
+      fileSize: asset.fileSize,
+      duration: asset.duration,
+      width: asset.width,
+      height: asset.height,
+    });
+  };
 
   // Co-echo state — when set, the response field is the author's take and
   // coAuthorResponse is the co-author's take. Only valid for postType === 'text'.
@@ -182,14 +211,16 @@ export default function CreatePostScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['videos'],
       quality: 0.6,
+      videoMaxDuration: MAX_VIDEO_DURATION_MS / 1000,
+      videoExportPreset: Platform.OS === 'ios'
+        ? ImagePicker.VideoExportPreset.H264_1280x720
+        : undefined,
+      preferredAssetRepresentationMode: Platform.OS === 'ios'
+        ? ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible
+        : undefined,
     });
     if (!result.canceled) {
-      const asset = result.assets[0];
-      setVideo({
-        uri: asset.uri,
-        mimeType: asset.mimeType,
-        fileName: asset.fileName,
-      });
+      setPickedVideo(result.assets[0]);
     }
   };
 
@@ -201,15 +232,16 @@ export default function CreatePostScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['videos'],
-      videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium,
+      videoMaxDuration: MAX_VIDEO_DURATION_MS / 1000,
+      videoQuality: Platform.OS === 'ios'
+        ? ImagePicker.UIImagePickerControllerQualityType.IFrame1280x720
+        : ImagePicker.UIImagePickerControllerQualityType.Medium,
+      videoExportPreset: Platform.OS === 'ios'
+        ? ImagePicker.VideoExportPreset.H264_1280x720
+        : undefined,
     });
     if (!result.canceled) {
-      const asset = result.assets[0];
-      setVideo({
-        uri: asset.uri,
-        mimeType: asset.mimeType,
-        fileName: asset.fileName,
-      });
+      setPickedVideo(result.assets[0]);
     }
   };
 
