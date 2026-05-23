@@ -108,10 +108,18 @@ export default function LoginScreen() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
-    // Safety timeout — if the browser never returns, unblock the UI after 30 s.
-    const bail = setTimeout(() => setGoogleLoading(false), 30_000);
+    // Safety timeout: if signInWithGoogle never resolves (Supabase hang,
+    // network stall, native WebBrowser stuck on a dismissed sheet), unblock
+    // the UI after 12s and surface a real error so the user isn't stranded.
+    let bailed = false;
+    const bail = setTimeout(() => {
+      bailed = true;
+      setGoogleLoading(false);
+      showToast('Google sign-in timed out — check your network and try again.', '❌');
+    }, 12_000);
     const { error } = await signInWithGoogle();
     clearTimeout(bail);
+    if (bailed) return;
     setGoogleLoading(false);
     if (!error || error === '__cancelled__') {
       if (!error) router.replace('/(tabs)/discover');
@@ -122,7 +130,7 @@ export default function LoginScreen() {
 
   const handleApple = async () => {
     setAppleLoading(true);
-    const bail = setTimeout(() => setAppleLoading(false), 30_000);
+    const bail = setTimeout(() => setAppleLoading(false), 12_000);
     const { error } = await signInWithApple();
     clearTimeout(bail);
     setAppleLoading(false);
