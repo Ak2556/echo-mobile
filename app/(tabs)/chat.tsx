@@ -14,7 +14,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ActionSheet } from '../../components/common/ActionSheet';
-import { streamEchoAI, EchoAIModel } from '../../lib/api';
+import { streamEchoAI, EchoAIModel, isRateLimitError } from '../../lib/api';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { generateSessionTitle } from '../../lib/aiTitle';
@@ -297,7 +297,16 @@ export default function ChatScreen() {
           if (last) updateSessionLastMessage(currentSessionId, last.content.slice(0, 80), final.length);
         }
       } catch (err: any) {
-        upsertText(`err-${Date.now()}`, 'assistant', `Error: ${err?.message ?? 'unknown'}`);
+        if (isRateLimitError(err?.message)) {
+          upsertText(
+            `err-${Date.now()}`,
+            'assistant',
+            "You've reached the AI limit (30 requests/hour). Try again in an hour, or upgrade to Pro for 200/hour.",
+          );
+          track('chat_rate_limited');
+        } else {
+          upsertText(`err-${Date.now()}`, 'assistant', `Error: ${err?.message ?? 'unknown'}`);
+        }
       } finally {
         stopFlush();
         stopStreamRef.current = null;

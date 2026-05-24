@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, Pressable, ActivityIndicator, useWindowDimensions,
+  View, Text, Pressable, ActivityIndicator, useWindowDimensions, Share,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -18,6 +18,7 @@ import { showToast } from '../ui/Toast';
 import { FeedItem } from '../../types';
 import { NEON, NEON_CHIP, neonGlow } from '../../lib/neonDesign';
 import { videoSourceForUri } from '../../lib/videoMedia';
+import { echoUrl } from '../../lib/echoUrl';
 
 interface EchoCardProps {
   item: FeedItem;
@@ -180,8 +181,13 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
     showToast(next ? 'Saved to bookmarks' : 'Removed from bookmarks', next ? '🔖' : '✓');
   };
 
-  const handleShare = () => {
-    showToast('Link copied!', '🔗');
+  const handleShare = async () => {
+    const url = echoUrl(item.id);
+    try {
+      await Share.share({ message: url, url });
+    } catch {
+      // User dismissed the share sheet — not an error
+    }
   };
 
   const handleRemix = () => {
