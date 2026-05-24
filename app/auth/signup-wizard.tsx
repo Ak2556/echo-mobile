@@ -242,7 +242,16 @@ export default function SignupWizard() {
 
   const usernameClean = usernameRaw.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
   const firstName = displayName.trim().split(' ')[0] || 'you';
-  const canStep0 = displayName.trim().length >= 1 && usernameClean.length >= 3 && usernameStatus === 'available';
+  // Allow proceeding as long as the username ISN'T confirmed taken or still
+  // checking. If RLS / network failure leaves status === 'idle', the DB unique
+  // constraint at insert time is the backstop — we surface "Username taken" and
+  // bounce back to this step. Better to let users move forward than to gate
+  // them on a check that can silently fail.
+  const canStep0 =
+    displayName.trim().length >= 1 &&
+    usernameClean.length >= 3 &&
+    usernameStatus !== 'taken' &&
+    usernameStatus !== 'checking';
 
   // Debounced availability check. Runs whenever the cleaned username changes
   // and is at least 3 chars. The reqId guards against stale responses landing
