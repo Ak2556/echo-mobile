@@ -650,20 +650,22 @@ function MenuRow({
       accessibilityRole="button"
       accessibilityLabel={label}
       style={({ pressed }) => [
-        styles.menuRow,
+        styles.menuTouchable,
         { backgroundColor: pressed ? colors.surfaceHover : 'transparent' },
       ]}
     >
-      <View style={styles.menuIcon}>{icon}</View>
-      <Text
-        style={[font.bodySemibold, styles.menuLabel, { color: colors.text }]}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-      >
-        {label}
-      </Text>
-      <CaretRight color={colors.textMuted} size={17} />
+      <View style={styles.menuRowContent}>
+        <View style={styles.menuIcon}>{icon}</View>
+        <Text
+          style={[font.bodySemibold, styles.menuLabel, { color: colors.text }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
+        >
+          {label}
+        </Text>
+        <CaretRight color={colors.textMuted} size={17} />
+      </View>
     </Pressable>
   );
 }
@@ -953,19 +955,24 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     marginBottom: 16,
   },
-  menuRow: {
+  menuTouchable: {
     minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  menuRowContent: {
+    minHeight: 28,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   menuIcon: {
     width: 24,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    marginRight: 12,
   },
   menuLabel: {
     flex: 1,
