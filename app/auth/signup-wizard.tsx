@@ -253,9 +253,11 @@ export default function SignupWizard() {
     usernameStatus !== 'taken' &&
     usernameStatus !== 'checking';
 
-  // Debounced availability check. Runs whenever the cleaned username changes
-  // and is at least 3 chars. The reqId guards against stale responses landing
-  // after the user typed something newer.
+  // Debounced availability check with a HARD 2.5s timeout so the status can
+  // never stay 'checking' forever — that would trap the user behind a disabled
+  // Continue button. If the query hangs (network blip, supabase client lock),
+  // we fall through to 'idle' and the canStep0 gate above lets them proceed.
+  // The DB unique constraint is the backstop at insert time.
   const usernameReqId = useRef(0);
   useEffect(() => {
     if (usernameClean.length < 3) {
@@ -264,22 +266,34 @@ export default function SignupWizard() {
     }
     setUsernameStatus('checking');
     const myReq = ++usernameReqId.current;
-    const t = setTimeout(async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', usernameClean)
-        .maybeSingle();
-      if (myReq !== usernameReqId.current) return; // stale
-      if (error) {
-        // Treat lookup errors as "idle" — don't block signup on a transient
-        // network failure; the insert-time constraint is the real backstop.
-        setUsernameStatus('idle');
-        return;
+    let cancelled = false;
+    const debounce = setTimeout(async () => {
+      try {
+        const query = supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', usernameClean)
+          .maybeSingle();
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('username-check-timeout')), 2_500),
+        );
+        const result = (await Promise.race([query, timeout])) as
+          | { data: { id: string } | null; error: unknown }
+          | never;
+        if (cancelled || myReq !== usernameReqId.current) return;
+        if ((result as any).error) {
+          setUsernameStatus('idle');
+          return;
+        }
+        setUsernameStatus((result as any).data ? 'taken' : 'available');
+      } catch {
+        if (!cancelled && myReq === usernameReqId.current) setUsernameStatus('idle');
       }
-      setUsernameStatus(data ? 'taken' : 'available');
     }, 350);
-    return () => clearTimeout(t);
+    return () => {
+      cancelled = true;
+      clearTimeout(debounce);
+    };
   }, [usernameClean]);
 
   const nameInputRef = useRef<TextInput>(null);
