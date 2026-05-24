@@ -454,6 +454,11 @@ export default function ChatScreen() {
         .filter(m => m.role === 'user' || m.role === 'assistant')
         .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     });
+    track('echo_drafted', {
+      source: 'chat_share_nudge',
+      length_prompt: lastUser.content.length,
+      length_response: lastAi.content.length,
+    });
     router.push({ pathname: '/share', params: { prompt: lastUser.content, response: lastAi.content } });
   }, [messages, router]);
 
@@ -542,23 +547,30 @@ export default function ChatScreen() {
             >
               <AnimatedPressable
                 onPress={handleShare}
-                depth="soft"
-                haptic="light"
+                haptic="medium"
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  borderRadius: 999,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.accent,
-                  backgroundColor: colors.isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)',
+                  gap: 10,
+                  borderRadius: 14,
+                  backgroundColor: colors.accent,
                   paddingHorizontal: 16,
-                  paddingVertical: 9,
+                  paddingVertical: 14,
+                  shadowColor: colors.accent,
+                  shadowOpacity: 0.35,
+                  shadowRadius: 14,
+                  shadowOffset: { width: 0, height: 6 },
                 }}
               >
-                <ArrowUpRight color={colors.accent} size={15} weight="bold" />
-                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>Share as Echo</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: -0.2 }}>
+                    Publish this conversation
+                  </Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12, marginTop: 2 }}>
+                    Turn it into an Echo your followers can read.
+                  </Text>
+                </View>
+                <ArrowUpRight color="#fff" size={18} weight="bold" />
               </AnimatedPressable>
             </Animated.View>
           ) : null}

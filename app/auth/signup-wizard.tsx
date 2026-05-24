@@ -40,6 +40,39 @@ const INTERESTS = [
   { id: 'podcasts', label: '🎤 Podcasts' }, { id: 'writing', label: '✍️ Writing' },
 ];
 
+// Activation seed prompts mapped to each interest. Used after the wizard
+// finishes — instead of dumping a brand-new user on an empty feed, we route
+// them straight to compose with one of these in the prompt field. First
+// publish in the first session is the strongest predictor of D1 retention.
+const INTEREST_PROMPTS: Record<string, string> = {
+  music:       'What\'s a song that always pulls you out of a bad mood?',
+  gaming:      'What\'s the most underrated mechanic in a game you love?',
+  art:         'What piece of art has changed how you see the world?',
+  tech:        'What\'s a piece of technology you wish more people used?',
+  fitness:     'What\'s the smallest habit that changed your fitness?',
+  food:        'What\'s the dish you\'d cook to convince someone you can cook?',
+  travel:      'Where would you send a friend who has one weekend free?',
+  books:       'What book do you give as a gift more than once?',
+  film:        'What\'s a film that needs a rewatch every couple of years?',
+  sports:      'What\'s an athletic moment you\'d show someone who doesn\'t care about sports?',
+  coding:      'What\'s a bug you remember years later, and what did it teach you?',
+  nature:      'What\'s a place outside you go to think clearly?',
+  photography: 'What photo means more to you than it should?',
+  comedy:      'Who makes you laugh in a way you can\'t explain to other people?',
+  science:     'What scientific idea blew your mind when you first understood it?',
+  finance:     'What\'s a money lesson you wish you\'d learned five years earlier?',
+  culture:     'What\'s a cultural moment that you keep coming back to?',
+  design:      'What\'s a piece of design — UI, object, signage — you love and never tire of?',
+  podcasts:    'What podcast episode have you recommended the most?',
+  writing:     'What sentence have you read this year that you can\'t forget?',
+};
+const DEFAULT_PROMPT = 'What\'s a piece of advice you ignored that turned out to be right?';
+
+function primaryInterestPrompt(interestId?: string): string {
+  if (!interestId) return DEFAULT_PROMPT;
+  return INTEREST_PROMPTS[interestId] ?? DEFAULT_PROMPT;
+}
+
 const CONFETTI_COLORS = [ACCENT, '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#06B6D4', '#F97316'];
 
 // Pre-generated at module level so values are stable across renders
@@ -375,7 +408,15 @@ export default function SignupWizard() {
     identify(session.user.id, { username: usernameClean });
     track('signup_completed', { interests_count: selectedInterests.length });
 
-    router.replace('/(tabs)/discover');
+    // Activation pivot: instead of dropping the user on an empty feed, route
+    // straight to compose with a primed prompt based on their first interest.
+    // This is the make-or-break for D1 retention — first publish in the first
+    // session is the strongest predictor of return.
+    const seed = primaryInterestPrompt(selectedInterests[0]);
+    router.replace({
+      pathname: '/create-post',
+      params: { prefillPrompt: seed, firstEcho: '1' },
+    } as never);
   };
 
   const backHidden = currentStep === 0 || currentStep === 4;
