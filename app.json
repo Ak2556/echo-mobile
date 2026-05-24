@@ -86,7 +86,14 @@
           "cameraPermission": "Allow Echo to use your camera to take photos and videos."
         }
       ],
-      "@sentry/react-native"
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "buildReactNativeFromSource": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
