@@ -1,16 +1,16 @@
 /**
  * Public API for auth.
  *
- *   import { useAuth, signInWithGoogle, sendMagicLink,
- *            sendPhoneOtp, verifyPhoneOtp, signOut,
- *            AuthListenerProvider } from '@/lib/auth';
+ *   import { useAuth, sendMagicLink, sendPhoneOtp, verifyPhoneOtp,
+ *            signOut, AuthListenerProvider } from '@/lib/auth';
  *
  * Do NOT import from `lib/auth/store`, `lib/auth/listener`, etc. directly —
  * the public surface is just this barrel.
  *
- * v1 providers: Google (native), email magic-link, phone OTP.
- * Apple Sign-In is intentionally out of scope for v1 — see commit history
- * for the original provider implementation if you re-add it post-launch.
+ * v1 providers: email magic-link, phone OTP. Both maximally reliable —
+ * commodity SMS + email infra with no provider-specific failure modes
+ * (no WebBrowser races, no Apple provisioning). Google + Apple defer
+ * until post-launch; see commit history for the original implementations.
  */
 
 import { supabase } from '../supabase';
@@ -22,7 +22,6 @@ export {
   hasAuthCallbackPayload,
   parseAuthCallbackUrl,
 } from './callback';
-export { signInWithGoogle } from './providers/google';
 export { sendMagicLink } from './providers/email';
 export { sendPhoneOtp, verifyPhoneOtp } from './providers/phone';
 export type { AuthStatus, AuthState, AuthProfile, ProviderResult } from './types';
