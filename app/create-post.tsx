@@ -59,7 +59,8 @@ function formatBytes(bytes: number): string {
 export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
-  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string }>();
+  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string; firstEcho?: string }>();
+  const isFirstEcho = params.firstEcho === '1';
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, avatarUrl, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore() as any;
   const quotedId = typeof params.quoted === 'string' ? params.quoted : undefined;
@@ -560,6 +561,25 @@ export default function CreatePostScreen() {
           )}
           {postType === 'text' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
+              {isFirstEcho && (
+                <View
+                  style={{
+                    marginBottom: 14,
+                    padding: 14,
+                    borderRadius: radius.card,
+                    backgroundColor: colors.accent + '14',
+                    borderWidth: 1,
+                    borderColor: colors.accent + '30',
+                  }}
+                >
+                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 11, letterSpacing: 0.6, marginBottom: 4 }}>
+                    YOUR FIRST ECHO
+                  </Text>
+                  <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19 }}>
+                    We picked a question to get you started. Take your time — a one-line take is fine. You can always edit later.
+                  </Text>
+                </View>
+              )}
               <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What question or prompt started this?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />

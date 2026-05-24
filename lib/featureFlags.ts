@@ -12,7 +12,7 @@
 
 const FLAGS = {
   /** Daily-question banner on Discover + answer screen. */
-  dailyQuestion: false,
+  dailyQuestion: true,
   /** Salons browse, create, and individual salon feed. */
   salons: false,
   /** Office hours list + RSVP. */

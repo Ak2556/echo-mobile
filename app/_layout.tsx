@@ -320,7 +320,6 @@ function RootLayout() {
         <AuthListener />
         <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
           <Stack.Screen name="index" />
-          <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
           <Stack.Screen name="auth" options={{ animation: 'fade' }} />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="thread/[id]" options={{ presentation: 'card' }} />
