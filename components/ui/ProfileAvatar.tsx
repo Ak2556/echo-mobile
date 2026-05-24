@@ -75,7 +75,7 @@ export function ProfileAvatar({
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: '#fff', fontSize: size * 0.43, fontWeight: '700' }}>
+            <Text style={{ color: '#fff', fontSize: size * 0.43, fontWeight: '700' }} maxFontSizeMultiplier={1}>
               {initial}
             </Text>
           </View>

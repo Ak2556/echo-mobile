@@ -5,6 +5,8 @@ import { FireSimple, Star } from 'phosphor-react-native';
 import { useRetention } from '../../lib/retention';
 import { GRADIENTS, NEON, neonGlow } from '../../lib/neonDesign';
 
+const COMPACT_TEXT_SCALE = 1.15;
+
 /**
  * Compact streak + XP/level chip for the profile screen. Two pieces:
  *   • Streak flame with day count
@@ -23,8 +25,8 @@ export function StreakXPBadge() {
       {streakDays > 0 && (
         <View style={[styles.streak, neonGlow(NEON.amber, 'soft')]}>
           <FireSimple color={NEON.amber} size={16} weight="fill" />
-          <Text style={styles.streakNum}>{streakDays}</Text>
-          <Text style={styles.streakLabel}>day streak</Text>
+          <Text style={styles.streakNum} numberOfLines={1} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>{streakDays}</Text>
+          <Text style={styles.streakLabel} numberOfLines={1} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>day streak</Text>
         </View>
       )}
 
@@ -32,9 +34,9 @@ export function StreakXPBadge() {
         <View style={styles.levelHeader}>
           <View style={styles.levelChip}>
             <Star color={NEON.lime} size={11} weight="fill" />
-            <Text style={styles.levelChipText}>LVL {level}</Text>
+            <Text style={styles.levelChipText} numberOfLines={1} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>LVL {level}</Text>
           </View>
-          <Text style={styles.levelTitle}>{title}</Text>
+          <Text style={styles.levelTitle} numberOfLines={1} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>{title}</Text>
         </View>
         <View style={styles.barTrack}>
           <LinearGradient
@@ -44,7 +46,7 @@ export function StreakXPBadge() {
             style={[styles.barFill, { width: `${Math.max(6, pct * 100)}%` }]}
           />
         </View>
-        <Text style={styles.barHint}>
+        <Text style={styles.barHint} numberOfLines={1} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>
           {xpToNext} XP to LVL {level + 1}
         </Text>
       </View>
@@ -60,6 +62,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   streak: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -95,6 +98,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     marginBottom: 8,
   },
   levelChip: {
@@ -116,6 +120,9 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   levelTitle: {
+    flex: 1,
+    minWidth: 0,
+    textAlign: 'right',
     color: '#fff',
     fontWeight: '800',
     fontSize: 12,

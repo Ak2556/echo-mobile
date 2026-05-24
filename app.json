@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.echo",
+      "bundleIdentifier": "com.ak2556.echo",
       "associatedDomains": [
         "applinks:echo.app"
       ],
@@ -27,7 +27,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.echo",
+      "package": "com.ak2556.echo",
       "intentFilters": [
         {
           "action": "VIEW",
