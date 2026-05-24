@@ -474,10 +474,10 @@ export default function SignupWizard() {
                   color: '#fff', fontSize: 28, fontWeight: '800',
                   letterSpacing: -0.5, marginBottom: 6,
                 }}>
-                  Who are you?
+                  Welcome to Echo
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 32 }}>
-                  Tell us your name and choose a handle.
+                  The social network for thinking out loud. Let&apos;s set up your account.
                 </Text>
 
                 <Text style={{

@@ -18,6 +18,7 @@ import {
   SquaresFour,
   Users,
 } from 'phosphor-react-native';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { PostsGrid } from '../../components/profile/PostsGrid';
 import { FeedCard } from '../../components/social/FeedCard';
@@ -272,6 +273,55 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
+        <View style={styles.accountArea}>
+          <SectionLabel label="Account" colors={colors} font={font} />
+          <View
+            style={[
+              styles.menuPanel,
+              { borderRadius: radius.card, borderColor: colors.border, backgroundColor: colors.surface },
+            ]}
+          >
+            {SETTINGS_ROWS.map(({ key, Icon, label, route }, index) => (
+              <React.Fragment key={key}>
+                <ProfileListRow
+                  icon={<Icon color={colors.textSecondary} size={18} />}
+                  label={label}
+                  colors={colors}
+                  radius={radius}
+                  font={font}
+                  onPress={() => route ? router.push(route as any) : openFollowers('followers')}
+                />
+                {index < SETTINGS_ROWS.length - 1 ? <View style={[styles.menuDivider, { backgroundColor: colors.border }]} /> : null}
+              </React.Fragment>
+            ))}
+          </View>
+
+          <SectionLabel label="Quick Controls" colors={colors} font={font} />
+          <View
+            style={[
+              styles.menuPanel,
+              styles.menuPanelCompact,
+              { borderRadius: radius.card, borderColor: colors.border, backgroundColor: colors.surface },
+            ]}
+          >
+            <ProfileListRow
+              icon={<Bell color={colors.textSecondary} size={18} />}
+              label="Notifications"
+              colors={colors}
+              radius={radius}
+              font={font}
+              right={
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={setNotificationsEnabled}
+                  trackColor={switchTrack}
+                  thumbColor="#fff"
+                />
+              }
+            />
+          </View>
+        </View>
+
         <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} colors={colors} radius={radius} font={font} />
 
         {activeTab === 'posts' ? (
@@ -296,52 +346,13 @@ export default function ProfileScreen() {
           />
         )}
 
-        <View style={styles.accountArea}>
-          <SectionLabel label="Account" colors={colors} font={font} />
-          <View
-            style={[
-              styles.menuPanel,
-              { borderRadius: radius.card, borderColor: colors.border, backgroundColor: colors.surface },
-            ]}
-          >
-            {SETTINGS_ROWS.map(({ key, Icon, label, route }, index) => (
-              <React.Fragment key={key}>
-                <MenuRow
-                  icon={<Icon color={colors.textSecondary} size={19} />}
-                  label={label}
-                  colors={colors}
-                  font={font}
-                  onPress={() => route ? router.push(route as any) : openFollowers('followers')}
-                />
-                {index < SETTINGS_ROWS.length - 1 ? <View style={[styles.menuDivider, { backgroundColor: colors.border }]} /> : null}
-              </React.Fragment>
-            ))}
-          </View>
-
-          <SectionLabel label="Quick Controls" colors={colors} font={font} />
-          <View
-            style={[
-              styles.menuPanel,
-              { borderRadius: radius.card, borderColor: colors.border, backgroundColor: colors.surface },
-            ]}
-          >
-            <View style={styles.switchRow}>
-              <Bell color={colors.textSecondary} size={19} />
-              <Text
-                style={[font.bodySemibold, styles.switchLabel, { color: colors.text }]}
-                numberOfLines={1}
-                maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-              >
-                Notifications
-              </Text>
-              <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={switchTrack} thumbColor="#fff" />
-            </View>
-          </View>
-
+        <View style={styles.sessionArea}>
+          <SectionLabel label="Session" colors={colors} font={font} />
           <Pressable
             onPress={() => { void signOut(); }}
             accessibilityRole="button"
             accessibilityLabel="Sign out"
+            accessibilityHint="Signs you out of Echo"
             style={({ pressed }) => [
               styles.signOutButton,
               {
@@ -631,43 +642,62 @@ function SectionLabel({
   );
 }
 
-function MenuRow({
+function ProfileListRow({
   icon,
   label,
   colors,
+  radius,
   font,
   onPress,
+  right,
+  accessibilityLabel,
 }: {
   icon: React.ReactNode;
   label: string;
   colors: ProfileColors;
+  radius: ProfileRadius;
   font: ProfileFont;
-  onPress: () => void;
+  onPress?: () => void;
+  right?: React.ReactNode;
+  accessibilityLabel?: string;
 }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => [
-        styles.menuTouchable,
-        { backgroundColor: pressed ? colors.surfaceHover : 'transparent' },
-      ]}
-    >
-      <View style={styles.menuRowContent}>
-        <View style={styles.menuIcon}>{icon}</View>
-        <Text
-          style={[font.bodySemibold, styles.menuLabel, { color: colors.text }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-        >
-          {label}
-        </Text>
-        <CaretRight color={colors.textMuted} size={17} />
+  const rowContent = (
+    <>
+      <View
+        style={[
+          styles.listRowIconTile,
+          { borderRadius: radius.md, backgroundColor: colors.surfaceHover },
+        ]}
+      >
+        {icon}
       </View>
-    </Pressable>
+      <Text
+        style={[font.bodySemibold, styles.listRowLabel, { color: colors.text }]}
+        numberOfLines={1}
+        maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
+      >
+        {label}
+      </Text>
+      {right ?? (onPress ? <CaretRight color={colors.textMuted} size={18} /> : null)}
+    </>
   );
+
+  if (onPress) {
+    return (
+      <AnimatedPressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? label}
+        style={styles.listRowTouchable}
+        scaleValue={0.98}
+        haptic="light"
+      >
+        {rowContent}
+      </AnimatedPressable>
+    );
+  }
+
+  return <View style={styles.listRowTouchable}>{rowContent}</View>;
 }
 
 function InfoRow({
@@ -859,7 +889,7 @@ const styles = StyleSheet.create({
   },
   tabShell: {
     marginHorizontal: 16,
-    marginTop: 18,
+    marginTop: 16,
     padding: 4,
     minHeight: 48,
     flexDirection: 'row',
@@ -948,33 +978,36 @@ const styles = StyleSheet.create({
   },
   accountArea: {
     paddingHorizontal: 16,
-    marginTop: 22,
+    marginTop: 16,
+  },
+  sessionArea: {
+    paddingHorizontal: 16,
+    marginTop: 24,
   },
   menuPanel: {
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  menuTouchable: {
-    minHeight: 52,
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  menuPanelCompact: {
+    marginBottom: 0,
   },
-  menuRowContent: {
-    minHeight: 28,
-    width: '100%',
+  listRowTouchable: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 52,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 12,
   },
-  menuIcon: {
-    width: 24,
+  listRowIconTile: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    marginRight: 12,
   },
-  menuLabel: {
+  listRowLabel: {
     flex: 1,
     minWidth: 0,
     fontSize: 15,
@@ -982,24 +1015,12 @@ const styles = StyleSheet.create({
   },
   menuDivider: {
     height: StyleSheet.hairlineWidth,
-    marginLeft: 50,
-  },
-  switchRow: {
-    minHeight: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  switchLabel: {
-    flex: 1,
-    minWidth: 0,
-    fontSize: 15,
-    lineHeight: 20,
+    marginLeft: 60,
   },
   signOutButton: {
+    alignSelf: 'stretch',
     minHeight: 46,
+    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

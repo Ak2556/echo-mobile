@@ -179,7 +179,7 @@ export default function LoginScreen() {
                 <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>e</Text>
               </View>
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>Welcome back</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: 6 }}>Sign in to your Echo account</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 15, marginTop: 6 }}>Conversations worth keeping.</Text>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(80).duration(220)}>
