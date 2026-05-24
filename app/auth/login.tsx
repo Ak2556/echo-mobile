@@ -1,52 +1,43 @@
 import React, { useState } from 'react';
 import {
-  View, Text, Platform, Pressable, ActivityIndicator, StyleSheet,
+  View, Text, Pressable, ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { signInWithGoogle, signInWithApple, CANCELLED } from '../../lib/auth';
+import { signInWithGoogle, CANCELLED } from '../../lib/auth';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
 
 /**
- * Login screen — minimum friction.
+ * Login screen — minimum friction (v1).
  *
  * Hierarchy:
- *   1. Apple Sign-In (iOS, native, one-tap)              — primary CTA
- *   2. Google native SDK                                 — secondary, equal height
- *   3. "Continue with email" → /auth/email (magic link)  — text link
- *   4. "Continue with phone" → /auth/phone (OTP)         — text link
+ *   1. Google native SDK                                 — primary CTA
+ *   2. "Continue with email" → /auth/email (magic link)  — text link
+ *   3. "Continue with phone" → /auth/phone (OTP)         — text link
  *
- * No email/password form, no forgot-password flow. The magic link IS the
- * verification. Phone OTP stays as a first-class option.
+ * Apple Sign-In is out of scope for v1 — adds Apple Developer dependency
+ * and provisioning friction that we can defer until post-launch. Re-add by
+ * importing signInWithApple from lib/auth and dropping the original Apple
+ * CTA back above the Google button.
  *
  * Navigation forward is owned by AuthListenerProvider — when status flips
- * to 'ready' or 'needs-onboarding', app/index.tsx is what catches it and
- * routes. This screen just kicks off the provider and waits.
+ * to 'ready' or 'needs-onboarding', app/index.tsx catches it and routes.
+ * This screen just kicks off the provider and waits.
  */
 export default function LoginScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
 
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
 
   const handleGoogle = async () => {
     if (googleLoading) return;
     setGoogleLoading(true);
     const { error } = await signInWithGoogle();
     setGoogleLoading(false);
-    if (!error || error === CANCELLED) return;
-    showToast(error, '❌');
-  };
-
-  const handleApple = async () => {
-    if (appleLoading) return;
-    setAppleLoading(true);
-    const { error } = await signInWithApple();
-    setAppleLoading(false);
     if (!error || error === CANCELLED) return;
     showToast(error, '❌');
   };
@@ -65,40 +56,8 @@ export default function LoginScreen() {
             <Text style={[font.body, { color: colors.textMuted, fontSize: 14, marginTop: 6 }]}>Conversations worth keeping.</Text>
           </Animated.View>
 
-          {/* Primary CTAs */}
-          <Animated.View entering={FadeInDown.delay(60).duration(220)} style={{ gap: 12, marginBottom: 24 }}>
-            {Platform.OS === 'ios' && (
-              <AnimatedPressable
-                onPress={handleApple}
-                disabled={appleLoading}
-                haptic="medium"
-                style={{
-                  borderRadius: radius.lg,
-                  backgroundColor: colors.isDark ? '#fff' : '#000',
-                  paddingVertical: 16,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  gap: 10,
-                  shadowColor: '#000',
-                  shadowOpacity: colors.isDark ? 0 : 0.2,
-                  shadowRadius: 12,
-                  shadowOffset: { width: 0, height: 4 },
-                }}
-              >
-                {appleLoading ? (
-                  <ActivityIndicator color={colors.isDark ? '#000' : '#fff'} />
-                ) : (
-                  <>
-                    <Text style={{ fontSize: 18, color: colors.isDark ? '#000' : '#fff' }}></Text>
-                    <Text style={[font.bodySemibold, { color: colors.isDark ? '#000' : '#fff', fontSize: 16 }]}>
-                      Continue with Apple
-                    </Text>
-                  </>
-                )}
-              </AnimatedPressable>
-            )}
-
+          {/* Primary CTA — Google */}
+          <Animated.View entering={FadeInDown.delay(60).duration(220)} style={{ marginBottom: 24 }}>
             <AnimatedPressable
               onPress={handleGoogle}
               disabled={googleLoading}
