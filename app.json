@@ -86,13 +86,7 @@
           "cameraPermission": "Allow Echo to use your camera to take photos and videos."
         }
       ],
-      "@sentry/react-native",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.PLACEHOLDER_REVERSED_CLIENT_ID"
-        }
-      ]
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,
