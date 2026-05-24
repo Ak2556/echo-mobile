@@ -413,8 +413,8 @@ export default function DiscoverScreen() {
               <View style={{ paddingTop: 32 }}>
                 <EmptyState
                   icon={<Sparkle color={colors.accent} size={28} weight="fill" />}
-                  title="Nothing to show yet"
-                  subtitle="Be the first to publish an echo. Open Chat, ask Echo something real, then share the answer."
+                  title="Conversations worth keeping"
+                  subtitle="Talk to Echo about something you've been thinking about. Publish the parts that resonate."
                   actionLabel="Open chat"
                   onAction={() => router.push('/(tabs)/chat')}
                 />
