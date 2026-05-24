@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArrowLeft, Check, At } from 'phosphor-react-native';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../lib/auth';
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -217,6 +218,7 @@ function ConfettiPiece({ startX, color, velocity, xDrift, rotDeg, w, h }: {
 
 export default function SignupWizard() {
   const router = useRouter();
+  const { session } = useAuth();
   const {
     setUsername,
     setDisplayName: storeSetDisplayName,
@@ -253,46 +255,43 @@ export default function SignupWizard() {
     usernameStatus !== 'taken' &&
     usernameStatus !== 'checking';
 
-  // Debounced availability check with a HARD 2.5s timeout so the status can
-  // never stay 'checking' forever — that would trap the user behind a disabled
-  // Continue button. If the query hangs (network blip, supabase client lock),
-  // we fall through to 'idle' and the canStep0 gate above lets them proceed.
-  // The DB unique constraint is the backstop at insert time.
-  const usernameReqId = useRef(0);
+  // Debounced availability check using AbortController. Each new keystroke
+  // aborts the previous in-flight query — so rapid typing only ever leaves
+  // ONE pending check. No timeout race needed: if the network is genuinely
+  // dead, the request rejects with an abort and we fall to 'idle', and the
+  // canStep0 gate above lets the user proceed (DB unique constraint is the
+  // backstop at save time).
   useEffect(() => {
     if (usernameClean.length < 3) {
       setUsernameStatus('idle');
       return;
     }
+
     setUsernameStatus('checking');
-    const myReq = ++usernameReqId.current;
-    let cancelled = false;
+    const controller = new AbortController();
+
     const debounce = setTimeout(async () => {
       try {
-        const query = supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('id')
           .eq('username', usernameClean)
+          .abortSignal(controller.signal)
           .maybeSingle();
-        const timeout = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('username-check-timeout')), 2_500),
-        );
-        const result = (await Promise.race([query, timeout])) as
-          | { data: { id: string } | null; error: unknown }
-          | never;
-        if (cancelled || myReq !== usernameReqId.current) return;
-        if ((result as any).error) {
+        if (controller.signal.aborted) return;
+        if (error) {
           setUsernameStatus('idle');
           return;
         }
-        setUsernameStatus((result as any).data ? 'taken' : 'available');
+        setUsernameStatus(data ? 'taken' : 'available');
       } catch {
-        if (!cancelled && myReq === usernameReqId.current) setUsernameStatus('idle');
+        if (!controller.signal.aborted) setUsernameStatus('idle');
       }
-    }, 350);
+    }, 300);
+
     return () => {
-      cancelled = true;
       clearTimeout(debounce);
+      controller.abort();
     };
   }, [usernameClean]);
 
@@ -389,14 +388,12 @@ export default function SignupWizard() {
 
   const handleSave = async () => {
     if (saving) return;
-    setSaving(true);
-
-    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showToast('Session expired', '❌');
       router.replace('/auth/login');
       return;
     }
+    setSaving(true);
 
     const { error } = await supabase.from('profiles').upsert({
       id: session.user.id,
