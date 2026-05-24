@@ -4,9 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import { useTheme } from '../lib/theme';
 import {
-  getAnalyticsConsent,
-  hasResolvedAnalyticsConsent,
-  setAnalyticsConsent,
+  getAnalyticsConsentAsync,
+  setAnalyticsConsentAsync,
 } from '../lib/consent';
 import { initAnalytics, track } from '../lib/analytics';
 
@@ -21,31 +20,32 @@ import { initAnalytics, track } from '../lib/analytics';
  */
 export function ConsentBanner() {
   const { colors, radius, font } = useTheme();
-  const [visible, setVisible] = useState<boolean>(() => !hasResolvedAnalyticsConsent());
+  const [visible, setVisible] = useState(false);
 
-  // If consent gets resolved elsewhere (settings screen, future toggle),
-  // hide the banner. Cheap poll keeps this dependency-free.
   useEffect(() => {
-    if (!visible) return;
-    const id = setInterval(() => {
-      if (getAnalyticsConsent() !== 'unknown') setVisible(false);
-    }, 1000);
-    return () => clearInterval(id);
-  }, [visible]);
+    let mounted = true;
+    void getAnalyticsConsentAsync().then(status => {
+      if (!mounted) return;
+      if (status === 'accepted') initAnalytics();
+      setVisible(status === 'unknown');
+    });
+    return () => { mounted = false; };
+  }, []);
 
   if (!visible) return null;
 
   const handleAccept = () => {
-    setAnalyticsConsent('accepted');
-    initAnalytics();
-    // First analytics event in the install — proves the pipeline.
-    track('consent_accepted');
     setVisible(false);
+    void setAnalyticsConsentAsync('accepted').then(() => {
+      initAnalytics();
+      // First analytics event in the install — proves the pipeline.
+      track('consent_accepted');
+    });
   };
 
   const handleDecline = () => {
-    setAnalyticsConsent('declined');
     setVisible(false);
+    void setAnalyticsConsentAsync('declined');
   };
 
   return (

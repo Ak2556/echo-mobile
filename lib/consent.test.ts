@@ -1,16 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-// Force the in-memory storage path by failing the MMKV require.
-vi.mock('react-native-mmkv', () => {
-  throw new Error('not available in node tests');
-});
-
 import {
   getAnalyticsConsent,
   setAnalyticsConsent,
   hasResolvedAnalyticsConsent,
 } from './consent';
 import { storage } from '../store/persist';
+
+// Force the in-memory storage path by failing the MMKV require.
+vi.mock('react-native-mmkv', () => {
+  throw new Error('not available in node tests');
+});
+
+vi.mock('@react-native-async-storage/async-storage', () => ({
+  default: {
+    getItem: vi.fn(async () => null),
+    setItem: vi.fn(async () => undefined),
+  },
+}));
 
 describe('analytics consent', () => {
   beforeEach(() => {
