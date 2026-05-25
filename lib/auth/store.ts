@@ -34,13 +34,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
 /**
  * React hook — subscribe to auth state.
- * Components that only care about status should use a selector to avoid
- * re-rendering on session/profile-object changes that don't affect them.
+ *
+ * Split into three individual primitive/reference selectors rather than one
+ * object-returning selector. Zustand v5 strict-compares selector return
+ * values; an object literal would change reference every render and trigger
+ * "Maximum update depth exceeded". Components that only need one field can
+ * still optimize by calling useAuthStore(s => s.status) directly.
  */
 export function useAuth(): AuthState {
-  return useAuthStore((s) => ({
-    status: s.status,
-    session: s.session,
-    profile: s.profile,
-  }));
+  const status = useAuthStore((s) => s.status);
+  const session = useAuthStore((s) => s.session);
+  const profile = useAuthStore((s) => s.profile);
+  return { status, session, profile };
 }

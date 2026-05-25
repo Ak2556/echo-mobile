@@ -22,8 +22,10 @@ interface CaptureContext {
 }
 
 // Optional dependency — only resolved when the native module is bundled.
-// In Expo Go (no native module) the require throws and Sentry stays null.
-type SentryModule = typeof import('@sentry/react-native') | null;
+// The package may not be installed at all (v1 launch drops Sentry); the
+// dynamic require returns null in that case and the rest of this file
+// silently no-ops.
+type SentryModule = any | null;
 
 let Sentry: SentryModule = null;
 let initialised = false;
