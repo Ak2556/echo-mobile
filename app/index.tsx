@@ -1,29 +1,27 @@
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
-import { supabase } from '../lib/supabase';
-import { useAppStore } from '../store/useAppStore';
+import { useAuth } from '../lib/auth';
 
+/**
+ * Initial route. Reads auth status from the central store and renders the
+ * matching redirect. The status is owned by AuthListenerProvider (mounted in
+ * _layout.tsx) — this screen never calls supabase.auth.getSession() directly.
+ *
+ * Safety net: if status stays 'checking' for >3s (e.g. corrupt AsyncStorage),
+ * we fall through to /auth/login so the user is never stranded on a buffer.
+ */
 export default function Index() {
-  const [checking, setChecking] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
-  const username = useAppStore(s => s.username);
+  const { status } = useAuth();
+  const [bailed, setBailed] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setHasSession(!!session);
-      setChecking(false);
-    });
+    if (status !== 'checking') return;
+    const t = setTimeout(() => setBailed(true), 3_000);
+    return () => clearTimeout(t);
+  }, [status]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setHasSession(!!session);
-      setChecking(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (checking) {
+  if (status === 'checking' && !bailed) {
     return (
       <View style={{ flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color="#6366F1" size="large" />
@@ -31,13 +29,14 @@ export default function Index() {
     );
   }
 
-  if (!hasSession) {
-    return <Redirect href="/auth/login" />;
+  if (status === 'ready') {
+    return <Redirect href="/(tabs)/discover" />;
   }
 
-  if (!username) {
+  if (status === 'needs-onboarding') {
     return <Redirect href="/auth/signup-wizard" />;
   }
 
-  return <Redirect href="/(tabs)/discover" />;
+  // 'signed-out' (or bailed-from 'checking')
+  return <Redirect href="/auth/login" />;
 }

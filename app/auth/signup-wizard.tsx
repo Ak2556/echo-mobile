@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArrowLeft, Check, At } from 'phosphor-react-native';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../lib/auth';
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -39,6 +40,39 @@ const INTERESTS = [
   { id: 'culture', label: '🎭 Culture' }, { id: 'design', label: '🏠 Design' },
   { id: 'podcasts', label: '🎤 Podcasts' }, { id: 'writing', label: '✍️ Writing' },
 ];
+
+// Activation seed prompts mapped to each interest. Used after the wizard
+// finishes — instead of dumping a brand-new user on an empty feed, we route
+// them straight to compose with one of these in the prompt field. First
+// publish in the first session is the strongest predictor of D1 retention.
+const INTEREST_PROMPTS: Record<string, string> = {
+  music:       'What\'s a song that always pulls you out of a bad mood?',
+  gaming:      'What\'s the most underrated mechanic in a game you love?',
+  art:         'What piece of art has changed how you see the world?',
+  tech:        'What\'s a piece of technology you wish more people used?',
+  fitness:     'What\'s the smallest habit that changed your fitness?',
+  food:        'What\'s the dish you\'d cook to convince someone you can cook?',
+  travel:      'Where would you send a friend who has one weekend free?',
+  books:       'What book do you give as a gift more than once?',
+  film:        'What\'s a film that needs a rewatch every couple of years?',
+  sports:      'What\'s an athletic moment you\'d show someone who doesn\'t care about sports?',
+  coding:      'What\'s a bug you remember years later, and what did it teach you?',
+  nature:      'What\'s a place outside you go to think clearly?',
+  photography: 'What photo means more to you than it should?',
+  comedy:      'Who makes you laugh in a way you can\'t explain to other people?',
+  science:     'What scientific idea blew your mind when you first understood it?',
+  finance:     'What\'s a money lesson you wish you\'d learned five years earlier?',
+  culture:     'What\'s a cultural moment that you keep coming back to?',
+  design:      'What\'s a piece of design — UI, object, signage — you love and never tire of?',
+  podcasts:    'What podcast episode have you recommended the most?',
+  writing:     'What sentence have you read this year that you can\'t forget?',
+};
+const DEFAULT_PROMPT = 'What\'s a piece of advice you ignored that turned out to be right?';
+
+function primaryInterestPrompt(interestId?: string): string {
+  if (!interestId) return DEFAULT_PROMPT;
+  return INTEREST_PROMPTS[interestId] ?? DEFAULT_PROMPT;
+}
 
 const CONFETTI_COLORS = [ACCENT, '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#06B6D4', '#F97316'];
 
@@ -184,6 +218,7 @@ function ConfettiPiece({ startX, color, velocity, xDrift, rotDeg, w, h }: {
 
 export default function SignupWizard() {
   const router = useRouter();
+  const { session } = useAuth();
   const {
     setUsername,
     setDisplayName: storeSetDisplayName,
@@ -197,6 +232,8 @@ export default function SignupWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [displayName, setDisplayNameLocal] = useState('');
   const [usernameRaw, setUsernameRaw] = useState('');
+
+  useEffect(() => { track('signup_started'); }, []);
   const [avatarColor, setAvatarColorLocal] = useState(ACCENT);
   const [bioText, setBioText] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -207,35 +244,55 @@ export default function SignupWizard() {
 
   const usernameClean = usernameRaw.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
   const firstName = displayName.trim().split(' ')[0] || 'you';
-  const canStep0 = displayName.trim().length >= 1 && usernameClean.length >= 3 && usernameStatus === 'available';
+  // Allow proceeding as long as the username ISN'T confirmed taken or still
+  // checking. If RLS / network failure leaves status === 'idle', the DB unique
+  // constraint at insert time is the backstop — we surface "Username taken" and
+  // bounce back to this step. Better to let users move forward than to gate
+  // them on a check that can silently fail.
+  const canStep0 =
+    displayName.trim().length >= 1 &&
+    usernameClean.length >= 3 &&
+    usernameStatus !== 'taken' &&
+    usernameStatus !== 'checking';
 
-  // Debounced availability check. Runs whenever the cleaned username changes
-  // and is at least 3 chars. The reqId guards against stale responses landing
-  // after the user typed something newer.
-  const usernameReqId = useRef(0);
+  // Debounced availability check using AbortController. Each new keystroke
+  // aborts the previous in-flight query — so rapid typing only ever leaves
+  // ONE pending check. No timeout race needed: if the network is genuinely
+  // dead, the request rejects with an abort and we fall to 'idle', and the
+  // canStep0 gate above lets the user proceed (DB unique constraint is the
+  // backstop at save time).
   useEffect(() => {
     if (usernameClean.length < 3) {
       setUsernameStatus('idle');
       return;
     }
+
     setUsernameStatus('checking');
-    const myReq = ++usernameReqId.current;
-    const t = setTimeout(async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', usernameClean)
-        .maybeSingle();
-      if (myReq !== usernameReqId.current) return; // stale
-      if (error) {
-        // Treat lookup errors as "idle" — don't block signup on a transient
-        // network failure; the insert-time constraint is the real backstop.
-        setUsernameStatus('idle');
-        return;
+    const controller = new AbortController();
+
+    const debounce = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', usernameClean)
+          .abortSignal(controller.signal)
+          .maybeSingle();
+        if (controller.signal.aborted) return;
+        if (error) {
+          setUsernameStatus('idle');
+          return;
+        }
+        setUsernameStatus(data ? 'taken' : 'available');
+      } catch {
+        if (!controller.signal.aborted) setUsernameStatus('idle');
       }
-      setUsernameStatus(data ? 'taken' : 'available');
-    }, 350);
-    return () => clearTimeout(t);
+    }, 300);
+
+    return () => {
+      clearTimeout(debounce);
+      controller.abort();
+    };
   }, [usernameClean]);
 
   const nameInputRef = useRef<TextInput>(null);
@@ -331,14 +388,12 @@ export default function SignupWizard() {
 
   const handleSave = async () => {
     if (saving) return;
-    setSaving(true);
-
-    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showToast('Session expired', '❌');
       router.replace('/auth/login');
       return;
     }
+    setSaving(true);
 
     const { error } = await supabase.from('profiles').upsert({
       id: session.user.id,
@@ -373,7 +428,15 @@ export default function SignupWizard() {
     identify(session.user.id, { username: usernameClean });
     track('signup_completed', { interests_count: selectedInterests.length });
 
-    router.replace('/(tabs)/discover');
+    // Activation pivot: instead of dropping the user on an empty feed, route
+    // straight to compose with a primed prompt based on their first interest.
+    // This is the make-or-break for D1 retention — first publish in the first
+    // session is the strongest predictor of return.
+    const seed = primaryInterestPrompt(selectedInterests[0]);
+    router.replace({
+      pathname: '/create-post',
+      params: { prefillPrompt: seed, firstEcho: '1' },
+    } as never);
   };
 
   const backHidden = currentStep === 0 || currentStep === 4;
@@ -431,10 +494,10 @@ export default function SignupWizard() {
                   color: '#fff', fontSize: 28, fontWeight: '800',
                   letterSpacing: -0.5, marginBottom: 6,
                 }}>
-                  Who are you?
+                  Welcome to Echo
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 32 }}>
-                  Tell us your name and choose a handle.
+                  The social network for thinking out loud. Let&apos;s set up your account.
                 </Text>
 
                 <Text style={{

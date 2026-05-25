@@ -3,6 +3,7 @@ import { ActionSheetIOS, ActivityIndicator, Modal, Platform, Pressable, Text, Vi
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { ArrowsClockwise, CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { videoSourceForUri } from '../../lib/videoMedia';
 
 export interface QualityOption { label: string; uri: string; }
 
@@ -16,6 +17,15 @@ interface InlineVideoProps {
 const SPEEDS = [0.5, 1, 1.5, 2] as const;
 type Speed = (typeof SPEEDS)[number];
 const PILL = { padding: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.65)' } as const;
+const VIDEO_LOAD_TIMEOUT_MS = 45_000;
+type VideoLoadState = 'loading' | 'ready' | 'error';
+
+function loadStateFromStatus(status: string | undefined): VideoLoadState | null {
+  if (status === 'readyToPlay') return 'ready';
+  if (status === 'error') return 'error';
+  if (status === 'loading' || status === 'idle') return 'loading';
+  return null;
+}
 
 function fmt(s: number): string {
   const t = Math.floor(Math.max(0, s));
@@ -26,9 +36,9 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
   const { colors, radius, fontSizes } = useTheme();
   const videoRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
-  const player = useVideoPlayer(activeUri, p => { p.muted = true; p.loop = false; });
+  const player = useVideoPlayer(videoSourceForUri(activeUri), p => { p.muted = true; p.loop = false; });
 
-  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [loop, setLoop] = useState(false);
@@ -50,11 +60,13 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
 
   useEffect(() => {
     const s1 = player.addListener('statusChange', ({ status }) => {
-      if (status === 'readyToPlay') {
+      const nextState = loadStateFromStatus(status);
+      if (nextState === 'ready') {
         setLoadState('ready');
         if (player.duration > 0) setDuration(player.duration);
       }
-      if (status === 'error') setLoadState('error');
+      if (nextState === 'error') setLoadState('error');
+      if (nextState === 'loading') setLoadState('loading');
     });
     const s2 = player.addListener('playingChange', ({ isPlaying }) => setPlaying(isPlaying));
     const s3 = player.addListener('timeUpdate', ({ currentTime }) => {
@@ -65,14 +77,22 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
     const s4 = player.addListener('playToEnd', () => {
       if (!loop) { player.replay(); player.pause(); setPlaying(false); }
     });
+    const initialState = loadStateFromStatus(player.status);
+    if (initialState) setLoadState(initialState);
+    if (player.duration > 0) setDuration(player.duration);
     return () => { s1.remove(); s2.remove(); s3.remove(); s4.remove(); };
   }, [player, loop]);
 
   useEffect(() => {
     if (loadState !== 'loading') return;
-    const t = setTimeout(() => setLoadState(s => s === 'loading' ? 'error' : s), 12000);
+    const t = setTimeout(() => setLoadState(s => s === 'loading' ? 'error' : s), VIDEO_LOAD_TIMEOUT_MS);
     return () => clearTimeout(t);
   }, [activeUri, loadState]);
+
+  const retryLoad = () => {
+    setLoadState('loading');
+    void player.replaceAsync(videoSourceForUri(activeUri));
+  };
 
   const togglePlay = () => { if (loadState !== 'ready') return; try { if (playing) { player.pause(); } else { player.play(); } } catch {} };
   const toggleMute = () => { try { setMuted(m => !m); } catch {} };
@@ -119,14 +139,22 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
         {loadState === 'error' ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.surfaceHover }}>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{"Couldn't load video"}</Text>
-            <Pressable onPress={() => { setLoadState('loading'); setActiveUri(uri); }}
+            <Pressable onPress={retryLoad}
               style={{ paddingHorizontal: 20, paddingVertical: 9, borderRadius: radius.full, backgroundColor: colors.accent }}>
               <Text style={{ color: '#fff', fontSize: fontSizes.small, fontWeight: '600' }}>Retry</Text>
             </Pressable>
           </View>
         ) : (
           <>
-            <VideoView ref={videoRef} player={player} style={{ flex: 1 }} contentFit="cover" nativeControls={false} fullscreenOptions={{ enable: true }} />
+            <VideoView
+              ref={videoRef}
+              player={player}
+              style={{ flex: 1 }}
+              contentFit="cover"
+              nativeControls={false}
+              fullscreenOptions={{ enable: true }}
+              onFirstFrameRender={() => setLoadState('ready')}
+            />
 
             {loadState === 'loading' && (
               <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>

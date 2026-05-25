@@ -173,7 +173,7 @@ export default function EditProfileScreen() {
 
       <ScrollView className="flex-1 px-4 pt-6" showsVerticalScrollIndicator={false}>
         {/* Avatar preview with glow ring */}
-        <Animated.View entering={animation(FadeInDown.delay(100).springify())} className="items-center mb-8">
+        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="items-center mb-8">
           <AnimatedPressable
             onPress={() => { void handlePickAvatar(); }}
             disabled={uploadingAvatar}
@@ -219,7 +219,7 @@ export default function EditProfileScreen() {
         </Animated.View>
 
         {/* Display Name */}
-        <Animated.View entering={animation(FadeInDown.delay(200).springify())} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} className="mb-4">
           <Text
             style={{
               color: colors.textSecondary,
@@ -240,7 +240,7 @@ export default function EditProfileScreen() {
         </Animated.View>
 
         {/* Username */}
-        <Animated.View entering={animation(FadeInDown.delay(250).springify())} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(250).duration(220))} className="mb-4">
           <Text
             style={{
               color: colors.textSecondary,
@@ -274,7 +274,7 @@ export default function EditProfileScreen() {
         </Animated.View>
 
         {/* Bio */}
-        <Animated.View entering={animation(FadeInDown.delay(300).springify())} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} className="mb-4">
           <Text
             style={{
               color: colors.textSecondary,
@@ -317,7 +317,7 @@ export default function EditProfileScreen() {
         </Animated.View>
 
         {/* Pronouns — small text field with quick presets */}
-        <Animated.View entering={animation(FadeInDown.delay(350).springify())} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} className="mb-4">
           <Text
             style={{
               color: colors.textSecondary,
@@ -363,7 +363,7 @@ export default function EditProfileScreen() {
         </Animated.View>
 
         {/* Mood — 60-char status that auto-expires in 24h */}
-        <Animated.View entering={animation(FadeInDown.delay(400).springify())} className="mb-8">
+        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} className="mb-8">
           <Text
             style={{
               color: colors.textSecondary,
@@ -383,7 +383,7 @@ export default function EditProfileScreen() {
               marginLeft: 4,
             }}
           >
-            What's on your mind right now? Shows above your name for a day, then disappears.
+            {"What's on your mind right now? Shows above your name for a day, then disappears."}
           </Text>
           <TextInput
             value={newMood}

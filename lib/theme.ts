@@ -55,24 +55,24 @@ const THEMES: Record<ThemeName, ThemeColors> = {
   midnight: {
     name: 'Midnight',
     isDark: true,
-    bg: '#09090B',
+    bg: '#0B0B0D',
     bgPure: '#000000',
-    surface: '#18181B',
-    surfaceHover: '#27272A',
-    border: '#27272A',
-    text: '#FFFFFF',
-    textSecondary: '#A1A1AA',
-    textMuted: '#71717A',
+    surface: '#161618',
+    surfaceHover: '#212124',
+    border: '#262629',
+    text: '#F5F5F4',
+    textSecondary: '#A8A29E',
+    textMuted: '#737378',
     accent: '#5B5BF8',
     accentMuted: 'rgba(91,91,248,0.15)',
     danger: '#EF4444',
     dangerMuted: 'rgba(239,68,68,0.15)',
     success: '#22C55E',
-    tabBar: '#000000',
+    tabBar: '#0A0A0B',
     tabBorder: '#1C1C1E',
-    inputBg: '#18181B',
-    inputBorder: '#27272A',
-    ambientGradient: ['rgba(91,91,248,0.20)', '#09090B'] as const,
+    inputBg: '#161618',
+    inputBorder: '#262629',
+    ambientGradient: ['rgba(91,91,248,0.20)', '#0B0B0D'] as const,
     ...DARK_GLASS,
   },
   amoled: {
@@ -349,6 +349,19 @@ export function useTheme() {
     return onlineStatus && ONLINE_USER_IDS.has(userId);
   };
 
+  // Brand typography — Inter family loaded at root. Each token maps to a
+  // semantic role rather than a raw font name so we can swap families in
+  // one place. Use these in components instead of inline fontFamily strings.
+  const font = {
+    body:         { fontFamily: 'Inter_400Regular' },
+    bodyMedium:   { fontFamily: 'Inter_500Medium' },
+    bodySemibold: { fontFamily: 'Inter_600SemiBold' },
+    bodyBold:     { fontFamily: 'Inter_700Bold' },
+    display:      { fontFamily: 'Inter_700Bold' as const, letterSpacing: -0.4 },
+    displayBlack: { fontFamily: 'Inter_800ExtraBold' as const, letterSpacing: -0.6 },
+    quote:        { fontFamily: 'Inter_400Regular' as const, fontStyle: 'italic' as const },
+  };
+
   return {
     colors,
     fontSizes,
@@ -358,6 +371,7 @@ export function useTheme() {
     reduceAnimations,
     showAvatars,
     isUserOnline,
+    font,
   };
 }
 

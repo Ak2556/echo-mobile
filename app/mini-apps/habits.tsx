@@ -179,7 +179,7 @@ export default function HabitsApp() {
         const done = habit.completedDates.includes(today);
         const streak = getStreak(habit.completedDates);
         return (
-          <Animated.View key={habit.id} entering={FadeInDown.delay(i * 50).springify()} style={{ marginBottom: 12 }}>
+          <Animated.View key={habit.id} entering={FadeInDown.delay(i * 50).duration(220)} style={{ marginBottom: 12 }}>
             <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 18 }} style={{ borderColor: done ? habit.color + '55' : colors.glassBorder }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>

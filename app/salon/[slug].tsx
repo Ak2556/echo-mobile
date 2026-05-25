@@ -10,8 +10,9 @@ import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
 import { fetchSalonBySlug, fetchSalonEchoes, setSalonMembership, type Salon } from '../../lib/supabaseEchoApi';
 import type { FeedItem } from '../../types';
+import { V2FeatureGuard } from '../../components/common/V2FeatureGuard';
 
-export default function SalonDetailScreen() {
+function SalonDetailScreenInner() {
   const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { colors, radius, fontSizes } = useTheme();
@@ -110,7 +111,7 @@ export default function SalonDetailScreen() {
       >
         {/* Salon header card */}
         <Animated.View
-          entering={FadeInUp.springify().damping(18).stiffness(140)}
+          entering={FadeInUp.duration(220)}
           style={{
             margin: 16,
             padding: 16,
@@ -162,3 +163,5 @@ export default function SalonDetailScreen() {
     </SafeAreaView>
   );
 }
+
+export default function SalonDetailScreen() { return <V2FeatureGuard flag="salons"><SalonDetailScreenInner /></V2FeatureGuard>; }

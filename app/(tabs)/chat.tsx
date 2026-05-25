@@ -14,7 +14,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ActionSheet } from '../../components/common/ActionSheet';
-import { streamEchoAI, EchoAIModel } from '../../lib/api';
+import { streamEchoAI, EchoAIModel, isRateLimitError } from '../../lib/api';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { generateSessionTitle } from '../../lib/aiTitle';
@@ -23,6 +23,7 @@ import { useTheme } from '../../lib/theme';
 import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, CaretDown } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
+import { track } from '../../lib/analytics';
 
 const EMPTY_SUGGESTIONS = ['Ask for a better hook', 'Turn an idea into a post', 'Run a poll for me', 'Summarize a note'];
 
@@ -296,7 +297,16 @@ export default function ChatScreen() {
           if (last) updateSessionLastMessage(currentSessionId, last.content.slice(0, 80), final.length);
         }
       } catch (err: any) {
-        upsertText(`err-${Date.now()}`, 'assistant', `Error: ${err?.message ?? 'unknown'}`);
+        if (isRateLimitError(err?.message)) {
+          upsertText(
+            `err-${Date.now()}`,
+            'assistant',
+            "You've reached the AI limit (30 requests/hour). Try again in an hour, or upgrade to Pro for 200/hour.",
+          );
+          track('chat_rate_limited');
+        } else {
+          upsertText(`err-${Date.now()}`, 'assistant', `Error: ${err?.message ?? 'unknown'}`);
+        }
       } finally {
         stopFlush();
         stopStreamRef.current = null;
@@ -316,6 +326,7 @@ export default function ChatScreen() {
       if (!currentSessionId) return;
       const userId = `u-${Date.now()}`;
       const isFirst = (useAppStore.getState().messagesBySession[currentSessionId] || []).length === 0;
+      track('chat_message_sent', { is_first_in_session: isFirst, length: text.length, model: aiModel });
       addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt: new Date().toISOString() });
       runStream({
         message: text,
@@ -443,6 +454,11 @@ export default function ChatScreen() {
         .filter(m => m.role === 'user' || m.role === 'assistant')
         .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     });
+    track('echo_drafted', {
+      source: 'chat_share_nudge',
+      length_prompt: lastUser.content.length,
+      length_response: lastAi.content.length,
+    });
     router.push({ pathname: '/share', params: { prompt: lastUser.content, response: lastAi.content } });
   }, [messages, router]);
 
@@ -531,23 +547,30 @@ export default function ChatScreen() {
             >
               <AnimatedPressable
                 onPress={handleShare}
-                depth="soft"
-                haptic="light"
+                haptic="medium"
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  borderRadius: 999,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.accent,
-                  backgroundColor: colors.isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)',
+                  gap: 10,
+                  borderRadius: 14,
+                  backgroundColor: colors.accent,
                   paddingHorizontal: 16,
-                  paddingVertical: 9,
+                  paddingVertical: 14,
+                  shadowColor: colors.accent,
+                  shadowOpacity: 0.35,
+                  shadowRadius: 14,
+                  shadowOffset: { width: 0, height: 6 },
                 }}
               >
-                <ArrowUpRight color={colors.accent} size={15} weight="bold" />
-                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>Share as Echo</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: -0.2 }}>
+                    Publish this conversation
+                  </Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12, marginTop: 2 }}>
+                    Turn it into an Echo your followers can read.
+                  </Text>
+                </View>
+                <ArrowUpRight color="#fff" size={18} weight="bold" />
               </AnimatedPressable>
             </Animated.View>
           ) : null}

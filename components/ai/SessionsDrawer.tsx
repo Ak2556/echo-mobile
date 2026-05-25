@@ -42,7 +42,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
         <Pressable style={{ flex: 1 }} onPress={onClose} />
       </Animated.View>
       <Animated.View
-        entering={reduceAnimations ? undefined : SlideInLeft.springify().damping(18)}
+        entering={reduceAnimations ? undefined : SlideInLeft.duration(220)}
         exiting={reduceAnimations ? undefined : SlideOutLeft.duration(180)}
         style={{
           position: 'absolute',

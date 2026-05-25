@@ -85,7 +85,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
-  const { colors, animation } = useTheme();
+  const { colors, animation, font } = useTheme();
   const performance = usePerformanceProfile('hot');
   const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'reactions' | 'saves' | 'quotes' | 'follows' | 'reposts'>('all');
 
@@ -263,17 +263,19 @@ export default function NotificationsScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>Activity</Text>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 26 }]}>Activity</Text>
             {unreadCount > 0 && (
               <View
                 style={{
                   backgroundColor: colors.accent,
                   borderRadius: 99,
-                  paddingHorizontal: 6,
+                  paddingHorizontal: 7,
                   paddingVertical: 2,
+                  minWidth: 20,
+                  alignItems: 'center',
                 }}
               >
-                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{unreadCount}</Text>
+                <Text style={[font.bodyBold, { color: '#fff', fontSize: 11 }]}>{unreadCount}</Text>
               </View>
             )}
           </View>
@@ -285,17 +287,15 @@ export default function NotificationsScreen() {
               alignItems: 'center',
               gap: 6,
               paddingHorizontal: 12,
-              paddingVertical: 6,
+              paddingVertical: 7,
               borderRadius: 99,
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
               borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.glassBorder,
+              borderColor: colors.border,
             }}
-            scaleValue={0.93}
             haptic="medium"
           >
-            <Checks color={colors.accent} size={16} />
-            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>Read All</Text>
+            <Checks color={colors.textSecondary} size={14} />
+            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>Read all</Text>
           </AnimatedPressable>
         </View>
 
@@ -307,20 +307,19 @@ export default function NotificationsScreen() {
               onPress={() => setFilter(tab)}
               performanceMode="hot"
               style={{
-                paddingHorizontal: 16,
-                paddingVertical: 7,
+                paddingHorizontal: 14,
+                paddingVertical: 6,
                 borderRadius: 99,
-                backgroundColor: filter === tab ? colors.accent : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                backgroundColor: filter === tab ? colors.accent : 'transparent',
                 borderWidth: StyleSheet.hairlineWidth,
-                borderColor: filter === tab ? 'transparent' : colors.glassBorder,
+                borderColor: filter === tab ? 'transparent' : colors.border,
               }}
-              scaleValue={0.93}
               haptic="light"
             >
               <Text
                 style={{
-                  fontSize: 14,
-                  fontWeight: '600',
+                  ...font.bodySemibold,
+                  fontSize: 13,
                   textTransform: 'capitalize',
                   color: filter === tab ? '#fff' : colors.textSecondary,
                 }}

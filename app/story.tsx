@@ -134,7 +134,7 @@ export default function StoryScreen() {
           }}
         >
           <Animated.View
-            entering={animation(FadeInDown.delay(100).springify())}
+            entering={animation(FadeInDown.delay(100).duration(220))}
             className="p-4 mb-5"
             style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.lg }}
           >
@@ -143,7 +143,7 @@ export default function StoryScreen() {
           </Animated.View>
 
           <Animated.View
-            entering={animation(FadeInDown.delay(200).springify())}
+            entering={animation(FadeInDown.delay(200).duration(220))}
             className="p-4"
             style={{
               backgroundColor: colors.accentMuted,
@@ -156,7 +156,7 @@ export default function StoryScreen() {
             <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{story.response}</Text>
           </Animated.View>
 
-          <Animated.View entering={animation(FadeInDown.delay(300).springify())} className="flex-row items-center justify-center mt-6 gap-1.5">
+          <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} className="flex-row items-center justify-center mt-6 gap-1.5">
             <Eye color={colors.textMuted} size={14} />
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{story.viewCount} views</Text>
           </Animated.View>

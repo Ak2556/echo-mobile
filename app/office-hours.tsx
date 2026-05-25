@@ -9,6 +9,7 @@ import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { fetchUpcomingOfficeHours, setOfficeHourRSVP, type OfficeHour } from '../lib/supabaseEchoApi';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 /**
  * Office Hours — scheduled AMA sessions on a creator's profile.
@@ -26,7 +27,7 @@ function relativeStart(starts_at: string): string {
   return `In ${days}d`;
 }
 
-export default function OfficeHoursScreen() {
+function OfficeHoursScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
   const [list, setList] = useState<OfficeHour[]>([]);
@@ -73,7 +74,7 @@ export default function OfficeHoursScreen() {
             No upcoming Office Hours
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
-            Schedule a session — invite Q's on a topic you know cold.
+            {"Schedule a session — invite Q's on a topic you know cold."}
           </Text>
           <AnimatedPressable
             onPress={() => router.push('/create-office-hour' as any)}
@@ -91,7 +92,7 @@ export default function OfficeHoursScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.accent} />}
         >
           {list.map((oh, i) => (
-            <Animated.View key={oh.id} entering={FadeInUp.delay(i * 30).springify().damping(18).stiffness(140)}>
+            <Animated.View key={oh.id} entering={FadeInUp.delay(i * 30).duration(220)}>
               <OfficeHourCard
                 oh={oh}
                 onRSVP={async (going) => {
@@ -185,3 +186,5 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
     </AnimatedPressable>
   );
 }
+
+export default function OfficeHoursScreen() { return <V2FeatureGuard flag="officeHours"><OfficeHoursScreenInner /></V2FeatureGuard>; }

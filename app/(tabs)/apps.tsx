@@ -93,7 +93,7 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(Math.min(index, 8) * 24).springify().damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
+      entering={FadeInDown.delay(Math.min(index, 8) * 24).duration(220).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
       style={{ width: CARD }}
     >
       <AnimatedPressable
@@ -253,7 +253,7 @@ export default function AppsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {dashboard && (
-          <Animated.View entering={FadeInDown.delay(40).springify()} style={{ gap: 12, marginBottom: 8 }}>
+          <Animated.View entering={FadeInDown.delay(40).duration(220)} style={{ gap: 12, marginBottom: 8 }}>
             <SectionTitle title="Support Your Echoes" caption="Local tools that feed ideas back into chat and posts" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
               <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/habits')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: `${colors.success}18`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.success}44` }}>
@@ -298,7 +298,7 @@ export default function AppsScreen() {
           </Animated.View>
         )}
 
-        <Animated.View entering={FadeInDown.delay(55).springify()} style={{ gap: 10, marginBottom: 8 }}>
+        <Animated.View entering={FadeInDown.delay(55).duration(220)} style={{ gap: 10, marginBottom: 8 }}>
           <SectionTitle title="Best paired with Echo" caption="Use these when you want something worth posting or messaging about" />
           <View style={{ gap: 8 }}>
             {[
@@ -314,7 +314,7 @@ export default function AppsScreen() {
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(70).springify()} style={{ gap: 10, marginBottom: 8 }}>
+        <Animated.View entering={FadeInDown.delay(70).duration(220)} style={{ gap: 10, marginBottom: 8 }}>
           <TextInput
             value={query}
             onChangeText={runLocalSearch}

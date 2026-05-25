@@ -16,30 +16,28 @@ If "Echo" conflicts with an existing app on review, fall back to:
 
 ## Subtitle (30 chars max)
 
-**Primary:** `Think out loud, together.`  *(24)*
-**Alt A:**   `Smarter than a feed.`  *(20)*
-**Alt B:**   `One question. Your take.`  *(24)*
+**Locked:** `Conversations worth keeping.`  *(28)*
 
-Pick one. Subtitle is the most-read line on the App Store — favor curiosity over feature list.
+Echoes the tagline that runs through the rest of the listing + the in-app welcome copy. Says "not Twitter" without saying it. Anti-positioning beats feature-listing on a 30-char line.
 
 ---
 
 ## Promotional Text (170 chars — editable post-launch without re-review)
 
-`Echo turns your real questions into posts worth keeping. Ask, answer, and discover ideas that don't disappear in 24 hours. Built around your curiosity, not the algorithm.`  *(170)*
+`Echo is the social network for thinking out loud. Two-part posts: the question that sparked it, and your take. Built around your curiosity, not the algorithm.`  *(159)*
 
 ---
 
 ## Description (4000 chars — limit, not target. Tighter is better.)
 
 ```
-Echo is a social space for sharing ideas you actually want to remember.
+The social network for thinking out loud.
 
-Every post — we call them "echoes" — has two parts: a question that sparked it, and the take you have on it. That structure is the whole product. Echo isn't a feed of one-liners — it's a feed of thoughts you can re-read in a year and still get something from.
+Every post on Echo — we call them "echoes" — has two parts: a question that sparked it, and the take you have on it. That structure is the whole product. Echo isn't a feed of one-liners — it's a feed of thoughts you can re-read in a year and still get something from.
 
 WHAT YOU CAN DO
 
-— Ask Echo's built-in AI a real question, then publish the conversation
+— Talk to Echo's built-in AI about something you've been thinking through, then publish the conversation as an Echo
 — Drop a thought of your own with a clear prompt + response
 — React with 🤯 📝 💯 🤔 instead of empty likes
 — @-mention friends in posts and comments
@@ -54,7 +52,7 @@ PRIVATE BY DEFAULT
 
 WHY ECHO
 
-You already have apps for staying in touch and apps for hot takes. Echo is the one for the ideas that deserve to outlast the scroll. Try it for a week — the strongest accounts on here aren't the loudest, they're the most curious.
+You already have apps for staying in touch and apps for hot takes. Echo is for the conversations you wish were public. The strongest accounts on here aren't the loudest, they're the most curious.
 
 —
 
@@ -65,7 +63,7 @@ Echo is in active development. We ship updates weekly. Feedback: support@echo.ap
 Subject to our Terms of Service and Privacy Policy. By using Echo you agree to be bound by them.
 ```
 
-Length: ~1200 chars — keeps room above the "more" fold.
+Length: ~1230 chars — keeps room above the "more" fold.
 
 ---
 

@@ -14,6 +14,7 @@ import { useFeed } from '../../hooks/queries/useFeed';
 import { buildSearchBuckets, deriveTopicFeed, groupDiscovery, inferTopics } from '../../lib/echoUX';
 import { useRemoteSearch } from '../../hooks/queries/useSearch';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { track } from '../../lib/analytics';
 
 const { width: SW } = Dimensions.get('window');
 const CARD_WIDTH = (SW - 48) / 2;
@@ -50,6 +51,7 @@ export default function SearchScreen() {
     const t = setTimeout(() => {
       const next = [q, ...recentSearches.filter(r => r !== q)].slice(0, 10);
       setRecentSearches(next);
+      track('search_executed', { length: q.length, has_hashtag: q.startsWith('#') });
     }, 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, Pressable, ActivityIndicator, useWindowDimensions,
+  View, Text, Pressable, ActivityIndicator, useWindowDimensions, Share,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -17,11 +17,23 @@ import { useAppStore } from '../../store/useAppStore';
 import { showToast } from '../ui/Toast';
 import { FeedItem } from '../../types';
 import { NEON, NEON_CHIP, neonGlow } from '../../lib/neonDesign';
+import { videoSourceForUri } from '../../lib/videoMedia';
+import { echoUrl } from '../../lib/echoUrl';
 
 interface EchoCardProps {
   item: FeedItem;
   isActive: boolean;
   onCommentPress?: (item: FeedItem) => void;
+}
+
+const VIDEO_LOAD_TIMEOUT_MS = 45_000;
+type VideoLoadState = 'loading' | 'ready' | 'error';
+
+function loadStateFromStatus(status: string | undefined): VideoLoadState | null {
+  if (status === 'readyToPlay') return 'ready';
+  if (status === 'error') return 'error';
+  if (status === 'loading' || status === 'idle') return 'loading';
+  return null;
 }
 
 function SidebarButton({
@@ -61,11 +73,11 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
   const toggleBookmark = useAppStore(s => s.toggleBookmark);
 
   const videoUri = item.videoUri ?? '';
-  const player = useVideoPlayer(videoUri, p => {
+  const player = useVideoPlayer(videoSourceForUri(videoUri), p => {
     p.muted = true;
     p.loop = true;
   });
-  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(item.isLiked);
@@ -85,7 +97,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
   // Safety-net timeout
   useEffect(() => {
     if (loadState !== 'loading') return;
-    const t = setTimeout(() => setLoadState(s => s === 'loading' ? 'error' : s), 12000);
+    const t = setTimeout(() => setLoadState(s => s === 'loading' ? 'error' : s), VIDEO_LOAD_TIMEOUT_MS);
     return () => clearTimeout(t);
   }, [item.videoUri, loadState]);
 
@@ -95,12 +107,14 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
 
   useEffect(() => {
     const statusSub = player.addListener('statusChange', ({ status }) => {
-      if (status === 'readyToPlay') setLoadState('ready');
-      if (status === 'error') setLoadState('error');
+      const nextState = loadStateFromStatus(status);
+      if (nextState) setLoadState(nextState);
     });
     const playingSub = player.addListener('playingChange', ({ isPlaying }) => {
       setPlaying(isPlaying);
     });
+    const initialState = loadStateFromStatus(player.status);
+    if (initialState) setLoadState(initialState);
     return () => {
       statusSub.remove();
       playingSub.remove();
@@ -167,8 +181,13 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
     showToast(next ? 'Saved to bookmarks' : 'Removed from bookmarks', next ? '🔖' : '✓');
   };
 
-  const handleShare = () => {
-    showToast('Link copied!', '🔗');
+  const handleShare = async () => {
+    const url = echoUrl(item.id);
+    try {
+      await Share.share({ message: url, url });
+    } catch {
+      // User dismissed the share sheet — not an error
+    }
   };
 
   const handleRemix = () => {
@@ -180,6 +199,11 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
     setMuted(m => !m);
   };
 
+  const retryVideo = () => {
+    setLoadState('loading');
+    void player.replaceAsync(videoSourceForUri(videoUri));
+  };
+
   const initials = (item.displayName || item.username || '?').charAt(0).toUpperCase();
 
   return (
@@ -187,9 +211,10 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
       {/* ── Video ────────────────────────────────────── */}
       <VideoView
         player={player}
-        style={{ position: 'absolute', inset: 0 }}
+        style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
         contentFit="cover"
         nativeControls={false}
+        onFirstFrameRender={() => setLoadState('ready')}
       />
 
       {/* ── Loading overlay ───────────────────────── */}
@@ -204,7 +229,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
         <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', gap: 12 }}>
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15 }}>{`Couldn't load video`}</Text>
           <Pressable
-            onPress={() => setLoadState('loading')}
+            onPress={retryVideo}
             style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: '#6366F1' }}
           >
             <Text style={{ color: '#fff', fontWeight: '700' }}>Retry</Text>

@@ -10,6 +10,7 @@ import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { LinkifiedText } from '../components/social/LinkifiedText';
 import { useTheme } from '../lib/theme';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import {
   fetchTodaysDailyQuestion,
   fetchOwnDailyAnswer,
@@ -32,7 +33,7 @@ import {
 
 const MAX_ANSWER_LENGTH = 600;
 
-export default function DailyQuestionScreen() {
+function DailyQuestionScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
 
@@ -130,7 +131,7 @@ export default function DailyQuestionScreen() {
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
           {/* Prompt card — large, hero-feeling */}
           <Animated.View
-            entering={FadeInUp.delay(50).springify().damping(18).stiffness(140)}
+            entering={FadeInUp.delay(50).duration(220)}
             style={{
               backgroundColor: colors.surface,
               borderRadius: radius.lg,
@@ -153,7 +154,7 @@ export default function DailyQuestionScreen() {
 
           {/* Compose card */}
           <Animated.View
-            entering={FadeInUp.delay(150).springify().damping(18).stiffness(140)}
+            entering={FadeInUp.delay(150).duration(220)}
             style={{
               backgroundColor: colors.surface,
               borderRadius: radius.lg,
@@ -223,10 +224,10 @@ export default function DailyQuestionScreen() {
               </Text>
             </Animated.View>
           ) : (
-            <Animated.View entering={SlideInDown.springify().damping(16).stiffness(140)}>
+            <Animated.View entering={SlideInDown.duration(220)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginHorizontal: 4 }}>
                 <Text style={{ color: colors.text, fontWeight: '700', fontSize: 17 }}>
-                  Everyone's takes
+                  {"Everyone's takes"}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
                   {answers.length} answer{answers.length === 1 ? '' : 's'}
@@ -311,3 +312,5 @@ function AnswerCard({ a }: { a: DailyAnswerWithAuthor }) {
     </AnimatedPressable>
   );
 }
+
+export default function DailyQuestionScreen() { return <V2FeatureGuard flag="dailyQuestion"><DailyQuestionScreenInner /></V2FeatureGuard>; }

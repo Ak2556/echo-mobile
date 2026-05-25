@@ -7,8 +7,9 @@ import { ArrowLeft, CheckCircle, Lightning, Trophy } from 'phosphor-react-native
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useTheme } from '../lib/theme';
 import { fetchActiveQuests, type Quest } from '../lib/supabaseEchoApi';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
-export default function QuestsScreen() {
+function QuestsScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
   const [quests, setQuests] = useState<Quest[]>([]);
@@ -71,7 +72,7 @@ function Section({ title, icon, quests }: { title: string; icon: React.ReactNode
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{title}</Text>
       </View>
       {quests.map((q, i) => (
-        <Animated.View key={q.id} entering={FadeInUp.delay(i * 30).springify()}>
+        <Animated.View key={q.id} entering={FadeInUp.delay(i * 30).duration(220)}>
           <QuestRow quest={q} />
         </Animated.View>
       ))}
@@ -130,3 +131,5 @@ function QuestRow({ quest }: { quest: Quest }) {
     </View>
   );
 }
+
+export default function QuestsScreen() { return <V2FeatureGuard flag="quests"><QuestsScreenInner /></V2FeatureGuard>; }

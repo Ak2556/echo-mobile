@@ -100,7 +100,7 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
   return (
     <Animated.View
       entering={FadeIn.duration(180)}
-      layout={Layout.springify().damping(MOTION.settle.damping).stiffness(MOTION.settle.stiffness).mass(MOTION.settle.mass)}
+      layout={Layout.duration(220).damping(MOTION.settle.damping).stiffness(MOTION.settle.stiffness).mass(MOTION.settle.mass)}
       style={{ marginHorizontal: 16, marginVertical: 6 }}
     >
       <GlassPanel borderRadius={radius.card} elevated style={{ borderColor: `${accentColor}55` }}>

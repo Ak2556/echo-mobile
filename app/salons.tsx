@@ -8,6 +8,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useTheme } from '../lib/theme';
 import { fetchSalons, setSalonMembership, type Salon } from '../lib/supabaseEchoApi';
 import { showToast } from '../components/ui/Toast';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 /**
  * Salons — topic-based circles. Browse list shows the most popular first,
@@ -15,7 +16,7 @@ import { showToast } from '../components/ui/Toast';
  * on the detail screen.
  */
 
-export default function SalonsScreen() {
+function SalonsScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
   const [salons, setSalons] = useState<Salon[]>([]);
@@ -89,7 +90,7 @@ export default function SalonsScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.accent} />}
         >
           {salons.map((salon, i) => (
-            <Animated.View key={salon.id} entering={FadeInUp.delay(i * 30).springify().damping(18).stiffness(140)}>
+            <Animated.View key={salon.id} entering={FadeInUp.delay(i * 30).duration(220)}>
               <SalonCard salon={salon} onToggle={async (join) => {
                 try {
                   await setSalonMembership(salon.id, join);
@@ -164,3 +165,5 @@ function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean
     </AnimatedPressable>
   );
 }
+
+export default function SalonsScreen() { return <V2FeatureGuard flag="salons"><SalonsScreenInner /></V2FeatureGuard>; }

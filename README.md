@@ -74,6 +74,22 @@ Frontend variables use the `EXPO_PUBLIC_` prefix because Expo embeds them into t
 
 Backend-only secrets belong in `backend/.env`, Supabase secrets, EAS environment variables, or GitHub Actions secrets depending on the runtime.
 
+### EAS Secrets (production/preview builds)
+
+`eas.json` deliberately ships **no** `env` blocks — every value is sourced
+from EAS Secrets at build time. Set them once per project:
+
+```bash
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://<ref>.supabase.co"
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<anon-key>"
+eas secret:create --scope project --name EXPO_PUBLIC_SENTRY_DSN --value "https://<key>@sentry.io/<project>"
+eas secret:create --scope project --name EXPO_PUBLIC_POSTHOG_KEY --value "phc_..."
+eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value "https://<your-fastapi>.up.railway.app"
+```
+
+List and rotate with `eas secret:list` / `eas secret:delete`. Local `.env`
+values are only used by `npm start` / Expo Go.
+
 See [docs/security/environment-and-secrets.md](docs/security/environment-and-secrets.md) for the full policy.
 
 ## Architecture
@@ -124,6 +140,37 @@ Deployment surfaces are split by runtime:
 - AWS/ECS workflow is present but requires production values and Docker/task definition assets before it can deploy successfully.
 
 Deployment guide: [docs/deployment/deployment-guide.md](docs/deployment/deployment-guide.md).
+
+## Launch readiness (v1)
+
+Tracking shipped vs. still-blocked work toward App Store submission.
+
+| Area | Status |
+| --- | --- |
+| App stability — themed error boundary, Sentry-ready capture | shipped |
+| Auth lock, session restore, signup with live username check | shipped |
+| Account deletion (Apple Guideline 5.1.1(v)) | shipped — `app/delete-account.tsx` |
+| AI disclosure inline + in Privacy Policy | shipped |
+| Visual identity unified — indigo accent, no neon, no ambient gradients | shipped |
+| Tab vocabulary — Home / Explore / Echo / Chat / Activity / You | shipped |
+| Empty/loading states via EmptyState + skeletons | shipped (most surfaces) |
+| First-Echo launch coach + post-publish push pre-prompt | shipped |
+| Deep links — `/e/<id>`, `/u/<id>`, `/c/<id>` | shipped |
+| AnimatedPressable lite-default, lazy worklets | shipped |
+| Engagement analytics — track() wired across like, react, follow, chat, search | shipped (stub backend) |
+| Apple-app-site-association spec | shipped (needs hosting at echo.app) |
+| Privacy policy + Terms of Service drafts | shipped in `docs/` (need legal entity name + jurisdiction) |
+| App Store listing copy + reviewer notes | shipped in `docs/app-store-listing.md` |
+| Sentry SDK install + DSN | shipped — set `EXPO_PUBLIC_SENTRY_DSN` in EAS Secrets |
+| Analytics SDK (PostHog) | shipped — set `EXPO_PUBLIC_POSTHOG_KEY` in EAS Secrets, consent-gated |
+| Analytics consent banner (GDPR-friendly) | shipped — `components/ConsentBanner.tsx` |
+| AI rate limiting (Edge Function + Postgres) | shipped — see `supabase/migrations/*_add_ai_rate_limit.sql` |
+| Content moderation before publishing | shipped — see `supabase/functions/echo-ai/moderation.ts` |
+| APNs cert + Expo Push wiring | blocked on user (Apple Developer account) |
+| Production EAS build (Distribution Cert) | blocked on user (Apple Developer creds) |
+| App icon, screenshots, support + privacy URLs hosted | blocked on user |
+
+Open the launch plan in conversation history to see per-phase notes. See `docs/app-store-listing.md` for the full submission checklist.
 
 ## Maintainers
 

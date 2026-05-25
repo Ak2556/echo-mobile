@@ -5,6 +5,8 @@
 // Endpoint contract: see ./README.md (or scroll to handleRequest).
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { moderateContent } from "./moderation.ts";
+import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "./rateLimit.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const DEFAULT_ECHO_AI_MODEL = "google/gemini-2.5-flash";
@@ -152,12 +154,22 @@ const TOOLS: ToolSpec[] = [
       `Publish post "${(a.title as string | undefined) ?? (a.prompt as string).slice(0, 60)}…"`,
     execute: async (a, { supabase, userId }) => {
       const prompt = a.prompt as string;
+      const response = a.response as string;
       const title =
         ((a.title as string | undefined)?.trim()) ||
         prompt.slice(0, 80) + (prompt.length > 80 ? "…" : "");
+
+      // Run moderation BEFORE the insert so flagged content never hits the
+      // public feed (Apple Guideline 1.1 / 4.3). Fail-open inside
+      // moderateContent — see moderation.ts for the policy.
+      const verdict = await moderateContent(`${title}\n\n${prompt}\n\n${response}`);
+      if (!verdict.ok) {
+        throw new Error("This content can't be shared publicly.");
+      }
+
       const { data, error } = await supabase
         .from("public_echoes")
-        .insert({ author_id: userId, title, prompt, response: a.response })
+        .insert({ author_id: userId, title, prompt, response, check_content: true })
         .select("id")
         .single();
       if (error) throw error;
@@ -324,6 +336,10 @@ const TOOLS: ToolSpec[] = [
     preview: (a) =>
       `Comment on ${a.post_id}: "${(a.content as string).slice(0, 80)}"`,
     execute: async (a, { supabase, userId }) => {
+      const verdict = await moderateContent(a.content as string);
+      if (!verdict.ok) {
+        throw new Error("This content can't be shared publicly.");
+      }
       const { data, error } = await supabase
         .from("echo_comments")
         .insert({ echo_id: a.post_id, author_id: userId, content: a.content })
@@ -1094,6 +1110,21 @@ async function handleRequest(req: Request): Promise<Response> {
           );
         } else if (body.message) {
           // ── Fresh user turn ──
+          // Rate-limit BEFORE we persist or call OpenRouter — bouncing the
+          // request here means no Postgres write, no OpenRouter spend, and
+          // the client gets a clean 429-shaped error event.
+          try {
+            const limit = await resolveLimitForUser(supabase, userId);
+            await checkAndIncrementRateLimit(supabase, userId, limit);
+          } catch (e) {
+            if (e instanceof AIRateLimitError) {
+              send({ type: "error", message: e.message });
+              send({ type: "done" });
+              controller.close();
+              return;
+            }
+            throw e;
+          }
           const userMsg: ORMessage = { role: "user", content: body.message };
           await persistMessage(supabase, conversationId, userId, userMsg);
           await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);

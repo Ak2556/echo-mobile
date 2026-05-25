@@ -62,7 +62,7 @@ export function EditMessageModal({
         style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
       >
         <Animated.View
-          entering={reduceAnimations ? undefined : SlideInDown.springify().damping(18)}
+          entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
           exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
           style={{ paddingHorizontal: 12, paddingBottom: insets.bottom + 12 }}
         >

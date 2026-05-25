@@ -8,6 +8,7 @@ import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { showToast } from '../components/ui/Toast';
+import { track } from '../lib/analytics';
 
 /**
  * In-app account deletion — required by Apple App Store guideline 5.1.1(v).
@@ -33,6 +34,7 @@ export default function DeleteAccountScreen() {
     try {
       const { error: rpcErr } = await supabase.rpc('delete_account');
       if (rpcErr) throw rpcErr;
+      track('account_deleted');
       // Best-effort: revoke session locally even though the auth.users row is
       // gone server-side. signOut() drops the AsyncStorage session entry.
       await supabase.auth.signOut().catch(() => undefined);

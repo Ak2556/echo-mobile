@@ -24,6 +24,8 @@ import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { playSoundEffect } from '../lib/sound';
 import { track } from '../lib/analytics';
+import { getPushPermissionStatus, registerForPush } from '../lib/push';
+import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
@@ -45,10 +47,20 @@ const POLL_DURATIONS = [
   { label: '7d', hours: 168 },
 ];
 
+const MAX_VIDEO_DURATION_MS = 60_000;
+const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
+
+function formatBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}
+
 export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
-  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string }>();
+  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string; firstEcho?: string }>();
+  const isFirstEcho = params.firstEcho === '1';
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, avatarUrl, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore() as any;
   const quotedId = typeof params.quoted === 'string' ? params.quoted : undefined;
@@ -70,6 +82,7 @@ export default function CreatePostScreen() {
     : ''
   );
   const [publishedEchoPreview, setPublishedEchoPreview] = useState<{ title: string } | null>(null);
+  const [showPushPrePrompt, setShowPushPrePrompt] = useState(false);
   const ceremonyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Cancel the ceremony timer if the user navigates away before it fires
   React.useEffect(() => () => { if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current); }, []);
@@ -89,6 +102,26 @@ export default function CreatePostScreen() {
   // Video state — single device URI
   const [video, setVideo] = useState<LocalVideoUpload | null>(null);
   const videoUri = video?.uri ?? '';
+
+  const setPickedVideo = (asset: ImagePicker.ImagePickerAsset) => {
+    if (asset.duration && asset.duration > MAX_VIDEO_DURATION_MS) {
+      Alert.alert('Video too long', 'Echo supports videos up to 60 seconds for reliable upload and playback.');
+      return;
+    }
+    if (asset.fileSize && asset.fileSize > MAX_VIDEO_UPLOAD_BYTES) {
+      Alert.alert('Video too large', `This video is ${formatBytes(asset.fileSize)}. Pick a video under ${formatBytes(MAX_VIDEO_UPLOAD_BYTES)}.`);
+      return;
+    }
+    setVideo({
+      uri: asset.uri,
+      mimeType: asset.mimeType,
+      fileName: asset.fileName,
+      fileSize: asset.fileSize,
+      duration: asset.duration,
+      width: asset.width,
+      height: asset.height,
+    });
+  };
 
   // Co-echo state — when set, the response field is the author's take and
   // coAuthorResponse is the co-author's take. Only valid for postType === 'text'.
@@ -179,14 +212,16 @@ export default function CreatePostScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['videos'],
       quality: 0.6,
+      videoMaxDuration: MAX_VIDEO_DURATION_MS / 1000,
+      videoExportPreset: Platform.OS === 'ios'
+        ? ImagePicker.VideoExportPreset.H264_1280x720
+        : undefined,
+      preferredAssetRepresentationMode: Platform.OS === 'ios'
+        ? ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible
+        : undefined,
     });
     if (!result.canceled) {
-      const asset = result.assets[0];
-      setVideo({
-        uri: asset.uri,
-        mimeType: asset.mimeType,
-        fileName: asset.fileName,
-      });
+      setPickedVideo(result.assets[0]);
     }
   };
 
@@ -198,15 +233,16 @@ export default function CreatePostScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['videos'],
-      videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium,
+      videoMaxDuration: MAX_VIDEO_DURATION_MS / 1000,
+      videoQuality: Platform.OS === 'ios'
+        ? ImagePicker.UIImagePickerControllerQualityType.IFrame1280x720
+        : ImagePicker.UIImagePickerControllerQualityType.Medium,
+      videoExportPreset: Platform.OS === 'ios'
+        ? ImagePicker.VideoExportPreset.H264_1280x720
+        : undefined,
     });
     if (!result.canceled) {
-      const asset = result.assets[0];
-      setVideo({
-        uri: asset.uri,
-        mimeType: asset.mimeType,
-        fileName: asset.fileName,
-      });
+      setPickedVideo(result.assets[0]);
     }
   };
 
@@ -344,7 +380,20 @@ export default function CreatePostScreen() {
       const previewTitle = publishedEcho.editorialTitle ?? publishedEcho.prompt ?? 'Your echo is live.';
       setPublishedEchoPreview({ title: previewTitle });
       if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current);
-      ceremonyTimer.current = setTimeout(() => {
+      ceremonyTimer.current = setTimeout(async () => {
+        // After the first publish, ask once whether to enable push (pre-prompt
+        // before the OS prompt). If permission is already granted/denied we
+        // skip straight to the feed.
+        if (isFirst) {
+          try {
+            const status = await getPushPermissionStatus();
+            if (status === 'undetermined') {
+              setPublishedEchoPreview(null);
+              setShowPushPrePrompt(true);
+              return;
+            }
+          } catch { /* fall through to feed */ }
+        }
         router.replace('/(tabs)/discover');
       }, 1800);
     } catch (e) {
@@ -361,6 +410,20 @@ export default function CreatePostScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Post-publish push pre-prompt (first echo only, status === undetermined). */}
+      <PushPrePrompt
+        visible={showPushPrePrompt}
+        onAccept={async () => {
+          setShowPushPrePrompt(false);
+          await registerForPush();
+          router.replace('/(tabs)/discover');
+        }}
+        onDecline={() => {
+          setShowPushPrePrompt(false);
+          router.replace('/(tabs)/discover');
+        }}
+      />
+
       {/* Publish ceremony overlay */}
       <Modal visible={!!publishedEchoPreview} transparent animationType="none">
         <Animated.View
@@ -368,7 +431,7 @@ export default function CreatePostScreen() {
           exiting={FadeOut.duration(200)}
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.88)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
         >
-          <Animated.View entering={ZoomIn.springify().damping(22).stiffness(260)} style={{ alignItems: 'center' }}>
+          <Animated.View entering={ZoomIn.duration(220)} style={{ alignItems: 'center' }}>
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(16,185,129,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
               <CheckCircle color="#10B981" size={38} weight="fill" />
             </View>
@@ -470,7 +533,7 @@ export default function CreatePostScreen() {
         <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
           {/* Author */}
-          <Animated.View entering={animation(FadeInDown.delay(40).springify())} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
+          <Animated.View entering={animation(FadeInDown.delay(40).duration(220))} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
             {avatarUrl ? (
               <Image
                 source={{ uri: avatarUrl }}
@@ -498,6 +561,25 @@ export default function CreatePostScreen() {
           )}
           {postType === 'text' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
+              {isFirstEcho && (
+                <View
+                  style={{
+                    marginBottom: 14,
+                    padding: 14,
+                    borderRadius: radius.card,
+                    backgroundColor: colors.accent + '14',
+                    borderWidth: 1,
+                    borderColor: colors.accent + '30',
+                  }}
+                >
+                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 11, letterSpacing: 0.6, marginBottom: 4 }}>
+                    YOUR FIRST ECHO
+                  </Text>
+                  <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19 }}>
+                    We picked a question to get you started. Take your time — a one-line take is fine. You can always edit later.
+                  </Text>
+                </View>
+              )}
               <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What question or prompt started this?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
@@ -542,7 +624,7 @@ export default function CreatePostScreen() {
                       <X color={colors.textMuted} size={16} />
                     </Pressable>
                   </View>
-                  <Text style={s.label}>{coAuthor.display_name || coAuthor.username}'s take</Text>
+                  <Text style={s.label}>{`${coAuthor.display_name || coAuthor.username}'s take`}</Text>
                   <View style={[s.surface, { padding: 14, marginBottom: 4 }]}>
                     <TextInput
                       multiline
@@ -743,7 +825,7 @@ export default function CreatePostScreen() {
           )}
 
           {/* Shared tags */}
-          <Animated.View entering={animation(FadeInDown.delay(60).springify())}>
+          <Animated.View entering={animation(FadeInDown.delay(60).duration(220))}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
               <Hash color={colors.textMuted} size={13} />
               <Text style={[s.label, { marginBottom: 0 }]}>Tags</Text>

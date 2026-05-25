@@ -9,6 +9,7 @@ import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteLike } from '../../hooks/queries/useSupabaseSocial';
 import { useAppStore } from '../../store/useAppStore';
 import { MOTION } from '../../lib/motion';
+import { track } from '../../lib/analytics';
 
 interface LikeButtonProps {
   echoId: string;
@@ -51,6 +52,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
       setLiked(next);
       setCount(c => (next ? c + 1 : Math.max(0, c - 1)));
       bump(next);
+      if (next) track('echo_liked', { echo_id: echoId });
       remoteMut.mutate(
         { echoId, like: next },
         { onError: () => { setLiked(!next); setCount(c => (next ? Math.max(0, c - 1) : c + 1)); } }
@@ -62,6 +64,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
     setLiked(next);
     setCount(c => (next ? c + 1 : Math.max(0, c - 1)));
     bump(next);
+    if (next) track('echo_liked', { echo_id: echoId });
     qc.invalidateQueries({ queryKey: ['feed'] });
   };
 

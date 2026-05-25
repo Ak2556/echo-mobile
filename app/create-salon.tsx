@@ -9,12 +9,13 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { createSalon } from '../lib/supabaseEchoApi';
+import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 const COVER_COLORS = ['#7C3AED', '#EF4444', '#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#06B6D4', '#F97316'];
 const NAME_MAX = 40;
 const DESC_MAX = 240;
 
-export default function CreateSalonScreen() {
+function CreateSalonScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes, animation } = useTheme();
 
@@ -89,14 +90,14 @@ export default function CreateSalonScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         {/* Name */}
-        <Animated.View entering={animation(FadeInDown.springify())} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.duration(220))} className="mb-4">
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Name</Text>
           <TextInput value={name} onChangeText={(t) => setName(t.slice(0, NAME_MAX))} placeholder="e.g. Long-form Thinkers" maxLength={NAME_MAX} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4, marginLeft: 4 }}>{name.length}/{NAME_MAX}</Text>
         </Animated.View>
 
         {/* Slug */}
-        <Animated.View entering={animation(FadeInDown.delay(100).springify())} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="mb-4">
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>URL slug</Text>
           <TextInput
             value={slug || derivedSlug}
@@ -111,7 +112,7 @@ export default function CreateSalonScreen() {
         </Animated.View>
 
         {/* Description */}
-        <Animated.View entering={animation(FadeInDown.delay(200).springify())} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} className="mb-4">
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Description (optional)</Text>
           <TextInput
             value={description}
@@ -123,7 +124,7 @@ export default function CreateSalonScreen() {
         </Animated.View>
 
         {/* Topic tags */}
-        <Animated.View entering={animation(FadeInDown.delay(300).springify())} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} className="mb-4">
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Topics (comma-separated)</Text>
           <TextInput
             value={topicTags}
@@ -134,7 +135,7 @@ export default function CreateSalonScreen() {
         </Animated.View>
 
         {/* Cover color picker */}
-        <Animated.View entering={animation(FadeInDown.delay(400).springify())} className="mb-6">
+        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} className="mb-6">
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Cover color</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
             {COVER_COLORS.map((c) => {
@@ -163,3 +164,5 @@ export default function CreateSalonScreen() {
     </SafeAreaView>
   );
 }
+
+export default function CreateSalonScreen() { return <V2FeatureGuard flag="salons"><CreateSalonScreenInner /></V2FeatureGuard>; }

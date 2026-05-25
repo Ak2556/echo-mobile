@@ -20,6 +20,10 @@ export type LocalVideoUpload = {
   uri: string;
   mimeType?: string | null;
   fileName?: string | null;
+  fileSize?: number | null;
+  duration?: number | null;
+  width?: number | null;
+  height?: number | null;
 };
 
 type UploadableImage = string | LocalImageUpload;
@@ -95,6 +99,7 @@ async function uploadLocalFileWithSignedUrl(
     httpMethod: 'PUT',
     uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
     headers: {
+      'cache-control': 'max-age=31536000',
       'content-type': contentType,
     },
   });
@@ -109,14 +114,19 @@ async function uploadLocalFileWithSignedUrl(
 
 function videoExtension(video: UploadableVideo): string {
   if (typeof video !== 'string') {
-    const mimeExt = video.mimeType?.split('/')[1]?.toLowerCase();
-    if (mimeExt) return mimeExt === 'quicktime' ? 'mov' : mimeExt;
+    const mime = video.mimeType?.toLowerCase();
+    if (mime === 'video/mp4') return 'mp4';
+    if (mime === 'video/quicktime') return 'mov';
+    if (mime === 'video/x-m4v') return 'm4v';
+    if (mime === 'video/webm') return 'webm';
+    const mimeExt = mime?.split('/')[1]?.toLowerCase();
+    if (mimeExt) return mimeExt === 'quicktime' ? 'mov' : mimeExt.replace(/^x-/, '');
     const fileExt = video.fileName?.split('.').pop()?.toLowerCase();
-    if (fileExt) return fileExt;
+    if (fileExt) return fileExt.replace(/^x-/, '');
   }
 
   const uri = typeof video === 'string' ? video : video.uri;
-  return uri.split('?')[0].split('.').pop()?.toLowerCase() || 'mp4';
+  return (uri.split('?')[0].split('.').pop()?.toLowerCase() || 'mp4').replace(/^x-/, '');
 }
 
 function videoContentType(video: UploadableVideo): string {
@@ -200,7 +210,16 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
   const path = `${uid}/${Date.now()}_video.${ext}`;
   const contentType = videoContentType(video);
 
-  await uploadLocalFileWithSignedUrl(uri, path, contentType);
+  if (/^https?:\/\//i.test(uri)) {
+    const response = await fetch(uri);
+    if (!response.ok) throw new Error(`Could not fetch video (${response.status})`);
+    const { error } = await supabase.storage
+      .from('echo-media')
+      .upload(path, await response.blob(), { contentType, cacheControl: '31536000' });
+    if (error) throw error;
+  } else {
+    await uploadLocalFileWithSignedUrl(uri, path, contentType);
+  }
 
   const { data } = supabase.storage.from('echo-media').getPublicUrl(path);
   return data.publicUrl;

@@ -64,20 +64,20 @@ export default function ReportScreen() {
       </View>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
-        <Animated.View entering={FadeInDown.delay(50).springify()} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+        <Animated.View entering={FadeInDown.delay(50).duration(220)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <Warning color="#F59E0B" size={20} />
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginLeft: 8 }}>
             Report {targetType === 'user' ? `@${targetName}` : 'this content'}
           </Text>
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
+        <Animated.View entering={FadeInDown.delay(100).duration(220)}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginBottom: 24, lineHeight: 20 }}>
             Select the reason that best describes the issue. Your report is confidential.
           </Text>
         </Animated.View>
 
         {REASONS.map((reason, i) => (
-          <Animated.View key={reason} entering={FadeInDown.delay(120 + i * 40).springify()}>
+          <Animated.View key={reason} entering={FadeInDown.delay(120 + i * 40).duration(220)}>
             <AnimatedPressable
               onPress={() => setSelectedReason(reason)}
               style={{
@@ -109,7 +109,7 @@ export default function ReportScreen() {
         ))}
 
         {selectedReason === 'Other' && (
-          <Animated.View entering={FadeInDown.springify()} style={{ marginTop: 8, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 12 }}>
+          <Animated.View entering={FadeInDown.duration(220)} style={{ marginTop: 8, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 12 }}>
             <RNTextInput
               style={{ color: colors.text, fontSize: fontSizes.body }}
               placeholder="Describe the issue..."
@@ -122,7 +122,7 @@ export default function ReportScreen() {
           </Animated.View>
         )}
 
-        <Animated.View entering={FadeInDown.delay(400).springify()}>
+        <Animated.View entering={FadeInDown.delay(400).duration(220)}>
           <AnimatedPressable
             onPress={() => { void handleSubmit(); }}
             disabled={submitting}

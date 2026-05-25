@@ -57,7 +57,7 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
   };
 
   return (
-    <Animated.View entering={animation(FadeInDown.springify())} className="flex-row py-3" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingLeft: indented ? 48 : 16, paddingRight: 16 }}>
+    <Animated.View entering={animation(FadeInDown.duration(220))} className="flex-row py-3" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingLeft: indented ? 48 : 16, paddingRight: 16 }}>
       {showAvatars && (
         <View
           className="w-9 h-9 rounded-full items-center justify-center mr-3 mt-0.5"
