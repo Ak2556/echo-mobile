@@ -1,6 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, Pressable, StyleSheet, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
@@ -23,13 +22,19 @@ interface ActionSheetProps {
   actions: ActionItem[];
 }
 
+/**
+ * iOS-style action sheet — opaque surface card stacked above a separate
+ * Cancel button. Backdrop dims the page behind.
+ *
+ * Earlier this used a BlurView + 4% white fill, which on a busy feed
+ * read as half-transparent and made the title invisible and the underlying
+ * post visible through the sheet. Solid surface fills it.
+ */
 export function ActionSheet({ visible, onClose, title, subtitle, actions }: ActionSheetProps) {
   const { colors, reduceAnimations, font } = useTheme();
   const insets = useSafeAreaInsets();
 
-  // Don't keep a Modal portal mounted when invisible. RN keeps the portal in
-  // the view hierarchy even with `visible={false}` — across a feed of cards,
-  // that's hundreds of dead portals taking up the bridge.
+  // Don't keep a Modal portal mounted when invisible.
   if (!visible) return null;
 
   return (
@@ -37,10 +42,11 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
       <Animated.View
         entering={reduceAnimations ? undefined : FadeIn.duration(160)}
         exiting={reduceAnimations ? undefined : FadeOut.duration(120)}
-        style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }]}
+        style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
       >
         <Pressable style={{ flex: 1 }} onPress={onClose} />
       </Animated.View>
+
       <Animated.View
         entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
         exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
@@ -53,29 +59,59 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
           paddingBottom: insets.bottom + 12,
         }}
       >
+        {/* Action card — opaque surface */}
         <View
           style={{
-            borderRadius: 22,
+            borderRadius: 16,
             overflow: 'hidden',
+            backgroundColor: colors.surface,
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassBorder,
-            backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.surface,
+            borderColor: colors.border,
+            shadowColor: '#000',
+            shadowOpacity: 0.35,
+            shadowRadius: 24,
+            shadowOffset: { width: 0, height: 12 },
           }}
         >
-          {Platform.OS === 'ios' && (
-            <BlurView
-              intensity={70}
-              tint={colors.isDark ? 'dark' : 'extraLight'}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
           {(title || subtitle) && (
-            <View style={{ paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-              {title && <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: 12, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }]}>{title}</Text>}
-              {subtitle && <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 4 }]}>{subtitle}</Text>}
+            <View
+              style={{
+                paddingHorizontal: 18,
+                paddingVertical: 14,
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderBottomColor: colors.border,
+                backgroundColor: colors.bgPure ? colors.bgPure : colors.bg,
+              }}
+            >
+              {title && (
+                <Text
+                  style={[font.bodyBold, {
+                    color: colors.text,
+                    fontSize: 13,
+                    textAlign: 'center',
+                    letterSpacing: 0.3,
+                  }]}
+                  numberOfLines={1}
+                >
+                  {title}
+                </Text>
+              )}
+              {subtitle && (
+                <Text
+                  style={[font.body, {
+                    color: colors.textSecondary,
+                    fontSize: 12,
+                    textAlign: 'center',
+                    marginTop: 3,
+                  }]}
+                  numberOfLines={2}
+                >
+                  {subtitle}
+                </Text>
+              )}
             </View>
           )}
+
           {actions.map((a, i) => (
             <Pressable
               key={a.key}
@@ -88,44 +124,55 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
               style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 12,
+                gap: 14,
                 paddingHorizontal: 18,
-                paddingVertical: 14,
-                opacity: a.disabled ? 0.5 : pressed ? 0.6 : 1,
+                paddingVertical: 16,
+                backgroundColor: pressed ? colors.surfaceHover : 'transparent',
+                opacity: a.disabled ? 0.45 : 1,
                 borderTopWidth: i === 0 && !title && !subtitle ? 0 : StyleSheet.hairlineWidth,
-                borderTopColor: colors.glassBorder,
+                borderTopColor: colors.border,
               })}
             >
-              {a.icon}
+              {a.icon ? (
+                <View style={{ width: 22, alignItems: 'center', justifyContent: 'center' }}>
+                  {a.icon}
+                </View>
+              ) : null}
               <Text
                 style={[
                   font.bodyMedium,
                   {
-                    color: a.destructive ? '#ef4444' : colors.text,
-                    fontSize: 15,
+                    color: a.destructive ? colors.danger : colors.text,
+                    fontSize: 16,
                     flex: 1,
                   },
                 ]}
+                numberOfLines={1}
               >
                 {a.label}
               </Text>
             </Pressable>
           ))}
         </View>
+
+        {/* Cancel — separate pill, also opaque */}
         <Pressable
-          onPress={onClose}
-          style={{
-            marginTop: 8,
-            borderRadius: 18,
-            overflow: 'hidden',
+          onPress={() => { tap('light'); onClose(); }}
+          style={({ pressed }) => ({
+            marginTop: 10,
+            borderRadius: 16,
+            backgroundColor: pressed ? colors.surfaceHover : colors.surface,
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassBorder,
-            backgroundColor: colors.surface,
-            paddingVertical: 14,
+            borderColor: colors.border,
+            paddingVertical: 16,
             alignItems: 'center',
-          }}
+            shadowColor: '#000',
+            shadowOpacity: 0.25,
+            shadowRadius: 16,
+            shadowOffset: { width: 0, height: 8 },
+          })}
         >
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Cancel</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>Cancel</Text>
         </Pressable>
       </Animated.View>
     </Modal>
