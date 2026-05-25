@@ -5,7 +5,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ArrowLeft, Phone as PhoneIcon, ArrowClockwise, ShieldCheck } from 'phosphor-react-native';
 import { sendPhoneOtp, verifyPhoneOtp } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
@@ -16,6 +15,15 @@ import { useTheme } from '../../lib/theme';
  *
  *   step = 'enter-phone' → input number, Send code
  *   step = 'enter-code'  → 6-digit input + Verify, with 30s resend
+ *
+ * NOTE on flicker prevention:
+ *   - No Animated.View entering on the form regions — the entering animation
+ *     was re-firing on every keystroke (Reanimated v3 quirk inside parent
+ *     re-renders), causing the input to flicker and lose focus.
+ *   - Input wrapper styles are STABLE shape (always include shadow keys with
+ *     0 opacity when blurred) so RN doesn't see a different style object on
+ *     focus toggle.
+ *   - `autoFocus` replaced by ref + useEffect to control re-focus timing.
  *
  * Forward navigation owned by AuthListenerProvider on SIGNED_IN.
  */
@@ -33,6 +41,7 @@ export default function PhoneAuthScreen() {
   const [codeFocused, setCodeFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const phoneRef = useRef<TextInput>(null);
   const codeRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -41,9 +50,10 @@ export default function PhoneAuthScreen() {
     return () => clearInterval(t);
   }, [cooldown]);
 
+  // Manual focus management — avoids autoFocus + parent-rerender quirks.
   useEffect(() => {
-    if (step !== 'enter-code') return;
-    const t = setTimeout(() => codeRef.current?.focus(), 250);
+    const ref = step === 'enter-phone' ? phoneRef : codeRef;
+    const t = setTimeout(() => ref.current?.focus(), 250);
     return () => clearTimeout(t);
   }, [step]);
 
@@ -79,6 +89,33 @@ export default function PhoneAuthScreen() {
     // SIGNED_IN → AuthListenerProvider → status nav → wizard or feed.
   };
 
+  // Stable input wrapper style — all keys always present so the style shape
+  // doesn't change on focus toggle. Shadow opacity drives the focus glow.
+  const inputWrapStyle = (focused: boolean) => ({
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: focused ? colors.accent : colors.inputBorder,
+    backgroundColor: colors.inputBg,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    shadowColor: colors.accent,
+    shadowOpacity: focused ? 0.18 : 0,
+    shadowRadius: focused ? 14 : 0,
+    shadowOffset: { width: 0, height: focused ? 4 : 0 },
+  });
+
+  const ctaStyle = (active: boolean) => ({
+    backgroundColor: active ? colors.accent : colors.surfaceHover,
+    borderRadius: radius.lg,
+    opacity: active ? 1 : 0.6,
+    shadowColor: colors.accent,
+    shadowOpacity: active ? 0.4 : 0,
+    shadowRadius: active ? 16 : 0,
+    shadowOffset: { width: 0, height: active ? 6 : 0 },
+  });
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -105,7 +142,7 @@ export default function PhoneAuthScreen() {
           </View>
 
           {step === 'enter-phone' ? (
-            <Animated.View entering={FadeInDown.duration(240)} style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
+            <View style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
               <View style={{
                 width: 64, height: 64, borderRadius: 18,
                 backgroundColor: colors.accentMuted,
@@ -122,23 +159,10 @@ export default function PhoneAuthScreen() {
                 We&apos;ll text you a 6-digit code. Include your country code.
               </Text>
 
-              <View style={{
-                flexDirection: 'row', alignItems: 'center',
-                borderRadius: radius.lg,
-                borderWidth: 1.5,
-                borderColor: phoneFocused ? colors.accent : colors.inputBorder,
-                backgroundColor: colors.inputBg,
-                paddingHorizontal: 16,
-                marginBottom: 20,
-                ...(phoneFocused && {
-                  shadowColor: colors.accent,
-                  shadowOpacity: 0.18,
-                  shadowRadius: 14,
-                  shadowOffset: { width: 0, height: 4 },
-                }),
-              }}>
+              <View style={inputWrapStyle(phoneFocused)}>
                 <PhoneIcon color={phoneFocused ? colors.accent : colors.textMuted} size={20} style={{ marginRight: 12 }} />
                 <TextInput
+                  ref={phoneRef}
                   value={phoneRaw}
                   onChangeText={setPhoneRaw}
                   placeholder="+1 555 123 4567"
@@ -148,22 +172,11 @@ export default function PhoneAuthScreen() {
                   onSubmitEditing={handleSendPhone}
                   onFocus={() => setPhoneFocused(true)}
                   onBlur={() => setPhoneFocused(false)}
-                  autoFocus
                   style={[font.body, { flex: 1, color: colors.text, fontSize: 17, paddingVertical: 18 }]}
                 />
               </View>
 
-              <View style={{
-                backgroundColor: canSendPhone ? colors.accent : colors.surfaceHover,
-                borderRadius: radius.lg,
-                opacity: canSendPhone ? 1 : 0.6,
-                ...(canSendPhone && {
-                  shadowColor: colors.accent,
-                  shadowOpacity: 0.4,
-                  shadowRadius: 16,
-                  shadowOffset: { width: 0, height: 6 },
-                }),
-              }}>
+              <View style={ctaStyle(canSendPhone)}>
                 <Pressable
                   onPress={handleSendPhone}
                   disabled={!canSendPhone}
@@ -176,9 +189,9 @@ export default function PhoneAuthScreen() {
                     : <Text style={[font.bodyBold, { color: canSendPhone ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>Send code</Text>}
                 </Pressable>
               </View>
-            </Animated.View>
+            </View>
           ) : (
-            <Animated.View entering={FadeIn.duration(220)} style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
+            <View style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
               <View style={{
                 width: 64, height: 64, borderRadius: 18,
                 backgroundColor: colors.accentMuted,
@@ -195,20 +208,7 @@ export default function PhoneAuthScreen() {
                 Sent to <Text style={[font.bodyBold, { color: colors.text }]}>{normalizedPhone}</Text>
               </Text>
 
-              <View style={{
-                borderRadius: radius.lg,
-                borderWidth: 1.5,
-                borderColor: codeFocused ? colors.accent : colors.inputBorder,
-                backgroundColor: colors.inputBg,
-                paddingHorizontal: 16,
-                marginBottom: 20,
-                ...(codeFocused && {
-                  shadowColor: colors.accent,
-                  shadowOpacity: 0.18,
-                  shadowRadius: 14,
-                  shadowOffset: { width: 0, height: 4 },
-                }),
-              }}>
+              <View style={inputWrapStyle(codeFocused)}>
                 <TextInput
                   ref={codeRef}
                   value={code}
@@ -221,6 +221,7 @@ export default function PhoneAuthScreen() {
                   onFocus={() => setCodeFocused(true)}
                   onBlur={() => setCodeFocused(false)}
                   style={[font.displayBlack, {
+                    flex: 1,
                     color: colors.text,
                     fontSize: 32,
                     letterSpacing: 12,
@@ -231,18 +232,7 @@ export default function PhoneAuthScreen() {
                 />
               </View>
 
-              <View style={{
-                backgroundColor: canVerify ? colors.accent : colors.surfaceHover,
-                borderRadius: radius.lg,
-                opacity: canVerify ? 1 : 0.6,
-                marginBottom: 18,
-                ...(canVerify && {
-                  shadowColor: colors.accent,
-                  shadowOpacity: 0.4,
-                  shadowRadius: 16,
-                  shadowOffset: { width: 0, height: 6 },
-                }),
-              }}>
+              <View style={ctaStyle(canVerify)}>
                 <Pressable
                   onPress={handleVerify}
                   disabled={!canVerify}
@@ -256,7 +246,7 @@ export default function PhoneAuthScreen() {
                 </Pressable>
               </View>
 
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', marginTop: 18 }}>
                 <View style={{
                   borderRadius: 999,
                   backgroundColor: cooldown > 0 ? 'transparent' : colors.surface,
@@ -281,7 +271,7 @@ export default function PhoneAuthScreen() {
                   </Pressable>
                 </View>
               </View>
-            </Animated.View>
+            </View>
           )}
         </KeyboardAvoidingView>
       </SafeAreaView>

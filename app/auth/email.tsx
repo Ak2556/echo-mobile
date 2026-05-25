@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { ArrowLeft, EnvelopeSimple, PaperPlaneTilt, ArrowClockwise, CheckCircle } from 'phosphor-react-native';
 import { sendMagicLink } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
@@ -39,6 +39,14 @@ export default function EmailAuthScreen() {
     const t = setInterval(() => setCooldown(c => Math.max(0, c - 1)), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
+
+  // Manual focus after mount — replaces `autoFocus` which interacts badly
+  // with parent re-renders during keystrokes.
+  useEffect(() => {
+    if (sent) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 250);
+    return () => clearTimeout(t);
+  }, [sent]);
 
   const trimmed = email.trim();
   const canSend = trimmed.length > 3 && /\S+@\S+\.\S+/.test(trimmed) && !loading;
@@ -80,7 +88,7 @@ export default function EmailAuthScreen() {
           </View>
 
           {!sent ? (
-            <Animated.View entering={FadeInDown.duration(240)} style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
+            <View style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
               {/* Icon hero */}
               <View style={{
                 width: 64, height: 64, borderRadius: 18,
@@ -98,7 +106,7 @@ export default function EmailAuthScreen() {
                 We&apos;ll send a one-tap link to your inbox. No password to remember.
               </Text>
 
-              {/* Email input */}
+              {/* Email input — stable style shape across focus toggle */}
               <View style={{
                 flexDirection: 'row', alignItems: 'center',
                 borderRadius: radius.lg,
@@ -107,12 +115,10 @@ export default function EmailAuthScreen() {
                 backgroundColor: colors.inputBg,
                 paddingHorizontal: 16,
                 marginBottom: 20,
-                ...(focused && {
-                  shadowColor: colors.accent,
-                  shadowOpacity: 0.18,
-                  shadowRadius: 14,
-                  shadowOffset: { width: 0, height: 4 },
-                }),
+                shadowColor: colors.accent,
+                shadowOpacity: focused ? 0.18 : 0,
+                shadowRadius: focused ? 14 : 0,
+                shadowOffset: { width: 0, height: focused ? 4 : 0 },
               }}>
                 <EnvelopeSimple color={focused ? colors.accent : colors.textMuted} size={20} style={{ marginRight: 12 }} />
                 <TextInput
@@ -128,22 +134,19 @@ export default function EmailAuthScreen() {
                   onSubmitEditing={send}
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
-                  autoFocus
                   style={[font.body, { flex: 1, color: colors.text, fontSize: 17, paddingVertical: 18 }]}
                 />
               </View>
 
-              {/* Send button */}
+              {/* Send button — stable style shape */}
               <View style={{
                 backgroundColor: canSend ? colors.accent : colors.surfaceHover,
                 borderRadius: radius.lg,
                 opacity: canSend ? 1 : 0.6,
-                ...(canSend && {
-                  shadowColor: colors.accent,
-                  shadowOpacity: 0.4,
-                  shadowRadius: 16,
-                  shadowOffset: { width: 0, height: 6 },
-                }),
+                shadowColor: colors.accent,
+                shadowOpacity: canSend ? 0.4 : 0,
+                shadowRadius: canSend ? 16 : 0,
+                shadowOffset: { width: 0, height: canSend ? 6 : 0 },
               }}>
                 <Pressable
                   onPress={send}
@@ -168,7 +171,7 @@ export default function EmailAuthScreen() {
                   )}
                 </Pressable>
               </View>
-            </Animated.View>
+            </View>
           ) : (
             <Animated.View entering={FadeIn.duration(220)} style={{ flex: 1, paddingHorizontal: 28, paddingTop: 32, alignItems: 'center' }}>
               <View style={{
