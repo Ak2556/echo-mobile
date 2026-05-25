@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
+import { usePathname, useRouter } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { useAppStore } from '../../store/useAppStore';
@@ -8,7 +9,7 @@ import { identifyUser, clearUser } from '../monitoring';
 import { isSupabaseRemote } from '../remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes } from '../supabaseEchoApi';
 import { useAuthStore } from './store';
-import type { AuthProfile } from './types';
+import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
 
 /**
@@ -109,12 +110,61 @@ async function handleDeepLink(url: string): Promise<void> {
 }
 
 /**
+ * Send the user to the right route for the current status. Called whenever
+ * the auth store's status changes — keeps /auth/phone, /auth/email, etc.
+ * from stranding the user after a successful verify.
+ *
+ * Idempotent: if the user is already on the right route, do nothing.
+ */
+function routeFor(
+  router: ReturnType<typeof useRouter>,
+  pathname: string,
+  status: AuthStatus,
+): void {
+  if (status === 'checking') return;
+
+  // Don't yank the user out of the wizard while they're working.
+  if (pathname === '/auth/signup-wizard' && status === 'needs-onboarding') return;
+
+  if (status === 'signed-out') {
+    if (!pathname.startsWith('/auth/')) router.replace('/auth/login');
+    return;
+  }
+  if (status === 'needs-onboarding') {
+    router.replace('/auth/signup-wizard');
+    return;
+  }
+  if (status === 'ready') {
+    router.replace('/(tabs)/discover');
+    return;
+  }
+}
+
+/**
  * Mount this provider once at the root of the app. Idempotent — only the
  * first mount starts the subscription; subsequent mounts are no-ops.
+ *
+ * Also watches auth status and pushes navigation transitions. Without this,
+ * a screen like /auth/phone that finishes verifyOtp would update the store
+ * but never navigate — app/index.tsx is the only redirect surface and it's
+ * not mounted while another auth screen is.
  */
 let started = false;
 
 export function AuthListenerProvider(): null {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Status-driven navigation. Runs whenever status changes — pushes the
+  // current view to the right destination if it's stale.
+  useEffect(() => {
+    const unsub = useAuthStore.subscribe((s, prev) => {
+      if (s.status === prev.status) return;
+      routeFor(router, pathname, s.status);
+    });
+    return unsub;
+  }, [router, pathname]);
+
   useEffect(() => {
     if (started) return;
     started = true;
