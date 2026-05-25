@@ -1,27 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { EnvelopeSimple, Phone as PhoneIcon } from 'phosphor-react-native';
-import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 
 /**
- * Login screen — v1 minimum surface.
+ * Login — v1 entry point.
  *
- * Two providers, both maximally reliable:
- *   1. Email magic link  — primary, accent-filled CTA
- *   2. Phone OTP         — secondary, outline CTA
+ * Two providers, deliberately stacked vertically with full-width CTAs:
+ *   • Primary (filled accent)  — Continue with email (magic link)
+ *   • Secondary (outlined)     — Continue with phone (OTP)
  *
- * No OAuth in v1. Google and Apple defer until post-launch — each adds
- * provider-specific failure modes (WebBrowser races for Google, Apple
- * Developer provisioning for Apple) that we'd rather not eat on launch
- * day. Email + SMS are commodity reliable.
- *
- * Both buttons just route — the actual auth happens on /auth/email and
- * /auth/phone. Forward navigation after sign-in is owned by
- * AuthListenerProvider in lib/auth/listener.ts.
+ * Forward navigation is owned by AuthListenerProvider; both buttons here
+ * just route to their respective entry screens.
  */
 export default function LoginScreen() {
   const router = useRouter();
@@ -30,82 +23,145 @@ export default function LoginScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 24 }}>
-          {/* Hero */}
-          <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center', marginBottom: 48 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 22 }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 42, letterSpacing: -1 }]}>echo</Text>
-              <Text style={[font.displayBlack, { color: colors.accent, fontSize: 42, letterSpacing: -1, marginLeft: 1 }]}>.</Text>
+        <View style={{ flex: 1, paddingHorizontal: 28, justifyContent: 'space-between', paddingBottom: 24, paddingTop: 32 }}>
+
+          {/* Top: hero */}
+          <Animated.View entering={FadeInDown.duration(260)} style={{ alignItems: 'center', marginTop: 64 }}>
+            <View style={{
+              width: 84, height: 84, borderRadius: 24,
+              backgroundColor: colors.accent,
+              alignItems: 'center', justifyContent: 'center',
+              marginBottom: 24,
+              shadowColor: colors.accent,
+              shadowOpacity: 0.45,
+              shadowRadius: 24,
+              shadowOffset: { width: 0, height: 12 },
+            }}>
+              <Text style={[font.displayBlack, { color: '#fff', fontSize: 44, letterSpacing: -1.5, lineHeight: 50 }]}>e</Text>
             </View>
-            <Text style={[font.display, { color: colors.text, fontSize: 22 }]}>Welcome</Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 14, marginTop: 6 }]}>Conversations worth keeping.</Text>
+
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 8 }}>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: 38, letterSpacing: -1.2 }]}>echo</Text>
+              <Text style={[font.displayBlack, { color: colors.accent, fontSize: 38, letterSpacing: -1.2 }]}>.</Text>
+            </View>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 15, textAlign: 'center', maxWidth: 260, lineHeight: 22 }]}>
+              The social network for{'\n'}thinking out loud.
+            </Text>
           </Animated.View>
 
-          {/* Primary — email magic link */}
-          <Animated.View entering={FadeInDown.delay(60).duration(220)} style={{ marginBottom: 12 }}>
-            <AnimatedPressable
-              onPress={() => router.push('/auth/email' as any)}
-              haptic="medium"
-              style={{
-                borderRadius: radius.lg,
-                backgroundColor: colors.accent,
-                paddingVertical: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 10,
-                shadowColor: colors.accent,
-                shadowOpacity: 0.35,
-                shadowRadius: 12,
-                shadowOffset: { width: 0, height: 4 },
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Continue with email"
-            >
-              <EnvelopeSimple color="#fff" size={18} weight="bold" />
-              <Text style={[font.bodyBold, { color: '#fff', fontSize: 16 }]}>
-                Continue with email
-              </Text>
-            </AnimatedPressable>
-          </Animated.View>
+          {/* Middle: CTAs */}
+          <View style={{ gap: 12 }}>
+            <Animated.View entering={FadeInDown.delay(80).duration(260)}>
+              <PrimaryButton
+                icon={<EnvelopeSimple color="#fff" size={20} weight="bold" />}
+                label="Continue with email"
+                onPress={() => router.push('/auth/email' as any)}
+                bg={colors.accent}
+                fg="#fff"
+                radius={radius.lg}
+                font={font.bodyBold}
+              />
+            </Animated.View>
 
-          {/* Secondary — phone OTP */}
-          <Animated.View entering={FadeInDown.delay(120).duration(220)}>
-            <AnimatedPressable
-              onPress={() => router.push('/auth/phone' as any)}
-              haptic="light"
-              style={{
-                borderRadius: radius.lg,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-                paddingVertical: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 10,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Continue with phone"
-            >
-              <PhoneIcon color={colors.text} size={18} />
-              <Text style={[font.bodySemibold, { color: colors.text, fontSize: 16 }]}>
-                Continue with phone
-              </Text>
-            </AnimatedPressable>
-          </Animated.View>
+            <Animated.View entering={FadeInDown.delay(140).duration(260)}>
+              <SecondaryButton
+                icon={<PhoneIcon color={colors.text} size={20} weight="regular" />}
+                label="Continue with phone"
+                onPress={() => router.push('/auth/phone' as any)}
+                fg={colors.text}
+                border={colors.border}
+                surface={colors.surface}
+                radius={radius.lg}
+                font={font.bodySemibold}
+              />
+            </Animated.View>
+          </View>
 
-          {/* Footer */}
-          <Animated.View
-            entering={FadeInUp.delay(180).duration(220)}
-            style={{ alignItems: 'center', marginTop: 48, paddingBottom: 8 }}
-          >
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center' }]}>
-              By continuing you agree to our{'\n'}Terms & Privacy.
+          {/* Bottom: legal */}
+          <Animated.View entering={FadeInUp.delay(200).duration(260)} style={{ alignItems: 'center' }}>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 }]}>
+              By continuing you agree to our{'\n'}
+              <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>Terms</Text>
+              {' & '}
+              <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>Privacy</Text>
+              .
             </Text>
           </Animated.View>
         </View>
       </SafeAreaView>
+    </View>
+  );
+}
+
+// ── Reusable buttons (kept colocated; pulled out if a third screen needs them) ──
+
+function PrimaryButton({
+  icon, label, onPress, bg, fg, radius, font,
+}: {
+  icon: React.ReactNode; label: string; onPress: () => void;
+  bg: string; fg: string; radius: number; font: object;
+}) {
+  return (
+    <View style={{
+      backgroundColor: bg,
+      borderRadius: radius,
+      shadowColor: bg,
+      shadowOpacity: 0.35,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 6 },
+    }}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        android_ripple={{ color: 'rgba(255,255,255,0.15)' }}
+        style={{
+          paddingVertical: 18,
+          paddingHorizontal: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'row',
+          gap: 10,
+        }}
+      >
+        {icon}
+        <Text style={[font, { color: fg, fontSize: 16, letterSpacing: -0.2 }]}>{label}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function SecondaryButton({
+  icon, label, onPress, fg, border, surface, radius, font,
+}: {
+  icon: React.ReactNode; label: string; onPress: () => void;
+  fg: string; border: string; surface: string; radius: number; font: object;
+}) {
+  return (
+    <View style={{
+      backgroundColor: surface,
+      borderWidth: 1,
+      borderColor: border,
+      borderRadius: radius,
+      overflow: 'hidden',
+    }}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        android_ripple={{ color: 'rgba(255,255,255,0.10)' }}
+        style={{
+          paddingVertical: 18,
+          paddingHorizontal: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'row',
+          gap: 10,
+        }}
+      >
+        {icon}
+        <Text style={[font, { color: fg, fontSize: 16, letterSpacing: -0.2 }]}>{label}</Text>
+      </Pressable>
     </View>
   );
 }
