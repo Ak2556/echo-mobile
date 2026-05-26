@@ -48,13 +48,13 @@ function SectionHeader({ label, sub, icon }: { label: string; sub?: string; icon
         flexDirection: 'row',
         alignItems: 'baseline',
         paddingHorizontal: 16,
-        marginTop: 24,
-        marginBottom: 12,
+        marginTop: 32,
+        marginBottom: 14,
         gap: 8,
       }}
     >
       {icon}
-      <Text style={[font.display, { color: colors.text, fontSize: 19 }]}>{label}</Text>
+      <Text style={[font.display, { color: colors.text, fontSize: 20, letterSpacing: -0.3 }]}>{label}</Text>
       {sub && (
         <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 13 }]}>
           {sub}
@@ -171,7 +171,7 @@ export default function DiscoverScreen() {
     <View>
       {/* For You (semantic) / Trending / Following toggle — neon when active */}
       {/* a11y: add accessibilityRole="tab" + accessibilityState={{ selected: active }} to each Pressable */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10, gap: 8 }}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 8 }}>
         {(['semantic', 'forYou', 'following'] as const).map(scope => {
           const active = feedScope === scope;
           const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : 'Following';
@@ -215,9 +215,9 @@ export default function DiscoverScreen() {
         <View
           style={{
             marginHorizontal: 16,
-            marginTop: 8,
-            marginBottom: 6,
-            padding: 14,
+            marginTop: 12,
+            marginBottom: 16,
+            padding: 16,
             borderRadius: 14,
             backgroundColor: colors.accent + '14',
             borderWidth: 1,
