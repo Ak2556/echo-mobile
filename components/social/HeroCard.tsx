@@ -3,6 +3,7 @@ import { View, Text, Dimensions, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { Heart, Eye, PlayCircle, Camera } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
 import { VideoPreview } from './VideoPreview';
@@ -191,25 +192,51 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
           }}
         />
         <View style={{ padding: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          {/* Meta row — post-type chip + counts. Counts render with icons
+              instead of bare numbers; both hide when 0 so the row collapses
+              to just the type chip on fresh posts. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <View
               style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
                 backgroundColor: colors.accent,
-                borderRadius: 6,
+                borderRadius: 999,
                 paddingHorizontal: 8,
                 paddingVertical: 3,
               }}
             >
+              {hasVideo
+                ? <PlayCircle color="#fff" size={11} weight="fill" />
+                : hasImage
+                  ? <Camera color="#fff" size={11} weight="fill" />
+                  : null}
               <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
-                ECHO
+                {hasVideo ? 'VIDEO' : hasImage ? 'PHOTO' : 'ECHO'}
               </Text>
             </View>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22C55E' }} />
-            <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11 }}>
-              {likeLabel} · {viewLabel}
-            </Text>
+
+            {(item.likes ?? 0) > 0 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                <Heart color="rgba(255,255,255,0.72)" size={12} weight="fill" />
+                <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11, fontVariant: ['tabular-nums'] }}>
+                  {likeLabel}
+                </Text>
+              </View>
+            )}
+            {(item.viewCount ?? 0) > 0 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                <Eye color="rgba(255,255,255,0.72)" size={12} weight="regular" />
+                <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11, fontVariant: ['tabular-nums'] }}>
+                  {viewLabel}
+                </Text>
+              </View>
+            )}
           </View>
 
+          {/* Prompt — kept uppercase but capped to display the user's text
+              naturally if it's already title-cased. */}
           <Text
             style={{
               color: '#fff',

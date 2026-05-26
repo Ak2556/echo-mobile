@@ -18,7 +18,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar, Question, GitBranch, GitFork } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserMinus, ChartBar, Question, GitBranch, GitFork } from 'phosphor-react-native';
 import { NEON } from '../../lib/neonDesign';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
@@ -323,7 +323,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           accessibilityRole="button"
         >
           <ChatCircle color={colors.textMuted} size={19} />
-          <SpringCounter value={item.commentCount || 0} performanceMode="hot" style={{ color: colors.textMuted, fontSize: fontSizes.caption }} />
+          {(item.commentCount || 0) > 0 && (
+            <SpringCounter value={item.commentCount || 0} performanceMode="hot" style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontVariant: ['tabular-nums'] }} />
+          )}
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -338,7 +340,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           accessibilityRole="button"
         >
           <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
-          <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }} />
+          {displayRepostCount > 0 && (
+            <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption, fontVariant: ['tabular-nums'] }} />
+          )}
         </AnimatedPressable>
 
         <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
@@ -468,7 +472,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 accessibilityLabel="More options"
                 accessibilityRole="button"
               >
-                <DotsThreeOutline color={colors.textMuted} size={20} />
+                <DotsThree color={colors.textMuted} size={22} weight="bold" />
               </AnimatedPressable>
             </View>
 
@@ -603,7 +607,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             haptic="light"
             performanceMode="hot"
           >
-            <DotsThreeOutline color={colors.textMuted} size={20} />
+            <DotsThree color={colors.textMuted} size={22} weight="bold" />
           </AnimatedPressable>
         </View>
 
