@@ -34,7 +34,9 @@ import { Users, MagnifyingGlass } from 'phosphor-react-native';
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
 const POST_TYPES: { key: PostType; label: string; Icon: React.ComponentType<any> }[] = [
-  { key: 'text', label: 'Text', Icon: Lightning },
+  // 'Echo' is the brand term for a text post — every other product surface
+  // calls them "echoes" so the tab name shouldn't degenerate to "Text".
+  { key: 'text', label: 'Echo', Icon: Lightning },
   { key: 'photo', label: 'Photo', Icon: ImageIcon },
   { key: 'video', label: 'Video', Icon: VideoCamera },
   { key: 'poll', label: 'Poll', Icon: ChartBar },

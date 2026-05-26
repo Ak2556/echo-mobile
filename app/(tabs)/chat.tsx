@@ -654,19 +654,19 @@ export default function ChatScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 2,
-                  backgroundColor: colors.isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.12)',
+                  gap: 4,
+                  backgroundColor: colors.surfaceHover,
                   borderRadius: 999,
-                  paddingHorizontal: 8,
-                  paddingVertical: 3,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
                   borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.accent + '55',
+                  borderColor: colors.border,
                 }}
               >
-                <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 0.3 }}>
                   {MODEL_LABELS[aiModel]}
                 </Text>
-                <CaretDown color={colors.accent} size={9} weight="bold" />
+                <CaretDown color={colors.textMuted} size={10} weight="bold" />
               </AnimatedPressable>
             </View>
           </View>
