@@ -14,6 +14,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ActionSheet } from '../../components/common/ActionSheet';
+import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
 import { streamEchoAI, EchoAIModel, isRateLimitError } from '../../lib/api';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
@@ -466,11 +467,8 @@ export default function ChatScreen() {
   const showEmptySuggestions = items.length === 0;
   const showShareNudge = !isStreaming && messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
 
-  const modelActions = MODEL_OPTIONS.map(m => ({
-    key: m,
-    label: `${MODEL_LABELS[m]} ${m === aiModel ? '✓' : ''}`.trim(),
-    onPress: () => setAiModel(m),
-  }));
+  // modelActions previously rendered via generic ActionSheet — replaced
+  // by ModelPickerSheet (richer rows with icons + taglines + active state).
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -721,11 +719,11 @@ export default function ChatScreen() {
         onCancel={() => setEditTarget(null)}
         onSubmit={handleEditSubmit}
       />
-      <ActionSheet
+      <ModelPickerSheet
         visible={modelSheetOpen}
         onClose={() => setModelSheetOpen(false)}
-        actions={modelActions}
-        title="Switch model"
+        selected={aiModel}
+        onSelect={setAiModel}
       />
     </View>
   );
