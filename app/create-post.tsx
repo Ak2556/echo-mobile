@@ -476,23 +476,28 @@ export default function CreatePostScreen() {
                 </Text>
               ) : (
                 coAuthorHits.map((u, i) => (
-                  <Pressable
+                  // Wrapper View owns layout; Pressable owns press handling.
+                  // (Pressable.style function strips flex props in Release.)
+                  <View
                     key={u.id}
-                    onPress={() => { setCoAuthor(u); setCoAuthorPickerOpen(false); }}
-                    style={({ pressed }) => ({
+                    style={{
                       flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 8, gap: 12,
                       borderTopWidth: i === 0 ? 0 : 0.5, borderTopColor: colors.border,
-                      backgroundColor: pressed ? colors.surfaceHover : 'transparent',
-                    })}
+                    }}
                   >
-                    <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: u.avatar_color, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(u.display_name || u.username).charAt(0).toUpperCase()}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>{u.display_name || u.username}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{u.username}</Text>
-                    </View>
-                  </Pressable>
+                    <Pressable
+                      onPress={() => { setCoAuthor(u); setCoAuthorPickerOpen(false); }}
+                      style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                    >
+                      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: u.avatar_color, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(u.display_name || u.username).charAt(0).toUpperCase()}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>{u.display_name || u.username}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{u.username}</Text>
+                      </View>
+                    </Pressable>
+                  </View>
                 ))
               )}
             </ScrollView>

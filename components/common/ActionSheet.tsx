@@ -113,67 +113,85 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
           )}
 
           {actions.map((a, i) => (
-            <Pressable
+            // Outer View owns the visual treatment (flex row + padding +
+            // top border). Pressable inside owns just press handling.
+            // Earlier we had `style={({pressed}) => ({...})}` on the Pressable
+            // and RN silently dropped the layout properties in Release, so
+            // icons stacked above labels and rows lost their row direction.
+            <View
               key={a.key}
-              disabled={a.disabled}
-              onPress={() => {
-                tap('light');
-                a.onPress();
-                onClose();
-              }}
-              style={({ pressed }) => ({
+              style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 14,
                 paddingHorizontal: 18,
-                paddingVertical: 16,
-                backgroundColor: pressed ? colors.surfaceHover : 'transparent',
-                opacity: a.disabled ? 0.45 : 1,
                 borderTopWidth: i === 0 && !title && !subtitle ? 0 : StyleSheet.hairlineWidth,
                 borderTopColor: colors.border,
-              })}
+              }}
             >
-              {a.icon ? (
-                <View style={{ width: 22, alignItems: 'center', justifyContent: 'center' }}>
-                  {a.icon}
-                </View>
-              ) : null}
-              <Text
-                style={[
-                  font.bodyMedium,
-                  {
-                    color: a.destructive ? colors.danger : colors.text,
-                    fontSize: 16,
-                    flex: 1,
-                  },
-                ]}
-                numberOfLines={1}
+              <Pressable
+                disabled={a.disabled}
+                onPress={() => {
+                  tap('light');
+                  a.onPress();
+                  onClose();
+                }}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 14,
+                  paddingVertical: 16,
+                  opacity: a.disabled ? 0.45 : 1,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={a.label}
+                accessibilityState={{ disabled: !!a.disabled }}
               >
-                {a.label}
-              </Text>
-            </Pressable>
+                {a.icon ? (
+                  <View style={{ width: 22, alignItems: 'center', justifyContent: 'center' }}>
+                    {a.icon}
+                  </View>
+                ) : null}
+                <Text
+                  style={[
+                    font.bodyMedium,
+                    {
+                      color: a.destructive ? colors.danger : colors.text,
+                      fontSize: 16,
+                      flex: 1,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {a.label}
+                </Text>
+              </Pressable>
+            </View>
           ))}
         </View>
 
         {/* Cancel — separate pill, also opaque */}
-        <Pressable
-          onPress={() => { tap('light'); onClose(); }}
-          style={({ pressed }) => ({
-            marginTop: 10,
-            borderRadius: 16,
-            backgroundColor: pressed ? colors.surfaceHover : colors.surface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
-            paddingVertical: 16,
-            alignItems: 'center',
-            shadowColor: '#000',
-            shadowOpacity: 0.25,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: 8 },
-          })}
-        >
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>Cancel</Text>
-        </Pressable>
+        <View style={{
+          marginTop: 10,
+          borderRadius: 16,
+          backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          shadowColor: '#000',
+          shadowOpacity: 0.25,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 8 },
+        }}>
+          <Pressable
+            onPress={() => { tap('light'); onClose(); }}
+            style={{ paddingVertical: 16, alignItems: 'center' }}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel"
+          >
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>Cancel</Text>
+          </Pressable>
+        </View>
       </Animated.View>
     </Modal>
   );
