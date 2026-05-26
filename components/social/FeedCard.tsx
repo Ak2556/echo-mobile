@@ -354,14 +354,10 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         </AnimatedPressable>
       </View>
       </View>
-      {/* ⚡ Echo identity chip */}
-      {(!item.postType || item.postType === 'text') && !compactFeed && (
-        <View style={{ alignItems: 'flex-end', marginTop: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, backgroundColor: colors.accent + '18' }}>
-            <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '700' }}>⚡ Echo</Text>
-          </View>
-        </View>
-      )}
+      {/* Echo identity chip removed — was only firing on text non-compact
+          posts (inconsistent vs photo/video/poll). The two-part prompt + take
+          framing in the card already signals "this is an Echo"; the badge
+          was visual noise. */}
     </View>
   );
 

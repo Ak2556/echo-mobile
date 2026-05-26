@@ -299,9 +299,11 @@ export default function NotificationsScreen() {
           </AnimatedPressable>
         </View>
 
-        {/* Filter tabs */}
+        {/* Filter tabs — reduced from 10 → 5 most-used. Power-user filters
+            (saves, quotes, reactions, reposts) collapsed into 'all' for now;
+            we can add a secondary filter sheet if real demand surfaces. */}
         <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 16, gap: 8 }}>
-          {(['all', 'unread', 'mentions', 'replies', 'reactions', 'saves', 'quotes', 'likes', 'follows', 'reposts'] as const).map(tab => (
+          {(['all', 'unread', 'mentions', 'replies', 'follows'] as const).map(tab => (
             <AnimatedPressable
               key={tab}
               onPress={() => setFilter(tab)}

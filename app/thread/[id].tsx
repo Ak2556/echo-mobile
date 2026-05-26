@@ -103,9 +103,8 @@ export default function ThreadDetailScreen() {
         </Pressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Echo Thread</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <Pressable onPress={toggleBm}>
-            <BookmarkSimple color={bookmarked ? colors.accent : colors.textSecondary} size={22} weight="fill" />
-          </Pressable>
+          {/* Bookmark stays only in the action row below the post body.
+              The header version was duplicate weight for the same action. */}
           {isOwner ? (
             <Pressable
               onPress={() => setShowMenu(value => !value)}

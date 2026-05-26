@@ -40,7 +40,9 @@ const SETTINGS_ROWS = [
   ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' }] : []),
   { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
   { key: 'messages', Icon: Envelope, label: 'Messages', route: '/messages' },
-  { key: 'connections', Icon: Users, label: 'Connections', route: null },
+  // 'Connections' menu item removed — the Followers/Following stats above
+  // in the hero already navigate to the same screen, so this was a duplicate
+  // entry point.
   { key: 'settings', Icon: Gear, label: 'Settings', route: '/settings' },
 ];
 

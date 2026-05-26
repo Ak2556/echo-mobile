@@ -173,11 +173,18 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 ) : (
                   <IconComp color={color} size={22} weight={isFocused ? 'fill' : 'regular'} />
                 )}
-                {isFocused ? (
-                  <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', marginTop: 1 }} numberOfLines={1}>
-                    {descriptors[route.key]?.options.title ?? route.name}
-                  </Text>
-                ) : null}
+                <Text
+                  style={{
+                    color: isFocused ? colors.accent : colors.textMuted,
+                    fontSize: 10,
+                    fontWeight: isFocused ? '800' : '600',
+                    marginTop: 1,
+                    letterSpacing: 0.1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {descriptors[route.key]?.options.title ?? route.name}
+                </Text>
               </Pressable>
             );
           })}

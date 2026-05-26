@@ -260,7 +260,10 @@ export default function DiscoverScreen() {
           </Text>
         </Pressable>
       )}
-      <SectionHeader label="For You" sub={interests.length > 0 ? `Picked for ${interests[0]}` : 'Start here'} />
+      <SectionHeader
+        label="For You"
+        sub={interests.length > 0 ? `Tuned to ${interests[0]}` : undefined}
+      />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
