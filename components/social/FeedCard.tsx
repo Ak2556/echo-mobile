@@ -700,6 +700,24 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {/* ── POLL post ── */}
         {item.postType === 'poll' && item.poll && (
           <View style={{ marginBottom: 4 }}>
+            {/* Poll badge — gives polls a unique post-type marker now that
+                the generic "Echo" chip is gone from text posts. */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              alignSelf: 'flex-start',
+              backgroundColor: colors.accentMuted,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 999,
+              marginBottom: 10,
+            }}>
+              <ChartBar color={colors.accent} size={11} weight="bold" />
+              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                POLL
+              </Text>
+            </View>
             {!!item.prompt && (
               <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600', marginBottom: 12 }} numberOfLines={compactFeed ? 1 : undefined}>{item.prompt}</Text>
             )}
