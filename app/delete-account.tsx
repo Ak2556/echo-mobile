@@ -117,29 +117,35 @@ export default function DeleteAccountScreen() {
           />
         </View>
 
-        {/* Destructive CTA */}
-        <Pressable
-          onPress={handleDelete}
-          disabled={!canDelete}
-          style={({ pressed }) => ({
-            marginTop: 12,
-            backgroundColor: canDelete ? colors.danger : colors.surfaceHover,
-            borderRadius: radius.lg,
-            paddingVertical: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            opacity: pressed ? 0.85 : (canDelete ? 1 : 0.5),
-          })}
-        >
-          {deleting
-            ? <ActivityIndicator color="#fff" />
-            : <>
-              <Trash color="#fff" size={16} weight="bold" />
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Delete my account</Text>
-            </>}
-        </Pressable>
+        {/* Destructive CTA — visual treatment on the View so the flex row
+            survives Release builds (Pressable.style function gets dropped). */}
+        <View style={{
+          marginTop: 12,
+          backgroundColor: canDelete ? colors.danger : colors.surfaceHover,
+          borderRadius: radius.lg,
+          opacity: canDelete ? 1 : 0.5,
+        }}>
+          <Pressable
+            onPress={handleDelete}
+            disabled={!canDelete}
+            style={{
+              paddingVertical: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Delete my account"
+          >
+            {deleting
+              ? <ActivityIndicator color="#fff" />
+              : <>
+                <Trash color="#fff" size={16} weight="bold" />
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Delete my account</Text>
+              </>}
+          </Pressable>
+        </View>
 
         <Pressable
           onPress={() => router.back()}
