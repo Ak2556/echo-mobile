@@ -367,7 +367,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           performanceMode="hot"
           style={{
             marginHorizontal: 16,
-            marginVertical: 6,
+            marginVertical: 10,
             borderRadius: heroRadius,
             overflow: 'hidden',
             borderWidth: StyleSheet.hairlineWidth,
@@ -499,7 +499,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   // ── Standard layout (text / poll / compact) ──
   return (
-    <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 16, marginVertical: 6 }}>
+    <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 16, marginVertical: 10 }}>
       <GlassPanel variant="light" borderRadius={radius.card} elevated performanceMode="hot">
         {/* Left accent rail — the Echo identity stripe */}
         <View

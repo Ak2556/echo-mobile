@@ -506,13 +506,19 @@ export default function ChatScreen() {
         </View>
         <View style={{ paddingBottom: 110 }}>
           {showEmptySuggestions ? (
-            <View style={{ paddingHorizontal: 12, paddingBottom: 8, gap: 10 }}>
-              <View style={{ borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', padding: 14 }}>
-                <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 4 }}>Best first chat</Text>
-                <Text style={{ color: colors.textMuted, lineHeight: 19 }}>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 16 }}>
+              <View style={{
+                borderRadius: 18,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: colors.glassBorder,
+                backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                padding: 18,
+              }}>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Best first chat</Text>
+                <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
                   Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
                 </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 10, opacity: 0.8 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 14, opacity: 0.8, lineHeight: 16 }}>
                   Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
                 </Text>
               </View>
@@ -528,11 +534,11 @@ export default function ChatScreen() {
                       borderWidth: StyleSheet.hairlineWidth,
                       borderColor: colors.glassBorder,
                       backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
+                      paddingHorizontal: 14,
+                      paddingVertical: 9,
                     }}
                   >
-                    <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>{suggestion}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{suggestion}</Text>
                   </AnimatedPressable>
                 ))}
               </View>

@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
   },
   sectionBlock: {
     paddingHorizontal: 16,
-    marginTop: 16,
+    marginTop: 28,
   },
   sectionLabelRow: {
     minHeight: 18,
@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
     marginLeft: 4,
-    marginBottom: 9,
+    marginBottom: 12,
   },
   sectionLabel: {
     fontSize: 11,
