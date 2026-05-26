@@ -84,6 +84,12 @@ export default function ProfileScreen() {
     router.push({ pathname: '/followers', params: { userId, tab } });
   };
 
+  // Status-bar fade — solid background block fixed to the top, sized to
+  // the iOS safe-area inset. Scrolled content (streak chip, level card,
+  // etc.) glides UNDER this instead of colliding with the time / dynamic
+  // island.
+  const statusFadeHeight = insets.top + 8;
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView
@@ -375,6 +381,21 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* Status-bar mask — solid background block fixed to the top of the
+          screen, sized to the iOS safe-area inset. Scrolled content glides
+          UNDER it instead of colliding with the time / dynamic island. */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: statusFadeHeight,
+          backgroundColor: colors.bg,
+        }}
+      />
     </View>
   );
 }
