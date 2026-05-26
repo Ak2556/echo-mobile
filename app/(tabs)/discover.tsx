@@ -142,12 +142,30 @@ export default function DiscoverScreen() {
     () => groupDiscovery(feed ?? [], interests, followingIds),
     [feed, interests, followingIds],
   );
-  const heroItems = (grouped.forYou.length > 0 ? grouped.forYou : feed?.slice(0, HERO_COUNT)) ?? [];
-  const popularItems = (grouped.rising.length > 0 ? grouped.rising : feed?.slice(HERO_COUNT)) ?? [];
-  const starterItems = grouped.conversationStarters.slice(0, 3);
 
   const feedScope = useAppStore(s => s.feedScope);
   const setFeedScope = useAppStore(s => s.setFeedScope);
+
+  // The For You / Trending / Following toggle drives BOTH the hero rail
+  // and the main list. Previously the toggle was visible but only changed
+  // the empty-state copy — heroItems and popularItems always defaulted to
+  // semantic recs + rising, which made the toggle feel broken.
+  const scopedAll = useMemo(() => {
+    if (!feed) return [];
+    if (feedScope === 'following') {
+      const followingSet = new Set(followingIds);
+      return feed.filter(f => followingSet.has(f.userId));
+    }
+    if (feedScope === 'forYou') {
+      return grouped.rising.length > 0 ? grouped.rising : feed;
+    }
+    // 'semantic' (labelled "For You" in the toggle)
+    return grouped.forYou.length > 0 ? grouped.forYou : feed;
+  }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising]);
+
+  const heroItems = scopedAll.slice(0, HERO_COUNT);
+  const popularItems = scopedAll.slice(HERO_COUNT);
+  const starterItems = grouped.conversationStarters.slice(0, 3);
 
   const ListHeader = (
     <View>

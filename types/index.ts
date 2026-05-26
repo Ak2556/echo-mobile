@@ -214,6 +214,12 @@ export interface Notification {
   targetPreview?: string;
   isRead: boolean;
   createdAt: string;
+  /**
+   * Set on synthesized notifications that represent N grouped notifications
+   * of the same type targeting the same object. UI surfaces this as a "+N"
+   * pill on the row so users know more is collapsed underneath.
+   */
+  groupCount?: number;
 }
 
 export interface DirectMessage {
