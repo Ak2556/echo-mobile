@@ -122,21 +122,22 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
               </View>
             }
             renderItem={({ item }) => (
-              <Pressable
-                onPress={() => { tap('light'); onSelect(item.id); onClose(); }}
-                onLongPress={() => { tap('warning'); deleteSession(item.id); }}
-                style={({ pressed }) => ({
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                  backgroundColor: pressed ? (colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)') : 'transparent',
-                  borderLeftWidth: 3,
-                  borderLeftColor: item.id === currentSessionId ? colors.accent : 'transparent',
-                })}
-              >
-                <View style={{ flex: 1 }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                borderLeftWidth: 3,
+                borderLeftColor: item.id === currentSessionId ? colors.accent : 'transparent',
+              }}>
+                {/* Tap target spans the title + subtitle area so the row
+                    feels like one selectable thing; trash stays independent. */}
+                <Pressable
+                  onPress={() => { tap('light'); onSelect(item.id); onClose(); }}
+                  onLongPress={() => { tap('warning'); deleteSession(item.id); }}
+                  style={{ flex: 1 }}
+                >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text numberOfLines={1} style={{ color: colors.text, fontSize: 15, fontWeight: '700', flex: 1 }}>{item.title}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 11 }}>{relativeTime(item.updatedAt)}</Text>
@@ -144,11 +145,17 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
                   <Text numberOfLines={1} style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
                     {item.lastMessage || 'Empty conversation'}
                   </Text>
-                </View>
-                <Pressable hitSlop={10} onPress={(e) => { e.stopPropagation?.(); tap('warning'); deleteSession(item.id); }} style={{ padding: 6, borderRadius: 8 }}>
+                </Pressable>
+                <Pressable
+                  hitSlop={10}
+                  onPress={() => { tap('warning'); deleteSession(item.id); }}
+                  style={{ padding: 8, borderRadius: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete conversation"
+                >
                   <Trash color={colors.textMuted} size={16} />
                 </Pressable>
-              </Pressable>
+              </View>
             )}
           />
         </View>
