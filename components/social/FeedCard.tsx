@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShareSheet } from '../common/ShareSheet';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
+import { RepostChoiceSheet } from './RepostChoiceSheet';
 import { QuotedEchoCard } from './QuotedEchoCard';
 import { tap } from '../../lib/haptics';
 import { Image } from 'expo-image';
@@ -194,20 +195,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     setFeedFeedbackOpen(true);
   };
 
-  const repostActions: ActionItem[] = [
-    {
-      key: 'repost',
-      label: reposted ? 'Undo re-echo' : 'Re-echo',
-      icon: <ArrowsClockwise color={colors.text} size={20} />,
-      onPress: () => handleRepost(),
-    },
-    {
-      key: 'quote',
-      label: 'Remix',
-      icon: <GitFork color={colors.text} size={20} />,
-      onPress: handleQuoteRepost,
-    },
-  ];
+  // repostActions replaced by RepostChoiceSheet (richer two-card picker).
 
   const feedFeedbackActions: ActionItem[] = [
     {
@@ -283,7 +271,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const AllModals = (
     <>
       <ShareSheet visible={shareOpen} onClose={() => setShareOpen(false)} echo={item} />
-      <ActionSheet visible={repostSheetOpen} onClose={() => setRepostSheetOpen(false)} title="Re-echo or quote?" actions={repostActions} />
+      <RepostChoiceSheet
+        visible={repostSheetOpen}
+        onClose={() => setRepostSheetOpen(false)}
+        reposted={reposted}
+        onRepost={handleRepost}
+        onRemix={handleQuoteRepost}
+      />
       <ActionSheet visible={feedFeedbackOpen} onClose={() => setFeedFeedbackOpen(false)} actions={feedFeedbackActions} />
       <ActionSheet visible={menuSheetOpen} onClose={() => setMenuSheetOpen(false)} subtitle={`@${item.username}`} actions={menuActions} />
     </>
