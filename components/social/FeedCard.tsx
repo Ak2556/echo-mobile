@@ -137,7 +137,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [repostSheetOpen, setRepostSheetOpen] = useState(false);
-  const [feedFeedbackOpen, setFeedFeedbackOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const toggleMute = useAppStore(s => s.toggleMute);
   const isMuted = useAppStore(s => s.isMuted);
@@ -190,35 +189,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     router.push({ pathname: '/create-post', params: { quoted: item.id } });
   }, [router, item.id]);
 
-  const handleLongPressCard = () => {
-    tap('medium');
-    setFeedFeedbackOpen(true);
-  };
-
-  // repostActions replaced by RepostChoiceSheet (richer two-card picker).
-
-  const feedFeedbackActions: ActionItem[] = [
-    {
-      key: 'less',
-      label: 'Show less like this',
-      onPress: () => { setFeedFeedback({ ...feedFeedback, [item.id]: 'less' }); tap('success'); showToast('Got it — less like this', '👍'); },
-    },
-    {
-      key: 'mute',
-      label: isMuted(item.userId) ? `Unmute @${item.username}` : `Mute @${item.username}`,
-      onPress: () => {
-        const wasMuted = isMuted(item.userId);
-        toggleMute(item.userId);
-        tap(wasMuted ? 'light' : 'warning');
-        showToast(wasMuted ? `Unmuted @${item.username}` : `Muted @${item.username}`, wasMuted ? '🔔' : '🔕');
-      },
-    },
-    {
-      key: 'notinterested',
-      label: 'Not interested',
-      onPress: () => { setNotInterestedIds([...notInterestedIds, item.id]); tap('success'); showToast('Hidden', '✓'); },
-    },
-  ];
+  // Long-press card sheet (feedFeedbackOpen) merged into the ⋮ menu —
+  // it duplicated mute and added hidden actions most users never discovered.
 
   const handleReport = () => {
     router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } });
@@ -241,12 +213,35 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   // ── Shared sub-sections ──
 
+  // Single overflow menu — merges the old long-press "feed feedback" sheet
+  // into the ⋮ menu so there's one discoverable affordance for everything
+  // the user might want to do with a card they didn't author.
   const menuActions: ActionItem[] = [
     {
       key: 'profile',
       label: 'View Profile',
       icon: <UserMinus color={colors.textSecondary} size={20} />,
       onPress: () => router.push(`/user/${item.userId}`),
+    },
+    {
+      key: 'less',
+      label: 'Show less like this',
+      icon: <Question color={colors.textSecondary} size={20} />,
+      onPress: () => {
+        setFeedFeedback({ ...feedFeedback, [item.id]: 'less' });
+        tap('success');
+        showToast('Got it — less like this', '👍');
+      },
+    },
+    {
+      key: 'notinterested',
+      label: 'Not interested',
+      icon: <Flag color={colors.textSecondary} size={20} />,
+      onPress: () => {
+        setNotInterestedIds([...notInterestedIds, item.id]);
+        tap('success');
+        showToast('Hidden', '✓');
+      },
     },
     {
       key: 'mute',
@@ -278,7 +273,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         onRepost={handleRepost}
         onRemix={handleQuoteRepost}
       />
-      <ActionSheet visible={feedFeedbackOpen} onClose={() => setFeedFeedbackOpen(false)} actions={feedFeedbackActions} />
       <ActionSheet visible={menuSheetOpen} onClose={() => setMenuSheetOpen(false)} subtitle={`@${item.username}`} actions={menuActions} />
     </>
   );
@@ -518,7 +512,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         />
       <AnimatedPressable
         onPress={handleMainPress}
-        onLongPress={handleLongPressCard}
         depth="soft"
         fadeOnPress
         haptic="light"
