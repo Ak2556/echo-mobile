@@ -259,7 +259,10 @@ export default function DiscoverScreen() {
           </Pressable>
         </View>
       )}
-      {features.dailyQuestion && (
+      {/* Daily Question — suppressed while the First-Echo coach is showing
+          (both target new users; surfacing both is the duplication the
+          section cull exists to fix). */}
+      {features.dailyQuestion && !showFirstEchoCoach && (
         <Pressable
           onPress={() => router.push('/daily-question' as any)}
           style={{
@@ -281,66 +284,30 @@ export default function DiscoverScreen() {
           </Text>
         </Pressable>
       )}
-      <SectionHeader
-        label="For You"
-        sub={interests.length > 0 ? `Tuned to ${interests[0]}` : undefined}
-      />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        snapToInterval={HERO_CARD_WIDTH + 12}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
-        onScroll={(e) => { heroScrollX.value = e.nativeEvent.contentOffset.x; }}
-        scrollEventThrottle={16}
-      >
-        {heroItems.map((item, index) => (
-          <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} scrollX={heroScrollX} cardIndex={index} />
-        ))}
-      </ScrollView>
-      {starterItems.length > 0 ? (
-        <>
-          <SectionHeader label="Open Questions" sub="Worth answering" icon={<Question color={colors.accent} size={16} weight="bold" />} />
-          {/* Horizontal scroll strip with "Answer →" CTA */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
-          >
-            {starterItems.map(item => (
-              <Pressable
-                key={item.id}
-                onPress={() => handlePressThread(item)}
-                style={{
-                  width: 220,
-                  padding: 14,
-                  borderRadius: 16,
-                  backgroundColor: colors.surface,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.border,
-                }}
-              >
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', lineHeight: 20 }} numberOfLines={2}>
-                  {item.editorialTitle || item.prompt}
-                </Text>
-                <Pressable
-                  onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/create-post', params: { prefillTitle: item.prompt ?? '' } } as any); }}
-                  style={{
-                    marginTop: 10,
-                    alignSelf: 'flex-start',
-                    backgroundColor: colors.accent + '18',
-                    borderRadius: 99,
-                    paddingHorizontal: 12,
-                    paddingVertical: 5,
-                  }}
-                >
-                  <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>Answer →</Text>
-                </Pressable>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </>
-      ) : null}
+      {/* Hero rail — renders directly under the scope toggle. The "For You"
+          SectionHeader was removed because the toggle already labels what's
+          below ("For You" appearing twice was the redundancy the cull
+          exists to fix). */}
+      <View style={{ marginTop: 4 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={HERO_CARD_WIDTH + 12}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+          onScroll={(e) => { heroScrollX.value = e.nativeEvent.contentOffset.x; }}
+          scrollEventThrottle={16}
+        >
+          {heroItems.map((item, index) => (
+            <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} scrollX={heroScrollX} cardIndex={index} />
+          ))}
+        </ScrollView>
+      </View>
+      {/* "Open Questions" section removed — those starter prompts already
+          surface via the Daily Question banner (for new users) and the For
+          You hero rail (for everyone). Triple coverage was clutter. The
+          grouped.conversationStarters data is still produced if we want
+          to re-introduce a single inline card later. */}
       <SectionHeader label="Trending Insights" sub="High energy" icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
     </View>
   );
