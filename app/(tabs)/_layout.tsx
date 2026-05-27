@@ -12,21 +12,24 @@ import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { showToast } from '../../components/ui/Toast';
 import { tap } from '../../lib/haptics';
 
-// `apps` is hidden from the floating tab bar — mini-apps are now surfaced
-// from the Profile screen instead, freeing a slot for `evolutions` which
-// is the signature AI-native discovery surface. `history` and `echoes`
-// remain hidden as before (echoes is reachable from the profile flow).
-const HIDDEN_ROUTES = new Set(['history', 'echoes', 'apps']);
+// v1 launch IA: 4-tab bar (Home, Explore, Chat, You). The Echo and Activity
+// tabs were folded — creation moved to a floating + button on Home, and
+// notifications surface via a bell icon in the Home header. `evolutions`,
+// `notifications`, `history`, `echoes`, and `apps` are still reachable as
+// routes (deep link / programmatic push) but no tab chip renders.
+const HIDDEN_ROUTES = new Set(['history', 'echoes', 'apps', 'evolutions', 'notifications']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
-  discover: House,
-  search: MagnifyingGlass,
+  home: House,
+  explore: MagnifyingGlass,
+  chat: ChatTeardropDots,
+  you: User,
+  // Hidden routes — kept for backwards-compat icon lookup if they're ever
+  // surfaced via deep link headers.
   evolutions: GitBranch,
   echoes: FilmStrip,
-  chat: ChatTeardropDots,
   notifications: Bell,
   apps: SquaresFour,
-  profile: User,
 };
 
 function BadgeIcon({ children, count }: { children: React.ReactNode; count: number }) {
@@ -94,7 +97,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       case 'discover':
         return [
           { key: 'compose', label: 'New Echo',           icon: <PencilSimple color={colors.accent} size={18} />, onPress: () => router.push('/create-post') },
-          { key: 'search',  label: 'Search',             icon: <MagnifyingGlass color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/search') },
+          { key: 'search',  label: 'Search',             icon: <MagnifyingGlass color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/explore') },
         ];
       case 'profile':
         return [
@@ -212,14 +215,15 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
-      <Tabs.Screen name="discover" options={{ title: 'Home' }} />
-      <Tabs.Screen name="search" options={{ title: 'Explore' }} />
-      <Tabs.Screen name="evolutions" options={{ title: 'Echo' }} />
+      <Tabs.Screen name="home" options={{ title: 'Home' }} />
+      <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
       <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
-      <Tabs.Screen name="notifications" options={{ title: 'Activity' }} />
+      <Tabs.Screen name="you" options={{ title: 'You' }} />
+      {/* Hidden — still mountable for deep links + programmatic navigation. */}
+      <Tabs.Screen name="evolutions" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="echoes" options={{ href: null }} />
       <Tabs.Screen name="apps" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ title: 'You' }} />
       <Tabs.Screen name="history" options={{ href: null }} />
     </Tabs>
   );

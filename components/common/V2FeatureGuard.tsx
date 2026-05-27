@@ -23,7 +23,7 @@ export function V2FeatureGuard({ flag, children }: V2FeatureGuardProps) {
   const enabled = features[flag];
 
   useEffect(() => {
-    if (!enabled) router.replace('/(tabs)/discover');
+    if (!enabled) router.replace('/(tabs)/home');
   }, [enabled, router]);
 
   if (!enabled) {

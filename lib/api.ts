@@ -68,7 +68,7 @@ interface StreamArgs {
   };
   /** When set, overrides the default model on the Edge Function side. */
   preferredModel?: EchoAIModel;
-  /** Expo Router pathname of the screen the user is currently on (e.g. '/(tabs)/discover'). Injected into the system prompt so the AI knows context. */
+  /** Expo Router pathname of the screen the user is currently on (e.g. '/(tabs)/home'). Injected into the system prompt so the AI knows context. */
   currentScreen?: string;
   /**
    * Called immediately once the stream opens with a `stop()` function.

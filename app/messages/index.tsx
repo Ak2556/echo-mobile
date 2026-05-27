@@ -119,7 +119,7 @@ export default function MessagesListScreen() {
             <ArrowLeft color={colors.text} size={24} />
           </AnimatedPressable>
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Messages</Text>
-          <AnimatedPressable onPress={() => router.push('/(tabs)/search')} className="p-1" scaleValue={0.88} haptic="light">
+          <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} className="p-1" scaleValue={0.88} haptic="light">
             <PencilSimple color={colors.accent} size={22} />
           </AnimatedPressable>
         </View>
@@ -137,7 +137,7 @@ export default function MessagesListScreen() {
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Messages</Text>
-        <AnimatedPressable onPress={() => router.push('/(tabs)/search')} className="p-1" scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} className="p-1" scaleValue={0.88} haptic="light">
           <PencilSimple color={colors.accent} size={22} />
         </AnimatedPressable>
       </View>

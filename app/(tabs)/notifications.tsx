@@ -208,7 +208,7 @@ export default function NotificationsScreen() {
                 : "When people interact with your echoes, you'll see it here."
             }
             actionLabel={filter === 'all' ? 'Explore' : undefined}
-            onAction={filter === 'all' ? () => router.push('/(tabs)/discover') : undefined}
+            onAction={filter === 'all' ? () => router.push('/(tabs)/home') : undefined}
           />
         </Animated.View>
       ) : (

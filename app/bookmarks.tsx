@@ -105,7 +105,7 @@ export default function BookmarksScreen() {
           title="No bookmarks yet"
           subtitle="Save echoes you want to revisit later by tapping the bookmark icon."
           actionLabel="Explore"
-          onAction={() => router.push('/(tabs)/discover')}
+          onAction={() => router.push('/(tabs)/home')}
         />
       ) : (
         <FlashList
