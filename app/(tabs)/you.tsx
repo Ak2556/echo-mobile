@@ -35,15 +35,13 @@ const COMPACT_TEXT_SCALE = 1.15;
 const BODY_TEXT_SCALE = 1.25;
 const TITLE_TEXT_SCALE = 1.12;
 
+// Library menu — only the two surfaces that are PRIMARY discovery for
+// the user's own content. Messages moved into /settings; Settings became
+// the gear icon in the header. Apps stays gated behind feature flag.
 const SETTINGS_ROWS = [
   { key: 'myechoes', Icon: FilmStrip, label: 'My Echoes', route: '/(tabs)/echoes' },
-  ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' }] : []),
   { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
-  { key: 'messages', Icon: Envelope, label: 'Messages', route: '/messages' },
-  // 'Connections' menu item removed — the Followers/Following stats above
-  // in the hero already navigate to the same screen, so this was a duplicate
-  // entry point.
-  { key: 'settings', Icon: Gear, label: 'Settings', route: '/settings' },
+  ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' }] : []),
 ];
 
 type ProfileColors = ReturnType<typeof useTheme>['colors'];
@@ -304,30 +302,9 @@ export default function ProfileScreen() {
             ))}
           </View>
 
-          <SectionLabel label="Quick Controls" colors={colors} font={font} />
-          <View
-            style={[
-              styles.menuPanel,
-              styles.menuPanelCompact,
-              { borderRadius: radius.card, borderColor: colors.border, backgroundColor: colors.surface },
-            ]}
-          >
-            <ProfileListRow
-              icon={<Bell color={colors.textSecondary} size={18} />}
-              label="Notifications"
-              colors={colors}
-              radius={radius}
-              font={font}
-              right={
-                <Switch
-                  value={notificationsEnabled}
-                  onValueChange={setNotificationsEnabled}
-                  trackColor={switchTrack}
-                  thumbColor="#fff"
-                />
-              }
-            />
-          </View>
+          {/* QUICK CONTROLS removed — notifications toggle lives in
+              /settings now (single source of truth for app prefs, reached
+              via the gear icon in the screen header). */}
         </View>
 
         <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} colors={colors} radius={radius} font={font} />
