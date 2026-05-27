@@ -227,17 +227,27 @@ export default function UserProfileScreen() {
       );
     }
 
-    const { user, echoes, isFollowing: remoteFollowing, isSelf } = remoteBundle.data;
+    const { user, echoes, isFollowing: remoteFollowing, isSelf, pinnedEcho } = remoteBundle.data;
     const blocked = isBlocked(user.id);
     const muted = isMuted(user.id);
     const creatorProfile = buildCreatorProfile(user, echoes);
+    // Hoist the pinned echo to the top of the list, deduped against the
+    // regular reverse-chron echoes so it doesn't render twice.
+    const orderedEchoes = pinnedEcho
+      ? [pinnedEcho, ...echoes.filter(e => e.id !== pinnedEcho.id)]
+      : echoes;
 
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <FlashList
-          data={echoes}
+          data={orderedEchoes}
           renderItem={({ item, index }) => (
-            <FeedCard item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />
+            <FeedCard
+              item={item}
+              index={index}
+              pinned={pinnedEcho?.id === item.id}
+              onPress={() => router.push(`/thread/${item.id}`)}
+            />
           )}
           keyExtractor={item => item.id}
           ListHeaderComponent={

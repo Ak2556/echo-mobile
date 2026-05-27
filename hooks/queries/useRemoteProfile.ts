@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import {
+  fetchRemoteEchoById,
   fetchRemoteEchoesByAuthor,
   fetchRemoteFollowersCount,
   fetchRemoteFollowingCount,
@@ -41,6 +42,7 @@ export function useRemoteProfileBundle(userId: string | undefined) {
       echoes: FeedItem[];
       isFollowing: boolean;
       isSelf: boolean;
+      pinnedEcho: FeedItem | null;
     } | null> => {
       if (!userId) return null;
       const profile = await fetchRemoteProfile(userId);
@@ -53,8 +55,17 @@ export function useRemoteProfileBundle(userId: string | undefined) {
       ]);
       const isSelf = sessionUid === userId;
       const isFollowing = sessionUid && !isSelf ? await isRemoteFollowing(userId) : false;
+      // Resolve the pinned echo if any. Use a local list first to avoid an
+      // extra round-trip when the pin is one of the most recent echoes.
+      let pinnedEcho: FeedItem | null = null;
+      if (profile.pinned_echo_id) {
+        pinnedEcho = echoes.find(e => e.id === profile.pinned_echo_id) ?? null;
+        if (!pinnedEcho) {
+          pinnedEcho = await fetchRemoteEchoById(profile.pinned_echo_id).catch(() => null);
+        }
+      }
       const user = profileRowToUser(profile, echoes.length, followerCount, followingCount);
-      return { user, echoes, isFollowing, isSelf };
+      return { user, echoes, isFollowing, isSelf, pinnedEcho };
     },
   });
 }
