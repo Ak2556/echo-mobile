@@ -26,6 +26,7 @@ import { usePerformanceProfile } from '../../lib/performance';
 import { groupDiscovery } from '../../lib/echoUX';
 import { useRealtimeNewEchoes } from '../../lib/realtime';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
+import { ComposeFAB } from '../../components/ui/ComposeFAB';
 import { UserRow } from '../../components/social/UserRow';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
@@ -145,6 +146,8 @@ export default function DiscoverScreen() {
 
   const feedScope = useAppStore(s => s.feedScope);
   const setFeedScope = useAppStore(s => s.setFeedScope);
+  // Unread notifications badge — header bell shows a red pill with the count.
+  const unreadNotifs = useAppStore(s => s.notifications.filter(n => !n.isRead).length);
 
   // The For You / Trending / Following toggle drives BOTH the hero rail
   // and the main list. Previously the toggle was visible but only changed
@@ -496,13 +499,42 @@ export default function DiscoverScreen() {
           </View>
 
           <Pressable
-            onPress={() => router.push('/notifications')}
+            onPress={() => router.push('/(tabs)/notifications')}
             style={{ padding: 6, marginRight: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
           >
-            <Bell color={colors.textSecondary} size={22} />
+            <View>
+              <Bell color={colors.textSecondary} size={22} />
+              {unreadNotifs > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -6,
+                    minWidth: 16,
+                    height: 16,
+                    paddingHorizontal: 4,
+                    borderRadius: 999,
+                    backgroundColor: colors.danger,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1.5,
+                    borderColor: colors.bg,
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                    {unreadNotifs > 99 ? '99+' : unreadNotifs}
+                  </Text>
+                </View>
+              )}
+            </View>
           </Pressable>
 
-          <Pressable onPress={() => router.push('/create-post')}>
+          {/* Avatar routes to profile, not compose — the + FAB owns
+              creation. Two entry points on the same screen was the redundancy
+              this restructure exists to fix. */}
+          <Pressable onPress={() => router.push('/(tabs)/you')} accessibilityLabel="Open your profile">
             <View
               style={{
                 width: 34,
@@ -537,6 +569,9 @@ export default function DiscoverScreen() {
           ]}
         />
       </View>
+
+      {/* Floating compose button — canonical creation entry point. */}
+      <ComposeFAB />
     </View>
   );
 }
