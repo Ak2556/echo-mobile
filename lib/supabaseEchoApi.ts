@@ -227,7 +227,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 
 // ─── Profile select helper ────────────────────────────────────────────────────
 
-const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns';
+const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id';
 const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response';
 
 export async function getSessionUserId(): Promise<string | null> {
@@ -964,6 +964,20 @@ export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfil
     .maybeSingle();
   if (error) throw error;
   return data as SupabaseProfileRow | null;
+}
+
+/**
+ * Set or clear the authenticated user's pinned signature echo.
+ * Passing null unpins. RLS guarantees you can only update your own row.
+ */
+export async function setPinnedEcho(echoId: string | null): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('profiles')
+    .update({ pinned_echo_id: echoId })
+    .eq('id', uid);
+  if (error) throw error;
 }
 
 export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedItem[]> {

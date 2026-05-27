@@ -3,8 +3,10 @@ import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PaperPlaneTilt, ShareNetwork, Sparkle, Trash } from 'phosphor-react-native';
+import { ArrowLeft, BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Sparkle, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
+import { setPinnedEcho } from '../../lib/supabaseEchoApi';
+import { showToast } from '../../components/ui/Toast';
 import { LikeButton } from '../../components/social/LikeButton';
 import { MediaGrid } from '../../components/social/MediaGrid';
 import { InlineVideo } from '../../components/social/InlineVideo';
@@ -14,6 +16,7 @@ import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
+import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { inferTopics } from '../../lib/echoUX';
 
 export default function ThreadDetailScreen() {
@@ -26,6 +29,9 @@ export default function ThreadDetailScreen() {
   const { colors, radius, fontSizes, showAvatars } = useTheme();
   const remoteBm = useToggleRemoteBookmark();
   const [showMenu, setShowMenu] = useState(false);
+  // Pull the owner's profile to know whether THIS echo is currently their pin.
+  const ownProfile = useRemoteProfileBundle(remote ? currentUserId : undefined);
+  const myPinnedId = ownProfile.data?.user ? (ownProfile.data as any).pinnedEcho?.id ?? null : null;
 
   const item = feed.find(f => f.id === id);
   const bookmarked = remote ? !!item?.isBookmarked : id ? isBookmarked(id) : false;
@@ -120,7 +126,24 @@ export default function ThreadDetailScreen() {
       </View>
 
       {isOwner && (() => {
+        const isPinned = myPinnedId === item.id;
         const menuActions: ActionItem[] = [
+          {
+            key: 'pin',
+            label: isPinned ? 'Unpin from profile' : 'Pin to profile',
+            icon: isPinned
+              ? <PushPinSlash color={colors.textSecondary} size={18} weight="bold" />
+              : <PushPin color={colors.accent} size={18} weight="fill" />,
+            onPress: async () => {
+              try {
+                await setPinnedEcho(isPinned ? null : item.id);
+                showToast(isPinned ? 'Unpinned' : 'Pinned to your profile', isPinned ? '' : '📌');
+                qc.invalidateQueries({ queryKey: ['profile', currentUserId] });
+              } catch (e: any) {
+                showToast(e?.message || 'Could not update pin', '❌');
+              }
+            },
+          },
           {
             key: 'edit',
             label: 'Edit Echo',

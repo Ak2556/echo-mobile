@@ -19,7 +19,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserMinus, ChartBar, Question, GitBranch, GitFork } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserMinus, ChartBar, Question, GitBranch, GitFork, PushPin } from 'phosphor-react-native';
 import { NEON } from '../../lib/neonDesign';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
@@ -35,6 +35,9 @@ interface FeedCardProps {
   item: FeedItem;
   index: number;
   onPress?: () => void;
+  /** When true, render a small "📌 Pinned" chip above the author row.
+   *  Set by the profile screen for its pinned signature echo. */
+  pinned?: boolean;
 }
 
 function getTimeAgo(dateStr: string): string {
@@ -121,7 +124,7 @@ function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollVie
   );
 }
 
-export function FeedCard({ item, index, onPress }: FeedCardProps) {
+export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const remote = isSupabaseRemote();
@@ -369,6 +372,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             backgroundColor: colors.surface,
           }}
         >
+          {/* Pinned chip — only on profile-pin context */}
+          {pinned && <PinnedChip cardPadding={cardPadding} colors={colors} />}
           {/* Repost badge */}
           {item.repostedByUsername && (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, marginHorizontal: cardPadding, marginBottom: 0, gap: 6 }}>
@@ -520,6 +525,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           padding: cardPadding,
         }}
       >
+        {/* Pinned chip — only on profile-pin context */}
+        {pinned && <PinnedChip cardPadding={0} colors={colors} />}
         {/* Repost badge */}
         {item.repostedByUsername && (
           <View className="flex-row items-center mb-2 ml-1 gap-1.5">
@@ -736,5 +743,32 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
       </GlassPanel>
       {AllModals}
     </Animated.View>
+  );
+}
+
+/**
+ * Pinned signature echo chip. Rendered above the author row when the
+ * parent passes `pinned` — small accent-tinted pill with a pushpin icon.
+ */
+function PinnedChip({ cardPadding, colors }: { cardPadding: number; colors: any }) {
+  return (
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 4,
+      marginHorizontal: cardPadding,
+      marginTop: cardPadding > 0 ? 10 : 0,
+      marginBottom: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 999,
+      backgroundColor: colors.accentMuted,
+    }}>
+      <PushPin color={colors.accent} size={11} weight="fill" />
+      <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+        PINNED
+      </Text>
+    </View>
   );
 }
