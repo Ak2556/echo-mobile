@@ -58,6 +58,11 @@ export interface SettingsSlice {
   // ── First-run hints ──
   hasSeenChatTabHint: boolean;
   setHasSeenChatTabHint: (v: boolean) => void;
+  /** Dismissal flag for the verbose "Best first chat" panel in the Chat
+   *  empty state. Set true on the user's first message send. Suggestion
+   *  chips remain visible — only the hint card disappears. */
+  hasSeenChatEmptyHint: boolean;
+  setHasSeenChatEmptyHint: (v: boolean) => void;
   hasSentFirstEcho: boolean;
   setHasSentFirstEcho: (v: boolean) => void;
   // ── Feed feedback signals ──
@@ -142,6 +147,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     fontScale: persistGet<number>('fontScale', 1),
     setFontScale: (v) => { persistSet('fontScale', v); set({ fontScale: v }); },
     hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
+    hasSeenChatEmptyHint: b('hasSeenChatEmptyHint', false), setHasSeenChatEmptyHint: s(set, 'hasSeenChatEmptyHint'),
     hasSentFirstEcho: b('hasSentFirstEcho', false), setHasSentFirstEcho: s(set, 'hasSentFirstEcho'),
     notInterestedIds: persistGet<string[]>('notInterestedIds', []),
     setNotInterestedIds: (v) => { persistSet('notInterestedIds', v); set({ notInterestedIds: v }); },

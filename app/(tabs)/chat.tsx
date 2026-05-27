@@ -14,6 +14,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ActionSheet } from '../../components/common/ActionSheet';
+import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
 import { streamEchoAI, EchoAIModel, isRateLimitError } from '../../lib/api';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
@@ -61,6 +62,8 @@ export default function ChatScreen() {
   const branchSession = useAppStore(s => s.branchSession);
   const hasSeenChatTabHint = useAppStore(s => s.hasSeenChatTabHint);
   const setHasSeenChatTabHint = useAppStore(s => s.setHasSeenChatTabHint);
+  const hasSeenChatEmptyHint = useAppStore(s => s.hasSeenChatEmptyHint);
+  const setHasSeenChatEmptyHint = useAppStore(s => s.setHasSeenChatEmptyHint);
   const insets = useSafeAreaInsets();
   const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
@@ -223,15 +226,15 @@ export default function ChatScreen() {
     // office-hours, year-in-echo, quests, badges) are still defined in the
     // app but hidden from nav and AI navigation per `lib/featureFlags.ts`.
     const routeMap: Record<string, string> = {
-      discover: '/(tabs)/discover',
-      profile: '/(tabs)/profile',
-      search: '/(tabs)/search',
+      discover: '/(tabs)/home',
+      profile: '/(tabs)/you',
+      search: '/(tabs)/explore',
       'create-post': '/create-post',
       messages: '/messages',
       bookmarks: '/bookmarks',
       notifications: '/notifications',
     };
-    router.push((routeMap[screen] ?? '/(tabs)/discover') as any);
+    router.push((routeMap[screen] ?? '/(tabs)/home') as any);
   }, [router]);
 
   const draftFn = useCallback((prompt: string, response: string) => {
@@ -327,6 +330,11 @@ export default function ChatScreen() {
       const userId = `u-${Date.now()}`;
       const isFirst = (useAppStore.getState().messagesBySession[currentSessionId] || []).length === 0;
       track('chat_message_sent', { is_first_in_session: isFirst, length: text.length, model: aiModel });
+      // First message sent — dismiss the verbose "Best first chat" hint
+      // panel for good. Suggestion chips remain useful for re-entry.
+      if (!useAppStore.getState().hasSeenChatEmptyHint) {
+        useAppStore.getState().setHasSeenChatEmptyHint(true);
+      }
       addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt: new Date().toISOString() });
       runStream({
         message: text,
@@ -464,13 +472,14 @@ export default function ChatScreen() {
 
   const headerHeight = insets.top + 52;
   const showEmptySuggestions = items.length === 0;
+  // The verbose "Best first chat" panel + AI disclosure dismisses for good
+  // once the user sends their first message. Suggestion chips stay — they
+  // remain useful as re-entry helpers for later empty sessions.
+  const showFirstChatPanel = showEmptySuggestions && !hasSeenChatEmptyHint;
   const showShareNudge = !isStreaming && messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
 
-  const modelActions = MODEL_OPTIONS.map(m => ({
-    key: m,
-    label: `${MODEL_LABELS[m]} ${m === aiModel ? '✓' : ''}`.trim(),
-    onPress: () => setAiModel(m),
-  }));
+  // modelActions previously rendered via generic ActionSheet — replaced
+  // by ModelPickerSheet (richer rows with icons + taglines + active state).
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -508,16 +517,24 @@ export default function ChatScreen() {
         </View>
         <View style={{ paddingBottom: 110 }}>
           {showEmptySuggestions ? (
-            <View style={{ paddingHorizontal: 12, paddingBottom: 8, gap: 10 }}>
-              <View style={{ borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', padding: 14 }}>
-                <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 4 }}>Best first chat</Text>
-                <Text style={{ color: colors.textMuted, lineHeight: 19 }}>
-                  Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 10, opacity: 0.8 }}>
-                  Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
-                </Text>
-              </View>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 16 }}>
+              {showFirstChatPanel && (
+                <View style={{
+                  borderRadius: 18,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.glassBorder,
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                  padding: 18,
+                }}>
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Best first chat</Text>
+                  <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
+                    Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 14, opacity: 0.8, lineHeight: 16 }}>
+                    Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
+                  </Text>
+                </View>
+              )}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {EMPTY_SUGGESTIONS.map(suggestion => (
                   <AnimatedPressable
@@ -530,11 +547,11 @@ export default function ChatScreen() {
                       borderWidth: StyleSheet.hairlineWidth,
                       borderColor: colors.glassBorder,
                       backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
+                      paddingHorizontal: 14,
+                      paddingVertical: 9,
                     }}
                   >
-                    <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>{suggestion}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{suggestion}</Text>
                   </AnimatedPressable>
                 ))}
               </View>
@@ -654,19 +671,19 @@ export default function ChatScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 2,
-                  backgroundColor: colors.isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.12)',
+                  gap: 4,
+                  backgroundColor: colors.surfaceHover,
                   borderRadius: 999,
-                  paddingHorizontal: 8,
-                  paddingVertical: 3,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
                   borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.accent + '55',
+                  borderColor: colors.border,
                 }}
               >
-                <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 0.3 }}>
                   {MODEL_LABELS[aiModel]}
                 </Text>
-                <CaretDown color={colors.accent} size={9} weight="bold" />
+                <CaretDown color={colors.textMuted} size={10} weight="bold" />
               </AnimatedPressable>
             </View>
           </View>
@@ -721,11 +738,11 @@ export default function ChatScreen() {
         onCancel={() => setEditTarget(null)}
         onSubmit={handleEditSubmit}
       />
-      <ActionSheet
+      <ModelPickerSheet
         visible={modelSheetOpen}
         onClose={() => setModelSheetOpen(false)}
-        actions={modelActions}
-        title="Switch model"
+        selected={aiModel}
+        onSelect={setAiModel}
       />
     </View>
   );

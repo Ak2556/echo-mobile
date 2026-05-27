@@ -135,7 +135,7 @@ function routeFor(
     return;
   }
   if (status === 'ready') {
-    router.replace('/(tabs)/discover');
+    router.replace('/(tabs)/home');
     return;
   }
 }

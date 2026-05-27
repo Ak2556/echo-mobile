@@ -141,10 +141,25 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
           )}
 
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontSize: fontSizes.small }} numberOfLines={2}>
-              <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
-              {' '}{actionTextFor(notification)}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <Text style={{ color: colors.text, fontSize: fontSizes.small, flexShrink: 1 }} numberOfLines={2}>
+                <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
+                {' '}{actionTextFor(notification)}
+              </Text>
+              {notification.groupCount && notification.groupCount > 1 && (
+                <View style={{
+                  backgroundColor: colors.accentMuted,
+                  paddingHorizontal: 7,
+                  paddingVertical: 1,
+                  borderRadius: 999,
+                  alignSelf: 'flex-start',
+                }}>
+                  <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', fontVariant: ['tabular-nums'], letterSpacing: 0.2 }}>
+                    +{notification.groupCount - 1}
+                  </Text>
+                </View>
+              )}
+            </View>
             {notification.targetPreview && notification.type !== 'reaction' && (
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
                 {notification.targetPreview}

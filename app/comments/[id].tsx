@@ -3,7 +3,7 @@ import { View, Text, Pressable, KeyboardAvoidingView, Platform, ActivityIndicato
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PaperPlaneTilt, ChatCircle, X } from 'phosphor-react-native';
+import { ArrowLeft, PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
 import { TextInput } from '../../components/ui/TextInput';
 import { CommentCard } from '../../components/social/CommentCard';
 import { MentionSuggestions, applyMentionPick } from '../../components/social/MentionSuggestions';
@@ -157,10 +157,36 @@ export default function CommentsScreen() {
         )}
 
         {replyingTo && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, backgroundColor: colors.surface, borderTopWidth: 0.5, borderTopColor: colors.border }}>
-            <Text style={{ color: colors.textMuted, fontSize: 13, flex: 1 }}>Replying to @{replyingTo.username}</Text>
-            <Pressable onPress={() => setReplyingTo(null)} hitSlop={10}>
-              <X color={colors.textMuted} size={16} />
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            backgroundColor: colors.accentMuted,
+            borderTopWidth: 0.5,
+            borderTopColor: colors.border,
+          }}>
+            <ArrowBendUpLeft color={colors.accent} size={16} weight="bold" />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.4, textTransform: 'uppercase' }}>
+                Replying to
+              </Text>
+              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginTop: 1 }} numberOfLines={1}>
+                @{replyingTo.username}
+                <Text style={{ color: colors.textMuted, fontWeight: '400' }}>
+                  {'  '}· {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''}
+                </Text>
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => setReplyingTo(null)}
+              hitSlop={10}
+              style={{ padding: 6, borderRadius: 999, backgroundColor: colors.surface }}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel reply"
+            >
+              <X color={colors.textSecondary} size={14} weight="bold" />
             </Pressable>
           </View>
         )}

@@ -26,6 +26,7 @@ import { usePerformanceProfile } from '../../lib/performance';
 import { groupDiscovery } from '../../lib/echoUX';
 import { useRealtimeNewEchoes } from '../../lib/realtime';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
+import { ComposeFAB } from '../../components/ui/ComposeFAB';
 import { UserRow } from '../../components/social/UserRow';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
@@ -48,13 +49,13 @@ function SectionHeader({ label, sub, icon }: { label: string; sub?: string; icon
         flexDirection: 'row',
         alignItems: 'baseline',
         paddingHorizontal: 16,
-        marginTop: 24,
-        marginBottom: 12,
+        marginTop: 32,
+        marginBottom: 14,
         gap: 8,
       }}
     >
       {icon}
-      <Text style={[font.display, { color: colors.text, fontSize: 19 }]}>{label}</Text>
+      <Text style={[font.display, { color: colors.text, fontSize: 20, letterSpacing: -0.3 }]}>{label}</Text>
       {sub && (
         <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 13 }]}>
           {sub}
@@ -142,18 +143,38 @@ export default function DiscoverScreen() {
     () => groupDiscovery(feed ?? [], interests, followingIds),
     [feed, interests, followingIds],
   );
-  const heroItems = (grouped.forYou.length > 0 ? grouped.forYou : feed?.slice(0, HERO_COUNT)) ?? [];
-  const popularItems = (grouped.rising.length > 0 ? grouped.rising : feed?.slice(HERO_COUNT)) ?? [];
-  const starterItems = grouped.conversationStarters.slice(0, 3);
 
   const feedScope = useAppStore(s => s.feedScope);
   const setFeedScope = useAppStore(s => s.setFeedScope);
+  // Unread notifications badge — header bell shows a red pill with the count.
+  const unreadNotifs = useAppStore(s => s.notifications.filter(n => !n.isRead).length);
+
+  // The For You / Trending / Following toggle drives BOTH the hero rail
+  // and the main list. Previously the toggle was visible but only changed
+  // the empty-state copy — heroItems and popularItems always defaulted to
+  // semantic recs + rising, which made the toggle feel broken.
+  const scopedAll = useMemo(() => {
+    if (!feed) return [];
+    if (feedScope === 'following') {
+      const followingSet = new Set(followingIds);
+      return feed.filter(f => followingSet.has(f.userId));
+    }
+    if (feedScope === 'forYou') {
+      return grouped.rising.length > 0 ? grouped.rising : feed;
+    }
+    // 'semantic' (labelled "For You" in the toggle)
+    return grouped.forYou.length > 0 ? grouped.forYou : feed;
+  }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising]);
+
+  const heroItems = scopedAll.slice(0, HERO_COUNT);
+  const popularItems = scopedAll.slice(HERO_COUNT);
+  const starterItems = grouped.conversationStarters.slice(0, 3);
 
   const ListHeader = (
     <View>
       {/* For You (semantic) / Trending / Following toggle — neon when active */}
       {/* a11y: add accessibilityRole="tab" + accessibilityState={{ selected: active }} to each Pressable */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10, gap: 8 }}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 8 }}>
         {(['semantic', 'forYou', 'following'] as const).map(scope => {
           const active = feedScope === scope;
           const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : 'Following';
@@ -197,9 +218,9 @@ export default function DiscoverScreen() {
         <View
           style={{
             marginHorizontal: 16,
-            marginTop: 8,
-            marginBottom: 6,
-            padding: 14,
+            marginTop: 12,
+            marginBottom: 16,
+            padding: 16,
             borderRadius: 14,
             backgroundColor: colors.accent + '14',
             borderWidth: 1,
@@ -238,7 +259,10 @@ export default function DiscoverScreen() {
           </Pressable>
         </View>
       )}
-      {features.dailyQuestion && (
+      {/* Daily Question — suppressed while the First-Echo coach is showing
+          (both target new users; surfacing both is the duplication the
+          section cull exists to fix). */}
+      {features.dailyQuestion && !showFirstEchoCoach && (
         <Pressable
           onPress={() => router.push('/daily-question' as any)}
           style={{
@@ -260,63 +284,30 @@ export default function DiscoverScreen() {
           </Text>
         </Pressable>
       )}
-      <SectionHeader label="For You" sub={interests.length > 0 ? `Picked for ${interests[0]}` : 'Start here'} />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        snapToInterval={HERO_CARD_WIDTH + 12}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
-        onScroll={(e) => { heroScrollX.value = e.nativeEvent.contentOffset.x; }}
-        scrollEventThrottle={16}
-      >
-        {heroItems.map((item, index) => (
-          <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} scrollX={heroScrollX} cardIndex={index} />
-        ))}
-      </ScrollView>
-      {starterItems.length > 0 ? (
-        <>
-          <SectionHeader label="Open Questions" sub="Worth answering" icon={<Question color={colors.accent} size={16} weight="bold" />} />
-          {/* Horizontal scroll strip with "Answer →" CTA */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
-          >
-            {starterItems.map(item => (
-              <Pressable
-                key={item.id}
-                onPress={() => handlePressThread(item)}
-                style={{
-                  width: 220,
-                  padding: 14,
-                  borderRadius: 16,
-                  backgroundColor: colors.surface,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.border,
-                }}
-              >
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', lineHeight: 20 }} numberOfLines={2}>
-                  {item.editorialTitle || item.prompt}
-                </Text>
-                <Pressable
-                  onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/create-post', params: { prefillTitle: item.prompt ?? '' } } as any); }}
-                  style={{
-                    marginTop: 10,
-                    alignSelf: 'flex-start',
-                    backgroundColor: colors.accent + '18',
-                    borderRadius: 99,
-                    paddingHorizontal: 12,
-                    paddingVertical: 5,
-                  }}
-                >
-                  <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>Answer →</Text>
-                </Pressable>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </>
-      ) : null}
+      {/* Hero rail — renders directly under the scope toggle. The "For You"
+          SectionHeader was removed because the toggle already labels what's
+          below ("For You" appearing twice was the redundancy the cull
+          exists to fix). */}
+      <View style={{ marginTop: 4 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={HERO_CARD_WIDTH + 12}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+          onScroll={(e) => { heroScrollX.value = e.nativeEvent.contentOffset.x; }}
+          scrollEventThrottle={16}
+        >
+          {heroItems.map((item, index) => (
+            <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} scrollX={heroScrollX} cardIndex={index} />
+          ))}
+        </ScrollView>
+      </View>
+      {/* "Open Questions" section removed — those starter prompts already
+          surface via the Daily Question banner (for new users) and the For
+          You hero rail (for everyone). Triple coverage was clutter. The
+          grouped.conversationStarters data is still produced if we want
+          to re-introduce a single inline card later. */}
       <SectionHeader label="Trending Insights" sub="High energy" icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
     </View>
   );
@@ -402,7 +393,7 @@ export default function DiscoverScreen() {
                   </>
                 ) : (
                   <Pressable
-                    onPress={() => router.push('/(tabs)/search')}
+                    onPress={() => router.push('/(tabs)/explore')}
                     style={{ backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, alignSelf: 'flex-start' }}
                   >
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Find people to follow</Text>
@@ -475,13 +466,42 @@ export default function DiscoverScreen() {
           </View>
 
           <Pressable
-            onPress={() => router.push('/notifications')}
+            onPress={() => router.push('/(tabs)/notifications')}
             style={{ padding: 6, marginRight: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
           >
-            <Bell color={colors.textSecondary} size={22} />
+            <View>
+              <Bell color={colors.textSecondary} size={22} />
+              {unreadNotifs > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -6,
+                    minWidth: 16,
+                    height: 16,
+                    paddingHorizontal: 4,
+                    borderRadius: 999,
+                    backgroundColor: colors.danger,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1.5,
+                    borderColor: colors.bg,
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                    {unreadNotifs > 99 ? '99+' : unreadNotifs}
+                  </Text>
+                </View>
+              )}
+            </View>
           </Pressable>
 
-          <Pressable onPress={() => router.push('/create-post')}>
+          {/* Avatar routes to profile, not compose — the + FAB owns
+              creation. Two entry points on the same screen was the redundancy
+              this restructure exists to fix. */}
+          <Pressable onPress={() => router.push('/(tabs)/you')} accessibilityLabel="Open your profile">
             <View
               style={{
                 width: 34,
@@ -516,6 +536,9 @@ export default function DiscoverScreen() {
           ]}
         />
       </View>
+
+      {/* Floating compose button — canonical creation entry point. */}
+      <ComposeFAB />
     </View>
   );
 }

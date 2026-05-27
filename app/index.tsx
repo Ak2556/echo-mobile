@@ -30,7 +30,7 @@ export default function Index() {
   }
 
   if (status === 'ready') {
-    return <Redirect href="/(tabs)/discover" />;
+    return <Redirect href="/(tabs)/home" />;
   }
 
   if (status === 'needs-onboarding') {

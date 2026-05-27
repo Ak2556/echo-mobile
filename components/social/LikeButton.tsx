@@ -90,11 +90,13 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
           weight={liked ? 'fill' : 'regular'}
         />
       </Animated.View>
-      <SpringCounter
-        value={count}
-        performanceMode="hot"
-        style={{ fontWeight: '500', color: liked ? '#EF4444' : '#A1A1AA', fontSize: 14 }}
-      />
+      {count > 0 && (
+        <SpringCounter
+          value={count}
+          performanceMode="hot"
+          style={{ fontWeight: '500', color: liked ? '#EF4444' : '#A1A1AA', fontSize: 14, fontVariant: ['tabular-nums'] }}
+        />
+      )}
     </AnimatedPressable>
   );
 }

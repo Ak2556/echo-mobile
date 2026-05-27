@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShareSheet } from '../common/ShareSheet';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
+import { RepostChoiceSheet } from './RepostChoiceSheet';
 import { QuotedEchoCard } from './QuotedEchoCard';
 import { tap } from '../../lib/haptics';
 import { Image } from 'expo-image';
@@ -18,7 +19,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThreeOutline, Flag, UserMinus, ChartBar, Question, GitBranch, GitFork } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserMinus, ChartBar, Question, GitBranch, GitFork, PushPin } from 'phosphor-react-native';
 import { NEON } from '../../lib/neonDesign';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
@@ -34,6 +35,9 @@ interface FeedCardProps {
   item: FeedItem;
   index: number;
   onPress?: () => void;
+  /** When true, render a small "📌 Pinned" chip above the author row.
+   *  Set by the profile screen for its pinned signature echo. */
+  pinned?: boolean;
 }
 
 function getTimeAgo(dateStr: string): string {
@@ -120,7 +124,7 @@ function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollVie
   );
 }
 
-export function FeedCard({ item, index, onPress }: FeedCardProps) {
+export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const remote = isSupabaseRemote();
@@ -136,7 +140,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [repostSheetOpen, setRepostSheetOpen] = useState(false);
-  const [feedFeedbackOpen, setFeedFeedbackOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const toggleMute = useAppStore(s => s.toggleMute);
   const isMuted = useAppStore(s => s.isMuted);
@@ -189,48 +192,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
     router.push({ pathname: '/create-post', params: { quoted: item.id } });
   }, [router, item.id]);
 
-  const handleLongPressCard = () => {
-    tap('medium');
-    setFeedFeedbackOpen(true);
-  };
-
-  const repostActions: ActionItem[] = [
-    {
-      key: 'repost',
-      label: reposted ? 'Undo re-echo' : 'Re-echo',
-      icon: <ArrowsClockwise color={colors.text} size={20} />,
-      onPress: () => handleRepost(),
-    },
-    {
-      key: 'quote',
-      label: 'Remix',
-      icon: <GitFork color={colors.text} size={20} />,
-      onPress: handleQuoteRepost,
-    },
-  ];
-
-  const feedFeedbackActions: ActionItem[] = [
-    {
-      key: 'less',
-      label: 'Show less like this',
-      onPress: () => { setFeedFeedback({ ...feedFeedback, [item.id]: 'less' }); tap('success'); showToast('Got it — less like this', '👍'); },
-    },
-    {
-      key: 'mute',
-      label: isMuted(item.userId) ? `Unmute @${item.username}` : `Mute @${item.username}`,
-      onPress: () => {
-        const wasMuted = isMuted(item.userId);
-        toggleMute(item.userId);
-        tap(wasMuted ? 'light' : 'warning');
-        showToast(wasMuted ? `Unmuted @${item.username}` : `Muted @${item.username}`, wasMuted ? '🔔' : '🔕');
-      },
-    },
-    {
-      key: 'notinterested',
-      label: 'Not interested',
-      onPress: () => { setNotInterestedIds([...notInterestedIds, item.id]); tap('success'); showToast('Hidden', '✓'); },
-    },
-  ];
+  // Long-press card sheet (feedFeedbackOpen) merged into the ⋮ menu —
+  // it duplicated mute and added hidden actions most users never discovered.
 
   const handleReport = () => {
     router.push({ pathname: '/report', params: { targetType: 'echo', targetId: item.id, targetName: item.username } });
@@ -253,12 +216,35 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   // ── Shared sub-sections ──
 
+  // Single overflow menu — merges the old long-press "feed feedback" sheet
+  // into the ⋮ menu so there's one discoverable affordance for everything
+  // the user might want to do with a card they didn't author.
   const menuActions: ActionItem[] = [
     {
       key: 'profile',
       label: 'View Profile',
       icon: <UserMinus color={colors.textSecondary} size={20} />,
       onPress: () => router.push(`/user/${item.userId}`),
+    },
+    {
+      key: 'less',
+      label: 'Show less like this',
+      icon: <Question color={colors.textSecondary} size={20} />,
+      onPress: () => {
+        setFeedFeedback({ ...feedFeedback, [item.id]: 'less' });
+        tap('success');
+        showToast('Got it — less like this', '👍');
+      },
+    },
+    {
+      key: 'notinterested',
+      label: 'Not interested',
+      icon: <Flag color={colors.textSecondary} size={20} />,
+      onPress: () => {
+        setNotInterestedIds([...notInterestedIds, item.id]);
+        tap('success');
+        showToast('Hidden', '✓');
+      },
     },
     {
       key: 'mute',
@@ -283,8 +269,13 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
   const AllModals = (
     <>
       <ShareSheet visible={shareOpen} onClose={() => setShareOpen(false)} echo={item} />
-      <ActionSheet visible={repostSheetOpen} onClose={() => setRepostSheetOpen(false)} title="Re-echo or quote?" actions={repostActions} />
-      <ActionSheet visible={feedFeedbackOpen} onClose={() => setFeedFeedbackOpen(false)} actions={feedFeedbackActions} />
+      <RepostChoiceSheet
+        visible={repostSheetOpen}
+        onClose={() => setRepostSheetOpen(false)}
+        reposted={reposted}
+        onRepost={handleRepost}
+        onRemix={handleQuoteRepost}
+      />
       <ActionSheet visible={menuSheetOpen} onClose={() => setMenuSheetOpen(false)} subtitle={`@${item.username}`} actions={menuActions} />
     </>
   );
@@ -323,7 +314,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           accessibilityRole="button"
         >
           <ChatCircle color={colors.textMuted} size={19} />
-          <SpringCounter value={item.commentCount || 0} performanceMode="hot" style={{ color: colors.textMuted, fontSize: fontSizes.caption }} />
+          {(item.commentCount || 0) > 0 && (
+            <SpringCounter value={item.commentCount || 0} performanceMode="hot" style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontVariant: ['tabular-nums'] }} />
+          )}
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -338,7 +331,9 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           accessibilityRole="button"
         >
           <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
-          <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption }} />
+          {displayRepostCount > 0 && (
+            <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption, fontVariant: ['tabular-nums'] }} />
+          )}
         </AnimatedPressable>
 
         <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
@@ -350,14 +345,10 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         </AnimatedPressable>
       </View>
       </View>
-      {/* ⚡ Echo identity chip */}
-      {(!item.postType || item.postType === 'text') && !compactFeed && (
-        <View style={{ alignItems: 'flex-end', marginTop: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, backgroundColor: colors.accent + '18' }}>
-            <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '700' }}>⚡ Echo</Text>
-          </View>
-        </View>
-      )}
+      {/* Echo identity chip removed — was only firing on text non-compact
+          posts (inconsistent vs photo/video/poll). The two-part prompt + take
+          framing in the card already signals "this is an Echo"; the badge
+          was visual noise. */}
     </View>
   );
 
@@ -373,7 +364,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           performanceMode="hot"
           style={{
             marginHorizontal: 16,
-            marginVertical: 6,
+            marginVertical: 10,
             borderRadius: heroRadius,
             overflow: 'hidden',
             borderWidth: StyleSheet.hairlineWidth,
@@ -381,6 +372,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             backgroundColor: colors.surface,
           }}
         >
+          {/* Pinned chip — only on profile-pin context */}
+          {pinned && <PinnedChip cardPadding={cardPadding} colors={colors} />}
           {/* Repost badge */}
           {item.repostedByUsername && (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, marginHorizontal: cardPadding, marginBottom: 0, gap: 6 }}>
@@ -468,7 +461,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
                 accessibilityLabel="More options"
                 accessibilityRole="button"
               >
-                <DotsThreeOutline color={colors.textMuted} size={20} />
+                <DotsThree color={colors.textMuted} size={22} weight="bold" />
               </AnimatedPressable>
             </View>
 
@@ -488,7 +481,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             {item.hashtags && item.hashtags.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                 {item.hashtags.slice(0, 3).map(tag => (
-                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/search', params: { q: `#${tag}` } as any }); }}>
+                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } as any }); }}>
                     <Text style={{ color: colors.accent, fontSize: fontSizes.caption }}>#{tag}</Text>
                   </Pressable>
                 ))}
@@ -505,7 +498,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
 
   // ── Standard layout (text / poll / compact) ──
   return (
-    <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 16, marginVertical: 6 }}>
+    <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 16, marginVertical: 10 }}>
       <GlassPanel variant="light" borderRadius={radius.card} elevated performanceMode="hot">
         {/* Left accent rail — the Echo identity stripe */}
         <View
@@ -524,7 +517,6 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         />
       <AnimatedPressable
         onPress={handleMainPress}
-        onLongPress={handleLongPressCard}
         depth="soft"
         fadeOnPress
         haptic="light"
@@ -533,6 +525,8 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
           padding: cardPadding,
         }}
       >
+        {/* Pinned chip — only on profile-pin context */}
+        {pinned && <PinnedChip cardPadding={0} colors={colors} />}
         {/* Repost badge */}
         {item.repostedByUsername && (
           <View className="flex-row items-center mb-2 ml-1 gap-1.5">
@@ -603,7 +597,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             haptic="light"
             performanceMode="hot"
           >
-            <DotsThreeOutline color={colors.textMuted} size={20} />
+            <DotsThree color={colors.textMuted} size={22} weight="bold" />
           </AnimatedPressable>
         </View>
 
@@ -700,6 +694,24 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
         {/* ── POLL post ── */}
         {item.postType === 'poll' && item.poll && (
           <View style={{ marginBottom: 4 }}>
+            {/* Poll badge — gives polls a unique post-type marker now that
+                the generic "Echo" chip is gone from text posts. */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              alignSelf: 'flex-start',
+              backgroundColor: colors.accentMuted,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 999,
+              marginBottom: 10,
+            }}>
+              <ChartBar color={colors.accent} size={11} weight="bold" />
+              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                POLL
+              </Text>
+            </View>
             {!!item.prompt && (
               <Text style={{ fontSize: textSize, color: colors.text, fontWeight: '600', marginBottom: 12 }} numberOfLines={compactFeed ? 1 : undefined}>{item.prompt}</Text>
             )}
@@ -731,5 +743,32 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
       </GlassPanel>
       {AllModals}
     </Animated.View>
+  );
+}
+
+/**
+ * Pinned signature echo chip. Rendered above the author row when the
+ * parent passes `pinned` — small accent-tinted pill with a pushpin icon.
+ */
+function PinnedChip({ cardPadding, colors }: { cardPadding: number; colors: any }) {
+  return (
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 4,
+      marginHorizontal: cardPadding,
+      marginTop: cardPadding > 0 ? 10 : 0,
+      marginBottom: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 999,
+      backgroundColor: colors.accentMuted,
+    }}>
+      <PushPin color={colors.accent} size={11} weight="fill" />
+      <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+        PINNED
+      </Text>
+    </View>
   );
 }

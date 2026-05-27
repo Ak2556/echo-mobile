@@ -135,8 +135,14 @@ export default function NotificationsScreen() {
         const sample = b.notifications[0];
         if (b.notifications.length === 1) return [sample];
         // Synthesize a grouped notification preserving the most-recent metadata.
+        // groupCount drives the +N pill in the row UI so the collapsed
+        // count is visible at a glance.
         const others = b.notifications.length - 1;
-        return [{ ...sample, targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${labelForType(sample)}` }];
+        return [{
+          ...sample,
+          groupCount: b.notifications.length,
+          targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${labelForType(sample)}`,
+        }];
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications, mutedIds, filter]); // typeFilter is recreated from `filter` which is already in deps
@@ -202,7 +208,7 @@ export default function NotificationsScreen() {
                 : "When people interact with your echoes, you'll see it here."
             }
             actionLabel={filter === 'all' ? 'Explore' : undefined}
-            onAction={filter === 'all' ? () => router.push('/(tabs)/discover') : undefined}
+            onAction={filter === 'all' ? () => router.push('/(tabs)/home') : undefined}
           />
         </Animated.View>
       ) : (
@@ -299,9 +305,11 @@ export default function NotificationsScreen() {
           </AnimatedPressable>
         </View>
 
-        {/* Filter tabs */}
+        {/* Filter tabs — reduced from 10 → 5 most-used. Power-user filters
+            (saves, quotes, reactions, reposts) collapsed into 'all' for now;
+            we can add a secondary filter sheet if real demand surfaces. */}
         <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 16, gap: 8 }}>
-          {(['all', 'unread', 'mentions', 'replies', 'reactions', 'saves', 'quotes', 'likes', 'follows', 'reposts'] as const).map(tab => (
+          {(['all', 'unread', 'mentions', 'replies', 'follows'] as const).map(tab => (
             <AnimatedPressable
               key={tab}
               onPress={() => setFilter(tab)}
