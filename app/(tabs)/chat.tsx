@@ -62,6 +62,8 @@ export default function ChatScreen() {
   const branchSession = useAppStore(s => s.branchSession);
   const hasSeenChatTabHint = useAppStore(s => s.hasSeenChatTabHint);
   const setHasSeenChatTabHint = useAppStore(s => s.setHasSeenChatTabHint);
+  const hasSeenChatEmptyHint = useAppStore(s => s.hasSeenChatEmptyHint);
+  const setHasSeenChatEmptyHint = useAppStore(s => s.setHasSeenChatEmptyHint);
   const insets = useSafeAreaInsets();
   const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
@@ -328,6 +330,11 @@ export default function ChatScreen() {
       const userId = `u-${Date.now()}`;
       const isFirst = (useAppStore.getState().messagesBySession[currentSessionId] || []).length === 0;
       track('chat_message_sent', { is_first_in_session: isFirst, length: text.length, model: aiModel });
+      // First message sent — dismiss the verbose "Best first chat" hint
+      // panel for good. Suggestion chips remain useful for re-entry.
+      if (!useAppStore.getState().hasSeenChatEmptyHint) {
+        useAppStore.getState().setHasSeenChatEmptyHint(true);
+      }
       addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt: new Date().toISOString() });
       runStream({
         message: text,
@@ -465,6 +472,10 @@ export default function ChatScreen() {
 
   const headerHeight = insets.top + 52;
   const showEmptySuggestions = items.length === 0;
+  // The verbose "Best first chat" panel + AI disclosure dismisses for good
+  // once the user sends their first message. Suggestion chips stay — they
+  // remain useful as re-entry helpers for later empty sessions.
+  const showFirstChatPanel = showEmptySuggestions && !hasSeenChatEmptyHint;
   const showShareNudge = !isStreaming && messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
 
   // modelActions previously rendered via generic ActionSheet — replaced
@@ -507,21 +518,23 @@ export default function ChatScreen() {
         <View style={{ paddingBottom: 110 }}>
           {showEmptySuggestions ? (
             <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 16 }}>
-              <View style={{
-                borderRadius: 18,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: colors.glassBorder,
-                backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                padding: 18,
-              }}>
-                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Best first chat</Text>
-                <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
-                  Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 14, opacity: 0.8, lineHeight: 16 }}>
-                  Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
-                </Text>
-              </View>
+              {showFirstChatPanel && (
+                <View style={{
+                  borderRadius: 18,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.glassBorder,
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                  padding: 18,
+                }}>
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Best first chat</Text>
+                  <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
+                    Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 14, opacity: 0.8, lineHeight: 16 }}>
+                    Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
+                  </Text>
+                </View>
+              )}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {EMPTY_SUGGESTIONS.map(suggestion => (
                   <AnimatedPressable
