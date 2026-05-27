@@ -156,7 +156,7 @@ export default function ShareScreen() {
       publishEcho(echo);
       await AsyncStorage.removeItem(SHARE_DRAFT_KEY);
       Alert.alert('Published', 'Your Echo is live in Discover.', [
-        { text: 'Open Discover', onPress: () => router.replace('/(tabs)/discover') },
+        { text: 'Open Discover', onPress: () => router.replace('/(tabs)/home') },
       ]);
       setPublishing(false);
     }, 200);
@@ -172,7 +172,7 @@ export default function ShareScreen() {
           variant={celebration.variant}
           onDone={() => {
             setCelebration(null);
-            router.replace('/(tabs)/discover');
+            router.replace('/(tabs)/home');
           }}
         />
       )}

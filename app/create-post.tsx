@@ -396,7 +396,7 @@ export default function CreatePostScreen() {
             }
           } catch { /* fall through to feed */ }
         }
-        router.replace('/(tabs)/discover');
+        router.replace('/(tabs)/home');
       }, 1800);
     } catch (e) {
       Alert.alert('Publish failed', (e as Error).message);
@@ -418,11 +418,11 @@ export default function CreatePostScreen() {
         onAccept={async () => {
           setShowPushPrePrompt(false);
           await registerForPush();
-          router.replace('/(tabs)/discover');
+          router.replace('/(tabs)/home');
         }}
         onDecline={() => {
           setShowPushPrePrompt(false);
-          router.replace('/(tabs)/discover');
+          router.replace('/(tabs)/home');
         }}
       />
 

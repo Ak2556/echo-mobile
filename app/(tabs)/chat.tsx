@@ -224,15 +224,15 @@ export default function ChatScreen() {
     // office-hours, year-in-echo, quests, badges) are still defined in the
     // app but hidden from nav and AI navigation per `lib/featureFlags.ts`.
     const routeMap: Record<string, string> = {
-      discover: '/(tabs)/discover',
-      profile: '/(tabs)/profile',
-      search: '/(tabs)/search',
+      discover: '/(tabs)/home',
+      profile: '/(tabs)/you',
+      search: '/(tabs)/explore',
       'create-post': '/create-post',
       messages: '/messages',
       bookmarks: '/bookmarks',
       notifications: '/notifications',
     };
-    router.push((routeMap[screen] ?? '/(tabs)/discover') as any);
+    router.push((routeMap[screen] ?? '/(tabs)/home') as any);
   }, [router]);
 
   const draftFn = useCallback((prompt: string, response: string) => {

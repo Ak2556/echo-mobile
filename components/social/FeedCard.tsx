@@ -482,7 +482,7 @@ export function FeedCard({ item, index, onPress }: FeedCardProps) {
             {item.hashtags && item.hashtags.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                 {item.hashtags.slice(0, 3).map(tag => (
-                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/search', params: { q: `#${tag}` } as any }); }}>
+                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } as any }); }}>
                     <Text style={{ color: colors.accent, fontSize: fontSizes.caption }}>#{tag}</Text>
                   </Pressable>
                 ))}

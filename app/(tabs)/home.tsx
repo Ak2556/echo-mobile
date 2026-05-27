@@ -423,7 +423,7 @@ export default function DiscoverScreen() {
                   </>
                 ) : (
                   <Pressable
-                    onPress={() => router.push('/(tabs)/search')}
+                    onPress={() => router.push('/(tabs)/explore')}
                     style={{ backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, alignSelf: 'flex-start' }}
                   >
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Find people to follow</Text>
