@@ -14,7 +14,7 @@ import { MentionSuggestions, applyMentionPick } from '../components/social/Menti
 import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 import {
   ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
-  VideoCamera, ChartBar, X, Plus, Clock, Camera, Images, CheckCircle,
+  VideoCamera, ChartBar, X, Plus, Clock, Camera, Images, CheckCircle, Question,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
@@ -31,12 +31,13 @@ import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, 
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
 import { Users, MagnifyingGlass } from 'phosphor-react-native';
 
-type PostType = 'text' | 'photo' | 'video' | 'poll';
+type PostType = 'text' | 'photo' | 'video' | 'poll' | 'musing';
 
 const POST_TYPES: { key: PostType; label: string; Icon: React.ComponentType<any> }[] = [
   // 'Echo' is the brand term for a text post — every other product surface
   // calls them "echoes" so the tab name shouldn't degenerate to "Text".
   { key: 'text', label: 'Echo', Icon: Lightning },
+  { key: 'musing', label: 'Musing', Icon: Question },
   { key: 'photo', label: 'Photo', Icon: ImageIcon },
   { key: 'video', label: 'Video', Icon: VideoCamera },
   { key: 'poll', label: 'Poll', Icon: ChartBar },
@@ -155,6 +156,7 @@ export default function CreatePostScreen() {
           return prompt.trim().length > 0 && response.trim().length > 0 && coAuthorResponse.trim().length > 0;
         }
         return prompt.trim().length > 0 && response.trim().length > 0;
+      case 'musing': return prompt.trim().length > 0;
       case 'photo': return imageUris.length > 0;
       case 'video': return videoUri.length > 0;
       case 'poll': return pollQuestion.trim().length > 0 && pollOptions.filter(o => o.trim()).length >= 2;
@@ -293,6 +295,21 @@ export default function CreatePostScreen() {
       let remoteEchoId: string | undefined;
 
       switch (postType) {
+        case 'musing':
+          // A musing is a single in-progress thought. Store it in `prompt`
+          // with an empty response; the feed renders it with italic
+          // "thinking out loud" treatment.
+          echo = coerceFeedItem({ ...base, postType: 'musing', prompt: prompt.trim(), response: '' });
+          if (remoteAuthorId) {
+            const row = await insertRemoteEcho({
+              authorId: remoteAuthorId,
+              prompt: prompt.trim(),
+              response: '',
+              postType: 'musing',
+            });
+            remoteEchoId = row.id;
+          }
+          break;
         case 'text':
           echo = coerceFeedItem({
             ...base,
@@ -565,6 +582,41 @@ export default function CreatePostScreen() {
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>QUOTING</Text>
               <QuotedEchoCard echo={quotedEcho} />
             </View>
+          )}
+          {postType === 'musing' && (
+            <Animated.View entering={animation(FadeIn.duration(80))}>
+              <View
+                style={{
+                  marginBottom: 14,
+                  padding: 14,
+                  borderRadius: radius.card,
+                  backgroundColor: colors.accent + '14',
+                  borderWidth: 1,
+                  borderColor: colors.accent + '30',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                }}
+              >
+                <Question color={colors.accent} size={20} weight="duotone" />
+                <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19, flex: 1 }}>
+                  A musing is a thought you&apos;re still working through — no need for a tidy answer. Think out loud.
+                </Text>
+              </View>
+              <Text style={s.label}>What&apos;s on your mind?</Text>
+              <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
+                <TextInput
+                  multiline
+                  value={prompt}
+                  onChangeText={setPrompt}
+                  placeholder="What are you working through?"
+                  placeholderTextColor={colors.textMuted}
+                  maxLength={500}
+                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 120 }}
+                />
+                <Text style={{ color: prompt.length > 470 ? colors.danger : colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/500</Text>
+              </View>
+            </Animated.View>
           )}
           {postType === 'text' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>

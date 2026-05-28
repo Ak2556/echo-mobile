@@ -601,6 +601,34 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           </AnimatedPressable>
         </View>
 
+        {/* ── MUSING post ──
+            "Thinking out loud" — a single in-progress thought, not a tidy
+            two-part take. Accent-tinted container + 🤔 chip + italic body. */}
+        {item.postType === 'musing' && !!item.prompt && (
+          <View style={{
+            backgroundColor: colors.accentMuted,
+            borderRadius: radius.md,
+            borderLeftWidth: 3,
+            borderLeftColor: colors.accent,
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            marginBottom: compactFeed ? 8 : 12,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+              <Question color={colors.accent} size={12} weight="bold" />
+              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                MUSING
+              </Text>
+            </View>
+            <Text
+              style={[font.quote, { color: colors.text, fontSize: textSize, lineHeight: textSize * 1.5 }]}
+              numberOfLines={compactFeed ? 4 : 10}
+            >
+              {item.prompt}
+            </Text>
+          </View>
+        )}
+
         {/* ── TEXT post ──
             Signature treatment: the prompt is rendered as a small italic
             pull-quote indented behind a 2px accent rule, with the response

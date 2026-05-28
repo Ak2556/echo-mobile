@@ -45,6 +45,8 @@ export type SupabaseEchoRow = {
   /** Co-echo: collaborative post with a second author. */
   co_author_id?: string | null;
   co_author_response?: string | null;
+  /** Explicit post type. Defaults 'text'; 'musing' etc. stored verbatim. */
+  post_type?: string | null;
 };
 
 /** Build a ReactionCounts object from a raw echo row's reaction columns. */
@@ -103,7 +105,11 @@ export function mapEchoRowToFeedItem(
     authorMood: moodActive ? (author?.mood ?? null) : null,
     hashtags: extractHashtags(`${echo.prompt} ${echo.response}`),
     createdAt: echo.created_at,
-    postType: videoUri ? 'video' : mediaUris ? 'photo' : 'text',
+    // Prefer the stored post_type (so 'musing' survives the round-trip);
+    // fall back to inference from media for legacy rows written before the
+    // post_type column existed.
+    postType: (echo.post_type as FeedItem['postType'])
+      ?? (videoUri ? 'video' : mediaUris ? 'photo' : 'text'),
     mediaUris: videoUri ? undefined : mediaUris,
     videoUri,
     quotedEchoId: echo.quoted_echo_id ?? undefined,
