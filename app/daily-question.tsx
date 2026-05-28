@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInUp, SlideInDown } from 'react-native-reanimated';
@@ -64,10 +64,9 @@ function DailyQuestionScreenInner() {
     })();
   }, []);
 
-  // Whenever the viewer has answered, load (and refresh) the answer feed.
-  useEffect(() => {
-    if (!question || !myAnswer) return;
-    void (async () => {
+  const loadAnswers = useMemo(
+    () => async () => {
+      if (!question || !myAnswer) return;
       setAnswersLoading(true);
       try {
         const rows = await fetchDailyAnswers(question.id);
@@ -77,8 +76,12 @@ function DailyQuestionScreenInner() {
       } finally {
         setAnswersLoading(false);
       }
-    })();
-  }, [question?.id, myAnswer]);
+    },
+    [question?.id, myAnswer],
+  );
+
+  // Whenever the viewer has answered, load (and refresh) the answer feed.
+  useEffect(() => { void loadAnswers(); }, [loadAnswers]);
 
   const canSubmit = useMemo(
     () => draft.trim().length > 0 && draft.trim().length <= MAX_ANSWER_LENGTH && !submitting,
@@ -128,7 +131,15 @@ function DailyQuestionScreenInner() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            myAnswer ? (
+              <RefreshControl refreshing={answersLoading} onRefresh={() => void loadAnswers()} tintColor={colors.accent} />
+            ) : undefined
+          }
+        >
           {/* Prompt card — large, hero-feeling */}
           <Animated.View
             entering={FadeInUp.delay(50).duration(220)}
@@ -235,6 +246,20 @@ function DailyQuestionScreenInner() {
               </View>
               {answersLoading ? (
                 <ActivityIndicator color={colors.accent} style={{ marginTop: 24 }} />
+              ) : answers.length === 0 ? (
+                <View style={{
+                  backgroundColor: colors.surface,
+                  borderRadius: radius.lg,
+                  padding: 20,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: 'center',
+                }}>
+                  <Sparkle color={colors.accent} size={24} weight="fill" />
+                  <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
+                    You&apos;re the first to answer today. Check back later to see how everyone else thinks about it.
+                  </Text>
+                </View>
               ) : (
                 answers.map((a) => (
                   <AnswerCard key={a.id} a={a} />
