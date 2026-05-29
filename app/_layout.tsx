@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import type { ErrorBoundaryProps } from 'expo-router';
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../lib/analytics';
@@ -99,6 +99,8 @@ function RootLayout() {
 
   // Push notification taps.
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     let cancelled = false;
     const route = (data: Record<string, unknown> | null | undefined) => {
       if (!data) return;

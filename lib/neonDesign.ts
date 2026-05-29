@@ -62,9 +62,9 @@ export function neonGlow(color: string, intensity: 'soft' | 'med' | 'hard' = 'me
 // Oversized expressive type for hero moments. Pair with `numberOfLines={2}`
 // so long titles wrap instead of truncating awkwardly.
 export const TYPE = {
-  hero:    { fontSize: 44, lineHeight: 48, fontWeight: '900' as const, letterSpacing: -1.2 },
-  display: { fontSize: 34, lineHeight: 38, fontWeight: '900' as const, letterSpacing: -0.9 },
-  title:   { fontSize: 26, lineHeight: 30, fontWeight: '800' as const, letterSpacing: -0.4 },
+  hero:    { fontSize: 44, lineHeight: 48, fontWeight: '900' as const, letterSpacing: 0 },
+  display: { fontSize: 34, lineHeight: 38, fontWeight: '900' as const, letterSpacing: 0 },
+  title:   { fontSize: 26, lineHeight: 30, fontWeight: '800' as const, letterSpacing: 0 },
   // Eyebrow — small all-caps label above hero text. Use sparingly.
   eyebrow: { fontSize: 11, fontWeight: '800' as const, letterSpacing: 2.5, textTransform: 'uppercase' as const },
   // Numeric stats — Tabular figures so columns line up.

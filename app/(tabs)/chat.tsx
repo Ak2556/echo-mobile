@@ -13,7 +13,6 @@ import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
-import { ActionSheet } from '../../components/common/ActionSheet';
 import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
 import { streamEchoAI, EchoAIModel, isRateLimitError } from '../../lib/api';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
@@ -33,8 +32,6 @@ const MODEL_LABELS: Record<EchoAIModel, string> = {
   'gemini-2.5-pro': 'Pro',
   'gemini-2.0-flash-lite': 'Lite',
 };
-
-const MODEL_OPTIONS: EchoAIModel[] = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash-lite'];
 
 type ChatItem =
   | { kind: 'text'; message: Message; isStreaming?: boolean }
@@ -63,7 +60,6 @@ export default function ChatScreen() {
   const hasSeenChatTabHint = useAppStore(s => s.hasSeenChatTabHint);
   const setHasSeenChatTabHint = useAppStore(s => s.setHasSeenChatTabHint);
   const hasSeenChatEmptyHint = useAppStore(s => s.hasSeenChatEmptyHint);
-  const setHasSeenChatEmptyHint = useAppStore(s => s.setHasSeenChatEmptyHint);
   const insets = useSafeAreaInsets();
   const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
@@ -580,7 +576,7 @@ export default function ChatScreen() {
                 }}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: -0.2 }}>
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: 0 }}>
                     Publish this conversation
                   </Text>
                   <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12, marginTop: 2 }}>

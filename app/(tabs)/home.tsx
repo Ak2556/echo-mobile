@@ -13,7 +13,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Bell, Question, Sparkle, TrendUp, PencilSimpleLine, X } from 'phosphor-react-native';
+import { Bell, Sparkle, TrendUp, PencilSimpleLine, X } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { HeroCard, HERO_CARD_WIDTH } from '../../components/social/HeroCard';
@@ -47,15 +47,15 @@ function SectionHeader({ label, sub, icon }: { label: string; sub?: string; icon
     <View
       style={{
         flexDirection: 'row',
-        alignItems: 'baseline',
+        alignItems: 'center',
         paddingHorizontal: 16,
-        marginTop: 32,
-        marginBottom: 14,
+        marginTop: 28,
+        marginBottom: 12,
         gap: 8,
       }}
     >
       {icon}
-      <Text style={[font.display, { color: colors.text, fontSize: 20, letterSpacing: -0.3 }]}>{label}</Text>
+      <Text style={[font.bodySemibold, { color: colors.text, fontSize: 18, letterSpacing: 0 }]}>{label}</Text>
       {sub && (
         <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 13 }]}>
           {sub}
@@ -78,7 +78,7 @@ export default function DiscoverScreen() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteFeed();
-  const feed = feedData?.pages.flat() ?? [];
+  const feed = useMemo(() => feedData?.pages.flat() ?? [], [feedData]);
   const realtime = useRealtimeNewEchoes();
   const { colors, animation, font } = useTheme();
   const performance = usePerformanceProfile('hot');
@@ -168,13 +168,23 @@ export default function DiscoverScreen() {
 
   const heroItems = scopedAll.slice(0, HERO_COUNT);
   const popularItems = scopedAll.slice(HERO_COUNT);
-  const starterItems = grouped.conversationStarters.slice(0, 3);
 
   const ListHeader = (
     <View>
-      {/* For You (semantic) / Trending / Following toggle — neon when active */}
-      {/* a11y: add accessibilityRole="tab" + accessibilityState={{ selected: active }} to each Pressable */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 8 }}>
+      {/* For You (semantic) / Trending / Following toggle */}
+      <View
+        style={{
+          flexDirection: 'row',
+          marginHorizontal: 16,
+          marginTop: 8,
+          marginBottom: 18,
+          padding: 4,
+          borderRadius: 999,
+          backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+        }}
+      >
         {(['semantic', 'forYou', 'following'] as const).map(scope => {
           const active = feedScope === scope;
           const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : 'Following';
@@ -186,19 +196,20 @@ export default function DiscoverScreen() {
               accessibilityLabel={label}
               accessibilityState={{ selected: active }}
               style={{
-                paddingHorizontal: 14,
-                paddingVertical: 7,
+                flex: 1,
+                minWidth: 0,
+                alignItems: 'center',
+                paddingHorizontal: 10,
+                paddingVertical: 8,
                 borderRadius: 999,
                 backgroundColor: active ? colors.accent : 'transparent',
-                borderWidth: active ? 0 : StyleSheet.hairlineWidth,
-                borderColor: colors.border,
               }}
             >
               <Text style={{
                 color: active ? '#fff' : colors.textSecondary,
                 fontSize: 13,
                 fontWeight: '700',
-                letterSpacing: 0.2,
+                letterSpacing: 0,
               }}>
                 {label}
               </Text>
@@ -308,7 +319,7 @@ export default function DiscoverScreen() {
           You hero rail (for everyone). Triple coverage was clutter. The
           grouped.conversationStarters data is still produced if we want
           to re-introduce a single inline card later. */}
-      <SectionHeader label="Trending Insights" sub="High energy" icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
+      <SectionHeader label="Top conversations" sub="Live now" icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
     </View>
   );
 
@@ -457,10 +468,10 @@ export default function DiscoverScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'baseline', flex: 1 }}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 24 }]}>
-              echo
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 24, letterSpacing: 0 }]}>
+              Echo
             </Text>
-            <Text style={[font.displayBlack, { color: colors.accent, fontSize: 24, marginLeft: 1 }]}>
+            <Text style={[font.displayBlack, { color: colors.accent, fontSize: 24, marginLeft: 1, letterSpacing: 0 }]}>
               .
             </Text>
           </View>
