@@ -121,7 +121,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     compactFeed: b('compactFeed', true), setCompactFeed: s(set, 'compactFeed'),
     dismissedFirstEchoCoach: b('dismissedFirstEchoCoach', false), setDismissedFirstEchoCoach: s(set, 'dismissedFirstEchoCoach'),
     reduceAnimations: b('reduceAnimations', false), setReduceAnimations: s(set, 'reduceAnimations'),
-    accentColor: persistGet('accentColor', '#5B5BF8'),
+    accentColor: persistGet('accentColor', '#4F8CFF'),
     setAccentColor: (v) => { persistSet('accentColor', v); set({ accentColor: v }); },
     showAvatars: b('showAvatars', true), setShowAvatars: s(set, 'showAvatars'),
     showPreviewCards: b('showPreviewCards', true), setShowPreviewCards: s(set, 'showPreviewCards'),

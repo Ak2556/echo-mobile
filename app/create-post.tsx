@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
-  Platform, TouchableOpacity, Pressable, Alert, Modal,
+  Platform, TouchableOpacity, Pressable, Alert, Modal, StyleSheet,
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -15,9 +15,9 @@ import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-rean
 import {
   ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
   VideoCamera, ChartBar, X, Plus, Clock, Camera, Images, CheckCircle, Question,
+  Users, MagnifyingGlass,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
-import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { FeedItem, PollOption } from '../types';
@@ -29,7 +29,6 @@ import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
-import { Users, MagnifyingGlass } from 'phosphor-react-native';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll' | 'musing';
 
@@ -423,8 +422,18 @@ export default function CreatePostScreen() {
   };
 
   const s = {
-    surface: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border },
-    label: { color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' as const, textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8, marginLeft: 4 },
+    surface: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOpacity: colors.isDark ? 0.12 : 0.04,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 1,
+    },
+    label: { color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700' as const, textTransform: 'uppercase' as const, letterSpacing: 0, marginBottom: 8, marginLeft: 4 },
   };
 
   return (
@@ -454,7 +463,7 @@ export default function CreatePostScreen() {
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(16,185,129,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
               <CheckCircle color="#10B981" size={38} weight="fill" />
             </View>
-            <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5, marginBottom: 10, textAlign: 'center' }}>
+            <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: 0, marginBottom: 10, textAlign: 'center' }}>
               Echo sent.
             </Text>
             <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 15, textAlign: 'center', lineHeight: 22 }} numberOfLines={2}>
@@ -523,17 +532,17 @@ export default function CreatePostScreen() {
       </Modal>
 
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
         <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <View style={{ alignItems: 'center' }}>
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>New Echo</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>Distil your take.</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>Distill your take.</Text>
         </View>
         <AnimatedPressable
           onPress={() => { void handlePublish(); }} disabled={!canPublish} scaleValue={0.92} haptic="medium"
-          style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
+          style={{ minWidth: 82, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
         >
           <PaperPlaneTilt color="#fff" size={14} />
           <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{publishing ? 'Posting…' : 'Post'}</Text>
@@ -541,17 +550,22 @@ export default function CreatePostScreen() {
       </View>
 
       {/* Type selector */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0, maxHeight: 56 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
+      >
         {POST_TYPES.map(({ key, label, Icon }) => {
           const active = postType === key;
           return (
-            <Pressable key={key} onPress={() => setPostType(key)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, gap: 4, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: 1, borderColor: active ? colors.accent : colors.border }}>
+            <Pressable key={key} onPress={() => setPostType(key)} style={{ minWidth: 88, height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, gap: 5, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border }}>
               <Icon color={active ? '#fff' : colors.textMuted} size={13} />
               <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: fontSizes.caption }}>{label}</Text>
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -656,7 +670,7 @@ export default function CreatePostScreen() {
                   onSelectionChange={e => setResponseCaret(e.nativeEvent.selection.start)}
                   onFocus={() => setResponseFocused(true)}
                   onBlur={() => setResponseFocused(false)}
-                  placeholder="The response, your take, or what made this worth sharing…"
+                  placeholder="Share the take people should remember."
                   placeholderTextColor={colors.textMuted}
                   maxLength={1000}
                   style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }}

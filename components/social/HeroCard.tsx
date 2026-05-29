@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, Dimensions, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Heart, Eye, PlayCircle, Camera } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
@@ -13,8 +12,8 @@ import type { SharedValue } from 'react-native-reanimated';
 import { usePerformanceProfile } from '../../lib/performance';
 
 const { width: SW } = Dimensions.get('window');
-export const HERO_CARD_WIDTH = SW * 0.72;
-export const HERO_CARD_HEIGHT = HERO_CARD_WIDTH * 1.44;
+export const HERO_CARD_WIDTH = Math.min(SW * 0.7, 300);
+export const HERO_CARD_HEIGHT = HERO_CARD_WIDTH * 1.14;
 
 interface HeroCardProps {
   item: FeedItem;
@@ -24,7 +23,7 @@ interface HeroCardProps {
 }
 
 export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProps) {
-  const { colors, reduceAnimations } = useTheme();
+  const { colors, font, reduceAnimations } = useTheme();
   const performance = usePerformanceProfile('hero');
 
   const hasImage = (item.mediaUris?.length ?? 0) > 0;
@@ -39,8 +38,6 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
     (item.viewCount ?? 0) >= 1000
       ? `${Math.floor((item.viewCount ?? 0) / 1000)}k`
       : String(item.viewCount ?? 0);
-
-  const useBlur = performance.useBlur;
 
   // Parallax: image layer moves at 0.35x inverse of scroll
   const CARD_STEP = HERO_CARD_WIDTH + 12;
@@ -65,8 +62,19 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       style={{
         width: HERO_CARD_WIDTH,
         height: HERO_CARD_HEIGHT,
-        borderRadius: 22,
+        borderRadius: 18,
         overflow: 'hidden',
+        backgroundColor: colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.glassBorder,
+        ...(Platform.OS === 'ios'
+          ? {
+              shadowColor: '#000',
+              shadowOpacity: colors.isDark ? 0.28 : 0.12,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 10 },
+            }
+          : { elevation: 4 }),
       }}
     >
       {/* Background with parallax */}
@@ -86,7 +94,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
           />
         ) : (
           <LinearGradient
-            colors={[item.avatarColor ?? colors.accent, '#0a0a0a']}
+            colors={[item.avatarColor ?? colors.accent, colors.surfaceHover, colors.surface]}
             start={{ x: 0.15, y: 0 }}
             end={{ x: 0.85, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -96,19 +104,19 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
 
       {/* Top scrim */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.62)', 'transparent']}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 110 }}
+        colors={['rgba(0,0,0,0.54)', 'rgba(0,0,0,0)']}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 118 }}
         pointerEvents="none"
       />
 
       {/* Bottom scrim */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.96)']}
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 210 }}
+        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.82)', 'rgba(0,0,0,0.95)']}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 190 }}
         pointerEvents="none"
       />
 
-      {/* Author row — glass pill */}
+      {/* Author row */}
       <View
         style={{
           position: 'absolute',
@@ -138,60 +146,31 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
         </View>
 
         <View style={{ flex: 1 }}>
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }} numberOfLines={1}>
+          <Text style={[font.bodySemibold, { color: '#fff', fontSize: 12 }]} numberOfLines={1}>
             {item.displayName || item.username}
           </Text>
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10 }}>
-            {(item.likes ?? 0).toLocaleString()} likes
+            @{item.username}
           </Text>
         </View>
 
-        {/* Frosted glass Follow button */}
         <View
           style={{
-            borderRadius: 20,
-            overflow: 'hidden',
+            borderRadius: 999,
+            paddingHorizontal: 10,
+            paddingVertical: 5,
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: 'rgba(255,255,255,0.35)',
+            borderColor: 'rgba(255,255,255,0.26)',
+            backgroundColor: 'rgba(255,255,255,0.12)',
           }}
         >
-          {useBlur ? (
-            <>
-              <BlurView intensity={performance.maxBlurIntensity} tint="dark" style={StyleSheet.absoluteFill} />
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
-            </>
-          ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.2)' }]} />
-          )}
-          <View style={{ paddingHorizontal: 13, paddingVertical: 5 }}>
-            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>Follow</Text>
-          </View>
+          <Text style={{ color: 'rgba(255,255,255,0.86)', fontSize: 11, fontWeight: '700' }}>Featured</Text>
         </View>
       </View>
 
-      {/* Bottom content — frosted glass panel */}
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden' }}>
-        {useBlur && (
-          <BlurView intensity={performance.maxBlurIntensity} tint="dark" style={StyleSheet.absoluteFill} />
-        )}
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: useBlur ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.65)' },
-          ]}
-        />
-        {/* Top glass edge */}
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: StyleSheet.hairlineWidth,
-            backgroundColor: 'rgba(255,255,255,0.18)',
-          }}
-        />
-        <View style={{ padding: 16 }}>
+      {/* Bottom content */}
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+        <View style={{ padding: 16, paddingTop: 34 }}>
           {/* Meta row — post-type chip + counts. Counts render with icons
               instead of bare numbers; both hide when 0 so the row collapses
               to just the type chip on fresh posts. */}
@@ -201,10 +180,12 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 4,
-                backgroundColor: colors.accent,
+                backgroundColor: 'rgba(255,255,255,0.13)',
                 borderRadius: 999,
                 paddingHorizontal: 8,
                 paddingVertical: 3,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: 'rgba(255,255,255,0.20)',
               }}
             >
               {hasVideo
@@ -212,7 +193,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
                 : hasImage
                   ? <Camera color="#fff" size={11} weight="fill" />
                   : null}
-              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0 }}>
                 {hasVideo ? 'VIDEO' : hasImage ? 'PHOTO' : 'ECHO'}
               </Text>
             </View>
@@ -235,20 +216,17 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
             )}
           </View>
 
-          {/* Prompt — kept uppercase but capped to display the user's text
-              naturally if it's already title-cased. */}
+          {/* Prompt */}
           <Text
-            style={{
+            style={[font.display, {
               color: '#fff',
-              fontSize: 22,
-              fontWeight: '900',
-              textTransform: 'uppercase',
+              fontSize: 21,
               lineHeight: 27,
-              letterSpacing: -0.4,
-            }}
+              letterSpacing: 0,
+            }]}
             numberOfLines={2}
           >
-            {item.prompt}
+            {item.editorialTitle ?? item.prompt}
           </Text>
           {/* Bottom padding */}
           <View style={{ height: 6 }} />
