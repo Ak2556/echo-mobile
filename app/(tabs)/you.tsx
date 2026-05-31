@@ -22,6 +22,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { PostsGrid } from '../../components/profile/PostsGrid';
 import { FeedCard } from '../../components/social/FeedCard';
+import { ThinkingFingerprintCard } from '../../components/social/ThinkingFingerprintCard';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { signOut } from '../../lib/auth';
@@ -306,6 +307,8 @@ export default function ProfileScreen() {
               /settings now (single source of truth for app prefs, reached
               via the gear icon in the screen header). */}
         </View>
+
+        {userId ? <ThinkingFingerprintCard userId={userId} isSelf /> : null}
 
         <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} colors={colors} radius={radius} font={font} />
 

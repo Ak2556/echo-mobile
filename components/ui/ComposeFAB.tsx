@@ -3,7 +3,7 @@ import { View, Pressable, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { Plus } from 'phosphor-react-native';
+import { PencilSimpleLine } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
 
@@ -58,15 +58,17 @@ export function ComposeFAB() {
     >
       <View
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: 28,
+          width: 54,
+          height: 54,
+          borderRadius: 27,
           backgroundColor: colors.accent,
           shadowColor: colors.accent,
-          shadowOpacity: 0.55,
-          shadowRadius: 18,
-          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: colors.isDark ? 0.28 : 0.18,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 8 },
           elevation: 6,
+          borderWidth: 1,
+          borderColor: colors.isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.72)',
         }}
       >
         <Pressable
@@ -81,10 +83,10 @@ export function ComposeFAB() {
             height: '100%',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 28,
+            borderRadius: 27,
           }}
         >
-          <Plus color="#fff" size={26} weight="bold" />
+          <PencilSimpleLine color="#fff" size={24} weight="bold" />
         </Pressable>
       </View>
     </Animated.View>

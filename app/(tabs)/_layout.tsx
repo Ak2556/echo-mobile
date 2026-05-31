@@ -63,7 +63,7 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
 }
 
 function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const unreadNotifications = useAppStore(s => s.unreadNotificationCount());
@@ -94,12 +94,12 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           { key: 'readall', label: 'Mark all as read', icon: <Checks color={colors.accent} size={18} />, onPress: () => { markAllNotificationsRead(); showToast('All caught up', '✓'); } },
           { key: 'mute',    label: notificationsEnabled ? 'Mute push notifications' : 'Unmute push notifications', icon: notificationsEnabled ? <BellSlash color={colors.accent} size={18} /> : <BellIcon color={colors.accent} size={18} />, onPress: () => setNotificationsEnabled(!notificationsEnabled) },
         ];
-      case 'discover':
+      case 'explore':
         return [
           { key: 'compose', label: 'New Echo',           icon: <PencilSimple color={colors.accent} size={18} />, onPress: () => router.push('/create-post') },
           { key: 'search',  label: 'Search',             icon: <MagnifyingGlass color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/explore') },
         ];
-      case 'profile':
+      case 'you':
         return [
           { key: 'edit',      label: 'Edit profile', icon: <PencilSimple color={colors.accent} size={18} />, onPress: () => router.push('/edit-profile') },
           { key: 'bookmarks', label: 'Bookmarks',    icon: <EyeSlash     color={colors.accent} size={18} />, onPress: () => router.push('/bookmarks') },
@@ -117,14 +117,14 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       style={{
         position: 'absolute',
         bottom,
-        left: 16,
-        right: 16,
-        height: 64,
+        left: 18,
+        right: 18,
+        height: 62,
       }}
       pointerEvents="box-none"
     >
-      <GlassPanel borderRadius={32} intensity={60} style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
+      <GlassPanel borderRadius={31} intensity={34} elevated style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5 }}>
           {visibleRoutes.map(route => {
             const isFocused = state.routes[state.index].name === route.name;
             const IconComp = TAB_ICONS[route.name];
@@ -162,11 +162,12 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '100%',
-                  gap: 2,
+                  gap: 3,
                   backgroundColor: isFocused ? colors.accentMuted : 'transparent',
                   borderRadius: 18,
-                  marginHorizontal: 4,
-                  marginVertical: 14,
+                  marginHorizontal: 2,
+                  marginVertical: 11,
+                  minWidth: 0,
                 }}
               >
                 {badgeCount > 0 ? (
@@ -178,11 +179,12 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 )}
                 <Text
                   style={{
+                    ...font.bodySemibold,
                     color: isFocused ? colors.accent : colors.textMuted,
                     fontSize: 10,
                     fontWeight: isFocused ? '800' : '600',
                     marginTop: 1,
-                    letterSpacing: 0.1,
+                    letterSpacing: 0,
                   }}
                   numberOfLines={1}
                 >

@@ -3,7 +3,9 @@ import { View, Text, ScrollView, Dimensions, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { Compass, Hash, MagnifyingGlass, Sparkle, TrendUp, UserCirclePlus } from 'phosphor-react-native';
+import { Compass, Hash, MagnifyingGlass, Sparkle, TrendUp, UserCirclePlus, Brain, CaretRight } from 'phosphor-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GRADIENTS, neonGlow, NEON } from '../../lib/neonDesign';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
@@ -182,6 +184,30 @@ export default function SearchScreen() {
               icon={<Compass color={colors.accent} size={20} />}
             />
           </View>
+
+          {remote && (
+            <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
+              <AnimatedPressable onPress={() => router.push('/thinking-partners')}>
+                <LinearGradient
+                  colors={GRADIENTS.forYou}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[{ borderRadius: radius.card, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14 }, neonGlow(NEON.violet, 'med')]}
+                >
+                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Brain color="#000" size={24} weight="fill" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#000', fontWeight: '900', fontSize: 16, letterSpacing: 0.2 }}>Find your thinking partners</Text>
+                    <Text style={{ color: 'rgba(0,0,0,0.72)', fontSize: 13, marginTop: 3, lineHeight: 18, fontWeight: '600' }}>
+                      Discover minds that think like you — or challenge how you think.
+                    </Text>
+                  </View>
+                  <CaretRight color="#000" size={20} weight="bold" />
+                </LinearGradient>
+              </AnimatedPressable>
+            </View>
+          )}
 
           <SectionHeader colors={colors} icon={<Hash color={colors.accent} size={16} />} label="Topics gaining momentum" />
           <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>

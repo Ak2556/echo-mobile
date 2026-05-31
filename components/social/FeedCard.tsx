@@ -19,16 +19,14 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserMinus, ChartBar, Question, GitBranch, GitFork, PushPin } from 'phosphor-react-native';
-import { NEON } from '../../lib/neonDesign';
-import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserMinus, ChartBar, Question, GitBranch, PushPin } from 'phosphor-react-native';
+import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
-import { MOTION } from '../../lib/motion';
 import { usePerformanceProfile } from '../../lib/performance';
 
 interface FeedCardProps {
@@ -281,7 +279,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   );
 
   const ActionsRow = (
-    <View style={{ paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+    <View style={{ paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
       {/* Knowledge-reactions pile (rendered above the heart/comment row). */}
       <View style={{ marginBottom: 8 }}>
         <ReactionBar
@@ -364,12 +362,17 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           performanceMode="hot"
           style={{
             marginHorizontal: 16,
-            marginVertical: 10,
+            marginVertical: 8,
             borderRadius: heroRadius,
             overflow: 'hidden',
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassBorder,
+            borderColor: colors.border,
             backgroundColor: colors.surface,
+            shadowColor: '#000',
+            shadowOpacity: colors.isDark ? 0.24 : 0.09,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: 8 },
+            elevation: 3,
           }}
         >
           {/* Pinned chip — only on profile-pin context */}
@@ -436,7 +439,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                 performanceMode="hot"
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: -0.1 }]}>{item.displayName || item.username}</Text>
+                  <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: 0 }]}>{item.displayName || item.username}</Text>
                   {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
                 </View>
                 {/* Mood chip — only renders when the author has an active mood. */}
@@ -498,23 +501,8 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
 
   // ── Standard layout (text / poll / compact) ──
   return (
-    <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 16, marginVertical: 10 }}>
+    <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 16, marginVertical: 8 }}>
       <GlassPanel variant="light" borderRadius={radius.card} elevated performanceMode="hot">
-        {/* Left accent rail — the Echo identity stripe */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 3,
-            backgroundColor: colors.accent + '55',
-            borderTopLeftRadius: radius.card,
-            borderBottomLeftRadius: radius.card,
-            zIndex: 1,
-          }}
-        />
       <AnimatedPressable
         onPress={handleMainPress}
         depth="soft"
@@ -538,11 +526,11 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         {item.parentEchoId && (
           <Pressable
             onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/thread/[id]', params: { id: String(item.parentEchoId) } }); }}
-            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 2, gap: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: 'rgba(34,245,255,0.08)', borderWidth: 1, borderColor: 'rgba(34,245,255,0.28)' }}
+            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 2, gap: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: colors.accentMuted, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '36' }}
           >
-            <GitBranch color={NEON.cyan} size={12} weight="fill" />
-            <Text style={{ color: NEON.cyan, fontSize: 11, fontWeight: '800', letterSpacing: 0.3 }}>
-              REMIX{item.parentAuthorUsername ? ` · @${item.parentAuthorUsername}` : ''}
+            <GitBranch color={colors.accent} size={12} weight="fill" />
+            <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 0 }}>
+              Remix{item.parentAuthorUsername ? ` · @${item.parentAuthorUsername}` : ''}
             </Text>
           </Pressable>
         )}
@@ -584,7 +572,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             performanceMode="hot"
           >
             <View className="flex-row items-center gap-1">
-              <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: -0.1 }]}>{item.displayName || item.username}</Text>
+              <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: 0 }]}>{item.displayName || item.username}</Text>
               {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
@@ -600,6 +588,34 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             <DotsThree color={colors.textMuted} size={22} weight="bold" />
           </AnimatedPressable>
         </View>
+
+        {/* ── MUSING post ──
+            "Thinking out loud" — a single in-progress thought, not a tidy
+            two-part take. Accent-tinted container + 🤔 chip + italic body. */}
+        {item.postType === 'musing' && !!item.prompt && (
+          <View style={{
+            backgroundColor: colors.accentMuted,
+            borderRadius: radius.md,
+            borderLeftWidth: 3,
+            borderLeftColor: colors.accent,
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            marginBottom: compactFeed ? 8 : 12,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+              <Question color={colors.accent} size={12} weight="bold" />
+              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                MUSING
+              </Text>
+            </View>
+            <Text
+              style={[font.quote, { color: colors.text, fontSize: textSize, lineHeight: textSize * 1.5 }]}
+              numberOfLines={compactFeed ? 4 : 10}
+            >
+              {item.prompt}
+            </Text>
+          </View>
+        )}
 
         {/* ── TEXT post ──
             Signature treatment: the prompt is rendered as a small italic
@@ -628,7 +644,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                 text={item.authorNote ?? item.response}
                 style={[
                   font.bodyMedium,
-                  { fontSize: textSize + 1, color: colors.text, lineHeight: (textSize + 1) * 1.5, marginBottom: compactFeed ? 8 : 12, letterSpacing: -0.1 },
+                  { fontSize: textSize + 1, color: colors.text, lineHeight: (textSize + 1) * 1.5, marginBottom: compactFeed ? 8 : 12, letterSpacing: 0 },
                 ]}
                 numberOfLines={compactFeed ? 3 : 5}
               />

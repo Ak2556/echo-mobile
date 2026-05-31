@@ -13,10 +13,10 @@ type GlassVariant = 'light' | 'medium' | 'heavy' | 'ultra';
 // premium feel on hero surfaces (HeroCard, tab bar) while dropping the
 // per-pixel cost on the dozens of card-level GlassPanels by ~60%.
 const VARIANT_INTENSITY: Record<GlassVariant, number> = {
-  light:  20,
-  medium: 32,
-  heavy:  48,
-  ultra:  60,
+  light:  0,
+  medium: 18,
+  heavy:  30,
+  ultra:  42,
 };
 
 interface GlassPanelProps {
@@ -68,9 +68,10 @@ export function GlassPanel({
     borderColor: border,
     ...(elevated && {
       shadowColor: '#000',
-      shadowOpacity: colors.isDark ? 0.45 : 0.18,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: colors.isDark ? 0.28 : 0.10,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 4,
     }),
     ...style,
   };

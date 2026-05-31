@@ -97,7 +97,7 @@ export interface FeedItem {
     completeness: boolean;
   };
   // Rich media
-  postType?: 'text' | 'photo' | 'video' | 'poll';
+  postType?: 'text' | 'photo' | 'video' | 'poll' | 'musing';
   mediaUris?: string[];   // up to 4 photo URIs (local device or remote Supabase Storage)
   videoUri?: string;      // single video URI (local or remote)
   videoQualities?: { label: string; uri: string }[]; // quality tiers for picker

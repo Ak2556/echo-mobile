@@ -103,6 +103,29 @@ export function applyEditorialAction(action: string, text: string, prompt: strin
   }
 }
 
+/**
+ * Required fields for publishing from the Share screen, in display order.
+ * Returns the human-readable labels of whatever is still empty so the UI can
+ * tell the user exactly what's missing instead of silently no-op'ing on Post.
+ */
+export function missingPublishFields(input: {
+  prompt: string;
+  title: string;
+  response: string;
+}): string[] {
+  const missing: string[] = [];
+  if (!input.prompt.trim()) missing.push('the original prompt');
+  if (!input.title.trim()) missing.push('a title');
+  if (!input.response.trim()) missing.push('the part worth sharing');
+  return missing;
+}
+
+/** Joins missing-field labels into a natural-language list ("a, b and c"). */
+export function formatMissingFields(missing: string[]): string {
+  if (missing.length <= 1) return missing[0] ?? '';
+  return `${missing.slice(0, -1).join(', ')} and ${missing[missing.length - 1]}`;
+}
+
 export function evaluatePublishChecklist(input: {
   title: string;
   response: string;

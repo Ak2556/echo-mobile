@@ -228,7 +228,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 // ─── Profile select helper ────────────────────────────────────────────────────
 
 const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id';
-const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response';
+const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response, post_type';
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -353,6 +353,9 @@ export async function fetchRemoteFeed(
   let query = supabase
     .from('public_echoes')
     .select(ECHO_SELECT)
+    // moderation gate: mirror get_ranked_feed / get_semantic_feed so the
+    // chronological fallback never surfaces unmoderated content.
+    .eq('check_content', true)
     .order('created_at', { ascending: false })
     .limit(options.limit ?? 50);
 
@@ -424,6 +427,7 @@ export async function insertRemoteEcho(params: {
   conversationSnapshot?: { role: 'user' | 'assistant'; content: string }[];
   coAuthorId?: string;
   coAuthorResponse?: string;
+  postType?: string;
 }): Promise<SupabaseEchoRow> {
   const title =
     params.title?.trim() ||
@@ -435,6 +439,7 @@ export async function insertRemoteEcho(params: {
       title,
       prompt: params.prompt,
       response: params.response,
+      ...(params.postType && params.postType !== 'text' ? { post_type: params.postType } : {}),
       ...(params.mediaUrls?.length ? { media_urls: params.mediaUrls } : {}),
       ...(params.quotedEchoId ? { quoted_echo_id: params.quotedEchoId } : {}),
       ...(params.parentEchoId ? { parent_echo_id: params.parentEchoId } : {}),
@@ -1770,15 +1775,34 @@ export async function submitDailyAnswer(questionId: string, answer: string): Pro
   if (!uid) throw new Error('Not signed in');
   const trimmed = answer.trim();
   if (!trimmed) throw new Error('Answer cannot be empty');
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('daily_answers')
     .upsert(
-      { question_id: questionId, user_id: uid, answer: trimmed },
+      { question_id: questionId, user_id: uid, answer: trimmed, embedding: null },
       { onConflict: 'question_id,user_id' },
-    );
+    )
+    .select('id')
+    .single();
   if (error) throw error;
   // Bump the daily-answer quest. Best-effort.
   bumpQuestProgress('daily_answer').catch(() => undefined);
+  // Embed the answer so it can be ranked by divergence. Fire-and-forget; the
+  // embedding is nulled above on edit so a stale vector never lingers.
+  const answerId = (data as { id: string } | null)?.id;
+  if (answerId) triggerEmbedDailyAnswer(answerId).catch(() => undefined);
+}
+
+/**
+ * Asks the embed-daily-answer edge function to compute and persist the
+ * embedding for a daily answer. Best-effort — divergence ranking simply
+ * omits answers that haven't been embedded yet.
+ */
+export async function triggerEmbedDailyAnswer(answerId: string): Promise<void> {
+  try {
+    await supabase.functions.invoke('embed-daily-answer', { body: { answer_id: answerId } });
+  } catch {
+    // Best-effort; a later submit or backfill can reconcile.
+  }
 }
 
 /** Fetch all answers for a given daily question, with author profile snippets.
@@ -1826,6 +1850,60 @@ export async function fetchDailyAnswers(questionId: string, limit = 100): Promis
       },
     };
   });
+}
+
+/** A daily answer plus how far it diverges from the day's consensus take. */
+export type DivergentDailyAnswer = DailyAnswerWithAuthor & {
+  /** Cosine distance from the consensus centroid, normalised to a 0–100 "divergence" readout. */
+  divergence: number;
+};
+
+interface DivergentDailyAnswerRow {
+  id: string;
+  user_id: string;
+  answer: string;
+  echo_id: string | null;
+  created_at: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_color: string | null;
+  avatar_url: string | null;
+  is_verified: boolean | null;
+  divergence: number | null;
+}
+
+/**
+ * Fetch the day's answers ranked by embedding divergence — the takes that sit
+ * furthest from the consensus float to the top. Excludes the viewer's own
+ * answer and anyone they block/mute. Returns [] until at least a couple of
+ * answers have been embedded by the embed-daily-answer function.
+ */
+export async function fetchDivergentDailyAnswers(questionId: string, limit = 30): Promise<DivergentDailyAnswer[]> {
+  const uid = await getSessionUserId();
+  const { data, error } = await supabase.rpc('get_divergent_daily_answers', {
+    p_question_id: questionId,
+    p_viewer_id: uid,
+    p_limit: limit,
+  });
+  if (error) throw error;
+  const rows = (data ?? []) as DivergentDailyAnswerRow[];
+  return rows.map((r) => ({
+    id: r.id,
+    question_id: questionId,
+    user_id: r.user_id,
+    answer: r.answer,
+    echo_id: r.echo_id,
+    created_at: r.created_at,
+    author: {
+      username: r.username ?? 'unknown',
+      display_name: r.display_name ?? r.username ?? 'unknown',
+      avatar_color: r.avatar_color ?? '#3B82F6',
+      avatar_url: r.avatar_url ?? null,
+      is_verified: r.is_verified ?? false,
+    },
+    // cosine distance is 0..2; map to a friendlier 0–100 readout (1.0 distance ≈ orthogonal ≈ 50).
+    divergence: Math.max(0, Math.min(100, Math.round(((r.divergence ?? 0) / 2) * 100))),
+  }));
 }
 
 // ─── User search & mentions ────────────────────────────────────────────────
@@ -2309,6 +2387,107 @@ export async function fetchSuggestedUsers(): Promise<import('../types').User[]> 
     echoCount: 0,
     createdAt: '',
   }));
+}
+
+// ── Thinking-partner matching ────────────────────────────────
+//
+// Surfaces users by how their "thinking centroid" (avg echo embedding)
+// compares to the viewer's — kindred minds ('similar') or productive friction
+// ('different'). See migration 20260529010000_thinking_partners.sql.
+
+export type ThinkingPartnerMode = 'similar' | 'different';
+
+/** A matched user plus their cosine similarity to the viewer's centroid. */
+export type ThinkingPartner = import('../types').User & { affinity: number };
+
+interface ThinkingPartnerRow {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  bio: string | null;
+  avatar_color: string | null;
+  avatar_url: string | null;
+  is_verified: boolean | null;
+  follower_count: number | null;
+  echo_count: number | null;
+  affinity: number | null;
+}
+
+export async function fetchThinkingPartners(
+  mode: ThinkingPartnerMode = 'similar',
+  limit = 12,
+): Promise<ThinkingPartner[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase.rpc('get_thinking_partners', {
+    p_user_id: uid,
+    p_limit: limit,
+    p_mode: mode,
+  });
+  if (error) throw error;
+  return ((data ?? []) as ThinkingPartnerRow[]).map(r => ({
+    id: r.id,
+    username: r.username ?? 'unknown',
+    displayName: r.display_name ?? r.username ?? 'User',
+    avatarColor: r.avatar_color ?? '#6366F1',
+    avatarUrl: r.avatar_url ?? undefined,
+    bio: r.bio ?? '',
+    isVerified: r.is_verified ?? false,
+    followerCount: r.follower_count ?? 0,
+    followingCount: 0,
+    echoCount: r.echo_count ?? 0,
+    createdAt: '',
+    affinity: r.affinity ?? 0,
+  }));
+}
+
+// ── Thinking Fingerprint ─────────────────────────────────────
+
+/** An AI-synthesised portrait of how a user thinks, derived from their echoes. */
+export interface ThinkingFingerprint {
+  archetype: string;
+  summary: string;
+  themes: string[];
+  reasoningStyle: string;
+  signatureQuestion: string;
+  /** 0–100 embedding spread: low = focused thinker, high = wide-ranging. */
+  range: number;
+  echoCount: number;
+}
+
+/**
+ * Fetch (or generate) a user's Thinking Fingerprint via the edge function.
+ * Returns null when the user doesn't yet have enough echoes (or synthesis is
+ * unavailable) — callers should treat null as "not ready yet".
+ */
+export async function fetchThinkingFingerprint(
+  userId: string,
+  force = false,
+): Promise<ThinkingFingerprint | null> {
+  const { data, error } = await supabase.functions.invoke('thinking-fingerprint', {
+    body: { user_id: userId, force },
+  });
+  if (error) return null;
+  const r = data as {
+    ready?: boolean;
+    echo_count?: number;
+    archetype?: string;
+    summary?: string;
+    themes?: string[];
+    reasoning_style?: string;
+    signature_question?: string;
+    range?: number;
+  } | null;
+  if (!r || r.ready !== true) return null;
+  return {
+    archetype: r.archetype ?? 'Original thinker',
+    summary: r.summary ?? '',
+    themes: Array.isArray(r.themes) ? r.themes : [],
+    reasoningStyle: r.reasoning_style ?? '',
+    signatureQuestion: r.signature_question ?? '',
+    range: typeof r.range === 'number' ? r.range : 0,
+    echoCount: r.echo_count ?? 0,
+  };
 }
 
 // ── Block / Mute ─────────────────────────────────────────────

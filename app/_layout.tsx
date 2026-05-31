@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import type { ErrorBoundaryProps } from 'expo-router';
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../lib/analytics';
@@ -99,6 +99,8 @@ function RootLayout() {
 
   // Push notification taps.
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     let cancelled = false;
     const route = (data: Record<string, unknown> | null | undefined) => {
       if (!data) return;
@@ -106,7 +108,8 @@ function RootLayout() {
       const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
       if (!targetId) return;
       track('notification_tapped', { kind });
-      if (kind === 'follow') router.push(`/user/${targetId}` as any);
+      if (kind === 'daily_question') router.push('/daily-question' as any);
+      else if (kind === 'follow') router.push(`/user/${targetId}` as any);
       else if (kind === 'comment' || kind === 'reaction' || kind === 'like' || kind === 'quote' || kind === 'mention' || kind === 'repost' || kind === 'bookmark') {
         router.push(`/thread/${targetId}` as any);
       } else if (kind === 'dm') {
@@ -151,6 +154,8 @@ function RootLayout() {
           <Stack.Screen name="bookmarks" options={{ presentation: 'card' }} />
           <Stack.Screen name="settings" options={{ presentation: 'card' }} />
           <Stack.Screen name="ai-memory" options={{ presentation: 'card' }} />
+          <Stack.Screen name="thinking-partners" options={{ presentation: 'card' }} />
+          <Stack.Screen name="daily-question" options={{ presentation: 'card' }} />
           <Stack.Screen name="edit-profile" options={{ presentation: 'card' }} />
           <Stack.Screen name="report" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />

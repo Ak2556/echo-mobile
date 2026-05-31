@@ -10,6 +10,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { fetchRemoteEchoById, fetchEchoConversationSnapshot } from '../../lib/supabaseEchoApi';
 import { setPendingPublishContext } from '../../lib/publishContext';
 import { GRADIENTS, NEON, TYPE, neonGlow, neonHaptic } from '../../lib/neonDesign';
+import { track } from '../../lib/analytics';
 import type { ChatMessage } from '../../types';
 
 /**
@@ -31,6 +32,9 @@ export default function RemixScreen() {
   const setMessages = useAppStore(s => s.setMessages);
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const [launching, setLaunching] = useState(false);
+  // Fork point: index of the LAST message included in the branch (inclusive).
+  // null = branch from the end (the whole conversation), the default.
+  const [forkPoint, setForkPoint] = useState<number | null>(null);
 
   const echoQuery = useQuery({
     queryKey: ['echo', id],
@@ -47,14 +51,22 @@ export default function RemixScreen() {
   const parent = echoQuery.data;
   const snapshot = snapshotQuery.data ?? [];
 
+  // How many leading messages the branch keeps. null forkPoint = keep all.
+  const branchCount = forkPoint == null ? snapshot.length : forkPoint + 1;
+  const isPartialBranch = branchCount < snapshot.length;
+
   const handleStartRemix = () => {
     if (!parent) return;
     if (hapticEnabled) void neonHaptic('remix');
     setLaunching(true);
+    // Fires the moment a remix is committed (not on screen view), so this is a
+    // true intent signal — the denominator for "remix → published echo".
+    track('remix_started', { is_partial_branch: isPartialBranch, branch_count: branchCount });
     const titleSource =
       parent.editorialTitle || (parentTitle ? String(parentTitle) : '') || parent.prompt.slice(0, 40) || 'Remix';
     const sessionId = createSession(`Remix · ${titleSource}`.slice(0, 60));
-    const seeded: ChatMessage[] = snapshot.map((m, idx) => ({
+    // Seed only up to the chosen fork point so the user branches from there.
+    const seeded: ChatMessage[] = snapshot.slice(0, branchCount).map((m, idx) => ({
       id: `seed-${idx}-${Date.now()}`,
       role: m.role,
       content: m.content,
@@ -148,33 +160,64 @@ export default function RemixScreen() {
 
             {/* Conversation preview */}
             <Text style={styles.sectionLabel}>The original conversation</Text>
+            {snapshot.length > 1 && (
+              <Text style={styles.forkHint}>
+                Tap any message to branch from that point — everything after it is
+                trimmed from your remix.
+              </Text>
+            )}
 
-            {snapshot.map((m, idx) => (
-              <Animated.View
-                key={idx}
-                entering={FadeInDown.delay(idx * 40).duration(240)}
-                style={{
-                  alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-                  maxWidth: '88%',
-                  marginBottom: 10,
-                }}
-              >
-                {m.role === 'user' ? (
-                  <LinearGradient
-                    colors={GRADIENTS.remix}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.bubbleUser}
+            {snapshot.map((m, idx) => {
+              const trimmed = idx >= branchCount;
+              const isForkEdge = isPartialBranch && idx === branchCount - 1;
+              return (
+                <React.Fragment key={idx}>
+                  <Animated.View
+                    entering={FadeInDown.delay(idx * 40).duration(240)}
+                    style={{
+                      alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+                      maxWidth: '88%',
+                      marginBottom: 10,
+                      opacity: trimmed ? 0.32 : 1,
+                    }}
                   >
-                    <Text style={styles.bubbleUserText}>{m.content}</Text>
-                  </LinearGradient>
-                ) : (
-                  <View style={styles.bubbleAi}>
-                    <Text style={styles.bubbleAiText}>{m.content}</Text>
-                  </View>
-                )}
-              </Animated.View>
-            ))}
+                    <Pressable
+                      onPress={() => {
+                        if (hapticEnabled) void neonHaptic('tap');
+                        // Tapping the current edge resets to the full conversation.
+                        setForkPoint(prev => (prev === idx ? null : idx));
+                      }}
+                    >
+                      {m.role === 'user' ? (
+                        <LinearGradient
+                          colors={GRADIENTS.remix}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.bubbleUser}
+                        >
+                          <Text style={styles.bubbleUserText}>{m.content}</Text>
+                        </LinearGradient>
+                      ) : (
+                        <View style={styles.bubbleAi}>
+                          <Text style={styles.bubbleAiText}>{m.content}</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  </Animated.View>
+
+                  {isForkEdge && (
+                    <View style={styles.forkDivider}>
+                      <View style={styles.forkLine} />
+                      <View style={styles.forkBadge}>
+                        <GitBranch color="#000" size={12} weight="fill" />
+                        <Text style={styles.forkBadgeText}>YOUR BRANCH STARTS HERE</Text>
+                      </View>
+                      <View style={styles.forkLine} />
+                    </View>
+                  )}
+                </React.Fragment>
+              );
+            })}
 
             {snapshot.length === 0 && (
               <View style={styles.emptyState}>
@@ -196,12 +239,18 @@ export default function RemixScreen() {
               >
                 <PaperPlaneRight color="#000" size={22} weight="fill" />
                 <Text style={styles.ctaText}>
-                  {launching ? 'Opening…' : 'Continue the conversation'}
+                  {launching
+                    ? 'Opening…'
+                    : isPartialBranch
+                      ? `Branch from message ${branchCount}`
+                      : 'Continue the conversation'}
                 </Text>
               </LinearGradient>
             </Pressable>
             <Text style={styles.ctaHint}>
-              Your remix will credit @{parentAuthor} as the source ✨
+              {isPartialBranch
+                ? `Keeping the first ${branchCount} of ${snapshot.length} messages · credits @${parentAuthor} ✨`
+                : `Your remix will credit @${parentAuthor} as the source ✨`}
             </Text>
           </View>
         </>
@@ -286,6 +335,39 @@ const styles = StyleSheet.create({
     ...TYPE.eyebrow,
     color: '#71717A',
     marginBottom: 12,
+  },
+  forkHint: {
+    color: '#71717A',
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginBottom: 16,
+  },
+  forkDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 8,
+  },
+  forkLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: NEON.cyan,
+    opacity: 0.4,
+  },
+  forkBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: NEON.cyan,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  forkBadgeText: {
+    color: '#000',
+    fontWeight: '900',
+    fontSize: 9.5,
+    letterSpacing: 0.6,
   },
   bubbleUser: {
     paddingHorizontal: 16,

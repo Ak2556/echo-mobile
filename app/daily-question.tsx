@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInUp, SlideInDown } from 'react-native-reanimated';
-import { ArrowLeft, Check, LockSimple, Sparkle } from 'phosphor-react-native';
+import { ArrowLeft, Check, LockSimple, Sparkle, Lightning, Clock } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
@@ -16,9 +16,12 @@ import {
   fetchOwnDailyAnswer,
   submitDailyAnswer,
   fetchDailyAnswers,
+  fetchDivergentDailyAnswers,
   type DailyQuestion,
   type DailyAnswerWithAuthor,
+  type DivergentDailyAnswer,
 } from '../lib/supabaseEchoApi';
+import { track } from '../lib/analytics';
 
 /**
  * Daily Question — Echo's twist on BeReal's daily ritual.
@@ -43,7 +46,9 @@ function DailyQuestionScreenInner() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<DailyAnswerWithAuthor[]>([]);
+  const [divergent, setDivergent] = useState<DivergentDailyAnswer[]>([]);
   const [answersLoading, setAnswersLoading] = useState(false);
+  const [view, setView] = useState<'recent' | 'divergent'>('recent');
 
   // Bootstrap: today's question + viewer's previous answer (if any).
   useEffect(() => {
@@ -52,6 +57,7 @@ function DailyQuestionScreenInner() {
         const q = await fetchTodaysDailyQuestion();
         setQuestion(q);
         if (q) {
+          track('daily_question_viewed', { question_id: q.id });
           const prior = await fetchOwnDailyAnswer(q.id);
           if (prior) {
             setMyAnswer(prior);
@@ -64,21 +70,28 @@ function DailyQuestionScreenInner() {
     })();
   }, []);
 
-  // Whenever the viewer has answered, load (and refresh) the answer feed.
-  useEffect(() => {
-    if (!question || !myAnswer) return;
-    void (async () => {
+  const loadAnswers = useMemo(
+    () => async () => {
+      if (!question || !myAnswer) return;
       setAnswersLoading(true);
       try {
-        const rows = await fetchDailyAnswers(question.id);
-        setAnswers(rows);
+        const [recent, diverging] = await Promise.all([
+          fetchDailyAnswers(question.id),
+          fetchDivergentDailyAnswers(question.id).catch(() => [] as DivergentDailyAnswer[]),
+        ]);
+        setAnswers(recent);
+        setDivergent(diverging);
       } catch (e) {
         console.warn('[daily-question] fetch answers failed', e);
       } finally {
         setAnswersLoading(false);
       }
-    })();
-  }, [question?.id, myAnswer]);
+    },
+    [question?.id, myAnswer],
+  );
+
+  // Whenever the viewer has answered, load (and refresh) the answer feed.
+  useEffect(() => { void loadAnswers(); }, [loadAnswers]);
 
   const canSubmit = useMemo(
     () => draft.trim().length > 0 && draft.trim().length <= MAX_ANSWER_LENGTH && !submitting,
@@ -90,6 +103,7 @@ function DailyQuestionScreenInner() {
     setSubmitting(true);
     try {
       await submitDailyAnswer(question.id, draft.trim());
+      track('daily_answer_submitted', { question_id: question.id, is_update: !!myAnswer, length: draft.trim().length });
       setMyAnswer(draft.trim());
       showToast('Your answer is in.', '✨');
     } catch (e) {
@@ -128,7 +142,15 @@ function DailyQuestionScreenInner() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            myAnswer ? (
+              <RefreshControl refreshing={answersLoading} onRefresh={() => void loadAnswers()} tintColor={colors.accent} />
+            ) : undefined
+          }
+        >
           {/* Prompt card — large, hero-feeling */}
           <Animated.View
             entering={FadeInUp.delay(50).duration(220)}
@@ -227,14 +249,74 @@ function DailyQuestionScreenInner() {
             <Animated.View entering={SlideInDown.duration(220)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginHorizontal: 4 }}>
                 <Text style={{ color: colors.text, fontWeight: '700', fontSize: 17 }}>
-                  {"Everyone's takes"}
+                  {view === 'divergent' ? 'Most divergent takes' : "Everyone's takes"}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
                   {answers.length} answer{answers.length === 1 ? '' : 's'}
                 </Text>
               </View>
+
+              {/* Recent ↔ divergence toggle */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+                <ViewChip
+                  active={view === 'recent'}
+                  onPress={() => setView('recent')}
+                  icon={<Clock size={14} weight="fill" color={view === 'recent' ? '#fff' : colors.textMuted} />}
+                  label="Recent"
+                />
+                <ViewChip
+                  active={view === 'divergent'}
+                  onPress={() => {
+                    if (view !== 'divergent') track('daily_divergence_viewed', { question_id: question.id, answer_count: divergent.length });
+                    setView('divergent');
+                  }}
+                  icon={<Lightning size={14} weight="fill" color={view === 'divergent' ? '#fff' : colors.textMuted} />}
+                  label="Most divergent"
+                />
+              </View>
+
+              {view === 'divergent' && (
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginBottom: 12, marginHorizontal: 4, lineHeight: 18 }}>
+                  Ranked by how far each take sits from the day&apos;s consensus — the boldest outliers first.
+                </Text>
+              )}
+
               {answersLoading ? (
                 <ActivityIndicator color={colors.accent} style={{ marginTop: 24 }} />
+              ) : view === 'divergent' ? (
+                divergent.length === 0 ? (
+                  <View style={{
+                    backgroundColor: colors.surface,
+                    borderRadius: radius.lg,
+                    padding: 20,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    alignItems: 'center',
+                  }}>
+                    <Lightning color={colors.accent} size={24} weight="fill" />
+                    <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
+                      Divergence ranking warms up as more people answer. Check back later to see today&apos;s boldest takes.
+                    </Text>
+                  </View>
+                ) : (
+                  divergent.map((a) => (
+                    <AnswerCard key={a.id} a={a} divergence={a.divergence} />
+                  ))
+                )
+              ) : answers.length === 0 ? (
+                <View style={{
+                  backgroundColor: colors.surface,
+                  borderRadius: radius.lg,
+                  padding: 20,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: 'center',
+                }}>
+                  <Sparkle color={colors.accent} size={24} weight="fill" />
+                  <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
+                    You&apos;re the first to answer today. Check back later to see how everyone else thinks about it.
+                  </Text>
+                </View>
               ) : (
                 answers.map((a) => (
                   <AnswerCard key={a.id} a={a} />
@@ -271,7 +353,44 @@ function ScreenHeader({ title, onBack }: { title: string; onBack: () => void }) 
   );
 }
 
-function AnswerCard({ a }: { a: DailyAnswerWithAuthor }) {
+function ViewChip({
+  active,
+  onPress,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onPress: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  const { colors } = useTheme();
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 99,
+        backgroundColor: active ? colors.accent : colors.surface,
+        borderWidth: 1,
+        borderColor: active ? colors.accent : colors.border,
+      }}
+      scaleValue={0.95}
+      haptic="light"
+    >
+      {icon}
+      <Text style={{ color: active ? '#fff' : colors.textSecondary, fontWeight: '700', fontSize: 13 }}>
+        {label}
+      </Text>
+    </AnimatedPressable>
+  );
+}
+
+function AnswerCard({ a, divergence }: { a: DailyAnswerWithAuthor; divergence?: number }) {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
   return (
@@ -304,6 +423,22 @@ function AnswerCard({ a }: { a: DailyAnswerWithAuthor }) {
             @{a.author.username}
           </Text>
         </View>
+        {divergence != null && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 99,
+            backgroundColor: colors.accent + '1F',
+          }}>
+            <Lightning size={11} weight="fill" color={colors.accent} />
+            <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '800' }}>
+              {divergence}% divergent
+            </Text>
+          </View>
+        )}
       </View>
       <LinkifiedText
         text={a.answer}

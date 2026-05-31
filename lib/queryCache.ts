@@ -16,6 +16,32 @@ function updateFeedItem(
   return item.id === echoId ? updater(item) : item;
 }
 
+/**
+ * Prepend a freshly-published echo to whatever a `['feed']` query currently
+ * holds. `setQueriesData({ queryKey: ['feed'] })` matches BOTH the flat
+ * `['feed']` cache (FeedItem[]) and the paginated `['feed', 'paginated']`
+ * cache (InfiniteData<FeedItem[]>), so the updater must handle both shapes —
+ * blindly calling `old.filter(...)` on the InfiniteData object throws
+ * "old.filter is not a function". De-dupes by id so re-publishing can't
+ * insert a duplicate.
+ */
+export function prependEchoToFeedCache(old: unknown, echo: FeedItem): unknown {
+  if (old == null) return [echo];
+  if (Array.isArray(old)) {
+    return [echo, ...(old as FeedItem[]).filter(item => item.id !== echo.id)];
+  }
+  if (typeof old === 'object' && Array.isArray((old as InfiniteData<FeedItem[]>).pages)) {
+    const data = old as InfiniteData<FeedItem[]>;
+    const pages = data.pages.map((page, idx) => {
+      const filtered = page.filter(item => item.id !== echo.id);
+      return idx === 0 ? [echo, ...filtered] : filtered;
+    });
+    return { ...data, pages };
+  }
+  // Unknown shape — leave it untouched; the subsequent invalidate will refetch.
+  return old;
+}
+
 function updateFeedList(
   list: FeedItem[] | undefined,
   echoId: string,

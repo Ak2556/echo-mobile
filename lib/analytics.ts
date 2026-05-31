@@ -34,6 +34,19 @@ export type AnalyticsEvent =
   | 'echo_thread_opened'
   | 'user_followed'
   | 'search_executed'
+  // ── Differentiator features (the retention thesis) ──
+  // These are the mechanics that set Echo apart from a generic feed. They are
+  // instrumented so retention can be sliced by feature exposure: e.g. compare
+  // D7/D30 of users who engaged a thinking-partner / fingerprint / daily
+  // divergence / remix against those who didn't. That comparison is the
+  // evidence that "uniqueness drives retention" — not an assertion.
+  | 'daily_question_viewed'
+  | 'daily_answer_submitted'
+  | 'daily_divergence_viewed'
+  | 'thinking_partners_viewed'
+  | 'thinking_partner_followed'
+  | 'thinking_fingerprint_viewed'
+  | 'remix_started'
   // ── AI ──
   | 'chat_message_sent'
   | 'chat_tool_executed'

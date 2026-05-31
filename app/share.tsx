@@ -3,6 +3,7 @@ import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ActivityIndicator } from 'react-native';
 import { ArrowLeft, CheckCircle, Eye, FloppyDisk, Globe, GitBranch, Lock, MagicWand, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -20,9 +21,12 @@ import {
   applyEditorialAction,
   buildEditorialTitle,
   evaluatePublishChecklist,
+  formatMissingFields,
   inferTopics,
+  missingPublishFields,
   summarizeConversationContext,
 } from '../lib/echoUX';
+import { rewriteEditorial, EditorialAction } from '../lib/editorial';
 
 const SHARE_DRAFT_KEY = 'echo/share-draft';
 
@@ -72,12 +76,40 @@ export default function ShareScreen() {
     Alert.alert('Draft saved', 'You can come back and finish this Echo later.');
   };
 
-  const handleEditorialAction = (action: string) => {
-    setEditedResponse(current => applyEditorialAction(action, current, String(prompt ?? '')));
+  const [editorialRunning, setEditorialRunning] = useState<string | null>(null);
+  const handleEditorialAction = async (action: string) => {
+    const current = editedResponse.trim();
+    if (!current) {
+      Alert.alert('Nothing to rewrite', 'Add the part worth sharing first, then try an editorial tool.');
+      return;
+    }
+    if (editorialRunning) return;
+    setEditorialRunning(action);
+    try {
+      if (remote) {
+        const next = await rewriteEditorial(action as EditorialAction, editedResponse, String(prompt ?? ''));
+        setEditedResponse(next);
+      } else {
+        setEditedResponse(applyEditorialAction(action, editedResponse, String(prompt ?? '')));
+      }
+    } catch (e) {
+      Alert.alert('Rewrite failed', (e as Error).message);
+    } finally {
+      setEditorialRunning(null);
+    }
   };
 
+  const missing = useMemo(
+    () => missingPublishFields({ prompt: String(prompt ?? ''), title, response: editedResponse }),
+    [prompt, title, editedResponse],
+  );
+  const canPublish = missing.length === 0 && !publishing;
+
   const handlePublish = async () => {
-    if (!prompt || !editedResponse.trim() || !title.trim()) return;
+    if (missing.length) {
+      Alert.alert('Almost there', `Add ${formatMissingFields(missing)} before posting.`);
+      return;
+    }
 
     if (!checklist.privacy) {
       Alert.alert('Privacy check', 'Remove emails, phone numbers, or personal details before publishing.');
@@ -184,7 +216,7 @@ export default function ShareScreen() {
         <Pressable
           onPress={() => { void handlePublish(); }}
           disabled={publishing}
-          style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: publishing ? colors.surfaceHover : colors.accent }}
+          style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: publishing || !canPublish ? colors.surfaceHover : colors.accent, opacity: !canPublish && !publishing ? 0.6 : 1 }}
         >
           <PaperPlaneTilt color="#fff" size={14} />
           <Text style={{ color: '#fff', fontWeight: '700', marginLeft: 8 }}>{publishing ? 'Posting…' : 'Post'}</Text>
@@ -236,19 +268,26 @@ export default function ShareScreen() {
 
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginTop: 18, marginBottom: 8 }}>Editorial tools</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
-              {EDITORIAL_ACTIONS.map(action => (
-                <Pressable
-                  key={action.key}
-                  onPress={() => handleEditorialAction(action.key)}
-                  style={{ paddingHorizontal: 12, paddingVertical: 9, borderRadius: radius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                >
-                  <MagicWand color={colors.accent} size={14} />
-                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{action.label}</Text>
-                </Pressable>
-              ))}
+              {EDITORIAL_ACTIONS.map(action => {
+                const running = editorialRunning === action.key;
+                const disabled = !!editorialRunning && !running;
+                return (
+                  <Pressable
+                    key={action.key}
+                    onPress={() => { void handleEditorialAction(action.key); }}
+                    disabled={!!editorialRunning}
+                    style={{ paddingHorizontal: 12, paddingVertical: 9, borderRadius: radius.full, backgroundColor: running ? colors.accentMuted : colors.surface, borderWidth: 1, borderColor: running ? colors.accent : colors.border, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: disabled ? 0.5 : 1 }}
+                  >
+                    {running
+                      ? <ActivityIndicator size="small" color={colors.accent} />
+                      : <MagicWand color={colors.accent} size={14} />}
+                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{action.label}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>The part worth sharing</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>The part worth sharing<Text style={{ color: colors.accent }}> *</Text></Text>
             <TextInput
               placeholder="Trim the answer down to the strongest takeaway"
               value={editedResponse}
@@ -256,6 +295,11 @@ export default function ShareScreen() {
               multiline
               maxLength={1600}
             />
+            {!editedResponse.trim() && (
+              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 6 }}>
+                Required — write the takeaway you want to publish.
+              </Text>
+            )}
 
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginTop: 18, marginBottom: 8 }}>Add your framing</Text>
             <TextInput
@@ -342,10 +386,11 @@ export default function ShareScreen() {
           </Pressable>
           <Pressable
             onPress={() => { void handlePublish(); }}
-            style={{ flex: 1, paddingVertical: 13, borderRadius: radius.card, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            disabled={publishing}
+            style={{ flex: 1, paddingVertical: 13, borderRadius: radius.card, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: !canPublish && !publishing ? 0.6 : 1 }}
           >
             <PaperPlaneTilt color="#fff" size={18} />
-            <Text style={{ color: '#fff', fontWeight: '800' }}>Publish</Text>
+            <Text style={{ color: '#fff', fontWeight: '800' }}>{publishing ? 'Publishing…' : 'Publish'}</Text>
           </Pressable>
         </View>
       </ScrollView>

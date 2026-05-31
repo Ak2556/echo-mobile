@@ -86,7 +86,7 @@ A/B candidates to test post-launch:
 ```
 Hello, world. This is v1 of Echo.
 
-— Sign up with email, phone, Google, or Apple
+— Sign up in one tap with email or phone — no passwords
 — Publish text, photo, video, or poll Echoes
 — Chat with Echo's AI, then turn the conversation into a post
 — React with 🤯 📝 💯 🤔, comment, bookmark, follow
@@ -108,10 +108,10 @@ Thanks for being early. Tell us what's broken: support@echo.app
 
 ## Privacy nutrition label (data types declared)
 
-- **Contact Info:** Email Address — *Linked to user, used for App Functionality, Account*
+- **Contact Info:** Email Address, Phone Number — *Linked to user, used for App Functionality, Account*
 - **Identifiers:** User ID — *Linked, App Functionality*
-- **User Content:** Photos/Videos, Other (echoes/comments/DMs) — *Linked, App Functionality*
-- **Usage Data:** Product Interaction — *Linked, Analytics, Product Personalization*
+- **User Content:** Photos/Videos, Audio Data (voice memos), Other (echoes/comments/DMs) — *Linked, App Functionality*
+- **Usage Data:** Product Interaction — *Linked, Analytics, Product Personalization* (collected only after opt-in consent)
 - **Diagnostics:** Crash Data, Performance Data — *Not Linked, Analytics*
 
 We **do not** track users across other apps. We **do not** show third-party ads.
@@ -141,10 +141,20 @@ We **do not** track users across other apps. We **do not** show third-party ads.
 
 ## Reviewer Notes (visible only to App Review)
 
+> ⚠️ **SET UP BEFORE SUBMISSION.** Echo is passwordless (one-time codes), so you
+> must give App Review a way in. In Supabase → Auth → set a **test OTP**: map a
+> reviewer phone/email to a fixed code that bypasses real SMS/email delivery.
+> Then fill the real values into the block below. Without this, review gets
+> stuck at the login screen.
+
 ```
-DEMO ACCOUNT
-Email: review@echo.app
-Password: (provide via Apple's secure note field)
+DEMO ACCOUNT (passwordless — Echo uses one-time codes, not passwords)
+Sign-in is via a one-time code sent to email or SMS. We've provisioned a
+reviewer account with a fixed test code so you can sign in without our inbox:
+  Phone/Email: [REVIEWER TEST IDENTIFIER]
+  One-time code: [FIXED TEST OTP]
+If the code does not work, email support@echo.app and we will relay the live
+code within minutes during review hours.
 
 NOTES FOR REVIEWER
 

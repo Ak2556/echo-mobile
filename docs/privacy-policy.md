@@ -24,10 +24,13 @@ Everything you create on Echo is stored on our servers:
 - Echoes (your posts), comments, reactions, bookmarks, follows
 - Direct messages you send
 - Images and videos you upload (stored on Supabase Storage)
+- Audio you record in the app (e.g. the voice-memo tool). Recording uses your
+  microphone only while you are actively recording, and only after you grant
+  permission.
 - Chat conversations with our AI assistant
 
 ### 1.3 Usage data
-We collect basic engagement signals — what you tap, what you scroll through, when you open the app — to improve the product. This data is associated with your account.
+We collect basic engagement signals — what you tap, what you scroll through, when you open the app — to improve the product. This data is associated with your account and is handled by PostHog (see §3). **Analytics is opt-in:** we collect nothing until you accept the in-app consent prompt, and you can decline or withdraw consent at any time.
 
 ### 1.4 Device data
 - Device model and OS version (to debug crashes)
@@ -43,7 +46,7 @@ We do **not** collect your IP address for ad-targeting purposes, and we do not s
 
 | Purpose | Data used |
 |---|---|
-| Authenticate you | Email/phone, password hash (handled by Supabase Auth) |
+| Authenticate you | Email or phone, via a one-time code / magic link (passwordless — handled by Supabase Auth) |
 | Show you a personalized feed | Interests, follows, engagement signals |
 | Deliver push notifications you opted into | Push token, account ID |
 | Generate AI replies | Your chat messages (sent to a third-party LLM provider — see §4) |
@@ -61,8 +64,10 @@ Echo uses a small number of trusted sub-processors to run the service:
 | Vendor | What they handle | Where data lives |
 |---|---|---|
 | Supabase (supabase.com) | Auth, database, file storage, real-time | US |
-| OpenRouter (openrouter.ai) | Routing AI chat to language model providers | US |
-| Google / Anthropic | Underlying LLMs that generate AI replies | US |
+| OpenRouter (openrouter.ai) | Routing AI chat, moderation, and embeddings to the model provider | US |
+| Google (Gemini, via OpenRouter) | The underlying LLM that generates AI replies, moderation, and embeddings | US |
+| PostHog (posthog.com) | Product analytics (opt-in only — see §1.3) | US |
+| Sentry (sentry.io) | Crash and error diagnostics | US |
 | Expo / EAS (expo.dev) | Build pipeline and over-the-air updates | US |
 | Apple Push Notification Service | Delivering push notifications (only if you opted in) | US |
 
@@ -101,7 +106,7 @@ Echo is rated 17+ on the App Store and is not directed at children under 13. We 
 
 ## 7. Security
 
-We use HTTPS for every request, store passwords as bcrypt hashes (via Supabase Auth), and apply row-level security so users can only access their own data. No system is perfectly secure — if you suspect your account has been compromised, change your password and email us.
+We use HTTPS for every request and apply row-level security so users can only access their own data. Sign-in is passwordless — we never store a password; access is granted by a one-time code or magic link sent to your verified email or phone (handled by Supabase Auth). No system is perfectly secure — if you suspect your account has been compromised, email us and we'll revoke active sessions.
 
 ---
 

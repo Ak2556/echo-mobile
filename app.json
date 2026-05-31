@@ -85,14 +85,6 @@
           "photosPermission": "Allow Echo to access your photos to share images.",
           "cameraPermission": "Allow Echo to use your camera to take photos and videos."
         }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "buildReactNativeFromSource": true
-          }
-        }
       ]
     ],
     "experiments": {

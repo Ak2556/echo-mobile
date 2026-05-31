@@ -12,6 +12,7 @@ import {
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { EmptyState } from '../../components/common/EmptyState';
 import { FeedCard } from '../../components/social/FeedCard';
+import { ThinkingFingerprintCard } from '../../components/social/ThinkingFingerprintCard';
 import { ProfileHeaderSkeleton, FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -24,7 +25,7 @@ import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { useToggleRemoteBlock, useToggleRemoteMute } from '../../hooks/queries/useBlockMute';
 import { buildCreatorProfile } from '../../lib/echoUX';
 
-function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, onReport, onBlock, onMute, showMenu, setShowMenu, isSelf, router, creatorProfile }: any) {
+function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, onReport, onBlock, onMute, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
   const online = isUserOnline(user.id);
   const followScale = useSharedValue(1);
@@ -182,6 +183,8 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         )}
       </Animated.View>
 
+      {fingerprintUserId ? <ThinkingFingerprintCard userId={fingerprintUserId} isSelf={isSelf} /> : null}
+
       <View className="mx-4 mb-2" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 16, marginBottom: 8 }}>
         Echoes {'\u00B7'} {echoeCount}
@@ -287,6 +290,7 @@ export default function UserProfileScreen() {
               isSelf={isSelf}
               router={router}
               creatorProfile={creatorProfile}
+              fingerprintUserId={user.id}
             />
           }
           ListEmptyComponent={
