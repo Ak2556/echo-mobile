@@ -38,19 +38,27 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
   if (!body.user_id) return new Response('user_id required', { status: 400 });
 
-  // Load recipient token + actor name in parallel.
-  const [{ data: recipient }, { data: actor }] = await Promise.all([
+  // Load recipient token + actor name in parallel. allSettled so a failed
+  // actor lookup doesn't abort the notification entirely.
+  const [recipientResult, actorResult] = await Promise.allSettled([
     supabase.from('profiles').select('push_token').eq('id', body.user_id).maybeSingle(),
     body.actor_id
       ? supabase.from('profiles').select('display_name, username').eq('id', body.actor_id).maybeSingle()
       : Promise.resolve({ data: null as { display_name?: string; username?: string } | null }),
   ]);
 
+  if (recipientResult.status === 'rejected') {
+    console.error('[push-fanout] recipient lookup failed:', recipientResult.reason);
+    return new Response(JSON.stringify({ error: 'recipient lookup failed' }), { status: 500 });
+  }
+
+  const recipient = recipientResult.value.data;
   if (!recipient?.push_token) {
     return new Response(JSON.stringify({ skipped: 'no token' }), { status: 200 });
   }
 
-  const actorName = actor?.display_name || actor?.username || 'Someone';
+  const actorData = actorResult.status === 'fulfilled' ? actorResult.value.data : null;
+  const actorName = actorData?.display_name || actorData?.username || 'Someone';
   const title = titleFor(body.type, actorName, body.preview);
   const message = messageFor(body.type, body.preview);
 

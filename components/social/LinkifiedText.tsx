@@ -30,7 +30,7 @@ export function LinkifiedText({ text, style, linkStyle, ...rest }: LinkifiedText
   const { colors } = useTheme();
 
   const segments = useMemo(() => {
-    if (!text) return [] as Array<{ kind: 'text' | 'mention' | 'tag'; value: string }>;
+    if (!text) return [] as { kind: 'text' | 'mention' | 'tag'; value: string }[];
     // Split keeps the matched tokens so we can wrap them.
     const parts = text.split(TOKEN_RE);
     return parts.map((part) => {
@@ -65,7 +65,7 @@ export function LinkifiedText({ text, style, linkStyle, ...rest }: LinkifiedText
             <Text
               key={i}
               style={[accent, linkStyle]}
-              onPress={() => router.push(`/(tabs)/search?q=${encodeURIComponent(tag)}` as any)}
+              onPress={() => router.push({ pathname: '/(tabs)/explore', params: { q: tag } })}
               suppressHighlighting
             >
               {seg.value}
