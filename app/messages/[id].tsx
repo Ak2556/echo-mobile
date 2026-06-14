@@ -27,7 +27,7 @@ import {
   useTypingIndicator,
 } from '../../hooks/queries/useDMs';
 import { markMessagesRead } from '../../lib/supabaseEchoApi';
-import type { RemoteDirectMessage, RemoteMessageReaction } from '../../lib/supabaseEchoApi';
+import type { RemoteMessageReaction } from '../../lib/supabaseEchoApi';
 import type { DirectMessage } from '../../types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -536,6 +536,12 @@ export default function DMScreen() {
 
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (typingTimer.current) clearTimeout(typingTimer.current);
+    };
+  }, []);
+
   const handleTextChange = useCallback((t: string) => {
     setText(t);
     if (!remote || !t.length) return;
@@ -596,7 +602,7 @@ export default function DMScreen() {
           alignItems: 'center', justifyContent: 'center', marginRight: 10,
         }}>
           <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-            {conversation.displayName.charAt(0).toUpperCase()}
+            {(conversation.displayName ?? '?').charAt(0).toUpperCase()}
           </Text>
         </View>
         {online && (

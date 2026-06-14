@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -22,6 +22,7 @@ import {
   type DivergentDailyAnswer,
 } from '../lib/supabaseEchoApi';
 import { track } from '../lib/analytics';
+import { captureException } from '../lib/monitoring';
 
 /**
  * Daily Question — Echo's twist on BeReal's daily ritual.
@@ -49,23 +50,28 @@ function DailyQuestionScreenInner() {
   const [divergent, setDivergent] = useState<DivergentDailyAnswer[]>([]);
   const [answersLoading, setAnswersLoading] = useState(false);
   const [view, setView] = useState<'recent' | 'divergent'>('recent');
+  const mounted = useRef(true);
+
+  useEffect(() => { return () => { mounted.current = false; }; }, []);
 
   // Bootstrap: today's question + viewer's previous answer (if any).
   useEffect(() => {
     void (async () => {
       try {
         const q = await fetchTodaysDailyQuestion();
+        if (!mounted.current) return;
         setQuestion(q);
         if (q) {
           track('daily_question_viewed', { question_id: q.id });
           const prior = await fetchOwnDailyAnswer(q.id);
+          if (!mounted.current) return;
           if (prior) {
             setMyAnswer(prior);
             setDraft(prior);
           }
         }
       } finally {
-        setLoading(false);
+        if (mounted.current) setLoading(false);
       }
     })();
   }, []);
@@ -79,14 +85,19 @@ function DailyQuestionScreenInner() {
           fetchDailyAnswers(question.id),
           fetchDivergentDailyAnswers(question.id).catch(() => [] as DivergentDailyAnswer[]),
         ]);
+        if (!mounted.current) return;
         setAnswers(recent);
         setDivergent(diverging);
       } catch (e) {
-        console.warn('[daily-question] fetch answers failed', e);
+        captureException(e, { tags: { screen: 'daily-question', action: 'fetch-answers' } });
       } finally {
-        setAnswersLoading(false);
+        if (mounted.current) setAnswersLoading(false);
       }
     },
+    // Intentionally keyed on question?.id (not the whole question object) so the
+    // loader is only recreated when the question actually changes, not on every
+    // identity change — which would trigger redundant answer re-fetches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [question?.id, myAnswer],
   );
 
@@ -331,7 +342,7 @@ function DailyQuestionScreenInner() {
 }
 
 function ScreenHeader({ title, onBack }: { title: string; onBack: () => void }) {
-  const { colors, fontSizes } = useTheme();
+  const { colors } = useTheme();
   return (
     <View
       style={{
