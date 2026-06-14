@@ -1,7 +1,5 @@
-// Neon 2026 design tokens — layered on top of the existing theme for the
-// new AI-native surfaces (Remix, Evolutions, For You). The goal is to make
-// the new flows feel *visibly* different from the rest of the app: vibrant
-// gradients, glow shadows, oversized expressive typography, spring physics.
+// Accent design tokens layered on top of the existing theme for newer
+// surfaces such as Remix, Evolutions, and For You.
 //
 // Use these tokens in any NEW component. Do not retrofit existing screens
 // here — that's a separate visual-refresh epic.
@@ -26,8 +24,7 @@ export const NEON = {
 } as const;
 
 // ── Signature gradients ──────────────────────────────────────────────────────
-// Use as `colors` for expo-linear-gradient. Always 3+ stops so the gradient
-// feels alive (not a tame two-color sweep).
+// Use as `colors` for expo-linear-gradient.
 export const GRADIENTS = {
   // Remix: cyan → violet → magenta. Reads as "branching / energy".
   remix:    ['#22F5FF', '#7A4DFF', '#FF3DD8'] as const,
@@ -72,7 +69,7 @@ export const TYPE = {
 } satisfies Record<string, TextStyle>;
 
 // ── Spring configs ───────────────────────────────────────────────────────────
-// Snappier than the default app springs — youth UI rewards quick feedback.
+// Interaction springs for high-emphasis actions.
 export const NEON_SPRING = {
   press:    { damping: 14, stiffness: 700, mass: 0.6 },
   pop:      { damping: 9,  stiffness: 380, mass: 0.7 },  // celebration pop

@@ -9,7 +9,7 @@ import { ArrowLeft, Brain, UsersThree, Lightning } from 'phosphor-react-native';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { useThinkingPartners } from '../hooks/queries/useThinkingPartners';
 import { useToggleRemoteFollow } from '../hooks/queries/useSupabaseSocial';
-import { GRADIENTS, NEON, TYPE, neonGlow, neonHaptic } from '../lib/neonDesign';
+import { GRADIENTS, NEON, neonGlow, neonHaptic } from '../lib/neonDesign';
 import { useAppStore } from '../store/useAppStore';
 import { track } from '../lib/analytics';
 import type { ThinkingPartnerMode } from '../lib/supabaseEchoApi';

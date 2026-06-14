@@ -18,7 +18,7 @@ import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 function YearInEchoScreenInner() {
   const router = useRouter();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
   const [wrap, setWrap] = useState<YearWrap | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -135,7 +135,7 @@ function YearInEchoScreenInner() {
                 Most-loved echo
               </Text>
               <AnimatedPressable
-                onPress={() => wrap.top_echo_id && router.push(`/echo/${wrap.top_echo_id}` as any)}
+                onPress={() => wrap.top_echo_id && router.push(`/thread/${wrap.top_echo_id}`)}
                 style={{
                   backgroundColor: colors.surface,
                   borderRadius: radius.lg,

@@ -130,7 +130,7 @@ export default function BookmarksScreen() {
         onCancel={() => setNamingOpen(false)}
         onSubmit={handleNamingSubmit}
         title="New collection"
-        subtitle="Group bookmarks by topic, project, or vibe."
+        subtitle="Group bookmarks by topic, project, or theme."
         submitLabel="Create"
         maxLength={40}
       />

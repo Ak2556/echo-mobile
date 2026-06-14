@@ -70,7 +70,12 @@
       ],
       "expo-web-browser",
       "expo-video",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Echo to access your microphone to record voice memos."
+        }
+      ],
       [
         "expo-notifications",
         {
@@ -85,7 +90,8 @@
           "photosPermission": "Allow Echo to access your photos to share images.",
           "cameraPermission": "Allow Echo to use your camera to take photos and videos."
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,

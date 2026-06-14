@@ -33,8 +33,8 @@ interface RemixButtonProps {
  * After they ask Gemini at least one more turn, they can publish the result
  * as a remix linked back to the parent.
  *
- * 2026 aesthetic: animated gradient border, double-thump haptic, optional
- * breathing-pulse when the lineage is hot.
+ * Animated gradient border, double-tap haptic, and optional emphasis when
+ * the lineage is active.
  */
 export function RemixButton({
   echoId,

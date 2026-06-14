@@ -19,18 +19,10 @@ import { useTheme } from '../../lib/theme';
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 /**
- * Login — v1 entry point, redesigned for first-impression weight.
+ * Login entry point.
  *
- * Visual ideas:
- *   1. Atmospheric mesh background — three blurred orbs of indigo, violet,
- *      and deep cyan drift very slowly behind everything.
- *   2. The wordmark IS the hero — 96pt typography with a slowly pulsing
- *      accent dot. No placeholder logo square.
- *   3. Rotating prompt — cycles through real Echo question seeds every 4s.
- *      Tells the user what Echo IS in the same beat as the brand mark.
- *   4. One stunning primary CTA. Phone is a quiet secondary link.
- *
- * Forward navigation owned by AuthListenerProvider; both CTAs just route.
+ * Auth state and forward navigation are owned by AuthListenerProvider; this
+ * screen only presents the available sign-in methods.
  */
 
 const ROTATING_PROMPTS = [
@@ -47,14 +39,15 @@ export default function LoginScreen() {
   const { colors, radius, font } = useTheme();
   const isDark = colors.isDark;
 
-  // Rotating prompt index — cycle every 4s with a soft cross-fade.
+  // Cycle through sample prompts so the first screen explains the product
+  // without requiring extra onboarding copy.
   const [promptIdx, setPromptIdx] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setPromptIdx(i => (i + 1) % ROTATING_PROMPTS.length), 4_000);
     return () => clearInterval(t);
   }, []);
 
-  // Pulsing accent dot on the wordmark.
+  // Subtle wordmark accent.
   const dotScale = useSharedValue(1);
   useEffect(() => {
     dotScale.value = withRepeat(
@@ -70,24 +63,22 @@ export default function LoginScreen() {
     transform: [{ scale: dotScale.value }],
   }));
 
-  // Floating orbs — extremely slow drift, very low amplitude. Adds depth
-  // without distraction.
-  const orb1Y = useSharedValue(0);
-  const orb2Y = useSharedValue(0);
+  const accentLayerTopY = useSharedValue(0);
+  const accentLayerMidY = useSharedValue(0);
   useEffect(() => {
-    orb1Y.value = withRepeat(
+    accentLayerTopY.value = withRepeat(
       withSequence(withSpring(28, { damping: 18, stiffness: 4 }), withSpring(-28, { damping: 18, stiffness: 4 })),
       -1,
       true,
     );
-    orb2Y.value = withRepeat(
+    accentLayerMidY.value = withRepeat(
       withSequence(withSpring(-22, { damping: 16, stiffness: 3 }), withSpring(22, { damping: 16, stiffness: 3 })),
       -1,
       true,
     );
-  }, [orb1Y, orb2Y]);
-  const orb1Style = useAnimatedStyle(() => ({ transform: [{ translateY: orb1Y.value }] }));
-  const orb2Style = useAnimatedStyle(() => ({ transform: [{ translateY: orb2Y.value }] }));
+  }, [accentLayerTopY, accentLayerMidY]);
+  const accentLayerTopStyle = useAnimatedStyle(() => ({ transform: [{ translateY: accentLayerTopY.value }] }));
+  const accentLayerMidStyle = useAnimatedStyle(() => ({ transform: [{ translateY: accentLayerMidY.value }] }));
 
   const bgBase = isDark ? '#08080C' : '#FAFAFB';
 
@@ -104,7 +95,7 @@ export default function LoginScreen() {
           borderRadius: SCREEN_W * 0.5,
           backgroundColor: isDark ? 'rgba(91,91,248,0.45)' : 'rgba(91,91,248,0.22)',
           opacity: 0.9,
-        }, orb1Style]} />
+        }, accentLayerTopStyle]} />
         <Animated.View style={[{
           position: 'absolute',
           top: SCREEN_H * 0.22,
@@ -114,7 +105,7 @@ export default function LoginScreen() {
           borderRadius: SCREEN_W * 0.5,
           backgroundColor: isDark ? 'rgba(168,85,247,0.40)' : 'rgba(168,85,247,0.18)',
           opacity: 0.85,
-        }, orb2Style]} />
+        }, accentLayerMidStyle]} />
         <View style={{
           position: 'absolute',
           bottom: -SCREEN_H * 0.08,
@@ -141,7 +132,7 @@ export default function LoginScreen() {
           {/* Hero — wordmark + rotating prompt */}
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Animated.View entering={FadeInDown.duration(380).springify().mass(0.7).damping(14)} style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 96, letterSpacing: -4, lineHeight: 96 }]}>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: 92, letterSpacing: 0, lineHeight: 96 }]}>
                 echo
               </Text>
               <Animated.View style={[{ marginLeft: 2, marginBottom: 14 }, dotStyle]}>
@@ -166,7 +157,7 @@ export default function LoginScreen() {
                   fontSize: 18,
                   textAlign: 'center',
                   lineHeight: 26,
-                  letterSpacing: -0.2,
+                  letterSpacing: 0,
                 }]}
               >
                 {`“${ROTATING_PROMPTS[promptIdx]}”`}
@@ -254,7 +245,7 @@ function PrimaryButton({
         }}
       >
         {icon}
-        <Text style={[font, { color: fg, fontSize: 16, letterSpacing: -0.2 }]}>{label}</Text>
+        <Text style={[font, { color: fg, fontSize: 16, letterSpacing: 0 }]}>{label}</Text>
       </Pressable>
     </View>
   );

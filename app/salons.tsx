@@ -18,7 +18,7 @@ import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 function SalonsScreenInner() {
   const router = useRouter();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors } = useTheme();
   const [salons, setSalons] = useState<Salon[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -96,7 +96,7 @@ function SalonsScreenInner() {
                   await setSalonMembership(salon.id, join);
                   setSalons((prev) => prev.map(s => s.id === salon.id ? { ...s, is_member: join, member_count: join ? s.member_count + 1 : Math.max(0, s.member_count - 1) } : s));
                   showToast(join ? `Joined ${salon.name}` : `Left ${salon.name}`, join ? '🏛️' : '👋');
-                } catch (e) {
+                } catch {
                   showToast('Could not update membership', '⚠️');
                 }
               }} />
@@ -110,7 +110,7 @@ function SalonsScreenInner() {
 
 function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean) => void }) {
   const router = useRouter();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <AnimatedPressable
       onPress={() => router.push(`/salon/${salon.slug}` as any)}

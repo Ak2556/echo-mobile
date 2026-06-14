@@ -97,9 +97,8 @@ export function ReactionBar({ target, counts, userReactions, compact }: Reaction
                 [reaction]: next ? prev[reaction] + 1 : Math.max(0, prev[reaction] - 1),
               }));
               if (hapticEnabled) {
-                next
-                  ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                  : Haptics.selectionAsync();
+                if (next) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                else Haptics.selectionAsync();
               }
               if (next) track('echo_reacted', { reaction, target_kind: target.kind });
 

@@ -14,7 +14,7 @@ import { track } from '../../lib/analytics';
 import type { ChatMessage } from '../../types';
 
 /**
- * Remix entry screen — 2026 aesthetic.
+ * Remix entry screen.
  *
  * Shows the parent echo's full conversation, then spins up a fresh chat
  * session pre-seeded with that history so the user can branch the
