@@ -1,14 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Switch, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   BookmarkSimple,
-  Bell,
   CalendarBlank,
   CaretRight,
   Compass,
-  Envelope,
   FilmStrip,
   Gear,
   Images,
@@ -16,7 +14,6 @@ import {
   SignOut,
   Sparkle,
   SquaresFour,
-  Users,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
@@ -51,7 +48,7 @@ type ProfileFont = ReturnType<typeof useTheme>['font'];
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { colors, radius, switchTrack, font } = useTheme();
+  const { colors, radius, font } = useTheme();
   const insets = useSafeAreaInsets();
   const {
     userId,
@@ -61,8 +58,6 @@ export default function ProfileScreen() {
     avatarColor,
     avatarUrl,
     publishedEchoes,
-    notificationsEnabled,
-    setNotificationsEnabled,
   } = useAppStore();
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const displayLabel = displayName || username || 'User';

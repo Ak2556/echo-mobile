@@ -8,7 +8,10 @@ import { videoSourceForUri } from '../../lib/videoMedia';
 // In Expo Go this stays null and we render the static fallback.
 let ExpoVideoModule: { VideoView: any; useVideoPlayer: any } | null = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // Dynamic require is required: expo-video's native module is absent in Expo
+  // Go, where a static import would throw at module load. The catch renders a
+  // static fallback instead.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   ExpoVideoModule = require('expo-video');
 } catch {}
 

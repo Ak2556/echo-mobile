@@ -29,7 +29,7 @@ function relativeStart(starts_at: string): string {
 
 function OfficeHoursScreenInner() {
   const router = useRouter();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors } = useTheme();
   const [list, setList] = useState<OfficeHour[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -101,7 +101,7 @@ function OfficeHoursScreenInner() {
                   try {
                     await setOfficeHourRSVP(oh.id, going);
                     showToast(going ? `RSVP'd to ${oh.topic}` : 'RSVP removed', going ? '🎙️' : '👋');
-                  } catch (e) {
+                  } catch {
                     setList(prev => prev.map(o => o.id === oh.id ? { ...o, has_rsvp: !going, rsvp_count: going ? Math.max(0, o.rsvp_count - 1) : o.rsvp_count + 1 } : o));
                     showToast('Could not update RSVP', '⚠️');
                   }
@@ -117,7 +117,7 @@ function OfficeHoursScreenInner() {
 
 function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolean) => void }) {
   const router = useRouter();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
   const liveNow = new Date(oh.starts_at).getTime() <= Date.now() && new Date(oh.ends_at).getTime() > Date.now();
   return (
     <AnimatedPressable

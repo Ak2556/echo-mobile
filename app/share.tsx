@@ -1,9 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
+import { View, Text, Pressable, Alert, ScrollView , ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator } from 'react-native';
 import { ArrowLeft, CheckCircle, Eye, FloppyDisk, Globe, GitBranch, Lock, MagicWand, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -34,7 +33,7 @@ export default function ShareScreen() {
   const router = useRouter();
   const { prompt, response } = useLocalSearchParams<{ prompt: string; response: string }>();
   const { username, userId, avatarColor, displayName, publishEcho } = useAppStore();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
   const [publishing, setPublishing] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [celebration, setCelebration] = useState<null | { headline: string; subtitle: string; variant: 'remix' | 'evolutions' | 'forYou' | 'achievement' }>(null);

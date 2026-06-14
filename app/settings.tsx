@@ -255,7 +255,7 @@ function ThemePicker({ value, onChange, onClose, theme }: {
           <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
             <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>Choose Theme</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>Pick a color palette that matches your vibe</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>Pick a color palette that matches your taste</Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
               {themeOrder.map(key => {

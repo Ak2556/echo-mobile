@@ -18,7 +18,7 @@ interface SimilarEchoesRailProps {
  * cosine distance) under the current thread. Powers the "more like this"
  * discovery loop — meaningful even when the author has no other followers.
  *
- * 2026 aesthetic: neon card edges, glow, oversized author chip.
+ * Related Echoes rail with high-emphasis cards.
  */
 export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps) {
   const router = useRouter();
@@ -56,7 +56,7 @@ export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps)
               }}
               style={[styles.card, neonGlow(NEON.cyan, 'soft')]}
             >
-              {/* Inner gradient bloom — feels alive without overwhelming */}
+              {/* Inner gradient bloom for depth. */}
               <LinearGradient
                 colors={['rgba(34,245,255,0.10)', 'rgba(155,91,255,0.08)', 'rgba(255,61,216,0.06)']}
                 start={{ x: 0, y: 0 }}

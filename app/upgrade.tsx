@@ -26,7 +26,7 @@ export default function UpgradeScreen() {
 
   const handleUpgrade = () => {
     // TODO(payments): kick off the IAP flow here.
-    showToast('Pro is coming soon — we\'ll email you the moment it launches.', '✨');
+    showToast('Pro is coming soon — we\'ll email you the moment it launches.', 'Update');
   };
 
   return (

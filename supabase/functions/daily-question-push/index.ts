@@ -69,7 +69,7 @@ Deno.serve(async (req: Request) => {
     for (const row of data) {
       const t = (row as { push_token: string | null }).push_token;
       // Expo tokens look like ExponentPushToken[...] or ExpoPushToken[...].
-      if (t && t.startsWith('Expo')) tokens.add(t);
+      if (t && /^Expo(nent)?PushToken\[.+\]$/.test(t)) tokens.add(t);
     }
     if (data.length < PAGE_SIZE) break;
   }

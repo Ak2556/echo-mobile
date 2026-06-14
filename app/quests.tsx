@@ -11,7 +11,7 @@ import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 
 function QuestsScreenInner() {
   const router = useRouter();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors } = useTheme();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +81,7 @@ function Section({ title, icon, quests }: { title: string; icon: React.ReactNode
 }
 
 function QuestRow({ quest }: { quest: Quest }) {
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
   const progress = Math.min(quest.progress ?? 0, quest.goal_value);
   const pct = (progress / quest.goal_value) * 100;
   const completed = !!quest.completed_at;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, Pressable, Share } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';

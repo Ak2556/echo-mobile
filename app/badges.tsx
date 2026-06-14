@@ -18,7 +18,7 @@ const TIER_COLOR: Record<Badge['tier'], string> = {
 
 function BadgesScreenInner() {
   const router = useRouter();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors } = useTheme();
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +81,7 @@ function BadgesScreenInner() {
 }
 
 function BadgeCard({ badge, locked }: { badge: Badge; locked?: boolean }) {
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
   const tint = TIER_COLOR[badge.tier];
   return (
     <View
