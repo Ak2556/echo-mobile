@@ -2532,6 +2532,11 @@ export async function setRemoteBlock(targetUserId: string, block: boolean): Prom
   }
 }
 
+export async function deleteAccount(): Promise<void> {
+  const { error } = await supabase.rpc('delete_account');
+  if (error) throw error;
+}
+
 export async function setRemoteMute(targetUserId: string, mute: boolean): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');

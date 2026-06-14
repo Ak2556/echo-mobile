@@ -9,17 +9,14 @@
 // anon key alone is NOT enough — we call auth.getUser()), and each call counts
 // against the same per-user hourly AI budget (ai_rate_limits table).
 
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { checkAndIncrementRateLimit, AIRateLimitError } from "../_shared/rateLimit.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const MODEL = Deno.env.get("EDITORIAL_REWRITE_MODEL") ?? "google/gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
-// Mirror echo-ai's free-tier ceiling. Editorial rewrites are real AI spend, so
-// they draw from the same hourly window as chat turns.
-const FREE_LIMIT = 30;
-const WINDOW_MS = 60 * 60 * 1000;
 // Hard ceiling on how long we'll wait for OpenRouter before giving up.
 const UPSTREAM_TIMEOUT_MS = 20_000;
 
@@ -57,46 +54,6 @@ function json(status: number, payload: unknown, extraHeaders: Record<string, str
   });
 }
 
-/**
- * Per-user hourly limiter against the shared ai_rate_limits table. Fail-open on
- * DB errors so a transient blip never locks the editor for everyone. Returns a
- * retry-after (seconds) when the user is over budget, otherwise null.
- */
-async function checkRateLimit(supabase: SupabaseClient, userId: string): Promise<number | null> {
-  try {
-    const { data: row, error } = await supabase
-      .from("ai_rate_limits")
-      .select("window_start, request_count")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (error) {
-      console.warn("[editorial-rewrite] rate read failed, failing open:", error.message);
-      return null;
-    }
-
-    const now = Date.now();
-    const previousStart = row ? new Date(row.window_start).getTime() : now;
-    const inWindow = row ? now - previousStart < WINDOW_MS : false;
-    const count = inWindow ? (row?.request_count ?? 0) : 0;
-    const windowStartIso = inWindow ? (row!.window_start as string) : new Date(now).toISOString();
-
-    if (inWindow && count >= FREE_LIMIT) {
-      return Math.ceil((WINDOW_MS - (now - previousStart)) / 1000);
-    }
-
-    const { error: upErr } = await supabase
-      .from("ai_rate_limits")
-      .upsert(
-        { user_id: userId, window_start: windowStartIso, request_count: count + 1 },
-        { onConflict: "user_id" },
-      );
-    if (upErr) console.warn("[editorial-rewrite] rate upsert failed, failing open:", upErr.message);
-    return null;
-  } catch (e) {
-    console.warn("[editorial-rewrite] rate unexpected, failing open:", e instanceof Error ? e.message : String(e));
-    return null;
-  }
-}
 
 async function rewrite(action: Action, text: string, prompt: string): Promise<string> {
   if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is not set");
@@ -199,13 +156,13 @@ Deno.serve(async (req) => {
   if (text.length > 8000) return json(400, { error: "text too long (max 8000 chars)" });
 
   // ── Rate limit (shared AI budget) ───────────────────────────────────────────
-  const retryAfter = await checkRateLimit(supabase, userId);
-  if (retryAfter !== null) {
-    return json(
-      429,
-      { error: "Rate limit reached. Try again in an hour." },
-      { "Retry-After": String(retryAfter) },
-    );
+  try {
+    await checkAndIncrementRateLimit(supabase, userId);
+  } catch (e) {
+    if (e instanceof AIRateLimitError) {
+      return json(429, { error: e.message }, { "Retry-After": String(e.retryAfterSeconds) });
+    }
+    throw e;
   }
 
   try {

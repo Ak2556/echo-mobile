@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Warning, Trash } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { useTheme } from '../lib/theme';
+import { deleteAccount } from '../lib/supabaseEchoApi';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { showToast } from '../components/ui/Toast';
@@ -21,7 +22,7 @@ import { track } from '../lib/analytics';
  */
 export default function DeleteAccountScreen() {
   const router = useRouter();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
   const [confirmText, setConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const { resetSocialData, clearChatHistory } = useAppStore();
@@ -32,8 +33,7 @@ export default function DeleteAccountScreen() {
     if (!canDelete) return;
     setDeleting(true);
     try {
-      const { error: rpcErr } = await supabase.rpc('delete_account');
-      if (rpcErr) throw rpcErr;
+      await deleteAccount();
       track('account_deleted');
       // Best-effort: revoke session locally even though the auth.users row is
       // gone server-side. signOut() drops the AsyncStorage session entry.

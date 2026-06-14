@@ -6,7 +6,7 @@
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { moderateContent } from "./moderation.ts";
-import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "./rateLimit.ts";
+import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const DEFAULT_ECHO_AI_MODEL = "google/gemini-2.5-flash";
@@ -1032,6 +1032,15 @@ async function handleRequest(req: Request): Promise<Response> {
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
 
+  // Fail fast with an actionable error if the upstream model key is unset,
+  // rather than sending an empty Bearer token and surfacing an opaque 401.
+  if (!OPENROUTER_API_KEY) {
+    return new Response(
+      JSON.stringify({ error: "OPENROUTER_API_KEY not configured" }),
+      { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
+  }
+
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) {
     return new Response("Missing auth", { status: 401, headers: CORS_HEADERS });
@@ -1054,6 +1063,14 @@ async function handleRequest(req: Request): Promise<Response> {
     body = await req.json();
   } catch {
     return new Response("Invalid JSON", { status: 400, headers: CORS_HEADERS });
+  }
+
+  // Runtime shape guard — req.json() is untyped at runtime.
+  if (typeof body.message !== "string" && !body.confirm && !body.local_result) {
+    return new Response(
+      JSON.stringify({ error: "invalid request: expected message, confirm, or local_result" }),
+      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
   }
 
   const stream = new ReadableStream({
@@ -1206,6 +1223,7 @@ async function runAgentLoop(
       try {
         args = call.function.arguments ? JSON.parse(call.function.arguments) : {};
       } catch (e) {
+        console.error("[echo-ai] malformed tool arguments from model:", call.function.name, e instanceof Error ? e.message : String(e));
         args = {};
       }
 
