@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -15,25 +15,32 @@ import { V2FeatureGuard } from '../../components/common/V2FeatureGuard';
 function SalonDetailScreenInner() {
   const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
 
   const [salon, setSalon] = useState<Salon | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const mounted = useRef(true);
+
+  useEffect(() => { return () => { mounted.current = false; }; }, []);
 
   const load = useCallback(async () => {
     if (!slug) return;
     try {
       const s = await fetchSalonBySlug(slug);
+      if (!mounted.current) return;
       setSalon(s);
       if (s) {
         const echoes = await fetchSalonEchoes(s.id);
+        if (!mounted.current) return;
         setFeed(echoes);
       }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (mounted.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [slug]);
 
@@ -70,7 +77,7 @@ function SalonDetailScreenInner() {
     try {
       await setSalonMembership(salon.id, next);
       showToast(next ? `Joined ${salon.name}` : `Left ${salon.name}`, next ? '🏛️' : '👋');
-    } catch (e) {
+    } catch {
       // Rollback
       setSalon(prev => prev ? { ...prev, is_member: !next, member_count: next ? Math.max(0, prev.member_count - 1) : prev.member_count + 1 } : prev);
       showToast('Could not update membership', '⚠️');

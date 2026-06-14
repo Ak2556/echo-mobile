@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,22 +23,26 @@ import {
 function OfficeHourDetailScreenInner() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
 
   const [oh, setOh] = useState<OfficeHour | null>(null);
   const [questions, setQuestions] = useState<OfficeHourQuestion[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const mounted = useRef(true);
+
+  useEffect(() => { return () => { mounted.current = false; }; }, []);
 
   const load = useCallback(async () => {
     if (!id) return;
     try {
       const [a, b] = await Promise.all([fetchOfficeHour(id), fetchOfficeHourQuestions(id)]);
+      if (!mounted.current) return;
       setOh(a);
       setQuestions(b);
     } finally {
-      setLoading(false);
+      if (mounted.current) setLoading(false);
     }
   }, [id]);
 
