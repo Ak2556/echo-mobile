@@ -21,8 +21,7 @@ const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// ─── SSE helpers ─────────────────────────────────────────────────────────────
-
+// SSE helpers
 type SSEEvent =
   | { type: "conversation"; id: string }
   | { type: "text_delta"; delta: string }
@@ -35,8 +34,7 @@ function sseEncode(event: SSEEvent): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`);
 }
 
-// ─── OpenRouter ──────────────────────────────────────────────────────────────
-
+// OpenRouter
 interface ORToolCall {
   id: string;
   type: "function";
@@ -112,7 +110,7 @@ async function openRouterChat(
   };
 }
 
-// ─── Tool definitions ────────────────────────────────────────────────────────
+// Tool definitions
 //
 // Tools marked `requiresConfirm: true` are paused and surfaced to the user as
 // a confirm card. Read-only tools execute automatically.
@@ -159,9 +157,8 @@ const TOOLS: ToolSpec[] = [
         ((a.title as string | undefined)?.trim()) ||
         prompt.slice(0, 80) + (prompt.length > 80 ? "…" : "");
 
-      // Run moderation BEFORE the insert so flagged content never hits the
-      // public feed (Apple Guideline 1.1 / 4.3). Fail-open inside
-      // moderateContent — see moderation.ts for the policy.
+      // Run moderation before insert so flagged or unreviewed content never
+      // reaches the public feed.
       const verdict = await moderateContent(`${title}\n\n${prompt}\n\n${response}`);
       if (!verdict.ok) {
         throw new Error("This content can't be shared publicly.");
@@ -234,7 +231,7 @@ const TOOLS: ToolSpec[] = [
     preview: (a) => `Search feed for "${a.query}"`,
     execute: async (a, { supabase }) => {
       const limit = Math.min((a.limit as number | undefined) ?? 10, 25);
-      const q = (a.query as string).trim();
+      const q = (a.query as string).trim().replace(/[%_\\]/g, '\\$&');
       const { data, error } = await supabase
         .from("public_echoes")
         .select("id, author_id, title, prompt, response, likes_count, created_at")
@@ -789,9 +786,7 @@ const TOOLS: ToolSpec[] = [
       return { ok: true };
     },
   },
-  // Gen-Z feature tools (open_daily_question, join_salon, rsvp_office_hour)
-  // are removed for v1 launch — those surfaces are hidden in the app. The
-  // implementations are preserved in git history (commit f0307ad) for v1.1.
+  // Secondary social tools stay out of the v1 AI action surface.
 ];
 
 const TOOL_BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
@@ -805,8 +800,7 @@ const ORTOOL_DEFS: ORTool[] = TOOLS.map((t) => ({
   },
 }));
 
-// ─── System prompt ───────────────────────────────────────────────────────────
-
+// System prompt
 interface UserProfile {
   username?: string | null;
   display_name?: string | null;
@@ -835,8 +829,8 @@ function buildSystemPrompt(profile?: UserProfile | null, currentScreen?: string 
   return `You are Echo — the AI built into Echo, a social network for curated knowledge.
 
 Echo's core concept: every post ("echo") is built from two parts:
-  • prompt   — the question or idea that sparked it (≤280 chars)
-  • response — the distilled insight, answer, or take (≤1000 chars)
+  - prompt: the question or idea that sparked it (280 chars or less)
+  - response: the distilled insight, answer, or take (1000 chars or less)
 Users come to Echo to think out loud, share hard-won knowledge, and discover quality ideas.
 
 Current user: ${name} (${handle}) · ${followers} followers · ${following} following
@@ -877,8 +871,7 @@ Rules:
 // Keep a static fallback for the continuation functions that don't carry profile context.
 const FALLBACK_SYSTEM_PROMPT = buildSystemPrompt();
 
-// ─── DB helpers ──────────────────────────────────────────────────────────────
-
+// DB helpers
 async function getOrCreateConversation(
   supabase: SupabaseClient,
   userId: string,
@@ -995,7 +988,7 @@ async function logToolCall(
   return data.id;
 }
 
-// ─── Main handler ────────────────────────────────────────────────────────────
+// Main handler
 //
 // POST body shapes:
 //   { message: string, conversation_id?: string }
@@ -1104,7 +1097,7 @@ async function handleRequest(req: Request): Promise<Response> {
 
         const systemPrompt = buildSystemPrompt(profile, body.current_screen ?? null);
 
-        // ── Confirm branch: user approved/rejected a previously paused tool ──
+        // Confirm branch: user approved/rejected a previously paused tool
         if (body.local_result) {
           await recordLocalToolResultAndContinue(
             supabase,
@@ -1126,7 +1119,7 @@ async function handleRequest(req: Request): Promise<Response> {
             systemPrompt,
           );
         } else if (body.message) {
-          // ── Fresh user turn ──
+          // Fresh user turn
           // Rate-limit BEFORE we persist or call OpenRouter — bouncing the
           // request here means no Postgres write, no OpenRouter spend, and
           // the client gets a clean 429-shaped error event.
