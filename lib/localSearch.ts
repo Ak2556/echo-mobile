@@ -1,3 +1,4 @@
+import type { Href } from 'expo-router';
 import { loadTransactions, summarizeExpenses, formatMoney } from './expenses';
 import { getStreak, loadHabits, todayStr } from './habits';
 import { loadNotes } from './notes';
@@ -10,7 +11,7 @@ export interface LocalSearchResult {
   id: string;
   title: string;
   subtitle: string;
-  route: string;
+  route: Href;
 }
 
 export interface TodayProductivity {
@@ -63,7 +64,7 @@ export async function searchLocalProductivity(query: string, limit = 12): Promis
       results.push({
         app: 'habits',
         id: habit.id,
-        title: `${habit.emoji} ${habit.name}`,
+        title: habit.name,
         subtitle: `${getStreak(habit.completedDates)} day streak`,
         route: '/mini-apps/habits',
       });
