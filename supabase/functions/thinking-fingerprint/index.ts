@@ -102,7 +102,7 @@ function buildDigest(rows: EchoRow[]): string {
   for (const r of rows) {
     const head = (r.title || r.prompt || "").replace(/\s+/g, " ").trim().slice(0, 120);
     const body = (r.response || "").replace(/\s+/g, " ").trim().slice(0, 240);
-    if (head || body) lines.push(`• ${head}${body ? ` — ${body}` : ""}`);
+    if (head || body) lines.push(`- ${head}${body ? `: ${body}` : ""}`);
   }
   return lines.join("\n").slice(0, 4000);
 }
@@ -201,6 +201,14 @@ Deno.serve(async (req: Request) => {
   }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  // Require a valid user session. Cross-user reads are allowed (fingerprints
+  // are derived from public echoes), but unauthenticated callers are rejected
+  // to prevent profile enumeration and unwanted LLM synthesis costs.
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!token) return json({ error: "authorization required" }, 401);
+  const { data: authData, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !authData.user) return json({ error: "invalid authorization" }, 401);
 
   // How many moderated echoes does this user have? (cache key)
   const { count: echoCount } = await supabase

@@ -32,8 +32,17 @@ const REACTION_EMOJI: Record<string, string> = {
   disagree: '🤔',
 };
 
+const PUSH_FANOUT_SECRET = Deno.env.get('PUSH_FANOUT_SECRET') ?? '';
+
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+
+  // Only the DB trigger (which passes the shared secret) may call this function.
+  const provided = req.headers.get('x-push-fanout-secret') ?? '';
+  if (!PUSH_FANOUT_SECRET || provided !== PUSH_FANOUT_SECRET) {
+    return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
+  }
+
   let body: Body;
   try { body = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
   if (!body.user_id) return new Response('user_id required', { status: 400 });
