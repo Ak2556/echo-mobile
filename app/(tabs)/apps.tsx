@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Dimensions, StyleSheet, Platform, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import Animated, { Extrapolation, FadeInDown, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import {
@@ -38,7 +38,7 @@ interface MiniApp {
   name: string;
   description: string;
   color: string;
-  route: string;
+  route: Href;
 }
 
 const APPS: MiniApp[] = [
@@ -97,7 +97,7 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
       style={{ width: CARD }}
     >
       <AnimatedPressable
-        onPress={() => router.push(app.route as any)}
+        onPress={() => router.push(app.route)}
         depth="medium"
         fadeOnPress
         style={{
@@ -131,7 +131,7 @@ function AppCard({ app, index }: { app: MiniApp; index: number }) {
           ]}
         />
 
-        {/* Accent glow spot */}
+        {/* Accent layer */}
         <View
           style={{
             position: 'absolute',
@@ -278,19 +278,19 @@ export default function AppsScreen() {
               </AnimatedPressable>
             </View>
             <View style={{ gap: 8 }}>
-              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/habits' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/habits')} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Habits due today</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.habits.remaining.length ? dashboard.habits.remaining.join(', ') : 'All habits complete'}</Text>
               </AnimatedPressable>
-              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/notes' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/notes')} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Recent notes</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.notes.recent.map(note => note.title).join(', ') || 'No recent notes'}</Text>
               </AnimatedPressable>
-              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/expenses' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/expenses')} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Biggest expense category</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }}>{dashboard.expenses.biggestCategory ? `${dashboard.expenses.biggestCategory.category} - $${formatMoney(dashboard.expenses.biggestCategory.amount)}` : 'No expenses this week'}</Text>
               </AnimatedPressable>
-              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/voice-memo' as any)} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/voice-memo')} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Latest voice memo</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.voiceMemos.recent[0] ? `${dashboard.voiceMemos.recent[0].title} - ${formatMemoTime(dashboard.voiceMemos.recent[0].duration)}` : 'No recordings'}</Text>
               </AnimatedPressable>
@@ -301,12 +301,12 @@ export default function AppsScreen() {
         <Animated.View entering={FadeInDown.delay(55).duration(220)} style={{ gap: 10, marginBottom: 8 }}>
           <SectionTitle title="Best paired with Echo" caption="Use these when you want something worth posting or messaging about" />
           <View style={{ gap: 8 }}>
-            {[
-              { title: 'Notes -> post ideas', body: 'Capture a thought, then turn the strongest line into a public Echo.', route: '/mini-apps/notes' },
-              { title: 'Voice memos -> conversation starters', body: 'Record messy thinking first, then ask Echo to shape it.', route: '/mini-apps/voice-memo' },
-              { title: 'Habits -> progress updates', body: 'Use streaks and milestones as material for creator updates.', route: '/mini-apps/habits' },
-            ].map(item => (
-              <AnimatedPressable key={item.title} depth="soft" fadeOnPress onPress={() => router.push(item.route as any)} style={{ borderRadius: 16, padding: 14, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            {([
+              { title: 'Notes -> post ideas', body: 'Capture a thought, then turn the strongest line into a public Echo.', route: '/mini-apps/notes' as Href },
+              { title: 'Voice memos -> conversation starters', body: 'Record messy thinking first, then ask Echo to shape it.', route: '/mini-apps/voice-memo' as Href },
+              { title: 'Habits -> progress updates', body: 'Use streaks and milestones as material for creator updates.', route: '/mini-apps/habits' as Href },
+            ]).map(item => (
+              <AnimatedPressable key={item.title} depth="soft" fadeOnPress onPress={() => router.push(item.route)} style={{ borderRadius: 16, padding: 14, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>{item.title}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, lineHeight: 18 }}>{item.body}</Text>
               </AnimatedPressable>
@@ -331,7 +331,7 @@ export default function AppsScreen() {
             })}
           </ScrollView>
           {filteredResults.map(result => (
-            <AnimatedPressable depth="soft" fadeOnPress key={`${result.app}-${result.id}`} onPress={() => router.push(result.route as any)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
+            <AnimatedPressable depth="soft" fadeOnPress key={`${result.app}-${result.id}`} onPress={() => router.push(result.route)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
               <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{result.title}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{result.app} · {result.subtitle}</Text>
             </AnimatedPressable>
@@ -346,7 +346,7 @@ export default function AppsScreen() {
           </View>
         ))}
         <View style={{ alignItems: 'center', paddingVertical: 20, gap: 6 }}>
-          <Text style={{ fontSize: 24 }}>⚡</Text>
+          <Pulse color={colors.textMuted} size={24} weight="thin" />
           <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>
             No internet needed · Zero data collected
           </Text>
