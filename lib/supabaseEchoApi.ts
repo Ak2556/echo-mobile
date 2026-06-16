@@ -6,9 +6,13 @@ import {
   SupabaseEchoRow,
   SupabaseProfileRow,
 } from './mapSupabaseEcho';
+import { captureException } from './monitoring';
 
-// ─── Storage helpers ──────────────────────────────────────────────────────────
+// Escape PostgREST filter special characters before interpolating into .or() strings.
+// Prevents filter injection where a crafted query like "x%,id.neq.y" alters the filter shape.
+function escPg(q: string): string { return q.replace(/[%_\\]/g, '\\$&'); }
 
+// Storage helpers
 export type LocalImageUpload = {
   uri: string;
   base64?: string | null;
@@ -225,8 +229,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
   return data.publicUrl;
 }
 
-// ─── Profile select helper ────────────────────────────────────────────────────
-
+// Profile select helper
 const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id';
 const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response, post_type';
 
@@ -275,8 +278,7 @@ export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
   );
 }
 
-// ─── Ranked feed (server-scored) ─────────────────────────────────────────────
-
+// Ranked feed (server-scored)
 // Row shape returned by the get_ranked_feed RPC (echo + profile joined).
 type RankedFeedRow = SupabaseEchoRow & SupabaseProfileRow & { rank_score: number };
 
@@ -460,8 +462,7 @@ export async function insertRemoteEcho(params: {
   if (usernames.length) {
     insertEchoMentions(row.id, usernames).catch(() => undefined);
   }
-  // Gen-Z gamification: bump daily_post quest, award first_echo if we just
-  // crossed the threshold. All fire-and-forget; never block the publish flow.
+  // Update local progression counters without blocking the publish flow.
   bumpQuestProgress('daily_post').catch(() => undefined);
   if (usernames.length) {
     bumpQuestProgress('weekly_mention', usernames.length).catch(() => undefined);
@@ -542,8 +543,7 @@ export async function fetchEchoConversationSnapshot(
   ];
 }
 
-// ─── Semantic feed + similar echoes (For You / "more like this" rail) ────────
-
+// Semantic feed + similar echoes (For You / "more like this" rail)
 type SemanticFeedRow = SupabaseEchoRow & SupabaseProfileRow & { distance: number };
 
 export async function fetchSemanticFeed(limit = 30): Promise<FeedItem[]> {
@@ -610,8 +610,7 @@ export async function fetchSimilarEchoes(echoId: string, limit = 6): Promise<Fee
   });
 }
 
-// ─── Evolutions (trending remix lineages) ────────────────────────────────────
-
+// Evolutions (trending remix lineages)
 type TrendingEvolutionRow = {
   root_id: string;
   root_title: string | null;
@@ -750,8 +749,8 @@ export async function setRemoteRepost(echoId: string, repost: boolean): Promise<
   }
 }
 
-// ─── Knowledge reactions ───────────────────────────────────────────────────
-// Four-emoji reaction pile: 🤯 mind_blown, 📝 taking_notes, 💯 agree, 🤔 disagree.
+// Knowledge reactions
+// Supported reaction counters.
 // Each (echo, user, reaction) combo is unique; counter columns on public_echoes
 // are kept in sync by DB triggers (adjust_echo_reaction_count).
 
@@ -770,7 +769,7 @@ export async function setRemoteEchoReaction(
       .from('echo_reactions')
       .insert({ echo_id: echoId, user_id: uid, reaction });
     if (error && !error.message.includes('duplicate')) throw error;
-    // Gen-Z gamification: bump daily_react quest.
+    // Update local progression counters without blocking the reaction.
     bumpQuestProgress('daily_react').catch(() => undefined);
   } else {
     const { error } = await supabase
@@ -823,7 +822,7 @@ export async function fetchUserReactions(
     .eq('user_id', uid)
     .in('echo_id', echoIds);
   if (error) {
-    console.warn('[reactions] fetchUserReactions failed', error.message);
+    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'fetchUserReactions' } });
     return result;
   }
   for (const row of data ?? []) {
@@ -1121,8 +1120,7 @@ export async function updateRemoteProfile(updates: {
   if (error) throw error;
 }
 
-// ─── Badges ────────────────────────────────────────────────────────────────
-
+// Badges
 export interface Badge {
   id: string;
   slug: string;
@@ -1165,12 +1163,11 @@ export async function awardBadge(slug: string): Promise<void> {
     .from('user_badges')
     .insert({ user_id: uid, badge_id: (badge as { id: string }).id });
   if (error && !error.message.includes('duplicate')) {
-    console.warn('[badges] award failed', error.message);
+    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'awardBadge' } });
   }
 }
 
-// ─── Quests ────────────────────────────────────────────────────────────────
-
+// Quests
 export interface Quest {
   id: string;
   slug: string;
@@ -1282,8 +1279,7 @@ export async function bumpQuestProgress(slug: string, delta = 1): Promise<void> 
   }
 }
 
-// ─── Year in Echo ──────────────────────────────────────────────────────────
-
+// Year in Echo
 export interface YearWrap {
   user_id: string;
   year: number;
@@ -1379,8 +1375,7 @@ export async function fetchOrComputeYearWrap(year: number = new Date().getFullYe
   return wrap;
 }
 
-// ─── Office Hours (scheduled AMA) ──────────────────────────────────────────
-
+// Office Hours (scheduled AMA)
 export interface OfficeHour {
   id: string;
   host_id: string;
@@ -1586,8 +1581,7 @@ export async function setOfficeHourQuestionUpvote(questionId: string, on: boolea
   }
 }
 
-// ─── Salons (communities) ──────────────────────────────────────────────────
-
+// Salons (communities)
 export interface Salon {
   id: string;
   slug: string;
@@ -1633,7 +1627,7 @@ export async function fetchSalonBySlug(slug: string): Promise<Salon | null> {
     .eq('slug', slug)
     .maybeSingle();
   if (error) {
-    console.warn('[salons] fetchSalonBySlug failed', error.message);
+    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'fetchSalonBySlug' } });
     return null;
   }
   if (!data) return null;
@@ -1716,8 +1710,7 @@ export async function fetchSalonEchoes(salonId: string, limit = 30): Promise<Fee
   return list.map(r => mapEchoRowToFeedItem(r, profileById.get(r.author_id), empty, empty, empty));
 }
 
-// ─── Daily Question (BeReal-style ritual) ──────────────────────────────────
-
+// Daily Question (BeReal-style ritual)
 export interface DailyQuestion {
   id: string;
   active_date: string;
@@ -1749,7 +1742,7 @@ export async function fetchTodaysDailyQuestion(): Promise<DailyQuestion | null> 
     .eq('active_date', today)
     .maybeSingle();
   if (error) {
-    console.warn('[daily] fetch question failed', error.message);
+    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'fetchDailyQuestion' } });
     return null;
   }
   return (data as DailyQuestion) ?? null;
@@ -1801,7 +1794,7 @@ export async function triggerEmbedDailyAnswer(answerId: string): Promise<void> {
   try {
     await supabase.functions.invoke('embed-daily-answer', { body: { answer_id: answerId } });
   } catch {
-    // Best-effort; a later submit or backfill can reconcile.
+    // Embedding is opportunistic; ranking excludes missing vectors.
   }
 }
 
@@ -1906,8 +1899,7 @@ export async function fetchDivergentDailyAnswers(questionId: string, limit = 30)
   }));
 }
 
-// ─── User search & mentions ────────────────────────────────────────────────
-
+// User search & mentions
 /** Lightweight profile snippet returned by user search (cheaper than a full SupabaseProfileRow). */
 export interface UserSearchHit {
   id: string;
@@ -1925,11 +1917,11 @@ export async function searchRemoteUsers(query: string, limit = 8): Promise<UserS
   const { data, error } = await supabase
     .from('profiles')
     .select('id, username, display_name, avatar_color, avatar_url, is_verified')
-    .or(`username.ilike.${q}%,display_name.ilike.%${q}%`)
+    .or(`username.ilike.${escPg(q)}%,display_name.ilike.%${escPg(q)}%`)
     .order('follower_count', { ascending: false })
     .limit(limit);
   if (error) {
-    console.warn('[users] search failed', error.message);
+    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'searchUsers' } });
     return [];
   }
   return (data as UserSearchHit[]) ?? [];
@@ -1951,7 +1943,7 @@ export async function insertEchoMentions(echoId: string, usernames: string[]): P
     .select('id, username')
     .in('username', usernames);
   if (error) {
-    console.warn('[mentions] resolve failed', error.message);
+    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'insertEchoMentions.resolve' } });
     return;
   }
   const rows = (profiles ?? []).map(p => ({ echo_id: echoId, mentioned_user_id: p.id }));
@@ -1959,7 +1951,7 @@ export async function insertEchoMentions(echoId: string, usernames: string[]): P
   const { error: insErr } = await supabase.from('echo_mentions').insert(rows);
   // Duplicates are fine — PK on (echo_id, mentioned_user_id).
   if (insErr && !insErr.message.includes('duplicate')) {
-    console.warn('[mentions] insert failed', insErr.message);
+    captureException(insErr, { tags: { module: 'supabaseEchoApi', fn: 'insertEchoMentions.insert' } });
   }
 }
 
@@ -1971,14 +1963,14 @@ export async function insertCommentMentions(commentId: string, usernames: string
     .select('id, username')
     .in('username', usernames);
   if (error) {
-    console.warn('[mentions] resolve failed', error.message);
+    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'insertCommentMentions.resolve' } });
     return;
   }
   const rows = (profiles ?? []).map(p => ({ comment_id: commentId, mentioned_user_id: p.id }));
   if (!rows.length) return;
   const { error: insErr } = await supabase.from('comment_mentions').insert(rows);
   if (insErr && !insErr.message.includes('duplicate')) {
-    console.warn('[mentions] insert failed', insErr.message);
+    captureException(insErr, { tags: { module: 'supabaseEchoApi', fn: 'insertCommentMentions.insert' } });
   }
 }
 
@@ -2009,8 +2001,7 @@ export async function upsertRemoteProfileOnSignIn(username: string, displayName:
   if (error) throw error;
 }
 
-// ── Notifications ─────────────────────────────────────────────────────────────
-
+// Notifications
 export async function fetchRemoteNotifications(): Promise<import('../types').Notification[]> {
   const uid = await getSessionUserId();
   if (!uid) return [];
@@ -2069,15 +2060,14 @@ export async function markAllRemoteNotificationsRead(): Promise<void> {
     .is('read_at', null);
 }
 
-// ── Search ────────────────────────────────────────────────────────────────────
-
+// Search
 export async function searchRemoteProfiles(query: string): Promise<import('../types').User[]> {
   const q = query.trim();
   if (!q) return [];
   const { data, error } = await supabase
     .from('profiles')
     .select(PROFILE_SELECT)
-    .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+    .or(`username.ilike.%${escPg(q)}%,display_name.ilike.%${escPg(q)}%`)
     .limit(20);
   if (error) throw error;
   return (data as SupabaseProfileRow[] ?? []).map(p => ({
@@ -2103,7 +2093,7 @@ export async function searchRemoteEchoes(query: string): Promise<import('../type
   const { data: rows, error } = await supabase
     .from('public_echoes')
     .select(ECHO_SELECT)
-    .or(`title.ilike.%${bare}%,prompt.ilike.%${bare}%,response.ilike.%${bare}%`)
+    .or(`title.ilike.%${escPg(bare)}%,prompt.ilike.%${escPg(bare)}%,response.ilike.%${escPg(bare)}%`)
     .order('created_at', { ascending: false })
     .limit(30);
   if (error) throw error;
@@ -2131,8 +2121,7 @@ export async function searchRemoteEchoes(query: string): Promise<import('../type
   return list.map(r => mapEchoRowToFeedItem(r, profileById.get(r.author_id), likedSet, bookmarkedSet, repostedSet));
 }
 
-// ── Edit Echo ─────────────────────────────────────────────────────────────────
-
+// Edit Echo
 export async function updateRemoteEcho(
   echoId: string,
   updates: { title?: string; prompt?: string; response?: string; media_urls?: string[] }
@@ -2147,8 +2136,7 @@ export async function updateRemoteEcho(
   if (error) throw error;
 }
 
-// ── Direct Messages ──────────────────────────────────────────
-
+// Direct Messages
 export interface RemoteConversation {
   id: string;
   otherUserId: string;
@@ -2165,7 +2153,7 @@ export interface RemoteMessageReaction {
   id: string;
   messageId: string;
   userId: string;
-  emoji: string;
+  value: string;
 }
 
 export interface RemoteDirectMessage {
@@ -2286,18 +2274,18 @@ export async function deleteRemoteMessage(messageId: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Add an emoji reaction (idempotent upsert). */
-export async function addMessageReaction(messageId: string, emoji: string): Promise<void> {
+/** Add a message reaction. */
+export async function addMessageReaction(messageId: string, reactionValue: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase
     .from('message_reactions')
-    .upsert({ message_id: messageId, user_id: uid, emoji }, { onConflict: 'message_id,user_id,emoji' });
+    .upsert({ message_id: messageId, user_id: uid, emoji: reactionValue }, { onConflict: 'message_id,user_id,emoji' });
   if (error) throw error;
 }
 
-/** Remove an emoji reaction. */
-export async function removeMessageReaction(messageId: string, emoji: string): Promise<void> {
+/** Remove a message reaction. */
+export async function removeMessageReaction(messageId: string, reactionValue: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase
@@ -2305,7 +2293,7 @@ export async function removeMessageReaction(messageId: string, emoji: string): P
     .delete()
     .eq('message_id', messageId)
     .eq('user_id', uid)
-    .eq('emoji', emoji);
+    .eq('emoji', reactionValue);
   if (error) throw error;
 }
 
@@ -2346,13 +2334,12 @@ export async function fetchRemoteMessages(
       id: r.id as string,
       messageId: m.id as string,
       userId: r.user_id as string,
-      emoji: r.emoji as string,
+      value: r.emoji as string,
     })),
   }));
 }
 
-// ── Suggested Users ──────────────────────────────────────────
-
+// Suggested Users
 export async function fetchSuggestedUsers(): Promise<import('../types').User[]> {
   const uid = await getSessionUserId();
   if (!uid) return [];
@@ -2389,7 +2376,7 @@ export async function fetchSuggestedUsers(): Promise<import('../types').User[]> 
   }));
 }
 
-// ── Thinking-partner matching ────────────────────────────────
+// Thinking-partner matching
 //
 // Surfaces users by how their "thinking centroid" (avg echo embedding)
 // compares to the viewer's — kindred minds ('similar') or productive friction
@@ -2441,8 +2428,7 @@ export async function fetchThinkingPartners(
   }));
 }
 
-// ── Thinking Fingerprint ─────────────────────────────────────
-
+// Thinking Fingerprint
 /** An AI-synthesised portrait of how a user thinks, derived from their echoes. */
 export interface ThinkingFingerprint {
   archetype: string;
@@ -2490,8 +2476,7 @@ export async function fetchThinkingFingerprint(
   };
 }
 
-// ── Block / Mute ─────────────────────────────────────────────
-
+// Block / Mute
 export async function fetchRemoteBlocks(): Promise<string[]> {
   const uid = await getSessionUserId();
   if (!uid) return [];
@@ -2534,6 +2519,16 @@ export async function setRemoteBlock(targetUserId: string, block: boolean): Prom
 
 export async function deleteAccount(): Promise<void> {
   const { error } = await supabase.rpc('delete_account');
+  if (error) throw error;
+}
+
+export async function deleteRemoteAIConversations(): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const { error } = await supabase
+    .from('ai_conversations')
+    .delete()
+    .eq('user_id', uid);
   if (error) throw error;
 }
 

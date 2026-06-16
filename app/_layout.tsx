@@ -18,7 +18,7 @@ import { AuthListenerProvider } from '../lib/auth';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
 import '../global.css';
 
-// One-time migration: evict stale seed/mock data persisted before v2.
+// One-time migration: evict stale seeded data persisted before v2.
 const DATA_VERSION = 2;
 if (persistGet<number>('_dataVersion', 0) < DATA_VERSION) {
   ['notifications', 'conversations', 'messagesByConversation', 'stories'].forEach(persistDelete);
@@ -65,9 +65,9 @@ function UniversalLinkRouter(): null {
         if (parsed.hostname !== 'echo.app' && parsed.hostname !== 'www.echo.app') return;
         const [, prefix, id] = parsed.pathname.split('/');
         if (!id) return;
-        if (prefix === 'e') router.push(`/thread/${id}` as any);
-        else if (prefix === 'u') router.push(`/user/${id}` as any);
-        else if (prefix === 'c') router.push(`/comments/${id}` as any);
+        if (prefix === 'e') router.push({ pathname: '/thread/[id]', params: { id } });
+        else if (prefix === 'u') router.push({ pathname: '/user/[id]', params: { id } });
+        else if (prefix === 'c') router.push({ pathname: '/comments/[id]', params: { id } });
       } catch { /* malformed URL — ignore */ }
     };
     Linking.getInitialURL().then(url => { if (url) handle(url); });
@@ -102,20 +102,20 @@ function RootLayout() {
     if (Platform.OS === 'web') return;
 
     let cancelled = false;
+    const VALID_KINDS = new Set(['daily_question', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm']);
     const route = (data: Record<string, unknown> | null | undefined) => {
       if (!data) return;
       const kind = String(data.kind ?? '');
+      if (!VALID_KINDS.has(kind)) return;
       const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
-      if (!targetId) return;
+      if (!targetId && kind !== 'daily_question') return;
       track('notification_tapped', { kind });
-      if (kind === 'daily_question') router.push('/daily-question' as any);
-      else if (kind === 'follow') router.push(`/user/${targetId}` as any);
+      if (kind === 'daily_question') router.push('/daily-question');
+      else if (kind === 'follow') router.push({ pathname: '/user/[id]', params: { id: targetId } });
       else if (kind === 'comment' || kind === 'reaction' || kind === 'like' || kind === 'quote' || kind === 'mention' || kind === 'repost' || kind === 'bookmark') {
-        router.push(`/thread/${targetId}` as any);
+        router.push({ pathname: '/thread/[id]', params: { id: targetId } });
       } else if (kind === 'dm') {
-        router.push(`/messages/${targetId}` as any);
-      } else {
-        router.push(`/thread/${targetId}` as any);
+        router.push({ pathname: '/messages/[id]', params: { id: targetId } });
       }
     };
 
@@ -166,17 +166,7 @@ function RootLayout() {
           <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="edit-post" options={{ presentation: 'modal', animation: 'fade' }} />
-          {/* Mini Apps */}
-          <Stack.Screen name="mini-apps/calculator" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/converter" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/bill-splitter" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/pomodoro" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/password-gen" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/world-clock" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/json-formatter" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/markdown" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/color-tools" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mini-apps/bmi" options={{ presentation: 'card' }} />
+          <Stack.Screen name="mini-apps" options={{ presentation: 'card' }} />
         </Stack>
         <ToastProvider />
         <ConsentBanner />
