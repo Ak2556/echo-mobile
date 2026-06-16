@@ -69,11 +69,34 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
+  // Require a valid user session.
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!token) {
+    return new Response(JSON.stringify({ error: "authorization required" }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+  const { data: authData, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !authData.user) {
+    return new Response(JSON.stringify({ error: "invalid authorization" }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
   const { data: row, error: fetchErr } = await supabase
     .from("daily_answers")
-    .select("id, answer")
+    .select("id, answer, user_id")
     .eq("id", answerId)
     .single();
+
+  if (!fetchErr && row && (row as { user_id: string }).user_id !== authData.user.id) {
+    return new Response(JSON.stringify({ error: "forbidden" }), {
+      status: 403,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
   if (fetchErr || !row) {
     return new Response(JSON.stringify({ error: fetchErr?.message ?? "answer not found" }), {
       status: 404,

@@ -77,11 +77,23 @@ async function generateEmbedding(text: string, model: string, dims: number | nul
   return values;
 }
 
+const ADMIN_SECRET = Deno.env.get("ADMIN_SECRET") ?? "";
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
+
+  // Admin-only ops tool — reject all callers that don't know the secret.
+  const provided = req.headers.get("x-admin-secret") ?? "";
+  if (!ADMIN_SECRET || provided !== ADMIN_SECRET) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
   if (!OPENROUTER_API_KEY) {
     return new Response(JSON.stringify({ error: "OPENROUTER_API_KEY not configured" }), {
       status: 500,
