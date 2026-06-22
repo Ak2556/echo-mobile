@@ -1,10 +1,8 @@
 /**
  * Feature flags for v1 launch scope discipline.
  *
- * For launch we hide the "Gen Z feature pack" surfaces from navigation — the
- * code stays in the repo, the screens still render if you deep-link to them,
- * but no UI affordance exposes them. Flip these to `true` post-launch (or
- * via remote config once we add it) to re-enable.
+ * Some secondary surfaces stay hidden from navigation at launch. The screens
+ * still render through deep links, but no primary UI affordance exposes them.
  *
  * The flags are read at module load. Toggling at runtime would require a
  * proper remote-config plumbing; for v1 a redeploy is fine.
@@ -14,19 +12,19 @@ const FLAGS = {
   /** Daily-question banner on Discover + answer screen. */
   dailyQuestion: true,
   /** Salons browse, create, and individual salon feed. */
-  salons: false,
+  salons: true,
   /** Office hours list + RSVP. */
-  officeHours: false,
+  officeHours: true,
   /** Year in Echo annual recap. */
-  yearInEcho: false,
-  /** Gamified quests with XP progression. */
-  quests: false,
+  yearInEcho: true,
+  /** Quests with XP progression. */
+  quests: true,
   /** Achievement badges. */
-  badges: false,
+  badges: true,
   /** Ephemeral 24h stories (also currently only works on local mode). */
   stories: false,
   /** Productivity mini-apps (notes, habits, expenses, voice memos, etc.). */
-  miniApps: false,
+  miniApps: true,
   /** LiveKit-based audio rooms. */
   liveAudio: false,
 } as const;

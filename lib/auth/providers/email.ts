@@ -1,38 +1,47 @@
-import * as Linking from 'expo-linking';
 import { supabase } from '../../supabase';
 import type { ProviderResult } from '../types';
+import { withAuthTimeout } from '../timeout';
 
 /**
- * Email magic-link sign-in.
+ * Email OTP sign-in.
  *
- * Replaces the email+password flow entirely. Supabase emails a one-tap link
- * that opens `echo://auth/callback?code=…` — the deep-link handler in
- * lib/auth/listener.ts consumes the code via exchangeCodeForSession and the
- * normal SIGNED_IN event takes over.
+ *   sendEmailOtp(email)            — sends a 6-digit code to the inbox
+ *   verifyEmailOtp(email, code)    — verifies; on success SIGNED_IN fires
  *
- * Requirements (one-time, user-side):
- *   - Supabase → Auth → Providers → Email: enable "Magic Link"
- *   - Supabase → Auth → URL Configuration → add `echo://auth/callback`
- *     to the Redirect URLs allowlist
+ * No magic links, no deep-link handling, no email-scanner token theft.
+ * The user types the code directly in the app — same UX as phone OTP.
  *
- * No password screens, no reset flow, no email-confirmation screen. The
- * magic link IS the verification.
+ * Requirements (one-time, Supabase dashboard):
+ *   - Auth → Providers → Email: "Confirm email" may remain on; OTP codes
+ *     work regardless of whether magic links are also enabled.
  */
-export async function sendMagicLink(email: string): Promise<ProviderResult> {
+
+export async function sendEmailOtp(email: string): Promise<ProviderResult> {
   const trimmed = email.trim().toLowerCase();
   if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
     return { error: 'Enter a valid email address.' };
   }
+  const { error } = await withAuthTimeout(
+    supabase.auth.signInWithOtp({
+      email: trimmed,
+      options: { shouldCreateUser: true },
+    }),
+  );
+  return { error: error?.message ?? null };
+}
 
-  const redirectTo = Linking.createURL('auth/callback');
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email: trimmed,
-    options: {
-      emailRedirectTo: redirectTo,
-      // shouldCreateUser defaults to true — this is BOTH signin and signup.
-    },
-  });
-
+export async function verifyEmailOtp(email: string, code: string): Promise<ProviderResult> {
+  const trimmed = email.trim().toLowerCase();
+  const cleaned = code.trim();
+  if (cleaned.length !== 6) {
+    return { error: 'Enter the 6-digit code.' };
+  }
+  const { error } = await withAuthTimeout(
+    supabase.auth.verifyOtp({
+      email: trimmed,
+      token: cleaned,
+      type: 'email',
+    }),
+  );
   return { error: error?.message ?? null };
 }

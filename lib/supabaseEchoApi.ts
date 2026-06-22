@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import * as FileSystem from 'expo-file-system/legacy';
-import { FeedItem, Comment, EvolutionGroup, RemixTreeNode } from '../types';
+import { FeedItem, Comment, EvolutionGroup, RemixTreeNode, PerspectiveCounts, PerspectiveType } from '../types';
 import {
   mapEchoRowToFeedItem,
   SupabaseEchoRow,
@@ -32,6 +32,11 @@ export type LocalVideoUpload = {
 
 type UploadableImage = string | LocalImageUpload;
 type UploadableVideo = string | LocalVideoUpload;
+
+const ALLOWED_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']);
+const ALLOWED_IMAGE_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
+const ALLOWED_VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'm4v', 'webm']);
+const ALLOWED_VIDEO_CONTENT_TYPES = new Set(['video/mp4', 'video/quicktime', 'video/x-m4v', 'video/webm']);
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -74,6 +79,17 @@ function imageContentType(image: UploadableImage): string {
   if (ext === 'webp') return 'image/webp';
   if (ext === 'heic' || ext === 'heif') return 'image/heic';
   return 'image/jpeg';
+}
+
+function assertImageUploadAllowed(image: UploadableImage): { ext: string; contentType: string } {
+  const ext = imageExtension(image);
+  const contentType = imageContentType(image).toLowerCase();
+
+  if (!ALLOWED_IMAGE_EXTENSIONS.has(ext) || !ALLOWED_IMAGE_CONTENT_TYPES.has(contentType)) {
+    throw new Error('Unsupported image type. Use JPG, PNG, WebP, HEIC, or HEIF.');
+  }
+
+  return { ext: ext === 'jpeg' ? 'jpg' : ext, contentType };
 }
 
 async function imageUploadBody(image: UploadableImage): Promise<Blob | ArrayBuffer> {
@@ -142,6 +158,17 @@ function videoContentType(video: UploadableVideo): string {
   return 'video/mp4';
 }
 
+function assertVideoUploadAllowed(video: UploadableVideo): { ext: string; contentType: string } {
+  const ext = videoExtension(video);
+  const contentType = videoContentType(video).toLowerCase();
+
+  if (!ALLOWED_VIDEO_EXTENSIONS.has(ext) || !ALLOWED_VIDEO_CONTENT_TYPES.has(contentType)) {
+    throw new Error('Unsupported video type. Use MP4, MOV, M4V, or WebM.');
+  }
+
+  return { ext, contentType };
+}
+
 /**
  * Upload a local image URI to the `avatars` bucket.
  * Uses the authenticated session UID as the folder name (required by RLS).
@@ -150,12 +177,12 @@ function videoContentType(video: UploadableVideo): string {
 export async function uploadAvatar(image: UploadableImage): Promise<string> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
+  await checkRemoteAppRateLimit('avatar_upload_hour', 10, 3600);
 
-  const ext = imageExtension(image);
+  const { ext, contentType } = assertImageUploadAllowed(image);
   const path = `${uid}/avatar.${ext}`;
 
   const body = await imageUploadBody(image);
-  const contentType = imageContentType(image);
 
   const { error } = await supabase.storage
     .from('avatars')
@@ -174,14 +201,14 @@ export async function uploadAvatar(image: UploadableImage): Promise<string> {
 export async function uploadEchoImages(images: UploadableImage[]): Promise<string[]> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
+  await checkRemoteAppRateLimit('echo_image_upload_hour', 60, 3600);
 
   const urls: string[] = [];
   for (let i = 0; i < Math.min(images.length, 4); i++) {
     const image = images[i];
-    const ext = imageExtension(image);
+    const { ext, contentType } = assertImageUploadAllowed(image);
     const path = `${uid}/${Date.now()}_${i}.${ext}`;
 
-    const contentType = imageContentType(image);
     const uri = typeof image === 'string' ? image : image.uri;
 
     if (/^https?:\/\//i.test(uri)) {
@@ -208,11 +235,11 @@ export async function uploadEchoImages(images: UploadableImage[]): Promise<strin
 export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
+  await checkRemoteAppRateLimit('echo_video_upload_hour', 10, 3600);
 
   const uri = typeof video === 'string' ? video : video.uri;
-  const ext = videoExtension(video);
+  const { ext, contentType } = assertVideoUploadAllowed(video);
   const path = `${uid}/${Date.now()}_video.${ext}`;
-  const contentType = videoContentType(video);
 
   if (/^https?:\/\//i.test(uri)) {
     const response = await fetch(uri);
@@ -231,11 +258,25 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 
 // Profile select helper
 const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id';
-const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response, post_type';
+const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, perspective_type, perspective_note, source_url, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response, post_type';
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.user?.id ?? null;
+}
+
+async function checkRemoteAppRateLimit(action: string, limit: number, windowSeconds: number): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase.rpc('check_app_rate_limit', {
+    p_action: action,
+    p_limit: limit,
+    p_window_seconds: windowSeconds,
+    p_user_id: uid,
+  });
+  if (error) {
+    throw new Error('Rate limit reached. Try again later.');
+  }
 }
 
 export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
@@ -425,6 +466,9 @@ export async function insertRemoteEcho(params: {
   mediaUrls?: string[];
   quotedEchoId?: string;
   parentEchoId?: string;
+  perspectiveType?: PerspectiveType;
+  perspectiveNote?: string;
+  sourceUrl?: string;
   sourceConversationId?: string;
   conversationSnapshot?: { role: 'user' | 'assistant'; content: string }[];
   coAuthorId?: string;
@@ -445,6 +489,9 @@ export async function insertRemoteEcho(params: {
       ...(params.mediaUrls?.length ? { media_urls: params.mediaUrls } : {}),
       ...(params.quotedEchoId ? { quoted_echo_id: params.quotedEchoId } : {}),
       ...(params.parentEchoId ? { parent_echo_id: params.parentEchoId } : {}),
+      ...(params.perspectiveType ? { perspective_type: params.perspectiveType } : {}),
+      ...(params.perspectiveNote?.trim() ? { perspective_note: params.perspectiveNote.trim() } : {}),
+      ...(params.sourceUrl?.trim() ? { source_url: params.sourceUrl.trim() } : {}),
       ...(params.sourceConversationId ? { source_conversation_id: params.sourceConversationId } : {}),
       ...(params.conversationSnapshot?.length ? { conversation_snapshot: params.conversationSnapshot } : {}),
       ...(params.coAuthorId ? { co_author_id: params.coAuthorId } : {}),
@@ -625,10 +672,34 @@ type TrendingEvolutionRow = {
   root_avatar_url: string | null;
   root_is_verified: boolean;
   branch_count: number;
+  agree_count: number;
+  challenge_count: number;
+  reframe_count: number;
+  story_count: number;
+  evidence_count: number;
+  question_count: number;
   unique_authors: number;
   tree_engagement: number;
   newest_remix_at: string | null;
 };
+
+function rowToPerspectiveCounts(row: {
+  agree_count?: number | null;
+  challenge_count?: number | null;
+  reframe_count?: number | null;
+  story_count?: number | null;
+  evidence_count?: number | null;
+  question_count?: number | null;
+}): PerspectiveCounts {
+  return {
+    agree: row.agree_count ?? 0,
+    challenge: row.challenge_count ?? 0,
+    reframe: row.reframe_count ?? 0,
+    story: row.story_count ?? 0,
+    evidence: row.evidence_count ?? 0,
+    question: row.question_count ?? 0,
+  };
+}
 
 export async function fetchTrendingEvolutions(limit = 30): Promise<EvolutionGroup[]> {
   const { data, error } = await supabase.rpc('get_trending_evolutions', { p_limit: limit });
@@ -648,6 +719,7 @@ export async function fetchTrendingEvolutions(limit = 30): Promise<EvolutionGrou
     rootAvatarUrl: r.root_avatar_url ?? undefined,
     rootIsVerified: r.root_is_verified,
     branchCount: r.branch_count,
+    perspectiveCounts: rowToPerspectiveCounts(r),
     uniqueAuthors: r.unique_authors,
     treeEngagement: r.tree_engagement,
     newestRemixAt: r.newest_remix_at,
@@ -666,6 +738,9 @@ type RemixTreeRow = {
   comment_count: number;
   repost_count: number;
   remix_count: number;
+  perspective_type: PerspectiveType | null;
+  perspective_note: string | null;
+  source_url: string | null;
   created_at: string;
   media_urls: string[] | null;
   username: string;
@@ -691,6 +766,9 @@ export async function fetchRemixTree(rootId: string): Promise<RemixTreeNode[]> {
     commentCount: r.comment_count,
     repostCount: r.repost_count,
     remixCount: r.remix_count,
+    perspectiveType: r.perspective_type ?? undefined,
+    perspectiveNote: r.perspective_note ?? undefined,
+    sourceUrl: r.source_url ?? undefined,
     createdAt: r.created_at,
     mediaUrls: r.media_urls ?? undefined,
     username: r.username,
@@ -938,6 +1016,42 @@ export async function submitRemoteReport(params: {
   if (error) throw error;
 }
 
+export interface MyReport {
+  id: string;
+  targetType: 'echo' | 'user' | 'comment';
+  targetId: string;
+  reason: string;
+  status: 'open' | 'reviewing' | 'resolved' | 'dismissed';
+  actionTaken: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+}
+
+export async function fetchMyReports(): Promise<MyReport[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase
+    .from('reports')
+    .select('id, target_type, target_id, reason, status, action_taken, created_at, reviewed_at')
+    .eq('reporter_id', uid)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []).map((r: {
+    id: string; target_type: string; target_id: string; reason: string;
+    status: string; action_taken: string | null; created_at: string; reviewed_at: string | null;
+  }) => ({
+    id: r.id,
+    targetType: r.target_type as MyReport['targetType'],
+    targetId: r.target_id,
+    reason: r.reason,
+    status: r.status as MyReport['status'],
+    actionTaken: r.action_taken,
+    createdAt: r.created_at,
+    reviewedAt: r.reviewed_at,
+  }));
+}
+
 export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
@@ -1109,7 +1223,7 @@ export async function updateRemoteProfile(updates: {
   display_name?: string;
   bio?: string;
   avatar_color?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   pronouns?: string | null;
   mood?: string | null;
   mood_expires_at?: string | null;
@@ -1914,6 +2028,7 @@ export interface UserSearchHit {
 export async function searchRemoteUsers(query: string, limit = 8): Promise<UserSearchHit[]> {
   const q = query.trim().replace(/^@+/, '');
   if (!q) return [];
+  await checkRemoteAppRateLimit('search_users_minute', 40, 60);
   const { data, error } = await supabase
     .from('profiles')
     .select('id, username, display_name, avatar_color, avatar_url, is_verified')
@@ -2015,21 +2130,21 @@ export async function fetchRemoteNotifications(): Promise<import('../types').Not
   const rows = data ?? [];
   if (rows.length === 0) return [];
 
-  const actorIds = [...new Set(rows.map((r: { actor_id: string }) => r.actor_id))];
+  const actorIds = [...new Set(rows.map((r: { actor_id: string | null }) => r.actor_id).filter(Boolean))] as string[];
   const { data: profiles } = await supabase.from('profiles').select(PROFILE_SELECT).in('id', actorIds);
   const profileById = new Map((profiles as SupabaseProfileRow[] ?? []).map(p => [p.id, p]));
 
   return rows.map((r: {
-    id: string; type: string; actor_id: string; target_kind: string | null;
+    id: string; type: string; actor_id: string | null; target_kind: string | null;
     target_id: string | null; preview: string | null; read_at: string | null; created_at: string;
   }) => {
-    const actor = profileById.get(r.actor_id);
+    const actor = r.actor_id ? profileById.get(r.actor_id) : undefined;
     return {
       id: r.id,
       type: r.type as import('../types').Notification['type'],
-      fromUserId: r.actor_id,
-      fromUsername: actor?.username ?? 'user',
-      fromDisplayName: actor?.display_name || actor?.username || 'User',
+      fromUserId: r.actor_id ?? '',
+      fromUsername: actor?.username ?? 'echo',
+      fromDisplayName: actor?.display_name || actor?.username || 'Echo',
       fromAvatarColor: actor?.avatar_color || '#3B82F6',
       fromAvatarUrl: actor?.avatar_url ?? undefined,
       targetId: r.target_id ?? undefined,
@@ -2064,6 +2179,7 @@ export async function markAllRemoteNotificationsRead(): Promise<void> {
 export async function searchRemoteProfiles(query: string): Promise<import('../types').User[]> {
   const q = query.trim();
   if (!q) return [];
+  await checkRemoteAppRateLimit('search_profiles_minute', 40, 60);
   const { data, error } = await supabase
     .from('profiles')
     .select(PROFILE_SELECT)
@@ -2088,6 +2204,7 @@ export async function searchRemoteProfiles(query: string): Promise<import('../ty
 export async function searchRemoteEchoes(query: string): Promise<import('../types').FeedItem[]> {
   const q = query.trim();
   if (!q) return [];
+  await checkRemoteAppRateLimit('search_echoes_minute', 40, 60);
   // Strip leading # for hashtag searches
   const bare = q.startsWith('#') ? q.slice(1) : q;
   const { data: rows, error } = await supabase
