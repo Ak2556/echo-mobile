@@ -9,6 +9,8 @@ export interface SettingsSlice {
   setNotificationsEnabled: (v: boolean) => void;
   privateAccount: boolean;
   setPrivateAccount: (v: boolean) => void;
+  profilePhotoVisible: boolean;
+  setProfilePhotoVisible: (v: boolean) => void;
   darkMode: boolean;
   setDarkMode: (v: boolean) => void;
   // ── Notification prefs ──
@@ -43,6 +45,7 @@ export interface SettingsSlice {
   chatBubbleStyle: 'modern' | 'classic' | 'minimal'; setChatBubbleStyle: (v: 'modern' | 'classic' | 'minimal') => void;
   showTypingIndicator: boolean; setShowTypingIndicator: (v: boolean) => void;
   streamResponses: boolean; setStreamResponses: (v: boolean) => void;
+  personaLearningEnabled: boolean; setPersonaLearningEnabled: (v: boolean) => void;
   // ── Content & Feed ──
   autoplayStories: boolean; setAutoplayStories: (v: boolean) => void;
   dataSaver: boolean; setDataSaver: (v: boolean) => void;
@@ -65,13 +68,17 @@ export interface SettingsSlice {
   setHasSeenChatEmptyHint: (v: boolean) => void;
   hasSentFirstEcho: boolean;
   setHasSentFirstEcho: (v: boolean) => void;
+  hasCompletedProductOnboarding: boolean;
+  setHasCompletedProductOnboarding: (v: boolean) => void;
+  onboardingDraftCreated: boolean;
+  setOnboardingDraftCreated: (v: boolean) => void;
   // ── Feed feedback signals ──
   notInterestedIds: string[];
   setNotInterestedIds: (v: string[]) => void;
   feedFeedback: Record<string, 'less' | 'more'>;
   setFeedFeedback: (v: Record<string, 'less' | 'more'>) => void;
-  feedScope: 'semantic' | 'forYou' | 'following';
-  setFeedScope: (v: 'semantic' | 'forYou' | 'following') => void;
+  feedScope: 'semantic' | 'forYou' | 'following' | 'latest';
+  setFeedScope: (v: 'semantic' | 'forYou' | 'following' | 'latest') => void;
   // ── Recent searches ──
   recentSearches: string[];
   setRecentSearches: (v: string[]) => void;
@@ -101,6 +108,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     hapticEnabled: b('hapticEnabled', true), setHapticEnabled: s(set, 'hapticEnabled'),
     notificationsEnabled: b('notificationsEnabled', true), setNotificationsEnabled: s(set, 'notificationsEnabled'),
     privateAccount: b('privateAccount', false), setPrivateAccount: s(set, 'privateAccount'),
+    profilePhotoVisible: b('profilePhotoVisible', true), setProfilePhotoVisible: s(set, 'profilePhotoVisible'),
     darkMode: b('darkMode', true), setDarkMode: s(set, 'darkMode'),
     notifyLikes: b('notifyLikes', true), setNotifyLikes: s(set, 'notifyLikes'),
     notifyComments: b('notifyComments', true), setNotifyComments: s(set, 'notifyComments'),
@@ -135,6 +143,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setChatBubbleStyle: (v) => { persistSet('chatBubbleStyle', v); set({ chatBubbleStyle: v }); },
     showTypingIndicator: b('showTypingIndicator', true), setShowTypingIndicator: s(set, 'showTypingIndicator'),
     streamResponses: b('streamResponses', true), setStreamResponses: s(set, 'streamResponses'),
+    personaLearningEnabled: b('personaLearningEnabled', true), setPersonaLearningEnabled: s(set, 'personaLearningEnabled'),
     autoplayStories: b('autoplayStories', true), setAutoplayStories: s(set, 'autoplayStories'),
     dataSaver: b('dataSaver', false), setDataSaver: s(set, 'dataSaver'),
     sensitiveContentFilter: b('sensitiveContentFilter', true), setSensitiveContentFilter: s(set, 'sensitiveContentFilter'),
@@ -149,11 +158,13 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
     hasSeenChatEmptyHint: b('hasSeenChatEmptyHint', false), setHasSeenChatEmptyHint: s(set, 'hasSeenChatEmptyHint'),
     hasSentFirstEcho: b('hasSentFirstEcho', false), setHasSentFirstEcho: s(set, 'hasSentFirstEcho'),
+    hasCompletedProductOnboarding: b('hasCompletedProductOnboarding', false), setHasCompletedProductOnboarding: s(set, 'hasCompletedProductOnboarding'),
+    onboardingDraftCreated: b('onboardingDraftCreated', false), setOnboardingDraftCreated: s(set, 'onboardingDraftCreated'),
     notInterestedIds: persistGet<string[]>('notInterestedIds', []),
     setNotInterestedIds: (v) => { persistSet('notInterestedIds', v); set({ notInterestedIds: v }); },
     feedFeedback: persistGet<Record<string, 'less' | 'more'>>('feedFeedback', {}),
     setFeedFeedback: (v) => { persistSet('feedFeedback', v); set({ feedFeedback: v }); },
-    feedScope: persistGet<'semantic' | 'forYou' | 'following'>('feedScope', 'forYou'),
+    feedScope: persistGet<'semantic' | 'forYou' | 'following' | 'latest'>('feedScope', 'forYou'),
     setFeedScope: (v) => { persistSet('feedScope', v); set({ feedScope: v }); },
     recentSearches: persistGet<string[]>('recentSearches', []),
     setRecentSearches: (v) => { persistSet('recentSearches', v.slice(0, 10)); set({ recentSearches: v.slice(0, 10) }); },
@@ -169,6 +180,9 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
         stories: [], blockedIds: [],
         hasSeenOnboarding: false, username: '', displayName: '', bio: '',
         avatarColor: '#3B82F6', interests: [],
+        profilePhotoVisible: true,
+        personaLearningEnabled: true,
+        hasCompletedProductOnboarding: false, onboardingDraftCreated: false,
       });
     },
     getCacheSize: () => {

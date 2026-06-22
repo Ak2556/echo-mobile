@@ -25,11 +25,11 @@ type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' 
 type SectionItem = { type: 'item'; data: Notification };
 type ListItem = SectionHeader | SectionItem;
 
-const REACTION_EMOJI: Record<string, string> = {
-  mind_blown: '🤯',
-  taking_notes: '📝',
-  agree: '💯',
-  disagree: '🤔',
+const REACTION_LABEL: Record<string, string> = {
+  mind_blown: 'insightful',
+  taking_notes: 'taking notes',
+  agree: 'agree',
+  disagree: 'rethink',
 };
 
 function labelForType(n: Notification): string {
@@ -41,11 +41,13 @@ function labelForType(n: Notification): string {
     case 'mention': return 'mentioned you';
     case 'dm': return 'sent a message';
     case 'reaction': {
-      const emoji = n.targetPreview ? REACTION_EMOJI[n.targetPreview] : '';
-      return emoji ? `reacted with ${emoji}` : 'reacted to your echo';
+      const label = n.targetPreview ? REACTION_LABEL[n.targetPreview] : '';
+      return label ? `reacted: ${label}` : 'reacted to your echo';
     }
     case 'bookmark': return 'saved your echo';
     case 'quote': return 'quoted your echo';
+    case 'report_resolved': return n.targetPreview ?? 'Your report has been reviewed';
+    case 'content_removed': return n.targetPreview ?? 'Content was removed by a moderator';
     default: return '';
   }
 }
@@ -119,8 +121,8 @@ export default function NotificationsScreen() {
     type Bucket = { key: string; notifications: Notification[] };
     const buckets = new Map<string, Bucket>();
     for (const n of visible) {
-      // Reactions and the preview field together — so "🤯 on echo X" buckets
-      // separately from "📝 on echo X".
+      // Reactions and the preview field together, so distinct reactions on
+      // the same echo remain in separate buckets.
       const subkey = n.type === 'reaction' ? `${n.targetId ?? n.fromUserId}:${n.targetPreview ?? ''}` : (n.targetId ?? n.fromUserId);
       const k = `${n.type}:${subkey}`;
       const b = buckets.get(k) ?? { key: k, notifications: [] };
@@ -231,7 +233,6 @@ export default function NotificationsScreen() {
         />
       )}
 
-      {/* Glass header */}
       <View
         style={{
           position: 'absolute',
@@ -305,9 +306,7 @@ export default function NotificationsScreen() {
           </AnimatedPressable>
         </View>
 
-        {/* Filter tabs — reduced from 10 → 5 most-used. Power-user filters
-            (saves, quotes, reactions, reposts) collapsed into 'all' for now;
-            we can add a secondary filter sheet if real demand surfaces. */}
+        {/* Filter tabs */}
         <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 16, gap: 8 }}>
           {(['all', 'unread', 'mentions', 'replies', 'follows'] as const).map(tab => (
             <AnimatedPressable

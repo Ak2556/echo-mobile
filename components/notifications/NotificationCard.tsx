@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope, BookmarkSimple, Sparkle, Quotes } from 'phosphor-react-native';
+import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope, BookmarkSimple, Sparkle, Quotes, CheckCircle, ShieldWarning } from 'phosphor-react-native';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { Notification } from '../../types';
@@ -16,13 +16,15 @@ const BG_MAP: Record<string, string> = {
   reaction: 'rgba(236,72,153,0.15)',
   bookmark: 'rgba(234,179,8,0.15)',
   quote: 'rgba(139,92,246,0.15)',
+  report_resolved: 'rgba(16,185,129,0.15)',
+  content_removed: 'rgba(239,68,68,0.15)',
 };
 
-const REACTION_EMOJI: Record<string, string> = {
-  mind_blown: '🤯',
-  taking_notes: '📝',
-  agree: '💯',
-  disagree: '🤔',
+const REACTION_LABEL: Record<string, string> = {
+  mind_blown: 'insightful',
+  taking_notes: 'taking notes',
+  agree: 'agree',
+  disagree: 'rethink',
 };
 
 function actionTextFor(n: Notification): string {
@@ -34,11 +36,13 @@ function actionTextFor(n: Notification): string {
     case 'mention': return 'mentioned you';
     case 'dm': return 'sent you a message';
     case 'reaction': {
-      const emoji = n.targetPreview ? REACTION_EMOJI[n.targetPreview] : '';
-      return emoji ? `reacted with ${emoji}` : 'reacted to your echo';
+      const label = n.targetPreview ? REACTION_LABEL[n.targetPreview] : '';
+      return label ? `reacted: ${label}` : 'reacted to your echo';
     }
     case 'bookmark': return 'saved your echo';
     case 'quote': return 'quoted your echo';
+    case 'report_resolved': return n.targetPreview ?? 'Your report has been reviewed';
+    case 'content_removed': return n.targetPreview ?? 'Content was removed';
     default: return 'interacted with you';
   }
 }
@@ -53,9 +57,11 @@ function NotifIcon({ type }: { type: string }) {
     case 'mention':  return <At               {...p} color="#F59E0B" />;
     case 'dm':       return <Envelope         {...p} color="#06B6D4" />;
     case 'reaction': return <Sparkle          {...p} color="#EC4899" />;
-    case 'bookmark': return <BookmarkSimple   {...p} color="#EAB308" />;
-    case 'quote':    return <Quotes           {...p} color="#8B5CF6" />;
-    default:         return <HeartStraight    {...p} color="#EF4444" />;
+    case 'bookmark':         return <BookmarkSimple   {...p} color="#EAB308" />;
+    case 'quote':            return <Quotes           {...p} color="#8B5CF6" />;
+    case 'report_resolved':  return <CheckCircle      {...p} color="#10B981" />;
+    case 'content_removed':  return <ShieldWarning    {...p} color="#EF4444" />;
+    default:                 return <HeartStraight    {...p} color="#EF4444" />;
   }
 }
 

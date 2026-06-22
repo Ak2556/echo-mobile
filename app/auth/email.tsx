@@ -5,34 +5,28 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowLeft, EnvelopeSimple, PaperPlaneTilt, ArrowClockwise, CheckCircle } from 'phosphor-react-native';
-import { sendMagicLink } from '../../lib/auth';
+import { ArrowLeft, EnvelopeSimple, ArrowClockwise, ShieldCheck } from 'phosphor-react-native';
+import { refreshAuthSession, sendEmailOtp, verifyEmailOtp } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
+import { useResponsiveLayout } from '../../lib/responsive';
 
-/**
- * Magic-link sign-in. One screen, two visual states:
- *   1. Form     — input email, tap Send link
- *   2. Sent     — illustrated confirmation with resend cooldown
- *
- * On magic-link tap (in the user's mail client), the OS opens
- * echo://auth/callback?code=… → AuthListenerProvider consumes the code,
- * SIGNED_IN fires, status-based routing pushes the user to the wizard
- * or feed automatically.
- */
 const RESEND_COOLDOWN_S = 30;
 
 export default function EmailAuthScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
+  const layout = useResponsiveLayout();
 
+  const [step, setStep] = useState<'enter-email' | 'enter-code'>('enter-email');
   const [email, setEmail] = useState('');
-  const [focused, setFocused] = useState(false);
+  const [code, setCode] = useState('');
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [codeFocused, setCodeFocused] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const inputRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const codeRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -40,44 +34,115 @@ export default function EmailAuthScreen() {
     return () => clearInterval(t);
   }, [cooldown]);
 
-  // Manual focus after mount — replaces `autoFocus` which interacts badly
-  // with parent re-renders during keystrokes.
   useEffect(() => {
-    if (sent) return;
-    const t = setTimeout(() => inputRef.current?.focus(), 250);
+    const ref = step === 'enter-email' ? emailRef : codeRef;
+    const t = setTimeout(() => ref.current?.focus(), 250);
     return () => clearTimeout(t);
-  }, [sent]);
+  }, [step]);
 
-  const trimmed = email.trim();
+  const trimmed = email.trim().toLowerCase();
   const canSend = trimmed.length > 3 && /\S+@\S+\.\S+/.test(trimmed) && !loading;
+  const canVerify = code.length === 6 && !loading;
 
-  const send = async () => {
+  const handleSendCode = async () => {
     if (!canSend) return;
     setLoading(true);
-    const { error } = await sendMagicLink(email);
-    setLoading(false);
-    if (error) { showToast(error, '❌'); return; }
-    setSent(true);
-    setCooldown(RESEND_COOLDOWN_S);
+    try {
+      const { error } = await sendEmailOtp(trimmed);
+      setLoading(false);
+      if (error) { showToast(error, 'Error'); return; }
+      setStep('enter-code');
+      setCooldown(RESEND_COOLDOWN_S);
+    } catch (e) {
+      setLoading(false);
+      showToast(e instanceof Error ? e.message : 'Could not send code. Try again.', 'Error');
+    }
   };
 
-  const resend = async () => {
+  const handleResend = async () => {
     if (cooldown > 0 || loading) return;
     setLoading(true);
-    const { error } = await sendMagicLink(email);
-    setLoading(false);
-    if (error) { showToast(error, '❌'); return; }
-    setCooldown(RESEND_COOLDOWN_S);
+    try {
+      const { error } = await sendEmailOtp(trimmed);
+      setLoading(false);
+      if (error) { showToast(error, 'Error'); return; }
+      setCooldown(RESEND_COOLDOWN_S);
+    } catch (e) {
+      setLoading(false);
+      showToast(e instanceof Error ? e.message : 'Could not resend code. Try again.', 'Error');
+    }
   };
+
+  const handleVerify = async () => {
+    if (!canVerify) return;
+    setLoading(true);
+    try {
+      const { error } = await verifyEmailOtp(trimmed, code);
+      if (error) {
+        setLoading(false);
+        showToast(error, 'Error');
+        return;
+      }
+
+      const status = await refreshAuthSession();
+      setLoading(false);
+
+      if (status === 'ready') {
+        router.replace('/(tabs)/home');
+        return;
+      }
+      if (status === 'needs-onboarding') {
+        router.replace('/auth/signup-wizard');
+        return;
+      }
+
+      showToast('Sign-in did not finish. Try the code again.', 'Error');
+    } catch (e) {
+      setLoading(false);
+      showToast(e instanceof Error ? e.message : 'Sign-in did not finish. Try the code again.', 'Error');
+    }
+  };
+
+  const inputWrapStyle = (focused: boolean) => ({
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: focused ? colors.accent : colors.inputBorder,
+    backgroundColor: colors.inputBg,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    shadowColor: colors.accent,
+    shadowOpacity: focused ? 0.18 : 0,
+    shadowRadius: focused ? 14 : 0,
+    shadowOffset: { width: 0, height: focused ? 4 : 0 },
+  });
+
+  const ctaStyle = (active: boolean) => ({
+    backgroundColor: active ? colors.accent : colors.surfaceHover,
+    borderRadius: radius.lg,
+    opacity: active ? 1 : 0.6,
+    shadowColor: colors.accent,
+    shadowOpacity: active ? 0.4 : 0,
+    shadowRadius: active ? 16 : 0,
+    shadowOffset: { width: 0, height: active ? 6 : 0 },
+  });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          {/* Back chevron */}
-          <View style={{ paddingHorizontal: 12, paddingTop: 8 }}>
+          <View style={[layout.formStyle, { paddingHorizontal: 12, paddingTop: 8 }]}>
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => {
+                if (step === 'enter-code') {
+                  setStep('enter-email');
+                  setCode('');
+                  setCooldown(0);
+                } else {
+                  router.back();
+                }
+              }}
               style={{ padding: 10, alignSelf: 'flex-start', borderRadius: 999 }}
               accessibilityRole="button"
               accessibilityLabel="Back"
@@ -87,9 +152,8 @@ export default function EmailAuthScreen() {
             </Pressable>
           </View>
 
-          {!sent ? (
-            <View style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
-              {/* Icon hero */}
+          {step === 'enter-email' ? (
+            <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
               <View style={{
                 width: 64, height: 64, borderRadius: 18,
                 backgroundColor: colors.accentMuted,
@@ -103,26 +167,13 @@ export default function EmailAuthScreen() {
                 Sign in with email
               </Text>
               <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, lineHeight: 22, marginBottom: 36 }]}>
-                We&apos;ll send a one-tap link to your inbox. No password to remember.
+                We&apos;ll send a 6-digit code to your inbox.
               </Text>
 
-              {/* Email input — stable style shape across focus toggle */}
-              <View style={{
-                flexDirection: 'row', alignItems: 'center',
-                borderRadius: radius.lg,
-                borderWidth: 1.5,
-                borderColor: focused ? colors.accent : colors.inputBorder,
-                backgroundColor: colors.inputBg,
-                paddingHorizontal: 16,
-                marginBottom: 20,
-                shadowColor: colors.accent,
-                shadowOpacity: focused ? 0.18 : 0,
-                shadowRadius: focused ? 14 : 0,
-                shadowOffset: { width: 0, height: focused ? 4 : 0 },
-              }}>
-                <EnvelopeSimple color={focused ? colors.accent : colors.textMuted} size={20} style={{ marginRight: 12 }} />
+              <View style={inputWrapStyle(emailFocused)}>
+                <EnvelopeSimple color={emailFocused ? colors.accent : colors.textMuted} size={20} style={{ marginRight: 12 }} />
                 <TextInput
-                  ref={inputRef}
+                  ref={emailRef}
                   value={email}
                   onChangeText={setEmail}
                   placeholder="you@example.com"
@@ -131,103 +182,109 @@ export default function EmailAuthScreen() {
                   autoCorrect={false}
                   keyboardType="email-address"
                   returnKeyType="send"
-                  onSubmitEditing={send}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
+                  onSubmitEditing={handleSendCode}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
                   style={[font.body, { flex: 1, color: colors.text, fontSize: 17, paddingVertical: 18 }]}
                 />
               </View>
 
-              {/* Send button — stable style shape */}
-              <View style={{
-                backgroundColor: canSend ? colors.accent : colors.surfaceHover,
-                borderRadius: radius.lg,
-                opacity: canSend ? 1 : 0.6,
-                shadowColor: colors.accent,
-                shadowOpacity: canSend ? 0.4 : 0,
-                shadowRadius: canSend ? 16 : 0,
-                shadowOffset: { width: 0, height: canSend ? 6 : 0 },
-              }}>
+              <View style={ctaStyle(canSend)}>
                 <Pressable
-                  onPress={send}
+                  onPress={handleSendCode}
                   disabled={!canSend}
                   accessibilityRole="button"
-                  accessibilityLabel="Send magic link"
-                  style={{
-                    paddingVertical: 18,
-                    alignItems: 'center', justifyContent: 'center',
-                    flexDirection: 'row', gap: 10,
-                  }}
+                  accessibilityLabel="Send code"
+                  style={{ paddingVertical: 18, alignItems: 'center', justifyContent: 'center' }}
                 >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <PaperPlaneTilt color={canSend ? '#fff' : colors.textMuted} size={18} weight="fill" />
-                      <Text style={[font.bodyBold, { color: canSend ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>
-                        Send magic link
-                      </Text>
-                    </>
-                  )}
+                  {loading
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={[font.bodyBold, { color: canSend ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>Send code</Text>}
                 </Pressable>
               </View>
             </View>
           ) : (
-            <Animated.View entering={FadeIn.duration(220)} style={{ flex: 1, paddingHorizontal: 28, paddingTop: 32, alignItems: 'center' }}>
+            <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
               <View style={{
-                width: 96, height: 96, borderRadius: 28,
+                width: 64, height: 64, borderRadius: 18,
                 backgroundColor: colors.accentMuted,
                 alignItems: 'center', justifyContent: 'center',
-                marginBottom: 28,
+                marginBottom: 22,
               }}>
-                <CheckCircle color={colors.accent} size={48} weight="duotone" />
+                <ShieldCheck color={colors.accent} size={30} weight="duotone" />
               </View>
 
-              <Text style={[font.display, { color: colors.text, fontSize: 28, letterSpacing: -0.6, marginBottom: 12, textAlign: 'center' }]}>
-                Check your inbox
+              <Text style={[font.display, { color: colors.text, fontSize: 30, letterSpacing: -0.7, marginBottom: 10 }]}>
+                Enter the code
               </Text>
-              <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 8 }]}>
-                We sent a one-tap link to
-              </Text>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, marginBottom: 28 }]}>
-                {trimmed.toLowerCase()}
+              <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, lineHeight: 22, marginBottom: 32 }]}>
+                Sent to <Text style={[font.bodyBold, { color: colors.text }]}>{trimmed}</Text>
               </Text>
 
-              <View style={{
-                borderRadius: 999,
-                backgroundColor: cooldown > 0 ? 'transparent' : colors.surface,
-                borderWidth: cooldown > 0 ? 0 : 1,
-                borderColor: colors.border,
-                overflow: 'hidden',
-              }}>
+              <View style={inputWrapStyle(codeFocused)}>
+                <TextInput
+                  ref={codeRef}
+                  value={code}
+                  onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="number-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={handleVerify}
+                  onFocus={() => setCodeFocused(true)}
+                  onBlur={() => setCodeFocused(false)}
+                  style={[font.displayBlack, {
+                    flex: 1,
+                    color: colors.text,
+                    fontSize: 32,
+                    letterSpacing: 12,
+                    paddingVertical: 20,
+                    textAlign: 'center',
+                  }]}
+                  maxLength={6}
+                />
+              </View>
+
+              <View style={ctaStyle(canVerify)}>
                 <Pressable
-                  onPress={resend}
-                  disabled={cooldown > 0 || loading}
-                  style={{
-                    flexDirection: 'row', alignItems: 'center', gap: 8,
-                    paddingVertical: 14, paddingHorizontal: 20,
-                  }}
+                  onPress={handleVerify}
+                  disabled={!canVerify}
                   accessibilityRole="button"
-                  accessibilityLabel={cooldown > 0 ? `Resend in ${cooldown} seconds` : 'Resend link'}
+                  accessibilityLabel="Verify code"
+                  style={{ paddingVertical: 18, alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <ArrowClockwise color={cooldown > 0 ? colors.textMuted : colors.accent} size={16} weight="bold" />
-                  <Text style={[font.bodySemibold, { color: cooldown > 0 ? colors.textMuted : colors.accent, fontSize: 14 }]}>
-                    {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend link'}
-                  </Text>
+                  {loading
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={[font.bodyBold, { color: canVerify ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>Verify</Text>}
                 </Pressable>
               </View>
 
-              <Pressable
-                onPress={() => { setSent(false); setEmail(''); setCooldown(0); setTimeout(() => inputRef.current?.focus(), 50); }}
-                style={{ paddingVertical: 14, marginTop: 4 }}
-                accessibilityRole="button"
-                accessibilityLabel="Use a different email"
-              >
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 13 }]}>
-                  Use a different email
-                </Text>
-              </Pressable>
-            </Animated.View>
+              <View style={{ alignItems: 'center', marginTop: 18 }}>
+                <View style={{
+                  borderRadius: 999,
+                  backgroundColor: cooldown > 0 ? 'transparent' : colors.surface,
+                  borderWidth: cooldown > 0 ? 0 : 1,
+                  borderColor: colors.border,
+                  overflow: 'hidden',
+                }}>
+                  <Pressable
+                    onPress={handleResend}
+                    disabled={cooldown > 0 || loading}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 8,
+                      paddingVertical: 12, paddingHorizontal: 20,
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={cooldown > 0 ? `Resend in ${cooldown} seconds` : 'Resend code'}
+                  >
+                    <ArrowClockwise color={cooldown > 0 ? colors.textMuted : colors.accent} size={16} weight="bold" />
+                    <Text style={[font.bodySemibold, { color: cooldown > 0 ? colors.textMuted : colors.accent, fontSize: 14 }]}>
+                      {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
           )}
         </KeyboardAvoidingView>
       </SafeAreaView>

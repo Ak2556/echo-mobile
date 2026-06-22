@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -13,13 +13,13 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Bell, Sparkle, TrendUp, PencilSimpleLine, X } from 'phosphor-react-native';
+import { Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, CheckCircle, Info, Clock } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { HeroCard, HERO_CARD_WIDTH } from '../../components/social/HeroCard';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
-import { useInfiniteFeed } from '../../hooks/queries/useFeed';
-import { FeedItem } from '../../types';
+import { useInfiniteFeed, useTrendingEvolutions } from '../../hooks/queries/useFeed';
+import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { usePerformanceProfile } from '../../lib/performance';
@@ -32,9 +32,12 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
-import { neonHaptic } from '../../lib/neonDesign';
+import { feedbackHaptic } from '../../lib/accentDesign';
 import { pingDailyActivity } from '../../lib/retention';
 import { features } from '../../lib/featureFlags';
+import { getTopPerspectiveSummary } from '../../lib/perspectives';
+import { track } from '../../lib/analytics';
+import { useResponsiveLayout } from '../../lib/responsive';
 
 const HERO_COUNT = 5;
 
@@ -42,26 +45,63 @@ const NAV_BAR_HEIGHT = 50;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 function SectionHeader({ label, sub, icon }: { label: string; sub?: string; icon?: React.ReactNode }) {
-  const { colors, font } = useTheme();
+  const { colors, font, fontSizes, lineHeights } = useTheme();
+  const layout = useResponsiveLayout();
   return (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        marginTop: 28,
+        paddingHorizontal: layout.gutter,
+        marginTop: layout.isDesktop ? 24 : 28,
         marginBottom: 12,
         gap: 8,
       }}
     >
       {icon}
-      <Text style={[font.bodySemibold, { color: colors.text, fontSize: 18, letterSpacing: 0 }]}>{label}</Text>
+      <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.title, lineHeight: lineHeights.title, letterSpacing: 0 }]}>{label}</Text>
       {sub && (
-        <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 13 }]}>
+        <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
           {sub}
         </Text>
       )}
     </View>
+  );
+}
+
+function ChecklistRow({
+  label,
+  done,
+  icon,
+  onPress,
+}: {
+  label: string;
+  done: boolean;
+  icon: React.ReactNode;
+  onPress: () => void;
+}) {
+  const { colors, font, fontSizes, lineHeights } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ checked: done }}
+      style={{
+        minHeight: 40,
+        borderRadius: 10,
+        backgroundColor: colors.surfaceHover,
+        paddingHorizontal: 12,
+        paddingVertical: 9,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+      }}
+    >
+      {done ? <CheckCircle color={colors.success} size={17} weight="fill" /> : icon}
+      <Text style={[font.bodySemibold, { color: done ? colors.text : colors.textSecondary, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, flex: 1 }]}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -80,20 +120,28 @@ export default function DiscoverScreen() {
   } = useInfiniteFeed();
   const feed = useMemo(() => feedData?.pages.flat() ?? [], [feedData]);
   const realtime = useRealtimeNewEchoes();
-  const { colors, animation, font } = useTheme();
+  const { colors, animation, font, fontSizes, lineHeights } = useTheme();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, interests, followingIds } = useAppStore();
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
   const dismissedCoach = useAppStore(s => s.dismissedFirstEchoCoach);
   const setDismissedCoach = useAppStore(s => s.setDismissedFirstEchoCoach);
-  const showFirstEchoCoach = publishedCount === 0 && !dismissedCoach;
+  const hasCompletedProductOnboarding = useAppStore(s => s.hasCompletedProductOnboarding);
+  const onboardingDraftCreated = useAppStore(s => s.onboardingDraftCreated);
+  const messagesBySession = useAppStore(s => s.messagesBySession);
+  const hasStartedFirstChat = useMemo(
+    () => Object.values(messagesBySession).some(messages => messages.some(message => message.role === 'user')),
+    [messagesBySession],
+  );
+  const showProductChecklist = !hasCompletedProductOnboarding && !onboardingDraftCreated;
+  const showFirstEchoCoach = publishedCount === 0 && !dismissedCoach && !showProductChecklist;
   const insets = useSafeAreaInsets();
+  const layout = useResponsiveLayout();
   const remote = isSupabaseRemote();
   const { data: suggestedUsers = [] } = useSuggestedUsers();
   const followMut = useToggleRemoteFollow();
+  const { data: evolvingNow = [] } = useTrendingEvolutions(8);
 
-  // Tick the daily streak once per day-mount of the home tab. Cheap no-op
-  // when already pinged today; awards a bonus + milestone XP on day rollover.
   useEffect(() => { pingDailyActivity(); }, []);
 
   const scrollY = useSharedValue(0);
@@ -102,11 +150,10 @@ export default function DiscoverScreen() {
     scrollY.value = event.nativeEvent.contentOffset.y;
   }, [scrollY]);
 
-  const headerHeight = insets.top + NAV_BAR_HEIGHT;
+  const headerHeight = insets.top + (layout.isDesktop ? 64 : NAV_BAR_HEIGHT);
   const useBlur = performance.useBlur;
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
-  // Spring-physics shared values — these settle naturally when scroll stops
   const blurIntensity = useSharedValue(0);
   const overlayOpacity = useSharedValue(0);
   const borderOpacity = useSharedValue(0);
@@ -146,13 +193,9 @@ export default function DiscoverScreen() {
 
   const feedScope = useAppStore(s => s.feedScope);
   const setFeedScope = useAppStore(s => s.setFeedScope);
-  // Unread notifications badge — header bell shows a red pill with the count.
   const unreadNotifs = useAppStore(s => s.notifications.filter(n => !n.isRead).length);
+  const [aboutFeedVisible, setAboutFeedVisible] = useState(false);
 
-  // The For You / Trending / Following toggle drives BOTH the hero rail
-  // and the main list. Previously the toggle was visible but only changed
-  // the empty-state copy — heroItems and popularItems always defaulted to
-  // semantic recs + rising, which made the toggle feel broken.
   const scopedAll = useMemo(() => {
     if (!feed) return [];
     if (feedScope === 'following') {
@@ -162,7 +205,6 @@ export default function DiscoverScreen() {
     if (feedScope === 'forYou') {
       return grouped.rising.length > 0 ? grouped.rising : feed;
     }
-    // 'semantic' (labelled "For You" in the toggle)
     return grouped.forYou.length > 0 ? grouped.forYou : feed;
   }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising]);
 
@@ -170,80 +212,175 @@ export default function DiscoverScreen() {
   const popularItems = scopedAll.slice(HERO_COUNT);
 
   const ListHeader = (
-    <View>
-      {/* For You (semantic) / Trending / Following toggle */}
-      <View
-        style={{
-          flexDirection: 'row',
-          marginHorizontal: 16,
-          marginTop: 8,
-          marginBottom: 18,
-          padding: 4,
-          borderRadius: 999,
-          backgroundColor: colors.surface,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.border,
-        }}
-      >
-        {(['semantic', 'forYou', 'following'] as const).map(scope => {
-          const active = feedScope === scope;
-          const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : 'Following';
-          return (
-            <Pressable
-              key={scope}
-              onPress={() => { void neonHaptic('select'); setFeedScope(scope); }}
-              accessibilityRole="tab"
-              accessibilityLabel={label}
-              accessibilityState={{ selected: active }}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                alignItems: 'center',
-                paddingHorizontal: 10,
-                paddingVertical: 8,
-                borderRadius: 999,
-                backgroundColor: active ? colors.accent : 'transparent',
-              }}
-            >
-              <Text style={{
-                color: active ? '#fff' : colors.textSecondary,
-                fontSize: 13,
-                fontWeight: '700',
-                letterSpacing: 0,
-              }}>
-                {label}
-              </Text>
-            </Pressable>
-          );
-        })}
+    <View style={layout.contentStyle}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 12 : 8, marginBottom: 16, gap: 6 }}>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            padding: 3,
+            borderRadius: layout.isDesktop ? 12 : 14,
+            backgroundColor: colors.surface,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.border,
+          }}
+        >
+          {(['semantic', 'forYou', 'following', 'latest'] as const).map(scope => {
+            const active = feedScope === scope;
+            const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : scope === 'following' ? 'Following' : 'Latest';
+            return (
+              <Pressable
+                key={scope}
+                onPress={() => { void feedbackHaptic('select'); setFeedScope(scope); }}
+                accessibilityRole="tab"
+                accessibilityLabel={label}
+                accessibilityState={{ selected: active }}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  alignItems: 'center',
+                  paddingHorizontal: 6,
+                  paddingVertical: layout.isDesktop ? 7 : 8,
+                  borderRadius: layout.isDesktop ? 9 : 11,
+                  backgroundColor: active ? colors.accentMuted : 'transparent',
+                }}
+              >
+                <Text style={{
+                  color: active ? colors.accent : colors.textSecondary,
+                  fontSize: fontSizes.caption,
+                  fontWeight: '700',
+                  letterSpacing: 0,
+                }}>
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Pressable
+          onPress={() => setAboutFeedVisible(true)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="About this feed"
+          style={{ padding: 4 }}
+        >
+          <Info color={colors.textMuted} size={18} />
+        </Pressable>
       </View>
+
+      <Modal
+        visible={aboutFeedVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAboutFeedVisible(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}
+          onPress={() => setAboutFeedVisible(false)}
+        >
+          <Pressable
+            style={{ backgroundColor: colors.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}
+            onPress={() => {}}
+          >
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 20 }} />
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 20, marginBottom: 20 }]}>How this feed works</Text>
+            {([
+              { scope: 'semantic', label: 'For You', icon: <Sparkle size={16} color={colors.accent} weight="fill" />, desc: 'Personalised to you. We use your reading history to surface echoes you\'re likely to find interesting, using semantic similarity matching.' },
+              { scope: 'forYou', label: 'Trending', icon: <TrendUp size={16} color={colors.accent} weight="bold" />, desc: 'Ranked by engagement (likes, comments, reposts) combined with recency. No personalisation — the same ranking for every user.' },
+              { scope: 'following', label: 'Following', icon: <Bell size={16} color={colors.accent} weight="bold" />, desc: 'Only echoes from people you follow, ranked by recency and engagement.' },
+              { scope: 'latest', label: 'Latest', icon: <Clock size={16} color={colors.accent} weight="bold" />, desc: 'Pure chronological order. No ranking, no personalisation — every public echo in the order it was posted.' },
+            ] as const).map(({ scope, label, icon, desc }) => (
+              <View key={scope} style={{ marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  {icon}
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]}>{label}</Text>
+                </View>
+                <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 20 }]}>{desc}</Text>
+              </View>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
       {features.stories && !remote && (
         <>
           <SectionHeader label="Your Stories" />
           <StoryCircles />
         </>
       )}
-      {/* First-Echo coach — pushes brand-new users toward their first publish.
-          Disappears the moment they publish OR explicitly dismiss. */}
+      {showProductChecklist && (
+        <View
+          style={{
+            marginHorizontal: layout.gutter,
+            marginTop: 8,
+            marginBottom: 14,
+            padding: layout.isDesktop ? 16 : 14,
+            borderRadius: layout.isDesktop ? 14 : 12,
+            backgroundColor: colors.surface,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.border,
+            gap: 12,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: colors.accentMuted,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Sparkle color={colors.accent} size={17} weight="fill" />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
+                Finish your first Echo
+              </Text>
+              <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 1 }]}>
+                Chat, draft, then publish when it feels ready.
+              </Text>
+            </View>
+          </View>
+
+          <ChecklistRow
+            label="Start first chat"
+            done={hasStartedFirstChat}
+            icon={<ChatCircleText color={hasStartedFirstChat ? colors.success : colors.accent} size={17} weight="bold" />}
+            onPress={() => router.push('/(tabs)/chat')}
+          />
+          <ChecklistRow
+            label="Create first draft"
+            done={onboardingDraftCreated}
+            icon={<PencilSimpleLine color={onboardingDraftCreated ? colors.success : colors.accent} size={17} weight="bold" />}
+            onPress={() => router.push('/onboarding')}
+          />
+          <ChecklistRow
+            label="Publish first Echo"
+            done={publishedCount > 0}
+            icon={<TrendUp color={publishedCount > 0 ? colors.success : colors.accent} size={17} weight="bold" />}
+            onPress={() => router.push('/create-post')}
+          />
+        </View>
+      )}
       {showFirstEchoCoach && (
         <View
           style={{
-            marginHorizontal: 16,
-            marginTop: 12,
-            marginBottom: 16,
-            padding: 16,
-            borderRadius: 14,
-            backgroundColor: colors.accent + '14',
-            borderWidth: 1,
-            borderColor: colors.accent + '30',
+            marginHorizontal: layout.gutter,
+            marginTop: 8,
+            marginBottom: 14,
+            padding: layout.isDesktop ? 14 : 13,
+            borderRadius: layout.isDesktop ? 14 : 12,
+            backgroundColor: colors.surface,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.border,
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,
           }}
         >
           <View style={{
-            width: 36, height: 36, borderRadius: 18,
-            backgroundColor: colors.accent + '22',
+            width: 32, height: 32, borderRadius: 16,
+            backgroundColor: colors.accentMuted,
             alignItems: 'center', justifyContent: 'center',
           }}>
             <PencilSimpleLine color={colors.accent} size={18} weight="bold" />
@@ -254,10 +391,10 @@ export default function DiscoverScreen() {
             accessibilityRole="button"
             accessibilityLabel="Drop your first Echo"
           >
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
               Drop your first Echo
             </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+            <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 1 }]}>
               One question, one take. That&apos;s how Echo starts.
             </Text>
           </Pressable>
@@ -270,14 +407,11 @@ export default function DiscoverScreen() {
           </Pressable>
         </View>
       )}
-      {/* Daily Question — suppressed while the First-Echo coach is showing
-          (both target new users; surfacing both is the duplication the
-          section cull exists to fix). */}
       {features.dailyQuestion && !showFirstEchoCoach && (
         <Pressable
-          onPress={() => router.push('/daily-question' as any)}
+          onPress={() => router.push('/daily-question')}
           style={{
-            marginHorizontal: 16,
+            marginHorizontal: layout.gutter,
             marginVertical: 12,
             padding: 14,
             borderRadius: 14,
@@ -290,22 +424,18 @@ export default function DiscoverScreen() {
           }}
         >
           <Sparkle color={colors.accent} size={18} weight="fill" />
-          <Text style={{ color: colors.text, fontWeight: '600', fontSize: 14, flex: 1 }}>
+          <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small, flex: 1 }]}>
             Today&apos;s question — tap to answer
           </Text>
         </Pressable>
       )}
-      {/* Hero rail — renders directly under the scope toggle. The "For You"
-          SectionHeader was removed because the toggle already labels what's
-          below ("For You" appearing twice was the redundancy the cull
-          exists to fix). */}
-      <View style={{ marginTop: 4 }}>
+      <View style={{ marginTop: 2 }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"
           snapToInterval={HERO_CARD_WIDTH + 12}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+          contentContainerStyle={{ paddingHorizontal: layout.gutter, gap: 12 }}
           onScroll={(e) => { heroScrollX.value = e.nativeEvent.contentOffset.x; }}
           scrollEventThrottle={16}
         >
@@ -314,11 +444,12 @@ export default function DiscoverScreen() {
           ))}
         </ScrollView>
       </View>
-      {/* "Open Questions" section removed — those starter prompts already
-          surface via the Daily Question banner (for new users) and the For
-          You hero rail (for everyone). Triple coverage was clutter. The
-          grouped.conversationStarters data is still produced if we want
-          to re-introduce a single inline card later. */}
+      {evolvingNow.length > 0 && (
+        <>
+          <SectionHeader label="Evolving now" sub="Perspectives" icon={<GitBranch color={colors.accent} size={16} weight="bold" />} />
+          <EvolvingNowRail items={evolvingNow} />
+        </>
+      )}
       <SectionHeader label="Top conversations" sub="Live now" icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
     </View>
   );
@@ -326,18 +457,19 @@ export default function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
 
-      {/* Scrollable content */}
       {isLoading ? (
         <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1, paddingTop: headerHeight }}>
-          {features.stories && !remote && (
-            <>
-              <SectionHeader label="Your Stories" />
-              <StoryCircles />
-            </>
-          )}
-          <SectionHeader label="Trending" sub="Live" />
-          <FeedCardSkeleton />
-          <FeedCardSkeleton />
+          <View style={layout.contentStyle}>
+            {features.stories && !remote && (
+              <>
+                <SectionHeader label="Your Stories" />
+                <StoryCircles />
+              </>
+            )}
+            <SectionHeader label="Trending" sub="Live" />
+            <FeedCardSkeleton />
+            <FeedCardSkeleton />
+          </View>
         </Animated.View>
       ) : isError ? (
         <View style={{ flex: 1, paddingTop: headerHeight, alignItems: 'center', justifyContent: 'center' }}>
@@ -345,89 +477,90 @@ export default function DiscoverScreen() {
         </View>
       ) : (
         <>
-        {realtime.count > 0 && (
-          <Pressable
-            onPress={() => { realtime.reset(); refetch(); }}
-            style={{
-              position: 'absolute', top: headerHeight + 6, alignSelf: 'center', zIndex: 30,
-              backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-            }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
-              {realtime.count} new echo{realtime.count > 1 ? 'es' : ''} · tap to refresh
-            </Text>
-          </Pressable>
-        )}
-        <FlashList
-          data={popularItems}
-          renderItem={({ item, index }) => (
-            <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
+          {realtime.count > 0 && (
+            <Pressable
+              onPress={() => { realtime.reset(); refetch(); }}
+              style={{
+                position: 'absolute', top: headerHeight + 6, alignSelf: 'center', zIndex: 30,
+                backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+              }}
+            >
+              <Text style={[font.bodyBold, { color: '#fff', fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
+                {realtime.count} new echo{realtime.count > 1 ? 'es' : ''} · tap to refresh
+              </Text>
+            </Pressable>
           )}
-          keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
-          onEndReachedThreshold={0.4}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              tintColor={colors.accent}
-              progressViewOffset={headerHeight}
-            />
-          }
-          ListHeaderComponent={ListHeader}
-          ListEmptyComponent={
-            feedScope === 'following' ? (
-              <View style={{ paddingTop: 24, paddingHorizontal: 16 }}>
-                <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', marginBottom: 4 }}>
-                  Your following feed is quiet
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginBottom: 20 }}>
-                  Follow some people to fill this up.
-                </Text>
-                {remote && suggestedUsers.length > 0 ? (
-                  <>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                      Suggested people
-                    </Text>
-                    {suggestedUsers.map(user => (
-                      <UserRow
-                        key={user.id}
-                        user={user}
-                        onPress={() => router.push(`/user/${user.id}`)}
-                        showFollowButton
-                        onFollowPress={() => followMut.mutate({ userId: user.id, follow: true })}
-                      />
-                    ))}
-                  </>
-                ) : (
-                  <Pressable
-                    onPress={() => router.push('/(tabs)/explore')}
-                    style={{ backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, alignSelf: 'flex-start' }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Find people to follow</Text>
-                  </Pressable>
-                )}
+          <FlashList
+            data={popularItems}
+            renderItem={({ item, index }) => (
+              <View style={layout.contentStyle}>
+                <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
               </View>
-            ) : (
-              <View style={{ paddingTop: 32 }}>
-                <EmptyState
-                  icon={<Sparkle color={colors.accent} size={28} weight="fill" />}
-                  title="Conversations worth keeping"
-                  subtitle="Talk to Echo about something you've been thinking about. Publish the parts that resonate."
-                  actionLabel="Open chat"
-                  onAction={() => router.push('/(tabs)/chat')}
-                />
-              </View>
-            )
-          }
-        />
+            )}
+            keyExtractor={item => item.id}
+            contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+            onEndReachedThreshold={0.4}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={refetch}
+                tintColor={colors.accent}
+                progressViewOffset={headerHeight}
+              />
+            }
+            ListHeaderComponent={ListHeader}
+            ListEmptyComponent={
+              feedScope === 'following' ? (
+                <View style={{ paddingTop: 24, paddingHorizontal: layout.gutter }}>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title, lineHeight: lineHeights.title, marginBottom: 4 }]}>
+                    Your following feed is quiet
+                  </Text>
+                  <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: lineHeights.small, marginBottom: 20 }]}>
+                    Follow some people to fill this up.
+                  </Text>
+                  {remote && suggestedUsers.length > 0 ? (
+                    <>
+                      <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }]}>
+                        Suggested people
+                      </Text>
+                      {suggestedUsers.map(user => (
+                        <UserRow
+                          key={user.id}
+                          user={user}
+                          onPress={() => router.push(`/user/${user.id}`)}
+                          showFollowButton
+                          onFollowPress={() => followMut.mutate({ userId: user.id, follow: true })}
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <Pressable
+                      onPress={() => router.push('/(tabs)/explore')}
+                      style={{ backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, alignSelf: 'flex-start' }}
+                    >
+                      <Text style={[font.bodyBold, { color: '#fff', fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>Find people to follow</Text>
+                    </Pressable>
+                  )}
+                </View>
+              ) : (
+                <View style={{ paddingTop: 32 }}>
+                  <EmptyState
+                    icon={<Sparkle color={colors.accent} size={28} weight="fill" />}
+                    title="Conversations worth keeping"
+                    subtitle="Talk to Echo about something you've been thinking about. Publish the parts that resonate."
+                    actionLabel="Open chat"
+                    onAction={() => router.push('/(tabs)/chat')}
+                  />
+                </View>
+              )
+            }
+          />
         </>
       )}
 
-      {/* Floating glass header — absolutely positioned over content */}
       <View
         style={{
           position: 'absolute',
@@ -447,7 +580,6 @@ export default function DiscoverScreen() {
           />
         ) : null}
 
-        {/* Solid fill that fades in — Android fallback + extra readability on iOS */}
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
@@ -456,23 +588,22 @@ export default function DiscoverScreen() {
           ]}
         />
 
-        {/* Nav bar content */}
         <View
           style={{
-            paddingTop: insets.top,
+            width: '100%',
+            maxWidth: layout.contentMaxWidth,
+            alignSelf: 'center',
+            paddingTop: insets.top + (layout.isDesktop ? 10 : 0),
             height: headerHeight,
             flexDirection: 'row',
             alignItems: 'center',
-            paddingHorizontal: 16,
+            paddingHorizontal: layout.gutter,
             paddingBottom: 6,
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'baseline', flex: 1 }}>
             <Text style={[font.displayBlack, { color: colors.text, fontSize: 24, letterSpacing: 0 }]}>
               Echo
-            </Text>
-            <Text style={[font.displayBlack, { color: colors.accent, fontSize: 24, marginLeft: 1, letterSpacing: 0 }]}>
-              .
             </Text>
           </View>
 
@@ -509,9 +640,6 @@ export default function DiscoverScreen() {
             </View>
           </Pressable>
 
-          {/* Avatar routes to profile, not compose — the + FAB owns
-              creation. Two entry points on the same screen was the redundancy
-              this restructure exists to fix. */}
           <Pressable onPress={() => router.push('/(tabs)/you')} accessibilityLabel="Open your profile">
             <View
               style={{
@@ -532,7 +660,6 @@ export default function DiscoverScreen() {
           </Pressable>
         </View>
 
-        {/* Bottom edge — fades in as content scrolls under */}
         <Animated.View
           style={[
             {
@@ -548,8 +675,55 @@ export default function DiscoverScreen() {
         />
       </View>
 
-      {/* Floating compose button — canonical creation entry point. */}
       <ComposeFAB />
     </View>
+  );
+}
+
+function EvolvingNowRail({ items }: { items: EvolutionGroup[] }) {
+  const router = useRouter();
+  const { colors, radius, font } = useTheme();
+  const layout = useResponsiveLayout();
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ paddingHorizontal: layout.gutter, gap: 10, paddingBottom: 2 }}
+    >
+      {items.map(item => {
+        const summary = getTopPerspectiveSummary(item.perspectiveCounts);
+        return (
+          <Pressable
+            key={item.rootId}
+            onPress={() => {
+              track('evolving_rail_opened', { root_id: item.rootId, branch_count: item.branchCount });
+              router.push({ pathname: '/evolution/[rootId]', params: { rootId: item.rootId } });
+            }}
+            style={{
+              width: 252,
+              padding: 14,
+              borderRadius: Math.min(radius.card, 14),
+              backgroundColor: colors.surface,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <GitBranch color={colors.accent} size={14} weight="fill" />
+              <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>
+                {item.branchCount} {item.branchCount === 1 ? 'perspective' : 'perspectives'}
+              </Text>
+            </View>
+            <Text style={[font.bodySemibold, { color: colors.text, fontSize: 15, lineHeight: 20 }]} numberOfLines={2}>
+              {item.rootTitle || item.rootPrompt}
+            </Text>
+            <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, marginTop: 8 }]} numberOfLines={1}>
+              {summary || `${item.uniqueAuthors} people are adding angles`}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
   );
 }

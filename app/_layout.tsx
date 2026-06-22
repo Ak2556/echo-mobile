@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import type { ErrorBoundaryProps } from 'expo-router';
-import { Linking, Platform } from 'react-native';
+import { Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../lib/analytics';
-import { initMonitoring, wrapRoot } from '../lib/monitoring';
+import { captureException, initMonitoring, wrapRoot } from '../lib/monitoring';
 import { getAnalyticsConsent } from '../lib/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
 import * as Notifications from 'expo-notifications';
@@ -16,7 +16,10 @@ import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/commandPalette';
 import { AuthListenerProvider } from '../lib/auth';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
+import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import '../global.css';
+
+LogBox.ignoreLogs(['[expo-notifications] Error reading persisted server registration info']);
 
 // One-time migration: evict stale seeded data persisted before v2.
 const DATA_VERSION = 2;
@@ -27,6 +30,12 @@ if (persistGet<number>('_dataVersion', 0) < DATA_VERSION) {
 
 // Cold-start timing — module-load happens before any React render.
 const COLD_START_T0 = Date.now();
+
+function isUnsignedSimulatorNotificationError(error: unknown): boolean {
+  if (Platform.OS !== 'ios') return false;
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('Keychain access failed') && message.includes('entitlement');
+}
 
 initMonitoring();
 if (getAnalyticsConsent() === 'accepted') {
@@ -60,15 +69,11 @@ function UniversalLinkRouter(): null {
   const router = useRouter();
   useEffect(() => {
     const handle = (url: string) => {
-      try {
-        const parsed = new URL(url);
-        if (parsed.hostname !== 'echo.app' && parsed.hostname !== 'www.echo.app') return;
-        const [, prefix, id] = parsed.pathname.split('/');
-        if (!id) return;
-        if (prefix === 'e') router.push({ pathname: '/thread/[id]', params: { id } });
-        else if (prefix === 'u') router.push({ pathname: '/user/[id]', params: { id } });
-        else if (prefix === 'c') router.push({ pathname: '/comments/[id]', params: { id } });
-      } catch { /* malformed URL — ignore */ }
+      const route = parseEchoUniversalLink(url);
+      if (!route) return;
+      if (route.kind === 'echo') router.push({ pathname: '/thread/[id]', params: { id: route.id } });
+      else if (route.kind === 'user') router.push({ pathname: '/user/[id]', params: { id: route.id } });
+      else if (route.kind === 'comment') router.push({ pathname: '/comments/[id]', params: { id: route.id } });
     };
     Linking.getInitialURL().then(url => { if (url) handle(url); });
     const sub = Linking.addEventListener('url', ({ url }) => handle(url));
@@ -108,21 +113,32 @@ function RootLayout() {
       const kind = String(data.kind ?? '');
       if (!VALID_KINDS.has(kind)) return;
       const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
-      if (!targetId && kind !== 'daily_question') return;
+      const routeId = safeRouteId(targetId);
+      if (kind === 'daily_question') {
+        track('notification_tapped', { kind });
+        router.push('/daily-question');
+        return;
+      }
+      if (!routeId) return;
       track('notification_tapped', { kind });
-      if (kind === 'daily_question') router.push('/daily-question');
-      else if (kind === 'follow') router.push({ pathname: '/user/[id]', params: { id: targetId } });
+      if (kind === 'follow') router.push({ pathname: '/user/[id]', params: { id: routeId } });
       else if (kind === 'comment' || kind === 'reaction' || kind === 'like' || kind === 'quote' || kind === 'mention' || kind === 'repost' || kind === 'bookmark') {
-        router.push({ pathname: '/thread/[id]', params: { id: targetId } });
+        router.push({ pathname: '/thread/[id]', params: { id: routeId } });
       } else if (kind === 'dm') {
-        router.push({ pathname: '/messages/[id]', params: { id: targetId } });
+        router.push({ pathname: '/messages/[id]', params: { id: routeId } });
       }
     };
 
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (cancelled || !response) return;
-      route(response.notification.request.content.data as Record<string, unknown>);
-    });
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (cancelled || !response) return;
+        route(response.notification.request.content.data as Record<string, unknown>);
+      })
+      .catch((error) => {
+        if (!isUnsignedSimulatorNotificationError(error)) {
+          captureException(error, { tags: { source: 'notification_bootstrap' } });
+        }
+      });
 
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       route(response.notification.request.content.data as Record<string, unknown>);
@@ -143,6 +159,7 @@ function RootLayout() {
         <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="auth" options={{ animation: 'fade' }} />
+          <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="thread/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'fade' }} />
@@ -167,6 +184,21 @@ function RootLayout() {
           <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="edit-post" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="mini-apps" options={{ presentation: 'card' }} />
+          <Stack.Screen name="salons" options={{ presentation: 'card' }} />
+          <Stack.Screen name="salon/[slug]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="office-hours" options={{ presentation: 'card' }} />
+          <Stack.Screen name="office-hours/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="badges" options={{ presentation: 'card' }} />
+          <Stack.Screen name="quests" options={{ presentation: 'card' }} />
+          <Stack.Screen name="year-in-echo" options={{ presentation: 'card' }} />
+          <Stack.Screen name="e/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="evolution/[rootId]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="remix/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="muted-users" options={{ presentation: 'card' }} />
+          <Stack.Screen name="persona" options={{ presentation: 'card' }} />
+          <Stack.Screen name="my-reports" options={{ presentation: 'card' }} />
+          <Stack.Screen name="create-salon" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="create-office-hour" options={{ presentation: 'modal', animation: 'fade' }} />
         </Stack>
         <ToastProvider />
         <ConsentBanner />

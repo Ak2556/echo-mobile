@@ -50,6 +50,17 @@ export interface Poll {
 /** Knowledge-curation reactions — distinct from the heart-like signal. */
 export type EchoReaction = 'mind_blown' | 'taking_notes' | 'agree' | 'disagree';
 
+export type PerspectiveType = 'agree' | 'challenge' | 'reframe' | 'story' | 'evidence' | 'question';
+
+export interface PerspectiveCounts {
+  agree: number;
+  challenge: number;
+  reframe: number;
+  story: number;
+  evidence: number;
+  question: number;
+}
+
 export interface ReactionCounts {
   mind_blown: number;
   taking_notes: number;
@@ -125,6 +136,9 @@ export interface FeedItem {
   remixCount?: number;
   parentAuthorUsername?: string;
   parentTitle?: string;
+  perspectiveType?: PerspectiveType;
+  perspectiveNote?: string;
+  sourceUrl?: string;
   // Quality / discovery
   thoughtfulnessScore?: number;
   semanticDistance?: number;
@@ -159,6 +173,7 @@ export interface EvolutionGroup {
   rootAvatarUrl?: string;
   rootIsVerified: boolean;
   branchCount: number;
+  perspectiveCounts?: PerspectiveCounts;
   uniqueAuthors: number;
   treeEngagement: number;
   newestRemixAt: string | null;
@@ -176,6 +191,9 @@ export interface RemixTreeNode {
   commentCount: number;
   repostCount: number;
   remixCount: number;
+  perspectiveType?: PerspectiveType;
+  perspectiveNote?: string;
+  sourceUrl?: string;
   createdAt: string;
   mediaUrls?: string[];
   username: string;
@@ -204,7 +222,7 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'dm' | 'reaction' | 'bookmark' | 'quote';
+  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'dm' | 'reaction' | 'bookmark' | 'quote' | 'report_resolved' | 'content_removed';
   fromUserId: string;
   fromUsername: string;
   fromDisplayName: string;

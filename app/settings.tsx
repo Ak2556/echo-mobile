@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Switch, Alert, Modal, Platform, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Switch, Alert, Modal, Platform, StyleSheet, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -10,8 +10,9 @@ import {
   ChatTeardropDots, Lightning, Translate, WifiSlash, ShieldCheck,
   Palette, TextT, SquaresFour, Star, Robot, FloppyDisk,
   ChatCircle, Broadcast, Database, Eraser, BookmarkSimple,
-  BellSlash, Rectangle,
-  Check, DeviceMobile, Users, Envelope, SunHorizon,
+  BellSlash, Rectangle, FileText,
+  Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
+  Warning, ListChecks, Globe,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -19,8 +20,18 @@ import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
 import { signOut } from '../lib/auth';
+import { deleteRemoteAIConversations, updateRemoteProfile } from '../lib/supabaseEchoApi';
+import { clearPushToken, registerForPush } from '../lib/push';
+import { useResponsiveLayout } from '../lib/responsive';
+import { isSupabaseRemote } from '../lib/remoteConfig';
+import { setPersonaEnabled } from '../lib/persona';
+import { track } from '../lib/analytics';
+import { isSafeExternalUrl } from '../lib/urlSafety';
 
-// ── Shared Components ──
+function openTrustedExternalUrl(url: string): void {
+  if (!isSafeExternalUrl(url)) return;
+  void Linking.openURL(url);
+}
 
 function SettingsRow({ icon: Icon, iconColor, label, subtitle, right, onPress, destructive, theme }: {
   icon: any; label: string; iconColor?: string; subtitle?: string;
@@ -29,17 +40,32 @@ function SettingsRow({ icon: Icon, iconColor, label, subtitle, right, onPress, d
 }) {
   const { colors, radius, fontSizes } = theme;
   return (
-    <AnimatedPressable onPress={onPress} className="flex-row items-center py-3.5 px-1" scaleValue={0.98} haptic="light">
+    <AnimatedPressable
+      onPress={onPress}
+      scaleValue={0.98}
+      haptic="light"
+      style={{
+        minHeight: 62,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 11,
+        paddingHorizontal: 4,
+      }}
+    >
       <View
-        className="w-9 h-9 items-center justify-center mr-3"
         style={{
+          width: 36,
+          height: 36,
           borderRadius: radius.md,
           backgroundColor: destructive ? colors.dangerMuted : colors.surfaceHover,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 12,
         }}
       >
         <Icon color={destructive ? colors.danger : (iconColor || colors.textSecondary)} size={18} />
       </View>
-      <View className="flex-1 mr-2">
+      <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
         <Text style={{ color: destructive ? colors.danger : colors.text, fontSize: fontSizes.body }}>{label}</Text>
         {subtitle && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>{subtitle}</Text>}
       </View>
@@ -56,7 +82,6 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
   const { colors, radius, fontSizes, animation } = theme;
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
-      {/* Blurred backdrop */}
       <View style={StyleSheet.absoluteFill}>
         {Platform.OS === 'ios' && (
           <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
@@ -125,8 +150,7 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
   );
 }
 
-// ── Accent Color Picker ──
-
+// Accent Color Picker
 const ACCENT_COLORS = [
   { color: '#3B82F6', name: 'Blue' },
   { color: '#EF4444', name: 'Red' },
@@ -185,7 +209,7 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
             {ACCENT_COLORS.map(c => (
               <AnimatedPressable
                 key={c.color}
-                onPress={() => { onChange(c.color); onClose(); showToast(`Accent: ${c.name}`, '\u{1F3A8}'); }}
+                onPress={() => { onChange(c.color); onClose(); showToast(`Accent: ${c.name}`, 'Accent'); }}
                 scaleValue={0.85}
                 haptic="medium"
                 className="items-center"
@@ -211,8 +235,7 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
   );
 }
 
-// ── Theme Picker ──
-
+// Theme Picker
 function ThemePicker({ value, onChange, onClose, theme }: {
   value: ThemeName; onChange: (v: ThemeName) => void; onClose: () => void;
   theme: ReturnType<typeof useTheme>;
@@ -264,7 +287,7 @@ function ThemePicker({ value, onChange, onClose, theme }: {
                 return (
                   <AnimatedPressable
                     key={key}
-                    onPress={() => { onChange(key); onClose(); showToast(`Theme: ${t.name}`, '\u{1F3A8}'); }}
+                    onPress={() => { onChange(key); onClose(); showToast(`Theme: ${t.name}`, 'Theme'); }}
                     scaleValue={0.95}
                     haptic="medium"
                     style={{
@@ -305,13 +328,13 @@ function ThemePicker({ value, onChange, onClose, theme }: {
   );
 }
 
-// ── Main Screen ──
-
+// Main Screen
 export default function SettingsScreen() {
   const router = useRouter();
   const s = useAppStore();
   const theme = useTheme();
   const { colors, radius, fontSizes, switchTrack, animation } = theme;
+  const layout = useResponsiveLayout();
 
   const [showFontPicker, setShowFontPicker] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
@@ -339,7 +362,7 @@ export default function SettingsScreen() {
   const handleDeleteAccount = () => {
     // Route to the dedicated delete-account screen — Apple wants a
     // multi-step confirmation flow, not a one-tap alert.
-    router.push('/delete-account' as any);
+    router.push('/delete-account');
   };
 
   const handleClearCache = () => {
@@ -348,17 +371,22 @@ export default function SettingsScreen() {
       { text: 'Clear', style: 'destructive', onPress: () => {
         s.clearChatHistory();
         s.clearNotifications();
-        showToast('Cache cleared', '\u{1F9F9}');
+        showToast('Cache cleared', 'Cleared');
       }},
     ]);
   };
 
   const handleClearChats = () => {
-    Alert.alert('Clear Chat History', `Delete all ${s.sessions.length} chat sessions? This cannot be undone.`, [
+    Alert.alert('Clear Chat History', `Delete all ${s.sessions.length} chat sessions and server-side AI conversations? This cannot be undone.`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear All', style: 'destructive', onPress: () => {
-        s.clearChatHistory();
-        showToast('Chat history cleared', '\u{1F5D1}');
+      { text: 'Clear All', style: 'destructive', onPress: async () => {
+        try {
+          await deleteRemoteAIConversations();
+          s.clearChatHistory();
+          showToast('Chat history cleared', 'Done');
+        } catch (e) {
+          Alert.alert('Could not clear chat history', (e as Error).message);
+        }
       }},
     ]);
   };
@@ -381,6 +409,43 @@ export default function SettingsScreen() {
         showToast('Notifications cleared', '');
       }},
     ]);
+  };
+
+  const handlePushToggle = async (enabled: boolean) => {
+    if (!enabled) {
+      s.setNotificationsEnabled(false);
+      await clearPushToken();
+      showToast('Push notifications muted', '');
+      return;
+    }
+
+    const result = await registerForPush();
+    s.setNotificationsEnabled(result.granted);
+    showToast(result.granted ? 'Push notifications enabled' : 'Notifications permission denied', result.granted ? 'Done' : '');
+  };
+
+  const handleProfilePhotoVisibleToggle = async (visible: boolean) => {
+    const previous = s.profilePhotoVisible;
+    s.setProfilePhotoVisible(visible);
+
+    if (!isSupabaseRemote()) {
+      showToast(visible ? 'Profile photo visible' : 'Profile photo hidden', 'Profile');
+      return;
+    }
+
+    try {
+      await updateRemoteProfile({ avatar_url: visible ? (s.avatarUrl || null) : null });
+      showToast(visible ? 'Profile photo visible' : 'Profile photo hidden', 'Profile');
+    } catch (e) {
+      s.setProfilePhotoVisible(previous);
+      Alert.alert('Could not update profile photo visibility', (e as Error).message);
+    }
+  };
+
+  const handlePersonaLearningToggle = (enabled: boolean) => {
+    s.setPersonaLearningEnabled(enabled);
+    setPersonaEnabled(enabled, s.userId);
+    track(enabled ? 'persona_learning_started' : 'persona_learning_disabled');
   };
 
   const fontLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.fontSize];
@@ -412,17 +477,39 @@ export default function SettingsScreen() {
   );
 
   const chevronValue = (label: string) => (
-    <View className="flex-row items-center">
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginRight: 4 }}>{label}</Text>
       <CaretRight color={colors.textMuted} size={18} />
     </View>
   );
 
+  const sectionGridStyle = layout.isDesktop
+    ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 20 }
+    : undefined;
+  const sectionStyle = layout.isDesktop
+    ? { width: '48.8%' as const, minWidth: 420, flexGrow: 1 }
+    : undefined;
+  const scrollContentStyle = {
+    width: '100%' as const,
+    maxWidth: layout.isDesktop ? 1180 : layout.contentMaxWidth,
+    alignSelf: 'center' as const,
+    paddingHorizontal: layout.gutter,
+    paddingTop: layout.isDesktop ? 22 : 16,
+    paddingBottom: layout.bottomChromePadding,
+  };
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Glass header */}
       <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingLeft: layout.isMacDesktop ? 84 : 16,
+            paddingRight: 16,
+            paddingVertical: layout.isDesktop ? 14 : 12,
+          }}
+        >
           <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
             <ArrowLeft color={colors.text} size={24} />
           </AnimatedPressable>
@@ -430,19 +517,20 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
         <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ padding: 16 }}>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 8 }}>Recommended first</Text>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 8 }}>Account controls</Text>
           <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
-            Set privacy, notifications, and accessibility first. The rest is advanced polish once your posting rhythm feels right.
+            Review privacy, notifications, and accessibility before changing advanced preferences.
           </Text>
         </GlassPanel>
 
+        <View style={sectionGridStyle}>
         {/* NOTIFICATIONS */}
-        <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
+        <Animated.View entering={animation(FadeInDown.delay(50).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Essentials</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, s.setNotificationsEnabled)} />
+            <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, handlePushToggle)} />
             {divider}
             <SettingsRow theme={theme} icon={Vibrate} label="Haptic Feedback" subtitle="Vibration on interactions" right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
             {divider}
@@ -457,12 +545,21 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* PRIVACY & SAFETY */}
-        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))}>
+        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Privacy & Safety</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, s.setActivityStatus)} />
             {divider}
             <SettingsRow theme={theme} icon={EyeSlash} label="Online Status" subtitle="Let others see your online indicator" right={SwitchEl(s.onlineStatus, s.setOnlineStatus)} />
+            {divider}
+            <SettingsRow
+              theme={theme}
+              icon={UserCircle}
+              iconColor={colors.accent}
+              label="Profile Photo"
+              subtitle={s.profilePhotoVisible ? 'Visible on profile and feed' : 'Hidden from other users'}
+              right={SwitchEl(s.profilePhotoVisible, handleProfilePhotoVisibleToggle)}
+            />
             {divider}
             <SettingsRow theme={theme} icon={ChatCircle} label="Read Receipts" subtitle="Show when you've read messages" right={SwitchEl(s.readReceipts, s.setReadReceipts)} />
             {divider}
@@ -475,7 +572,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* APPEARANCE & DISPLAY */}
-        <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
+        <Animated.View entering={animation(FadeInDown.delay(150).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Accessibility & Display</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow
@@ -486,7 +583,7 @@ export default function SettingsScreen() {
               subtitle={`${themeLabel} — tap to change`}
               onPress={() => setShowThemePicker(true)}
               right={
-                <View className="flex-row items-center">
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View
                     style={{
                       width: 22,
@@ -500,8 +597,8 @@ export default function SettingsScreen() {
                   >
                     <View style={{ position: 'absolute', top: 3, left: 3, width: 16, height: 16, borderRadius: 999, backgroundColor: THEMES[s.theme]?.accent ?? colors.accent }} />
                   </View>
-      <CaretRight color={colors.textMuted} size={18} />
-            </View>
+                  <CaretRight color={colors.textMuted} size={18} />
+                </View>
               }
             />
             {divider}
@@ -517,7 +614,7 @@ export default function SettingsScreen() {
               subtitle="Customize the app's accent color"
               onPress={() => setShowAccentPicker(true)}
               right={
-                <View className="flex-row items-center">
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ width: 20, height: 20, borderRadius: 999, marginRight: 8, backgroundColor: s.accentColor }} />
                   <CaretRight color={colors.textMuted} size={18} />
                 </View>
@@ -537,7 +634,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* CONTENT & FEED */}
-        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))}>
+        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Content & Feed</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={SquaresFour} label="Feed Sort" subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
@@ -553,12 +650,27 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* CHAT & AI */}
-        <Animated.View entering={animation(FadeInDown.delay(250).duration(220))}>
+        <Animated.View entering={animation(FadeInDown.delay(250).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Chat & AI</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label="AI Model" subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={Database} iconColor={colors.accent} label="AI Memory" subtitle="View and clear remembered preferences" onPress={() => router.push('/ai-memory')} />
+            {divider}
+            <SettingsRow
+              theme={theme}
+              icon={Brain}
+              iconColor={colors.accent}
+              label="Personal Persona"
+              subtitle={s.personaLearningEnabled ? 'Learn your voice over the first week' : 'Persona learning is paused'}
+              onPress={() => router.push('/persona' as never)}
+              right={
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  {SwitchEl(s.personaLearningEnabled, handlePersonaLearningToggle)}
+                  <CaretRight color={colors.textMuted} size={18} />
+                </View>
+              }
+            />
             {divider}
             <SettingsRow theme={theme} icon={ChatTeardropDots} label="Chat Bubble Style" subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
             {divider}
@@ -571,14 +683,14 @@ export default function SettingsScreen() {
         </Animated.View>
 
         {/* STORAGE & DATA */}
-        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))}>
+        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Advanced Data Controls</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Database} label="Storage Used" right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
             {divider}
             <SettingsRow theme={theme} icon={Eraser} label="Clear Cache" subtitle="Free up storage space" onPress={handleClearCache} />
             {divider}
-            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`Clear Chat History (${s.sessions.length})`} subtitle="Delete all AI conversations" onPress={handleClearChats} />
+            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`Clear Chat History (${s.sessions.length})`} subtitle="Delete local and server-side AI conversations" onPress={handleClearChats} />
             {divider}
             <SettingsRow theme={theme} icon={BookmarkSimple} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle="Remove all saved echoes" onPress={handleClearBookmarks} />
             {divider}
@@ -586,22 +698,34 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>
 
+        {/* EU DIGITAL SERVICES ACT */}
+        <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
+          <Text style={sectionHeaderStyle}>EU Digital Services Act</Text>
+          <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
+            <SettingsRow theme={theme} icon={Warning} label="My Reports" subtitle="Track the outcome of content reports you've filed" onPress={() => router.push('/my-reports')} />
+            {divider}
+            <SettingsRow theme={theme} icon={Globe} label="DSA Contact" subtitle="Contact us for DSA-related matters" onPress={() => openTrustedExternalUrl('mailto:dsa@echo.app')} />
+            {divider}
+            <SettingsRow theme={theme} icon={ListChecks} label="EU Legal Representative" onPress={() => openTrustedExternalUrl('https://echo.app/legal/eu-rep')} />
+          </GlassPanel>
+        </Animated.View>
+
         {/* ABOUT */}
-        <Animated.View entering={animation(FadeInDown.delay(350).duration(220))}>
+        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>About</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => Alert.alert('Privacy Policy', 'Echo respects your privacy. We collect minimal data to provide the best experience. Your chats are processed via encrypted connections and are never stored on our servers permanently.')} />
+            <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => openTrustedExternalUrl('https://echo.app/privacy')} />
             {divider}
-            <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => Alert.alert('Help & Support', 'For help, contact echo-support@example.com\n\nFAQ:\n\u2022 Swipe on feed cards for actions\n\u2022 Long-press messages to copy\n\u2022 Tap avatars to view profiles\n\u2022 Pull down to refresh feeds')} />
+            <SettingsRow theme={theme} icon={FileText} label="Terms of Service" onPress={() => openTrustedExternalUrl('https://echo.app/terms')} />
             {divider}
-            <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.2.0 (42)</Text>} />
+            <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => openTrustedExternalUrl('mailto:support@echo.app')} />
             {divider}
-            <SettingsRow theme={theme} icon={Star} label="What's New" onPress={() => Alert.alert("What's New in 1.2.0", '\u2022 Multi-theme system (6 themes)\n\u2022 Every setting is now live\n\u2022 Online status indicators\n\u2022 Accent color customization\n\u2022 Font size + corner radius controls\n\u2022 Reduce animations respected everywhere')} />
+            <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.0.0</Text>} />
           </GlassPanel>
         </Animated.View>
 
         {/* DANGER ZONE */}
-        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))}>
+        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Danger Zone</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={SignOut} label="Sign Out" onPress={handleSignOut} destructive />
@@ -609,9 +733,9 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={Trash} label="Delete Account" subtitle="Permanently delete all data" onPress={handleDeleteAccount} destructive />
           </GlassPanel>
         </Animated.View>
+        </View>
 
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 8 }}>Echo v1.2.0</Text>
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32, opacity: 0.6 }}>Made with love</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32 }}>Echo v1.0.0</Text>
       </ScrollView>
 
       {/* PICKERS */}
@@ -629,7 +753,7 @@ export default function SettingsScreen() {
             { label: 'Large', value: 'large' as const, desc: 'Easier to read' },
           ]}
           value={s.fontSize}
-          onChange={(v) => { s.setFontSize(v); showToast(`Font size: ${v}`, '\u{1F524}'); }}
+          onChange={(v) => { s.setFontSize(v); showToast(`Font size: ${v}`, 'Font'); }}
           onClose={() => setShowFontPicker(false)}
         />
       )}
@@ -644,7 +768,7 @@ export default function SettingsScreen() {
             { label: 'Gemini 2.0 Flash Lite', value: 'gemini-2.0-flash-lite' as const, desc: 'Lightweight Google AI Studio model' },
           ]}
           value={s.aiModel}
-          onChange={(v) => { s.setAiModel(v); showToast(`Model: ${v}`, '\u{1F916}'); }}
+          onChange={(v) => { s.setAiModel(v); showToast(`Model: ${v}`, 'Model'); }}
           onClose={() => setShowModelPicker(false)}
         />
       )}
@@ -659,7 +783,7 @@ export default function SettingsScreen() {
             { label: 'Minimal', value: 'minimal' as const, desc: 'Clean, no background' },
           ]}
           value={s.chatBubbleStyle}
-          onChange={(v) => { s.setChatBubbleStyle(v); showToast(`Bubble style: ${v}`, '\u{1F4AC}'); }}
+          onChange={(v) => { s.setChatBubbleStyle(v); showToast(`Bubble style: ${v}`, 'Bubble'); }}
           onClose={() => setShowBubblePicker(false)}
         />
       )}
@@ -674,7 +798,7 @@ export default function SettingsScreen() {
             { label: 'Nobody', value: 'nobody' as const, desc: 'Disable direct messages' },
           ]}
           value={s.dmPrivacy}
-          onChange={(v) => { s.setDmPrivacy(v); showToast(`DMs: ${v}`, '\u{1F4EC}'); }}
+          onChange={(v) => { s.setDmPrivacy(v); showToast(`DMs: ${v}`, 'DMs'); }}
           onClose={() => setShowDmPicker(false)}
         />
       )}
@@ -696,7 +820,7 @@ export default function SettingsScreen() {
             { label: 'Arabic', value: 'Arabic' as string },
           ]}
           value={s.contentLanguage}
-          onChange={(v) => { s.setContentLanguage(v); showToast(`Language: ${v}`, '\u{1F30D}'); }}
+          onChange={(v) => { s.setContentLanguage(v); showToast(`Language: ${v}`, 'Language'); }}
           onClose={() => setShowLanguagePicker(false)}
         />
       )}
@@ -711,7 +835,7 @@ export default function SettingsScreen() {
             { label: 'Following', value: 'following' as const, desc: 'Only from people you follow' },
           ]}
           value={s.feedSort}
-          onChange={(v) => { s.setFeedSort(v); showToast(`Feed: ${v}`, '\u{1F4F0}'); }}
+          onChange={(v) => { s.setFeedSort(v); showToast(`Feed: ${v}`, 'Feed'); }}
           onClose={() => setShowFeedSortPicker(false)}
         />
       )}
@@ -726,7 +850,7 @@ export default function SettingsScreen() {
             { label: 'Large', value: 'large' as const, desc: 'Extra rounded corners (24px)' },
           ]}
           value={s.roundedCorners}
-          onChange={(v) => { s.setRoundedCorners(v); showToast(`Corners: ${v}`, '\u{25FE}'); }}
+          onChange={(v) => { s.setRoundedCorners(v); showToast(`Corners: ${v}`, 'Corners'); }}
           onClose={() => setShowCornerPicker(false)}
         />
       )}

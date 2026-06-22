@@ -16,6 +16,7 @@ export default function AuthLayout() {
       <Stack.Screen name="signup-wizard" />
       <Stack.Screen name="email" />
       <Stack.Screen name="phone" />
+      <Stack.Screen name="callback" options={{ animation: 'none' }} />
     </Stack>
   );
 }

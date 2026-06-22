@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { FeedItem } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { captureException } from '../../lib/monitoring';
 import {
   fetchRankedFeed,
   fetchRemoteFeed,
@@ -16,8 +17,7 @@ import { computeScore, GRAVITY, deduplicateFeed } from '../../lib/feedScoring';
 
 const PAGE_SIZE = 20;
 
-// ─── Home feed (non-paginated, ~50 items) ────────────────────────────────────
-
+// Home feed (non-paginated, ~50 items)
 export function useFeed() {
   const publishedEchoes = useAppStore(s => s.publishedEchoes);
   const likedIds        = useAppStore(s => s.likedIds);
@@ -58,7 +58,7 @@ export function useFeed() {
             // No semantic results yet (e.g. fresh install) — fall through
             // to ranked feed so the surface is never empty.
           } catch (semErr) {
-            console.warn('[useFeed] semantic RPC failed, falling back to ranked:', semErr);
+            captureException(semErr, { tags: { hook: 'useFeed', fallback: 'ranked' } });
           }
         }
         // Gravity: recency-heavy for 'latest', engagement-heavy for 'popular'.
@@ -71,13 +71,13 @@ export function useFeed() {
           });
           return filterHidden(rows);
         } catch (rankErr) {
-          console.warn('[useFeed] ranked RPC failed, falling back to chronological:', rankErr);
+          captureException(rankErr, { tags: { hook: 'useFeed', fallback: 'chronological' } });
           const rows = await fetchRemoteFeed({ limit: 50 });
           return filterHidden(rows);
         }
       }
 
-      // ── Local / offline mode ──────────────────────────────────────────────
+      // Local / offline mode
       const liked      = new Set(likedIds);
       const bookmarked = new Set(bookmarkedIds);
       const interestSet = new Set(interests);
@@ -118,8 +118,7 @@ export function useFeed() {
   });
 }
 
-// ─── Similar echoes ("more like this" rail) ──────────────────────────────────
-
+// Similar echoes ("more like this" rail)
 export function useSimilarEchoes(echoId: string | undefined, limit = 6) {
   const remote = isSupabaseRemote();
   return useQuery({
@@ -130,8 +129,7 @@ export function useSimilarEchoes(echoId: string | undefined, limit = 6) {
   });
 }
 
-// ─── Trending evolutions (Evolutions tab) ────────────────────────────────────
-
+// Trending evolutions (Evolutions tab)
 export function useTrendingEvolutions(limit = 30) {
   const remote = isSupabaseRemote();
   return useQuery({
@@ -142,8 +140,7 @@ export function useTrendingEvolutions(limit = 30) {
   });
 }
 
-// ─── Single remix tree (Evolution detail view) ───────────────────────────────
-
+// Single remix tree (Evolution detail view)
 export function useRemixTree(rootId: string | undefined) {
   const remote = isSupabaseRemote();
   return useQuery({
@@ -154,8 +151,7 @@ export function useRemixTree(rootId: string | undefined) {
   });
 }
 
-// ─── Discover / infinite feed (paginated) ────────────────────────────────────
-
+// Discover / infinite feed (paginated)
 export function useInfiniteFeed() {
   const publishedEchoes  = useAppStore(s => s.publishedEchoes);
   const likedIds         = useAppStore(s => s.likedIds);
@@ -196,6 +192,13 @@ export function useInfiniteFeed() {
         list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
+        // Latest: pure chronological, no ranking, no personalisation (DSA Art. 27 opt-out).
+        if (feedScope === 'latest') {
+          if (pageParam) return [];
+          const rows = await fetchRemoteFeed({ limit: PAGE_SIZE * 3 });
+          return filterHidden(rows);
+        }
+
         const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
         try {
           const rows = await fetchRankedFeed({
@@ -206,7 +209,7 @@ export function useInfiniteFeed() {
           });
           return filterHidden(rows);
         } catch (rankErr) {
-          console.warn('[useInfiniteFeed] ranked RPC failed, falling back:', rankErr);
+          captureException(rankErr, { tags: { hook: 'useInfiniteFeed', fallback: 'chronological' } });
           const cursor = typeof pageParam === 'object' && pageParam ? undefined : undefined;
           const rows = await fetchRemoteFeed({ limit: PAGE_SIZE, cursor });
           return filterHidden(rows);
