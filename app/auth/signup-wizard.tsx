@@ -29,16 +29,29 @@ const AVATAR_COLORS = [
 ];
 
 const INTERESTS = [
+  // thinking & knowledge
   { id: 'philosophy', label: 'Philosophy' }, { id: 'science', label: 'Science' },
-  { id: 'technology', label: 'Technology' }, { id: 'design', label: 'Design' },
-  { id: 'writing', label: 'Writing' }, { id: 'psychology', label: 'Psychology' },
-  { id: 'economics', label: 'Economics' }, { id: 'culture', label: 'Culture' },
-  { id: 'history', label: 'History' }, { id: 'art', label: 'Art' },
+  { id: 'psychology', label: 'Psychology' }, { id: 'economics', label: 'Economics' },
+  { id: 'history', label: 'History' }, { id: 'politics', label: 'Politics' },
+  // creative & culture
+  { id: 'writing', label: 'Writing' }, { id: 'art', label: 'Art' },
   { id: 'film', label: 'Film' }, { id: 'music', label: 'Music' },
-  { id: 'politics', label: 'Politics' }, { id: 'books', label: 'Books' },
-  { id: 'startups', label: 'Startups' }, { id: 'climate', label: 'Climate' },
-  { id: 'health', label: 'Health' }, { id: 'education', label: 'Education' },
-  { id: 'spirituality', label: 'Spirituality' }, { id: 'media', label: 'Media' },
+  { id: 'books', label: 'Books' }, { id: 'design', label: 'Design' },
+  // world & society
+  { id: 'technology', label: 'Technology' }, { id: 'startups', label: 'Startups' },
+  { id: 'climate', label: 'Climate' }, { id: 'education', label: 'Education' },
+  { id: 'culture', label: 'Culture' }, { id: 'media', label: 'Media' },
+  // life & wellbeing
+  { id: 'health', label: 'Health' }, { id: 'mental-health', label: 'Mental Health' },
+  { id: 'fitness', label: 'Fitness' }, { id: 'spirituality', label: 'Spirituality' },
+  { id: 'nature', label: 'Nature' },
+  // everyday life
+  { id: 'career', label: 'Career' }, { id: 'finance', label: 'Finance' },
+  { id: 'relationships', label: 'Relationships' }, { id: 'parenting', label: 'Parenting' },
+  { id: 'travel', label: 'Travel' }, { id: 'food', label: 'Food' },
+  // fun & play
+  { id: 'gaming', label: 'Gaming' }, { id: 'sports', label: 'Sports' },
+  { id: 'fashion', label: 'Fashion' },
 ];
 
 const CONFETTI_COLORS = [ACCENT, '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#06B6D4', '#F97316'];
