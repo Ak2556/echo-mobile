@@ -1,4 +1,4 @@
-import { EchoReaction, FeedItem, ReactionCounts } from '../types';
+import { EchoReaction, FeedItem, PerspectiveType, ReactionCounts } from '../types';
 import { isVideoUri } from './videoMedia';
 
 export type SupabaseProfileRow = {
@@ -34,10 +34,14 @@ export type SupabaseEchoRow = {
   parent_echo_id?: string | null;
   remix_root_id?: string | null;
   remix_count?: number | null;
+  perspective_type?: PerspectiveType | null;
+  perspective_note?: string | null;
+  source_url?: string | null;
+  source_conversation_id?: string | null;
   thoughtfulness_score?: number | null;
   rank_score?: number;
   distance?: number;
-  /** Knowledge-reaction counters (added by Gen Z feature pack). */
+  /** Knowledge-reaction counters. */
   mind_blown_count?: number | null;
   taking_notes_count?: number | null;
   agree_count?: number | null;
@@ -117,9 +121,13 @@ export function mapEchoRowToFeedItem(
     parentEchoId: echo.parent_echo_id ?? undefined,
     remixRootId: echo.remix_root_id ?? undefined,
     remixCount: echo.remix_count ?? undefined,
+    perspectiveType: echo.perspective_type ?? undefined,
+    perspectiveNote: echo.perspective_note ?? undefined,
+    sourceUrl: echo.source_url ?? undefined,
     thoughtfulnessScore: echo.thoughtfulness_score ?? undefined,
     semanticDistance: echo.distance ?? undefined,
-    postOrigin: echo.parent_echo_id ? 'remix' : undefined,
+    postOrigin: echo.parent_echo_id ? 'remix' : echo.source_conversation_id ? 'chat' : undefined,
+    sourceConversationId: echo.source_conversation_id ?? undefined,
     coAuthor: echo.co_author_id ? {
       id: echo.co_author_id,
       username: coAuthor?.username ?? 'unknown',

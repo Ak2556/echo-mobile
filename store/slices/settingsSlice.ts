@@ -55,6 +55,9 @@ export interface SettingsSlice {
   // ── Interests ──
   interests: string[];
   setInterests: (v: string[]) => void;
+  // ── Thinking Archetype ──
+  thinkingStyle: string;
+  setThinkingStyle: (v: string) => void;
   // ── Accessibility ──
   fontScale: number;
   setFontScale: (v: number) => void;
@@ -153,6 +156,8 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setFeedSort: (v) => { persistSet('feedSort', v); set({ feedSort: v }); },
     interests: persistGet<string[]>('interests', []),
     setInterests: (v) => { persistSet('interests', v); set({ interests: v }); },
+    thinkingStyle: persistGet<string>('thinkingStyle', ''),
+    setThinkingStyle: (v) => { persistSet('thinkingStyle', v); set({ thinkingStyle: v }); },
     fontScale: persistGet<number>('fontScale', 1),
     setFontScale: (v) => { persistSet('fontScale', v); set({ fontScale: v }); },
     hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
