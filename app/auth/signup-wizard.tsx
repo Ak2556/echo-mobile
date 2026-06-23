@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  View, Text, TextInput, ScrollView, Dimensions, Platform,
+  View, Text, TextInput, ScrollView, Platform, useWindowDimensions,
   KeyboardAvoidingView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,13 +11,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArrowLeft, Check, At } from 'phosphor-react-native';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../lib/auth';
+import { refreshAuthSession, useAuth } from '../../lib/auth';
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { track, identify } from '../../lib/analytics';
+import { useResponsiveLayout } from '../../lib/responsive';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ACCENT = '#6366F1';
 const SPRING = { damping: 24, stiffness: 300 };
 
@@ -29,66 +29,19 @@ const AVATAR_COLORS = [
 ];
 
 const INTERESTS = [
-  { id: 'music', label: '🎵 Music' }, { id: 'gaming', label: '🎮 Gaming' },
-  { id: 'art', label: '🎨 Art' }, { id: 'tech', label: '📱 Tech' },
-  { id: 'fitness', label: '🏋️ Fitness' }, { id: 'food', label: '🍕 Food' },
-  { id: 'travel', label: '✈️ Travel' }, { id: 'books', label: '📚 Books' },
-  { id: 'film', label: '🎬 Film' }, { id: 'sports', label: '🏀 Sports' },
-  { id: 'coding', label: '💻 Coding' }, { id: 'nature', label: '🌿 Nature' },
-  { id: 'photography', label: '📸 Photography' }, { id: 'comedy', label: '😂 Comedy' },
-  { id: 'science', label: '🔬 Science' }, { id: 'finance', label: '💰 Finance' },
-  { id: 'culture', label: '🎭 Culture' }, { id: 'design', label: '🏠 Design' },
-  { id: 'podcasts', label: '🎤 Podcasts' }, { id: 'writing', label: '✍️ Writing' },
+  { id: 'philosophy', label: 'Philosophy' }, { id: 'science', label: 'Science' },
+  { id: 'technology', label: 'Technology' }, { id: 'design', label: 'Design' },
+  { id: 'writing', label: 'Writing' }, { id: 'psychology', label: 'Psychology' },
+  { id: 'economics', label: 'Economics' }, { id: 'culture', label: 'Culture' },
+  { id: 'history', label: 'History' }, { id: 'art', label: 'Art' },
+  { id: 'film', label: 'Film' }, { id: 'music', label: 'Music' },
+  { id: 'politics', label: 'Politics' }, { id: 'books', label: 'Books' },
+  { id: 'startups', label: 'Startups' }, { id: 'climate', label: 'Climate' },
+  { id: 'health', label: 'Health' }, { id: 'education', label: 'Education' },
+  { id: 'spirituality', label: 'Spirituality' }, { id: 'media', label: 'Media' },
 ];
 
-// Activation seed prompts mapped to each interest. Used after the wizard
-// finishes — instead of dumping a brand-new user on an empty feed, we route
-// them straight to compose with one of these in the prompt field. First
-// publish in the first session is the strongest predictor of D1 retention.
-const INTEREST_PROMPTS: Record<string, string> = {
-  music:       'What\'s a song that always pulls you out of a bad mood?',
-  gaming:      'What\'s the most underrated mechanic in a game you love?',
-  art:         'What piece of art has changed how you see the world?',
-  tech:        'What\'s a piece of technology you wish more people used?',
-  fitness:     'What\'s the smallest habit that changed your fitness?',
-  food:        'What\'s the dish you\'d cook to convince someone you can cook?',
-  travel:      'Where would you send a friend who has one weekend free?',
-  books:       'What book do you give as a gift more than once?',
-  film:        'What\'s a film that needs a rewatch every couple of years?',
-  sports:      'What\'s an athletic moment you\'d show someone who doesn\'t care about sports?',
-  coding:      'What\'s a bug you remember years later, and what did it teach you?',
-  nature:      'What\'s a place outside you go to think clearly?',
-  photography: 'What photo means more to you than it should?',
-  comedy:      'Who makes you laugh in a way you can\'t explain to other people?',
-  science:     'What scientific idea blew your mind when you first understood it?',
-  finance:     'What\'s a money lesson you wish you\'d learned five years earlier?',
-  culture:     'What\'s a cultural moment that you keep coming back to?',
-  design:      'What\'s a piece of design — UI, object, signage — you love and never tire of?',
-  podcasts:    'What podcast episode have you recommended the most?',
-  writing:     'What sentence have you read this year that you can\'t forget?',
-};
-const DEFAULT_PROMPT = 'What\'s a piece of advice you ignored that turned out to be right?';
-
-function primaryInterestPrompt(interestId?: string): string {
-  if (!interestId) return DEFAULT_PROMPT;
-  return INTEREST_PROMPTS[interestId] ?? DEFAULT_PROMPT;
-}
-
 const CONFETTI_COLORS = [ACCENT, '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#06B6D4', '#F97316'];
-
-// Pre-generated at module level so values are stable across renders
-const CONFETTI_DATA = Array.from({ length: 40 }, (_, i) => ({
-  id: i,
-  startX: Math.random() * SCREEN_WIDTH,
-  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-  velocity: 300 + Math.random() * 400,
-  xDrift: (Math.random() - 0.5) * 80,
-  rotDeg: (Math.random() - 0.5) * 720,
-  w: Math.round(5 + Math.random() * 7),
-  h: Math.round(7 + Math.random() * 9),
-}));
-
-// ─── SwatchItem ───────────────────────────────────────────────────────────────
 
 function SwatchItem({ color, selected, onPress }: {
   color: string; selected: boolean; onPress: () => void;
@@ -125,8 +78,6 @@ function SwatchItem({ color, selected, onPress }: {
     </AnimatedPressable>
   );
 }
-
-// ─── InterestChip ─────────────────────────────────────────────────────────────
 
 function InterestChip({ label, selected, onPress }: {
   label: string; selected: boolean; onPress: () => void;
@@ -170,8 +121,6 @@ function InterestChip({ label, selected, onPress }: {
   );
 }
 
-// ─── ConfettiPiece ────────────────────────────────────────────────────────────
-
 function ConfettiPiece({ startX, color, velocity, xDrift, rotDeg, w, h }: {
   startX: number; color: string; velocity: number;
   xDrift: number; rotDeg: number; w: number; h: number;
@@ -214,11 +163,22 @@ function ConfettiPiece({ startX, color, velocity, xDrift, rotDeg, w, h }: {
   );
 }
 
-// ─── SignupWizard ─────────────────────────────────────────────────────────────
-
 export default function SignupWizard() {
   const router = useRouter();
   const { session } = useAuth();
+  const { width: screenWidth } = useWindowDimensions();
+  const layout = useResponsiveLayout();
+  const stepWidth = Math.min(screenWidth, layout.contentMaxWidth);
+  const confettiData = useMemo(() => Array.from({ length: 40 }, (_, i) => ({
+    id: i,
+    startX: Math.random() * stepWidth,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    velocity: 300 + Math.random() * 400,
+    xDrift: (Math.random() - 0.5) * 80,
+    rotDeg: (Math.random() - 0.5) * 720,
+    w: Math.round(5 + Math.random() * 7),
+    h: Math.round(7 + Math.random() * 9),
+  })), [stepWidth]);
   const {
     setUsername,
     setDisplayName: storeSetDisplayName,
@@ -226,6 +186,8 @@ export default function SignupWizard() {
     setAvatarColor: storeSetAvatarColor,
     setInterests,
     setHasSeenOnboarding,
+    setHasCompletedProductOnboarding,
+    setOnboardingDraftCreated,
     reduceAnimations,
   } = useAppStore();
 
@@ -238,29 +200,16 @@ export default function SignupWizard() {
   const [bioText, setBioText] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  // Username availability — debounced server check. 'idle' until 3+ chars,
-  // 'checking' while we query, 'available' if free, 'taken' if collision.
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
 
   const usernameClean = usernameRaw.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
   const firstName = displayName.trim().split(' ')[0] || 'you';
-  // Allow proceeding as long as the username ISN'T confirmed taken or still
-  // checking. If RLS / network failure leaves status === 'idle', the DB unique
-  // constraint at insert time is the backstop — we surface "Username taken" and
-  // bounce back to this step. Better to let users move forward than to gate
-  // them on a check that can silently fail.
   const canStep0 =
     displayName.trim().length >= 1 &&
     usernameClean.length >= 3 &&
     usernameStatus !== 'taken' &&
     usernameStatus !== 'checking';
 
-  // Debounced availability check using AbortController. Each new keystroke
-  // aborts the previous in-flight query — so rapid typing only ever leaves
-  // ONE pending check. No timeout race needed: if the network is genuinely
-  // dead, the request rejects with an abort and we fall to 'idle', and the
-  // canStep0 gate above lets the user proceed (DB unique constraint is the
-  // backstop at save time).
   useEffect(() => {
     if (usernameClean.length < 3) {
       setUsernameStatus('idle');
@@ -298,11 +247,10 @@ export default function SignupWizard() {
   const nameInputRef = useRef<TextInput>(null);
   const prevColorRef = useRef(avatarColor);
 
-  // ── Shared values ──
   const tapeOffset = useSharedValue(0);
   const progressBarWidth = useSharedValue(0);
-  const glowOpacity = useSharedValue(0.3);
-  const ctaGlowOpacity = useSharedValue(0);
+  const avatarRingOpacity = useSharedValue(0.3);
+  const ctaRingOpacity = useSharedValue(0);
   const backOpacity = useSharedValue(0);
   const counterOpacity = useSharedValue(1);
 
@@ -314,12 +262,12 @@ export default function SignupWizard() {
     width: progressBarWidth.value,
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
+  const avatarRingStyle = useAnimatedStyle(() => ({
+    opacity: avatarRingOpacity.value,
   }));
 
-  const ctaGlowStyle = useAnimatedStyle(() => ({
-    opacity: ctaGlowOpacity.value,
+  const ctaRingStyle = useAnimatedStyle(() => ({
+    opacity: ctaRingOpacity.value,
   }));
 
   const backOpacityStyle = useAnimatedStyle(() => ({
@@ -330,15 +278,13 @@ export default function SignupWizard() {
     opacity: counterOpacity.value,
   }));
 
-  // Progress bar follows currentStep
   useEffect(() => {
-    progressBarWidth.value = withSpring((currentStep / 4) * SCREEN_WIDTH, SPRING);
-  }, [currentStep, progressBarWidth]);
+    progressBarWidth.value = withSpring((currentStep / 4) * screenWidth, SPRING);
+  }, [currentStep, progressBarWidth, screenWidth]);
 
-  // CTA glow pulse on step 4
   useEffect(() => {
     if (currentStep === 4) {
-      ctaGlowOpacity.value = withRepeat(
+      ctaRingOpacity.value = withRepeat(
         withSequence(
           withTiming(0.7, { duration: 1000 }),
           withTiming(0.3, { duration: 1000 }),
@@ -347,9 +293,8 @@ export default function SignupWizard() {
         true,
       );
     }
-  }, [currentStep, ctaGlowOpacity]);
+  }, [currentStep, ctaRingOpacity]);
 
-  // Auto-focus name input when on step 0
   useEffect(() => {
     if (currentStep === 0) {
       const t = setTimeout(() => nameInputRef.current?.focus(), 300);
@@ -357,16 +302,15 @@ export default function SignupWizard() {
     }
   }, [currentStep]);
 
-  // Avatar glow pulse on color change
   useEffect(() => {
     if (prevColorRef.current !== avatarColor) {
       prevColorRef.current = avatarColor;
-      glowOpacity.value = withSequence(
+      avatarRingOpacity.value = withSequence(
         withTiming(0.8, { duration: 150 }),
         withSpring(0.3, { damping: 15, stiffness: 200 }),
       );
     }
-  }, [avatarColor, glowOpacity]);
+  }, [avatarColor, avatarRingOpacity]);
 
   const goToStep = useCallback((n: number, instant = false) => {
     setCurrentStep(n);
@@ -374,11 +318,15 @@ export default function SignupWizard() {
     backOpacity.value = withTiming(hidden ? 0 : 1, { duration: 200 });
     counterOpacity.value = withTiming(n === 4 ? 0 : 1, { duration: 200 });
     if (instant || reduceAnimations) {
-      tapeOffset.value = -n * SCREEN_WIDTH;
+      tapeOffset.value = -n * stepWidth;
     } else {
-      tapeOffset.value = withSpring(-n * SCREEN_WIDTH, SPRING);
+      tapeOffset.value = withSpring(-n * stepWidth, SPRING);
     }
-  }, [reduceAnimations, backOpacity, counterOpacity, tapeOffset]);
+  }, [reduceAnimations, backOpacity, counterOpacity, stepWidth, tapeOffset]);
+
+  useEffect(() => {
+    tapeOffset.value = -currentStep * stepWidth;
+  }, [currentStep, stepWidth, tapeOffset]);
 
   const toggleInterest = (id: string) => {
     setSelectedInterests(prev =>
@@ -389,7 +337,7 @@ export default function SignupWizard() {
   const handleSave = async () => {
     if (saving) return;
     if (!session) {
-      showToast('Session expired', '❌');
+      showToast('Session expired', 'Error');
       router.replace('/auth/login');
       return;
     }
@@ -407,13 +355,13 @@ export default function SignupWizard() {
     if (error) {
       const msg = error.message.toLowerCase();
       if (error.code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
-        showToast('Username taken — pick another', '❌');
+        showToast('Username taken — pick another', 'Error');
         setUsernameRaw('');
         goToStep(0, true);
         setSaving(false);
         return;
       }
-      showToast(error.message, '❌');
+      showToast(error.message, 'Error');
       setSaving(false);
       return;
     }
@@ -424,19 +372,14 @@ export default function SignupWizard() {
     storeSetBio(bioText.trim());
     setInterests(selectedInterests);
     setHasSeenOnboarding(true);
+    setHasCompletedProductOnboarding(false);
+    setOnboardingDraftCreated(false);
 
     identify(session.user.id, { username: usernameClean });
     track('signup_completed', { interests_count: selectedInterests.length });
 
-    // Activation pivot: instead of dropping the user on an empty feed, route
-    // straight to compose with a primed prompt based on their first interest.
-    // This is the make-or-break for D1 retention — first publish in the first
-    // session is the strongest predictor of return.
-    const seed = primaryInterestPrompt(selectedInterests[0]);
-    router.replace({
-      pathname: '/create-post',
-      params: { prefillPrompt: seed, firstEcho: '1' },
-    } as never);
+    await refreshAuthSession();
+    router.replace('/onboarding');
   };
 
   const backHidden = currentStep === 0 || currentStep === 4;
@@ -447,16 +390,14 @@ export default function SignupWizard() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Progress bar */}
         <View style={{ height: 3, backgroundColor: '#18181B', width: '100%' }}>
           <Animated.View style={[{ height: 3, backgroundColor: ACCENT }, progressBarStyle]} />
         </View>
 
-        {/* Chrome: back + step counter */}
-        <View style={{
+        <View style={[layout.contentStyle, {
           flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
           paddingHorizontal: 16, paddingVertical: 14,
-        }}>
+        }]}>
           <Animated.View style={backOpacityStyle}>
             <AnimatedPressable
               onPress={() => goToStep(currentStep - 1)}
@@ -478,17 +419,15 @@ export default function SignupWizard() {
           <View style={{ width: 30 }} />
         </View>
 
-        {/* Tape */}
-        <View style={{ flex: 1, overflow: 'hidden' }}>
+        <View style={[layout.contentStyle, { flex: 1, overflow: 'hidden' }]}>
           <Animated.View style={[{
             position: 'absolute',
             top: 0, bottom: 0, left: 0,
-            width: SCREEN_WIDTH * 5,
+            width: stepWidth * 5,
             flexDirection: 'row',
           }, tapeStyle]}>
 
-            {/* ── Step 0: Who are you? ── */}
-            <View style={{ width: SCREEN_WIDTH, height: '100%', paddingHorizontal: 24 }}>
+            <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
                   color: '#fff', fontSize: 28, fontWeight: '800',
@@ -609,8 +548,7 @@ export default function SignupWizard() {
               </View>
             </View>
 
-            {/* ── Step 1: Make it yours ── */}
-            <View style={{ width: SCREEN_WIDTH, height: '100%', paddingHorizontal: 24 }}>
+            <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
                   color: '#fff', fontSize: 28, fontWeight: '800',
@@ -622,7 +560,6 @@ export default function SignupWizard() {
                   Pick a color that represents you.
                 </Text>
 
-                {/* Avatar preview with glow */}
                 <View style={{ alignItems: 'center', marginBottom: 28 }}>
                   <View style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}>
                     <Animated.View style={[{
@@ -630,7 +567,7 @@ export default function SignupWizard() {
                       top: -8, left: -8, right: -8, bottom: -8,
                       borderRadius: 68,
                       backgroundColor: avatarColor,
-                    }, glowStyle]} />
+                    }, avatarRingStyle]} />
                     <View style={{
                       width: 100, height: 100, borderRadius: 50,
                       backgroundColor: avatarColor,
@@ -643,7 +580,6 @@ export default function SignupWizard() {
                   </View>
                 </View>
 
-                {/* Color grid — 4 columns */}
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
                   {AVATAR_COLORS.map(color => (
                     <SwatchItem
@@ -673,8 +609,7 @@ export default function SignupWizard() {
               </View>
             </View>
 
-            {/* ── Step 2: Your story ── */}
-            <View style={{ width: SCREEN_WIDTH, height: '100%', paddingHorizontal: 24 }}>
+            <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
                   color: '#fff', fontSize: 28, fontWeight: '800',
@@ -738,8 +673,7 @@ export default function SignupWizard() {
               </View>
             </View>
 
-            {/* ── Step 3: What lights you up? ── */}
-            <View style={{ width: SCREEN_WIDTH, height: '100%' }}>
+            <View style={{ width: stepWidth, height: '100%' }}>
               <View style={{ paddingHorizontal: 24, paddingTop: 8 }}>
                 <Text style={{
                   color: '#fff', fontSize: 28, fontWeight: '800',
@@ -780,7 +714,7 @@ export default function SignupWizard() {
                 <AnimatedPressable
                   onPress={() => {
                     if (selectedInterests.length < 3) {
-                      showToast(`Pick ${3 - selectedInterests.length} more to continue`, '👆');
+                      showToast(`Pick ${3 - selectedInterests.length} more to continue`, 'More');
                     } else {
                       goToStep(4);
                     }
@@ -811,9 +745,8 @@ export default function SignupWizard() {
               </View>
             </View>
 
-            {/* ── Step 4: Celebration ── */}
             <View style={{
-              width: SCREEN_WIDTH, height: '100%',
+              width: stepWidth, height: '100%',
               paddingHorizontal: 24, alignItems: 'center',
             }}>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -840,7 +773,7 @@ export default function SignupWizard() {
                   color: '#52525B', fontSize: 15, textAlign: 'center',
                   lineHeight: 22,
                 }}>
-                  Your profile is ready. Time to explore.
+                  Your profile is ready. Next, make your first Echo.
                 </Text>
               </View>
 
@@ -851,7 +784,7 @@ export default function SignupWizard() {
                     top: -8, left: -8, right: -8, bottom: -8,
                     borderRadius: 22,
                     backgroundColor: ACCENT,
-                  }, ctaGlowStyle]} />
+                  }, ctaRingStyle]} />
                   <AnimatedPressable
                     onPress={handleSave}
                     disabled={saving}
@@ -867,7 +800,7 @@ export default function SignupWizard() {
                   >
                     {saving
                       ? <ActivityIndicator color="#fff" />
-                      : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Start exploring</Text>}
+                      : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Continue</Text>}
                   </AnimatedPressable>
                 </View>
               </View>
@@ -876,13 +809,12 @@ export default function SignupWizard() {
           </Animated.View>
         </View>
 
-        {/* Confetti overlay — only on step 4, skipped when reduceAnimations */}
         {!reduceAnimations && currentStep === 4 && (
           <View
             pointerEvents="none"
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           >
-            {CONFETTI_DATA.map(c => (
+            {confettiData.map(c => (
               <ConfettiPiece key={c.id} {...c} />
             ))}
           </View>
