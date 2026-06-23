@@ -5,7 +5,7 @@
  *   SUPABASE_PROJECT_REF=<project-ref> SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/setup-db.js
  *
  * Get your service role key from:
- *   Supabase dashboard → Project Settings → API → service_role (secret)
+ *   Supabase dashboard -> Project Settings -> API -> service_role (secret)
  */
 
 const fs = require('fs');
@@ -16,9 +16,9 @@ const PROJECT_REF = process.env.SUPABASE_PROJECT_REF;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!PROJECT_REF || !SERVICE_KEY) {
-  if (!PROJECT_REF) console.error('❌  Missing SUPABASE_PROJECT_REF env var.');
-  if (!SERVICE_KEY) console.error('❌  Missing SUPABASE_SERVICE_ROLE_KEY env var.');
-  console.error('   Get it from: Supabase dashboard → Project Settings → API → service_role');
+  if (!PROJECT_REF) console.error('Missing SUPABASE_PROJECT_REF env var.');
+  if (!SERVICE_KEY) console.error('Missing SUPABASE_SERVICE_ROLE_KEY env var.');
+  console.error('   Get it from: Supabase dashboard -> Project Settings -> API -> service_role');
   console.error('   Then run: SUPABASE_PROJECT_REF=<project-ref> SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/setup-db.js');
   process.exit(1);
 }
@@ -55,17 +55,17 @@ const mgmtOptions = {
   },
 };
 
-console.log('⏳  Running schema against Supabase...');
+console.log('Running schema against Supabase...');
 
 const req = https.request(mgmtOptions, (res) => {
   let data = '';
   res.on('data', (chunk) => { data += chunk; });
   res.on('end', () => {
     if (res.statusCode >= 200 && res.statusCode < 300) {
-      console.log('✅  Schema applied successfully!');
+      console.log('Schema applied successfully.');
     } else {
       // Try direct SQL via service role using pg connection
-      console.log(`⚠️  Management API returned ${res.statusCode}. Trying direct approach...`);
+      console.log(`Management API returned ${res.statusCode}. Trying direct approach...`);
       console.log(data);
       runDirectSQL(sql, SERVICE_KEY);
     }
@@ -87,7 +87,7 @@ function runDirectSQL(sql, serviceKey) {
     .map(s => s.trim())
     .filter(s => s.length > 0 && !s.startsWith('--'));
 
-  console.log(`📋  Attempting to run ${stmts.length} SQL statements via service role...`);
+  console.log(`Attempting to run ${stmts.length} SQL statements via service role...`);
 
   const createFnBody = JSON.stringify({
     query: sql
@@ -110,24 +110,24 @@ function runDirectSQL(sql, serviceKey) {
     res2.on('data', c => { d += c; });
     res2.on('end', () => {
       if (res2.statusCode >= 200 && res2.statusCode < 300) {
-        console.log('✅  Schema applied via pg endpoint!');
+        console.log('Schema applied via pg endpoint.');
       } else {
-        console.log('\n──────────────────────────────────────────────────────────');
-        console.log('ℹ️  Automated migration requires a Personal Access Token.');
+        console.log('\n----------------------------------------------------------');
+        console.log('Automated migration requires a Personal Access Token.');
         console.log('   The service role key only works for data operations.');
         console.log('\n   To apply the schema manually (30 seconds):');
         console.log('   1. Go to: https://supabase.com/dashboard/project/' + PROJECT_REF + '/editor');
         console.log('   2. Paste contents of: backend/db/schema.sql');
         console.log('   3. Click Run');
-        console.log('──────────────────────────────────────────────────────────\n');
+        console.log('----------------------------------------------------------\n');
       }
     });
   });
   r2.on('error', () => {
-    console.log('\n──────────────────────────────────────────────────────────');
-    console.log('   Manual step required — apply schema in Supabase SQL Editor:');
+    console.log('\n----------------------------------------------------------');
+    console.log('   Manual step required: apply schema in Supabase SQL Editor:');
     console.log('   https://supabase.com/dashboard/project/' + PROJECT_REF + '/editor');
-    console.log('──────────────────────────────────────────────────────────\n');
+    console.log('----------------------------------------------------------\n');
   });
   r2.write(createFnBody);
   r2.end();

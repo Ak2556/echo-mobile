@@ -5,48 +5,26 @@ import { supabase } from './supabase';
 import { track } from './analytics';
 import { captureException } from './monitoring';
 
-/**
- * Push notifications wiring.
- *
- * Three responsibilities:
- *   1. Request permission (called from the in-app PushPrePrompt → onAccept)
- *   2. Fetch the Expo push token
- *   3. Persist the token to profiles.push_token so the server can target it
- *
- * Notification taps and deep-link handling are set up in app/_layout.tsx via
- * Notifications.addNotificationResponseReceivedListener.
- *
- * Wiring deps (already in package.json):
- *   - expo-notifications: ~0.32.17
- *   - app.json plugin: "expo-notifications" with icon + color
- *
- * Server side: send-push-on-notification edge fn (TBD) reads the row from
- * `notifications` (pg trigger) and calls Expo's push API with the token from
- * profiles.push_token. APNs cert is managed by Expo Push (no manual upload).
- */
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+}
 
-// Set how the OS handles notifications received while the app is in foreground.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
-
-/** Whether the user has previously granted, denied, or never been asked. */
 export async function getPushPermissionStatus(): Promise<Notifications.PermissionStatus> {
+  if (Platform.OS === 'web') return Notifications.PermissionStatus.UNDETERMINED;
   const { status } = await Notifications.getPermissionsAsync();
   return status;
 }
 
-/**
- * Ask the OS for permission. Returns true on grant. This is the call that
- * follows the in-app PushPrePrompt → onAccept handler — the OS prompt fires
- * here, not on app start.
- */
 export async function requestPushPermission(): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Echo',
@@ -62,11 +40,6 @@ export async function requestPushPermission(): Promise<boolean> {
   return status === 'granted';
 }
 
-/**
- * Register this device for push: get the Expo push token and persist it
- * against the current Supabase user. Idempotent — safe to call on every
- * session start where status is already granted.
- */
 export async function registerForPush(): Promise<{ token: string | null; granted: boolean }> {
   try {
     const granted = await requestPushPermission();
@@ -87,8 +60,6 @@ export async function registerForPush(): Promise<{ token: string | null; granted
     const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
     const token = tokenResponse.data;
 
-    // Persist against the current user. Fails silently — push is best-effort
-    // and we don't want to surface this in any error UI.
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user?.id) {
       const { error } = await supabase
@@ -108,23 +79,17 @@ export async function registerForPush(): Promise<{ token: string | null; granted
   }
 }
 
-/** Clear the token from the profile on sign-out. Best-effort. */
 export async function clearPushToken(): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user?.id) return;
     await supabase.from('profiles').update({ push_token: null }).eq('id', session.user.id);
   } catch {
-    // intentionally swallow — we're signing out anyway
   }
 }
 
-/** Backwards-compat shim for the older callsite. */
 export async function registerPushAndStoreToken(userId: string | null | undefined): Promise<void> {
   if (!userId) return;
-  // Only re-register if permission already granted — don't trigger the OS
-  // prompt from an unrelated call site. The proper flow is via the
-  // PushPrePrompt → requestPushPermission() chain.
   const status = await getPushPermissionStatus();
   if (status !== 'granted') return;
   await registerForPush();

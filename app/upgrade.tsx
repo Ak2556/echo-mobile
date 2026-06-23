@@ -2,31 +2,28 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Sparkle, Check } from 'phosphor-react-native';
+import { ArrowLeft, Sparkle, Check, Crown } from 'phosphor-react-native';
 import { useTheme } from '../lib/theme';
 import { PLANS } from '../constants/subscriptions';
 import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
 
 /**
- * Echo Pro upgrade screen.
+ * Echo tier upgrade screen.
  *
- * v1 ships as a paywall placeholder — there's no IAP integration yet, so
- * tapping "Upgrade to Pro" just confirms the request and routes back.
- * When Apple IAP / RevenueCat lands, replace `handleUpgrade` with the
- * real purchase call.
+ * Echo Pro upgrade screen. App Store purchases are not connected in this
+ * build, so the CTA records interest instead of starting a purchase.
  *
  * The screen is reached from the ProGate component, which is shown when a
- * free user hits a limit (e.g. 30 AI requests in an hour).
+ * free user hits a tier limit.
  */
 export default function UpgradeScreen() {
   const router = useRouter();
   const { colors, radius } = useTheme();
-  const pro = PLANS.pro;
+  const visiblePlans = [PLANS.plus, PLANS.pro, PLANS.founder];
 
   const handleUpgrade = () => {
-    // TODO(payments): kick off the IAP flow here.
-    showToast('Pro is coming soon — we\'ll email you the moment it launches.', 'Update');
+    showToast('We\'ll let you know when paid tiers open.', 'Update');
   };
 
   return (
@@ -51,52 +48,71 @@ export default function UpgradeScreen() {
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }}>
-          Upgrade to Pro
+          Echo Tiers
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 24, gap: 24 }}>
         <EmptyState
           icon={<Sparkle color={colors.accent} size={28} weight="fill" />}
-          title={pro.name}
-          subtitle="More AI, unlimited saved chats, and early access to new features."
+          title="Echo Tiers"
+          subtitle="Every person gets a unique Echo. Higher tiers add more capacity, deeper persona memory, and exclusive access."
         />
 
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: radius.card,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
-            padding: 20,
-            gap: 14,
-          }}
-        >
-          {[
-            `${pro.aiRequestsPerDay} AI requests per day`,
-            'Unlimited saved chats',
-            'Early access to new features',
-            'Priority support',
-          ].map((feature) => (
-            <View key={feature} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Check color={colors.accent} size={18} weight="bold" />
-              <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>{feature}</Text>
+        <View style={{ gap: 12 }}>
+          {visiblePlans.map((plan) => (
+            <View
+              key={plan.id}
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: radius.card,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: plan.exclusive ? colors.accent : colors.border,
+                padding: 18,
+                gap: 12,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                {plan.exclusive ? (
+                  <Crown color={colors.accent} size={20} weight="fill" />
+                ) : (
+                  <Sparkle color={colors.accent} size={20} weight="fill" />
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{plan.name}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{plan.tagline}</Text>
+                </View>
+                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
+                  {plan.price === 0 ? 'Invite' : `$${plan.price.toFixed(2)}`}
+                </Text>
+              </View>
+              {[
+                `${plan.aiRequestsPerHour} AI requests per hour`,
+                plan.maxSavedChats === -1 ? 'Unlimited saved chats' : `${plan.maxSavedChats} saved chats`,
+                plan.personaDepth === 'replica' ? 'Replica persona mode' : plan.personaDepth === 'deep' ? 'Deep persona learning' : 'Personal persona learning',
+                plan.exclusive ? 'Exclusive manual approval' : 'Standard access',
+              ].map((feature) => (
+                <View key={feature} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Check color={colors.accent} size={17} weight="bold" />
+                  <Text style={{ color: colors.text, fontSize: 14, flex: 1 }}>{feature}</Text>
+                </View>
+              ))}
             </View>
           ))}
         </View>
 
         <View style={{ alignItems: 'center', gap: 6 }}>
           <Text style={{ color: colors.text, fontSize: 32, fontWeight: '800' }}>
-            ${pro.price.toFixed(2)}
+            From ${PLANS.plus.price.toFixed(2)}
             <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '500' }}>/month</Text>
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>Cancel anytime in Settings.</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12 }}>Founder access is invite-only.</Text>
         </View>
 
         <Pressable
           onPress={handleUpgrade}
           accessibilityRole="button"
-          accessibilityLabel={`Upgrade to ${pro.name}`}
+          accessibilityLabel="Request tier access"
           style={({ pressed }) => ({
             backgroundColor: pressed ? colors.accentMuted : colors.accent,
             borderRadius: radius.lg,
@@ -104,7 +120,7 @@ export default function UpgradeScreen() {
             alignItems: 'center',
           })}
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Upgrade to Pro</Text>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Request access</Text>
         </Pressable>
 
         <Pressable

@@ -27,6 +27,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "allowBackup": false,
       "package": "com.ak2556.echo",
       "intentFilters": [
         {
@@ -48,6 +49,11 @@
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -91,7 +97,10 @@
           "cameraPermission": "Allow Echo to use your camera to take photos and videos."
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-asset",
+      "expo-build-properties",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -47,8 +47,7 @@ export function AnimatedPressable(props: AnimatedPressableProps) {
   return isHeavy ? <HeavyPressable {...props} /> : <LitePressable {...props} />;
 }
 
-// ─── Lite path ──────────────────────────────────────────────────────────────
-
+// Lite path
 function LitePressable({
   children,
   onPress,
@@ -121,8 +120,7 @@ function extractStringLabel(node: React.ReactNode): string | undefined {
   return undefined;
 }
 
-// ─── Heavy path (kept for hero CTAs) ────────────────────────────────────────
-
+// Heavy path (kept for hero CTAs)
 function HeavyPressable({
   children,
   onPress,

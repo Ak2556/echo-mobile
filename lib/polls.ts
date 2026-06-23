@@ -28,7 +28,7 @@ export function buildPollFromArgs(args: PollArgs): BuiltPoll {
 
   const rawOptions = Array.isArray(args.options) ? args.options : [];
   const opts = rawOptions
-    .map((o): string => typeof o === 'string' ? o.trim() : (o && typeof o === 'object' && typeof (o as any).text === 'string' ? (o as any).text.trim() : ''))
+    .map((o): string => typeof o === 'string' ? o.trim() : (o && typeof o === 'object' && typeof (o as { text?: unknown }).text === 'string' ? (o as { text: string }).text.trim() : ''))
     .filter(Boolean)
     .slice(0, 4);
   if (opts.length < 2) throw new Error('A poll needs at least 2 options');

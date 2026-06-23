@@ -1,11 +1,11 @@
 -- Align profiles/public_echoes with app + ERD; rename embedding table; repost + deduped views.
 
--- ── Columns (idempotent) ─────────────────────────────────────────────────────
+-- Columns (idempotent)
 alter table public.profiles add column if not exists avatar_url text;
 
 alter table public.public_echoes add column if not exists media_urls text[];
 
--- ── Rename legacy embeddings table (avoids clash with UX “messages”) ─────────
+-- Rename legacy embeddings table (avoids clash with UX “messages”)
 do $$
 begin
   if exists (
@@ -28,7 +28,7 @@ begin
   end if;
 end $$;
 
--- ── Reposts (mirrors echo_likes counter pattern) ─────────────────────────────
+-- Reposts (mirrors echo_likes counter pattern)
 create table if not exists public.echo_reposts (
   id uuid primary key default gen_random_uuid(),
   echo_id uuid not null references public.public_echoes (id) on delete cascade,
@@ -81,7 +81,7 @@ drop policy if exists "Anon can read reposts" on public.echo_reposts;
 create policy "Anon can read reposts"
   on public.echo_reposts for select to anon using (true);
 
--- ── Views: one row per user per echo → increments view_count once ─────────────
+-- Views: one row per user per echo -> increments view_count once
 create table if not exists public.echo_views (
   echo_id uuid not null references public.public_echoes (id) on delete cascade,
   user_id uuid not null references public.profiles (id) on delete cascade,

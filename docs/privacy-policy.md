@@ -1,8 +1,8 @@
 # Echo Privacy Policy
 
-**Last updated:** [DATE BEFORE LAUNCH]
+**Last updated:** June 16, 2026
 
-This Privacy Policy explains what data Echo ("we", "us") collects, how we use it, and the choices you have. Echo is operated by [LEGAL ENTITY NAME], [REGISTERED ADDRESS], reachable at **support@echo.app**.
+This Privacy Policy explains what data Echo ("we", "us") collects, how we use it, and the choices you have. Echo is operated by the seller identified on Echo's App Store and Google Play listings, reachable at **support@echo.app**.
 
 If you have questions about this policy, email us.
 
@@ -23,7 +23,7 @@ Everything you create on Echo is stored on our servers:
 
 - Echoes (your posts), comments, reactions, bookmarks, follows
 - Direct messages you send
-- Images and videos you upload (stored on Supabase Storage)
+- Images and videos you upload (stored on Supabase Storage and publicly accessible when attached to public content)
 - Audio you record in the app (e.g. the voice-memo tool). Recording uses your
   microphone only while you are actively recording, and only after you grant
   permission.
@@ -92,7 +92,8 @@ You can:
 - **Delete an Echo, comment, or DM** at any time
 - **Disable push notifications** in Settings → Notifications
 - **Export your data** — email support@echo.app
-- **Delete your entire account** from Settings → Danger Zone → Delete Account. This is permanent and cascades: profile, all echoes, comments, reactions, bookmarks, DMs, and chat history are removed. Backups roll off within 30 days.
+- **Clear AI chat history** from Settings → Advanced Data Controls → Clear Chat History. This removes local chat state and server-side AI conversations associated with your account.
+- **Delete your entire account** from Settings → Danger Zone → Delete Account. This is permanent and removes your profile, uploaded avatar/media objects, echoes, comments, reactions, bookmarks, DMs, AI chat history, push token, and authentication record, except for data we must retain for legal, security, or abuse-prevention reasons. Backups roll off within 30 days.
 
 You can ask us to fix incorrect data by emailing support@echo.app.
 

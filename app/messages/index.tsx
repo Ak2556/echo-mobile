@@ -147,6 +147,8 @@ export default function MessagesListScreen() {
           icon={<Envelope color="#6366F1" size={32} />}
           title="No messages yet"
           subtitle="Start a conversation by visiting someone's profile and tapping the message button."
+          actionLabel="Find people"
+          onAction={() => router.push('/(tabs)/explore')}
         />
       ) : (
         <FlashList

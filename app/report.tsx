@@ -45,7 +45,7 @@ export default function ReportScreen() {
           details: details.trim() || undefined,
         });
       }
-      showToast('Report submitted. Thank you!', '✅');
+      showToast('Report submitted. Thank you.', 'Submitted');
       router.back();
     } catch (e) {
       Alert.alert('Could not submit', (e as Error).message);

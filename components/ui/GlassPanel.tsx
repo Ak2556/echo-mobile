@@ -10,7 +10,7 @@ type GlassVariant = 'light' | 'medium' | 'heavy' | 'ultra';
 // the most expensive components per-pixel — every 10-point bump in intensity
 // roughly doubles GPU cost. The previous values (55/75/90/100) read as
 // "smoked glass" but ate 60fps on lower-end devices. The new set keeps the
-// premium feel on hero surfaces (HeroCard, tab bar) while dropping the
+// visual depth on hero surfaces (HeroCard, tab bar) while dropping the
 // per-pixel cost on the dozens of card-level GlassPanels by ~60%.
 const VARIANT_INTENSITY: Record<GlassVariant, number> = {
   light:  0,

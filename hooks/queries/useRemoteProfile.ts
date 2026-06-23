@@ -23,6 +23,7 @@ function profileRowToUser(
     username: p.username,
     displayName: p.display_name || p.username,
     avatarColor: p.avatar_color || '#3B82F6',
+    avatarUrl: p.avatar_url ?? undefined,
     bio: p.bio ?? '',
     isVerified: p.is_verified,
     followerCount,

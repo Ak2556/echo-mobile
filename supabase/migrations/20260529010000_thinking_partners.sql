@@ -83,7 +83,7 @@ as $$
       select 1 from public.follows f
       where f.follower_id = p_user_id and f.following_id = c.author_id
     )
-  -- 'similar' → smallest distance first; 'different' → largest distance first.
+  -- 'similar' -> smallest distance first; 'different' -> largest distance first.
   order by (c.centroid <=> v.centroid) * (case when p_mode = 'different' then -1 else 1 end) asc
   limit p_limit;
 $$;

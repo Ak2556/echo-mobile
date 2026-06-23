@@ -64,8 +64,8 @@ describe('executeLocalTool', () => {
 
   it('prefers exact habit id over name match', async () => {
     await saveHabits([
-      { id: 'target', name: 'Walk', emoji: '💧', color: '#6366F1', completedDates: [], createdAt: '2026-05-01T08:00:00.000Z' },
-      { id: 'other', name: 'Walk', emoji: '💧', color: '#6366F1', completedDates: [], createdAt: '2026-05-01T08:00:00.000Z' },
+      { id: 'target', name: 'Walk', marker: 'HY', color: '#6366F1', completedDates: [], createdAt: '2026-05-01T08:00:00.000Z' },
+      { id: 'other', name: 'Walk', marker: 'HY', color: '#6366F1', completedDates: [], createdAt: '2026-05-01T08:00:00.000Z' },
     ]);
 
     const completed = await executeLocalTool('complete_habit', { id: 'target', name: 'Walk', date: '2026-05-01' });
@@ -95,7 +95,7 @@ describe('executeLocalTool', () => {
   });
 
   it('returns a failed match error without mutating records', async () => {
-    await saveHabits([{ id: 'h1', name: 'Read', emoji: '💧', color: '#6366F1', completedDates: [], createdAt: '2026-05-01T08:00:00.000Z' }]);
+    await saveHabits([{ id: 'h1', name: 'Read', marker: 'HY', color: '#6366F1', completedDates: [], createdAt: '2026-05-01T08:00:00.000Z' }]);
 
     await expect(executeLocalTool('complete_habit', { name: 'Missing' })).rejects.toThrow('No matching habit found');
   });
@@ -104,7 +104,7 @@ describe('executeLocalTool', () => {
 describe('local search and memory', () => {
   it('searches notes, habits, expenses, and memos', async () => {
     await saveNotes([{ id: 'n1', title: 'Launch', body: 'Roadmap', color: '#6366F1', updatedAt: '2026-05-01T08:00:00.000Z' }]);
-    await saveHabits([{ id: 'h1', name: 'Launch checklist', emoji: '💧', color: '#6366F1', completedDates: [], createdAt: '2026-05-01T08:00:00.000Z' }]);
+    await saveHabits([{ id: 'h1', name: 'Launch checklist', marker: 'HY', color: '#6366F1', completedDates: [], createdAt: '2026-05-01T08:00:00.000Z' }]);
     await saveTransactions([{ id: 't1', type: 'expense', amount: 20, category: 'Launch', note: 'Ads', date: '2026-05-01T08:00:00.000Z' }]);
     await saveMemos([{ id: 'm1', title: 'Launch memo', uri: 'file://memo.m4a', duration: 30, createdAt: '2026-05-01T08:00:00.000Z' }]);
 

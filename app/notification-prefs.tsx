@@ -10,6 +10,8 @@ import {
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
+import { showToast } from '../components/ui/Toast';
+import { clearPushToken, registerForPush } from '../lib/push';
 
 export default function NotificationPrefsScreen() {
   const router = useRouter();
@@ -25,6 +27,19 @@ export default function NotificationPrefsScreen() {
     soundEnabled, setSoundEnabled,
     hapticEnabled, setHapticEnabled,
   } = useAppStore();
+
+  const handlePushToggle = async (enabled: boolean) => {
+    if (!enabled) {
+      setNotificationsEnabled(false);
+      await clearPushToken();
+      showToast('Push notifications muted', '');
+      return;
+    }
+
+    const result = await registerForPush();
+    setNotificationsEnabled(result.granted);
+    showToast(result.granted ? 'Push notifications enabled' : 'Notifications permission denied', result.granted ? 'Done' : '');
+  };
 
   const ToggleRow = ({ icon: Icon, iconColor, label, subtitle, value, onValueChange }: {
     icon: any; iconColor: string; label: string; subtitle?: string;
@@ -79,7 +94,7 @@ export default function NotificationPrefsScreen() {
               label="Push Notifications"
               subtitle="Master toggle for all notifications"
               value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
+              onValueChange={handlePushToggle}
             />
           </View>
         </Animated.View>

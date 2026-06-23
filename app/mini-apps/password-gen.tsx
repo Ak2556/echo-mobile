@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, Pressable, Switch, Clipboard, StyleSheet } from 'react-native';
-import { ArrowClockwise, Copy, Check, ShieldCheck, Warning, ShieldWarning } from 'phosphor-react-native';
+import { ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
@@ -96,7 +96,7 @@ export default function PasswordGenScreen() {
           </>
         ) : (
           <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 32 }}>🔐</Text>
+            <LockKey color={colors.textMuted} size={32} weight="thin" />
             <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8 }}>Tap Generate to create a password</Text>
           </View>
         )}

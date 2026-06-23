@@ -2,9 +2,9 @@
 /**
  * scripts/seed-content.js
  * ---------------------------------------------------------------------------
- * Seeds a small set of PERMANENT, hand-curated "echoes" + author accounts into
- * the production Supabase project, so a brand-new user (and an investor demo)
- * lands in a feed that already feels alive instead of empty. This is the
+ * Seeds a small set of permanent, curated echoes and author accounts into
+ * the production Supabase project, so a brand-new user lands in a populated
+ * feed instead of an empty state. This is the
  * cold-start fix: every differentiator (semantic "For You", thinking partners,
  * remix, daily divergence) needs a content pool to be worth anything.
  *
@@ -24,7 +24,7 @@
  *   a vector(768) embedding per echo. Pass --embed to invoke the already-deployed
  *   embed-echo function for each seeded echo (reuses the exact moderation +
  *   embedding path real publishes use, keeping OPENROUTER_API_KEY server-side).
- *   You can also backfill later via the backfill-embeddings function.
+ *   Embeddings can also be generated with the backfill-embeddings function.
  *
  * USAGE
  *   SUPABASE_URL=https://<ref>.supabase.co \
@@ -35,7 +35,7 @@
  *   node scripts/seed-content.js --embed    # also generate embeddings
  *
  *   Get the service role key from:
- *     Supabase dashboard → Project Settings → API → service_role (secret)
+ *     Supabase dashboard -> Project Settings -> API -> service_role (secret)
  *
  * SAFETY
  *   - Service role bypasses RLS by design; run it from a trusted machine only.
@@ -75,9 +75,9 @@ const DO_EMBED = process.argv.includes('--embed');
 const DRY_RUN = process.argv.includes('--dry-run');
 
 if (!DRY_RUN && (!SUPABASE_URL || !SERVICE_KEY)) {
-  if (!SUPABASE_URL) console.error('❌  Missing SUPABASE_URL (or EXPO_PUBLIC_SUPABASE_URL).');
-  if (!SERVICE_KEY) console.error('❌  Missing SUPABASE_SERVICE_ROLE_KEY.');
-  console.error('   Get the service role key from: Supabase dashboard → Project Settings → API → service_role');
+  if (!SUPABASE_URL) console.error('Missing SUPABASE_URL (or EXPO_PUBLIC_SUPABASE_URL).');
+  if (!SERVICE_KEY) console.error('Missing SUPABASE_SERVICE_ROLE_KEY.');
+  console.error('   Get the service role key from: Supabase dashboard -> Project Settings -> API -> service_role');
   console.error('   Then run:');
   console.error('     SUPABASE_URL=https://<ref>.supabase.co \\');
   console.error('     SUPABASE_SERVICE_ROLE_KEY=<key> \\');
@@ -109,7 +109,7 @@ const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
 function hoursAgo(h) { return new Date(Date.now() - h * HOUR).toISOString(); }
 
-// ── Seed authors ────────────────────────────────────────────────────────────
+// Seed authors
 // Distinct voices so the feed reads like a small, interesting community.
 const AUTHORS = [
   {
@@ -174,12 +174,12 @@ const AUTHORS = [
   },
 ];
 
-// ── Seed echoes ─────────────────────────────────────────────────────────────
+// Seed echoes
 // `snapshot` (optional) is the full multi-turn transcript — it boosts the
 // thoughtfulness score and gives the thread view real depth. `comments`
 // (optional) seeds genuine discussion on flagship echoes.
 const ECHOES = [
-  // ───────── Maya — science / philosophy / psychology / books ─────────
+  // Maya — science / philosophy / psychology / books
   {
     slug: 'maya-time-faster',
     author: 'maya',
@@ -242,7 +242,7 @@ const ECHOES = [
     likes: 76, reposts: 15, views: 1400, days_h: 180,
   },
 
-  // ───────── Dev — coding / tech / finance / productivity ─────────
+  // Dev — coding / tech / finance / productivity
   {
     slug: 'dev-senior-eng',
     author: 'dev',
@@ -300,11 +300,11 @@ const ECHOES = [
     title: 'How to actually think about technical debt',
     prompt: 'How should I think about technical debt? My team treats it like a moral failing.',
     response:
-      'The metaphor is better than people use it. Debt isn’t the same as a mess — debt is borrowing speed now and paying interest later. And just like real debt, the question is never “is debt bad?” It’s “is this loan worth the interest, and can I afford the payments?”\n\nSometimes taking it on is exactly right. You’re testing whether anyone even wants the feature — hard-code it, ship it ugly, learn fast. That’s a smart loan; if the bet pays off you refactor, and if it doesn’t you delete it and you saved weeks. The sin isn’t borrowing. The sin is borrowing *unconsciously*, never tracking the balance, and acting shocked when the interest — every change taking twice as long — finally swallows your velocity.\n\nSo make it explicit. Name the debt in the PR. Leave a comment that says “shortcut: here’s what’s missing and why.” Healthy teams carry debt on purpose, with their eyes open, and pay it down where the interest actually hurts — not everywhere, and not nowhere. It’s a balance sheet, not a confession.',
+      'The metaphor is better than people use it. Debt isn’t the same as a mess — debt is borrowing speed now and paying interest later. And just like real debt, the question is never “is debt bad?” It’s “is this loan worth the interest, and can I afford the payments?”\n\nSometimes taking it on is exactly right. You’re testing whether anyone even wants the feature: build the narrow version, ship it ugly, learn fast. That’s a smart loan; if the bet pays off you refactor, and if it doesn’t you delete it and you saved weeks. The sin isn’t borrowing. The sin is borrowing *unconsciously*, never tracking the balance, and acting shocked when the interest — every change taking twice as long — finally swallows your velocity.\n\nSo make it explicit. Name the debt in the PR. Leave a comment that says “shortcut: here’s what’s missing and why.” Healthy teams carry debt on purpose, with their eyes open, and pay it down where the interest actually hurts — not everywhere, and not nowhere. It’s a balance sheet, not a confession.',
     likes: 71, reposts: 17, views: 1600, days_h: 200,
   },
 
-  // ───────── Lina — books / writing / culture / film ─────────
+  // Lina — books / writing / culture / film
   {
     slug: 'lina-find-voice',
     author: 'lina',
@@ -363,7 +363,7 @@ const ECHOES = [
     likes: 84, reposts: 23, views: 1800, days_h: 210,
   },
 
-  // ───────── Arjun — travel / nature / food / photography ─────────
+  // Arjun — travel / nature / food / photography
   {
     slug: 'arjun-memorable-travel',
     author: 'arjun',
@@ -415,13 +415,13 @@ const ECHOES = [
     slug: 'arjun-nature-restoring',
     author: 'arjun',
     title: 'Why being in nature is so restoring',
-    prompt: 'Why do I feel so much better after time in nature? Is it real or just a vibe?',
+    prompt: 'Why do I feel so much better after time in nature? Is there a real mechanism behind it?',
     response:
-      'It’s real, and there’s a decent theory for why: your attention has two modes, and modern life only ever uses one of them.\n\nDirected attention is the effortful kind — the focus you spend on screens, traffic, decisions, notifications. It’s a finite resource, and it fatigues like a muscle. A whole day of it leaves you frayed and irritable in a way that isn’t about how hard you worked, but about how *continuously* you had to concentrate.\n\nNature pulls on the other mode. It holds your attention softly and involuntarily — a moving stream, wind in leaves, a far ridgeline. Researchers call it “soft fascination”: engaging enough to occupy you, undemanding enough to let the directed-attention muscle rest and refill. That’s the mechanism behind the calm. You’re not just relaxing; you’re letting a depleted system actually recharge.\n\nWhich is why ten genuine minutes among trees can reset you more than an hour of scrolling that’s supposedly “relaxing.” The scroll keeps hammering the tired muscle. Nature finally lets it go. The vibe is real — it just has a mechanism underneath it.',
+      'It’s real, and there’s a decent theory for why: your attention has two modes, and modern life only ever uses one of them.\n\nDirected attention is the effortful kind — the focus you spend on screens, traffic, decisions, notifications. It’s a finite resource, and it fatigues like a muscle. A whole day of it leaves you frayed and irritable in a way that isn’t about how hard you worked, but about how *continuously* you had to concentrate.\n\nNature pulls on the other mode. It holds your attention softly and involuntarily — a moving stream, wind in leaves, a far ridgeline. Researchers call it “soft fascination”: engaging enough to occupy you, undemanding enough to let the directed-attention muscle rest and refill. That’s the mechanism behind the calm. You’re not just relaxing; you’re letting a depleted system actually recharge.\n\nWhich is why ten genuine minutes among trees can reset you more than an hour of scrolling that’s supposedly “relaxing.” The scroll keeps hammering the tired muscle. Nature finally lets it go. The feeling is real, and it has a mechanism underneath it.',
     likes: 113, reposts: 33, views: 2500, days_h: 100,
   },
 
-  // ───────── Sofia — design / art / creativity / productivity ─────────
+  // Sofia — design / art / creativity / productivity
   {
     slug: 'sofia-good-design',
     author: 'sofia',
@@ -483,7 +483,7 @@ const ECHOES = [
     likes: 148, reposts: 51, views: 3200, days_h: 112,
   },
 
-  // ───────── Theo — history / economics / big questions ─────────
+  // Theo — history / economics / big questions
   {
     slug: 'theo-history-lesson',
     author: 'theo',
@@ -537,7 +537,7 @@ const ECHOES = [
   },
 ];
 
-// ── Run ──────────────────────────────────────────────────────────────────────
+// Run
 async function ensureAuthor(a) {
   // Try to create the auth user. The handle_new_user trigger will create the
   // matching profile from raw_user_meta_data. On re-run the user already exists,
@@ -614,29 +614,29 @@ function validate() {
       }
     }
   }
-  console.log(`\n🔍  Dry run — validating dataset (no DB writes)\n`);
+  console.log(`\nDry run: validating dataset (no DB writes)\n`);
   console.log(`   Authors: ${AUTHORS.length}`);
   for (const a of AUTHORS) console.log(`     @${a.username.padEnd(16)} ${perAuthor[a.key] || 0} echoes`);
   console.log(`   Echoes:   ${ECHOES.length}  (${snapshots} multi-turn, ${comments} seed comments)`);
   console.log(`   Content:  ~${words.toLocaleString()} words of curated responses`);
   if (errors.length) {
-    console.log(`\n❌  ${errors.length} validation error(s):`);
+    console.log(`\n${errors.length} validation error(s):`);
     errors.forEach((e) => console.log('     - ' + e));
     process.exit(1);
   }
-  console.log(`\n✅  Dataset valid. Re-run without --dry-run (with creds) to seed.`);
+  console.log(`\nDataset valid. Re-run without --dry-run (with credentials) to seed.`);
 }
 
 async function main() {
   if (DRY_RUN) { validate(); return; }
-  console.log(`⏳  Seeding ${AUTHORS.length} authors and ${ECHOES.length} echoes → ${SUPABASE_URL}`);
+  console.log(`Seeding ${AUTHORS.length} authors and ${ECHOES.length} echoes to ${SUPABASE_URL}`);
 
   // 1) Authors → author_id by key
   const authorId = {};
   for (const a of AUTHORS) {
     const id = await ensureAuthor(a);
     authorId[a.key] = id;
-    console.log(`   ✓ @${a.username}`);
+    console.log(`   ${a.username}`);
   }
 
   // 2) Echoes (idempotent upsert by deterministic id). check_content=true so
@@ -661,7 +661,7 @@ async function main() {
     const { error } = await supabase.from('public_echoes').upsert(row, { onConflict: 'id' });
     if (error) throw new Error(`echo upsert(${e.slug}) failed: ${error.message}`);
   }
-  console.log(`   ✓ ${ECHOES.length} echoes upserted (check_content=true)`);
+  console.log(`   ${ECHOES.length} echoes upserted (check_content=true)`);
 
   // 3) Comments on flagship echoes (idempotent). comment_count is owned by the
   //    DB trigger — on first insert it bumps once; re-run hits the conflict path
@@ -684,13 +684,13 @@ async function main() {
       commentCount++;
     }
   }
-  console.log(`   ✓ ${commentCount} comments upserted`);
+  console.log(`   ${commentCount} comments upserted`);
 
   // 4) Optional: generate embeddings via the deployed embed-echo function so the
   //    semantic "For You" feed works. Reuses the exact path real publishes use;
   //    keeps OPENROUTER_API_KEY server-side. Best-effort and re-runnable.
   if (DO_EMBED) {
-    console.log('⏳  Generating embeddings via embed-echo (this calls OpenRouter; ~1s each)…');
+    console.log('Generating embeddings via embed-echo. This calls OpenRouter and takes about 1s each.');
     let ok = 0; const fails = [];
     for (const e of ECHOES) {
       try {
@@ -701,21 +701,21 @@ async function main() {
         fails.push(`${e.slug}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
-    console.log(`   ✓ embedded ${ok}/${ECHOES.length}` + (fails.length ? `, ${fails.length} failed` : ''));
+    console.log(`   embedded ${ok}/${ECHOES.length}` + (fails.length ? `, ${fails.length} failed` : ''));
     if (fails.length) {
       console.log('     First failures:'); fails.slice(0, 5).forEach((f) => console.log('       - ' + f));
       console.log('     (embed-echo must be deployed and OPENROUTER_API_KEY set; you can also run backfill-embeddings.)');
     }
   } else {
-    console.log('ℹ️   Skipped embeddings. Run with --embed, or call the backfill-embeddings function, to enable the semantic feed.');
+    console.log('Skipped embeddings. Run with --embed, or call the backfill-embeddings function, to enable the semantic feed.');
   }
 
-  console.log('\n✅  Seed complete.');
-  console.log('    Open the app → Discover/“Trending” should now be populated.');
+  console.log('\nSeed complete.');
+  console.log('    Open the app; Discover and Trending should now be populated.');
   if (!DO_EMBED) console.log('    Run again with `--embed` to light up the “For You” semantic feed.');
 }
 
 main().catch((err) => {
-  console.error('\n❌  Seed failed:', err.message);
+  console.error('\nSeed failed:', err.message);
   process.exit(1);
 });

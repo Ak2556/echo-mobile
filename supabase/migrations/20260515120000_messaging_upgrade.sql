@@ -1,4 +1,4 @@
--- ── Messaging Upgrade ──────────────────────────────────────────────────────────
+-- Messaging Upgrade
 -- Adds: denormalized last-message columns + trigger, UPDATE RLS on conversations,
 --       soft-delete on messages, message_reactions table, and get_dm_conversations RPC.
 
@@ -19,9 +19,9 @@ BEGIN
   UPDATE dm_conversations
      SET last_message_at   = NEW.created_at,
          last_message_text = CASE NEW.kind
-                               WHEN 'echo'  THEN '📎 Shared an Echo'
-                               WHEN 'image' THEN '🖼 Photo'
-                               WHEN 'voice' THEN '🎤 Voice message'
+                               WHEN 'echo'  THEN 'Shared an Echo'
+                               WHEN 'image' THEN 'Photo'
+                               WHEN 'voice' THEN 'Voice message'
                                ELSE NEW.text
                              END,
          last_message_kind = NEW.kind

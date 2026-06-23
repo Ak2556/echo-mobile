@@ -116,7 +116,7 @@ function DailyQuestionScreenInner() {
       await submitDailyAnswer(question.id, draft.trim());
       track('daily_answer_submitted', { question_id: question.id, is_update: !!myAnswer, length: draft.trim().length });
       setMyAnswer(draft.trim());
-      showToast('Your answer is in.', '✨');
+      showToast('Your answer is in.', 'Saved');
     } catch (e) {
       Alert.alert('Could not submit', (e as Error).message);
     } finally {
@@ -162,7 +162,7 @@ function DailyQuestionScreenInner() {
             ) : undefined
           }
         >
-          {/* Prompt card — large, hero-feeling */}
+          {/* Prompt card */}
           <Animated.View
             entering={FadeInUp.delay(50).duration(220)}
             style={{
@@ -424,7 +424,7 @@ function AnswerCard({ a, divergence }: { a: DailyAnswerWithAuthor; divergence?: 
           avatarColor={a.author.avatar_color}
           avatarUrl={a.author.avatar_url ?? undefined}
           size={32}
-          showGlow={false}
+          showHalo={false}
         />
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>

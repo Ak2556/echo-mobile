@@ -9,7 +9,7 @@ import { ArrowLeft, Brain, UsersThree, Lightning } from 'phosphor-react-native';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { useThinkingPartners } from '../hooks/queries/useThinkingPartners';
 import { useToggleRemoteFollow } from '../hooks/queries/useSupabaseSocial';
-import { GRADIENTS, NEON, neonGlow, neonHaptic } from '../lib/neonDesign';
+import { GRADIENTS, ACCENT_COLORS, accentShadow, feedbackHaptic } from '../lib/accentDesign';
 import { useAppStore } from '../store/useAppStore';
 import { track } from '../lib/analytics';
 import type { ThinkingPartnerMode } from '../lib/supabaseEchoApi';
@@ -33,7 +33,7 @@ export default function ThinkingPartnersScreen() {
 
   const switchMode = (next: ThinkingPartnerMode) => {
     if (next === mode) return;
-    if (hapticEnabled) void neonHaptic('select');
+    if (hapticEnabled) void feedbackHaptic('select');
     setMode(next);
   };
 
@@ -45,7 +45,7 @@ export default function ThinkingPartnersScreen() {
           <ArrowLeft color="#fff" size={24} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Brain color={NEON.violet} size={18} weight="fill" />
+          <Brain color={ACCENT_COLORS.violet} size={18} weight="fill" />
           <Text style={styles.headerTitle}>MINDS</Text>
         </View>
         <View style={{ width: 32 }} />
@@ -75,7 +75,7 @@ export default function ThinkingPartnersScreen() {
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={NEON.violet} size="large" />
+          <ActivityIndicator color={ACCENT_COLORS.violet} size="large" />
           <Text style={styles.muted}>Reading the room…</Text>
         </View>
       ) : isError ? (
@@ -121,7 +121,7 @@ function ModeChip({
           colors={GRADIENTS.forYou}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={[styles.chip, neonGlow(NEON.violet, 'med')]}
+          style={[styles.chip, accentShadow(ACCENT_COLORS.violet, 'med')]}
         >
           {icon}
           <Text style={[styles.chipText, { color: '#000' }]}>{label}</Text>
@@ -152,7 +152,7 @@ function PartnerRow({
 
   // Map cosine similarity [-1,1] to a friendlier 0–100 "match" readout.
   const pct = Math.max(0, Math.min(100, Math.round(((partner.affinity + 1) / 2) * 100)));
-  const accent = mode === 'similar' ? NEON.cyan : NEON.amber;
+  const accent = mode === 'similar' ? ACCENT_COLORS.cyan : ACCENT_COLORS.amber;
 
   const onFollow = () => {
     const next = !following;
@@ -169,7 +169,7 @@ function PartnerRow({
           avatarColor={partner.avatarColor}
           avatarUrl={partner.avatarUrl}
           size={48}
-          showGlow={false}
+          showHalo={false}
           isVerified={partner.isVerified}
         />
         <View style={{ flex: 1, marginLeft: 12 }}>

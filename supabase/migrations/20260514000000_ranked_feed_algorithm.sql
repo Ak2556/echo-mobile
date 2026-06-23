@@ -1,4 +1,4 @@
--- ─── follower_count denormalization ──────────────────────────────────────────
+-- follower_count denormalization
 -- Kept on profiles so ranking queries avoid a COUNT subquery per row.
 
 alter table public.profiles
@@ -30,14 +30,7 @@ create trigger follows_adjust_follower_count
   after insert or delete on public.follows
   for each row execute function public.adjust_follower_count();
 
--- ─── Ranked feed RPC ─────────────────────────────────────────────────────────
--- Returns posts scored by a Hacker News–style gravity formula personalised for
--- the requesting user.  All blocking, muting and scope filtering happens here
--- so the client receives a clean, ready-to-render list.
---
--- Score formula (per post):
---   base     = (likes×3 + comments×5 + reposts×4 + views×0.3)
---              ─────────────────────────────────────────────────
+
 --              (age_hours + 2) ^ gravity          ← time decay
 --
 --   × engagement_rate_boost  = 1 + (likes+comments+reposts) / max(views,1) × 2
@@ -45,8 +38,8 @@ create trigger follows_adjust_follower_count
 --   × media_boost            = 1.2 if post has media, else 1.0
 --   × follow_boost           = 1.5 if current user follows author, else 1.0
 --
--- Gravity guide:  1.8 → recency-heavy (home "latest")
---                 1.0 → engagement-heavy (explore "popular")
+-- Gravity guide:  1.8 -> recency-heavy (home "latest")
+--                 1.0 -> engagement-heavy (explore "popular")
 
 create or replace function public.get_ranked_feed(
   p_user_id        uuid    default null,
@@ -160,8 +153,7 @@ as $$
   limit p_limit;
 $$;
 
--- ─── Supporting indexes ───────────────────────────────────────────────────────
-
+-- Supporting indexes
 create index if not exists public_echoes_engagement_idx
   on public.public_echoes (likes_count desc, comment_count desc, repost_count desc, created_at desc);
 

@@ -38,6 +38,7 @@ interface MessageBubbleProps {
 }
 
 const FONT_SIZES = { small: 14, medium: 16, large: 18 };
+const MAX_MARKDOWN_RENDER_CHARS = 12000;
 
 function buildMarkdownStyles(colors: any, textSize: number) {
   return StyleSheet.create({
@@ -200,10 +201,11 @@ export function MessageBubble({ message, isStreaming, onCopy, onEdit, onRegenera
   }
 
   // Assistant bubble content — plain text during streaming, Markdown after done
-  const bubbleContent = isStreaming ? (
+  const shouldRenderMarkdown = !isStreaming && message.content.length <= MAX_MARKDOWN_RENDER_CHARS;
+  const bubbleContent = !shouldRenderMarkdown ? (
     <Text style={{ color: colors.text, fontSize: textSize, lineHeight: textSize * 1.55 }}>
       {message.content}
-      <Text style={{ color: colors.accent, opacity: cursorOn ? 1 : 0 }}>▌</Text>
+      {isStreaming && <Text style={{ color: colors.accent, opacity: cursorOn ? 1 : 0 }}>▌</Text>}
     </Text>
   ) : (
     <Markdown style={buildMarkdownStyles(colors, textSize)} rules={markdownRules}>

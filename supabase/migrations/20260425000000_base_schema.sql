@@ -1,11 +1,11 @@
 -- Base schema: profiles, public_echoes, echo_likes, echo_comments, follows
 -- This must run before all other migrations.
 
--- ── Extensions ────────────────────────────────────────────────────────────────
+-- Extensions
 create extension if not exists "uuid-ossp";
 create extension if not exists vector;
 
--- ── Profiles (mirrors auth.users) ─────────────────────────────────────────────
+-- Profiles (mirrors auth.users)
 create table if not exists public.profiles (
   id            uuid primary key references auth.users (id) on delete cascade,
   username      text not null unique,
@@ -56,7 +56,7 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- ── Follows ───────────────────────────────────────────────────────────────────
+-- Follows
 create table if not exists public.follows (
   follower_id  uuid not null references auth.users (id) on delete cascade,
   following_id uuid not null references auth.users (id) on delete cascade,
@@ -104,7 +104,7 @@ create trigger on_follow_change
   after insert or delete on public.follows
   for each row execute function public.adjust_follower_count();
 
--- ── Public Echoes ─────────────────────────────────────────────────────────────
+-- Public Echoes
 create table if not exists public.public_echoes (
   id            uuid primary key default gen_random_uuid(),
   author_id     uuid not null references public.profiles (id) on delete cascade,
@@ -143,7 +143,7 @@ drop policy if exists "Users can delete own echoes" on public.public_echoes;
 create policy "Users can delete own echoes"
   on public.public_echoes for delete using (auth.uid() = author_id);
 
--- ── Echo Likes ─────────────────────────────────────────────────────────────────
+-- Echo Likes
 create table if not exists public.echo_likes (
   id         uuid primary key default gen_random_uuid(),
   echo_id    uuid not null references public.public_echoes (id) on delete cascade,
@@ -192,7 +192,7 @@ drop policy if exists "Users can unlike echoes" on public.echo_likes;
 create policy "Users can unlike echoes"
   on public.echo_likes for delete using (auth.uid() = user_id);
 
--- ── Echo Comments ──────────────────────────────────────────────────────────────
+-- Echo Comments
 create table if not exists public.echo_comments (
   id                uuid primary key default gen_random_uuid(),
   echo_id           uuid not null references public.public_echoes (id) on delete cascade,
@@ -245,7 +245,7 @@ drop policy if exists "Users can delete own comments" on public.echo_comments;
 create policy "Users can delete own comments"
   on public.echo_comments for delete using (auth.uid() = author_id);
 
--- ── Bookmarks ──────────────────────────────────────────────────────────────────
+-- Bookmarks
 create table if not exists public.echo_bookmarks (
   id         uuid primary key default gen_random_uuid(),
   echo_id    uuid not null references public.public_echoes (id) on delete cascade,

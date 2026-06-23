@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet , Clipboard } from 'react-native';
-import { Check, Copy, Shuffle } from 'phosphor-react-native';
+import { Check, Copy, FloppyDisk, Shuffle } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
@@ -73,8 +73,9 @@ export default function ColorToolsScreen() {
             <Shuffle color={textColor} size={15} weight="bold" />
             <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>Random</Text>
           </Pressable>
-          <Pressable onPress={save} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
-            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>💾 Save</Text>
+          <Pressable onPress={save} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
+            <FloppyDisk color={textColor} size={15} weight="bold" />
+            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>Save</Text>
           </Pressable>
         </View>
       </View>

@@ -2,10 +2,10 @@
  * Pure helpers for feed-side filtering.
  *
  * Kept separate from the Supabase mapper so they're trivially unit-testable
- * without a fake Supabase client. The feed query already filters on
+ * without a local Supabase client. The feed query already filters on
  * `check_content = true` at the SQL layer, but we run the same gate
  * client-side as a defense-in-depth measure: if a buggy admin script ever
- * inserts a row with check_content=true but the moderation API later
+ * inserts a row with check_content=true but the moderation API subsequently
  * back-flags it (via the `flagged` column), the client still hides it.
  */
 

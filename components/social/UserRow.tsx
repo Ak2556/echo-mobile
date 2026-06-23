@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { SealCheck } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -18,6 +20,7 @@ interface UserRowProps {
 }
 
 export function UserRow({ user, onPress, showFollowButton = false, onFollowPress }: UserRowProps) {
+  const router = useRouter();
   const { isFollowing, toggleFollow } = useAppStore();
   const { colors, fontSizes, showAvatars, reduceAnimations } = useTheme();
   const following = isFollowing(user.id);
@@ -40,8 +43,15 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
       onFollowPress();
     } else {
       toggleFollow(user.id);
-      showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? '\u{1F91D}' : '');
+      showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? 'Following' : '');
     }
+  };
+  const openProfile = () => {
+    if (onPress) {
+      onPress();
+      return;
+    }
+    router.push(`/user/${user.id}`);
   };
 
   return (
@@ -53,14 +63,32 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
       haptic="light"
     >
       {showAvatars && (
-        <View
-          className="w-11 h-11 rounded-full items-center justify-center mr-3"
-          style={{ backgroundColor: user.avatarColor }}
+        <AnimatedPressable
+          onPress={(e) => { e.stopPropagation?.(); openProfile(); }}
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${user.displayName}'s profile`}
+          className="mr-3"
+          scaleValue={0.9}
+          haptic="light"
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>
-            {user.displayName.charAt(0).toUpperCase()}
-          </Text>
-        </View>
+          {user.avatarUrl ? (
+            <Image
+              source={{ uri: user.avatarUrl }}
+              style={{ width: 44, height: 44, borderRadius: 22 }}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
+          ) : (
+            <View
+              className="w-11 h-11 rounded-full items-center justify-center"
+              style={{ backgroundColor: user.avatarColor }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>
+                {user.displayName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </AnimatedPressable>
       )}
 
       <View className="flex-1">

@@ -1,13 +1,13 @@
 -- Echo: remix lineage, conversation snapshots, and pgvector embeddings.
 -- Adds the data foundation for the AI-native pivot:
---   • parent_echo_id / remix_root_id  → fork another user's conversation, keep lineage
---   • source_conversation_id          → link back to the author's private chat thread
---   • conversation_snapshot           → frozen multi-turn history at publish time
---   • embedding (vector(768))         → Gemini text-embedding-004 vectors for semantic feed
---   • remix_count                     → denormalized counter, kept in sync by trigger
---   • thoughtfulness_score            → derived quality signal (set by edge function)
+-- - parent_echo_id / remix_root_id  -> fork another user's conversation, keep lineage
+-- - source_conversation_id          -> link back to the author's private chat thread
+-- - conversation_snapshot           -> frozen multi-turn history at publish time
+-- - embedding (vector(768))         -> Gemini text-embedding-004 vectors for semantic feed
+-- - remix_count                     -> denormalized counter, kept in sync by trigger
+-- - thoughtfulness_score            -> derived quality signal (set by edge function)
 
--- ── Columns (idempotent) ─────────────────────────────────────────────────────
+-- Columns (idempotent)
 alter table public.public_echoes
   add column if not exists parent_echo_id        uuid references public.public_echoes (id) on delete set null,
   add column if not exists remix_root_id         uuid references public.public_echoes (id) on delete set null,
@@ -17,7 +17,7 @@ alter table public.public_echoes
   add column if not exists remix_count           int not null default 0,
   add column if not exists thoughtfulness_score  float not null default 0;
 
--- ── Indexes ──────────────────────────────────────────────────────────────────
+-- Indexes
 create index if not exists public_echoes_parent_idx
   on public.public_echoes (parent_echo_id)
   where parent_echo_id is not null;
@@ -35,7 +35,7 @@ create index if not exists public_echoes_embedding_hnsw_idx
 create index if not exists public_echoes_thoughtfulness_idx
   on public.public_echoes (thoughtfulness_score desc, created_at desc);
 
--- ── Remix lineage trigger ────────────────────────────────────────────────────
+-- Remix lineage trigger
 -- On insert of a remix, derive remix_root_id from the parent and bump the
 -- parent's remix_count. This keeps clients from having to compute lineage.
 create or replace function public.handle_remix_lineage()

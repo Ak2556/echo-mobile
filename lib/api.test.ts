@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
 
-// react-native-sse is an RN-only module; stub it before importing the SUT
+// react-native-sse is an RN-only module; mock it before importing the SUT.
 // so vitest in node doesn't choke trying to load native bridges.
 vi.mock('react-native-sse', () => ({
   default: class FakeEventSource {
@@ -22,7 +22,7 @@ vi.mock('./supabase', () => ({
   },
 }));
 
-import { isRateLimitError, normalizeEchoAIError, streamEchoAI } from './api';
+import { isRateLimitError, normalizeEchoAIError, parseEchoAISSEPayload, streamEchoAI } from './api';
 import { supabase } from './supabase';
 
 const getSession = supabase.auth.getSession as unknown as Mock;
@@ -62,6 +62,36 @@ describe('normalizeEchoAIError', () => {
   it('preserves the OpenRouter status prefix', () => {
     const raw = 'OpenRouter 429: {"error":{"message":"Slow down"}}';
     expect(normalizeEchoAIError(raw)).toBe('OpenRouter 429: Slow down');
+  });
+});
+
+describe('parseEchoAISSEPayload', () => {
+  it('dispatches text and done events from a complete SSE payload', () => {
+    const events: unknown[] = [];
+
+    parseEchoAISSEPayload(
+      [
+        'data: {"type":"text_delta","delta":"Hi"}',
+        '',
+        'data: {"type":"done"}',
+        '',
+      ].join('\n'),
+      event => events.push(event),
+    );
+
+    expect(events).toEqual([
+      { type: 'text_delta', delta: 'Hi' },
+      { type: 'done' },
+    ]);
+  });
+
+  it('throws normalized errors from SSE error events', () => {
+    expect(() => {
+      parseEchoAISSEPayload(
+        'data: {"type":"error","message":"OpenRouter 429: {\\"error\\":{\\"message\\":\\"Slow down\\"}}"}\n\n',
+        () => undefined,
+      );
+    }).toThrow('OpenRouter 429: Slow down');
   });
 });
 

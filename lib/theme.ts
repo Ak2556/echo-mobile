@@ -10,8 +10,7 @@ export const ANIM = {
   springBadge:  { damping: 22, stiffness: 600 },
 } as const;
 
-// ── Theme Definitions ──
-
+// Theme Definitions
 export type ThemeName = 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic';
 
 export interface ThemeColors {
@@ -191,8 +190,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     ...DARK_GLASS,
   },
 
-  // ── Light themes ──
-
+  // Light themes
   light: {
     name: 'Light',
     isDark: false,
@@ -276,28 +274,32 @@ const THEMES: Record<ThemeName, ThemeColors> = {
   },
 };
 
-// ── Font Size Maps ──
-
+// Font Size Maps
 const FONT_SIZE_MAP = {
   small:  { caption: 10, small: 12, body: 14, title: 18, heading: 24 },
   medium: { caption: 11, small: 13, body: 16, title: 20, heading: 28 },
   large:  { caption: 12, small: 14, body: 18, title: 22, heading: 32 },
 } as const;
 
-// ── Border Radius Maps ──
+const LINE_HEIGHT_MULTIPLIERS = {
+  caption: 1.35,
+  small: 1.45,
+  body: 1.5,
+  title: 1.3,
+  heading: 1.22,
+} as const;
 
+// Border Radius Maps
 const RADIUS_MAP = {
   small:  { sm: 4, md: 8, lg: 10, xl: 12, card: 10, full: 9999 },
   medium: { sm: 6, md: 10, lg: 14, xl: 18, card: 14, full: 9999 },
   large:  { sm: 8, md: 12, lg: 16, xl: 20, card: 18, full: 9999 },
 } as const;
 
-// ── Mock online users (subset of mock user IDs) ──
-
+// Local online users
 const ONLINE_USER_IDS = new Set(['u1', 'u4', 'u5', 'u7']);
 
-// ── useTheme Hook ──
-
+// useTheme Hook
 export function useTheme() {
   const themeName = useAppStore(s => s.theme);
   const darkMode = useAppStore(s => s.darkMode);
@@ -334,6 +336,12 @@ export function useTheme() {
   const fontSizes = scale === 1
     ? baseSizes
     : Object.fromEntries(Object.entries(baseSizes).map(([k, v]) => [k, Math.round((v as number) * scale)])) as typeof baseSizes;
+  const lineHeights = Object.fromEntries(
+    Object.entries(fontSizes).map(([k, v]) => {
+      const key = k as keyof typeof LINE_HEIGHT_MULTIPLIERS;
+      return [key, Math.round((v as number) * LINE_HEIGHT_MULTIPLIERS[key])];
+    }),
+  ) as Record<keyof typeof baseSizes, number>;
   const radius = RADIUS_MAP[roundedCorners] || RADIUS_MAP.medium;
 
   const animation = <T>(anim: T): T | undefined => {
@@ -349,9 +357,6 @@ export function useTheme() {
     return onlineStatus && ONLINE_USER_IDS.has(userId);
   };
 
-  // Brand typography — Inter family loaded at root. Each token maps to a
-  // semantic role rather than a raw font name so we can swap families in
-  // one place. Use these in components instead of inline fontFamily strings.
   const font = {
     body:         { fontFamily: 'Inter_400Regular' },
     bodyMedium:   { fontFamily: 'Inter_500Medium' },
@@ -365,6 +370,7 @@ export function useTheme() {
   return {
     colors,
     fontSizes,
+    lineHeights,
     radius,
     animation,
     switchTrack,

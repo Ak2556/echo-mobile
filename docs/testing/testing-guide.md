@@ -33,7 +33,7 @@ cd backend
 python -m compileall main.py db/supabase.py
 ```
 
-If backend tests are added later, document and run them from this guide.
+Document backend tests here when they are added.
 
 ## Area-Specific Manual Checks
 

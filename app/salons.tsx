@@ -43,7 +43,7 @@ function SalonsScreenInner() {
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Salons</Text>
         <AnimatedPressable
-          onPress={() => router.push('/create-salon' as any)}
+          onPress={() => router.push('/create-salon')}
           style={{ padding: 4 }}
           scaleValue={0.88}
           haptic="medium"
@@ -66,7 +66,7 @@ function SalonsScreenInner() {
             Start the first one — a circle of people thinking about a shared topic.
           </Text>
           <AnimatedPressable
-            onPress={() => router.push('/create-salon' as any)}
+            onPress={() => router.push('/create-salon')}
             style={{
               marginTop: 20,
               paddingHorizontal: 18,
@@ -95,9 +95,9 @@ function SalonsScreenInner() {
                 try {
                   await setSalonMembership(salon.id, join);
                   setSalons((prev) => prev.map(s => s.id === salon.id ? { ...s, is_member: join, member_count: join ? s.member_count + 1 : Math.max(0, s.member_count - 1) } : s));
-                  showToast(join ? `Joined ${salon.name}` : `Left ${salon.name}`, join ? '🏛️' : '👋');
+                  showToast(join ? `Joined ${salon.name}` : `Left ${salon.name}`, join ? 'Joined' : 'Left');
                 } catch {
-                  showToast('Could not update membership', '⚠️');
+                  showToast('Could not update membership', 'Error');
                 }
               }} />
             </Animated.View>
@@ -113,7 +113,7 @@ function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean
   const { colors, radius } = useTheme();
   return (
     <AnimatedPressable
-      onPress={() => router.push(`/salon/${salon.slug}` as any)}
+      onPress={() => router.push({ pathname: '/salon/[slug]', params: { slug: salon.slug } })}
       style={{
         backgroundColor: colors.surface,
         borderRadius: radius.lg,

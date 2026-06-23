@@ -1,5 +1,6 @@
 import { supabase } from '../../supabase';
 import type { ProviderResult } from '../types';
+import { withAuthTimeout } from '../timeout';
 
 /**
  * Phone OTP sign-in.
@@ -27,9 +28,7 @@ export async function sendPhoneOtp(phone: string): Promise<ProviderResult & { ph
   if (e164.length < 8) {
     return { error: 'Enter a valid phone number.', phone: e164 };
   }
-  const { error } = await supabase.auth.signInWithOtp({
-    phone: e164,
-  });
+  const { error } = await withAuthTimeout(supabase.auth.signInWithOtp({ phone: e164 }));
   return { error: error?.message ?? null, phone: e164 };
 }
 
@@ -39,10 +38,12 @@ export async function verifyPhoneOtp(phone: string, code: string): Promise<Provi
   if (cleaned.length !== 6) {
     return { error: 'Enter the 6-digit code.' };
   }
-  const { error } = await supabase.auth.verifyOtp({
-    phone: e164,
-    token: cleaned,
-    type: 'sms',
-  });
+  const { error } = await withAuthTimeout(
+    supabase.auth.verifyOtp({
+      phone: e164,
+      token: cleaned,
+      type: 'sms',
+    }),
+  );
   return { error: error?.message ?? null };
 }

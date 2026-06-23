@@ -89,7 +89,7 @@ export default function VoiceMemoApp() {
     await setAudioModeAsync({ allowsRecording: false });
     const uri = recorder.uri;
     setIsRecording(false);
-    if (!uri) { showToast('Recording failed', '❌'); return; }
+    if (!uri) { showToast('Recording failed', 'Error'); return; }
     const memo: Memo = {
       id: Date.now().toString(),
       title: `Recording ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
@@ -100,7 +100,7 @@ export default function VoiceMemoApp() {
     const updated = [memo, ...memos];
     setMemos(updated);
     saveMemos(updated);
-    showToast('Memo saved', '🎙');
+    showToast('Memo saved', 'Saved');
   };
 
   const playMemo = async (memo: Memo) => {

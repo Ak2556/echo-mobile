@@ -11,15 +11,15 @@
 --      added to the rows they RETURN.
 --
 -- New rows default to check_content = false and are flipped to true by the
--- embed-echo edge function after moderation (fail-open). The chronological
+-- embed-echo edge function after moderation. The chronological
 -- fallback query is gated client-side in lib/supabaseEchoApi.ts.
 
--- ── 1. Backfill existing rows so they stay visible ───────────────────────────
+-- 1. Backfill existing rows so they stay visible
 update public.public_echoes
    set check_content = true
  where check_content is distinct from true;
 
--- ── 2a. get_ranked_feed — gated ──────────────────────────────────────────────
+-- 2a. get_ranked_feed — gated
 create or replace function public.get_ranked_feed(
   p_user_id        uuid    default null,
   p_limit          int     default 20,
@@ -134,7 +134,7 @@ as $$
   limit p_limit;
 $$;
 
--- ── 2b. get_semantic_feed — gated ────────────────────────────────────────────
+-- 2b. get_semantic_feed — gated
 create or replace function public.get_semantic_feed(
   p_user_id uuid,
   p_limit   int default 20
@@ -195,7 +195,7 @@ begin
       limit 20;
   end if;
 
-  -- No signal at all → degrade gracefully to engagement-ranked recent echoes.
+  -- No signal at all -> degrade gracefully to engagement-ranked recent echoes.
   if taste is null then
     return query
       select
@@ -252,7 +252,7 @@ begin
 end;
 $$;
 
--- ── 3. Partial index to keep the gated scans fast ────────────────────────────
+-- 3. Partial index to keep the gated scans fast
 create index if not exists public_echoes_check_content_created_idx
   on public.public_echoes (created_at desc)
   where check_content = true;

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, FilmStrip, GitBranch, Envelope, PencilSimple, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash } from 'phosphor-react-native';
+import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
@@ -11,23 +11,18 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { showToast } from '../../components/ui/Toast';
 import { tap } from '../../lib/haptics';
+import { clearPushToken, registerForPush } from '../../lib/push';
+import { useResponsiveLayout } from '../../lib/responsive';
 
-// v1 launch IA: 4-tab bar (Home, Explore, Chat, You). The Echo and Activity
-// tabs were folded — creation moved to a floating + button on Home, and
-// notifications surface via a bell icon in the Home header. `evolutions`,
-// `notifications`, `history`, `echoes`, and `apps` are still reachable as
-// routes (deep link / programmatic push) but no tab chip renders.
-const HIDDEN_ROUTES = new Set(['history', 'echoes', 'apps', 'evolutions', 'notifications']);
+const HIDDEN_ROUTES = new Set(['apps', 'notifications']);
+const DESKTOP_ROUTES = new Set(['home', 'explore', 'marketplace', 'chat', 'you', 'notifications', 'apps']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
   home: House,
   explore: MagnifyingGlass,
+  marketplace: Storefront,
   chat: ChatTeardropDots,
   you: User,
-  // Hidden routes — kept for backwards-compat icon lookup if they're ever
-  // surfaced via deep link headers.
-  evolutions: GitBranch,
-  echoes: FilmStrip,
   notifications: Bell,
   apps: SquaresFour,
 };
@@ -62,8 +57,163 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
   );
 }
 
-function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colors, font } = useTheme();
+function routeLabel(routeName: string, title?: string): string {
+  if (title) return title;
+  if (routeName === 'apps') return 'Apps';
+  if (routeName === 'notifications') return 'Alerts';
+  return routeName.charAt(0).toUpperCase() + routeName.slice(1);
+}
+
+function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { colors, font, lineHeights } = useTheme();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const layout = useResponsiveLayout();
+  const unreadNotifications = useAppStore(s => s.unreadNotificationCount());
+  const unreadDMs = useAppStore(s => s.totalUnreadDMs());
+  const routes = state.routes.filter(r => DESKTOP_ROUTES.has(r.name));
+  const badges: Record<string, number> = { chat: unreadDMs, notifications: unreadNotifications };
+
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        width: layout.sidebarWidth,
+        paddingTop: Math.max(insets.top, layout.isMacDesktop ? 42 : 24),
+        paddingBottom: Math.max(insets.bottom, 20),
+        paddingHorizontal: 12,
+        backgroundColor: colors.isDark ? 'rgba(9,11,15,0.96)' : 'rgba(255,255,255,0.96)',
+        borderRightWidth: StyleSheet.hairlineWidth,
+        borderRightColor: colors.border,
+        zIndex: 30,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, marginBottom: 22 }}>
+        <View
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            backgroundColor: colors.accent,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Lightning color="#fff" size={18} weight="fill" />
+        </View>
+        <View>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 17, lineHeight: lineHeights.body }]}>Echo</Text>
+          <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, lineHeight: lineHeights.caption, marginTop: 1 }]}>
+            {layout.isMacDesktop ? 'Mac' : 'Desktop'}
+          </Text>
+        </View>
+      </View>
+
+      <Pressable
+        onPress={() => router.push('/create-post')}
+        accessibilityRole="button"
+        accessibilityLabel="New Echo"
+        style={{
+          height: 42,
+          borderRadius: 12,
+          backgroundColor: colors.accent,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          marginBottom: 18,
+        }}
+      >
+        <PencilSimple color="#fff" size={18} weight="bold" />
+        <Text style={[font.bodyBold, { color: '#fff', fontSize: 14, lineHeight: lineHeights.small }]}>New Echo</Text>
+      </Pressable>
+
+      <View style={{ gap: 4 }}>
+        {routes.map(route => {
+          const isFocused = state.routes[state.index].name === route.name;
+          const IconComp = TAB_ICONS[route.name];
+          if (!IconComp) return null;
+
+          const title = descriptors[route.key]?.options.title;
+          const label = routeLabel(route.name, typeof title === 'string' ? title : undefined);
+          const badgeCount = badges[route.name] ?? 0;
+          const color = isFocused ? colors.accent : colors.textSecondary;
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={() => {
+                const event = navigation.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+                if (!isFocused && !event.defaultPrevented) {
+                  navigation.navigate(route.name);
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+              accessibilityState={{ selected: isFocused }}
+              style={{
+                height: 42,
+                borderRadius: 10,
+                paddingHorizontal: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 11,
+                backgroundColor: isFocused ? colors.accentMuted : 'transparent',
+              }}
+            >
+              {badgeCount > 0 ? (
+                <BadgeIcon count={badgeCount}>
+                  <IconComp color={color} size={20} weight={isFocused ? 'fill' : 'regular'} />
+                </BadgeIcon>
+              ) : (
+                <IconComp color={color} size={20} weight={isFocused ? 'fill' : 'regular'} />
+              )}
+              <Text
+                style={[font.bodySemibold, { color, fontSize: 14, lineHeight: lineHeights.small, flex: 1 }]}
+                numberOfLines={1}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View style={{ flex: 1 }} />
+
+      <Pressable
+        onPress={() => useCommandPalette.getState().open()}
+        accessibilityRole="button"
+        accessibilityLabel="Open command palette"
+        style={{
+          height: 40,
+          borderRadius: 11,
+          paddingHorizontal: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+        }}
+      >
+        <MagicWand color={colors.accent} size={17} weight="bold" />
+        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 13, lineHeight: lineHeights.small }]}>Command palette</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function FloatingTabBar(props: BottomTabBarProps) {
+  const { state, descriptors, navigation } = props;
+  const { colors, font, lineHeights } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const unreadNotifications = useAppStore(s => s.unreadNotificationCount());
@@ -72,15 +222,37 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const setNotificationsEnabled = useAppStore(s => s.setNotificationsEnabled);
   const markAllNotificationsRead = useAppStore(s => s.markAllNotificationsRead);
   const [longPressKey, setLongPressKey] = useState<string | null>(null);
+  const layout = useResponsiveLayout();
+
+  if (layout.navigationKind === 'desktop-sidebar') {
+    return <DesktopSidebar {...props} />;
+  }
 
   const badges: Record<string, number> = { chat: unreadDMs, notifications: unreadNotifications };
 
   const visibleRoutes = state.routes.filter(r => !HIDDEN_ROUTES.has(r.name));
-  const bottom = insets.bottom > 0 ? insets.bottom + 8 : 16;
+  const isTabletTabs = layout.navigationKind === 'tablet-tabs';
+  const bottom = insets.bottom > 0 ? insets.bottom + (isTabletTabs ? 16 : 10) : (isTabletTabs ? 24 : 16);
+  const tabHeight = isTabletTabs ? 64 : 56;
+  const tabMaxWidth = isTabletTabs ? 640 : layout.isWide ? 520 : undefined;
+  const outerPadding = isTabletTabs ? 34 : 22;
+  const itemRadius = isTabletTabs ? 16 : 14;
+  const iconSize = isTabletTabs ? 24 : 22;
+  const labelSize = isTabletTabs ? 11 : 10;
 
-  // Per-tab long-press menus. Returns null when there's nothing useful to show
-  // (we still emit the navigation `tabLongPress` event in that case, so other
-  // listeners can react).
+  const setPushNotifications = async (enabled: boolean) => {
+    if (!enabled) {
+      setNotificationsEnabled(false);
+      await clearPushToken();
+      showToast('Push notifications muted', '');
+      return;
+    }
+
+    const result = await registerForPush();
+    setNotificationsEnabled(result.granted);
+    showToast(result.granted ? 'Push notifications enabled' : 'Notifications permission denied', result.granted ? 'Done' : '');
+  };
+
   const longPressActions = (routeName: string): ActionItem[] | null => {
     switch (routeName) {
       case 'chat':
@@ -91,13 +263,18 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         ];
       case 'notifications':
         return [
-          { key: 'readall', label: 'Mark all as read', icon: <Checks color={colors.accent} size={18} />, onPress: () => { markAllNotificationsRead(); showToast('All caught up', '✓'); } },
-          { key: 'mute',    label: notificationsEnabled ? 'Mute push notifications' : 'Unmute push notifications', icon: notificationsEnabled ? <BellSlash color={colors.accent} size={18} /> : <BellIcon color={colors.accent} size={18} />, onPress: () => setNotificationsEnabled(!notificationsEnabled) },
+          { key: 'readall', label: 'Mark all as read', icon: <Checks color={colors.accent} size={18} />, onPress: () => { markAllNotificationsRead(); showToast('All caught up', 'Done'); } },
+          { key: 'mute',    label: notificationsEnabled ? 'Mute push notifications' : 'Unmute push notifications', icon: notificationsEnabled ? <BellSlash color={colors.accent} size={18} /> : <BellIcon color={colors.accent} size={18} />, onPress: () => void setPushNotifications(!notificationsEnabled) },
         ];
       case 'explore':
         return [
           { key: 'compose', label: 'New Echo',           icon: <PencilSimple color={colors.accent} size={18} />, onPress: () => router.push('/create-post') },
           { key: 'search',  label: 'Search',             icon: <MagnifyingGlass color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/explore') },
+        ];
+      case 'marketplace':
+        return [
+          { key: 'open', label: 'Open Market', icon: <Storefront color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/marketplace') },
+          { key: 'messages', label: 'Seller messages', icon: <Envelope color={colors.accent} size={18} />, onPress: () => router.push('/messages') },
         ];
       case 'you':
         return [
@@ -117,13 +294,20 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       style={{
         position: 'absolute',
         bottom,
-        left: 18,
-        right: 18,
-        height: 62,
+        left: 0,
+        right: 0,
+        height: tabHeight,
+        alignItems: 'center',
+        paddingHorizontal: outerPadding,
       }}
       pointerEvents="box-none"
     >
-      <GlassPanel borderRadius={31} intensity={34} elevated style={{ flex: 1 }}>
+      <GlassPanel
+        borderRadius={isTabletTabs ? 22 : 20}
+        variant="light"
+        elevated
+        style={{ flex: 1, width: '100%', maxWidth: tabMaxWidth }}
+      >
         <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5 }}>
           {visibleRoutes.map(route => {
             const isFocused = state.routes[state.index].name === route.name;
@@ -162,27 +346,27 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '100%',
-                  gap: 3,
+                  gap: 2,
                   backgroundColor: isFocused ? colors.accentMuted : 'transparent',
-                  borderRadius: 18,
+                  borderRadius: itemRadius,
                   marginHorizontal: 2,
-                  marginVertical: 11,
+                  marginVertical: isTabletTabs ? 9 : 8,
                   minWidth: 0,
                 }}
               >
                 {badgeCount > 0 ? (
                   <BadgeIcon count={badgeCount}>
-                    <IconComp color={color} size={22} weight={isFocused ? 'fill' : 'regular'} />
+                    <IconComp color={color} size={iconSize} weight={isFocused ? 'fill' : 'regular'} />
                   </BadgeIcon>
                 ) : (
-                  <IconComp color={color} size={22} weight={isFocused ? 'fill' : 'regular'} />
+                  <IconComp color={color} size={iconSize} weight={isFocused ? 'fill' : 'regular'} />
                 )}
                 <Text
                   style={{
                     ...font.bodySemibold,
                     color: isFocused ? colors.accent : colors.textMuted,
-                    fontSize: 10,
-                    fontWeight: isFocused ? '800' : '600',
+                    fontSize: labelSize,
+                    lineHeight: lineHeights.caption,
                     marginTop: 1,
                     letterSpacing: 0,
                   }}
@@ -210,23 +394,27 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const layout = useResponsiveLayout();
+  const { colors } = useTheme();
+
   return (
     <Tabs
       tabBar={props => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        sceneStyle: {
+          backgroundColor: colors.bg,
+          marginLeft: layout.navigationKind === 'desktop-sidebar' ? layout.sidebarWidth : 0,
+        },
       }}
     >
       <Tabs.Screen name="home" options={{ title: 'Home' }} />
       <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
+      <Tabs.Screen name="marketplace" options={{ title: 'Market' }} />
       <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
       <Tabs.Screen name="you" options={{ title: 'You' }} />
-      {/* Hidden — still mountable for deep links + programmatic navigation. */}
-      <Tabs.Screen name="evolutions" options={{ href: null }} />
-      <Tabs.Screen name="notifications" options={{ href: null }} />
-      <Tabs.Screen name="echoes" options={{ href: null }} />
-      <Tabs.Screen name="apps" options={{ href: null }} />
-      <Tabs.Screen name="history" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ title: 'Alerts', href: null }} />
+      <Tabs.Screen name="apps" options={{ title: 'Apps', href: null }} />
     </Tabs>
   );
 }

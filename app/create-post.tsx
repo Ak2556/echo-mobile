@@ -65,7 +65,8 @@ export default function CreatePostScreen() {
   const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string; firstEcho?: string }>();
   const isFirstEcho = params.firstEcho === '1';
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { username, userId, avatarColor, avatarUrl, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore() as any;
+  const { username, userId, avatarColor, avatarUrl, profilePhotoVisible, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore();
+  const visibleAvatarUrl = profilePhotoVisible ? avatarUrl : '';
   const quotedId = typeof params.quoted === 'string' ? params.quoted : undefined;
   const quotedEcho = React.useMemo(() => {
     if (!quotedId) return undefined;
@@ -281,7 +282,7 @@ export default function CreatePostScreen() {
         userId: remoteAuthorId ?? userId, username: username || 'anonymous',
         displayName: displayName || username || 'anonymous',
         avatarColor: avatarColor || colors.accent,
-        avatarUrl: avatarUrl || undefined,
+        avatarUrl: visibleAvatarUrl || undefined,
         isVerified: false,
         likes: 0, isLiked: false, isBookmarked: false, isReposted: false,
         repostCount: 0, commentCount: 0, viewCount: 0,
@@ -570,9 +571,9 @@ export default function CreatePostScreen() {
 
           {/* Author */}
           <Animated.View entering={animation(FadeInDown.delay(40).duration(220))} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
-            {avatarUrl ? (
+            {visibleAvatarUrl ? (
               <Image
-                source={{ uri: avatarUrl }}
+                source={{ uri: visibleAvatarUrl }}
                 style={{ width: 40, height: 40, borderRadius: 20, marginRight: 10 }}
                 contentFit="cover"
                 cachePolicy="memory-disk"
@@ -588,7 +589,7 @@ export default function CreatePostScreen() {
             </View>
           </Animated.View>
 
-          {/* ── TEXT ── */}
+          {/* Text post */}
           {quotedEcho && (
             <View style={{ marginBottom: 12 }}>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>QUOTING</Text>
@@ -721,7 +722,7 @@ export default function CreatePostScreen() {
             </Animated.View>
           )}
 
-          {/* ── PHOTO ── */}
+          {/* Photo post */}
           {postType === 'photo' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               {/* Picker buttons */}
@@ -797,7 +798,7 @@ export default function CreatePostScreen() {
             </Animated.View>
           )}
 
-          {/* ── VIDEO ── */}
+          {/* Video post */}
           {postType === 'video' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               {/* Picker buttons */}
@@ -854,7 +855,7 @@ export default function CreatePostScreen() {
             </Animated.View>
           )}
 
-          {/* ── POLL ── */}
+          {/* Poll post */}
           {postType === 'poll' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Question</Text>

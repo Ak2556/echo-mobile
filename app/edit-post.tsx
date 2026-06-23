@@ -127,7 +127,7 @@ export default function EditPostScreen() {
 
     qc.invalidateQueries({ queryKey: ['feed'] });
     qc.invalidateQueries({ queryKey: ['profile'] });
-    showToast('Echo updated!', '✅');
+    showToast('Echo updated.', 'Saved');
     setSaving(false);
     router.back();
   };
@@ -244,7 +244,7 @@ export default function EditPostScreen() {
               {videoUrl.trim().length > 0 && (
                 <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden', height: 160, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
                   <VideoCamera color={colors.textMuted} size={40} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>Video URL set ✓</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>Video URL set</Text>
                 </View>
               )}
               <Text style={s.label}>Caption (optional)</Text>

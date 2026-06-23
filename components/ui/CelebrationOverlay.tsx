@@ -12,13 +12,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GRADIENTS, NEON, NEON_SPRING, TYPE, neonGlow, neonHaptic } from '../../lib/neonDesign';
+import { GRADIENTS, ACCENT_COLORS, ACCENT_SPRING, DISPLAY_TYPE, accentShadow, feedbackHaptic } from '../../lib/accentDesign';
 import { useAppStore } from '../../store/useAppStore';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 const PARTICLE_COUNT = 24;
-const PARTICLE_COLORS = [NEON.cyan, NEON.magenta, NEON.lime, NEON.violet, NEON.amber];
+const PARTICLE_COLORS = [ACCENT_COLORS.cyan, ACCENT_COLORS.magenta, ACCENT_COLORS.lime, ACCENT_COLORS.violet, ACCENT_COLORS.amber];
 
 interface CelebrationOverlayProps {
   visible: boolean;
@@ -85,10 +85,10 @@ function Headline({
   const opacity = useSharedValue(0);
 
   useEffect(() => {
-    if (haptic) void neonHaptic('celebrate');
+    if (haptic) void feedbackHaptic('celebrate');
     scale.value = withSequence(
-      withSpring(1.12, NEON_SPRING.pop),
-      withSpring(1.0, NEON_SPRING.release),
+      withSpring(1.12, ACCENT_SPRING.pop),
+      withSpring(1.0, ACCENT_SPRING.release),
     );
     opacity.value = withSequence(
       withTiming(1, { duration: 160 }),
@@ -110,7 +110,7 @@ function Headline({
 
   return (
     <View style={styles.center} pointerEvents="none">
-      <Animated.View style={[style, neonGlow(NEON.magenta, 'hard')]}>
+      <Animated.View style={[style, accentShadow(ACCENT_COLORS.magenta, 'hard')]}>
         <LinearGradient
           colors={gradient as unknown as readonly [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headline: {
-    ...TYPE.display,
+    ...DISPLAY_TYPE.display,
     color: '#000',
     textAlign: 'center',
   },

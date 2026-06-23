@@ -13,6 +13,7 @@ const DEFAULT_ECHO_AI_MODEL = "google/gemini-2.5-flash";
 const CONFIGURED_ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? DEFAULT_ECHO_AI_MODEL;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -64,8 +65,12 @@ const GOOGLE_AI_STUDIO_MODELS = new Set([
   "google/gemini-2.0-flash-lite-001",
 ]);
 
-function resolveEchoAIModel(modelOverride?: string): string {
-  if (modelOverride && GOOGLE_AI_STUDIO_MODELS.has(modelOverride)) return modelOverride;
+function resolveEchoAIModel(modelOverride?: string, planId: string = "free"): string {
+  const canUseProModel = planId === "pro" || planId === "founder";
+  if (modelOverride && GOOGLE_AI_STUDIO_MODELS.has(modelOverride)) {
+    if (modelOverride === "google/gemini-2.5-pro" && !canUseProModel) return DEFAULT_ECHO_AI_MODEL;
+    return modelOverride;
+  }
   if (GOOGLE_AI_STUDIO_MODELS.has(CONFIGURED_ECHO_AI_MODEL)) return CONFIGURED_ECHO_AI_MODEL;
   return DEFAULT_ECHO_AI_MODEL;
 }
@@ -79,7 +84,9 @@ async function openRouterChat(
   tools: ORTool[],
   modelOverride?: string,
 ): Promise<{ content: string; tool_calls?: ORToolCall[] }> {
-  const model = resolveEchoAIModel(modelOverride);
+  const model = modelOverride && GOOGLE_AI_STUDIO_MODELS.has(modelOverride)
+    ? modelOverride
+    : resolveEchoAIModel();
   const provider = providerForModel(model);
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -819,12 +826,20 @@ const SCREEN_LABELS: Record<string, string> = {
   '/notifications':    'Activity',
 };
 
-function buildSystemPrompt(profile?: UserProfile | null, currentScreen?: string | null): string {
+function buildSystemPrompt(profile?: UserProfile | null, currentScreen?: string | null, personaContext?: string | null): string {
   const name = profile?.display_name || profile?.username || 'the user';
   const handle = profile?.username ? `@${profile.username}` : 'unknown';
   const followers = profile?.followers_count ?? '?';
   const following = profile?.following_count ?? '?';
   const screenLabel = (currentScreen && SCREEN_LABELS[currentScreen]) || 'Echo app';
+  const personaBlock = typeof personaContext === 'string' && personaContext.trim()
+    ? `
+Private persona context learned from the user's own chats:
+${personaContext.trim().slice(0, 2800)}
+
+Use this to adapt tone, examples, defaults, and drafting style. Treat it as incomplete and user-editable. Do not invent memories, make commitments as the user, or claim you literally are the user. When drafting in the user's voice, write as a clearly assisted draft unless the user explicitly asks for first-person copy.
+`
+    : '';
 
   return `You are Echo — the AI built into Echo, a social network for curated knowledge.
 
@@ -835,6 +850,7 @@ Users come to Echo to think out loud, share hard-won knowledge, and discover qua
 
 Current user: ${name} (${handle}) · ${followers} followers · ${following} following
 Current screen: ${screenLabel}
+${personaBlock}
 
 Vocabulary — map what the user says to the right action:
   "post / share / publish / echo something" → compose_post (always fill BOTH prompt AND response)
@@ -1015,6 +1031,8 @@ interface RequestBody {
   preferred_model?: string;
   /** The Expo Router pathname the user is on when they send the message. */
   current_screen?: string;
+  /** Compact private personalization summary generated on the client. */
+  persona_context?: string;
 }
 
 async function handleRequest(req: Request): Promise<Response> {
@@ -1033,6 +1051,12 @@ async function handleRequest(req: Request): Promise<Response> {
       { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   }
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return new Response(
+      JSON.stringify({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }),
+      { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
+  }
 
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) {
@@ -1042,6 +1066,9 @@ async function handleRequest(req: Request): Promise<Response> {
   // Per-user Supabase client: every DB call respects RLS as the authenticated user.
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false },
+  });
+  const adminSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
   });
 
@@ -1074,7 +1101,8 @@ async function handleRequest(req: Request): Promise<Response> {
         const modelOverride = typeof body.preferred_model === "string" && body.preferred_model
           ? body.preferred_model
           : undefined;
-        const selectedModel = resolveEchoAIModel(modelOverride);
+        const tier = await resolveLimitForUser(adminSupabase, userId);
+        const selectedModel = resolveEchoAIModel(modelOverride, tier.planId);
 
         const { id: conversationId, isNew } = await getOrCreateConversation(
           supabase,
@@ -1095,7 +1123,7 @@ async function handleRequest(req: Request): Promise<Response> {
           profile = data ?? null;
         } catch { /* non-fatal */ }
 
-        const systemPrompt = buildSystemPrompt(profile, body.current_screen ?? null);
+        const systemPrompt = buildSystemPrompt(profile, body.current_screen ?? null, body.persona_context ?? null);
 
         // Confirm branch: user approved/rejected a previously paused tool
         if (body.local_result) {
@@ -1105,7 +1133,7 @@ async function handleRequest(req: Request): Promise<Response> {
             conversationId,
             body.local_result,
             send,
-            modelOverride,
+            selectedModel,
             systemPrompt,
           );
         } else if (body.confirm) {
@@ -1115,7 +1143,7 @@ async function handleRequest(req: Request): Promise<Response> {
             conversationId,
             body.confirm,
             send,
-            modelOverride,
+            selectedModel,
             systemPrompt,
           );
         } else if (body.message) {
@@ -1124,8 +1152,7 @@ async function handleRequest(req: Request): Promise<Response> {
           // request here means no Postgres write, no OpenRouter spend, and
           // the client gets a clean 429-shaped error event.
           try {
-            const limit = await resolveLimitForUser(supabase, userId);
-            await checkAndIncrementRateLimit(supabase, userId, limit);
+            await checkAndIncrementRateLimit(adminSupabase, userId, tier);
           } catch (e) {
             if (e instanceof AIRateLimitError) {
               send({ type: "error", message: e.message });
@@ -1137,7 +1164,7 @@ async function handleRequest(req: Request): Promise<Response> {
           }
           const userMsg: ORMessage = { role: "user", content: body.message };
           await persistMessage(supabase, conversationId, userId, userMsg);
-          await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);
+          await runAgentLoop(supabase, userId, conversationId, send, 6, selectedModel, systemPrompt);
         } else {
           send({ type: "error", message: "missing message or confirm" });
         }

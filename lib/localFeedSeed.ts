@@ -179,8 +179,7 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
     topicLabels: ['tech'],
   }),
 
-  // ── Rich media seed items ────────────────────────────────────────────────
-
+  // Rich media seed items
   // Photo post — 4 images
   {
     id: 'photo1',
@@ -190,7 +189,7 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
     avatarColor: '#F59E0B',
     isVerified: true,
     postType: 'photo',
-    prompt: 'Our GPU cluster visualized 🔥',
+    prompt: 'What changed after we visualized our GPU cluster?',
     response: '',
     mediaUris: [
       'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80',
@@ -236,7 +235,7 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
     createdAt: new Date(Date.now() - 5400000).toISOString(),
   },
 
-  // ── Video posts (Echoes feed) ────────────────────────────────────────────
+  // Video posts (Echoes feed)
   // All use Apple public HLS test streams (load quickly through native video playback)
   {
     id: 'video1',
@@ -274,7 +273,7 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
     avatarColor: '#F59E0B',
     isVerified: true,
     postType: 'video',
-    prompt: 'Training a diffusion model from scratch in 90 seconds 🤯',
+    prompt: 'Training a diffusion model from scratch in 90 seconds',
     response: '',
     videoUri: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8',
     hashtags: ['ai', 'diffusion', 'ml', 'stablediffusion'],
@@ -296,7 +295,7 @@ export const LOCAL_SEED_FEED: FeedItem[] = [
     avatarColor: '#EF4444',
     isVerified: true,
     postType: 'video',
-    prompt: 'My entire dark UI design process in 60 seconds ✨',
+    prompt: 'What is your dark UI design process from start to finish?',
     response: '',
     videoUri: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8',
     hashtags: ['design', 'ui', 'darkmode', 'figma'],

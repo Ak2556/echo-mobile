@@ -60,15 +60,13 @@ const SYSTEM_PROMPT =
 /**
  * Returns ok=true when the text is safe to publish, ok=false otherwise.
  *
- * Fail-open policy: if the moderation call itself errors (network, 5xx,
- * missing key, malformed output), we return ok=true and log the reason. We'd
- * rather publish occasionally-flaggable content than block legitimate users
- * behind a third-party outage. The trade-off is intentional and documented.
+ * If the moderation call fails, return ok=false so public content stays hidden
+ * until the user retries or an operator reviews the incident.
  */
 export async function moderateContent(text: string): Promise<ModerationResult> {
   const apiKey = Deno.env.get("OPENROUTER_API_KEY");
   if (!apiKey) {
-    return { ok: true, categories: [], error: "OPENROUTER_API_KEY unset — skipping moderation" };
+    return { ok: false, categories: ["moderation_unavailable"], error: "OPENROUTER_API_KEY unset" };
   }
   const trimmed = (text ?? "").trim();
   if (!trimmed) {
@@ -101,14 +99,14 @@ export async function moderateContent(text: string): Promise<ModerationResult> {
     });
 
     if (!res.ok) {
-      return { ok: true, categories: [], error: `moderation http ${res.status}` };
+      return { ok: false, categories: ["moderation_unavailable"], error: `moderation http ${res.status}` };
     }
 
     const data = await res.json();
     const content: string = data?.choices?.[0]?.message?.content ?? "";
     const verdict = parseVerdict(content);
     if (!verdict) {
-      return { ok: true, categories: [], error: "moderation: unparseable verdict" };
+      return { ok: false, categories: ["moderation_unavailable"], error: "moderation: unparseable verdict" };
     }
 
     if (verdict.flagged) {
@@ -117,8 +115,8 @@ export async function moderateContent(text: string): Promise<ModerationResult> {
     return { ok: true, categories: [] };
   } catch (e) {
     return {
-      ok: true,
-      categories: [],
+      ok: false,
+      categories: ["moderation_unavailable"],
       error: e instanceof Error ? e.message : String(e),
     };
   } finally {

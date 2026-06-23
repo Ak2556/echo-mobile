@@ -1,8 +1,8 @@
 # Echo Terms of Service
 
-**Last updated:** [DATE BEFORE LAUNCH]
+**Last updated:** June 16, 2026
 
-These Terms of Service ("Terms") are an agreement between you and [LEGAL ENTITY NAME] ("Echo", "we"). By creating an account or using Echo you agree to these Terms.
+These Terms of Service ("Terms") are an agreement between you and Echo ("Echo", "we"), operated by the seller identified on Echo's App Store and Google Play listings. By creating an account or using Echo you agree to these Terms.
 
 ---
 
@@ -80,7 +80,7 @@ Some jurisdictions don't allow some of these limits — they apply to the extent
 
 ## 10. Governing law
 
-These Terms are governed by the laws of [STATE/COUNTRY] without regard to conflict-of-laws principles. Disputes will be resolved in the state or federal courts located in [JURISDICTION], and you consent to that jurisdiction.
+These Terms are governed by the laws applicable to the operator identified on Echo's store listings, without regard to conflict-of-laws principles. Disputes will be resolved in courts with jurisdiction over that operator, unless consumer law in your location requires a different venue.
 
 ---
 

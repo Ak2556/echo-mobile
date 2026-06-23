@@ -10,12 +10,13 @@
 // against the same per-user hourly AI budget (ai_rate_limits table).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { checkAndIncrementRateLimit, AIRateLimitError } from "../_shared/rateLimit.ts";
+import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const MODEL = Deno.env.get("EDITORIAL_REWRITE_MODEL") ?? "google/gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 // Hard ceiling on how long we'll wait for OpenRouter before giving up.
 const UPSTREAM_TIMEOUT_MS = 20_000;
@@ -122,14 +123,20 @@ async function rewrite(action: Action, text: string, prompt: string): Promise<st
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (req.method !== "POST") return json(405, { error: "Method not allowed" });
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return json(500, { error: "SUPABASE_SERVICE_ROLE_KEY not configured" });
+  }
 
-  // ── Auth: require a real signed-in user, not just the public anon key ───────
+  // Auth: require a real signed-in user, not just the public anon key
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) {
     return json(401, { error: "Missing auth" });
   }
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false },
+  });
+  const adminSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
   });
   const { data: userData, error: userErr } = await supabase.auth.getUser();
@@ -155,9 +162,10 @@ Deno.serve(async (req) => {
   if (!text) return json(400, { error: "text is required" });
   if (text.length > 8000) return json(400, { error: "text too long (max 8000 chars)" });
 
-  // ── Rate limit (shared AI budget) ───────────────────────────────────────────
+  // Rate limit (shared AI budget)
   try {
-    await checkAndIncrementRateLimit(supabase, userId);
+    const tier = await resolveLimitForUser(adminSupabase, userId);
+    await checkAndIncrementRateLimit(adminSupabase, userId, tier);
   } catch (e) {
     if (e instanceof AIRateLimitError) {
       return json(429, { error: e.message }, { "Retry-After": String(e.retryAfterSeconds) });

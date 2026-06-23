@@ -173,7 +173,7 @@ function PollPreview({ args, accentColor }: { args: any; accentColor: string }) 
     : 'Drafting your poll…';
   const rawOptions: unknown[] = Array.isArray(args?.options) ? args.options : [];
   const options = rawOptions
-    .map((o) => typeof o === 'string' ? o : (o && typeof o === 'object' && typeof (o as any).text === 'string' ? (o as any).text : ''))
+    .map((o) => typeof o === 'string' ? o : (o && typeof o === 'object' && typeof (o as { text?: unknown }).text === 'string' ? (o as { text: string }).text : ''))
     .filter(Boolean)
     .slice(0, 4);
   const duration = typeof args?.duration === 'string' ? args.duration : '24h';

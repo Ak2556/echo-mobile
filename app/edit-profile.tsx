@@ -27,7 +27,7 @@ const PRONOUN_PRESETS = ['', 'she/her', 'he/him', 'they/them', 'she/they', 'he/t
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { username, displayName, bio, avatarColor, avatarUrl, setUsername, setDisplayName, setBio, setAvatarColor, setAvatarUrl } = useAppStore();
+  const { username, displayName, bio, avatarColor, avatarUrl, profilePhotoVisible, setUsername, setDisplayName, setBio, setAvatarColor, setAvatarUrl } = useAppStore();
   const { colors, radius, fontSizes, animation } = useTheme();
 
   const [newUsername, setNewUsername] = useState(username);
@@ -40,10 +40,7 @@ export default function EditProfileScreen() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Hydrate pronouns + mood from the remote profile on mount.
-  // We keep these out of the local Zustand store for now — they're
-  // small fields and only relevant in this screen + the AI's system
-  // prompt (read on the server side).
+  // Hydrate remote-only profile fields on mount.
   useEffect(() => {
     if (!isSupabaseRemote()) return;
     void (async () => {
@@ -123,7 +120,7 @@ export default function EditProfileScreen() {
           mood_expires_at: trimmedMood
             ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
             : null,
-          ...(newAvatarUrl ? { avatar_url: newAvatarUrl } : {}),
+          avatar_url: profilePhotoVisible && newAvatarUrl ? newAvatarUrl : null,
         });
       } catch (e) {
         Alert.alert('Could not save', (e as Error).message);
@@ -137,7 +134,7 @@ export default function EditProfileScreen() {
     setBio(newBio.trim());
     setAvatarColor(newColor);
     if (newAvatarUrl) setAvatarUrl(newAvatarUrl);
-    showToast('Profile updated!', '\u{2728}');
+    showToast('Profile updated!', 'Saved');
     router.back();
   };
 
@@ -172,7 +169,7 @@ export default function EditProfileScreen() {
       </View>
 
       <ScrollView className="flex-1 px-4 pt-6" showsVerticalScrollIndicator={false}>
-        {/* Avatar preview with glow ring */}
+        {/* Avatar preview */}
         <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="items-center mb-8">
           <AnimatedPressable
             onPress={() => { void handlePickAvatar(); }}
@@ -186,7 +183,7 @@ export default function EditProfileScreen() {
               avatarColor={newColor}
               avatarUrl={newAvatarUrl || undefined}
               size={84}
-              showGlow
+              showHalo
             />
             {/* "Change Photo" badge */}
             <View style={{
@@ -388,7 +385,7 @@ export default function EditProfileScreen() {
           <TextInput
             value={newMood}
             onChangeText={(v) => setNewMood(v.slice(0, MOOD_MAX))}
-            placeholder="📚 deep-reading mode"
+            placeholder="deep-reading mode"
             maxLength={MOOD_MAX}
           />
           <Text

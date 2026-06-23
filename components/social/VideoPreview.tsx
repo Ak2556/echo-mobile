@@ -40,7 +40,7 @@ function formatViewCount(n: number): string {
   return `${n}`;
 }
 
-// ── Static fallback (Expo Go / no native module) ────────────────────────────
+// Static fallback (Expo Go / no native module)
 function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden' }}>
@@ -74,7 +74,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount }: 
   );
 }
 
-// ── Full video player (dev client / production build) ───────────────────────
+// Full video player (dev client / production build)
 function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
@@ -147,7 +147,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount 
   );
 }
 
-// ── Public export — auto-selects based on native module availability ─────────
+// Public export — auto-selects based on native module availability
 export function VideoPreview(props: VideoPreviewProps) {
   if (!ExpoVideoModule) return <VideoFallback {...props} />;
   return <VideoPlayer {...props} />;

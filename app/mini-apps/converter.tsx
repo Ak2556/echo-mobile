@@ -6,30 +6,30 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
 
 interface Unit { label: string; toBase: number }
-interface Category { name: string; emoji: string; units: Unit[] }
+interface Category { name: string; marker: string; units: Unit[] }
 
 const CATEGORIES: Category[] = [
-  { name: 'Length', emoji: '📏', units: [
+  { name: 'Length', marker: 'L', units: [
     { label: 'Meter', toBase: 1 }, { label: 'Kilometer', toBase: 1000 }, { label: 'Mile', toBase: 1609.344 },
     { label: 'Foot', toBase: 0.3048 }, { label: 'Inch', toBase: 0.0254 }, { label: 'Centimeter', toBase: 0.01 },
     { label: 'Yard', toBase: 0.9144 }, { label: 'Millimeter', toBase: 0.001 },
   ]},
-  { name: 'Weight', emoji: '⚖️', units: [
+  { name: 'Weight', marker: 'W', units: [
     { label: 'Kilogram', toBase: 1 }, { label: 'Gram', toBase: 0.001 }, { label: 'Pound', toBase: 0.453592 },
     { label: 'Ounce', toBase: 0.0283495 }, { label: 'Ton', toBase: 1000 }, { label: 'Stone', toBase: 6.35029 },
   ]},
-  { name: 'Temperature', emoji: '🌡️', units: [
+  { name: 'Temperature', marker: 'T', units: [
     { label: '°Celsius', toBase: 1 }, { label: '°Fahrenheit', toBase: 1 }, { label: 'Kelvin', toBase: 1 },
   ]},
-  { name: 'Volume', emoji: '🧪', units: [
+  { name: 'Volume', marker: 'V', units: [
     { label: 'Liter', toBase: 1 }, { label: 'Milliliter', toBase: 0.001 }, { label: 'Gallon (US)', toBase: 3.78541 },
     { label: 'Cup', toBase: 0.236588 }, { label: 'Fluid oz', toBase: 0.0295735 }, { label: 'Cubic m', toBase: 1000 },
   ]},
-  { name: 'Speed', emoji: '🚀', units: [
+  { name: 'Speed', marker: 'S', units: [
     { label: 'm/s', toBase: 1 }, { label: 'km/h', toBase: 0.277778 }, { label: 'mph', toBase: 0.44704 },
     { label: 'knot', toBase: 0.514444 }, { label: 'ft/s', toBase: 0.3048 },
   ]},
-  { name: 'Area', emoji: '⬛', units: [
+  { name: 'Area', marker: 'A', units: [
     { label: 'm²', toBase: 1 }, { label: 'km²', toBase: 1e6 }, { label: 'acre', toBase: 4046.86 },
     { label: 'hectare', toBase: 10000 }, { label: 'ft²', toBase: 0.092903 },
   ]},
@@ -77,7 +77,7 @@ export default function ConverterScreen() {
               shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
             }}
           >
-            <Text style={{ color: i === catIdx ? '#fff' : colors.text, fontWeight: '700', fontSize: 14 }}>{c.emoji} {c.name}</Text>
+            <Text style={{ color: i === catIdx ? '#fff' : colors.text, fontWeight: '700', fontSize: 14 }}>{c.marker} · {c.name}</Text>
           </Pressable>
         ))}
       </ScrollView>

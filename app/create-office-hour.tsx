@@ -63,8 +63,8 @@ function CreateOfficeHourScreenInner() {
         starts_at: startAt.toISOString(),
         duration_minutes: duration,
       });
-      showToast('Office Hours scheduled', '🎙️');
-      router.replace(`/office-hours/${oh.id}` as any);
+      showToast('Office Hours scheduled', 'Scheduled');
+      router.replace({ pathname: '/office-hours/[id]', params: { id: oh.id } });
     } catch (e) {
       Alert.alert('Could not schedule', (e as Error).message);
     } finally {

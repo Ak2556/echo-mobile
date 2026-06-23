@@ -13,7 +13,7 @@ export const ONBOARDING_INTERESTS = [
 
 export const POSTING_INTENTS = [
   { key: 'chat', title: 'Start a conversation', subtitle: 'Ask Echo something worth turning into a post later.' },
-  { key: 'discover', title: 'Explore top Echoes', subtitle: 'See what strong AI-native posts look like first.' },
+  { key: 'discover', title: 'Explore top Echoes', subtitle: 'See what strong public posts look like first.' },
   { key: 'post', title: 'Draft your first Echo', subtitle: 'Publish a thought or conversation right away.' },
 ] as const;
 

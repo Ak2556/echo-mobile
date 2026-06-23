@@ -24,6 +24,7 @@ const GAP = 12;
 const CARD = (width - PAD * 2 - GAP) / 2;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 type SearchFilter = 'all' | LocalProductivityApp;
+type EchoPairing = { title: string; body: string; route: Href };
 
 const SEARCH_FILTERS: { label: string; value: SearchFilter }[] = [
   { label: 'All', value: 'all' },
@@ -31,6 +32,12 @@ const SEARCH_FILTERS: { label: string; value: SearchFilter }[] = [
   { label: 'Habits', value: 'habits' },
   { label: 'Expenses', value: 'expenses' },
   { label: 'Memos', value: 'voice-memo' },
+];
+
+const ECHO_PAIRINGS: EchoPairing[] = [
+  { title: 'Notes to posts', body: 'Capture a thought, then turn the strongest line into a public Echo.', route: '/mini-apps/notes' },
+  { title: 'Voice memos to prompts', body: 'Record an idea first, then use Echo to refine it.', route: '/mini-apps/voice-memo' },
+  { title: 'Habits to updates', body: 'Use streaks and milestones as material for progress updates.', route: '/mini-apps/habits' },
 ];
 
 interface MiniApp {
@@ -299,13 +306,9 @@ export default function AppsScreen() {
         )}
 
         <Animated.View entering={FadeInDown.delay(55).duration(220)} style={{ gap: 10, marginBottom: 8 }}>
-          <SectionTitle title="Best paired with Echo" caption="Use these when you want something worth posting or messaging about" />
+          <SectionTitle title="Works with Echo" caption="Use these tools to prepare posts, prompts, and updates" />
           <View style={{ gap: 8 }}>
-            {([
-              { title: 'Notes -> post ideas', body: 'Capture a thought, then turn the strongest line into a public Echo.', route: '/mini-apps/notes' as Href },
-              { title: 'Voice memos -> conversation starters', body: 'Record messy thinking first, then ask Echo to shape it.', route: '/mini-apps/voice-memo' as Href },
-              { title: 'Habits -> progress updates', body: 'Use streaks and milestones as material for creator updates.', route: '/mini-apps/habits' as Href },
-            ]).map(item => (
+            {ECHO_PAIRINGS.map(item => (
               <AnimatedPressable key={item.title} depth="soft" fadeOnPress onPress={() => router.push(item.route)} style={{ borderRadius: 16, padding: 14, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>{item.title}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, lineHeight: 18 }}>{item.body}</Text>
@@ -331,7 +334,7 @@ export default function AppsScreen() {
             })}
           </ScrollView>
           {filteredResults.map(result => (
-            <AnimatedPressable depth="soft" fadeOnPress key={`${result.app}-${result.id}`} onPress={() => router.push(result.route)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
+            <AnimatedPressable depth="soft" fadeOnPress key={`${result.app}-${result.id}`} onPress={() => router.push(result.route as Href)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
               <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{result.title}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{result.app} · {result.subtitle}</Text>
             </AnimatedPressable>
@@ -353,7 +356,6 @@ export default function AppsScreen() {
         </View>
       </ScrollView>
 
-      {/* Glass header */}
       <View
         style={{
           position: 'absolute',

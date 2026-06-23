@@ -11,7 +11,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Lightning, X, ArrowUp, Question } from 'phosphor-react-native';
+import { useRouter, type Href } from 'expo-router';
+import { Brain, Envelope, GearSix, Lightning, MagnifyingGlass, PencilSimple, SquaresFour, X, ArrowUp, Question } from 'phosphor-react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { ActionCenter } from './ActionCenter';
 import { useCommandPalette } from '../../lib/commandPalette';
@@ -30,6 +31,7 @@ type Item =
 
 export function CommandPalette() {
   const { isOpen, close } = useCommandPalette();
+  const router = useRouter();
   const { colors, reduceAnimations } = useTheme();
   const performance = usePerformanceProfile('overlay');
   const [input, setInput] = useState('');
@@ -38,6 +40,14 @@ export function CommandPalette() {
   const [showActionCenter, setShowActionCenter] = useState(false);
   const conversationIdRef = useRef<string | null>(null);
   const inputRef = useRef<TextInput>(null);
+  const shortcuts: { key: string; label: string; href: Href; icon: React.ReactNode }[] = [
+    { key: 'create', label: 'New Echo', href: '/create-post', icon: <PencilSimple color={colors.accent} size={16} /> },
+    { key: 'search', label: 'Explore', href: '/(tabs)/explore', icon: <MagnifyingGlass color={colors.accent} size={16} /> },
+    { key: 'messages', label: 'Messages', href: '/messages', icon: <Envelope color={colors.accent} size={16} /> },
+    { key: 'apps', label: 'Mini apps', href: '/(tabs)/apps', icon: <SquaresFour color={colors.accent} size={16} /> },
+    { key: 'partners', label: 'Thinking partners', href: '/thinking-partners', icon: <Brain color={colors.accent} size={16} /> },
+    { key: 'settings', label: 'Settings', href: '/settings', icon: <GearSix color={colors.accent} size={16} /> },
+  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -318,6 +328,40 @@ export function CommandPalette() {
                     )}
                   </AnimatedPressable>
                 </View>
+
+                {items.length === 0 && (
+                  <View style={{ padding: 14, gap: 8 }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {shortcuts.map(shortcut => (
+                        <AnimatedPressable
+                          key={shortcut.key}
+                          onPress={() => {
+                            close();
+                            router.push(shortcut.href);
+                          }}
+                          performanceMode="overlay"
+                          haptic="light"
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 8,
+                            paddingHorizontal: 12,
+                            paddingVertical: 9,
+                            borderRadius: 999,
+                            backgroundColor: colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                            borderWidth: StyleSheet.hairlineWidth,
+                            borderColor: colors.glassBorder,
+                          }}
+                        >
+                          {shortcut.icon}
+                          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>
+                            {shortcut.label}
+                          </Text>
+                        </AnimatedPressable>
+                      ))}
+                    </View>
+                  </View>
+                )}
 
                 {items.length > 0 && (
                   <ScrollView

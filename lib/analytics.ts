@@ -1,29 +1,14 @@
-/**
- * Product analytics facade backed by posthog-react-native.
- *
- * Initialisation is lazy and consent-gated: PostHog is only loaded if
- * EXPO_PUBLIC_POSTHOG_KEY is set AND the user has accepted analytics in
- * the consent banner. Until that happens every `track()` is a no-op.
- *
- * The typed event vocabulary below is the canonical list — adding a new
- * event means adding it to the union so we don't ship typos.
- */
-
 export type AnalyticsEvent =
-  // ── Lifecycle ──
   | 'app_open'
   | 'app_background'
-  // ── Auth funnel ──
   | 'signup_started'
   | 'signup_completed'
   | 'signin_completed'
   | 'signout'
   | 'account_deleted'
-  // ── Activation ──
   | 'first_echo_published'
   | 'echo_published'
   | 'echo_drafted'
-  // ── Engagement ──
   | 'feed_scope_changed'
   | 'echo_liked'
   | 'echo_reacted'
@@ -34,29 +19,38 @@ export type AnalyticsEvent =
   | 'echo_thread_opened'
   | 'user_followed'
   | 'search_executed'
-  // ── Differentiator features (the retention thesis) ──
-  // These are the mechanics that set Echo apart from a generic feed. They are
-  // instrumented so retention can be sliced by feature exposure: e.g. compare
-  // D7/D30 of users who engaged a thinking-partner / fingerprint / daily
-  // divergence / remix against those who didn't. That comparison is the
-  // evidence that "uniqueness drives retention" — not an assertion.
   | 'daily_question_viewed'
   | 'daily_answer_submitted'
   | 'daily_divergence_viewed'
   | 'thinking_partners_viewed'
   | 'thinking_partner_followed'
   | 'thinking_fingerprint_viewed'
+  | 'marketplace_viewed'
+  | 'marketplace_listing_opened'
+  | 'marketplace_inquiry_started'
   | 'remix_started'
-  // ── AI ──
+  | 'perspective_started'
+  | 'perspective_type_selected'
+  | 'perspective_published'
+  | 'evolution_opened'
+  | 'evolution_shared'
+  | 'evolving_rail_opened'
   | 'chat_message_sent'
   | 'chat_tool_executed'
   | 'chat_tool_rejected'
   | 'chat_rate_limited'
-  // ── Notifications ──
+  | 'product_onboarding_started'
+  | 'product_onboarding_skipped'
+  | 'product_onboarding_chat_sent'
+  | 'product_onboarding_draft_created'
+  | 'product_onboarding_completed'
+  | 'persona_learning_started'
+  | 'persona_learning_disabled'
+  | 'persona_snapshot_reset'
+  | 'persona_note_updated'
   | 'push_permission_granted'
   | 'push_permission_denied'
   | 'notification_tapped'
-  // ── Consent ──
   | 'consent_accepted'
   | 'consent_declined';
 
@@ -64,7 +58,6 @@ export interface AnalyticsProps {
   [key: string]: string | number | boolean | undefined | null;
 }
 
-// Optional dependency — only resolved when the native module is bundled.
 type PostHogModule = { default: new (key: string, options?: Record<string, unknown>) => PostHogInstance } | null;
 
 interface PostHogInstance {
@@ -85,11 +78,6 @@ function loadPostHog(): PostHogModule {
   }
 }
 
-/**
- * Initialise PostHog. Must only be called after the user has accepted
- * analytics consent (see components/ConsentBanner). Safe to call multiple
- * times — only the first call performs the underlying init.
- */
 export function initAnalytics(): void {
   if (initialised) return;
   const key = process.env.EXPO_PUBLIC_POSTHOG_KEY;
@@ -111,28 +99,22 @@ export function initAnalytics(): void {
 
 export function track(event: AnalyticsEvent, props?: AnalyticsProps): void {
   if (!initialised || !client) {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log('[analytics]', event, props ?? '');
-    }
+    void event;
+    void props;
     return;
   }
   client.capture(event, props as Record<string, unknown> | undefined);
 }
 
-/** Set the user id and any traits for subsequent events. */
 export function identify(userId: string, traits?: AnalyticsProps): void {
   if (!initialised || !client) {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log('[analytics] identify', userId, traits ?? '');
-    }
+    void userId;
+    void traits;
     return;
   }
   client.identify(userId, traits as Record<string, unknown> | undefined);
 }
 
-/** Drop the identity on sign-out. */
 export function resetIdentity(): void {
   if (!initialised || !client) return;
   client.reset();

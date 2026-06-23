@@ -30,9 +30,15 @@ import { markMessagesRead } from '../../lib/supabaseEchoApi';
 import type { RemoteMessageReaction } from '../../lib/supabaseEchoApi';
 import type { DirectMessage } from '../../types';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const QUICK_EMOJIS = ['❤️', '👍', '😂', '🔥', '💡', '😮'] as const;
+// Constants
+const QUICK_REACTIONS = [
+  { value: 'love', label: 'Love' },
+  { value: 'agree', label: 'Agree' },
+  { value: 'funny', label: 'Funny' },
+  { value: 'strong', label: 'Strong' },
+  { value: 'idea', label: 'Idea' },
+  { value: 'surprise', label: 'Oh' },
+] as const;
 
 const QUICK_STARTERS: Record<string, string> = {
   followup: 'Curious what part of this stood out to you most?',
@@ -40,8 +46,7 @@ const QUICK_STARTERS: Record<string, string> = {
   draft:    'This could probably turn into a follow-up Echo about ',
 };
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 interface NormalizedMessage {
   id: string;
   senderId: string;
@@ -56,8 +61,7 @@ interface NormalizedMessage {
   reactions: RemoteMessageReaction[];
 }
 
-// ─── EchoShareCard ────────────────────────────────────────────────────────────
-
+// EchoShareCard
 function EchoShareCard({ title, preview, author }: { title: string; preview: string; author?: string }) {
   const { colors, radius } = useTheme();
   return (
@@ -78,31 +82,30 @@ function EchoShareCard({ title, preview, author }: { title: string; preview: str
   );
 }
 
-// ─── ReactionBar ──────────────────────────────────────────────────────────────
-
+// ReactionBar
 function ReactionBar({
   reactions, myUserId, onToggle,
 }: {
   reactions: RemoteMessageReaction[];
   myUserId: string;
-  onToggle: (emoji: string, hasReacted: boolean) => void;
+  onToggle: (reactionValue: string, hasReacted: boolean) => void;
 }) {
   const { colors } = useTheme();
   if (!reactions.length) return null;
 
   const grouped: Record<string, { count: number; hasReacted: boolean }> = {};
   for (const r of reactions) {
-    if (!grouped[r.emoji]) grouped[r.emoji] = { count: 0, hasReacted: false };
-    grouped[r.emoji].count++;
-    if (r.userId === myUserId) grouped[r.emoji].hasReacted = true;
+    if (!grouped[r.value]) grouped[r.value] = { count: 0, hasReacted: false };
+    grouped[r.value].count++;
+    if (r.userId === myUserId) grouped[r.value].hasReacted = true;
   }
 
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
-      {Object.entries(grouped).map(([emoji, { count, hasReacted }]) => (
+      {Object.entries(grouped).map(([reactionValue, { count, hasReacted }]) => (
         <Pressable
-          key={emoji}
-          onPress={() => onToggle(emoji, hasReacted)}
+          key={reactionValue}
+          onPress={() => onToggle(reactionValue, hasReacted)}
           style={{
             flexDirection: 'row', alignItems: 'center', gap: 3,
             paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
@@ -110,7 +113,7 @@ function ReactionBar({
             borderWidth: 1, borderColor: hasReacted ? colors.accent : colors.border,
           }}
         >
-          <Text style={{ fontSize: 14 }}>{emoji}</Text>
+          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '700' }}>{reactionValue}</Text>
           {count > 1 && (
             <Text style={{ fontSize: 11, fontWeight: '600', color: hasReacted ? colors.accent : colors.textMuted }}>
               {count}
@@ -122,8 +125,7 @@ function ReactionBar({
   );
 }
 
-// ─── TypingDots ───────────────────────────────────────────────────────────────
-
+// TypingDots
 function TypingDots() {
   const { colors, radius } = useTheme();
   return (
@@ -139,8 +141,7 @@ function TypingDots() {
   );
 }
 
-// ─── DMBubble ─────────────────────────────────────────────────────────────────
-
+// DMBubble
 function DMBubble({
   message, isMe, showReadReceipt, myUserId, onLongPress, onReactionToggle,
 }: {
@@ -149,7 +150,7 @@ function DMBubble({
   showReadReceipt: boolean;
   myUserId: string;
   onLongPress: () => void;
-  onReactionToggle: (emoji: string, hasReacted: boolean) => void;
+  onReactionToggle: (reactionValue: string, hasReacted: boolean) => void;
 }) {
   const fontSizeSetting = useAppStore(s => s.fontSize);
   const { colors, radius } = useTheme();
@@ -215,8 +216,7 @@ function DMBubble({
   );
 }
 
-// ─── MessageActionSheet ───────────────────────────────────────────────────────
-
+// MessageActionSheet
 function MessageActionSheet({
   visible, message, isOwn, myUserId, onClose, onCopy, onDelete, onReact,
 }: {
@@ -227,7 +227,7 @@ function MessageActionSheet({
   onClose: () => void;
   onCopy: () => void;
   onDelete: () => void;
-  onReact: (emoji: string, hasReacted: boolean) => void;
+  onReact: (reactionValue: string, hasReacted: boolean) => void;
 }) {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
@@ -289,14 +289,15 @@ function MessageActionSheet({
           )}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12, paddingHorizontal: 4 }}>
-            {QUICK_EMOJIS.map(emoji => {
-              const alreadyReacted = message.reactions.some(r => r.emoji === emoji && r.userId === myUserId);
+            {QUICK_REACTIONS.map(reaction => {
+              const alreadyReacted = message.reactions.some(r => r.value === reaction.value && r.userId === myUserId);
               return (
                 <Pressable
-                  key={emoji}
-                  onPress={() => { onReact(emoji, alreadyReacted); onClose(); }}
+                  key={reaction.value}
+                  onPress={() => { onReact(reaction.value, alreadyReacted); onClose(); }}
                   style={({ pressed }) => ({
-                    width: 46, height: 46, borderRadius: 23,
+                    minWidth: 46, height: 46, borderRadius: 23,
+                    paddingHorizontal: 8,
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: alreadyReacted ? colors.accentMuted : 'transparent',
                     opacity: pressed ? 0.6 : 1,
@@ -304,7 +305,7 @@ function MessageActionSheet({
                     borderColor: colors.accent,
                   })}
                 >
-                  <Text style={{ fontSize: 26 }}>{emoji}</Text>
+                  <Text style={{ color: alreadyReacted ? colors.accent : colors.text, fontSize: 11, fontWeight: '700' }}>{reaction.label}</Text>
                 </Pressable>
               );
             })}
@@ -350,8 +351,7 @@ function MessageActionSheet({
   );
 }
 
-// ─── DMScreen ─────────────────────────────────────────────────────────────────
-
+// DMScreen
 export default function DMScreen() {
   const { id, echoId, echoTitle, echoPreview, echoAuthor } = useLocalSearchParams<{
     id: string;
@@ -380,7 +380,7 @@ export default function DMScreen() {
   const remote = isSupabaseRemote();
   const myId = userId ?? 'me';
 
-  // ── Conversation resolution ─────────────────────────────────────────────────
+  // Conversation resolution
   const localConversation = conversations.find(c => c.id === id);
   const { data: remoteConvData, isLoading: convLoading } = useRemoteConversation(
     remote && !localConversation ? id : undefined,
@@ -400,7 +400,7 @@ export default function DMScreen() {
       }
     : null);
 
-  // ── Remote hooks ────────────────────────────────────────────────────────────
+  // Remote hooks
   const {
     data: remoteMessagePages,
     fetchNextPage, hasNextPage,
@@ -416,7 +416,7 @@ export default function DMScreen() {
     remote ? myId : undefined,
   );
 
-  // ── Message normalization ───────────────────────────────────────────────────
+  // Message normalization
   const localMessages = (id ? getDMs(id) : []) as DirectMessage[];
 
   const messages: NormalizedMessage[] = remote
@@ -449,8 +449,7 @@ export default function DMScreen() {
 
   const online = conversation ? isUserOnline(conversation.userId) : false;
 
-  // ── Effects ─────────────────────────────────────────────────────────────────
-
+  // Effects
   // Local mark-as-read
   useEffect(() => {
     if (id) markConversationRead(id);
@@ -491,14 +490,13 @@ export default function DMScreen() {
     // Remote: compose as rich text (echo-kind DM is a future enhancement)
     const echoPreviewText = echoPreview ? `\n${echoPreview}` : '';
     sendRemote.mutate({
-      content: `📎 "${String(echoTitle)}"${echoPreviewText}${echoAuthor ? `\n— ${echoAuthor}` : ''}`,
+      content: `Shared Echo: "${String(echoTitle)}"${echoPreviewText}${echoAuthor ? `\n${echoAuthor}` : ''}`,
     });
     setSharedPending(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharedPending, echoId, remote, conversation?.id]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
-
+  // Handlers
   const handleSend = useCallback(() => {
     const content = text.trim();
     if (!content || !id) return;
@@ -529,9 +527,9 @@ export default function DMScreen() {
     deleteMessage.mutate(activeMessage.id);
   }, [activeMessage, remote, deleteMessage]);
 
-  const handleReact = useCallback((emoji: string, hasReacted: boolean) => {
+  const handleReact = useCallback((reactionValue: string, hasReacted: boolean) => {
     if (!activeMessage || !remote) return;
-    toggleReaction.mutate({ messageId: activeMessage.id, emoji, hasReacted });
+    toggleReaction.mutate({ messageId: activeMessage.id, reactionValue, hasReacted });
   }, [activeMessage, remote, toggleReaction]);
 
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -549,8 +547,7 @@ export default function DMScreen() {
     typingTimer.current = setTimeout(() => sendTypingEvent(), 1500);
   }, [remote, sendTypingEvent]);
 
-  // ── Loading / not found ─────────────────────────────────────────────────────
-
+  // Loading / not found
   if (!conversation) {
     if (remote && convLoading) {
       return (
@@ -576,8 +573,7 @@ export default function DMScreen() {
     );
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
-
+  // Render
   return (
     <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.bg }}>
 
@@ -666,9 +662,9 @@ export default function DMScreen() {
               showReadReceipt={readReceipts}
               myUserId={myId}
               onLongPress={() => handleLongPress(item)}
-              onReactionToggle={(emoji, hasReacted) => {
+              onReactionToggle={(reactionValue, hasReacted) => {
                 if (!remote) return;
-                toggleReaction.mutate({ messageId: item.id, emoji, hasReacted });
+                toggleReaction.mutate({ messageId: item.id, reactionValue, hasReacted });
               }}
             />
           )}

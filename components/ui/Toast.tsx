@@ -10,6 +10,20 @@ import Animated, {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { BlurView } from 'expo-blur';
 import { create } from 'zustand';
+import {
+  ArrowsClockwise,
+  Bell,
+  BookmarkSimple,
+  Broom,
+  ChatCircle,
+  CheckCircle,
+  Globe,
+  Info,
+  PaintBrush,
+  Robot,
+  TextT,
+  WarningCircle,
+} from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { MOTION } from '../../lib/motion';
 import { usePerformanceProfile } from '../../lib/performance';
@@ -30,6 +44,60 @@ export const useToastStore = create<ToastState>((set) => ({
 
 export function showToast(message: string, icon?: string) {
   useToastStore.getState().show(message, icon);
+}
+
+function ToastIcon({ value }: { value: string | null }) {
+  const { colors } = useTheme();
+  if (!value) return null;
+
+  const key = value.toLowerCase();
+  const iconColor = key.includes('error') || key.includes('denied') || key.includes('required')
+    ? colors.danger
+    : colors.accent;
+
+  let Icon = Info;
+  if (key.includes('error') || key.includes('denied') || key.includes('required')) Icon = WarningCircle;
+  else if (key.includes('bookmark') || value === '\u{1F516}') Icon = BookmarkSimple;
+  else if (key.includes('re-echo') || value === '\u{1F501}') Icon = ArrowsClockwise;
+  else if (key.includes('accent') || key.includes('theme') || key.includes('corners') || value === '\u{1F3A8}') Icon = PaintBrush;
+  else if (key.includes('cache') || key.includes('cleared') || value === '\u{1F9F9}') Icon = Broom;
+  else if (key.includes('font') || value === '\u{1F524}') Icon = TextT;
+  else if (key.includes('model') || value === '\u{1F916}') Icon = Robot;
+  else if (key.includes('bubble') || value === '\u{1F4AC}') Icon = ChatCircle;
+  else if (key.includes('dm') || value === '\u{1F4EC}') Icon = ChatCircle;
+  else if (key.includes('language') || value === '\u{1F30D}') Icon = Globe;
+  else if (key.includes('notification') || key.includes('broadcast') || value === '\u{1F4E1}') Icon = Bell;
+  else if (
+    key.includes('done') ||
+    key.includes('saved') ||
+    key.includes('updated') ||
+    key.includes('created') ||
+    key.includes('joined') ||
+    key.includes('following') ||
+    key.includes('submitted') ||
+    key.includes('pinned') ||
+    key.includes('added') ||
+    value === '\u{2728}' ||
+    value === '\u{1F91D}'
+  ) {
+    Icon = CheckCircle;
+  }
+
+  return (
+    <View
+      style={{
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 9,
+        backgroundColor: iconColor === colors.danger ? colors.dangerMuted : colors.accentMuted,
+      }}
+    >
+      <Icon color={iconColor} size={15} weight="bold" />
+    </View>
+  );
 }
 
 export function ToastProvider() {
@@ -150,7 +218,7 @@ export function ToastProvider() {
                 paddingHorizontal: 20,
               }}
             >
-              {icon ? <Text style={{ fontSize: 16, marginRight: 8 }}>{icon}</Text> : null}
+              <ToastIcon value={icon} />
               <Text
                 style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}
                 accessibilityLiveRegion="polite"
@@ -170,7 +238,7 @@ export function ToastProvider() {
               paddingHorizontal: 20,
             }}
           >
-            {icon ? <Text style={{ fontSize: 16, marginRight: 8 }}>{icon}</Text> : null}
+            <ToastIcon value={icon} />
             <Text
               style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}
               accessibilityLiveRegion="polite"

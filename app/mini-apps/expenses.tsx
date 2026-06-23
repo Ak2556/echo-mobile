@@ -11,7 +11,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
-import { EXPENSE_CATS, INCOME_CATS, Transaction, TxType, categoryEmoji, formatDate, formatMoney, loadTransactions, saveTransactions } from '../../lib/expenses';
+import { EXPENSE_CATS, INCOME_CATS, Transaction, TxType, categoryMarker, formatDate, formatMoney, loadTransactions, saveTransactions } from '../../lib/expenses';
 
 function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClose: () => void }) {
   const { colors } = useTheme();
@@ -25,8 +25,8 @@ function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClos
 
   const submit = () => {
     const num = parseFloat(amount.replace(/,/g, ''));
-    if (!num || num <= 0) { showToast('Enter a valid amount', '⚠️'); return; }
-    if (!category) { showToast('Pick a category', '⚠️'); return; }
+    if (!num || num <= 0) { showToast('Enter a valid amount', 'Error'); return; }
+    if (!category) { showToast('Pick a category', 'Required'); return; }
     onAdd({ id: Date.now().toString(), type, amount: num, category, note: note.trim(), date: new Date().toISOString() });
     onClose();
   };
@@ -65,7 +65,7 @@ function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClos
               {cats.map(c => (
                 <Pressable key={c.label} onPress={() => setCategory(c.label)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: category === c.label ? ACCENT + '22' : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: category === c.label ? 1.5 : StyleSheet.hairlineWidth, borderColor: category === c.label ? ACCENT : colors.glassBorder }}>
-                    <Text style={{ fontSize: 16 }}>{c.emoji}</Text>
+                    <Text style={{ color: category === c.label ? ACCENT : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{c.marker}</Text>
                     <Text style={{ color: category === c.label ? ACCENT : colors.text, fontWeight: '600', fontSize: 13 }}>{c.label}</Text>
                   </View>
                 </Pressable>
@@ -108,7 +108,7 @@ export default function ExpensesApp() {
 
   const addTx = (tx: Transaction) => {
     const updated = [tx, ...txs]; setTxs(updated); saveTransactions(updated);
-    showToast(`${tx.type === 'expense' ? 'Expense' : 'Income'} added`, tx.type === 'expense' ? '📉' : '📈');
+    showToast(`${tx.type === 'expense' ? 'Expense' : 'Income'} added`, 'Saved');
   };
 
   const deleteTx = (id: string) => {
@@ -171,7 +171,7 @@ export default function ExpensesApp() {
         <Animated.View key={tx.id} entering={FadeInDown.delay(i * 40).duration(220)} style={{ marginBottom: 10 }}>
           <GlassPanel variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}>
             <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: tx.type === 'income' ? '#10B98118' : '#EF444418', borderWidth: 1, borderColor: tx.type === 'income' ? '#10B98133' : '#EF444433', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 22 }}>{categoryEmoji(tx.category)}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{categoryMarker(tx.category)}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{tx.category}</Text>

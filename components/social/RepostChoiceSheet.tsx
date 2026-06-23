@@ -86,8 +86,8 @@ export function RepostChoiceSheet({ visible, onClose, reposted, onRepost, onRemi
             <ChoiceRow
               Icon={GitFork}
               accent={colors.accent}
-              name="Remix"
-              tagline="Add your own take and link back to the original"
+              name="Add Perspective"
+              tagline="Add your own angle and link back to the original"
               onPress={() => { tap('light'); onRemix(); onClose(); }}
               colors={colors}
               font={font}

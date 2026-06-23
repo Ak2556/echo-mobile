@@ -56,7 +56,7 @@ function OfficeHourDetailScreenInner() {
       setDraft('');
       const refreshed = await fetchOfficeHourQuestions(oh.id);
       setQuestions(refreshed);
-      showToast('Question added', '🎤');
+      showToast('Question added', 'Added');
     } catch (e) {
       Alert.alert('Could not submit', (e as Error).message);
     } finally {
@@ -143,7 +143,7 @@ function OfficeHourDetailScreenInner() {
                       avatarColor={oh.host.avatar_color}
                       avatarUrl={oh.host.avatar_url ?? undefined}
                       size={28}
-                      showGlow={false}
+                      showHalo={false}
                     />
                     <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Hosted by @{oh.host.username}</Text>
                   </>
