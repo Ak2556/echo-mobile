@@ -1,11 +1,11 @@
-# Echo — Go-Live Checklist
+# Echo Go-Live Checklist
 
 The single source of truth for taking Echo from "runs locally" to "live on the
-App Store." Work top to bottom. Anything marked **🚧 BLOCKER** must be resolved
-before submission; **⚠️** is a gotcha that bites if skipped.
+App Store." Work top to bottom. Anything marked **BLOCKER** must be resolved
+before submission; **Caution** marks items that are easy to miss.
 
-> Project facts: Supabase project `xmjbhcyyqrjlvhluisfj` (echo-mobile) · EAS
-> project `a743cf66-7ec4-4ff0-ad2a-4088398b5654` · bundle id `com.ak2556.echo`.
+> Project facts: Supabase project `xmjbhcyyqrjlvhluisfj` (echo-mobile), EAS
+> project `a743cf66-7ec4-4ff0-ad2a-4088398b5654`, bundle id `com.ak2556.echo`.
 > Migrations and functions go through the **Supabase CLI `--linked`**, never the
 > MCP server (it points at a different project). See `memory` / deploy-workflow.
 
@@ -34,7 +34,7 @@ supabase migration list --linked                   # Remote column should fill i
 ### 1b. Deploy every Edge Function
 
 ```bash
-# user-facing (JWT-verified by default — correct)
+# user-facing (JWT-verified by default)
 supabase functions deploy echo-ai
 supabase functions deploy editorial-rewrite
 supabase functions deploy embed-echo
@@ -43,7 +43,7 @@ supabase functions deploy thinking-fingerprint
 supabase functions deploy backfill-embeddings
 supabase functions deploy push-fanout
 
-# public / scheduler-triggered — MUST be --no-verify-jwt
+# public / scheduler-triggered: use --no-verify-jwt
 supabase functions deploy daily-question-push --no-verify-jwt
 supabase functions deploy og-redirect --no-verify-jwt
 ```
@@ -51,17 +51,17 @@ supabase functions deploy og-redirect --no-verify-jwt
 ### 1c. Set server-side function secrets
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are injected
-into Edge Functions automatically — **do not set them**. You only set:
+into Edge Functions automatically. Do not set them manually. Set only:
 
 ```bash
-# REQUIRED — powers AI chat, content moderation, and all embeddings.
+# REQUIRED: powers AI chat, content moderation, and all embeddings.
 # The account is restricted to the google-ai-studio provider.
 supabase secrets set OPENROUTER_API_KEY=<key>
 
-# REQUIRED for the retention push loop (see §1d).
+# REQUIRED for the retention push loop (see section 1d).
 supabase secrets set DAILY_PUSH_SECRET=<long-random-string>
 
-# Optional — only if you host a web preview (see BLOCKER in §5).
+# Optional: only if you host a web preview (see blockers in section 5).
 supabase secrets set WEB_BASE_URL=https://<your-domain>
 ```
 
@@ -92,23 +92,23 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-key> \
 
 - [ ] Dry-run first (`--dry-run`, no creds needed) to sanity-check the dataset.
 - [ ] After it runs, Discover/"Trending" is populated; `--embed` lights up the
-      semantic "For You" feed. (Embeddings can also be backfilled later via the
+      semantic "For You" feed. (Embeddings can also be generated via the
       `backfill-embeddings` function.)
 
 ---
 
 ## 2. App config sanity (`app.json`)
 
-- [ ] Version `1.0.0`, `runtimeVersion.policy = appVersion`. ✅ already set.
-- [ ] `ios.infoPlist.ITSAppUsesNonExemptEncryption = false`. ✅ already set.
-- [ ] ⚠️ **Microphone usage string.** The app records audio (voice-memo mini-app).
+- [ ] Version `1.0.0`, `runtimeVersion.policy = appVersion`. Already set.
+- [ ] `ios.infoPlist.ITSAppUsesNonExemptEncryption = false`. Already set.
+- [ ] Caution: **Microphone usage string.** The app records audio (voice-memo mini-app).
       Confirm the iOS build includes an `NSMicrophoneUsageDescription` (the
       `expo-audio` plugin injects a default; add an explicit one in
-      `app.json → ios.infoPlist` if App Review wants clearer wording).
-- [ ] ⚠️ `ios.associatedDomains = ["applinks:echo.app"]` and the Android
+      `app.json -> ios.infoPlist` if App Review wants clearer wording).
+- [ ] Caution: `ios.associatedDomains = ["applinks:echo.app"]` and the Android
       `echo.app` intent filter point at a domain you **don't own yet** (see
-      BLOCKER §5). Universal links won't verify until that's resolved. The app
-      still works; only https→app deep links are affected. Custom `echo://`
+      blocker in section 5). Universal links won't verify until that's resolved. The app
+      still works; only HTTPS-to-app deep links are affected. Custom `echo://`
       scheme links work regardless.
 
 ---
@@ -126,13 +126,17 @@ eas secret:create --scope project --name EXPO_PUBLIC_API_URL           --value <
 eas secret:create --scope project --name EXPO_PUBLIC_POSTHOG_KEY       --value <posthog-project-key>
 eas secret:create --scope project --name EXPO_PUBLIC_POSTHOG_HOST      --value https://us.i.posthog.com
 eas secret:create --scope project --name EXPO_PUBLIC_SENTRY_DSN        --value <sentry-dsn>
+eas secret:create --scope project --name SENTRY_ORG                    --value <sentry-org>
+eas secret:create --scope project --name SENTRY_PROJECT                --value <sentry-project>
+eas secret:create --scope project --name SENTRY_AUTH_TOKEN             --value <sentry-auth-token>
 # Optional / blocked on domain:
 eas secret:create --scope project --name EXPO_PUBLIC_WEB_BASE_URL      --value https://<your-domain>
 ```
 
 - [ ] `eas secret:list` shows them all.
-- [ ] ⚠️ Analytics is **consent-gated** — PostHog only initializes after the user
-      accepts the in-app consent banner. No key ⇒ analytics silently no-ops
+- [ ] Sentry sourcemap/debug-symbol upload succeeds in the production EAS build.
+- [ ] Caution: Analytics is **consent-gated**. PostHog only initializes after the user
+      accepts the in-app consent banner. No key means analytics silently no-ops
       (safe). Sentry/PostHog are optional to *ship* but expected for launch
       telemetry.
 
@@ -141,11 +145,11 @@ eas secret:create --scope project --name EXPO_PUBLIC_WEB_BASE_URL      --value h
 ## 4. Build & submit (iOS)
 
 Prereqs:
-- [ ] 🚧 **Apple Developer Program** membership ($99/yr) active.
+- [ ] BLOCKER: **Apple Developer Program** membership ($99/yr) active.
 - [ ] App record created in **App Store Connect** for `com.ak2556.echo`.
-- [ ] `eas login` done; `eas.json` `production` profile present. ✅
+- [ ] `eas login` done; `eas.json` `production` profile present.
 
-Build → TestFlight → submit:
+Build, TestFlight, submit:
 
 ```bash
 # 1. Production build (app-store credentials managed by EAS)
@@ -161,18 +165,18 @@ eas submit --profile production --platform ios --latest
       keywords, description, what's-new, category, age rating 17+).
 - [ ] Upload screenshots (6.7" + 6.5" mandatory). Capture from the iPhone 17 Pro
       Max simulator **after seeding** so the feed looks alive.
-- [ ] Privacy nutrition labels — copy from `app-store-listing.md → Privacy
+- [ ] Privacy nutrition labels: copy from `app-store-listing.md -> Privacy
       nutrition label`. Remember to declare **Audio Data** (microphone).
-- [ ] 🚧 **Privacy Policy URL** + **Support URL** must be live (see §5).
-- [ ] ⚠️ **Reviewer access (OTP auth).** Echo is passwordless (email magic-link /
-      SMS code) — there's no password to hand App Review. Provide one of:
+- [ ] BLOCKER: **Privacy Policy URL** + **Support URL** must be live (see section 5).
+- [ ] Caution: **Reviewer access (OTP auth).** Echo is passwordless (email magic-link /
+      SMS code). There is no password to hand App Review. Provide one of:
       a test email whose inbox the reviewer can reach, a test phone number, or a
       reviewer-only static-OTP bypass. Put details in App Review notes. Without
-      this, review **will** get stuck at the login screen.
+      this, review can get stuck at the login screen.
 
 ---
 
-## 5. 🚧 BLOCKERS to resolve before submission
+## 5. Blockers to resolve before submission
 
 ### Domain ownership (`echo.app` is referenced but not owned)
 This one domain gates four things:
@@ -188,11 +192,12 @@ This one domain gates four things:
   one-line support page on it.
 - Or, to ship *today*: host the privacy + support pages on a free static host
   (GitHub Pages, Notion public page, Vercel) and use those URLs in App Store
-  Connect. Universal links + web preview stay disabled until you own a domain —
+  Connect. Universal links + web preview stay disabled until you own a domain;
   the app is fully functional without them (`echo://` deep links still work).
 
-### Legal placeholders in `privacy-policy.md` / `terms-of-service.md`
-- [ ] Fill `[LEGAL ENTITY NAME]`, `[REGISTERED ADDRESS]`, `[DATE BEFORE LAUNCH]`.
+### Legal ownership in `privacy-policy.md` / `terms-of-service.md`
+- [ ] Confirm the store-listed seller/operator identity is correct for the
+      production Apple Developer and Google Play accounts.
 - [ ] Confirm `support@echo.app` is a mailbox you can actually receive at (or
       swap for one you control).
 
@@ -210,6 +215,6 @@ This one domain gates four things:
 ---
 
 ### Rollback levers
-- **App:** EAS OTA — publish a previous update to the `production` channel.
+- **App:** EAS OTA: publish a previous update to the `production` channel.
 - **DB:** migrations are forward-only; keep a Supabase point-in-time backup before §1a.
 - **Function:** `supabase functions deploy <name>` re-deploys a known-good copy.

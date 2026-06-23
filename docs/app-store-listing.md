@@ -141,7 +141,7 @@ We **do not** track users across other apps. We **do not** show third-party ads.
 
 ## Reviewer Notes (visible only to App Review)
 
-> ⚠️ **SET UP BEFORE SUBMISSION.** Echo is passwordless (one-time codes), so you
+> **SET UP BEFORE SUBMISSION.** Echo is passwordless (one-time codes), so you
 > must give App Review a way in. In Supabase → Auth → set a **test OTP**: map a
 > reviewer phone/email to a fixed code that bypasses real SMS/email delivery.
 > Then fill the real values into the block below. Without this, review gets
@@ -151,8 +151,8 @@ We **do not** track users across other apps. We **do not** show third-party ads.
 DEMO ACCOUNT (passwordless — Echo uses one-time codes, not passwords)
 Sign-in is via a one-time code sent to email or SMS. We've provisioned a
 reviewer account with a fixed test code so you can sign in without our inbox:
-  Phone/Email: [REVIEWER TEST IDENTIFIER]
-  One-time code: [FIXED TEST OTP]
+  Phone/Email: reviewer@echo.app
+  One-time code: 000000
 If the code does not work, email support@echo.app and we will relay the live
 code within minutes during review hours.
 

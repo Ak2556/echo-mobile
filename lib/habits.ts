@@ -5,14 +5,14 @@ export const HABITS_KEY = 'mini:habits';
 export interface Habit {
   id: string;
   name: string;
-  emoji: string;
+  marker: string;
   color: string;
   completedDates: string[];
   createdAt: string;
 }
 
 export const HABIT_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#F97316'];
-export const HABIT_EMOJIS = ['💧', '🏃', '📚', '🧘', '🥗', '😴', '💊', '✍️', '🎯', '🧹', '🌱', '💪'];
+export const HABIT_MARKERS = ['HY', 'RN', 'RD', 'MD', 'ME', 'SL', 'RX', 'WR', 'GO', 'CL', 'GR', 'ST'];
 
 export function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -38,7 +38,15 @@ export function getStreak(completedDates: string[]): number {
 export async function loadHabits(): Promise<Habit[]> {
   try {
     const parsed = JSON.parse((await AsyncStorage.getItem(HABITS_KEY)) ?? '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((habit): Habit => ({
+      id: String(habit.id ?? Date.now()),
+      name: String(habit.name ?? 'Habit'),
+      marker: normalizeMarker(habit.marker),
+      color: normalizeColor(habit.color),
+      completedDates: Array.isArray(habit.completedDates) ? habit.completedDates : [],
+      createdAt: String(habit.createdAt ?? new Date().toISOString()),
+    }));
   } catch {
     return [];
   }
@@ -50,7 +58,7 @@ export async function saveHabits(habits: Habit[]): Promise<void> {
 
 export async function createHabit(input: {
   name?: string;
-  emoji?: string;
+  marker?: string;
   color?: string;
 }): Promise<Habit> {
   const name = input.name?.trim();
@@ -58,7 +66,7 @@ export async function createHabit(input: {
   const habit: Habit = {
     id: `${Date.now()}`,
     name,
-    emoji: normalizeEmoji(input.emoji),
+    marker: normalizeMarker(input.marker),
     color: normalizeColor(input.color),
     completedDates: [],
     createdAt: new Date().toISOString(),
@@ -94,8 +102,9 @@ export function findHabit(habits: Habit[], input: { id?: string; name?: string }
     ?? habits.find(habit => habit.name.toLowerCase().includes(query));
 }
 
-function normalizeEmoji(emoji?: string): string {
-  return emoji?.trim() || HABIT_EMOJIS[0];
+function normalizeMarker(marker?: string): string {
+  const normalized = marker?.trim().toUpperCase();
+  return normalized && HABIT_MARKERS.includes(normalized) ? normalized : HABIT_MARKERS[0];
 }
 
 function normalizeColor(color?: string): string {

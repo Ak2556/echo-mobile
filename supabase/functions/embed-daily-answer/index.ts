@@ -112,6 +112,19 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const { error: embedLimitError } = await supabase.rpc("check_app_rate_limit", {
+    p_action: "embed_daily_answer_hour",
+    p_limit: 20,
+    p_window_seconds: 3600,
+    p_user_id: authData.user.id,
+  });
+  if (embedLimitError) {
+    return new Response(JSON.stringify({ error: "Rate limit reached. Try again later." }), {
+      status: 429,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
   let embedding: number[];
   try {
     embedding = await generateEmbedding(text);

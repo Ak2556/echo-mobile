@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, Alert, ScrollView , ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -26,13 +26,23 @@ import {
   summarizeConversationContext,
 } from '../lib/echoUX';
 import { rewriteEditorial, EditorialAction } from '../lib/editorial';
+import { getPerspectiveLabel } from '../lib/perspectives';
+import { track } from '../lib/analytics';
 
 const SHARE_DRAFT_KEY = 'echo/share-draft';
 
 export default function ShareScreen() {
   const router = useRouter();
-  const { prompt, response } = useLocalSearchParams<{ prompt: string; response: string }>();
-  const { username, userId, avatarColor, displayName, publishEcho } = useAppStore();
+  const { prompt, response, onboarding } = useLocalSearchParams<{ prompt: string; response: string; onboarding?: string }>();
+  const {
+    username,
+    userId,
+    avatarColor,
+    displayName,
+    publishEcho,
+    setOnboardingDraftCreated,
+    setHasCompletedProductOnboarding,
+  } = useAppStore();
   const { colors, radius } = useTheme();
   const [publishing, setPublishing] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -54,6 +64,18 @@ export default function ShareScreen() {
   const remotePublish = usePublishRemoteEcho();
   const remote = isSupabaseRemote();
   const isRemix = !!pendingCtx?.parentEchoId;
+  const perspectiveLabel = getPerspectiveLabel(pendingCtx?.perspectiveType);
+  const isOnboardingDraft = onboarding === '1';
+  const markedOnboardingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOnboardingDraft || markedOnboardingRef.current) return;
+    markedOnboardingRef.current = true;
+    setOnboardingDraftCreated(true);
+    setHasCompletedProductOnboarding(true);
+    track('product_onboarding_draft_created');
+    track('product_onboarding_completed');
+  }, [isOnboardingDraft, setHasCompletedProductOnboarding, setOnboardingDraftCreated]);
 
   const checklist = useMemo(() => evaluatePublishChecklist({ title, response: editedResponse, authorNote }), [authorNote, editedResponse, title]);
   const checklistItems = [
@@ -136,15 +158,21 @@ export default function ShareScreen() {
           response: editedResponse.trim(),
           title: title.trim() || undefined,
           parentEchoId: ctx?.parentEchoId,
+          perspectiveType: ctx?.perspectiveType,
+          perspectiveNote: ctx?.perspectiveNote,
+          sourceUrl: ctx?.sourceUrl,
           sourceConversationId: ctx?.sourceConversationId,
           conversationSnapshot: ctx?.conversationSnapshot,
         });
+        if (isRemixPublish) {
+          track('perspective_published', { perspective_type: ctx?.perspectiveType ?? 'reframe' });
+        }
         await AsyncStorage.removeItem(SHARE_DRAFT_KEY);
         // Celebrate first, then route. Overlay calls onDone after ~1.6s.
         const xpDelta = isRemixPublish ? XP_REWARDS.publishRemix : XP_REWARDS.publishEcho;
         setCelebration({
-          headline: isRemixPublish ? 'REMIXED!' : 'PUBLISHED!',
-          subtitle: `+${xpDelta} XP · It's live in Discover`,
+          headline: isRemixPublish ? 'PERSPECTIVE ADDED' : 'PUBLISHED!',
+          subtitle: isRemixPublish ? `+${xpDelta} XP · It's part of the Evolution` : `+${xpDelta} XP · It's live in Discover`,
           variant: isRemixPublish ? 'remix' : 'achievement',
         });
       } catch (e) {
@@ -174,6 +202,12 @@ export default function ShareScreen() {
       hashtags,
       createdAt: new Date().toISOString(),
       postOrigin: 'chat',
+      parentEchoId: pendingCtx?.parentEchoId,
+      parentAuthorUsername: pendingCtx?.parentAuthorUsername,
+      parentTitle: pendingCtx?.parentTitle,
+      perspectiveType: pendingCtx?.perspectiveType,
+      perspectiveNote: pendingCtx?.perspectiveNote,
+      sourceUrl: pendingCtx?.sourceUrl,
       topicLabels: hashtags.length ? hashtags : inferTopics({ hashtags: [], prompt: String(prompt), response: editedResponse }),
       editorialTitle: title.trim(),
       authorNote: authorNote.trim() || undefined,
@@ -228,11 +262,16 @@ export default function ShareScreen() {
             <GitBranch color={colors.accent} size={20} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
-                Remixing @{pendingCtx?.parentAuthorUsername ?? 'their'} Echo
+                Adding {perspectiveLabel.toLowerCase()} perspective to @{pendingCtx?.parentAuthorUsername ?? 'their'} Echo
               </Text>
               {pendingCtx?.parentTitle && (
                 <Text style={{ color: colors.textSecondary, marginTop: 2, fontSize: 12 }} numberOfLines={1}>
-                  ↳ {pendingCtx.parentTitle}
+                  Source: {pendingCtx.parentTitle}
+                </Text>
+              )}
+              {pendingCtx?.sourceUrl && (
+                <Text style={{ color: colors.textMuted, marginTop: 2, fontSize: 12 }} numberOfLines={1}>
+                  Evidence: {pendingCtx.sourceUrl}
                 </Text>
               )}
             </View>

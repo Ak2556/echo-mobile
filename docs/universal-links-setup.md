@@ -30,7 +30,7 @@ Should return `200 OK` with `Content-Type: application/json`.
 
 The handler already exists for `auth/callback` (OAuth deep links). For Echo URLs, we need to wire `/e/<id>` → router.push(`/thread/<id>`), `/u/<id>` → `/user/<id>`, `/c/<id>` → `/comments/<id>`.
 
-That's a small `app/_layout.tsx` patch — we'll do it during the final pre-launch sweep. Skipping for now to avoid a native rebuild.
+Universal link routing should be verified during the final pre-submission build.
 
 ## 4. Test
 

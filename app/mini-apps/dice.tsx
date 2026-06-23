@@ -11,12 +11,12 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 
 const DICE = [
-  { sides: 4,  label: 'D4',  color: '#EF4444', emoji: '🔺' },
-  { sides: 6,  label: 'D6',  color: '#F59E0B', emoji: '🎲' },
-  { sides: 8,  label: 'D8',  color: '#10B981', emoji: '♦' },
-  { sides: 10, label: 'D10', color: '#06B6D4', emoji: '💠' },
-  { sides: 12, label: 'D12', color: '#8B5CF6', emoji: '⬡' },
-  { sides: 20, label: 'D20', color: '#6366F1', emoji: '⬟' },
+  { sides: 4,  label: 'D4',  color: '#EF4444' },
+  { sides: 6,  label: 'D6',  color: '#F59E0B' },
+  { sides: 8,  label: 'D8',  color: '#10B981' },
+  { sides: 10, label: 'D10', color: '#06B6D4' },
+  { sides: 12, label: 'D12', color: '#8B5CF6' },
+  { sides: 20, label: 'D20', color: '#6366F1' },
 ];
 
 interface HistoryEntry { die: string; result: number; color: string; ts: number }
@@ -178,7 +178,7 @@ export default function DiceApp() {
         <Animated.View style={coinStyle}>
           <Pressable onPress={flipCoin}>
             <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: coinFace === 'heads' ? '#F59E0B22' : coinFace === 'tails' ? '#6366F122' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: 3, borderColor: coinFace ? (coinFace === 'heads' ? '#F59E0B' : '#6366F1') : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 40 }}>{coinFace === 'heads' ? '👑' : coinFace === 'tails' ? '⭐' : '🪙'}</Text>
+              <Text style={{ color: coinFace === 'heads' ? '#F59E0B' : coinFace === 'tails' ? '#6366F1' : colors.textMuted, fontSize: 18, fontWeight: '900' }}>{coinFace === 'heads' ? 'H' : coinFace === 'tails' ? 'T' : '?'}</Text>
             </View>
           </Pressable>
         </Animated.View>

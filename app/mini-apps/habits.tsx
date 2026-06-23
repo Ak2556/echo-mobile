@@ -11,7 +11,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
-import { HABIT_COLORS, HABIT_EMOJIS, Habit, getStreak, loadHabits, saveHabits, todayStr } from '../../lib/habits';
+import { HABIT_COLORS, HABIT_MARKERS, Habit, getStreak, loadHabits, saveHabits, todayStr } from '../../lib/habits';
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -46,12 +46,12 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
   const insets = useSafeAreaInsets();
   const accent = colors.accent;
   const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState(HABIT_EMOJIS[0]);
+  const [marker, setMarker] = useState(HABIT_MARKERS[0]);
   const [color, setColor] = useState(accent);
 
   const submit = () => {
-    if (!name.trim()) { showToast('Enter a habit name', '⚠️'); return; }
-    onAdd({ id: Date.now().toString(), name: name.trim(), emoji, color, completedDates: [], createdAt: new Date().toISOString() });
+    if (!name.trim()) { showToast('Enter a habit name', 'Error'); return; }
+    onAdd({ id: Date.now().toString(), name: name.trim(), marker, color, completedDates: [], createdAt: new Date().toISOString() });
     onClose();
   };
 
@@ -70,10 +70,10 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>ICON</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {HABIT_EMOJIS.map(e => (
-                <Pressable key={e} onPress={() => setEmoji(e)}>
-                  <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: emoji === e ? color + '22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: emoji === e ? 2 : StyleSheet.hairlineWidth, borderColor: emoji === e ? color : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 22 }}>{e}</Text>
+              {HABIT_MARKERS.map(e => (
+                <Pressable key={e} onPress={() => setMarker(e)}>
+                  <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: marker === e ? color + '22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: marker === e ? 2 : StyleSheet.hairlineWidth, borderColor: marker === e ? color : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ color: marker === e ? color : colors.textMuted, fontSize: 12, fontWeight: '800' }}>{e}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -126,7 +126,7 @@ export default function HabitsApp() {
   const addHabit = (h: Habit) => {
     const updated = [h, ...habits];
     setHabits(updated); saveHabits(updated);
-    showToast(`${h.emoji} ${h.name} added`, '✅');
+    showToast(`${h.name} added`, 'Saved');
   };
 
   const deleteHabit = (id: string) => {
@@ -183,7 +183,7 @@ export default function HabitsApp() {
             <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 18 }} style={{ borderColor: done ? habit.color + '55' : colors.glassBorder }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
-                  <Text style={{ fontSize: 26 }}>{habit.emoji}</Text>
+                  <Text style={{ color: habit.color, fontSize: 13, fontWeight: '800' }}>{habit.marker}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{habit.name}</Text>

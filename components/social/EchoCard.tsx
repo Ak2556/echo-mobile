@@ -16,7 +16,7 @@ import {
 import { useAppStore } from '../../store/useAppStore';
 import { showToast } from '../ui/Toast';
 import { FeedItem } from '../../types';
-import { NEON, NEON_CHIP, neonGlow } from '../../lib/neonDesign';
+import { ACCENT_COLORS, ACCENT_CHIP, accentShadow } from '../../lib/accentDesign';
 import { videoSourceForUri } from '../../lib/videoMedia';
 import { echoUrl } from '../../lib/echoUrl';
 
@@ -178,7 +178,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
     const next = !isBookmarked;
     setIsBookmarked(next);
     toggleBookmark(item.id);
-    showToast(next ? 'Saved to bookmarks' : 'Removed from bookmarks', next ? '🔖' : '✓');
+    showToast(next ? 'Saved to bookmarks' : 'Removed from bookmarks', next ? 'Saved' : 'Done');
   };
 
   const handleShare = async () => {
@@ -208,7 +208,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
 
   return (
     <View style={{ width: '100%', height: SCREEN_H, backgroundColor: '#000' }}>
-      {/* ── Video ────────────────────────────────────── */}
+      {/* Video */}
       <VideoView
         player={player}
         style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
@@ -217,14 +217,14 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
         onFirstFrameRender={() => setLoadState('ready')}
       />
 
-      {/* ── Loading overlay ───────────────────────── */}
+      {/* Loading overlay */}
       {loadState === 'loading' && (
         <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
           <ActivityIndicator color="#fff" size="large" />
         </View>
       )}
 
-      {/* ── Error state ───────────────────────────── */}
+      {/* Error state */}
       {loadState === 'error' && (
         <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', gap: 12 }}>
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15 }}>{`Couldn't load video`}</Text>
@@ -237,7 +237,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
         </View>
       )}
 
-      {/* ── Tap layer (play/pause + double-tap like) ─ */}
+      {/* Tap layer */}
       <Pressable
         onPress={handleTap}
         style={{ position: 'absolute', inset: 0 }}
@@ -252,7 +252,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
         </View>
       )}
 
-      {/* ── Heart burst ───────────────────────────── */}
+      {/* Heart burst */}
       <Animated.View
         pointerEvents="none"
         style={[{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }, heartStyle]}
@@ -260,7 +260,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
         <HeartStraight color="#FF4D6D" size={96} weight="fill" />
       </Animated.View>
 
-      {/* ── Bottom gradient (simulated with 5 layers) ── */}
+      {/* Bottom gradient */}
       <View pointerEvents="none" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 340 }}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0)' }} />
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)' }} />
@@ -269,15 +269,15 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.82)' }} />
       </View>
 
-      {/* ── Author + caption (bottom-left) ───────── */}
+      {/* Author and caption */}
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 70, paddingHorizontal: 16, paddingBottom: 100 }}>
         {item.parentEchoId && (
           <Pressable
             onPress={() => router.push({ pathname: '/thread/[id]', params: { id: String(item.parentEchoId) } })}
-            style={[NEON_CHIP, { backgroundColor: NEON.cyanDim, marginBottom: 8 }, neonGlow(NEON.cyan, 'soft')]}
+            style={[ACCENT_CHIP, { backgroundColor: ACCENT_COLORS.cyanDim, marginBottom: 8 }, accentShadow(ACCENT_COLORS.cyan, 'soft')]}
           >
-            <GitBranch color={NEON.cyan} size={12} weight="fill" />
-            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>REMIX</Text>
+            <GitBranch color={ACCENT_COLORS.cyan} size={12} weight="fill" />
+            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>PERSPECTIVE</Text>
           </Pressable>
         )}
         {/* Author row */}
@@ -323,7 +323,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
         )}
       </View>
 
-      {/* ── Right sidebar ─────────────────────────── */}
+      {/* Right sidebar */}
       <View style={{ position: 'absolute', right: 12, bottom: 100, alignItems: 'center', gap: 24 }}>
         <SidebarButton
           icon={<HeartStraight color={isLiked ? '#FF4D6D' : '#fff'} size={30} weight={isLiked ? 'fill' : 'regular'} />}

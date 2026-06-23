@@ -104,9 +104,6 @@ export const ShareableEchoCard = forwardRef<View, ShareableEchoCardProps>(({ ite
           <Text style={[font.displayBlack, { color: colors.textMuted, fontSize: 36, letterSpacing: -0.8 }]}>
             echo
           </Text>
-          <Text style={[font.displayBlack, { color: colors.accent, fontSize: 36, letterSpacing: -0.8 }]}>
-            .
-          </Text>
         </View>
       </View>
     </View>

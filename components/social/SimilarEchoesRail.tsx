@@ -5,7 +5,7 @@ import { Sparkle, GitBranch } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSimilarEchoes } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
-import { NEON, TYPE, neonGlow, neonHaptic } from '../../lib/neonDesign';
+import { ACCENT_COLORS, DISPLAY_TYPE, accentShadow, feedbackHaptic } from '../../lib/accentDesign';
 import { useAppStore } from '../../store/useAppStore';
 
 interface SimilarEchoesRailProps {
@@ -32,13 +32,13 @@ export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps)
   return (
     <View style={{ marginTop: 22, marginBottom: 8 }}>
       <View style={styles.heading}>
-        <Sparkle color={NEON.cyan} size={16} weight="fill" />
+        <Sparkle color={ACCENT_COLORS.cyan} size={16} weight="fill" />
         <Text style={styles.headingText}>SIMILAR CONVERSATIONS</Text>
       </View>
 
       {isLoading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="small" color={NEON.cyan} />
+          <ActivityIndicator size="small" color={ACCENT_COLORS.cyan} />
         </View>
       ) : (
         <ScrollView
@@ -51,12 +51,12 @@ export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps)
             <Pressable
               key={item.id}
               onPress={() => {
-                if (hapticEnabled) void neonHaptic('tap');
+                if (hapticEnabled) void feedbackHaptic('tap');
                 router.push({ pathname: '/thread/[id]', params: { id: item.id } });
               }}
-              style={[styles.card, neonGlow(NEON.cyan, 'soft')]}
+              style={[styles.card, accentShadow(ACCENT_COLORS.cyan, 'soft')]}
             >
-              {/* Inner gradient bloom for depth. */}
+              {/* Background tint for depth. */}
               <LinearGradient
                 colors={['rgba(34,245,255,0.10)', 'rgba(155,91,255,0.08)', 'rgba(255,61,216,0.06)']}
                 start={{ x: 0, y: 0 }}
@@ -73,10 +73,10 @@ export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps)
                 {item.response || item.prompt}
               </Text>
               <View style={styles.statsRow}>
-                <Text style={styles.stat}>♥ {item.likes}</Text>
+                <Text style={styles.stat}>{item.likes} likes</Text>
                 {(item.remixCount ?? 0) > 0 && (
                   <View style={styles.remixChip}>
-                    <GitBranch color={NEON.magenta} size={11} weight="fill" />
+                    <GitBranch color={ACCENT_COLORS.magenta} size={11} weight="fill" />
                     <Text style={styles.remixChipText}>{item.remixCount}</Text>
                   </View>
                 )}
@@ -102,8 +102,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   headingText: {
-    ...TYPE.eyebrow,
-    color: NEON.cyan,
+    ...DISPLAY_TYPE.eyebrow,
+    color: ACCENT_COLORS.cyan,
   },
   card: {
     width: 220,
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   author: {
-    color: NEON.cyan,
+    color: ACCENT_COLORS.cyan,
     fontWeight: '800',
     fontSize: 11,
     letterSpacing: 0.4,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,61,216,0.35)',
   },
   remixChipText: {
-    color: NEON.magenta,
+    color: ACCENT_COLORS.magenta,
     fontWeight: '900',
     fontSize: 11,
     fontVariant: ['tabular-nums'],

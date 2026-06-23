@@ -12,8 +12,8 @@ import type { SharedValue } from 'react-native-reanimated';
 import { usePerformanceProfile } from '../../lib/performance';
 
 const { width: SW } = Dimensions.get('window');
-export const HERO_CARD_WIDTH = Math.min(SW * 0.7, 300);
-export const HERO_CARD_HEIGHT = HERO_CARD_WIDTH * 1.14;
+export const HERO_CARD_WIDTH = Math.min(SW * 0.58, 252);
+export const HERO_CARD_HEIGHT = HERO_CARD_WIDTH * 1.04;
 
 interface HeroCardProps {
   item: FeedItem;
@@ -62,7 +62,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       style={{
         width: HERO_CARD_WIDTH,
         height: HERO_CARD_HEIGHT,
-        borderRadius: 18,
+        borderRadius: 14,
         overflow: 'hidden',
         backgroundColor: colors.surface,
         borderWidth: StyleSheet.hairlineWidth,
@@ -70,11 +70,11 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
         ...(Platform.OS === 'ios'
           ? {
               shadowColor: '#000',
-              shadowOpacity: colors.isDark ? 0.28 : 0.12,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: colors.isDark ? 0.16 : 0.07,
+              shadowRadius: 10,
+              shadowOffset: { width: 0, height: 5 },
             }
-          : { elevation: 4 }),
+          : { elevation: 2 }),
       }}
     >
       {/* Background with parallax */}
@@ -104,15 +104,15 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
 
       {/* Top scrim */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.54)', 'rgba(0,0,0,0)']}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 118 }}
+        colors={['rgba(0,0,0,0.42)', 'rgba(0,0,0,0)']}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 88 }}
         pointerEvents="none"
       />
 
       {/* Bottom scrim */}
       <LinearGradient
-        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.82)', 'rgba(0,0,0,0.95)']}
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 190 }}
+        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.70)', 'rgba(0,0,0,0.88)']}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 146 }}
         pointerEvents="none"
       />
 
@@ -120,9 +120,9 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       <View
         style={{
           position: 'absolute',
-          top: 14,
-          left: 14,
-          right: 14,
+          top: 12,
+          left: 12,
+          right: 12,
           flexDirection: 'row',
           alignItems: 'center',
           gap: 8,
@@ -130,17 +130,17 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       >
         <View
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: 17,
+            width: 30,
+            height: 30,
+            borderRadius: 15,
             backgroundColor: item.avatarColor ?? colors.accent,
             alignItems: 'center',
             justifyContent: 'center',
-            borderWidth: 1.5,
+            borderWidth: StyleSheet.hairlineWidth,
             borderColor: 'rgba(255,255,255,0.28)',
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>
             {(item.displayName || item.username).charAt(0).toUpperCase()}
           </Text>
         </View>
@@ -153,28 +153,15 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
             @{item.username}
           </Text>
         </View>
-
-        <View
-          style={{
-            borderRadius: 999,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: 'rgba(255,255,255,0.26)',
-            backgroundColor: 'rgba(255,255,255,0.12)',
-          }}
-        >
-          <Text style={{ color: 'rgba(255,255,255,0.86)', fontSize: 11, fontWeight: '700' }}>Featured</Text>
-        </View>
       </View>
 
       {/* Bottom content */}
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-        <View style={{ padding: 16, paddingTop: 34 }}>
+        <View style={{ padding: 14, paddingTop: 28 }}>
           {/* Meta row — post-type chip + counts. Counts render with icons
               instead of bare numbers; both hide when 0 so the row collapses
               to just the type chip on fresh posts. */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 8 }}>
             <View
               style={{
                 flexDirection: 'row',
@@ -218,10 +205,10 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
 
           {/* Prompt */}
           <Text
-            style={[font.display, {
-              color: '#fff',
-              fontSize: 21,
-              lineHeight: 27,
+              style={[font.display, {
+                color: '#fff',
+              fontSize: 18,
+              lineHeight: 23,
               letterSpacing: 0,
             }]}
             numberOfLines={2}

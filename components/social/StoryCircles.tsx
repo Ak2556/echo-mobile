@@ -36,7 +36,7 @@ export function StoryCircles() {
       {!remote && (
       <Animated.View entering={animation(FadeInRight.delay(0).duration(220))}>
         <AnimatedPressable
-          onPress={() => router.push('/create-story' as any)}
+          onPress={() => router.push('/create-story')}
           style={{ alignItems: 'center', width: 68 }}
           scaleValue={0.9}
           haptic="light"

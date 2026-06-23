@@ -9,7 +9,7 @@ flowchart TD
   A --> D["Supabase Edge Function: echo-ai"]
   D --> E["LLM provider through OpenRouter"]
   A --> F["FastAPI backend"]
-  F --> G["Backend AI stream and API stubs"]
+  F --> G["Backend AI stream and API routes"]
   C --> H["RLS policies and migrations"]
 ```
 
@@ -70,7 +70,7 @@ Prefer additive migrations. RLS policy changes require security review because t
 Primary paths:
 
 - `.github/workflows/ci.yml` for CI validation.
-- `.github/workflows/aws.yml` for ECS deployment workflow scaffolding.
+- `.github/workflows/aws.yml` for ECS deployment workflow configuration.
 - `app.json` and `eas.json` for Expo/EAS behavior.
 - `.dockerignore` for future Docker build context hygiene.
 

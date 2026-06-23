@@ -11,8 +11,7 @@ import { track } from '../../lib/analytics';
 import type { EchoReaction, ReactionCounts } from '../../types';
 
 /**
- * Knowledge-reaction pile — four reactions that fit Echo's identity:
- *   🤯 mind-blown   📝 taking notes   💯 agree   🤔 disagree
+ * Knowledge-reaction pile.
  *
  * Tap a chip to toggle. Counts update optimistically; rollback on error.
  * Chips render only when count > 0 *or* the viewer has reacted that way,
@@ -20,11 +19,11 @@ import type { EchoReaction, ReactionCounts } from '../../types';
  * affordance still lets the viewer pick).
  */
 
-const REACTION_META: Record<EchoReaction, { emoji: string; label: string; tint: string }> = {
-  mind_blown:   { emoji: '🤯', label: 'mind-blown',   tint: '#A855F7' },
-  taking_notes: { emoji: '📝', label: 'taking notes', tint: '#EAB308' },
-  agree:        { emoji: '💯', label: 'agree',        tint: '#10B981' },
-  disagree:     { emoji: '🤔', label: 'rethink',      tint: '#3B82F6' },
+const REACTION_META: Record<EchoReaction, { shortLabel: string; label: string; tint: string }> = {
+  mind_blown:   { shortLabel: 'Insight', label: 'insightful',   tint: '#A855F7' },
+  taking_notes: { shortLabel: 'Notes',   label: 'taking notes', tint: '#EAB308' },
+  agree:        { shortLabel: 'Agree',   label: 'agree',        tint: '#10B981' },
+  disagree:     { shortLabel: 'Rethink', label: 'rethink',      tint: '#3B82F6' },
 };
 
 const ORDER: EchoReaction[] = ['mind_blown', 'taking_notes', 'agree', 'disagree'];
@@ -179,7 +178,7 @@ function ReactionChip({ reaction, count, active, tint, onToggle }: ChipProps) {
       accessibilityRole="button"
     >
       <Animated.View style={animStyle}>
-        <Text style={{ fontSize: 13 }}>{meta.emoji}</Text>
+        <Text style={[labelStyle, { fontSize: 11 }]}>{meta.shortLabel}</Text>
       </Animated.View>
       {count > 0 && <Text style={labelStyle}>{count}</Text>}
     </AnimatedPressable>

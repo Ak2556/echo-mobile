@@ -25,8 +25,7 @@ export const XP_REWARDS = {
 
 export type XpAction = keyof typeof XP_REWARDS;
 
-// Level curve: 100 * level^1.5. Gives a satisfying "early levels feel fast,
-// later levels feel earned" arc without ballooning to MMO-scale numbers.
+// Level curve: 100 * level^1.5.
 export function xpForLevel(level: number): number {
   if (level <= 1) return 0;
   return Math.floor(100 * Math.pow(level - 1, 1.5));
@@ -68,8 +67,7 @@ export function levelTitle(level: number): string {
   return 'Seedling';
 }
 
-// ── Streak math ──────────────────────────────────────────────────────────────
-
+// Streak math
 function dayKey(d: Date): string {
   // YYYY-MM-DD in local time. We don't try to be timezone-clever; matching
   // the user's local "day" feels right for a daily-streak product.
@@ -87,9 +85,9 @@ function daysBetween(a: string, b: string): number {
 
 /**
  * Returns the next streak count given the previous activity day.
- *   • Same day → unchanged
- *   • Yesterday → +1
- *   • Older → reset to 1
+ *   - Same day: unchanged
+ *   - Yesterday: +1
+ *   - Older: reset to 1
  */
 export function nextStreak(prevDayKey: string | null, prevStreak: number, today = new Date()): number {
   const todayKey = dayKey(today);
@@ -108,12 +106,10 @@ export function streakMilestoneBonus(streak: number): number {
   return 0;
 }
 
-// ── React hook ───────────────────────────────────────────────────────────────
+// React hook
 //
-// Components import `useRetention()` to read current state. Actions go
-// through `awardXp(action)` which delegates to the store slice. Keeping a
-// thin lib boundary keeps the slice code small and lets us swap the
-// persistence layer later (e.g. backend mirror) without touching components.
+// Components read retention state through this hook; mutations stay in the
+// store slice.
 
 export function useRetention() {
   const xp = useAppStore(s => s.xp);

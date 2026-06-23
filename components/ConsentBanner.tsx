@@ -38,7 +38,6 @@ export function ConsentBanner() {
     setVisible(false);
     void setAnalyticsConsentAsync('accepted').then(() => {
       initAnalytics();
-      // First analytics event in the install — proves the pipeline.
       track('consent_accepted');
     });
   };

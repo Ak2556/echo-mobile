@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, Dimensions } from 'react-native';
+import { View, Text, Pressable, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,15 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { EnvelopeSimple } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
-
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-
-/**
- * Login entry point.
- *
- * Auth state and forward navigation are owned by AuthListenerProvider; this
- * screen only presents the available sign-in methods.
- */
+import { useResponsiveLayout } from '../../lib/responsive';
 
 const ROTATING_PROMPTS = [
   'What’s a song that always pulls you out of a bad mood?',
@@ -37,17 +29,16 @@ const ROTATING_PROMPTS = [
 export default function LoginScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
+  const { width: screenW, height: screenH } = useWindowDimensions();
+  const layout = useResponsiveLayout();
   const isDark = colors.isDark;
 
-  // Cycle through sample prompts so the first screen explains the product
-  // without requiring extra onboarding copy.
   const [promptIdx, setPromptIdx] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setPromptIdx(i => (i + 1) % ROTATING_PROMPTS.length), 4_000);
     return () => clearInterval(t);
   }, []);
 
-  // Subtle wordmark accent.
   const dotScale = useSharedValue(1);
   useEffect(() => {
     dotScale.value = withRepeat(
@@ -84,39 +75,37 @@ export default function LoginScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: bgBase }}>
-      {/* Atmospheric layer */}
       <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
         <Animated.View style={[{
           position: 'absolute',
-          top: -SCREEN_H * 0.12,
-          left: -SCREEN_W * 0.25,
-          width: SCREEN_W * 0.95,
-          height: SCREEN_W * 0.95,
-          borderRadius: SCREEN_W * 0.5,
+          top: -screenH * 0.12,
+          left: -screenW * 0.25,
+          width: screenW * 0.95,
+          height: screenW * 0.95,
+          borderRadius: screenW * 0.5,
           backgroundColor: isDark ? 'rgba(91,91,248,0.45)' : 'rgba(91,91,248,0.22)',
           opacity: 0.9,
         }, accentLayerTopStyle]} />
         <Animated.View style={[{
           position: 'absolute',
-          top: SCREEN_H * 0.22,
-          right: -SCREEN_W * 0.30,
-          width: SCREEN_W * 0.90,
-          height: SCREEN_W * 0.90,
-          borderRadius: SCREEN_W * 0.5,
+          top: screenH * 0.22,
+          right: -screenW * 0.30,
+          width: screenW * 0.90,
+          height: screenW * 0.90,
+          borderRadius: screenW * 0.5,
           backgroundColor: isDark ? 'rgba(168,85,247,0.40)' : 'rgba(168,85,247,0.18)',
           opacity: 0.85,
         }, accentLayerMidStyle]} />
         <View style={{
           position: 'absolute',
-          bottom: -SCREEN_H * 0.08,
-          left: -SCREEN_W * 0.20,
-          width: SCREEN_W * 0.75,
-          height: SCREEN_W * 0.75,
-          borderRadius: SCREEN_W * 0.5,
+          bottom: -screenH * 0.08,
+          left: -screenW * 0.20,
+          width: screenW * 0.75,
+          height: screenW * 0.75,
+          borderRadius: screenW * 0.5,
           backgroundColor: isDark ? 'rgba(34,211,238,0.28)' : 'rgba(34,211,238,0.14)',
           opacity: 0.7,
         }} />
-        {/* Top-to-bottom vignette to push content into focus */}
         <LinearGradient
           colors={isDark
             ? ['rgba(8,8,12,0)', 'rgba(8,8,12,0.55)', 'rgba(8,8,12,0.95)']
@@ -127,9 +116,18 @@ export default function LoginScreen() {
       </View>
 
       <SafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1, paddingHorizontal: 28, justifyContent: 'space-between', paddingBottom: 24 }}>
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            maxWidth: layout.formMaxWidth,
+            alignSelf: 'center',
+            paddingHorizontal: layout.isWide ? 0 : 28,
+            justifyContent: 'space-between',
+            paddingBottom: 24,
+          }}
+        >
 
-          {/* Hero — wordmark + rotating prompt */}
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Animated.View entering={FadeInDown.duration(380).springify().mass(0.7).damping(14)} style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
               <Text style={[font.displayBlack, { color: colors.text, fontSize: 92, letterSpacing: 0, lineHeight: 96 }]}>
@@ -147,7 +145,6 @@ export default function LoginScreen() {
               </Animated.View>
             </Animated.View>
 
-            {/* Rotating prompt */}
             <View style={{ height: 88, marginTop: 32, justifyContent: 'flex-start', alignItems: 'center', paddingHorizontal: 4 }}>
               <Animated.Text
                 key={promptIdx}
@@ -168,13 +165,12 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* CTAs */}
           <View style={{ gap: 16 }}>
             <Animated.View entering={FadeInDown.delay(120).duration(360).springify().mass(0.7)}>
               <PrimaryButton
                 icon={<EnvelopeSimple color="#fff" size={20} weight="bold" />}
                 label="Continue with email"
-                onPress={() => router.push('/auth/email' as any)}
+                onPress={() => router.push('/auth/email')}
                 bg={colors.accent}
                 fg="#fff"
                 radius={radius.lg}
@@ -184,7 +180,7 @@ export default function LoginScreen() {
 
             <Animated.View entering={FadeInDown.delay(200).duration(360)} style={{ alignItems: 'center' }}>
               <Pressable
-                onPress={() => router.push('/auth/phone' as any)}
+                onPress={() => router.push('/auth/phone')}
                 hitSlop={12}
                 accessibilityRole="button"
                 accessibilityLabel="Continue with phone"
@@ -202,8 +198,7 @@ export default function LoginScreen() {
                 By continuing you agree to our{' '}
                 <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>Terms</Text>
                 {' & '}
-                <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>Privacy</Text>
-                .
+                <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>Privacy.</Text>
               </Text>
             </Animated.View>
           </View>
@@ -212,8 +207,6 @@ export default function LoginScreen() {
     </View>
   );
 }
-
-// ── Primary CTA ──
 
 function PrimaryButton({
   icon, label, onPress, bg, fg, radius, font,

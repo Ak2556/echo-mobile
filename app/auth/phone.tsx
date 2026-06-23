@@ -6,32 +6,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Phone as PhoneIcon, ArrowClockwise, ShieldCheck } from 'phosphor-react-native';
-import { sendPhoneOtp, verifyPhoneOtp } from '../../lib/auth';
+import { refreshAuthSession, sendPhoneOtp, verifyPhoneOtp } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
+import { useResponsiveLayout } from '../../lib/responsive';
 
-/**
- * Phone OTP sign-in — single screen, two internal steps.
- *
- *   step = 'enter-phone' → input number, Send code
- *   step = 'enter-code'  → 6-digit input + Verify, with 30s resend
- *
- * NOTE on flicker prevention:
- *   - No Animated.View entering on the form regions — the entering animation
- *     was re-firing on every keystroke (Reanimated v3 quirk inside parent
- *     re-renders), causing the input to flicker and lose focus.
- *   - Input wrapper styles are STABLE shape (always include shadow keys with
- *     0 opacity when blurred) so RN doesn't see a different style object on
- *     focus toggle.
- *   - `autoFocus` replaced by ref + useEffect to control re-focus timing.
- *
- * Forward navigation owned by AuthListenerProvider on SIGNED_IN.
- */
 const RESEND_COOLDOWN_S = 30;
 
 export default function PhoneAuthScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
+  const layout = useResponsiveLayout();
 
   const [step, setStep] = useState<'enter-phone' | 'enter-code'>('enter-phone');
   const [phoneRaw, setPhoneRaw] = useState('');
@@ -50,7 +35,6 @@ export default function PhoneAuthScreen() {
     return () => clearInterval(t);
   }, [cooldown]);
 
-  // Manual focus management — avoids autoFocus + parent-rerender quirks.
   useEffect(() => {
     const ref = step === 'enter-phone' ? phoneRef : codeRef;
     const t = setTimeout(() => ref.current?.focus(), 250);
@@ -63,34 +47,63 @@ export default function PhoneAuthScreen() {
   const handleSendPhone = async () => {
     if (!canSendPhone) return;
     setLoading(true);
-    const { error, phone } = await sendPhoneOtp(phoneRaw);
-    setLoading(false);
-    if (error) { showToast(error, '❌'); return; }
-    setNormalizedPhone(phone);
-    setStep('enter-code');
-    setCooldown(RESEND_COOLDOWN_S);
+    try {
+      const { error, phone } = await sendPhoneOtp(phoneRaw);
+      setLoading(false);
+      if (error) { showToast(error, 'Error'); return; }
+      setNormalizedPhone(phone);
+      setStep('enter-code');
+      setCooldown(RESEND_COOLDOWN_S);
+    } catch (e) {
+      setLoading(false);
+      showToast(e instanceof Error ? e.message : 'Could not send code. Try again.', 'Error');
+    }
   };
 
   const handleResend = async () => {
     if (cooldown > 0 || loading) return;
     setLoading(true);
-    const { error } = await sendPhoneOtp(phoneRaw);
-    setLoading(false);
-    if (error) { showToast(error, '❌'); return; }
-    setCooldown(RESEND_COOLDOWN_S);
+    try {
+      const { error } = await sendPhoneOtp(phoneRaw);
+      setLoading(false);
+      if (error) { showToast(error, 'Error'); return; }
+      setCooldown(RESEND_COOLDOWN_S);
+    } catch (e) {
+      setLoading(false);
+      showToast(e instanceof Error ? e.message : 'Could not resend code. Try again.', 'Error');
+    }
   };
 
   const handleVerify = async () => {
     if (!canVerify) return;
     setLoading(true);
-    const { error } = await verifyPhoneOtp(phoneRaw, code);
-    setLoading(false);
-    if (error) { showToast(error, '❌'); return; }
-    // SIGNED_IN → AuthListenerProvider → status nav → wizard or feed.
+    try {
+      const { error } = await verifyPhoneOtp(phoneRaw, code);
+      if (error) {
+        setLoading(false);
+        showToast(error, 'Error');
+        return;
+      }
+
+      const status = await refreshAuthSession();
+      setLoading(false);
+
+      if (status === 'ready') {
+        router.replace('/(tabs)/home');
+        return;
+      }
+      if (status === 'needs-onboarding') {
+        router.replace('/auth/signup-wizard');
+        return;
+      }
+
+      showToast('Sign-in did not finish. Try the code again.', 'Error');
+    } catch (e) {
+      setLoading(false);
+      showToast(e instanceof Error ? e.message : 'Sign-in did not finish. Try the code again.', 'Error');
+    }
   };
 
-  // Stable input wrapper style — all keys always present so the style shape
-  // doesn't change on focus toggle. Shadow opacity drives the focus glow.
   const inputWrapStyle = (focused: boolean) => ({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -120,8 +133,7 @@ export default function PhoneAuthScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          {/* Back chevron — also handles "back a step" within this screen */}
-          <View style={{ paddingHorizontal: 12, paddingTop: 8 }}>
+          <View style={[layout.formStyle, { paddingHorizontal: 12, paddingTop: 8 }]}>
             <Pressable
               onPress={() => {
                 if (step === 'enter-code') {
@@ -142,7 +154,7 @@ export default function PhoneAuthScreen() {
           </View>
 
           {step === 'enter-phone' ? (
-            <View style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
+            <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
               <View style={{
                 width: 64, height: 64, borderRadius: 18,
                 backgroundColor: colors.accentMuted,
@@ -191,7 +203,7 @@ export default function PhoneAuthScreen() {
               </View>
             </View>
           ) : (
-            <View style={{ flex: 1, paddingHorizontal: 28, paddingTop: 24 }}>
+            <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
               <View style={{
                 width: 64, height: 64, borderRadius: 18,
                 backgroundColor: colors.accentMuted,

@@ -70,6 +70,8 @@ interface StreamArgs {
   preferredModel?: EchoAIModel;
   /** Expo Router pathname of the screen the user is currently on (e.g. '/(tabs)/home'). Injected into the system prompt so the AI knows context. */
   currentScreen?: string;
+  /** Compact private personalization summary learned from the user's own chats. */
+  personaContext?: string;
   /**
    * Called immediately once the stream opens with a `stop()` function.
    * Calling `stop()` closes the SSE connection and resolves the promise cleanly.
@@ -95,6 +97,69 @@ function parseErrorMessage(raw: string | undefined, xhrStatus?: number): string 
 
 interface StreamError extends Error {
   status?: number;
+  receivedEvent?: boolean;
+}
+
+function createStreamError(message: string, status?: number, receivedEvent?: boolean): StreamError {
+  const err: StreamError = new Error(message);
+  err.status = status;
+  err.receivedEvent = receivedEvent;
+  return err;
+}
+
+export function parseEchoAISSEPayload(raw: string, onEvent: StreamArgs['onEvent']): void {
+  const chunks = raw
+    .replace(/\r\n/g, '\n')
+    .split('\n\n')
+    .map(chunk => chunk.trim())
+    .filter(Boolean);
+
+  for (const chunk of chunks) {
+    const data = chunk
+      .split('\n')
+      .filter(line => line.startsWith('data:'))
+      .map(line => line.replace(/^data:\s?/, ''))
+      .join('\n');
+
+    if (!data || data === '[DONE]') continue;
+
+    const parsed: EchoAIEvent = JSON.parse(data);
+    onEvent(parsed);
+    if (parsed.type === 'error') {
+      throw createStreamError(normalizeEchoAIError(parsed.message));
+    }
+  }
+}
+
+async function openStreamWithFetch(
+  jwt: string,
+  payload: Record<string, unknown>,
+  onEvent: StreamArgs['onEvent'],
+): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(ECHO_AI_URL, {
+      method: 'POST',
+      headers: {
+        Accept: 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${jwt}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Connection error — check your network';
+    throw createStreamError(normalizeEchoAIError(message), 0);
+  }
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw createStreamError(normalizeEchoAIError(parseErrorMessage(text, response.status)), response.status);
+  }
+
+  parseEchoAISSEPayload(text, onEvent);
 }
 
 /** Open a single SSE stream and return a Promise that resolves on "done". */
@@ -105,9 +170,14 @@ function openStream(
   onAbortHandle?: StreamArgs['onAbortHandle'],
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
+    let receivedEvent = false;
     const es = new EventSource(ECHO_AI_URL, {
       method: 'POST',
+      pollingInterval: 0,
+      lineEndingCharacter: '\n',
       headers: {
+        Accept: 'text/event-stream',
+        'Cache-Control': 'no-cache',
         'Content-Type': 'application/json',
         Authorization: `Bearer ${jwt}`,
         apikey: SUPABASE_ANON_KEY,
@@ -130,13 +200,14 @@ function openStream(
       if (!event.data || event.data === '[DONE]') return;
       try {
         const parsed: EchoAIEvent = JSON.parse(event.data);
+        receivedEvent = true;
         onEvent(parsed);
         if (parsed.type === 'done') {
           cleanup();
           resolve();
         } else if (parsed.type === 'error') {
           cleanup();
-          reject(new Error(normalizeEchoAIError(parsed.message)));
+          reject(createStreamError(normalizeEchoAIError(parsed.message), undefined, receivedEvent));
         }
       } catch {
         // ignore malformed SSE lines
@@ -150,9 +221,7 @@ function openStream(
       const msg = normalizeEchoAIError(parseErrorMessage(rawMsg, status));
       console.error(`[EchoAI] SSE error — status:${status ?? 'N/A'} raw:${rawMsg ?? '(empty)'}`);
       // Tag 401s so the caller can decide whether to refresh + retry.
-      const err: StreamError = new Error(msg);
-      err.status = status;
-      reject(err);
+      reject(createStreamError(msg, status, receivedEvent));
     });
   });
 }
@@ -164,6 +233,7 @@ export async function streamEchoAI({
   localResult,
   preferredModel,
   currentScreen,
+  personaContext,
   onAbortHandle,
   onEvent,
 }: StreamArgs): Promise<void> {
@@ -196,16 +266,32 @@ export async function streamEchoAI({
     payload.preferred_model = AI_MODEL_MAP[preferredModel];
   }
   if (currentScreen) payload.current_screen = currentScreen;
+  if (personaContext) payload.persona_context = personaContext.slice(0, 2800);
 
   try {
     await openStream(jwt, payload, onEvent, onAbortHandle);
   } catch (err: any) {
+    if ((err as StreamError)?.status === 0 && !(err as StreamError)?.receivedEvent) {
+      console.warn('[EchoAI] SSE transport failed before first event — retrying with fetch fallback');
+      await openStreamWithFetch(jwt, payload, onEvent);
+      return;
+    }
+
     // On 401: silently refresh the token and retry ONCE.
     if ((err as StreamError)?.status === 401) {
       console.warn('[EchoAI] 401 — attempting token refresh then retry');
       const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
       if (!refreshErr && refreshed.session?.access_token) {
-        await openStream(refreshed.session.access_token, payload, onEvent, onAbortHandle);
+        try {
+          await openStream(refreshed.session.access_token, payload, onEvent, onAbortHandle);
+        } catch (retryErr: any) {
+          if ((retryErr as StreamError)?.status === 0 && !(retryErr as StreamError)?.receivedEvent) {
+            console.warn('[EchoAI] SSE transport failed after token refresh — retrying with fetch fallback');
+            await openStreamWithFetch(refreshed.session.access_token, payload, onEvent);
+            return;
+          }
+          throw retryErr;
+        }
         return;
       }
       // Refresh failed — sign the user out so they hit the login screen.
@@ -215,23 +301,3 @@ export async function streamEchoAI({
     throw err;
   }
 }
-
-// Legacy back-compat export. Drops tool events; only forwards text.
-export const apiClient = {
-  async sendMessage(
-    message: string,
-    onChunk: (chunk: string) => void,
-  ): Promise<{ id: string; role: 'assistant'; content: string }> {
-    let acc = '';
-    await streamEchoAI({
-      message,
-      onEvent: (e) => {
-        if (e.type === 'text_delta') {
-          acc += e.delta;
-          onChunk(acc);
-        }
-      },
-    });
-    return { id: Date.now().toString(), role: 'assistant', content: acc };
-  },
-};

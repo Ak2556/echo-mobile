@@ -8,6 +8,7 @@ import {
   setRemoteLike,
   setRemoteRepost,
 } from '../../lib/supabaseEchoApi';
+import type { PerspectiveType } from '../../types';
 import { patchBookmarkCaches, patchFollowCaches, patchLikeCaches, patchRepostCaches } from '../../lib/queryCache';
 import { awardXp } from '../../lib/retention';
 import type { EchoReaction } from '../../types';
@@ -119,13 +120,13 @@ export function usePublishRemoteEcho() {
       title?: string;
       mediaUrls?: string[];
       parentEchoId?: string;
+      perspectiveType?: PerspectiveType;
+      perspectiveNote?: string;
+      sourceUrl?: string;
       sourceConversationId?: string;
       conversationSnapshot?: { role: 'user' | 'assistant'; content: string }[];
     }) => insertRemoteEcho(params),
     onSuccess: (_, vars) => {
-      // Reward XP for the publish. Remixes earn slightly less than fresh
-      // posts so the gamification doesn't accidentally encourage low-effort
-      // forking. Retention is local-only; backend mirror can come later.
       awardXp(vars.parentEchoId ? 'publishRemix' : 'publishEcho');
     },
     onSettled: (_, __, vars) => {

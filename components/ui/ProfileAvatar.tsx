@@ -9,7 +9,7 @@ interface ProfileAvatarProps {
   avatarColor: string;
   avatarUrl?: string;
   size?: number;
-  showGlow?: boolean;
+  showHalo?: boolean;
   isVerified?: boolean;
 }
 
@@ -18,24 +18,24 @@ export function ProfileAvatar({
   avatarColor,
   avatarUrl,
   size = 74,
-  showGlow = true,
+  showHalo = true,
   isVerified = false,
 }: ProfileAvatarProps) {
   const { colors } = useTheme();
   const [imgError, setImgError] = useState(false);
-  const glowSize = size + 20;
+  const haloSize = size + 20;
   const ringSize = size + 8;
   const initial = (displayName || '?').charAt(0).toUpperCase();
 
   return (
-    <View style={{ width: glowSize, height: glowSize, alignItems: 'center', justifyContent: 'center' }}>
-      {showGlow && (
+    <View style={{ width: haloSize, height: haloSize, alignItems: 'center', justifyContent: 'center' }}>
+      {showHalo && (
         <View
           style={{
             position: 'absolute',
-            width: glowSize,
-            height: glowSize,
-            borderRadius: glowSize / 2,
+            width: haloSize,
+            height: haloSize,
+            borderRadius: haloSize / 2,
             backgroundColor: avatarColor + '28',
           }}
         />

@@ -1,4 +1,4 @@
--- Echo Gen Z feature pack — full schema for mentions, reactions, mood,
+-- Echo social feature pack: schema for mentions, reactions, mood,
 -- daily question, salons, co-echoes, office hours, badges, year-in-echo, quests.
 -- All tables get RLS + sensible policies + counter triggers where applicable.
 --
@@ -6,13 +6,13 @@
 -- (20260521093251 through 20260521093456). This consolidated file is the
 -- source-of-truth for the schema and is idempotent — running it again is safe.
 
--- ─── Profile extensions ────────────────────────────────────────────────────
+-- Profile extensions
 alter table public.profiles
   add column if not exists pronouns text,
   add column if not exists mood text,
   add column if not exists mood_expires_at timestamptz;
 
--- ─── Reaction counters on public_echoes ────────────────────────────────────
+-- Reaction counters on public_echoes
 alter table public.public_echoes
   add column if not exists mind_blown_count   integer not null default 0,
   add column if not exists taking_notes_count integer not null default 0,
@@ -34,7 +34,7 @@ alter table public.echo_comments
   add column if not exists agree_count        integer not null default 0,
   add column if not exists disagree_count     integer not null default 0;
 
--- ─── Mentions ──────────────────────────────────────────────────────────────
+-- Mentions
 create table if not exists public.echo_mentions (
   echo_id            uuid not null references public.public_echoes (id) on delete cascade,
   mentioned_user_id  uuid not null references auth.users (id) on delete cascade,
@@ -114,7 +114,7 @@ create trigger trg_notify_comment_mention
   after insert on public.comment_mentions
   for each row execute function public.notify_on_comment_mention();
 
--- ─── Reactions (4-emoji set: mind_blown / taking_notes / agree / disagree) ─
+-- Reactions (4-emoji set: mind_blown / taking_notes / agree / disagree)
 create table if not exists public.echo_reactions (
   echo_id    uuid not null references public.public_echoes (id) on delete cascade,
   user_id    uuid not null references auth.users (id) on delete cascade,
@@ -204,7 +204,7 @@ create trigger trg_comment_reaction_count
   after insert or delete on public.comment_reactions
   for each row execute function public.adjust_comment_reaction_count();
 
--- ─── Daily Question ────────────────────────────────────────────────────────
+-- Daily Question
 create table if not exists public.daily_questions (
   id          uuid primary key default gen_random_uuid(),
   active_date date not null unique,
@@ -238,7 +238,7 @@ drop policy if exists "daily_answers delete own" on public.daily_answers;
 create policy "daily_answers delete own" on public.daily_answers
   for delete using (auth.uid() = user_id);
 
--- ─── Salons (topic communities) ────────────────────────────────────────────
+-- Salons (topic communities)
 create table if not exists public.salons (
   id            uuid primary key default gen_random_uuid(),
   slug          text not null unique,
@@ -349,7 +349,7 @@ create trigger trg_salon_echo_count
   after insert or update or delete on public.public_echoes
   for each row execute function public.adjust_salon_echo_count();
 
--- ─── Office Hours ──────────────────────────────────────────────────────────
+-- Office Hours
 create table if not exists public.office_hours (
   id          uuid primary key default gen_random_uuid(),
   host_id     uuid not null references auth.users (id) on delete cascade,
@@ -461,7 +461,7 @@ create trigger trg_oh_question_upvote_count
   after insert or delete on public.office_hour_question_upvotes
   for each row execute function public.adjust_oh_question_upvote_count();
 
--- ─── Badges & user_badges ──────────────────────────────────────────────────
+-- Badges & user_badges
 create table if not exists public.badges (
   id          uuid primary key default gen_random_uuid(),
   slug        text not null unique,
@@ -490,17 +490,17 @@ drop policy if exists "user_badges select all" on public.user_badges;
 create policy "user_badges select all" on public.user_badges for select using (true);
 
 insert into public.badges (slug, name, description, icon, tier, criteria) values
-  ('first_echo',      'First Echo',       'You posted your first echo. Welcome to the conversation.',           '🎉', 'bronze', '{"echoes":1}'),
-  ('streak_7',        'On a Roll',         'Seven days of consecutive echoes. The mind is warming up.',          '🔥', 'silver', '{"streak":7}'),
-  ('streak_30',       'Lit',               'Thirty-day streak. You think out loud for a living now.',            '🚀', 'gold',   '{"streak":30}'),
-  ('verified_thinker','Verified Thinker',  'Reached 100 mind-blown reactions across your echoes.',               '🧠', 'gold',   '{"mind_blown":100}'),
-  ('curator',         'Curator',           'You answered 30 Daily Questions. Reliable mind.',                    '🧭', 'silver', '{"daily_answers":30}'),
-  ('host',            'Host',              'You ran your first Office Hours session.',                           '🎙️', 'silver', '{"office_hours_hosted":1}'),
-  ('salon_keeper',    'Salon Keeper',      'You started a Salon that reached 25 members.',                       '🏛️', 'gold',   '{"salon_members":25}'),
-  ('wrap_2026',       'Year in Echo 2026', 'Special: completed your 2026 Year in Echo recap.',                   '🏆', 'special','{"year":2026}')
+  ('first_echo',      'First Echo',       'You posted your first echo. Welcome to the conversation.',           '1',   'bronze', '{"echoes":1}'),
+  ('streak_7',        'On a Roll',         'Seven days of consecutive echoes. The mind is warming up.',          '7',   'silver', '{"streak":7}'),
+  ('streak_30',       'Thirty-Day Streak', 'Thirty-day streak. You think out loud consistently.',                 '30',  'gold',   '{"streak":30}'),
+  ('verified_thinker','Verified Thinker',  'Reached 100 mind-blown reactions across your echoes.',               '100', 'gold',   '{"mind_blown":100}'),
+  ('curator',         'Curator',           'You answered 30 Daily Questions.',                                   'DQ',  'silver', '{"daily_answers":30}'),
+  ('host',            'Host',              'You ran your first Office Hours session.',                           'OH',  'silver', '{"office_hours_hosted":1}'),
+  ('salon_keeper',    'Salon Keeper',      'You started a Salon that reached 25 members.',                       'S',   'gold',   '{"salon_members":25}'),
+  ('wrap_2026',       'Year in Echo 2026', 'Completed your 2026 Year in Echo recap.',                           '26',  'special','{"year":2026}')
 on conflict (slug) do nothing;
 
--- ─── Year in Echo ──────────────────────────────────────────────────────────
+-- Year in Echo
 create table if not exists public.year_wraps (
   user_id              uuid not null references auth.users (id) on delete cascade,
   year                 integer not null,
@@ -518,7 +518,7 @@ alter table public.year_wraps enable row level security;
 drop policy if exists "year_wraps select own" on public.year_wraps;
 create policy "year_wraps select own" on public.year_wraps for select using (auth.uid() = user_id);
 
--- ─── Quests ────────────────────────────────────────────────────────────────
+-- Quests
 create table if not exists public.quests (
   id              uuid primary key default gen_random_uuid(),
   slug            text not null unique,

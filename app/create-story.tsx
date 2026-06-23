@@ -35,12 +35,12 @@ export default function CreateStoryScreen() {
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <Broadcast color={colors.accent} size={48} />
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>Stories are on their way</Text>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>Stories are unavailable</Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 21 }}>
-            Real-time Stories are coming soon. For now, share your thoughts as an Echo — they live in your feed permanently.
+            Share your thoughts as an Echo instead. Echoes stay available in your feed.
           </Text>
           <AnimatedPressable
-            onPress={() => router.replace('/create-post' as any)}
+            onPress={() => router.replace('/create-post')}
             style={{ marginTop: 24, backgroundColor: colors.accent, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
             haptic="medium"
           >
@@ -84,7 +84,7 @@ export default function CreateStoryScreen() {
     setTimeout(() => {
       addStory(story);
       playSoundEffect('success');
-      showToast('Story shared for 24h', '\u{1F4E1}');
+      showToast('Story shared for 24h', 'Broadcast');
       setPublishing(false);
       router.back();
     }, 300);

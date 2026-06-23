@@ -12,14 +12,14 @@ Use this file to log VoiceOver findings during the pre-submission QA pass.
 
 | Flow | Status | Notes |
 | --- | --- | --- |
-| Cold start → onboarding → sign-up | TODO | |
-| Discover → like / repost / comment a card | TODO | |
-| Open a thread → reply → back | TODO | |
-| Profile → settings → account deletion (cancel before confirming) | TODO | |
-| Switch theme & accent color | TODO | |
-| Trigger ConsentBanner (clear MMKV first) → Accept → Decline | TODO | |
-| Send a message that hits the rate limit (>30/h) | TODO | |
-| Edit profile → upload avatar → save | TODO | |
+| Cold start -> onboarding -> sign-up | Not run | |
+| Discover -> like / repost / comment a card | Not run | |
+| Open a thread -> reply -> back | Not run | |
+| Profile -> settings -> account deletion (cancel before confirming) | Not run | |
+| Switch theme and accent color | Not run | |
+| Trigger ConsentBanner after clearing MMKV -> Accept -> Decline | Not run | |
+| Send a message that hits the rate limit (>30/h) | Not run | |
+| Edit profile -> upload avatar -> save | Not run | |
 
 ## Findings
 

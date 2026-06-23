@@ -51,7 +51,7 @@ export default function CameraApp() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       setCaptured(prev => [{ uri: asset.uri, type: mode, width: asset.width, height: asset.height }, ...prev]);
-      showToast(mode === 'photo' ? 'Photo captured' : 'Video saved', '✅');
+      showToast(mode === 'photo' ? 'Photo captured' : 'Video saved', 'Saved');
     }
   };
 
@@ -65,7 +65,7 @@ export default function CameraApp() {
       const asset = result.assets[0];
       const type: Mode = asset.type === 'video' ? 'video' : 'photo';
       setCaptured(prev => [{ uri: asset.uri, type, width: asset.width, height: asset.height }, ...prev]);
-      showToast('Added from library', '🖼');
+      showToast('Added from library', 'Added');
     }
   };
 

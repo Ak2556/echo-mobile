@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 
-// Tiny store for the global "ask Echo anything" palette. Any screen can call
-// useCommandPalette.getState().open() to surface it. iPad ⌘K binding can be
-// added later via a hardware keyboard listener that calls open().
+// Tiny store for the global "ask Echo anything" palette.
 
 interface CommandPaletteStore {
   isOpen: boolean;

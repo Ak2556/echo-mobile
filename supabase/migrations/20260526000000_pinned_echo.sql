@@ -2,14 +2,14 @@
 --
 -- A user can mark ONE of their published echoes as their pinned signature.
 -- This echo renders at the top of their profile's Echoes tab, with a
--- "📌 Pinned" chip in the card header.
+-- "Pinned" chip in the card header.
 --
 -- Design notes:
---   • One pin per user (a plain column on profiles, not a join table).
---   • ON DELETE SET NULL — if the pinned echo is later deleted, the pin
+--   - One pin per user (a plain column on profiles, not a join table).
+--   - ON DELETE SET NULL: if the pinned echo is deleted, the pin
 --     just clears instead of leaving a dangling reference.
---   • Nullable — most users won't pin anything; the column stays empty.
---   • No CHECK that the echo belongs to the same user. The RLS policy on
+--   - Nullable: most users won't pin anything; the column stays empty.
+--   - No CHECK that the echo belongs to the same user. The RLS policy on
 --     `profiles.update` (auth.uid() = id) already prevents pinning someone
 --     else's content because you can only update your own profile row.
 

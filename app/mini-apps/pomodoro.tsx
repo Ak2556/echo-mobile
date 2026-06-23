@@ -9,9 +9,9 @@ import { useTheme } from '../../lib/theme';
 type Mode = 'focus' | 'short' | 'long';
 
 const MODES = [
-  { id: 'focus' as Mode, label: 'Focus', emoji: '🎯', minutes: 25, color: '#EF4444' },
-  { id: 'short' as Mode, label: 'Short Break', emoji: '☕', minutes: 5, color: '#10B981' },
-  { id: 'long' as Mode, label: 'Long Break', emoji: '🌿', minutes: 15, color: '#3B82F6' },
+  { id: 'focus' as Mode, label: 'Focus', marker: 'FO', minutes: 25, color: '#EF4444' },
+  { id: 'short' as Mode, label: 'Short Break', marker: 'SB', minutes: 5, color: '#10B981' },
+  { id: 'long' as Mode, label: 'Long Break', marker: 'LB', minutes: 15, color: '#3B82F6' },
 ];
 
 const { width } = Dimensions.get('window');
@@ -44,7 +44,7 @@ export default function PomodoroScreen() {
             clearInterval(intervalRef.current!);
             setRunning(false);
             setCycles(c => c + (mode === 'focus' ? 1 : 0));
-            setLog(l => [`✅ ${modeData.label} — ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, ...l].slice(0, 12));
+            setLog(l => [`${modeData.label} — ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, ...l].slice(0, 12));
             return 0;
           }
           return s - 1;
@@ -90,7 +90,7 @@ export default function PomodoroScreen() {
             onPress={() => switchMode(m.id)}
             style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: mode === m.id ? m.color : 'transparent' }}
           >
-            <Text style={{ fontSize: 14 }}>{m.emoji}</Text>
+            <Text style={{ color: mode === m.id ? '#fff' : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{m.marker}</Text>
             <Text style={{ color: mode === m.id ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 11, marginTop: 2 }}>{m.label.split(' ')[0]}</Text>
           </Pressable>
         ))}
@@ -107,7 +107,7 @@ export default function PomodoroScreen() {
           </Text>
           <View style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: accent + '22', borderRadius: 20, borderWidth: 1, borderColor: accent + '44', marginTop: 8 }}>
             <Text style={{ color: accent, fontSize: 12, fontWeight: '700' }}>
-              {running ? `${pct}% done` : pct === 0 ? modeData.emoji + ' Ready' : `${pct}% done`}
+              {running ? `${pct}% done` : pct === 0 ? 'Ready' : `${pct}% done`}
             </Text>
           </View>
         </View>
@@ -133,7 +133,7 @@ export default function PomodoroScreen() {
           {running ? <Pause color="#fff" size={34} weight="fill" /> : <Play color="#fff" size={34} weight="fill" />}
         </Pressable>
         <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-          <Text style={{ fontSize: 24 }}>{MODES.find(m => m.id !== mode)?.emoji ?? '⏭️'}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{MODES.find(m => m.id !== mode)?.marker ?? 'NX'}</Text>
         </View>
       </View>
 
@@ -142,7 +142,7 @@ export default function PomodoroScreen() {
         {[
           { label: 'Session', value: modeData.minutes + 'm' },
           { label: 'Remaining', value: `${mins}m ${secs}s` },
-          { label: 'Today', value: `${cycles} 🍅` },
+          { label: 'Today', value: String(cycles) },
         ].map(s => (
           <GlassPanel key={s.label} variant="light" borderRadius={16} style={{ flex: 1 }} contentStyle={{ padding: 14, alignItems: 'center' }}>
             <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>{s.value}</Text>

@@ -21,7 +21,7 @@ interface PushPrePromptProps {
  *   2. This sheet appears with the value prop
  *   3. They tap "Turn on notifications" → caller calls Notifications.
  *      requestPermissionsAsync()
- *   4. Or they tap "Not now" → no native prompt fires; we can ask again later
+ *   4. Or they tap "Not now" -> no native prompt fires
  *
  * The decline branch is reversible because we never burned the OS prompt.
  */

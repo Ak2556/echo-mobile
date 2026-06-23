@@ -2,8 +2,8 @@
 // embedding + thoughtfulness score, and persist all of it on public_echoes.
 //
 // Invoked fire-and-forget from the client after insertRemoteEcho returns
-// (see lib/supabaseEchoApi.ts → triggerEmbedEcho). Also safe to backfill:
-// re-running on a populated row will overwrite with a fresh embedding.
+// (see lib/supabaseEchoApi.ts -> triggerEmbedEcho). Backfills use the separate
+// backfill-embeddings function.
 //
 // Embeddings come from OpenRouter's embeddings endpoint (Google
 // gemini-embedding-001 reduced to 768-dim), so the only secret needed is
@@ -13,11 +13,9 @@
 // MODERATION GATE: rows are only shown in the public feed when
 // check_content = true (enforced in get_ranked_feed / get_semantic_feed and
 // the chronological fallback query). New rows default to false, so this
-// function flips them true once the content passes moderation. This write is
-// done FIRST and independently of embedding — embedding can fail (e.g. missing
-// OPENROUTER_API_KEY) without trapping a clean post in permanent invisibility.
-// Fail-open: moderateContent returns ok=true on API/key errors, matching the
-// policy used by echo-ai.
+// function flips them true once the content passes moderation. If moderation is
+// unavailable, the row remains hidden until the user retries or operators review
+// the incident.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { moderateContent } from "./moderation.ts";
@@ -42,6 +40,7 @@ const CORS_HEADERS: Record<string, string> = {
 
 interface EchoRow {
   id: string;
+  author_id: string;
   title: string | null;
   prompt: string;
   response: string;
@@ -127,9 +126,24 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false },
   });
 
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  if (!token) {
+    return new Response(JSON.stringify({ error: "authorization required" }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+  const { data: authData, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !authData.user) {
+    return new Response(JSON.stringify({ error: "invalid authorization" }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
   const { data: row, error: fetchErr } = await supabase
     .from("public_echoes")
-    .select("id, title, prompt, response, conversation_snapshot")
+    .select("id, author_id, title, prompt, response, conversation_snapshot")
     .eq("id", echoId)
     .single();
   if (fetchErr || !row) {
@@ -138,8 +152,27 @@ Deno.serve(async (req: Request) => {
       { status: 404, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   }
+  if ((row as EchoRow).author_id !== authData.user.id) {
+    return new Response(JSON.stringify({ error: "forbidden" }), {
+      status: 403,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
 
-  // ── Moderation gate (runs FIRST, independent of embedding) ──────────────────
+  const { error: embedLimitError } = await supabase.rpc("check_app_rate_limit", {
+    p_action: "embed_echo_hour",
+    p_limit: 40,
+    p_window_seconds: 3600,
+    p_user_id: authData.user.id,
+  });
+  if (embedLimitError) {
+    return new Response(JSON.stringify({ error: "Rate limit reached. Try again later." }), {
+      status: 429,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  // Moderation gate (runs FIRST, independent of embedding)
   // Decide visibility and persist it before doing anything that can fail. The
   // feed only surfaces rows with check_content = true.
   const echoRow = row as EchoRow;
@@ -152,7 +185,7 @@ Deno.serve(async (req: Request) => {
     .update({ check_content: verdict.ok })
     .eq("id", echoId);
   if (gateErr) {
-    // If we can't persist the gate, log and continue — a later re-run can fix it.
+    // Keep embedding available even if moderation persistence fails.
     console.warn("[embed-echo] failed to set check_content:", gateErr.message);
   }
   if (!verdict.ok) {

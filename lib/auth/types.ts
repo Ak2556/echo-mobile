@@ -3,10 +3,10 @@ import type { Session } from '@supabase/supabase-js';
 /**
  * Auth status — what should the app render right now?
  *
- *  • `checking`         — initial cold-start, waiting on getSession()
- *  • `signed-out`       — no valid session
- *  • `needs-onboarding` — session exists but profile.username is empty
- *  • `ready`            — session + profile.username present, app can render
+ *  - `checking`: initial cold-start, waiting on getSession()
+ *  - `signed-out`: no valid session
+ *  - `needs-onboarding`: session exists but profile.username is empty
+ *  - `ready`: session + profile.username present, app can render
  */
 export type AuthStatus = 'checking' | 'signed-out' | 'needs-onboarding' | 'ready';
 

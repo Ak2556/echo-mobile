@@ -14,24 +14,23 @@ import Animated, {
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { SpringCounter } from '../ui/SpringCounter';
 import { useAppStore } from '../../store/useAppStore';
-import { GRADIENTS, NEON, NEON_SPRING, neonGlow, neonHaptic } from '../../lib/neonDesign';
+import { GRADIENTS, ACCENT_COLORS, ACCENT_SPRING, accentShadow, feedbackHaptic } from '../../lib/accentDesign';
 
 interface RemixButtonProps {
   echoId: string;
   remixCount?: number;
   authorUsername?: string;
   authorTitle?: string;
-  /** Hot when remixCount >= 3 — pulses + glows to attract attention */
+  /** Emphasized when remixCount >= 3. */
   hot?: boolean;
   /** Compact mode for inline use (FeedCard action bar) */
   compact?: boolean;
 }
 
 /**
- * Tap to fork an Echo: the parent's full conversation snapshot seeds a fresh
+ * Tap to add a perspective: the parent's conversation snapshot seeds a fresh
  * chat session and the user can continue from where the author left off.
- * After they ask Gemini at least one more turn, they can publish the result
- * as a remix linked back to the parent.
+ * Publishing creates a linked Echo in the parent Evolution.
  *
  * Animated gradient border, double-tap haptic, and optional emphasis when
  * the lineage is active.
@@ -73,10 +72,10 @@ export function RemixButton({
   }));
 
   const handlePress = () => {
-    if (hapticEnabled) void neonHaptic('remix');
+    if (hapticEnabled) void feedbackHaptic('remix');
     press.value = withSequence(
       withTiming(0.92, { duration: 80 }),
-      withSpring(1, NEON_SPRING.release),
+      withSpring(1, ACCENT_SPRING.release),
     );
     router.push({
       pathname: '/remix/[id]',
@@ -88,19 +87,19 @@ export function RemixButton({
     });
   };
 
-  const labelColor = isHot ? NEON.cyan : '#E4E4E7';
+  const labelColor = isHot ? ACCENT_COLORS.cyan : '#E4E4E7';
   const padH = compact ? 10 : 14;
   const padV = compact ? 7 : 9;
 
   return (
-    <Animated.View style={[containerStyle, isHot ? neonGlow(NEON.cyan, 'med') : null]}>
+    <Animated.View style={[containerStyle, isHot ? accentShadow(ACCENT_COLORS.cyan, 'med') : null]}>
       <AnimatedPressable
         onPress={handlePress}
         style={styles.touch}
         haptic="none"
         performanceMode="hot"
         accessibilityLabel={
-          remixCount > 0 ? `Remix conversation — ${remixCount} existing remixes` : 'Remix this conversation'
+          remixCount > 0 ? `Add perspective — ${remixCount} existing perspectives` : 'Add perspective'
         }
         accessibilityRole="button"
       >
@@ -124,7 +123,7 @@ export function RemixButton({
                 letterSpacing: 0.3,
               }}
             >
-              Remix
+              {compact ? 'Perspective' : 'Add Perspective'}
             </Text>
             {remixCount > 0 && (
               <SpringCounter

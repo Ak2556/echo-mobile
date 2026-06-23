@@ -438,12 +438,17 @@ export function createSocialSlice(
       // sees the first-Echo coach again. The settings slice owns these,
       // but they're guarded against re-publishing accidental dismissals.
       persistSet('dismissedFirstEchoCoach', false);
+      persistSet('hasCompletedProductOnboarding', false);
+      persistSet('onboardingDraftCreated', false);
       set({
         publishedEchoes: [], likedIds: [], bookmarkedIds: [], repostedIds: [],
         commentsByEcho: {}, followingIds: [], notifications: [],
         conversations: [], messagesByConversation: {}, stories: [],
         blockedIds: [], mutedIds: [], mutedThreadIds: [], pinnedEchoIds: [],
         bookmarkCollections: [], bookmarkCollectionByEchoId: {},
+        dismissedFirstEchoCoach: false,
+        hasCompletedProductOnboarding: false,
+        onboardingDraftCreated: false,
       });
     },
   };

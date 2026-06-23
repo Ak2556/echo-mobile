@@ -12,8 +12,7 @@
 -- insert (e.g. via a buggy admin tool) is invisible to the public feed
 -- until reviewed.
 
--- ── ai_rate_limits ───────────────────────────────────────────────────────────
-
+-- ai_rate_limits
 create table if not exists public.ai_rate_limits (
   user_id        uuid primary key references auth.users(id) on delete cascade,
   window_start   timestamptz not null default now(),
@@ -45,8 +44,7 @@ create policy "Users can update their own AI limit"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- ── Moderation gate on public_echoes ─────────────────────────────────────────
-
+-- Moderation gate on public_echoes
 alter table public.public_echoes
   add column if not exists check_content boolean not null default false;
 

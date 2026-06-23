@@ -36,7 +36,7 @@ export function computeScore(item: ScoringInput, gravity: number = GRAVITY.lates
   return base * engagementRate * authorAuthority * mediaBoost * followBoost;
 }
 
-// ─── Min-heap for merging sorted pages without re-sorting everything ──────────
+// Min-heap for merging sorted pages without re-sorting everything
 // Used in useInfiniteFeed to merge incoming pages while preserving rank order.
 
 export class MinHeap<T> {

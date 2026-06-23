@@ -76,7 +76,7 @@ Production deployment must provide:
 
 ## AWS/ECS Workflow
 
-`.github/workflows/aws.yml` contains an ECS deployment workflow scaffold. It references Docker/ECS settings that must be provided before it can be used for production:
+`.github/workflows/aws.yml` contains an ECS deployment workflow configuration. It references Docker/ECS settings that must be provided before it can be used for production:
 
 - AWS region
 - ECR repository

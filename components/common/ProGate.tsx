@@ -21,8 +21,8 @@ interface ProGateProps {
  */
 export function ProGate({
   title = 'You\'ve hit the free limit',
-  subtitle = 'Echo Pro raises your AI request ceiling and unlocks unlimited saved chats.',
-  ctaLabel = 'See Echo Pro',
+  subtitle = 'Higher Echo tiers raise your AI capacity and unlock deeper persona modes.',
+  ctaLabel = 'See tiers',
 }: ProGateProps) {
   const router = useRouter();
   const { colors } = useTheme();

@@ -5,12 +5,14 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { useAppStore } from '../../store/useAppStore';
 import { identify, resetIdentity, track } from '../analytics';
-import { identifyUser, clearUser } from '../monitoring';
+import { identifyUser, clearUser, captureException } from '../monitoring';
 import { isSupabaseRemote } from '../remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes } from '../supabaseEchoApi';
+import { loadPersonaProfile } from '../persona';
 import { useAuthStore } from './store';
 import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
+import { withAuthTimeout } from './timeout';
 
 /**
  * THE single auth listener.
@@ -63,12 +65,15 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
   // still reads from it — stays consistent. New code should read from
   // useAuth(); this mirroring is the migration bridge.
   app.setUserId(session.user.id);
+  app.setPersonaLearningEnabled(loadPersonaProfile(session.user.id).enabled);
   if (profile?.username) {
     app.setUsername(profile.username);
     app.setDisplayName(profile.display_name ?? '');
     app.setBio(profile.bio ?? '');
     app.setAvatarColor(profile.avatar_color ?? '#6366F1');
-    app.setAvatarUrl(profile.avatar_url ?? '');
+    if (profile.avatar_url || app.profilePhotoVisible) {
+      app.setAvatarUrl(profile.avatar_url ?? '');
+    }
     app.setHasSeenOnboarding(true);
   }
 
@@ -84,6 +89,12 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
       })
       .catch(() => {});
   }
+}
+
+export async function refreshAuthSession(): Promise<AuthStatus> {
+  const { data: { session } } = await withAuthTimeout(supabase.auth.getSession());
+  await hydrateFromSession(session);
+  return useAuthStore.getState().status;
 }
 
 async function handleDeepLink(url: string): Promise<void> {
@@ -102,7 +113,7 @@ async function handleDeepLink(url: string): Promise<void> {
   const result = await consumeAuthCallbackUrl(url);
 
   if (result.status === 'error') {
-    console.warn('[auth] callback error', { type: params.type, error: result.error });
+    captureException(new Error(`auth callback ${params.type}: ${result.error}`), { tags: { source: 'auth_callback' } });
     return;
   }
   // On success, onAuthStateChange fires SIGNED_IN and the subscription
@@ -135,7 +146,9 @@ function routeFor(
     return;
   }
   if (status === 'ready') {
-    router.replace('/(tabs)/home');
+    if (pathname.startsWith('/auth/') || pathname === '/') {
+      router.replace('/(tabs)/home');
+    }
     return;
   }
 }
@@ -169,11 +182,12 @@ export function AuthListenerProvider(): null {
     if (started) return;
     started = true;
 
-    // Cold-start session check. We don't add a hard timeout here because the
-    // store starts at status: 'checking' and consumers render a splash; the
-    // app/index.tsx redirect already has a 3s fallback to /auth/login.
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Cold-start session check. Keep the auth store from staying in
+    // 'checking' if the platform auth client never resolves.
+    withAuthTimeout(supabase.auth.getSession()).then(({ data: { session } }) => {
       hydrateFromSession(session);
+    }).catch(() => {
+      useAuthStore.getState().setAuth({ status: 'signed-out', session: null, profile: null });
     });
 
     // The ONE onAuthStateChange subscription.
@@ -202,6 +216,8 @@ export function AuthListenerProvider(): null {
         app.setAvatarColor('#6366F1');
         app.setAvatarUrl('');
         app.setHasSeenOnboarding(false);
+        app.setHasCompletedProductOnboarding(false);
+        app.setOnboardingDraftCreated(false);
         app.resetSocialData();
         app.clearChatHistory();
       }

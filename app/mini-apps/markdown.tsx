@@ -29,7 +29,7 @@ const SAMPLE = `# Hello, Markdown!
 
 \`\`\`
 const hello = "world";
-console.log(hello);
+return hello;
 \`\`\`
 
 ---
@@ -130,9 +130,8 @@ export default function MarkdownScreen() {
   return (
     <MiniAppShell title="Markdown" subtitle={`${words} words · ${chars} chars`} headerRight={ClearBtn} scrollable={false}>
       <View style={{ flex: 1, padding: 16 }}>
-        {/* Tab bar */}
         <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 12 }}>
-          {[{ id: 'edit', label: '✏️ Editor' }, { id: 'preview', label: '👁 Preview' }].map(t => (
+          {[{ id: 'edit', label: 'Editor' }, { id: 'preview', label: 'Preview' }].map(t => (
             <Pressable
               key={t.id}
               onPress={() => setTab(t.id as any)}

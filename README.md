@@ -151,13 +151,13 @@ Tracking shipped vs. still-blocked work toward App Store submission.
 | Auth lock, session restore, signup with live username check | shipped |
 | Account deletion (Apple Guideline 5.1.1(v)) | shipped — `app/delete-account.tsx` |
 | AI disclosure inline + in Privacy Policy | shipped |
-| Visual identity unified — indigo accent, no neon, no ambient gradients | shipped |
+| Visual identity unified — restrained indigo accent system | shipped |
 | Tab vocabulary — Home / Explore / Echo / Chat / Activity / You | shipped |
 | Empty/loading states via EmptyState + skeletons | shipped (most surfaces) |
 | First-Echo launch coach + post-publish push pre-prompt | shipped |
 | Deep links — `/e/<id>`, `/u/<id>`, `/c/<id>` | shipped |
 | AnimatedPressable lite-default, lazy worklets | shipped |
-| Engagement analytics — track() wired across like, react, follow, chat, search | shipped (stub backend) |
+| Engagement analytics — track() wired across like, react, follow, chat, search | shipped (backend collector pending) |
 | Apple-app-site-association spec | shipped (needs hosting at echo.app) |
 | Privacy policy + Terms of Service drafts | shipped in `docs/` (need legal entity name + jurisdiction) |
 | App Store listing copy + reviewer notes | shipped in `docs/app-store-listing.md` |

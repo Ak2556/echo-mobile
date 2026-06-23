@@ -28,7 +28,7 @@ const ICON: Record<ErrorKind, React.ReactNode> = {
 
 export function classifyError(err: unknown): ErrorKind {
   if (!err) return 'unknown';
-  const e = err as any;
+  const e = err as { message?: string; code?: string; status?: number };
   const msg = (e.message ?? '').toString().toLowerCase();
   if (msg.includes('network') || msg.includes('offline') || e.code === 'ENOTCONN') return 'offline';
   if (msg.includes('timeout')) return 'timeout';

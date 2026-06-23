@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, Alert } from 'react-native';
-import { Image } from 'expo-image';
+import { Share, View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
   ArrowLeft, SealCheck, DotsThreeOutline, Envelope,
-  UserMinus, Flag, ShareNetwork, Images,
+  UserMinus, Flag, ShareNetwork, Images, Compass, Users, PencilSimple, ChatTeardropDots,
 } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
+import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { EmptyState } from '../../components/common/EmptyState';
 import { FeedCard } from '../../components/social/FeedCard';
 import { ThinkingFingerprintCard } from '../../components/social/ThinkingFingerprintCard';
 import { ProfileHeaderSkeleton, FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
+import { ProfilePhotoPreview } from '../../components/ui/ProfilePhotoPreview';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -24,10 +26,13 @@ import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { useToggleRemoteBlock, useToggleRemoteMute } from '../../hooks/queries/useBlockMute';
 import { buildCreatorProfile } from '../../lib/echoUX';
+import { userUrl } from '../../lib/echoUrl';
 
-function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, onReport, onBlock, onMute, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId }: any) {
+function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
   const online = isUserOnline(user.id);
+  const primaryTopic = creatorProfile?.topics?.[0];
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
   const followScale = useSharedValue(1);
   const followAnim = useAnimatedStyle(() => ({
     transform: [{ scale: followScale.value }],
@@ -40,7 +45,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
       withSpring(1, { damping: 12, stiffness: 300 })
     );
     onFollow();
-    showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? '\u{1F91D}' : '');
+    showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? 'Following' : '');
   };
 
   const menuActions: ActionItem[] = [
@@ -97,27 +102,25 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
       />
 
       <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="items-center px-4 pt-2 pb-4">
-        <AnimatedPressable scaleValue={0.93} haptic="light">
+        <AnimatedPressable
+          onPress={() => user.avatarUrl ? setPhotoPreviewOpen(true) : undefined}
+          disabled={!user.avatarUrl}
+          accessibilityRole={user.avatarUrl ? 'button' : undefined}
+          accessibilityLabel={user.avatarUrl ? 'Open profile photo' : undefined}
+          style={{ marginBottom: 12 }}
+          scaleValue={0.93}
+          haptic="light"
+        >
           <View className="relative">
-            {user.avatarUrl ? (
-              <Image
-                source={{ uri: user.avatarUrl }}
-                style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 12 }}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <View
-                className="w-20 h-20 rounded-full items-center justify-center mb-3"
-                style={{ backgroundColor: user.avatarColor }}
-              >
-                <Text style={{ color: '#fff', fontSize: 30, fontWeight: '700' }}>
-                  {user.displayName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
+            <ProfileAvatar
+              displayName={user.displayName}
+              avatarColor={user.avatarColor}
+              avatarUrl={user.avatarUrl}
+              size={82}
+              isVerified={false}
+            />
             {online && (
-              <View className="absolute bottom-3 right-0 w-4 h-4 rounded-full" style={{ backgroundColor: colors.success, borderWidth: 2.5, borderColor: colors.bg }} />
+              <View className="absolute bottom-3 right-1 w-4 h-4 rounded-full" style={{ backgroundColor: colors.success, borderWidth: 2.5, borderColor: colors.bg }} />
             )}
           </View>
         </AnimatedPressable>
@@ -131,9 +134,17 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         {creatorProfile?.topics?.length ? (
           <View className="flex-row flex-wrap justify-center gap-2 mb-4">
             {creatorProfile.topics.map((topic: string) => (
-              <View key={topic} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.accentMuted }}>
+              <AnimatedPressable
+                key={topic}
+                onPress={() => router.push({ pathname: '/(tabs)/explore', params: { q: topic } })}
+                accessibilityRole="button"
+                accessibilityLabel={`Explore ${topic}`}
+                scaleValue={0.94}
+                haptic="light"
+                style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.accentMuted }}
+              >
                 <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
-              </View>
+              </AnimatedPressable>
             ))}
           </View>
         ) : null}
@@ -176,7 +187,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
             <AnimatedPressable onPress={onMessage} className="py-2.5 px-4" style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }} scaleValue={0.92} haptic="light">
               <Envelope color={colors.text} size={20} />
             </AnimatedPressable>
-            <AnimatedPressable className="py-2.5 px-4" style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }} scaleValue={0.92} haptic="light">
+            <AnimatedPressable onPress={onShare} className="py-2.5 px-4" style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }} scaleValue={0.92} haptic="light">
               <ShareNetwork color={colors.text} size={20} />
             </AnimatedPressable>
           </View>
@@ -185,10 +196,61 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
 
       {fingerprintUserId ? <ThinkingFingerprintCard userId={fingerprintUserId} isSelf={isSelf} /> : null}
 
+      <View style={{ marginHorizontal: 16, marginBottom: 16 }}>
+        <ConnectionPanel
+          title="Connected paths"
+          subtitle={isSelf ? 'Jump from your profile into the places that shape it.' : `Keep exploring @${user.username}.`}
+          actions={[
+            isSelf ? {
+              key: 'edit',
+              label: 'Edit profile',
+              description: 'Update how people find you',
+              icon: <PencilSimple color={colors.textSecondary} size={18} />,
+              onPress: () => router.push('/edit-profile'),
+              emphasis: 'primary',
+            } : {
+              key: 'message',
+              label: 'Message',
+              description: 'Start a direct conversation',
+              icon: <Envelope color={colors.textSecondary} size={18} />,
+              onPress: onMessage,
+              emphasis: 'primary',
+            },
+            ...(primaryTopic ? [{
+              key: 'topic',
+              label: `Explore #${primaryTopic}`,
+              description: 'Find related Echoes and people',
+              icon: <Compass color={colors.textSecondary} size={18} />,
+              onPress: () => router.push({ pathname: '/(tabs)/explore', params: { q: primaryTopic } }),
+            }] : []),
+            {
+              key: 'followers',
+              label: 'Followers',
+              description: 'See their network',
+              icon: <Users color={colors.textSecondary} size={18} />,
+              onPress: () => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } }),
+            },
+            {
+              key: 'thinking',
+              label: 'Thinking partners',
+              description: 'Find adjacent minds',
+              icon: <ChatTeardropDots color={colors.textSecondary} size={18} />,
+              onPress: () => router.push('/thinking-partners'),
+            },
+          ]}
+        />
+      </View>
+
       <View className="mx-4 mb-2" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 16, marginBottom: 8 }}>
         Echoes {'\u00B7'} {echoeCount}
       </Text>
+      <ProfilePhotoPreview
+        visible={photoPreviewOpen}
+        imageUrl={user.avatarUrl}
+        displayName={user.displayName}
+        onClose={() => setPhotoPreviewOpen(false)}
+      />
     </View>
   );
 }
@@ -262,6 +324,7 @@ export default function UserProfileScreen() {
               muted={muted}
               onFollow={() => followMut.mutate({ userId: user.id, follow: !remoteFollowing })}
               onMessage={() => { const convId = getOrCreateConversation(user); router.push(`/messages/${convId}`); }}
+              onShare={() => { void Share.share({ message: userUrl(user.username), url: userUrl(user.username) }); }}
               onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
               onMute={() => {
                 if (remote) {
@@ -342,6 +405,7 @@ export default function UserProfileScreen() {
             muted={muted}
             onFollow={() => toggleFollow(user.id)}
             onMessage={() => { const convId = getOrCreateConversation(user); router.push(`/messages/${convId}`); }}
+            onShare={() => { void Share.share({ message: userUrl(user.username), url: userUrl(user.username) }); }}
             onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
             onMute={() => toggleMute(user.id)}
             onBlock={() => {

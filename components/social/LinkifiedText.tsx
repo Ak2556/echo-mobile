@@ -5,8 +5,8 @@ import { useTheme } from '../../lib/theme';
 
 /**
  * Renders free-form Echo text with two tap-targets recognized:
- *   • @username  — opens the mentioned user's profile
- *   • #hashtag   — runs a search for that tag (or opens topic page)
+ *   - @username: opens the mentioned user's profile
+ *   - #hashtag: runs a search for that tag (or opens topic page)
  *
  * Used in FeedCard body, comments, daily-answers etc. so mentions feel
  * native rather than dead text.

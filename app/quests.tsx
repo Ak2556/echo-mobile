@@ -39,7 +39,7 @@ function QuestsScreenInner() {
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Quests</Text>
-        <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>{totalCompleted}/{quests.length} ✓</Text>
+        <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>{totalCompleted}/{quests.length} completed</Text>
       </View>
 
       {loading ? (

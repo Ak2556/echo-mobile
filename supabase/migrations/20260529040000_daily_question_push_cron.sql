@@ -5,7 +5,7 @@
 -- trigger half of the retention loop (the device half — token registration +
 -- tap routing — already exists).
 --
--- ── One-time setup the operator must do (NOT in this migration, by design) ──
+-- One-time setup the operator must do (NOT in this migration, by design)
 --   1. Deploy the function:
 --        supabase functions deploy daily-question-push --no-verify-jwt
 --   2. Give the function its gate secret:

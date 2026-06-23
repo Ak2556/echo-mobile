@@ -13,16 +13,16 @@ export interface Transaction {
 }
 
 export const EXPENSE_CATS = [
-  { label: 'Food', emoji: '🍔' }, { label: 'Transport', emoji: '🚗' },
-  { label: 'Shopping', emoji: '🛍' }, { label: 'Health', emoji: '💊' },
-  { label: 'Bills', emoji: '📱' }, { label: 'Entertainment', emoji: '🎮' },
-  { label: 'Travel', emoji: '✈️' }, { label: 'Other', emoji: '📦' },
+  { label: 'Food', marker: 'FD' }, { label: 'Transport', marker: 'TR' },
+  { label: 'Shopping', marker: 'SH' }, { label: 'Health', marker: 'HE' },
+  { label: 'Bills', marker: 'BI' }, { label: 'Entertainment', marker: 'EN' },
+  { label: 'Travel', marker: 'TV' }, { label: 'Other', marker: 'OT' },
 ];
 
 export const INCOME_CATS = [
-  { label: 'Salary', emoji: '💼' }, { label: 'Freelance', emoji: '💻' },
-  { label: 'Gift', emoji: '🎁' }, { label: 'Investment', emoji: '📈' },
-  { label: 'Other', emoji: '💰' },
+  { label: 'Salary', marker: 'SA' }, { label: 'Freelance', marker: 'FR' },
+  { label: 'Gift', marker: 'GI' }, { label: 'Investment', marker: 'IN' },
+  { label: 'Other', marker: 'OT' },
 ];
 
 export async function loadTransactions(): Promise<Transaction[]> {
@@ -102,8 +102,8 @@ export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export function categoryEmoji(cat: string) {
-  return [...EXPENSE_CATS, ...INCOME_CATS].find(c => c.label === cat)?.emoji ?? '💰';
+export function categoryMarker(cat: string) {
+  return [...EXPENSE_CATS, ...INCOME_CATS].find(c => c.label === cat)?.marker ?? 'OT';
 }
 
 function normalizeAmount(amount?: number | string): number {

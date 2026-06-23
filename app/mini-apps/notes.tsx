@@ -104,7 +104,7 @@ export default function NotesApp() {
     let updated: Note[] = existing ? notes.map(x => x.id === n.id ? n : x) : [n, ...notes];
     updated.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     setNotes(updated); saveNotes(updated);
-    showToast(existing ? 'Note updated' : 'Note saved', '📝');
+    showToast(existing ? 'Note updated' : 'Note saved', 'Saved');
   };
 
   const deleteNote = (id: string) => {

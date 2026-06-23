@@ -1,13 +1,13 @@
 -- Echo: AI-native discovery RPCs
---   get_semantic_feed       → cosine-similarity feed tuned to the user's taste vector
---   get_similar_echoes      → "more like this" rail under any echo
---   get_trending_evolutions → trending remix lineages for the Evolutions tab
---   get_remix_tree          → flat list of an evolution lineage for the tree viewer
+--   get_semantic_feed       -> cosine-similarity feed tuned to the user's taste vector
+--   get_similar_echoes      -> "more like this" rail under any echo
+--   get_trending_evolutions -> trending remix lineages for the Evolutions tab
+--   get_remix_tree          -> flat list of an evolution lineage for the tree viewer
 --
 -- All return the same shape as get_ranked_feed so the client can reuse
 -- the existing FeedCard/EchoCard renderers.
 
--- ─── Semantic feed (For You) ─────────────────────────────────────────────────
+-- Semantic feed (For You)
 -- Builds a "taste vector" from the user's last 20 likes (falls back to last
 -- 20 viewed/published echoes if no likes yet) and ranks public_echoes by
 -- cosine distance. If the user has zero embedding signal at all, returns
@@ -72,7 +72,7 @@ begin
       limit 20;
   end if;
 
-  -- No signal at all → degrade gracefully to engagement-ranked recent echoes.
+  -- No signal at all -> degrade gracefully to engagement-ranked recent echoes.
   if taste is null then
     return query
       select
@@ -127,7 +127,7 @@ begin
 end;
 $$;
 
--- ─── Similar echoes ("more like this" rail) ──────────────────────────────────
+-- Similar echoes ("more like this" rail)
 create or replace function public.get_similar_echoes(
   p_echo_id uuid,
   p_limit   int default 8
@@ -176,7 +176,7 @@ as $$
   limit p_limit;
 $$;
 
--- ─── Trending evolutions (Evolutions tab) ────────────────────────────────────
+-- Trending evolutions (Evolutions tab)
 -- Returns one row per remix_root_id ranked by aggregate engagement across the
 -- entire remix tree (root + every descendant). The root's own metadata is
 -- joined back so the tab can render the seed conversation as a hero card.
@@ -236,7 +236,7 @@ as $$
   limit p_limit;
 $$;
 
--- ─── Remix tree (flat list for tree viewer) ──────────────────────────────────
+-- Remix tree (flat list for tree viewer)
 -- Returns the root + every descendant of a remix lineage with a depth column.
 -- Client renders an indented list ordered by depth, then by engagement.
 create or replace function public.get_remix_tree(

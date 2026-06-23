@@ -40,7 +40,7 @@ export default function DeleteAccountScreen() {
       await supabase.auth.signOut().catch(() => undefined);
       resetSocialData();
       clearChatHistory();
-      showToast('Account deleted', '✓');
+      showToast('Account deleted', 'Done');
       router.replace('/auth/login');
     } catch (e) {
       Alert.alert('Could not delete account', (e as Error).message);

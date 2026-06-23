@@ -75,13 +75,13 @@ export async function executeLocalTool(name: LocalToolName, args: any, context?:
     case 'create_habit': {
       const habit = await createHabit({
         name: stringArg(args?.name),
-        emoji: stringArg(args?.emoji),
+        marker: stringArg(args?.marker),
         color: stringArg(args?.color),
       });
       return {
         ok: true,
         summary: `Created habit "${habit.name}" (${habit.id})`,
-        result: { id: habit.id, name: habit.name, emoji: habit.emoji },
+        result: { id: habit.id, name: habit.name, marker: habit.marker },
       };
     }
     case 'complete_habit':

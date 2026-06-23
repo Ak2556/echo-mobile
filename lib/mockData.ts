@@ -23,7 +23,7 @@ export const SEED_NOTIFICATIONS: Notification[] = [
 
 export const SEED_CONVERSATIONS: Conversation[] = [
   { id: 'conv1', userId: 'u4', username: 'ml_engineer', displayName: 'ML Maya', avatarColor: '#F59E0B', isVerified: true, lastMessage: 'That transformer explanation was really helpful!', lastMessageAt: new Date(Date.now() - 1800000).toISOString(), unreadCount: 2 },
-  { id: 'conv2', userId: 'u5', username: 'design_lead', displayName: 'Design Dan', avatarColor: '#EF4444', isVerified: true, lastMessage: 'Love the dark mode tips 🌙', lastMessageAt: new Date(Date.now() - 7200000).toISOString(), unreadCount: 0 },
+  { id: 'conv2', userId: 'u5', username: 'design_lead', displayName: 'Design Dan', avatarColor: '#EF4444', isVerified: true, lastMessage: 'Love the dark mode tips', lastMessageAt: new Date(Date.now() - 7200000).toISOString(), unreadCount: 0 },
   { id: 'conv3', userId: 'u2', username: 'sys_admin', displayName: 'SysOps', avatarColor: '#10B981', isVerified: false, lastMessage: 'Can you help with pgvector indexing?', lastMessageAt: new Date(Date.now() - 86400000).toISOString(), unreadCount: 1 },
 ];
 
@@ -36,7 +36,7 @@ export const SEED_DMS: Record<string, DirectMessage[]> = {
   ],
   conv2: [
     { id: 'dm5', senderId: 'me', content: 'Hey Dan, what do you think of OLED-optimized designs?', isRead: true, createdAt: new Date(Date.now() - 14400000).toISOString() },
-    { id: 'dm6', senderId: 'u5', content: 'Love the dark mode tips 🌙', isRead: true, createdAt: new Date(Date.now() - 7200000).toISOString() },
+    { id: 'dm6', senderId: 'u5', content: 'Love the dark mode tips', isRead: true, createdAt: new Date(Date.now() - 7200000).toISOString() },
   ],
   conv3: [
     { id: 'dm7', senderId: 'u2', content: 'Can you help with pgvector indexing?', isRead: false, createdAt: new Date(Date.now() - 86400000).toISOString() },

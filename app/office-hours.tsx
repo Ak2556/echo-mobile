@@ -54,7 +54,7 @@ function OfficeHoursScreenInner() {
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Office Hours</Text>
         <AnimatedPressable
-          onPress={() => router.push('/create-office-hour' as any)}
+          onPress={() => router.push('/create-office-hour')}
           style={{ padding: 4 }}
           scaleValue={0.88}
           haptic="medium"
@@ -77,7 +77,7 @@ function OfficeHoursScreenInner() {
             {"Schedule a session — invite Q's on a topic you know cold."}
           </Text>
           <AnimatedPressable
-            onPress={() => router.push('/create-office-hour' as any)}
+            onPress={() => router.push('/create-office-hour')}
             style={{ marginTop: 20, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 99, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}
             scaleValue={0.94}
             haptic="medium"
@@ -100,10 +100,10 @@ function OfficeHoursScreenInner() {
                   setList(prev => prev.map(o => o.id === oh.id ? { ...o, has_rsvp: going, rsvp_count: going ? o.rsvp_count + 1 : Math.max(0, o.rsvp_count - 1) } : o));
                   try {
                     await setOfficeHourRSVP(oh.id, going);
-                    showToast(going ? `RSVP'd to ${oh.topic}` : 'RSVP removed', going ? '🎙️' : '👋');
+                    showToast(going ? `RSVP'd to ${oh.topic}` : 'RSVP removed', going ? 'RSVP' : 'Removed');
                   } catch {
                     setList(prev => prev.map(o => o.id === oh.id ? { ...o, has_rsvp: !going, rsvp_count: going ? Math.max(0, o.rsvp_count - 1) : o.rsvp_count + 1 } : o));
-                    showToast('Could not update RSVP', '⚠️');
+                    showToast('Could not update RSVP', 'Error');
                   }
                 }}
               />
@@ -121,7 +121,7 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
   const liveNow = new Date(oh.starts_at).getTime() <= Date.now() && new Date(oh.ends_at).getTime() > Date.now();
   return (
     <AnimatedPressable
-      onPress={() => router.push(`/office-hours/${oh.id}` as any)}
+      onPress={() => router.push({ pathname: '/office-hours/[id]', params: { id: oh.id } })}
       style={{
         backgroundColor: colors.surface,
         borderRadius: radius.lg,
@@ -172,7 +172,7 @@ function OfficeHourCard({ oh, onRSVP }: { oh: OfficeHour; onRSVP: (going: boolea
               avatarColor={oh.host.avatar_color}
               avatarUrl={oh.host.avatar_url ?? undefined}
               size={22}
-              showGlow={false}
+              showHalo={false}
             />
             <Text style={{ color: colors.textSecondary, fontSize: 12 }}>@{oh.host.username}</Text>
           </>

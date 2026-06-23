@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
+import { isAllowedAuthCallbackUrl } from '../urlSafety';
 
 /**
  * Parse + consume an auth callback URL.
@@ -63,6 +64,8 @@ export function parseAuthCallbackUrl(url: string): AuthCallbackParams {
 }
 
 export function hasAuthCallbackPayload(url: string): boolean {
+  if (!isAllowedAuthCallbackUrl(url)) return false;
+
   const p = parseAuthCallbackUrl(url);
   return Boolean(
     p.accessToken ||
@@ -80,7 +83,7 @@ export function hasAuthCallbackPayload(url: string): boolean {
 export async function consumeAuthCallbackUrl(url: string): Promise<AuthCallbackResult> {
   const params = parseAuthCallbackUrl(url);
 
-  if (!hasAuthCallbackPayload(url)) {
+  if (!isAllowedAuthCallbackUrl(url) || !hasAuthCallbackPayload(url)) {
     return { status: 'ignored', type: params.type };
   }
 

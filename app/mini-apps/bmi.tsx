@@ -7,12 +7,12 @@ import { useTheme } from '../../lib/theme';
 type Unit = 'metric' | 'imperial';
 
 const CATS = [
-  { label: 'Underweight', range: '< 18.5', color: '#38BDF8', min: 0, max: 18.5, emoji: '📉', advice: 'Consider consulting a nutritionist to reach a healthy weight.' },
-  { label: 'Normal', range: '18.5–24.9', color: '#22C55E', min: 18.5, max: 25, emoji: '✅', advice: "You're in the healthy range. Keep it up!" },
-  { label: 'Overweight', range: '25–29.9', color: '#F59E0B', min: 25, max: 30, emoji: '⚠️', advice: 'Light diet changes and regular exercise can help.' },
-  { label: 'Obese I', range: '30–34.9', color: '#F97316', min: 30, max: 35, emoji: '🔶', advice: 'Consult a doctor and consider a structured program.' },
-  { label: 'Obese II', range: '35–39.9', color: '#EF4444', min: 35, max: 40, emoji: '🔴', advice: 'Medical supervision is strongly recommended.' },
-  { label: 'Obese III', range: '≥ 40', color: '#991B1B', min: 40, max: 99, emoji: '🚨', advice: 'Please seek professional medical advice immediately.' },
+  { label: 'Underweight', range: '< 18.5', color: '#38BDF8', min: 0, max: 18.5, marker: 'Low', advice: 'Consider consulting a nutritionist to reach a healthy weight.' },
+  { label: 'Normal', range: '18.5–24.9', color: '#22C55E', min: 18.5, max: 25, marker: 'OK', advice: "You're in the healthy range. Keep it up!" },
+  { label: 'Overweight', range: '25–29.9', color: '#F59E0B', min: 25, max: 30, marker: 'High', advice: 'Light diet changes and regular exercise can help.' },
+  { label: 'Obese I', range: '30–34.9', color: '#F97316', min: 30, max: 35, marker: 'I', advice: 'Consult a doctor and consider a structured program.' },
+  { label: 'Obese II', range: '35–39.9', color: '#EF4444', min: 35, max: 40, marker: 'II', advice: 'Medical supervision is strongly recommended.' },
+  { label: 'Obese III', range: '≥ 40', color: '#991B1B', min: 40, max: 99, marker: 'III', advice: 'Please seek professional medical advice immediately.' },
 ];
 
 function getCat(bmi: number) {
@@ -93,7 +93,7 @@ export default function BmiScreen() {
             style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: unit === u ? accent : 'transparent', alignItems: 'center', shadowColor: unit === u ? accent : 'transparent', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}
           >
             <Text style={{ color: unit === u ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 14 }}>
-              {u === 'metric' ? '🌍 Metric' : '🇺🇸 Imperial'}
+              {u === 'metric' ? 'Metric' : 'Imperial'}
             </Text>
             <Text style={{ color: unit === u ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontSize: 11, marginTop: 2 }}>
               {u === 'metric' ? 'kg · cm' : 'lbs · ft'}
@@ -124,7 +124,7 @@ export default function BmiScreen() {
         <>
           {/* BMI result */}
           <View style={{ backgroundColor: cat.color + '18', borderRadius: 28, borderWidth: 1.5, borderColor: cat.color + '44', padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: cat.color, shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 6 } }}>
-            <Text style={{ fontSize: 32, marginBottom: 4 }}>{cat.emoji}</Text>
+            <Text style={{ color: cat.color, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>{cat.marker}</Text>
             <Text style={{ color: cat.color, fontSize: 80, fontWeight: '200', letterSpacing: -5, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
             <Text style={{ color: cat.color, fontSize: 22, fontWeight: '800', marginBottom: 4 }}>{cat.label}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 13 }}>BMI range: {cat.range}</Text>

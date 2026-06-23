@@ -48,8 +48,8 @@ function CreateSalonScreenInner() {
         cover_color: coverColor,
         topic_tags: tagList,
       });
-      showToast(`Salon created`, '🏛️');
-      router.replace(`/salon/${salon.slug}` as any);
+      showToast('Salon created', 'Created');
+      router.replace({ pathname: '/salon/[slug]', params: { slug: salon.slug } });
     } catch (e) {
       Alert.alert('Could not create salon', (e as Error).message);
     } finally {

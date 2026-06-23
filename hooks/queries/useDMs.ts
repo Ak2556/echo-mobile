@@ -19,8 +19,7 @@ import {
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { supabase } from '../../lib/supabase';
 
-// ── Conversations list ────────────────────────────────────────────────────────
-
+// Conversations list
 /** All conversations for the current user, with real unread counts. */
 export function useRemoteConversations() {
   const remote = isSupabaseRemote();
@@ -60,8 +59,7 @@ export function useRemoteConversations() {
   });
 }
 
-// ── Single conversation ───────────────────────────────────────────────────────
-
+// Single conversation
 /** Fetch a conversation header by UUID (used when local store doesn't have it). */
 export function useRemoteConversation(conversationId: string | undefined) {
   return useQuery<RemoteConversation | null>({
@@ -72,8 +70,7 @@ export function useRemoteConversation(conversationId: string | undefined) {
   });
 }
 
-// ── Messages ──────────────────────────────────────────────────────────────────
-
+// Messages
 /** Messages in a conversation — infinite scroll (load older on demand). */
 export function useRemoteMessages(conversationId: string | undefined) {
   const remote = isSupabaseRemote();
@@ -128,8 +125,7 @@ export function useRemoteMessages(conversationId: string | undefined) {
   });
 }
 
-// ── Send ──────────────────────────────────────────────────────────────────────
-
+// Send
 /** Send a text DM with optimistic update. */
 export function useSendRemoteDM(conversationId: string | undefined, recipientId: string | undefined) {
   const qc = useQueryClient();
@@ -178,8 +174,7 @@ export function useSendRemoteDM(conversationId: string | undefined, recipientId:
   });
 }
 
-// ── Mark read ─────────────────────────────────────────────────────────────────
-
+// Mark read
 /** Mark all incoming messages in a conversation as read. */
 export function useMarkRead() {
   const qc = useQueryClient();
@@ -192,8 +187,7 @@ export function useMarkRead() {
   });
 }
 
-// ── Delete message ────────────────────────────────────────────────────────────
-
+// Delete message
 /** Soft-delete own message with optimistic update. */
 export function useDeleteMessage(conversationId: string | undefined) {
   const qc = useQueryClient();
@@ -224,27 +218,25 @@ export function useDeleteMessage(conversationId: string | undefined) {
   });
 }
 
-// ── Reactions ─────────────────────────────────────────────────────────────────
-
-/** Add or remove an emoji reaction on a message. */
+// Reactions
+/** Add or remove a reaction on a message. */
 export function useToggleReaction(conversationId: string | undefined) {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: ({
-      messageId, emoji, hasReacted,
-    }: { messageId: string; emoji: string; hasReacted: boolean }) =>
+      messageId, reactionValue, hasReacted,
+    }: { messageId: string; reactionValue: string; hasReacted: boolean }) =>
       hasReacted
-        ? removeMessageReaction(messageId, emoji)
-        : addMessageReaction(messageId, emoji),
+        ? removeMessageReaction(messageId, reactionValue)
+        : addMessageReaction(messageId, reactionValue),
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['messages', conversationId] });
     },
   });
 }
 
-// ── Typing indicator ──────────────────────────────────────────────────────────
-
+// Typing indicator
 /** Subscribe to partner's typing events and expose a throttled send function. */
 export function useTypingIndicator(
   conversationId: string | undefined,

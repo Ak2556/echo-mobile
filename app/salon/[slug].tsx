@@ -76,11 +76,11 @@ function SalonDetailScreenInner() {
     setSalon(prev => prev ? { ...prev, is_member: next, member_count: next ? prev.member_count + 1 : Math.max(0, prev.member_count - 1) } : prev);
     try {
       await setSalonMembership(salon.id, next);
-      showToast(next ? `Joined ${salon.name}` : `Left ${salon.name}`, next ? '🏛️' : '👋');
+      showToast(next ? `Joined ${salon.name}` : `Left ${salon.name}`, next ? 'Joined' : 'Left');
     } catch {
       // Rollback
       setSalon(prev => prev ? { ...prev, is_member: !next, member_count: next ? Math.max(0, prev.member_count - 1) : prev.member_count + 1 } : prev);
-      showToast('Could not update membership', '⚠️');
+      showToast('Could not update membership', 'Error');
     }
   };
 

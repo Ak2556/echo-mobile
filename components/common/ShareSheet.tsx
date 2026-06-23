@@ -67,7 +67,7 @@ export function ShareSheet({ visible, onClose, echo }: ShareSheetProps) {
       key: 'dm',
       label: 'Send to a chat',
       icon: <PaperPlaneTilt color={colors.text} size={20} />,
-      onPress: () => router.push({ pathname: '/messages', params: { share: echo.id } as any }),
+      onPress: () => router.push({ pathname: '/messages', params: { share: echo.id } }),
     },
   ];
 

@@ -3,8 +3,9 @@ import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Sparkle, Trash } from 'phosphor-react-native';
+import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Sparkle, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
+import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { setPinnedEcho } from '../../lib/supabaseEchoApi';
 import { showToast } from '../../components/ui/Toast';
 import { LikeButton } from '../../components/social/LikeButton';
@@ -31,7 +32,7 @@ export default function ThreadDetailScreen() {
   const [showMenu, setShowMenu] = useState(false);
   // Pull the owner's profile to know whether THIS echo is currently their pin.
   const ownProfile = useRemoteProfileBundle(remote ? currentUserId : undefined);
-  const myPinnedId = ownProfile.data?.user ? (ownProfile.data as any).pinnedEcho?.id ?? null : null;
+  const myPinnedId = ownProfile.data?.pinnedEcho?.id ?? null;
 
   const item = feed.find(f => f.id === id);
   const bookmarked = remote ? !!item?.isBookmarked : id ? isBookmarked(id) : false;
@@ -43,6 +44,10 @@ export default function ThreadDetailScreen() {
       .filter(entry => entry.id !== item.id && inferTopics(entry).some(topic => itemTopics.includes(topic.toLowerCase())))
       .slice(0, 3);
   }, [feed, item]);
+  const visibleTopics = useMemo(
+    () => item ? (item.topicLabels?.length ? item.topicLabels : inferTopics(item)).slice(0, 4) : [],
+    [item],
+  );
 
   const toggleBm = () => {
     if (!id) return;
@@ -66,6 +71,7 @@ export default function ThreadDetailScreen() {
   }
 
   const isOwner = item.userId === currentUserId || item.userId === 'me';
+  const primaryTopic = visibleTopics[0];
 
   const handleDelete = () => {
     Alert.alert('Delete Echo', 'This cannot be undone.', [
@@ -100,6 +106,48 @@ export default function ThreadDetailScreen() {
       },
     });
   };
+
+  const connectionActions = [
+    {
+      key: 'comments',
+      label: 'Open comments',
+      description: `${item.commentCount ?? 0} public repl${(item.commentCount ?? 0) === 1 ? 'y' : 'ies'}`,
+      icon: <ChatCircle color={colors.textSecondary} size={18} />,
+      onPress: () => router.push(`/comments/${item.id}`),
+    },
+    {
+      key: 'perspective',
+      label: 'Add perspective',
+      description: 'Branch this idea in Echo chat',
+      icon: <GitBranch color={colors.textSecondary} size={18} weight="bold" />,
+      onPress: () => router.push({
+        pathname: '/remix/[id]',
+        params: { id: item.id, author: item.username, parentTitle: item.editorialTitle || item.prompt },
+      }),
+      emphasis: 'primary' as const,
+    },
+    {
+      key: 'quote',
+      label: 'Quote Echo',
+      description: 'Publish your take with this attached',
+      icon: <NotePencil color={colors.textSecondary} size={18} />,
+      onPress: () => router.push({ pathname: '/create-post', params: { quoted: item.id } }),
+    },
+    ...(primaryTopic ? [{
+      key: 'topic',
+      label: `Explore #${primaryTopic}`,
+      description: 'Find related people and Echoes',
+      icon: <Compass color={colors.textSecondary} size={18} />,
+      onPress: () => router.push({ pathname: '/(tabs)/explore', params: { q: primaryTopic } }),
+    }] : []),
+    ...(!isOwner ? [{
+      key: 'message',
+      label: 'Message author',
+      description: 'Continue privately with context',
+      icon: <PaperPlaneTilt color={colors.textSecondary} size={18} />,
+      onPress: handleMessageAboutEcho,
+    }] : []),
+  ];
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -137,10 +185,10 @@ export default function ThreadDetailScreen() {
             onPress: async () => {
               try {
                 await setPinnedEcho(isPinned ? null : item.id);
-                showToast(isPinned ? 'Unpinned' : 'Pinned to your profile', isPinned ? '' : '📌');
+                showToast(isPinned ? 'Unpinned' : 'Pinned to your profile', isPinned ? '' : 'Pinned');
                 qc.invalidateQueries({ queryKey: ['profile', currentUserId] });
               } catch (e: any) {
-                showToast(e?.message || 'Could not update pin', '❌');
+                showToast(e?.message || 'Could not update pin', 'Error');
               }
             },
           },
@@ -148,7 +196,7 @@ export default function ThreadDetailScreen() {
             key: 'edit',
             label: 'Edit Echo',
             icon: <NotePencil color={colors.accent} size={18} />,
-            onPress: () => router.push({ pathname: '/edit-post' as any, params: { id: item.id } }),
+            onPress: () => router.push({ pathname: '/edit-post', params: { id: item.id } }),
           },
           {
             key: 'delete',
@@ -210,10 +258,16 @@ export default function ThreadDetailScreen() {
               </>
             ) : null}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {(item.topicLabels?.length ? item.topicLabels : inferTopics(item)).slice(0, 4).map(topic => (
-                <View key={topic} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}>
+              {visibleTopics.map(topic => (
+                <Pressable
+                  key={topic}
+                  onPress={() => router.push({ pathname: '/(tabs)/explore', params: { q: topic } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Explore ${topic}`}
+                  style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
+                >
                   <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
-                </View>
+                </Pressable>
               ))}
             </View>
           </View>
@@ -258,15 +312,13 @@ export default function ThreadDetailScreen() {
           </View>
         </View>
 
-        {!isOwner ? (
-          <Pressable
-            onPress={handleMessageAboutEcho}
-            style={{ marginTop: 18, paddingVertical: 14, borderRadius: radius.card, backgroundColor: colors.accent, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
-          >
-            <PaperPlaneTilt color="#fff" size={18} />
-            <Text style={{ color: '#fff', fontWeight: '800' }}>Message about this Echo</Text>
-          </Pressable>
-        ) : null}
+        <View style={{ marginTop: 18 }}>
+          <ConnectionPanel
+            title="Keep this connected"
+            subtitle="Move from this Echo into the next useful place."
+            actions={connectionActions}
+          />
+        </View>
 
         <SimilarEchoesRail echoId={item.id} />
 

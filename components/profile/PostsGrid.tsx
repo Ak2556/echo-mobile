@@ -18,6 +18,7 @@ interface PostsGridProps {
   echoes: FeedItem[];
   onPressEcho: (item: FeedItem) => void;
   avatarColor: string;
+  containerWidth?: number;
 }
 
 function GridCell({ item, onPress, size }: { item: FeedItem; onPress: () => void; size: number }) {
@@ -99,13 +100,14 @@ function FeaturedCard({
   );
 }
 
-export function PostsGrid({ echoes, onPressEcho, avatarColor }: PostsGridProps) {
+export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: PostsGridProps) {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const featured = echoes[0];
   const gridEchoes = echoes.slice(1);
+  const gridWidth = Math.min(width, containerWidth ?? width);
   const cellSize = Math.floor(
-    (width - GRID_HORIZONTAL_INSET * 2 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS,
+    (gridWidth - GRID_HORIZONTAL_INSET * 2 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS,
   );
 
   if (echoes.length === 0) {

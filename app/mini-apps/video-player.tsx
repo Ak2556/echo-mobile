@@ -61,7 +61,7 @@ export default function VideoPlayerApp() {
     setIsPlaying(false);
     setPosition(0);
     setDuration(asset.duration ? asset.duration * 1000 : 0);
-    showToast('Video loaded', '🎬');
+    showToast('Video loaded', 'Loaded');
   };
 
   const recordVideo = async () => {
@@ -81,7 +81,7 @@ export default function VideoPlayerApp() {
     setVideo({ uri: asset.uri, name, duration: asset.duration ? asset.duration * 1000 : 0, width: asset.width, height: asset.height });
     setIsPlaying(false);
     setPosition(0);
-    showToast('Video recorded', '🎥');
+    showToast('Video recorded', 'Recorded');
   };
 
   useEffect(() => {
@@ -193,7 +193,7 @@ export default function VideoPlayerApp() {
                 </View>
               </AnimatedPressable>
 
-              <AnimatedPressable onPress={() => showToast('Use pinch to zoom', '🔍')} scaleValue={0.85} haptic="light">
+              <AnimatedPressable onPress={() => showToast('Use pinch to zoom', 'Zoom')} scaleValue={0.85} haptic="light">
                 <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.glassBorder }}>
                   <CornersOut color={colors.text} size={18} />
                 </View>

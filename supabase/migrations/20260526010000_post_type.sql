@@ -1,7 +1,7 @@
 -- Persist post type on echoes.
 --
 -- Until now the client INFERRED post type from media presence
--- (video → 'video', media → 'photo', else → 'text'). That's fine for those
+-- (video -> 'video', media -> 'photo', else -> 'text'). That's fine for those
 -- three, but "musing" (a text-only "thinking out loud" post) is
 -- indistinguishable from a plain text echo on the wire — it would round-trip
 -- back as 'text' and lose its treatment.

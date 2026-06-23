@@ -41,16 +41,16 @@ const webStorage = {
   },
 };
 
+const authLock = async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => fn();
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: Platform.OS === 'web' ? webStorage : AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: Platform.OS === 'web',
-    // We tried processLock — it deadlocked getSession() under certain
-    // post-OAuth conditions, leaving the app stuck on a buffer screen even
-    // after sign-in succeeded. The default no-lock behavior is fine for
-    // single-threaded JS in React Native.
+    lock: authLock,
+    lockAcquireTimeout: 3_000,
   },
 });
 

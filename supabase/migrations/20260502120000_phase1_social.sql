@@ -4,7 +4,7 @@
 --   * Mutes / blocks tables (user_blocks already exists in some envs; guard)
 --   * Pinned echoes (public_echoes.pinned_at)
 
--- ── Quote-repost ────────────────────────────────────────────
+-- Quote-repost
 alter table public.public_echoes
   add column if not exists quoted_echo_id uuid
   references public.public_echoes (id) on delete set null;
@@ -35,7 +35,7 @@ create trigger trg_bump_quote_repost_count
   after insert or delete on public.public_echoes
   for each row execute function public.bump_quote_repost_count();
 
--- ── Comment threading ───────────────────────────────────────
+-- Comment threading
 alter table public.echo_comments
   add column if not exists parent_comment_id uuid
   references public.echo_comments (id) on delete cascade;
@@ -44,7 +44,7 @@ create index if not exists idx_echo_comments_parent
   on public.echo_comments (parent_comment_id)
   where parent_comment_id is not null;
 
--- ── Mutes & blocks ──────────────────────────────────────────
+-- Mutes & blocks
 create table if not exists public.user_blocks (
   blocker_id uuid not null references auth.users (id) on delete cascade,
   blocked_id uuid not null references auth.users (id) on delete cascade,
@@ -81,7 +81,7 @@ drop policy if exists "user_mutes_delete_own" on public.user_mutes;
 create policy "user_mutes_delete_own" on public.user_mutes
   for delete using (auth.uid() = muter_id);
 
--- ── Pinned echoes ───────────────────────────────────────────
+-- Pinned echoes
 alter table public.public_echoes
   add column if not exists pinned_at timestamptz;
 

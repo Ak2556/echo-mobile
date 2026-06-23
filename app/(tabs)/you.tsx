@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import {
   BookmarkSimple,
   CalendarBlank,
@@ -9,7 +9,6 @@ import {
   Compass,
   FilmStrip,
   Gear,
-  Images,
   PencilSimple,
   SignOut,
   Sparkle,
@@ -17,6 +16,7 @@ import {
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
+import { ProfilePhotoPreview } from '../../components/ui/ProfilePhotoPreview';
 import { PostsGrid } from '../../components/profile/PostsGrid';
 import { FeedCard } from '../../components/social/FeedCard';
 import { ThinkingFingerprintCard } from '../../components/social/ThinkingFingerprintCard';
@@ -28,6 +28,7 @@ import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { StreakXPBadge } from '../../components/social/StreakXPBadge';
 import { features } from '../../lib/featureFlags';
+import { useResponsiveLayout } from '../../lib/responsive';
 
 const COMPACT_TEXT_SCALE = 1.15;
 const BODY_TEXT_SCALE = 1.25;
@@ -36,10 +37,10 @@ const TITLE_TEXT_SCALE = 1.12;
 // Library menu — only the two surfaces that are PRIMARY discovery for
 // the user's own content. Messages moved into /settings; Settings became
 // the gear icon in the header. Apps stays gated behind feature flag.
-const SETTINGS_ROWS = [
-  { key: 'myechoes', Icon: FilmStrip, label: 'My Echoes', route: '/(tabs)/echoes' },
+const SETTINGS_ROWS: { key: string; Icon: React.ComponentType<any>; label: string; route: Href | null }[] = [
   { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
-  ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' }] : []),
+  { key: 'followers', Icon: FilmStrip, label: 'Followers', route: null },
+  ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' as Href }] : []),
 ];
 
 type ProfileColors = ReturnType<typeof useTheme>['colors'];
@@ -50,6 +51,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
   const insets = useSafeAreaInsets();
+  const layout = useResponsiveLayout();
   const {
     userId,
     username,
@@ -57,9 +59,11 @@ export default function ProfileScreen() {
     bio,
     avatarColor,
     avatarUrl,
+    profilePhotoVisible,
     publishedEchoes,
   } = useAppStore();
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
   const displayLabel = displayName || username || 'User';
   const handle = username || 'user';
   const { data: remoteBundle } = useRemoteProfileBundle(userId);
@@ -72,6 +76,7 @@ export default function ProfileScreen() {
   const followerCount = remoteBundle?.user?.followerCount ?? 0;
   const followingCount = remoteBundle?.user?.followingCount ?? 0;
   const profileAccent = avatarColor || colors.accent;
+  const visibleAvatarUrl = profilePhotoVisible ? (avatarUrl || undefined) : undefined;
 
   const handlePressEcho = (item: FeedItem) => router.push(`/thread/${item.id}`);
   const openFollowers = (tab: 'followers' | 'following') => {
@@ -90,10 +95,11 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{
-          paddingTop: insets.top + 10,
-          paddingBottom: insets.bottom + 120,
+          paddingTop: insets.top + (layout.isDesktop ? 28 : 10),
+          paddingBottom: insets.bottom + layout.bottomChromePadding,
         }}
       >
+        <View style={layout.contentStyle}>
         <View style={styles.screenHeader}>
           <View style={styles.headerCopy}>
             <Text
@@ -154,13 +160,25 @@ export default function ProfileScreen() {
             },
           ]}
         >
+          <View style={[styles.heroAccent, { backgroundColor: profileAccent }]} />
           <View style={styles.identityRow}>
-            <ProfileAvatar
-              displayName={displayLabel}
-              avatarColor={profileAccent}
-              avatarUrl={avatarUrl || undefined}
-              size={82}
-            />
+            <Pressable
+              onPress={() => visibleAvatarUrl ? setPhotoPreviewOpen(true) : undefined}
+              disabled={!visibleAvatarUrl}
+              accessibilityRole={visibleAvatarUrl ? 'button' : undefined}
+              accessibilityLabel={visibleAvatarUrl ? 'Open profile photo' : undefined}
+              style={({ pressed }) => [
+                styles.avatarPressable,
+                { opacity: pressed ? 0.82 : 1 },
+              ]}
+            >
+              <ProfileAvatar
+                displayName={displayLabel}
+                avatarColor={profileAccent}
+                avatarUrl={visibleAvatarUrl}
+                size={72}
+              />
+            </Pressable>
             <View style={styles.identityCopy}>
               <Text
                 style={[font.displayBlack, styles.displayName, { color: colors.text, letterSpacing: 0 }]}
@@ -176,6 +194,15 @@ export default function ProfileScreen() {
               >
                 @{handle}
               </Text>
+              {!profilePhotoVisible && (
+                <Text
+                  style={[font.bodySemibold, styles.photoHiddenText, { color: colors.textMuted }]}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
+                >
+                  Photo hidden
+                </Text>
+              )}
             </View>
           </View>
 
@@ -236,7 +263,7 @@ export default function ProfileScreen() {
                     {
                       backgroundColor: colors.accentMuted,
                       borderColor: colors.accent + '40',
-                      borderRadius: radius.full,
+                  borderRadius: radius.lg,
                     },
                   ]}
                 >
@@ -291,7 +318,7 @@ export default function ProfileScreen() {
                   colors={colors}
                   radius={radius}
                   font={font}
-                  onPress={() => route ? router.push(route as any) : openFollowers('followers')}
+                  onPress={() => route ? router.push(route) : openFollowers('followers')}
                 />
                 {index < SETTINGS_ROWS.length - 1 ? <View style={[styles.menuDivider, { backgroundColor: colors.border }]} /> : null}
               </React.Fragment>
@@ -316,7 +343,12 @@ export default function ProfileScreen() {
               onCreate={() => router.push('/create-post')}
             />
           ) : (
-            <PostsGrid echoes={publishedEchoes} onPressEcho={handlePressEcho} avatarColor={profileAccent} />
+            <PostsGrid
+              echoes={publishedEchoes}
+              onPressEcho={handlePressEcho}
+              avatarColor={profileAccent}
+              containerWidth={layout.contentWidth}
+            />
           )
         ) : (
           <AboutPanel
@@ -355,6 +387,7 @@ export default function ProfileScreen() {
             </Text>
           </Pressable>
         </View>
+        </View>
       </ScrollView>
 
       {/* Status-bar mask — solid background block fixed to the top of the
@@ -370,6 +403,12 @@ export default function ProfileScreen() {
           height: statusFadeHeight,
           backgroundColor: colors.bg,
         }}
+      />
+      <ProfilePhotoPreview
+        visible={photoPreviewOpen}
+        imageUrl={visibleAvatarUrl}
+        displayName={displayLabel}
+        onClose={() => setPhotoPreviewOpen(false)}
       />
     </View>
   );
@@ -462,7 +501,7 @@ function ProfileTabBar({
   font: ProfileFont;
 }) {
   return (
-    <View style={[styles.tabShell, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+    <View style={[styles.tabShell, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
       {(['posts', 'about'] as const).map(tab => {
         const active = activeTab === tab;
         return (
@@ -475,8 +514,8 @@ function ProfileTabBar({
             style={[
               styles.tabButton,
               {
-                backgroundColor: active ? colors.accent : 'transparent',
-                borderRadius: radius.full,
+                backgroundColor: active ? colors.accentMuted : 'transparent',
+                borderRadius: radius.md,
               },
             ]}
           >
@@ -484,7 +523,7 @@ function ProfileTabBar({
               style={[
                 font.bodySemibold,
                 styles.tabText,
-                { color: active ? '#fff' : colors.textMuted },
+                { color: active ? colors.accent : colors.textMuted },
               ]}
               numberOfLines={1}
               maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
@@ -516,7 +555,6 @@ function ProfileEmptyPosts({
         { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.card },
       ]}
     >
-      <Images color={colors.accent} size={26} weight="duotone" />
       <Text
         style={[font.display, styles.emptyTitle, { color: colors.text, letterSpacing: 0 }]}
         numberOfLines={2}
@@ -736,7 +774,7 @@ function trimCount(value: number) {
 const styles = StyleSheet.create({
   screenHeader: {
     paddingHorizontal: 20,
-    paddingBottom: 14,
+    paddingBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -751,8 +789,8 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   headerTitle: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 24,
+    lineHeight: 30,
   },
   headerActions: {
     flexDirection: 'row',
@@ -767,9 +805,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   editButton: {
-    minWidth: 72,
-    height: 40,
-    paddingHorizontal: 14,
+    minWidth: 66,
+    height: 38,
+    paddingHorizontal: 12,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
@@ -782,34 +820,53 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     marginHorizontal: 16,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 16,
     borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  heroAccent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    opacity: 0.92,
   },
   identityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
+  avatarPressable: {
+    flexShrink: 0,
+  },
   identityCopy: {
     flex: 1,
     minWidth: 0,
   },
   displayName: {
-    fontSize: 27,
-    lineHeight: 32,
+    fontSize: 22,
+    lineHeight: 28,
   },
   username: {
     fontSize: 13,
     lineHeight: 18,
     marginTop: 3,
   },
+  photoHiddenText: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 5,
+  },
   heroDivider: {
     height: StyleSheet.hairlineWidth,
-    marginTop: 14,
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 10,
   },
   statsRow: {
-    minHeight: 58,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'stretch',
   },
@@ -822,13 +879,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   statValue: {
-    fontSize: 21,
-    lineHeight: 25,
+    fontSize: 18,
+    lineHeight: 22,
   },
   statLabel: {
     fontSize: 11,
     lineHeight: 15,
-    marginTop: 3,
+    marginTop: 2,
   },
   statDivider: {
     width: StyleSheet.hairlineWidth,
@@ -840,8 +897,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   addBioButton: {
-    marginTop: 12,
-    minHeight: 42,
+    marginTop: 10,
+    minHeight: 38,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
     flexDirection: 'row',
@@ -887,16 +944,16 @@ const styles = StyleSheet.create({
   },
   tabShell: {
     marginHorizontal: 16,
-    marginTop: 16,
-    padding: 4,
-    minHeight: 48,
+    marginTop: 14,
+    padding: 3,
+    minHeight: 42,
     flexDirection: 'row',
     borderWidth: StyleSheet.hairlineWidth,
   },
   tabButton: {
     flex: 1,
     minWidth: 0,
-    minHeight: 40,
+    minHeight: 34,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
@@ -908,27 +965,27 @@ const styles = StyleSheet.create({
   emptyPanel: {
     marginHorizontal: 16,
     marginTop: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 28,
+    paddingHorizontal: 18,
+    paddingTop: 20,
+    paddingBottom: 96,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
   emptyTitle: {
-    fontSize: 23,
-    lineHeight: 29,
-    marginTop: 14,
+    fontSize: 20,
+    lineHeight: 26,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 6,
     textAlign: 'center',
   },
   createButton: {
-    marginTop: 18,
-    minHeight: 42,
-    paddingHorizontal: 16,
+    marginTop: 14,
+    minHeight: 38,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -976,7 +1033,7 @@ const styles = StyleSheet.create({
   },
   accountArea: {
     paddingHorizontal: 16,
-    marginTop: 16,
+    marginTop: 14,
   },
   sessionArea: {
     paddingHorizontal: 16,
@@ -993,14 +1050,14 @@ const styles = StyleSheet.create({
   listRowTouchable: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 52,
+    minHeight: 48,
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 12,
   },
   listRowIconTile: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,

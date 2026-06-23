@@ -1,4 +1,4 @@
-import type { ConversationSnapshotMessage } from '../types';
+import type { ConversationSnapshotMessage, PerspectiveType } from '../types';
 
 // Ephemeral context handed from chat/remix screens to the share screen.
 // URL params can't carry the full multi-turn snapshot (size + escape pain),
@@ -9,6 +9,9 @@ export interface PendingPublishContext {
   parentEchoId?: string;
   parentAuthorUsername?: string;
   parentTitle?: string;
+  perspectiveType?: PerspectiveType;
+  perspectiveNote?: string;
+  sourceUrl?: string;
   // Optional pre-filled drafts when remixing.
   initialTitle?: string;
   initialAuthorNote?: string;

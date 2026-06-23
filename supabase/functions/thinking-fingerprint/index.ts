@@ -237,6 +237,26 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  const { error: burstLimitError } = await supabase.rpc("check_app_rate_limit", {
+    p_action: "thinking_fingerprint_hour",
+    p_limit: 12,
+    p_window_seconds: 3600,
+    p_user_id: authData.user.id,
+  });
+  if (burstLimitError) {
+    return json({ error: "Rate limit reached. Try again later." }, 429);
+  }
+
+  const { error: dailyLimitError } = await supabase.rpc("check_app_rate_limit", {
+    p_action: "thinking_fingerprint_day",
+    p_limit: 40,
+    p_window_seconds: 86400,
+    p_user_id: authData.user.id,
+  });
+  if (dailyLimitError) {
+    return json({ error: "Rate limit reached. Try again later." }, 429);
+  }
+
   // Pull the most recent echoes for analysis.
   const { data: rows, error } = await supabase
     .from("public_echoes")

@@ -31,7 +31,7 @@ export default function BlockedUsersScreen() {
           text: 'Unblock',
           onPress: () => {
             toggleBlock(user.id);
-            showToast(`Unblocked @${user.username}`, '🔓');
+            showToast(`Unblocked @${user.username}`, 'Done');
           },
         },
       ]
