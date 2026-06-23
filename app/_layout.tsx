@@ -199,6 +199,8 @@ function RootLayout() {
           <Stack.Screen name="my-reports" options={{ presentation: 'card' }} />
           <Stack.Screen name="create-salon" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="create-office-hour" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="create-listing" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="listing/[id]" options={{ presentation: 'card' }} />
         </Stack>
         <ToastProvider />
         <ConsentBanner />
