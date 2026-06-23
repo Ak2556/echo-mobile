@@ -1,5 +1,6 @@
 import { persistGet, persistSet, storage } from '../persist';
 import type { EchoAIModel } from '../../lib/api';
+import type { CurrencyCode } from '../../lib/currency';
 
 export interface SettingsSlice {
   // ── Core ──
@@ -58,6 +59,9 @@ export interface SettingsSlice {
   // ── Thinking Archetype ──
   thinkingStyle: string;
   setThinkingStyle: (v: string) => void;
+  // ── Marketplace ──
+  preferredCurrency: CurrencyCode;
+  setPreferredCurrency: (v: CurrencyCode) => void;
   // ── Accessibility ──
   fontScale: number;
   setFontScale: (v: number) => void;
@@ -158,6 +162,8 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setInterests: (v) => { persistSet('interests', v); set({ interests: v }); },
     thinkingStyle: persistGet<string>('thinkingStyle', ''),
     setThinkingStyle: (v) => { persistSet('thinkingStyle', v); set({ thinkingStyle: v }); },
+    preferredCurrency: persistGet<CurrencyCode>('preferredCurrency', 'INR'),
+    setPreferredCurrency: (v) => { persistSet('preferredCurrency', v); set({ preferredCurrency: v }); },
     fontScale: persistGet<number>('fontScale', 1),
     setFontScale: (v) => { persistSet('fontScale', v); set({ fontScale: v }); },
     hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
