@@ -9,7 +9,8 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
   withRepeat, withSequence, withDecay,
 } from 'react-native-reanimated';
-import { ArrowLeft, Check, At } from 'phosphor-react-native';
+import { ArrowLeft, Check, At, Brain } from 'phosphor-react-native';
+import { ARCHETYPE_QUESTIONS, ARCHETYPES, ThinkingArchetype, scoreArchetype } from '../../lib/thinkingArchetype';
 import { supabase } from '../../lib/supabase';
 import { refreshAuthSession, useAuth } from '../../lib/auth';
 import { useAppStore } from '../../store/useAppStore';
@@ -198,6 +199,7 @@ export default function SignupWizard() {
     setBio: storeSetBio,
     setAvatarColor: storeSetAvatarColor,
     setInterests,
+    setThinkingStyle,
     setHasSeenOnboarding,
     setHasCompletedProductOnboarding,
     setOnboardingDraftCreated,
@@ -212,6 +214,7 @@ export default function SignupWizard() {
   const [avatarColor, setAvatarColorLocal] = useState(ACCENT);
   const [bioText, setBioText] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [archetypeAnswers, setArchetypeAnswers] = useState<Record<string, ThinkingArchetype>>({});
   const [saving, setSaving] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
 
@@ -292,11 +295,11 @@ export default function SignupWizard() {
   }));
 
   useEffect(() => {
-    progressBarWidth.value = withSpring((currentStep / 4) * screenWidth, SPRING);
+    progressBarWidth.value = withSpring((currentStep / 5) * screenWidth, SPRING);
   }, [currentStep, progressBarWidth, screenWidth]);
 
   useEffect(() => {
-    if (currentStep === 4) {
+    if (currentStep === 5) {
       ctaRingOpacity.value = withRepeat(
         withSequence(
           withTiming(0.7, { duration: 1000 }),
@@ -384,6 +387,9 @@ export default function SignupWizard() {
     storeSetAvatarColor(avatarColor);
     storeSetBio(bioText.trim());
     setInterests(selectedInterests);
+    if (Object.keys(archetypeAnswers).length > 0) {
+      setThinkingStyle(scoreArchetype(archetypeAnswers));
+    }
     setHasSeenOnboarding(true);
     setHasCompletedProductOnboarding(false);
     setOnboardingDraftCreated(false);
@@ -395,7 +401,7 @@ export default function SignupWizard() {
     router.replace('/onboarding');
   };
 
-  const backHidden = currentStep === 0 || currentStep === 4;
+  const backHidden = currentStep === 0 || currentStep === 5;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
@@ -426,7 +432,7 @@ export default function SignupWizard() {
           <Animated.Text style={[{
             color: '#52525B', fontSize: 13, fontWeight: '600',
           }, counterOpacityStyle]}>
-            Step {currentStep + 1} of 4
+            Step {currentStep + 1} of 5
           </Animated.Text>
 
           <View style={{ width: 30 }} />
@@ -436,7 +442,7 @@ export default function SignupWizard() {
           <Animated.View style={[{
             position: 'absolute',
             top: 0, bottom: 0, left: 0,
-            width: stepWidth * 5,
+            width: stepWidth * 6,
             flexDirection: 'row',
           }, tapeStyle]}>
 
@@ -753,11 +759,106 @@ export default function SignupWizard() {
                   haptic="light"
                   style={{ alignItems: 'center', paddingVertical: 8 }}
                 >
+                  <Text style={{ color: '#52525B', fontSize: 14, fontWeight: '600' }}>Skip for now</Text>
+                </AnimatedPressable>
+              </View>
+            </View>
+
+            {/* Step 4: Thinking Archetype quiz */}
+            <View style={{ width: stepWidth, height: '100%' }}>
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 8 }}
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <Brain color={ACCENT} size={22} weight="fill" />
+                  <Text style={{ color: ACCENT, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>THINKING ARCHETYPE</Text>
+                </View>
+                <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5, marginBottom: 6 }}>
+                  How do you think?
+                </Text>
+                <Text style={{ color: '#52525B', fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
+                  3 quick questions to find your intellectual style. It shapes how Echo introduces you.
+                </Text>
+                {ARCHETYPE_QUESTIONS.map((q, qi) => (
+                  <View key={q.id} style={{ marginBottom: 22 }}>
+                    <Text style={{ color: '#A1A1AA', fontSize: 12, fontWeight: '700', letterSpacing: 0.5, marginBottom: 8 }}>
+                      {qi + 1} of {ARCHETYPE_QUESTIONS.length}
+                    </Text>
+                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', lineHeight: 22, marginBottom: 10 }}>
+                      {q.question}
+                    </Text>
+                    {q.options.map((opt) => {
+                      const selected = archetypeAnswers[q.id] === opt.archetype;
+                      const info = ARCHETYPES[opt.archetype];
+                      return (
+                        <AnimatedPressable
+                          key={opt.archetype}
+                          onPress={() => setArchetypeAnswers(prev => ({ ...prev, [q.id]: opt.archetype }))}
+                          scaleValue={0.97}
+                          haptic="light"
+                          style={{
+                            marginBottom: 8,
+                            borderRadius: 12,
+                            borderWidth: 1.5,
+                            borderColor: selected ? info.color : '#27272A',
+                            backgroundColor: selected ? info.dimColor : '#18181B',
+                            paddingHorizontal: 14,
+                            paddingVertical: 12,
+                          }}
+                        >
+                          <Text style={{ color: selected ? info.color : '#A1A1AA', fontSize: 14, fontWeight: selected ? '700' : '500', lineHeight: 20 }}>
+                            {opt.label}
+                          </Text>
+                        </AnimatedPressable>
+                      );
+                    })}
+                  </View>
+                ))}
+                {/* Preview archetype if all answered */}
+                {Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length && (() => {
+                  const archetype = ARCHETYPES[scoreArchetype(archetypeAnswers)];
+                  return (
+                    <View style={{ borderRadius: 16, borderWidth: 1.5, borderColor: archetype.color + '66', backgroundColor: archetype.dimColor, padding: 16, marginBottom: 16 }}>
+                      <Text style={{ color: archetype.color, fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 4 }}>YOUR ARCHETYPE</Text>
+                      <Text style={{ color: '#fff', fontSize: 19, fontWeight: '800', marginBottom: 4 }}>{archetype.label}</Text>
+                      <Text style={{ color: '#A1A1AA', fontSize: 13, lineHeight: 19 }}>{archetype.description}</Text>
+                    </View>
+                  );
+                })()}
+              </ScrollView>
+              <View style={{ paddingHorizontal: 24, paddingBottom: 16, gap: 12 }}>
+                <AnimatedPressable
+                  onPress={() => goToStep(5)}
+                  scaleValue={0.97}
+                  haptic="medium"
+                  style={{
+                    backgroundColor: Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? ACCENT : '#27272A',
+                    borderRadius: 14, paddingVertical: 16,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? 1 : 0.5,
+                    shadowColor: ACCENT,
+                    shadowOpacity: Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? 0.4 : 0,
+                    shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                    {Object.keys(archetypeAnswers).length === ARCHETYPE_QUESTIONS.length ? 'Continue' : `${ARCHETYPE_QUESTIONS.length - Object.keys(archetypeAnswers).length} questions left`}
+                  </Text>
+                </AnimatedPressable>
+                <AnimatedPressable
+                  onPress={() => goToStep(5)}
+                  scaleValue={0.97}
+                  haptic="light"
+                  style={{ alignItems: 'center', paddingVertical: 8 }}
+                >
                   <Text style={{ color: '#52525B', fontSize: 14, fontWeight: '600' }}>Skip</Text>
                 </AnimatedPressable>
               </View>
             </View>
 
+            {/* Step 5: Confirmation */}
             <View style={{
               width: stepWidth, height: '100%',
               paddingHorizontal: 24, alignItems: 'center',
@@ -822,7 +923,7 @@ export default function SignupWizard() {
           </Animated.View>
         </View>
 
-        {!reduceAnimations && currentStep === 4 && (
+        {!reduceAnimations && currentStep === 5 && (
           <View
             pointerEvents="none"
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}

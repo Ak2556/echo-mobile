@@ -94,6 +94,7 @@ export interface FeedItem {
   hashtags: string[];
   createdAt: string;
   postOrigin?: 'chat' | 'manual' | 'remix';
+  sourceConversationId?: string;
   topicLabels?: string[];
   editorialTitle?: string;
   authorNote?: string;
