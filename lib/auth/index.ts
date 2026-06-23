@@ -19,7 +19,7 @@ export {
   hasAuthCallbackPayload,
   parseAuthCallbackUrl,
 } from './callback';
-export { sendEmailOtp, verifyEmailOtp } from './providers/email';
+export { sendEmailOtp, verifyEmailOtp, signInAsDemo } from './providers/email';
 export { sendPhoneOtp, verifyPhoneOtp } from './providers/phone';
 export type { AuthStatus, AuthState, AuthProfile, ProviderResult } from './types';
 export { CANCELLED } from './types';

@@ -1052,6 +1052,48 @@ export async function fetchMyReports(): Promise<MyReport[]> {
   }));
 }
 
+// ── DSA Art. 20 Appeals ──────────────────────────────────────────────────────
+
+export interface MyAppeal {
+  id: string;
+  reportId: string;
+  reason: string;
+  status: 'pending' | 'upheld' | 'overturned';
+  moderatorNote: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+export async function submitAppeal(reportId: string, reason: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('appeals')
+    .insert({ report_id: reportId, appellant_id: uid, reason: reason.trim() });
+  if (error) throw error;
+}
+
+export async function fetchMyAppeals(): Promise<MyAppeal[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase
+    .from('appeals')
+    .select('id, report_id, reason, status, moderator_note, created_at, resolved_at')
+    .eq('appellant_id', uid)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []).map((a: any) => ({
+    id: a.id,
+    reportId: a.report_id,
+    reason: a.reason,
+    status: a.status as MyAppeal['status'],
+    moderatorNote: a.moderator_note ?? null,
+    createdAt: a.created_at,
+    resolvedAt: a.resolved_at ?? null,
+  }));
+}
+
 export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');

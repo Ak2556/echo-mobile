@@ -15,7 +15,10 @@
         "applinks:echo.app"
       ],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "Echo uses your microphone to record voice memos in the mini-apps section.",
+        "NSCameraUsageDescription": "Echo uses your camera to take photos for your profile and marketplace listings.",
+        "NSPhotoLibraryUsageDescription": "Echo accesses your photo library so you can upload photos to your profile and marketplace listings."
       }
     },
     "android": {

@@ -13,6 +13,7 @@ import {
   SignOut,
   Sparkle,
   SquaresFour,
+  X,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
@@ -33,6 +34,58 @@ import { useResponsiveLayout } from '../../lib/responsive';
 const COMPACT_TEXT_SCALE = 1.15;
 const BODY_TEXT_SCALE = 1.25;
 const TITLE_TEXT_SCALE = 1.12;
+
+interface CompletionStep { key: string; label: string; done: boolean }
+
+function ProfileCompletionBanner({
+  steps,
+  onDismiss,
+  onPress,
+}: {
+  steps: CompletionStep[];
+  onDismiss: () => void;
+  onPress: () => void;
+}) {
+  const { colors, radius, font } = useTheme();
+  const done = steps.filter(s => s.done).length;
+  const total = steps.length;
+  const pct = Math.round((done / total) * 100);
+  const missing = steps.filter(s => !s.done).map(s => s.label);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => ({
+        backgroundColor: pressed ? colors.accentMuted : colors.surface,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: colors.accent + '40',
+        padding: 14,
+        marginHorizontal: 0,
+        marginBottom: 12,
+      })}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14 }]}>
+            Complete your profile — {pct}%
+          </Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>
+            Missing: {missing.join(', ')}
+          </Text>
+        </View>
+        <Pressable onPress={onDismiss} hitSlop={12} style={{ padding: 4 }}>
+          <X color={colors.textMuted} size={16} />
+        </Pressable>
+      </View>
+      {/* Progress bar */}
+      <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
+        <View style={{ height: 4, width: `${pct}%`, backgroundColor: colors.accent, borderRadius: 2 }} />
+      </View>
+    </Pressable>
+  );
+}
 
 // Library menu — only the two surfaces that are PRIMARY discovery for
 // the user's own content. Messages moved into /settings; Settings became
@@ -64,6 +117,16 @@ export default function ProfileScreen() {
   } = useAppStore();
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const completionSteps: CompletionStep[] = useMemo(() => [
+    { key: 'name',   label: 'display name', done: !!(displayName && displayName !== username) },
+    { key: 'bio',    label: 'bio',          done: !!(bio && bio.trim().length > 0) },
+    { key: 'photo',  label: 'photo',        done: !!(avatarUrl && profilePhotoVisible) },
+  ], [displayName, username, bio, avatarUrl, profilePhotoVisible]);
+
+  const profileComplete = completionSteps.every(s => s.done);
+  const showCompletionBanner = !bannerDismissed && !profileComplete && publishedEchoes.length < 10;
   const displayLabel = displayName || username || 'User';
   const handle = username || 'user';
   const { data: remoteBundle } = useRemoteProfileBundle(userId);
@@ -248,6 +311,14 @@ export default function ProfileScreen() {
             </Pressable>
           )}
         </View>
+
+        {showCompletionBanner && (
+          <ProfileCompletionBanner
+            steps={completionSteps}
+            onDismiss={() => setBannerDismissed(true)}
+            onPress={() => router.push('/edit-profile')}
+          />
+        )}
 
         <StreakXPBadge />
 
