@@ -28,9 +28,9 @@ import { useResponsiveLayout } from '../../lib/responsive';
 import { buildPersonaPromptContext, loadPersonaProfile, recordPersonaSignal, syncPersonaFromMessages } from '../../lib/persona';
 
 const EMPTY_SUGGESTIONS = [
-  'A question I keep returning to',
+  'A decision I\'m working through',
+  'Something I can\'t stop thinking about',
   'Something I changed my mind about',
-  'An idea I can\'t fully explain yet',
   'What I actually think about…',
 ];
 
@@ -512,7 +512,7 @@ export default function ChatScreen() {
         }}>
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Start with something real</Text>
           <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
-            A half-formed thought, a question you can't shake, something you've been turning over. The clearest Echoes start there.
+            A question you can't shake, a decision you're working through, something you've been sitting with. That's all it takes.
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 14, opacity: 0.8, lineHeight: 16 }}>
             Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
