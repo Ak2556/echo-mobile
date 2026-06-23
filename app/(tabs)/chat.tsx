@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, usePathname } from 'expo-router';
+import { useRouter, usePathname, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { FlashList } from '@shopify/flash-list';
@@ -24,8 +24,15 @@ import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, CaretDown 
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
 import { track } from '../../lib/analytics';
+import { useResponsiveLayout } from '../../lib/responsive';
+import { buildPersonaPromptContext, loadPersonaProfile, recordPersonaSignal, syncPersonaFromMessages } from '../../lib/persona';
 
-const EMPTY_SUGGESTIONS = ['Ask for a better hook', 'Turn an idea into a post', 'Run a poll for me', 'Summarize a note'];
+const EMPTY_SUGGESTIONS = [
+  'A question I keep returning to',
+  'Something I changed my mind about',
+  'An idea I can\'t fully explain yet',
+  'What I actually think about…',
+];
 
 const MODEL_LABELS: Record<EchoAIModel, string> = {
   'gemini-2.5-flash': 'Flash',
@@ -60,7 +67,10 @@ export default function ChatScreen() {
   const hasSeenChatTabHint = useAppStore(s => s.hasSeenChatTabHint);
   const setHasSeenChatTabHint = useAppStore(s => s.setHasSeenChatTabHint);
   const hasSeenChatEmptyHint = useAppStore(s => s.hasSeenChatEmptyHint);
+  const personaLearningEnabled = useAppStore(s => s.personaLearningEnabled);
+  const accountUserId = useAppStore(s => s.userId);
   const insets = useSafeAreaInsets();
+  const layout = useResponsiveLayout();
   const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
@@ -75,6 +85,7 @@ export default function ChatScreen() {
   const [showHint, setShowHint] = useState(false);
   const [editTarget, setEditTarget] = useState<Message | null>(null);
   const listRef = useRef<any>(null);
+  const didInitialPersonaSyncRef = useRef(false);
 
   // Stop handle — set by openStream, called to cancel mid-stream.
   const stopStreamRef = useRef<(() => void) | null>(null);
@@ -125,6 +136,18 @@ export default function ChatScreen() {
       return () => { clearTimeout(t); clearTimeout(dismissAt); };
     }
   }, [hasSeenChatTabHint, setHasSeenChatTabHint]);
+
+  useEffect(() => {
+    const persona = loadPersonaProfile(accountUserId);
+    if (!personaLearningEnabled || !persona.enabled) {
+      didInitialPersonaSyncRef.current = false;
+      return;
+    }
+    if (!didInitialPersonaSyncRef.current) {
+      syncPersonaFromMessages(useAppStore.getState().messagesBySession, accountUserId);
+      didInitialPersonaSyncRef.current = true;
+    }
+  }, [personaLearningEnabled, accountUserId]);
 
   const messages: ChatMessage[] = useMemo(
     () => (currentSessionId ? messagesBySession[currentSessionId] || [] : []),
@@ -191,6 +214,7 @@ export default function ChatScreen() {
           preferredModel: aiModel,
           conversationId: conversationIdRef.current ?? undefined,
           localResult: { tool_call_id: tool.id, tool_name: tool.name, args: tool.args, ok, result, error },
+          personaContext: buildPersonaPromptContext(loadPersonaProfile(accountUserId)),
           onAbortHandle: (stop) => { stopStreamRef.current = stop; },
           onEvent: (e) => {
             if (e.type === 'conversation') setConvId(e.id);
@@ -214,13 +238,12 @@ export default function ChatScreen() {
         setStreamingMsgId(null);
       }
     },
-    [aiModel, setConvId, startFlush, stopFlush, upsertText, upsertTool],
+    [accountUserId, aiModel, setConvId, startFlush, stopFlush, upsertText, upsertTool],
   );
 
   const navigateFn = useCallback((screen: string) => {
-    // v1 navigation surface. Gen-Z feature routes (daily-question, salons,
-    // office-hours, year-in-echo, quests, badges) are still defined in the
-    // app but hidden from nav and AI navigation per `lib/featureFlags.ts`.
+    // v1 navigation surface. Secondary routes are still defined in the app
+    // but hidden from AI navigation per `lib/featureFlags.ts`.
     const routeMap: Record<string, string> = {
       discover: '/(tabs)/home',
       profile: '/(tabs)/you',
@@ -230,14 +253,14 @@ export default function ChatScreen() {
       bookmarks: '/bookmarks',
       notifications: '/notifications',
     };
-    router.push((routeMap[screen] ?? '/(tabs)/home') as any);
+    router.push((routeMap[screen] ?? '/(tabs)/home') as Href);
   }, [router]);
 
   const draftFn = useCallback((prompt: string, response: string) => {
     router.push({
       pathname: '/create-post',
       params: { prefillTitle: prompt, prefillBody: response },
-    } as any);
+    });
   }, [router]);
 
   const localToolContext = useMemo<LocalToolContext>(
@@ -267,6 +290,7 @@ export default function ChatScreen() {
         await streamEchoAI({
           ...opts,
           preferredModel: aiModel,
+          personaContext: opts.personaContext ?? buildPersonaPromptContext(loadPersonaProfile(accountUserId)),
           onAbortHandle: (stop) => { stopStreamRef.current = stop; },
           onEvent: (e) => {
             if (e.type === 'conversation') setConvId(e.id);
@@ -300,7 +324,7 @@ export default function ChatScreen() {
           upsertText(
             `err-${Date.now()}`,
             'assistant',
-            "You've reached the AI limit (30 requests/hour). Try again in an hour, or upgrade to Pro for 200/hour.",
+            "You've reached your current Echo tier's AI limit. Try again when the window resets, or open Tiers for more capacity.",
           );
           track('chat_rate_limited');
         } else {
@@ -313,7 +337,7 @@ export default function ChatScreen() {
         setStreamingMsgId(null);
       }
     },
-    [aiModel, currentSessionId, runLocalTool, setConvId, startFlush, stopFlush, updateSessionLastMessage, upsertText, upsertTool],
+    [accountUserId, aiModel, currentSessionId, runLocalTool, setConvId, startFlush, stopFlush, updateSessionLastMessage, upsertText, upsertTool],
   );
 
   const handleStop = useCallback(() => {
@@ -324,6 +348,7 @@ export default function ChatScreen() {
     (text: string) => {
       if (!currentSessionId) return;
       const userId = `u-${Date.now()}`;
+      const createdAt = new Date().toISOString();
       const isFirst = (useAppStore.getState().messagesBySession[currentSessionId] || []).length === 0;
       track('chat_message_sent', { is_first_in_session: isFirst, length: text.length, model: aiModel });
       // First message sent — dismiss the verbose "Best first chat" hint
@@ -331,7 +356,8 @@ export default function ChatScreen() {
       if (!useAppStore.getState().hasSeenChatEmptyHint) {
         useAppStore.getState().setHasSeenChatEmptyHint(true);
       }
-      addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt: new Date().toISOString() });
+      addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt });
+      if (personaLearningEnabled && loadPersonaProfile(accountUserId).enabled) recordPersonaSignal(text, createdAt, accountUserId);
       runStream({
         message: text,
         conversationId: conversationIdRef.current ?? undefined,
@@ -351,7 +377,7 @@ export default function ChatScreen() {
         }, 1500);
       }
     },
-    [aiModel, addMessage, currentSessionId, pathname, runStream, updateSessionTitle],
+    [accountUserId, aiModel, addMessage, currentSessionId, pathname, personaLearningEnabled, runStream, updateSessionTitle],
   );
 
   const handleConfirm = useCallback(
@@ -384,7 +410,7 @@ export default function ChatScreen() {
     createSession();
   }, [createSession]);
 
-  // ── Edit / Regenerate / Branch ──────────────────────────
+  // Edit / Regenerate / Branch
   const regenerateAfter = useCallback((priorUserMsg: ChatMessage) => {
     if (!currentSessionId) return;
     truncateMessagesAfter(currentSessionId, priorUserMsg.id, false);
@@ -419,10 +445,12 @@ export default function ChatScreen() {
     truncateMessagesAfter(currentSessionId, editTarget.id, true);
     setToolItems({});
     const userId = `u-${Date.now()}`;
-    addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt: new Date().toISOString() });
+    const createdAt = new Date().toISOString();
+    addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt });
+    if (personaLearningEnabled && loadPersonaProfile(accountUserId).enabled) recordPersonaSignal(text, createdAt, accountUserId);
     runStream({ message: text, conversationId: conversationIdRef.current ?? undefined, onEvent: () => {} });
     setEditTarget(null);
-  }, [addMessage, currentSessionId, editTarget, runStream, truncateMessagesAfter]);
+  }, [accountUserId, addMessage, currentSessionId, editTarget, personaLearningEnabled, runStream, truncateMessagesAfter]);
 
   const handleBranch = useCallback((m: Message) => {
     if (!currentSessionId) return;
@@ -466,13 +494,53 @@ export default function ChatScreen() {
     router.push({ pathname: '/share', params: { prompt: lastUser.content, response: lastAi.content } });
   }, [messages, router]);
 
-  const headerHeight = insets.top + 52;
+  const headerHeight = insets.top + (layout.isDesktop ? 64 : 52);
   const showEmptySuggestions = items.length === 0;
-  // The verbose "Best first chat" panel + AI disclosure dismisses for good
-  // once the user sends their first message. Suggestion chips stay — they
-  // remain useful as re-entry helpers for later empty sessions.
+  // Hide the onboarding panel after the first sent message.
   const showFirstChatPanel = showEmptySuggestions && !hasSeenChatEmptyHint;
   const showShareNudge = !isStreaming && messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
+
+  const emptyChatState = showEmptySuggestions ? (
+    <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isDesktop ? 112 : 96, paddingBottom: 20, gap: 16 }]}>
+      {showFirstChatPanel && (
+        <View style={{
+          borderRadius: 18,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.glassBorder,
+          backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          padding: 18,
+        }}>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Start with something real</Text>
+          <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
+            A half-formed thought, a question you can't shake, something you've been turning over. The clearest Echoes start there.
+          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 14, opacity: 0.8, lineHeight: 16 }}>
+            Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
+          </Text>
+        </View>
+      )}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {EMPTY_SUGGESTIONS.map(suggestion => (
+          <AnimatedPressable
+            key={suggestion}
+            onPress={() => setDraft(suggestion)}
+            depth="soft"
+            fadeOnPress
+            style={{
+              borderRadius: 999,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.glassBorder,
+              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+              paddingHorizontal: 14,
+              paddingVertical: 9,
+            }}
+          >
+            <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{suggestion}</Text>
+          </AnimatedPressable>
+        ))}
+      </View>
+    </View>
+  ) : null;
 
   // modelActions previously rendered via generic ActionSheet — replaced
   // by ModelPickerSheet (richer rows with icons + taglines + active state).
@@ -492,71 +560,35 @@ export default function ChatScreen() {
             extraData={extraData}
             keyExtractor={(item) => item.kind === 'text' ? `t-${item.message.id}` : `c-${item.tool.id}`}
             renderItem={({ item }) =>
-              item.kind === 'text' ? (
-                <MessageBubble
-                  message={item.message}
-                  isStreaming={item.isStreaming}
-                  onEdit={handleEdit}
-                  onRegenerate={handleRegenerate}
-                  onBranch={handleBranch}
-                />
-              ) : (
-                <ToolCallCard item={item.tool} onConfirm={handleConfirm} onReject={handleReject} />
+              (
+                <View style={layout.contentStyle}>
+                  {item.kind === 'text' ? (
+                    <MessageBubble
+                      message={item.message}
+                      isStreaming={item.isStreaming}
+                      onEdit={handleEdit}
+                      onRegenerate={handleRegenerate}
+                      onBranch={handleBranch}
+                    />
+                  ) : (
+                    <ToolCallCard item={item.tool} onConfirm={handleConfirm} onReject={handleReject} />
+                  )}
+                </View>
               )
             }
-            contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: 8 }}
+            contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: layout.isDesktop ? 18 : 8 }}
+            ListEmptyComponent={emptyChatState}
             onContentSizeChange={() => {
               listRef.current?.scrollToEnd({ animated: false });
             }}
           />
           {isStreaming && showTyping && <TypingIndicator />}
         </View>
-        <View style={{ paddingBottom: 110 }}>
-          {showEmptySuggestions ? (
-            <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 16 }}>
-              {showFirstChatPanel && (
-                <View style={{
-                  borderRadius: 18,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.glassBorder,
-                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                  padding: 18,
-                }}>
-                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Best first chat</Text>
-                  <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
-                    Ask a question you could imagine posting later. The strongest Echoes start with a real prompt, not a generic demo.
-                  </Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 14, opacity: 0.8, lineHeight: 16 }}>
-                    Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
-                  </Text>
-                </View>
-              )}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {EMPTY_SUGGESTIONS.map(suggestion => (
-                  <AnimatedPressable
-                    key={suggestion}
-                    onPress={() => setDraft(suggestion)}
-                    depth="soft"
-                    fadeOnPress
-                    style={{
-                      borderRadius: 999,
-                      borderWidth: StyleSheet.hairlineWidth,
-                      borderColor: colors.glassBorder,
-                      backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                      paddingHorizontal: 14,
-                      paddingVertical: 9,
-                    }}
-                  >
-                    <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{suggestion}</Text>
-                  </AnimatedPressable>
-                ))}
-              </View>
-            </View>
-          ) : null}
+        <View style={{ paddingBottom: layout.bottomChromePadding }}>
           {showShareNudge ? (
             <Animated.View
               entering={animation(FadeIn.duration(200))}
-              style={{ paddingHorizontal: 12, paddingBottom: 8 }}
+              style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingBottom: 8 }]}
             >
               <AnimatedPressable
                 onPress={handleShare}
@@ -577,27 +609,28 @@ export default function ChatScreen() {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: 0 }}>
-                    Publish this conversation
+                    Something landed here
                   </Text>
                   <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12, marginTop: 2 }}>
-                    Turn it into an Echo your followers can read.
+                    Shape it into an Echo worth keeping.
                   </Text>
                 </View>
                 <ArrowUpRight color="#fff" size={18} weight="bold" />
               </AnimatedPressable>
             </Animated.View>
           ) : null}
-          <ChatInput
-            onSend={handleSend}
-            isLoading={isStreaming}
-            onStop={handleStop}
-            draft={draft}
-            onDraftChange={setDraft}
-          />
+          <View style={layout.contentStyle}>
+            <ChatInput
+              onSend={handleSend}
+              isLoading={isStreaming}
+              onStop={handleStop}
+              draft={draft}
+              onDraftChange={setDraft}
+            />
+          </View>
         </View>
       </KeyboardAvoidingView>
 
-      {/* Glass header */}
       <View
         style={{
           position: 'absolute', top: 0, left: 0, right: 0,
@@ -611,9 +644,12 @@ export default function ChatScreen() {
         <Animated.View
           entering={animation(FadeIn.duration(80))}
           style={{
-            paddingTop: insets.top, height: headerHeight,
+            width: '100%',
+            maxWidth: layout.contentMaxWidth,
+            alignSelf: 'center',
+            paddingTop: insets.top + (layout.isDesktop ? 10 : 0), height: headerHeight,
             flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-            paddingHorizontal: 16, paddingBottom: 4,
+            paddingHorizontal: layout.gutter, paddingBottom: 4,
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
