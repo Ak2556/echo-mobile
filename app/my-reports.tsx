@@ -3,7 +3,7 @@ import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Warning, CheckCircle, Clock, MagnifyingGlass, X } from 'phosphor-react-native';
+import { ArrowLeft, Warning, CheckCircle, Clock, MagnifyingGlass, Scales, X } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/theme';
@@ -46,7 +46,16 @@ export default function MyReportsScreen() {
         <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title }]}>My Reports</Text>
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title, flex: 1 }]}>My Reports</Text>
+        <AnimatedPressable
+          onPress={() => router.push('/appeal')}
+          fadeOnPress
+          hitSlop={12}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accentMuted }}
+        >
+          <Scales color={colors.accent} size={14} weight="bold" />
+          <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>My appeals</Text>
+        </AnimatedPressable>
       </View>
 
       {loading ? (
@@ -102,6 +111,30 @@ export default function MyReportsScreen() {
                     <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 8 }]}>
                       Reviewed {timeAgo(report.reviewedAt)}
                     </Text>
+                  )}
+
+                  {(report.status === 'resolved' || report.status === 'dismissed') && (
+                    <AnimatedPressable
+                      onPress={() => router.push({ pathname: '/appeal', params: { reportId: report.id } } as any)}
+                      fadeOnPress
+                      style={{
+                        marginTop: 10,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      <Scales color={colors.textMuted} size={13} />
+                      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
+                        Appeal this decision
+                      </Text>
+                    </AnimatedPressable>
                   )}
                 </GlassPanel>
               </Animated.View>

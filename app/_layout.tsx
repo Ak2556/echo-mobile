@@ -107,7 +107,7 @@ function RootLayout() {
     if (Platform.OS === 'web') return;
 
     let cancelled = false;
-    const VALID_KINDS = new Set(['daily_question', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm']);
+    const VALID_KINDS = new Set(['daily_question', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved']);
     const route = (data: Record<string, unknown> | null | undefined) => {
       if (!data) return;
       const kind = String(data.kind ?? '');
@@ -126,6 +126,8 @@ function RootLayout() {
         router.push({ pathname: '/thread/[id]', params: { id: routeId } });
       } else if (kind === 'dm') {
         router.push({ pathname: '/messages/[id]', params: { id: routeId } });
+      } else if (kind === 'appeal_resolved') {
+        router.push('/appeal');
       }
     };
 
@@ -201,6 +203,7 @@ function RootLayout() {
           <Stack.Screen name="create-office-hour" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="create-listing" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="listing/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="appeal" options={{ presentation: 'card' }} />
         </Stack>
         <ToastProvider />
         <ConsentBanner />

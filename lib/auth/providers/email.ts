@@ -45,3 +45,24 @@ export async function verifyEmailOtp(email: string, code: string): Promise<Provi
   );
   return { error: error?.message ?? null };
 }
+
+/**
+ * App Store reviewer bypass.
+ * Signs in with a pre-created demo account using password auth.
+ * The demo account must be created in Supabase with email+password enabled.
+ *
+ * Credentials are intentionally in the client bundle — this is a demo account
+ * with no real user data. Set EXPO_PUBLIC_DEMO_EMAIL + EXPO_PUBLIC_DEMO_PASSWORD
+ * as EAS secrets before the production build.
+ */
+export async function signInAsDemo(): Promise<ProviderResult> {
+  const email = process.env.EXPO_PUBLIC_DEMO_EMAIL ?? '';
+  const password = process.env.EXPO_PUBLIC_DEMO_PASSWORD ?? '';
+  if (!email || !password) {
+    return { error: 'Demo account not configured.' };
+  }
+  const { error } = await withAuthTimeout(
+    supabase.auth.signInWithPassword({ email, password }),
+  );
+  return { error: error?.message ?? null };
+}

@@ -16,6 +16,8 @@ import Animated, {
 import { EnvelopeSimple } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { refreshAuthSession, signInAsDemo } from '../../lib/auth';
+import { showToast } from '../../components/ui/Toast';
 
 const ROTATING_PROMPTS = [
   'What’s a song that always pulls you out of a bad mood?',
@@ -26,6 +28,8 @@ const ROTATING_PROMPTS = [
   'What’s an idea you keep returning to?',
 ];
 
+const DEMO_ENABLED = !!(process.env.EXPO_PUBLIC_DEMO_EMAIL && process.env.EXPO_PUBLIC_DEMO_PASSWORD);
+
 export default function LoginScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
@@ -33,7 +37,23 @@ export default function LoginScreen() {
   const layout = useResponsiveLayout();
   const isDark = colors.isDark;
 
+  const [demoLoading, setDemoLoading] = useState(false);
   const [promptIdx, setPromptIdx] = useState(0);
+
+  const handleDemo = async () => {
+    if (demoLoading) return;
+    setDemoLoading(true);
+    const { error } = await signInAsDemo();
+    if (error) {
+      setDemoLoading(false);
+      showToast('Demo sign-in unavailable', 'Error');
+      return;
+    }
+    const status = await refreshAuthSession();
+    setDemoLoading(false);
+    if (status === 'ready') router.replace('/(tabs)/home');
+    else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
+  };
   useEffect(() => {
     const t = setInterval(() => setPromptIdx(i => (i + 1) % ROTATING_PROMPTS.length), 4_000);
     return () => clearInterval(t);
@@ -201,6 +221,21 @@ export default function LoginScreen() {
                 <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>Privacy.</Text>
               </Text>
             </Animated.View>
+
+            {DEMO_ENABLED && (
+              <Animated.View entering={FadeInDown.delay(320).duration(360)} style={{ alignItems: 'center' }}>
+                <Pressable
+                  onPress={handleDemo}
+                  disabled={demoLoading}
+                  hitSlop={12}
+                  style={{ paddingVertical: 8, paddingHorizontal: 16, opacity: demoLoading ? 0.5 : 1 }}
+                >
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>
+                    App Review · <Text style={{ color: colors.textSecondary }}>Open demo account</Text>
+                  </Text>
+                </Pressable>
+              </Animated.View>
+            )}
           </View>
         </View>
       </SafeAreaView>
