@@ -193,20 +193,28 @@ export default function DiscoverScreen() {
 
   const feedScope = useAppStore(s => s.feedScope);
   const setFeedScope = useAppStore(s => s.setFeedScope);
+  const sensitiveContentFilter = useAppStore(s => s.sensitiveContentFilter);
   const unreadNotifs = useAppStore(s => s.notifications.filter(n => !n.isRead).length);
   const [aboutFeedVisible, setAboutFeedVisible] = useState(false);
 
+  const SENSITIVE_TAGS = new Set(['nsfw', 'adult', 'explicit', 'mature', '18+', '18plus', 'gore', 'graphic', 'disturbing']);
+
   const scopedAll = useMemo(() => {
     if (!feed) return [];
+    let result: typeof feed;
     if (feedScope === 'following') {
       const followingSet = new Set(followingIds);
-      return feed.filter(f => followingSet.has(f.userId));
+      result = feed.filter(f => followingSet.has(f.userId));
+    } else if (feedScope === 'forYou') {
+      result = grouped.rising.length > 0 ? grouped.rising : feed;
+    } else {
+      result = grouped.forYou.length > 0 ? grouped.forYou : feed;
     }
-    if (feedScope === 'forYou') {
-      return grouped.rising.length > 0 ? grouped.rising : feed;
+    if (sensitiveContentFilter) {
+      result = result.filter(f => !f.hashtags?.some(tag => SENSITIVE_TAGS.has(tag.toLowerCase().replace(/^#/, ''))));
     }
-    return grouped.forYou.length > 0 ? grouped.forYou : feed;
-  }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising]);
+    return result;
+  }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising, sensitiveContentFilter]);
 
   const heroItems = scopedAll.slice(0, HERO_COUNT);
   const popularItems = scopedAll.slice(HERO_COUNT);

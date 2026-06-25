@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, Play } from 'phosphor-react-native';
+import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { videoSourceForUri } from '../../lib/videoMedia';
+import { useAppStore } from '../../store/useAppStore';
 
 // Safely attempt to load expo-video (unavailable in Expo Go).
 // In Expo Go this stays null and we render the static fallback.
@@ -147,8 +148,32 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount 
   );
 }
 
-// Public export — auto-selects based on native module availability
+function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
+  return (
+    <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden' }}>
+      <LinearGradient
+        colors={['#1E1B4B', '#312E81', '#0A0A0A']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
+      >
+        <WifiSlash color="rgba(255,255,255,0.5)" size={24} />
+        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '500' }}>Video paused — Data Saver on</Text>
+      </LinearGradient>
+      {viewCount !== undefined && (
+        <View style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>
+          <Eye size={13} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{viewCount >= 1000 ? `${(viewCount / 1000).toFixed(1)}K` : `${viewCount}`}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+// Public export — auto-selects based on native module availability and Data Saver flag
 export function VideoPreview(props: VideoPreviewProps) {
+  const dataSaver = useAppStore(s => s.dataSaver);
+  if (dataSaver) return <DataSaverPlaceholder {...props} />;
   if (!ExpoVideoModule) return <VideoFallback {...props} />;
   return <VideoPlayer {...props} />;
 }
