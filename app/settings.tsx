@@ -464,8 +464,6 @@ export default function SettingsScreen() {
     color: colors.textMuted,
     fontSize: fontSizes.caption,
     fontWeight: '600' as const,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1,
     marginBottom: 8,
     marginLeft: 4,
   };

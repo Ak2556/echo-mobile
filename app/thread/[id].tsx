@@ -324,7 +324,7 @@ export default function ThreadDetailScreen() {
 
         {relatedEchoes.length > 0 ? (
           <View style={{ marginTop: 20 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 10 }}>
               Related Echoes
             </Text>
             {relatedEchoes.map(related => (

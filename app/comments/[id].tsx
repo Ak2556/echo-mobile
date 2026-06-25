@@ -169,7 +169,7 @@ export default function CommentsScreen() {
           }}>
             <ArrowBendUpLeft color={colors.accent} size={16} weight="bold" />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.4, textTransform: 'uppercase' }}>
+              <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700' }}>
                 Replying to
               </Text>
               <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginTop: 1 }} numberOfLines={1}>

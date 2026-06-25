@@ -378,8 +378,6 @@ const styles = StyleSheet.create({
     color: 'rgba(0,0,0,0.65)',
     fontWeight: '700',
     fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
     marginTop: 2,
   },
   lineageLabel: {

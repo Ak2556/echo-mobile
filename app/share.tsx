@@ -278,7 +278,7 @@ export default function ShareScreen() {
           </View>
         )}
         <View style={{ padding: 16, marginBottom: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Original prompt</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 10 }}>Original prompt</Text>
           <View style={{ padding: 12, borderRadius: radius.lg, backgroundColor: colors.surfaceHover }}>
             <Text style={{ color: colors.text, lineHeight: 22 }}>{prompt}</Text>
           </View>
@@ -301,10 +301,10 @@ export default function ShareScreen() {
 
         {!previewMode ? (
           <>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Title</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 8 }}>Title</Text>
             <TextInput placeholder="Give this Echo a headline" value={title} onChangeText={setTitle} maxLength={90} />
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginTop: 18, marginBottom: 8 }}>Editorial tools</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Editorial tools</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
               {EDITORIAL_ACTIONS.map(action => {
                 const running = editorialRunning === action.key;
@@ -325,7 +325,7 @@ export default function ShareScreen() {
               })}
             </View>
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>The part worth sharing<Text style={{ color: colors.accent }}> *</Text></Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 8 }}>The part worth sharing<Text style={{ color: colors.accent }}> *</Text></Text>
             <TextInput
               placeholder="Trim the answer down to the strongest takeaway"
               value={editedResponse}
@@ -339,7 +339,7 @@ export default function ShareScreen() {
               </Text>
             )}
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginTop: 18, marginBottom: 8 }}>Add your framing</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Add your framing</Text>
             <TextInput
               placeholder="Why is this worth posting? Add context, opinion, or a takeaway."
               value={authorNote}
@@ -348,7 +348,7 @@ export default function ShareScreen() {
               maxLength={220}
             />
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginTop: 18, marginBottom: 8 }}>Topics</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Topics</Text>
             <TextInput
               placeholder="AI, product, react-native"
               value={tagsRaw}
@@ -356,7 +356,7 @@ export default function ShareScreen() {
               autoCapitalize="none"
             />
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginTop: 18, marginBottom: 8 }}>Who can see this</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Who can see this</Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Pressable
                 onPress={() => setVisibility('public')}

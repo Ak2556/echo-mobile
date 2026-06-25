@@ -144,9 +144,8 @@ export default function AppealScreen() {
                 {/* Reason input */}
                 <View>
                   <Text style={{
-                    color: colors.textMuted, fontSize: fontSizes.caption,
+                    color: colors.textMuted, fontSize: fontSizes.caption - 1,
                     fontFamily: 'Inter_500Medium', marginBottom: 8,
-                    letterSpacing: 0.4, textTransform: 'uppercase',
                   }}>
                     Why should this decision be reconsidered? *
                   </Text>
@@ -258,7 +257,7 @@ export default function AppealScreen() {
                           borderLeftWidth: 3,
                           borderLeftColor: cfg.color,
                         }}>
-                          <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_600SemiBold', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
                             Moderator note
                           </Text>
                           <Text style={{ color: colors.text, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', lineHeight: 18 }}>

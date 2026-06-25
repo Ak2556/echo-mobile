@@ -16,10 +16,9 @@ import { LinkifiedText } from './LinkifiedText';
 import { ReactionBar } from './ReactionBar';
 import { RemixButton } from './RemixButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
-import { GlassPanel } from '../ui/GlassPanel';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, GitBranch, PushPin, Sparkle, Brain } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin } from 'phosphor-react-native';
 import { PerspectiveType } from '../../types';
 import { PERSPECTIVE_LABELS } from '../../lib/perspectives';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -367,7 +366,6 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             elevation: 3,
           }}
         >
-          {pinned && <PinnedChip cardPadding={cardPadding} colors={colors} />}
           {item.repostedByUsername && (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, marginHorizontal: cardPadding, marginBottom: 0, gap: 6 }}>
               <ArrowsClockwise color={colors.textMuted} size={14} />
@@ -485,7 +483,12 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
 
   return (
     <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: cardMargin, marginVertical: layout.cardGap / 2 }}>
-      <GlassPanel variant="light" borderRadius={Math.min(radius.card, 14)} performanceMode="hot">
+      <View style={{
+        backgroundColor: colors.surface,
+        borderRadius: Math.min(radius.card, 14),
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.border,
+      }}>
       <AnimatedPressable
         onPress={handleMainPress}
         depth="soft"
@@ -496,7 +499,6 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           padding: cardPadding,
         }}
       >
-        {pinned && <PinnedChip cardPadding={0} colors={colors} />}
         {item.repostedByUsername && (
           <View className="flex-row items-center mb-2 ml-1 gap-1.5">
             <ArrowsClockwise color={colors.textMuted} size={14} />
@@ -505,17 +507,16 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         )}
         {item.parentEchoId && (() => {
           const chip = item.perspectiveType ? PERSPECTIVE_CHIP[item.perspectiveType] : null;
-          const chipColor = chip?.color ?? colors.accent;
-          const chipDim = chip?.dimColor ?? (colors.accent + '20');
+          const chipColor = chip?.color ?? colors.textMuted;
           const verb = chip?.verb ?? 'Perspective';
           return (
             <Pressable
               onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/thread/[id]', params: { id: String(item.parentEchoId) } }); }}
-              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 2, gap: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: chipDim, borderWidth: StyleSheet.hairlineWidth, borderColor: chipColor + '55' }}
+              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 8 }}
             >
-              <GitBranch color={chipColor} size={12} weight="fill" />
-              <Text style={{ color: chipColor, fontSize: 11, fontWeight: '800', letterSpacing: 0 }}>
-                {verb}{item.parentAuthorUsername ? ` · @${item.parentAuthorUsername}` : ''}
+              <View style={{ width: 2.5, height: 14, borderRadius: 2, backgroundColor: chipColor }} />
+              <Text style={{ color: chipColor, fontSize: fontSizes.caption, fontFamily: 'Inter_500Medium' }}>
+                {verb}{item.parentAuthorUsername ? ` @${item.parentAuthorUsername}` : ''}
               </Text>
             </Pressable>
           );
@@ -523,27 +524,12 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         {!item.parentEchoId && (item.remixCount ?? 0) >= 3 && (
           <Pressable
             onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/evolution/[rootId]', params: { rootId: item.remixRootId ?? item.id } }); }}
-            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 2, gap: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: colors.accentMuted, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '36' }}
+            style={{ marginBottom: 10 }}
           >
-            <GitBranch color={colors.accent} size={12} weight="fill" />
-            <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 0 }}>
-              Evolving · {item.remixCount} perspectives
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular' }}>
+              {item.remixCount} perspectives →
             </Text>
           </Pressable>
-        )}
-        {/* AI-refined badge: post came from a real thinking conversation */}
-        {item.postOrigin === 'chat' && !item.parentEchoId && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 2, gap: 5, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: colors.accentMuted, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '36' }}>
-            <Sparkle color={colors.accent} size={11} weight="fill" />
-            <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0 }}>AI-refined</Text>
-          </View>
-        )}
-        {/* Depth badge: high thoughtfulness score signals quality thinking */}
-        {(item.thoughtfulnessScore ?? 0) >= 7 && !item.parentEchoId && item.postOrigin !== 'chat' && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 2, gap: 5, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: '#8B5CF610', borderWidth: StyleSheet.hairlineWidth, borderColor: '#8B5CF640' }}>
-            <Brain color="#8B5CF6" size={11} weight="fill" />
-            <Text style={{ color: '#8B5CF6', fontSize: 11, fontWeight: '700', letterSpacing: 0 }}>Depth</Text>
-          </View>
         )}
 
         <View className={`flex-row items-center ${compactFeed ? 'mb-2' : 'mb-3'}`}>
@@ -588,6 +574,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
+          {pinned && <PushPin color={colors.textMuted} size={13} weight="fill" style={{ marginRight: 6 }} />}
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
             depth="medium"
@@ -601,22 +588,14 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
 
         {item.postType === 'musing' && !!item.prompt && (
           <View style={{
-            backgroundColor: colors.accentMuted,
-            borderRadius: radius.md,
             borderLeftWidth: 3,
             borderLeftColor: colors.accent,
-            paddingVertical: 12,
+            paddingVertical: 10,
             paddingHorizontal: 14,
             marginBottom: compactFeed ? 8 : 12,
           }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
-              <Question color={colors.accent} size={12} weight="bold" />
-              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
-                MUSING
-              </Text>
-            </View>
             <Text
-              style={[font.quote, { color: colors.text, fontSize: textSize, lineHeight: lineHeights.body }]}
+              style={[font.quote, { color: colors.textSecondary, fontSize: textSize, lineHeight: lineHeights.body }]}
               numberOfLines={compactFeed ? 4 : 10}
             >
               {item.prompt}
@@ -706,20 +685,10 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
 
         {item.postType === 'poll' && item.poll && (
           <View style={{ marginBottom: 4 }}>
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              alignSelf: 'flex-start',
-              backgroundColor: colors.accentMuted,
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-              borderRadius: 999,
-              marginBottom: 10,
-            }}>
-              <ChartBar color={colors.accent} size={11} weight="bold" />
-              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
-                POLL
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+              <ChartBar color={colors.textMuted} size={12} weight="bold" />
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '500' }}>
+                Poll
               </Text>
             </View>
             {!!item.prompt && (
@@ -748,31 +717,9 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
 
         {ActionsRow}
       </AnimatedPressable>
-      </GlassPanel>
+      </View>
       {AllModals}
     </Animated.View>
   );
 }
 
-function PinnedChip({ cardPadding, colors }: { cardPadding: number; colors: any }) {
-  return (
-    <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'flex-start',
-      gap: 4,
-      marginHorizontal: cardPadding,
-      marginTop: cardPadding > 0 ? 10 : 0,
-      marginBottom: 8,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-      borderRadius: 999,
-      backgroundColor: colors.accentMuted,
-    }}>
-      <PushPin color={colors.accent} size={11} weight="fill" />
-      <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
-        PINNED
-      </Text>
-    </View>
-  );
-}

@@ -136,7 +136,7 @@ export default function EditPostScreen() {
 
   const s = {
     surface: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border },
-    label: { color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' as const, textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8, marginLeft: 4 },
+    label: { color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' as const, marginBottom: 8, marginLeft: 4 },
   };
 
   return (
