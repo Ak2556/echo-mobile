@@ -10,6 +10,7 @@ import { useToggleRemoteLike } from '../../hooks/queries/useSupabaseSocial';
 import { useAppStore } from '../../store/useAppStore';
 import { MOTION } from '../../lib/motion';
 import { track } from '../../lib/analytics';
+import { playSoundEffect } from '../../lib/sound';
 
 interface LikeButtonProps {
   echoId: string;
@@ -40,6 +41,7 @@ export function LikeButton({ echoId, initialLikes, initialLiked = false }: LikeB
         withSpring(1, MOTION.overshoot)
       );
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      playSoundEffect('like');
     } else {
       heartScale.value = withSpring(1, MOTION.release);
       if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

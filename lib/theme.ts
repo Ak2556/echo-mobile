@@ -313,8 +313,10 @@ export function useTheme() {
   const onlineStatus = useAppStore(s => s.onlineStatus);
 
   const selectedBase = THEMES[themeName] || THEMES.midnight;
-  // darkMode=false forces the light theme when a dark theme is active
-  const base = (!darkMode && selectedBase.isDark) ? THEMES.light : selectedBase;
+  // dark mode toggle overrides theme picker in both directions
+  const base = darkMode
+    ? (selectedBase.isDark ? selectedBase : THEMES.midnight)
+    : (selectedBase.isDark ? THEMES.light : selectedBase);
 
   // Build accent muted from accentColor
   const hexToRgba = (hex: string, alpha: number) => {

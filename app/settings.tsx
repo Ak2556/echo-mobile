@@ -414,14 +414,19 @@ export default function SettingsScreen() {
   const handlePushToggle = async (enabled: boolean) => {
     if (!enabled) {
       s.setNotificationsEnabled(false);
-      await clearPushToken();
       showToast('Push notifications muted', '');
+      void clearPushToken();
       return;
     }
 
+    s.setNotificationsEnabled(true);
     const result = await registerForPush();
-    s.setNotificationsEnabled(result.granted);
-    showToast(result.granted ? 'Push notifications enabled' : 'Notifications permission denied', result.granted ? 'Done' : '');
+    if (!result.granted) {
+      s.setNotificationsEnabled(false);
+      showToast('Notifications permission denied', '');
+    } else {
+      showToast('Push notifications enabled', 'Done');
+    }
   };
 
   const handleProfilePhotoVisibleToggle = async (visible: boolean) => {

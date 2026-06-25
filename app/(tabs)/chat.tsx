@@ -26,6 +26,7 @@ import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/p
 import { track } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { buildPersonaPromptContext, loadPersonaProfile, recordPersonaSignal, syncPersonaFromMessages } from '../../lib/persona';
+import { playSoundEffect } from '../../lib/sound';
 
 const EMPTY_SUGGESTIONS = [
   'A decision I\'m working through',
@@ -69,6 +70,7 @@ export default function ChatScreen() {
   const hasSeenChatEmptyHint = useAppStore(s => s.hasSeenChatEmptyHint);
   const autoSaveChats = useAppStore(s => s.autoSaveChats);
   const deleteSession = useAppStore(s => s.deleteSession);
+  const streamResponses = useAppStore(s => s.streamResponses);
   const personaLearningEnabled = useAppStore(s => s.personaLearningEnabled);
   const accountUserId = useAppStore(s => s.userId);
   const insets = useSafeAreaInsets();
@@ -132,6 +134,8 @@ export default function ChatScreen() {
   autoSaveChatsRef.current = autoSaveChats;
   const currentSessionIdRef = useRef(currentSessionId);
   currentSessionIdRef.current = currentSessionId;
+  const streamResponsesRef = useRef(streamResponses);
+  streamResponsesRef.current = streamResponses;
 
   // When auto-save is off, discard the session when the user leaves the screen.
   useEffect(() => {
@@ -303,6 +307,7 @@ export default function ChatScreen() {
       setStreamingMsgId(assistantId);
       setIsStreaming(true);
       startFlush();
+      let bufferedText = '';
       try {
         await streamEchoAI({
           ...opts,
@@ -311,7 +316,13 @@ export default function ChatScreen() {
           onAbortHandle: (stop) => { stopStreamRef.current = stop; },
           onEvent: (e) => {
             if (e.type === 'conversation') setConvId(e.id);
-            else if (e.type === 'text_delta') upsertText(assistantId, 'assistant', e.delta);
+            else if (e.type === 'text_delta') {
+              if (streamResponsesRef.current) {
+                upsertText(assistantId, 'assistant', e.delta);
+              } else {
+                bufferedText += e.delta;
+              }
+            }
             else if (e.type === 'tool_call_pending') {
               const tool: ToolCallItem = {
                 id: e.id, name: e.name, preview: e.preview, args: e.args,
@@ -330,6 +341,10 @@ export default function ChatScreen() {
             opts.onEvent?.(e);
           },
         });
+        // If non-streaming mode, flush the full buffer at once now
+        if (!streamResponsesRef.current && bufferedText) {
+          upsertText(assistantId, 'assistant', bufferedText);
+        }
         // Update session metadata once stream finishes.
         if (currentSessionId) {
           const final = useAppStore.getState().messagesBySession[currentSessionId] || [];
@@ -374,6 +389,7 @@ export default function ChatScreen() {
         useAppStore.getState().setHasSeenChatEmptyHint(true);
       }
       addMessage(currentSessionId, { id: userId, role: 'user', content: text, createdAt });
+      playSoundEffect('send');
       if (personaLearningEnabled && loadPersonaProfile(accountUserId).enabled) recordPersonaSignal(text, createdAt, accountUserId);
       runStream({
         message: text,
