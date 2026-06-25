@@ -1269,6 +1269,11 @@ export async function updateRemoteProfile(updates: {
   pronouns?: string | null;
   mood?: string | null;
   mood_expires_at?: string | null;
+  is_private?: boolean;
+  dm_privacy?: 'everyone' | 'followers' | 'nobody';
+  activity_status?: boolean;
+  online_status?: boolean;
+  read_receipts?: boolean;
 }): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
