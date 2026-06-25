@@ -442,6 +442,67 @@ export default function SettingsScreen() {
     }
   };
 
+  const handlePrivateAccount = async (enabled: boolean) => {
+    const prev = s.privateAccount;
+    s.setPrivateAccount(enabled);
+    if (!isSupabaseRemote()) return;
+    try {
+      await updateRemoteProfile({ is_private: enabled });
+    } catch (e) {
+      s.setPrivateAccount(prev);
+      Alert.alert('Could not update private account', (e as Error).message);
+    }
+  };
+
+  const handleActivityStatus = async (enabled: boolean) => {
+    const prev = s.activityStatus;
+    s.setActivityStatus(enabled);
+    if (!isSupabaseRemote()) return;
+    try {
+      await updateRemoteProfile({ activity_status: enabled });
+    } catch (e) {
+      s.setActivityStatus(prev);
+      Alert.alert('Could not update activity status', (e as Error).message);
+    }
+  };
+
+  const handleOnlineStatus = async (enabled: boolean) => {
+    const prev = s.onlineStatus;
+    s.setOnlineStatus(enabled);
+    if (!isSupabaseRemote()) return;
+    try {
+      await updateRemoteProfile({ online_status: enabled });
+    } catch (e) {
+      s.setOnlineStatus(prev);
+      Alert.alert('Could not update online status', (e as Error).message);
+    }
+  };
+
+  const handleReadReceipts = async (enabled: boolean) => {
+    const prev = s.readReceipts;
+    s.setReadReceipts(enabled);
+    if (!isSupabaseRemote()) return;
+    try {
+      await updateRemoteProfile({ read_receipts: enabled });
+    } catch (e) {
+      s.setReadReceipts(prev);
+      Alert.alert('Could not update read receipts', (e as Error).message);
+    }
+  };
+
+  const handleDmPrivacy = async (v: 'everyone' | 'followers' | 'nobody') => {
+    const prev = s.dmPrivacy;
+    s.setDmPrivacy(v);
+    if (!isSupabaseRemote()) { showToast(`DMs: ${v}`, 'DMs'); return; }
+    try {
+      await updateRemoteProfile({ dm_privacy: v });
+      showToast(`DMs: ${v}`, 'DMs');
+    } catch (e) {
+      s.setDmPrivacy(prev);
+      Alert.alert('Could not update DM privacy', (e as Error).message);
+    }
+  };
+
   const handlePersonaLearningToggle = (enabled: boolean) => {
     s.setPersonaLearningEnabled(enabled);
     setPersonaEnabled(enabled, s.userId);
@@ -536,7 +597,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Bell} label="Notification Preferences" subtitle="Customize which notifications you receive" onPress={() => router.push('/notification-prefs')} />
             {divider}
-            <SettingsRow theme={theme} icon={Lock} iconColor="#F59E0B" label="Private Account" subtitle="Safer default while you're learning the app" right={SwitchEl(s.privateAccount, s.setPrivateAccount)} />
+            <SettingsRow theme={theme} icon={Lock} iconColor="#F59E0B" label="Private Account" subtitle="Safer default while you're learning the app" right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
             {divider}
             <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, s.setSensitiveContentFilter)} />
           </GlassPanel>
@@ -546,9 +607,9 @@ export default function SettingsScreen() {
         <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Privacy & Safety</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, s.setActivityStatus)} />
+            <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, handleActivityStatus)} />
             {divider}
-            <SettingsRow theme={theme} icon={EyeSlash} label="Online Status" subtitle="Let others see your online indicator" right={SwitchEl(s.onlineStatus, s.setOnlineStatus)} />
+            <SettingsRow theme={theme} icon={EyeSlash} label="Online Status" subtitle="Let others see your online indicator" right={SwitchEl(s.onlineStatus, handleOnlineStatus)} />
             {divider}
             <SettingsRow
               theme={theme}
@@ -559,7 +620,7 @@ export default function SettingsScreen() {
               right={SwitchEl(s.profilePhotoVisible, handleProfilePhotoVisibleToggle)}
             />
             {divider}
-            <SettingsRow theme={theme} icon={ChatCircle} label="Read Receipts" subtitle="Show when you've read messages" right={SwitchEl(s.readReceipts, s.setReadReceipts)} />
+            <SettingsRow theme={theme} icon={ChatCircle} label="Read Receipts" subtitle="Show when you've read messages" right={SwitchEl(s.readReceipts, handleReadReceipts)} />
             {divider}
             <SettingsRow theme={theme} icon={Envelope} label="Who Can Message You" subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
@@ -796,7 +857,7 @@ export default function SettingsScreen() {
             { label: 'Nobody', value: 'nobody' as const, desc: 'Disable direct messages' },
           ]}
           value={s.dmPrivacy}
-          onChange={(v) => { s.setDmPrivacy(v); showToast(`DMs: ${v}`, 'DMs'); }}
+          onChange={(v) => void handleDmPrivacy(v)}
           onClose={() => setShowDmPicker(false)}
         />
       )}

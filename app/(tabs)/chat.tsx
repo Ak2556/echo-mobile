@@ -67,6 +67,8 @@ export default function ChatScreen() {
   const hasSeenChatTabHint = useAppStore(s => s.hasSeenChatTabHint);
   const setHasSeenChatTabHint = useAppStore(s => s.setHasSeenChatTabHint);
   const hasSeenChatEmptyHint = useAppStore(s => s.hasSeenChatEmptyHint);
+  const autoSaveChats = useAppStore(s => s.autoSaveChats);
+  const deleteSession = useAppStore(s => s.deleteSession);
   const personaLearningEnabled = useAppStore(s => s.personaLearningEnabled);
   const accountUserId = useAppStore(s => s.userId);
   const insets = useSafeAreaInsets();
@@ -124,6 +126,21 @@ export default function ChatScreen() {
       else createSession();
     }
   }, [currentSessionId, sessions, setCurrentSessionId, createSession]);
+
+  // Keep latest values in refs so the unmount cleanup can read them.
+  const autoSaveChatsRef = useRef(autoSaveChats);
+  autoSaveChatsRef.current = autoSaveChats;
+  const currentSessionIdRef = useRef(currentSessionId);
+  currentSessionIdRef.current = currentSessionId;
+
+  // When auto-save is off, discard the session when the user leaves the screen.
+  useEffect(() => {
+    return () => {
+      if (!autoSaveChatsRef.current && currentSessionIdRef.current) {
+        deleteSession(currentSessionIdRef.current);
+      }
+    };
+  }, [deleteSession]);
 
   // Show command-palette hint once on first focus.
   useEffect(() => {
