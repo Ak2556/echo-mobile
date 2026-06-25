@@ -223,7 +223,6 @@ export default function ProfileScreen() {
             },
           ]}
         >
-          <View style={[styles.heroAccent, { backgroundColor: profileAccent }]} />
           <View style={styles.identityRow}>
             <Pressable
               onPress={() => visibleAvatarUrl ? setPhotoPreviewOpen(true) : undefined}
@@ -324,43 +323,25 @@ export default function ProfileScreen() {
 
         {creatorProfile.topics.length > 0 && (
           <View style={styles.sectionBlock}>
-            <SectionLabel label="Expertise" colors={colors} font={font} icon={<Sparkle color={colors.accent} size={15} />} />
-            <View style={styles.topicWrap}>
+            <SectionLabel label="Expertise" colors={colors} font={font} />
+            <View style={[styles.topicWrap, { columnGap: 12, rowGap: 4 }]}>
               {creatorProfile.topics.slice(0, 8).map(topic => (
-                <View
+                <Text
                   key={topic}
-                  style={[
-                    styles.topicChip,
-                    {
-                      backgroundColor: colors.accentMuted,
-                      borderColor: colors.accent + '40',
-                  borderRadius: radius.lg,
-                    },
-                  ]}
+                  style={[font.body, styles.topicText, { color: colors.accent, fontWeight: '500' }]}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
                 >
-                  <Text
-                    style={[font.bodySemibold, styles.topicText, { color: colors.accent }]}
-                    numberOfLines={1}
-                    maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-                  >
-                    #{topic}
-                  </Text>
-                </View>
+                  #{topic}
+                </Text>
               ))}
               {creatorProfile.topics.length > 8 && (
-                <View
-                  style={[
-                    styles.topicChip,
-                    { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full },
-                  ]}
+                <Text
+                  style={[font.body, styles.topicText, { color: colors.textMuted }]}
+                  maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
                 >
-                  <Text
-                    style={[font.bodySemibold, styles.topicText, { color: colors.textMuted }]}
-                    maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-                  >
-                    +{creatorProfile.topics.length - 8} more
-                  </Text>
-                </View>
+                  +{creatorProfile.topics.length - 8} more
+                </Text>
               )}
             </View>
           </View>
@@ -572,7 +553,7 @@ function ProfileTabBar({
   font: ProfileFont;
 }) {
   return (
-    <View style={[styles.tabShell, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+    <View style={[styles.tabShell, { borderBottomColor: colors.border }]}>
       {(['posts', 'about'] as const).map(tab => {
         const active = activeTab === tab;
         return (
@@ -585,16 +566,16 @@ function ProfileTabBar({
             style={[
               styles.tabButton,
               {
-                backgroundColor: active ? colors.accentMuted : 'transparent',
-                borderRadius: radius.md,
+                borderBottomWidth: 2,
+                borderBottomColor: active ? colors.accent : 'transparent',
+                paddingBottom: 6,
               },
             ]}
           >
             <Text
               style={[
-                font.bodySemibold,
                 styles.tabText,
-                { color: active ? colors.accent : colors.textMuted },
+                { color: active ? colors.accent : colors.textMuted, fontWeight: active ? '700' : '400' },
               ]}
               numberOfLines={1}
               maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
@@ -995,7 +976,6 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     lineHeight: 14,
-    textTransform: 'uppercase',
     letterSpacing: 0,
   },
   topicWrap: {
@@ -1016,10 +996,10 @@ const styles = StyleSheet.create({
   tabShell: {
     marginHorizontal: 16,
     marginTop: 14,
-    padding: 3,
     minHeight: 42,
     flexDirection: 'row',
-    borderWidth: StyleSheet.hairlineWidth,
+    gap: 24,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   tabButton: {
     flex: 1,

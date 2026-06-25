@@ -146,7 +146,7 @@ export default function CreateStoryScreen() {
           </Animated.View>
 
           <Animated.View entering={animation(FadeInDown.delay(100).duration(220))}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Asked</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>Asked</Text>
             <View
               className="p-4 mb-4"
               style={{
@@ -174,7 +174,7 @@ export default function CreateStoryScreen() {
           <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
             <View className="flex-row items-center mb-2 ml-1 gap-1.5">
               <Lightning color={colors.accent} size={12} />
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Echo</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>Echo</Text>
             </View>
             <View
               className="p-4 mb-4"

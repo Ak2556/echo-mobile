@@ -124,7 +124,7 @@ export default function SearchScreen() {
               keyExtractor={item => `user-${item.id}`}
               ListHeaderComponent={activeTab === 'all' ? (
                 <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
-                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>People</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>People</Text>
                 </View>
               ) : null}
               ListEmptyComponent={activeTab === 'people' ? <EmptyCopy colors={colors} title="No people found" subtitle="Try a broader username, name, or topic." /> : null}
@@ -133,7 +133,7 @@ export default function SearchScreen() {
 
           {(activeTab === 'all' || activeTab === 'topics') && searchBuckets.topicMatches.length > 0 && (
             <View style={[layout.wideContentStyle, { paddingHorizontal: 16, marginBottom: 12 }]}>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Topics</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 10 }}>Topics</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {searchBuckets.topicMatches.map(item => (
                   <AnimatedPressable
@@ -160,7 +160,7 @@ export default function SearchScreen() {
               keyExtractor={item => `echo-${item.id}`}
               ListHeaderComponent={(
                 <View style={{ paddingHorizontal: 16, paddingTop: activeTab === 'echoes' ? 0 : 4, marginBottom: 12 }}>
-                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>
                     {activeTab === 'echoes' ? 'Echoes' : 'Best matches'}
                   </Text>
                 </View>
@@ -309,7 +309,7 @@ function SectionHeader({ colors, icon, label }: { colors: any; icon: React.React
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginTop: 12, marginBottom: 12, gap: 8 }}>
       {icon}
-      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>{label}</Text>
     </View>
   );
 }

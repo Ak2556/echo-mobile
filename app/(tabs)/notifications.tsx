@@ -166,7 +166,7 @@ export default function NotificationsScreen() {
     if (item.type === 'header') {
       return (
         <View style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 8 }}>
-          <Text style={{ fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, color: colors.textMuted }}>
+          <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>
             {item.label}
           </Text>
         </View>

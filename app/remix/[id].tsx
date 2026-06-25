@@ -425,8 +425,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     marginBottom: 8,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
   },
   sourceInput: {
     color: '#fff',

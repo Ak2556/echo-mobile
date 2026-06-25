@@ -186,11 +186,9 @@ export default function CreateListingScreen() {
 
   const labelStyle = {
     color: colors.textMuted,
-    fontSize: fontSizes.caption,
+    fontSize: fontSizes.caption - 1,
     fontFamily: 'Inter_500Medium',
     marginBottom: 6,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase' as const,
   };
 
   const selectedCurrency = CURRENCIES.find(c => c.code === currency);

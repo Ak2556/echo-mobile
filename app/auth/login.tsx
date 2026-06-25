@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,7 +11,6 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
-  withSpring,
 } from 'react-native-reanimated';
 import { EnvelopeSimple } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
@@ -33,7 +32,6 @@ const DEMO_ENABLED = !!(process.env.EXPO_PUBLIC_DEMO_EMAIL && process.env.EXPO_P
 export default function LoginScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
-  const { width: screenW, height: screenH } = useWindowDimensions();
   const layout = useResponsiveLayout();
   const isDark = colors.isDark;
 
@@ -74,63 +72,16 @@ export default function LoginScreen() {
     transform: [{ scale: dotScale.value }],
   }));
 
-  const accentLayerTopY = useSharedValue(0);
-  const accentLayerMidY = useSharedValue(0);
-  useEffect(() => {
-    accentLayerTopY.value = withRepeat(
-      withSequence(withSpring(28, { damping: 18, stiffness: 4 }), withSpring(-28, { damping: 18, stiffness: 4 })),
-      -1,
-      true,
-    );
-    accentLayerMidY.value = withRepeat(
-      withSequence(withSpring(-22, { damping: 16, stiffness: 3 }), withSpring(22, { damping: 16, stiffness: 3 })),
-      -1,
-      true,
-    );
-  }, [accentLayerTopY, accentLayerMidY]);
-  const accentLayerTopStyle = useAnimatedStyle(() => ({ transform: [{ translateY: accentLayerTopY.value }] }));
-  const accentLayerMidStyle = useAnimatedStyle(() => ({ transform: [{ translateY: accentLayerMidY.value }] }));
-
   const bgBase = isDark ? '#08080C' : '#FAFAFB';
 
   return (
     <View style={{ flex: 1, backgroundColor: bgBase }}>
       <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
-        <Animated.View style={[{
-          position: 'absolute',
-          top: -screenH * 0.12,
-          left: -screenW * 0.25,
-          width: screenW * 0.95,
-          height: screenW * 0.95,
-          borderRadius: screenW * 0.5,
-          backgroundColor: isDark ? 'rgba(91,91,248,0.45)' : 'rgba(91,91,248,0.22)',
-          opacity: 0.9,
-        }, accentLayerTopStyle]} />
-        <Animated.View style={[{
-          position: 'absolute',
-          top: screenH * 0.22,
-          right: -screenW * 0.30,
-          width: screenW * 0.90,
-          height: screenW * 0.90,
-          borderRadius: screenW * 0.5,
-          backgroundColor: isDark ? 'rgba(168,85,247,0.40)' : 'rgba(168,85,247,0.18)',
-          opacity: 0.85,
-        }, accentLayerMidStyle]} />
-        <View style={{
-          position: 'absolute',
-          bottom: -screenH * 0.08,
-          left: -screenW * 0.20,
-          width: screenW * 0.75,
-          height: screenW * 0.75,
-          borderRadius: screenW * 0.5,
-          backgroundColor: isDark ? 'rgba(34,211,238,0.28)' : 'rgba(34,211,238,0.14)',
-          opacity: 0.7,
-        }} />
         <LinearGradient
           colors={isDark
-            ? ['rgba(8,8,12,0)', 'rgba(8,8,12,0.55)', 'rgba(8,8,12,0.95)']
-            : ['rgba(250,250,251,0)', 'rgba(250,250,251,0.55)', 'rgba(250,250,251,0.95)']}
-          locations={[0, 0.5, 1]}
+            ? ['rgba(224,96,48,0.06)', 'transparent', 'rgba(0,0,0,0.0)']
+            : ['rgba(224,96,48,0.04)', 'transparent']}
+          locations={isDark ? [0, 0.45, 1] : [0, 1]}
           style={{ position: 'absolute', inset: 0 }}
         />
       </View>
@@ -179,7 +130,7 @@ export default function LoginScreen() {
               >
                 {`“${ROTATING_PROMPTS[promptIdx]}”`}
               </Animated.Text>
-              <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, letterSpacing: 1.5, marginTop: 14, textTransform: 'uppercase' }]}>
+              <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, marginTop: 14 }]}>
                 A QUESTION WORTH KEEPING
               </Text>
             </View>

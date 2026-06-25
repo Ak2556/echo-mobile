@@ -214,17 +214,7 @@ export default function DiscoverScreen() {
   const ListHeader = (
     <View style={layout.contentStyle}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 12 : 8, marginBottom: 16, gap: 6 }}>
-        <View
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            padding: 3,
-            borderRadius: layout.isDesktop ? 12 : 14,
-            backgroundColor: colors.surface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
-          }}
-        >
+        <View style={{ flex: 1, flexDirection: 'row', gap: 20 }}>
           {(['semantic', 'forYou', 'following', 'latest'] as const).map(scope => {
             const active = feedScope === scope;
             const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : scope === 'following' ? 'Following' : 'Latest';
@@ -236,20 +226,15 @@ export default function DiscoverScreen() {
                 accessibilityLabel={label}
                 accessibilityState={{ selected: active }}
                 style={{
-                  flex: 1,
-                  minWidth: 0,
-                  alignItems: 'center',
-                  paddingHorizontal: 6,
-                  paddingVertical: layout.isDesktop ? 7 : 8,
-                  borderRadius: layout.isDesktop ? 9 : 11,
-                  backgroundColor: active ? colors.accentMuted : 'transparent',
+                  paddingBottom: 4,
+                  borderBottomWidth: 2,
+                  borderBottomColor: active ? colors.accent : 'transparent',
                 }}
               >
                 <Text style={{
                   color: active ? colors.accent : colors.textSecondary,
-                  fontSize: fontSizes.caption,
-                  fontWeight: '700',
-                  letterSpacing: 0,
+                  fontSize: fontSizes.small,
+                  fontWeight: active ? '700' : '400',
                 }}>
                   {label}
                 </Text>
@@ -322,16 +307,7 @@ export default function DiscoverScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={{
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: colors.accentMuted,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Sparkle color={colors.accent} size={17} weight="fill" />
-            </View>
+            <Sparkle color={colors.accent} size={20} weight="fill" />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
                 Finish your first Echo
@@ -378,13 +354,7 @@ export default function DiscoverScreen() {
             gap: 12,
           }}
         >
-          <View style={{
-            width: 32, height: 32, borderRadius: 16,
-            backgroundColor: colors.accentMuted,
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <PencilSimpleLine color={colors.accent} size={18} weight="bold" />
-          </View>
+          <PencilSimpleLine color={colors.accent} size={20} weight="bold" />
           <Pressable
             onPress={() => router.push('/create-post')}
             style={{ flex: 1 }}
@@ -523,7 +493,7 @@ export default function DiscoverScreen() {
                   </Text>
                   {remote && suggestedUsers.length > 0 ? (
                     <>
-                      <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }]}>
+                      <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginBottom: 8 }]}>
                         Suggested people
                       </Text>
                       {suggestedUsers.map(user => (

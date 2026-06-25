@@ -86,7 +86,7 @@ export default function DeleteAccountScreen() {
 
         {/* What gets deleted */}
         <View style={{ gap: 6 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' }}>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>
             What we delete
           </Text>
           {[

@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
-import { GlassPanel } from '../../components/ui/GlassPanel';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { showToast } from '../../components/ui/Toast';
 import { tap } from '../../lib/haptics';
@@ -160,12 +159,14 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
               accessibilityState={{ selected: isFocused }}
               style={{
                 height: 42,
-                borderRadius: 10,
+                borderRadius: 0,
                 paddingHorizontal: 12,
+                paddingLeft: isFocused ? 10 : 12,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 11,
-                backgroundColor: isFocused ? colors.accentMuted : 'transparent',
+                borderLeftWidth: isFocused ? 2 : 0,
+                borderLeftColor: colors.accent,
               }}
             >
               {badgeCount > 0 ? (
@@ -232,11 +233,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
 
   const visibleRoutes = state.routes.filter(r => !HIDDEN_ROUTES.has(r.name));
   const isTabletTabs = layout.navigationKind === 'tablet-tabs';
-  const bottom = insets.bottom > 0 ? insets.bottom + (isTabletTabs ? 16 : 10) : (isTabletTabs ? 24 : 16);
   const tabHeight = isTabletTabs ? 64 : 56;
-  const tabMaxWidth = isTabletTabs ? 640 : layout.isWide ? 520 : undefined;
-  const outerPadding = isTabletTabs ? 34 : 22;
-  const itemRadius = isTabletTabs ? 16 : 14;
   const iconSize = isTabletTabs ? 24 : 22;
   const labelSize = isTabletTabs ? 11 : 10;
 
@@ -293,21 +290,17 @@ function FloatingTabBar(props: BottomTabBarProps) {
     <View
       style={{
         position: 'absolute',
-        bottom,
+        bottom: 0,
         left: 0,
         right: 0,
-        height: tabHeight,
-        alignItems: 'center',
-        paddingHorizontal: outerPadding,
+        height: tabHeight + insets.bottom,
+        paddingBottom: insets.bottom,
+        backgroundColor: colors.bg,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: colors.border,
       }}
       pointerEvents="box-none"
     >
-      <GlassPanel
-        borderRadius={isTabletTabs ? 22 : 20}
-        variant="light"
-        elevated
-        style={{ flex: 1, width: '100%', maxWidth: tabMaxWidth }}
-      >
         <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5 }}>
           {visibleRoutes.map(route => {
             const isFocused = state.routes[state.index].name === route.name;
@@ -346,11 +339,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '100%',
-                  gap: 2,
-                  backgroundColor: isFocused ? colors.accentMuted : 'transparent',
-                  borderRadius: itemRadius,
-                  marginHorizontal: 2,
-                  marginVertical: isTabletTabs ? 9 : 8,
+                  gap: 3,
                   minWidth: 0,
                 }}
               >
@@ -378,7 +367,6 @@ function FloatingTabBar(props: BottomTabBarProps) {
             );
           })}
         </View>
-      </GlassPanel>
 
       <ActionSheet
         visible={!!longPressActionList}

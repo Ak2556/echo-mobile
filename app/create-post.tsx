@@ -432,7 +432,7 @@ export default function CreatePostScreen() {
       shadowOffset: { width: 0, height: 4 },
       elevation: 1,
     },
-    label: { color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700' as const, textTransform: 'uppercase' as const, letterSpacing: 0, marginBottom: 8, marginLeft: 4 },
+    label: { color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700' as const, letterSpacing: 0, marginBottom: 8, marginLeft: 4 },
   };
 
   return (

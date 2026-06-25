@@ -242,7 +242,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
       </View>
 
       <View className="mx-4 mb-2" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 16, marginBottom: 8 }}>
+      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', paddingHorizontal: 16, marginBottom: 8 }}>
         Echoes {'\u00B7'} {echoeCount}
       </Text>
       <ProfilePhotoPreview
