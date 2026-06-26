@@ -1,5 +1,3 @@
-import * as FileSystem from 'expo-file-system/legacy';
-
 export type SoundEffect = 'success' | 'error' | 'like' | 'send' | 'pop';
 
 // [frequency Hz, duration ms, volume 0–1]
@@ -11,11 +9,13 @@ const EFFECT_CONFIG: Record<SoundEffect, [number, number, number]> = {
   error:   [220,  280, 0.30],
 };
 
-// Resolved lazily — null if expo-audio native module is absent (Expo Go)
+// Both resolved lazily so a missing native module never crashes the bundle
 let ExpoAudio: { createAudioPlayer: (src: any) => any; setAudioModeAsync: (m: any) => Promise<void> } | null = null;
-try {
-  ExpoAudio = require('expo-audio');
-} catch {}
+let FileSystem: { cacheDirectory: string | null; writeAsStringAsync: (uri: string, contents: string, opts: any) => Promise<void>; EncodingType: { Base64: string } } | null = null;
+try { ExpoAudio = require('expo-audio'); } catch {}
+try { FileSystem = require('expo-file-system/legacy'); } catch {
+  try { FileSystem = require('expo-file-system'); } catch {}
+}
 
 const cachedUris: Partial<Record<SoundEffect, string>> = {};
 let audioModeConfigured = false;
@@ -64,6 +64,7 @@ async function ensureAudioMode(): Promise<void> {
 
 async function getUri(effect: SoundEffect): Promise<string> {
   if (cachedUris[effect]) return cachedUris[effect]!;
+  if (!FileSystem?.cacheDirectory) throw new Error('FileSystem unavailable');
   const [freq, dur, vol] = EFFECT_CONFIG[effect];
   const b64 = buildWavBase64(freq, dur, vol);
   const uri = `${FileSystem.cacheDirectory}sfx_${effect}.wav`;
@@ -73,7 +74,7 @@ async function getUri(effect: SoundEffect): Promise<string> {
 }
 
 export function playSoundEffect(effect: SoundEffect): void {
-  if (!ExpoAudio) return;                          // Expo Go / unsupported platform
+  if (!ExpoAudio || !FileSystem) return;           // native modules absent in this build
   const { useAppStore } = require('../store/useAppStore') as typeof import('../store/useAppStore');
   if (!useAppStore.getState().soundEnabled) return;
 
