@@ -514,6 +514,46 @@ export default function SettingsScreen() {
     track(enabled ? 'persona_learning_started' : 'persona_learning_disabled');
   };
 
+  const handleAiModel = async (v: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.0-flash-lite') => {
+    const prev = s.aiModel;
+    s.setAiModel(v);
+    if (!isSupabaseRemote()) { showToast(`Model: ${v}`, 'Model'); return; }
+    try { await updateRemoteProfile({ ai_model: v }); showToast(`Model: ${v}`, 'Model'); }
+    catch (e) { s.setAiModel(prev); Alert.alert('Could not update AI model', (e as Error).message); }
+  };
+
+  const handleSensitiveContentFilter = async (enabled: boolean) => {
+    const prev = s.sensitiveContentFilter;
+    s.setSensitiveContentFilter(enabled);
+    if (!isSupabaseRemote()) return;
+    try { await updateRemoteProfile({ sensitive_content_filter: enabled }); }
+    catch (e) { s.setSensitiveContentFilter(prev); Alert.alert('Could not update sensitive content filter', (e as Error).message); }
+  };
+
+  const handleContentLanguage = async (v: string) => {
+    const prev = s.contentLanguage;
+    s.setContentLanguage(v);
+    if (!isSupabaseRemote()) { showToast(`Language: ${v}`, 'Language'); return; }
+    try { await updateRemoteProfile({ content_language: v }); showToast(`Language: ${v}`, 'Language'); }
+    catch (e) { s.setContentLanguage(prev); Alert.alert('Could not update content language', (e as Error).message); }
+  };
+
+  const handleStreamResponses = async (enabled: boolean) => {
+    const prev = s.streamResponses;
+    s.setStreamResponses(enabled);
+    if (!isSupabaseRemote()) return;
+    try { await updateRemoteProfile({ stream_responses: enabled }); }
+    catch (e) { s.setStreamResponses(prev); Alert.alert('Could not update stream responses', (e as Error).message); }
+  };
+
+  const handleAutoSaveChats = async (enabled: boolean) => {
+    const prev = s.autoSaveChats;
+    s.setAutoSaveChats(enabled);
+    if (!isSupabaseRemote()) return;
+    try { await updateRemoteProfile({ auto_save_chats: enabled }); }
+    catch (e) { s.setAutoSaveChats(prev); Alert.alert('Could not update auto-save chats', (e as Error).message); }
+  };
+
   const fontLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.fontSize];
   const modelLabel = {
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
@@ -604,7 +644,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Lock} iconColor="#F59E0B" label="Private Account" subtitle="Safer default while you're learning the app" right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
             {divider}
-            <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, s.setSensitiveContentFilter)} />
+            <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
           </GlassPanel>
         </Animated.View>
 
@@ -738,11 +778,11 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={ChatTeardropDots} label="Chat Bubble Style" subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Star} label="Stream Responses" subtitle="Show AI responses as they're generated" right={SwitchEl(s.streamResponses, s.setStreamResponses)} />
+            <SettingsRow theme={theme} icon={Star} label="Stream Responses" subtitle="Show AI responses as they're generated" right={SwitchEl(s.streamResponses, handleStreamResponses)} />
             {divider}
             <SettingsRow theme={theme} icon={Lightning} label="Typing Indicator" subtitle="Show dots while AI is thinking" right={SwitchEl(s.showTypingIndicator, s.setShowTypingIndicator)} />
             {divider}
-            <SettingsRow theme={theme} icon={FloppyDisk} label="Auto-save Chats" subtitle="Automatically save conversations" right={SwitchEl(s.autoSaveChats, s.setAutoSaveChats)} />
+            <SettingsRow theme={theme} icon={FloppyDisk} label="Auto-save Chats" subtitle="Automatically save conversations" right={SwitchEl(s.autoSaveChats, handleAutoSaveChats)} />
           </GlassPanel>
         </Animated.View>
 
@@ -832,7 +872,7 @@ export default function SettingsScreen() {
             { label: 'Gemini 2.0 Flash Lite', value: 'gemini-2.0-flash-lite' as const, desc: 'Lightweight Google AI Studio model' },
           ]}
           value={s.aiModel}
-          onChange={(v) => { s.setAiModel(v); showToast(`Model: ${v}`, 'Model'); }}
+          onChange={(v) => void handleAiModel(v)}
           onClose={() => setShowModelPicker(false)}
         />
       )}
@@ -884,7 +924,7 @@ export default function SettingsScreen() {
             { label: 'Arabic', value: 'Arabic' as string },
           ]}
           value={s.contentLanguage}
-          onChange={(v) => { s.setContentLanguage(v); showToast(`Language: ${v}`, 'Language'); }}
+          onChange={(v) => void handleContentLanguage(v)}
           onClose={() => setShowLanguagePicker(false)}
         />
       )}
