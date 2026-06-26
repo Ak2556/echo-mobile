@@ -1,5 +1,4 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { createAudioPlayer } from 'expo-audio';
 
 export type SoundEffect = 'success' | 'error' | 'like' | 'send' | 'pop';
 
@@ -12,7 +11,14 @@ const EFFECT_CONFIG: Record<SoundEffect, [number, number, number]> = {
   error:   [220,  280, 0.30],
 };
 
+// Resolved lazily — null if expo-audio native module is absent (Expo Go)
+let ExpoAudio: { createAudioPlayer: (src: any) => any; setAudioModeAsync: (m: any) => Promise<void> } | null = null;
+try {
+  ExpoAudio = require('expo-audio');
+} catch {}
+
 const cachedUris: Partial<Record<SoundEffect, string>> = {};
+let audioModeConfigured = false;
 
 function buildWavBase64(frequency: number, durationMs: number, volume: number): string {
   const sampleRate = 44100;
@@ -24,8 +30,8 @@ function buildWavBase64(frequency: number, durationMs: number, volume: number): 
   const w16 = (o: number, v: number) => view.setUint16(o, v, true);
   const ws  = (o: number, s: string) => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
 
-  ws(0,  'RIFF'); w32(4,  36 + numSamples * 2);
-  ws(8,  'WAVE'); ws(12, 'fmt ');
+  ws(0, 'RIFF'); w32(4, 36 + numSamples * 2);
+  ws(8, 'WAVE'); ws(12, 'fmt ');
   w32(16, 16); w16(20, 1); w16(22, 1);
   w32(24, sampleRate); w32(28, sampleRate * 2);
   w16(32, 2); w16(34, 16);
@@ -44,6 +50,18 @@ function buildWavBase64(frequency: number, durationMs: number, volume: number): 
   return btoa(bin);
 }
 
+async function ensureAudioMode(): Promise<void> {
+  if (audioModeConfigured || !ExpoAudio) return;
+  audioModeConfigured = true;
+  // playsInSilentMode:false — respects iOS silent switch and Android audio focus.
+  // interruptionMode DUCK_OTHERS — lowers background audio briefly, resumes after.
+  await ExpoAudio.setAudioModeAsync({
+    playsInSilentMode: false,
+    allowsRecording: false,
+    interruptionMode: 2, // InterruptionMode.DUCK_OTHERS
+  }).catch(() => {});
+}
+
 async function getUri(effect: SoundEffect): Promise<string> {
   if (cachedUris[effect]) return cachedUris[effect]!;
   const [freq, dur, vol] = EFFECT_CONFIG[effect];
@@ -55,13 +73,15 @@ async function getUri(effect: SoundEffect): Promise<string> {
 }
 
 export function playSoundEffect(effect: SoundEffect): void {
+  if (!ExpoAudio) return;                          // Expo Go / unsupported platform
   const { useAppStore } = require('../store/useAppStore') as typeof import('../store/useAppStore');
   if (!useAppStore.getState().soundEnabled) return;
 
   void (async () => {
     try {
+      await ensureAudioMode();
       const uri = await getUri(effect);
-      const player = createAudioPlayer({ uri });
+      const player = ExpoAudio!.createAudioPlayer({ uri });
       player.play();
       const [, dur] = EFFECT_CONFIG[effect];
       setTimeout(() => { try { player.remove(); } catch {} }, dur + 400);

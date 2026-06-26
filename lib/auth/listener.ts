@@ -7,7 +7,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { identify, resetIdentity, track } from '../analytics';
 import { identifyUser, clearUser, captureException } from '../monitoring';
 import { isSupabaseRemote } from '../remoteConfig';
-import { fetchRemoteBlocks, fetchRemoteMutes } from '../supabaseEchoApi';
+import { fetchRemoteBlocks, fetchRemoteMutes, fetchAndApplyRemoteSettings } from '../supabaseEchoApi';
 import { loadPersonaProfile } from '../persona';
 import { useAuthStore } from './store';
 import type { AuthProfile, AuthStatus } from './types';
@@ -77,9 +77,9 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
     app.setHasSeenOnboarding(true);
   }
 
-  // Hydrate block/mute lists in the background — non-fatal.
+  // Hydrate block/mute lists + cross-device settings in the background — non-fatal.
   if (isSupabaseRemote()) {
-    Promise.all([fetchRemoteBlocks(), fetchRemoteMutes()])
+    Promise.all([fetchRemoteBlocks(), fetchRemoteMutes(), fetchAndApplyRemoteSettings()])
       .then(([blockedIds, mutedIds]) => {
         const s = useAppStore.getState();
         const cb = new Set(s.blockedIds);

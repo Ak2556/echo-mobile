@@ -1274,11 +1274,41 @@ export async function updateRemoteProfile(updates: {
   activity_status?: boolean;
   online_status?: boolean;
   read_receipts?: boolean;
+  // content + AI prefs — synced across all devices
+  ai_model?: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.0-flash-lite';
+  sensitive_content_filter?: boolean;
+  content_language?: string;
+  stream_responses?: boolean;
+  auto_save_chats?: boolean;
 }): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase.from('profiles').update(updates).eq('id', uid);
   if (error) throw error;
+}
+
+/** Pull content + AI settings from the server and apply to local store. */
+export async function fetchAndApplyRemoteSettings(): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('ai_model, sensitive_content_filter, content_language, stream_responses, auto_save_chats, is_private, dm_privacy, activity_status, online_status, read_receipts')
+    .eq('id', uid)
+    .single();
+  if (error || !data) return;
+  const { useAppStore } = require('../store/useAppStore') as typeof import('../store/useAppStore');
+  const s = useAppStore.getState();
+  if (data.ai_model)                          s.setAiModel(data.ai_model as any);
+  if (data.sensitive_content_filter != null)  s.setSensitiveContentFilter(data.sensitive_content_filter);
+  if (data.content_language)                  s.setContentLanguage(data.content_language);
+  if (data.stream_responses != null)          s.setStreamResponses(data.stream_responses);
+  if (data.auto_save_chats != null)           s.setAutoSaveChats(data.auto_save_chats);
+  if (data.is_private != null)                s.setPrivateAccount(data.is_private);
+  if (data.dm_privacy)                        s.setDmPrivacy(data.dm_privacy as any);
+  if (data.activity_status != null)           s.setActivityStatus(data.activity_status);
+  if (data.online_status != null)             s.setOnlineStatus(data.online_status);
+  if (data.read_receipts != null)             s.setReadReceipts(data.read_receipts);
 }
 
 // Badges
