@@ -8,6 +8,10 @@ import {
   fetchRemoteMessages,
   fetchConversationById,
   sendRemoteDM,
+  sendDMImage,
+  editRemoteMessage,
+  pinDMMessage,
+  getOrCreateRemoteConversation,
   markMessagesRead,
   deleteRemoteMessage,
   addMessageReaction,
@@ -125,17 +129,30 @@ export function useRemoteMessages(conversationId: string | undefined) {
   });
 }
 
+// Start conversation
+/** Upsert a dm_conversation in Supabase and return its UUID — no message sent. */
+export function useStartRemoteConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (recipientId: string) => getOrCreateRemoteConversation(recipientId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['conversations'] }),
+  });
+}
+
 // Send
-/** Send a text DM with optimistic update. */
-export function useSendRemoteDM(conversationId: string | undefined, recipientId: string | undefined) {
+/** Send a text DM with optimistic update. Accepts optional replyToId for quoted replies. */
+export function useSendRemoteDM(
+  conversationId: string | undefined,
+  recipientId: string | undefined,
+) {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ content }: { content: string }) => {
+    mutationFn: ({ content, replyToId }: { content: string; replyToId?: string }) => {
       if (!recipientId) throw new Error('No recipient');
-      return sendRemoteDM(recipientId, content);
+      return sendRemoteDM(recipientId, content, replyToId);
     },
-    onMutate: async ({ content }) => {
+    onMutate: async ({ content, replyToId }) => {
       await qc.cancelQueries({ queryKey: ['messages', conversationId] });
       const snapshot = qc.getQueryData(['messages', conversationId]);
 
@@ -149,8 +166,14 @@ export function useSendRemoteDM(conversationId: string | undefined, recipientId:
         createdAt: new Date().toISOString(),
         readAt: null,
         deletedAt: null,
+        editedAt: null,
         sharedEchoId: null,
         mediaUrl: null,
+        replyToId: replyToId ?? null,
+        replyToContent: null,
+        replyToSenderId: null,
+        replyToKind: null,
+        replyToDeleted: false,
         reactions: [],
       };
 
@@ -169,6 +192,109 @@ export function useSendRemoteDM(conversationId: string | undefined, recipientId:
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+// Send image
+/** Upload a photo and send it as an image-kind DM with optimistic placeholder. */
+export function useSendImageDM(
+  conversationId: string | undefined,
+  recipientId: string | undefined,
+) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ uri, mimeType, replyToId }: { uri: string; mimeType: string; replyToId?: string }) => {
+      if (!recipientId) throw new Error('No recipient');
+      return sendDMImage(recipientId, uri, mimeType, replyToId);
+    },
+    onMutate: async ({ uri }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId] });
+      const snapshot = qc.getQueryData(['messages', conversationId]);
+
+      const uid = await getSessionUserId();
+      const optimistic: RemoteDirectMessage = {
+        id: `pending-img-${Date.now()}`,
+        conversationId: conversationId ?? '',
+        senderId: uid ?? 'me',
+        content: null,
+        kind: 'image',
+        createdAt: new Date().toISOString(),
+        readAt: null,
+        deletedAt: null,
+        editedAt: null,
+        sharedEchoId: null,
+        mediaUrl: uri, // local URI until confirmed
+        replyToId: null,
+        replyToContent: null,
+        replyToSenderId: null,
+        replyToKind: null,
+        replyToDeleted: false,
+        reactions: [],
+      };
+
+      qc.setQueryData<InfiniteData<RemoteDirectMessage[]>>(
+        ['messages', conversationId],
+        old => old
+          ? { ...old, pages: old.pages.map((p, i) => i === 0 ? [...p, optimistic] : p) }
+          : old,
+      );
+      return { snapshot };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.snapshot !== undefined) qc.setQueryData(['messages', conversationId], ctx.snapshot);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+// Edit
+/** Edit the text of an own message. */
+export function useEditMessage(conversationId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, content }: { messageId: string; content: string }) =>
+      editRemoteMessage(messageId, content),
+    onMutate: async ({ messageId, content }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId] });
+      const snapshot = qc.getQueryData(['messages', conversationId]);
+      const now = new Date().toISOString();
+      qc.setQueryData<InfiniteData<RemoteDirectMessage[]>>(
+        ['messages', conversationId],
+        old => old
+          ? {
+              ...old,
+              pages: old.pages.map(page =>
+                page.map(msg =>
+                  msg.id === messageId ? { ...msg, content, editedAt: now } : msg,
+                ),
+              ),
+            }
+          : old,
+      );
+      return { snapshot };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.snapshot !== undefined) qc.setQueryData(['messages', conversationId], ctx.snapshot);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['messages', conversationId] }),
+  });
+}
+
+// Pin
+/** Pin or unpin a message in this conversation. */
+export function usePinMessage(conversationId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId }: { messageId: string | null }) =>
+      conversationId ? pinDMMessage(conversationId, messageId) : Promise.resolve(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversation', conversationId] });
       qc.invalidateQueries({ queryKey: ['conversations'] });
     },
   });

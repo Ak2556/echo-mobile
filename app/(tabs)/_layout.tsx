@@ -254,8 +254,8 @@ function FloatingTabBar(props: BottomTabBarProps) {
     switch (routeName) {
       case 'chat':
         return [
-          { key: 'inbox',   label: 'Open Messages',    icon: <Envelope     color={colors.accent} size={18} />, onPress: () => router.push('/messages') },
-          { key: 'new',     label: 'New conversation', icon: <PencilSimple color={colors.accent} size={18} />, onPress: () => router.push('/messages') },
+          { key: 'inbox',   label: 'Open Messages',    icon: <Envelope     color="#0ea5e9" size={18} />, onPress: () => router.push('/messages') },
+          { key: 'new',     label: 'New message',      icon: <PencilSimple color="#0ea5e9" size={18} />, onPress: () => router.push('/messages') },
           { key: 'palette', label: 'Command palette',  icon: <MagicWand    color={colors.accent} size={18} />, onPress: () => useCommandPalette.getState().open() },
         ];
       case 'notifications':
