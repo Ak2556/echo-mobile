@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, KeyboardAvoidingView, Platform, FlatList,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
-  ActivityIndicator,
+  ActivityIndicator, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -697,6 +697,8 @@ export default function DMScreen() {
     const echoPreviewText = echoPreview ? `\n${echoPreview}` : '';
     sendRemote.mutate({
       content: `Shared Echo: "${String(echoTitle)}"${echoPreviewText}${echoAuthor ? `\n${echoAuthor}` : ''}`,
+    }, {
+      onError: () => Alert.alert('Error', 'Failed to share Echo. Please try again.'),
     });
     setSharedPending(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -715,7 +717,10 @@ export default function DMScreen() {
     setQuickAction(null);
 
     if (editingMessage) {
-      if (remote) editMessage.mutate({ messageId: editingMessage.id, content });
+      if (remote) editMessage.mutate(
+        { messageId: editingMessage.id, content },
+        { onError: () => Alert.alert('Error', 'Failed to edit message. Please try again.') },
+      );
       setEditingMessage(null);
       return;
     }
@@ -724,7 +729,12 @@ export default function DMScreen() {
     setReplyingTo(null);
 
     if (remote) {
-      sendRemote.mutate({ content, replyToId });
+      sendRemote.mutate({ content, replyToId }, {
+        onError: () => {
+          setText(content);
+          Alert.alert('Error', 'Message failed to send. Please try again.');
+        },
+      });
     } else {
       sendDM(id, content);
     }
@@ -752,6 +762,7 @@ export default function DMScreen() {
           setReplyingTo(null);
           setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
         },
+        onError: () => Alert.alert('Error', 'Failed to send image. Please try again.'),
       });
     } catch {
       setImageUploading(false);

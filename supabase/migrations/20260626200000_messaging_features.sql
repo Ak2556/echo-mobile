@@ -12,10 +12,10 @@ CREATE INDEX IF NOT EXISTS idx_dm_reply_to ON public.direct_messages(reply_to_id
 ALTER TABLE public.dm_conversations
   ADD COLUMN IF NOT EXISTS pinned_message_id uuid REFERENCES public.direct_messages(id) ON DELETE SET NULL;
 
--- 3. dm-media storage bucket for DM photos / voice notes
+-- 3. dm-media storage bucket for DM photos / voice notes (private — no public CDN URLs)
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('dm-media', 'dm-media', true)
-ON CONFLICT (id) DO NOTHING;
+VALUES ('dm-media', 'dm-media', false)
+ON CONFLICT (id) DO UPDATE SET public = false;
 
 -- Allow the sender to upload to their own subfolder: dm-media/<uid>/...
 DROP POLICY IF EXISTS "dm_media_upload"  ON storage.objects;
@@ -26,7 +26,7 @@ CREATE POLICY "dm_media_upload"  ON storage.objects
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
--- Authenticated users can read (bucket is public so CDN URLs also work)
+-- Only authenticated users can read; CDN URLs are blocked because bucket is private
 DROP POLICY IF EXISTS "dm_media_read"   ON storage.objects;
 CREATE POLICY "dm_media_read"   ON storage.objects
   FOR SELECT USING (bucket_id = 'dm-media' AND auth.role() = 'authenticated');
