@@ -2341,6 +2341,7 @@ export interface RemoteConversation {
   lastMessageAt: string | null;
   lastMessageKind: string;
   unreadCount: number;
+  pinnedMessage: { id: string; content: string | null; kind: string } | null;
 }
 
 export interface RemoteMessageReaction {
@@ -2359,9 +2360,32 @@ export interface RemoteDirectMessage {
   createdAt: string;
   readAt: string | null;
   deletedAt: string | null;
+  editedAt: string | null;
   sharedEchoId: string | null;
   mediaUrl: string | null;
+  replyToId: string | null;
+  replyToContent: string | null;
+  replyToSenderId: string | null;
+  replyToKind: string | null;
+  replyToDeleted: boolean;
   reactions: RemoteMessageReaction[];
+}
+
+/** Upsert a dm_conversation row and return its UUID. Does NOT send a message. */
+export async function getOrCreateRemoteConversation(recipientId: string): Promise<string> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const userA = uid < recipientId ? uid : recipientId;
+  const userB = uid < recipientId ? recipientId : uid;
+
+  const { data: conv, error } = await supabase
+    .from('dm_conversations')
+    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return conv.id as string;
 }
 
 /** Upsert a conversation (order user_a < user_b per DB check) and insert a message.
@@ -2369,6 +2393,7 @@ export interface RemoteDirectMessage {
 export async function sendRemoteDM(
   recipientId: string,
   content: string,
+  replyToId?: string,
 ): Promise<{ conversationId: string }> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
@@ -2385,10 +2410,100 @@ export async function sendRemoteDM(
 
   const { error: msgErr } = await supabase
     .from('direct_messages')
-    .insert({ conversation_id: conv.id, sender_id: uid, kind: 'text', text: content });
+    .insert({
+      conversation_id: conv.id,
+      sender_id: uid,
+      kind: 'text',
+      text: content,
+      ...(replyToId ? { reply_to_id: replyToId } : {}),
+    });
   if (msgErr) throw msgErr;
 
   return { conversationId: conv.id };
+}
+
+/** Edit a sent message (sender only, enforced both here and by RLS). */
+export async function editRemoteMessage(messageId: string, content: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('direct_messages')
+    .update({ text: content, edited_at: new Date().toISOString() })
+    .eq('id', messageId)
+    .eq('sender_id', uid);
+  if (error) throw error;
+}
+
+/** Send a photo DM. Uploads to dm-media bucket then inserts an image-kind message. */
+export async function sendDMImage(
+  recipientId: string,
+  uri: string,
+  mimeType: string,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const userA = uid < recipientId ? uid : recipientId;
+  const userB = uid < recipientId ? recipientId : uid;
+
+  const { data: conv, error: convErr } = await supabase
+    .from('dm_conversations')
+    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
+    .select('id')
+    .single();
+  if (convErr) throw convErr;
+
+  const ext = (mimeType.split('/')[1] ?? 'jpg').replace('jpeg', 'jpg');
+  const path = `${uid}/${conv.id as string}/${Date.now()}.${ext}`;
+
+  const { data: signed, error: signErr } = await supabase.storage
+    .from('dm-media')
+    .createSignedUploadUrl(path);
+
+  if (signErr) {
+    const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+    const bytes = base64ToArrayBuffer(base64);
+    const { error: upErr } = await supabase.storage
+      .from('dm-media')
+      .upload(path, bytes, { upsert: true, contentType: mimeType });
+    if (upErr) throw upErr;
+  } else {
+    const res = await FileSystem.uploadAsync(signed.signedUrl, uri, {
+      httpMethod: 'PUT',
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      headers: { 'content-type': mimeType, 'cache-control': 'max-age=31536000' },
+    });
+    if (res.status < 200 || res.status >= 300) throw new Error(`Image upload failed (${res.status})`);
+  }
+
+  const { data: pub } = supabase.storage.from('dm-media').getPublicUrl(path);
+
+  const { error: msgErr } = await supabase
+    .from('direct_messages')
+    .insert({
+      conversation_id: conv.id,
+      sender_id: uid,
+      kind: 'image',
+      media_url: pub.publicUrl,
+      text: null,
+      ...(replyToId ? { reply_to_id: replyToId } : {}),
+    });
+  if (msgErr) throw msgErr;
+
+  return { conversationId: conv.id as string };
+}
+
+/** Set or clear the pinned message for a conversation. */
+export async function pinDMMessage(
+  conversationId: string,
+  messageId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('dm_conversations')
+    .update({ pinned_message_id: messageId })
+    .eq('id', conversationId);
+  if (error) throw error;
 }
 
 /** Fetch all conversations via RPC (correct last message + real unread count). */
@@ -2409,6 +2524,7 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
     lastMessageAt: (r.last_message_at as string | null) ?? null,
     lastMessageKind: (r.last_message_kind as string | null) ?? 'text',
     unreadCount: Number(r.unread_count ?? 0),
+    pinnedMessage: null,
   }));
 }
 
@@ -2419,7 +2535,11 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
 
   const { data: conv } = await supabase
     .from('dm_conversations')
-    .select('id, user_a, user_b, last_message_at, last_message_text, last_message_kind')
+    .select(`
+      id, user_a, user_b, last_message_at, last_message_text, last_message_kind,
+      pinned_message_id,
+      pinned_msg:pinned_message_id (id, text, kind, deleted_at)
+    `)
     .eq('id', conversationId)
     .single();
   if (!conv) return null;
@@ -2431,6 +2551,8 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
     .eq('id', otherId)
     .single();
 
+  const pm = (conv as Record<string, unknown>).pinned_msg as Record<string, unknown> | null;
+
   return {
     id: conv.id as string,
     otherUserId: otherId,
@@ -2441,6 +2563,9 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
     lastMessageAt: (conv.last_message_at as string | null) ?? null,
     lastMessageKind: (conv.last_message_kind as string | null) ?? 'text',
     unreadCount: 0,
+    pinnedMessage: pm && !pm.deleted_at
+      ? { id: pm.id as string, content: (pm.text as string | null) ?? null, kind: (pm.kind as string) ?? 'text' }
+      : null,
   };
 }
 
@@ -2501,7 +2626,10 @@ export async function fetchRemoteMessages(
     .from('direct_messages')
     .select(`
       id, conversation_id, sender_id, text, kind,
-      created_at, read_at, deleted_at, shared_echo_id, media_url,
+      created_at, read_at, deleted_at, edited_at,
+      shared_echo_id, media_url,
+      reply_to_id,
+      reply_msg:reply_to_id (id, text, kind, sender_id, deleted_at),
       reactions:message_reactions(id, user_id, emoji)
     `)
     .eq('conversation_id', conversationId)
@@ -2513,24 +2641,33 @@ export async function fetchRemoteMessages(
   const { data, error } = await q;
   if (error) throw error;
 
-  return ((data ?? []) as Record<string, unknown>[]).reverse().map(m => ({
-    id: m.id as string,
-    conversationId: m.conversation_id as string,
-    senderId: m.sender_id as string,
-    content: (m.text as string | null) ?? null,
-    kind: (m.kind as RemoteDirectMessage['kind']) ?? 'text',
-    createdAt: m.created_at as string,
-    readAt: (m.read_at as string | null) ?? null,
-    deletedAt: (m.deleted_at as string | null) ?? null,
-    sharedEchoId: (m.shared_echo_id as string | null) ?? null,
-    mediaUrl: (m.media_url as string | null) ?? null,
-    reactions: ((m.reactions as Record<string, unknown>[] | null) ?? []).map(r => ({
-      id: r.id as string,
-      messageId: m.id as string,
-      userId: r.user_id as string,
-      value: r.emoji as string,
-    })),
-  }));
+  return ((data ?? []) as Record<string, unknown>[]).reverse().map(m => {
+    const rm = (m.reply_msg as Record<string, unknown> | null);
+    return {
+      id: m.id as string,
+      conversationId: m.conversation_id as string,
+      senderId: m.sender_id as string,
+      content: (m.text as string | null) ?? null,
+      kind: (m.kind as RemoteDirectMessage['kind']) ?? 'text',
+      createdAt: m.created_at as string,
+      readAt: (m.read_at as string | null) ?? null,
+      deletedAt: (m.deleted_at as string | null) ?? null,
+      editedAt: (m.edited_at as string | null) ?? null,
+      sharedEchoId: (m.shared_echo_id as string | null) ?? null,
+      mediaUrl: (m.media_url as string | null) ?? null,
+      replyToId: (m.reply_to_id as string | null) ?? null,
+      replyToContent: rm ? ((rm.text as string | null) ?? null) : null,
+      replyToSenderId: rm ? ((rm.sender_id as string | null) ?? null) : null,
+      replyToKind: rm ? ((rm.kind as string | null) ?? null) : null,
+      replyToDeleted: rm ? !!(rm.deleted_at) : false,
+      reactions: ((m.reactions as Record<string, unknown>[] | null) ?? []).map(r => ({
+        id: r.id as string,
+        messageId: m.id as string,
+        userId: r.user_id as string,
+        value: r.emoji as string,
+      })),
+    };
+  });
 }
 
 // Suggested Users

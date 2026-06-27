@@ -25,6 +25,7 @@ import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { useToggleRemoteBlock, useToggleRemoteMute } from '../../hooks/queries/useBlockMute';
+import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
 
@@ -263,6 +264,7 @@ export default function UserProfileScreen() {
   const followMut = useToggleRemoteFollow();
   const blockMut = useToggleRemoteBlock();
   const muteMut = useToggleRemoteMute();
+  const startConvMut = useStartRemoteConversation();
   const { colors } = useTheme();
 
   const {
@@ -323,7 +325,9 @@ export default function UserProfileScreen() {
               blocked={blocked}
               muted={muted}
               onFollow={() => followMut.mutate({ userId: user.id, follow: !remoteFollowing })}
-              onMessage={() => { const convId = getOrCreateConversation(user); router.push(`/messages/${convId}`); }}
+              onMessage={() => {
+                void startConvMut.mutateAsync(user.id).then(convId => router.push(`/messages/${convId}`));
+              }}
               onShare={() => { void Share.share({ message: userUrl(user.username), url: userUrl(user.username) }); }}
               onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
               onMute={() => {

@@ -113,7 +113,7 @@ export default function AppealScreen() {
                   Appeal submitted
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 }}>
-                  We'll review your appeal and notify you of the outcome within 14 days, as required by the Digital Services Act.
+                  {"We'll review your appeal and notify you of the outcome within 14 days, as required by the Digital Services Act."}
                 </Text>
                 <AnimatedPressable
                   onPress={() => router.back()}
@@ -223,7 +223,7 @@ export default function AppealScreen() {
               <View style={{ paddingTop: 48, alignItems: 'center', gap: 12 }}>
                 <Scales color={colors.border} size={40} weight="duotone" />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular', textAlign: 'center' }}>
-                  You haven't filed any appeals yet.{'\n'}Appeals appear here when you contest a moderation decision.
+                  {"You haven't filed any appeals yet."}{'\n'}Appeals appear here when you contest a moderation decision.
                 </Text>
               </View>
             ) : (

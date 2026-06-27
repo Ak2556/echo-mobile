@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet, Pressable, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -20,13 +20,151 @@ import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/loc
 import { generateSessionTitle } from '../../lib/aiTitle';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, CaretDown } from 'phosphor-react-native';
+import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
 import { track } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { buildPersonaPromptContext, loadPersonaProfile, recordPersonaSignal, syncPersonaFromMessages } from '../../lib/persona';
 import { playSoundEffect } from '../../lib/sound';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { useRemoteConversations } from '../../hooks/queries/useDMs';
+import type { RemoteConversation } from '../../lib/supabaseEchoApi';
+import type { Conversation } from '../../types';
+import { FeedCardSkeleton } from '../../components/ui/Skeleton';
+
+// ─── DM colour token (teal, distinct from AI accent) ────────────────────────
+const DM_COLOR = '#0ea5e9';
+
+// ─── DMConversationCard ───────────────────────────────────────────────────────
+function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: () => void }) {
+  const { colors, fontSizes } = useTheme();
+  function ago(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'now';
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  }
+  const hasUnread = conv.unreadCount > 0;
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flexDirection: 'row', alignItems: 'center',
+        paddingHorizontal: 20, paddingVertical: 14,
+        borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      <View style={{ position: 'relative', marginRight: 14 }}>
+        <View style={{
+          width: 46, height: 46, borderRadius: 23,
+          backgroundColor: conv.avatarColor,
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17 }}>
+            {conv.displayName.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+        {hasUnread && (
+          <View style={{
+            position: 'absolute', top: -2, right: -4,
+            width: 18, height: 18, borderRadius: 9,
+            backgroundColor: DM_COLOR,
+            alignItems: 'center', justifyContent: 'center',
+            borderWidth: 2, borderColor: colors.bg,
+          }}>
+            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
+              {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+          <Text style={{
+            color: colors.text, fontWeight: hasUnread ? '700' : '600',
+            fontSize: fontSizes.body,
+          }} numberOfLines={1}>
+            {conv.displayName}
+          </Text>
+          {conv.isVerified && <SealCheck color={DM_COLOR} size={13} weight="fill" />}
+        </View>
+        <Text style={{
+          color: hasUnread ? colors.textSecondary : colors.textMuted,
+          fontSize: fontSizes.small, fontWeight: hasUnread ? '500' : '400',
+        }} numberOfLines={1}>
+          {conv.lastMessage || `@${conv.username}`}
+        </Text>
+      </View>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 10 }}>
+        {ago(conv.lastMessageAt)}
+      </Text>
+    </Pressable>
+  );
+}
+
+// ─── DMInboxView ─────────────────────────────────────────────────────────────
+function DMInboxView({ topPad }: { topPad: number }) {
+  const router = useRouter();
+  const { colors, fontSizes } = useTheme();
+  const remote = isSupabaseRemote();
+  const localConversations = useAppStore(s => s.conversations);
+  const { data: remoteConvs = [], isLoading } = useRemoteConversations();
+
+  const conversations: Conversation[] = remote
+    ? remoteConvs.map((rc: RemoteConversation) => ({
+        id: rc.id,
+        userId: rc.otherUserId,
+        username: rc.otherUsername,
+        displayName: rc.otherDisplayName,
+        avatarColor: rc.otherAvatarColor,
+        isVerified: false,
+        lastMessage: rc.lastMessage ?? '',
+        lastMessageAt: rc.lastMessageAt ?? new Date().toISOString(),
+        unreadCount: rc.unreadCount,
+      }))
+    : localConversations;
+
+  const sorted = [...conversations].sort(
+    (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
+  );
+
+  if (remote && isLoading) {
+    return (
+      <View style={{ flex: 1, paddingTop: topPad }}>
+        <FeedCardSkeleton /><FeedCardSkeleton /><FeedCardSkeleton />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      <FlatList
+        data={sorted}
+        keyExtractor={c => c.id}
+        contentContainerStyle={{ paddingTop: topPad }}
+        ListEmptyComponent={
+          <View style={{ paddingTop: 60, alignItems: 'center', gap: 8 }}>
+            <Envelope color={colors.textMuted} size={36} weight="thin" />
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center', paddingHorizontal: 40, lineHeight: 22 }}>
+              No messages yet.{'\n'}Go to someone&apos;s profile and tap Message.
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <DMConversationCard
+            conv={item}
+            onPress={() => router.push(`/messages/${item.id}` as Href)}
+          />
+        )}
+      />
+    </View>
+  );
+}
 
 const EMPTY_SUGGESTIONS = [
   'A decision I\'m working through',
@@ -35,11 +173,6 @@ const EMPTY_SUGGESTIONS = [
   'What I actually think about…',
 ];
 
-const MODEL_LABELS: Record<EchoAIModel, string> = {
-  'gemini-2.5-flash': 'Flash',
-  'gemini-2.5-pro': 'Pro',
-  'gemini-2.0-flash-lite': 'Lite',
-};
 
 type ChatItem =
   | { kind: 'text'; message: Message; isStreaming?: boolean }
@@ -77,6 +210,9 @@ export default function ChatScreen() {
   const layout = useResponsiveLayout();
   const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
+
+  // Mode: AI chat vs DM inbox
+  const [chatMode, setChatMode] = useState<'ai' | 'dm'>('ai');
 
   // Ephemeral live items: persisted text messages + transient tool cards.
   const [toolItems, setToolItems] = useState<Record<string, ToolCallItem>>({});
@@ -581,8 +717,14 @@ export default function ChatScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
 
+      {/* DM Inbox (shown when chatMode === 'dm') */}
+      {chatMode === 'dm' && (
+        <DMInboxView topPad={headerHeight} />
+      )}
+
+      {/* AI Chat (shown when chatMode === 'ai') */}
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, display: chatMode === 'ai' ? 'flex' : 'none' }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
@@ -686,39 +828,46 @@ export default function ChatScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <AnimatedPressable
-              onPress={() => setDrawerOpen(true)}
-              style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
-              scaleValue={0.88}
-              haptic="light"
-              accessibilityLabel="Chat sessions"
-              accessibilityRole="button"
-            >
-              <List color={colors.textSecondary} size={20} />
-            </AnimatedPressable>
-            <AnimatedPressable
-              onPress={handleNewChat}
-              style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
-              scaleValue={0.88}
-              haptic="light"
-              accessibilityLabel="New chat"
-              accessibilityRole="button"
-            >
-              <Plus color={colors.textSecondary} size={20} />
-            </AnimatedPressable>
-            <AnimatedPressable
-              onPress={() => setShowActionCenter(true)}
-              style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
-              scaleValue={0.88}
-              haptic="light"
-              accessibilityLabel="Quick actions"
-              accessibilityRole="button"
-            >
-              <Question color={colors.textSecondary} size={20} />
-            </AnimatedPressable>
+            {chatMode === 'ai' ? (
+              <>
+                <AnimatedPressable
+                  onPress={() => setDrawerOpen(true)}
+                  style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
+                  scaleValue={0.88} haptic="light"
+                  accessibilityLabel="Chat sessions" accessibilityRole="button"
+                >
+                  <List color={colors.textSecondary} size={20} />
+                </AnimatedPressable>
+                <AnimatedPressable
+                  onPress={handleNewChat}
+                  style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
+                  scaleValue={0.88} haptic="light"
+                  accessibilityLabel="New AI chat" accessibilityRole="button"
+                >
+                  <Plus color={colors.textSecondary} size={20} />
+                </AnimatedPressable>
+                <AnimatedPressable
+                  onPress={() => setShowActionCenter(true)}
+                  style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
+                  scaleValue={0.88} haptic="light"
+                  accessibilityLabel="Quick actions" accessibilityRole="button"
+                >
+                  <Question color={colors.textSecondary} size={20} />
+                </AnimatedPressable>
+              </>
+            ) : (
+              <AnimatedPressable
+                onPress={() => router.push('/messages' as Href)}
+                style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
+                scaleValue={0.88} haptic="light"
+                accessibilityLabel="Open full messages" accessibilityRole="button"
+              >
+                <PencilSimple color={DM_COLOR} size={20} />
+              </AnimatedPressable>
+            )}
           </View>
 
-          {/* Center: Echo title + model pill */}
+          {/* Center: mode switcher */}
           <View
             style={{
               position: 'absolute', left: 0, right: 0,
@@ -726,43 +875,69 @@ export default function ChatScreen() {
             }}
             pointerEvents="box-none"
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} pointerEvents="box-none">
-              <Lightning color={colors.accent} size={16} weight="fill" />
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Echo</Text>
-              <AnimatedPressable
-                onPress={() => setModelSheetOpen(true)}
-                scaleValue={0.9}
-                haptic="light"
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', gap: 4,
+              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+              borderRadius: 999, padding: 3,
+            }} pointerEvents="box-none">
+              {/* AI mode pill */}
+              <Pressable
+                onPress={() => setChatMode('ai')}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4,
-                  backgroundColor: colors.surfaceHover,
+                  flexDirection: 'row', alignItems: 'center', gap: 5,
+                  paddingHorizontal: 14, paddingVertical: 6,
                   borderRadius: 999,
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.border,
+                  backgroundColor: chatMode === 'ai' ? colors.accent : 'transparent',
                 }}
               >
-                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 0.3 }}>
-                  {MODEL_LABELS[aiModel]}
+                <Lightning
+                  color={chatMode === 'ai' ? '#fff' : colors.textSecondary}
+                  size={13} weight="fill"
+                />
+                <Text style={{
+                  color: chatMode === 'ai' ? '#fff' : colors.textSecondary,
+                  fontSize: 13, fontWeight: '700', letterSpacing: 0.2,
+                }}>
+                  AI Chat
                 </Text>
-                <CaretDown color={colors.textMuted} size={10} weight="bold" />
-              </AnimatedPressable>
+              </Pressable>
+
+              {/* DM mode pill */}
+              <Pressable
+                onPress={() => setChatMode('dm')}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 5,
+                  paddingHorizontal: 14, paddingVertical: 6,
+                  borderRadius: 999,
+                  backgroundColor: chatMode === 'dm' ? DM_COLOR : 'transparent',
+                }}
+              >
+                <Envelope
+                  color={chatMode === 'dm' ? '#fff' : colors.textSecondary}
+                  size={13} weight={chatMode === 'dm' ? 'fill' : 'regular'}
+                />
+                <Text style={{
+                  color: chatMode === 'dm' ? '#fff' : colors.textSecondary,
+                  fontSize: 13, fontWeight: '700', letterSpacing: 0.2,
+                }}>
+                  Messages
+                </Text>
+              </Pressable>
             </View>
           </View>
 
-          <AnimatedPressable
-            onPress={handleShare}
-            style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', zIndex: 1 }}
-            scaleValue={0.88}
-            haptic="light"
-            accessibilityLabel="Share conversation"
-            accessibilityRole="button"
-          >
-            <ShareNetwork color={colors.textSecondary} size={20} />
-          </AnimatedPressable>
+          {chatMode === 'ai' ? (
+            <AnimatedPressable
+              onPress={handleShare}
+              style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', zIndex: 1 }}
+              scaleValue={0.88} haptic="light"
+              accessibilityLabel="Share conversation" accessibilityRole="button"
+            >
+              <ShareNetwork color={colors.textSecondary} size={20} />
+            </AnimatedPressable>
+          ) : (
+            <View style={{ width: 32 }} />
+          )}
         </Animated.View>
 
         <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
