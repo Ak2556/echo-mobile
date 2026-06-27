@@ -16,6 +16,7 @@ export type SupabaseProfileRow = {
   pronouns?: string | null;
   /** ID of the echo the user has pinned to their profile, or null. */
   pinned_echo_id?: string | null;
+  is_moderator?: boolean;
 };
 
 export type SupabaseEchoRow = {

@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ak2556.echo",
+      "buildNumber": "1",
       "associatedDomains": [
         "applinks:echo.app"
       ],
@@ -18,7 +19,8 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSMicrophoneUsageDescription": "Echo uses your microphone to record voice memos in the mini-apps section.",
         "NSCameraUsageDescription": "Echo uses your camera to take photos for your profile and marketplace listings.",
-        "NSPhotoLibraryUsageDescription": "Echo accesses your photo library so you can upload photos to your profile and marketplace listings."
+        "NSPhotoLibraryUsageDescription": "Echo accesses your photo library so you can upload photos to your profile, marketplace listings, and send images in direct messages.",
+        "NSPhotoLibraryAddUsageDescription": "Echo saves images to your photo library."
       }
     },
     "android": {
@@ -28,6 +30,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "versionCode": 1,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "allowBackup": false,

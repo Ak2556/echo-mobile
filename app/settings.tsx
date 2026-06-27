@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Switch, Alert, Modal, Platform, StyleSheet, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,7 +12,7 @@ import {
   ChatCircle, Broadcast, Database, Eraser, BookmarkSimple,
   BellSlash, Rectangle, FileText,
   Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
-  Warning, ListChecks, Globe,
+  Warning, ListChecks, Globe, Gavel,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -20,7 +20,7 @@ import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
 import { signOut } from '../lib/auth';
-import { deleteRemoteAIConversations, updateRemoteProfile } from '../lib/supabaseEchoApi';
+import { deleteRemoteAIConversations, updateRemoteProfile, fetchCurrentUserProfile } from '../lib/supabaseEchoApi';
 import { clearPushToken, registerForPush } from '../lib/push';
 import { useResponsiveLayout } from '../lib/responsive';
 import { isSupabaseRemote } from '../lib/remoteConfig';
@@ -335,6 +335,15 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const { colors, radius, fontSizes, switchTrack, animation } = theme;
   const layout = useResponsiveLayout();
+
+  const [isModerator, setIsModerator] = useState(false);
+
+  useEffect(() => {
+    if (!isSupabaseRemote()) return;
+    fetchCurrentUserProfile().then(p => {
+      if (p?.is_moderator) setIsModerator(true);
+    }).catch(() => {});
+  }, []);
 
   const [showFontPicker, setShowFontPicker] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
@@ -801,6 +810,16 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={BellSlash} label="Clear Notifications" subtitle="Remove all notifications" onPress={handleClearNotifications} />
           </GlassPanel>
         </Animated.View>
+
+        {/* MODERATION (moderators only) */}
+        {isModerator && (
+          <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
+            <Text style={sectionHeaderStyle}>Moderation</Text>
+            <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
+              <SettingsRow theme={theme} icon={Gavel} label="Appeals Queue" subtitle="Review DSA Art. 20 pending appeals" onPress={() => router.push('/mod-appeals' as any)} />
+            </GlassPanel>
+          </Animated.View>
+        )}
 
         {/* EU DIGITAL SERVICES ACT */}
         <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
