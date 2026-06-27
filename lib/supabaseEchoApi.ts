@@ -257,7 +257,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 }
 
 // Profile select helper
-const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id';
+const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id, is_moderator';
 const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, perspective_type, perspective_note, source_url, source_conversation_id, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response, post_type';
 
 export async function getSessionUserId(): Promise<string | null> {
@@ -1092,6 +1092,73 @@ export async function fetchMyAppeals(): Promise<MyAppeal[]> {
     createdAt: a.created_at,
     resolvedAt: a.resolved_at ?? null,
   }));
+}
+
+// ─── Moderator: DSA Art. 20 appeal review ────────────────────────────────────
+
+export interface PendingAppeal {
+  id: string;
+  reportId: string;
+  appellantUsername: string;
+  appellantDisplayName: string;
+  appellantId: string;
+  reportReason: string;
+  reportTargetType: 'echo' | 'user' | 'comment';
+  appealReason: string;
+  createdAt: string;
+  daysRemaining: number;
+}
+
+export async function fetchPendingAppeals(): Promise<PendingAppeal[]> {
+  const { data, error } = await supabase
+    .from('appeals')
+    .select(`
+      id, appellant_id, reason, created_at,
+      profiles!appellant_id (username, display_name),
+      reports!report_id (reason, target_type)
+    `)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true })
+    .limit(100);
+  if (error) throw error;
+  const now = Date.now();
+  return (data ?? []).map((a: any) => {
+    const age = Math.floor((now - new Date(a.created_at).getTime()) / 86400000);
+    return {
+      id: a.id,
+      reportId: a.report_id,
+      appellantId: a.appellant_id,
+      appellantUsername: a.profiles?.username ?? 'unknown',
+      appellantDisplayName: a.profiles?.display_name ?? a.profiles?.username ?? 'Unknown',
+      reportReason: a.reports?.reason ?? '',
+      reportTargetType: a.reports?.target_type ?? 'echo',
+      appealReason: a.reason,
+      createdAt: a.created_at,
+      daysRemaining: Math.max(0, 14 - age),
+    };
+  });
+}
+
+export async function resolveAppeal(
+  appealId: string,
+  resolution: 'upheld' | 'overturned',
+  note: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('appeals')
+    .update({
+      status: resolution,
+      moderator_note: note.trim() || null,
+      resolved_at: new Date().toISOString(),
+    })
+    .eq('id', appealId);
+  if (error) throw error;
+}
+
+export async function fetchCurrentUserProfile(): Promise<SupabaseProfileRow | null> {
+  const uid = await getSessionUserId();
+  if (!uid) return null;
+  return fetchRemoteProfile(uid);
 }
 
 export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
