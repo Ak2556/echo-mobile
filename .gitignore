@@ -67,3 +67,7 @@ backend/venv/
 
 # Supabase local state
 supabase/.temp/
+
+# Electron desktop build output
+desktop/
+release/
