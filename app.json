@@ -103,7 +103,13 @@
           "cameraPermission": "Allow Echo to use your camera to take photos and videos."
         }
       ],
-      "@sentry/react-native",
+      [
+        "@sentry/react-native",
+        {
+          "organization": "echo-nb",
+          "project": "react-native"
+        }
+      ],
       "expo-asset",
       "expo-build-properties",
       "expo-font"
