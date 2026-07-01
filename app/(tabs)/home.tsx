@@ -74,11 +74,13 @@ function ChecklistRow({
   done,
   icon,
   onPress,
+  isLast,
 }: {
   label: string;
   done: boolean;
   icon: React.ReactNode;
   onPress: () => void;
+  isLast?: boolean;
 }) {
   const { colors, font, fontSizes, lineHeights } = useTheme();
   return (
@@ -88,13 +90,13 @@ function ChecklistRow({
       accessibilityState={{ checked: done }}
       style={{
         minHeight: 40,
-        borderRadius: 10,
-        backgroundColor: colors.surfaceHover,
-        paddingHorizontal: 12,
-        paddingVertical: 9,
+        paddingVertical: 10,
+        paddingHorizontal: 2,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+        borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
       }}
     >
       {done ? <CheckCircle color={colors.success} size={17} weight="fill" /> : icon}
@@ -301,31 +303,13 @@ export default function DiscoverScreen() {
         </>
       )}
       {showProductChecklist && (
-        <View
-          style={{
-            marginHorizontal: layout.gutter,
-            marginTop: 8,
-            marginBottom: 14,
-            padding: layout.isDesktop ? 16 : 14,
-            borderRadius: layout.isDesktop ? 14 : 12,
-            backgroundColor: colors.surface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
-            gap: 12,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Sparkle color={colors.accent} size={20} weight="fill" />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
-                Finish your first Echo
-              </Text>
-              <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 1 }]}>
-                Chat, draft, then publish when it feels ready.
-              </Text>
-            </View>
+        <View style={{ marginHorizontal: layout.gutter, marginTop: 12, marginBottom: 18 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <Sparkle color={colors.accent} size={16} weight="fill" />
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
+              Finish your first Echo
+            </Text>
           </View>
-
           <ChecklistRow
             label="Start first chat"
             done={hasStartedFirstChat}
@@ -343,6 +327,7 @@ export default function DiscoverScreen() {
             done={publishedCount > 0}
             icon={<TrendUp color={publishedCount > 0 ? colors.success : colors.accent} size={17} weight="bold" />}
             onPress={() => router.push('/create-post')}
+            isLast
           />
         </View>
       )}
@@ -390,18 +375,18 @@ export default function DiscoverScreen() {
           onPress={() => router.push('/daily-question')}
           style={{
             marginHorizontal: layout.gutter,
-            marginVertical: 12,
-            padding: 14,
-            borderRadius: 14,
-            backgroundColor: colors.surface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
+            marginTop: 6,
+            marginBottom: 18,
+            paddingVertical: 10,
+            paddingLeft: 14,
+            paddingRight: 4,
+            borderLeftWidth: 3,
+            borderLeftColor: colors.accent,
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,
           }}
         >
-          <Sparkle color={colors.accent} size={18} weight="fill" />
           <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small, flex: 1 }]}>
             Today&apos;s question — tap to answer
           </Text>

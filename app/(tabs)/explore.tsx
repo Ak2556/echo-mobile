@@ -225,14 +225,14 @@ export default function SearchScreen() {
                     <AnimatedPressable
                       key={item.topic}
                       onPress={() => setQuery(item.topic)}
-                      style={{ width: topicCardWidth, padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}
+                      style={{ width: topicCardWidth, padding: 14, borderRadius: radius.card, backgroundColor: `${fallback.color}14` }}
                     >
                       <View
                         style={{
                           width: 34,
                           height: 34,
                           borderRadius: 12,
-                          backgroundColor: `${fallback.color}1F`,
+                          backgroundColor: `${fallback.color}28`,
                           alignItems: 'center',
                           justifyContent: 'center',
                           marginBottom: 10,
@@ -251,15 +251,19 @@ export default function SearchScreen() {
             {discovery.conversationStarters.length > 0 && (
               <>
                 <SectionHeader colors={colors} icon={<TrendUp color={colors.danger} size={16} />} label="Worth opening next" />
-                <View style={{ paddingHorizontal: 16, marginBottom: 24, gap: 10 }}>
-                  {discovery.conversationStarters.slice(0, 4).map(item => (
+                <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
+                  {discovery.conversationStarters.slice(0, 4).map((item, idx, arr) => (
                     <AnimatedPressable
                       key={item.id}
                       onPress={() => router.push(`/thread/${item.id}`)}
-                      style={{ padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}
+                      style={{
+                        paddingVertical: 14,
+                        borderBottomWidth: idx < arr.length - 1 ? StyleSheet.hairlineWidth : 0,
+                        borderBottomColor: colors.border,
+                      }}
                     >
                       <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{item.editorialTitle || item.prompt}</Text>
-                      <Text style={{ color: colors.textSecondary, marginTop: 6, lineHeight: 20 }} numberOfLines={2}>
+                      <Text style={{ color: colors.textSecondary, marginTop: 5, lineHeight: 20 }} numberOfLines={2}>
                         {item.authorNote || item.response || `Topics: ${inferTopics(item).join(', ')}`}
                       </Text>
                     </AnimatedPressable>
