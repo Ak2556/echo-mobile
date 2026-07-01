@@ -672,13 +672,7 @@ export default function ChatScreen() {
   const emptyChatState = showEmptySuggestions ? (
     <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isDesktop ? 112 : 96, paddingBottom: 20, gap: 16 }]}>
       {showFirstChatPanel && (
-        <View style={{
-          borderRadius: 18,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.glassBorder,
-          backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-          padding: 18,
-        }}>
+        <View style={{ paddingVertical: 4, paddingHorizontal: 2 }}>
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Start with something real</Text>
           <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
             {"A question you can't shake, a decision you're working through, something you've been sitting with. That's all it takes."}
