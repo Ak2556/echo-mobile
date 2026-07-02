@@ -4,42 +4,42 @@ import type { ViewStyle, TextStyle } from 'react-native';
 import { Platform } from 'react-native';
 
 // Palette
-// High-contrast color stops for dark-mode surfaces.
+// Muted editorial tones that sit alongside the brand orange (#E06030)
+// instead of fighting it. Keys are kept stable for existing consumers.
 export const ACCENT_COLORS = {
-  cyan:    '#22F5FF',
-  cyanDim: 'rgba(34,245,255,0.22)',
-  magenta: '#FF3DD8',
-  magentaDim: 'rgba(255,61,216,0.22)',
-  lime:    '#C6FF3D',
-  limeDim: 'rgba(198,255,61,0.22)',
-  violet:  '#9B5BFF',
-  violetDim: 'rgba(155,91,255,0.22)',
-  amber:   '#FFB12B',
-  amberDim: 'rgba(255,177,43,0.22)',
+  cyan:    '#7FB0BC',
+  cyanDim: 'rgba(127,176,188,0.18)',
+  magenta: '#C1789A',
+  magentaDim: 'rgba(193,120,154,0.18)',
+  lime:    '#A3B26E',
+  limeDim: 'rgba(163,178,110,0.18)',
+  violet:  '#9789BD',
+  violetDim: 'rgba(151,137,189,0.18)',
+  amber:   '#D19A54',
+  amberDim: 'rgba(209,154,84,0.18)',
 } as const;
 
-// Use as `colors` for expo-linear-gradient.
+// Use as `colors` for expo-linear-gradient. Warm, near-brand blends —
+// no rainbow stops.
 export const GRADIENTS = {
-  remix:    ['#22F5FF', '#7A4DFF', '#FF3DD8'] as const,
-  evolutions: ['#FF3DD8', '#FFB12B', '#C6FF3D'] as const,
-  forYou:   ['#9B5BFF', '#22F5FF', '#C6FF3D'] as const,
-  achievement: ['#C6FF3D', '#22F5FF'] as const,
+  remix:    ['#E8834E', '#D95F2B'] as const,
+  evolutions: ['#D95F2B', '#C98A3F'] as const,
+  forYou:   ['#DFA153', '#D96A35'] as const,
+  achievement: ['#C98A3F', '#D96A35'] as const,
   heroOverlay: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)'] as const,
 } as const;
 
-// iOS only — Android doesn't render colored shadows the same way; we fall
-// back to a stronger elevation there.
-export function accentShadow(color: string, intensity: 'soft' | 'med' | 'hard' = 'med'): ViewStyle {
-  const opacity = intensity === 'soft' ? 0.35 : intensity === 'hard' ? 0.85 : 0.55;
-  const radius  = intensity === 'soft' ? 14   : intensity === 'hard' ? 28   : 20;
+// Neutral depth shadow. Colored glows read as template chrome, so the
+// `color` argument is accepted for API compatibility but ignored.
+export function accentShadow(_color: string, intensity: 'soft' | 'med' | 'hard' = 'med'): ViewStyle {
   if (Platform.OS === 'android') {
-    return { elevation: intensity === 'hard' ? 12 : intensity === 'med' ? 8 : 4 };
+    return { elevation: intensity === 'hard' ? 8 : intensity === 'med' ? 5 : 3 };
   }
   return {
-    shadowColor: color,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: opacity,
-    shadowRadius: radius,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: intensity === 'hard' ? 6 : 3 },
+    shadowOpacity: intensity === 'hard' ? 0.35 : intensity === 'med' ? 0.25 : 0.15,
+    shadowRadius: intensity === 'hard' ? 16 : intensity === 'med' ? 10 : 6,
   };
 }
 

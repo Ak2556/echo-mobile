@@ -7,7 +7,6 @@ import { QuotedEchoCard } from './QuotedEchoCard';
 import { tap } from '../../lib/haptics';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MediaGrid } from './MediaGrid';
 import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,7 +19,6 @@ import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
 import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin } from 'phosphor-react-native';
 import { PerspectiveType } from '../../types';
-import { PERSPECTIVE_LABELS } from '../../lib/perspectives';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
@@ -205,14 +203,11 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
       : undefined;
 
   const textSize = fontSizes.body;
-  const cardPadding = compactFeed ? 12 : layout.isDesktop ? 18 : 16;
   const cardMargin = layout.isDesktop ? 20 : layout.isTablet ? 18 : 16;
 
   const isHero =
     (item.postType === 'photo' && (item.mediaUris?.length ?? 0) > 0) ||
     (item.postType === 'video' && !!item.videoUri);
-
-  const heroRadius = radius.card + 4;
 
   const menuActions: ActionItem[] = [
     {
@@ -352,42 +347,28 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           haptic="light"
           performanceMode="hot"
           style={{
-            marginHorizontal: cardMargin,
-            marginVertical: layout.cardGap / 2,
-            borderRadius: heroRadius,
-            overflow: 'hidden',
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-            shadowColor: '#000',
-            shadowOpacity: colors.isDark ? 0.24 : 0.09,
-            shadowRadius: 14,
-            shadowOffset: { width: 0, height: 8 },
-            elevation: 3,
+            paddingVertical: 18,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.border,
           }}
         >
           {item.repostedByUsername && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, marginHorizontal: cardPadding, marginBottom: 0, gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: cardMargin, marginBottom: 8, gap: 6 }}>
               <ArrowsClockwise color={colors.textMuted} size={14} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.repostedByUsername} re-echoed</Text>
             </View>
           )}
 
-          <View style={{ minHeight: 240, position: 'relative' }}>
+          <View style={{ minHeight: 240, position: 'relative', marginHorizontal: cardMargin, borderRadius: 6, overflow: 'hidden' }}>
             {item.postType === 'photo' && (
               <MediaGrid uris={item.mediaUris!} />
             )}
             {item.postType === 'video' && item.videoUri && (
               <VideoPreview uri={item.videoUri} height={300} borderRadius={0} />
             )}
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.65)']}
-              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 72 }}
-              pointerEvents="none"
-            />
           </View>
 
-          <View style={{ padding: cardPadding }}>
+          <View style={{ paddingHorizontal: cardMargin, paddingTop: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
               {showAvatars && (
                 <AnimatedPressable
@@ -453,7 +434,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             </View>
 
             {!!(item.editorialTitle ?? item.prompt) && (
-              <Text style={[font.bodyBold, { fontSize: textSize, color: colors.text, marginBottom: item.authorNote ? 4 : 10, lineHeight: lineHeights.body }]} numberOfLines={2}>
+              <Text style={[font.display, { fontSize: 19, color: colors.text, marginBottom: item.authorNote ? 4 : 10, lineHeight: 26 }]} numberOfLines={2}>
                 {item.editorialTitle ?? item.prompt}
               </Text>
             )}
@@ -482,12 +463,10 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   }
 
   return (
-    <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: cardMargin, marginVertical: layout.cardGap / 2 }}>
+    <Animated.View entering={entering} layout={undefined}>
       <View style={{
-        backgroundColor: colors.surface,
-        borderRadius: Math.min(radius.card, 14),
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
       }}>
       <AnimatedPressable
         onPress={handleMainPress}
@@ -496,7 +475,8 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         haptic="light"
         performanceMode="hot"
         style={{
-          padding: cardPadding,
+          paddingHorizontal: cardMargin,
+          paddingVertical: compactFeed ? 14 : 18,
         }}
       >
         {item.repostedByUsername && (
@@ -587,46 +567,38 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         </View>
 
         {item.postType === 'musing' && !!item.prompt && (
-          <View style={{
-            borderLeftWidth: 3,
-            borderLeftColor: colors.accent,
-            paddingVertical: 10,
-            paddingHorizontal: 14,
-            marginBottom: compactFeed ? 8 : 12,
-          }}>
-            <Text
-              style={[font.quote, { color: colors.textSecondary, fontSize: textSize, lineHeight: lineHeights.body }]}
-              numberOfLines={compactFeed ? 4 : 10}
-            >
-              {item.prompt}
-            </Text>
-          </View>
+          <Text
+            style={[
+              font.quote,
+              { color: colors.text, fontSize: compactFeed ? 16 : 19, lineHeight: compactFeed ? 24 : 28, marginBottom: compactFeed ? 8 : 12 },
+            ]}
+            numberOfLines={compactFeed ? 4 : 10}
+          >
+            {item.prompt}
+          </Text>
         )}
 
         {(!item.postType || item.postType === 'text') && (
           <>
             {!!item.prompt && !item.coAuthor && (
-              <View style={{ flexDirection: 'row', marginBottom: compactFeed ? 8 : 10 }}>
-                <View style={{ width: 2, backgroundColor: colors.accent, borderRadius: 1, marginRight: 10, opacity: 0.8 }} />
-                <Text
-                  style={[
-                    font.quote,
-                    { color: colors.textSecondary, fontSize: textSize - 1, lineHeight: Math.round((textSize - 1) * 1.5), flex: 1 },
-                  ]}
-                  numberOfLines={compactFeed ? 2 : 3}
-                >
-                  {item.editorialTitle ?? item.prompt}
-                </Text>
-              </View>
+              <Text
+                style={[
+                  font.display,
+                  { color: colors.text, fontSize: compactFeed ? 17 : 20, lineHeight: compactFeed ? 23 : 27, marginBottom: compactFeed ? 6 : 8 },
+                ]}
+                numberOfLines={compactFeed ? 2 : 3}
+              >
+                {item.editorialTitle ?? item.prompt}
+              </Text>
             )}
             {!!(item.authorNote ?? (showPreviewCards ? item.response : null)) && !item.coAuthor && (
               <LinkifiedText
                 text={item.authorNote ?? item.response}
                 style={[
-                  font.bodyMedium,
-                  { fontSize: textSize + 1, color: colors.text, lineHeight: Math.round((textSize + 1) * 1.5), marginBottom: compactFeed ? 8 : 12, letterSpacing: 0 },
+                  font.body,
+                  { fontSize: textSize, color: colors.textSecondary, lineHeight: Math.round(textSize * 1.55), marginBottom: compactFeed ? 8 : 12, letterSpacing: 0 },
                 ]}
-                numberOfLines={compactFeed ? 3 : 5}
+                numberOfLines={compactFeed ? 3 : 4}
               />
             )}
             {item.coAuthor && item.response && item.coAuthorResponse && (

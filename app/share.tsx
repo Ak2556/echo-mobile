@@ -171,8 +171,8 @@ export default function ShareScreen() {
         // Celebrate first, then route. Overlay calls onDone after ~1.6s.
         const xpDelta = isRemixPublish ? XP_REWARDS.publishRemix : XP_REWARDS.publishEcho;
         setCelebration({
-          headline: isRemixPublish ? 'PERSPECTIVE ADDED' : 'PUBLISHED!',
-          subtitle: isRemixPublish ? `+${xpDelta} XP · It's part of the Evolution` : `+${xpDelta} XP · It's live in Discover`,
+          headline: 'Published',
+          subtitle: `+${xpDelta} XP`,
           variant: isRemixPublish ? 'remix' : 'achievement',
         });
       } catch (e) {

@@ -44,25 +44,24 @@ const HERO_COUNT = 5;
 const NAV_BAR_HEIGHT = 50;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
-function SectionHeader({ label, sub, icon }: { label: string; sub?: string; icon?: React.ReactNode }) {
-  const { colors, font, fontSizes, lineHeights } = useTheme();
+function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: React.ReactNode }) {
+  const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
   return (
     <View
       style={{
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'baseline',
         paddingHorizontal: layout.gutter,
-        marginTop: layout.isDesktop ? 24 : 28,
-        marginBottom: 12,
+        marginTop: layout.isDesktop ? 28 : 32,
+        marginBottom: 14,
         gap: 8,
       }}
     >
-      {icon}
-      <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.title, lineHeight: lineHeights.title, letterSpacing: 0 }]}>{label}</Text>
+      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{label}</Text>
       {sub && (
-        <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
-          {sub}
+        <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>
+          · {sub}
         </Text>
       )}
     </View>
@@ -304,12 +303,9 @@ export default function DiscoverScreen() {
       )}
       {showProductChecklist && (
         <View style={{ marginHorizontal: layout.gutter, marginTop: 12, marginBottom: 18 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <Sparkle color={colors.accent} size={16} weight="fill" />
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
-              Finish your first Echo
-            </Text>
-          </View>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small, marginBottom: 12 }]}>
+            Finish your first Echo
+          </Text>
           <ChecklistRow
             label="Start first chat"
             done={hasStartedFirstChat}
@@ -355,10 +351,10 @@ export default function DiscoverScreen() {
             accessibilityLabel="Drop your first Echo"
           >
             <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
-              Drop your first Echo
+              Write your first Echo
             </Text>
             <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 1 }]}>
-              One question, one take. That&apos;s how Echo starts.
+              A question or a take is enough.
             </Text>
           </Pressable>
           <Pressable
@@ -511,9 +507,9 @@ export default function DiscoverScreen() {
               ) : (
                 <View style={{ paddingTop: 32 }}>
                   <EmptyState
-                    icon={<Sparkle color={colors.accent} size={28} weight="fill" />}
-                    title="Conversations worth keeping"
-                    subtitle="Talk to Echo about something you've been thinking about. Publish the parts that resonate."
+                    icon={<ChatCircleText color={colors.accent} size={28} />}
+                    title="Nothing here yet"
+                    subtitle="Start a chat, then publish what you want to keep."
                     actionLabel="Open chat"
                     onAction={() => router.push('/(tabs)/chat')}
                   />
@@ -565,7 +561,7 @@ export default function DiscoverScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'baseline', flex: 1 }}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 24, letterSpacing: 0 }]}>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 26 }]}>
               Echo
             </Text>
           </View>

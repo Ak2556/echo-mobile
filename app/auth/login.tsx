@@ -101,7 +101,7 @@ export default function LoginScreen() {
 
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Animated.View entering={FadeInDown.duration(380).springify().mass(0.7).damping(14)} style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 92, letterSpacing: 0, lineHeight: 96 }]}>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: 92, lineHeight: 100 }]}>
                 echo
               </Text>
               <Animated.View style={[{ marginLeft: 2, marginBottom: 14 }, dotStyle]}>
