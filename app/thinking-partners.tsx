@@ -69,14 +69,14 @@ export default function ThinkingPartnersScreen() {
 
       <Text style={styles.subhead}>
         {mode === 'similar'
-          ? 'People whose echoes map closest to yours — kindred minds worth following.'
-          : 'People whose echoes diverge most from yours — productive friction.'}
+          ? 'People who write about the same things you do.'
+          : 'People who write about the same things from the other side.'}
       </Text>
 
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={ACCENT_COLORS.violet} size="large" />
-          <Text style={styles.muted}>Reading the room…</Text>
+          <Text style={styles.muted}>Finding people…</Text>
         </View>
       ) : isError ? (
         <View style={styles.center}>
@@ -84,9 +84,9 @@ export default function ThinkingPartnersScreen() {
         </View>
       ) : partners.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyTitle}>Not enough signal yet</Text>
+          <Text style={styles.emptyTitle}>Nothing to match yet</Text>
           <Text style={styles.muted}>
-            Publish a few echoes so we can map how you think, then check back.
+            Publish a few echoes first, then check back.
           </Text>
         </View>
       ) : (

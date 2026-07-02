@@ -12,7 +12,7 @@ export interface ConnectionAction {
 }
 
 interface ConnectionPanelProps {
-  title: string;
+  title?: string;
   subtitle?: string;
   actions: ConnectionAction[];
 }
@@ -23,25 +23,19 @@ export function ConnectionPanel({ title, subtitle, actions }: ConnectionPanelPro
   if (actions.length === 0) return null;
 
   return (
-    <View
-      style={{
-        padding: 14,
-        borderRadius: radius.card,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
-        backgroundColor: colors.surface,
-      }}
-    >
-      <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>
-        {title}
-      </Text>
+    <View>
+      {title ? (
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>
+          {title}
+        </Text>
+      ) : null}
       {subtitle ? (
         <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 3 }]}>
           {subtitle}
         </Text>
       ) : null}
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: title ? 14 : 0 }}>
         {actions.map(action => {
           const primary = action.emphasis === 'primary';
           return (

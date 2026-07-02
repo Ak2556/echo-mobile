@@ -3,9 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { Brain, CaretRight, ChartLineUp, Compass, Cpu, Hash, MagnifyingGlass, PaintBrush, RocketLaunch, Sparkle, TrendUp, UserCirclePlus } from 'phosphor-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { GRADIENTS, accentShadow, ACCENT_COLORS } from '../../lib/accentDesign';
+import { Brain, CaretRight, ChartLineUp, Cpu, Hash, MagnifyingGlass, PaintBrush, RocketLaunch, TrendUp } from 'phosphor-react-native';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
@@ -173,44 +171,20 @@ export default function SearchScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}>
           <View style={layout.wideContentStyle}>
-            <SectionHeader colors={colors} icon={<Sparkle color={colors.accent} size={16} />} label="Search with a path" />
-            <View style={{ paddingHorizontal: 16, marginBottom: 24, gap: 12 }}>
-              <ReasonCard
-                colors={colors}
-                radius={radius}
-                title="Find people worth following"
-                body="Search by topic, not just name. Try AI, design systems, prompts, or productivity."
-                icon={<UserCirclePlus color={colors.accent} size={20} />}
-              />
-              <ReasonCard
-                colors={colors}
-                radius={radius}
-                title="Look for conversation starters"
-                body="Use prompt language to find Echoes that are worth answering with a new perspective."
-                icon={<Compass color={colors.accent} size={20} />}
-              />
-            </View>
-
             {remote && (
               <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-                <AnimatedPressable onPress={() => router.push('/thinking-partners')}>
-                  <LinearGradient
-                    colors={GRADIENTS.forYou}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[{ borderRadius: radius.card, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14 }, accentShadow(ACCENT_COLORS.violet, 'med')]}
-                  >
-                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-                      <Brain color="#000" size={24} weight="fill" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#000', fontWeight: '900', fontSize: 16, letterSpacing: 0.2 }}>Find your thinking partners</Text>
-                      <Text style={{ color: 'rgba(0,0,0,0.72)', fontSize: 13, marginTop: 3, lineHeight: 18, fontWeight: '600' }}>
-                        Discover minds that think like you — or challenge how you think.
-                      </Text>
-                    </View>
-                    <CaretRight color="#000" size={20} weight="bold" />
-                  </LinearGradient>
+                <AnimatedPressable
+                  onPress={() => router.push('/thinking-partners')}
+                  style={{ borderRadius: radius.card, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
+                >
+                  <Brain color={colors.accent} size={22} weight="regular" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Thinking partners</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2, lineHeight: 18 }}>
+                      People writing about what you read.
+                    </Text>
+                  </View>
+                  <CaretRight color={colors.textMuted} size={16} />
                 </AnimatedPressable>
               </View>
             )}
@@ -309,25 +283,10 @@ export default function SearchScreen() {
   );
 }
 
-function SectionHeader({ colors, icon, label }: { colors: any; icon: React.ReactNode; label: string }) {
+function SectionHeader({ colors, label }: { colors: any; icon?: React.ReactNode; label: string }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginTop: 12, marginBottom: 12, gap: 8 }}>
-      {icon}
-      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>{label}</Text>
-    </View>
-  );
-}
-
-function ReasonCard({ colors, radius, title, body, icon }: { colors: any; radius: any; title: string; body: string; icon: React.ReactNode }) {
-  return (
-    <View style={{ padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', gap: 12 }}>
-      <View style={{ width: 40, height: 40, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}>
-        {icon}
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{title}</Text>
-        <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 4 }}>{body}</Text>
-      </View>
+    <View style={{ paddingHorizontal: 16, marginTop: 20, marginBottom: 14 }}>
+      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', fontFamily: 'Inter_600SemiBold' }}>{label}</Text>
     </View>
   );
 }

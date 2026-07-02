@@ -173,7 +173,7 @@ export default function ProfileScreen() {
               @{handle}
             </Text>
             <Text
-              style={[font.displayBlack, styles.headerTitle, { color: colors.text, letterSpacing: 0 }]}
+              style={[font.displayBlack, styles.headerTitle, { color: colors.text }]}
               numberOfLines={1}
               maxFontSizeMultiplier={TITLE_TEXT_SCALE}
             >
@@ -243,7 +243,7 @@ export default function ProfileScreen() {
             </Pressable>
             <View style={styles.identityCopy}>
               <Text
-                style={[font.displayBlack, styles.displayName, { color: colors.text, letterSpacing: 0 }]}
+                style={[font.displayBlack, styles.displayName, { color: colors.text }]}
                 numberOfLines={2}
                 maxFontSizeMultiplier={TITLE_TEXT_SCALE}
               >
@@ -520,7 +520,7 @@ function StatButton({
       style={styles.statButton}
     >
       <Text
-        style={[font.display, styles.statValue, { color: colors.text, letterSpacing: 0 }]}
+        style={[font.display, styles.statValue, { color: colors.text }]}
         numberOfLines={1}
         adjustsFontSizeToFit
         maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
@@ -608,7 +608,7 @@ function ProfileEmptyPosts({
       ]}
     >
       <Text
-        style={[font.display, styles.emptyTitle, { color: colors.text, letterSpacing: 0 }]}
+        style={[font.display, styles.emptyTitle, { color: colors.text }]}
         numberOfLines={2}
         maxFontSizeMultiplier={TITLE_TEXT_SCALE}
       >

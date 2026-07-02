@@ -167,10 +167,9 @@ function DMInboxView({ topPad }: { topPad: number }) {
 }
 
 const EMPTY_SUGGESTIONS = [
-  'A decision I\'m working through',
-  'Something I can\'t stop thinking about',
-  'Something I changed my mind about',
-  'What I actually think about…',
+  'Help me think through a decision',
+  'Poke holes in my argument',
+  'Explain something to me',
 ];
 
 
@@ -673,12 +672,11 @@ export default function ChatScreen() {
     <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isDesktop ? 112 : 96, paddingBottom: 20, gap: 16 }]}>
       {showFirstChatPanel && (
         <View style={{ paddingVertical: 4, paddingHorizontal: 2 }}>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 6 }}>Start with something real</Text>
           <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
-            {"A question you can't shake, a decision you're working through, something you've been sitting with. That's all it takes."}
+            Ask a question or think out loud.
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 14, opacity: 0.8, lineHeight: 16 }}>
-            Your messages here are sent to our AI providers to generate replies. Don&apos;t share private info you wouldn&apos;t want stored.
+          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 12, opacity: 0.8, lineHeight: 16 }}>
+            Messages are sent to our AI providers to generate replies. Don&apos;t share anything you wouldn&apos;t want stored.
           </Text>
         </View>
       )}
@@ -777,11 +775,11 @@ export default function ChatScreen() {
                 }}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: 0 }}>
-                    Something landed here
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', letterSpacing: 0 }}>
+                    Draft ready
                   </Text>
                   <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12, marginTop: 2 }}>
-                    Shape it into an Echo worth keeping.
+                    Turn this conversation into an Echo.
                   </Text>
                 </View>
                 <ArrowUpRight color="#fff" size={18} weight="bold" />

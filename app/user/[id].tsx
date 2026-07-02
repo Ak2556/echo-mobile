@@ -199,20 +199,16 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
 
       <View style={{ marginHorizontal: 16, marginBottom: 16 }}>
         <ConnectionPanel
-          title="Connected paths"
-          subtitle={isSelf ? 'Jump from your profile into the places that shape it.' : `Keep exploring @${user.username}.`}
           actions={[
             isSelf ? {
               key: 'edit',
               label: 'Edit profile',
-              description: 'Update how people find you',
               icon: <PencilSimple color={colors.textSecondary} size={18} />,
               onPress: () => router.push('/edit-profile'),
               emphasis: 'primary',
             } : {
               key: 'message',
               label: 'Message',
-              description: 'Start a direct conversation',
               icon: <Envelope color={colors.textSecondary} size={18} />,
               onPress: onMessage,
               emphasis: 'primary',
@@ -220,21 +216,18 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
             ...(primaryTopic ? [{
               key: 'topic',
               label: `Explore #${primaryTopic}`,
-              description: 'Find related Echoes and people',
               icon: <Compass color={colors.textSecondary} size={18} />,
               onPress: () => router.push({ pathname: '/(tabs)/explore', params: { q: primaryTopic } }),
             }] : []),
             {
               key: 'followers',
               label: 'Followers',
-              description: 'See their network',
               icon: <Users color={colors.textSecondary} size={18} />,
               onPress: () => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } }),
             },
             {
               key: 'thinking',
               label: 'Thinking partners',
-              description: 'Find adjacent minds',
               icon: <ChatTeardropDots color={colors.textSecondary} size={18} />,
               onPress: () => router.push('/thinking-partners'),
             },

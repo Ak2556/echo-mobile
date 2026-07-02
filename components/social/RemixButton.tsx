@@ -1,12 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { GitBranch } from 'phosphor-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
   withSequence,
   withSpring,
   withTiming,
@@ -14,7 +12,7 @@ import Animated, {
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { SpringCounter } from '../ui/SpringCounter';
 import { useAppStore } from '../../store/useAppStore';
-import { GRADIENTS, ACCENT_COLORS, ACCENT_SPRING, accentShadow, feedbackHaptic } from '../../lib/accentDesign';
+import { ACCENT_SPRING, feedbackHaptic } from '../../lib/accentDesign';
 
 interface RemixButtonProps {
   echoId: string;
@@ -45,30 +43,13 @@ export function RemixButton({
 }: RemixButtonProps) {
   const router = useRouter();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
-  const reduceAnimations = useAppStore(s => s.reduceAnimations);
 
-  const pulse = useSharedValue(1);
   const press = useSharedValue(1);
 
   const isHot = hot ?? remixCount >= 3;
 
-  useEffect(() => {
-    if (isHot && !reduceAnimations) {
-      pulse.value = withRepeat(
-        withSequence(
-          withTiming(1.06, { duration: 900 }),
-          withTiming(1.0, { duration: 900 }),
-        ),
-        -1,
-        true,
-      );
-    } else {
-      pulse.value = withTiming(1, { duration: 200 });
-    }
-  }, [isHot, pulse, reduceAnimations]);
-
   const containerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value * press.value }],
+    transform: [{ scale: press.value }],
   }));
 
   const handlePress = () => {
@@ -87,12 +68,12 @@ export function RemixButton({
     });
   };
 
-  const labelColor = isHot ? ACCENT_COLORS.cyan : '#E4E4E7';
+  const labelColor = isHot ? '#fff' : '#E4E4E7';
   const padH = compact ? 10 : 14;
   const padV = compact ? 7 : 9;
 
   return (
-    <Animated.View style={[containerStyle, isHot ? accentShadow(ACCENT_COLORS.cyan, 'med') : null]}>
+    <Animated.View style={containerStyle}>
       <AnimatedPressable
         onPress={handlePress}
         style={styles.touch}
@@ -103,24 +84,27 @@ export function RemixButton({
         }
         accessibilityRole="button"
       >
-        <LinearGradient
-          colors={isHot ? GRADIENTS.remix : ['rgba(34,245,255,0.18)', 'rgba(155,91,255,0.18)', 'rgba(255,61,216,0.18)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.gradient, { paddingHorizontal: padH, paddingVertical: padV }]}
+        <View
+          style={[
+            styles.gradient,
+            {
+              paddingHorizontal: padH,
+              paddingVertical: padV,
+              backgroundColor: isHot ? '#D95F2B' : 'rgba(255,255,255,0.08)',
+            },
+          ]}
         >
           <View style={styles.inner}>
             <GitBranch
               size={compact ? 16 : 18}
-              color={isHot ? '#000' : labelColor}
-              weight={isHot ? 'fill' : 'bold'}
+              color={labelColor}
+              weight="bold"
             />
             <Text
               style={{
-                fontWeight: '800',
+                fontWeight: '700',
                 fontSize: compact ? 12 : 13,
-                color: isHot ? '#000' : labelColor,
-                letterSpacing: 0.3,
+                color: labelColor,
               }}
             >
               {compact ? 'Perspective' : 'Add Perspective'}
@@ -130,8 +114,8 @@ export function RemixButton({
                 value={remixCount}
                 performanceMode="hot"
                 style={{
-                  fontWeight: '900',
-                  color: isHot ? '#000' : labelColor,
+                  fontWeight: '700',
+                  color: labelColor,
                   fontSize: compact ? 12 : 13,
                   marginLeft: 2,
                   fontVariant: ['tabular-nums'],
@@ -139,7 +123,7 @@ export function RemixButton({
               />
             )}
           </View>
-        </LinearGradient>
+        </View>
       </AnimatedPressable>
     </Animated.View>
   );

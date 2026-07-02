@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Sparkle, Trash } from 'phosphor-react-native';
+import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { setPinnedEcho } from '../../lib/supabaseEchoApi';
@@ -27,7 +27,7 @@ export default function ThreadDetailScreen() {
   const remote = isSupabaseRemote();
   const { data: feed = [] } = useFeed();
   const { isBookmarked, toggleBookmark, deleteEcho, userId: currentUserId, getOrCreateConversation } = useAppStore();
-  const { colors, radius, fontSizes, showAvatars } = useTheme();
+  const { colors, radius, fontSizes, showAvatars, font } = useTheme();
   const remoteBm = useToggleRemoteBookmark();
   const [showMenu, setShowMenu] = useState(false);
   // Pull the owner's profile to know whether THIS echo is currently their pin.
@@ -110,15 +110,13 @@ export default function ThreadDetailScreen() {
   const connectionActions = [
     {
       key: 'comments',
-      label: 'Open comments',
-      description: `${item.commentCount ?? 0} public repl${(item.commentCount ?? 0) === 1 ? 'y' : 'ies'}`,
+      label: `Comments (${item.commentCount ?? 0})`,
       icon: <ChatCircle color={colors.textSecondary} size={18} />,
       onPress: () => router.push(`/comments/${item.id}`),
     },
     {
       key: 'perspective',
       label: 'Add perspective',
-      description: 'Branch this idea in Echo chat',
       icon: <GitBranch color={colors.textSecondary} size={18} weight="bold" />,
       onPress: () => router.push({
         pathname: '/remix/[id]',
@@ -128,22 +126,19 @@ export default function ThreadDetailScreen() {
     },
     {
       key: 'quote',
-      label: 'Quote Echo',
-      description: 'Publish your take with this attached',
+      label: 'Quote',
       icon: <NotePencil color={colors.textSecondary} size={18} />,
       onPress: () => router.push({ pathname: '/create-post', params: { quoted: item.id } }),
     },
     ...(primaryTopic ? [{
       key: 'topic',
       label: `Explore #${primaryTopic}`,
-      description: 'Find related people and Echoes',
       icon: <Compass color={colors.textSecondary} size={18} />,
       onPress: () => router.push({ pathname: '/(tabs)/explore', params: { q: primaryTopic } }),
     }] : []),
     ...(!isOwner ? [{
       key: 'message',
       label: 'Message author',
-      description: 'Continue privately with context',
       icon: <PaperPlaneTilt color={colors.textSecondary} size={18} />,
       onPress: handleMessageAboutEcho,
     }] : []),
@@ -216,57 +211,51 @@ export default function ThreadDetailScreen() {
         return <ActionSheet visible={showMenu} onClose={() => setShowMenu(false)} subtitle={item.editorialTitle || item.prompt} actions={menuActions} />;
       })()}
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 36 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-          {showAvatars ? (
-            <Pressable onPress={() => router.push(`/user/${item.userId}`)}>
-              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.title * 0.9 }}>{item.username.charAt(0).toUpperCase()}</Text>
-              </View>
-            </Pressable>
-          ) : null}
-          <Pressable onPress={() => router.push(`/user/${item.userId}`)} style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontWeight: '800', fontSize: fontSizes.title }}>{item.displayName || item.username}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{item.username}</Text>
-          </Pressable>
-        </View>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 36 }}>
+        <Text style={[font.displayBlack, { color: colors.text, fontSize: 27, lineHeight: 35, marginBottom: 16 }]}>
+          {item.editorialTitle || item.prompt}
+        </Text>
 
-        <View style={{ padding: 16, marginBottom: 12, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', marginBottom: 10 }}>
-            {item.editorialTitle || item.prompt}
-          </Text>
-          {item.authorNote ? (
-            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.45, marginBottom: 12 }}>
-              {item.authorNote}
-            </Text>
+        <Pressable onPress={() => router.push(`/user/${item.userId}`)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+          {showAvatars ? (
+            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{item.username.charAt(0).toUpperCase()}</Text>
+            </View>
           ) : null}
-          <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: fontSizes.small, marginBottom: 8 }}>
-            {item.postType === 'poll' ? 'Poll prompt' : 'Original prompt'}
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small, fontFamily: 'Inter_600SemiBold' }}>{item.displayName || item.username}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
+          </View>
+        </Pressable>
+
+        {item.authorNote ? (
+          <Text style={{ color: colors.text, fontSize: fontSizes.body + 1, lineHeight: Math.round((fontSizes.body + 1) * 1.6), marginBottom: 20, fontFamily: 'Inter_400Regular' }}>
+            {item.authorNote}
           </Text>
-          <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{item.prompt}</Text>
-        </View>
+        ) : null}
+        {item.editorialTitle && item.editorialTitle !== item.prompt ? (
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Inter_600SemiBold' }}>
+              {item.postType === 'poll' ? 'Poll prompt' : 'Prompt'}
+            </Text>
+            <Text style={[font.quote, { color: colors.textSecondary, fontSize: fontSizes.body + 1, lineHeight: Math.round((fontSizes.body + 1) * 1.6) }]}>{item.prompt}</Text>
+          </View>
+        ) : null}
 
         {(item.conversationContext || (item.topicLabels?.length ?? 0) > 0 || inferTopics(item).length > 0) ? (
-          <View style={{ padding: 16, marginBottom: 12, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border }}>
+          <View style={{ marginBottom: 20 }}>
             {item.conversationContext ? (
-              <>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <Sparkle color={colors.accent} size={16} />
-                  <Text style={{ color: colors.text, fontWeight: '700' }}>How this Echo was framed</Text>
-                </View>
-                <Text style={{ color: colors.textSecondary, lineHeight: 20, marginBottom: 12 }}>{item.conversationContext}</Text>
-              </>
+              <Text style={{ color: colors.textSecondary, lineHeight: 21, marginBottom: 12 }}>{item.conversationContext}</Text>
             ) : null}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
               {visibleTopics.map(topic => (
                 <Pressable
                   key={topic}
                   onPress={() => router.push({ pathname: '/(tabs)/explore', params: { q: topic } })}
                   accessibilityRole="button"
                   accessibilityLabel={`Explore ${topic}`}
-                  style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: colors.accentMuted }}
                 >
-                  <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>#{topic}</Text>
+                  <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>#{topic}</Text>
                 </Pressable>
               ))}
             </View>
@@ -290,9 +279,9 @@ export default function ThreadDetailScreen() {
         ) : null}
 
         {(item.postType === 'text' || !item.postType) && !!item.response ? (
-          <View style={{ padding: 16, marginTop: 12, marginBottom: 18, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.accentMuted }}>
-            <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.small, marginBottom: 8 }}>Echo takeaway</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{item.response}</Text>
+          <View style={{ marginTop: 4, marginBottom: 22, paddingLeft: 16, borderLeftWidth: 2, borderLeftColor: colors.accent }}>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Inter_600SemiBold' }}>Takeaway</Text>
+            <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{item.response}</Text>
           </View>
         ) : null}
 
@@ -313,11 +302,7 @@ export default function ThreadDetailScreen() {
         </View>
 
         <View style={{ marginTop: 18 }}>
-          <ConnectionPanel
-            title="Keep this connected"
-            subtitle="Move from this Echo into the next useful place."
-            actions={connectionActions}
-          />
+          <ConnectionPanel actions={connectionActions} />
         </View>
 
         <SimilarEchoesRail echoId={item.id} />

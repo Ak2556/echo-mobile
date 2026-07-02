@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Dimensions, StyleSheet, Platform } from 'react-native';
+import { View, Text, Dimensions, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Eye, PlayCircle, Camera } from 'phosphor-react-native';
@@ -62,19 +62,11 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       style={{
         width: HERO_CARD_WIDTH,
         height: HERO_CARD_HEIGHT,
-        borderRadius: 14,
+        borderRadius: 8,
         overflow: 'hidden',
         backgroundColor: colors.surface,
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.glassBorder,
-        ...(Platform.OS === 'ios'
-          ? {
-              shadowColor: '#000',
-              shadowOpacity: colors.isDark ? 0.16 : 0.07,
-              shadowRadius: 10,
-              shadowOffset: { width: 0, height: 5 },
-            }
-          : { elevation: 2 }),
+        borderColor: colors.border,
       }}
     >
       {/* Background with parallax */}
@@ -208,8 +200,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
               style={[font.display, {
                 color: '#fff',
               fontSize: 18,
-              lineHeight: 23,
-              letterSpacing: 0,
+              lineHeight: 25,
             }]}
             numberOfLines={2}
           >
