@@ -82,7 +82,7 @@ export default function SearchScreen() {
   const topicColumns = layout.isDesktop ? 4 : layout.isWide ? 3 : 2;
   const topicCardWidth = Math.floor((layout.wideContentWidth - 32 - 12 * (topicColumns - 1)) / topicColumns);
 
-  const headerHeight = insets.top + (layout.isDesktop ? 78 : 68);
+  const headerHeight = insets.top + (layout.isDesktop ? 78 : 106);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -175,16 +175,18 @@ export default function SearchScreen() {
               <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
                 <AnimatedPressable
                   onPress={() => router.push('/thinking-partners')}
-                  style={{ borderRadius: radius.card, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
+                  style={{ borderRadius: radius.card, padding: 16, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
                 >
-                  <Brain color={colors.accent} size={22} weight="regular" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Thinking partners</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2, lineHeight: 18 }}>
-                      People writing about what you read.
-                    </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                    <Brain color={colors.accent} size={22} weight="regular" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Thinking partners</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2, lineHeight: 18 }}>
+                        People writing about what you read.
+                      </Text>
+                    </View>
+                    <CaretRight color={colors.textMuted} size={16} />
                   </View>
-                  <CaretRight color={colors.textMuted} size={16} />
                 </AnimatedPressable>
               </View>
             )}
@@ -199,7 +201,7 @@ export default function SearchScreen() {
                     <AnimatedPressable
                       key={item.topic}
                       onPress={() => setQuery(item.topic)}
-                      style={{ width: topicCardWidth, padding: 14, borderRadius: radius.card, backgroundColor: `${fallback.color}14` }}
+                      style={{ width: topicCardWidth, padding: 14, borderRadius: radius.card, backgroundColor: `${fallback.color}1F` }}
                     >
                       <View
                         style={{
@@ -262,6 +264,11 @@ export default function SearchScreen() {
 
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, zIndex: 10, backgroundColor: colors.bg }}>
         <View style={[layout.wideContentStyle, { paddingTop: insets.top + (layout.isDesktop ? 16 : 8), paddingHorizontal: layout.gutter, paddingBottom: 8 }]}>
+          {!layout.isDesktop && (
+            <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 10 }}>
+              Explore
+            </Text>
+          )}
           <SearchBar value={query} onChangeText={setQuery} placeholder="Search people, Echoes, and topics" />
         </View>
         {!isSearching && recentSearches.length > 0 && (
