@@ -12,8 +12,8 @@ import type { SharedValue } from 'react-native-reanimated';
 import { usePerformanceProfile } from '../../lib/performance';
 
 const { width: SW } = Dimensions.get('window');
-export const HERO_CARD_WIDTH = Math.min(SW * 0.58, 252);
-export const HERO_CARD_HEIGHT = HERO_CARD_WIDTH * 1.04;
+export const HERO_CARD_WIDTH = Math.min(SW * 0.44, 196);
+export const HERO_CARD_HEIGHT = HERO_CARD_WIDTH * 0.92;
 
 interface HeroCardProps {
   item: FeedItem;
@@ -122,34 +122,27 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       >
         <View
           style={{
-            width: 30,
-            height: 30,
-            borderRadius: 15,
+            width: 22,
+            height: 22,
+            borderRadius: 11,
             backgroundColor: item.avatarColor ?? colors.accent,
             alignItems: 'center',
             justifyContent: 'center',
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: 'rgba(255,255,255,0.28)',
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>
             {(item.displayName || item.username).charAt(0).toUpperCase()}
           </Text>
         </View>
 
-        <View style={{ flex: 1 }}>
-          <Text style={[font.bodySemibold, { color: '#fff', fontSize: 12 }]} numberOfLines={1}>
-            {item.displayName || item.username}
-          </Text>
-          <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10 }}>
-            @{item.username}
-          </Text>
-        </View>
+        <Text style={[font.bodySemibold, { color: '#fff', fontSize: 11, flex: 1 }]} numberOfLines={1}>
+          {item.displayName || item.username}
+        </Text>
       </View>
 
       {/* Bottom content */}
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-        <View style={{ padding: 14, paddingTop: 28 }}>
+        <View style={{ padding: 10, paddingTop: 24 }}>
           {/* Meta row — post-type chip + counts. Counts render with icons
               instead of bare numbers; both hide when 0 so the row collapses
               to just the type chip on fresh posts. */}
@@ -199,8 +192,8 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
           <Text
               style={[font.display, {
                 color: '#fff',
-              fontSize: 18,
-              lineHeight: 25,
+              fontSize: 15,
+              lineHeight: 20,
             }]}
             numberOfLines={2}
           >

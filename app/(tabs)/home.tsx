@@ -13,7 +13,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, CheckCircle, Info, Clock } from 'phosphor-react-native';
+import { Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, Info, Clock } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { HeroCard, HERO_CARD_WIDTH } from '../../components/social/HeroCard';
@@ -65,44 +65,6 @@ function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: Rea
         </Text>
       )}
     </View>
-  );
-}
-
-function ChecklistRow({
-  label,
-  done,
-  icon,
-  onPress,
-  isLast,
-}: {
-  label: string;
-  done: boolean;
-  icon: React.ReactNode;
-  onPress: () => void;
-  isLast?: boolean;
-}) {
-  const { colors, font, fontSizes, lineHeights } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ checked: done }}
-      style={{
-        minHeight: 40,
-        paddingVertical: 10,
-        paddingHorizontal: 2,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
-      }}
-    >
-      {done ? <CheckCircle color={colors.success} size={17} weight="fill" /> : icon}
-      <Text style={[font.bodySemibold, { color: done ? colors.text : colors.textSecondary, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, flex: 1 }]}>
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 
@@ -301,32 +263,40 @@ export default function DiscoverScreen() {
           <StoryCircles />
         </>
       )}
-      {showProductChecklist && (
-        <View style={{ marginHorizontal: layout.gutter, marginTop: 12, marginBottom: 18 }}>
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small, marginBottom: 12 }]}>
-            Finish your first Echo
-          </Text>
-          <ChecklistRow
-            label="Start first chat"
-            done={hasStartedFirstChat}
-            icon={<ChatCircleText color={hasStartedFirstChat ? colors.success : colors.accent} size={17} weight="bold" />}
-            onPress={() => router.push('/(tabs)/chat')}
-          />
-          <ChecklistRow
-            label="Create first draft"
-            done={onboardingDraftCreated}
-            icon={<PencilSimpleLine color={onboardingDraftCreated ? colors.success : colors.accent} size={17} weight="bold" />}
-            onPress={() => router.push('/onboarding')}
-          />
-          <ChecklistRow
-            label="Publish first Echo"
-            done={publishedCount > 0}
-            icon={<TrendUp color={publishedCount > 0 ? colors.success : colors.accent} size={17} weight="bold" />}
-            onPress={() => router.push('/create-post')}
-            isLast
-          />
-        </View>
-      )}
+      {showProductChecklist && (() => {
+        // One compact row pointing at the next incomplete step — the feed,
+        // not onboarding chrome, owns the first screen.
+        const steps = [
+          { label: 'Start your first chat', done: hasStartedFirstChat, onPress: () => router.push('/(tabs)/chat') },
+          { label: 'Create your first draft', done: onboardingDraftCreated, onPress: () => router.push('/onboarding') },
+          { label: 'Publish your first Echo', done: publishedCount > 0, onPress: () => router.push('/create-post') },
+        ];
+        const doneCount = steps.filter(s => s.done).length;
+        const next = steps.find(s => !s.done) ?? steps[steps.length - 1];
+        return (
+          <Pressable
+            onPress={next.onPress}
+            style={{
+              marginHorizontal: layout.gutter,
+              marginTop: 10,
+              marginBottom: 6,
+              paddingVertical: 10,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small, flex: 1 }]}>
+              {next.label}
+            </Text>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
+              {doneCount}/{steps.length}
+            </Text>
+          </Pressable>
+        );
+      })()}
       {showFirstEchoCoach && (
         <View
           style={{
@@ -561,7 +531,7 @@ export default function DiscoverScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'baseline', flex: 1 }}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 26 }]}>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 30 }]}>
               Echo
             </Text>
           </View>
