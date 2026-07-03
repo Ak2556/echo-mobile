@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { Brain, CaretRight, ChartLineUp, Cpu, Hash, MagnifyingGlass, PaintBrush, RocketLaunch, TrendUp } from 'phosphor-react-native';
+import { Brain, CaretRight, ChartLineUp, Cpu, PaintBrush, RocketLaunch } from 'phosphor-react-native';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
@@ -55,7 +55,7 @@ export default function SearchScreen() {
   const users = useAppStore(s => s.users);
   const interests = useAppStore(s => s.interests);
   const followingIds = useAppStore(s => s.followingIds);
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const layout = useResponsiveLayout();
   const { data: feed = [] } = useFeed();
   const remote = isSupabaseRemote();
@@ -79,8 +79,6 @@ export default function SearchScreen() {
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
   const suggestedUsers = users.slice(0, 4);
   const topTopics = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(item => ({ topic: item.label, count: 0 }));
-  const topicColumns = layout.isDesktop ? 4 : layout.isWide ? 3 : 2;
-  const topicCardWidth = Math.floor((layout.wideContentWidth - 32 - 12 * (topicColumns - 1)) / topicColumns);
 
   const headerHeight = insets.top + (layout.isDesktop ? 78 : 106);
 
@@ -171,76 +169,54 @@ export default function SearchScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}>
           <View style={layout.wideContentStyle}>
-            {remote && (
-              <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
+            <SectionHeader colors={colors} label="Trending topics" />
+            <View style={{ paddingHorizontal: 16, marginBottom: 36 }}>
+              {topTopics.slice(0, 5).map((item, index, arr) => (
                 <AnimatedPressable
-                  onPress={() => router.push('/thinking-partners')}
-                  style={{ borderRadius: radius.card, padding: 16, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
+                  key={item.topic}
+                  onPress={() => setQuery(item.topic)}
+                  style={{
+                    paddingVertical: 13,
+                    borderBottomWidth: index < arr.length - 1 ? StyleSheet.hairlineWidth : 0,
+                    borderBottomColor: colors.border,
+                  }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                    <Brain color={colors.accent} size={22} weight="regular" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Thinking partners</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2, lineHeight: 18 }}>
-                        People writing about what you read.
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 14 }}>
+                    <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold', fontVariant: ['tabular-nums'], width: 22 }}>
+                      {String(index + 1).padStart(2, '0')}
+                    </Text>
+                    <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Inter_600SemiBold', flex: 1 }} numberOfLines={1}>
+                      #{item.topic}
+                    </Text>
+                    {item.count > 0 && (
+                      <Text style={{ color: colors.textMuted, fontSize: 12, fontVariant: ['tabular-nums'] }}>
+                        {item.count} {item.count === 1 ? 'echo' : 'echoes'}
                       </Text>
-                    </View>
-                    <CaretRight color={colors.textMuted} size={16} />
+                    )}
                   </View>
                 </AnimatedPressable>
-              </View>
-            )}
-
-            <SectionHeader colors={colors} icon={<Hash color={colors.accent} size={16} />} label="Topics gaining momentum" />
-            <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                {topTopics.slice(0, 6).map((item, index) => {
-                  const fallback = CATEGORY_FALLBACKS[index % CATEGORY_FALLBACKS.length];
-                  const Icon = fallback.Icon;
-                  return (
-                    <AnimatedPressable
-                      key={item.topic}
-                      onPress={() => setQuery(item.topic)}
-                      style={{ width: topicCardWidth, padding: 14, borderRadius: radius.card, backgroundColor: `${fallback.color}1F` }}
-                    >
-                      <View
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: 12,
-                          backgroundColor: `${fallback.color}28`,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginBottom: 10,
-                        }}
-                      >
-                        <Icon color={fallback.color} size={19} weight="duotone" />
-                      </View>
-                      <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>#{item.topic}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>{item.count > 0 ? `${item.count} active Echoes` : 'Tap to explore'}</Text>
-                    </AnimatedPressable>
-                  );
-                })}
-              </View>
+              ))}
             </View>
 
             {discovery.conversationStarters.length > 0 && (
               <>
-                <SectionHeader colors={colors} icon={<TrendUp color={colors.danger} size={16} />} label="Worth opening next" />
-                <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
+                <SectionHeader colors={colors} label="Worth opening" />
+                <View style={{ paddingHorizontal: 16, marginBottom: 36 }}>
                   {discovery.conversationStarters.slice(0, 4).map((item, idx, arr) => (
                     <AnimatedPressable
                       key={item.id}
                       onPress={() => router.push(`/thread/${item.id}`)}
                       style={{
-                        paddingVertical: 14,
+                        paddingVertical: 18,
                         borderBottomWidth: idx < arr.length - 1 ? StyleSheet.hairlineWidth : 0,
                         borderBottomColor: colors.border,
                       }}
                     >
-                      <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{item.editorialTitle || item.prompt}</Text>
-                      <Text style={{ color: colors.textSecondary, marginTop: 5, lineHeight: 20 }} numberOfLines={2}>
-                        {item.authorNote || item.response || `Topics: ${inferTopics(item).join(', ')}`}
+                      <Text style={[font.display, { color: colors.text, fontSize: 18, lineHeight: 24 }]} numberOfLines={2}>
+                        {item.editorialTitle || item.prompt}
+                      </Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }} numberOfLines={1}>
+                        {item.authorNote || item.response || inferTopics(item).map(t => `#${t}`).join(' ')}
                       </Text>
                     </AnimatedPressable>
                   ))}
@@ -248,10 +224,26 @@ export default function SearchScreen() {
               </>
             )}
 
+            {remote && (
+              <View style={{ paddingHorizontal: 16, marginBottom: 36 }}>
+                <AnimatedPressable
+                  onPress={() => router.push('/thinking-partners')}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 }}>
+                    <Brain color={colors.accent} size={20} weight="regular" />
+                    <Text style={{ color: colors.text, fontWeight: '600', fontSize: 15, fontFamily: 'Inter_600SemiBold', flex: 1 }}>
+                      Thinking partners
+                    </Text>
+                    <CaretRight color={colors.textMuted} size={15} />
+                  </View>
+                </AnimatedPressable>
+              </View>
+            )}
+
             {suggestedUsers.length > 0 && (
               <>
-                <SectionHeader colors={colors} icon={<MagnifyingGlass color={colors.accent} size={16} />} label="People to start with" />
-                <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
+                <SectionHeader colors={colors} label="People to start with" />
+                <View style={{ paddingHorizontal: 16, marginBottom: 36 }}>
                   {suggestedUsers.map(user => (
                     <UserRow key={user.id} user={user} onPress={() => router.push(`/user/${user.id}`)} showFollowButton />
                   ))}
