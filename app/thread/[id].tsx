@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
-import { setPinnedEcho } from '../../lib/supabaseEchoApi';
+import { fetchRemoteEchoById, setPinnedEcho } from '../../lib/supabaseEchoApi';
 import { showToast } from '../../components/ui/Toast';
 import { LikeButton } from '../../components/social/LikeButton';
 import { MediaGrid } from '../../components/social/MediaGrid';
@@ -34,7 +34,17 @@ export default function ThreadDetailScreen() {
   const ownProfile = useRemoteProfileBundle(remote ? currentUserId : undefined);
   const myPinnedId = ownProfile.data?.pinnedEcho?.id ?? null;
 
-  const item = feed.find(f => f.id === id);
+  // The feed cache only holds the current feed page; items reached from the
+  // trending rail, notifications, or deep links may not be in it. Fall back
+  // to a by-id fetch so every echo route resolves.
+  const cachedItem = feed.find(f => f.id === id);
+  const { data: fetchedItem, isLoading: fetchingItem } = useQuery({
+    queryKey: ['echo', id],
+    queryFn: () => fetchRemoteEchoById(id!),
+    enabled: remote && !cachedItem && !!id,
+    staleTime: 60_000,
+  });
+  const item = cachedItem ?? fetchedItem ?? undefined;
   const bookmarked = remote ? !!item?.isBookmarked : id ? isBookmarked(id) : false;
 
   const relatedEchoes = useMemo(() => {
@@ -62,10 +72,16 @@ export default function ThreadDetailScreen() {
   if (!item) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: colors.textSecondary }}>Echo not found</Text>
-        <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ color: colors.accent }}>Go back</Text>
-        </Pressable>
+        {fetchingItem ? (
+          <ActivityIndicator color={colors.textMuted} />
+        ) : (
+          <>
+            <Text style={{ color: colors.textSecondary }}>Echo not found</Text>
+            <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
+              <Text style={{ color: colors.accent }}>Go back</Text>
+            </Pressable>
+          </>
+        )}
       </SafeAreaView>
     );
   }

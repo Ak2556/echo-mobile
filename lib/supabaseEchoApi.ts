@@ -913,14 +913,15 @@ export async function fetchUserReactions(
 
 /** Records one deduplicated view per authenticated user per echo (PK echo_id,user_id). Ignores duplicates. */
 export async function recordRemoteEchoView(echoId: string): Promise<void> {
-  const uid = await getSessionUserId();
-  if (!uid) return;
-  const { error } = await supabase.from('echo_views').insert({ echo_id: echoId, user_id: uid });
-  if (!error) return;
-  const code = (error as { code?: string }).code;
-  if (code === '23505') return;
-  if (error.message?.includes('duplicate')) return;
-  throw error;
+  // Best-effort: view counting must never surface an error to callers,
+  // who invoke this fire-and-forget on every card tap.
+  try {
+    const uid = await getSessionUserId();
+    if (!uid) return;
+    await supabase.from('echo_views').insert({ echo_id: echoId, user_id: uid });
+  } catch {
+    // Offline or transient failure — drop the view.
+  }
 }
 
 export async function fetchRemoteComments(echoId: string): Promise<Comment[]> {
