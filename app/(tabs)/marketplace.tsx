@@ -234,7 +234,7 @@ export default function MarketplaceScreen() {
         gap: 12,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold' }}>
+          <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>
             Marketplace
           </Text>
           <AnimatedPressable
