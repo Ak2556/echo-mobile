@@ -46,7 +46,7 @@ function ProfileCompletionBanner({
   onDismiss: () => void;
   onPress: () => void;
 }) {
-  const { colors, radius, font } = useTheme();
+  const { colors, font } = useTheme();
   const done = steps.filter(s => s.done).length;
   const total = steps.length;
   const pct = Math.round((done / total) * 100);
@@ -56,33 +56,24 @@ function ProfileCompletionBanner({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => ({
-        backgroundColor: pressed ? colors.accentMuted : colors.surface,
-        borderRadius: radius.card,
-        borderWidth: 1,
-        borderColor: colors.accent + '40',
-        padding: 14,
-        marginHorizontal: 0,
-        marginBottom: 12,
-      })}
+      style={{
+        marginHorizontal: 16,
+        paddingVertical: 10,
+        marginBottom: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
+      }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14 }]}>
-            Complete your profile — {pct}%
-          </Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>
-            Missing: {missing.join(', ')}
-          </Text>
-        </View>
-        <Pressable onPress={onDismiss} hitSlop={12} style={{ padding: 4 }}>
-          <X color={colors.textMuted} size={16} />
-        </Pressable>
-      </View>
-      {/* Progress bar */}
-      <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
-        <View style={{ height: 4, width: `${pct}%`, backgroundColor: colors.accent, borderRadius: 2 }} />
-      </View>
+      <Text style={[font.bodySemibold, { color: colors.text, fontSize: 13, flex: 1 }]} numberOfLines={1}>
+        Complete your profile{missing.length ? ` — add ${missing[0].toLowerCase()}` : ''}
+      </Text>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>{pct}%</Text>
+      <Pressable onPress={onDismiss} hitSlop={12}>
+        <X color={colors.textMuted} size={14} />
+      </Pressable>
     </Pressable>
   );
 }
@@ -213,16 +204,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View
-          style={[
-            styles.heroCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.card,
-            },
-          ]}
-        >
+        <View style={styles.heroCard}>
           <View style={styles.identityRow}>
             <Pressable
               onPress={() => visibleAvatarUrl ? setPhotoPreviewOpen(true) : undefined}
@@ -356,12 +338,7 @@ export default function ProfileScreen() {
 
         <View style={styles.accountArea}>
           <SectionLabel label="Account" colors={colors} font={font} />
-          <View
-            style={[
-              styles.menuPanel,
-              { borderRadius: radius.card, borderColor: colors.border, backgroundColor: colors.surface },
-            ]}
-          >
+          <View style={styles.menuPanel}>
             {SETTINGS_ROWS.map(({ key, Icon, label, route }, index) => (
               <React.Fragment key={key}>
                 <ProfileListRow
@@ -601,12 +578,7 @@ function ProfileEmptyPosts({
   onCreate: () => void;
 }) {
   return (
-    <View
-      style={[
-        styles.emptyPanel,
-        { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.card },
-      ]}
-    >
+    <View style={styles.emptyPanel}>
       <Text
         style={[font.display, styles.emptyTitle, { color: colors.text }]}
         numberOfLines={2}
@@ -662,7 +634,7 @@ function AboutPanel({
 }) {
   return (
     <View style={styles.aboutArea}>
-      <View style={[styles.aboutCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.card }]}>
+      <View style={styles.aboutCard}>
         {bio ? (
           <Text
             style={[font.body, styles.aboutBio, { color: colors.textSecondary }]}
@@ -689,7 +661,7 @@ function AboutPanel({
         )}
       </View>
 
-      <View style={[styles.aboutCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.card }]}>
+      <View style={styles.aboutCard}>
         <InfoRow icon={<CalendarBlank color={colors.textMuted} size={18} />} label={`Joined Echo ${creatorProfile.joinedYear}`} colors={colors} font={font} />
         {creatorProfile.topics[0] ? (
           <InfoRow icon={<Sparkle color={colors.textMuted} size={18} />} label={`Best known for ${creatorProfile.topics[0]}`} colors={colors} font={font} />
@@ -751,12 +723,7 @@ function ProfileListRow({
 }) {
   const rowContent = (
     <>
-      <View
-        style={[
-          styles.listRowIconTile,
-          { borderRadius: radius.md, backgroundColor: colors.surfaceHover },
-        ]}
-      >
+      <View style={styles.listRowIconTile}>
         {icon}
       </View>
       <Text
@@ -872,11 +839,8 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     marginHorizontal: 16,
-    paddingHorizontal: 16,
-    paddingTop: 18,
-    paddingBottom: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
+    paddingTop: 14,
+    paddingBottom: 4,
   },
   heroAccent: {
     position: 'absolute',
@@ -1015,11 +979,9 @@ const styles = StyleSheet.create({
   },
   emptyPanel: {
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 24,
     paddingHorizontal: 18,
-    paddingTop: 20,
-    paddingBottom: 96,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 72,
     alignItems: 'center',
   },
   emptyTitle: {
@@ -1053,8 +1015,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   aboutCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 16,
+    paddingVertical: 8,
     gap: 13,
   },
   aboutBio: {
@@ -1091,8 +1052,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   menuPanel: {
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
     marginBottom: 12,
   },
   menuPanelCompact: {
@@ -1102,7 +1061,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 48,
-    paddingHorizontal: 12,
+    paddingHorizontal: 2,
     paddingVertical: 10,
     gap: 12,
   },
@@ -1121,7 +1080,7 @@ const styles = StyleSheet.create({
   },
   menuDivider: {
     height: StyleSheet.hairlineWidth,
-    marginLeft: 60,
+    marginLeft: 46,
   },
   signOutButton: {
     alignSelf: 'stretch',

@@ -626,7 +626,7 @@ export default function SettingsScreen() {
           <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
             <ArrowLeft color={colors.text} size={24} />
           </AnimatedPressable>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Settings</Text>
+          <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>Settings</Text>
         </View>
       </View>
 
