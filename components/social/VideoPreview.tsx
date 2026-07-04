@@ -46,7 +46,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount }: 
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden' }}>
       <LinearGradient
-        colors={['#1E1B4B', '#312E81', '#0A0A0A']}
+        colors={['#2A2018', '#1A1512', '#0C0B09']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
@@ -125,18 +125,16 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount 
       )}
 
       {loadState === 'error' && (
-        <LinearGradient colors={['#3730A3', '#0A0A0A']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        <LinearGradient colors={['#2A2018', '#0C0B09']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <Play color="#fff" size={24} weight="fill" />
           <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600' }}>Tap to open video</Text>
         </LinearGradient>
       )}
 
-      <LinearGradient colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.72)']} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }} pointerEvents="none" />
-
-      <View pointerEvents="none" style={{ position: 'absolute', top: '50%', left: '50%', width: 54, height: 54, marginLeft: -27, marginTop: -27, borderRadius: 27, backgroundColor: 'rgba(0,0,0,0.48)', alignItems: 'center', justifyContent: 'center' }}>
-        <Play color="#fff" size={24} weight="fill" />
-      </View>
+      {/* Bottom scrim only — the video autoplays, so no persistent play chip
+          and no full-frame dim. Overlaid card text stays legible via this band. */}
+      <LinearGradient colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.55)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 110 }} pointerEvents="none" />
 
       {viewCount !== undefined && (
         <View pointerEvents="none" style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>
@@ -152,7 +150,7 @@ function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCo
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden' }}>
       <LinearGradient
-        colors={['#1E1B4B', '#312E81', '#0A0A0A']}
+        colors={['#2A2018', '#1A1512', '#0C0B09']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
