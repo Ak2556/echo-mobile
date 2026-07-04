@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   typeCardActive: {
     borderColor: ACCENT_COLORS.cyan,
-    backgroundColor: 'rgba(34,245,255,0.12)',
+    backgroundColor: 'rgba(127,176,188,0.12)',
   },
   typeTitle: {
     color: '#E4E4E7',

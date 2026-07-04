@@ -165,21 +165,9 @@ export default function ProductOnboardingScreen() {
                   })}
                 </View>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-                  <View style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 14,
-                    backgroundColor: colors.accentMuted,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    <Sparkle color={colors.accent} size={20} weight="fill" />
-                  </View>
-                  <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 13, letterSpacing: 0 }]}>
-                    Your first Echo
-                  </Text>
-                </View>
+                <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 16 }]}>
+                  Your first Echo
+                </Text>
 
                 <Text style={[font.display, {
                   color: colors.text,
