@@ -593,7 +593,7 @@ export default function DiscoverScreen() {
 
 function EvolvingNowRail({ items }: { items: EvolutionGroup[] }) {
   const router = useRouter();
-  const { colors, radius, font } = useTheme();
+  const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
 
   return (
@@ -611,27 +611,30 @@ function EvolvingNowRail({ items }: { items: EvolutionGroup[] }) {
               track('evolving_rail_opened', { root_id: item.rootId, branch_count: item.branchCount });
               router.push({ pathname: '/evolution/[rootId]', params: { rootId: item.rootId } });
             }}
-            style={{
-              width: 252,
-              padding: 14,
-              borderRadius: Math.min(radius.card, 14),
-              backgroundColor: colors.surface,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.border,
-            }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              <GitBranch color={colors.accent} size={14} weight="fill" />
-              <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>
-                {item.branchCount} {item.branchCount === 1 ? 'perspective' : 'perspectives'}
-              </Text>
+            <View style={{ width: 252, borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface }}>
+              <LinearGradient
+                colors={[`${colors.accent}38`, `${colors.accent}0F`, 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0.9, y: 1 }}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <View style={{ padding: 15 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 9 }}>
+                  <GitBranch color={colors.accent} size={14} weight="fill" />
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>
+                    {item.branchCount} {item.branchCount === 1 ? 'perspective' : 'perspectives'}
+                  </Text>
+                </View>
+                <Text style={[font.display, { color: colors.text, fontSize: 16, lineHeight: 21 }]} numberOfLines={2}>
+                  {item.rootTitle || item.rootPrompt}
+                </Text>
+                <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, marginTop: 9 }]} numberOfLines={1}>
+                  {summary || `${item.uniqueAuthors} people are adding angles`}
+                </Text>
+              </View>
             </View>
-            <Text style={[font.bodySemibold, { color: colors.text, fontSize: 15, lineHeight: 20 }]} numberOfLines={2}>
-              {item.rootTitle || item.rootPrompt}
-            </Text>
-            <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, marginTop: 8 }]} numberOfLines={1}>
-              {summary || `${item.uniqueAuthors} people are adding angles`}
-            </Text>
           </Pressable>
         );
       })}
