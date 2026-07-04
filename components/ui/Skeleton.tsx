@@ -56,34 +56,29 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 8, classN
 
 export function FeedCardSkeleton() {
   const { colors } = useTheme();
+  // Mirrors the immersive canvas card: rounded 24 shell, identity row,
+  // large title bars, then the slim actions row beneath the canvas.
   return (
-    <View style={{ backgroundColor: colors.surface, marginHorizontal: 16, marginVertical: 6, padding: 16, borderRadius: 20, borderWidth: 1, borderColor: colors.border }}>
-      <View className="flex-row items-center mb-3">
-        <Skeleton width={36} height={36} borderRadius={18} />
-        <View className="ml-3 flex-1">
-          <Skeleton width={120} height={14} className="mb-1.5" />
-          <Skeleton width={80} height={12} />
+    <View style={{ marginHorizontal: 12, marginVertical: 7 }}>
+      <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 18 }}>
+        <View className="flex-row items-center mb-4">
+          <Skeleton width={34} height={34} borderRadius={17} />
+          <View className="ml-3 flex-1">
+            <Skeleton width={110} height={13} className="mb-1.5" />
+            <Skeleton width={60} height={10} />
+          </View>
         </View>
-        <Skeleton width={30} height={12} />
+        <Skeleton width="94%" height={22} className="mb-2" />
+        <Skeleton width="70%" height={22} className="mb-4" />
+        <Skeleton width="100%" height={13} className="mb-1.5" />
+        <Skeleton width="82%" height={13} />
       </View>
-      <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 12, padding: 12, marginBottom: 12 }}>
-        <Skeleton width={50} height={10} className="mb-2" />
-        <Skeleton width="90%" height={14} className="mb-1" />
-        <Skeleton width="60%" height={14} />
-      </View>
-      <View className="mb-3">
-        <Skeleton width={40} height={10} className="mb-2" />
-        <Skeleton width="100%" height={14} className="mb-1" />
-        <Skeleton width="85%" height={14} className="mb-1" />
-        <Skeleton width="40%" height={14} />
-      </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Skeleton width={70} height={32} borderRadius={16} />
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 6, paddingTop: 10 }}>
+        <Skeleton width={90} height={28} borderRadius={14} />
         <View className="flex-row gap-4">
-          <Skeleton width={20} height={20} borderRadius={10} />
-          <Skeleton width={20} height={20} borderRadius={10} />
-          <Skeleton width={20} height={20} borderRadius={10} />
-          <Skeleton width={20} height={20} borderRadius={10} />
+          <Skeleton width={19} height={19} borderRadius={10} />
+          <Skeleton width={19} height={19} borderRadius={10} />
+          <Skeleton width={19} height={19} borderRadius={10} />
         </View>
       </View>
     </View>

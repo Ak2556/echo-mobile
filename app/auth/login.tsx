@@ -130,7 +130,7 @@ export default function LoginScreen() {
               >
                 {`“${ROTATING_PROMPTS[promptIdx]}”`}
               </Animated.Text>
-              <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12, marginTop: 14 }]}>
+              <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 11, marginTop: 14, letterSpacing: 1.6 }]}>
                 A QUESTION WORTH KEEPING
               </Text>
             </View>
