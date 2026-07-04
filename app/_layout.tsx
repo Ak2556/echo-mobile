@@ -168,7 +168,7 @@ function RootLayout() {
           <Stack.Screen name="auth" options={{ animation: 'fade' }} />
           <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="thread/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="thread/[id]" options={{ presentation: 'card', animation: 'fade_from_bottom', animationDuration: 240 }} />
           <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="comments/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="user/[id]" options={{ presentation: 'card' }} />
@@ -179,7 +179,7 @@ function RootLayout() {
           <Stack.Screen name="settings" options={{ presentation: 'card' }} />
           <Stack.Screen name="ai-memory" options={{ presentation: 'card' }} />
           <Stack.Screen name="thinking-partners" options={{ presentation: 'card' }} />
-          <Stack.Screen name="daily-question" options={{ presentation: 'card' }} />
+          <Stack.Screen name="daily-question" options={{ presentation: 'card', animation: 'fade_from_bottom', animationDuration: 240 }} />
           <Stack.Screen name="edit-profile" options={{ presentation: 'card' }} />
           <Stack.Screen name="report" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />

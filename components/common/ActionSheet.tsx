@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
 
@@ -23,12 +24,13 @@ interface ActionSheetProps {
 }
 
 /**
- * iOS-style action sheet — opaque surface card stacked above a separate
- * Cancel button. Backdrop dims the page behind.
+ * iOS-style action sheet — glass card stacked above a separate Cancel
+ * button. Backdrop dims the page behind.
  *
- * Earlier this used a BlurView + 4% white fill, which on a busy feed
- * read as half-transparent and made the title invisible and the underlying
- * post visible through the sheet. Solid surface fills it.
+ * Legibility note: an early glass version used only a 4% white fill and
+ * was unreadable over busy feeds. The current recipe stacks the 55% black
+ * backdrop + blur(60) + a 62% bg fill, which keeps text solid while still
+ * reading as glass. Don't reduce the fill below ~0.55.
  */
 export function ActionSheet({ visible, onClose, title, subtitle, actions }: ActionSheetProps) {
   const { colors, reduceAnimations, font } = useTheme();
@@ -59,20 +61,21 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
           paddingBottom: insets.bottom + 12,
         }}
       >
-        {/* Action card — opaque surface */}
+        {/* Action card — glass sheet over the dimmed content */}
         <View
           style={{
-            borderRadius: 16,
+            borderRadius: 22,
             overflow: 'hidden',
-            backgroundColor: colors.surface,
             borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
+            borderColor: colors.glassBorder,
             shadowColor: '#000',
             shadowOpacity: 0.35,
             shadowRadius: 24,
             shadowOffset: { width: 0, height: 12 },
           }}
         >
+          <BlurView intensity={60} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.62 }]} pointerEvents="none" />
           {(title || subtitle) && (
             <View
               style={{
@@ -80,7 +83,7 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
                 paddingVertical: 14,
                 borderBottomWidth: StyleSheet.hairlineWidth,
                 borderBottomColor: colors.border,
-                backgroundColor: colors.bgPure ? colors.bgPure : colors.bg,
+                
               }}
             >
               {title && (
@@ -171,18 +174,20 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
           ))}
         </View>
 
-        {/* Cancel — separate pill, also opaque */}
+        {/* Cancel — separate glass pill */}
         <View style={{
           marginTop: 10,
-          borderRadius: 16,
-          backgroundColor: colors.surface,
+          borderRadius: 18,
+          overflow: 'hidden',
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.border,
+          borderColor: colors.glassBorder,
           shadowColor: '#000',
           shadowOpacity: 0.25,
           shadowRadius: 16,
           shadowOffset: { width: 0, height: 8 },
         }}>
+          <BlurView intensity={60} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.62 }]} pointerEvents="none" />
           <Pressable
             onPress={() => { tap('light'); onClose(); }}
             style={{ paddingVertical: 16, alignItems: 'center' }}

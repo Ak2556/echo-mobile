@@ -6,6 +6,7 @@ import { FlashList } from '@shopify/flash-list';
 import { Brain, CaretRight, ChartLineUp, Cpu, PaintBrush, RocketLaunch } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
@@ -293,7 +294,9 @@ export default function SearchScreen() {
         </ScrollView>
       )}
 
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, zIndex: 10, backgroundColor: colors.bg }}>
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, zIndex: 10, overflow: 'hidden' }}>
+        <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.72 }]} pointerEvents="none" />
         <View style={[layout.wideContentStyle, { paddingTop: insets.top + (layout.isDesktop ? 16 : 8), paddingHorizontal: layout.gutter, paddingBottom: 8 }]}>
           {!layout.isDesktop && (
             <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 10 }}>
