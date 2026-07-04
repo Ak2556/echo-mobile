@@ -1,17 +1,14 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Images } from 'phosphor-react-native';
-import { AnimatedPressable } from '../ui/AnimatedPressable';
-import { GlassPanel } from '../ui/GlassPanel';
 import { EmptyState } from '../common/EmptyState';
 import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
 
-const GRID_COLUMNS = 3;
-const GRID_GAP = 2;
-const GRID_HORIZONTAL_INSET = 16;
+const GRID_GAP = 8;
+const GRID_HORIZONTAL_INSET = 12;
 const COMPACT_TEXT_SCALE = 1.2;
 
 interface PostsGridProps {
@@ -21,94 +18,71 @@ interface PostsGridProps {
   containerWidth?: number;
 }
 
-function GridCell({ item, onPress, size }: { item: FeedItem; onPress: () => void; size: number }) {
-  const hasMedia = item.mediaUris && item.mediaUris.length > 0;
-
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      style={{ width: size, height: size, overflow: 'hidden', borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.04)' }}
-      scaleValue={0.95}
-      haptic="light"
-    >
-      {hasMedia ? (
-        <Image
-          source={{ uri: item.mediaUris![0] }}
-          style={{ flex: 1 }}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-        />
-      ) : (
-        <LinearGradient
-          colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.5)']}
-          style={{ flex: 1, padding: 8, justifyContent: 'flex-end' }}
-        >
-          <Text style={{ color: '#fff', fontSize: 11, lineHeight: 15 }} numberOfLines={2} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>
-            {item.prompt}
-          </Text>
-        </LinearGradient>
-      )}
-    </AnimatedPressable>
-  );
-}
-
-function FeaturedCard({
+function MosaicTile({
   item,
   onPress,
-  avatarColor,
+  tint,
+  width,
+  height,
+  featured,
 }: {
   item: FeedItem;
   onPress: () => void;
-  avatarColor: string;
+  tint: string;
+  width: number;
+  height: number;
+  featured?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
+  const mediaUri = item.mediaUris?.[0];
 
   return (
-    <AnimatedPressable onPress={onPress} style={{ marginBottom: 12 }} scaleValue={0.98} haptic="light">
-      <GlassPanel borderRadius={12} intensity={32}>
-        <View style={{ padding: 16, flexDirection: 'row', gap: 12 }}>
-          <View
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: avatarColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
+    <Pressable onPress={onPress}>
+      <View style={{ width, height, borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface }}>
+        {mediaUri ? (
+          <>
+            <Image source={{ uri: mediaUri }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.72)']}
+              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: Math.min(height * 0.6, 120) }}
+              pointerEvents="none"
+            />
+          </>
+        ) : (
+          <LinearGradient
+            colors={[`${tint}52`, `${tint}17`, 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.8, y: 1 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+        )}
+        <View style={{ flex: 1, justifyContent: mediaUri ? 'flex-end' : 'flex-start', padding: 13 }}>
+          <Text
+            style={[
+              font.display,
+              {
+                color: mediaUri ? '#fff' : colors.text,
+                fontSize: featured ? 20 : 15,
+                lineHeight: featured ? 26 : 20,
+              },
+            ]}
+            numberOfLines={mediaUri ? 2 : featured ? 4 : 5}
+            maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>
-              {(item.displayName || '?').charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontWeight: '600', fontSize: 13 }} numberOfLines={1} maxFontSizeMultiplier={COMPACT_TEXT_SCALE}>
-              {item.displayName}
-            </Text>
-            <Text
-              style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 4 }}
-              numberOfLines={3}
-              maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-            >
-              {item.response || item.prompt}
-            </Text>
-          </View>
+            {item.editorialTitle || item.prompt}
+          </Text>
         </View>
-      </GlassPanel>
-    </AnimatedPressable>
+      </View>
+    </Pressable>
   );
 }
 
 export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: PostsGridProps) {
   const { colors } = useTheme();
-  const { width } = useWindowDimensions();
-  const featured = echoes[0];
-  const gridEchoes = echoes.slice(1);
-  const gridWidth = Math.min(width, containerWidth ?? width);
-  const cellSize = Math.floor(
-    (gridWidth - GRID_HORIZONTAL_INSET * 2 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS,
-  );
+  const gridWidth = containerWidth ?? 0;
+  const usable = gridWidth - GRID_HORIZONTAL_INSET * 2;
+  const tileWidth = Math.floor((usable - GRID_GAP) / 2);
 
   if (echoes.length === 0) {
     return (
@@ -122,31 +96,32 @@ export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: 
     );
   }
 
+  const [featured, ...rest] = echoes;
+
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={gridEchoes}
-        numColumns={GRID_COLUMNS}
-        keyExtractor={item => item.id}
-        columnWrapperStyle={{ gap: GRID_GAP }}
-        ItemSeparatorComponent={() => <View style={{ height: GRID_GAP }} />}
-        scrollEnabled={false}
-        ListHeaderComponent={
-          featured ? (
-            <FeaturedCard item={featured} onPress={() => onPressEcho(featured)} avatarColor={avatarColor} />
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <GridCell item={item} onPress={() => onPressEcho(item)} size={cellSize} />
-        )}
-      />
+    <View style={{ paddingHorizontal: GRID_HORIZONTAL_INSET, paddingTop: 12 }}>
+      <View style={{ marginBottom: GRID_GAP }}>
+        <MosaicTile
+          item={featured}
+          onPress={() => onPressEcho(featured)}
+          tint={featured.avatarColor || avatarColor}
+          width={usable}
+          height={featured.mediaUris?.[0] ? 300 : 180}
+          featured
+        />
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP }}>
+        {rest.map((item, idx) => (
+          <MosaicTile
+            key={item.id}
+            item={item}
+            onPress={() => onPressEcho(item)}
+            tint={item.avatarColor || avatarColor}
+            width={tileWidth}
+            height={idx % 3 === 0 ? 220 : 170}
+          />
+        ))}
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: GRID_HORIZONTAL_INSET,
-    paddingTop: 12,
-  },
-});

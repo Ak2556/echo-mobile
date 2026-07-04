@@ -228,6 +228,18 @@ export default function ThreadDetailScreen() {
       })()}
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 36 }}>
+        {/* Media leads, matching the feed's card grammar. */}
+        {item.postType === 'photo' && item.mediaUris && item.mediaUris.length > 0 ? (
+          <View style={{ marginBottom: 18, marginHorizontal: -8, borderRadius: 22, overflow: 'hidden' }}>
+            <MediaGrid uris={item.mediaUris} />
+          </View>
+        ) : null}
+        {item.postType === 'video' && item.videoUri ? (
+          <View style={{ marginBottom: 18, marginHorizontal: -8, borderRadius: 22, overflow: 'hidden' }}>
+            <InlineVideo uri={item.videoUri} height={340} qualities={item.videoQualities} />
+          </View>
+        ) : null}
+
         <Text style={[font.displayBlack, { color: colors.text, fontSize: 27, lineHeight: 35, marginBottom: 16 }]}>
           {item.editorialTitle || item.prompt}
         </Text>
@@ -275,18 +287,6 @@ export default function ThreadDetailScreen() {
                 </Pressable>
               ))}
             </View>
-          </View>
-        ) : null}
-
-        {item.postType === 'photo' && item.mediaUris && item.mediaUris.length > 0 ? (
-          <View style={{ marginBottom: 12 }}>
-            <MediaGrid uris={item.mediaUris} />
-          </View>
-        ) : null}
-
-        {item.postType === 'video' && item.videoUri ? (
-          <View style={{ marginBottom: 12 }}>
-            <InlineVideo uri={item.videoUri} height={300} qualities={item.videoQualities} />
           </View>
         ) : null}
 
