@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
@@ -29,6 +30,7 @@ export default function ThreadDetailScreen() {
   const { data: feed = [] } = useFeed();
   const { isBookmarked, toggleBookmark, deleteEcho, userId: currentUserId, getOrCreateConversation } = useAppStore();
   const { colors, radius, fontSizes, showAvatars, font } = useTheme();
+  const insets = useSafeAreaInsets();
   const remoteBm = useToggleRemoteBookmark();
   const [showMenu, setShowMenu] = useState(false);
   // Pull the owner's profile to know whether THIS echo is currently their pin.
@@ -162,8 +164,11 @@ export default function ThreadDetailScreen() {
   ];
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, overflow: 'hidden' }}>
+        <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.72 }]} pointerEvents="none" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: insets.top + 6, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
         <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
@@ -182,6 +187,7 @@ export default function ThreadDetailScreen() {
               <DotsThreeOutline color={colors.textSecondary} size={24} />
             </Pressable>
           ) : null}
+        </View>
         </View>
       </View>
 
@@ -228,7 +234,7 @@ export default function ThreadDetailScreen() {
         return <ActionSheet visible={showMenu} onClose={() => setShowMenu(false)} subtitle={item.editorialTitle || item.prompt} actions={menuActions} />;
       })()}
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 36 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 58, paddingBottom: 36 }}>
         {/* Entrance choreography: the screen lifts in (fade_from_bottom on
             the stack), then media settles first and the article staggers
             in beneath it — reads as continuity from the tapped feed card. */}
@@ -353,7 +359,7 @@ export default function ThreadDetailScreen() {
         ) : null}
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
