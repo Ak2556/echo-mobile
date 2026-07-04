@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -11,18 +12,7 @@ import {
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Books,
-  Desktop,
-  FunnelSimple,
-  Lightbulb,
-  MagnifyingGlass,
-  PaintBrush,
-  Package,
-  Plus,
-  Tag,
-  Wrench,
-} from 'phosphor-react-native';
+import { MagnifyingGlass, Package, Plus, Tag } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { track } from '../../lib/analytics';
@@ -40,15 +30,6 @@ const CARD_GAP = 10;
 const CARD_H_PADDING = 16;
 const CARD_WIDTH = (SCREEN_WIDTH - CARD_H_PADDING * 2 - CARD_GAP) / 2;
 
-const CATEGORY_ICON: Record<string, React.ComponentType<any>> = {
-  All: FunnelSimple,
-  'Books & Learning': Books,
-  'Tech & Gear': Wrench,
-  Workspace: Desktop,
-  Creative: PaintBrush,
-  Services: Lightbulb,
-};
-
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const h = diff / 3600000;
@@ -60,34 +41,28 @@ function timeAgo(iso: string): string {
 }
 
 function CategoryPill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, fontSizes } = useTheme();
-  const Icon = CATEGORY_ICON[label] ?? Package;
+  const { colors } = useTheme();
   return (
-    <AnimatedPressable
-      onPress={onPress}
-      fadeOnPress
-      haptic="light"
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 999,
-        backgroundColor: active ? colors.accent : colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: active ? colors.accent : colors.border,
-      }}
-    >
-      <Icon color={active ? '#fff' : colors.textMuted} size={13} weight={active ? 'bold' : 'regular'} />
-      <Text style={{
-        color: active ? '#fff' : colors.textSecondary,
-        fontSize: 13,
-        fontFamily: 'Inter_600SemiBold',
-      }}>
-        {label === 'All' ? 'All' : label}
-      </Text>
-    </AnimatedPressable>
+    <Pressable onPress={onPress}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 15,
+          paddingVertical: 9,
+          borderRadius: 999,
+          backgroundColor: active ? colors.accent : colors.surfaceHover,
+        }}
+      >
+        <Text style={{
+          color: active ? '#fff' : colors.textSecondary,
+          fontSize: 13,
+          fontFamily: 'Inter_600SemiBold',
+        }}>
+          {label === 'All' ? 'All' : label}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
