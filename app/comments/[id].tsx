@@ -100,7 +100,7 @@ export default function CommentsScreen() {
         <Pressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} accessibilityLabel="Go back" accessibilityRole="button">
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }}>Comments</Text>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, flex: 1 }}>Comments</Text>
         <Text style={{ color: colors.textMuted, fontSize: 14 }}>{comments.length}</Text>
       </View>
 

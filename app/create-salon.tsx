@@ -63,7 +63,7 @@ function CreateSalonScreenInner() {
         <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>New Salon</Text>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>New Salon</Text>
         <AnimatedPressable
           onPress={() => void handleSubmit()}
           disabled={!canSubmit}

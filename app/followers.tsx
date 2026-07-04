@@ -49,7 +49,7 @@ export default function FollowersScreen() {
         <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light" performanceMode="hot">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Connections</Text>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Connections</Text>
       </View>
 
       <View className="flex-row" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>

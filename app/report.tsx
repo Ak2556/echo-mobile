@@ -60,7 +60,7 @@ export default function ReportScreen() {
         <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Report</Text>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Report</Text>
       </View>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>

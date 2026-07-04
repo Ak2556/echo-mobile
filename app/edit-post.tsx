@@ -145,7 +145,7 @@ export default function EditPostScreen() {
         <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Edit Echo</Text>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Edit Echo</Text>
         <AnimatedPressable onPress={handleSave} disabled={!canSave} scaleValue={0.92} haptic="medium"
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: canSave ? colors.accent : colors.surfaceHover, opacity: canSave ? 1 : 0.5 }}>
           <Check color="#fff" size={15} />
