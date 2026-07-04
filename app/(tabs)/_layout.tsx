@@ -4,6 +4,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
@@ -295,12 +296,24 @@ function FloatingTabBar(props: BottomTabBarProps) {
         right: 0,
         height: tabHeight + insets.bottom,
         paddingBottom: insets.bottom,
-        backgroundColor: colors.bg,
         borderTopWidth: StyleSheet.hairlineWidth,
         borderTopColor: colors.border,
+        overflow: 'hidden',
       }}
       pointerEvents="box-none"
     >
+      <BlurView
+        intensity={50}
+        tint={colors.isDark ? 'dark' : 'light'}
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: colors.bg, opacity: 0.72 },
+        ]}
+        pointerEvents="none"
+      />
         <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5 }}>
           {visibleRoutes.map(route => {
             const isFocused = state.routes[state.index].name === route.name;
