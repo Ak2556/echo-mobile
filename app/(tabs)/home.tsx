@@ -13,10 +13,10 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, Info, Clock } from 'phosphor-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, Info, Clock } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
-import { HeroCard, HERO_CARD_WIDTH } from '../../components/social/HeroCard';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { useInfiniteFeed, useTrendingEvolutions } from '../../hooks/queries/useFeed';
 import { EvolutionGroup, FeedItem } from '../../types';
@@ -39,7 +39,6 @@ import { getTopPerspectiveSummary } from '../../lib/perspectives';
 import { track } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
 
-const HERO_COUNT = 5;
 
 const NAV_BAR_HEIGHT = 50;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
@@ -108,7 +107,6 @@ export default function DiscoverScreen() {
   useEffect(() => { pingDailyActivity(); }, []);
 
   const scrollY = useSharedValue(0);
-  const heroScrollX = useSharedValue(0);
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollY.value = event.nativeEvent.contentOffset.y;
   }, [scrollY]);
@@ -179,8 +177,7 @@ export default function DiscoverScreen() {
     return result;
   }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising, sensitiveContentFilter]);
 
-  const heroItems = scopedAll.slice(0, HERO_COUNT);
-  const popularItems = scopedAll.slice(HERO_COUNT);
+  const popularItems = scopedAll;
 
   const ListHeader = (
     <View style={layout.contentStyle}>
@@ -337,42 +334,27 @@ export default function DiscoverScreen() {
         </View>
       )}
       {features.dailyQuestion && !showFirstEchoCoach && (
-        <Pressable
-          onPress={() => router.push('/daily-question')}
-          style={{
-            marginHorizontal: layout.gutter,
-            marginTop: 6,
-            marginBottom: 18,
-            paddingVertical: 10,
-            paddingLeft: 14,
-            paddingRight: 4,
-            borderLeftWidth: 3,
-            borderLeftColor: colors.accent,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small, flex: 1 }]}>
-            Today&apos;s question — tap to answer
-          </Text>
+        <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: 12, marginTop: 4, marginBottom: 6 }}>
+          <View style={{ borderRadius: 20, overflow: 'hidden' }}>
+            <LinearGradient
+              colors={['#E8834E', '#C94F1D']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ paddingHorizontal: 18, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[font.display, { color: '#fff', fontSize: 18, lineHeight: 24 }]}>
+                  Today&apos;s question
+                </Text>
+                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, fontFamily: 'Inter_500Medium' }}>
+                  Tap to answer
+                </Text>
+              </View>
+              <ArrowUpRight color="#fff" size={20} weight="bold" />
+            </LinearGradient>
+          </View>
         </Pressable>
       )}
-      <View style={{ marginTop: 2 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={HERO_CARD_WIDTH + 12}
-          contentContainerStyle={{ paddingHorizontal: layout.gutter, gap: 12 }}
-          onScroll={(e) => { heroScrollX.value = e.nativeEvent.contentOffset.x; }}
-          scrollEventThrottle={16}
-        >
-          {heroItems.map((item, index) => (
-            <HeroCard key={item.id} item={item} onPress={() => handlePressThread(item)} scrollX={heroScrollX} cardIndex={index} />
-          ))}
-        </ScrollView>
-      </View>
       {evolvingNow.length > 0 && (
         <>
           <SectionHeader label="Evolving now" sub="Perspectives" icon={<GitBranch color={colors.accent} size={16} weight="bold" />} />
