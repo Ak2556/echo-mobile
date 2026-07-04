@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -166,7 +167,7 @@ export default function ThreadDetailScreen() {
         <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Echo Thread</Text>
+        <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Echo Thread</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           {/* Bookmark stays only in the action row below the post body.
               The header version was duplicate weight for the same action. */}
@@ -228,34 +229,42 @@ export default function ThreadDetailScreen() {
       })()}
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 36 }}>
-        {/* Media leads, matching the feed's card grammar. */}
+        {/* Entrance choreography: the screen lifts in (fade_from_bottom on
+            the stack), then media settles first and the article staggers
+            in beneath it — reads as continuity from the tapped feed card. */}
         {item.postType === 'photo' && item.mediaUris && item.mediaUris.length > 0 ? (
-          <View style={{ marginBottom: 18, marginHorizontal: -8, borderRadius: 22, overflow: 'hidden' }}>
+          <Animated.View entering={FadeIn.duration(260)} style={{ marginBottom: 18, marginHorizontal: -8, borderRadius: 22, overflow: 'hidden' }}>
             <MediaGrid uris={item.mediaUris} />
-          </View>
+          </Animated.View>
         ) : null}
         {item.postType === 'video' && item.videoUri ? (
-          <View style={{ marginBottom: 18, marginHorizontal: -8, borderRadius: 22, overflow: 'hidden' }}>
+          <Animated.View entering={FadeIn.duration(260)} style={{ marginBottom: 18, marginHorizontal: -8, borderRadius: 22, overflow: 'hidden' }}>
             <InlineVideo uri={item.videoUri} height={340} qualities={item.videoQualities} />
-          </View>
+          </Animated.View>
         ) : null}
 
-        <Text style={[font.displayBlack, { color: colors.text, fontSize: 27, lineHeight: 35, marginBottom: 16 }]}>
+        <Animated.Text
+          entering={FadeInDown.delay(60).duration(300).springify().damping(18)}
+          style={[font.displayBlack, { color: colors.text, fontSize: 27, lineHeight: 35, marginBottom: 16 }]}
+        >
           {item.editorialTitle || item.prompt}
-        </Text>
+        </Animated.Text>
 
-        <Pressable onPress={() => router.push(`/user/${item.userId}`)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
-          {showAvatars ? (
-            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{item.username.charAt(0).toUpperCase()}</Text>
+        <Animated.View entering={FadeInDown.delay(120).duration(300).springify().damping(18)}>
+          <Pressable onPress={() => router.push(`/user/${item.userId}`)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+            {showAvatars ? (
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{item.username.charAt(0).toUpperCase()}</Text>
+              </View>
+            ) : null}
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small, fontFamily: 'Inter_600SemiBold' }}>{item.displayName || item.username}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
             </View>
-          ) : null}
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small, fontFamily: 'Inter_600SemiBold' }}>{item.displayName || item.username}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
-          </View>
-        </Pressable>
+          </Pressable>
+        </Animated.View>
 
+        <Animated.View entering={FadeInDown.delay(170).duration(320).springify().damping(18)}>
         {item.authorNote ? (
           <Text style={{ color: colors.text, fontSize: fontSizes.body + 1, lineHeight: Math.round((fontSizes.body + 1) * 1.6), marginBottom: 20, fontFamily: 'Inter_400Regular' }}>
             {item.authorNote}
@@ -342,6 +351,7 @@ export default function ThreadDetailScreen() {
             ))}
           </View>
         ) : null}
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
