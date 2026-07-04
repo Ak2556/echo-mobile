@@ -338,10 +338,9 @@ function DMBubble({
       return (
         <Pressable onLongPress={onLongPress} delayLongPress={350}>
           <View style={{
-            paddingHorizontal: 14, paddingVertical: 11,
-            borderRadius: radius.card,
-            backgroundColor: bubbleBg,
-            borderWidth: isMe ? 0 : 1, borderColor: colors.border,
+            paddingHorizontal: 15, paddingVertical: 11,
+            borderRadius: 20,
+            backgroundColor: isMe ? bubbleBg : colors.surfaceHover,
           }}>
             {message.replyToId && (
               <ReplyCard

@@ -235,7 +235,7 @@ function RemixNode({ node, onPress }: { node: RemixTreeNode; onPress: () => void
       <View style={{ width: indent, alignItems: 'flex-end', justifyContent: 'flex-start', paddingTop: 28 }}>
         {indent > 0 && (
           <LinearGradient
-            colors={['rgba(34,245,255,0.0)', ACCENT_COLORS.cyan]}
+            colors={['rgba(127,176,188,0.0)', ACCENT_COLORS.cyan]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={{ width: 2, height: 24, borderRadius: 2 }}
@@ -403,8 +403,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   summaryChipActive: {
-    borderColor: 'rgba(34,245,255,0.45)',
-    backgroundColor: 'rgba(34,245,255,0.10)',
+    borderColor: 'rgba(127,176,188,0.45)',
+    backgroundColor: 'rgba(127,176,188,0.10)',
   },
   summaryCount: {
     color: '#71717A',
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: '#101018',
     borderWidth: 1,
-    borderColor: 'rgba(34,245,255,0.18)',
+    borderColor: 'rgba(127,176,188,0.18)',
     padding: 14,
   },
   nodeHeaderRow: {
@@ -488,9 +488,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: 'rgba(34,245,255,0.12)',
+    backgroundColor: 'rgba(127,176,188,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(34,245,255,0.35)',
+    borderColor: 'rgba(127,176,188,0.35)',
   },
   depthChipText: {
     color: ACCENT_COLORS.cyan,
@@ -503,9 +503,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,61,216,0.12)',
+    backgroundColor: 'rgba(193,120,154,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255,61,216,0.35)',
+    borderColor: 'rgba(193,120,154,0.35)',
   },
   perspectiveChipText: {
     color: ACCENT_COLORS.magenta,
