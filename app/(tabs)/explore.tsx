@@ -1,9 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { Brain, CaretRight, ChartLineUp, Cpu, PaintBrush, RocketLaunch } from 'phosphor-react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SearchBar } from '../../components/social/SearchBar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
@@ -11,7 +13,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
-import { buildSearchBuckets, deriveTopicFeed, groupDiscovery, inferTopics } from '../../lib/echoUX';
+import { buildSearchBuckets, deriveTopicFeed, groupDiscovery } from '../../lib/echoUX';
 import { useRemoteSearch } from '../../hooks/queries/useSearch';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { track } from '../../lib/analytics';
@@ -169,57 +171,94 @@ export default function SearchScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}>
           <View style={layout.wideContentStyle}>
-            <SectionHeader colors={colors} label="Trending topics" />
-            <View style={{ paddingHorizontal: 16, marginBottom: 36 }}>
-              {topTopics.slice(0, 5).map((item, index, arr) => (
-                <AnimatedPressable
-                  key={item.topic}
-                  onPress={() => setQuery(item.topic)}
-                  style={{
-                    paddingVertical: 13,
-                    borderBottomWidth: index < arr.length - 1 ? StyleSheet.hairlineWidth : 0,
-                    borderBottomColor: colors.border,
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 14 }}>
-                    <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold', fontVariant: ['tabular-nums'], width: 22 }}>
-                      {String(index + 1).padStart(2, '0')}
-                    </Text>
-                    <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Inter_600SemiBold', flex: 1 }} numberOfLines={1}>
-                      #{item.topic}
-                    </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 4 }}
+              style={{ marginBottom: 20 }}
+            >
+              {topTopics.slice(0, 8).map(item => (
+                <Pressable key={item.topic} onPress={() => setQuery(item.topic)}>
+                  <View
+                    style={{
+                      paddingHorizontal: 15,
+                      paddingVertical: 9,
+                      borderRadius: 999,
+                      backgroundColor: colors.surfaceHover,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>#{item.topic}</Text>
                     {item.count > 0 && (
-                      <Text style={{ color: colors.textMuted, fontSize: 12, fontVariant: ['tabular-nums'] }}>
-                        {item.count} {item.count === 1 ? 'echo' : 'echoes'}
-                      </Text>
+                      <Text style={{ color: colors.accent, fontSize: 12, fontFamily: 'Inter_600SemiBold', fontVariant: ['tabular-nums'] }}>{item.count}</Text>
                     )}
                   </View>
-                </AnimatedPressable>
+                </Pressable>
               ))}
-            </View>
+            </ScrollView>
 
             {discovery.conversationStarters.length > 0 && (
               <>
-                <SectionHeader colors={colors} label="Worth opening" />
-                <View style={{ paddingHorizontal: 16, marginBottom: 36 }}>
-                  {discovery.conversationStarters.slice(0, 4).map((item, idx, arr) => (
-                    <AnimatedPressable
-                      key={item.id}
-                      onPress={() => router.push(`/thread/${item.id}`)}
-                      style={{
-                        paddingVertical: 18,
-                        borderBottomWidth: idx < arr.length - 1 ? StyleSheet.hairlineWidth : 0,
-                        borderBottomColor: colors.border,
-                      }}
-                    >
-                      <Text style={[font.display, { color: colors.text, fontSize: 18, lineHeight: 24 }]} numberOfLines={2}>
-                        {item.editorialTitle || item.prompt}
-                      </Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }} numberOfLines={1}>
-                        {item.authorNote || item.response || inferTopics(item).map(t => `#${t}`).join(' ')}
-                      </Text>
-                    </AnimatedPressable>
-                  ))}
+                <SectionHeader colors={colors} label="Trending now" />
+                <View style={{ paddingHorizontal: 12, marginBottom: 28, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {discovery.conversationStarters.slice(0, 6).map((item, idx) => {
+                    const tileWidth = Math.floor((layout.wideContentWidth - 24 - 8) / 2);
+                    const tall = idx % 3 === 0;
+                    const mediaUri = item.mediaUris?.[0];
+                    const tint = item.avatarColor || colors.accent;
+                    return (
+                      <Pressable key={item.id} onPress={() => router.push(`/thread/${item.id}`)}>
+                      <View
+                        style={{ width: tileWidth, height: tall ? 250 : 190, borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface }}
+                      >
+                        {mediaUri ? (
+                          <>
+                            <ExpoImage source={{ uri: mediaUri }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+                            <LinearGradient
+                              colors={['transparent', 'rgba(0,0,0,0.72)']}
+                              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 110 }}
+                              pointerEvents="none"
+                            />
+                          </>
+                        ) : (
+                          <LinearGradient
+                            colors={[`${tint}52`, `${tint}17`, 'transparent']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0.8, y: 1 }}
+                            style={StyleSheet.absoluteFill}
+                            pointerEvents="none"
+                          />
+                        )}
+                        <View style={{ flex: 1, justifyContent: mediaUri ? 'flex-end' : 'space-between', padding: 13 }}>
+                          {!mediaUri && (
+                            <Text style={[font.display, { color: colors.text, fontSize: 17, lineHeight: 22 }]} numberOfLines={tall ? 6 : 4}>
+                              {item.editorialTitle || item.prompt}
+                            </Text>
+                          )}
+                          <View>
+                            {mediaUri && (
+                              <Text style={[font.display, { color: '#fff', fontSize: 16, lineHeight: 21, marginBottom: 6 }]} numberOfLines={2}>
+                                {item.editorialTitle || item.prompt}
+                              </Text>
+                            )}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
+                                  {(item.displayName || item.username).charAt(0).toUpperCase()}
+                                </Text>
+                              </View>
+                              <Text style={{ color: mediaUri ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontSize: 11, fontWeight: '600' }} numberOfLines={1}>
+                                {item.username}
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                      </View>
+                      </Pressable>
+                    );
+                  })}
                 </View>
               </>
             )}

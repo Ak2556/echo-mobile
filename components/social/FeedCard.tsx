@@ -6,6 +6,7 @@ import { RepostChoiceSheet } from './RepostChoiceSheet';
 import { QuotedEchoCard } from './QuotedEchoCard';
 import { tap } from '../../lib/haptics';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { MediaGrid } from './MediaGrid';
 import { VideoPreview } from './VideoPreview';
@@ -339,135 +340,132 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
 
   if (isHero && !compactFeed) {
     return (
-      <Animated.View entering={entering} layout={undefined}>
+      <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 12, marginVertical: 7 }}>
         <AnimatedPressable
           onPress={handleMainPress}
           depth="soft"
           fadeOnPress
           haptic="light"
           performanceMode="hot"
-          style={{
-            paddingVertical: 18,
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: colors.border,
-          }}
+          style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: colors.surface }}
         >
-          {item.repostedByUsername && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: cardMargin, marginBottom: 8, gap: 6 }}>
-              <ArrowsClockwise color={colors.textMuted} size={14} />
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{item.repostedByUsername} re-echoed</Text>
-            </View>
-          )}
-
-          <View style={{ minHeight: 240, position: 'relative', marginHorizontal: cardMargin, borderRadius: 6, overflow: 'hidden' }}>
+          <View style={{ minHeight: 430 }}>
             {item.postType === 'photo' && (
               <MediaGrid uris={item.mediaUris!} />
             )}
             {item.postType === 'video' && item.videoUri && (
-              <VideoPreview uri={item.videoUri} height={300} borderRadius={0} />
+              <VideoPreview uri={item.videoUri} height={430} borderRadius={0} />
             )}
-          </View>
 
-          <View style={{ paddingHorizontal: cardMargin, paddingTop: 14 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-              {showAvatars && (
-                <AnimatedPressable
-                  onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
-                  depth="medium"
-                  fadeOnPress
-                  haptic="light"
-                  performanceMode="hot"
-                >
-                  {item.avatarUrl && !avatarError ? (
-                    <Image
-                      source={{ uri: item.avatarUrl }}
-                      style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
-                      contentFit="cover"
-                      cachePolicy="memory-disk"
-                      onError={() => setAvatarError(true)}
-                    />
-                  ) : (
-                    <View
-                      style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}
-                    >
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-                        {(item.displayName || item.username).charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                </AnimatedPressable>
-              )}
+            {/* Scrims for overlay legibility */}
+            <LinearGradient
+              colors={['rgba(0,0,0,0.45)', 'transparent']}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 100 }}
+              pointerEvents="none"
+            />
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0.86)']}
+              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 190 }}
+              pointerEvents="none"
+            />
+
+            {/* Identity overlay */}
+            <View style={{ position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', alignItems: 'center', gap: 9 }}>
               <AnimatedPressable
                 onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
-                style={{ flex: 1 }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1 }}
                 depth="soft"
                 haptic="none"
                 performanceMode="hot"
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: 0 }]}>{item.displayName || item.username}</Text>
-                  {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
-                </View>
-                {item.authorMood ? (
-                  <Text
-                    numberOfLines={1}
-                    style={{ color: colors.accent, fontSize: fontSizes.caption, fontStyle: 'italic', marginTop: 1 }}
-                  >
-                    · {item.authorMood}
-                  </Text>
+                {item.avatarUrl && !avatarError ? (
+                  <Image
+                    source={{ uri: item.avatarUrl }}
+                    style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    onError={() => setAvatarError(true)}
+                  />
                 ) : (
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
+                  <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}>
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
+                      {(item.displayName || item.username).charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
                 )}
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text style={[font.bodySemibold, { fontSize: 14, color: '#fff' }]} numberOfLines={1}>{item.displayName || item.username}</Text>
+                    {item.isVerified && <SealCheck color="#fff" size={13} weight="fill" />}
+                  </View>
+                  <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11 }}>{getTimeAgo(item.createdAt)}</Text>
+                </View>
               </AnimatedPressable>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
               <AnimatedPressable
                 onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
-                depth="medium"
-                fadeOnPress
-                haptic="light"
-                performanceMode="hot"
-                accessibilityLabel="More options"
-                accessibilityRole="button"
+                depth="medium" fadeOnPress haptic="light" performanceMode="hot"
+                accessibilityLabel="More options" accessibilityRole="button"
               >
-                <DotsThree color={colors.textMuted} size={22} weight="bold" />
+                <DotsThree color="#fff" size={22} weight="bold" />
               </AnimatedPressable>
             </View>
 
-            {!!(item.editorialTitle ?? item.prompt) && (
-              <Text style={[font.display, { fontSize: 19, color: colors.text, marginBottom: item.authorNote ? 4 : 10, lineHeight: 26 }]} numberOfLines={2}>
-                {item.editorialTitle ?? item.prompt}
-              </Text>
-            )}
-            {!!item.authorNote && (
-              <Text style={[font.bodyMedium, { fontSize: fontSizes.small, color: colors.textSecondary, lineHeight: lineHeights.small, marginBottom: 10 }]} numberOfLines={2}>
-                {item.authorNote}
-              </Text>
-            )}
-
-            {item.hashtags && item.hashtags.length > 0 && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                {item.hashtags.slice(0, 3).map(tag => (
-                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}>
-                    <Text style={{ color: colors.accent, fontSize: fontSizes.caption }}>#{tag}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-
-            {ActionsRow}
+            {/* Title + meta overlay */}
+            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}>
+              {!!(item.editorialTitle ?? item.prompt) && (
+                <Text style={[font.display, { fontSize: 22, color: '#fff', lineHeight: 29, marginBottom: item.authorNote ? 4 : 10 }]} numberOfLines={2}>
+                  {item.editorialTitle ?? item.prompt}
+                </Text>
+              )}
+              {!!item.authorNote && (
+                <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 18, marginBottom: 10 }} numberOfLines={2}>
+                  {item.authorNote}
+                </Text>
+              )}
+              {item.hashtags && item.hashtags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 2 }}>
+                  {item.hashtags.slice(0, 3).map(tag => (
+                    <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}>
+                      <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '600' }}>#{tag}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
         </AnimatedPressable>
+        <View style={{ paddingHorizontal: 6, paddingTop: 8 }}>
+          {ActionsRow}
+        </View>
         {AllModals}
       </Animated.View>
     );
   }
 
+  const canvasTint = item.avatarColor || colors.accent;
   return (
-    <Animated.View entering={entering} layout={undefined}>
-      <View style={{
+    <Animated.View
+      entering={entering}
+      layout={undefined}
+      style={compactFeed ? undefined : { marginHorizontal: 12, marginVertical: 7 }}
+    >
+      <View style={compactFeed ? {
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
+      } : {
+        borderRadius: 24,
+        overflow: 'hidden',
+        backgroundColor: colors.surface,
       }}>
+      {!compactFeed && (
+        <LinearGradient
+          colors={[`${canvasTint}3D`, `${canvasTint}12`, 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      )}
       <AnimatedPressable
         onPress={handleMainPress}
         depth="soft"
@@ -475,7 +473,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         haptic="light"
         performanceMode="hot"
         style={{
-          paddingHorizontal: cardMargin,
+          paddingHorizontal: compactFeed ? cardMargin : 18,
           paddingVertical: compactFeed ? 14 : 18,
         }}
       >
@@ -584,9 +582,9 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
               <Text
                 style={[
                   font.display,
-                  { color: colors.text, fontSize: compactFeed ? 17 : 20, lineHeight: compactFeed ? 23 : 27, marginBottom: compactFeed ? 6 : 8 },
+                  { color: colors.text, fontSize: compactFeed ? 17 : 23, lineHeight: compactFeed ? 23 : 30, marginBottom: compactFeed ? 6 : 10 },
                 ]}
-                numberOfLines={compactFeed ? 2 : 3}
+                numberOfLines={compactFeed ? 2 : 4}
               >
                 {item.editorialTitle ?? item.prompt}
               </Text>
