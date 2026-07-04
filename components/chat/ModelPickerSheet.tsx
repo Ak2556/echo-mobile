@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Lightning, Sparkle, Star, Check } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
@@ -80,16 +81,17 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
         }}
       >
         <View style={{
-          borderRadius: 20,
+          borderRadius: 22,
           overflow: 'hidden',
-          backgroundColor: colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.border,
+          borderColor: colors.glassBorder,
           shadowColor: '#000',
           shadowOpacity: 0.4,
           shadowRadius: 28,
           shadowOffset: { width: 0, height: 14 },
         }}>
+          <BlurView intensity={60} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.62 }]} pointerEvents="none" />
           {/* Header */}
           <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 18, letterSpacing: -0.3 }]}>
