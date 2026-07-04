@@ -41,7 +41,7 @@ function SalonsScreenInner() {
         <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Salons</Text>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Salons</Text>
         <AnimatedPressable
           onPress={() => router.push('/create-salon')}
           style={{ padding: 4 }}

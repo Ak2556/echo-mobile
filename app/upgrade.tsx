@@ -47,7 +47,7 @@ export default function UpgradeScreen() {
         >
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }}>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, flex: 1 }}>
           Echo Tiers
         </Text>
       </View>
@@ -79,10 +79,10 @@ export default function UpgradeScreen() {
                   <Sparkle color={colors.accent} size={20} weight="fill" />
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{plan.name}</Text>
+                  <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{plan.name}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{plan.tagline}</Text>
                 </View>
-                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
+                <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold' }}>
                   {plan.price === 0 ? 'Invite' : `$${plan.price.toFixed(2)}`}
                 </Text>
               </View>
@@ -102,9 +102,9 @@ export default function UpgradeScreen() {
         </View>
 
         <View style={{ alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: colors.text, fontSize: 32, fontWeight: '800' }}>
+          <Text style={{ color: colors.text, fontSize: 34, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.6 }}>
             From ${PLANS.plus.price.toFixed(2)}
-            <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '500' }}>/month</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 16, fontFamily: 'Inter_500Medium' }}>/month</Text>
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 12 }}>Founder access is invite-only.</Text>
         </View>

@@ -65,7 +65,7 @@ export default function BookmarksScreen() {
         <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light" performanceMode="hot">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Bookmarks</Text>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Bookmarks</Text>
         <View className="flex-1" />
         <Pressable onPress={handleNewCollection} hitSlop={10}>
           <Plus color={colors.textSecondary} size={20} />

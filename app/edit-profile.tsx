@@ -147,7 +147,7 @@ export default function EditProfileScreen() {
         <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Edit Profile</Text>
+        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Edit Profile</Text>
         <AnimatedPressable
           onPress={() => { void handleSave(); }}
           disabled={saving}

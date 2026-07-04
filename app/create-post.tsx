@@ -536,7 +536,7 @@ export default function CreatePostScreen() {
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>New Echo</Text>
+          <Text style={{ color: colors.text, fontSize: 21, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>New Echo</Text>
           <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>Distill your take.</Text>
         </View>
         <AnimatedPressable
