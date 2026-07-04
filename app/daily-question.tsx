@@ -3,6 +3,7 @@ import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInUp, SlideInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Check, LockSimple, Sparkle, Lightning, Clock } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
@@ -162,27 +163,24 @@ function DailyQuestionScreenInner() {
             ) : undefined
           }
         >
-          {/* Prompt card */}
+          {/* Prompt card — same gradient canvas as the home entry point. */}
           <Animated.View
             entering={FadeInUp.delay(50).duration(220)}
-            style={{
-              backgroundColor: colors.surface,
-              borderRadius: radius.lg,
-              padding: 20,
-              borderWidth: 1,
-              borderColor: colors.accent + '33',
-              marginBottom: 16,
-            }}
+            style={{ borderRadius: 22, overflow: 'hidden', marginBottom: 16 }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-              <Sparkle color={colors.accent} size={14} weight="fill" />
-              <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 0.6 }}>
+            <LinearGradient
+              colors={['#E8834E', '#C94F1D']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ padding: 20 }}
+            >
+              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1.2, marginBottom: 10, fontFamily: 'Inter_600SemiBold' }}>
                 TODAY · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </Text>
-            </View>
-            <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700', lineHeight: 30 }}>
-              {question.question}
-            </Text>
+              <Text style={{ color: '#fff', fontSize: 24, lineHeight: 32, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
+                {question.question}
+              </Text>
+            </LinearGradient>
           </Animated.View>
 
           {/* Compose card */}
