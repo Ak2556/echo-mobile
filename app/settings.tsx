@@ -577,9 +577,11 @@ export default function SettingsScreen() {
 
   const sectionHeaderStyle = {
     color: colors.textMuted,
-    fontSize: fontSizes.caption,
-    fontWeight: '600' as const,
-    marginBottom: 8,
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase' as const,
+    marginBottom: 10,
     marginLeft: 4,
   };
 
@@ -631,13 +633,6 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
-        <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ padding: 16 }}>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, marginBottom: 8 }}>Account controls</Text>
-          <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
-            Review privacy, notifications, and accessibility before changing advanced preferences.
-          </Text>
-        </GlassPanel>
-
         <View style={sectionGridStyle}>
         {/* NOTIFICATIONS */}
         <Animated.View entering={animation(FadeInDown.delay(50).duration(220))} style={sectionStyle}>
