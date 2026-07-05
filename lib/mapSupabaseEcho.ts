@@ -110,11 +110,15 @@ export function mapEchoRowToFeedItem(
     authorMood: moodActive ? (author?.mood ?? null) : null,
     hashtags: extractHashtags(`${echo.prompt} ${echo.response}`),
     createdAt: echo.created_at,
-    // Prefer the stored post_type (so 'musing' survives the round-trip);
-    // fall back to inference from media for legacy rows written before the
-    // post_type column existed.
-    postType: (echo.post_type as FeedItem['postType'])
-      ?? (videoUri ? 'video' : mediaUris ? 'photo' : 'text'),
+    // Prefer the stored post_type for intentional variants (musing, poll),
+    // but a row claiming 'text' while carrying media is a legacy mis-write
+    // from clients that didn't set post_type on uploads — infer from the
+    // media so those posts don't render with their video/photo stripped.
+    postType: (() => {
+      const stored = echo.post_type as FeedItem['postType'] | null | undefined;
+      const inferred = videoUri ? 'video' as const : mediaUris ? 'photo' as const : 'text' as const;
+      return stored && stored !== 'text' ? stored : inferred;
+    })(),
     mediaUris: videoUri ? undefined : mediaUris,
     videoUri,
     quotedEchoId: echo.quoted_echo_id ?? undefined,
