@@ -86,7 +86,7 @@ function AppealCard({
 
       {/* Appeal reason */}
       <View style={{ padding: 10, backgroundColor: colors.accentMuted, borderRadius: 8, gap: 2 }}>
-        <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption }]}>User's appeal</Text>
+        <Text style={[font.bodySemibold, { color: colors.accent, fontSize: fontSizes.caption }]}>{"User's appeal"}</Text>
         <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.caption, lineHeight: 18 }]}>
           {appeal.appealReason}
         </Text>
