@@ -102,7 +102,7 @@ export default function PomodoroScreen() {
         <View style={{ position: 'absolute', width: RING - 16, height: RING - 16, borderRadius: (RING - 16) / 2, borderWidth: 4, borderColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
         <View style={{ position: 'absolute', width: RING - 16, height: RING - 16, borderRadius: (RING - 16) / 2, borderWidth: 4, borderColor: accent, borderRightColor: 'transparent', borderBottomColor: pct > 25 ? accent : 'transparent', borderLeftColor: pct > 50 ? accent : 'transparent', borderTopColor: pct > 75 ? 'transparent' : accent }} />
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: colors.text, fontSize: RING * 0.26, fontWeight: '200', letterSpacing: -4, lineHeight: RING * 0.28 }}>
+          <Text style={{ color: colors.text, fontSize: RING * 0.24, fontFamily: 'Fraunces_500Medium', letterSpacing: -2, lineHeight: RING * 0.28 }}>
             {mins}:{secs}
           </Text>
           <View style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: accent + '22', borderRadius: 20, borderWidth: 1, borderColor: accent + '44', marginTop: 8 }}>

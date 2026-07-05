@@ -129,7 +129,7 @@ export default function ExpensesApp() {
       {/* Balance card */}
       <GlassPanel variant="medium" borderRadius={28} contentStyle={{ padding: 24 }} style={{ marginBottom: 14, shadowColor: balance >= 0 ? '#10B981' : '#EF4444', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 4 } }} elevated>
         <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Balance</Text>
-        <Text style={{ color: balance >= 0 ? '#10B981' : '#EF4444', fontSize: 40, fontWeight: '900', letterSpacing: -1 }}>
+        <Text style={{ color: balance >= 0 ? '#10B981' : '#EF4444', fontSize: 40, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
           {balance < 0 ? '-' : ''}${formatMoney(Math.abs(balance))}
         </Text>
         <View style={{ flexDirection: 'row', marginTop: 20, gap: 12 }}>

@@ -125,7 +125,7 @@ export default function BmiScreen() {
           {/* BMI result */}
           <View style={{ backgroundColor: cat.color + '18', borderRadius: 28, borderWidth: 1.5, borderColor: cat.color + '44', padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: cat.color, shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 6 } }}>
             <Text style={{ color: cat.color, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>{cat.marker}</Text>
-            <Text style={{ color: cat.color, fontSize: 80, fontWeight: '200', letterSpacing: -5, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
+            <Text style={{ color: cat.color, fontSize: 76, fontFamily: 'Fraunces_500Medium', letterSpacing: -2, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
             <Text style={{ color: cat.color, fontSize: 22, fontWeight: '800', marginBottom: 4 }}>{cat.label}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 13 }}>BMI range: {cat.range}</Text>
           </View>

@@ -198,7 +198,7 @@ export default function VoiceMemoApp() {
         {/* Duration */}
         <Text style={{
           color: isRecording ? REC_COLOR : colors.textMuted,
-          fontSize: 38, fontWeight: '900', letterSpacing: -1,
+          fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1,
         }}>
           {formatMemoTime(recordDuration)}
         </Text>

@@ -43,7 +43,7 @@ function DieFace({ value, sides, color }: { value: number; sides: number; color:
   }
   return (
     <View style={{ width: 100, height: 100, borderRadius: 22, backgroundColor: color + '18', borderWidth: 2.5, borderColor: color + '55', alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color, fontSize: 36, fontWeight: '900', letterSpacing: -1 }}>{value}</Text>
+      <Text style={{ color, fontSize: 36, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>{value}</Text>
     </View>
   );
 }
@@ -154,7 +154,7 @@ export default function DiceApp() {
 
         {result !== null && (
           <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
-            <Text style={{ color: selectedDie.color, fontSize: 52, fontWeight: '900', letterSpacing: -2 }}>{result}</Text>
+            <Text style={{ color: selectedDie.color, fontSize: 52, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1.5 }}>{result}</Text>
             {diceCount > 1 && <Text style={{ color: colors.textMuted, fontSize: 14 }}>{diceCount}× {selectedDie.label} · total</Text>}
           </Animated.View>
         )}
