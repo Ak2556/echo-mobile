@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Pressable, PressableProps } from 'react-native';
+import { Pressable, PressableProps, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../store/useAppStore';
@@ -87,7 +87,11 @@ function LitePressable({
       accessibilityRole={accessibilityRole ?? 'button'}
       accessibilityLabel={inferredLabel}
       accessibilityState={disabled ? { disabled: true } : undefined}
-      style={({ pressed }) => [
+      // Flatten to a single object: function styles returning ARRAYS have
+      // dropped layout props (flexDirection/width/gap) in Release builds —
+      // see the ActionSheet regression note. A flat merged object survives.
+      style={({ pressed }) => StyleSheet.flatten([
+        typeof style === 'function' ? style({ pressed: false }) : style,
         {
           opacity: (disabled && dimWhenDisabled)
             ? 0.45
@@ -95,8 +99,7 @@ function LitePressable({
               ? (fadeOnPress ? 0.82 : 0.85)
               : 1,
         },
-        typeof style === 'function' ? style({ pressed: false }) : style,
-      ]}
+      ])}
       {...rest}
     >
       {children}
