@@ -277,9 +277,22 @@ export default function UserProfileScreen() {
       );
     }
     if (!remoteBundle.data) {
+      // Distinguish a fetch failure from a genuinely missing profile —
+      // showing "not found" for a network/RLS error sent us debugging the
+      // wrong thing entirely.
+      const errMessage = remoteBundle.error
+        ? (remoteBundle.error as Error).message || 'Something went wrong loading this profile.'
+        : null;
       return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} className="items-center justify-center">
-          <Text style={{ color: colors.textSecondary }}>User not found</Text>
+          <Text style={{ color: colors.textSecondary, textAlign: 'center', paddingHorizontal: 32 }}>
+            {errMessage ? `Couldn't load profile\n${errMessage}` : 'User not found'}
+          </Text>
+          {errMessage ? (
+            <AnimatedPressable onPress={() => remoteBundle.refetch()} className="mt-4" scaleValue={0.95} haptic="light">
+              <Text style={{ color: colors.accent }}>Retry</Text>
+            </AnimatedPressable>
+          ) : null}
           <AnimatedPressable onPress={() => router.back()} className="mt-4" scaleValue={0.95} haptic="light">
             <Text style={{ color: colors.accent }}>Go Back</Text>
           </AnimatedPressable>
