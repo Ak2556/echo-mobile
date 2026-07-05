@@ -449,8 +449,8 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontWeight: '800',
-                  letterSpacing: -0.5, marginBottom: 6,
+                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5,
+                  marginBottom: 6,
                 }}>
                   Welcome to Echo
                 </Text>
@@ -570,8 +570,8 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontWeight: '800',
-                  letterSpacing: -0.5, marginBottom: 6,
+                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5,
+                  marginBottom: 6,
                 }}>
                   Make it yours
                 </Text>
@@ -631,8 +631,8 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontWeight: '800',
-                  letterSpacing: -0.5, marginBottom: 6,
+                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5,
+                  marginBottom: 6,
                 }}>
                   Your story
                 </Text>
@@ -695,8 +695,8 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%' }}>
               <View style={{ paddingHorizontal: 24, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontWeight: '800',
-                  letterSpacing: -0.5, marginBottom: 6,
+                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5,
+                  marginBottom: 6,
                 }}>
                   What lights you up?
                 </Text>
@@ -775,7 +775,7 @@ export default function SignupWizard() {
                   <Brain color={ACCENT} size={22} weight="fill" />
                   <Text style={{ color: ACCENT, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>THINKING ARCHETYPE</Text>
                 </View>
-                <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: '#fff', fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 6 }}>
                   How do you think?
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
