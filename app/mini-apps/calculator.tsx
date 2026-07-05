@@ -54,7 +54,7 @@ function CalcBtn({ btn, accent, colors, onPress }: { btn: Btn; accent: string; c
           shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
         }, aStyle]}
       >
-        <Text style={{ color: textColor, fontSize: 30, fontWeight: '400', letterSpacing: -0.5 }}>
+        <Text style={{ color: textColor, fontSize: 30, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.5 }}>
           {btn.label}
         </Text>
       </Animated.View>

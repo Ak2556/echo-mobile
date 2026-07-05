@@ -90,7 +90,7 @@ export default function ConverterScreen() {
             value={input}
             onChangeText={setInput}
             keyboardType="decimal-pad"
-            style={{ color: colors.text, fontSize: 44, fontWeight: '200', letterSpacing: -1, marginBottom: 14 }}
+            style={{ color: colors.text, fontSize: 42, fontFamily: 'Fraunces_500Medium', letterSpacing: -1, marginBottom: 14 }}
             placeholderTextColor={colors.textMuted}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -128,7 +128,7 @@ export default function ConverterScreen() {
         {/* TO */}
         <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>TO</Text>
-          <Text style={{ color: accent, fontSize: 44, fontWeight: '200', letterSpacing: -1, marginBottom: 14 }} numberOfLines={1} adjustsFontSizeToFit>{result}</Text>
+          <Text style={{ color: accent, fontSize: 42, fontFamily: 'Fraunces_500Medium', letterSpacing: -1, marginBottom: 14 }} numberOfLines={1} adjustsFontSizeToFit>{result}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {cat.units.map((u, i) => (

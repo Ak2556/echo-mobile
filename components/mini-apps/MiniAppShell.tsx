@@ -120,10 +120,10 @@ export function MiniAppShell({
             <Text
               style={{
                 color: colors.text,
-                fontWeight: '800',
+                fontFamily: 'Fraunces_600SemiBold',
                 fontSize: 20,
-                letterSpacing: -0.5,
-                lineHeight: 24,
+                letterSpacing: -0.4,
+                lineHeight: 25,
               }}
             >
               {title}
