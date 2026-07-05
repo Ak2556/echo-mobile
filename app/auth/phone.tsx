@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Phone as PhoneIcon, ArrowClockwise, ShieldCheck } from 'phosphor-react-native';
+import { ArrowLeft, Phone as PhoneIcon, ArrowClockwise } from 'phosphor-react-native';
 import { refreshAuthSession, sendPhoneOtp, verifyPhoneOtp } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
@@ -155,14 +155,6 @@ export default function PhoneAuthScreen() {
 
           {step === 'enter-phone' ? (
             <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
-              <View style={{
-                width: 64, height: 64, borderRadius: 18,
-                backgroundColor: colors.accentMuted,
-                alignItems: 'center', justifyContent: 'center',
-                marginBottom: 22,
-              }}>
-                <PhoneIcon color={colors.accent} size={28} weight="duotone" />
-              </View>
 
               <Text style={[font.display, { color: colors.text, fontSize: 30, letterSpacing: -0.7, marginBottom: 10 }]}>
                 Sign in with phone
@@ -204,14 +196,6 @@ export default function PhoneAuthScreen() {
             </View>
           ) : (
             <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
-              <View style={{
-                width: 64, height: 64, borderRadius: 18,
-                backgroundColor: colors.accentMuted,
-                alignItems: 'center', justifyContent: 'center',
-                marginBottom: 22,
-              }}>
-                <ShieldCheck color={colors.accent} size={30} weight="duotone" />
-              </View>
 
               <Text style={[font.display, { color: colors.text, fontSize: 30, letterSpacing: -0.7, marginBottom: 10 }]}>
                 Enter the code
