@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, Dimensions, StyleSheet, Platform, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, ScrollView, Dimensions, StyleSheet, Platform, Pressable, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import Animated, { Extrapolation, FadeInDown, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Calculator, ArrowsLeftRight, Receipt, Timer,
   Key, Globe, BracketsCurly, FileText,
@@ -14,7 +15,6 @@ import { useTheme } from '../../lib/theme';
 import { getTodayProductivity, LocalProductivityApp, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
 import { formatMoney } from '../../lib/expenses';
 import { formatMemoTime } from '../../lib/voiceMemos';
-import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { EmptyState, Pill, SectionTitle } from '../../components/ui/Polish';
 import { MOTION } from '../../lib/motion';
 
@@ -93,102 +93,36 @@ function AppIcon({ id, color }: { id: string; color: string }) {
 }
 
 function AppCard({ app, index }: { app: MiniApp; index: number }) {
-  const { colors, reduceAnimations } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
-  const useBlur = Platform.OS === 'ios' && !reduceAnimations;
-  const tint = colors.isDark ? 'dark' : 'extraLight';
 
   return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index, 8) * 24).duration(220).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
       style={{ width: CARD }}
     >
-      <AnimatedPressable
-        onPress={() => router.push(app.route)}
-        depth="medium"
-        fadeOnPress
-        style={{
-          borderRadius: 24,
-          overflow: 'hidden',
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.glassBorder,
-          shadowColor: app.color,
-          shadowOpacity: 0.1,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 4,
-        }}
-      >
-        {/* Glass base */}
-        {useBlur && (
-          <BlurView
-            intensity={40}
-            tint={tint}
+      <Pressable onPress={() => router.push(app.route)}>
+        <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface }}>
+          <LinearGradient
+            colors={[`${app.color}26`, `${app.color}0A`, 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.9, y: 1 }}
             style={StyleSheet.absoluteFill}
+            pointerEvents="none"
           />
-        )}
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: useBlur
-                ? (colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.30)')
-                : colors.surface,
-            },
-          ]}
-        />
-
-        {/* Accent layer */}
-        <View
-          style={{
-            position: 'absolute',
-            top: -20,
-            right: -20,
-            width: 80,
-            height: 80,
-            borderRadius: 40,
-            backgroundColor: app.color + '18',
-          }}
-        />
-
-        {/* Content */}
-        <View style={{ padding: 18 }}>
-          <View
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 18,
-              backgroundColor: app.color + '20',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 14,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: app.color + '40',
-            }}
-          >
-            <AppIcon id={app.id} color={app.color} />
+          <View style={{ padding: 16 }}>
+            <View style={{ marginBottom: 14 }}>
+              <AppIcon id={app.id} color={app.color} />
+            </View>
+            <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold', marginBottom: 3 }} numberOfLines={1}>
+              {app.name}
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 16 }} numberOfLines={2}>
+              {app.description}
+            </Text>
           </View>
-
-          <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 3 }} numberOfLines={1}>
-            {app.name}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 16 }} numberOfLines={2}>
-            {app.description}
-          </Text>
-
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 14,
-              right: 14,
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: app.color + '66',
-            }}
-          />
         </View>
-      </AnimatedPressable>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -263,56 +197,56 @@ export default function AppsScreen() {
           <Animated.View entering={FadeInDown.delay(40).duration(220)} style={{ gap: 12, marginBottom: 8 }}>
             <SectionTitle title="Support Your Echoes" caption="Local tools that feed ideas back into chat and posts" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
-              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/habits')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: `${colors.success}18`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.success}44` }}>
-                <Text style={{ color: colors.success, fontWeight: '900', fontSize: 24 }}>{dashboard.habits.percent}%</Text>
-                <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Habits</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.habits.done}/{dashboard.habits.total} done</Text>
-              </AnimatedPressable>
-              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/expenses')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#8B5CF618', borderWidth: StyleSheet.hairlineWidth, borderColor: '#8B5CF644' }}>
-                <Text style={{ color: dashboard.expenses.balance >= 0 ? colors.success : colors.danger, fontWeight: '900', fontSize: 22 }}>${formatMoney(Math.abs(dashboard.expenses.balance))}</Text>
-                <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Weekly balance</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>${formatMoney(dashboard.expenses.expense)} spent</Text>
-              </AnimatedPressable>
-              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/notes')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: '#F59E0B18', borderWidth: StyleSheet.hairlineWidth, borderColor: '#F59E0B44' }}>
-                <Text style={{ color: '#F59E0B', fontWeight: '900', fontSize: 24 }}>{dashboard.notes.total}</Text>
-                <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Notes</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>{dashboard.notes.recent[0]?.title ?? 'No recent notes'}</Text>
-              </AnimatedPressable>
-              <AnimatedPressable depth="medium" fadeOnPress onPress={() => router.push('/mini-apps/voice-memo')} style={{ width: CARD, borderRadius: 18, padding: 14, backgroundColor: `${colors.danger}18`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.danger}44` }}>
-                <Text style={{ color: colors.danger, fontWeight: '900', fontSize: 24 }}>{dashboard.voiceMemos.total}</Text>
-                <Text style={{ color: colors.text, fontWeight: '700', marginTop: 4 }}>Voice memos</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dashboard.voiceMemos.recent[0] ? formatMemoTime(dashboard.voiceMemos.recent[0].duration) : 'No recordings'}</Text>
-              </AnimatedPressable>
+              {([
+                { route: '/mini-apps/habits' as Href, value: `${dashboard.habits.percent}%`, label: 'Habits', sub: `${dashboard.habits.done}/${dashboard.habits.total} done` },
+                { route: '/mini-apps/expenses' as Href, value: `$${formatMoney(Math.abs(dashboard.expenses.balance))}`, label: 'Weekly balance', sub: `$${formatMoney(dashboard.expenses.expense)} spent` },
+                { route: '/mini-apps/notes' as Href, value: `${dashboard.notes.total}`, label: 'Notes', sub: dashboard.notes.recent[0]?.title ?? 'No recent notes' },
+                { route: '/mini-apps/voice-memo' as Href, value: `${dashboard.voiceMemos.total}`, label: 'Voice memos', sub: dashboard.voiceMemos.recent[0] ? formatMemoTime(dashboard.voiceMemos.recent[0].duration) : 'No recordings' },
+              ]).map(stat => (
+                <Pressable key={stat.label} onPress={() => router.push(stat.route)}>
+                  <View style={{ width: CARD, borderRadius: 20, padding: 15, backgroundColor: colors.surface, overflow: 'hidden' }}>
+                    <LinearGradient
+                      colors={[`${colors.accent}24`, `${colors.accent}08`, 'transparent']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0.9, y: 1 }}
+                      style={StyleSheet.absoluteFill}
+                      pointerEvents="none"
+                    />
+                    <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>{stat.value}</Text>
+                    <Text style={{ color: colors.text, fontFamily: 'Inter_600SemiBold', fontSize: 13, marginTop: 5 }}>{stat.label}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>{stat.sub}</Text>
+                  </View>
+                </Pressable>
+              ))}
             </View>
-            <View style={{ gap: 8 }}>
-              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/habits')} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                <Text style={{ color: colors.text, fontWeight: '800' }}>Habits due today</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.habits.remaining.length ? dashboard.habits.remaining.join(', ') : 'All habits complete'}</Text>
-              </AnimatedPressable>
-              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/notes')} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                <Text style={{ color: colors.text, fontWeight: '800' }}>Recent notes</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.notes.recent.map(note => note.title).join(', ') || 'No recent notes'}</Text>
-              </AnimatedPressable>
-              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/expenses')} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                <Text style={{ color: colors.text, fontWeight: '800' }}>Biggest expense category</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }}>{dashboard.expenses.biggestCategory ? `${dashboard.expenses.biggestCategory.category} - $${formatMoney(dashboard.expenses.biggestCategory.amount)}` : 'No expenses this week'}</Text>
-              </AnimatedPressable>
-              <AnimatedPressable depth="soft" fadeOnPress onPress={() => router.push('/mini-apps/voice-memo')} style={{ borderRadius: 14, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                <Text style={{ color: colors.text, fontWeight: '800' }}>Latest voice memo</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{dashboard.voiceMemos.recent[0] ? `${dashboard.voiceMemos.recent[0].title} - ${formatMemoTime(dashboard.voiceMemos.recent[0].duration)}` : 'No recordings'}</Text>
-              </AnimatedPressable>
+            <View>
+              {([
+                { route: '/mini-apps/habits' as Href, title: 'Habits due today', sub: dashboard.habits.remaining.length ? dashboard.habits.remaining.join(', ') : 'All habits complete' },
+                { route: '/mini-apps/notes' as Href, title: 'Recent notes', sub: dashboard.notes.recent.map(note => note.title).join(', ') || 'No recent notes' },
+                { route: '/mini-apps/expenses' as Href, title: 'Biggest expense category', sub: dashboard.expenses.biggestCategory ? `${dashboard.expenses.biggestCategory.category} - $${formatMoney(dashboard.expenses.biggestCategory.amount)}` : 'No expenses this week' },
+                { route: '/mini-apps/voice-memo' as Href, title: 'Latest voice memo', sub: dashboard.voiceMemos.recent[0] ? `${dashboard.voiceMemos.recent[0].title} - ${formatMemoTime(dashboard.voiceMemos.recent[0].duration)}` : 'No recordings' },
+              ]).map((row, i, arr) => (
+                <Pressable key={row.title} onPress={() => router.push(row.route)}>
+                  <View style={{ paddingVertical: 12, borderBottomWidth: i < arr.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.border }}>
+                    <Text style={{ color: colors.text, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>{row.title}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>{row.sub}</Text>
+                  </View>
+                </Pressable>
+              ))}
             </View>
           </Animated.View>
         )}
 
         <Animated.View entering={FadeInDown.delay(55).duration(220)} style={{ gap: 10, marginBottom: 8 }}>
           <SectionTitle title="Works with Echo" caption="Use these tools to prepare posts, prompts, and updates" />
-          <View style={{ gap: 8 }}>
-            {ECHO_PAIRINGS.map(item => (
-              <AnimatedPressable key={item.title} depth="soft" fadeOnPress onPress={() => router.push(item.route)} style={{ borderRadius: 16, padding: 14, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                <Text style={{ color: colors.text, fontWeight: '800' }}>{item.title}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, lineHeight: 18 }}>{item.body}</Text>
-              </AnimatedPressable>
+          <View>
+            {ECHO_PAIRINGS.map((item, i) => (
+              <Pressable key={item.title} onPress={() => router.push(item.route)}>
+                <View style={{ paddingVertical: 12, borderBottomWidth: i < ECHO_PAIRINGS.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.border }}>
+                  <Text style={{ color: colors.text, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>{item.title}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3, lineHeight: 18 }}>{item.body}</Text>
+                </View>
+              </Pressable>
             ))}
           </View>
         </Animated.View>
@@ -323,7 +257,7 @@ export default function AppsScreen() {
             onChangeText={runLocalSearch}
             placeholder="Search notes, habits, expenses, memos..."
             placeholderTextColor={colors.textMuted}
-            style={{ color: colors.text, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
+            style={{ color: colors.text, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 13, backgroundColor: colors.surfaceHover, fontSize: 15 }}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {SEARCH_FILTERS.map(item => {
@@ -333,11 +267,13 @@ export default function AppsScreen() {
               );
             })}
           </ScrollView>
-          {filteredResults.map(result => (
-            <AnimatedPressable depth="soft" fadeOnPress key={`${result.app}-${result.id}`} onPress={() => router.push(result.route as Href)} style={{ borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
-              <Text style={{ color: colors.text, fontWeight: '700' }} numberOfLines={1}>{result.title}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{result.app} · {result.subtitle}</Text>
-            </AnimatedPressable>
+          {filteredResults.map((result, i) => (
+            <Pressable key={`${result.app}-${result.id}`} onPress={() => router.push(result.route as Href)}>
+              <View style={{ paddingVertical: 11, borderBottomWidth: i < filteredResults.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.border }}>
+                <Text style={{ color: colors.text, fontFamily: 'Inter_600SemiBold', fontSize: 14 }} numberOfLines={1}>{result.title}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{result.app} · {result.subtitle}</Text>
+              </View>
+            </Pressable>
           ))}
           {query.trim() && filteredResults.length === 0 ? <EmptyState title="No local matches" caption="Try a different note, habit, expense, or memo term." /> : null}
         </Animated.View>
@@ -383,10 +319,10 @@ export default function AppsScreen() {
         />
 
         <View style={{ paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
-          <Text style={{ color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.8 }}>
+          <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>
             Echo Tools
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 1 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>
             Utilities that help you think, capture, and post better
           </Text>
         </View>
