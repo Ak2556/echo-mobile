@@ -37,7 +37,7 @@ const MODELS: ModelMeta[] = [
     accent: '#A78BFA', // violet — premium
   },
   {
-    key: 'gemini-2.0-flash-lite',
+    key: 'gemini-2.5-flash-lite',
     name: 'Lite',
     tagline: 'Light replies, fewer compute hits',
     Icon: Sparkle,

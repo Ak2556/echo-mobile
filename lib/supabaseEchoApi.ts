@@ -1351,7 +1351,7 @@ export async function updateRemoteProfile(updates: {
   online_status?: boolean;
   read_receipts?: boolean;
   // content + AI prefs — synced across all devices
-  ai_model?: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.0-flash-lite';
+  ai_model?: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.5-flash-lite';
   sensitive_content_filter?: boolean;
   content_language?: string;
   stream_responses?: boolean;

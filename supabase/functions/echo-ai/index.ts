@@ -62,7 +62,7 @@ interface ORTool {
 const GOOGLE_AI_STUDIO_MODELS = new Set([
   "google/gemini-2.5-flash",
   "google/gemini-2.5-pro",
-  "google/gemini-2.0-flash-lite-001",
+  "google/gemini-2.5-flash-lite",
 ]);
 
 function resolveEchoAIModel(modelOverride?: string, planId: string = "free"): string {
