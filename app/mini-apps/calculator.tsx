@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
+import { useResponsiveLayout } from '../../lib/responsive';
 
-const { width } = Dimensions.get('window');
 const GAP = 10;
 const PAD = 16;
-const BTN = (width - PAD * 2 - GAP * 3) / 4;
 
 type BtnType = 'number' | 'op' | 'action' | 'equals';
 interface Btn { label: string; type: BtnType; wide?: boolean }
@@ -22,10 +21,10 @@ const ROWS: Btn[][] = [
 
 const SCI = ['sin', 'cos', 'tan', '√', 'x²', 'π'];
 
-function CalcBtn({ btn, accent, colors, onPress }: { btn: Btn; accent: string; colors: any; onPress: () => void }) {
+function CalcBtn({ btn, accent, colors, size, onPress }: { btn: Btn; accent: string; colors: any; size: number; onPress: () => void }) {
   const scale = useSharedValue(1);
   const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const w = btn.wide ? BTN * 2 + GAP : BTN;
+  const w = btn.wide ? size * 2 + GAP : size;
 
   const bgColor = btn.type === 'op' || btn.type === 'equals'
     ? accent
@@ -41,20 +40,20 @@ function CalcBtn({ btn, accent, colors, onPress }: { btn: Btn; accent: string; c
         scale.value = withSequence(withSpring(0.88, { damping: 10, stiffness: 500 }), withSpring(1, { damping: 12 }));
         onPress();
       }}
-      style={{ width: w, height: BTN }}
+      style={{ width: w, height: size }}
     >
       <Animated.View
         style={[{
-          width: '100%', height: '100%', borderRadius: BTN / 2,
+          width: '100%', height: '100%', borderRadius: size / 2,
           backgroundColor: bgColor, alignItems: btn.wide ? 'flex-start' : 'center',
-          justifyContent: 'center', paddingLeft: btn.wide ? BTN / 2 : 0,
+          justifyContent: 'center', paddingLeft: btn.wide ? size / 2 : 0,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: btn.type === 'op' || btn.type === 'equals' ? 'transparent' : colors.glassBorder,
           shadowColor: btn.type === 'op' || btn.type === 'equals' ? accent : 'transparent',
           shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
         }, aStyle]}
       >
-        <Text style={{ color: textColor, fontSize: 30, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.5 }}>
+        <Text style={{ color: textColor, fontSize: Math.max(22, Math.min(30, size * 0.45)), fontFamily: 'Fraunces_500Medium', letterSpacing: 0 }}>
           {btn.label}
         </Text>
       </Animated.View>
@@ -64,6 +63,7 @@ function CalcBtn({ btn, accent, colors, onPress }: { btn: Btn; accent: string; c
 
 export default function CalculatorScreen() {
   const { colors } = useTheme();
+  const layout = useResponsiveLayout();
   const accent = colors.accent;
 
   const [display, setDisplay] = useState('0');
@@ -105,10 +105,12 @@ export default function CalculatorScreen() {
   };
 
   const fontSize = display.length > 12 ? 36 : display.length > 8 ? 48 : 68;
+  const keypadWidth = Math.min(layout.contentWidth - layout.gutter * 2, 390);
+  const btnSize = Math.floor((keypadWidth - GAP * 3) / 4);
 
   return (
     <MiniAppShell title="Calculator" subtitle="Scientific & history" scrollable={false}>
-      <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: PAD, paddingBottom: 24 }}>
+      <View style={{ flex: 1, justifyContent: 'flex-end', width: keypadWidth + PAD * 2, maxWidth: '100%', alignSelf: 'center', paddingHorizontal: PAD, paddingBottom: 24 }}>
         {/* History */}
         {history.length > 0 && (
           <ScrollView style={{ maxHeight: 72 }} showsVerticalScrollIndicator={false}>
@@ -120,7 +122,7 @@ export default function CalculatorScreen() {
         {expression ? (
           <Text style={{ color: colors.textSecondary, fontSize: 22, textAlign: 'right', marginBottom: 4 }}>{expression}</Text>
         ) : null}
-        <Text style={{ color: colors.text, fontSize, fontWeight: '200', textAlign: 'right', letterSpacing: -2, marginBottom: 20 }} numberOfLines={1} adjustsFontSizeToFit>{display}</Text>
+        <Text style={{ color: colors.text, fontSize, fontWeight: '200', textAlign: 'right', letterSpacing: 0, marginBottom: 20 }} numberOfLines={1} adjustsFontSizeToFit>{display}</Text>
 
         {/* Scientific row */}
         <View style={{ flexDirection: 'row', gap: GAP, marginBottom: 16 }}>
@@ -143,7 +145,7 @@ export default function CalculatorScreen() {
         <View style={{ gap: GAP }}>
           {ROWS.map((row, ri) => (
             <View key={ri} style={{ flexDirection: 'row', gap: GAP }}>
-              {row.map(btn => <CalcBtn key={btn.label} btn={btn} accent={accent} colors={colors} onPress={() => handleBtn(btn.label)} />)}
+              {row.map(btn => <CalcBtn key={btn.label} btn={btn} size={btnSize} accent={accent} colors={colors} onPress={() => handleBtn(btn.label)} />)}
             </View>
           ))}
         </View>

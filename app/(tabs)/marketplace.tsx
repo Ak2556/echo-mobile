@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -24,11 +24,10 @@ import {
   ListingWithSeller,
 } from '../../lib/marketplaceApi';
 import { useTheme } from '../../lib/theme';
+import { useResponsiveLayout } from '../../lib/responsive';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_GAP = 10;
 const CARD_H_PADDING = 16;
-const CARD_WIDTH = (SCREEN_WIDTH - CARD_H_PADDING * 2 - CARD_GAP) / 2;
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -67,7 +66,7 @@ function CategoryPill({ label, active, onPress }: { label: string; active: boole
 }
 
 function ListingCard({ item, width }: { item: ListingWithSeller; width: number }) {
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius } = useTheme();
   const hasPhoto = item.photoUrls.length > 0;
 
   return (
@@ -157,6 +156,8 @@ function ListingCard({ item, width }: { item: ListingWithSeller; width: number }
 export default function MarketplaceScreen() {
   const insets = useSafeAreaInsets();
   const { colors, fontSizes, radius } = useTheme();
+  const layout = useResponsiveLayout();
+  const { width: windowWidth } = useWindowDimensions();
 
   const [listings, setListings] = useState<ListingWithSeller[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,7 +181,6 @@ export default function MarketplaceScreen() {
   }, []);
 
   useEffect(() => {
-    load(query, category);
     track('marketplace_viewed', { category });
   }, [category]);
 
@@ -188,27 +188,25 @@ export default function MarketplaceScreen() {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => load(query, category), 350);
     return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
-  }, [query]);
+  }, [category, load, query]);
 
-  // Build 2-column pairs
-  const pairs: [ListingWithSeller, ListingWithSeller | null][] = [];
-  for (let i = 0; i < listings.length; i += 2) {
-    pairs.push([listings[i], listings[i + 1] ?? null]);
-  }
+  const gridOuterWidth = Math.min(windowWidth, layout.isDesktop ? 980 : layout.wideMaxWidth);
+  const columns = layout.isDesktop ? 3 : layout.isTablet ? 3 : 2;
+  const gridWidth = gridOuterWidth - CARD_H_PADDING * 2;
+  const cardWidth = Math.floor((gridWidth - CARD_GAP * (columns - 1)) / columns);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Header */}
       <View style={{
         paddingTop: insets.top + 12,
-        paddingHorizontal: CARD_H_PADDING,
         paddingBottom: 12,
         backgroundColor: colors.bg,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
-        gap: 12,
       }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ width: '100%', maxWidth: gridOuterWidth, alignSelf: 'center', paddingHorizontal: CARD_H_PADDING, gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>
             Marketplace
           </Text>
@@ -276,6 +274,7 @@ export default function MarketplaceScreen() {
             />
           )}
         />
+        </View>
       </View>
 
       {/* Grid */}
@@ -285,9 +284,15 @@ export default function MarketplaceScreen() {
         </View>
       ) : (
         <FlatList
-          data={pairs}
-          keyExtractor={(_, i) => String(i)}
+          key={columns}
+          data={listings}
+          keyExtractor={item => item.id}
+          numColumns={columns}
+          columnWrapperStyle={columns > 1 ? { gap: CARD_GAP } : undefined}
           contentContainerStyle={{
+            width: '100%',
+            maxWidth: gridOuterWidth,
+            alignSelf: 'center',
             padding: CARD_H_PADDING,
             gap: CARD_GAP,
             paddingBottom: insets.bottom + 80,
@@ -316,14 +321,8 @@ export default function MarketplaceScreen() {
               </AnimatedPressable>
             </View>
           }
-          renderItem={({ item: [left, right] }) => (
-            <View style={{ flexDirection: 'row', gap: CARD_GAP }}>
-              <ListingCard item={left} width={CARD_WIDTH} />
-              {right
-                ? <ListingCard item={right} width={CARD_WIDTH} />
-                : <View style={{ width: CARD_WIDTH }} />
-              }
-            </View>
+          renderItem={({ item }) => (
+            <ListingCard item={item} width={cardWidth} />
           )}
         />
       )}

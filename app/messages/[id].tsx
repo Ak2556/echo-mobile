@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, KeyboardAvoidingView, Platform, FlatList,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, Linking,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ import {
   ArrowLeft, PaperPlaneTilt, Quotes, SealCheck,
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
-  Camera,
+  Camera, Plus, LinkSimple, UserCircle,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -26,6 +26,9 @@ import {
   useRemoteMessages,
   useSendRemoteDM,
   useSendImageDM,
+  useSendLinkDM,
+  useSendContactDM,
+  useSendEchoDM,
   useEditMessage,
   usePinMessage,
   useRemoteConversation,
@@ -37,6 +40,7 @@ import {
 import { markMessagesRead } from '../../lib/supabaseEchoApi';
 import type { RemoteMessageReaction } from '../../lib/supabaseEchoApi';
 import type { DirectMessage } from '../../types';
+import { userUrl } from '../../lib/echoUrl';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -59,16 +63,46 @@ interface NormalizedMessage {
   deletedAt: string | null;
   editedAt: string | null;
   kind: string;
+  sharedEchoId: string | null;
   sharedEchoTitle: string | null;
   sharedEchoPreview: string | null;
   sharedEchoAuthor: string | null;
   mediaUrl: string | null;
+  linkUrl: string | null;
+  linkTitle: string | null;
+  linkSubtitle: string | null;
+  contactUserId: string | null;
+  contactUsername: string | null;
+  contactDisplayName: string | null;
+  contactAvatarColor: string | null;
   replyToId: string | null;
   replyToContent: string | null;
   replyToSenderId: string | null;
   replyToKind: string | null;
   replyToDeleted: boolean;
   reactions: RemoteMessageReaction[];
+}
+
+function tryParsePayload(content: string | null): Record<string, unknown> | null {
+  if (!content) return null;
+  try {
+    const parsed = JSON.parse(content);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;
+  } catch {
+    return null;
+  }
+}
+
+function firstUrl(text: string): string | null {
+  return text.match(/https?:\/\/[^\s]+/i)?.[0] ?? null;
+}
+
+function urlHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -123,6 +157,63 @@ function EchoShareCard({ title, preview, author }: { title: string; preview: str
   );
 }
 
+function LinkShareCard({ url, title, subtitle }: { url: string; title?: string | null; subtitle?: string | null }) {
+  const { colors, radius } = useTheme();
+  return (
+    <View style={{
+      padding: 12, borderRadius: radius.card,
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      marginTop: 4, minWidth: 210,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+        <LinkSimple color={colors.accent} size={15} weight="bold" />
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13, flex: 1 }} numberOfLines={1}>
+          {title || urlHost(url)}
+        </Text>
+      </View>
+      <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 17 }} numberOfLines={2}>
+        {subtitle || urlHost(url)}
+      </Text>
+      <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 6 }} numberOfLines={1}>
+        {url}
+      </Text>
+    </View>
+  );
+}
+
+function ContactShareCard({
+  displayName, username, avatarColor,
+}: { displayName: string; username: string; avatarColor: string }) {
+  const { colors, radius } = useTheme();
+  return (
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', gap: 11,
+      padding: 12, borderRadius: radius.card,
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      marginTop: 4, minWidth: 220,
+    }}>
+      <View style={{
+        width: 42, height: 42, borderRadius: 21,
+        backgroundColor: avatarColor,
+        alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
+          {displayName.charAt(0).toUpperCase()}
+        </Text>
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }} numberOfLines={1}>
+          {displayName}
+        </Text>
+        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+          @{username}
+        </Text>
+      </View>
+      <UserCircle color={colors.accent} size={20} weight="bold" />
+    </View>
+  );
+}
+
 // ─── ReplyCard ────────────────────────────────────────────────────────────────
 
 function ReplyCard({
@@ -133,6 +224,8 @@ function ReplyCard({
     ? 'Deleted message'
     : kind === 'image' ? '📷 Photo'
     : kind === 'voice' ? '🎙️ Voice message'
+    : kind === 'link' ? '🔗 Link'
+    : kind === 'contact' ? '👤 Contact'
     : (content ?? '').slice(0, 80);
 
   return (
@@ -238,7 +331,15 @@ function PinnedMessageBanner({
   content, kind, onUnpin,
 }: { content: string | null; kind: string; onUnpin: () => void }) {
   const { colors } = useTheme();
-  const label = kind === 'image' ? '📷 Photo' : kind === 'voice' ? '🎙️ Voice' : (content ?? '');
+  const label = kind === 'image'
+    ? '📷 Photo'
+    : kind === 'voice'
+      ? '🎙️ Voice'
+      : kind === 'link'
+        ? '🔗 Link'
+        : kind === 'contact'
+          ? '👤 Contact'
+          : (content ?? '');
   return (
     <Animated.View
       entering={FadeIn.duration(180)}
@@ -276,6 +377,7 @@ function DMBubble({
   onReactionToggle: (val: string, hasReacted: boolean) => void;
   onReplyPress: (replyToId: string) => void;
 }) {
+  const router = useRouter();
   const fontSizeSetting = useAppStore(s => s.fontSize);
   const { colors, radius } = useTheme();
   const textSize = ({ small: 14, medium: 16, large: 18 } as Record<string, number>)[fontSizeSetting] ?? 16;
@@ -324,11 +426,49 @@ function DMBubble({
 
     if (message.kind === 'echo' && message.sharedEchoTitle) {
       return (
-        <Pressable onLongPress={onLongPress} delayLongPress={350}>
+        <Pressable
+          onPress={() => {
+            if (message.sharedEchoId) router.push(`/thread/${message.sharedEchoId}`);
+          }}
+          onLongPress={onLongPress}
+          delayLongPress={350}
+        >
           <EchoShareCard
             title={message.sharedEchoTitle}
             preview={message.sharedEchoPreview ?? ''}
             author={message.sharedEchoAuthor ?? undefined}
+          />
+        </Pressable>
+      );
+    }
+
+    if (message.kind === 'link' && message.linkUrl) {
+      return (
+        <Pressable
+          onPress={() => void Linking.openURL(message.linkUrl!)}
+          onLongPress={onLongPress}
+          delayLongPress={350}
+        >
+          <LinkShareCard
+            url={message.linkUrl}
+            title={message.linkTitle}
+            subtitle={message.linkSubtitle}
+          />
+        </Pressable>
+      );
+    }
+
+    if (message.kind === 'contact' && message.contactUsername && message.contactDisplayName) {
+      return (
+        <Pressable
+          onPress={() => router.push(`/user/${message.contactUserId || message.contactUsername}`)}
+          onLongPress={onLongPress}
+          delayLongPress={350}
+        >
+          <ContactShareCard
+            displayName={message.contactDisplayName}
+            username={message.contactUsername}
+            avatarColor={message.contactAvatarColor ?? colors.accent}
           />
         </Pressable>
       );
@@ -552,6 +692,9 @@ export default function DMScreen() {
 
   const {
     conversations, getDMs, sendDM, markConversationRead,
+    sendDMImage: sendLocalImage,
+    sendDMLink: sendLocalLink,
+    shareContactInDM,
     shareEchoInDM, userId,
   } = useAppStore();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
@@ -567,6 +710,7 @@ export default function DMScreen() {
   const [editingMessage, setEditingMessage] = useState<NormalizedMessage | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [imageUploading, setImageUploading] = useState(false);
+  const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
 
   const listRef = useRef<FlatList<any>>(null);
   const inputRef = useRef<RNTextInput>(null);
@@ -581,7 +725,7 @@ export default function DMScreen() {
     remote && !localConversation ? id : undefined,
   );
 
-  const conversation = localConversation ?? (remoteConvData
+  const conversation = useMemo(() => localConversation ?? (remoteConvData
     ? {
         id: remoteConvData.id,
         userId: remoteConvData.otherUserId,
@@ -593,7 +737,7 @@ export default function DMScreen() {
         lastMessageAt: remoteConvData.lastMessageAt ?? new Date().toISOString(),
         unreadCount: 0,
       }
-    : null);
+    : null), [localConversation, remoteConvData]);
 
   const pinnedMessage = remoteConvData?.pinnedMessage ?? null;
 
@@ -602,6 +746,9 @@ export default function DMScreen() {
   const remoteMessages = (remoteMessagePages?.pages ?? []).flat();
   const sendRemote = useSendRemoteDM(id, conversation?.userId);
   const sendImageDM = useSendImageDM(id, conversation?.userId);
+  const sendLinkDM = useSendLinkDM(id, conversation?.userId);
+  const sendContactDM = useSendContactDM(id, conversation?.userId);
+  const sendEchoDM = useSendEchoDM(id, conversation?.userId);
   const editMessage = useEditMessage(id);
   const pinMessage = usePinMessage(id);
   const { mutate: doMarkRead } = useMarkRead();
@@ -616,46 +763,72 @@ export default function DMScreen() {
   const localMessages = (id ? getDMs(id) : []) as DirectMessage[];
 
   const messages: NormalizedMessage[] = remote
-    ? remoteMessages.map(m => ({
-        id: m.id,
-        senderId: m.senderId,
-        content: m.content,
-        createdAt: m.createdAt,
-        isRead: !!m.readAt,
-        deletedAt: m.deletedAt,
-        editedAt: m.editedAt,
-        kind: m.kind,
-        sharedEchoTitle: m.kind === 'echo' ? (m.content ?? 'Shared Echo') : null,
-        sharedEchoPreview: null,
-        sharedEchoAuthor: null,
-        mediaUrl: m.mediaUrl,
-        replyToId: m.replyToId,
-        replyToContent: m.replyToContent,
-        replyToSenderId: m.replyToSenderId,
-        replyToKind: m.replyToKind,
-        replyToDeleted: m.replyToDeleted,
-        reactions: m.reactions,
-      }))
-    : localMessages.map(m => ({
-        id: m.id,
-        senderId: m.senderId,
-        content: m.content,
-        createdAt: m.createdAt,
-        isRead: m.isRead,
-        deletedAt: null,
-        editedAt: null,
-        kind: m.sharedEchoTitle ? 'echo' : 'text',
-        sharedEchoTitle: m.sharedEchoTitle ?? null,
-        sharedEchoPreview: m.sharedEchoPreview ?? null,
-        sharedEchoAuthor: m.sharedEchoAuthor ?? null,
-        mediaUrl: null,
-        replyToId: null,
-        replyToContent: null,
-        replyToSenderId: null,
-        replyToKind: null,
-        replyToDeleted: false,
-        reactions: [],
-      }));
+    ? remoteMessages.map(m => {
+        const payload = tryParsePayload(m.content);
+        const contact = payload?.type === 'contact' ? payload : null;
+        const url = (payload?.url as string | undefined) ?? (m.kind === 'link' && !contact ? firstUrl(m.content ?? '') : null);
+        return {
+          id: m.id,
+          senderId: m.senderId,
+          content: payload ? null : m.content,
+          createdAt: m.createdAt,
+          isRead: !!m.readAt,
+          deletedAt: m.deletedAt,
+          editedAt: m.editedAt,
+          kind: contact ? 'contact' : m.kind,
+          sharedEchoId: m.sharedEchoId,
+          sharedEchoTitle: m.kind === 'echo'
+            ? ((payload?.title as string | undefined) ?? (m.content ?? 'Shared Echo'))
+            : null,
+          sharedEchoPreview: m.kind === 'echo' ? ((payload?.preview as string | undefined) ?? null) : null,
+          sharedEchoAuthor: m.kind === 'echo' ? ((payload?.author as string | undefined) ?? null) : null,
+          mediaUrl: m.mediaUrl,
+          linkUrl: url,
+          linkTitle: (payload?.title as string | undefined) ?? (url ? urlHost(url) : null),
+          linkSubtitle: (payload?.subtitle as string | undefined) ?? null,
+          contactUserId: contact ? ((contact.userId as string | undefined) ?? null) : null,
+          contactUsername: contact ? ((contact.username as string | undefined) ?? null) : null,
+          contactDisplayName: contact ? ((contact.displayName as string | undefined) ?? null) : null,
+          contactAvatarColor: contact ? ((contact.avatarColor as string | undefined) ?? null) : null,
+          replyToId: m.replyToId,
+          replyToContent: m.replyToContent,
+          replyToSenderId: m.replyToSenderId,
+          replyToKind: m.replyToKind,
+          replyToDeleted: m.replyToDeleted,
+          reactions: m.reactions,
+        };
+      })
+    : localMessages.map(m => {
+        const url = m.linkUrl ?? (m.kind === 'link' ? firstUrl(m.content) : null);
+        return {
+          id: m.id,
+          senderId: m.senderId,
+          content: m.kind === 'image' || m.kind === 'link' || m.kind === 'contact' ? null : m.content,
+          createdAt: m.createdAt,
+          isRead: m.isRead,
+          deletedAt: null,
+          editedAt: null,
+          kind: m.kind ?? (m.sharedEchoTitle ? 'echo' : 'text'),
+          sharedEchoId: m.sharedEchoId ?? null,
+          sharedEchoTitle: m.sharedEchoTitle ?? null,
+          sharedEchoPreview: m.sharedEchoPreview ?? null,
+          sharedEchoAuthor: m.sharedEchoAuthor ?? null,
+          mediaUrl: m.mediaUrl ?? null,
+          linkUrl: url,
+          linkTitle: m.linkTitle ?? (url ? urlHost(url) : null),
+          linkSubtitle: m.linkSubtitle ?? null,
+          contactUserId: m.contactUserId ?? null,
+          contactUsername: m.contactUsername ?? null,
+          contactDisplayName: m.contactDisplayName ?? null,
+          contactAvatarColor: m.contactAvatarColor ?? null,
+          replyToId: null,
+          replyToContent: null,
+          replyToSenderId: null,
+          replyToKind: null,
+          replyToDeleted: false,
+          reactions: [],
+        };
+      });
 
   const online = conversation ? isUserOnline(conversation.userId) : false;
 
@@ -693,9 +866,14 @@ export default function DMScreen() {
       setSharedPending(false);
       return;
     }
-    const echoPreviewText = echoPreview ? `\n${echoPreview}` : '';
-    sendRemote.mutate({
-      content: `Shared Echo: "${String(echoTitle)}"${echoPreviewText}${echoAuthor ? `\n${echoAuthor}` : ''}`,
+    sendEchoDM.mutate({
+      echo: {
+        id: String(echoId),
+        title: String(echoTitle),
+        preview: echoPreview ? String(echoPreview) : undefined,
+        author: echoAuthor ? String(echoAuthor) : undefined,
+      },
+      intro: `Thought you'd like this Echo from ${echoAuthor ?? conversation.displayName}.`,
     }, {
       onError: () => Alert.alert('Error', 'Failed to share Echo. Please try again.'),
     });
@@ -726,8 +904,21 @@ export default function DMScreen() {
 
     const replyToId = replyingTo?.id;
     setReplyingTo(null);
+    const link = firstUrl(content);
 
-    if (remote) {
+    if (link && content === link) {
+      const title = urlHost(link);
+      if (remote) {
+        sendLinkDM.mutate({ url: link, title, replyToId }, {
+          onError: () => {
+            setText(content);
+            Alert.alert('Error', 'Link failed to send. Please try again.');
+          },
+        });
+      } else {
+        sendLocalLink(id, link, title);
+      }
+    } else if (remote) {
       sendRemote.mutate({ content, replyToId }, {
         onError: () => {
           setText(content);
@@ -738,7 +929,7 @@ export default function DMScreen() {
       sendDM(id, content);
     }
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
-  }, [text, id, hapticEnabled, remote, sendRemote, sendDM, editingMessage, editMessage, replyingTo]);
+  }, [text, id, hapticEnabled, remote, sendRemote, sendDM, editingMessage, editMessage, replyingTo, sendLinkDM, sendLocalLink]);
 
   const handlePickImage = useCallback(async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -749,24 +940,78 @@ export default function DMScreen() {
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
+    setAttachmentMenuOpen(false);
     setImageUploading(true);
     try {
-      sendImageDM.mutate({
-        uri: asset.uri,
-        mimeType: asset.mimeType ?? 'image/jpeg',
-        replyToId: replyingTo?.id,
-      }, {
-        onSettled: () => {
-          setImageUploading(false);
-          setReplyingTo(null);
-          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
-        },
-        onError: () => Alert.alert('Error', 'Failed to send image. Please try again.'),
-      });
+      if (remote) {
+        sendImageDM.mutate({
+          uri: asset.uri,
+          mimeType: asset.mimeType ?? 'image/jpeg',
+          replyToId: replyingTo?.id,
+        }, {
+          onSettled: () => {
+            setImageUploading(false);
+            setReplyingTo(null);
+            setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+          },
+          onError: () => Alert.alert('Error', 'Failed to send image. Please try again.'),
+        });
+      } else if (id) {
+        sendLocalImage(id, asset.uri);
+        setImageUploading(false);
+        setReplyingTo(null);
+        setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+      }
     } catch {
       setImageUploading(false);
     }
-  }, [sendImageDM, replyingTo]);
+  }, [sendImageDM, replyingTo, remote, id, sendLocalImage]);
+
+  const handleShareContact = useCallback(() => {
+    if (!id || !conversation) return;
+    setAttachmentMenuOpen(false);
+    const contact = {
+      userId: conversation.userId,
+      username: conversation.username,
+      displayName: conversation.displayName,
+      avatarColor: conversation.avatarColor,
+    };
+    const replyToId = replyingTo?.id;
+    setReplyingTo(null);
+    if (remote) {
+      sendContactDM.mutate({ contact, replyToId }, {
+        onError: () => Alert.alert('Error', 'Contact failed to send. Please try again.'),
+      });
+    } else {
+      shareContactInDM(id, conversation);
+    }
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+  }, [id, conversation, replyingTo, remote, sendContactDM, shareContactInDM]);
+
+  const handleSendLinkFromComposer = useCallback(() => {
+    const link = firstUrl(text.trim());
+    if (!id || !link) {
+      Alert.alert('Paste a link first', 'Paste a URL in the message box, then tap Link.');
+      return;
+    }
+    setAttachmentMenuOpen(false);
+    setText('');
+    setQuickAction(null);
+    const replyToId = replyingTo?.id;
+    setReplyingTo(null);
+    const title = urlHost(link);
+    if (remote) {
+      sendLinkDM.mutate({ url: link, title, replyToId }, {
+        onError: () => {
+          setText(link);
+          Alert.alert('Error', 'Link failed to send. Please try again.');
+        },
+      });
+    } else {
+      sendLocalLink(id, link, title, userUrl(conversation?.username ?? ''));
+    }
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+  }, [text, id, replyingTo, remote, sendLinkDM, sendLocalLink, conversation?.username]);
 
   const handleLongPress = useCallback((message: NormalizedMessage) => {
     if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -1063,6 +1308,54 @@ export default function DMScreen() {
           </View>
         )}
 
+        {!editingMessage && attachmentMenuOpen && (
+          <Animated.View
+            entering={FadeIn.duration(140)}
+            exiting={FadeOut.duration(100)}
+            style={{
+              paddingHorizontal: 12,
+              paddingTop: 8,
+            }}
+          >
+            <View style={{
+              flexDirection: 'row',
+              gap: 8,
+              padding: 8,
+              borderRadius: radius.card,
+              backgroundColor: colors.surface,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+            }}>
+              {[
+                { key: 'image', label: 'Image', icon: <Camera color={colors.accent} size={17} weight="bold" />, onPress: handlePickImage },
+                { key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={17} weight="bold" />, onPress: handleShareContact },
+                { key: 'link', label: 'Link', icon: <LinkSimple color={colors.accent} size={17} weight="bold" />, onPress: handleSendLinkFromComposer },
+              ].map(action => (
+                <Pressable
+                  key={action.key}
+                  onPress={action.onPress}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: 42,
+                    borderRadius: radius.card - 4,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: 6,
+                    backgroundColor: colors.inputBg,
+                    opacity: pressed ? 0.65 : 1,
+                  })}
+                >
+                  {action.icon}
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }} numberOfLines={1}>
+                    {action.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </Animated.View>
+        )}
+
         {/* Input bar */}
         <View style={{
           flexDirection: 'row', alignItems: 'flex-end',
@@ -1073,7 +1366,7 @@ export default function DMScreen() {
           {/* Image picker */}
           {!editingMessage && (
             <Pressable
-              onPress={handlePickImage}
+              onPress={() => setAttachmentMenuOpen(open => !open)}
               disabled={imageUploading}
               style={{
                 width: 40, height: 40, borderRadius: 20,
@@ -1084,7 +1377,7 @@ export default function DMScreen() {
             >
               {imageUploading
                 ? <ActivityIndicator size="small" color={colors.accent} />
-                : <Camera color={colors.textSecondary} size={18} weight="regular" />
+                : <Plus color={colors.textSecondary} size={19} weight={attachmentMenuOpen ? 'fill' : 'regular'} />
               }
             </Pressable>
           )}

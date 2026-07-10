@@ -14,7 +14,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
-import { streamEchoAI, EchoAIModel, isRateLimitError } from '../../lib/api';
+import { streamEchoAI, isRateLimitError } from '../../lib/api';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { generateSessionTitle } from '../../lib/aiTitle';
@@ -38,7 +38,7 @@ const DM_COLOR = '#0ea5e9';
 
 // ─── DMConversationCard ───────────────────────────────────────────────────────
 function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: () => void }) {
-  const { colors, fontSizes } = useTheme();
+  const { colors, fontSizes, isUserOnline } = useTheme();
   function ago(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const m = Math.floor(diff / 60000);
@@ -49,19 +49,26 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
     return `${Math.floor(h / 24)}d`;
   }
   const hasUnread = conv.unreadCount > 0;
+  const online = isUserOnline(conv.userId);
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => ({
-        flexDirection: 'row', alignItems: 'center',
-        paddingHorizontal: 20, paddingVertical: 14,
-        borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        borderRadius: 14,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.border,
+        backgroundColor: colors.isDark ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.025)',
         opacity: pressed ? 0.7 : 1,
       })}
     >
-      <View style={{ position: 'relative', marginRight: 14 }}>
+      <View style={{ position: 'relative', marginRight: 12 }}>
         <View style={{
-          width: 46, height: 46, borderRadius: 23,
+          width: 48, height: 48, borderRadius: 24,
           backgroundColor: conv.avatarColor,
           alignItems: 'center', justifyContent: 'center',
         }}>
@@ -69,6 +76,14 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
             {conv.displayName.charAt(0).toUpperCase()}
           </Text>
         </View>
+        {online && (
+          <View style={{
+            position: 'absolute', bottom: 0, right: 1,
+            width: 14, height: 14, borderRadius: 7,
+            backgroundColor: colors.success,
+            borderWidth: 2, borderColor: colors.bg,
+          }} />
+        )}
         {hasUnread && (
           <View style={{
             position: 'absolute', top: -2, right: -4,
@@ -83,15 +98,21 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
           </View>
         )}
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 }}>
           <Text style={{
+            flexShrink: 1,
             color: colors.text, fontWeight: hasUnread ? '700' : '600',
             fontSize: fontSizes.body,
           }} numberOfLines={1}>
             {conv.displayName}
           </Text>
           {conv.isVerified && <SealCheck color={DM_COLOR} size={13} weight="fill" />}
+          {online && (
+            <Text style={{ color: colors.success, fontSize: fontSizes.caption }} numberOfLines={1}>
+              online
+            </Text>
+          )}
         </View>
         <Text style={{
           color: hasUnread ? colors.textSecondary : colors.textMuted,
@@ -100,7 +121,7 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
           {conv.lastMessage || `@${conv.username}`}
         </Text>
       </View>
-      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 10 }}>
+      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 10, flexShrink: 0 }}>
         {ago(conv.lastMessageAt)}
       </Text>
     </Pressable>
@@ -111,6 +132,7 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
 function DMInboxView({ topPad }: { topPad: number }) {
   const router = useRouter();
   const { colors, fontSizes } = useTheme();
+  const layout = useResponsiveLayout();
   const remote = isSupabaseRemote();
   const localConversations = useAppStore(s => s.conversations);
   const { data: remoteConvs = [], isLoading } = useRemoteConversations();
@@ -135,8 +157,19 @@ function DMInboxView({ topPad }: { topPad: number }) {
 
   if (remote && isLoading) {
     return (
-      <View style={{ flex: 1, paddingTop: topPad }}>
-        <FeedCardSkeleton /><FeedCardSkeleton /><FeedCardSkeleton />
+      <View
+        style={{
+          flex: 1,
+          paddingTop: topPad + 12,
+          paddingHorizontal: layout.gutter,
+          width: '100%',
+          maxWidth: layout.contentMaxWidth,
+          alignSelf: 'center',
+        }}
+      >
+        <FeedCardSkeleton />
+        <FeedCardSkeleton />
+        <FeedCardSkeleton />
       </View>
     );
   }
@@ -146,7 +179,15 @@ function DMInboxView({ topPad }: { topPad: number }) {
       <FlatList
         data={sorted}
         keyExtractor={c => c.id}
-        contentContainerStyle={{ paddingTop: topPad }}
+        contentContainerStyle={{
+          paddingTop: topPad + 12,
+          paddingBottom: layout.bottomChromePadding + 16,
+          paddingHorizontal: layout.gutter,
+          width: '100%',
+          maxWidth: layout.contentMaxWidth,
+          alignSelf: 'center',
+          gap: 10,
+        }}
         ListEmptyComponent={
           <View style={{ paddingTop: 60, alignItems: 'center', gap: 8 }}>
             <Envelope color={colors.textMuted} size={36} weight="thin" />

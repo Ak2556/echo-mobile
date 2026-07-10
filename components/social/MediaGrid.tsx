@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import {
-  View, Modal, Pressable, Dimensions, Text, StyleSheet,
+  View, Modal, Pressable, Text, StyleSheet, useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { X, MagnifyingGlassPlus, CaretLeft, CaretRight } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
-
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 interface MediaGridProps {
   uris: string[];
@@ -14,6 +12,7 @@ interface MediaGridProps {
 
 export function MediaGrid({ uris }: MediaGridProps) {
   const { radius } = useTheme();
+  const { width, height } = useWindowDimensions();
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const count = uris.length;
@@ -109,7 +108,7 @@ export function MediaGrid({ uris }: MediaGridProps) {
           {/* Image */}
           <Image
             source={{ uri: uris[currentIdx] }}
-            style={{ width: SCREEN_W, height: SCREEN_H * 0.75 }}
+            style={{ width, height: height * 0.75 }}
             contentFit="contain"
             cachePolicy="memory-disk"
           />

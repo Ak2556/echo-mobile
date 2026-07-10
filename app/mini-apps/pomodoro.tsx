@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Play, Pause, ArrowCounterClockwise } from 'phosphor-react-native';
 import { useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { useTheme } from '../../lib/theme';
+import { useResponsiveLayout } from '../../lib/responsive';
 
 type Mode = 'focus' | 'short' | 'long';
 
@@ -14,11 +15,9 @@ const MODES = [
   { id: 'long' as Mode, label: 'Long Break', marker: 'LB', minutes: 15, color: '#3B82F6' },
 ];
 
-const { width } = Dimensions.get('window');
-const RING = Math.min(width - 80, 260);
-
 export default function PomodoroScreen() {
   const { colors } = useTheme();
+  const layout = useResponsiveLayout();
 
   const [mode, setMode] = useState<Mode>('focus');
   const [seconds, setSeconds] = useState(25 * 60);
@@ -72,6 +71,7 @@ export default function PomodoroScreen() {
   const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
   const secs = String(seconds % 60).padStart(2, '0');
   const pct = Math.round(((totalSecs - seconds) / totalSecs) * 100);
+  const ring = Math.max(220, Math.min(layout.contentWidth - layout.gutter * 2, 260));
 
   const CycleCounter = (
     <View style={{ backgroundColor: accent + '22', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: accent + '44' }}>
@@ -97,12 +97,12 @@ export default function PomodoroScreen() {
       </GlassPanel>
 
       {/* Ring */}
-      <View style={{ width: RING, height: RING, alignItems: 'center', justifyContent: 'center', marginBottom: 32, alignSelf: 'center' }}>
-        <View style={{ position: 'absolute', width: RING, height: RING, borderRadius: RING / 2, borderWidth: 16, borderColor: accent + '18' }} />
-        <View style={{ position: 'absolute', width: RING - 16, height: RING - 16, borderRadius: (RING - 16) / 2, borderWidth: 4, borderColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
-        <View style={{ position: 'absolute', width: RING - 16, height: RING - 16, borderRadius: (RING - 16) / 2, borderWidth: 4, borderColor: accent, borderRightColor: 'transparent', borderBottomColor: pct > 25 ? accent : 'transparent', borderLeftColor: pct > 50 ? accent : 'transparent', borderTopColor: pct > 75 ? 'transparent' : accent }} />
+      <View style={{ width: ring, height: ring, alignItems: 'center', justifyContent: 'center', marginBottom: 32, alignSelf: 'center' }}>
+        <View style={{ position: 'absolute', width: ring, height: ring, borderRadius: ring / 2, borderWidth: 16, borderColor: accent + '18' }} />
+        <View style={{ position: 'absolute', width: ring - 16, height: ring - 16, borderRadius: (ring - 16) / 2, borderWidth: 4, borderColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+        <View style={{ position: 'absolute', width: ring - 16, height: ring - 16, borderRadius: (ring - 16) / 2, borderWidth: 4, borderColor: accent, borderRightColor: 'transparent', borderBottomColor: pct > 25 ? accent : 'transparent', borderLeftColor: pct > 50 ? accent : 'transparent', borderTopColor: pct > 75 ? 'transparent' : accent }} />
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: colors.text, fontSize: RING * 0.24, fontFamily: 'Fraunces_500Medium', letterSpacing: -2, lineHeight: RING * 0.28 }}>
+          <Text style={{ color: colors.text, fontSize: ring * 0.24, fontFamily: 'Fraunces_500Medium', letterSpacing: 0, lineHeight: ring * 0.28 }}>
             {mins}:{secs}
           </Text>
           <View style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: accent + '22', borderRadius: 20, borderWidth: 1, borderColor: accent + '44', marginTop: 8 }}>
@@ -138,7 +138,7 @@ export default function PomodoroScreen() {
       </View>
 
       {/* Stats */}
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
+      <View style={{ flexDirection: layout.isPhone ? 'column' : 'row', gap: 12, marginBottom: 14 }}>
         {[
           { label: 'Session', value: modeData.minutes + 'm' },
           { label: 'Remaining', value: `${mins}m ${secs}s` },

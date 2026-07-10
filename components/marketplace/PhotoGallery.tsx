@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import {
-  Dimensions,
   Modal,
   Pressable,
   ScrollView,
@@ -176,7 +175,8 @@ function FullscreenViewer({
 }
 
 export function PhotoGallery({ urls, compact }: PhotoGalleryProps) {
-  const { colors, radius } = useTheme();
+  const { radius } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   if (!urls || urls.length === 0) return null;
@@ -218,8 +218,7 @@ export function PhotoGallery({ urls, compact }: PhotoGalleryProps) {
   }
 
   // Full-width layout for detail view
-  const { width: screenWidth } = Dimensions.get('window');
-  const mainHeight = Math.round(screenWidth * 0.75);
+  const mainHeight = Math.round(Math.min(screenWidth, 760) * 0.75);
 
   return (
     <>

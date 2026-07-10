@@ -19,9 +19,8 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
 import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin } from 'phosphor-react-native';
-import { PerspectiveType } from '../../types';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { FeedItem, Poll } from '../../types';
+import { FeedItem, PerspectiveType, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -135,7 +134,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const remote = isSupabaseRemote();
   const remoteBm = useToggleRemoteBookmark();
   const remoteRp = useToggleRemoteRepost();
-  const { colors, radius, fontSizes, lineHeights, font, reduceAnimations, showAvatars } = useTheme();
+  const { colors, radius, fontSizes, font, reduceAnimations, showAvatars } = useTheme();
   const performance = usePerformanceProfile('hot');
   const layout = useResponsiveLayout();
   const { isBookmarked, toggleBookmark, isReposted, toggleRepost,
@@ -692,4 +691,3 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     </Animated.View>
   );
 }
-

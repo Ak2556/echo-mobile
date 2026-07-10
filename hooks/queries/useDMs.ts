@@ -8,6 +8,9 @@ import {
   fetchRemoteMessages,
   fetchConversationById,
   sendRemoteDM,
+  sendRemoteDMLink,
+  sendRemoteDMContact,
+  sendRemoteDMEcho,
   sendDMImage,
   editRemoteMessage,
   pinDMMessage,
@@ -197,6 +200,19 @@ export function useSendRemoteDM(
   });
 }
 
+function appendOptimisticMessage(
+  qc: ReturnType<typeof useQueryClient>,
+  conversationId: string | undefined,
+  optimistic: RemoteDirectMessage,
+) {
+  qc.setQueryData<InfiniteData<RemoteDirectMessage[]>>(
+    ['messages', conversationId],
+    old => old
+      ? { ...old, pages: old.pages.map((p, i) => i === 0 ? [...p, optimistic] : p) }
+      : old,
+  );
+}
+
 // Send image
 /** Upload a photo and send it as an image-kind DM with optimistic placeholder. */
 export function useSendImageDM(
@@ -241,6 +257,151 @@ export function useSendImageDM(
           ? { ...old, pages: old.pages.map((p, i) => i === 0 ? [...p, optimistic] : p) }
           : old,
       );
+      return { snapshot };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.snapshot !== undefined) qc.setQueryData(['messages', conversationId], ctx.snapshot);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export function useSendLinkDM(
+  conversationId: string | undefined,
+  recipientId: string | undefined,
+) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ url, title, subtitle, replyToId }: { url: string; title?: string; subtitle?: string; replyToId?: string }) => {
+      if (!recipientId) throw new Error('No recipient');
+      return sendRemoteDMLink(recipientId, url, title, subtitle, replyToId);
+    },
+    onMutate: async ({ url, title, subtitle, replyToId }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId] });
+      const snapshot = qc.getQueryData(['messages', conversationId]);
+      const uid = await getSessionUserId();
+      appendOptimisticMessage(qc, conversationId, {
+        id: `pending-link-${Date.now()}`,
+        conversationId: conversationId ?? '',
+        senderId: uid ?? 'me',
+        content: JSON.stringify({ url, title: title ?? url, subtitle }),
+        kind: 'link',
+        createdAt: new Date().toISOString(),
+        readAt: null,
+        deletedAt: null,
+        editedAt: null,
+        sharedEchoId: null,
+        mediaUrl: null,
+        replyToId: replyToId ?? null,
+        replyToContent: null,
+        replyToSenderId: null,
+        replyToKind: null,
+        replyToDeleted: false,
+        reactions: [],
+      });
+      return { snapshot };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.snapshot !== undefined) qc.setQueryData(['messages', conversationId], ctx.snapshot);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export function useSendContactDM(
+  conversationId: string | undefined,
+  recipientId: string | undefined,
+) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ contact, replyToId }: {
+      contact: { userId: string; username: string; displayName: string; avatarColor: string };
+      replyToId?: string;
+    }) => {
+      if (!recipientId) throw new Error('No recipient');
+      return sendRemoteDMContact(recipientId, contact, replyToId);
+    },
+    onMutate: async ({ contact, replyToId }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId] });
+      const snapshot = qc.getQueryData(['messages', conversationId]);
+      const uid = await getSessionUserId();
+      appendOptimisticMessage(qc, conversationId, {
+        id: `pending-contact-${Date.now()}`,
+        conversationId: conversationId ?? '',
+        senderId: uid ?? 'me',
+        content: JSON.stringify({ type: 'contact', ...contact }),
+        kind: 'link',
+        createdAt: new Date().toISOString(),
+        readAt: null,
+        deletedAt: null,
+        editedAt: null,
+        sharedEchoId: null,
+        mediaUrl: null,
+        replyToId: replyToId ?? null,
+        replyToContent: null,
+        replyToSenderId: null,
+        replyToKind: null,
+        replyToDeleted: false,
+        reactions: [],
+      });
+      return { snapshot };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.snapshot !== undefined) qc.setQueryData(['messages', conversationId], ctx.snapshot);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export function useSendEchoDM(
+  conversationId: string | undefined,
+  recipientId: string | undefined,
+) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ echo, intro, replyToId }: {
+      echo: { id: string; title: string; preview?: string; author?: string };
+      intro?: string;
+      replyToId?: string;
+    }) => {
+      if (!recipientId) throw new Error('No recipient');
+      return sendRemoteDMEcho(recipientId, echo, intro, replyToId);
+    },
+    onMutate: async ({ echo, intro, replyToId }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId] });
+      const snapshot = qc.getQueryData(['messages', conversationId]);
+      const uid = await getSessionUserId();
+      appendOptimisticMessage(qc, conversationId, {
+        id: `pending-echo-${Date.now()}`,
+        conversationId: conversationId ?? '',
+        senderId: uid ?? 'me',
+        content: JSON.stringify({ title: echo.title, preview: echo.preview, author: echo.author, intro }),
+        kind: 'echo',
+        createdAt: new Date().toISOString(),
+        readAt: null,
+        deletedAt: null,
+        editedAt: null,
+        sharedEchoId: echo.id,
+        mediaUrl: null,
+        replyToId: replyToId ?? null,
+        replyToContent: null,
+        replyToSenderId: null,
+        replyToKind: null,
+        replyToDeleted: false,
+        reactions: [],
+      });
       return { snapshot };
     },
     onError: (_, __, ctx) => {

@@ -4,7 +4,7 @@ The single source of truth for taking Echo from "runs locally" to "live on the
 App Store." Work top to bottom. Anything marked **BLOCKER** must be resolved
 before submission; **Caution** marks items that are easy to miss.
 
-> Project facts: Supabase project `xmjbhcyyqrjlvhluisfj` (echo-mobile), EAS
+> Project facts: Supabase project `eyokhisijabitzjiydmz`, EAS
 > project `a743cf66-7ec4-4ff0-ad2a-4088398b5654`, bundle id `com.ak2556.echo`.
 > Migrations and functions go through the **Supabase CLI `--linked`**, never the
 > MCP server (it points at a different project). See `memory` / deploy-workflow.
@@ -26,7 +26,7 @@ before submission; **Caution** marks items that are easy to miss.
 ### 1a. Push the database schema
 
 ```bash
-supabase link --project-ref xmjbhcyyqrjlvhluisfj   # one-time
+supabase link --project-ref eyokhisijabitzjiydmz   # one-time
 supabase db push --linked
 supabase migration list --linked                   # Remote column should fill in
 ```
@@ -120,7 +120,7 @@ the production build picks them up (they end up in the JS bundle — only put
 **publishable** keys here, never the service-role key):
 
 ```bash
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL      --value https://xmjbhcyyqrjlvhluisfj.supabase.co
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL      --value https://eyokhisijabitzjiydmz.supabase.co
 eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value <anon-publishable-key>
 eas secret:create --scope project --name EXPO_PUBLIC_API_URL           --value <api-url-if-used>
 eas secret:create --scope project --name EXPO_PUBLIC_POSTHOG_KEY       --value <posthog-project-key>
@@ -129,8 +129,13 @@ eas secret:create --scope project --name EXPO_PUBLIC_SENTRY_DSN        --value <
 eas secret:create --scope project --name SENTRY_ORG                    --value <sentry-org>
 eas secret:create --scope project --name SENTRY_PROJECT                --value <sentry-project>
 eas secret:create --scope project --name SENTRY_AUTH_TOKEN             --value <sentry-auth-token>
-# Optional / blocked on domain:
+# Public launch domain + support contacts:
 eas secret:create --scope project --name EXPO_PUBLIC_WEB_BASE_URL      --value https://<your-domain>
+eas secret:create --scope project --name EXPO_PUBLIC_SUPPORT_EMAIL      --value support@<your-domain>
+eas secret:create --scope project --name EXPO_PUBLIC_DSA_EMAIL          --value dsa@<your-domain>
+# App Review demo account:
+eas secret:create --scope project --name EXPO_PUBLIC_DEMO_EMAIL         --value reviewer-demo@<your-domain>
+eas secret:create --scope project --name EXPO_PUBLIC_DEMO_PASSWORD      --value <demo-password>
 ```
 
 - [ ] `eas secret:list` shows them all.
@@ -168,11 +173,12 @@ eas submit --profile production --platform ios --latest
 - [ ] Privacy nutrition labels: copy from `app-store-listing.md -> Privacy
       nutrition label`. Remember to declare **Audio Data** (microphone).
 - [ ] BLOCKER: **Privacy Policy URL** + **Support URL** must be live (see section 5).
-- [ ] Caution: **Reviewer access (OTP auth).** Echo is passwordless (email magic-link /
-      SMS code). There is no password to hand App Review. Provide one of:
-      a test email whose inbox the reviewer can reach, a test phone number, or a
-      reviewer-only static-OTP bypass. Put details in App Review notes. Without
-      this, review can get stuck at the login screen.
+- [ ] Caution: **Reviewer access.** Echo is passwordless for normal users, but
+      the review build can expose an "App Review · Open demo account" button
+      when `EXPO_PUBLIC_DEMO_EMAIL` + `EXPO_PUBLIC_DEMO_PASSWORD` are set.
+      Create that no-real-data Supabase password user before the production
+      build and put the same details in App Review notes. Without this, review
+      can get stuck at the login screen.
 
 ---
 

@@ -2439,6 +2439,22 @@ export interface RemoteDirectMessage {
   reactions: RemoteMessageReaction[];
 }
 
+function dmPreviewText(kind: string | null | undefined, text: string | null | undefined): string | null {
+  if (kind === 'image') return 'Photo';
+  if (kind === 'voice') return 'Voice message';
+  if (kind === 'echo') return 'Shared Echo';
+  if (kind === 'link') {
+    try {
+      const parsed = JSON.parse(text ?? '{}') as Record<string, unknown>;
+      if (parsed.type === 'contact') return `Contact: ${String(parsed.displayName ?? parsed.username ?? 'Profile')}`;
+      return String(parsed.title ?? parsed.url ?? 'Link');
+    } catch {
+      return text ?? 'Link';
+    }
+  }
+  return text ?? null;
+}
+
 /** Upsert a dm_conversation row and return its UUID. Does NOT send a message. */
 export async function getOrCreateRemoteConversation(recipientId: string): Promise<string> {
   const uid = await getSessionUserId();
@@ -2483,6 +2499,106 @@ export async function sendRemoteDM(
       sender_id: uid,
       kind: 'text',
       text: content,
+      ...(replyToId ? { reply_to_id: replyToId } : {}),
+    });
+  if (msgErr) throw msgErr;
+
+  return { conversationId: conv.id };
+}
+
+export async function sendRemoteDMLink(
+  recipientId: string,
+  url: string,
+  title?: string,
+  subtitle?: string,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const userA = uid < recipientId ? uid : recipientId;
+  const userB = uid < recipientId ? recipientId : uid;
+
+  const { data: conv, error: convErr } = await supabase
+    .from('dm_conversations')
+    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
+    .select('id')
+    .single();
+  if (convErr) throw convErr;
+
+  const { error: msgErr } = await supabase
+    .from('direct_messages')
+    .insert({
+      conversation_id: conv.id,
+      sender_id: uid,
+      kind: 'link',
+      text: JSON.stringify({ url, title: title ?? url, subtitle }),
+      ...(replyToId ? { reply_to_id: replyToId } : {}),
+    });
+  if (msgErr) throw msgErr;
+
+  return { conversationId: conv.id };
+}
+
+export async function sendRemoteDMContact(
+  recipientId: string,
+  contact: { userId: string; username: string; displayName: string; avatarColor: string },
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const userA = uid < recipientId ? uid : recipientId;
+  const userB = uid < recipientId ? recipientId : uid;
+
+  const { data: conv, error: convErr } = await supabase
+    .from('dm_conversations')
+    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
+    .select('id')
+    .single();
+  if (convErr) throw convErr;
+
+  const { error: msgErr } = await supabase
+    .from('direct_messages')
+    .insert({
+      conversation_id: conv.id,
+      sender_id: uid,
+      kind: 'link',
+      text: JSON.stringify({ type: 'contact', ...contact }),
+      ...(replyToId ? { reply_to_id: replyToId } : {}),
+    });
+  if (msgErr) throw msgErr;
+
+  return { conversationId: conv.id };
+}
+
+export async function sendRemoteDMEcho(
+  recipientId: string,
+  echo: { id: string; title: string; preview?: string; author?: string },
+  intro?: string,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const userA = uid < recipientId ? uid : recipientId;
+  const userB = uid < recipientId ? recipientId : uid;
+
+  const { data: conv, error: convErr } = await supabase
+    .from('dm_conversations')
+    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
+    .select('id')
+    .single();
+  if (convErr) throw convErr;
+
+  const { error: msgErr } = await supabase
+    .from('direct_messages')
+    .insert({
+      conversation_id: conv.id,
+      sender_id: uid,
+      kind: 'echo',
+      shared_echo_id: echo.id,
+      text: JSON.stringify({ title: echo.title, preview: echo.preview, author: echo.author, intro }),
       ...(replyToId ? { reply_to_id: replyToId } : {}),
     });
   if (msgErr) throw msgErr;
@@ -2588,7 +2704,7 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
     otherUsername: (r.other_username as string | null) ?? 'unknown',
     otherDisplayName: (r.other_display_name as string | null) ?? (r.other_username as string | null) ?? 'User',
     otherAvatarColor: (r.other_avatar_color as string | null) ?? '#6366F1',
-    lastMessage: (r.last_message_text as string | null) ?? null,
+    lastMessage: dmPreviewText(r.last_message_kind as string | null, r.last_message_text as string | null),
     lastMessageAt: (r.last_message_at as string | null) ?? null,
     lastMessageKind: (r.last_message_kind as string | null) ?? 'text',
     unreadCount: Number(r.unread_count ?? 0),
@@ -2627,7 +2743,7 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
     otherUsername: (profile?.username as string | null) ?? 'unknown',
     otherDisplayName: (profile?.display_name as string | null) ?? (profile?.username as string | null) ?? 'User',
     otherAvatarColor: (profile?.avatar_color as string | null) ?? '#6366F1',
-    lastMessage: (conv.last_message_text as string | null) ?? null,
+    lastMessage: dmPreviewText(conv.last_message_kind as string | null, conv.last_message_text as string | null),
     lastMessageAt: (conv.last_message_at as string | null) ?? null,
     lastMessageKind: (conv.last_message_kind as string | null) ?? 'text',
     unreadCount: 0,

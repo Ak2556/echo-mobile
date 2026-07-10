@@ -8,6 +8,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { useResponsiveLayout } from '../../lib/responsive';
 
 interface MiniAppShellProps {
   title: string;
@@ -34,10 +35,17 @@ export function MiniAppShell({
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const layout = useResponsiveLayout();
 
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
   const HEADER_H = insets.top + 62;
+  const contentStyle = {
+    width: '100%' as const,
+    maxWidth: layout.isDesktop ? 760 : layout.contentMaxWidth,
+    alignSelf: 'center' as const,
+    paddingHorizontal: scrollPadding,
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -55,16 +63,18 @@ export function MiniAppShell({
         <ScrollView
           contentContainerStyle={{
             paddingTop: HEADER_H + 8,
-            paddingHorizontal: scrollPadding,
-            paddingBottom: bottomPad,
+            paddingHorizontal: 0,
+            paddingBottom: Math.max(bottomPad, layout.bottomChromePadding),
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {children}
+          <View style={contentStyle}>{children}</View>
         </ScrollView>
       ) : (
-        <View style={{ flex: 1, paddingTop: HEADER_H }}>{children}</View>
+        <View style={{ flex: 1, paddingTop: HEADER_H }}>
+          <View style={[contentStyle, { flex: 1 }]}>{children}</View>
+        </View>
       )}
 
       {/* Glass header */}
@@ -97,6 +107,9 @@ export function MiniAppShell({
             alignItems: 'center',
             paddingHorizontal: 16,
             paddingBottom: 8,
+            width: '100%',
+            maxWidth: layout.isDesktop ? 760 : layout.contentMaxWidth,
+            alignSelf: 'center',
           }}
         >
           <Pressable

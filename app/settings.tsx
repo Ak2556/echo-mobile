@@ -27,6 +27,10 @@ import { isSupabaseRemote } from '../lib/remoteConfig';
 import { setPersonaEnabled } from '../lib/persona';
 import { track } from '../lib/analytics';
 import { isSafeExternalUrl } from '../lib/urlSafety';
+import { publicWebUrl } from '../lib/echoUrl';
+
+const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@echo.app';
+const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@echo.app';
 
 function openTrustedExternalUrl(url: string): void {
   if (!isSafeExternalUrl(url)) return;
@@ -602,7 +606,7 @@ export default function SettingsScreen() {
     ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 20 }
     : undefined;
   const sectionStyle = layout.isDesktop
-    ? { width: '48.8%' as const, minWidth: 420, flexGrow: 1 }
+    ? { flexBasis: 420, flexGrow: 1, flexShrink: 1 }
     : undefined;
   const scrollContentStyle = {
     width: '100%' as const,
@@ -822,9 +826,9 @@ export default function SettingsScreen() {
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Warning} label="My Reports" subtitle="Track the outcome of content reports you've filed" onPress={() => router.push('/my-reports')} />
             {divider}
-            <SettingsRow theme={theme} icon={Globe} label="DSA Contact" subtitle="Contact us for DSA-related matters" onPress={() => openTrustedExternalUrl('mailto:dsa@echo.app')} />
+            <SettingsRow theme={theme} icon={Globe} label="DSA Contact" subtitle="Contact us for DSA-related matters" onPress={() => openTrustedExternalUrl(`mailto:${DSA_EMAIL}`)} />
             {divider}
-            <SettingsRow theme={theme} icon={ListChecks} label="EU Legal Representative" onPress={() => openTrustedExternalUrl('https://echo.app/legal/eu-rep')} />
+            <SettingsRow theme={theme} icon={ListChecks} label="EU Legal Representative" onPress={() => openTrustedExternalUrl(publicWebUrl('/legal/eu-rep'))} />
           </GlassPanel>
         </Animated.View>
 
@@ -832,11 +836,11 @@ export default function SettingsScreen() {
         <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>About</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => openTrustedExternalUrl('https://echo.app/privacy')} />
+            <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => openTrustedExternalUrl(publicWebUrl('/privacy'))} />
             {divider}
-            <SettingsRow theme={theme} icon={FileText} label="Terms of Service" onPress={() => openTrustedExternalUrl('https://echo.app/terms')} />
+            <SettingsRow theme={theme} icon={FileText} label="Terms of Service" onPress={() => openTrustedExternalUrl(publicWebUrl('/terms'))} />
             {divider}
-            <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => openTrustedExternalUrl('mailto:support@echo.app')} />
+            <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
             {divider}
             <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.0.0</Text>} />
           </GlassPanel>

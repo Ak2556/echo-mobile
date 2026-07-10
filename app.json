@@ -44,6 +44,16 @@
               "scheme": "https",
               "host": "echo.app",
               "pathPrefix": "/e"
+            },
+            {
+              "scheme": "https",
+              "host": "echo.app",
+              "pathPrefix": "/u"
+            },
+            {
+              "scheme": "https",
+              "host": "echo.app",
+              "pathPrefix": "/c"
             }
           ],
           "category": [

@@ -80,9 +80,10 @@ function MosaicTile({
 
 export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: PostsGridProps) {
   const { colors } = useTheme();
-  const gridWidth = containerWidth ?? 0;
-  const usable = gridWidth - GRID_HORIZONTAL_INSET * 2;
-  const tileWidth = Math.floor((usable - GRID_GAP) / 2);
+  const gridWidth = Math.max(containerWidth ?? 360, 280);
+  const usable = Math.max(gridWidth - GRID_HORIZONTAL_INSET * 2, 240);
+  const columns = usable >= 620 ? 3 : 2;
+  const tileWidth = Math.floor((usable - GRID_GAP * (columns - 1)) / columns);
 
   if (echoes.length === 0) {
     return (
@@ -118,7 +119,7 @@ export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: 
             onPress={() => onPressEcho(item)}
             tint={item.avatarColor || avatarColor}
             width={tileWidth}
-            height={idx % 3 === 0 ? 220 : 170}
+            height={columns === 3 ? (idx % 3 === 0 ? 190 : 150) : (idx % 3 === 0 ? 220 : 170)}
           />
         ))}
       </View>
