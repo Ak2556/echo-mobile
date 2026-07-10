@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, Dimensions, StyleSheet, Platform, Pressable, TextInput, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Platform, Pressable, TextInput, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import Animated, { Extrapolation, FadeInDown, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -17,11 +17,10 @@ import { formatMoney } from '../../lib/expenses';
 import { formatMemoTime } from '../../lib/voiceMemos';
 import { EmptyState, Pill, SectionTitle } from '../../components/ui/Polish';
 import { MOTION } from '../../lib/motion';
+import { useResponsiveLayout } from '../../lib/responsive';
 
-const { width } = Dimensions.get('window');
 const PAD = 20;
 const GAP = 12;
-const CARD = (width - PAD * 2 - GAP) / 2;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 type SearchFilter = 'all' | LocalProductivityApp;
 type EchoPairing = { title: string; body: string; route: Href };
@@ -92,14 +91,14 @@ function AppIcon({ id, color }: { id: string; color: string }) {
   }
 }
 
-function AppCard({ app, index }: { app: MiniApp; index: number }) {
+function AppCard({ app, index, width }: { app: MiniApp; index: number; width: number }) {
   const { colors } = useTheme();
   const router = useRouter();
 
   return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index, 8) * 24).duration(220).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
-      style={{ width: CARD }}
+      style={{ width }}
     >
       <Pressable onPress={() => router.push(app.route)}>
         <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface }}>
@@ -131,6 +130,8 @@ export default function AppsScreen() {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const layout = useResponsiveLayout();
+  const { width: windowWidth } = useWindowDimensions();
   const [dashboard, setDashboard] = useState<TodayProductivity | null>(null);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<LocalSearchResult[]>([]);
@@ -140,6 +141,9 @@ export default function AppsScreen() {
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
   const HEADER_HEIGHT = insets.top + 70;
+  const contentMaxWidth = Math.min(windowWidth, layout.isDesktop ? 980 : layout.wideMaxWidth);
+  const columns = layout.isDesktop ? 3 : layout.isTablet ? 3 : 2;
+  const cardWidth = Math.floor((contentMaxWidth - PAD * 2 - GAP * (columns - 1)) / columns);
   const scrollY = useSharedValue(0);
   const blurIntensity = useSharedValue(0);
   const overlayOpacity = useSharedValue(useBlur ? 0.28 : 0.97);
@@ -165,7 +169,7 @@ export default function AppsScreen() {
   }, [scrollY]);
 
   const rows: MiniApp[][] = [];
-  for (let i = 0; i < APPS.length; i += 2) rows.push(APPS.slice(i, i + 2));
+  for (let i = 0; i < APPS.length; i += columns) rows.push(APPS.slice(i, i + columns));
 
   useFocusEffect(
     useCallback(() => {
@@ -188,7 +192,7 @@ export default function AppsScreen() {
       {/* Ambient gradient */}
 
       <ScrollView
-        contentContainerStyle={{ paddingTop: HEADER_HEIGHT, padding: PAD, gap: GAP }}
+        contentContainerStyle={{ width: '100%', maxWidth: contentMaxWidth, alignSelf: 'center', paddingTop: HEADER_HEIGHT, padding: PAD, gap: GAP }}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
@@ -204,7 +208,7 @@ export default function AppsScreen() {
                 { route: '/mini-apps/voice-memo' as Href, value: `${dashboard.voiceMemos.total}`, label: 'Voice memos', sub: dashboard.voiceMemos.recent[0] ? formatMemoTime(dashboard.voiceMemos.recent[0].duration) : 'No recordings' },
               ]).map(stat => (
                 <Pressable key={stat.label} onPress={() => router.push(stat.route)}>
-                  <View style={{ width: CARD, borderRadius: 20, padding: 15, backgroundColor: colors.surface, overflow: 'hidden' }}>
+                  <View style={{ width: cardWidth, borderRadius: 20, padding: 15, backgroundColor: colors.surface, overflow: 'hidden' }}>
                     <LinearGradient
                       colors={[`${colors.accent}24`, `${colors.accent}08`, 'transparent']}
                       start={{ x: 0, y: 0 }}
@@ -280,8 +284,8 @@ export default function AppsScreen() {
 
         {rows.map((row, ri) => (
           <View key={ri} style={{ flexDirection: 'row', gap: GAP }}>
-            {row.map((app, ci) => <AppCard key={app.id} app={app} index={ri * 2 + ci} />)}
-            {row.length === 1 && <View style={{ width: CARD }} />}
+            {row.map((app, ci) => <AppCard key={app.id} app={app} width={cardWidth} index={ri * columns + ci} />)}
+            {Array.from({ length: columns - row.length }).map((_, i) => <View key={`spacer-${i}`} style={{ width: cardWidth }} />)}
           </View>
         ))}
         <View style={{ alignItems: 'center', paddingVertical: 20, gap: 6 }}>
@@ -318,7 +322,7 @@ export default function AppsScreen() {
           ]}
         />
 
-        <View style={{ paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
+        <View style={{ width: '100%', maxWidth: contentMaxWidth, alignSelf: 'center', paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
           <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>
             Echo Tools
           </Text>

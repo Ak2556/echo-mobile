@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Camera, CheckCircle, Plus, Trash } from 'phosphor-react-native';
+import { ArrowLeft, Camera, CheckCircle, Trash } from 'phosphor-react-native';
 import { useTheme } from '../lib/theme';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
@@ -47,7 +47,7 @@ function PickerSheet<T extends string>({
   onClose: () => void;
   renderOption?: (v: T) => string;
 }) {
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, fontSizes } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (

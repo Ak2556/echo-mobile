@@ -141,20 +141,21 @@ We **do not** track users across other apps. We **do not** show third-party ads.
 
 ## Reviewer Notes (visible only to App Review)
 
-> **SET UP BEFORE SUBMISSION.** Echo is passwordless (one-time codes), so you
-> must give App Review a way in. In Supabase → Auth → set a **test OTP**: map a
-> reviewer phone/email to a fixed code that bypasses real SMS/email delivery.
-> Then fill the real values into the block below. Without this, review gets
-> stuck at the login screen.
+> **SET UP BEFORE SUBMISSION.** Echo is passwordless for normal users, so you
+> must give App Review a deterministic way in. Create a no-real-data Supabase
+> password user, set `EXPO_PUBLIC_DEMO_EMAIL` and
+> `EXPO_PUBLIC_DEMO_PASSWORD` as EAS secrets before the review build, then fill
+> the same values into the block below. The login screen will show
+> "App Review · Open demo account" only when those secrets are present.
 
 ```
-DEMO ACCOUNT (passwordless — Echo uses one-time codes, not passwords)
-Sign-in is via a one-time code sent to email or SMS. We've provisioned a
-reviewer account with a fixed test code so you can sign in without our inbox:
-  Phone/Email: reviewer@echo.app
-  One-time code: 000000
-If the code does not work, email support@echo.app and we will relay the live
-code within minutes during review hours.
+DEMO ACCOUNT
+Tap "App Review · Open demo account" on the login screen. This signs into a
+pre-created, no-real-data reviewer account:
+  Email: reviewer-demo@<your-domain>
+  Password: <demo-password>
+If the demo button is unavailable or sign-in fails, email support@<your-domain>
+and we will respond during review hours.
 
 NOTES FOR REVIEWER
 

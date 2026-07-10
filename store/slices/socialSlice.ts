@@ -62,6 +62,9 @@ export interface SocialSlice {
   conversations: Conversation[];
   messagesByConversation: Record<string, DirectMessage[]>;
   sendDM: (conversationId: string, content: string) => void;
+  sendDMImage: (conversationId: string, uri: string) => void;
+  sendDMLink: (conversationId: string, url: string, title?: string, subtitle?: string) => void;
+  shareContactInDM: (conversationId: string, user: User | Conversation, intro?: string) => void;
   shareEchoInDM: (conversationId: string, echo: FeedItem, intro?: string) => void;
   markConversationRead: (conversationId: string) => void;
   getOrCreateConversation: (user: User) => string;
@@ -262,6 +265,7 @@ export function createSocialSlice(
         id: Date.now().toString(),
         senderId: 'me',
         content,
+        kind: 'text',
         isRead: true,
         createdAt: new Date().toISOString(),
       };
@@ -275,12 +279,83 @@ export function createSocialSlice(
       persistSet('conversations', conversations);
       set({ messagesByConversation: updatedMsgs, conversations });
     },
+    sendDMImage: (conversationId, uri) => {
+      const msg: DirectMessage = {
+        id: Date.now().toString(),
+        senderId: 'me',
+        content: '',
+        kind: 'image',
+        mediaUrl: uri,
+        isRead: true,
+        createdAt: new Date().toISOString(),
+      };
+      const prev = get().messagesByConversation;
+      const msgs = [...(prev[conversationId] || []), msg];
+      const updatedMsgs = { ...prev, [conversationId]: msgs };
+      const conversations = get().conversations.map(c =>
+        c.id === conversationId ? { ...c, lastMessage: 'Photo', lastMessageAt: msg.createdAt } : c
+      );
+      persistSet('messagesByConversation', updatedMsgs);
+      persistSet('conversations', conversations);
+      set({ messagesByConversation: updatedMsgs, conversations });
+    },
+    sendDMLink: (conversationId, url, title, subtitle) => {
+      const cleanUrl = url.trim();
+      const msg: DirectMessage = {
+        id: Date.now().toString(),
+        senderId: 'me',
+        content: cleanUrl,
+        kind: 'link',
+        linkUrl: cleanUrl,
+        linkTitle: title ?? cleanUrl,
+        linkSubtitle: subtitle,
+        isRead: true,
+        createdAt: new Date().toISOString(),
+      };
+      const prev = get().messagesByConversation;
+      const msgs = [...(prev[conversationId] || []), msg];
+      const updatedMsgs = { ...prev, [conversationId]: msgs };
+      const conversations = get().conversations.map(c =>
+        c.id === conversationId ? { ...c, lastMessage: title ?? cleanUrl, lastMessageAt: msg.createdAt } : c
+      );
+      persistSet('messagesByConversation', updatedMsgs);
+      persistSet('conversations', conversations);
+      set({ messagesByConversation: updatedMsgs, conversations });
+    },
+    shareContactInDM: (conversationId, user, intro) => {
+      const username = user.username;
+      const displayName = user.displayName;
+      const msg: DirectMessage = {
+        id: Date.now().toString(),
+        senderId: 'me',
+        content: intro?.trim() || `Contact: ${displayName}`,
+        kind: 'contact',
+        contactUserId: 'userId' in user ? user.userId : user.id,
+        contactUsername: username,
+        contactDisplayName: displayName,
+        contactAvatarColor: user.avatarColor,
+        linkTitle: displayName,
+        linkSubtitle: `@${username}`,
+        isRead: true,
+        createdAt: new Date().toISOString(),
+      };
+      const prev = get().messagesByConversation;
+      const msgs = [...(prev[conversationId] || []), msg];
+      const updatedMsgs = { ...prev, [conversationId]: msgs };
+      const conversations = get().conversations.map(c =>
+        c.id === conversationId ? { ...c, lastMessage: `Contact: ${displayName}`, lastMessageAt: msg.createdAt } : c
+      );
+      persistSet('messagesByConversation', updatedMsgs);
+      persistSet('conversations', conversations);
+      set({ messagesByConversation: updatedMsgs, conversations });
+    },
     shareEchoInDM: (conversationId, echo, intro) => {
       const body = intro?.trim() || `Thought you'd like this Echo from @${echo.username}.`;
       const msg: DirectMessage = {
         id: Date.now().toString(),
         senderId: 'me',
         content: body,
+        kind: 'echo',
         isRead: true,
         createdAt: new Date().toISOString(),
         sharedEchoId: echo.id,

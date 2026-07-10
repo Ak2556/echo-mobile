@@ -12,15 +12,15 @@ const FLAGS = {
   /** Daily-question banner on Discover + answer screen. */
   dailyQuestion: true,
   /** Salons browse, create, and individual salon feed. */
-  salons: true,
+  salons: false,
   /** Office hours list + RSVP. */
-  officeHours: true,
+  officeHours: false,
   /** Year in Echo annual recap. */
-  yearInEcho: true,
+  yearInEcho: false,
   /** Quests with XP progression. */
-  quests: true,
+  quests: false,
   /** Achievement badges. */
-  badges: true,
+  badges: false,
   /** Ephemeral 24h stories (also currently only works on local mode). */
   stories: false,
   /** Productivity mini-apps (notes, habits, expenses, voice memos, etc.). */

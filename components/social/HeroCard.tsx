@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Eye, PlayCircle, Camera } from 'phosphor-react-native';
@@ -11,8 +11,7 @@ import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-na
 import type { SharedValue } from 'react-native-reanimated';
 import { usePerformanceProfile } from '../../lib/performance';
 
-const { width: SW } = Dimensions.get('window');
-export const HERO_CARD_WIDTH = Math.min(SW * 0.44, 196);
+export const HERO_CARD_WIDTH = 196;
 export const HERO_CARD_HEIGHT = HERO_CARD_WIDTH * 0.92;
 
 interface HeroCardProps {
@@ -24,7 +23,10 @@ interface HeroCardProps {
 
 export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProps) {
   const { colors, font, reduceAnimations } = useTheme();
+  const { width } = useWindowDimensions();
   const performance = usePerformanceProfile('hero');
+  const cardWidth = Math.min(width * 0.44, 196);
+  const cardHeight = cardWidth * 0.92;
 
   const hasImage = (item.mediaUris?.length ?? 0) > 0;
   const hasVideo = item.postType === 'video' && !!item.videoUri;
@@ -40,7 +42,7 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       : String(item.viewCount ?? 0);
 
   // Parallax: image layer moves at 0.35x inverse of scroll
-  const CARD_STEP = HERO_CARD_WIDTH + 12;
+  const CARD_STEP = cardWidth + 12;
   const parallaxStyle = useAnimatedStyle(() => {
     if (!scrollX || reduceAnimations || !performance.listAnimations) return { transform: [{ translateX: 0 }] };
     const cardOffset = cardIndex * CARD_STEP;
@@ -60,8 +62,8 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       fadeOnPress
       performanceMode="hot"
       style={{
-        width: HERO_CARD_WIDTH,
-        height: HERO_CARD_HEIGHT,
+        width: cardWidth,
+        height: cardHeight,
         borderRadius: 8,
         overflow: 'hidden',
         backgroundColor: colors.surface,
@@ -70,11 +72,11 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
       }}
     >
       {/* Background with parallax */}
-      <Animated.View style={[StyleSheet.absoluteFill, { width: HERO_CARD_WIDTH * 1.3, left: -HERO_CARD_WIDTH * 0.15 }, parallaxStyle]}>
+      <Animated.View style={[StyleSheet.absoluteFill, { width: cardWidth * 1.3, left: -cardWidth * 0.15 }, parallaxStyle]}>
         {hasVideo ? (
           <VideoPreview
             uri={item.videoUri!}
-            height={HERO_CARD_HEIGHT}
+            height={cardHeight}
             borderRadius={0}
           />
         ) : hasImage ? (

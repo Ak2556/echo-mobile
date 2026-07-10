@@ -42,6 +42,7 @@ import { useResponsiveLayout } from '../../lib/responsive';
 
 const NAV_BAR_HEIGHT = 50;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+const SENSITIVE_TAGS = new Set(['nsfw', 'adult', 'explicit', 'mature', '18+', '18plus', 'gore', 'graphic', 'disturbing']);
 
 function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: React.ReactNode }) {
   const { colors, font } = useTheme();
@@ -157,8 +158,6 @@ export default function DiscoverScreen() {
   const sensitiveContentFilter = useAppStore(s => s.sensitiveContentFilter);
   const unreadNotifs = useAppStore(s => s.notifications.filter(n => !n.isRead).length);
   const [aboutFeedVisible, setAboutFeedVisible] = useState(false);
-
-  const SENSITIVE_TAGS = new Set(['nsfw', 'adult', 'explicit', 'mature', '18+', '18plus', 'gore', 'graphic', 'disturbing']);
 
   const scopedAll = useMemo(() => {
     if (!feed) return [];

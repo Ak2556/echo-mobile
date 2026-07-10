@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   ChatCircle,
-  DotsThree,
   ShareNetwork,
   Tag,
 } from 'phosphor-react-native';
@@ -24,7 +23,6 @@ import { formatPrice } from '../../lib/currency';
 import { fetchListing, ListingWithSeller, updateListingStatus } from '../../lib/marketplaceApi';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
-import { supabase } from '../../lib/supabase';
 
 const CONDITION_COLOR: Record<string, string> = {
   'New': '#10B981',

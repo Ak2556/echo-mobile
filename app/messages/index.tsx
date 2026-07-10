@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -34,34 +34,80 @@ function ConversationCard({ conversation, index, onPress }: {
 
   return (
     <Animated.View entering={animation(FadeIn.delay(index * 20).duration(80))}>
-      <AnimatedPressable onPress={onPress} className="flex-row items-center px-4 py-3.5" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border }} scaleValue={0.98} haptic="light">
+      <AnimatedPressable
+        onPress={onPress}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+        }}
+        scaleValue={0.98}
+        haptic="light"
+      >
         {showAvatars && (
-          <View className="relative">
+          <View style={{ position: 'relative', marginRight: 12 }}>
             <View
-              className="w-12 h-12 rounded-full items-center justify-center mr-3"
-              style={{ backgroundColor: conversation.avatarColor }}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: conversation.avatarColor,
+              }}
             >
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.title * 0.9 }}>
                 {conversation.displayName.charAt(0).toUpperCase()}
               </Text>
             </View>
             {online && (
-              <View className="absolute bottom-0 right-2 w-3.5 h-3.5 rounded-full" style={{ backgroundColor: colors.success, borderWidth: 2, borderColor: colors.bg }} />
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 2,
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  backgroundColor: colors.success,
+                  borderWidth: 2,
+                  borderColor: colors.bg,
+                }}
+              />
             )}
             {conversation.unreadCount > 0 && (
-              <Animated.View entering={animation(FadeIn.duration(120))} className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full items-center justify-center" style={{ backgroundColor: colors.accent, borderWidth: 2, borderColor: colors.bg }}>
+              <Animated.View
+                entering={animation(FadeIn.duration(120))}
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colors.accent,
+                  borderWidth: 2,
+                  borderColor: colors.bg,
+                }}
+              >
                 <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{conversation.unreadCount}</Text>
               </Animated.View>
             )}
           </View>
         )}
 
-        <View className="flex-1">
-          <View className="flex-row items-center gap-1">
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={{
+              flexShrink: 1,
               fontWeight: '600', fontSize: fontSizes.body,
               color: conversation.unreadCount > 0 ? colors.text : colors.textSecondary,
-            }}>
+            }} numberOfLines={1}>
               {conversation.displayName}
             </Text>
             {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
@@ -79,7 +125,9 @@ function ConversationCard({ conversation, index, onPress }: {
           </Text>
         </View>
 
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8 }}>{getTimeAgo(conversation.lastMessageAt)}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8 }}>
+          {getTimeAgo(conversation.lastMessageAt)}
+        </Text>
       </AnimatedPressable>
     </Animated.View>
   );

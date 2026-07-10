@@ -42,7 +42,7 @@ export default function AuthCallbackScreen() {
         captureException(err, { tags: { source: 'auth_callback_screen' } });
         router.replace('/auth/login');
       });
-  }, [url]);
+  }, [router, url]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>

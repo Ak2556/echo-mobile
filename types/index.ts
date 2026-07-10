@@ -247,10 +247,19 @@ export interface DirectMessage {
   content: string;
   isRead: boolean;
   createdAt: string;
+  kind?: 'text' | 'echo' | 'image' | 'link' | 'contact';
   sharedEchoId?: string;
   sharedEchoTitle?: string;
   sharedEchoPreview?: string;
   sharedEchoAuthor?: string;
+  mediaUrl?: string;
+  linkUrl?: string;
+  linkTitle?: string;
+  linkSubtitle?: string;
+  contactUserId?: string;
+  contactUsername?: string;
+  contactDisplayName?: string;
+  contactAvatarColor?: string;
 }
 
 export interface Conversation {
