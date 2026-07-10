@@ -45,13 +45,13 @@ export function normalizeEchoAIError(message: string): string {
   return message;
 }
 
-export type EchoAIModel = 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.0-flash-lite';
+export type EchoAIModel = 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.5-flash-lite';
 
 // Map the in-app model key to Google models routed through Google AI Studio.
 const AI_MODEL_MAP: Record<EchoAIModel, string> = {
   'gemini-2.5-flash': 'google/gemini-2.5-flash',
   'gemini-2.5-pro': 'google/gemini-2.5-pro',
-  'gemini-2.0-flash-lite': 'google/gemini-2.0-flash-lite-001',
+  'gemini-2.5-flash-lite': 'google/gemini-2.5-flash-lite',
 };
 
 interface StreamArgs {

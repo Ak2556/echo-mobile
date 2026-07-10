@@ -103,7 +103,7 @@ function s(set: (p: object) => void, key: string) {
 
 function getAiModel(): EchoAIModel {
   const value = persistGet<string>('aiModel', 'gemini-2.5-flash');
-  if (value === 'gemini-2.5-flash' || value === 'gemini-2.5-pro' || value === 'gemini-2.0-flash-lite') {
+  if (value === 'gemini-2.5-flash' || value === 'gemini-2.5-pro' || value === 'gemini-2.5-flash-lite') {
     return value;
   }
   persistSet('aiModel', 'gemini-2.5-flash');

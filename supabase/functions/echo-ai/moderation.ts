@@ -26,7 +26,7 @@ export interface ModerationResult {
 // Cheap, fast classifier. Routed through google-ai-studio to match the rest of
 // the Echo AI stack. Overridable via env for tuning without a redeploy.
 const MODERATION_MODEL =
-  Deno.env.get("MODERATION_MODEL") ?? "google/gemini-2.0-flash-lite-001";
+  Deno.env.get("MODERATION_MODEL") ?? "google/gemini-2.5-flash-lite";
 const MODERATION_TIMEOUT_MS = 8000;
 
 // Categories the classifier may return. Mirrors OpenAI's moderation taxonomy so

@@ -527,7 +527,7 @@ export default function SettingsScreen() {
     track(enabled ? 'persona_learning_started' : 'persona_learning_disabled');
   };
 
-  const handleAiModel = async (v: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.0-flash-lite') => {
+  const handleAiModel = async (v: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.5-flash-lite') => {
     const prev = s.aiModel;
     s.setAiModel(v);
     if (!isSupabaseRemote()) { showToast(`Model: ${v}`, 'Model'); return; }
@@ -571,7 +571,7 @@ export default function SettingsScreen() {
   const modelLabel = {
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
     'gemini-2.5-pro': 'Gemini 2.5 Pro',
-    'gemini-2.0-flash-lite': 'Gemini 2.0 Flash Lite',
+    'gemini-2.5-flash-lite': 'Gemini 2.5 Flash Lite',
   }[s.aiModel];
   const bubbleLabel = { modern: 'Modern', classic: 'Classic', minimal: 'Minimal' }[s.chatBubbleStyle];
   const dmLabel = { everyone: 'Everyone', followers: 'Followers Only', nobody: 'Nobody' }[s.dmPrivacy];
@@ -887,7 +887,7 @@ export default function SettingsScreen() {
           options={[
             { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash' as const, desc: 'Fast Google AI Studio model' },
             { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro' as const, desc: 'More capable Google AI Studio model' },
-            { label: 'Gemini 2.0 Flash Lite', value: 'gemini-2.0-flash-lite' as const, desc: 'Lightweight Google AI Studio model' },
+            { label: 'Gemini 2.5 Flash Lite', value: 'gemini-2.5-flash-lite' as const, desc: 'Lightweight Google AI Studio model' },
           ]}
           value={s.aiModel}
           onChange={(v) => void handleAiModel(v)}

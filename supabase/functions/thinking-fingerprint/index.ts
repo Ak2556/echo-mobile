@@ -20,7 +20,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 
-const SYNTH_MODEL = Deno.env.get("FINGERPRINT_MODEL") ?? "google/gemini-2.0-flash-001";
+const SYNTH_MODEL = Deno.env.get("FINGERPRINT_MODEL") ?? "google/gemini-2.5-flash";
 const SYNTH_TIMEOUT_MS = 15000;
 const MIN_ECHOES = 3;
 const MAX_ECHOES = 24;
