@@ -19,7 +19,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "audit:backend": "node scripts/audit-backend.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
