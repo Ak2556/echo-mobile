@@ -179,7 +179,27 @@ Deno.serve(async (req: Request) => {
   const moderationText = [echoRow.title, echoRow.prompt, echoRow.response]
     .filter(Boolean)
     .join("\n\n");
-  const verdict = await moderateContent(moderationText);
+  let verdict = await moderateContent(moderationText);
+  // Infra failure is not a verdict. Retry a couple of times; if the gate is
+  // still unreachable, leave the row PENDING (check_content stays at its
+  // default false, but no explicit verdict is written) and tell the caller,
+  // so the client can re-trigger. Writing false here used to hide freshly
+  // published posts forever after a transient OpenRouter hiccup.
+  for (
+    let attempt = 0;
+    attempt < 2 && !verdict.ok && verdict.categories.includes("moderation_unavailable");
+    attempt++
+  ) {
+    await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+    verdict = await moderateContent(moderationText);
+  }
+  if (!verdict.ok && verdict.categories.includes("moderation_unavailable")) {
+    console.error(`[embed-echo] moderation unavailable for ${echoId}; leaving pending:`, verdict.error);
+    return new Response(
+      JSON.stringify({ ok: false, reason: "moderation_unavailable" }),
+      { status: 503, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
+  }
   const { error: gateErr } = await supabase
     .from("public_echoes")
     .update({ check_content: verdict.ok })

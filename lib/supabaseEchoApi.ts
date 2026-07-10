@@ -525,10 +525,18 @@ export async function insertRemoteEcho(params: {
  * so the publish UX is never gated on embedding success.
  */
 export async function triggerEmbedEcho(echoId: string): Promise<void> {
-  try {
-    await supabase.functions.invoke('embed-echo', { body: { echo_id: echoId } });
-  } catch {
-    // Embedding is best-effort. Reconciliation can happen via a backfill job.
+  // Up to 3 attempts with backoff: embed-echo returns 503 when the moderation
+  // gate itself is unreachable, leaving the row hidden-pending — a retry here
+  // is what un-sticks a freshly published post after a transient provider
+  // hiccup. Still best-effort overall; the publish UX is never gated on this.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const { error } = await supabase.functions.invoke('embed-echo', { body: { echo_id: echoId } });
+      if (!error) return;
+    } catch {
+      // fall through to retry
+    }
+    await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
   }
 }
 
