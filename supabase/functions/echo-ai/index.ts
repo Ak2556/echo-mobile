@@ -140,6 +140,24 @@ interface ToolCtx {
   supabase: SupabaseClient;
 }
 
+
+/**
+ * A moderation gate can fail two very different ways: the classifier flagged
+ * the content, or the moderation CALL itself failed (network, key, parse).
+ * Surfacing the same "can't be shared publicly" message for both sent users
+ * (and us) debugging phantom content violations — say which one it was.
+ */
+function moderationError(verdict: { categories: string[]; error?: string }): Error {
+  if (verdict.categories.includes("moderation_unavailable")) {
+    console.error("[moderation] gate unavailable:", verdict.error);
+    return new Error(
+      "Couldn't verify this content just now — the safety check is temporarily unavailable. Please try again.",
+    );
+  }
+  console.warn("[moderation] flagged:", verdict.categories.join(","));
+  return new Error("This content can't be shared publicly.");
+}
+
 const TOOLS: ToolSpec[] = [
   {
     name: "compose_post",
@@ -168,7 +186,7 @@ const TOOLS: ToolSpec[] = [
       // reaches the public feed.
       const verdict = await moderateContent(`${title}\n\n${prompt}\n\n${response}`);
       if (!verdict.ok) {
-        throw new Error("This content can't be shared publicly.");
+        throw moderationError(verdict);
       }
 
       const { data, error } = await supabase
@@ -342,7 +360,7 @@ const TOOLS: ToolSpec[] = [
     execute: async (a, { supabase, userId }) => {
       const verdict = await moderateContent(a.content as string);
       if (!verdict.ok) {
-        throw new Error("This content can't be shared publicly.");
+        throw moderationError(verdict);
       }
       const { data, error } = await supabase
         .from("echo_comments")
@@ -869,6 +887,7 @@ Vocabulary — map what the user says to the right action:
 
 Rules:
 - Always call a tool when the user wants to act. Never describe what you would do — do it.
+- Questions are NOT actions. "explain X", "tell me about X", "what is X", "help me understand X" → answer directly in chat. Never call compose_post, draft_echo, or comment_on_post unless the user explicitly asks to post, publish, share, draft, or comment. When in doubt, answer in chat.
 - compose_post: ALWAYS fill BOTH fields — prompt (the question that sparked it) AND response (the insight). If the user only gives you one piece of text, infer a natural question from context or ask one short clarifying question before composing.
 - draft_echo: use this when the user says "draft", "prepare", "open compose", or "write but don't publish". Opens the create-post screen pre-filled — nothing is published until the user taps Post themselves.
 - navigate_to: call this immediately for any navigation request. Never say "go to X" in chat — just call the tool.
