@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TextInput, Pressable,
-  KeyboardAvoidingView, Platform, Alert, Modal, StyleSheet,
+  KeyboardAvoidingView, Platform, Alert, Modal, StyleSheet, Share,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { NotePencil, Plus, Trash, MagnifyingGlass, X } from 'phosphor-react-native';
+import { NotePencil, Plus, Trash, MagnifyingGlass, X, PushPin, ShareNetwork } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -38,8 +38,10 @@ function NoteEditor({ note, onSave, onClose }: { note: Note | null; onSave: (n: 
 
   const save = () => {
     if (!title.trim() && !body.trim()) { onClose(); return; }
-    onSave({ id: note?.id ?? Date.now().toString(), title: title.trim() || 'Untitled', body: body.trim(), color, updatedAt: new Date().toISOString() });
+    onSave({ id: note?.id ?? Date.now().toString(), title: title.trim() || 'Untitled', body: body.trim(), color, pinned: note?.pinned, updatedAt: new Date().toISOString() });
   };
+
+  const words = body.trim() ? body.trim().split(/\s+/).length : 0;
 
   return (
     <Modal animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { save(); onClose(); }}>
@@ -66,6 +68,11 @@ function NoteEditor({ note, onSave, onClose }: { note: Note | null; onSave: (n: 
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: color, marginBottom: 16 }} />
             <TextInput value={title} onChangeText={setTitle} placeholder="Note title…" placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 26, fontWeight: '800', letterSpacing: -0.5, marginBottom: 16, padding: 0 }} multiline />
             <TextInput value={body} onChangeText={setBody} placeholder="Start writing…" placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 16, lineHeight: 26, padding: 0, minHeight: 300 }} multiline textAlignVertical="top" autoFocus={isNew} />
+            {words > 0 && (
+              <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'right', marginTop: 8 }}>
+                {words} word{words === 1 ? '' : 's'} · {body.length} characters
+              </Text>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
@@ -114,6 +121,19 @@ export default function NotesApp() {
     ]);
   };
 
+  const togglePin = (id: string) => {
+    const updated = notes
+      .map(n => n.id === id ? { ...n, pinned: !n.pinned } : n)
+      .sort((a, b) =>
+        Number(!!b.pinned) - Number(!!a.pinned) ||
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    setNotes(updated); saveNotes(updated);
+  };
+
+  const shareNote = (n: Note) => {
+    Share.share({ message: n.body ? `${n.title}\n\n${n.body}` : n.title }).catch(() => {});
+  };
+
   const NewBtn = (
     <AnimatedPressable onPress={openNew} scaleValue={0.88} haptic="medium" style={{ backgroundColor: accent, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       <Plus color="#fff" size={16} weight="bold" />
@@ -158,20 +178,29 @@ export default function NotesApp() {
                 })}
               >
                 <GlassPanel variant="medium" borderRadius={20} style={{ borderColor: note.color + '44' }} contentStyle={{ padding: 18 }}>
-                  <View style={{ width: 32, height: 3.5, borderRadius: 2, backgroundColor: note.color, marginBottom: 12 }} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                    <View style={{ width: 32, height: 3.5, borderRadius: 2, backgroundColor: note.color, flex: 0 }} />
+                    <View style={{ flex: 1 }} />
+                    {note.pinned && <PushPin color={note.color} size={14} weight="fill" />}
+                  </View>
                   <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800', marginBottom: 6 }} numberOfLines={1}>{note.title}</Text>
                   {note.body.length > 0 && (
                     <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 20, marginBottom: 10 }} numberOfLines={3}>{note.body}</Text>
                   )}
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={{ color: colors.textMuted, fontSize: 12, flex: 1 }}>{formatDate(note.updatedAt)}</Text>
+                    <AnimatedPressable onPress={() => togglePin(note.id)} scaleValue={0.85} haptic="light" style={{ padding: 4, marginRight: 2 }}>
+                      <PushPin color={note.pinned ? note.color : colors.textMuted} size={16} weight={note.pinned ? 'fill' : 'regular'} />
+                    </AnimatedPressable>
+                    <AnimatedPressable onPress={() => shareNote(note)} scaleValue={0.85} haptic="light" style={{ padding: 4, marginRight: 2 }}>
+                      <ShareNetwork color={colors.textMuted} size={16} />
+                    </AnimatedPressable>
                     <AnimatedPressable onPress={() => publishAsEcho(note)} scaleValue={0.85} haptic="light" style={{ padding: 4, marginRight: 4 }}>
                       <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700' }}>Echo</Text>
                     </AnimatedPressable>
                     <AnimatedPressable onPress={() => deleteNote(note.id)} scaleValue={0.85} haptic="light" style={{ padding: 4 }}>
                       <Trash color={colors.textMuted} size={16} />
                     </AnimatedPressable>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: note.color, marginLeft: 10 }} />
                   </View>
                 </GlassPanel>
               </Pressable>

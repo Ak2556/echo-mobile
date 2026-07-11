@@ -7,7 +7,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Plus, CheckCircle, CircleDashed, Fire, Trash, X, Camera, Images, Clock, NotePencil } from 'phosphor-react-native';
+import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Plus, CheckCircle, CircleDashed, Fire, Trash, X, Camera, Images, Clock, NotePencil, Bell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -15,10 +17,101 @@ import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
   HABIT_COLORS, HABIT_MARKERS, Habit, HabitCheckIn, checkInFor, formatCheckInTime,
-  getStreak, loadHabits, saveHabits, setCheckInDetails, todayStr,
+  getStreak, loadHabits, saveHabits, setCheckInDetails, thisWeekCount, todayStr,
 } from '../../lib/habits';
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const GOAL_OPTIONS = [3, 4, 5, 6, 7];
+const REMINDER_OPTIONS: { label: string; value: { hour: number; minute: number } | null }[] = [
+  { label: 'None', value: null },
+  { label: '8:00', value: { hour: 8, minute: 0 } },
+  { label: '13:00', value: { hour: 13, minute: 0 } },
+  { label: '18:00', value: { hour: 18, minute: 0 } },
+  { label: '21:00', value: { hour: 21, minute: 0 } },
+];
+
+// Reminder notification ids are per-device: kept in AsyncStorage, never in
+// the synced habit doc — another device schedules (and cancels) its own.
+const notifKey = (habitId: string) => `mini:habits:notif:${habitId}`;
+
+async function syncReminder(habit: Habit): Promise<void> {
+  try {
+    const existing = await AsyncStorage.getItem(notifKey(habit.id));
+    if (existing) {
+      await Notifications.cancelScheduledNotificationAsync(existing).catch(() => {});
+      await AsyncStorage.removeItem(notifKey(habit.id));
+    }
+    if (!habit.reminder) return;
+    const perm = await Notifications.requestPermissionsAsync();
+    if (!perm.granted) return;
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: habit.name,
+        body: 'Time to keep the streak going.',
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: habit.reminder.hour,
+        minute: habit.reminder.minute,
+      },
+    });
+    await AsyncStorage.setItem(notifKey(habit.id), id);
+  } catch {
+    // Notifications unavailable (old build, denied) — habit still works.
+  }
+}
+
+async function cancelReminder(habitId: string): Promise<void> {
+  try {
+    const existing = await AsyncStorage.getItem(notifKey(habitId));
+    if (existing) {
+      await Notifications.cancelScheduledNotificationAsync(existing).catch(() => {});
+      await AsyncStorage.removeItem(notifKey(habitId));
+    }
+  } catch {}
+}
+
+/** 12-week completion heatmap, GitHub style: columns = weeks, rows = days. */
+function Heatmap({ habit, colors }: { habit: Habit; colors: any }) {
+  const done = new Set(habit.completedDates);
+  const today = new Date();
+  const weeks = 12;
+  // Start from the Monday `weeks-1` weeks back.
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7) - (weeks - 1) * 7);
+  const cols = Array.from({ length: weeks }, (_, w) =>
+    Array.from({ length: 7 }, (_, d) => {
+      const cell = new Date(start); cell.setDate(start.getDate() + w * 7 + d);
+      return cell.toISOString().slice(0, 10);
+    }),
+  );
+  const todayIso = todayStr();
+  return (
+    <View style={{ flexDirection: 'row', gap: 3, marginTop: 12, justifyContent: 'center' }}>
+      {cols.map((col, w) => (
+        <View key={w} style={{ gap: 3 }}>
+          {col.map(date => {
+            const future = date > todayIso;
+            return (
+              <View
+                key={date}
+                style={{
+                  width: 11, height: 11, borderRadius: 3,
+                  backgroundColor: future
+                    ? 'transparent'
+                    : done.has(date)
+                      ? habit.color
+                      : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'),
+                }}
+              />
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
 
 function WeekRow({ habit, colors, onDayPress }: { habit: Habit; colors: any; onDayPress: (date: string) => void }) {
   const today = new Date();
@@ -186,10 +279,16 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
   const [name, setName] = useState('');
   const [marker, setMarker] = useState(HABIT_MARKERS[0]);
   const [color, setColor] = useState(accent);
+  const [goal, setGoal] = useState(7);
+  const [reminder, setReminder] = useState<{ hour: number; minute: number } | null>(null);
 
   const submit = () => {
     if (!name.trim()) { showToast('Enter a habit name', 'Error'); return; }
-    onAdd({ id: Date.now().toString(), name: name.trim(), marker, color, completedDates: [], createdAt: new Date().toISOString() });
+    onAdd({
+      id: Date.now().toString(), name: name.trim(), marker, color,
+      completedDates: [], weeklyGoal: goal === 7 ? undefined : goal, reminder,
+      createdAt: new Date().toISOString(),
+    });
     onClose();
   };
 
@@ -200,7 +299,7 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>New Habit</Text>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
         </View>
-        <View style={{ padding: 20, gap: 24 }}>
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>HABIT NAME</Text>
             <TextInput value={name} onChangeText={setName} placeholder="e.g. Drink water, Exercise…" placeholderTextColor={colors.textMuted} autoFocus style={{ color: colors.text, fontSize: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
@@ -227,10 +326,37 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
               ))}
             </View>
           </View>
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>TIMES PER WEEK</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {GOAL_OPTIONS.map(g => (
+                <Pressable key={g} onPress={() => setGoal(g)} style={{ flex: 1 }}>
+                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: goal === g ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: goal === g ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: goal === g ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>{g === 7 ? 'Daily' : g}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>DAILY REMINDER</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {REMINDER_OPTIONS.map(opt => {
+                const active = (reminder?.hour ?? -1) === (opt.value?.hour ?? -1);
+                return (
+                  <Pressable key={opt.label} onPress={() => setReminder(opt.value)} style={{ flex: 1 }}>
+                    <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5 }}>{opt.label}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
           <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: color, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
             <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Add Habit</Text>
           </AnimatedPressable>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -275,15 +401,18 @@ export default function HabitsApp() {
   const addHabit = (h: Habit) => {
     const updated = [h, ...habits];
     setHabits(updated); saveHabits(updated);
+    void syncReminder(h);
     showToast(`${h.name} added`, 'Saved');
   };
 
   const deleteHabit = (id: string) => {
     Alert.alert('Delete habit?', 'Your streak will be lost.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { const updated = habits.filter(h => h.id !== id); setHabits(updated); saveHabits(updated); } },
+      { text: 'Delete', style: 'destructive', onPress: () => { const updated = habits.filter(h => h.id !== id); setHabits(updated); saveHabits(updated); void cancelReminder(id); } },
     ]);
   };
+
+  const [heatmapFor, setHeatmapFor] = useState<string | null>(null);
 
   const todayLabel = new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
 
@@ -332,14 +461,24 @@ export default function HabitsApp() {
           <Animated.View key={habit.id} entering={FadeInDown.delay(i * 50).duration(220)} style={{ marginBottom: 12 }}>
             <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 18 }} style={{ borderColor: done ? habit.color + '55' : colors.glassBorder }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
-                  <Text style={{ color: habit.color, fontSize: 13, fontWeight: '800' }}>{habit.marker}</Text>
-                </View>
+                <Pressable onPress={() => setHeatmapFor(heatmapFor === habit.id ? null : habit.id)}>
+                  <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+                    <Text style={{ color: habit.color, fontSize: 13, fontWeight: '800' }}>{habit.marker}</Text>
+                  </View>
+                </Pressable>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{habit.name}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{habit.name}</Text>
+                    {habit.reminder ? <Bell color={colors.textMuted} size={12} weight="fill" /> : null}
+                  </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
                     <Fire color={streak > 0 ? '#F59E0B' : colors.textMuted} size={13} weight={streak > 0 ? 'fill' : 'regular'} />
                     <Text style={{ color: streak > 0 ? '#F59E0B' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>{streak} day streak</Text>
+                    {habit.weeklyGoal ? (
+                      <Text style={{ color: thisWeekCount(habit.completedDates) >= habit.weeklyGoal ? '#10B981' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>
+                        · {Math.min(thisWeekCount(habit.completedDates), habit.weeklyGoal)}/{habit.weeklyGoal} wk
+                      </Text>
+                    ) : null}
                     {done && todayEntry?.at ? (
                       <Text style={{ color: colors.textMuted, fontSize: 12 }}>· {formatCheckInTime(todayEntry.at)}</Text>
                     ) : null}
@@ -353,6 +492,7 @@ export default function HabitsApp() {
                 </AnimatedPressable>
               </View>
               <WeekRow habit={habit} colors={colors} onDayPress={date => setProof({ habitId: habit.id, date })} />
+              {heatmapFor === habit.id && <Heatmap habit={habit} colors={colors} />}
               {done && (
                 <Pressable onPress={() => setProof({ habitId: habit.id, date: today })}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 9, borderRadius: 10, justifyContent: 'center', backgroundColor: habit.color + '12', borderWidth: StyleSheet.hairlineWidth, borderColor: habit.color + '33' }}>
