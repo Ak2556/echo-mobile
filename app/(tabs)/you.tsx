@@ -391,29 +391,22 @@ export default function ProfileScreen() {
         )}
 
         <View style={styles.sessionArea}>
-          <SectionLabel label="Session" colors={colors} font={font} />
           <Pressable
             onPress={() => { void signOut(); }}
             accessibilityRole="button"
             accessibilityLabel="Sign out"
             accessibilityHint="Signs you out of Echo"
-            style={({ pressed }) => [
-              styles.signOutButton,
-              {
-                borderRadius: radius.full,
-                borderColor: 'rgba(239,68,68,0.32)',
-                backgroundColor: pressed ? colors.dangerMuted : 'transparent',
-              },
-            ]}
           >
-            <SignOut color={colors.danger} size={16} />
-            <Text
-              style={[font.bodySemibold, styles.signOutText, { color: colors.danger }]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-            >
-              Sign Out
-            </Text>
+            <View style={[styles.signOutButton, { borderRadius: radius.full, backgroundColor: colors.dangerMuted }]}>
+              <SignOut color={colors.danger} size={16} />
+              <Text
+                style={[font.bodySemibold, styles.signOutText, { color: colors.danger }]}
+                numberOfLines={1}
+                maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
+              >
+                Sign Out
+              </Text>
+            </View>
           </Pressable>
         </View>
         </View>
@@ -596,22 +589,19 @@ function ProfileEmptyPosts({
         onPress={onCreate}
         accessibilityRole="button"
         accessibilityLabel="Create Echo"
-        style={({ pressed }) => [
-          styles.createButton,
-          {
-            borderRadius: radius.full,
-            backgroundColor: pressed ? colors.accentMuted : colors.accent,
-          },
-        ]}
       >
-        <PencilSimple color="#fff" size={15} weight="bold" />
-        <Text
-          style={[font.bodySemibold, styles.createButtonText]}
-          numberOfLines={1}
-          maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-        >
-          Create Echo
-        </Text>
+        {/* Layout + fill live on the inner View — pressable style callbacks
+            returning arrays drop layout props (see AnimatedPressable note). */}
+        <View style={[styles.createButton, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
+          <PencilSimple color="#fff" size={15} weight="bold" />
+          <Text
+            style={[font.bodySemibold, styles.createButtonText]}
+            numberOfLines={1}
+            maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
+          >
+            Create Echo
+          </Text>
+        </View>
       </Pressable>
     </View>
   );
@@ -981,7 +971,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 24,
     paddingHorizontal: 18,
-    paddingBottom: 72,
+    paddingBottom: 8,
     alignItems: 'center',
   },
   emptyTitle: {
@@ -1049,7 +1039,8 @@ const styles = StyleSheet.create({
   },
   sessionArea: {
     paddingHorizontal: 16,
-    marginTop: 24,
+    marginTop: 28,
+    alignItems: 'center',
   },
   menuPanel: {
     marginBottom: 12,
@@ -1083,15 +1074,12 @@ const styles = StyleSheet.create({
     marginLeft: 46,
   },
   signOutButton: {
-    alignSelf: 'stretch',
-    minHeight: 46,
-    marginTop: 8,
+    minHeight: 42,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 16,
+    paddingHorizontal: 22,
   },
   signOutText: {
     fontSize: 14,
