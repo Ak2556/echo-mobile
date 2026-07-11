@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -14,15 +14,12 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Camera, CheckCircle, Trash } from 'phosphor-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ArrowLeft, Camera, Plus, X } from 'phosphor-react-native';
 import { useTheme } from '../lib/theme';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
-import {
-  CURRENCIES,
-  CurrencyCode,
-  formatPrice,
-} from '../lib/currency';
+import { CURRENCIES, CurrencyCode, formatPrice, getCurrencySymbol } from '../lib/currency';
 import {
   LISTING_CATEGORIES,
   LISTING_CONDITIONS,
@@ -34,74 +31,47 @@ import {
 
 const MAX_PHOTOS = 6;
 
-function PickerSheet<T extends string>({
-  options,
-  selected,
-  onSelect,
-  onClose,
-  renderOption,
-}: {
-  options: readonly T[];
-  selected: T;
-  onSelect: (v: T) => void;
-  onClose: () => void;
-  renderOption?: (v: T) => string;
-}) {
-  const { colors, fontSizes } = useTheme();
-  const insets = useSafeAreaInsets();
-
+function Eyebrow({ children, style }: { children: React.ReactNode; style?: object }) {
+  const { colors } = useTheme();
   return (
-    <Modal transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        onPress={onClose}
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-      >
-        <Pressable
-          onPress={e => e.stopPropagation()}
-          style={{
-            backgroundColor: colors.surface,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            paddingTop: 8,
-            paddingBottom: insets.bottom + 16,
-          }}
-        >
-          <View style={{
-            width: 36,
-            height: 4,
-            borderRadius: 2,
-            backgroundColor: colors.border,
-            alignSelf: 'center',
-            marginBottom: 12,
-          }} />
-          {options.map(opt => (
-            <Pressable
-              key={opt}
-              onPress={() => { onSelect(opt); onClose(); }}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: 20,
-                paddingVertical: 14,
-              }}
-            >
-              <Text style={{ color: colors.text, fontSize: fontSizes.body }}>
-                {renderOption ? renderOption(opt) : opt}
-              </Text>
-              {opt === selected && (
-                <CheckCircle color={colors.accent} size={20} weight="fill" />
-              )}
-            </Pressable>
-          ))}
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <Text style={[{
+      color: colors.textMuted,
+      fontSize: 12,
+      fontFamily: 'Inter_600SemiBold',
+      letterSpacing: 1.4,
+      textTransform: 'uppercase',
+    }, style]}>
+      {children}
+    </Text>
+  );
+}
+
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable onPress={onPress}>
+      <View style={{
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: 999,
+        backgroundColor: active ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: active ? 'transparent' : colors.border,
+      }}>
+        <Text style={{
+          color: active ? '#fff' : colors.text,
+          fontSize: 13.5,
+          fontFamily: active ? 'Inter_600SemiBold' : 'Inter_500Medium',
+        }}>
+          {label}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
 export default function CreateListingScreen() {
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [photos, setPhotos] = useState<string[]>([]);
@@ -114,12 +84,9 @@ export default function CreateListingScreen() {
   const [location, setLocation] = useState('');
   const [fulfillment, setFulfillment] = useState('');
   const [tagsText, setTagsText] = useState('');
-
-  const [sheet, setSheet] = useState<'currency' | 'category' | 'condition' | null>(null);
   const [saving, setSaving] = useState(false);
 
   const price = parseFloat(priceText.replace(/,/g, '')) || 0;
-
   const canSubmit = title.trim().length >= 3 && price >= 0 && !saving;
 
   const pickPhotos = async () => {
@@ -172,26 +139,23 @@ export default function CreateListingScreen() {
     }
   };
 
-  const inputStyle = {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
+  const softField = {
+    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     color: colors.text,
-    fontSize: fontSizes.body,
+    fontSize: 15,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 13,
     fontFamily: 'Inter_400Regular',
   };
 
-  const labelStyle = {
-    color: colors.textMuted,
-    fontSize: fontSizes.caption - 1,
-    fontFamily: 'Inter_500Medium',
-    marginBottom: 6,
+  const hairline = {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginVertical: 24,
   };
-
-  const selectedCurrency = CURRENCIES.find(c => c.code === currency);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -201,7 +165,7 @@ export default function CreateListingScreen() {
         paddingBottom: 12,
         paddingHorizontal: 16,
         backgroundColor: colors.bg,
-        borderBottomWidth: 1,
+        borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
         flexDirection: 'row',
         alignItems: 'center',
@@ -210,24 +174,25 @@ export default function CreateListingScreen() {
         <AnimatedPressable onPress={() => router.back()} hitSlop={12} fadeOnPress>
           <ArrowLeft color={colors.text} size={22} />
         </AnimatedPressable>
-        <Text style={{ flex: 1, color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold' }}>
+        <Text style={{ flex: 1, color: colors.text, fontSize: 21, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
           Sell something
         </Text>
         <AnimatedPressable
           onPress={handleSubmit}
           disabled={!canSubmit}
           fadeOnPress
-          style={{
-            backgroundColor: canSubmit ? colors.accent : colors.border,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderRadius: radius.full,
-          }}
         >
-          {saving
-            ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>Post</Text>
-          }
+          <View style={{
+            backgroundColor: canSubmit ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'),
+            paddingHorizontal: 18,
+            paddingVertical: 9,
+            borderRadius: 999,
+          }}>
+            {saving
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Text style={{ color: canSubmit ? '#fff' : colors.textMuted, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>Post</Text>
+            }
+          </View>
         </AnimatedPressable>
       </View>
 
@@ -236,196 +201,204 @@ export default function CreateListingScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={{ padding: 16, gap: 20, paddingBottom: insets.bottom + 40 }}
+          contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 48 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Photos */}
-          <View>
-            <Text style={labelStyle}>Photos ({photos.length}/{MAX_PHOTOS})</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-              {photos.map((uri, i) => (
-                <View key={uri + i} style={{ position: 'relative' }}>
-                  <Image
-                    source={{ uri }}
-                    style={{ width: 96, height: 96, borderRadius: radius.md }}
-                    contentFit="cover"
-                  />
-                  {i === 0 && (
-                    <View style={{
-                      position: 'absolute',
-                      top: 4, left: 4,
-                      backgroundColor: 'rgba(0,0,0,0.55)',
-                      borderRadius: 6,
-                      paddingHorizontal: 6, paddingVertical: 2,
-                    }}>
-                      <Text style={{ color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>Cover</Text>
-                    </View>
-                  )}
-                  <Pressable
-                    onPress={() => removePhoto(i)}
-                    hitSlop={8}
-                    style={{
-                      position: 'absolute', top: 4, right: 4,
-                      backgroundColor: 'rgba(0,0,0,0.6)',
-                      borderRadius: 10, width: 20, height: 20,
-                      alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    <Trash color="#fff" size={12} weight="bold" />
-                  </Pressable>
+          {photos.length === 0 ? (
+            <Pressable onPress={pickPhotos}>
+              <View style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: colors.surface }}>
+                <LinearGradient
+                  colors={[`${colors.accent}2E`, `${colors.accent}0E`, 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0.9, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
+                <View style={{ alignItems: 'center', paddingVertical: 44, gap: 10 }}>
+                  <Camera color={colors.accent} size={30} weight="fill" />
+                  <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Add photos</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12.5 }}>
+                    Listings with photos sell faster · up to {MAX_PHOTOS}
+                  </Text>
                 </View>
-              ))}
-              {photos.length < MAX_PHOTOS && (
-                <AnimatedPressable
-                  onPress={pickPhotos}
-                  fadeOnPress
-                  style={{
-                    width: 96, height: 96,
-                    borderRadius: radius.md,
-                    borderWidth: 1.5,
-                    borderColor: colors.border,
-                    borderStyle: 'dashed',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 4,
-                  }}
-                >
-                  <Camera color={colors.textMuted} size={24} />
-                  <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_500Medium' }}>Add photo</Text>
-                </AnimatedPressable>
-              )}
-            </ScrollView>
-          </View>
-
-          {/* Title */}
-          <View>
-            <Text style={labelStyle}>Title *</Text>
-            <TextInput
-              style={inputStyle}
-              placeholder="What are you selling?"
-              placeholderTextColor={colors.textMuted}
-              value={title}
-              onChangeText={setTitle}
-              maxLength={120}
-              returnKeyType="next"
-            />
-          </View>
-
-          {/* Description */}
-          <View>
-            <Text style={labelStyle}>Description</Text>
-            <TextInput
-              style={[inputStyle, { minHeight: 88, textAlignVertical: 'top' }]}
-              placeholder="Describe the item — condition, size, details buyers need to know..."
-              placeholderTextColor={colors.textMuted}
-              value={description}
-              onChangeText={setDescription}
-              maxLength={2000}
-              multiline
-              returnKeyType="default"
-            />
-          </View>
-
-          {/* Price + Currency */}
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={labelStyle}>Price *</Text>
-              <TextInput
-                style={inputStyle}
-                placeholder="0"
-                placeholderTextColor={colors.textMuted}
-                value={priceText}
-                onChangeText={t => setPriceText(t.replace(/[^0-9.,]/g, ''))}
-                keyboardType="decimal-pad"
-                returnKeyType="done"
-              />
+              </View>
+            </Pressable>
+          ) : (
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Eyebrow>Photos</Eyebrow>
+                <Text style={{ color: colors.textMuted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{photos.length}/{MAX_PHOTOS}</Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                {photos.map((uri, i) => (
+                  <View key={uri + i}>
+                    <Image
+                      source={{ uri }}
+                      style={{ width: 110, height: 110, borderRadius: 18 }}
+                      contentFit="cover"
+                    />
+                    {i === 0 && (
+                      <View style={{
+                        position: 'absolute',
+                        bottom: 6, left: 6,
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        borderRadius: 7,
+                        paddingHorizontal: 7, paddingVertical: 3,
+                      }}>
+                        <Text style={{ color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.4 }}>COVER</Text>
+                      </View>
+                    )}
+                    <Pressable
+                      onPress={() => removePhoto(i)}
+                      hitSlop={8}
+                      style={{
+                        position: 'absolute', top: 6, right: 6,
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        borderRadius: 11, width: 22, height: 22,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <X color="#fff" size={12} weight="bold" />
+                    </Pressable>
+                  </View>
+                ))}
+                {photos.length < MAX_PHOTOS && (
+                  <Pressable onPress={pickPhotos}>
+                    <View style={{
+                      width: 110, height: 110,
+                      borderRadius: 18,
+                      borderWidth: 1.5,
+                      borderColor: colors.accent + '55',
+                      borderStyle: 'dashed',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 5,
+                      backgroundColor: colors.accent + '0A',
+                    }}>
+                      <Plus color={colors.accent} size={20} weight="bold" />
+                      <Text style={{ color: colors.accent, fontSize: 11.5, fontFamily: 'Inter_600SemiBold' }}>Add more</Text>
+                    </View>
+                  </Pressable>
+                )}
+              </ScrollView>
             </View>
-            <View style={{ width: 130 }}>
-              <Text style={labelStyle}>Currency</Text>
-              <AnimatedPressable
-                onPress={() => setSheet('currency')}
-                fadeOnPress
-                style={[inputStyle, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}
-              >
-                <Text style={{ fontSize: 16 }}>{selectedCurrency?.flag}</Text>
-                <Text style={{ color: colors.text, fontSize: fontSizes.body, flex: 1, fontFamily: 'Inter_400Regular' }}>
-                  {currency}
-                </Text>
-              </AnimatedPressable>
-            </View>
-          </View>
-
-          {/* Preview price */}
-          {price > 0 && (
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', marginTop: -14 }}>
-              Shows as: {formatPrice(price, currency)}
-            </Text>
           )}
 
-          {/* Category + Condition */}
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={labelStyle}>Category</Text>
-              <AnimatedPressable
-                onPress={() => setSheet('category')}
-                fadeOnPress
-                style={[inputStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
-              >
-                <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular' }}>
-                  {category === 'All' ? 'Other' : category}
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>▾</Text>
-              </AnimatedPressable>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={labelStyle}>Condition</Text>
-              <AnimatedPressable
-                onPress={() => setSheet('condition')}
-                fadeOnPress
-                style={[inputStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
-              >
-                <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular' }}>
-                  {condition}
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>▾</Text>
-              </AnimatedPressable>
-            </View>
+          {/* The item */}
+          <View style={hairline} />
+          <Eyebrow style={{ marginBottom: 14 }}>The item</Eyebrow>
+
+          <TextInput
+            style={{
+              color: colors.text,
+              fontSize: 22,
+              fontFamily: 'Inter_600SemiBold',
+              letterSpacing: -0.3,
+              paddingVertical: 6,
+            }}
+            placeholder="What are you selling?"
+            placeholderTextColor={colors.textMuted}
+            value={title}
+            onChangeText={setTitle}
+            maxLength={120}
+            returnKeyType="next"
+          />
+          <TextInput
+            style={{
+              color: colors.textSecondary,
+              fontSize: 15,
+              lineHeight: 22,
+              fontFamily: 'Inter_400Regular',
+              minHeight: 66,
+              textAlignVertical: 'top',
+              paddingVertical: 6,
+              marginTop: 4,
+            }}
+            placeholder="Describe it — condition, size, what a buyer should know…"
+            placeholderTextColor={colors.textMuted}
+            value={description}
+            onChangeText={setDescription}
+            maxLength={2000}
+            multiline
+          />
+
+          {/* Price */}
+          <View style={hairline} />
+          <Eyebrow style={{ marginBottom: 14 }}>Price</Eyebrow>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+            <Text style={{ color: colors.accent, fontSize: 32, fontFamily: 'Fraunces_600SemiBold', marginRight: 6, marginBottom: 2 }}>
+              {getCurrencySymbol(currency)}
+            </Text>
+            <TextInput
+              style={{
+                flex: 1,
+                color: colors.text,
+                fontSize: 40,
+                fontFamily: 'Fraunces_600SemiBold',
+                letterSpacing: -1,
+                paddingVertical: 0,
+              }}
+              placeholder="0"
+              placeholderTextColor={colors.textMuted}
+              value={priceText}
+              onChangeText={t => setPriceText(t.replace(/[^0-9.,]/g, ''))}
+              keyboardType="decimal-pad"
+              returnKeyType="done"
+            />
+          </View>
+          {price > 0 && (
+            <Text style={{ color: colors.textMuted, fontSize: 12.5, marginTop: 4 }}>
+              Shows as {formatPrice(price, currency)}
+            </Text>
+          )}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 14 }}>
+            {CURRENCIES.map(c => (
+              <Chip key={c.code} label={`${c.symbol} ${c.code}`} active={currency === c.code} onPress={() => setCurrency(c.code)} />
+            ))}
+          </ScrollView>
+
+          {/* Category */}
+          <View style={hairline} />
+          <Eyebrow style={{ marginBottom: 12 }}>Category</Eyebrow>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {(LISTING_CATEGORIES.filter(c => c !== 'All') as ListingCategory[]).map(c => (
+              <Chip key={c} label={c} active={(category === 'All' ? 'Other' : category) === c} onPress={() => setCategory(c)} />
+            ))}
           </View>
 
-          {/* Location */}
-          <View>
-            <Text style={labelStyle}>Location (optional)</Text>
+          <Eyebrow style={{ marginTop: 22, marginBottom: 12 }}>Condition</Eyebrow>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {LISTING_CONDITIONS.map(c => (
+              <Chip key={c} label={c} active={condition === c} onPress={() => setCondition(c)} />
+            ))}
+          </View>
+
+          {/* Details */}
+          <View style={hairline} />
+          <Eyebrow style={{ marginBottom: 14 }}>Details</Eyebrow>
+          <View style={{ gap: 12 }}>
             <TextInput
-              style={inputStyle}
-              placeholder="City, neighbourhood, or 'Ships nationally'"
+              style={softField}
+              placeholder="Location — city, area, or 'Ships nationally'"
               placeholderTextColor={colors.textMuted}
               value={location}
               onChangeText={setLocation}
               maxLength={80}
               returnKeyType="next"
             />
-          </View>
-
-          {/* Fulfillment */}
-          <View>
-            <Text style={labelStyle}>How to get it (optional)</Text>
             <TextInput
-              style={inputStyle}
-              placeholder="Pickup only, can ship, deliver locally..."
+              style={softField}
+              placeholder="How to get it — pickup, shipping, local delivery…"
               placeholderTextColor={colors.textMuted}
               value={fulfillment}
               onChangeText={setFulfillment}
               maxLength={120}
               returnKeyType="next"
             />
-          </View>
-
-          {/* Tags */}
-          <View>
-            <Text style={labelStyle}>Tags (optional)</Text>
             <TextInput
-              style={inputStyle}
-              placeholder="vintage, leather, size-M — comma separated"
+              style={softField}
+              placeholder="Tags — vintage, leather, size-M (comma separated)"
               placeholderTextColor={colors.textMuted}
               value={tagsText}
               onChangeText={setTagsText}
@@ -436,36 +409,6 @@ export default function CreateListingScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Pickers */}
-      {sheet === 'currency' && (
-        <PickerSheet
-          options={CURRENCIES.map(c => c.code) as CurrencyCode[]}
-          selected={currency}
-          onSelect={setCurrency}
-          onClose={() => setSheet(null)}
-          renderOption={code => {
-            const c = CURRENCIES.find(x => x.code === code);
-            return c ? `${c.flag}  ${c.code} — ${c.label}` : code;
-          }}
-        />
-      )}
-      {sheet === 'category' && (
-        <PickerSheet
-          options={LISTING_CATEGORIES.filter(c => c !== 'All') as ListingCategory[]}
-          selected={category === 'All' ? 'Other' : category}
-          onSelect={setCategory}
-          onClose={() => setSheet(null)}
-        />
-      )}
-      {sheet === 'condition' && (
-        <PickerSheet
-          options={LISTING_CONDITIONS}
-          selected={condition}
-          onSelect={setCondition}
-          onClose={() => setSheet(null)}
-        />
-      )}
     </View>
   );
 }
