@@ -67,8 +67,30 @@ const APPS: MiniApp[] = [
   { id: 'video-player',  name: 'Video Player', description: 'Pick & play videos',      color: '#0EA5E9', route: '/mini-apps/video-player' },
 ];
 
-function AppIcon({ id, color }: { id: string; color: string }) {
-  const p = { color, size: 28, weight: 'duotone' as const };
+/** Darken a #RRGGBB color by a 0..1 factor. */
+function shade(hex: string, factor: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (c: number) => Math.max(0, Math.round(c * (1 - factor)));
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(f);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
+/** iOS-style icon plate: gradient rounded-square + white fill glyph. */
+function IconPlate({ id, color, size = 46 }: { id: string; color: string; size?: number }) {
+  return (
+    <LinearGradient
+      colors={[color, shade(color, 0.35)]}
+      start={{ x: 0.1, y: 0 }}
+      end={{ x: 0.9, y: 1 }}
+      style={{ width: size, height: size, borderRadius: size * 0.29, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <AppIcon id={id} color="#fff" size={Math.round(size * 0.52)} />
+    </LinearGradient>
+  );
+}
+
+function AppIcon({ id, color, size = 28 }: { id: string; color: string; size?: number }) {
+  const p = { color, size, weight: 'fill' as const };
   switch (id) {
     case 'calculator':    return <Calculator      {...p} />;
     case 'converter':     return <ArrowsLeftRight  {...p} />;
@@ -111,7 +133,7 @@ function AppCard({ app, index, width }: { app: MiniApp; index: number; width: nu
           />
           <View style={{ padding: 16 }}>
             <View style={{ marginBottom: 14 }}>
-              <AppIcon id={app.id} color={app.color} />
+              <IconPlate id={app.id} color={app.color} />
             </View>
             <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold', marginBottom: 3 }} numberOfLines={1}>
               {app.name}
