@@ -17,7 +17,7 @@ export async function loadNotes(): Promise<Note[]> {
   // Cloud copy wins when a newer device wrote it (cross-device sync);
   // otherwise fall through to the local collection.
   const remote = await pullMiniAppIfNewer('notes');
-  if (remote) {
+  if (Array.isArray(remote)) {
     await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(remote));
     return remote as Note[];
   }
