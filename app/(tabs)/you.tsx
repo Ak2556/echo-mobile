@@ -8,6 +8,7 @@ import {
   CaretRight,
   Compass,
   Gear,
+  SealCheck,
   PencilSimple,
   SignOut,
   Sparkle,
@@ -83,6 +84,7 @@ function ProfileCompletionBanner({
 const SETTINGS_ROWS: { key: string; Icon: React.ComponentType<any>; label: string; route: Href | null }[] = [
   { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
   ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' as Href }] : []),
+  { key: 'verify', Icon: SealCheck, label: 'Get verified', route: '/get-verified' },
 ];
 
 type ProfileColors = ReturnType<typeof useTheme>['colors'];
