@@ -12,10 +12,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { EnvelopeSimple } from 'phosphor-react-native';
+import { EnvelopeSimple, GoogleLogo } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
-import { refreshAuthSession, signInAsDemo } from '../../lib/auth';
+import { CANCELLED, refreshAuthSession, signInAsDemo, signInWithGoogle } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
 
 const ROTATING_PROMPTS = [
@@ -36,7 +36,23 @@ export default function LoginScreen() {
   const isDark = colors.isDark;
 
   const [demoLoading, setDemoLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [promptIdx, setPromptIdx] = useState(0);
+
+  const handleGoogle = async () => {
+    if (googleLoading) return;
+    setGoogleLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setGoogleLoading(false);
+      if (error !== CANCELLED) showToast(error, 'Error');
+      return;
+    }
+    const status = await refreshAuthSession();
+    setGoogleLoading(false);
+    if (status === 'ready') router.replace('/(tabs)/home');
+    else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
+  };
 
   const handleDemo = async () => {
     if (demoLoading) return;
@@ -136,8 +152,23 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          <View style={{ gap: 16 }}>
-            <Animated.View entering={FadeInDown.delay(120).duration(360).springify().mass(0.7)}>
+          <View style={{ gap: 14 }}>
+            <Animated.View entering={FadeInDown.delay(100).duration(360).springify().mass(0.7)}>
+              <PrimaryButton
+                icon={googleLoading
+                  ? null
+                  : <GoogleLogo color={isDark ? '#0C0B09' : '#fff'} size={20} weight="bold" />}
+                label={googleLoading ? 'Signing in…' : 'Continue with Google'}
+                onPress={handleGoogle}
+                bg={isDark ? '#FFFFFF' : '#0C0B09'}
+                fg={isDark ? '#0C0B09' : '#fff'}
+                radius={radius.lg}
+                font={font.bodyBold}
+                glow={false}
+              />
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(160).duration(360).springify().mass(0.7)}>
               <PrimaryButton
                 icon={<EnvelopeSimple color="#fff" size={20} weight="bold" />}
                 label="Continue with email"
@@ -195,19 +226,19 @@ export default function LoginScreen() {
 }
 
 function PrimaryButton({
-  icon, label, onPress, bg, fg, radius, font,
+  icon, label, onPress, bg, fg, radius, font, glow = true,
 }: {
   icon: React.ReactNode; label: string; onPress: () => void;
-  bg: string; fg: string; radius: number; font: object;
+  bg: string; fg: string; radius: number; font: object; glow?: boolean;
 }) {
   return (
     <View style={{
       backgroundColor: bg,
       borderRadius: radius,
       shadowColor: bg,
-      shadowOpacity: 0.55,
-      shadowRadius: 24,
-      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: glow ? 0.55 : 0.18,
+      shadowRadius: glow ? 24 : 10,
+      shadowOffset: { width: 0, height: glow ? 12 : 4 },
     }}>
       <Pressable
         onPress={onPress}

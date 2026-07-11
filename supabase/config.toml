@@ -244,6 +244,13 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# Sign-in code email (signInWithOtp uses the magic_link template). The default
+# Supabase template sends only a tappable link — the app expects a typed
+# 6-digit code, so the template must render {{ .Token }}.
+[auth.email.template.magic_link]
+subject = "Your Echo sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true
