@@ -22,6 +22,10 @@ export interface Habit {
   completedDates: string[];
   /** check-in details keyed by date; absent for pre-upgrade completions */
   log?: HabitCheckIn[];
+  /** target completions per week, 1–7; absent = daily (7) */
+  weeklyGoal?: number;
+  /** daily reminder time; scheduled notification ids live per-device */
+  reminder?: { hour: number; minute: number } | null;
   createdAt: string;
 }
 
@@ -62,6 +66,8 @@ export async function loadHabits(): Promise<Habit[]> {
       color: normalizeColor(habit.color),
       completedDates: Array.isArray(habit.completedDates) ? habit.completedDates : [],
       log: Array.isArray(habit.log) ? habit.log : [],
+      weeklyGoal: Number(habit.weeklyGoal) >= 1 && Number(habit.weeklyGoal) <= 7 ? Number(habit.weeklyGoal) : undefined,
+      reminder: habit.reminder && Number.isFinite(habit.reminder.hour) ? { hour: Number(habit.reminder.hour), minute: Number(habit.reminder.minute) || 0 } : undefined,
       createdAt: String(habit.createdAt ?? new Date().toISOString()),
     }));
   } catch {
@@ -138,6 +144,15 @@ export async function setCheckInDetails(
 
 export function formatCheckInTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+/** Completions in the current Monday-based week. */
+export function thisWeekCount(completedDates: string[]): number {
+  const now = new Date();
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  const start = monday.toISOString().slice(0, 10);
+  return completedDates.filter(d => d >= start).length;
 }
 
 export function findHabit(habits: Habit[], input: { id?: string; name?: string }): Habit | undefined {

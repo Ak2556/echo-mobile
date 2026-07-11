@@ -8,6 +8,7 @@ export interface Note {
   title: string;
   body: string;
   color: string;
+  pinned?: boolean;
   updatedAt: string;
 }
 
@@ -93,7 +94,9 @@ export function formatNoteResult(action: 'create' | 'update', note: Note): strin
 function sortNotes(notes: Note[]): Note[] {
   return notes
     .slice()
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    .sort((a, b) =>
+      Number(!!b.pinned) - Number(!!a.pinned) ||
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
 function titleFromBody(body?: string): string {
