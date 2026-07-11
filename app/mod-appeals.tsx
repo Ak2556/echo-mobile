@@ -3,7 +3,7 @@ import { View, Text, ScrollView, ActivityIndicator, TextInput, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Clock, Scales, CheckCircle, XCircle, Warning } from 'phosphor-react-native';
+import { ArrowLeft, Clock, Scales, CheckCircle, XCircle, Warning, SealCheck } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/theme';
@@ -191,6 +191,14 @@ export default function ModAppealsScreen() {
             DSA Art. 20 · 14-day SLA
           </Text>
         </View>
+        <AnimatedPressable
+          onPress={() => router.push('/mod-verifications' as any)}
+          scaleValue={0.9} haptic="light"
+          style={{ padding: 6, marginRight: 8 }}
+          accessibilityLabel="Verification queue"
+        >
+          <SealCheck color={colors.accent} size={20} weight="fill" />
+        </AnimatedPressable>
         {!loading && (
           <View style={{
             paddingHorizontal: 10, paddingVertical: 4,
