@@ -1,0 +1,17 @@
+<!-- Sign-in code email. Sent for signInWithOtp (the app's email flow). -->
+<!-- Code only, no ConfirmationURL: the app asks for the 6-digit code and the
+     link path is unsupported since the OTP migration. -->
+<div style="background:#FAF7F1;padding:40px 16px;">
+  <div style="max-width:440px;margin:0 auto;background:#ffffff;border-radius:16px;padding:40px 36px;font-family:Georgia,'Times New Roman',serif;color:#0C0B09;">
+    <div style="font-size:30px;font-weight:700;letter-spacing:-0.5px;">
+      echo<span style="color:#E06030;">.</span>
+    </div>
+    <p style="font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;color:#4A463F;margin:26px 0 8px;">
+      Here’s your sign-in code. It expires in one hour.
+    </p>
+    <div style="font-size:44px;font-weight:700;letter-spacing:10px;padding:18px 0 14px;color:#0C0B09;">{{ .Token }}</div>
+    <p style="font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:19px;color:#8A857C;margin:18px 0 0;">
+      Enter it in the Echo app to continue. If you didn’t request this, you can ignore this email — no one can sign in without the code.
+    </p>
+  </div>
+</div>

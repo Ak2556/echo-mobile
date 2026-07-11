@@ -7,7 +7,7 @@
  * Do NOT import from `lib/auth/store`, `lib/auth/listener`, etc. directly —
  * the public surface is just this barrel.
  *
- * Current providers: email OTP (6-digit code) and phone OTP.
+ * Current providers: email OTP (6-digit code), phone OTP, and Google OAuth.
  */
 
 import { supabase } from '../supabase';
@@ -21,6 +21,7 @@ export {
 } from './callback';
 export { sendEmailOtp, verifyEmailOtp, signInAsDemo } from './providers/email';
 export { sendPhoneOtp, verifyPhoneOtp } from './providers/phone';
+export { signInWithGoogle } from './providers/google';
 export type { AuthStatus, AuthState, AuthProfile, ProviderResult } from './types';
 export { CANCELLED } from './types';
 
