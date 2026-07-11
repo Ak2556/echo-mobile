@@ -1,7 +1,10 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "explicit",
-    "source.sortMembers": "explicit"
-  }
+  // Edge functions are Deno, not React Native. Scope the Deno language
+  // server to them so the regular TS server stops reporting false errors
+  // (Cannot find name 'Deno', URL imports) — requires the "Deno" extension
+  // (denoland.vscode-deno).
+  "deno.enable": true,
+  "deno.enablePaths": ["./supabase/functions"],
+  "deno.lint": true,
+  "deno.unstable": false
 }
