@@ -1,0 +1,878 @@
+import React, { useCallback, useState } from 'react';
+import {
+  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, ScrollView,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useFocusEffect } from 'expo-router';
+import Svg, { Circle, Polyline } from 'react-native-svg';
+import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus } from 'phosphor-react-native';
+import { GlassPanel } from '../../components/ui/GlassPanel';
+import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { ExerciseDemo } from '../../components/mini-apps/ExerciseDemo';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { useTheme } from '../../lib/theme';
+import { showToast } from '../../components/ui/Toast';
+import {
+  FitnessDoc, Meal, MealKind, MEAL_KINDS, Workout, WorkoutExercise, WeightEntry,
+  MeasurementEntry, MEASUREMENT_FIELDS,
+  loadFitness, saveFitness, todayMealTotals, todayWaterMl, workoutVolume, isSameDay,
+  liftHistory, est1RM, weeklySummaries, monthlySummaries,
+} from '../../lib/fitness';
+import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
+import { FoodItem, searchFoods } from '../../lib/foodDatabase';
+
+const TEAL = '#14B8A6';
+type Tab = 'meals' | 'workouts' | 'progress' | 'library';
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'meals', label: 'Meals' },
+  { key: 'workouts', label: 'Workouts' },
+  { key: 'progress', label: 'Progress' },
+  { key: 'library', label: 'Library' },
+];
+
+function num(v: string): number {
+  const n = parseFloat(v.replace(/,/g, ''));
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+function SheetHeader({ title, onClose }: { title: string; onClose: () => void }) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+      <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{title}</Text>
+      <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
+    </View>
+  );
+}
+
+function Field({ label, value, onChange, placeholder, keyboard = 'default', flex = 1, autoFocus }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string;
+  keyboard?: 'default' | 'decimal-pad'; flex?: number; autoFocus?: boolean;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex }}>
+      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{label}</Text>
+      <TextInput
+        value={value} onChangeText={onChange} placeholder={placeholder} autoFocus={autoFocus}
+        placeholderTextColor={colors.textMuted} keyboardType={keyboard}
+        style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12 }}
+      />
+    </View>
+  );
+}
+
+function SubmitBtn({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <AnimatedPressable onPress={onPress} scaleValue={0.96} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: TEAL, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{label}</Text>
+    </AnimatedPressable>
+  );
+}
+
+// ── Add meal ─────────────────────────────────────────────────────────────────
+
+function AddMealModal({ onAdd, onClose }: { onAdd: (m: Meal) => void; onClose: () => void }) {
+  const { colors } = useTheme();
+  const [name, setName] = useState('');
+  const [kind, setKind] = useState<MealKind>('breakfast');
+  const [calories, setCalories] = useState('');
+  const [protein, setProtein] = useState('');
+  const [carbs, setCarbs] = useState('');
+  const [fat, setFat] = useState('');
+  const [search, setSearch] = useState('');
+  const [picked, setPicked] = useState<FoodItem | null>(null);
+  const [qty, setQty] = useState(1);
+  const results = picked ? [] : searchFoods(search);
+
+  const applyFood = (food: FoodItem, q: number) => {
+    setPicked(food);
+    setQty(q);
+    setSearch('');
+    setName(q === 1 ? food.name : `${food.name} ×${q}`);
+    setCalories(String(Math.round(food.calories * q)));
+    setProtein(String(Math.round(food.protein * q * 10) / 10));
+    setCarbs(String(Math.round(food.carbs * q * 10) / 10));
+    setFat(String(Math.round(food.fat * q * 10) / 10));
+  };
+
+  const submit = () => {
+    if (!name.trim()) { showToast('Name the meal', 'Required'); return; }
+    const cal = num(calories);
+    if (cal <= 0) { showToast('Enter calories', 'Required'); return; }
+    onAdd({
+      id: Date.now().toString(), name: name.trim(), kind, calories: cal,
+      protein: num(protein), carbs: num(carbs), fat: num(fat), date: new Date().toISOString(),
+    });
+    onClose();
+  };
+
+  return (
+    <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <SheetHeader title="Log Meal" onClose={onClose} />
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 20 }} keyboardShouldPersistTaps="handled">
+          {/* Food database search */}
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>FOOD DATABASE</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 12 }}>
+              <MagnifyingGlass color={colors.textMuted} size={16} />
+              <TextInput
+                value={search}
+                onChangeText={t => { setSearch(t); if (picked) setPicked(null); }}
+                placeholder="Search roti, dal, chicken, oats…"
+                placeholderTextColor={colors.textMuted}
+                autoFocus
+                style={{ flex: 1, color: colors.text, fontSize: 15, paddingHorizontal: 10, paddingVertical: 12 }}
+              />
+            </View>
+            {results.map(food => (
+              <Pressable key={food.id} onPress={() => applyFood(food, 1)}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }}>{food.name}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{food.serving} · P {food.protein}g · C {food.carbs}g · F {food.fat}g</Text>
+                  </View>
+                  <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800' }}>{food.calories} kcal</Text>
+                </View>
+              </Pressable>
+            ))}
+            {picked && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: TEAL + '12', borderRadius: 14, borderWidth: 1, borderColor: TEAL + '33', padding: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '700' }}>{picked.name}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{qty} × {picked.serving}</Text>
+                </View>
+                <AnimatedPressable onPress={() => applyFood(picked, Math.max(0.5, qty - 0.5))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)', borderRadius: 10, padding: 8 }}>
+                  <Minus color={colors.text} size={14} weight="bold" />
+                </AnimatedPressable>
+                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginHorizontal: 12, fontVariant: ['tabular-nums'] }}>{qty}</Text>
+                <AnimatedPressable onPress={() => applyFood(picked, qty + 0.5)} scaleValue={0.85} haptic="light" style={{ backgroundColor: TEAL, borderRadius: 10, padding: 8 }}>
+                  <Plus color="#fff" size={14} weight="bold" />
+                </AnimatedPressable>
+              </View>
+            )}
+          </View>
+
+          <Field label="MEAL" value={name} onChange={setName} placeholder="e.g. Paneer wrap, Oats + banana" />
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }}>WHEN</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {MEAL_KINDS.map(k => (
+                <Pressable key={k.kind} onPress={() => setKind(k.kind)} style={{ flex: 1 }}>
+                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: kind === k.kind ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: kind === k.kind ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: kind === k.kind ? '#fff' : colors.text, fontWeight: '700', fontSize: 12 }}>{k.label}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          <Field label="CALORIES (kcal)" value={calories} onChange={setCalories} placeholder="450" keyboard="decimal-pad" />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Field label="PROTEIN (g)" value={protein} onChange={setProtein} placeholder="0" keyboard="decimal-pad" />
+            <Field label="CARBS (g)" value={carbs} onChange={setCarbs} placeholder="0" keyboard="decimal-pad" />
+            <Field label="FAT (g)" value={fat} onChange={setFat} placeholder="0" keyboard="decimal-pad" />
+          </View>
+          <SubmitBtn label="Log Meal" onPress={submit} />
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+// ── Edit goals ───────────────────────────────────────────────────────────────
+
+function GoalsModal({ doc, onSave, onClose }: { doc: FitnessDoc; onSave: (goals: FitnessDoc['goals']) => void; onClose: () => void }) {
+  const { colors } = useTheme();
+  const [cal, setCal] = useState(String(doc.goals.calories));
+  const [protein, setProtein] = useState(String(doc.goals.protein));
+  const [carbs, setCarbs] = useState(String(doc.goals.carbs));
+  const [fat, setFat] = useState(String(doc.goals.fat));
+  const [water, setWater] = useState(String(doc.goals.waterMl));
+  const submit = () => {
+    const goals = { calories: num(cal), protein: num(protein), carbs: num(carbs), fat: num(fat), waterMl: num(water) };
+    if (Object.values(goals).some(v => v <= 0)) { showToast('Enter valid goals', 'Required'); return; }
+    onSave(goals); onClose();
+  };
+  return (
+    <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <SheetHeader title="Daily Targets" onClose={onClose} />
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 20 }} keyboardShouldPersistTaps="handled">
+          <Field label="CALORIES (kcal / day)" value={cal} onChange={setCal} keyboard="decimal-pad" autoFocus />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Field label="PROTEIN (g)" value={protein} onChange={setProtein} keyboard="decimal-pad" />
+            <Field label="CARBS (g)" value={carbs} onChange={setCarbs} keyboard="decimal-pad" />
+            <Field label="FAT (g)" value={fat} onChange={setFat} keyboard="decimal-pad" />
+          </View>
+          <Field label="WATER (ml / day)" value={water} onChange={setWater} keyboard="decimal-pad" />
+          <SubmitBtn label="Save Targets" onPress={submit} />
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+// ── Add workout ──────────────────────────────────────────────────────────────
+
+interface DraftExercise { name: string; sets: string; reps: string; weight: string }
+const emptyDraft = (): DraftExercise => ({ name: '', sets: '3', reps: '10', weight: '' });
+
+function AddWorkoutModal({ onAdd, onClose }: { onAdd: (w: Workout) => void; onClose: () => void }) {
+  const { colors } = useTheme();
+  const [title, setTitle] = useState('');
+  const [rows, setRows] = useState<DraftExercise[]>([emptyDraft()]);
+  const [suggestFor, setSuggestFor] = useState<number | null>(null);
+
+  const setRow = (i: number, patch: Partial<DraftExercise>) =>
+    setRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+
+  const suggestions = suggestFor != null ? searchExercises(rows[suggestFor]?.name ?? '') : [];
+
+  const submit = () => {
+    const exercises: WorkoutExercise[] = rows
+      .filter(r => r.name.trim())
+      .map(r => ({ name: r.name.trim(), sets: Math.max(1, Math.round(num(r.sets))), reps: Math.max(1, Math.round(num(r.reps))), weight: num(r.weight) }));
+    if (exercises.length === 0) { showToast('Add at least one exercise', 'Required'); return; }
+    onAdd({ id: Date.now().toString(), title: title.trim() || 'Workout', exercises, date: new Date().toISOString() });
+    onClose();
+  };
+
+  return (
+    <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <SheetHeader title="Log Workout" onClose={onClose} />
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
+          <Field label="SESSION" value={title} onChange={setTitle} placeholder="e.g. Push day, Legs" autoFocus />
+          {rows.map((row, i) => (
+            <GlassPanel key={i} variant="light" borderRadius={16} contentStyle={{ padding: 14, gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{`EXERCISE ${i + 1}`}</Text>
+                  <TextInput
+                    value={row.name}
+                    onChangeText={v => { setRow(i, { name: v }); setSuggestFor(i); }}
+                    onFocus={() => setSuggestFor(i)}
+                    placeholder="Search 100+ exercises…"
+                    placeholderTextColor={colors.textMuted}
+                    style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12 }}
+                  />
+                </View>
+                {rows.length > 1 && (
+                  <AnimatedPressable onPress={() => setRows(rows.filter((_, j) => j !== i))} scaleValue={0.85} haptic="light" style={{ paddingBottom: 12 }}>
+                    <Trash color={colors.textMuted} size={17} />
+                  </AnimatedPressable>
+                )}
+              </View>
+              {suggestFor === i && suggestions.length > 0 && !suggestions.some(s => s.name === row.name) && (
+                <View>
+                  {suggestions.map(s => (
+                    <Pressable key={s.id} onPress={() => { setRow(i, { name: s.name }); setSuggestFor(null); }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', flex: 1 }}>{s.name}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 11.5 }}>{s.muscle} · {s.equipment}</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Field label="SETS" value={row.sets} onChange={v => setRow(i, { sets: v })} keyboard="decimal-pad" />
+                <Field label="REPS" value={row.reps} onChange={v => setRow(i, { reps: v })} keyboard="decimal-pad" />
+                <Field label="KG" value={row.weight} onChange={v => setRow(i, { weight: v })} placeholder="0 = body" keyboard="decimal-pad" />
+              </View>
+            </GlassPanel>
+          ))}
+          <Pressable onPress={() => setRows([...rows, emptyDraft()])}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: TEAL + '55', borderStyle: 'dashed' }}>
+              <Plus color={TEAL} size={15} weight="bold" />
+              <Text style={{ color: TEAL, fontWeight: '700', fontSize: 14 }}>Add exercise</Text>
+            </View>
+          </Pressable>
+          <SubmitBtn label="Save Workout" onPress={submit} />
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+// ── Measurements ─────────────────────────────────────────────────────────────
+
+function MeasurementModal({ latest, onAdd, onClose }: {
+  latest: MeasurementEntry | undefined; onAdd: (m: MeasurementEntry) => void; onClose: () => void;
+}) {
+  const { colors } = useTheme();
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(MEASUREMENT_FIELDS.map(f => [f.key, latest?.[f.key] ? String(latest[f.key]) : ''])),
+  );
+
+  const submit = () => {
+    const entry: MeasurementEntry = { id: Date.now().toString(), date: new Date().toISOString() };
+    let any = false;
+    for (const f of MEASUREMENT_FIELDS) {
+      const v = num(values[f.key]);
+      if (v > 0) { entry[f.key] = v; any = true; }
+    }
+    if (!any) { showToast('Enter at least one measurement', 'Required'); return; }
+    onAdd(entry);
+    onClose();
+  };
+
+  return (
+    <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <SheetHeader title="Body Measurements" onClose={onClose} />
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
+          <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 20 }}>
+            All in centimetres. Fill only what you measured — the rest carries over on the trend.
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {MEASUREMENT_FIELDS.map(f => (
+              <View key={f.key} style={{ width: '47%', flexGrow: 1 }}>
+                <Field
+                  label={`${f.label.toUpperCase()} (cm)`}
+                  value={values[f.key]}
+                  onChange={v => setValues({ ...values, [f.key]: v })}
+                  keyboard="decimal-pad"
+                  placeholder="—"
+                />
+              </View>
+            ))}
+          </View>
+          <SubmitBtn label="Save Measurements" onPress={submit} />
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+// ── Progress chart ───────────────────────────────────────────────────────────
+
+function WeightChart({ entries, colors }: { entries: WeightEntry[]; colors: any }) {
+  const W = 300; const H = 120; const PADX = 10; const PADY = 14;
+  const pts = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-20);
+  if (pts.length < 2) return null;
+  const kgs = pts.map(p => p.kg);
+  const min = Math.min(...kgs); const max = Math.max(...kgs);
+  const span = Math.max(max - min, 0.5);
+  const x = (i: number) => PADX + (i / (pts.length - 1)) * (W - PADX * 2);
+  const y = (kg: number) => PADY + (1 - (kg - min) / span) * (H - PADY * 2);
+  const points = pts.map((p, i) => `${x(i)},${y(p.kg)}`).join(' ');
+  return (
+    <View>
+      <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
+        <Polyline points={points} fill="none" stroke={TEAL} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+        {pts.map((p, i) => (
+          <Circle key={p.id} cx={x(i)} cy={y(p.kg)} r={i === pts.length - 1 ? 4.5 : 2.5} fill={i === pts.length - 1 ? TEAL : colors.textMuted} />
+        ))}
+      </Svg>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Text style={{ color: colors.textMuted, fontSize: 11 }}>{min.toFixed(1)} kg</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11 }}>{max.toFixed(1)} kg</Text>
+      </View>
+    </View>
+  );
+}
+
+// ── Screen ───────────────────────────────────────────────────────────────────
+
+export default function FitnessApp() {
+  const { colors } = useTheme();
+  const [doc, setDoc] = useState<FitnessDoc | null>(null);
+  const [tab, setTab] = useState<Tab>('meals');
+  const [showAddMeal, setShowAddMeal] = useState(false);
+  const [showAddWorkout, setShowAddWorkout] = useState(false);
+  const [showGoals, setShowGoals] = useState(false);
+  const [weightInput, setWeightInput] = useState('');
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [showMeasure, setShowMeasure] = useState(false);
+  const [libQuery, setLibQuery] = useState('');
+  const [libGroup, setLibGroup] = useState<MuscleGroup | 'All'>('All');
+
+  useFocusEffect(useCallback(() => { loadFitness().then(setDoc); }, []));
+
+  const update = (next: FitnessDoc) => { setDoc(next); saveFitness(next); };
+
+  const removeItem = (label: string, apply: () => FitnessDoc) => {
+    Alert.alert(`Delete ${label}?`, undefined, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => update(apply()) },
+    ]);
+  };
+
+  const AddBtn = (tab === 'meals' || tab === 'workouts') ? (
+    <AnimatedPressable
+      onPress={() => (tab === 'meals' ? setShowAddMeal(true) : setShowAddWorkout(true))}
+      scaleValue={0.88} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 12, padding: 10 }}
+    >
+      <Plus color="#fff" size={18} weight="bold" />
+    </AnimatedPressable>
+  ) : undefined;
+
+  if (!doc) return <MiniAppShell title="Fitness" subtitle="Meals · workouts · progress"><View /></MiniAppShell>;
+
+  const totals = todayMealTotals(doc.meals);
+  const calPct = Math.min(100, Math.round((totals.calories / doc.goals.calories) * 100));
+  const waterToday = todayWaterMl(doc.water);
+
+  const addWater = (ml: number) => {
+    update({ ...doc, water: [{ id: Date.now().toString(), ml, date: new Date().toISOString() }, ...doc.water] });
+  };
+  const undoWater = () => {
+    const idx = doc.water.findIndex(w => isSameDay(w.date));
+    if (idx < 0) return;
+    update({ ...doc, water: doc.water.filter((_, i) => i !== idx) });
+  };
+  const weekWorkouts = doc.workouts.filter(w => Date.now() - new Date(w.date).getTime() < 7 * 86400000);
+  const sortedWeights = [...doc.weights].sort((a, b) => b.date.localeCompare(a.date));
+  const latestWeight = sortedWeights[0];
+  const firstWeight = sortedWeights[sortedWeights.length - 1];
+  const delta = latestWeight && firstWeight ? latestWeight.kg - firstWeight.kg : 0;
+
+  const sortedMeasures = [...doc.measurements].sort((a, b) => b.date.localeCompare(a.date));
+  const latestMeasure = sortedMeasures[0];
+  const prevMeasure = sortedMeasures[1];
+  const liftMap = liftHistory(doc.workouts);
+  const lifts = [...liftMap.values()].slice(0, 8);
+  const weekly = weeklySummaries(doc, 4);
+  const monthly = monthlySummaries(doc, 2);
+  const libraryList = EXERCISE_CATALOG.filter(e =>
+    (libGroup === 'All' || e.muscle === libGroup) &&
+    (!libQuery.trim() || e.name.toLowerCase().includes(libQuery.trim().toLowerCase())),
+  );
+
+  const logWeight = () => {
+    const kg = num(weightInput);
+    if (kg <= 0 || kg > 400) { showToast('Enter a valid weight', 'Required'); return; }
+    update({ ...doc, weights: [{ id: Date.now().toString(), kg, date: new Date().toISOString() }, ...doc.weights] });
+    setWeightInput('');
+    showToast(`${kg.toFixed(1)} kg logged`, 'Saved');
+  };
+
+  return (
+    <MiniAppShell title="Fitness" subtitle="Meals · workouts · progress" headerRight={AddBtn}>
+      {/* Tabs */}
+      <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
+        {TABS.map(t => (
+          <Pressable key={t.key} onPress={() => setTab(t.key)} style={{ flex: 1 }}>
+            <View style={{ paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: tab === t.key ? TEAL : 'transparent' }}>
+              <Text style={{ color: tab === t.key ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{t.label}</Text>
+            </View>
+          </Pressable>
+        ))}
+      </GlassPanel>
+
+      {/* ── Meals ── */}
+      {tab === 'meals' && (
+        <>
+          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>Today</Text>
+                <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+                  {Math.round(totals.calories)}
+                  <Text style={{ color: colors.textMuted, fontSize: 17 }}> / {doc.goals.calories} kcal</Text>
+                </Text>
+              </View>
+              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" style={{ padding: 6 }}>
+                <PencilSimple color={colors.textMuted} size={17} />
+              </AnimatedPressable>
+            </View>
+            <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden', marginTop: 12 }}>
+              <View style={{ height: '100%', width: `${calPct}%`, backgroundColor: totals.calories > doc.goals.calories ? '#EF4444' : TEAL, borderRadius: 4 }} />
+            </View>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+              {[
+                { label: 'Protein', value: `${Math.round(totals.protein)}g`, sub: `of ${doc.goals.protein}g` },
+                { label: 'Carbs', value: `${Math.round(totals.carbs)}g`, sub: `of ${doc.goals.carbs}g` },
+                { label: 'Fat', value: `${Math.round(totals.fat)}g`, sub: `of ${doc.goals.fat}g` },
+              ].map(m => (
+                <View key={m.label} style={{ flex: 1, backgroundColor: TEAL + '14', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: TEAL + '2A' }}>
+                  <Text style={{ color: TEAL, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{m.label.toUpperCase()}</Text>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 3 }}>{m.value}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 11 }}>{m.sub}</Text>
+                </View>
+              ))}
+            </View>
+          </GlassPanel>
+
+          {/* Water */}
+          <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Drop color="#38BDF8" size={26} weight="fill" />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
+                  {waterToday >= 1000 ? `${(waterToday / 1000).toFixed(1)} L` : `${waterToday} ml`}
+                  <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>  of {(doc.goals.waterMl / 1000).toFixed(1)} L</Text>
+                </Text>
+                <View style={{ height: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden', marginTop: 7 }}>
+                  <View style={{ height: '100%', width: `${Math.min(100, Math.round((waterToday / doc.goals.waterMl) * 100))}%`, backgroundColor: '#38BDF8', borderRadius: 3 }} />
+                </View>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+              {[{ label: '+250 ml', ml: 250 }, { label: '+500 ml', ml: 500 }, { label: '+1 L', ml: 1000 }].map(opt => (
+                <Pressable key={opt.ml} onPress={() => addWater(opt.ml)} style={{ flex: 1 }}>
+                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: '#38BDF818', borderWidth: 1, borderColor: '#38BDF833' }}>
+                    <Text style={{ color: '#38BDF8', fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{opt.label}</Text>
+                  </View>
+                </Pressable>
+              ))}
+              {waterToday > 0 && (
+                <Pressable onPress={undoWater}>
+                  <View style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                    <Text style={{ color: colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>Undo</Text>
+                  </View>
+                </Pressable>
+              )}
+            </View>
+          </GlassPanel>
+
+          {totals.meals.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: 48, gap: 12 }}>
+              <ForkKnife color={colors.glassBorder} size={44} weight="thin" />
+              <Text style={{ color: colors.textMuted, fontSize: 15 }}>Nothing logged today</Text>
+              <AnimatedPressable onPress={() => setShowAddMeal(true)} scaleValue={0.96} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 12 }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Log your first meal</Text>
+              </AnimatedPressable>
+            </View>
+          )}
+
+          {MEAL_KINDS.map(k => {
+            const meals = totals.meals.filter(m => m.kind === k.kind);
+            if (meals.length === 0) return null;
+            return (
+              <View key={k.kind} style={{ marginBottom: 14 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8 }}>{k.label}</Text>
+                {meals.map((m, i) => (
+                  <Animated.View key={m.id} entering={FadeInDown.delay(i * 40).duration(220)} style={{ marginBottom: 8 }}>
+                    <GlassPanel variant="medium" borderRadius={16} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{m.name}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+                          P {Math.round(m.protein)}g · C {Math.round(m.carbs)}g · F {Math.round(m.fat)}g
+                        </Text>
+                      </View>
+                      <Text style={{ color: TEAL, fontSize: 16, fontWeight: '800' }}>{Math.round(m.calories)} kcal</Text>
+                      <AnimatedPressable onPress={() => removeItem('meal', () => ({ ...doc, meals: doc.meals.filter(x => x.id !== m.id) }))} scaleValue={0.85} haptic="light">
+                        <Trash color={colors.textMuted} size={16} />
+                      </AnimatedPressable>
+                    </GlassPanel>
+                  </Animated.View>
+                ))}
+              </View>
+            );
+          })}
+        </>
+      )}
+
+      {/* ── Workouts ── */}
+      {tab === 'workouts' && (
+        <>
+          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20, flexDirection: 'row' }} style={{ marginBottom: 14 }} elevated>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>This week</Text>
+              <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+                {weekWorkouts.length}
+                <Text style={{ color: colors.textMuted, fontSize: 17 }}> session{weekWorkouts.length === 1 ? '' : 's'}</Text>
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+                {Math.round(weekWorkouts.reduce((s, w) => s + workoutVolume(w), 0)).toLocaleString()} kg total volume
+              </Text>
+            </View>
+            <Barbell color={TEAL} size={40} weight="fill" />
+          </GlassPanel>
+
+          {doc.workouts.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: 48, gap: 12 }}>
+              <Barbell color={colors.glassBorder} size={44} weight="thin" />
+              <Text style={{ color: colors.textMuted, fontSize: 15 }}>No workouts logged</Text>
+              <AnimatedPressable onPress={() => setShowAddWorkout(true)} scaleValue={0.96} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 12 }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Log your first workout</Text>
+              </AnimatedPressable>
+            </View>
+          )}
+
+          {doc.workouts.map((w, i) => (
+            <Animated.View key={w.id} entering={FadeInDown.delay(Math.min(i, 6) * 40).duration(220)} style={{ marginBottom: 10 }}>
+              <GlassPanel variant="medium" borderRadius={18} contentStyle={{ padding: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{w.title}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+                      {new Date(w.date).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {isSameDay(w.date) ? ' · Today' : ''}
+                    </Text>
+                  </View>
+                  <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800' }}>{Math.round(workoutVolume(w)).toLocaleString()} kg</Text>
+                  <AnimatedPressable onPress={() => removeItem('workout', () => ({ ...doc, workouts: doc.workouts.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light" style={{ marginLeft: 12 }}>
+                    <Trash color={colors.textMuted} size={16} />
+                  </AnimatedPressable>
+                </View>
+                {w.exercises.map((e, j) => (
+                  <View key={j} style={{ flexDirection: 'row', paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder }}>
+                    <Text style={{ color: colors.text, fontSize: 13.5, flex: 1 }}>{e.name}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 13, fontVariant: ['tabular-nums'] }}>
+                      {e.sets} × {e.reps}{e.weight > 0 ? ` @ ${e.weight} kg` : ''}
+                    </Text>
+                  </View>
+                ))}
+              </GlassPanel>
+            </Animated.View>
+          ))}
+        </>
+      )}
+
+      {/* ── Progress ── */}
+      {tab === 'progress' && (
+        <>
+          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>Body weight</Text>
+                <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+                  {latestWeight ? latestWeight.kg.toFixed(1) : '—'}
+                  <Text style={{ color: colors.textMuted, fontSize: 17 }}> kg</Text>
+                </Text>
+                {sortedWeights.length > 1 && (
+                  <Text style={{ color: delta <= 0 ? '#10B981' : '#F59E0B', fontSize: 13, fontWeight: '700', marginTop: 2 }}>
+                    {delta > 0 ? '+' : ''}{delta.toFixed(1)} kg since {new Date(firstWeight.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                  </Text>
+                )}
+              </View>
+              <TrendUp color={TEAL} size={36} weight="fill" />
+            </View>
+            {sortedWeights.length > 1 && (
+              <View style={{ marginTop: 16 }}>
+                <WeightChart entries={doc.weights} colors={colors} />
+              </View>
+            )}
+          </GlassPanel>
+
+          <GlassPanel variant="light" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }} style={{ marginBottom: 16 }}>
+            <TextInput
+              value={weightInput} onChangeText={setWeightInput} placeholder="Today's weight (kg)"
+              placeholderTextColor={colors.textMuted} keyboardType="decimal-pad"
+              style={{ flex: 1, color: colors.text, fontSize: 15, paddingHorizontal: 8, paddingVertical: 8 }}
+            />
+            <AnimatedPressable onPress={logWeight} scaleValue={0.92} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>Log</Text>
+            </AnimatedPressable>
+          </GlassPanel>
+
+          {sortedWeights.map(w => (
+            <View key={w.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', flex: 1 }}>{w.kg.toFixed(1)} kg</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13, marginRight: 14 }}>
+                {new Date(w.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+              </Text>
+              <AnimatedPressable onPress={() => removeItem('entry', () => ({ ...doc, weights: doc.weights.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light">
+                <Trash color={colors.textMuted} size={15} />
+              </AnimatedPressable>
+            </View>
+          ))}
+          {sortedWeights.length === 0 && (
+            <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', paddingVertical: 24 }}>
+              Log your weight to start the trend line.
+            </Text>
+          )}
+
+          {/* Body measurements */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 10 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>Measurements</Text>
+            <AnimatedPressable onPress={() => setShowMeasure(true)} scaleValue={0.9} haptic="light" style={{ backgroundColor: TEAL + '18', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 }}>
+              <Text style={{ color: TEAL, fontWeight: '700', fontSize: 12.5 }}>+ Log</Text>
+            </AnimatedPressable>
+          </View>
+          {latestMeasure ? (
+            <GlassPanel variant="light" borderRadius={18} contentStyle={{ flexDirection: 'row', flexWrap: 'wrap', padding: 14 }} style={{ marginBottom: 8 }}>
+              {MEASUREMENT_FIELDS.map(f => {
+                const cur = latestMeasure[f.key];
+                if (!cur) return null;
+                const prev = prevMeasure?.[f.key];
+                const d = prev ? cur - prev : 0;
+                return (
+                  <View key={f.key} style={{ width: '33%', paddingVertical: 8 }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{f.label.toUpperCase()}</Text>
+                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 2 }}>{cur} <Text style={{ fontSize: 12, color: colors.textMuted }}>cm</Text></Text>
+                    {prev && d !== 0 ? (
+                      <Text style={{ color: d < 0 ? '#10B981' : '#F59E0B', fontSize: 11.5, fontWeight: '700' }}>{d > 0 ? '+' : ''}{d.toFixed(1)}</Text>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </GlassPanel>
+          ) : (
+            <Text style={{ color: colors.textMuted, fontSize: 13.5, marginBottom: 8 }}>
+              Track chest, waist, hips, arms and thighs over time.
+            </Text>
+          )}
+
+          {/* Lift progress */}
+          {lifts.length > 0 && (
+            <>
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 24, marginBottom: 10 }}>Lifts</Text>
+              <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
+                {lifts.map(({ name, points }, i) => {
+                  const [latest, prev] = points;
+                  const cur1rm = est1RM(latest.weight, latest.reps);
+                  const prev1rm = prev ? est1RM(prev.weight, prev.reps) : null;
+                  const up = prev1rm != null && cur1rm > prev1rm + 0.1;
+                  const down = prev1rm != null && cur1rm < prev1rm - 0.1;
+                  return (
+                    <View key={name} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < lifts.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '700' }}>{name}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
+                          {latest.sets} × {latest.reps} @ {latest.weight} kg · est 1RM {Math.round(cur1rm)} kg
+                        </Text>
+                      </View>
+                      {up ? <TrendUp color="#10B981" size={18} weight="bold" /> : null}
+                      {down ? <TrendUp color="#F59E0B" size={18} weight="bold" style={{ transform: [{ scaleY: -1 }] }} /> : null}
+                      {!up && !down ? <Text style={{ color: colors.textMuted, fontSize: 12 }}>{points.length}×</Text> : null}
+                    </View>
+                  );
+                })}
+              </GlassPanel>
+            </>
+          )}
+
+          {/* Weekly + monthly logs */}
+          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 24, marginBottom: 10 }}>Weekly log</Text>
+          <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
+            {weekly.map((wk, i) => (
+              <View key={wk.label} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < weekly.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', flex: 1 }}>{wk.label}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12.5, fontVariant: ['tabular-nums'] }}>
+                  {wk.workouts} workout{wk.workouts === 1 ? '' : 's'} · {wk.volume.toLocaleString()} kg
+                  {wk.avgCalories ? ` · ${wk.avgCalories} kcal/day` : ''}
+                  {wk.waterPct ? ` · ${wk.waterPct}% water` : ''}
+                </Text>
+              </View>
+            ))}
+          </GlassPanel>
+
+          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 20, marginBottom: 10 }}>Monthly log</Text>
+          <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }}>
+            {monthly.map((mo, i) => (
+              <View key={mo.label} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < monthly.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', flex: 1 }}>{mo.label}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12.5, fontVariant: ['tabular-nums'] }}>
+                  {mo.workouts} workout{mo.workouts === 1 ? '' : 's'} · {mo.volume.toLocaleString()} kg
+                  {mo.avgCalories ? ` · ${mo.avgCalories} kcal/day` : ''}
+                </Text>
+              </View>
+            ))}
+          </GlassPanel>
+        </>
+      )}
+
+      {/* ── Library ── */}
+      {tab === 'library' && (
+        <>
+          <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginBottom: 12 }}>
+            {EXERCISE_CATALOG.length} exercises. Tap one for form cues — featured moves animate.
+          </Text>
+
+          <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }} style={{ marginBottom: 10 }}>
+            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <TextInput
+              value={libQuery} onChangeText={setLibQuery}
+              placeholder="Search exercises"
+              placeholderTextColor={colors.textMuted}
+              style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingHorizontal: 10, paddingVertical: 11 }}
+            />
+            {libQuery ? <Pressable onPress={() => setLibQuery('')} hitSlop={8}><X color={colors.textMuted} size={14} /></Pressable> : null}
+          </GlassPanel>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
+            {(['All', ...MUSCLE_GROUPS] as const).map(g => (
+              <Pressable key={g} onPress={() => setLibGroup(g)}>
+                <View style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: libGroup === g ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: StyleSheet.hairlineWidth, borderColor: libGroup === g ? 'transparent' : colors.glassBorder }}>
+                  <Text style={{ color: libGroup === g ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5 }}>{g}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {libraryList.map(item => {
+            const open = expanded === item.id;
+            const demo = item.demoId ? EXERCISES.find(e => e.id === item.demoId) : undefined;
+            const history = liftMap.get(item.name.toLowerCase());
+            const latest = history?.points[0];
+            return (
+              <View key={item.id} style={{ marginBottom: 8 }}>
+                <GlassPanel variant="medium" borderRadius={16} contentStyle={{ padding: 14 }} style={open ? { borderColor: TEAL + '55' } : undefined}>
+                  <Pressable onPress={() => setExpanded(open ? null : item.id)}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{item.name}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
+                          {item.muscle} · {item.equipment}
+                          {latest ? ` · last ${latest.weight} kg × ${latest.reps}` : ''}
+                        </Text>
+                      </View>
+                      {demo ? <Text style={{ color: TEAL, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.6, marginRight: 8 }}>DEMO</Text> : null}
+                      {open ? <CaretUp color={TEAL} size={16} weight="bold" /> : <CaretDown color={colors.textMuted} size={16} />}
+                    </View>
+                  </Pressable>
+                  {open && (
+                    <View style={{ marginTop: 12 }}>
+                      {demo ? (
+                        <>
+                          <View style={{ alignItems: 'center', backgroundColor: TEAL + '0E', borderRadius: 16, paddingVertical: 8 }}>
+                            <ExerciseDemo exercise={demo} color={TEAL} muted={colors.textMuted} />
+                          </View>
+                          <View style={{ marginTop: 12, gap: 7 }}>
+                            {demo.cues.map((cue, j) => (
+                              <View key={j} style={{ flexDirection: 'row', gap: 8 }}>
+                                <Text style={{ color: TEAL, fontSize: 13, fontWeight: '800' }}>{j + 1}</Text>
+                                <Text style={{ color: colors.text, fontSize: 13.5, lineHeight: 19, flex: 1 }}>{cue}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        </>
+                      ) : null}
+                      {history ? (
+                        <View style={{ marginTop: demo ? 12 : 0 }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>YOUR HISTORY</Text>
+                          {history.points.slice(0, 5).map((p, j) => (
+                            <View key={j} style={{ flexDirection: 'row', paddingVertical: 5 }}>
+                              <Text style={{ color: colors.textMuted, fontSize: 12.5, width: 74 }}>
+                                {new Date(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                              </Text>
+                              <Text style={{ color: colors.text, fontSize: 12.5, fontVariant: ['tabular-nums'] }}>
+                                {p.sets} × {p.reps} @ {p.weight} kg · est 1RM {Math.round(est1RM(p.weight, p.reps))} kg
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      ) : (
+                        !demo ? (
+                          <Text style={{ color: colors.textMuted, fontSize: 13 }}>
+                            Log it from the Workouts tab to start tracking sets, reps and weight.
+                          </Text>
+                        ) : null
+                      )}
+                    </View>
+                  )}
+                </GlassPanel>
+              </View>
+            );
+          })}
+          {libraryList.length === 0 && (
+            <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', paddingVertical: 24 }}>No exercises match.</Text>
+          )}
+        </>
+      )}
+
+      {showAddMeal && <AddMealModal onAdd={m => { update({ ...doc, meals: [m, ...doc.meals] }); showToast(`${m.name} logged`, 'Saved'); }} onClose={() => setShowAddMeal(false)} />}
+      {showAddWorkout && <AddWorkoutModal onAdd={w => { update({ ...doc, workouts: [w, ...doc.workouts] }); showToast(`${w.title} saved`, 'Saved'); }} onClose={() => setShowAddWorkout(false)} />}
+      {showGoals && <GoalsModal doc={doc} onSave={goals => { update({ ...doc, goals }); showToast('Targets updated', 'Saved'); }} onClose={() => setShowGoals(false)} />}
+      {showMeasure && <MeasurementModal latest={latestMeasure} onAdd={m => { update({ ...doc, measurements: [m, ...doc.measurements] }); showToast('Measurements logged', 'Saved'); }} onClose={() => setShowMeasure(false)} />}
+    </MiniAppShell>
+  );
+}

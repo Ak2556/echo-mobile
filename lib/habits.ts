@@ -3,12 +3,25 @@ import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 
 export const HABITS_KEY = 'mini:habits';
 
+/** One completed day: when it was checked off, plus optional evidence. */
+export interface HabitCheckIn {
+  /** YYYY-MM-DD — matches an entry in completedDates */
+  date: string;
+  /** full ISO timestamp of the moment it was checked off */
+  at: string;
+  note?: string;
+  /** local file URI — device-specific, other devices simply won't render it */
+  photoUri?: string;
+}
+
 export interface Habit {
   id: string;
   name: string;
   marker: string;
   color: string;
   completedDates: string[];
+  /** check-in details keyed by date; absent for pre-upgrade completions */
+  log?: HabitCheckIn[];
   createdAt: string;
 }
 
@@ -38,7 +51,7 @@ export function getStreak(completedDates: string[]): number {
 
 export async function loadHabits(): Promise<Habit[]> {
   const remote = await pullMiniAppIfNewer('habits');
-  if (remote) await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(remote));
+  if (Array.isArray(remote)) await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(remote));
   try {
     const parsed = JSON.parse((await AsyncStorage.getItem(HABITS_KEY)) ?? '[]');
     if (!Array.isArray(parsed)) return [];
@@ -48,6 +61,7 @@ export async function loadHabits(): Promise<Habit[]> {
       marker: normalizeMarker(habit.marker),
       color: normalizeColor(habit.color),
       completedDates: Array.isArray(habit.completedDates) ? habit.completedDates : [],
+      log: Array.isArray(habit.log) ? habit.log : [],
       createdAt: String(habit.createdAt ?? new Date().toISOString()),
     }));
   } catch {
@@ -93,9 +107,37 @@ export async function setHabitCompletion(input: {
   const dates = new Set(habit.completedDates);
   if (input.completed) dates.add(date);
   else dates.delete(date);
-  const updated = { ...habit, completedDates: [...dates].sort() };
+  const log = (habit.log ?? []).filter(entry => entry.date !== date);
+  if (input.completed) log.push({ date, at: new Date().toISOString() });
+  const updated = { ...habit, completedDates: [...dates].sort(), log };
   await saveHabits(habits.map(h => h.id === habit.id ? updated : h));
   return updated;
+}
+
+export function checkInFor(habit: Habit, date: string): HabitCheckIn | undefined {
+  return habit.log?.find(entry => entry.date === date);
+}
+
+/** Attach or update the note / photo proof on an existing check-in. */
+export async function setCheckInDetails(
+  habitId: string,
+  date: string,
+  details: { note?: string; photoUri?: string },
+): Promise<Habit> {
+  const habits = await loadHabits();
+  const habit = habits.find(h => h.id === habitId);
+  if (!habit) throw new Error('No matching habit found');
+  const log = [...(habit.log ?? [])];
+  const idx = log.findIndex(entry => entry.date === date);
+  if (idx >= 0) log[idx] = { ...log[idx], ...details };
+  else log.push({ date, at: new Date().toISOString(), ...details });
+  const updated = { ...habit, log };
+  await saveHabits(habits.map(h => h.id === habitId ? updated : h));
+  return updated;
+}
+
+export function formatCheckInTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 export function findHabit(habits: Habit[], input: { id?: string; name?: string }): Habit | undefined {

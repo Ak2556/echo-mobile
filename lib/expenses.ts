@@ -26,20 +26,50 @@ export const INCOME_CATS = [
   { label: 'Other', marker: 'OT' },
 ];
 
-export async function loadTransactions(): Promise<Transaction[]> {
+/**
+ * The synced document. Historically a bare Transaction[]; now an object so the
+ * monthly budget travels with it. Readers accept both shapes.
+ */
+export interface ExpensesDoc {
+  txs: Transaction[];
+  /** monthly spending budget; null = not set */
+  budget: number | null;
+}
+
+function coerceDoc(raw: unknown): ExpensesDoc {
+  if (Array.isArray(raw)) return { txs: raw as Transaction[], budget: null };
+  if (raw && typeof raw === 'object') {
+    const doc = raw as Partial<ExpensesDoc>;
+    return {
+      txs: Array.isArray(doc.txs) ? doc.txs : [],
+      budget: typeof doc.budget === 'number' && doc.budget > 0 ? doc.budget : null,
+    };
+  }
+  return { txs: [], budget: null };
+}
+
+export async function loadExpensesDoc(): Promise<ExpensesDoc> {
   const remote = await pullMiniAppIfNewer('expenses');
-  if (remote) await AsyncStorage.setItem(TX_KEY, JSON.stringify(remote));
+  if (remote) await AsyncStorage.setItem(TX_KEY, JSON.stringify(coerceDoc(remote)));
   try {
-    const parsed = JSON.parse((await AsyncStorage.getItem(TX_KEY)) ?? '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    return coerceDoc(JSON.parse((await AsyncStorage.getItem(TX_KEY)) ?? 'null'));
   } catch {
-    return [];
+    return { txs: [], budget: null };
   }
 }
 
+export async function saveExpensesDoc(doc: ExpensesDoc): Promise<void> {
+  await AsyncStorage.setItem(TX_KEY, JSON.stringify(doc));
+  pushMiniApp('expenses', doc);
+}
+
+export async function loadTransactions(): Promise<Transaction[]> {
+  return (await loadExpensesDoc()).txs;
+}
+
 export async function saveTransactions(txs: Transaction[]): Promise<void> {
-  await AsyncStorage.setItem(TX_KEY, JSON.stringify(txs));
-  pushMiniApp('expenses', txs);
+  const doc = await loadExpensesDoc();
+  await saveExpensesDoc({ ...doc, txs });
 }
 
 export async function logExpenseTransaction(input: {
@@ -100,6 +130,35 @@ export async function summarizeExpenses(input: {
 
 export function formatMoney(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/** 'YYYY-MM' bucket for a transaction date. */
+export function monthKey(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function monthLabel(key: string): string {
+  const [y, m] = key.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString([], { month: 'long', year: 'numeric' });
+}
+
+export function shiftMonth(key: string, delta: number): string {
+  const [y, m] = key.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function currentMonthKey(): string {
+  return monthKey(new Date().toISOString());
+}
+
+export function transactionsToCsv(txs: Transaction[]): string {
+  const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+  const rows = txs.map(tx =>
+    [tx.date.slice(0, 10), tx.type, esc(tx.category), tx.amount.toFixed(2), esc(tx.note)].join(','),
+  );
+  return ['date,type,category,amount,note', ...rows].join('\n');
 }
 
 export function formatDate(iso: string) {

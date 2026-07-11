@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { isSupabaseRemote } from './remoteConfig';
 
-export type MiniApp = 'notes' | 'habits' | 'expenses';
+export type MiniApp = 'notes' | 'habits' | 'expenses' | 'fitness';
 
 const stampKey = (app: MiniApp) => `mini:${app}:updatedAt`;
 
@@ -22,8 +22,8 @@ export async function setLocalStamp(app: MiniApp, iso: string): Promise<void> {
   try { await AsyncStorage.setItem(stampKey(app), iso); } catch {}
 }
 
-/** Fire-and-forget push of the full collection. Never throws. */
-export function pushMiniApp(app: MiniApp, data: unknown[]): void {
+/** Fire-and-forget push of the full document (array or object). Never throws. */
+export function pushMiniApp(app: MiniApp, data: unknown): void {
   void (async () => {
     try {
       if (!isSupabaseRemote()) return;
@@ -44,9 +44,10 @@ export function pushMiniApp(app: MiniApp, data: unknown[]): void {
 /**
  * Reconcile on load: if the cloud copy is newer than anything this device has
  * written, adopt it (and persist locally via the caller). Returns the winning
- * remote collection, or null when local wins / offline / signed out.
+ * remote document, or null when local wins / offline / signed out.
+ * Callers validate the shape (array vs object) themselves.
  */
-export async function pullMiniAppIfNewer(app: MiniApp): Promise<unknown[] | null> {
+export async function pullMiniAppIfNewer(app: MiniApp): Promise<unknown | null> {
   try {
     if (!isSupabaseRemote()) return null;
     const { data: session } = await supabase.auth.getSession();
@@ -62,7 +63,7 @@ export async function pullMiniAppIfNewer(app: MiniApp): Promise<unknown[] | null
     const local = await localStamp(app);
     if (local && local >= (row.updated_at as string)) return null;
     await setLocalStamp(app, row.updated_at as string);
-    return Array.isArray(row.data) ? (row.data as unknown[]) : null;
+    return row.data ?? null;
   } catch {
     return null;
   }
