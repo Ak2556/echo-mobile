@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 
 export const HABITS_KEY = 'mini:habits';
 
@@ -36,6 +37,8 @@ export function getStreak(completedDates: string[]): number {
 }
 
 export async function loadHabits(): Promise<Habit[]> {
+  const remote = await pullMiniAppIfNewer('habits');
+  if (remote) await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(remote));
   try {
     const parsed = JSON.parse((await AsyncStorage.getItem(HABITS_KEY)) ?? '[]');
     if (!Array.isArray(parsed)) return [];
@@ -54,6 +57,7 @@ export async function loadHabits(): Promise<Habit[]> {
 
 export async function saveHabits(habits: Habit[]): Promise<void> {
   await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
+  pushMiniApp('habits', habits);
 }
 
 export async function createHabit(input: {

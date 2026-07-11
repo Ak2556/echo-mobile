@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import * as Notifications from 'expo-notifications';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Play, Pause, ArrowCounterClockwise } from 'phosphor-react-native';
 import { useSharedValue, withTiming, Easing } from 'react-native-reanimated';
@@ -34,6 +35,34 @@ export default function PomodoroScreen() {
   useEffect(() => {
     progress.value = withTiming(seconds / totalSecs, { duration: 600, easing: Easing.out(Easing.ease) });
   }, [seconds, totalSecs, progress]);
+
+  // The JS interval dies when the app backgrounds — a scheduled local
+  // notification carries the "time's up" moment to the lock screen instead.
+  const notifIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const cancelScheduled = () => {
+      if (notifIdRef.current) {
+        void Notifications.cancelScheduledNotificationAsync(notifIdRef.current).catch(() => {});
+        notifIdRef.current = null;
+      }
+    };
+    if (running && seconds > 0) {
+      void Notifications.scheduleNotificationAsync({
+        content: {
+          title: mode === 'focus' ? 'Focus session complete' : 'Break over',
+          body: mode === 'focus'
+            ? `${modeData.minutes} minutes of focus done — take a break.`
+            : 'Back to it — start your next focus session.',
+          sound: true,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds },
+      }).then(id => { notifIdRef.current = id; }).catch(() => {});
+    } else {
+      cancelScheduled();
+    }
+    return cancelScheduled;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running]);
 
   useEffect(() => {
     if (running) {
