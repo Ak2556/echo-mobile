@@ -7,7 +7,6 @@ import {
   CalendarBlank,
   CaretRight,
   Compass,
-  FilmStrip,
   Gear,
   PencilSimple,
   SignOut,
@@ -83,7 +82,6 @@ function ProfileCompletionBanner({
 // the gear icon in the header. Apps stays gated behind feature flag.
 const SETTINGS_ROWS: { key: string; Icon: React.ComponentType<any>; label: string; route: Href | null }[] = [
   { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
-  { key: 'followers', Icon: FilmStrip, label: 'Followers', route: null },
   ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' as Href }] : []),
 ];
 
@@ -101,7 +99,6 @@ export default function ProfileScreen() {
     username,
     displayName,
     bio,
-    avatarColor,
     avatarUrl,
     profilePhotoVisible,
     publishedEchoes,
@@ -129,7 +126,9 @@ export default function ProfileScreen() {
 
   const followerCount = remoteBundle?.user?.followerCount ?? 0;
   const followingCount = remoteBundle?.user?.followingCount ?? 0;
-  const profileAccent = avatarColor || colors.accent;
+  // Own profile rings with the brand accent — stored avatarColors are
+  // legacy indigo defaults that fight the warm palette.
+  const profileAccent = colors.accent;
   const visibleAvatarUrl = profilePhotoVisible ? (avatarUrl || undefined) : undefined;
 
   const handlePressEcho = (item: FeedItem) => router.push(`/thread/${item.id}`);
@@ -260,6 +259,8 @@ export default function ProfileScreen() {
             <StatButton value={followingCount} label="Following" colors={colors} font={font} onPress={() => openFollowers('following')} />
           </View>
 
+          {/* Missing bio is handled by the completion banner below — a second
+              "Add a bio" affordance here just doubled the same action. */}
           {bio ? (
             <Text
               style={[font.body, styles.bioText, { color: colors.textSecondary }]}
@@ -267,30 +268,7 @@ export default function ProfileScreen() {
             >
               {bio}
             </Text>
-          ) : (
-            <Pressable
-              onPress={() => router.push('/edit-profile')}
-              accessibilityRole="button"
-              accessibilityLabel="Add a bio"
-              style={({ pressed }) => [
-                styles.addBioButton,
-                {
-                  backgroundColor: pressed ? colors.accentMuted : colors.glassLightFill,
-                  borderColor: colors.border,
-                  borderRadius: radius.md,
-                },
-              ]}
-            >
-              <PencilSimple color={colors.accent} size={16} />
-              <Text
-                style={[font.bodySemibold, styles.addBioText, { color: colors.accent }]}
-                numberOfLines={1}
-                maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-              >
-                Add a bio
-              </Text>
-            </Pressable>
-          )}
+          ) : null}
         </View>
 
         {showCompletionBanner && (
@@ -682,7 +660,7 @@ function SectionLabel({
     <View style={styles.sectionLabelRow}>
       {icon}
       <Text
-        style={[font.bodySemibold, styles.sectionLabel, { color: colors.textMuted }]}
+        style={[font.bodySemibold, styles.sectionLabel, { color: colors.textMuted, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 12 }]}
         numberOfLines={1}
         maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
       >

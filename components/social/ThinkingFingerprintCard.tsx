@@ -12,6 +12,20 @@ import { track } from '../../lib/analytics';
  * the user has enough signal for a meaningful read (the edge function returns
  * ready=false → hook data is null), so it never shows an empty shell.
  */
+
+/**
+ * Rewrites a third-person summary into second person for the owner's own
+ * profile, keeping sentence capitalization intact ("action. They are" →
+ * "action. You are" — the old inline replace produced lowercase "you" at
+ * sentence starts).
+ */
+function selfify(summary: string): string {
+  return summary
+    .replace(/\bthey\b/gi, 'you')
+    .replace(/\btheir\b/gi, 'your')
+    .replace(/(^|[.!?]\s+)(you|your)\b/g, (_m, pre, word) => pre + word[0].toUpperCase() + word.slice(1));
+}
+
 export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; isSelf?: boolean }) {
   const { colors, radius } = useTheme();
   const { data, isLoading } = useThinkingFingerprint(userId);
@@ -59,14 +73,14 @@ export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; is
       </View>
 
       {/* Archetype */}
-      <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', marginBottom: 8 }}>
+      <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, marginBottom: 8 }}>
         {data.archetype}
       </Text>
 
       {/* Summary */}
       {data.summary ? (
         <Text style={{ color: colors.textSecondary, fontSize: 14.5, lineHeight: 21, marginBottom: 14 }}>
-          {isSelf ? data.summary.replace(/\bthey\b/gi, 'you').replace(/\btheir\b/gi, 'your') : data.summary}
+          {isSelf ? selfify(data.summary) : data.summary}
         </Text>
       ) : null}
 
