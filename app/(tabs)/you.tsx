@@ -182,15 +182,13 @@ export default function ProfileScreen() {
               onPress={() => router.push('/edit-profile')}
               accessibilityRole="button"
               accessibilityLabel="Edit profile"
-              style={({ pressed }) => [
-                styles.editButton,
-                {
-                  borderColor: colors.border,
-                  backgroundColor: pressed ? colors.surfaceHover : colors.surface,
-                  borderRadius: radius.full,
-                },
-              ]}
             >
+              <View
+                style={[
+                  styles.editButton,
+                  { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.full },
+                ]}
+              >
               <PencilSimple color={colors.accent} size={15} weight="bold" />
               <Text
                 style={[font.bodySemibold, styles.editButtonText, { color: colors.text }]}
@@ -199,6 +197,7 @@ export default function ProfileScreen() {
               >
                 Edit
               </Text>
+              </View>
             </Pressable>
           </View>
         </View>
@@ -432,16 +431,15 @@ function IconButton({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [
-        styles.iconButton,
-        {
-          borderRadius: radius.full,
-          borderColor: colors.border,
-          backgroundColor: pressed ? colors.surfaceHover : colors.surface,
-        },
-      ]}
     >
-      {icon}
+      <View
+        style={[
+          styles.iconButton,
+          { borderRadius: radius.full, borderColor: colors.border, backgroundColor: colors.surface },
+        ]}
+      >
+        {icon}
+      </View>
     </Pressable>
   );
 }
