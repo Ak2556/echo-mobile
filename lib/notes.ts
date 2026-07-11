@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 
 export const NOTES_KEY = 'mini:notes';
 
@@ -13,6 +14,13 @@ export interface Note {
 export const NOTE_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899'];
 
 export async function loadNotes(): Promise<Note[]> {
+  // Cloud copy wins when a newer device wrote it (cross-device sync);
+  // otherwise fall through to the local collection.
+  const remote = await pullMiniAppIfNewer('notes');
+  if (remote) {
+    await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(remote));
+    return remote as Note[];
+  }
   try {
     const raw = await AsyncStorage.getItem(NOTES_KEY);
     const parsed = JSON.parse(raw ?? '[]');
@@ -23,7 +31,9 @@ export async function loadNotes(): Promise<Note[]> {
 }
 
 export async function saveNotes(notes: Note[]): Promise<void> {
-  await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(sortNotes(notes)));
+  const sorted = sortNotes(notes);
+  await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(sorted));
+  pushMiniApp('notes', sorted);
 }
 
 export async function createNote(input: {

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 
 export const TX_KEY = 'mini:expenses';
 export type TxType = 'income' | 'expense';
@@ -26,6 +27,8 @@ export const INCOME_CATS = [
 ];
 
 export async function loadTransactions(): Promise<Transaction[]> {
+  const remote = await pullMiniAppIfNewer('expenses');
+  if (remote) await AsyncStorage.setItem(TX_KEY, JSON.stringify(remote));
   try {
     const parsed = JSON.parse((await AsyncStorage.getItem(TX_KEY)) ?? '[]');
     return Array.isArray(parsed) ? parsed : [];
@@ -36,6 +39,7 @@ export async function loadTransactions(): Promise<Transaction[]> {
 
 export async function saveTransactions(txs: Transaction[]): Promise<void> {
   await AsyncStorage.setItem(TX_KEY, JSON.stringify(txs));
+  pushMiniApp('expenses', txs);
 }
 
 export async function logExpenseTransaction(input: {
