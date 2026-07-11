@@ -10,6 +10,7 @@ import {
   Key, Globe, BracketsCurly, FileText,
   Palette, Pulse,
   Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix, VideoCamera,
+  Barbell,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { getTodayProductivity, LocalProductivityApp, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
@@ -63,6 +64,7 @@ const APPS: MiniApp[] = [
   { id: 'notes',         name: 'Notes',        description: 'Quick notes & ideas',     color: '#F59E0B', route: '/mini-apps/notes' },
   { id: 'habits',        name: 'Habits',       description: 'Daily streaks & goals',   color: '#10B981', route: '/mini-apps/habits' },
   { id: 'expenses',      name: 'Expenses',     description: 'Income & budget log',     color: '#8B5CF6', route: '/mini-apps/expenses' },
+  { id: 'fitness',       name: 'Fitness',      description: 'Meals · workouts · form', color: '#14B8A6', route: '/mini-apps/fitness' },
   { id: 'dice',          name: 'Dice & Coin',  description: 'Roll dice, flip coins',   color: '#F97316', route: '/mini-apps/dice' },
   { id: 'video-player',  name: 'Video Player', description: 'Pick & play videos',      color: '#0EA5E9', route: '/mini-apps/video-player' },
 ];
@@ -107,6 +109,7 @@ function AppIcon({ id, color, size = 28 }: { id: string; color: string; size?: n
     case 'notes':         return <NotePencil       {...p} />;
     case 'habits':        return <CheckCircle      {...p} />;
     case 'expenses':      return <Wallet           {...p} />;
+    case 'fitness':       return <Barbell          {...p} />;
     case 'dice':          return <DiceSix          {...p} />;
     case 'video-player':  return <VideoCamera      {...p} />;
     default:              return <Calculator       {...p} />;
