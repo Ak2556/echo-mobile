@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
 import { ChatInput } from '../../components/ai/ChatInput';
@@ -20,7 +21,7 @@ import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/loc
 import { generateSessionTitle } from '../../lib/aiTitle';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple } from 'phosphor-react-native';
+import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Sparkle, Target, SquaresFour, NotePencil, ChartLineUp } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
 import { track } from '../../lib/analytics';
@@ -32,13 +33,15 @@ import { useRemoteConversations } from '../../hooks/queries/useDMs';
 import type { RemoteConversation } from '../../lib/supabaseEchoApi';
 import type { Conversation } from '../../types';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
+import { getTargetCategory } from '../../lib/targetCategories';
+import { miniAppById } from '../../lib/miniAppCatalog';
 
 // ─── DM colour token (teal, distinct from AI accent) ────────────────────────
 const DM_COLOR = '#0ea5e9';
 
 // ─── DMConversationCard ───────────────────────────────────────────────────────
 function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: () => void }) {
-  const { colors, fontSizes, isUserOnline } = useTheme();
+  const { colors, font, fontSizes, isUserOnline } = useTheme();
   function ago(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const m = Math.floor(diff / 60000);
@@ -57,12 +60,12 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
         width: '100%',
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        borderRadius: 14,
+        paddingHorizontal: 15,
+        paddingVertical: 14,
+        borderRadius: 18,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: colors.border,
-        backgroundColor: colors.isDark ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.025)',
+        backgroundColor: colors.surface,
         opacity: pressed ? 0.7 : 1,
       })}
     >
@@ -102,7 +105,8 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 }}>
           <Text style={{
             flexShrink: 1,
-            color: colors.text, fontWeight: hasUnread ? '700' : '600',
+            color: colors.text,
+            fontFamily: hasUnread ? 'Inter_700Bold' : 'Inter_600SemiBold',
             fontSize: fontSizes.body,
           }} numberOfLines={1}>
             {conv.displayName}
@@ -116,15 +120,51 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
         </View>
         <Text style={{
           color: hasUnread ? colors.textSecondary : colors.textMuted,
-          fontSize: fontSizes.small, fontWeight: hasUnread ? '500' : '400',
+          fontSize: fontSizes.small,
+          fontFamily: hasUnread ? 'Inter_500Medium' : 'Inter_400Regular',
         }} numberOfLines={1}>
           {conv.lastMessage || `@${conv.username}`}
         </Text>
       </View>
-      <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 10, flexShrink: 0 }}>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 10, flexShrink: 0 }]}>
         {ago(conv.lastMessageAt)}
       </Text>
     </Pressable>
+  );
+}
+
+function DMInboxHero({ count, onNew }: { count: number; onNew: () => void }) {
+  const { colors, font } = useTheme();
+  return (
+    <View style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, marginBottom: 14 }}>
+      <LinearGradient
+        colors={[`${DM_COLOR}3A`, `${DM_COLOR}10`, 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+      <View style={{ padding: 16, gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: `${DM_COLOR}20`, alignItems: 'center', justifyContent: 'center' }}>
+            <Envelope color={DM_COLOR} size={24} weight="fill" />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>Messages</Text>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 13, marginTop: 2 }]} numberOfLines={2}>
+              {count ? `${count} conversation${count === 1 ? '' : 's'} ready to continue.` : 'Start private chats from profiles or shared progress.'}
+            </Text>
+          </View>
+        </View>
+        <Pressable
+          onPress={onNew}
+          style={{ minHeight: 42, borderRadius: 15, backgroundColor: DM_COLOR, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}
+        >
+          <PencilSimple color="#fff" size={17} weight="bold" />
+          <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>Open full inbox</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
@@ -188,8 +228,9 @@ function DMInboxView({ topPad }: { topPad: number }) {
           alignSelf: 'center',
           gap: 10,
         }}
+        ListHeaderComponent={<DMInboxHero count={sorted.length} onNew={() => router.push('/messages' as Href)} />}
         ListEmptyComponent={
-          <View style={{ paddingTop: 60, alignItems: 'center', gap: 8 }}>
+          <View style={{ paddingTop: 28, alignItems: 'center', gap: 8 }}>
             <Envelope color={colors.textMuted} size={36} weight="thin" />
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center', paddingHorizontal: 40, lineHeight: 22 }}>
               No messages yet.{'\n'}Go to someone&apos;s profile and tap Message.
@@ -208,10 +249,227 @@ function DMInboxView({ topPad }: { topPad: number }) {
 }
 
 const EMPTY_SUGGESTIONS = [
-  'Help me think through a decision',
-  'Poke holes in my argument',
-  'Explain something to me',
+  { label: 'Target plan', prompt: 'Help me make progress on my target today' },
+  { label: 'Draft Echo', prompt: 'Turn my rough idea into a clear Echo' },
+  { label: 'Next 3 actions', prompt: 'Plan my next 3 focused actions' },
+  { label: 'Challenge me', prompt: 'Challenge my thinking on this decision' },
 ];
+
+function modelLabel(model: string): string {
+  if (model.includes('pro')) return 'Pro';
+  if (model.includes('lite')) return 'Lite';
+  return 'Flash';
+}
+
+function HeaderIconButton({ icon, onPress, label, accent = false }: { icon: React.ReactNode; onPress: () => void; label: string; accent?: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 12,
+        backgroundColor: accent ? colors.accent : colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: accent ? colors.accent : colors.border,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      scaleValue={0.9}
+      haptic="light"
+      accessibilityLabel={label}
+      accessibilityRole="button"
+    >
+      {icon}
+    </AnimatedPressable>
+  );
+}
+
+function ModeSwitch({ mode, onChange }: { mode: 'ai' | 'dm'; onChange: (mode: 'ai' | 'dm') => void }) {
+  const { colors, font } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.surface, borderRadius: 999, padding: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+      {([
+        { key: 'ai' as const, label: 'AI Chat', Icon: Lightning, color: colors.accent },
+        { key: 'dm' as const, label: 'Messages', Icon: Envelope, color: DM_COLOR },
+      ]).map(item => {
+        const active = mode === item.key;
+        return (
+          <Pressable
+            key={item.key}
+            onPress={() => onChange(item.key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            style={{
+              minHeight: 32,
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              backgroundColor: active ? item.color : 'transparent',
+            }}
+          >
+            <item.Icon color={active ? '#fff' : colors.textSecondary} size={14} weight={active ? 'fill' : 'regular'} />
+            <Text style={[font.bodyBold, { color: active ? '#fff' : colors.textSecondary, fontSize: 12 }]}>{item.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function ChatEmptyLaunchpad({
+  targetLabel,
+  targetOutcome,
+  targetAppIds,
+  onPrompt,
+  showPrivacy,
+}: {
+  targetLabel: string;
+  targetOutcome: string;
+  targetAppIds: string[];
+  onPrompt: (value: string) => void;
+  showPrivacy: boolean;
+}) {
+  const { colors, font } = useTheme();
+  const layout = useResponsiveLayout();
+  const router = useRouter();
+  const toolApps = targetAppIds.map(id => miniAppById(id)).filter(Boolean).slice(0, 3);
+  const quickActions = [
+    {
+      key: 'target',
+      title: 'Move my target',
+      subtitle: targetLabel,
+      icon: <Target color={colors.accent} size={19} weight="bold" />,
+      onPress: () => onPrompt('Help me make meaningful progress on my target today. Ask me only what you need, then give me the next 3 actions.'),
+    },
+    {
+      key: 'draft',
+      title: 'Draft an Echo',
+      subtitle: 'Turn an idea into a post',
+      icon: <NotePencil color={colors.accent} size={19} weight="bold" />,
+      onPress: () => onPrompt('Help me turn this rough idea into a clear Echo that people would want to respond to: '),
+    },
+    {
+      key: 'tools',
+      title: 'Open tools',
+      subtitle: toolApps.map(app => app?.name).filter(Boolean).join(' · ') || 'Mini apps',
+      icon: <SquaresFour color={colors.accent} size={19} weight="bold" />,
+      onPress: () => router.push('/(tabs)/apps' as Href),
+    },
+  ];
+
+  return (
+    <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isPhone ? 12 : 18, paddingBottom: 28, gap: 14 }]}>
+      <View style={{ borderRadius: 28, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+        <LinearGradient
+          colors={[`${colors.accent}4A`, `${colors.accent}18`, 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <View style={{ padding: layout.isPhone ? 18 : 22, gap: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
+            <View style={{ width: 50, height: 50, borderRadius: 18, backgroundColor: `${colors.accent}22`, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+              <Sparkle color={colors.accent} size={28} weight="fill" />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 28 : 34, lineHeight: layout.isPhone ? 33 : 40 }]}>
+                What should Echo help you finish?
+              </Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }]} numberOfLines={2}>
+                {targetOutcome || `Start with ${targetLabel.toLowerCase()}, a draft, or a decision.`}
+              </Text>
+              {showPrivacy ? (
+                <Text style={[font.body, { color: colors.textMuted, fontSize: 11, lineHeight: 15, marginTop: 8 }]} numberOfLines={1}>
+                  Avoid private details in AI prompts.
+                </Text>
+              ) : null}
+            </View>
+          </View>
+
+          <Pressable
+            onPress={() => onPrompt('Echo, help me with ')}
+            accessibilityRole="button"
+            style={{
+              minHeight: 52,
+              borderRadius: 20,
+              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.72)',
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.glassBorder,
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Text style={[font.body, { flex: 1, color: colors.textMuted, fontSize: 16 }]} numberOfLines={1}>
+              Ask Echo anything...
+            </Text>
+            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <ArrowUpRight color="#fff" size={17} weight="bold" />
+            </View>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={{ gap: 9 }}>
+        {quickActions.map(action => (
+          <Pressable
+            key={action.key}
+            onPress={action.onPress}
+            accessibilityRole="button"
+            style={{
+              minHeight: 56,
+              borderRadius: 18,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <View style={{ width: 36, height: 36, borderRadius: 13, backgroundColor: `${colors.accent}18`, alignItems: 'center', justifyContent: 'center' }}>
+              {action.icon}
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]} numberOfLines={1}>{action.title}</Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
+            </View>
+            {action.key === 'target' ? <ChartLineUp color={colors.textMuted} size={17} weight="bold" /> : <ArrowUpRight color={colors.textMuted} size={17} weight="bold" />}
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {EMPTY_SUGGESTIONS.map(suggestion => (
+          <AnimatedPressable
+            key={suggestion.label}
+            onPress={() => onPrompt(suggestion.prompt)}
+            fadeOnPress
+            style={{
+              borderRadius: 999,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+            }}
+          >
+            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]} numberOfLines={1}>{suggestion.label}</Text>
+          </AnimatedPressable>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 
 type ChatItem =
@@ -246,6 +504,9 @@ export default function ChatScreen() {
   const streamResponses = useAppStore(s => s.streamResponses);
   const personaLearningEnabled = useAppStore(s => s.personaLearningEnabled);
   const accountUserId = useAppStore(s => s.userId);
+  const targetCategoryId = useAppStore(s => s.targetCategory);
+  const targetOutcome = useAppStore(s => s.targetOutcome);
+  const targetMiniApps = useAppStore(s => s.targetMiniApps);
   const insets = useSafeAreaInsets();
   const layout = useResponsiveLayout();
   const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
@@ -266,6 +527,7 @@ export default function ChatScreen() {
   const [editTarget, setEditTarget] = useState<Message | null>(null);
   const listRef = useRef<any>(null);
   const didInitialPersonaSyncRef = useRef(false);
+  const targetCategory = useMemo(() => getTargetCategory(targetCategoryId), [targetCategoryId]);
 
   // Stop handle — set by openStream, called to cancel mid-stream.
   const stopStreamRef = useRef<(() => void) | null>(null);
@@ -703,45 +965,20 @@ export default function ChatScreen() {
     router.push({ pathname: '/share', params: { prompt: lastUser.content, response: lastAi.content } });
   }, [messages, router]);
 
-  const headerHeight = insets.top + (layout.isDesktop ? 64 : 52);
+  const headerHeight = insets.top + (layout.isDesktop ? 92 : 92);
   const showEmptySuggestions = items.length === 0;
   // Hide the onboarding panel after the first sent message.
   const showFirstChatPanel = showEmptySuggestions && !hasSeenChatEmptyHint;
   const showShareNudge = !isStreaming && messages.some(m => m.role === 'user') && messages.some(m => m.role === 'assistant');
 
   const emptyChatState = showEmptySuggestions ? (
-    <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isDesktop ? 112 : 96, paddingBottom: 20, gap: 16 }]}>
-      {showFirstChatPanel && (
-        <View style={{ paddingVertical: 4, paddingHorizontal: 2 }}>
-          <Text style={{ color: colors.textMuted, lineHeight: 20, fontSize: 14 }}>
-            Ask a question or think out loud.
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 12, opacity: 0.8, lineHeight: 16 }}>
-            Messages are sent to our AI providers to generate replies. Don&apos;t share anything you wouldn&apos;t want stored.
-          </Text>
-        </View>
-      )}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {EMPTY_SUGGESTIONS.map(suggestion => (
-          <AnimatedPressable
-            key={suggestion}
-            onPress={() => setDraft(suggestion)}
-            depth="soft"
-            fadeOnPress
-            style={{
-              borderRadius: 999,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.glassBorder,
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-              paddingHorizontal: 14,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{suggestion}</Text>
-          </AnimatedPressable>
-        ))}
-      </View>
-    </View>
+    <ChatEmptyLaunchpad
+      targetLabel={targetCategory.label}
+      targetOutcome={targetOutcome}
+      targetAppIds={targetMiniApps.length ? targetMiniApps : targetCategory.apps}
+      onPrompt={setDraft}
+      showPrivacy={showFirstChatPanel}
+    />
   ) : null;
 
   // modelActions previously rendered via generic ActionSheet — replaced
@@ -784,7 +1021,7 @@ export default function ChatScreen() {
                 </View>
               )
             }
-            contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: layout.isDesktop ? 18 : 8 }}
+            contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: layout.isDesktop ? 20 : 10 }}
             ListEmptyComponent={emptyChatState}
             onContentSizeChange={() => {
               listRef.current?.scrollToEnd({ animated: false });
@@ -792,7 +1029,7 @@ export default function ChatScreen() {
           />
           {isStreaming && showTyping && <TypingIndicator />}
         </View>
-        <View style={{ paddingBottom: layout.bottomChromePadding }}>
+        <View style={{ paddingBottom: layout.bottomChromePadding, backgroundColor: colors.bg }}>
           {showShareNudge ? (
             <Animated.View
               entering={animation(FadeIn.duration(200))}
@@ -827,7 +1064,7 @@ export default function ChatScreen() {
               </AnimatedPressable>
             </Animated.View>
           ) : null}
-          <View style={layout.contentStyle}>
+          <View style={[layout.contentStyle, { paddingHorizontal: layout.isDesktop ? layout.gutter : 0 }]}>
             <ChatInput
               onSend={handleSend}
               isLoading={isStreaming}
@@ -846,131 +1083,73 @@ export default function ChatScreen() {
         }}
       >
         {useBlurHeader ? (
-          <BlurView intensity={70} tint={tint} style={StyleSheet.absoluteFill} />
+          <BlurView intensity={78} tint={tint} style={StyleSheet.absoluteFill} />
         ) : null}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlurHeader ? 0.28 : 0.96 }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlurHeader ? 0.55 : 0.98 }]} />
         <Animated.View
           entering={animation(FadeIn.duration(80))}
           style={{
             width: '100%',
             maxWidth: layout.contentMaxWidth,
             alignSelf: 'center',
-            paddingTop: insets.top + (layout.isDesktop ? 10 : 0), height: headerHeight,
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-            paddingHorizontal: layout.gutter, paddingBottom: 4,
+            paddingTop: insets.top + 6,
+            height: headerHeight,
+            paddingHorizontal: layout.gutter,
+            paddingBottom: 7,
+            gap: 7,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {chatMode === 'ai' ? (
-              <>
-                <AnimatedPressable
-                  onPress={() => setDrawerOpen(true)}
-                  style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
-                  scaleValue={0.88} haptic="light"
-                  accessibilityLabel="Chat sessions" accessibilityRole="button"
-                >
-                  <List color={colors.textSecondary} size={20} />
-                </AnimatedPressable>
-                <AnimatedPressable
-                  onPress={handleNewChat}
-                  style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
-                  scaleValue={0.88} haptic="light"
-                  accessibilityLabel="New AI chat" accessibilityRole="button"
-                >
-                  <Plus color={colors.textSecondary} size={20} />
-                </AnimatedPressable>
-                <AnimatedPressable
-                  onPress={() => setShowActionCenter(true)}
-                  style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
-                  scaleValue={0.88} haptic="light"
-                  accessibilityLabel="Quick actions" accessibilityRole="button"
-                >
-                  <Question color={colors.textSecondary} size={20} />
-                </AnimatedPressable>
-              </>
-            ) : (
-              <AnimatedPressable
-                onPress={() => router.push('/messages' as Href)}
-                style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
-                scaleValue={0.88} haptic="light"
-                accessibilityLabel="Open full messages" accessibilityRole="button"
-              >
-                <PencilSimple color={DM_COLOR} size={20} />
-              </AnimatedPressable>
-            )}
-          </View>
-
-          {/* Center: mode switcher */}
-          <View
-            style={{
-              position: 'absolute', left: 0, right: 0,
-              alignItems: 'center', paddingTop: insets.top,
-            }}
-            pointerEvents="box-none"
-          >
-            <View style={{
-              flexDirection: 'row', alignItems: 'center', gap: 4,
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
-              borderRadius: 999, padding: 3,
-            }} pointerEvents="box-none">
-              {/* AI mode pill */}
-              <Pressable
-                onPress={() => setChatMode('ai')}
-                style={{
-                  flexDirection: 'row', alignItems: 'center', gap: 5,
-                  paddingHorizontal: 14, paddingVertical: 6,
-                  borderRadius: 999,
-                  backgroundColor: chatMode === 'ai' ? colors.accent : 'transparent',
-                }}
-              >
-                <Lightning
-                  color={chatMode === 'ai' ? '#fff' : colors.textSecondary}
-                  size={13} weight="fill"
-                />
-                <Text style={{
-                  color: chatMode === 'ai' ? '#fff' : colors.textSecondary,
-                  fontSize: 13, fontWeight: '700', letterSpacing: 0.2,
-                }}>
-                  AI Chat
-                </Text>
-              </Pressable>
-
-              {/* DM mode pill */}
-              <Pressable
-                onPress={() => setChatMode('dm')}
-                style={{
-                  flexDirection: 'row', alignItems: 'center', gap: 5,
-                  paddingHorizontal: 14, paddingVertical: 6,
-                  borderRadius: 999,
-                  backgroundColor: chatMode === 'dm' ? DM_COLOR : 'transparent',
-                }}
-              >
-                <Envelope
-                  color={chatMode === 'dm' ? '#fff' : colors.textSecondary}
-                  size={13} weight={chatMode === 'dm' ? 'fill' : 'regular'}
-                />
-                <Text style={{
-                  color: chatMode === 'dm' ? '#fff' : colors.textSecondary,
-                  fontSize: 13, fontWeight: '700', letterSpacing: 0.2,
-                }}>
-                  Messages
-                </Text>
-              </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', lineHeight: 26 }} numberOfLines={1}>
+                {chatMode === 'ai' ? 'Echo Chat' : 'Messages'}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_500Medium' }} numberOfLines={1}>
+                {chatMode === 'ai' ? `${modelLabel(aiModel)} · ${messages.length} message${messages.length === 1 ? '' : 's'}` : 'Private conversations'}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              {chatMode === 'ai' ? (
+                <>
+                  <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label="Chat sessions" onPress={() => setDrawerOpen(true)} />
+                  <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label="New AI chat" onPress={handleNewChat} />
+                  <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label="Quick actions" onPress={() => setShowActionCenter(true)} />
+                  <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label="Share conversation" onPress={handleShare} accent />
+                </>
+              ) : (
+                <HeaderIconButton icon={<PencilSimple color="#fff" size={18} />} label="Open full messages" onPress={() => router.push('/messages' as Href)} accent />
+              )}
             </View>
           </View>
 
-          {chatMode === 'ai' ? (
-            <AnimatedPressable
-              onPress={handleShare}
-              style={{ padding: 6, borderRadius: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', zIndex: 1 }}
-              scaleValue={0.88} haptic="light"
-              accessibilityLabel="Share conversation" accessibilityRole="button"
-            >
-              <ShareNetwork color={colors.textSecondary} size={20} />
-            </AnimatedPressable>
-          ) : (
-            <View style={{ width: 32 }} />
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <ModeSwitch mode={chatMode} onChange={setChatMode} />
+            </View>
+            {chatMode === 'ai' ? (
+              <Pressable
+                onPress={() => setModelSheetOpen(true)}
+                style={{
+                  minHeight: 38,
+                  width: layout.isPhone ? 46 : undefined,
+                  borderRadius: 999,
+                  backgroundColor: colors.surface,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.border,
+                  paddingHorizontal: layout.isPhone ? 0 : 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                <Lightning color={colors.accent} size={14} weight="fill" />
+                {!layout.isPhone ? (
+                  <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{modelLabel(aiModel)}</Text>
+                ) : null}
+              </Pressable>
+            ) : null}
+          </View>
         </Animated.View>
 
         <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />

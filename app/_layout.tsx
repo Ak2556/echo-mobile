@@ -167,6 +167,7 @@ function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="auth" options={{ animation: 'fade' }} />
           <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+          <Stack.Screen name="target-progress" options={{ presentation: 'card' }} />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="thread/[id]" options={{ presentation: 'card', animation: 'fade_from_bottom', animationDuration: 240 }} />
           <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'fade' }} />

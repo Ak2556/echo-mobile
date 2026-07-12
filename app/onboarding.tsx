@@ -11,20 +11,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowRight, ChatCircleText, CheckCircle, PencilSimpleLine, Sparkle } from 'phosphor-react-native';
+import { ArrowRight, ChatCircleText, CheckCircle, PencilSimpleLine, Sparkle, Target } from 'phosphor-react-native';
 import { useAuth } from '../lib/auth';
 import { streamEchoAI } from '../lib/api';
 import { track } from '../lib/analytics';
 import { primaryInterestPrompt } from '../lib/productOnboarding';
+import { TARGET_CATEGORIES, getTargetCategory, getTargetPrompt } from '../lib/targetCategories';
 import { useResponsiveLayout } from '../lib/responsive';
 import { setPendingPublishContext } from '../lib/publishContext';
 import { useTheme } from '../lib/theme';
 import { useAppStore } from '../store/useAppStore';
 import { TextInput } from '../components/ui/TextInput';
 
-type StepKey = 'promise' | 'chat' | 'reply' | 'draft';
+type StepKey = 'target' | 'promise' | 'chat' | 'reply' | 'draft';
 
 const STEPS: { key: StepKey; label: string }[] = [
+  { key: 'target', label: 'Target' },
   { key: 'promise', label: 'Think' },
   { key: 'chat', label: 'Chat' },
   { key: 'reply', label: 'Shape' },
@@ -38,8 +40,19 @@ export default function ProductOnboardingScreen() {
   const layout = useResponsiveLayout();
   const interests = useAppStore(s => s.interests);
   const aiModel = useAppStore(s => s.aiModel);
-  const promptSeed = useMemo(() => primaryInterestPrompt(interests[0]), [interests]);
-  const [step, setStep] = useState<StepKey>('promise');
+  const storedTargetCategory = useAppStore(s => s.targetCategory);
+  const storedTargetOutcome = useAppStore(s => s.targetOutcome);
+  const setStoredTargetCategory = useAppStore(s => s.setTargetCategory);
+  const setStoredTargetOutcome = useAppStore(s => s.setTargetOutcome);
+  const setStoredTargetMiniApps = useAppStore(s => s.setTargetMiniApps);
+  const [selectedTargetId, setSelectedTargetId] = useState(storedTargetCategory);
+  const [targetOutcome, setTargetOutcome] = useState(storedTargetOutcome);
+  const selectedTarget = useMemo(() => getTargetCategory(selectedTargetId), [selectedTargetId]);
+  const promptSeed = useMemo(() => {
+    if (selectedTargetId) return getTargetPrompt(selectedTarget, targetOutcome);
+    return primaryInterestPrompt(interests[0]);
+  }, [interests, selectedTarget, selectedTargetId, targetOutcome]);
+  const [step, setStep] = useState<StepKey>('target');
   const [prompt, setPrompt] = useState(promptSeed);
   const [response, setResponse] = useState('');
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -62,6 +75,28 @@ export default function ProductOnboardingScreen() {
   const currentStepIndex = Math.max(0, STEPS.findIndex(item => item.key === step));
   const canSend = prompt.trim().length > 0 && !loading;
   const canDraft = response.trim().length > 0 && !loading;
+  const recommendedAppNames = selectedTarget.apps.map(app => app.replace(/-/g, ' ')).join(' · ');
+
+  const updateTargetOutcome = (value: string) => {
+    setTargetOutcome(value);
+    if (step === 'target' || step === 'promise') {
+      setPrompt(getTargetPrompt(selectedTarget, value));
+    }
+  };
+
+  const selectTarget = (id: string) => {
+    const category = getTargetCategory(id);
+    setSelectedTargetId(category.id);
+    setPrompt(getTargetPrompt(category, targetOutcome));
+  };
+
+  const continueWithTarget = () => {
+    setStoredTargetCategory(selectedTarget.id);
+    setStoredTargetOutcome(targetOutcome.trim());
+    setStoredTargetMiniApps(selectedTarget.apps);
+    setPrompt(getTargetPrompt(selectedTarget, targetOutcome));
+    setStep('promise');
+  };
 
   const skip = () => {
     track('product_onboarding_skipped', { step });
@@ -166,7 +201,7 @@ export default function ProductOnboardingScreen() {
                 </View>
 
                 <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 16 }]}>
-                  Your first Echo
+                  Your target system
                 </Text>
 
                 <Text style={[font.display, {
@@ -176,7 +211,7 @@ export default function ProductOnboardingScreen() {
                   letterSpacing: 0,
                   marginBottom: 12,
                 }]}>
-                  Think with Echo. Publish what&apos;s worth keeping.
+                  Make Echo useful for what you want next.
                 </Text>
                 <Text style={[font.body, {
                   color: colors.textSecondary,
@@ -185,10 +220,56 @@ export default function ProductOnboardingScreen() {
                   marginBottom: 26,
                   maxWidth: 620,
                 }]}>
-                  Start with a question. Echo helps shape the answer into something clear enough to save, edit, and publish.
+                  Choose a target, then Echo customizes mini apps, habits, notes, and prompts around the outcome you want.
                 </Text>
 
-                {step === 'promise' ? (
+                {step === 'target' ? (
+                  <View style={{ gap: 16 }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>
+                      {TARGET_CATEGORIES.map(category => (
+                        <TargetChip
+                          key={category.id}
+                          label={category.label}
+                          active={category.id === selectedTarget.id}
+                          onPress={() => selectTarget(category.id)}
+                        />
+                      ))}
+                    </View>
+                    <View>
+                      <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginBottom: 8 }]}>
+                        Desired output
+                      </Text>
+                      <TextInput
+                        value={targetOutcome}
+                        onChangeText={updateTargetOutcome}
+                        maxLength={140}
+                        placeholder="Example: lose 8 kg, pass an exam, post 3 times a week..."
+                        style={{ minHeight: 58 }}
+                      />
+                    </View>
+                    <View style={{
+                      borderRadius: radius.card,
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                      padding: 15,
+                    }}>
+                      <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 4 }]}>
+                        {selectedTarget.label}: {selectedTarget.outcome}
+                      </Text>
+                      <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19 }]}>
+                        {selectedTarget.starter}
+                      </Text>
+                      <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12, marginTop: 10, textTransform: 'capitalize' }]}>
+                        {recommendedAppNames}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                      <PrimaryButton label="Build my system" icon={<Target color="#fff" size={18} weight="bold" />} onPress={continueWithTarget} />
+                      <SecondaryButton label="Skip for now" onPress={skip} />
+                    </View>
+                  </View>
+                ) : step === 'promise' ? (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                     <PrimaryButton label="Start first chat" icon={<ChatCircleText color="#fff" size={18} weight="bold" />} onPress={() => setStep('chat')} />
                     <SecondaryButton label="Skip for now" onPress={skip} />
@@ -274,8 +355,9 @@ export default function ProductOnboardingScreen() {
                   alignSelf: 'center',
                 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 14 }]}>
-                    The Echo loop
+                    Your Echo loop
                   </Text>
+                  <PreviewRow icon={<Target color={colors.accent} size={18} weight="bold" />} title={selectedTarget.label} body={targetOutcome.trim() || selectedTarget.outcome} />
                   <PreviewRow icon={<ChatCircleText color={colors.accent} size={18} weight="bold" />} title="Ask" body={prompt} />
                   <PreviewRow icon={<Sparkle color={colors.accent} size={18} weight="fill" />} title="Shape" body={response || 'Echo turns the idea into a clearer take.'} />
                   <PreviewRow icon={<PencilSimpleLine color={colors.accent} size={18} weight="bold" />} title="Draft" body="Open the editor, trim the answer, and publish when it is ready." />
@@ -286,6 +368,31 @@ export default function ProductOnboardingScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function TargetChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const { colors, radius, font } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      style={{
+        minHeight: 38,
+        borderRadius: radius.lg,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: active ? colors.accent : colors.border,
+        backgroundColor: active ? `${colors.accent}22` : colors.surface,
+        paddingHorizontal: 13,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text style={[font.bodySemibold, { color: active ? colors.accent : colors.textSecondary, fontSize: 13 }]}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Alert, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { ArrowLeft, Check, Camera } from 'phosphor-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ArrowLeft, Check, Camera, TextAlignLeft, UserCircle } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
@@ -14,6 +15,7 @@ import { useTheme } from '../lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteProfile, updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
 import { supabase } from '../lib/supabase';
+import { useResponsiveLayout } from '../lib/responsive';
 
 const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
@@ -28,7 +30,8 @@ const PRONOUN_PRESETS = ['', 'she/her', 'he/him', 'they/them', 'she/they', 'he/t
 export default function EditProfileScreen() {
   const router = useRouter();
   const { username, displayName, bio, avatarColor, avatarUrl, profilePhotoVisible, setUsername, setDisplayName, setBio, setAvatarColor, setAvatarUrl } = useAppStore();
-  const { colors, radius, fontSizes, animation } = useTheme();
+  const { colors, radius, fontSizes, font, animation } = useTheme();
+  const layout = useResponsiveLayout();
 
   const [newUsername, setNewUsername] = useState(username);
   const [newDisplayName, setNewDisplayName] = useState(displayName || username);
@@ -100,6 +103,13 @@ export default function EditProfileScreen() {
   const usernameValid = newUsername.trim().length >= 2;
   const bioProgress = newBio.length / BIO_MAX;
   const bioNearLimit = newBio.length > BIO_WARN;
+  const completionItems = [
+    { label: 'Name', done: !!newDisplayName.trim() },
+    { label: 'Username', done: usernameValid },
+    { label: 'Bio', done: !!newBio.trim() },
+    { label: 'Photo', done: !!newAvatarUrl && profilePhotoVisible },
+  ];
+  const completion = completionItems.filter(item => item.done).length / completionItems.length;
 
   const handleSave = async () => {
     if (!usernameValid) {
@@ -168,45 +178,98 @@ export default function EditProfileScreen() {
         </AnimatedPressable>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-6" showsVerticalScrollIndicator={false}>
-        {/* Avatar preview */}
-        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="items-center mb-8">
-          <AnimatedPressable
-            onPress={() => { void handlePickAvatar(); }}
-            disabled={uploadingAvatar}
-            style={{ marginBottom: 16, position: 'relative' }}
-            scaleValue={0.95}
-            haptic="light"
-          >
-            <ProfileAvatar
-              displayName={newDisplayName || newUsername || '?'}
-              avatarColor={newColor}
-              avatarUrl={newAvatarUrl || undefined}
-              size={84}
-              showHalo
-            />
-            {/* "Change Photo" badge */}
-            <View style={{
-              position: 'absolute', bottom: 2, right: 2,
-              backgroundColor: colors.accent, borderRadius: 14, padding: 5,
-              borderWidth: 2, borderColor: colors.bg,
-            }}>
-              {uploadingAvatar
-                ? <ActivityIndicator size="small" color="#fff" style={{ width: 14, height: 14 }} />
-                : <Camera size={14} color="#fff" weight="fill" />
-              }
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          width: '100%',
+          maxWidth: layout.isDesktop ? 640 : layout.contentMaxWidth,
+          alignSelf: 'center',
+          paddingHorizontal: layout.gutter,
+          paddingTop: 18,
+          paddingBottom: layout.bottomChromePadding,
+          gap: 16,
+        }}
+      >
+        <Animated.View entering={animation(FadeInDown.delay(80).duration(220))} style={{ borderRadius: 28, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface }}>
+          <LinearGradient
+            colors={[`${newColor}4A`, `${newColor}16`, 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+          <View style={{ padding: 18, gap: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <AnimatedPressable
+                onPress={() => { void handlePickAvatar(); }}
+                disabled={uploadingAvatar}
+                style={{ position: 'relative' }}
+                scaleValue={0.95}
+                haptic="light"
+              >
+                <ProfileAvatar
+                  displayName={newDisplayName || newUsername || '?'}
+                  avatarColor={newColor}
+                  avatarUrl={newAvatarUrl || undefined}
+                  size={82}
+                  showHalo
+                />
+                <View style={{
+                  position: 'absolute', bottom: 2, right: 2,
+                  backgroundColor: colors.accent, borderRadius: 15, padding: 6,
+                  borderWidth: 2, borderColor: colors.bg,
+                }}>
+                  {uploadingAvatar
+                    ? <ActivityIndicator size="small" color="#fff" style={{ width: 14, height: 14 }} />
+                    : <Camera size={14} color="#fff" weight="fill" />
+                  }
+                </View>
+              </AnimatedPressable>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[font.display, { color: colors.text, fontSize: 30, lineHeight: 35 }]} numberOfLines={1}>
+                  {newDisplayName || newUsername || 'Your profile'}
+                </Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: 13, marginTop: 4 }]} numberOfLines={1}>
+                  @{newUsername.trim().toLowerCase() || 'username'}
+                </Text>
+                {!!newMood.trim() && (
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12, marginTop: 8 }]} numberOfLines={1}>
+                    {newMood.trim()}
+                  </Text>
+                )}
+              </View>
             </View>
-          </AnimatedPressable>
-          <View className="flex-row gap-2.5 flex-wrap justify-center">
+
+            <View style={{ gap: 8 }}>
+              <View style={{ height: 6, borderRadius: 999, backgroundColor: colors.surfaceHover, overflow: 'hidden' }}>
+                <View style={{ width: `${completion * 100}%`, height: '100%', borderRadius: 999, backgroundColor: colors.accent }} />
+              </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
+                {completionItems.map(item => (
+                  <View key={item.label} style={{ borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: item.done ? `${colors.success}1E` : colors.surfaceHover }}>
+                    <Text style={[font.bodySemibold, { color: item.done ? colors.success : colors.textMuted, fontSize: 11 }]}>{item.label}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={animation(FadeInDown.delay(130).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 12 }}>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>Profile color</Text>
+          <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
             {AVATAR_COLORS.map(color => (
               <AnimatedPressable
                 key={color}
                 onPress={() => setNewColor(color)}
-                className="w-9 h-9 rounded-full"
                 style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
                   backgroundColor: color,
-                  borderWidth: newColor === color ? 2 : 0,
-                  borderColor: colors.text,
+                  borderWidth: newColor === color ? 3 : StyleSheet.hairlineWidth,
+                  borderColor: newColor === color ? colors.text : colors.border,
                 }}
                 scaleValue={0.85}
                 haptic="light"
@@ -215,8 +278,13 @@ export default function EditProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* Display Name */}
-        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(180).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <UserCircle color={colors.accent} size={20} weight="bold" />
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Identity</Text>
+          </View>
+
+          <View>
           <Text
             style={{
               color: colors.textSecondary,
@@ -234,10 +302,9 @@ export default function EditProfileScreen() {
             placeholder="Your display name"
             maxLength={30}
           />
-        </Animated.View>
+          </View>
 
-        {/* Username */}
-        <Animated.View entering={animation(FadeInDown.delay(250).duration(220))} className="mb-4">
+          <View>
           <Text
             style={{
               color: colors.textSecondary,
@@ -268,10 +335,60 @@ export default function EditProfileScreen() {
               {usernameValid ? 'Username looks good' : 'At least 2 characters required'}
             </Text>
           )}
+          </View>
+
+          <View>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: fontSizes.small,
+              fontWeight: '500',
+              marginBottom: 8,
+              marginLeft: 4,
+            }}
+          >
+            Pronouns
+          </Text>
+          <TextInput
+            value={newPronouns}
+            onChangeText={setNewPronouns}
+            placeholder="e.g. they/them"
+            maxLength={32}
+            autoCapitalize="none"
+          />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginLeft: 4 }}>
+            {PRONOUN_PRESETS.filter(p => p).map((p) => {
+              const active = newPronouns === p;
+              return (
+                <AnimatedPressable
+                  key={p}
+                  onPress={() => setNewPronouns(active ? '' : p)}
+                  style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 99,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: active ? colors.accent : colors.border,
+                    backgroundColor: active ? `${colors.accent}22` : colors.surfaceHover,
+                  }}
+                  scaleValue={0.94}
+                  haptic="light"
+                >
+                  <Text style={{ color: active ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>{p}</Text>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+          </View>
         </Animated.View>
 
-        {/* Bio */}
-        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} className="mb-4">
+        <Animated.View entering={animation(FadeInDown.delay(240).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TextAlignLeft color={colors.accent} size={20} weight="bold" />
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Story</Text>
+          </View>
+
+          <View>
           <Text
             style={{
               color: colors.textSecondary,
@@ -311,56 +428,9 @@ export default function EditProfileScreen() {
           >
             {newBio.length}/{BIO_MAX}
           </Text>
-        </Animated.View>
-
-        {/* Pronouns — small text field with quick presets */}
-        <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} className="mb-4">
-          <Text
-            style={{
-              color: colors.textSecondary,
-              fontSize: fontSizes.small,
-              fontWeight: '500',
-              marginBottom: 8,
-              marginLeft: 4,
-            }}
-          >
-            Pronouns
-          </Text>
-          <TextInput
-            value={newPronouns}
-            onChangeText={setNewPronouns}
-            placeholder="e.g. they/them"
-            maxLength={32}
-            autoCapitalize="none"
-          />
-          {/* Quick-pick presets */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginLeft: 4 }}>
-            {PRONOUN_PRESETS.filter(p => p).map((p) => {
-              const active = newPronouns === p;
-              return (
-                <AnimatedPressable
-                  key={p}
-                  onPress={() => setNewPronouns(active ? '' : p)}
-                  style={{
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 99,
-                    borderWidth: 1,
-                    borderColor: active ? colors.accent : colors.border,
-                    backgroundColor: active ? colors.accent + '22' : 'transparent',
-                  }}
-                  scaleValue={0.94}
-                  haptic="light"
-                >
-                  <Text style={{ color: active ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>{p}</Text>
-                </AnimatedPressable>
-              );
-            })}
           </View>
-        </Animated.View>
 
-        {/* Mood — 60-char status that auto-expires in 24h */}
-        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} className="mb-8">
+          <View>
           <Text
             style={{
               color: colors.textSecondary,
@@ -398,8 +468,10 @@ export default function EditProfileScreen() {
           >
             {newMood.length}/{MOOD_MAX}
           </Text>
+          </View>
         </Animated.View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

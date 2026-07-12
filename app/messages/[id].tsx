@@ -11,12 +11,11 @@ import {
   ArrowLeft, PaperPlaneTilt, Quotes, SealCheck,
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
-  Camera, Plus, LinkSimple, UserCircle,
+  Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { useAppStore } from '../../store/useAppStore';
@@ -135,6 +134,23 @@ function isGroupedWithPrev(msg: NormalizedMessage, prev: NormalizedMessage | und
   if (prev.deletedAt || msg.deletedAt) return false;
   const gap = new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime();
   return gap < 3 * 60 * 1000;
+}
+
+function messageSearchText(message: NormalizedMessage): string {
+  return [
+    message.content,
+    message.sharedEchoTitle,
+    message.sharedEchoPreview,
+    message.sharedEchoAuthor,
+    message.linkUrl,
+    message.linkTitle,
+    message.linkSubtitle,
+    message.contactDisplayName,
+    message.contactUsername,
+    message.kind === 'image' ? 'photo image picture' : '',
+    message.kind === 'link' ? 'link url website' : '',
+    message.kind === 'contact' ? 'contact profile user' : '',
+  ].filter(Boolean).join(' ').toLowerCase();
 }
 
 // ─── EchoShareCard ────────────────────────────────────────────────────────────
@@ -366,7 +382,7 @@ function PinnedMessageBanner({
 
 function DMBubble({
   message, isMe, showReadReceipt, myUserId, grouped,
-  onLongPress, onReactionToggle, onReplyPress,
+  onLongPress, onReactionToggle, onReplyPress, onImagePress,
 }: {
   message: NormalizedMessage;
   isMe: boolean;
@@ -376,6 +392,7 @@ function DMBubble({
   onLongPress: () => void;
   onReactionToggle: (val: string, hasReacted: boolean) => void;
   onReplyPress: (replyToId: string) => void;
+  onImagePress?: (url: string) => void;
 }) {
   const router = useRouter();
   const fontSizeSetting = useAppStore(s => s.fontSize);
@@ -403,7 +420,11 @@ function DMBubble({
 
     if (message.kind === 'image' && message.mediaUrl) {
       return (
-        <Pressable onLongPress={onLongPress} delayLongPress={350}>
+        <Pressable
+          onPress={() => onImagePress?.(message.mediaUrl!)}
+          onLongPress={onLongPress}
+          delayLongPress={350}
+        >
           <View style={{ borderRadius: radius.card, overflow: 'hidden' }}>
             {message.replyToId && (
               <ReplyCard
@@ -553,8 +574,6 @@ function MessageActionSheet({
   const insets = useSafeAreaInsets();
   if (!message) return null;
 
-  const glassBg = Platform.OS === 'ios' ? 'transparent' : colors.surface;
-  const tint = colors.isDark ? 'dark' : 'extraLight';
   const isDeleted = !!message.deletedAt;
   const isText = message.kind === 'text' && !isDeleted;
 
@@ -567,15 +586,23 @@ function MessageActionSheet({
     <Pressable
       onPress={() => { onPress(); onClose(); }}
       style={({ pressed }) => ({
-        flexDirection: 'row', alignItems: 'center', gap: 14,
-        paddingHorizontal: 18, paddingVertical: 15,
+        minHeight: 56,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 18,
         opacity: pressed ? 0.6 : 1,
         borderTopWidth: bordered ? StyleSheet.hairlineWidth : 0,
-        borderTopColor: colors.glassBorder,
+        borderTopColor: colors.border,
       })}
     >
-      {icon}
-      <Text style={{ color: destructive ? '#ef4444' : colors.text, fontSize: 16, fontWeight: '600' }}>
+      <View style={{ width: 28, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+        {icon}
+      </View>
+      <Text
+        style={{ flex: 1, color: destructive ? '#ef4444' : colors.text, fontSize: 16, lineHeight: 21, fontWeight: '700' }}
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.15}
+      >
         {label}
       </Text>
     </Pressable>
@@ -595,18 +622,17 @@ function MessageActionSheet({
         exiting={reduceAnimations ? undefined : SlideOutDown.duration(180)}
         style={{
           position: 'absolute', left: 0, right: 0, bottom: 0,
-          paddingHorizontal: 12, paddingBottom: insets.bottom + 12,
+          paddingHorizontal: 16,
+          paddingBottom: Math.max(insets.bottom, 12) + 18,
         }}
       >
         {/* Emoji quick-react strip */}
         {!isDeleted && (
           <View style={{
             borderRadius: 18, overflow: 'hidden', marginBottom: 8,
-            borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
-            backgroundColor: glassBg,
+            borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
+            backgroundColor: colors.surface,
           }}>
-            {Platform.OS === 'ios' && <BlurView intensity={72} tint={tint} style={StyleSheet.absoluteFill} />}
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12, paddingHorizontal: 4 }}>
               {QUICK_REACTIONS.map(emoji => {
                 const alreadyReacted = message.reactions.some(r => r.value === emoji && r.userId === myUserId);
@@ -634,11 +660,9 @@ function MessageActionSheet({
         {/* Actions */}
         <View style={{
           borderRadius: 18, overflow: 'hidden',
-          borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
-          backgroundColor: glassBg,
+          borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
+          backgroundColor: colors.surface,
         }}>
-          {Platform.OS === 'ios' && <BlurView intensity={72} tint={tint} style={StyleSheet.absoluteFill} />}
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
           {!isDeleted && (
             <Row icon={<ArrowBendUpLeft color={colors.text} size={18} />} label="Reply" onPress={onReply} bordered={false} />
           )}
@@ -666,12 +690,14 @@ function MessageActionSheet({
           style={({ pressed }) => ({
             marginTop: 8, borderRadius: 18, overflow: 'hidden',
             backgroundColor: colors.surface,
-            borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
-            paddingVertical: 15, alignItems: 'center',
+            borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
+            minHeight: 54, alignItems: 'center', justifyContent: 'center',
             opacity: pressed ? 0.7 : 1,
           })}
         >
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>Cancel</Text>
+          <Text style={{ color: colors.text, fontSize: 16, lineHeight: 21, fontWeight: '800' }} maxFontSizeMultiplier={1.15}>
+            Cancel
+          </Text>
         </Pressable>
       </Animated.View>
     </Modal>
@@ -689,6 +715,7 @@ export default function DMScreen() {
     echoAuthor?: string;
   }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const {
     conversations, getDMs, sendDM, markConversationRead,
@@ -711,9 +738,14 @@ export default function DMScreen() {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [imageUploading, setImageUploading] = useState(false);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [composerFocused, setComposerFocused] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
   const listRef = useRef<FlatList<any>>(null);
   const inputRef = useRef<RNTextInput>(null);
+  const searchInputRef = useRef<RNTextInput>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const remote = isSupabaseRemote();
@@ -831,6 +863,11 @@ export default function DMScreen() {
       });
 
   const online = conversation ? isUserOnline(conversation.userId) : false;
+  const searchTerm = searchQuery.trim().toLowerCase();
+  const visibleMessages = searchTerm
+    ? messages.filter(message => messageSearchText(message).includes(searchTerm))
+    : messages;
+  const searchMatchCount = searchTerm ? visibleMessages.length : 0;
 
   // Effects
   useEffect(() => {
@@ -885,6 +922,12 @@ export default function DMScreen() {
     return () => { if (typingTimer.current) clearTimeout(typingTimer.current); };
   }, []);
 
+  useEffect(() => {
+    if (searchOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 80);
+    }
+  }, [searchOpen]);
+
   // Handlers
   const handleSend = useCallback(() => {
     const content = text.trim();
@@ -931,15 +974,7 @@ export default function DMScreen() {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
   }, [text, id, hapticEnabled, remote, sendRemote, sendDM, editingMessage, editMessage, replyingTo, sendLinkDM, sendLocalLink]);
 
-  const handlePickImage = useCallback(async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.85,
-    });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
+  const sendPickedImage = useCallback((asset: ImagePicker.ImagePickerAsset) => {
     setAttachmentMenuOpen(false);
     setImageUploading(true);
     try {
@@ -954,7 +989,10 @@ export default function DMScreen() {
             setReplyingTo(null);
             setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
           },
-          onError: () => Alert.alert('Error', 'Failed to send image. Please try again.'),
+          onError: error => Alert.alert(
+            'Image failed',
+            error instanceof Error ? error.message : 'Failed to send image. Please try again.',
+          ),
         });
       } else if (id) {
         sendLocalImage(id, asset.uri);
@@ -966,6 +1004,35 @@ export default function DMScreen() {
       setImageUploading(false);
     }
   }, [sendImageDM, replyingTo, remote, id, sendLocalImage]);
+
+  const handlePickImage = useCallback(async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Permission needed', 'Photo library access is required to send images.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    sendPickedImage(result.assets[0]);
+  }, [sendPickedImage]);
+
+  const handleTakePhoto = useCallback(async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Permission needed', 'Camera access is required to take and send photos.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: false,
+      quality: 0.78,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    sendPickedImage(result.assets[0]);
+  }, [sendPickedImage]);
 
   const handleShareContact = useCallback(() => {
     if (!id || !conversation) return;
@@ -1081,8 +1148,8 @@ export default function DMScreen() {
     | { type: 'date'; label: string };
 
   const listData: ListRow[] = [];
-  messages.forEach((msg, i) => {
-    const prev = messages[i - 1];
+  visibleMessages.forEach((msg, i) => {
+    const prev = visibleMessages[i - 1];
     if (!prev || !isSameDay(msg.createdAt, prev.createdAt)) {
       listData.push({ type: 'date', label: getDateLabel(msg.createdAt) });
     }
@@ -1160,7 +1227,78 @@ export default function DMScreen() {
             {online ? 'Online now' : `@${conversation.username}`}
           </Text>
         </View>
+
+        <Pressable
+          onPress={() => {
+            setSearchOpen(open => {
+              const next = !open;
+              if (!next) setSearchQuery('');
+              return next;
+            });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={searchOpen ? 'Close message search' : 'Search messages'}
+          style={({ pressed }) => ({
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: searchOpen ? colors.accentMuted : colors.surface,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: searchOpen ? colors.accent : colors.border,
+            opacity: pressed ? 0.65 : 1,
+          })}
+        >
+          {searchOpen
+            ? <X color={colors.accent} size={17} weight="bold" />
+            : <MagnifyingGlass color={colors.textSecondary} size={17} weight="bold" />
+          }
+        </Pressable>
       </View>
+
+      {searchOpen && (
+        <Animated.View
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(100)}
+          style={{
+            paddingHorizontal: 14,
+            paddingVertical: 9,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.border,
+            backgroundColor: colors.bg,
+          }}
+        >
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            minHeight: 42,
+            paddingHorizontal: 12,
+            borderRadius: radius.card,
+            backgroundColor: colors.inputBg,
+            borderWidth: 1,
+            borderColor: colors.inputBorder,
+          }}>
+            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <RNTextInput
+              ref={searchInputRef}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search this conversation"
+              placeholderTextColor={colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={{ flex: 1, color: colors.text, fontSize: 15, paddingVertical: 9 }}
+            />
+            {searchTerm ? (
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>
+                {searchMatchCount}
+              </Text>
+            ) : null}
+          </View>
+        </Animated.View>
+      )}
 
       {/* Pinned message */}
       {pinnedMessage && (
@@ -1190,7 +1328,11 @@ export default function DMScreen() {
         </Animated.View>
       ) : null}
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
 
         {/* Message list */}
         <FlatList<ListRow>
@@ -1211,6 +1353,17 @@ export default function DMScreen() {
           }}
           scrollEventThrottle={100}
           ListFooterComponent={partnerIsTyping ? <TypingDots /> : null}
+          ListEmptyComponent={searchTerm ? (
+            <View style={{ alignItems: 'center', paddingVertical: 42, paddingHorizontal: 24 }}>
+              <MagnifyingGlass color={colors.textMuted} size={28} />
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 }}>
+                No messages found
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 5 }}>
+                Try a different word, link, contact, or photo search.
+              </Text>
+            </View>
+          ) : null}
           renderItem={({ item }) => {
             if (item.type === 'date') return <DateSeparator label={item.label} />;
             const { msg, grouped } = item;
@@ -1231,6 +1384,7 @@ export default function DMScreen() {
                   const idx = listData.findIndex(r => r.type === 'message' && r.msg.id === replyId);
                   if (idx >= 0) listRef.current?.scrollToIndex({ index: idx, animated: true });
                 }}
+                onImagePress={setImagePreviewUrl}
               />
             );
           }}
@@ -1282,7 +1436,7 @@ export default function DMScreen() {
         )}
 
         {/* Quick starters */}
-        {!editingMessage && !replyingTo && (
+        {!composerFocused && !editingMessage && !replyingTo && (
           <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {Object.entries({ followup: 'Follow-up', summary: 'Your take', draft: 'Draft' }).map(([key, label]) => (
@@ -1327,7 +1481,8 @@ export default function DMScreen() {
               borderColor: colors.border,
             }}>
               {[
-                { key: 'image', label: 'Image', icon: <Camera color={colors.accent} size={17} weight="bold" />, onPress: handlePickImage },
+                { key: 'camera', label: 'Camera', icon: <Camera color={colors.accent} size={17} weight="bold" />, onPress: handleTakePhoto },
+                { key: 'gallery', label: 'Gallery', icon: <Images color={colors.accent} size={17} weight="bold" />, onPress: handlePickImage },
                 { key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={17} weight="bold" />, onPress: handleShareContact },
                 { key: 'link', label: 'Link', icon: <LinkSimple color={colors.accent} size={17} weight="bold" />, onPress: handleSendLinkFromComposer },
               ].map(action => (
@@ -1359,7 +1514,9 @@ export default function DMScreen() {
         {/* Input bar */}
         <View style={{
           flexDirection: 'row', alignItems: 'flex-end',
-          paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8,
+          paddingHorizontal: 12,
+          paddingTop: 8,
+          paddingBottom: Math.max(8, Platform.OS === 'ios' ? 8 : insets.bottom + 8),
           borderTopWidth: 1, borderTopColor: colors.border,
           gap: 8,
         }}>
@@ -1397,6 +1554,8 @@ export default function DMScreen() {
               placeholderTextColor={colors.textMuted}
               value={text}
               onChangeText={handleTextChange}
+              onFocus={() => setComposerFocused(true)}
+              onBlur={() => setComposerFocused(false)}
               multiline
               maxLength={2000}
             />
@@ -1420,6 +1579,50 @@ export default function DMScreen() {
         </View>
 
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={!!imagePreviewUrl}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImagePreviewUrl(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.94)' }}>
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+            }}>
+              <Pressable
+                onPress={() => setImagePreviewUrl(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Close image preview"
+                style={({ pressed }) => ({
+                  width: 42,
+                  height: 42,
+                  borderRadius: 21,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <X color="#fff" size={20} weight="bold" />
+              </Pressable>
+            </View>
+            {imagePreviewUrl ? (
+              <Image
+                source={{ uri: imagePreviewUrl }}
+                style={{ flex: 1, width: '100%' }}
+                contentFit="contain"
+                transition={120}
+              />
+            ) : null}
+          </SafeAreaView>
+        </View>
+      </Modal>
 
       {/* Message action sheet */}
       <MessageActionSheet

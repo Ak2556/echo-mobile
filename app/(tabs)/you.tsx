@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, type Href } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import {
   BookmarkSimple,
   CalendarBlank,
@@ -30,6 +30,8 @@ import { buildCreatorProfile } from '../../lib/echoUX';
 import { StreakXPBadge } from '../../components/social/StreakXPBadge';
 import { features } from '../../lib/featureFlags';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { getSessionUserId } from '../../lib/supabaseEchoApi';
 
 const COMPACT_TEXT_SCALE = 1.15;
 const BODY_TEXT_SCALE = 1.25;
@@ -104,7 +106,9 @@ export default function ProfileScreen() {
     avatarUrl,
     profilePhotoVisible,
     publishedEchoes,
+    setUserId,
   } = useAppStore();
+  const [profileUserId, setProfileUserId] = useState(userId);
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -116,14 +120,16 @@ export default function ProfileScreen() {
   ], [displayName, username, bio, avatarUrl, profilePhotoVisible]);
 
   const profileComplete = completionSteps.every(s => s.done);
-  const showCompletionBanner = !bannerDismissed && !profileComplete && publishedEchoes.length < 10;
   const displayLabel = displayName || username || 'User';
   const handle = username || 'user';
-  const { data: remoteBundle } = useRemoteProfileBundle(userId);
+  const resolvedProfileUserId = profileUserId || userId;
+  const { data: remoteBundle, refetch: refetchRemoteProfile } = useRemoteProfileBundle(resolvedProfileUserId);
+  const profileEchoes = remoteBundle?.echoes ?? publishedEchoes;
+  const showCompletionBanner = !bannerDismissed && !profileComplete && profileEchoes.length < 10;
   const createdAt = remoteBundle?.user?.createdAt ?? new Date().toISOString();
   const creatorProfile = useMemo(
-    () => buildCreatorProfile({ displayName: displayLabel, bio, createdAt }, publishedEchoes),
-    [bio, createdAt, displayLabel, publishedEchoes],
+    () => buildCreatorProfile({ displayName: displayLabel, bio, createdAt }, profileEchoes),
+    [bio, createdAt, displayLabel, profileEchoes],
   );
 
   const followerCount = remoteBundle?.user?.followerCount ?? 0;
@@ -135,8 +141,41 @@ export default function ProfileScreen() {
 
   const handlePressEcho = (item: FeedItem) => router.push(`/thread/${item.id}`);
   const openFollowers = (tab: 'followers' | 'following') => {
-    router.push({ pathname: '/followers', params: { userId, tab } });
+    router.push({ pathname: '/followers', params: { userId: resolvedProfileUserId, tab } });
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      if (!isSupabaseRemote()) {
+        setProfileUserId(userId);
+        return undefined;
+      }
+
+      getSessionUserId()
+        .then(sessionUserId => {
+          if (!active) return;
+          const nextUserId = sessionUserId || userId;
+          setProfileUserId(nextUserId);
+          if (sessionUserId && sessionUserId !== userId) {
+            setUserId(sessionUserId);
+          }
+        })
+        .catch(() => {
+          if (active) setProfileUserId(userId);
+        });
+
+      return () => { active = false; };
+    }, [setUserId, userId]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (resolvedProfileUserId && isSupabaseRemote()) {
+        void refetchRemoteProfile();
+      }
+    }, [refetchRemoteProfile, resolvedProfileUserId]),
+  );
 
   // Status-bar fade — solid background block fixed to the top, sized to
   // the iOS safe-area inset. Scrolled content (streak chip, level card,
@@ -253,7 +292,7 @@ export default function ProfileScreen() {
           <View style={[styles.heroDivider, { backgroundColor: colors.border }]} />
 
           <View style={styles.statsRow}>
-            <StatButton value={publishedEchoes.length} label="Echoes" colors={colors} font={font} />
+            <StatButton value={profileEchoes.length} label="Echoes" colors={colors} font={font} />
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <StatButton value={followerCount} label="Followers" colors={colors} font={font} onPress={() => openFollowers('followers')} />
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
@@ -338,12 +377,12 @@ export default function ProfileScreen() {
               via the gear icon in the screen header). */}
         </View>
 
-        {userId ? <ThinkingFingerprintCard userId={userId} isSelf /> : null}
+        {resolvedProfileUserId ? <ThinkingFingerprintCard userId={resolvedProfileUserId} isSelf /> : null}
 
         <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} colors={colors} radius={radius} font={font} />
 
         {activeTab === 'posts' ? (
-          publishedEchoes.length === 0 ? (
+          profileEchoes.length === 0 ? (
             <ProfileEmptyPosts
               colors={colors}
               radius={radius}
@@ -352,7 +391,7 @@ export default function ProfileScreen() {
             />
           ) : (
             <PostsGrid
-              echoes={publishedEchoes}
+              echoes={profileEchoes}
               onPressEcho={handlePressEcho}
               avatarColor={profileAccent}
               containerWidth={layout.contentWidth}

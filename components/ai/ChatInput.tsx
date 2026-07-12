@@ -77,8 +77,9 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
     <View
       style={{
         overflow: 'hidden',
-        borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: colors.glassBorder,
+        paddingHorizontal: 12,
+        paddingTop: 6,
+        paddingBottom: 8,
       }}
     >
       {Platform.OS === 'ios' && !reduceAnimations ? (
@@ -89,35 +90,38 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
             style={StyleSheet.absoluteFill}
           />
           <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassHeavyFill ?? 'rgba(255,255,255,0.10)' }]}
+            style={[StyleSheet.absoluteFill, { backgroundColor: colors.isDark ? 'rgba(0,0,0,0.36)' : 'rgba(255,255,255,0.58)' }]}
           />
         </>
       ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }]} />
       )}
 
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'flex-end',
-          paddingHorizontal: 12,
-          paddingVertical: 10,
+          padding: 6,
+          borderRadius: 28,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.glassBorder,
+          backgroundColor: colors.surface,
+          shadowColor: '#000',
+          shadowOpacity: colors.isDark ? 0.36 : 0.12,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 8 },
         }}
       >
         {/* Input bubble */}
         <Animated.View
           style={[{
             flex: 1,
-            marginRight: 8,
+            marginRight: 6,
             borderRadius: 22,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassBorder,
-            backgroundColor: colors.isDark
-              ? 'rgba(255,255,255,0.06)'
-              : 'rgba(0,0,0,0.04)',
-            paddingHorizontal: 16,
-            paddingVertical: 10,
-            minHeight: 44,
+            borderWidth: 0,
+            paddingHorizontal: 14,
+            paddingVertical: 9,
+            minHeight: 42,
             justifyContent: 'center',
           }, inputShellStyle]}
         >
@@ -139,6 +143,7 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
               maxHeight: 120,
               paddingTop: 0,
               paddingBottom: 0,
+              fontFamily: 'Inter_400Regular',
             }}
           />
         </Animated.View>
@@ -152,8 +157,8 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
             fadeOnPress
             style={{
               width: 44,
-              height: 44,
-              borderRadius: 22,
+              height: 42,
+              borderRadius: 21,
               backgroundColor: sendBg,
               alignItems: 'center',
               justifyContent: 'center',

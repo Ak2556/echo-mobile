@@ -270,8 +270,20 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     </>
   );
 
+  const iconButtonStyle = {
+    minHeight: 36,
+    minWidth: 34,
+    borderRadius: 18,
+    paddingHorizontal: 9,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: colors.surfaceHover,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
+  };
+
   const ActionsRow = (
-    <View style={{ paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+    <View style={{ paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder }}>
       <View style={{ marginBottom: 8 }}>
         <ReactionBar
           target={{ kind: 'echo', echoId: item.id }}
@@ -280,8 +292,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           compact
         />
       </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, overflow: 'hidden' }}>
         <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
         <RemixButton
           echoId={item.id}
@@ -289,12 +300,12 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           authorUsername={item.username}
           authorTitle={item.editorialTitle}
           compact
+          iconOnly
         />
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+
         <AnimatedPressable
           onPress={(e) => { e.stopPropagation?.(); router.push(`/comments/${item.id}`); }}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+          style={[iconButtonStyle, { flexDirection: 'row', gap: 4 }]}
           depth="medium"
           fadeOnPress
           haptic="light"
@@ -311,7 +322,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         <AnimatedPressable
           onPress={(e) => { e.stopPropagation?.(); handleRepost(); }}
           onLongPress={(e) => { e.stopPropagation?.(); setRepostSheetOpen(true); }}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+          style={[iconButtonStyle, { flexDirection: 'row', gap: 4 }]}
           depth="medium"
           fadeOnPress
           haptic="medium"
@@ -325,14 +336,13 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           )}
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
+        <AnimatedPressable style={iconButtonStyle} onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
           <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
         </AnimatedPressable>
 
-        <AnimatedPressable onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light" performanceMode="hot" accessibilityLabel="Share" accessibilityRole="button">
+        <AnimatedPressable style={iconButtonStyle} onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light" performanceMode="hot" accessibilityLabel="Share" accessibilityRole="button">
           <ShareNetwork color={colors.textMuted} size={19} />
         </AnimatedPressable>
-      </View>
       </View>
     </View>
   );
@@ -455,6 +465,12 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         borderRadius: 24,
         overflow: 'hidden',
         backgroundColor: colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.glassBorder,
+        shadowColor: '#000',
+        shadowOpacity: colors.isDark ? 0.22 : 0.08,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: 10 },
       }}>
       {!compactFeed && (
         <LinearGradient
@@ -521,14 +537,14 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
               {item.avatarUrl ? (
                 <Image
                   source={{ uri: item.avatarUrl }}
-                  style={{ width: compactFeed ? 28 : 36, height: compactFeed ? 28 : 36, borderRadius: compactFeed ? 14 : 18, marginRight: 12 }}
+                  style={{ width: compactFeed ? 30 : 40, height: compactFeed ? 30 : 40, borderRadius: compactFeed ? 15 : 20, marginRight: 12, borderWidth: 1.5, borderColor: `${canvasTint}66` }}
                   contentFit="cover"
                   cachePolicy="memory-disk"
                 />
               ) : (
                 <View
                   className={`${compactFeed ? 'w-7 h-7' : 'w-9 h-9'} rounded-full items-center justify-center mr-3`}
-                  style={{ backgroundColor: item.avatarColor || colors.accent }}
+                  style={{ backgroundColor: item.avatarColor || colors.accent, borderWidth: 1.5, borderColor: `${canvasTint}66` }}
                 >
                   <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
                     {(item.displayName || item.username).charAt(0).toUpperCase()}
@@ -550,7 +566,9 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
+          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 8, paddingVertical: 5, marginRight: 8 }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(item.createdAt)}</Text>
+          </View>
           {pinned && <PushPin color={colors.textMuted} size={13} weight="fill" style={{ marginRight: 6 }} />}
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
@@ -558,6 +576,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             fadeOnPress
             haptic="light"
             performanceMode="hot"
+            style={{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}
           >
             <DotsThree color={colors.textMuted} size={22} weight="bold" />
           </AnimatedPressable>
@@ -675,13 +694,19 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         {!compactFeed && item.hashtags && item.hashtags.length > 0 && (
           <View className="flex-row flex-wrap gap-1.5 mb-3">
             {item.hashtags.slice(0, 3).map(tag => (
-              <Text key={tag} style={{ color: colors.accent, fontSize: fontSizes.caption }}>#{tag}</Text>
+              <Pressable
+                key={tag}
+                onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}
+                style={{ borderRadius: 999, backgroundColor: `${colors.accent}16`, paddingHorizontal: 9, paddingVertical: 5 }}
+              >
+                <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontFamily: 'Inter_600SemiBold' }}>#{tag}</Text>
+              </Pressable>
             ))}
           </View>
         )}
 
         {!compactFeed && (item.viewCount ?? 0) > 0 && (
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginBottom: 8 }}>{item.viewCount?.toLocaleString()} views</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginBottom: 8, fontFamily: 'Inter_500Medium' }}>{item.viewCount?.toLocaleString()} views</Text>
         )}
 
         {ActionsRow}

@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, Info, Clock } from 'phosphor-react-native';
+import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, Info, Clock, Storefront, SquaresFour, Target } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
@@ -38,6 +38,8 @@ import { features } from '../../lib/featureFlags';
 import { getTopPerspectiveSummary } from '../../lib/perspectives';
 import { track } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { TargetToolsPanel } from '../../components/productivity/TargetToolsPanel';
+import { getTargetCategory } from '../../lib/targetCategories';
 
 
 const NAV_BAR_HEIGHT = 50;
@@ -68,6 +70,160 @@ function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: Rea
   );
 }
 
+function HomeHero({
+  username,
+  targetLabel,
+  targetOutcome,
+  publishedCount,
+  unreadCount,
+  liveCount,
+}: {
+  username: string;
+  targetLabel: string;
+  targetOutcome: string;
+  publishedCount: number;
+  unreadCount: number;
+  liveCount: number;
+}) {
+  const router = useRouter();
+  const { colors, font } = useTheme();
+  const layout = useResponsiveLayout();
+  return (
+    <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 14 : 10, marginBottom: 14 }}>
+      <View style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+        <LinearGradient
+          colors={[`${colors.accent}35`, `${colors.accent}0D`, 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <View style={{ padding: layout.isPhone ? 15 : 18, gap: 14 }}>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}20` }}>
+              <Sparkle color={colors.accent} size={24} weight="fill" />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 24 : 29, lineHeight: layout.isPhone ? 29 : 35 }]} numberOfLines={2}>
+                {username ? `Welcome back, ${username}` : 'Build your Echo today'}
+              </Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 3 }]} numberOfLines={2}>
+                {targetOutcome || targetLabel}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <HeroMetric value={String(publishedCount)} label="Echoes" />
+            <HeroMetric value={String(liveCount)} label="Live ideas" />
+            <HeroMetric value={String(unreadCount)} label="Unread" />
+          </View>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <HeroAction icon={<ChatCircleText color="#fff" size={17} weight="bold" />} label="Chat" filled onPress={() => router.push('/(tabs)/chat')} />
+            <HeroAction icon={<Target color={colors.accent} size={17} weight="bold" />} label="Progress" onPress={() => router.push('/target-progress')} />
+            <HeroAction icon={<Storefront color={colors.accent} size={17} weight="bold" />} label="Market" onPress={() => router.push('/(tabs)/marketplace')} />
+            <HeroAction icon={<SquaresFour color={colors.accent} size={17} weight="bold" />} label="Tools" onPress={() => router.push('/(tabs)/apps')} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function HeroMetric({ value, label }: { value: string; label: string }) {
+  const { colors, font } = useTheme();
+  return (
+    <View style={{ flex: 1, minWidth: 82, borderRadius: 15, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 9 }}>
+      <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>{value}</Text>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>{label}</Text>
+    </View>
+  );
+}
+
+function HeroAction({ icon, label, onPress, filled = false }: { icon: React.ReactNode; label: string; onPress: () => void; filled?: boolean }) {
+  const { colors, font } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        minHeight: 40,
+        flexGrow: 1,
+        flexBasis: '22%',
+        borderRadius: 14,
+        backgroundColor: filled ? colors.accent : colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: filled ? colors.accent : colors.border,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 7,
+        paddingHorizontal: 10,
+      }}
+    >
+      {icon}
+      <Text style={[font.bodyBold, { color: filled ? '#fff' : colors.textSecondary, fontSize: 13 }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function FeedScopeRail({
+  feedScope,
+  setFeedScope,
+  onInfo,
+}: {
+  feedScope: 'semantic' | 'forYou' | 'following' | 'latest';
+  setFeedScope: (scope: 'semantic' | 'forYou' | 'following' | 'latest') => void;
+  onInfo: () => void;
+}) {
+  const { colors, font, fontSizes } = useTheme();
+  const layout = useResponsiveLayout();
+  return (
+    <View style={{ marginHorizontal: layout.gutter, marginTop: 2, marginBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+        {(['semantic', 'forYou', 'following', 'latest'] as const).map(scope => {
+          const active = feedScope === scope;
+          const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : scope === 'following' ? 'Following' : 'Latest';
+          return (
+            <Pressable
+              key={scope}
+              onPress={() => { void feedbackHaptic('select'); setFeedScope(scope); }}
+              accessibilityRole="tab"
+              accessibilityLabel={label}
+              accessibilityState={{ selected: active }}
+              style={{
+                minHeight: 36,
+                borderRadius: 999,
+                backgroundColor: active ? colors.accent : colors.surface,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: active ? colors.accent : colors.border,
+                paddingHorizontal: 14,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={[font.bodySemibold, { color: active ? '#fff' : colors.textSecondary, fontSize: fontSizes.small }]}>
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <Pressable
+        onPress={onInfo}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="About this feed"
+        style={{ width: 36, height: 36, borderRadius: 13, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Info color={colors.textMuted} size={18} />
+      </Pressable>
+    </View>
+  );
+}
+
 export default function DiscoverScreen() {
   const router = useRouter();
   const {
@@ -86,6 +242,8 @@ export default function DiscoverScreen() {
   const { colors, animation, font, fontSizes, lineHeights } = useTheme();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, interests, followingIds } = useAppStore();
+  const targetCategoryId = useAppStore(s => s.targetCategory);
+  const targetOutcome = useAppStore(s => s.targetOutcome);
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
   const dismissedCoach = useAppStore(s => s.dismissedFirstEchoCoach);
   const setDismissedCoach = useAppStore(s => s.setDismissedFirstEchoCoach);
@@ -104,6 +262,7 @@ export default function DiscoverScreen() {
   const { data: suggestedUsers = [] } = useSuggestedUsers();
   const followMut = useToggleRemoteFollow();
   const { data: evolvingNow = [] } = useTrendingEvolutions(8);
+  const targetCategory = useMemo(() => getTargetCategory(targetCategoryId), [targetCategoryId]);
 
   useEffect(() => { pingDailyActivity(); }, []);
 
@@ -180,45 +339,15 @@ export default function DiscoverScreen() {
 
   const ListHeader = (
     <View style={layout.contentStyle}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 12 : 8, marginBottom: 16, gap: 6 }}>
-        <View style={{ flex: 1, flexDirection: 'row', gap: 20 }}>
-          {(['semantic', 'forYou', 'following', 'latest'] as const).map(scope => {
-            const active = feedScope === scope;
-            const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : scope === 'following' ? 'Following' : 'Latest';
-            return (
-              <Pressable
-                key={scope}
-                onPress={() => { void feedbackHaptic('select'); setFeedScope(scope); }}
-                accessibilityRole="tab"
-                accessibilityLabel={label}
-                accessibilityState={{ selected: active }}
-                style={{
-                  paddingBottom: 4,
-                  borderBottomWidth: 2,
-                  borderBottomColor: active ? colors.accent : 'transparent',
-                }}
-              >
-                <Text style={{
-                  color: active ? colors.accent : colors.textSecondary,
-                  fontSize: fontSizes.small,
-                  fontWeight: active ? '700' : '400',
-                }}>
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Pressable
-          onPress={() => setAboutFeedVisible(true)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="About this feed"
-          style={{ padding: 4 }}
-        >
-          <Info color={colors.textMuted} size={18} />
-        </Pressable>
-      </View>
+      <HomeHero
+        username={username}
+        targetLabel={targetCategory.label}
+        targetOutcome={targetOutcome}
+        publishedCount={publishedCount}
+        unreadCount={unreadNotifs}
+        liveCount={popularItems.length}
+      />
+      <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} onInfo={() => setAboutFeedVisible(true)} />
 
       <Modal
         visible={aboutFeedVisible}
@@ -253,6 +382,7 @@ export default function DiscoverScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      <TargetToolsPanel compact />
       {features.stories && !remote && (
         <>
           <SectionHeader label="Your Stories" />

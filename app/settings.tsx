@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft, CaretRight, Bell, Vibrate, Lock, Moon, SpeakerHigh,
   Shield, Info, Question, SignOut, Trash, Eye, EyeSlash,
@@ -12,7 +13,7 @@ import {
   ChatCircle, Broadcast, Database, Eraser, BookmarkSimple,
   BellSlash, Rectangle, FileText,
   Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
-  Warning, ListChecks, Globe, Gavel,
+  Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -28,9 +29,11 @@ import { setPersonaEnabled } from '../lib/persona';
 import { track } from '../lib/analytics';
 import { isSafeExternalUrl } from '../lib/urlSafety';
 import { publicWebUrl } from '../lib/echoUrl';
+import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@echo.app';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@echo.app';
+type SettingsGroup = 'all' | 'essentials' | 'privacy' | 'display' | 'feed' | 'ai' | 'data' | 'support';
 
 function openTrustedExternalUrl(url: string): void {
   if (!isSafeExternalUrl(url)) return;
@@ -42,7 +45,8 @@ function SettingsRow({ icon: Icon, iconColor, label, subtitle, right, onPress, d
   right?: React.ReactNode; onPress?: () => void; destructive?: boolean;
   theme: ReturnType<typeof useTheme>;
 }) {
-  const { colors, radius, fontSizes } = theme;
+  const { colors, radius, fontSizes, font } = theme;
+  const resolvedIconColor = destructive ? colors.danger : (iconColor || colors.textSecondary);
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -61,20 +65,190 @@ function SettingsRow({ icon: Icon, iconColor, label, subtitle, right, onPress, d
           width: 36,
           height: 36,
           borderRadius: radius.md,
-          backgroundColor: destructive ? colors.dangerMuted : colors.surfaceHover,
+          backgroundColor: destructive ? colors.dangerMuted : `${resolvedIconColor}18`,
           alignItems: 'center',
           justifyContent: 'center',
           marginRight: 12,
         }}
       >
-        <Icon color={destructive ? colors.danger : (iconColor || colors.textSecondary)} size={18} />
+        <Icon color={resolvedIconColor} size={18} weight={iconColor || destructive ? 'bold' : 'regular'} />
       </View>
       <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
-        <Text style={{ color: destructive ? colors.danger : colors.text, fontSize: fontSizes.body }}>{label}</Text>
-        {subtitle && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>{subtitle}</Text>}
+        <Text style={[font.bodySemibold, { color: destructive ? colors.danger : colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>{label}</Text>
+        {subtitle && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={2}>{subtitle}</Text>}
       </View>
       {right || (onPress && <CaretRight color={colors.textMuted} size={18} />)}
     </AnimatedPressable>
+  );
+}
+
+function SettingsHero({
+  theme,
+  displayName,
+  username,
+  avatarColor,
+  avatarUrl,
+  profilePhotoVisible,
+  modelLabel,
+  notificationsEnabled,
+  privateAccount,
+  onEditProfile,
+  onTarget,
+  onAiMemory,
+}: {
+  theme: ReturnType<typeof useTheme>;
+  displayName: string;
+  username: string;
+  avatarColor: string;
+  avatarUrl?: string;
+  profilePhotoVisible: boolean;
+  modelLabel: string;
+  notificationsEnabled: boolean;
+  privateAccount: boolean;
+  onEditProfile: () => void;
+  onTarget: () => void;
+  onAiMemory: () => void;
+}) {
+  const { colors, radius, font } = theme;
+  const visibleAvatar = profilePhotoVisible ? avatarUrl : undefined;
+  const quickActions = [
+    { label: 'Edit profile', subtitle: `@${username}`, icon: PencilSimple, color: colors.accent, onPress: onEditProfile },
+    { label: 'Target tools', subtitle: 'Progress', icon: Target, color: '#10B981', onPress: onTarget },
+    { label: 'AI memory', subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: '#8B5CF6', onPress: onAiMemory },
+  ];
+
+  return (
+    <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, marginBottom: 18 }}>
+      <LinearGradient
+        colors={[`${colors.accent}42`, `${colors.accent}12`, 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+      <View style={{ padding: 18, gap: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <ProfileAvatar
+            displayName={displayName || username || 'Echo'}
+            avatarColor={avatarColor}
+            avatarUrl={visibleAvatar}
+            size={62}
+            showHalo
+          />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 33 }]} numberOfLines={1}>
+              Settings
+            </Text>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 3 }]} numberOfLines={2}>
+              Tune your profile, privacy, feed, and Echo AI from one place.
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
+            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{notificationsEnabled ? 'Notifications on' : 'Notifications off'}</Text>
+          </View>
+          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
+            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{privateAccount ? 'Private account' : 'Public account'}</Text>
+          </View>
+          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
+            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{modelLabel.replace('Gemini 2.5 ', '')}</Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {quickActions.map(action => {
+            const Icon = action.icon;
+            return (
+              <AnimatedPressable
+                key={action.label}
+                onPress={action.onPress}
+                style={{
+                  flex: 1,
+                  minHeight: 86,
+                  borderRadius: radius.lg,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.border,
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.62)',
+                  padding: 12,
+                  justifyContent: 'space-between',
+                }}
+                scaleValue={0.96}
+                haptic="light"
+              >
+                <View style={{ width: 34, height: 34, borderRadius: 13, backgroundColor: `${action.color}1F`, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon color={action.color} size={18} weight="bold" />
+                </View>
+                <View>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]} numberOfLines={1}>{action.label}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
+                </View>
+              </AnimatedPressable>
+            );
+          })}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function SettingsCategoryRail({
+  active,
+  onChange,
+  theme,
+}: {
+  active: SettingsGroup;
+  onChange: (group: SettingsGroup) => void;
+  theme: ReturnType<typeof useTheme>;
+}) {
+  const { colors, font } = theme;
+  const groups: { key: SettingsGroup; label: string; icon: any }[] = [
+    { key: 'all', label: 'All', icon: SlidersHorizontal },
+    { key: 'essentials', label: 'Essentials', icon: Bell },
+    { key: 'privacy', label: 'Privacy', icon: ShieldCheck },
+    { key: 'display', label: 'Display', icon: Palette },
+    { key: 'feed', label: 'Feed', icon: SquaresFour },
+    { key: 'ai', label: 'AI', icon: Robot },
+    { key: 'data', label: 'Data', icon: Database },
+    { key: 'support', label: 'Support', icon: Question },
+  ];
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: 8, paddingBottom: 16 }}
+    >
+      {groups.map(group => {
+        const activeGroup = active === group.key;
+        const Icon = group.icon;
+        return (
+          <AnimatedPressable
+            key={group.key}
+            onPress={() => onChange(group.key)}
+            style={{
+              minHeight: 40,
+              borderRadius: 999,
+              paddingHorizontal: 13,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 7,
+              backgroundColor: activeGroup ? colors.accent : colors.surface,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: activeGroup ? colors.accent : colors.border,
+            }}
+            scaleValue={0.95}
+            haptic="light"
+            accessibilityRole="button"
+            accessibilityState={{ selected: activeGroup }}
+          >
+            <Icon color={activeGroup ? '#fff' : colors.textSecondary} size={16} weight={activeGroup ? 'bold' : 'regular'} />
+            <Text style={[font.bodyBold, { color: activeGroup ? '#fff' : colors.textSecondary, fontSize: 13 }]}>{group.label}</Text>
+          </AnimatedPressable>
+        );
+      })}
+    </ScrollView>
   );
 }
 
@@ -358,6 +532,7 @@ export default function SettingsScreen() {
   const [showCornerPicker, setShowCornerPicker] = useState(false);
   const [showAccentPicker, setShowAccentPicker] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<SettingsGroup>('all');
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -578,6 +753,7 @@ export default function SettingsScreen() {
   const feedLabel = { latest: 'Latest', popular: 'Popular', following: 'Following' }[s.feedSort];
   const cornerLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.roundedCorners];
   const themeLabel = THEMES[s.theme]?.name ?? 'Midnight';
+  const showGroup = (...groups: SettingsGroup[]) => activeGroup === 'all' || groups.includes(activeGroup);
 
   const sectionHeaderStyle = {
     color: colors.textMuted,
@@ -637,9 +813,24 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
+        <SettingsHero
+          theme={theme}
+          displayName={s.displayName || s.username}
+          username={s.username}
+          avatarColor={s.avatarColor}
+          avatarUrl={s.avatarUrl || undefined}
+          profilePhotoVisible={s.profilePhotoVisible}
+          modelLabel={modelLabel}
+          notificationsEnabled={s.notificationsEnabled}
+          privateAccount={s.privateAccount}
+          onEditProfile={() => router.push('/edit-profile')}
+          onTarget={() => router.push('/target-progress' as never)}
+          onAiMemory={() => router.push('/ai-memory')}
+        />
+        <SettingsCategoryRail active={activeGroup} onChange={setActiveGroup} theme={theme} />
         <View style={sectionGridStyle}>
         {/* NOTIFICATIONS */}
-        <Animated.View entering={animation(FadeInDown.delay(50).duration(220))} style={sectionStyle}>
+        {showGroup('essentials') && <Animated.View entering={animation(FadeInDown.delay(50).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Essentials</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, handlePushToggle)} />
@@ -654,10 +845,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
 
         {/* PRIVACY & SAFETY */}
-        <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
+        {showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Privacy & Safety</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, handleActivityStatus)} />
@@ -681,10 +872,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Users} label={`Muted Users (${s.mutedIds.length})`} subtitle="Hide their echoes without notifying them" onPress={() => router.push('/muted-users')} />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
 
         {/* APPEARANCE & DISPLAY */}
-        <Animated.View entering={animation(FadeInDown.delay(150).duration(220))} style={sectionStyle}>
+        {showGroup('display') && <Animated.View entering={animation(FadeInDown.delay(150).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Accessibility & Display</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow
@@ -743,10 +934,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Lightning} label="Reduce Animations" subtitle="Minimize motion effects" right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
 
         {/* CONTENT & FEED */}
-        <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} style={sectionStyle}>
+        {showGroup('feed') && <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Content & Feed</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={SquaresFour} label="Feed Sort" subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
@@ -759,10 +950,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={WifiSlash} label="Data Saver" subtitle="Reduce data usage on mobile" right={SwitchEl(s.dataSaver, s.setDataSaver)} />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
 
         {/* CHAT & AI */}
-        <Animated.View entering={animation(FadeInDown.delay(250).duration(220))} style={sectionStyle}>
+        {showGroup('ai') && <Animated.View entering={animation(FadeInDown.delay(250).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Chat & AI</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label="AI Model" subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
@@ -792,10 +983,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={FloppyDisk} label="Auto-save Chats" subtitle="Automatically save conversations" right={SwitchEl(s.autoSaveChats, handleAutoSaveChats)} />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
 
         {/* STORAGE & DATA */}
-        <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} style={sectionStyle}>
+        {showGroup('data') && <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Advanced Data Controls</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Database} label="Storage Used" right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
@@ -808,10 +999,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={BellSlash} label="Clear Notifications" subtitle="Remove all notifications" onPress={handleClearNotifications} />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
 
         {/* MODERATION (moderators only) */}
-        {isModerator && (
+        {isModerator && showGroup('support') && (
           <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
             <Text style={sectionHeaderStyle}>Moderation</Text>
             <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -821,7 +1012,7 @@ export default function SettingsScreen() {
         )}
 
         {/* EU DIGITAL SERVICES ACT */}
-        <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
+        {showGroup('support') && <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>EU Digital Services Act</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Warning} label="My Reports" subtitle="Track the outcome of content reports you've filed" onPress={() => router.push('/my-reports')} />
@@ -830,10 +1021,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={ListChecks} label="EU Legal Representative" onPress={() => openTrustedExternalUrl(publicWebUrl('/legal/eu-rep'))} />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
 
         {/* ABOUT */}
-        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
+        {showGroup('support') && <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>About</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => openTrustedExternalUrl(publicWebUrl('/privacy'))} />
@@ -844,17 +1035,17 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.0.0</Text>} />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
 
         {/* DANGER ZONE */}
-        <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
+        {showGroup('support', 'data') && <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Danger Zone</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={SignOut} label="Sign Out" onPress={handleSignOut} destructive />
             {divider}
             <SettingsRow theme={theme} icon={Trash} label="Delete Account" subtitle="Permanently delete all data" onPress={handleDeleteAccount} destructive />
           </GlassPanel>
-        </Animated.View>
+        </Animated.View>}
         </View>
 
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32 }}>Echo v1.0.0</Text>

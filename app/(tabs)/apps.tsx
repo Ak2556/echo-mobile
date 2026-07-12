@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Platform, Pressable, TextInput, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
@@ -9,8 +9,7 @@ import {
   Calculator, ArrowsLeftRight, Receipt, Timer,
   Key, Globe, BracketsCurly, FileText,
   Palette, Pulse,
-  Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix, VideoCamera,
-  Barbell,
+  Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix, VideoCamera, Target, Barbell,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { getTodayProductivity, LocalProductivityApp, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
@@ -19,6 +18,9 @@ import { formatMemoTime } from '../../lib/voiceMemos';
 import { EmptyState, Pill, SectionTitle } from '../../components/ui/Polish';
 import { MOTION } from '../../lib/motion';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { TARGET_CATEGORIES, getTargetCategory } from '../../lib/targetCategories';
+import { useAppStore } from '../../store/useAppStore';
+import { MINI_APP_CATALOG, type MiniAppCatalogItem } from '../../lib/miniAppCatalog';
 
 const PAD = 20;
 const GAP = 12;
@@ -40,34 +42,8 @@ const ECHO_PAIRINGS: EchoPairing[] = [
   { title: 'Habits to updates', body: 'Use streaks and milestones as material for progress updates.', route: '/mini-apps/habits' },
 ];
 
-interface MiniApp {
-  id: string;
-  name: string;
-  description: string;
-  color: string;
-  route: Href;
-}
-
-const APPS: MiniApp[] = [
-  { id: 'calculator',    name: 'Calculator',   description: 'Scientific & history',    color: '#3B82F6', route: '/mini-apps/calculator' },
-  { id: 'converter',     name: 'Converter',    description: 'Length · weight · temp',  color: '#10B981', route: '/mini-apps/converter' },
-  { id: 'bill-splitter', name: 'Bill Splitter', description: 'Tip & split bills',      color: '#F59E0B', route: '/mini-apps/bill-splitter' },
-  { id: 'pomodoro',      name: 'Pomodoro',     description: 'Focus & break timer',     color: '#EF4444', route: '/mini-apps/pomodoro' },
-  { id: 'password-gen',  name: 'Passwords',    description: 'Secure generator',        color: '#8B5CF6', route: '/mini-apps/password-gen' },
-  { id: 'world-clock',   name: 'World Clock',  description: 'Global timezones',        color: '#06B6D4', route: '/mini-apps/world-clock' },
-  { id: 'json-formatter', name: 'JSON Tools',  description: 'Format & validate',       color: '#F97316', route: '/mini-apps/json-formatter' },
-  { id: 'markdown',      name: 'Markdown',     description: 'Write & preview',         color: '#64748B', route: '/mini-apps/markdown' },
-  { id: 'color-tools',   name: 'Colors',       description: 'HEX · RGB · palettes',   color: '#EC4899', route: '/mini-apps/color-tools' },
-  { id: 'bmi',           name: 'BMI Calc',     description: 'Health & body metrics',   color: '#22C55E', route: '/mini-apps/bmi' },
-  { id: 'camera',        name: 'Camera',       description: 'Photo & video capture',   color: '#6366F1', route: '/mini-apps/camera' },
-  { id: 'voice-memo',    name: 'Voice Memo',   description: 'Record & play audio',     color: '#EF4444', route: '/mini-apps/voice-memo' },
-  { id: 'notes',         name: 'Notes',        description: 'Quick notes & ideas',     color: '#F59E0B', route: '/mini-apps/notes' },
-  { id: 'habits',        name: 'Habits',       description: 'Daily streaks & goals',   color: '#10B981', route: '/mini-apps/habits' },
-  { id: 'expenses',      name: 'Expenses',     description: 'Income & budget log',     color: '#8B5CF6', route: '/mini-apps/expenses' },
-  { id: 'fitness',       name: 'Fitness',      description: 'Meals · workouts · form', color: '#14B8A6', route: '/mini-apps/fitness' },
-  { id: 'dice',          name: 'Dice & Coin',  description: 'Roll dice, flip coins',   color: '#F97316', route: '/mini-apps/dice' },
-  { id: 'video-player',  name: 'Video Player', description: 'Pick & play videos',      color: '#0EA5E9', route: '/mini-apps/video-player' },
-];
+type MiniApp = MiniAppCatalogItem;
+const APPS: MiniApp[] = MINI_APP_CATALOG;
 
 /** Darken a #RRGGBB color by a 0..1 factor. */
 function shade(hex: string, factor: number): string {
@@ -104,12 +80,12 @@ function AppIcon({ id, color, size = 28 }: { id: string; color: string; size?: n
     case 'markdown':      return <FileText         {...p} />;
     case 'color-tools':   return <Palette          {...p} />;
     case 'bmi':           return <Pulse            {...p} />;
+    case 'fitness':       return <Barbell          {...p} />;
     case 'camera':        return <Camera           {...p} />;
     case 'voice-memo':    return <Microphone       {...p} />;
     case 'notes':         return <NotePencil       {...p} />;
     case 'habits':        return <CheckCircle      {...p} />;
     case 'expenses':      return <Wallet           {...p} />;
-    case 'fitness':       return <Barbell          {...p} />;
     case 'dice':          return <DiceSix          {...p} />;
     case 'video-player':  return <VideoCamera      {...p} />;
     default:              return <Calculator       {...p} />;
@@ -156,6 +132,11 @@ export default function AppsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const layout = useResponsiveLayout();
+  const targetCategory = useAppStore(s => s.targetCategory);
+  const targetOutcome = useAppStore(s => s.targetOutcome);
+  const targetMiniApps = useAppStore(s => s.targetMiniApps);
+  const setTargetCategory = useAppStore(s => s.setTargetCategory);
+  const setTargetOutcome = useAppStore(s => s.setTargetOutcome);
   const { width: windowWidth } = useWindowDimensions();
   const [dashboard, setDashboard] = useState<TodayProductivity | null>(null);
   const [query, setQuery] = useState('');
@@ -193,6 +174,13 @@ export default function AppsScreen() {
     scrollY.value = event.nativeEvent.contentOffset.y;
   }, [scrollY]);
 
+  const selectedTarget = useMemo(() => getTargetCategory(targetCategory), [targetCategory]);
+  const appById = useMemo(() => new Map<string, MiniApp>(APPS.map(app => [app.id, app])), []);
+  const targetApps = useMemo(() => {
+    const ids = targetMiniApps.length ? targetMiniApps : selectedTarget.apps;
+    return ids.map(id => appById.get(id)).filter((app): app is MiniApp => Boolean(app));
+  }, [appById, selectedTarget.apps, targetMiniApps]);
+
   const rows: MiniApp[][] = [];
   for (let i = 0; i < APPS.length; i += columns) rows.push(APPS.slice(i, i + columns));
 
@@ -211,6 +199,9 @@ export default function AppsScreen() {
     searchLocalProductivity(text, 6).then(setResults).catch(() => setResults([]));
   };
   const filteredResults = filter === 'all' ? results : results.filter(result => result.app === filter);
+  const chooseTarget = (id: string) => {
+    setTargetCategory(id);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -222,6 +213,93 @@ export default function AppsScreen() {
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
+        <Animated.View entering={FadeInDown.delay(30).duration(220)} style={{ gap: 12, marginBottom: 8 }}>
+          <SectionTitle
+            title="Your Target Stack"
+            caption="Mini apps recommended around the output you want"
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: `${colors.accent}20`,
+            }}>
+              <Target color={colors.accent} size={23} weight="bold" />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ color: colors.text, fontFamily: 'Inter_600SemiBold', fontSize: 16 }} numberOfLines={1}>
+                {selectedTarget.label}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 17 }} numberOfLines={2}>
+                {targetOutcome.trim() || selectedTarget.outcome}
+              </Text>
+            </View>
+          </View>
+          <TextInput
+            value={targetOutcome}
+            onChangeText={setTargetOutcome}
+            placeholder="Name your desired output..."
+            placeholderTextColor={colors.textMuted}
+            style={{ color: colors.text, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 13, backgroundColor: colors.surfaceHover, fontSize: 15 }}
+          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {TARGET_CATEGORIES.map(category => {
+              const active = category.id === selectedTarget.id;
+              return (
+                <Pressable
+                  key={category.id}
+                  onPress={() => chooseTarget(category.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  style={{
+                    minHeight: 34,
+                    borderRadius: 999,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: active ? colors.accent : colors.border,
+                    backgroundColor: active ? `${colors.accent}20` : colors.surface,
+                    paddingHorizontal: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{ color: active ? colors.accent : colors.textSecondary, fontFamily: 'Inter_600SemiBold', fontSize: 12 }}>
+                    {category.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
+            {targetApps.map((app, index) => (
+              <AppCard key={`target-${app.id}`} app={app} width={cardWidth} index={index} />
+            ))}
+          </View>
+          <View>
+            {selectedTarget.metrics.map((metric, i, arr) => (
+              <View key={metric} style={{ paddingVertical: 10, borderBottomWidth: i < arr.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.border }}>
+                <Text style={{ color: colors.text, fontFamily: 'Inter_600SemiBold', fontSize: 13 }}>{metric}</Text>
+              </View>
+            ))}
+          </View>
+          <Pressable
+            onPress={() => router.push('/target-progress' as Href)}
+            style={{
+              minHeight: 44,
+              borderRadius: 16,
+              backgroundColor: colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>
+              Share or compare progress
+            </Text>
+          </Pressable>
+        </Animated.View>
+
         {dashboard && (
           <Animated.View entering={FadeInDown.delay(40).duration(220)} style={{ gap: 12, marginBottom: 8 }}>
             <SectionTitle title="Support Your Echoes" caption="Local tools that feed ideas back into chat and posts" />

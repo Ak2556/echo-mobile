@@ -23,6 +23,8 @@ interface RemixButtonProps {
   hot?: boolean;
   /** Compact mode for inline use (FeedCard action bar) */
   compact?: boolean;
+  /** Icon-first mode for very tight action rows. */
+  iconOnly?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export function RemixButton({
   authorTitle,
   hot,
   compact,
+  iconOnly,
 }: RemixButtonProps) {
   const router = useRouter();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
@@ -69,7 +72,7 @@ export function RemixButton({
   };
 
   const labelColor = isHot ? '#fff' : '#E4E4E7';
-  const padH = compact ? 10 : 14;
+  const padH = iconOnly ? 9 : compact ? 10 : 14;
   const padV = compact ? 7 : 9;
 
   return (
@@ -102,6 +105,7 @@ export function RemixButton({
             />
             <Text
               style={{
+                display: iconOnly ? 'none' : 'flex',
                 fontWeight: '700',
                 fontSize: compact ? 12 : 13,
                 color: labelColor,
