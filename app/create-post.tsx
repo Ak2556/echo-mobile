@@ -385,6 +385,23 @@ export default function CreatePostScreen() {
       publishEcho(publishedEcho);
       if (remoteAuthorId) {
         qc.setQueriesData({ queryKey: ['feed'] }, (old: unknown) => prependEchoToFeedCache(old, publishedEcho));
+        qc.setQueryData(['profile', remoteAuthorId], (old: unknown) => {
+          if (!old || typeof old !== 'object' || !('echoes' in old)) return old;
+          const bundle = old as { echoes?: FeedItem[]; user?: { echoCount?: number } };
+          if (!Array.isArray(bundle.echoes)) return old;
+          const nextEchoes = [
+            publishedEcho,
+            ...bundle.echoes.filter(item => item.id !== publishedEcho.id),
+          ];
+          return {
+            ...bundle,
+            echoes: nextEchoes,
+            user: bundle.user
+              ? { ...bundle.user, echoCount: Math.max(bundle.user.echoCount ?? 0, nextEchoes.length) }
+              : bundle.user,
+          };
+        });
+        qc.invalidateQueries({ queryKey: ['profile', remoteAuthorId] });
       }
       qc.invalidateQueries({ queryKey: ['feed'] });
       playSoundEffect('success');

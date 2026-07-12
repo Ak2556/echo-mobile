@@ -515,6 +515,9 @@ export function createSocialSlice(
       persistSet('dismissedFirstEchoCoach', false);
       persistSet('hasCompletedProductOnboarding', false);
       persistSet('onboardingDraftCreated', false);
+      persistSet('targetCategory', 'focus');
+      persistSet('targetOutcome', '');
+      persistSet('targetMiniApps', ['pomodoro', 'habits', 'notes', 'voice-memo']);
       set({
         publishedEchoes: [], likedIds: [], bookmarkedIds: [], repostedIds: [],
         commentsByEcho: {}, followingIds: [], notifications: [],
@@ -524,6 +527,9 @@ export function createSocialSlice(
         dismissedFirstEchoCoach: false,
         hasCompletedProductOnboarding: false,
         onboardingDraftCreated: false,
+        targetCategory: 'focus',
+        targetOutcome: '',
+        targetMiniApps: ['pomodoro', 'habits', 'notes', 'voice-memo'],
       });
     },
   };

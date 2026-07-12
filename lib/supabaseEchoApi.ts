@@ -37,6 +37,7 @@ const ALLOWED_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 
 const ALLOWED_IMAGE_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
 const ALLOWED_VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'm4v', 'webm']);
 const ALLOWED_VIDEO_CONTENT_TYPES = new Set(['video/mp4', 'video/quicktime', 'video/x-m4v', 'video/webm']);
+const DM_MEDIA_BUCKET = 'dm-media';
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -90,6 +91,49 @@ function assertImageUploadAllowed(image: UploadableImage): { ext: string; conten
   }
 
   return { ext: ext === 'jpeg' ? 'jpg' : ext, contentType };
+}
+
+function dmMediaPathFromStoredValue(value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (!/^https?:\/\//i.test(value)) return value.replace(/^\/+/, '');
+
+  try {
+    const parsed = new URL(value);
+    const marker = `/storage/v1/object/public/${DM_MEDIA_BUCKET}/`;
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx >= 0) {
+      return decodeURIComponent(parsed.pathname.slice(idx + marker.length));
+    }
+
+    const signedMarker = `/storage/v1/object/sign/${DM_MEDIA_BUCKET}/`;
+    const signedIdx = parsed.pathname.indexOf(signedMarker);
+    if (signedIdx >= 0) {
+      return decodeURIComponent(parsed.pathname.slice(signedIdx + signedMarker.length));
+    }
+  } catch {
+    return value;
+  }
+
+  return value;
+}
+
+async function signedDmMediaUrl(value: string | null | undefined): Promise<string | null> {
+  const path = dmMediaPathFromStoredValue(value);
+  if (!path) return null;
+
+  const { data } = supabase.storage.from(DM_MEDIA_BUCKET).getPublicUrl(path);
+  return data.publicUrl || value || null;
+}
+
+function normalizeImageContentType(input: string | null | undefined): string {
+  const contentType = (input || 'image/jpeg').toLowerCase();
+  if (contentType === 'image/jpg') return 'image/jpeg';
+  return ALLOWED_IMAGE_CONTENT_TYPES.has(contentType) ? contentType : 'image/jpeg';
+}
+
+function imageExtFromContentType(contentType: string): string {
+  const ext = contentType.split('/')[1] || 'jpeg';
+  return ext === 'jpeg' ? 'jpg' : ext;
 }
 
 async function imageUploadBody(image: UploadableImage): Promise<Blob | ArrayBuffer> {
@@ -2644,32 +2688,18 @@ export async function sendDMImage(
     .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
     .select('id')
     .single();
-  if (convErr) throw convErr;
+  if (convErr) throw new Error(`Conversation failed: ${convErr.message}`);
 
-  const ext = (mimeType.split('/')[1] ?? 'jpg').replace('jpeg', 'jpg');
+  const contentType = normalizeImageContentType(mimeType);
+  const ext = imageExtFromContentType(contentType);
   const path = `${uid}/${conv.id as string}/${Date.now()}.${ext}`;
 
-  const { data: signed, error: signErr } = await supabase.storage
-    .from('dm-media')
-    .createSignedUploadUrl(path);
-
-  if (signErr) {
-    const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-    const bytes = base64ToArrayBuffer(base64);
-    const { error: upErr } = await supabase.storage
-      .from('dm-media')
-      .upload(path, bytes, { upsert: true, contentType: mimeType });
-    if (upErr) throw upErr;
-  } else {
-    const res = await FileSystem.uploadAsync(signed.signedUrl, uri, {
-      httpMethod: 'PUT',
-      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-      headers: { 'content-type': mimeType, 'cache-control': 'max-age=31536000' },
-    });
-    if (res.status < 200 || res.status >= 300) throw new Error(`Image upload failed (${res.status})`);
-  }
-
-  const { data: pub } = supabase.storage.from('dm-media').getPublicUrl(path);
+  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  const bytes = base64ToArrayBuffer(base64);
+  const { error: upErr } = await supabase.storage
+    .from(DM_MEDIA_BUCKET)
+    .upload(path, bytes, { contentType, cacheControl: '31536000' });
+  if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
 
   const { error: msgErr } = await supabase
     .from('direct_messages')
@@ -2677,11 +2707,11 @@ export async function sendDMImage(
       conversation_id: conv.id,
       sender_id: uid,
       kind: 'image',
-      media_url: pub.publicUrl,
+      media_url: path,
       text: null,
       ...(replyToId ? { reply_to_id: replyToId } : {}),
     });
-  if (msgErr) throw msgErr;
+  if (msgErr) throw new Error(`Message insert failed: ${msgErr.message}`);
 
   return { conversationId: conv.id as string };
 }
@@ -2833,20 +2863,24 @@ export async function fetchRemoteMessages(
   const { data, error } = await q;
   if (error) throw error;
 
-  return ((data ?? []) as Record<string, unknown>[]).reverse().map(m => {
+  const messages = await Promise.all(((data ?? []) as Record<string, unknown>[]).reverse().map(async m => {
     const rm = (m.reply_msg as Record<string, unknown> | null);
+    const kind = (m.kind as RemoteDirectMessage['kind']) ?? 'text';
+    const storedMediaUrl = (m.media_url as string | null) ?? null;
     return {
       id: m.id as string,
       conversationId: m.conversation_id as string,
       senderId: m.sender_id as string,
       content: (m.text as string | null) ?? null,
-      kind: (m.kind as RemoteDirectMessage['kind']) ?? 'text',
+      kind,
       createdAt: m.created_at as string,
       readAt: (m.read_at as string | null) ?? null,
       deletedAt: (m.deleted_at as string | null) ?? null,
       editedAt: (m.edited_at as string | null) ?? null,
       sharedEchoId: (m.shared_echo_id as string | null) ?? null,
-      mediaUrl: (m.media_url as string | null) ?? null,
+      mediaUrl: kind === 'image' || kind === 'voice'
+        ? await signedDmMediaUrl(storedMediaUrl)
+        : storedMediaUrl,
       replyToId: (m.reply_to_id as string | null) ?? null,
       replyToContent: rm ? ((rm.text as string | null) ?? null) : null,
       replyToSenderId: rm ? ((rm.sender_id as string | null) ?? null) : null,
@@ -2859,7 +2893,9 @@ export async function fetchRemoteMessages(
         value: r.emoji as string,
       })),
     };
-  });
+  }));
+
+  return messages;
 }
 
 // Suggested Users

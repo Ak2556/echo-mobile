@@ -1,6 +1,7 @@
 import { persistGet, persistSet, storage } from '../persist';
 import type { EchoAIModel } from '../../lib/api';
 import type { CurrencyCode } from '../../lib/currency';
+import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/targetCategories';
 
 export interface SettingsSlice {
   // ── Core ──
@@ -59,6 +60,13 @@ export interface SettingsSlice {
   // ── Thinking Archetype ──
   thinkingStyle: string;
   setThinkingStyle: (v: string) => void;
+  // ── Personal target system ──
+  targetCategory: string;
+  setTargetCategory: (v: string) => void;
+  targetOutcome: string;
+  setTargetOutcome: (v: string) => void;
+  targetMiniApps: string[];
+  setTargetMiniApps: (v: string[]) => void;
   // ── Marketplace ──
   preferredCurrency: CurrencyCode;
   setPreferredCurrency: (v: CurrencyCode) => void;
@@ -162,6 +170,17 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setInterests: (v) => { persistSet('interests', v); set({ interests: v }); },
     thinkingStyle: persistGet<string>('thinkingStyle', ''),
     setThinkingStyle: (v) => { persistSet('thinkingStyle', v); set({ thinkingStyle: v }); },
+    targetCategory: persistGet<string>('targetCategory', DEFAULT_TARGET_CATEGORY_ID),
+    setTargetCategory: (v) => {
+      const category = getTargetCategory(v);
+      persistSet('targetCategory', category.id);
+      persistSet('targetMiniApps', category.apps);
+      set({ targetCategory: category.id, targetMiniApps: category.apps });
+    },
+    targetOutcome: persistGet<string>('targetOutcome', ''),
+    setTargetOutcome: (v) => { persistSet('targetOutcome', v); set({ targetOutcome: v }); },
+    targetMiniApps: persistGet<string[]>('targetMiniApps', getTargetCategory(DEFAULT_TARGET_CATEGORY_ID).apps),
+    setTargetMiniApps: (v) => { persistSet('targetMiniApps', v); set({ targetMiniApps: v }); },
     preferredCurrency: persistGet<CurrencyCode>('preferredCurrency', 'INR'),
     setPreferredCurrency: (v) => { persistSet('preferredCurrency', v); set({ preferredCurrency: v }); },
     fontScale: persistGet<number>('fontScale', 1),
@@ -193,6 +212,9 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
         avatarColor: '#3B82F6', interests: [],
         profilePhotoVisible: true,
         personaLearningEnabled: true,
+        targetCategory: DEFAULT_TARGET_CATEGORY_ID,
+        targetOutcome: '',
+        targetMiniApps: getTargetCategory(DEFAULT_TARGET_CATEGORY_ID).apps,
         hasCompletedProductOnboarding: false, onboardingDraftCreated: false,
       });
     },
