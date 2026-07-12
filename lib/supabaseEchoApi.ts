@@ -2761,6 +2761,50 @@ export async function sendDMVoice(
   return { conversationId: conv.id as string };
 }
 
+/**
+ * Forward a message to another user: copy kind/text/media/echo reference into
+ * a new message in the target conversation. Media is referenced by path, not
+ * re-uploaded — the dm-media read policy covers any authenticated user.
+ */
+export async function forwardDMMessage(
+  messageId: string,
+  recipientId: string,
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const { data: src, error: srcErr } = await supabase
+    .from('direct_messages')
+    .select('kind, text, media_url, shared_echo_id, deleted_at')
+    .eq('id', messageId)
+    .single();
+  if (srcErr || !src) throw new Error('Message not found');
+  if (src.deleted_at) throw new Error('Message was deleted');
+
+  const userA = uid < recipientId ? uid : recipientId;
+  const userB = uid < recipientId ? recipientId : uid;
+  const { data: conv, error: convErr } = await supabase
+    .from('dm_conversations')
+    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
+    .select('id')
+    .single();
+  if (convErr) throw new Error(`Conversation failed: ${convErr.message}`);
+
+  const { error: msgErr } = await supabase
+    .from('direct_messages')
+    .insert({
+      conversation_id: conv.id,
+      sender_id: uid,
+      kind: src.kind,
+      text: src.text,
+      media_url: src.media_url,
+      shared_echo_id: src.shared_echo_id,
+    });
+  if (msgErr) throw new Error(`Forward failed: ${msgErr.message}`);
+
+  return { conversationId: conv.id as string };
+}
+
 /** Set or clear the pinned message for a conversation. */
 export async function pinDMMessage(
   conversationId: string,

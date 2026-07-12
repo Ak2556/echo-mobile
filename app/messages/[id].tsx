@@ -12,7 +12,7 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
-  Microphone, Play, Pause,
+  Microphone, Play, Pause, ShareFat, WarningCircle,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -24,9 +24,14 @@ import {
   useAudioRecorder,
   type AudioPlayer,
 } from 'expo-audio';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated, {
+  FadeIn, FadeOut, SlideInDown, SlideOutDown,
+  runOnJS, useAnimatedStyle, useSharedValue, withSpring,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
+import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -45,6 +50,9 @@ import {
   useDeleteMessage,
   useToggleReaction,
   useTypingIndicator,
+  useDiscardLocalMessage,
+  useForwardMessage,
+  useRemoteConversations,
 } from '../../hooks/queries/useDMs';
 import { markMessagesRead } from '../../lib/supabaseEchoApi';
 import { usePresenceTracking } from '../../lib/presence';
@@ -486,7 +494,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
 
 function DMBubble({
   message, isMe, showReadReceipt, myUserId, grouped,
-  onLongPress, onReactionToggle, onReplyPress, onImagePress,
+  onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry,
 }: {
   message: NormalizedMessage;
   isMe: boolean;
@@ -497,12 +505,39 @@ function DMBubble({
   onReactionToggle: (val: string, hasReacted: boolean) => void;
   onReplyPress: (replyToId: string) => void;
   onImagePress?: (url: string) => void;
+  onSwipeReply?: () => void;
+  onRetry?: () => void;
 }) {
   const router = useRouter();
   const fontSizeSetting = useAppStore(s => s.fontSize);
   const { colors, radius } = useTheme();
   const textSize = ({ small: 14, medium: 16, large: 18 } as Record<string, number>)[fontSizeSetting] ?? 16;
   const isDeleted = !!message.deletedAt;
+  const isFailed = message.id.startsWith('failed-');
+
+  // Swipe-to-reply: drag the bubble toward the center; past the threshold a
+  // reply is armed and springs back. Own messages swipe left, others right.
+  const tx = useSharedValue(0);
+  const SWIPE_MAX = 72;
+  const SWIPE_TRIGGER = 52;
+  const canSwipe = !isDeleted && !isFailed && !message.id.startsWith('pending-') && !!onSwipeReply;
+  const swipePan = Gesture.Pan()
+    .enabled(canSwipe)
+    .activeOffsetX(isMe ? [-16, 9999] : [-9999, 16])
+    .failOffsetY([-14, 14])
+    .onUpdate(e => {
+      const raw = isMe ? Math.min(0, e.translationX) : Math.max(0, e.translationX);
+      const capped = Math.max(-SWIPE_MAX, Math.min(SWIPE_MAX, raw));
+      tx.value = capped;
+    })
+    .onEnd(() => {
+      if (Math.abs(tx.value) >= SWIPE_TRIGGER && onSwipeReply) runOnJS(onSwipeReply)();
+      tx.value = withSpring(0, { damping: 18, stiffness: 220 });
+    });
+  const swipeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }] }));
+  const replyHintStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(1, Math.abs(tx.value) / SWIPE_TRIGGER),
+  }));
 
   const bubbleBg = isMe ? colors.accent : colors.surface;
   const textColor = isMe ? '#fff' : colors.text;
@@ -640,19 +675,41 @@ function DMBubble({
 
   return (
     <View style={{ paddingHorizontal: 16, paddingVertical: grouped ? 1 : 4, alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-      <View style={{ maxWidth: '82%' }}>
-        {renderContent()}
+      <GestureDetector gesture={swipePan}>
+        <Animated.View style={[{ maxWidth: '82%' }, swipeStyle]}>
+          {canSwipe && (
+            <Animated.View
+              pointerEvents="none"
+              style={[{
+                position: 'absolute',
+                top: 0, bottom: 0,
+                [isMe ? 'right' : 'left']: -34,
+                justifyContent: 'center',
+              }, replyHintStyle]}
+            >
+              <ArrowBendUpLeft color={colors.accent} size={18} weight="bold" />
+            </Animated.View>
+          )}
+          {renderContent()}
 
-        {!isDeleted && message.reactions.length > 0 && (
-          <ReactionBar
-            reactions={message.reactions}
-            myUserId={myUserId}
-            onToggle={onReactionToggle}
-          />
-        )}
-      </View>
+          {!isDeleted && message.reactions.length > 0 && (
+            <ReactionBar
+              reactions={message.reactions}
+              myUserId={myUserId}
+              onToggle={onReactionToggle}
+            />
+          )}
+        </Animated.View>
+      </GestureDetector>
 
-      {!grouped && (
+      {isFailed ? (
+        <Pressable onPress={onRetry} hitSlop={8}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3, marginHorizontal: 2 }}>
+            <WarningCircle color="#EF4444" size={12} weight="fill" />
+            <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '700' }}>Failed to send — tap to retry</Text>
+          </View>
+        </Pressable>
+      ) : !grouped && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3, marginHorizontal: 2 }}>
           <Text style={{ color: colors.textMuted, fontSize: 10 }}>{formatTime(message.createdAt)}</Text>
           {message.editedAt && !isDeleted && (
@@ -670,11 +727,107 @@ function DMBubble({
   );
 }
 
+// ─── UnreadDivider ───────────────────────────────────────────────────────────
+
+function UnreadDivider() {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10 }}>
+      <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
+      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>NEW MESSAGES</Text>
+      <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
+    </View>
+  );
+}
+
+// ─── ForwardSheet ────────────────────────────────────────────────────────────
+
+function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
+  visible: boolean;
+  currentConversationId: string | undefined;
+  onSelect: (recipientId: string, displayName: string) => void;
+  onClose: () => void;
+}) {
+  const { colors, reduceAnimations } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { data: conversations = [] } = useRemoteConversations();
+  const targets = conversations.filter(c => c.id !== currentConversationId && !c.archived);
+
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <Animated.View
+        entering={reduceAnimations ? undefined : FadeIn.duration(200)}
+        style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.48)' }]}
+      >
+        <Pressable style={{ flex: 1 }} onPress={onClose} />
+      </Animated.View>
+      <Animated.View
+        entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
+        exiting={reduceAnimations ? undefined : SlideOutDown.duration(180)}
+        style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0,
+          maxHeight: 420,
+          borderTopLeftRadius: 24, borderTopRightRadius: 24,
+          backgroundColor: colors.surface,
+          paddingBottom: Math.max(insets.bottom, 12) + 8,
+          overflow: 'hidden',
+        }}
+      >
+        <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+        </View>
+        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', paddingHorizontal: 20, paddingBottom: 10 }}>
+          Forward to…
+        </Text>
+        {targets.length === 0 ? (
+          <Text style={{ color: colors.textMuted, fontSize: 14, paddingHorizontal: 20, paddingVertical: 18 }}>
+            No other conversations yet.
+          </Text>
+        ) : (
+          <FlatList
+            data={targets}
+            keyExtractor={c => c.id}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => { onSelect(item.otherUserId, item.otherDisplayName); onClose(); }}
+                style={({ pressed }) => ({
+                  flexDirection: 'row', alignItems: 'center', gap: 12,
+                  paddingHorizontal: 20, paddingVertical: 12,
+                  opacity: pressed ? 0.6 : 1,
+                })}
+              >
+                <View style={{
+                  width: 40, height: 40, borderRadius: 20,
+                  backgroundColor: item.otherAvatarColor,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+                    {item.otherDisplayName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
+                    {item.otherDisplayName}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>
+                    @{item.otherUsername}
+                  </Text>
+                </View>
+                <ShareFat color={colors.accent} size={17} weight="fill" />
+              </Pressable>
+            )}
+          />
+        )}
+      </Animated.View>
+    </Modal>
+  );
+}
+
 // ─── MessageActionSheet ───────────────────────────────────────────────────────
 
 function MessageActionSheet({
   visible, message, isOwn, myUserId, isPinned,
-  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin,
+  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward,
 }: {
   visible: boolean;
   message: NormalizedMessage | null;
@@ -688,6 +841,7 @@ function MessageActionSheet({
   onReply: () => void;
   onEdit: () => void;
   onPin: () => void;
+  onForward: () => void;
 }) {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
@@ -787,6 +941,9 @@ function MessageActionSheet({
           )}
           {isText && (
             <Row icon={<Copy color={colors.text} size={18} />} label="Copy" onPress={onCopy} />
+          )}
+          {!isDeleted && !message.id.startsWith('pending-') && !message.id.startsWith('failed-') && (
+            <Row icon={<ShareFat color={colors.text} size={18} />} label="Forward" onPress={onForward} />
           )}
           {isText && isOwn && (
             <Row icon={<PencilSimple color={colors.text} size={18} />} label="Edit" onPress={onEdit} />
@@ -956,6 +1113,9 @@ export default function DMScreen() {
   const { mutate: doMarkRead } = useMarkRead();
   const deleteMessage = useDeleteMessage(id);
   const toggleReaction = useToggleReaction(id);
+  const forwardMessage = useForwardMessage();
+  const discardLocal = useDiscardLocalMessage(id);
+  const [forwardTarget, setForwardTarget] = useState<NormalizedMessage | null>(null);
   const { partnerIsTyping, sendTypingEvent } = useTypingIndicator(
     remote ? id : undefined,
     remote ? myId : undefined,
@@ -1038,6 +1198,18 @@ export default function DMScreen() {
     ? messages.filter(message => messageSearchText(message).includes(searchTerm))
     : messages;
   const searchMatchCount = searchTerm ? visibleMessages.length : 0;
+
+  // Snapshot where the unread block starts, once, before mark-read wipes the
+  // flags — this anchors the "New messages" divider for the whole visit.
+  const firstUnreadIdRef = useRef<string | null>(null);
+  const unreadSnapshotTaken = useRef(false);
+  useEffect(() => {
+    if (unreadSnapshotTaken.current || messages.length === 0) return;
+    unreadSnapshotTaken.current = true;
+    const firstUnread = messages.find(m => !m.isRead && m.senderId !== myId && !m.deletedAt);
+    firstUnreadIdRef.current = firstUnread?.id ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
 
   // Effects
   useEffect(() => {
@@ -1312,16 +1484,20 @@ export default function DMScreen() {
     setQuickAction(null);
   }, []);
 
-  // Build list data with date separators
+  // Build list data with date separators + the unread divider
   type ListRow =
     | { type: 'message'; msg: NormalizedMessage; grouped: boolean }
-    | { type: 'date'; label: string };
+    | { type: 'date'; label: string }
+    | { type: 'unread' };
 
   const listData: ListRow[] = [];
   visibleMessages.forEach((msg, i) => {
     const prev = visibleMessages[i - 1];
     if (!prev || !isSameDay(msg.createdAt, prev.createdAt)) {
       listData.push({ type: 'date', label: getDateLabel(msg.createdAt) });
+    }
+    if (!searchTerm && msg.id === firstUnreadIdRef.current) {
+      listData.push({ type: 'unread' });
     }
     listData.push({ type: 'message', msg, grouped: isGroupedWithPrev(msg, prev) });
   });
@@ -1508,7 +1684,7 @@ export default function DMScreen() {
         <FlatList<ListRow>
           ref={listRef}
           data={listData}
-          keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.msg.id}
+          keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.type === 'unread' ? 'unread-divider' : item.msg.id}
           contentContainerStyle={{ paddingVertical: 10 }}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => {
@@ -1536,6 +1712,7 @@ export default function DMScreen() {
           ) : null}
           renderItem={({ item }) => {
             if (item.type === 'date') return <DateSeparator label={item.label} />;
+            if (item.type === 'unread') return <UnreadDivider />;
             const { msg, grouped } = item;
             return (
               <DMBubble
@@ -1555,6 +1732,11 @@ export default function DMScreen() {
                   if (idx >= 0) listRef.current?.scrollToIndex({ index: idx, animated: true });
                 }}
                 onImagePress={setImagePreviewUrl}
+                onSwipeReply={remote ? () => { setEditingMessage(null); setReplyingTo(msg); } : undefined}
+                onRetry={remote && msg.id.startsWith('failed-') && msg.kind === 'text' && msg.content ? () => {
+                  discardLocal(msg.id);
+                  sendRemote.mutate({ content: msg.content!, replyToId: msg.replyToId ?? undefined });
+                } : undefined}
               />
             );
           }}
@@ -1873,6 +2055,23 @@ export default function DMScreen() {
         onReply={handleReply}
         onEdit={handleEdit}
         onPin={handlePin}
+        onForward={() => { if (activeMessage) setForwardTarget(activeMessage); }}
+      />
+
+      <ForwardSheet
+        visible={!!forwardTarget}
+        currentConversationId={id}
+        onClose={() => setForwardTarget(null)}
+        onSelect={(recipientId, displayName) => {
+          if (!forwardTarget) return;
+          forwardMessage.mutate(
+            { messageId: forwardTarget.id, recipientId },
+            {
+              onSuccess: () => showToast(`Forwarded to ${displayName}`, 'CheckCircle'),
+              onError: e => showToast(e instanceof Error ? e.message : 'Forward failed', 'Error'),
+            },
+          );
+        }}
       />
     </SafeAreaView>
   );
