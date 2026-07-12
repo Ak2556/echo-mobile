@@ -6,6 +6,7 @@ import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, ShieldSlash } from 'phosphor-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
@@ -65,13 +66,8 @@ export default function BlockedUsersScreen() {
                 style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
               >
                 {showAvatars && (
-                  <View
-                    className="w-11 h-11 rounded-full items-center justify-center mr-3"
-                    style={{ backgroundColor: item.avatarColor }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>
-                      {item.displayName.charAt(0).toUpperCase()}
-                    </Text>
+                  <View className="mr-3">
+                    <Avatar name={item.displayName} color={item.avatarColor} url={item.avatarUrl} size={44} />
                   </View>
                 )}
                 <View className="flex-1">

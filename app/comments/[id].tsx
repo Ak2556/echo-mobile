@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
 import { TextInput } from '../../components/ui/TextInput';
+import { Avatar } from '../../components/ui/Avatar';
 import { CommentCard } from '../../components/social/CommentCard';
 import { MentionSuggestions, applyMentionPick } from '../../components/social/MentionSuggestions';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -27,7 +28,7 @@ export default function CommentsScreen() {
   const addRemote = useAddRemoteComment(remote ? id : undefined);
   const { colors } = useTheme();
 
-  const { getComments, addComment, username, displayName, avatarColor } = useAppStore();
+  const { getComments, addComment, username, displayName, avatarColor, avatarUrl } = useAppStore();
   const [text, setText] = useState('');
   const [caret, setCaret] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
@@ -192,12 +193,8 @@ export default function CommentsScreen() {
         )}
 
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg }}>
-          <View
-            style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: avatarColor }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>
-              {(username || '?').charAt(0).toUpperCase()}
-            </Text>
+          <View style={{ marginRight: 8 }}>
+            <Avatar name={username || '?'} color={avatarColor} url={avatarUrl} size={32} />
           </View>
           <View className="flex-1 mr-2">
             <TextInput

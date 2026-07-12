@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { Barbell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
+import { showToast } from '../../components/ui/Toast';
+import { loadFitness, saveFitness } from '../../lib/fitness';
 
 type Unit = 'metric' | 'imperial';
+type Sex = 'male' | 'female';
+
+const ACTIVITY_LEVELS = [
+  { label: 'Sedentary', caption: 'Desk life, little exercise', factor: 1.2 },
+  { label: 'Light', caption: '1–3 workouts a week', factor: 1.375 },
+  { label: 'Moderate', caption: '3–5 workouts a week', factor: 1.55 },
+  { label: 'Active', caption: '6–7 workouts a week', factor: 1.725 },
+];
 
 const CATS = [
   { label: 'Underweight', range: '< 18.5', color: '#38BDF8', min: 0, max: 18.5, marker: 'Low', advice: 'Consider consulting a nutritionist to reach a healthy weight.' },
@@ -53,6 +65,57 @@ export default function BmiScreen() {
   const [height, setHeight] = useState('');
   const [heightFt, setHeightFt] = useState('');
   const [heightIn, setHeightIn] = useState('');
+  const [age, setAge] = useState('');
+  const [sex, setSex] = useState<Sex>('male');
+  const [activityIdx, setActivityIdx] = useState(1);
+  const [applying, setApplying] = useState(false);
+
+  const bodyMetrics = (): { kg: number; cm: number } | null => {
+    const w = parseFloat(weight);
+    const kg = unit === 'imperial' ? w * 0.453592 : w;
+    let cm: number;
+    if (unit === 'metric') cm = parseFloat(height);
+    else {
+      const ft = parseFloat(heightFt) || 0;
+      const inch = parseFloat(heightIn) || 0;
+      cm = (ft * 12 + inch) * 2.54;
+    }
+    if (!kg || !cm || kg <= 0 || cm <= 0) return null;
+    return { kg, cm };
+  };
+
+  // Mifflin-St Jeor — the standard clinical estimate.
+  const energy = (): { bmr: number; tdee: number; protein: number; fat: number; carbs: number } | null => {
+    const m = bodyMetrics();
+    const a = parseFloat(age);
+    if (!m || !a || a < 10 || a > 100) return null;
+    const bmr = 10 * m.kg + 6.25 * m.cm - 5 * a + (sex === 'male' ? 5 : -161);
+    const tdee = bmr * ACTIVITY_LEVELS[activityIdx].factor;
+    const protein = Math.round(m.kg * 1.8);
+    const fat = Math.round((tdee * 0.25) / 9);
+    const carbs = Math.round((tdee - protein * 4 - fat * 9) / 4);
+    return { bmr: Math.round(bmr), tdee: Math.round(tdee), protein, fat, carbs };
+  };
+
+  const applyToFitness = async () => {
+    const e = energy();
+    const m = bodyMetrics();
+    if (!e || !m) return;
+    setApplying(true);
+    try {
+      const doc = await loadFitness();
+      await saveFitness({
+        ...doc,
+        weights: [{ id: Date.now().toString(), kg: Math.round(m.kg * 10) / 10, date: new Date().toISOString() }, ...doc.weights],
+        goals: { ...doc.goals, calories: e.tdee, protein: e.protein, carbs: e.carbs, fat: e.fat },
+      });
+      showToast('Fitness targets updated', 'Saved');
+    } catch {
+      showToast('Could not update targets', 'Error');
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const calcBmi = (): number | null => {
     const w = parseFloat(weight);
@@ -118,6 +181,21 @@ export default function BmiScreen() {
             <InputField label="INCHES" value={heightIn} onChange={setHeightIn} placeholder="9" unit="in" />
           </View>
         )}
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <InputField label="AGE" value={age} onChange={setAge} placeholder="28" unit="yrs" />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>SEX</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {(['male', 'female'] as Sex[]).map(s => (
+                <Pressable key={s} onPress={() => setSex(s)} style={{ flex: 1 }}>
+                  <View style={{ paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: sex === s ? accent : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: sex === s ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: sex === s ? '#fff' : colors.text, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>{s}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </View>
       </GlassPanel>
 
       {bmi && cat && (
@@ -147,6 +225,76 @@ export default function BmiScreen() {
               ))}
             </View>
           </GlassPanel>
+
+          {/* Energy: BMR / TDEE / macros */}
+          {(() => {
+            const e = energy();
+            if (!e) {
+              return (
+                <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 13.5, lineHeight: 20 }}>
+                    Add your age to unlock daily energy needs (BMR & TDEE) and a macro plan.
+                  </Text>
+                </GlassPanel>
+              );
+            }
+            return (
+              <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>DAILY ENERGY</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+                  {ACTIVITY_LEVELS.map((a, i) => (
+                    <Pressable key={a.label} onPress={() => setActivityIdx(i)} style={{ flex: 1 }}>
+                      <View style={{ paddingVertical: 9, borderRadius: 12, alignItems: 'center', backgroundColor: activityIdx === i ? accent : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: activityIdx === i ? 'transparent' : colors.glassBorder }}>
+                        <Text style={{ color: activityIdx === i ? '#fff' : colors.text, fontWeight: '700', fontSize: 11.5 }}>{a.label}</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 14 }}>{ACTIVITY_LEVELS[activityIdx].caption}</Text>
+
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+                  <View style={{ flex: 1, backgroundColor: accent + '14', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: accent + '2A' }}>
+                    <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>BMR (AT REST)</Text>
+                    <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }}>{e.bmr}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>kcal / day</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: accent + '14', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: accent + '2A' }}>
+                    <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>TDEE (MAINTAIN)</Text>
+                    <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }}>{e.tdee}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>kcal / day</Text>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                  {[
+                    { label: 'PROTEIN', value: `${e.protein}g` },
+                    { label: 'CARBS', value: `${e.carbs}g` },
+                    { label: 'FAT', value: `${e.fat}g` },
+                  ].map(m => (
+                    <View key={m.label} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}>
+                      <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '700', letterSpacing: 0.6 }}>{m.label}</Text>
+                      <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 2 }}>{m.value}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <AnimatedPressable
+                  onPress={() => void applyToFitness()}
+                  disabled={applying}
+                  scaleValue={0.96} haptic="medium"
+                  style={{ backgroundColor: '#14B8A6', borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: applying ? 0.6 : 1 }}
+                >
+                  <Barbell color="#fff" size={16} weight="fill" />
+                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14.5 }}>
+                    Set as my Fitness targets
+                  </Text>
+                </AnimatedPressable>
+                <Text style={{ color: colors.textMuted, fontSize: 11.5, marginTop: 8, textAlign: 'center' }}>
+                  Writes calories & macros to the Fitness app and logs today’s weight.
+                </Text>
+              </GlassPanel>
+            );
+          })()}
 
           {/* Stats */}
           <GlassPanel variant="light" borderRadius={24} contentStyle={{ overflow: 'hidden' }} style={{ marginBottom: 14 }}>

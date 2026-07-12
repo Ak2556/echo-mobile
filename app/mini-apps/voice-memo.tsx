@@ -21,6 +21,7 @@ import {
 } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -228,6 +229,22 @@ export default function VoiceMemoApp() {
           {isRecording ? 'Tap to stop recording' : 'Tap to start recording'}
         </Text>
       </GlassPanel>
+
+      <EdgeFeaturePanel
+        appName="Voice Memo"
+        accent={accent}
+        headline="Capture before the idea disappears"
+        caption="Use voice notes as raw material for prompts, posts, decisions, and follow-ups."
+        metrics={[
+          { label: 'Memos', value: `${memos.length}` },
+          { label: 'Minutes', value: `${Math.round(memos.reduce((sum, memo) => sum + memo.duration, 0) / 60)}` },
+          { label: 'Latest', value: memos[0] ? formatMemoTime(memos[0].duration) : '0:00' },
+        ]}
+        prompt="Help me turn my latest voice memo into a clear note, next action, or Echo draft."
+        shareText={`Voice memo progress: ${memos.length} recordings saved, ${formatMemoTime(memos.reduce((sum, memo) => sum + memo.duration, 0))} captured.`}
+        publishTitle="Voice memo progress"
+        publishBody={`I captured ${memos.length} voice memos totaling ${formatMemoTime(memos.reduce((sum, memo) => sum + memo.duration, 0))}.`}
+      />
 
       {/* Memo list */}
       {memos.length === 0 ? (

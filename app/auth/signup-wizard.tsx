@@ -18,16 +18,13 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { track, identify } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { WARM_AVATAR_COLORS } from '../../lib/avatarPalette';
 
-const ACCENT = '#6366F1';
+const ACCENT = '#E06030';
 const SPRING = { damping: 24, stiffness: 300 };
 
-const AVATAR_COLORS = [
-  '#6366F1', '#EC4899', '#10B981', '#F59E0B',
-  '#3B82F6', '#8B5CF6', '#EF4444', '#06B6D4',
-  '#84CC16', '#F97316', '#14B8A6', '#A78BFA',
-  '#FB923C', '#4ADE80', '#F472B6', '#38BDF8',
-];
+// Warm editorial identity palette — single source: lib/avatarPalette.ts.
+const AVATAR_COLORS = [...WARM_AVATAR_COLORS];
 
 const INTERESTS = [
   // thinking & knowledge

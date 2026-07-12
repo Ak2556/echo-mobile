@@ -8,6 +8,7 @@ import { useFocusEffect } from 'expo-router';
 import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -272,6 +273,22 @@ export default function ExpensesApp() {
           </Pressable>
         )}
       </GlassPanel>
+
+      <EdgeFeaturePanel
+        appName="Expenses"
+        accent={accent}
+        headline="Money decisions, not just logs"
+        caption="Turn spending data into budget coaching, accountability, and weekly finance updates."
+        metrics={[
+          { label: 'Balance', value: `${balance < 0 ? '-' : ''}$${formatMoney(Math.abs(balance))}` },
+          { label: 'Spent', value: `$${formatMoney(expense)}` },
+          { label: 'Budget', value: doc.budget ? `${budgetPct}%` : 'Off' },
+        ]}
+        prompt="Review my expense pattern and tell me where to adjust this week without making the plan unrealistic."
+        shareText={`Expenses progress: income $${formatMoney(income)}, expenses $${formatMoney(expense)}, balance ${balance < 0 ? '-' : ''}$${formatMoney(Math.abs(balance))}${doc.budget ? `, budget used ${budgetPct}%` : ''}.`}
+        publishTitle="Budget progress"
+        publishBody={`This period I logged $${formatMoney(income)} income, $${formatMoney(expense)} expenses, and a ${balance >= 0 ? 'positive' : 'negative'} balance of ${balance < 0 ? '-' : ''}$${formatMoney(Math.abs(balance))}.`}
+      />
 
       {/* Category breakdown */}
       {!searching && topCats.length > 0 && (

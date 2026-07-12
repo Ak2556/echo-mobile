@@ -10,6 +10,7 @@ import { User } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { track } from '../../lib/analytics';
+import { warmAvatarColor } from '../../lib/avatarPalette';
 
 interface UserRowProps {
   user: User;
@@ -81,7 +82,7 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
           ) : (
             <View
               className="w-11 h-11 rounded-full items-center justify-center"
-              style={{ backgroundColor: user.avatarColor }}
+              style={{ backgroundColor: warmAvatarColor(user.avatarColor, user.username) }}
             >
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>
                 {user.displayName.charAt(0).toUpperCase()}

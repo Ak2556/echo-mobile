@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet, Pressable, FlatList } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -21,7 +21,8 @@ import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/loc
 import { generateSessionTitle } from '../../lib/aiTitle';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Sparkle, Target, SquaresFour, NotePencil, ChartLineUp } from 'phosphor-react-native';
+import { Avatar } from '../../components/ui/Avatar';
+import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Sparkle, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
 import { track } from '../../lib/analytics';
@@ -37,11 +38,28 @@ import { getTargetCategory } from '../../lib/targetCategories';
 import { miniAppById } from '../../lib/miniAppCatalog';
 
 // ─── DM colour token (teal, distinct from AI accent) ────────────────────────
-const DM_COLOR = '#0ea5e9';
+// One accent per app: the DM surfaces use the same warm brand accent as
+// everything else — a second (blue) accent made the hub read off-brand.
+const DM_COLOR = '#E06030';
+
+type DMPreviewConversation = Conversation & {
+  isGroup?: boolean;
+  memberCount?: number;
+};
 
 // ─── DMConversationCard ───────────────────────────────────────────────────────
-function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: () => void }) {
-  const { colors, font, fontSizes, isUserOnline } = useTheme();
+function DMConversationCard({
+  conv,
+  onPress,
+  embedded = false,
+  isLast = false,
+}: {
+  conv: DMPreviewConversation;
+  onPress: () => void;
+  embedded?: boolean;
+  isLast?: boolean;
+}) {
+  const { colors, font, isUserOnline } = useTheme();
   function ago(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const m = Math.floor(diff / 60000);
@@ -52,118 +70,148 @@ function DMConversationCard({ conv, onPress }: { conv: Conversation; onPress: ()
     return `${Math.floor(h / 24)}d`;
   }
   const hasUnread = conv.unreadCount > 0;
-  const online = isUserOnline(conv.userId);
+  const online = !conv.isGroup && isUserOnline(conv.userId);
+  const subtitle = conv.isGroup
+    ? `${conv.memberCount ?? 1} members${conv.lastMessage ? ` · ${conv.lastMessage}` : ''}`
+    : conv.lastMessage || `@${conv.username}`;
+
+  // Editorial row: no box, no chevron chrome — a hairline list where unread
+  // speaks through typographic weight and one accent chip.
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => ({
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 15,
+    <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}>
+      <View style={{
+        flexDirection: 'row', alignItems: 'center',
         paddingVertical: 14,
-        borderRadius: 18,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
-        backgroundColor: colors.surface,
-        opacity: pressed ? 0.7 : 1,
-      })}
-    >
-      <View style={{ position: 'relative', marginRight: 12 }}>
-        <View style={{
-          width: 48, height: 48, borderRadius: 24,
-          backgroundColor: conv.avatarColor,
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 17 }}>
-            {conv.displayName.charAt(0).toUpperCase()}
+        borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
+      }}>
+        <View style={{ marginRight: 13 }}>
+          <Avatar
+            name={conv.displayName}
+            color={conv.avatarColor}
+            url={conv.isGroup ? undefined : conv.avatarUrl}
+            size={46}
+            online={online}
+          >
+            {conv.isGroup ? <Users color="#fff" size={19} weight="fill" /> : undefined}
+          </Avatar>
+        </View>
+
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Text style={{
+              flexShrink: 1,
+              color: colors.text,
+              fontFamily: hasUnread ? 'Inter_700Bold' : 'Inter_600SemiBold',
+              fontSize: 15.5,
+              lineHeight: 21,
+            }} numberOfLines={1}>
+              {conv.displayName}
+            </Text>
+            {conv.isVerified && <SealCheck color={colors.accent} size={13} weight="fill" />}
+          </View>
+          <Text style={{
+            color: hasUnread ? colors.textSecondary : colors.textMuted,
+            fontSize: 13,
+            lineHeight: 18,
+            marginTop: 2,
+            fontFamily: hasUnread ? 'Inter_500Medium' : 'Inter_400Regular',
+          }} numberOfLines={1}>
+            {subtitle}
           </Text>
         </View>
-        {online && (
-          <View style={{
-            position: 'absolute', bottom: 0, right: 1,
-            width: 14, height: 14, borderRadius: 7,
-            backgroundColor: colors.success,
-            borderWidth: 2, borderColor: colors.bg,
-          }} />
-        )}
-        {hasUnread && (
-          <View style={{
-            position: 'absolute', top: -2, right: -4,
-            width: 18, height: 18, borderRadius: 9,
-            backgroundColor: DM_COLOR,
-            alignItems: 'center', justifyContent: 'center',
-            borderWidth: 2, borderColor: colors.bg,
-          }}>
-            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
-              {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
-            </Text>
-          </View>
-        )}
-      </View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-          <Text style={{
-            flexShrink: 1,
-            color: colors.text,
-            fontFamily: hasUnread ? 'Inter_700Bold' : 'Inter_600SemiBold',
-            fontSize: fontSizes.body,
-          }} numberOfLines={1}>
-            {conv.displayName}
+
+        <View style={{ marginLeft: 12, alignItems: 'flex-end', gap: 6 }}>
+          <Text style={[font.body, {
+            color: hasUnread ? colors.accent : colors.textMuted,
+            fontSize: 12,
+            fontWeight: hasUnread ? '700' : '400',
+          }]}>
+            {ago(conv.lastMessageAt)}
           </Text>
-          {conv.isVerified && <SealCheck color={DM_COLOR} size={13} weight="fill" />}
-          {online && (
-            <Text style={{ color: colors.success, fontSize: fontSizes.caption }} numberOfLines={1}>
-              online
-            </Text>
+          {hasUnread && (
+            <View style={{
+              minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5,
+              backgroundColor: colors.accent,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '700' }}>
+                {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
+              </Text>
+            </View>
           )}
         </View>
-        <Text style={{
-          color: hasUnread ? colors.textSecondary : colors.textMuted,
-          fontSize: fontSizes.small,
-          fontFamily: hasUnread ? 'Inter_500Medium' : 'Inter_400Regular',
-        }} numberOfLines={1}>
-          {conv.lastMessage || `@${conv.username}`}
-        </Text>
       </View>
-      <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 10, flexShrink: 0 }]}>
-        {ago(conv.lastMessageAt)}
-      </Text>
     </Pressable>
   );
 }
 
-function DMInboxHero({ count, onNew }: { count: number; onNew: () => void }) {
+function DMInboxHeader({
+  count,
+  unread,
+  onInbox,
+  onNewGroup,
+}: {
+  count: number;
+  unread: number;
+  onInbox: () => void;
+  onNewGroup: () => void;
+}) {
   const { colors, font } = useTheme();
+
+  // Text-as-interface: actions are quiet hairline rows (the same language as
+  // the profile Account panel), and the status is a serif line — the one
+  // typographic moment this pane gets.
+  const actions = [
+    { key: 'message', label: 'New message', caption: 'Start a private conversation', Icon: PencilSimple, onPress: onInbox },
+    { key: 'group', label: 'New group', caption: 'Bring a few people together', Icon: Users, onPress: onNewGroup },
+  ];
+
   return (
-    <View style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, marginBottom: 14 }}>
-      <LinearGradient
-        colors={[`${DM_COLOR}3A`, `${DM_COLOR}10`, 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      <View style={{ padding: 16, gap: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: `${DM_COLOR}20`, alignItems: 'center', justifyContent: 'center' }}>
-            <Envelope color={DM_COLOR} size={24} weight="fill" />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>Messages</Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 13, marginTop: 2 }]} numberOfLines={2}>
-              {count ? `${count} conversation${count === 1 ? '' : 's'} ready to continue.` : 'Start private chats from profiles or shared progress.'}
-            </Text>
-          </View>
-        </View>
-        <Pressable
-          onPress={onNew}
-          style={{ minHeight: 42, borderRadius: 15, backgroundColor: DM_COLOR, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}
-        >
-          <PencilSimple color="#fff" size={17} weight="bold" />
-          <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>Open full inbox</Text>
-        </Pressable>
+    <View style={{ marginBottom: 4 }}>
+      <View>
+        {actions.map((action, i) => (
+          <Pressable key={action.key} onPress={action.onPress} accessibilityRole="button">
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', gap: 13,
+              paddingVertical: 13,
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              borderBottomColor: colors.border,
+              borderTopWidth: i === 0 ? StyleSheet.hairlineWidth : 0,
+              borderTopColor: colors.border,
+            }}>
+              <action.Icon color={colors.accent} size={18} weight="regular" />
+              <View style={{ flex: 1 }}>
+                <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14.5 }]}>{action.label}</Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 1 }]}>{action.caption}</Text>
+              </View>
+              <CaretRight color={colors.textMuted} size={13} />
+            </View>
+          </Pressable>
+        ))}
       </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 24 }}>
+        <Text style={{
+          color: colors.textMuted,
+          fontSize: 12,
+          fontFamily: 'Inter_600SemiBold',
+          letterSpacing: 1.4,
+          textTransform: 'uppercase',
+        }}>
+          Recent
+        </Text>
+        {count > 0 && (
+          <Pressable onPress={onInbox} hitSlop={10}>
+            <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 13 }]}>View all</Text>
+          </Pressable>
+        )}
+      </View>
+      <Text style={[font.quote, { color: colors.textSecondary, fontSize: 15, marginTop: 6 }]}>
+        {unread
+          ? `${unread} unread ${unread === 1 ? 'message' : 'messages'} waiting.`
+          : count > 0 ? 'All caught up.' : 'Quiet, for now.'}
+      </Text>
     </View>
   );
 }
@@ -177,23 +225,28 @@ function DMInboxView({ topPad }: { topPad: number }) {
   const localConversations = useAppStore(s => s.conversations);
   const { data: remoteConvs = [], isLoading } = useRemoteConversations();
 
-  const conversations: Conversation[] = remote
+  const conversations: DMPreviewConversation[] = remote
     ? remoteConvs.map((rc: RemoteConversation) => ({
         id: rc.id,
-        userId: rc.otherUserId,
-        username: rc.otherUsername,
+        userId: rc.otherUserId ?? rc.id,
+        username: rc.isGroup ? 'group' : rc.otherUsername,
         displayName: rc.otherDisplayName,
         avatarColor: rc.otherAvatarColor,
+        avatarUrl: rc.otherAvatarUrl ?? undefined,
         isVerified: false,
         lastMessage: rc.lastMessage ?? '',
         lastMessageAt: rc.lastMessageAt ?? new Date().toISOString(),
         unreadCount: rc.unreadCount,
+        isGroup: rc.isGroup,
+        memberCount: rc.memberCount,
       }))
     : localConversations;
 
   const sorted = [...conversations].sort(
     (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
   );
+  const unreadCount = sorted.reduce((sum, c) => sum + c.unreadCount, 0);
+  const previewConversations = sorted.slice(0, 6);
 
   if (remote && isLoading) {
     return (
@@ -216,9 +269,8 @@ function DMInboxView({ topPad }: { topPad: number }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList
-        data={sorted}
-        keyExtractor={c => c.id}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: topPad + 12,
           paddingBottom: layout.bottomChromePadding + 16,
@@ -226,24 +278,43 @@ function DMInboxView({ topPad }: { topPad: number }) {
           width: '100%',
           maxWidth: layout.contentMaxWidth,
           alignSelf: 'center',
-          gap: 10,
+          gap: 12,
         }}
-        ListHeaderComponent={<DMInboxHero count={sorted.length} onNew={() => router.push('/messages' as Href)} />}
-        ListEmptyComponent={
-          <View style={{ paddingTop: 28, alignItems: 'center', gap: 8 }}>
-            <Envelope color={colors.textMuted} size={36} weight="thin" />
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center', paddingHorizontal: 40, lineHeight: 22 }}>
-              No messages yet.{'\n'}Go to someone&apos;s profile and tap Message.
-            </Text>
+      >
+        <DMInboxHeader
+          count={sorted.length}
+          unread={unreadCount}
+          onInbox={() => router.push('/messages' as Href)}
+          onNewGroup={() => router.push('/messages?newGroup=1' as Href)}
+        />
+
+        {previewConversations.length > 0 ? (
+          <View>
+            {previewConversations.map((item, index) => (
+              <DMConversationCard
+                key={item.id}
+                conv={item}
+                isLast={index === previewConversations.length - 1}
+                onPress={() => router.push(`/messages/${item.id}` as Href)}
+              />
+            ))}
           </View>
-        }
-        renderItem={({ item }) => (
-          <DMConversationCard
-            conv={item}
-            onPress={() => router.push(`/messages/${item.id}` as Href)}
-          />
+        ) : (
+          <View style={{ paddingTop: 22, paddingBottom: 12, gap: 9 }}>
+            <Text style={{ color: colors.text, fontSize: 21, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
+              Nothing here yet.
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21 }}>
+              Conversations start from a profile — find someone whose thinking you like and say hello.
+            </Text>
+            <Pressable onPress={() => router.push('/(tabs)/explore' as Href)} hitSlop={8}>
+              <Text style={{ color: colors.accent, fontSize: 14, fontFamily: 'Inter_600SemiBold', marginTop: 4 }}>
+                Find people →
+              </Text>
+            </Pressable>
+          </View>
         )}
-      />
+      </ScrollView>
     </View>
   );
 }
@@ -289,10 +360,20 @@ function HeaderIconButton({ icon, onPress, label, accent = false }: { icon: Reac
 function ModeSwitch({ mode, onChange }: { mode: 'ai' | 'dm'; onChange: (mode: 'ai' | 'dm') => void }) {
   const { colors, font } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.surface, borderRadius: 999, padding: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      minHeight: 42,
+      backgroundColor: colors.surface,
+      borderRadius: 999,
+      padding: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    }}>
       {([
-        { key: 'ai' as const, label: 'AI Chat', Icon: Lightning, color: colors.accent },
-        { key: 'dm' as const, label: 'Messages', Icon: Envelope, color: DM_COLOR },
+        { key: 'ai' as const, label: 'AI Chat', Icon: Sparkle, color: colors.accent },
+        { key: 'dm' as const, label: 'Messages', Icon: ChatCircleText, color: DM_COLOR },
       ]).map(item => {
         const active = mode === item.key;
         return (
@@ -302,18 +383,30 @@ function ModeSwitch({ mode, onChange }: { mode: 'ai' | 'dm'; onChange: (mode: 'a
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
             style={{
-              minHeight: 32,
+              flex: 1,
+              minHeight: 34,
               borderRadius: 999,
-              paddingHorizontal: 12,
+              paddingHorizontal: 8,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
+              gap: 7,
               backgroundColor: active ? item.color : 'transparent',
             }}
           >
-            <item.Icon color={active ? '#fff' : colors.textSecondary} size={14} weight={active ? 'fill' : 'regular'} />
-            <Text style={[font.bodyBold, { color: active ? '#fff' : colors.textSecondary, fontSize: 12 }]}>{item.label}</Text>
+            <View style={{
+              width: 22,
+              height: 22,
+              borderRadius: 11,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: active ? 'rgba(255,255,255,0.18)' : `${item.color}18`,
+            }}>
+              <item.Icon color={active ? '#fff' : item.color} size={13} weight={active ? 'fill' : 'bold'} />
+            </View>
+            <Text style={[font.bodyBold, { color: active ? '#fff' : colors.textSecondary, fontSize: 13 }]} numberOfLines={1}>
+              {item.label}
+            </Text>
           </Pressable>
         );
       })}

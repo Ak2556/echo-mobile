@@ -13,6 +13,7 @@ import {
   VideoCamera, ChartBar, X, Plus, Clock, Link,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Avatar } from '../components/ui/Avatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -41,7 +42,7 @@ export default function EditPostScreen() {
   const qc = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { publishedEchoes, updateEcho, username, avatarColor, displayName } = useAppStore();
+  const { publishedEchoes, updateEcho, username, avatarColor, avatarUrl, displayName } = useAppStore();
 
   const echo = publishedEchoes.find(e => e.id === id);
 
@@ -169,8 +170,8 @@ export default function EditPostScreen() {
         <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
           <Animated.View entering={animation(FadeInDown.delay(30).duration(220))} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(username || '?').charAt(0).toUpperCase()}</Text>
+            <View style={{ marginRight: 10 }}>
+              <Avatar name={username || '?'} color={avatarColor} url={avatarUrl} size={40} />
             </View>
             <View>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{displayName || username || 'You'}</Text>

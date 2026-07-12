@@ -1,5 +1,6 @@
 import { EchoReaction, FeedItem, PerspectiveType, ReactionCounts } from '../types';
 import { isVideoUri } from './videoMedia';
+import { warmAvatarColor } from './avatarPalette';
 
 export type SupabaseProfileRow = {
   id: string;
@@ -93,7 +94,7 @@ export function mapEchoRowToFeedItem(
     userId: echo.author_id,
     username,
     displayName: author?.display_name || username,
-    avatarColor: author?.avatar_color || '#3B82F6',
+    avatarColor: warmAvatarColor(author?.avatar_color, username),
     avatarUrl: author?.avatar_url ?? undefined,
     isVerified: author?.is_verified ?? false,
     prompt: echo.prompt,
@@ -137,7 +138,7 @@ export function mapEchoRowToFeedItem(
       id: echo.co_author_id,
       username: coAuthor?.username ?? 'unknown',
       displayName: coAuthor?.display_name || coAuthor?.username || 'unknown',
-      avatarColor: coAuthor?.avatar_color || '#3B82F6',
+      avatarColor: warmAvatarColor(coAuthor?.avatar_color, coAuthor?.username ?? 'co'),
       avatarUrl: coAuthor?.avatar_url ?? undefined,
       isVerified: coAuthor?.is_verified ?? false,
     } : undefined,

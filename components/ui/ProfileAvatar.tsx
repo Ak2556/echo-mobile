@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { SealCheck } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { warmAvatarColor } from '../../lib/avatarPalette';
 
 interface ProfileAvatarProps {
   displayName: string;
@@ -15,13 +16,14 @@ interface ProfileAvatarProps {
 
 export function ProfileAvatar({
   displayName,
-  avatarColor,
+  avatarColor: rawAvatarColor,
   avatarUrl,
   size = 74,
   showHalo = true,
   isVerified = false,
 }: ProfileAvatarProps) {
   const { colors } = useTheme();
+  const avatarColor = warmAvatarColor(rawAvatarColor, displayName);
   const [imgError, setImgError] = useState(false);
   const haloSize = size + 20;
   const ringSize = size + 8;

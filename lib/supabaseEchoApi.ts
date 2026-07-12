@@ -2453,10 +2453,15 @@ export async function updateRemoteEcho(
 // Direct Messages
 export interface RemoteConversation {
   id: string;
-  otherUserId: string;
+  otherUserId: string | null;
   otherUsername: string;
   otherDisplayName: string;
   otherAvatarColor: string;
+  otherAvatarUrl: string | null;
+  isGroup: boolean;
+  groupTitle: string | null;
+  groupAvatarColor: string | null;
+  memberCount: number;
   lastMessage: string | null;
   lastMessageAt: string | null;
   lastMessageKind: string;
@@ -2524,6 +2529,61 @@ export async function getOrCreateRemoteConversation(recipientId: string): Promis
     .single();
   if (error) throw error;
   return conv.id as string;
+}
+
+export async function createRemoteGroupConversation(title: string, memberIds: string[]): Promise<string> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const uniqueMembers = Array.from(new Set(memberIds.filter(id => id && id !== uid))).slice(0, 31);
+  if (uniqueMembers.length < 1) throw new Error('Choose at least one member');
+
+  const { data, error } = await supabase.rpc('create_group_conversation', {
+    p_title: title.trim() || 'Group chat',
+    p_member_ids: uniqueMembers,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+async function insertRemoteDMInConversation(
+  conversationId: string,
+  fields: {
+    kind: RemoteDirectMessage['kind'];
+    text?: string | null;
+    mediaUrl?: string | null;
+    sharedEchoId?: string | null;
+    replyToId?: string;
+  },
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const { error } = await supabase
+    .from('direct_messages')
+    .insert({
+      conversation_id: conversationId,
+      sender_id: uid,
+      kind: fields.kind,
+      text: fields.text ?? null,
+      media_url: fields.mediaUrl ?? null,
+      shared_echo_id: fields.sharedEchoId ?? null,
+      ...(fields.replyToId ? { reply_to_id: fields.replyToId } : {}),
+    });
+  if (error) throw error;
+
+  return { conversationId };
+}
+
+export async function sendRemoteDMToConversation(
+  conversationId: string,
+  content: string,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  return insertRemoteDMInConversation(conversationId, {
+    kind: 'text',
+    text: content,
+    replyToId,
+  });
 }
 
 /** Upsert a conversation (order user_a < user_b per DB check) and insert a message.
@@ -2594,6 +2654,20 @@ export async function sendRemoteDMLink(
   return { conversationId: conv.id };
 }
 
+export async function sendRemoteDMLinkToConversation(
+  conversationId: string,
+  url: string,
+  title?: string,
+  subtitle?: string,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  return insertRemoteDMInConversation(conversationId, {
+    kind: 'link',
+    text: JSON.stringify({ url, title: title ?? url, subtitle }),
+    replyToId,
+  });
+}
+
 export async function sendRemoteDMContact(
   recipientId: string,
   contact: { userId: string; username: string; displayName: string; avatarColor: string },
@@ -2624,6 +2698,18 @@ export async function sendRemoteDMContact(
   if (msgErr) throw msgErr;
 
   return { conversationId: conv.id };
+}
+
+export async function sendRemoteDMContactToConversation(
+  conversationId: string,
+  contact: { userId: string; username: string; displayName: string; avatarColor: string },
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  return insertRemoteDMInConversation(conversationId, {
+    kind: 'link',
+    text: JSON.stringify({ type: 'contact', ...contact }),
+    replyToId,
+  });
 }
 
 export async function sendRemoteDMEcho(
@@ -2660,6 +2746,20 @@ export async function sendRemoteDMEcho(
   return { conversationId: conv.id };
 }
 
+export async function sendRemoteDMEchoToConversation(
+  conversationId: string,
+  echo: { id: string; title: string; preview?: string; author?: string },
+  intro?: string,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  return insertRemoteDMInConversation(conversationId, {
+    kind: 'echo',
+    text: JSON.stringify({ title: echo.title, preview: echo.preview, author: echo.author, intro }),
+    sharedEchoId: echo.id,
+    replyToId,
+  });
+}
+
 /** Edit a sent message (sender only, enforced both here and by RLS). */
 export async function editRemoteMessage(messageId: string, content: string): Promise<void> {
   const uid = await getSessionUserId();
@@ -2692,9 +2792,21 @@ export async function sendDMImage(
     .single();
   if (convErr) throw new Error(`Conversation failed: ${convErr.message}`);
 
+  return sendDMImageToConversation(conv.id as string, uri, mimeType, replyToId);
+}
+
+export async function sendDMImageToConversation(
+  conversationId: string,
+  uri: string,
+  mimeType: string,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
   const contentType = normalizeImageContentType(mimeType);
   const ext = imageExtFromContentType(contentType);
-  const path = `${uid}/${conv.id as string}/${Date.now()}.${ext}`;
+  const path = `${uid}/${conversationId}/${Date.now()}.${ext}`;
 
   const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
   const bytes = base64ToArrayBuffer(base64);
@@ -2703,19 +2815,11 @@ export async function sendDMImage(
     .upload(path, bytes, { contentType, cacheControl: '31536000' });
   if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
 
-  const { error: msgErr } = await supabase
-    .from('direct_messages')
-    .insert({
-      conversation_id: conv.id,
-      sender_id: uid,
-      kind: 'image',
-      media_url: path,
-      text: null,
-      ...(replyToId ? { reply_to_id: replyToId } : {}),
-    });
-  if (msgErr) throw new Error(`Message insert failed: ${msgErr.message}`);
-
-  return { conversationId: conv.id as string };
+  return insertRemoteDMInConversation(conversationId, {
+    kind: 'image',
+    mediaUrl: path,
+    replyToId,
+  });
 }
 
 /** Send a voice DM. Uploads the m4a to dm-media, stores duration (s) in text. */
@@ -2738,7 +2842,19 @@ export async function sendDMVoice(
     .single();
   if (convErr) throw new Error(`Conversation failed: ${convErr.message}`);
 
-  const path = `${uid}/${conv.id as string}/${Date.now()}.m4a`;
+  return sendDMVoiceToConversation(conv.id as string, uri, durationSec, replyToId);
+}
+
+export async function sendDMVoiceToConversation(
+  conversationId: string,
+  uri: string,
+  durationSec: number,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const path = `${uid}/${conversationId}/${Date.now()}.m4a`;
   const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
   const bytes = base64ToArrayBuffer(base64);
   const { error: upErr } = await supabase.storage
@@ -2746,19 +2862,12 @@ export async function sendDMVoice(
     .upload(path, bytes, { contentType: 'audio/mp4', cacheControl: '31536000' });
   if (upErr) throw new Error(`Voice upload failed: ${upErr.message}`);
 
-  const { error: msgErr } = await supabase
-    .from('direct_messages')
-    .insert({
-      conversation_id: conv.id,
-      sender_id: uid,
-      kind: 'voice',
-      media_url: path,
-      text: String(Math.max(1, Math.round(durationSec))),
-      ...(replyToId ? { reply_to_id: replyToId } : {}),
-    });
-  if (msgErr) throw new Error(`Message insert failed: ${msgErr.message}`);
-
-  return { conversationId: conv.id as string };
+  return insertRemoteDMInConversation(conversationId, {
+    kind: 'voice',
+    mediaUrl: path,
+    text: String(Math.max(1, Math.round(durationSec))),
+    replyToId,
+  });
 }
 
 /**
@@ -2834,10 +2943,15 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
 
   return ((data ?? []) as Record<string, unknown>[]).map(r => ({
     id: r.id as string,
-    otherUserId: r.other_user_id as string,
-    otherUsername: (r.other_username as string | null) ?? 'unknown',
-    otherDisplayName: (r.other_display_name as string | null) ?? (r.other_username as string | null) ?? 'User',
-    otherAvatarColor: (r.other_avatar_color as string | null) ?? '#6366F1',
+    otherUserId: (r.other_user_id as string | null) ?? null,
+    otherUsername: (r.other_username as string | null) ?? (r.is_group ? 'group' : 'unknown'),
+    otherDisplayName: (r.is_group ? (r.group_title as string | null) : (r.other_display_name as string | null)) ?? (r.other_username as string | null) ?? 'User',
+    otherAvatarColor: (r.is_group ? (r.group_avatar_color as string | null) : (r.other_avatar_color as string | null)) ?? '#C65F3F',
+    otherAvatarUrl: r.is_group ? null : ((r.other_avatar_url as string | null) ?? null),
+    isGroup: !!r.is_group,
+    groupTitle: (r.group_title as string | null) ?? null,
+    groupAvatarColor: (r.group_avatar_color as string | null) ?? null,
+    memberCount: Number(r.member_count ?? (r.is_group ? 1 : 2)),
     lastMessage: dmPreviewText(r.last_message_kind as string | null, r.last_message_text as string | null),
     lastMessageAt: (r.last_message_at as string | null) ?? null,
     lastMessageKind: (r.last_message_kind as string | null) ?? 'text',
@@ -2872,7 +2986,7 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
   const { data: conv } = await supabase
     .from('dm_conversations')
     .select(`
-      id, user_a, user_b, last_message_at, last_message_text, last_message_kind,
+      id, user_a, user_b, is_group, title, avatar_color, last_message_at, last_message_text, last_message_kind,
       pinned_message_id,
       pinned_msg:pinned_message_id (id, text, kind, deleted_at)
     `)
@@ -2880,10 +2994,43 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
     .single();
   if (!conv) return null;
 
+  const isGroup = !!conv.is_group;
+  if (isGroup) {
+    const [{ count }, prefsRes] = await Promise.all([
+      supabase
+        .from('dm_conversation_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('conversation_id', conversationId),
+      supabase.from('dm_prefs').select('muted, archived').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
+    ]);
+    const pm = (conv as Record<string, unknown>).pinned_msg as Record<string, unknown> | null;
+    return {
+      id: conv.id as string,
+      otherUserId: null,
+      otherUsername: 'group',
+      otherDisplayName: (conv.title as string | null) ?? 'Group chat',
+      otherAvatarColor: (conv.avatar_color as string | null) ?? '#C65F3F',
+      otherAvatarUrl: null,
+      isGroup: true,
+      groupTitle: (conv.title as string | null) ?? 'Group chat',
+      groupAvatarColor: (conv.avatar_color as string | null) ?? '#C65F3F',
+      memberCount: count ?? 1,
+      lastMessage: dmPreviewText(conv.last_message_kind as string | null, conv.last_message_text as string | null),
+      lastMessageAt: (conv.last_message_at as string | null) ?? null,
+      lastMessageKind: (conv.last_message_kind as string | null) ?? 'text',
+      unreadCount: 0,
+      pinnedMessage: pm && !pm.deleted_at
+        ? { id: pm.id as string, content: (pm.text as string | null) ?? null, kind: (pm.kind as string) ?? 'text' }
+        : null,
+      muted: !!prefsRes.data?.muted,
+      archived: !!prefsRes.data?.archived,
+    };
+  }
+
   const otherId: string = (conv.user_a as string) === uid ? (conv.user_b as string) : (conv.user_a as string);
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, display_name, avatar_color')
+    .select('id, username, display_name, avatar_color, avatar_url')
     .eq('id', otherId)
     .single();
 
@@ -2894,7 +3041,12 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
     otherUserId: otherId,
     otherUsername: (profile?.username as string | null) ?? 'unknown',
     otherDisplayName: (profile?.display_name as string | null) ?? (profile?.username as string | null) ?? 'User',
-    otherAvatarColor: (profile?.avatar_color as string | null) ?? '#6366F1',
+    otherAvatarColor: (profile?.avatar_color as string | null) ?? '#C65F3F',
+    otherAvatarUrl: (profile?.avatar_url as string | null) ?? null,
+    isGroup: false,
+    groupTitle: null,
+    groupAvatarColor: null,
+    memberCount: 2,
     lastMessage: dmPreviewText(conv.last_message_kind as string | null, conv.last_message_text as string | null),
     lastMessageAt: (conv.last_message_at as string | null) ?? null,
     lastMessageKind: (conv.last_message_kind as string | null) ?? 'text',

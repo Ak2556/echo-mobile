@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
+import { Avatar } from '../../components/ui/Avatar';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { fetchRemoteEchoById, setPinnedEcho } from '../../lib/supabaseEchoApi';
 import { showToast } from '../../components/ui/Toast';
@@ -259,8 +260,8 @@ export default function ThreadDetailScreen() {
         <Animated.View entering={FadeInDown.delay(120).duration(300).springify().damping(18)}>
           <Pressable onPress={() => router.push(`/user/${item.userId}`)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
             {showAvatars ? (
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{item.username.charAt(0).toUpperCase()}</Text>
+              <View style={{ marginRight: 10 }}>
+                <Avatar name={item.displayName || item.username} color={item.avatarColor} url={item.avatarUrl} size={34} />
               </View>
             ) : null}
             <View style={{ flex: 1 }}>

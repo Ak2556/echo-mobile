@@ -18,6 +18,8 @@ import {
   Users, MagnifyingGlass,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Avatar } from '../components/ui/Avatar';
+import { warmAvatarColor } from '../lib/avatarPalette';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { FeedItem, PollOption } from '../types';
@@ -531,9 +533,7 @@ export default function CreatePostScreen() {
                       onPress={() => { setCoAuthor(u); setCoAuthorPickerOpen(false); }}
                       style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}
                     >
-                      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: u.avatar_color, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(u.display_name || u.username).charAt(0).toUpperCase()}</Text>
-                      </View>
+                      <Avatar name={u.display_name || u.username} color={u.avatar_color} url={u.avatar_url} size={38} />
                       <View style={{ flex: 1 }}>
                         <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>{u.display_name || u.username}</Text>
                         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{u.username}</Text>
@@ -596,7 +596,7 @@ export default function CreatePostScreen() {
                 cachePolicy="memory-disk"
               />
             ) : (
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: warmAvatarColor(avatarColor, username ?? 'me'), alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
                 <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(username || '?').charAt(0).toUpperCase()}</Text>
               </View>
             )}
@@ -702,9 +702,7 @@ export default function CreatePostScreen() {
                     <Text style={[s.label, { marginBottom: 0 }]}>Co-author</Text>
                   </View>
                   <View style={[s.surface, { padding: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
-                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: coAuthor.avatar_color, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>{(coAuthor.display_name || coAuthor.username).charAt(0).toUpperCase()}</Text>
-                    </View>
+                    <Avatar name={coAuthor.display_name || coAuthor.username} color={coAuthor.avatar_color} url={coAuthor.avatar_url} size={32} />
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{coAuthor.display_name || coAuthor.username}</Text>
                       <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{coAuthor.username}</Text>

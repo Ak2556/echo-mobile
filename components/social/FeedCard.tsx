@@ -16,8 +16,10 @@ import { LinkifiedText } from './LinkifiedText';
 import { ReactionBar } from './ReactionBar';
 import { RemixButton } from './RemixButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { Avatar } from '../ui/Avatar';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
+import { warmAvatarColor } from '../../lib/avatarPalette';
 import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin } from 'phosphor-react-native';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, PerspectiveType, Poll } from '../../types';
@@ -396,7 +398,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                     onError={() => setAvatarError(true)}
                   />
                 ) : (
-                  <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}>
+                  <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: warmAvatarColor(item.avatarColor, item.username), alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}>
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
                       {(item.displayName || item.username).charAt(0).toUpperCase()}
                     </Text>
@@ -544,7 +546,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
               ) : (
                 <View
                   className={`${compactFeed ? 'w-7 h-7' : 'w-9 h-9'} rounded-full items-center justify-center mr-3`}
-                  style={{ backgroundColor: item.avatarColor || colors.accent, borderWidth: 1.5, borderColor: `${canvasTint}66` }}
+                  style={{ backgroundColor: warmAvatarColor(item.avatarColor, item.username), borderWidth: 1.5, borderColor: `${canvasTint}66` }}
                 >
                   <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
                     {(item.displayName || item.username).charAt(0).toUpperCase()}
@@ -621,9 +623,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
               <View style={{ flexDirection: compactFeed ? 'column' : 'row', gap: 8, marginBottom: 12 }}>
                 <View style={{ flex: 1, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.avatarColor, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>{item.displayName.charAt(0).toUpperCase()}</Text>
-                    </View>
+                    <Avatar name={item.displayName} color={item.avatarColor} url={item.avatarUrl} size={18} />
                     <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }} numberOfLines={1}>@{item.username}</Text>
                   </View>
                   <LinkifiedText
@@ -634,9 +634,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                 </View>
                 <View style={{ flex: 1, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.coAuthor.avatarColor, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>{item.coAuthor.displayName.charAt(0).toUpperCase()}</Text>
-                    </View>
+                    <Avatar name={item.coAuthor.displayName} color={item.coAuthor.avatarColor} url={item.coAuthor.avatarUrl} size={18} />
                     <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }} numberOfLines={1}>@{item.coAuthor.username}</Text>
                   </View>
                   <LinkifiedText

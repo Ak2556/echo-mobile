@@ -8,14 +8,21 @@ import {
   fetchRemoteMessages,
   fetchConversationById,
   sendRemoteDM,
+  sendRemoteDMToConversation,
   sendRemoteDMLink,
+  sendRemoteDMLinkToConversation,
   sendRemoteDMContact,
+  sendRemoteDMContactToConversation,
   sendRemoteDMEcho,
+  sendRemoteDMEchoToConversation,
   sendDMImage,
+  sendDMImageToConversation,
   sendDMVoice,
+  sendDMVoiceToConversation,
   editRemoteMessage,
   pinDMMessage,
   getOrCreateRemoteConversation,
+  createRemoteGroupConversation,
   markMessagesRead,
   setDMPref,
   forwardDMMessage,
@@ -145,16 +152,30 @@ export function useStartRemoteConversation() {
   });
 }
 
+export function useCreateGroupConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ title, memberIds }: { title: string; memberIds: string[] }) =>
+      createRemoteGroupConversation(title, memberIds),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['conversations'] }),
+  });
+}
+
 // Send
 /** Send a text DM with optimistic update. Accepts optional replyToId for quoted replies. */
 export function useSendRemoteDM(
   conversationId: string | undefined,
   recipientId: string | undefined,
+  isGroup = false,
 ) {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: ({ content, replyToId }: { content: string; replyToId?: string }) => {
+      if (isGroup) {
+        if (!conversationId) throw new Error('No conversation');
+        return sendRemoteDMToConversation(conversationId, content, replyToId);
+      }
       if (!recipientId) throw new Error('No recipient');
       return sendRemoteDM(recipientId, content, replyToId);
     },
@@ -268,11 +289,16 @@ function appendOptimisticMessage(
 export function useSendImageDM(
   conversationId: string | undefined,
   recipientId: string | undefined,
+  isGroup = false,
 ) {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: ({ uri, mimeType, replyToId }: { uri: string; mimeType: string; replyToId?: string }) => {
+      if (isGroup) {
+        if (!conversationId) throw new Error('No conversation');
+        return sendDMImageToConversation(conversationId, uri, mimeType, replyToId);
+      }
       if (!recipientId) throw new Error('No recipient');
       return sendDMImage(recipientId, uri, mimeType, replyToId);
     },
@@ -324,11 +350,16 @@ export function useSendImageDM(
 export function useSendVoiceDM(
   conversationId: string | undefined,
   recipientId: string | undefined,
+  isGroup = false,
 ) {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: ({ uri, durationSec, replyToId }: { uri: string; durationSec: number; replyToId?: string }) => {
+      if (isGroup) {
+        if (!conversationId) throw new Error('No conversation');
+        return sendDMVoiceToConversation(conversationId, uri, durationSec, replyToId);
+      }
       if (!recipientId) throw new Error('No recipient');
       return sendDMVoice(recipientId, uri, durationSec, replyToId);
     },
@@ -370,11 +401,16 @@ export function useSendVoiceDM(
 export function useSendLinkDM(
   conversationId: string | undefined,
   recipientId: string | undefined,
+  isGroup = false,
 ) {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: ({ url, title, subtitle, replyToId }: { url: string; title?: string; subtitle?: string; replyToId?: string }) => {
+      if (isGroup) {
+        if (!conversationId) throw new Error('No conversation');
+        return sendRemoteDMLinkToConversation(conversationId, url, title, subtitle, replyToId);
+      }
       if (!recipientId) throw new Error('No recipient');
       return sendRemoteDMLink(recipientId, url, title, subtitle, replyToId);
     },
@@ -416,6 +452,7 @@ export function useSendLinkDM(
 export function useSendContactDM(
   conversationId: string | undefined,
   recipientId: string | undefined,
+  isGroup = false,
 ) {
   const qc = useQueryClient();
 
@@ -424,6 +461,10 @@ export function useSendContactDM(
       contact: { userId: string; username: string; displayName: string; avatarColor: string };
       replyToId?: string;
     }) => {
+      if (isGroup) {
+        if (!conversationId) throw new Error('No conversation');
+        return sendRemoteDMContactToConversation(conversationId, contact, replyToId);
+      }
       if (!recipientId) throw new Error('No recipient');
       return sendRemoteDMContact(recipientId, contact, replyToId);
     },
@@ -465,6 +506,7 @@ export function useSendContactDM(
 export function useSendEchoDM(
   conversationId: string | undefined,
   recipientId: string | undefined,
+  isGroup = false,
 ) {
   const qc = useQueryClient();
 
@@ -474,6 +516,10 @@ export function useSendEchoDM(
       intro?: string;
       replyToId?: string;
     }) => {
+      if (isGroup) {
+        if (!conversationId) throw new Error('No conversation');
+        return sendRemoteDMEchoToConversation(conversationId, echo, intro, replyToId);
+      }
       if (!recipientId) throw new Error('No recipient');
       return sendRemoteDMEcho(recipientId, echo, intro, replyToId);
     },

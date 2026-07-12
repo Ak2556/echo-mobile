@@ -33,6 +33,24 @@ const CATEGORIES: Category[] = [
     { label: 'm²', toBase: 1 }, { label: 'km²', toBase: 1e6 }, { label: 'acre', toBase: 4046.86 },
     { label: 'hectare', toBase: 10000 }, { label: 'ft²', toBase: 0.092903 },
   ]},
+  { name: 'Time', marker: 'Ti', units: [
+    { label: 'Second', toBase: 1 }, { label: 'Minute', toBase: 60 }, { label: 'Hour', toBase: 3600 },
+    { label: 'Day', toBase: 86400 }, { label: 'Week', toBase: 604800 }, { label: 'Month (30d)', toBase: 2592000 },
+    { label: 'Year', toBase: 31536000 }, { label: 'Millisecond', toBase: 0.001 },
+  ]},
+  { name: 'Data', marker: 'D', units: [
+    { label: 'Megabyte', toBase: 1 }, { label: 'Kilobyte', toBase: 0.001 }, { label: 'Gigabyte', toBase: 1000 },
+    { label: 'Terabyte', toBase: 1e6 }, { label: 'Byte', toBase: 1e-6 }, { label: 'Mebibyte (MiB)', toBase: 1.048576 },
+    { label: 'Gibibyte (GiB)', toBase: 1073.741824 }, { label: 'Megabit', toBase: 0.125 },
+  ]},
+  { name: 'Energy', marker: 'E', units: [
+    { label: 'Joule', toBase: 1 }, { label: 'Kilojoule', toBase: 1000 }, { label: 'Calorie', toBase: 4.184 },
+    { label: 'kcal', toBase: 4184 }, { label: 'Watt-hour', toBase: 3600 }, { label: 'kWh', toBase: 3.6e6 },
+  ]},
+  { name: 'Pressure', marker: 'P', units: [
+    { label: 'Pascal', toBase: 1 }, { label: 'kPa', toBase: 1000 }, { label: 'Bar', toBase: 100000 },
+    { label: 'PSI', toBase: 6894.76 }, { label: 'Atmosphere', toBase: 101325 }, { label: 'mmHg', toBase: 133.322 },
+  ]},
 ];
 
 function convertTemp(val: number, from: string, to: string): number {

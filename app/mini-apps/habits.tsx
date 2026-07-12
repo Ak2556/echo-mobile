@@ -9,16 +9,19 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Plus, CheckCircle, CircleDashed, Fire, Trash, X, Camera, Images, Clock, NotePencil, Bell } from 'phosphor-react-native';
+import { Plus, Minus, CheckCircle, CircleDashed, Fire, Trash, X, Camera, Images, Clock, NotePencil, Bell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
   HABIT_COLORS, HABIT_MARKERS, Habit, HabitCheckIn, checkInFor, formatCheckInTime,
-  getStreak, loadHabits, saveHabits, setCheckInDetails, thisWeekCount, todayStr,
+  getHabitStreak, isScheduledOn, dayCountFor, STREAK_MILESTONES,
+  loadHabits, saveHabits, setCheckInDetails, thisWeekCount, todayStr,
 } from '../../lib/habits';
+import { HabitDetail } from '../../components/mini-apps/HabitDetail';
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const GOAL_OPTIONS = [3, 4, 5, 6, 7];
@@ -126,9 +129,10 @@ function WeekRow({ habit, colors, onDayPress }: { habit: Habit; colors: any; onD
         const isToday = dateStr === todayStr();
         const entry = checkInFor(habit, dateStr);
         const hasProof = !!(entry?.note || entry?.photoUri);
+        const scheduled = isScheduledOn(habit, dateStr);
         return (
           <Pressable key={i} onPress={done ? () => onDayPress(dateStr) : undefined} style={{ flex: 1 }}>
-            <View style={{ alignItems: 'center', gap: 4 }}>
+            <View style={{ alignItems: 'center', gap: 4, opacity: scheduled ? 1 : 0.3 }}>
               <Text style={{ color: isToday ? habit.color : colors.textMuted, fontSize: 10, fontWeight: isToday ? '700' : '400' }}>
                 {DAYS[new Date(dateStr + 'T12:00:00').getDay()]}
               </Text>
@@ -272,22 +276,45 @@ function ProofModal({ habit, date, onSaved, onClose }: {
   );
 }
 
-function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose: () => void }) {
+const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function AddHabitModal({ initial, onSave, onClose }: {
+  initial?: Habit | null;
+  onSave: (h: Habit) => void;
+  onClose: () => void;
+}) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const accent = colors.accent;
-  const [name, setName] = useState('');
-  const [marker, setMarker] = useState(HABIT_MARKERS[0]);
-  const [color, setColor] = useState(accent);
-  const [goal, setGoal] = useState(7);
-  const [reminder, setReminder] = useState<{ hour: number; minute: number } | null>(null);
+  const [name, setName] = useState(initial?.name ?? '');
+  const [marker, setMarker] = useState(initial?.marker ?? HABIT_MARKERS[0]);
+  const [color, setColor] = useState(initial?.color ?? accent);
+  const [goal, setGoal] = useState(initial?.weeklyGoal ?? 7);
+  const [reminder, setReminder] = useState<{ hour: number; minute: number } | null>(initial?.reminder ?? null);
+  const [days, setDays] = useState<number[]>(initial?.scheduledDays ?? [0, 1, 2, 3, 4, 5, 6]);
+  const [target, setTarget] = useState(initial?.dailyTarget ?? 1);
+
+  const toggleDay = (d: number) => {
+    setDays(prev => {
+      const next = prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d].sort();
+      return next.length === 0 ? prev : next; // at least one day
+    });
+  };
 
   const submit = () => {
     if (!name.trim()) { showToast('Enter a habit name', 'Error'); return; }
-    onAdd({
-      id: Date.now().toString(), name: name.trim(), marker, color,
-      completedDates: [], weeklyGoal: goal === 7 ? undefined : goal, reminder,
-      createdAt: new Date().toISOString(),
+    onSave({
+      id: initial?.id ?? Date.now().toString(),
+      name: name.trim(), marker, color,
+      completedDates: initial?.completedDates ?? [],
+      log: initial?.log ?? [],
+      dayCounts: initial?.dayCounts,
+      archived: initial?.archived,
+      weeklyGoal: goal === 7 ? undefined : goal,
+      reminder,
+      scheduledDays: days.length === 7 ? undefined : days,
+      dailyTarget: target > 1 ? target : undefined,
+      createdAt: initial?.createdAt ?? new Date().toISOString(),
     });
     onClose();
   };
@@ -296,7 +323,7 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
     <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>New Habit</Text>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{initial ? 'Edit Habit' : 'New Habit'}</Text>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
         </View>
         <ScrollView contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
@@ -327,6 +354,36 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
             </View>
           </View>
           <View>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>WHICH DAYS</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {WEEKDAY_LABELS.map((label, d) => {
+                const active = days.includes(d);
+                return (
+                  <Pressable key={d} onPress={() => toggleDay(d)} style={{ flex: 1 }}>
+                    <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{label}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>TIMES PER DAY</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <AnimatedPressable onPress={() => setTarget(t => Math.max(1, t - 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, padding: 11 }}>
+                <Minus color={colors.text} size={15} weight="bold" />
+              </AnimatedPressable>
+              <View style={{ minWidth: 70, alignItems: 'center' }}>
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{target}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11 }}>{target === 1 ? 'simple check' : 'taps to complete'}</Text>
+              </View>
+              <AnimatedPressable onPress={() => setTarget(t => Math.min(20, t + 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: color, borderRadius: 12, padding: 11 }}>
+                <Plus color="#fff" size={15} weight="bold" />
+              </AnimatedPressable>
+            </View>
+          </View>
+          <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>TIMES PER WEEK</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {GOAL_OPTIONS.map(g => (
@@ -354,7 +411,7 @@ function AddHabitModal({ onAdd, onClose }: { onAdd: (h: Habit) => void; onClose:
             </View>
           </View>
           <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: color, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Add Habit</Text>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initial ? 'Save Changes' : 'Add Habit'}</Text>
           </AnimatedPressable>
         </ScrollView>
       </View>
@@ -376,43 +433,82 @@ export default function HabitsApp() {
   const [proof, setProof] = useState<{ habitId: string; date: string } | null>(null);
   const today = todayStr();
 
-  const doneToday = habits.filter(h => h.completedDates.includes(today)).length;
-  const pct = habits.length > 0 ? Math.round((doneToday / habits.length) * 100) : 0;
+  const active = habits.filter(h => !h.archived);
+  const archived = habits.filter(h => h.archived);
+  const dueToday = active.filter(h => isScheduledOn(h, today));
+  const doneToday = dueToday.filter(h => h.completedDates.includes(today)).length;
+  const pct = dueToday.length > 0 ? Math.round((doneToday / dueToday.length) * 100) : 0;
+  const bestStreak = active.reduce((max, habit) => Math.max(max, getHabitStreak(habit)), 0);
+  const proofCount = active.reduce((sum, habit) => sum + (habit.log ?? []).filter(entry => entry.note || entry.photoUri).length, 0);
 
-  const toggleHabit = (id: string) => {
+  // One tap = one increment; quantity habits complete at their target, and a
+  // tap on a completed day unchecks/resets it.
+  const bumpHabit = (id: string) => {
+    let milestone: { streak: number; name: string } | null = null;
     const updated = habits.map(h => {
       if (h.id !== id) return h;
-      const done = h.completedDates.includes(today);
-      const log = (h.log ?? []).filter(entry => entry.date !== today);
-      if (!done) log.push({ date: today, at: new Date().toISOString() });
-      return {
+      const target = h.dailyTarget ?? 1;
+      const cur = dayCountFor(h, today);
+      if (cur >= target) {
+        return {
+          ...h,
+          completedDates: h.completedDates.filter(d => d !== today),
+          dayCounts: h.dailyTarget ? { ...(h.dayCounts ?? {}), [today]: 0 } : h.dayCounts,
+          log: (h.log ?? []).filter(entry => entry.date !== today),
+        };
+      }
+      const next = cur + 1;
+      const nowDone = next >= target;
+      const result: Habit = {
         ...h,
-        completedDates: done ? h.completedDates.filter(d => d !== today) : [...h.completedDates, today],
-        log,
+        dayCounts: h.dailyTarget ? { ...(h.dayCounts ?? {}), [today]: next } : h.dayCounts,
+        completedDates: nowDone ? [...h.completedDates, today] : h.completedDates,
+        log: nowDone
+          ? [...(h.log ?? []).filter(entry => entry.date !== today), { date: today, at: new Date().toISOString() }]
+          : h.log,
       };
+      if (nowDone) {
+        const s = getHabitStreak(result);
+        if (STREAK_MILESTONES.includes(s)) milestone = { streak: s, name: result.name };
+      }
+      return result;
     });
     setHabits(updated); saveHabits(updated);
+    if (milestone) {
+      const m = milestone as { streak: number; name: string };
+      showToast(`🎉 ${m.streak}-day streak — ${m.name}!`, 'Streak');
+    }
   };
 
   const onProofSaved = (updated: Habit) => {
     setHabits(habits.map(h => h.id === updated.id ? updated : h));
   };
 
-  const addHabit = (h: Habit) => {
-    const updated = [h, ...habits];
+  const saveHabit = (h: Habit) => {
+    const exists = habits.some(x => x.id === h.id);
+    const updated = exists ? habits.map(x => x.id === h.id ? h : x) : [h, ...habits];
     setHabits(updated); saveHabits(updated);
     void syncReminder(h);
-    showToast(`${h.name} added`, 'Saved');
+    showToast(exists ? 'Habit updated' : `${h.name} added`, 'Saved');
   };
 
   const deleteHabit = (id: string) => {
-    Alert.alert('Delete habit?', 'Your streak will be lost.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { const updated = habits.filter(h => h.id !== id); setHabits(updated); saveHabits(updated); void cancelReminder(id); } },
-    ]);
+    const updated = habits.filter(h => h.id !== id);
+    setHabits(updated); saveHabits(updated);
+    void cancelReminder(id);
+    setDetailId(null);
+  };
+
+  const toggleArchive = (id: string) => {
+    const updated = habits.map(h => h.id === id ? { ...h, archived: !h.archived } : h);
+    setHabits(updated); saveHabits(updated);
   };
 
   const [heatmapFor, setHeatmapFor] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [editHabit, setEditHabit] = useState<Habit | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const detailHabit = detailId ? habits.find(h => h.id === detailId) ?? null : null;
 
   const todayLabel = new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
 
@@ -425,16 +521,16 @@ export default function HabitsApp() {
   return (
     <MiniAppShell title="Habits" subtitle={todayLabel} headerRight={AddBtn}>
       {/* Progress */}
-      {habits.length > 0 && (
+      {dueToday.length > 0 && (
         <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900' }}>{pct}%</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{doneToday} of {habits.length} done today</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{doneToday} of {dueToday.length} due today</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Fire color={pct === 100 ? '#F59E0B' : colors.textMuted} size={36} weight={pct === 100 ? 'fill' : 'thin'} />
-              {pct === 100 && <Text style={{ color: '#F59E0B', fontSize: 11, fontWeight: '700' }}>Perfect!</Text>}
+              <Fire color={pct === 100 ? '#B08536' : colors.textMuted} size={36} weight={pct === 100 ? 'fill' : 'thin'} />
+              {pct === 100 && <Text style={{ color: '#B08536', fontSize: 11, fontWeight: '700' }}>Perfect!</Text>}
             </View>
           </View>
           <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden' }}>
@@ -443,7 +539,23 @@ export default function HabitsApp() {
         </GlassPanel>
       )}
 
-      {habits.length === 0 && (
+      <EdgeFeaturePanel
+        appName="Habits"
+        accent={accent}
+        headline="Make consistency social"
+        caption="Share streaks, compare progress, and turn proof-backed habits into public updates."
+        metrics={[
+          { label: 'Today', value: `${doneToday}/${dueToday.length}` },
+          { label: 'Best streak', value: `${bestStreak}` },
+          { label: 'Proofs', value: `${proofCount}` },
+        ]}
+        prompt="Review my habit streaks and help me choose the smallest realistic next action for today."
+        shareText={`Habit progress: ${doneToday}/${dueToday.length} habits done today, best streak ${bestStreak} days, ${proofCount} proof notes/photos saved.`}
+        publishTitle="Habit progress"
+        publishBody={`Today I completed ${doneToday} of ${dueToday.length} scheduled habits. My best active streak is ${bestStreak} days, with ${proofCount} proof-backed check-ins.`}
+      />
+
+      {active.length === 0 && archived.length === 0 && (
         <View style={{ alignItems: 'center', paddingVertical: 60, gap: 12 }}>
           <Fire color={colors.glassBorder} size={48} weight="thin" />
           <Text style={{ color: colors.textMuted, fontSize: 15 }}>No habits yet</Text>
@@ -453,12 +565,15 @@ export default function HabitsApp() {
         </View>
       )}
 
-      {habits.map((habit, i) => {
+      {active.map((habit, i) => {
         const done = habit.completedDates.includes(today);
-        const streak = getStreak(habit.completedDates);
+        const streak = getHabitStreak(habit);
         const todayEntry = checkInFor(habit, today);
+        const restDay = !isScheduledOn(habit, today);
+        const target = habit.dailyTarget ?? 1;
+        const count = dayCountFor(habit, today);
         return (
-          <Animated.View key={habit.id} entering={FadeInDown.delay(i * 50).duration(220)} style={{ marginBottom: 12 }}>
+          <Animated.View key={habit.id} entering={FadeInDown.delay(Math.min(i, 6) * 50).duration(220)} style={{ marginBottom: 12, opacity: restDay ? 0.55 : 1 }}>
             <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 18 }} style={{ borderColor: done ? habit.color + '55' : colors.glassBorder }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Pressable onPress={() => setHeatmapFor(heatmapFor === habit.id ? null : habit.id)}>
@@ -466,16 +581,18 @@ export default function HabitsApp() {
                     <Text style={{ color: habit.color, fontSize: 13, fontWeight: '800' }}>{habit.marker}</Text>
                   </View>
                 </Pressable>
-                <View style={{ flex: 1 }}>
+                <Pressable onPress={() => setDetailId(habit.id)} style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{habit.name}</Text>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }} numberOfLines={1}>{habit.name}</Text>
                     {habit.reminder ? <Bell color={colors.textMuted} size={12} weight="fill" /> : null}
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                    <Fire color={streak > 0 ? '#F59E0B' : colors.textMuted} size={13} weight={streak > 0 ? 'fill' : 'regular'} />
-                    <Text style={{ color: streak > 0 ? '#F59E0B' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>{streak} day streak</Text>
-                    {habit.weeklyGoal ? (
-                      <Text style={{ color: thisWeekCount(habit.completedDates) >= habit.weeklyGoal ? '#10B981' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>
+                    <Fire color={streak > 0 ? '#B08536' : colors.textMuted} size={13} weight={streak > 0 ? 'fill' : 'regular'} />
+                    <Text style={{ color: streak > 0 ? '#B08536' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>{streak} day streak</Text>
+                    {restDay ? (
+                      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600' }}>· rest day</Text>
+                    ) : habit.weeklyGoal ? (
+                      <Text style={{ color: thisWeekCount(habit.completedDates) >= habit.weeklyGoal ? '#4E8B7A' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>
                         · {Math.min(thisWeekCount(habit.completedDates), habit.weeklyGoal)}/{habit.weeklyGoal} wk
                       </Text>
                     ) : null}
@@ -483,12 +600,25 @@ export default function HabitsApp() {
                       <Text style={{ color: colors.textMuted, fontSize: 12 }}>· {formatCheckInTime(todayEntry.at)}</Text>
                     ) : null}
                   </View>
-                </View>
-                <AnimatedPressable onPress={() => toggleHabit(habit.id)} scaleValue={0.85} haptic="medium" style={{ marginLeft: 8 }}>
-                  {done ? <CheckCircle color={habit.color} size={36} weight="fill" /> : <CircleDashed color={colors.glassBorder} size={36} weight="regular" />}
-                </AnimatedPressable>
-                <AnimatedPressable onPress={() => deleteHabit(habit.id)} scaleValue={0.85} haptic="light" style={{ marginLeft: 10 }}>
-                  <Trash color={colors.textMuted} size={17} />
+                </Pressable>
+                <AnimatedPressable onPress={() => bumpHabit(habit.id)} disabled={restDay} scaleValue={0.85} haptic="medium" style={{ marginLeft: 8 }}>
+                  {target > 1 ? (
+                    <View style={{
+                      minWidth: 44, height: 36, borderRadius: 18, paddingHorizontal: 10,
+                      alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: done ? habit.color : habit.color + '14',
+                      borderWidth: done ? 0 : 1.5,
+                      borderColor: count > 0 ? habit.color + '88' : colors.glassBorder,
+                    }}>
+                      <Text style={{ color: done ? '#fff' : habit.color, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                        {count}/{target}
+                      </Text>
+                    </View>
+                  ) : done ? (
+                    <CheckCircle color={habit.color} size={36} weight="fill" />
+                  ) : (
+                    <CircleDashed color={colors.glassBorder} size={36} weight="regular" />
+                  )}
                 </AnimatedPressable>
               </View>
               <WeekRow habit={habit} colors={colors} onDayPress={date => setProof({ habitId: habit.id, date })} />
@@ -508,7 +638,43 @@ export default function HabitsApp() {
         );
       })}
 
-      {showAdd && <AddHabitModal onAdd={addHabit} onClose={() => setShowAdd(false)} />}
+      {/* Archived */}
+      {archived.length > 0 && (
+        <View style={{ marginTop: 8 }}>
+          <Pressable onPress={() => setShowArchived(v => !v)}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>
+                Archived · {archived.length}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{showArchived ? 'Hide' : 'Show'}</Text>
+            </View>
+          </Pressable>
+          {showArchived && archived.map(habit => (
+            <Pressable key={habit.id} onPress={() => setDetailId(habit.id)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+                <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: habit.color + '14', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: habit.color, fontSize: 10.5, fontWeight: '800' }}>{habit.marker}</Text>
+                </View>
+                <Text style={{ color: colors.textSecondary, fontSize: 14.5, fontWeight: '600', flex: 1 }} numberOfLines={1}>{habit.name}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{habit.completedDates.length} total</Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
+      {showAdd && <AddHabitModal onSave={saveHabit} onClose={() => setShowAdd(false)} />}
+      {editHabit && <AddHabitModal initial={editHabit} onSave={saveHabit} onClose={() => setEditHabit(null)} />}
+      {detailHabit && !editHabit && (
+        <HabitDetail
+          habit={detailHabit}
+          onEdit={() => setEditHabit(detailHabit)}
+          onToggleArchive={() => toggleArchive(detailHabit.id)}
+          onDelete={() => deleteHabit(detailHabit.id)}
+          onDayPress={date => setProof({ habitId: detailHabit.id, date })}
+          onClose={() => setDetailId(null)}
+        />
+      )}
       {proof && (() => {
         const habit = habits.find(h => h.id === proof.habitId);
         if (!habit) return null;
