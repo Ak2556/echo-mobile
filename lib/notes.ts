@@ -9,6 +9,12 @@ export interface Note {
   body: string;
   color: string;
   pinned?: boolean;
+  favorite?: boolean;
+  archived?: boolean;
+  folder?: string;
+  tags?: string[];
+  kind?: 'note' | 'checklist' | 'meeting' | 'idea' | 'journal' | 'research';
+  createdAt?: string;
   updatedAt: string;
 }
 
@@ -48,6 +54,7 @@ export async function createNote(input: {
     title: input.title?.trim() || titleFromBody(input.body) || 'Untitled',
     body: input.body?.trim() ?? '',
     color: normalizeNoteColor(input.color),
+    createdAt: now,
     updatedAt: now,
   };
   const notes = await loadNotes();

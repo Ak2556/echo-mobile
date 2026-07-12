@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ArrowLeft, PaperPlaneTilt, Lightning, Broadcast, Clock } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Avatar } from '../components/ui/Avatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -17,7 +18,7 @@ const STORY_DURATION_HOURS = 24;
 export default function CreateStoryScreen() {
   const router = useRouter();
   const { colors, radius, fontSizes, animation } = useTheme();
-  const { username, userId, avatarColor, displayName, addStory } = useAppStore();
+  const { username, userId, avatarColor, avatarUrl, displayName, addStory } = useAppStore();
 
   // Hooks must always be called unconditionally
   const [prompt, setPrompt] = useState('');
@@ -122,17 +123,8 @@ export default function CreateStoryScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
           <Animated.View entering={animation(FadeIn.delay(50))} className="flex-row items-center mb-4">
-            <View
-              className="w-12 h-12 rounded-full items-center justify-center mr-3"
-              style={{
-                backgroundColor: avatarColor || colors.accent,
-                borderWidth: 2.5,
-                borderColor: colors.accent,
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>
-                {(username || '?').charAt(0).toUpperCase()}
-              </Text>
+            <View className="mr-3" style={{ borderRadius: 24, borderWidth: 2.5, borderColor: colors.accent }}>
+              <Avatar name={username || '?'} color={avatarColor} url={avatarUrl} size={43} />
             </View>
             <View className="flex-1">
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>

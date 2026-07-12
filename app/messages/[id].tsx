@@ -12,7 +12,7 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
-  Microphone, Play, Pause, ShareFat, WarningCircle,
+  Microphone, Play, Pause, ShareFat, WarningCircle, Users,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -32,6 +32,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { showToast } from '../../components/ui/Toast';
+import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -57,7 +58,7 @@ import {
 import { markMessagesRead } from '../../lib/supabaseEchoApi';
 import { usePresenceTracking } from '../../lib/presence';
 import type { RemoteMessageReaction } from '../../lib/supabaseEchoApi';
-import type { DirectMessage } from '../../types';
+import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -100,6 +101,11 @@ interface NormalizedMessage {
   replyToDeleted: boolean;
   reactions: RemoteMessageReaction[];
 }
+
+type ChatConversation = Conversation & {
+  isGroup?: boolean;
+  memberCount?: number;
+};
 
 function tryParsePayload(content: string | null): Record<string, unknown> | null {
   if (!content) return null;
@@ -227,15 +233,7 @@ function ContactShareCard({
       backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
       marginTop: 4, minWidth: 220,
     }}>
-      <View style={{
-        width: 42, height: 42, borderRadius: 21,
-        backgroundColor: avatarColor,
-        alignItems: 'center', justifyContent: 'center',
-      }}>
-        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-          {displayName.charAt(0).toUpperCase()}
-        </Text>
-      </View>
+      <Avatar name={displayName} color={avatarColor} size={42} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }} numberOfLines={1}>
           {displayName}
@@ -751,7 +749,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
   const { data: conversations = [] } = useRemoteConversations();
-  const targets = conversations.filter(c => c.id !== currentConversationId && !c.archived);
+  const targets = conversations.filter(c => c.id !== currentConversationId && !c.archived && !c.isGroup && c.otherUserId);
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -789,22 +787,21 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
             keyExtractor={c => c.id}
             renderItem={({ item }) => (
               <Pressable
-                onPress={() => { onSelect(item.otherUserId, item.otherDisplayName); onClose(); }}
+                onPress={() => { if (item.otherUserId) onSelect(item.otherUserId, item.otherDisplayName); onClose(); }}
                 style={({ pressed }) => ({
                   flexDirection: 'row', alignItems: 'center', gap: 12,
                   paddingHorizontal: 20, paddingVertical: 12,
                   opacity: pressed ? 0.6 : 1,
                 })}
               >
-                <View style={{
-                  width: 40, height: 40, borderRadius: 20,
-                  backgroundColor: item.otherAvatarColor,
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-                    {item.otherDisplayName.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
+                <Avatar
+                  name={item.otherDisplayName}
+                  color={item.otherAvatarColor}
+                  url={item.isGroup ? undefined : item.otherAvatarUrl}
+                  size={40}
+                >
+                  {item.isGroup ? <Users color="#fff" size={17} weight="fill" /> : undefined}
+                </Avatar>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
                     {item.otherDisplayName}
@@ -1083,13 +1080,16 @@ export default function DMScreen() {
     remote && !localConversation ? id : undefined,
   );
 
-  const conversation = useMemo(() => localConversation ?? (remoteConvData
+  const conversation = useMemo<ChatConversation | null>(() => localConversation ?? (remoteConvData
     ? {
         id: remoteConvData.id,
-        userId: remoteConvData.otherUserId,
-        username: remoteConvData.otherUsername,
+        userId: remoteConvData.otherUserId ?? remoteConvData.id,
+        username: remoteConvData.isGroup ? 'group' : remoteConvData.otherUsername,
         displayName: remoteConvData.otherDisplayName,
         avatarColor: remoteConvData.otherAvatarColor,
+        avatarUrl: remoteConvData.otherAvatarUrl ?? undefined,
+        isGroup: remoteConvData.isGroup,
+        memberCount: remoteConvData.memberCount,
         isVerified: false,
         lastMessage: remoteConvData.lastMessage ?? '',
         lastMessageAt: remoteConvData.lastMessageAt ?? new Date().toISOString(),
@@ -1102,12 +1102,13 @@ export default function DMScreen() {
   // Remote hooks
   const { data: remoteMessagePages, fetchNextPage, hasNextPage } = useRemoteMessages(remote ? id : undefined);
   const remoteMessages = (remoteMessagePages?.pages ?? []).flat();
-  const sendRemote = useSendRemoteDM(id, conversation?.userId);
-  const sendImageDM = useSendImageDM(id, conversation?.userId);
-  const sendVoiceDM = useSendVoiceDM(id, conversation?.userId);
-  const sendLinkDM = useSendLinkDM(id, conversation?.userId);
-  const sendContactDM = useSendContactDM(id, conversation?.userId);
-  const sendEchoDM = useSendEchoDM(id, conversation?.userId);
+  const isGroupConversation = !!conversation?.isGroup;
+  const sendRemote = useSendRemoteDM(id, conversation?.userId ?? undefined, isGroupConversation);
+  const sendImageDM = useSendImageDM(id, conversation?.userId ?? undefined, isGroupConversation);
+  const sendVoiceDM = useSendVoiceDM(id, conversation?.userId ?? undefined, isGroupConversation);
+  const sendLinkDM = useSendLinkDM(id, conversation?.userId ?? undefined, isGroupConversation);
+  const sendContactDM = useSendContactDM(id, conversation?.userId ?? undefined, isGroupConversation);
+  const sendEchoDM = useSendEchoDM(id, conversation?.userId ?? undefined, isGroupConversation);
   const editMessage = useEditMessage(id);
   const pinMessage = usePinMessage(id);
   const { mutate: doMarkRead } = useMarkRead();
@@ -1192,7 +1193,7 @@ export default function DMScreen() {
         };
       });
 
-  const online = conversation ? isUserOnline(conversation.userId) : false;
+  const online = conversation && !conversation.isGroup && conversation.userId ? isUserOnline(conversation.userId) : false;
   const searchTerm = searchQuery.trim().toLowerCase();
   const visibleMessages = searchTerm
     ? messages.filter(message => messageSearchText(message).includes(searchTerm))
@@ -1377,7 +1378,7 @@ export default function DMScreen() {
   }, [sendPickedImage]);
 
   const handleShareContact = useCallback(() => {
-    if (!id || !conversation) return;
+    if (!id || !conversation || conversation.isGroup || !conversation.userId) return;
     setAttachmentMenuOpen(false);
     const contact = {
       userId: conversation.userId,
@@ -1543,23 +1544,16 @@ export default function DMScreen() {
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
 
-        <View style={{ position: 'relative', marginRight: 10 }}>
-          <View style={{
-            width: 40, height: 40, borderRadius: 20,
-            backgroundColor: conversation.avatarColor,
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-              {(conversation.displayName ?? '?').charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          {online && (
-            <View style={{
-              position: 'absolute', bottom: 0, right: 0,
-              width: 11, height: 11, borderRadius: 6,
-              backgroundColor: colors.success, borderWidth: 2, borderColor: colors.bg,
-            }} />
-          )}
+        <View style={{ marginRight: 10 }}>
+          <Avatar
+            name={conversation.displayName ?? '?'}
+            color={conversation.avatarColor}
+            url={conversation.isGroup ? undefined : conversation.avatarUrl}
+            size={40}
+            online={online}
+          >
+            {conversation.isGroup ? <Users color="#fff" size={17} weight="fill" /> : undefined}
+          </Avatar>
         </View>
 
         <View style={{ flex: 1 }}>
@@ -1570,7 +1564,9 @@ export default function DMScreen() {
             {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
           </View>
           <Text style={{ color: online ? colors.success : colors.textMuted, fontSize: 12 }}>
-            {online ? 'Online now' : `@${conversation.username}`}
+            {conversation.isGroup
+              ? `${conversation.memberCount ?? 1} members`
+              : online ? 'Online now' : `@${conversation.username}`}
           </Text>
         </View>
 
@@ -1835,7 +1831,7 @@ export default function DMScreen() {
               {[
                 { key: 'camera', label: 'Camera', icon: <Camera color={colors.accent} size={17} weight="bold" />, onPress: handleTakePhoto },
                 { key: 'gallery', label: 'Gallery', icon: <Images color={colors.accent} size={17} weight="bold" />, onPress: handlePickImage },
-                { key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={17} weight="bold" />, onPress: handleShareContact },
+                ...(!conversation?.isGroup ? [{ key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={17} weight="bold" />, onPress: handleShareContact }] : []),
                 { key: 'link', label: 'Link', icon: <LinkSimple color={colors.accent} size={17} weight="bold" />, onPress: handleSendLinkFromComposer },
               ].map(action => (
                 <Pressable

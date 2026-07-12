@@ -4,13 +4,14 @@ import { Plus } from 'phosphor-react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { Avatar } from '../ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 
 export function StoryCircles() {
   const router = useRouter();
-  const { getActiveStories, username, avatarColor } = useAppStore();
+  const { getActiveStories, username, avatarColor, avatarUrl } = useAppStore();
   const { colors, animation, isUserOnline } = useTheme();
   const stories = getActiveStories();
   const remote = isSupabaseRemote();
@@ -42,22 +43,12 @@ export function StoryCircles() {
           haptic="light"
         >
           <View style={{ position: 'relative' }}>
-            <View
-              style={{
-                width: 62,
-                height: 62,
-                borderRadius: 31,
-                backgroundColor: avatarColor,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 2,
-                borderColor: 'rgba(255,255,255,0.15)',
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 20 }}>
-                {(username || '?').charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            <Avatar
+              name={username || '?'}
+              color={avatarColor}
+              url={avatarUrl}
+              size={62}
+            />
             {/* Add button */}
             <View
               style={{
@@ -116,19 +107,12 @@ export function StoryCircles() {
                     borderColor: hasUnviewed ? colors.accent : 'rgba(255,255,255,0.12)',
                   }}
                 >
-                  <View
-                    style={{
-                      flex: 1,
-                      borderRadius: 30,
-                      backgroundColor: story.avatarColor,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>
-                      {story.displayName.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
+                  <Avatar
+                    name={story.displayName}
+                    color={story.avatarColor}
+                    url={story.avatarUrl}
+                    size={56}
+                  />
                 </View>
 
                 {/* Green online dot */}

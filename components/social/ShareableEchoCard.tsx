@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react';
 import { View, Text } from 'react-native';
 import { FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
+import { warmAvatarColor } from '../../lib/avatarPalette';
 
 interface ShareableEchoCardProps {
   item: FeedItem;
@@ -81,7 +82,9 @@ export const ShareableEchoCard = forwardRef<View, ShareableEchoCardProps>(({ ite
               width: 64,
               height: 64,
               borderRadius: 32,
-              backgroundColor: item.avatarColor,
+              // Snapshot render: keep the initial (remote images may not
+              // resolve before the view-shot capture) but on the warm palette.
+              backgroundColor: warmAvatarColor(item.avatarColor, item.username),
               alignItems: 'center',
               justifyContent: 'center',
             }}

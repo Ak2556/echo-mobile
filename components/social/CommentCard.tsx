@@ -4,6 +4,7 @@ import { HeartStraight, SealCheck, ChatCircle } from 'phosphor-react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { Avatar } from '../ui/Avatar';
 import { Comment } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -59,13 +60,13 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
   return (
     <Animated.View entering={animation(FadeInDown.duration(220))} className="flex-row py-3" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingLeft: indented ? 48 : 16, paddingRight: 16 }}>
       {showAvatars && (
-        <View
-          className="w-9 h-9 rounded-full items-center justify-center mr-3 mt-0.5"
-          style={{ backgroundColor: comment.avatarColor }}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-            {comment.displayName.charAt(0).toUpperCase()}
-          </Text>
+        <View className="mr-3 mt-0.5">
+          <Avatar
+            name={comment.displayName}
+            color={comment.avatarColor}
+            url={comment.avatarUrl}
+            size={36}
+          />
         </View>
       )}
 

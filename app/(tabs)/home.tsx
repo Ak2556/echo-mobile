@@ -18,6 +18,7 @@ import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, C
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
+import { Avatar } from '../../components/ui/Avatar';
 import { useInfiniteFeed, useTrendingEvolutions } from '../../hooks/queries/useFeed';
 import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
@@ -241,7 +242,7 @@ export default function DiscoverScreen() {
   const realtime = useRealtimeNewEchoes();
   const { colors, animation, font, fontSizes, lineHeights } = useTheme();
   const performance = usePerformanceProfile('hot');
-  const { username, avatarColor, interests, followingIds } = useAppStore();
+  const { username, avatarColor, avatarUrl, interests, followingIds } = useAppStore();
   const targetCategoryId = useAppStore(s => s.targetCategory);
   const targetOutcome = useAppStore(s => s.targetOutcome);
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
@@ -681,21 +682,8 @@ export default function DiscoverScreen() {
           </Pressable>
 
           <Pressable onPress={() => router.push('/(tabs)/you')} accessibilityLabel="Open your profile">
-            <View
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 17,
-                backgroundColor: avatarColor || colors.accent,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 2,
-                borderColor: colors.glassBorder,
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
-                {(username || '?').charAt(0).toUpperCase()}
-              </Text>
+            <View style={{ borderRadius: 17, borderWidth: 2, borderColor: colors.glassBorder }}>
+              <Avatar name={username || '?'} color={avatarColor} url={avatarUrl} size={30} />
             </View>
           </Pressable>
         </View>

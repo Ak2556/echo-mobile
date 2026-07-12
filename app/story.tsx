@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming, FadeInDown } from 'react-native-reanimated';
 import { X, Eye } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { Avatar } from '../components/ui/Avatar';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 
@@ -100,13 +101,8 @@ export default function StoryScreen() {
 
       <View className="flex-row items-center justify-between px-4 mb-4">
         <View className="flex-row items-center">
-          <View
-            className="w-9 h-9 rounded-full items-center justify-center mr-2.5"
-            style={{ backgroundColor: story.avatarColor }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-              {story.displayName.charAt(0).toUpperCase()}
-            </Text>
+          <View className="mr-2.5">
+            <Avatar name={story.displayName} color={story.avatarColor} url={story.avatarUrl} size={36} />
           </View>
           <View>
             <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{story.displayName}</Text>

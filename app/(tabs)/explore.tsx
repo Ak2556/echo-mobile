@@ -7,6 +7,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { SearchBar } from '../../components/social/SearchBar';
+import { Avatar } from '../../components/ui/Avatar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -458,11 +459,7 @@ function TrendingTile({ item, width, tall, onPress }: { item: any; width: number
               </Text>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: item.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>
-                  {(item.displayName || item.username).charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              <Avatar name={item.displayName || item.username} color={item.avatarColor} url={item.avatarUrl} size={20} />
               <Text style={{ color: mediaUri ? 'rgba(255,255,255,0.86)' : colors.textMuted, fontSize: 11, fontWeight: '700' }} numberOfLines={1}>
                 {item.username}
               </Text>

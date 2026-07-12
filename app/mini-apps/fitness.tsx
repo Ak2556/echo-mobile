@@ -6,19 +6,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import Svg, { Circle, Polyline } from 'react-native-svg';
-import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus } from 'phosphor-react-native';
+import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { ExerciseDemo } from '../../components/mini-apps/ExerciseDemo';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
   FitnessDoc, Meal, MealKind, MEAL_KINDS, Workout, WorkoutExercise, WeightEntry,
-  MeasurementEntry, MEASUREMENT_FIELDS,
+  MeasurementEntry, MEASUREMENT_FIELDS, Routine, CustomFood,
   loadFitness, saveFitness, todayMealTotals, todayWaterMl, workoutVolume, isSameDay,
   liftHistory, est1RM, weeklySummaries, monthlySummaries,
+  thisWeekWorkoutCount, weeklyStreak, detectPRs,
 } from '../../lib/fitness';
+import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
 import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
 import { FoodItem, searchFoods } from '../../lib/foodDatabase';
 
@@ -75,7 +78,12 @@ function SubmitBtn({ label, onPress }: { label: string; onPress: () => void }) {
 
 // ── Add meal ─────────────────────────────────────────────────────────────────
 
-function AddMealModal({ onAdd, onClose }: { onAdd: (m: Meal) => void; onClose: () => void }) {
+function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
+  customFoods: CustomFood[];
+  onAdd: (m: Meal) => void;
+  onSaveFood: (f: CustomFood) => void;
+  onClose: () => void;
+}) {
   const { colors } = useTheme();
   const [name, setName] = useState('');
   const [kind, setKind] = useState<MealKind>('breakfast');
@@ -86,7 +94,13 @@ function AddMealModal({ onAdd, onClose }: { onAdd: (m: Meal) => void; onClose: (
   const [search, setSearch] = useState('');
   const [picked, setPicked] = useState<FoodItem | null>(null);
   const [qty, setQty] = useState(1);
-  const results = picked ? [] : searchFoods(search);
+  const [saveToFoods, setSaveToFoods] = useState(false);
+  // Your foods rank above the built-in database.
+  const q = search.trim().toLowerCase();
+  const customHits: FoodItem[] = q
+    ? customFoods.filter(f => f.name.toLowerCase().includes(q)).slice(0, 4)
+    : [];
+  const results = picked ? [] : [...customHits, ...searchFoods(search).filter(f => !customHits.some(c => c.id === f.id))].slice(0, 8);
 
   const applyFood = (food: FoodItem, q: number) => {
     setPicked(food);
@@ -103,6 +117,12 @@ function AddMealModal({ onAdd, onClose }: { onAdd: (m: Meal) => void; onClose: (
     if (!name.trim()) { showToast('Name the meal', 'Required'); return; }
     const cal = num(calories);
     if (cal <= 0) { showToast('Enter calories', 'Required'); return; }
+    if (saveToFoods && !picked) {
+      onSaveFood({
+        id: `custom-${Date.now()}`, name: name.trim(), serving: '1 serving',
+        calories: cal, protein: num(protein), carbs: num(carbs), fat: num(fat),
+      });
+    }
     onAdd({
       id: Date.now().toString(), name: name.trim(), kind, calories: cal,
       protein: num(protein), carbs: num(carbs), fat: num(fat), date: new Date().toISOString(),
@@ -176,6 +196,23 @@ function AddMealModal({ onAdd, onClose }: { onAdd: (m: Meal) => void; onClose: (
             <Field label="CARBS (g)" value={carbs} onChange={setCarbs} placeholder="0" keyboard="decimal-pad" />
             <Field label="FAT (g)" value={fat} onChange={setFat} placeholder="0" keyboard="decimal-pad" />
           </View>
+          {!picked && name.trim().length > 0 && (
+            <Pressable onPress={() => setSaveToFoods(v => !v)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{
+                  width: 22, height: 22, borderRadius: 7,
+                  alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: saveToFoods ? TEAL : 'transparent',
+                  borderWidth: saveToFoods ? 0 : 1.5, borderColor: colors.glassBorder,
+                }}>
+                  {saveToFoods && <FloppyDisk color="#fff" size={13} weight="fill" />}
+                </View>
+                <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
+                  Save to my foods for next time
+                </Text>
+              </View>
+            </Pressable>
+          )}
           <SubmitBtn label="Log Meal" onPress={submit} />
         </ScrollView>
       </View>
@@ -192,8 +229,9 @@ function GoalsModal({ doc, onSave, onClose }: { doc: FitnessDoc; onSave: (goals:
   const [carbs, setCarbs] = useState(String(doc.goals.carbs));
   const [fat, setFat] = useState(String(doc.goals.fat));
   const [water, setWater] = useState(String(doc.goals.waterMl));
+  const [weekly, setWeekly] = useState(doc.goals.workoutsPerWeek);
   const submit = () => {
-    const goals = { calories: num(cal), protein: num(protein), carbs: num(carbs), fat: num(fat), waterMl: num(water) };
+    const goals = { calories: num(cal), protein: num(protein), carbs: num(carbs), fat: num(fat), waterMl: num(water), workoutsPerWeek: weekly };
     if (Object.values(goals).some(v => v <= 0)) { showToast('Enter valid goals', 'Required'); return; }
     onSave(goals); onClose();
   };
@@ -209,6 +247,18 @@ function GoalsModal({ doc, onSave, onClose }: { doc: FitnessDoc; onSave: (goals:
             <Field label="FAT (g)" value={fat} onChange={setFat} keyboard="decimal-pad" />
           </View>
           <Field label="WATER (ml / day)" value={water} onChange={setWater} keyboard="decimal-pad" />
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }}>WORKOUTS / WEEK</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {[2, 3, 4, 5, 6].map(n => (
+                <Pressable key={n} onPress={() => setWeekly(n)} style={{ flex: 1 }}>
+                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: weekly === n ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: weekly === n ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: weekly === n ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>{n}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
           <SubmitBtn label="Save Targets" onPress={submit} />
         </ScrollView>
       </View>
@@ -221,10 +271,23 @@ function GoalsModal({ doc, onSave, onClose }: { doc: FitnessDoc; onSave: (goals:
 interface DraftExercise { name: string; sets: string; reps: string; weight: string }
 const emptyDraft = (): DraftExercise => ({ name: '', sets: '3', reps: '10', weight: '' });
 
-function AddWorkoutModal({ onAdd, onClose }: { onAdd: (w: Workout) => void; onClose: () => void }) {
+const REST_OPTIONS = [60, 90, 120, 180];
+
+function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose }: {
+  mode?: 'log' | 'routine';
+  initial?: Routine | null;
+  onAdd?: (w: Workout) => void;
+  onSaveRoutine?: (r: Routine) => void;
+  onClose: () => void;
+}) {
   const { colors } = useTheme();
-  const [title, setTitle] = useState('');
-  const [rows, setRows] = useState<DraftExercise[]>([emptyDraft()]);
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [rows, setRows] = useState<DraftExercise[]>(() =>
+    initial?.exercises.length
+      ? initial.exercises.map(e => ({ name: e.name, sets: String(e.sets), reps: String(e.reps), weight: e.weight > 0 ? String(e.weight) : '' }))
+      : [emptyDraft()],
+  );
+  const [restSec, setRestSec] = useState(initial?.restSec ?? 90);
   const [suggestFor, setSuggestFor] = useState<number | null>(null);
 
   const setRow = (i: number, patch: Partial<DraftExercise>) =>
@@ -237,16 +300,24 @@ function AddWorkoutModal({ onAdd, onClose }: { onAdd: (w: Workout) => void; onCl
       .filter(r => r.name.trim())
       .map(r => ({ name: r.name.trim(), sets: Math.max(1, Math.round(num(r.sets))), reps: Math.max(1, Math.round(num(r.reps))), weight: num(r.weight) }));
     if (exercises.length === 0) { showToast('Add at least one exercise', 'Required'); return; }
-    onAdd({ id: Date.now().toString(), title: title.trim() || 'Workout', exercises, date: new Date().toISOString() });
+    if (mode === 'routine') {
+      onSaveRoutine?.({ id: initial?.id ?? Date.now().toString(), title: title.trim() || 'Routine', exercises, restSec });
+    } else {
+      onAdd?.({ id: Date.now().toString(), title: title.trim() || 'Workout', exercises, date: new Date().toISOString() });
+    }
     onClose();
   };
 
   return (
     <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <SheetHeader title="Log Workout" onClose={onClose} />
+        <SheetHeader title={mode === 'routine' ? (initial ? 'Edit Routine' : 'New Routine') : 'Log Workout'} onClose={onClose} />
         <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
-          <Field label="SESSION" value={title} onChange={setTitle} placeholder="e.g. Push day, Legs" autoFocus />
+          <Field
+            label={mode === 'routine' ? 'ROUTINE NAME' : 'SESSION'}
+            value={title} onChange={setTitle}
+            placeholder="e.g. Push day, Legs" autoFocus={!initial}
+          />
           {rows.map((row, i) => (
             <GlassPanel key={i} variant="light" borderRadius={16} contentStyle={{ padding: 14, gap: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
@@ -292,7 +363,21 @@ function AddWorkoutModal({ onAdd, onClose }: { onAdd: (w: Workout) => void; onCl
               <Text style={{ color: TEAL, fontWeight: '700', fontSize: 14 }}>Add exercise</Text>
             </View>
           </Pressable>
-          <SubmitBtn label="Save Workout" onPress={submit} />
+          {mode === 'routine' && (
+            <View>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }}>REST BETWEEN SETS</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {REST_OPTIONS.map(sec => (
+                  <Pressable key={sec} onPress={() => setRestSec(sec)} style={{ flex: 1 }}>
+                    <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: restSec === sec ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: restSec === sec ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: restSec === sec ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>{sec}s</Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+          <SubmitBtn label={mode === 'routine' ? 'Save Routine' : 'Save Workout'} onPress={submit} />
         </ScrollView>
       </View>
     </Modal>
@@ -389,6 +474,8 @@ export default function FitnessApp() {
   const [weightInput, setWeightInput] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showMeasure, setShowMeasure] = useState(false);
+  const [routineEditor, setRoutineEditor] = useState<Routine | 'new' | null>(null);
+  const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
   const [libQuery, setLibQuery] = useState('');
   const [libGroup, setLibGroup] = useState<MuscleGroup | 'All'>('All');
 
@@ -427,6 +514,14 @@ export default function FitnessApp() {
     update({ ...doc, water: doc.water.filter((_, i) => i !== idx) });
   };
   const weekWorkouts = doc.workouts.filter(w => Date.now() - new Date(w.date).getTime() < 7 * 86400000);
+  const weekCount = thisWeekWorkoutCount(doc.workouts);
+  const streak = weeklyStreak(doc.workouts, doc.goals.workoutsPerWeek);
+
+  const saveLoggedWorkout = (w: Workout) => {
+    const prs = detectPRs(doc.workouts, w);
+    update({ ...doc, workouts: [w, ...doc.workouts] });
+    showToast(prs.length ? `🏆 ${prs.length} new PR${prs.length === 1 ? '' : 's'}!` : `${w.title} saved`, 'Saved');
+  };
   const sortedWeights = [...doc.weights].sort((a, b) => b.date.localeCompare(a.date));
   const latestWeight = sortedWeights[0];
   const firstWeight = sortedWeights[sortedWeights.length - 1];
@@ -464,6 +559,22 @@ export default function FitnessApp() {
           </Pressable>
         ))}
       </GlassPanel>
+
+      <EdgeFeaturePanel
+        appName="Fitness"
+        accent={TEAL}
+        headline="Fitness that turns into momentum"
+        caption="Share progress, compare consistency, and convert training data into better next steps."
+        metrics={[
+          { label: 'Calories', value: `${Math.round(totals.calories)}` },
+          { label: 'Workouts', value: `${weekCount}/${doc.goals.workoutsPerWeek}` },
+          { label: 'Streak', value: `${streak}` },
+        ]}
+        prompt="Review my meals, workouts, and progress, then give me the next realistic adjustment for this week."
+        shareText={`Fitness progress: ${Math.round(totals.calories)}/${doc.goals.calories} kcal today, ${weekCount}/${doc.goals.workoutsPerWeek} workouts this week, ${streak} week streak.`}
+        publishTitle="Fitness progress"
+        publishBody={`Today I logged ${Math.round(totals.calories)} kcal and ${Math.round(totals.protein)}g protein. This week I completed ${weekCount} of ${doc.goals.workoutsPerWeek} workouts with a ${streak}-week streak.`}
+      />
 
       {/* ── Meals ── */}
       {tab === 'meals' && (
@@ -572,22 +683,85 @@ export default function FitnessApp() {
       {/* ── Workouts ── */}
       {tab === 'workouts' && (
         <>
-          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20, flexDirection: 'row' }} style={{ marginBottom: 14 }} elevated>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>This week</Text>
-              <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
-                {weekWorkouts.length}
-                <Text style={{ color: colors.textMuted, fontSize: 17 }}> session{weekWorkouts.length === 1 ? '' : 's'}</Text>
+          {/* Weekly goal + streak */}
+          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>This week</Text>
+                <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+                  {weekCount}
+                  <Text style={{ color: colors.textMuted, fontSize: 17 }}> of {doc.goals.workoutsPerWeek} workouts</Text>
+                </Text>
+              </View>
+              <Barbell color={TEAL} size={40} weight="fill" />
+            </View>
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 12 }}>
+              {Array.from({ length: doc.goals.workoutsPerWeek }).map((_, i) => (
+                <View key={i} style={{
+                  flex: 1, height: 8, borderRadius: 4,
+                  backgroundColor: i < weekCount ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+                }} />
+              ))}
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
+              <Fire color={streak > 0 ? '#B08536' : colors.textMuted} size={14} weight={streak > 0 ? 'fill' : 'regular'} />
+              <Text style={{ color: streak > 0 ? '#B08536' : colors.textMuted, fontSize: 13, fontWeight: '700', flex: 1 }}>
+                {streak > 0 ? `${streak}-week streak` : 'Hit your goal to start a streak'}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
-                {Math.round(weekWorkouts.reduce((s, w) => s + workoutVolume(w), 0)).toLocaleString()} kg total volume
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                {Math.round(weekWorkouts.reduce((s, w) => s + workoutVolume(w), 0)).toLocaleString()} kg this week
               </Text>
             </View>
-            <Barbell color={TEAL} size={40} weight="fill" />
           </GlassPanel>
 
+          {/* Routines — the follow-along entry point */}
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 10 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>
+              Routines
+            </Text>
+            <Pressable onPress={() => setRoutineEditor('new')} hitSlop={10}>
+              <Text style={{ color: TEAL, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>+ New routine</Text>
+            </Pressable>
+          </View>
+          {doc.routines.length === 0 ? (
+            <Text style={{ color: colors.textMuted, fontSize: 13.5, lineHeight: 20, marginBottom: 16 }}>
+              Save the workouts you repeat — then start one with a tap and follow along set by set, rest timer included.
+            </Text>
+          ) : (
+            <View style={{ marginBottom: 16, gap: 10 }}>
+              {doc.routines.map(r => (
+                <GlassPanel key={r.id} variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
+                  <Pressable
+                    onPress={() => setRoutineEditor(r)}
+                    onLongPress={() => removeItem('routine', () => ({ ...doc, routines: doc.routines.filter(x => x.id !== r.id) }))}
+                    style={{ flex: 1 }}
+                  >
+                    <Text style={{ color: colors.text, fontSize: 15.5, fontWeight: '800' }}>{r.title}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+                      {r.exercises.length} exercise{r.exercises.length === 1 ? '' : 's'} · {r.exercises.map(e => e.name).join(', ')}
+                    </Text>
+                  </Pressable>
+                  <AnimatedPressable
+                    onPress={() => setActiveRoutine(r)}
+                    scaleValue={0.9} haptic="medium"
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: TEAL, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 }}
+                  >
+                    <Play color="#fff" size={13} weight="fill" />
+                    <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>Start</Text>
+                  </AnimatedPressable>
+                </GlassPanel>
+              ))}
+            </View>
+          )}
+
+          {doc.workouts.length > 0 && (
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 10 }}>
+              History
+            </Text>
+          )}
+
           {doc.workouts.length === 0 && (
-            <View style={{ alignItems: 'center', paddingVertical: 48, gap: 12 }}>
+            <View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
               <Barbell color={colors.glassBorder} size={44} weight="thin" />
               <Text style={{ color: colors.textMuted, fontSize: 15 }}>No workouts logged</Text>
               <AnimatedPressable onPress={() => setShowAddWorkout(true)} scaleValue={0.96} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 12 }}>
@@ -869,8 +1043,39 @@ export default function FitnessApp() {
         </>
       )}
 
-      {showAddMeal && <AddMealModal onAdd={m => { update({ ...doc, meals: [m, ...doc.meals] }); showToast(`${m.name} logged`, 'Saved'); }} onClose={() => setShowAddMeal(false)} />}
-      {showAddWorkout && <AddWorkoutModal onAdd={w => { update({ ...doc, workouts: [w, ...doc.workouts] }); showToast(`${w.title} saved`, 'Saved'); }} onClose={() => setShowAddWorkout(false)} />}
+      {showAddMeal && (
+        <AddMealModal
+          customFoods={doc.customFoods}
+          onAdd={m => { update({ ...doc, meals: [m, ...doc.meals] }); showToast(`${m.name} logged`, 'Saved'); }}
+          onSaveFood={f => update({ ...doc, customFoods: [f, ...doc.customFoods.filter(x => x.name.toLowerCase() !== f.name.toLowerCase())] })}
+          onClose={() => setShowAddMeal(false)}
+        />
+      )}
+      {showAddWorkout && <AddWorkoutModal onAdd={saveLoggedWorkout} onClose={() => setShowAddWorkout(false)} />}
+      {routineEditor !== null && (
+        <AddWorkoutModal
+          mode="routine"
+          initial={routineEditor === 'new' ? null : routineEditor}
+          onSaveRoutine={r => {
+            const exists = doc.routines.some(x => x.id === r.id);
+            update({ ...doc, routines: exists ? doc.routines.map(x => x.id === r.id ? r : x) : [r, ...doc.routines] });
+            showToast(`${r.title} saved`, 'Saved');
+          }}
+          onClose={() => setRoutineEditor(null)}
+        />
+      )}
+      {activeRoutine && (
+        <WorkoutSession
+          routine={activeRoutine}
+          history={doc.workouts}
+          onFinish={(w, prs) => {
+            update({ ...doc, workouts: [w, ...doc.workouts] });
+            setActiveRoutine(null);
+            showToast(prs.length ? `🏆 ${prs.length} new PR${prs.length === 1 ? '' : 's'}!` : `${w.title} saved`, 'Saved');
+          }}
+          onClose={() => setActiveRoutine(null)}
+        />
+      )}
       {showGoals && <GoalsModal doc={doc} onSave={goals => { update({ ...doc, goals }); showToast('Targets updated', 'Saved'); }} onClose={() => setShowGoals(false)} />}
       {showMeasure && <MeasurementModal latest={latestMeasure} onAdd={m => { update({ ...doc, measurements: [m, ...doc.measurements] }); showToast('Measurements logged', 'Saved'); }} onClose={() => setShowMeasure(false)} />}
     </MiniAppShell>
