@@ -18,6 +18,7 @@ import {
   getOrCreateRemoteConversation,
   markMessagesRead,
   setDMPref,
+  forwardDMMessage,
   deleteRemoteMessage,
   addMessageReaction,
   removeMessageReaction,
@@ -162,8 +163,9 @@ export function useSendRemoteDM(
       const snapshot = qc.getQueryData(['messages', conversationId]);
 
       const uid = await getSessionUserId();
+      const optimisticId = `pending-${Date.now()}`;
       const optimistic: RemoteDirectMessage = {
-        id: `pending-${Date.now()}`,
+        id: optimisticId,
         conversationId: conversationId ?? '',
         senderId: uid ?? 'me',
         content,
@@ -188,16 +190,62 @@ export function useSendRemoteDM(
           ? { ...old, pages: old.pages.map((p, i) => i === 0 ? [...p, optimistic] : p) }
           : old,
       );
-      return { snapshot };
+      return { snapshot, optimisticId };
     },
     onError: (_, __, ctx) => {
-      if (ctx?.snapshot !== undefined) {
-        qc.setQueryData(['messages', conversationId], ctx.snapshot);
+      // Don't roll back silently — keep the bubble, flagged as failed, so the
+      // user can tap to retry. (The `failed-` id prefix drives the UI.)
+      if (!ctx?.optimisticId) return;
+      qc.setQueryData<InfiniteData<RemoteDirectMessage[]>>(
+        ['messages', conversationId],
+        old => old
+          ? {
+              ...old,
+              pages: old.pages.map(page =>
+                page.map(msg =>
+                  msg.id === ctx.optimisticId
+                    ? { ...msg, id: ctx.optimisticId.replace('pending-', 'failed-') }
+                    : msg,
+                ),
+              ),
+            }
+          : old,
+      );
+    },
+    onSettled: (_data, error) => {
+      // A failed send must keep its local 'failed-' bubble: skip the refetch
+      // that would wipe it. Successful sends refresh as usual.
+      if (!error) {
+        qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+        qc.invalidateQueries({ queryKey: ['conversations'] });
       }
     },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+  });
+}
+
+/** Drop a locally-cached (failed/optimistic) message — used before a retry. */
+export function useDiscardLocalMessage(conversationId: string | undefined) {
+  const qc = useQueryClient();
+  return useCallback((messageId: string) => {
+    qc.setQueryData<InfiniteData<RemoteDirectMessage[]>>(
+      ['messages', conversationId],
+      old => old
+        ? { ...old, pages: old.pages.map(page => page.filter(m => m.id !== messageId)) }
+        : old,
+    );
+  }, [qc, conversationId]);
+}
+
+// Forward
+/** Copy a message into another conversation. */
+export function useForwardMessage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, recipientId }: { messageId: string; recipientId: string }) =>
+      forwardDMMessage(messageId, recipientId),
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['conversations'] });
+      qc.invalidateQueries({ queryKey: ['messages', res.conversationId] });
     },
   });
 }
