@@ -2462,6 +2462,8 @@ export interface RemoteConversation {
   lastMessageKind: string;
   unreadCount: number;
   pinnedMessage: { id: string; content: string | null; kind: string } | null;
+  muted: boolean;
+  archived: boolean;
 }
 
 export interface RemoteMessageReaction {
@@ -2716,6 +2718,49 @@ export async function sendDMImage(
   return { conversationId: conv.id as string };
 }
 
+/** Send a voice DM. Uploads the m4a to dm-media, stores duration (s) in text. */
+export async function sendDMVoice(
+  recipientId: string,
+  uri: string,
+  durationSec: number,
+  replyToId?: string,
+): Promise<{ conversationId: string }> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+
+  const userA = uid < recipientId ? uid : recipientId;
+  const userB = uid < recipientId ? recipientId : uid;
+
+  const { data: conv, error: convErr } = await supabase
+    .from('dm_conversations')
+    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
+    .select('id')
+    .single();
+  if (convErr) throw new Error(`Conversation failed: ${convErr.message}`);
+
+  const path = `${uid}/${conv.id as string}/${Date.now()}.m4a`;
+  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  const bytes = base64ToArrayBuffer(base64);
+  const { error: upErr } = await supabase.storage
+    .from(DM_MEDIA_BUCKET)
+    .upload(path, bytes, { contentType: 'audio/mp4', cacheControl: '31536000' });
+  if (upErr) throw new Error(`Voice upload failed: ${upErr.message}`);
+
+  const { error: msgErr } = await supabase
+    .from('direct_messages')
+    .insert({
+      conversation_id: conv.id,
+      sender_id: uid,
+      kind: 'voice',
+      media_url: path,
+      text: String(Math.max(1, Math.round(durationSec))),
+      ...(replyToId ? { reply_to_id: replyToId } : {}),
+    });
+  if (msgErr) throw new Error(`Message insert failed: ${msgErr.message}`);
+
+  return { conversationId: conv.id as string };
+}
+
 /** Set or clear the pinned message for a conversation. */
 export async function pinDMMessage(
   conversationId: string,
@@ -2733,8 +2778,15 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
   const uid = await getSessionUserId();
   if (!uid) return [];
 
-  const { data, error } = await supabase.rpc('get_dm_conversations', { p_user_id: uid });
+  const [{ data, error }, prefsRes] = await Promise.all([
+    supabase.rpc('get_dm_conversations', { p_user_id: uid }),
+    supabase.from('dm_prefs').select('conversation_id, muted, archived').eq('user_id', uid),
+  ]);
   if (error) throw error;
+  const prefs = new Map(
+    ((prefsRes.data ?? []) as { conversation_id: string; muted: boolean; archived: boolean }[])
+      .map(p => [p.conversation_id, p]),
+  );
 
   return ((data ?? []) as Record<string, unknown>[]).map(r => ({
     id: r.id as string,
@@ -2747,7 +2799,25 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
     lastMessageKind: (r.last_message_kind as string | null) ?? 'text',
     unreadCount: Number(r.unread_count ?? 0),
     pinnedMessage: null,
+    muted: prefs.get(r.id as string)?.muted ?? false,
+    archived: prefs.get(r.id as string)?.archived ?? false,
   }));
+}
+
+/** Set mute/archive preference for a conversation (per current user). */
+export async function setDMPref(
+  conversationId: string,
+  patch: { muted?: boolean; archived?: boolean },
+): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('dm_prefs')
+    .upsert(
+      { conversation_id: conversationId, user_id: uid, ...patch, updated_at: new Date().toISOString() },
+      { onConflict: 'conversation_id,user_id' },
+    );
+  if (error) throw error;
 }
 
 /** Fetch a single conversation by UUID (used when local store doesn't have it). */
@@ -2788,6 +2858,8 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
     pinnedMessage: pm && !pm.deleted_at
       ? { id: pm.id as string, content: (pm.text as string | null) ?? null, kind: (pm.kind as string) ?? 'text' }
       : null,
+    muted: false,
+    archived: false,
   };
 }
 

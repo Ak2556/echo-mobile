@@ -12,10 +12,12 @@ import {
   sendRemoteDMContact,
   sendRemoteDMEcho,
   sendDMImage,
+  sendDMVoice,
   editRemoteMessage,
   pinDMMessage,
   getOrCreateRemoteConversation,
   markMessagesRead,
+  setDMPref,
   deleteRemoteMessage,
   addMessageReaction,
   removeMessageReaction,
@@ -269,6 +271,54 @@ export function useSendImageDM(
   });
 }
 
+// Send voice
+/** Record-and-send voice note: optimistic bubble with the local file URI. */
+export function useSendVoiceDM(
+  conversationId: string | undefined,
+  recipientId: string | undefined,
+) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ uri, durationSec, replyToId }: { uri: string; durationSec: number; replyToId?: string }) => {
+      if (!recipientId) throw new Error('No recipient');
+      return sendDMVoice(recipientId, uri, durationSec, replyToId);
+    },
+    onMutate: async ({ uri, durationSec }) => {
+      await qc.cancelQueries({ queryKey: ['messages', conversationId] });
+      const snapshot = qc.getQueryData(['messages', conversationId]);
+      const uid = await getSessionUserId();
+      appendOptimisticMessage(qc, conversationId, {
+        id: `pending-voice-${Date.now()}`,
+        conversationId: conversationId ?? '',
+        senderId: uid ?? 'me',
+        content: String(Math.max(1, Math.round(durationSec))),
+        kind: 'voice',
+        createdAt: new Date().toISOString(),
+        readAt: null,
+        deletedAt: null,
+        editedAt: null,
+        sharedEchoId: null,
+        mediaUrl: uri, // local file until the upload confirms
+        replyToId: null,
+        replyToContent: null,
+        replyToSenderId: null,
+        replyToKind: null,
+        replyToDeleted: false,
+        reactions: [],
+      });
+      return { snapshot };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.snapshot !== undefined) qc.setQueryData(['messages', conversationId], ctx.snapshot);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
 export function useSendLinkDM(
   conversationId: string | undefined,
   recipientId: string | undefined,
@@ -461,6 +511,28 @@ export function usePinMessage(conversationId: string | undefined) {
   });
 }
 
+// Conversation prefs
+/** Mute or archive a conversation for the current user. */
+export function useSetDMPref() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ conversationId, patch }: { conversationId: string; patch: { muted?: boolean; archived?: boolean } }) =>
+      setDMPref(conversationId, patch),
+    onMutate: async ({ conversationId, patch }) => {
+      await qc.cancelQueries({ queryKey: ['conversations'] });
+      const snapshot = qc.getQueryData(['conversations']);
+      qc.setQueryData<RemoteConversation[]>(['conversations'], old =>
+        old?.map(c => (c.id === conversationId ? { ...c, ...patch } : c)) ?? old,
+      );
+      return { snapshot };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.snapshot !== undefined) qc.setQueryData(['conversations'], ctx.snapshot);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['conversations'] }),
+  });
+}
+
 // Mark read
 /** Mark all incoming messages in a conversation as read. */
 export function useMarkRead() {
@@ -537,7 +609,10 @@ export function useTypingIndicator(
   useEffect(() => {
     if (!conversationId || !myUserId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
 
-    const channel = supabase.channel(`typing:${conversationId}:${Math.random().toString(36).slice(2, 10)}`, {
+    // The topic must be IDENTICAL for both participants — broadcasts only
+    // reach subscribers of the same channel name. (A per-client random
+    // suffix here silently isolated each user on their own topic.)
+    const channel = supabase.channel(`typing:${conversationId}`, {
       config: { broadcast: { self: false } },
     });
     channelRef.current = channel;

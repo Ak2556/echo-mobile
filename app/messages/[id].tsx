@@ -12,9 +12,18 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
+  Microphone, Play, Pause,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import {
+  createAudioPlayer,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  type AudioPlayer,
+} from 'expo-audio';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
@@ -25,6 +34,7 @@ import {
   useRemoteMessages,
   useSendRemoteDM,
   useSendImageDM,
+  useSendVoiceDM,
   useSendLinkDM,
   useSendContactDM,
   useSendEchoDM,
@@ -37,6 +47,7 @@ import {
   useTypingIndicator,
 } from '../../hooks/queries/useDMs';
 import { markMessagesRead } from '../../lib/supabaseEchoApi';
+import { usePresenceTracking } from '../../lib/presence';
 import type { RemoteMessageReaction } from '../../lib/supabaseEchoApi';
 import type { DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
@@ -378,6 +389,99 @@ function PinnedMessageBanner({
   );
 }
 
+// ─── VoiceBubble ─────────────────────────────────────────────────────────────
+
+function fmtVoiceTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
+  url: string;
+  durationSec: number;
+  isMe: boolean;
+  pending: boolean;
+  onLongPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const [playing, setPlaying] = useState(false);
+  const [position, setPosition] = useState(0);
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const subRef = useRef<{ remove: () => void } | null>(null);
+
+  useEffect(() => () => {
+    subRef.current?.remove();
+    playerRef.current?.remove();
+  }, []);
+
+  const stop = () => {
+    subRef.current?.remove(); subRef.current = null;
+    playerRef.current?.remove(); playerRef.current = null;
+    setPlaying(false);
+    setPosition(0);
+  };
+
+  const toggle = async () => {
+    if (playing) { stop(); return; }
+    try {
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      const player = createAudioPlayer({ uri: url });
+      subRef.current = player.addListener('playbackStatusUpdate', status => {
+        if (typeof status.currentTime === 'number') setPosition(status.currentTime);
+        if (status.didJustFinish) stop();
+      });
+      player.play();
+      playerRef.current = player;
+      setPlaying(true);
+    } catch {
+      stop();
+    }
+  };
+
+  const fg = isMe ? '#fff' : colors.text;
+  const track = isMe ? 'rgba(255,255,255,0.3)' : (colors.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.1)');
+  const fill = isMe ? '#fff' : colors.accent;
+  const progress = durationSec > 0 ? Math.min(1, position / durationSec) : 0;
+
+  return (
+    <Pressable onLongPress={onLongPress} delayLongPress={350}>
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        paddingHorizontal: 12, paddingVertical: 10,
+        borderRadius: 20, minWidth: 190,
+        backgroundColor: isMe ? colors.accent : colors.surfaceHover,
+        opacity: pending ? 0.75 : 1,
+      }}>
+        <Pressable
+          onPress={toggle}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={playing ? 'Pause voice message' : 'Play voice message'}
+          style={{
+            width: 34, height: 34, borderRadius: 17,
+            alignItems: 'center', justifyContent: 'center',
+            backgroundColor: isMe ? 'rgba(255,255,255,0.22)' : colors.accent + '22',
+          }}
+        >
+          {playing
+            ? <Pause color={fg} size={15} weight="fill" />
+            : <Play color={isMe ? '#fff' : colors.accent} size={15} weight="fill" />}
+        </Pressable>
+        <View style={{ flex: 1, gap: 5 }}>
+          <View style={{ height: 3.5, borderRadius: 2, backgroundColor: track, overflow: 'hidden' }}>
+            <View style={{ height: '100%', width: `${Math.round(progress * 100)}%`, backgroundColor: fill, borderRadius: 2 }} />
+          </View>
+          <Text style={{ color: isMe ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontSize: 11, fontVariant: ['tabular-nums'] }}>
+            {playing ? fmtVoiceTime(position) : fmtVoiceTime(durationSec)}
+          </Text>
+        </View>
+        <Microphone color={isMe ? 'rgba(255,255,255,0.7)' : colors.textMuted} size={14} weight="fill" />
+      </View>
+    </Pressable>
+  );
+}
+
 // ─── DMBubble ────────────────────────────────────────────────────────────────
 
 function DMBubble({
@@ -442,6 +546,18 @@ function DMBubble({
             />
           </View>
         </Pressable>
+      );
+    }
+
+    if (message.kind === 'voice' && message.mediaUrl) {
+      return (
+        <VoiceBubble
+          url={message.mediaUrl}
+          durationSec={Number(message.content) || 0}
+          isMe={isMe}
+          pending={message.id.startsWith('pending-')}
+          onLongPress={onLongPress}
+        />
       );
     }
 
@@ -541,6 +657,9 @@ function DMBubble({
           <Text style={{ color: colors.textMuted, fontSize: 10 }}>{formatTime(message.createdAt)}</Text>
           {message.editedAt && !isDeleted && (
             <Text style={{ color: colors.textMuted, fontSize: 10, fontStyle: 'italic' }}>Edited</Text>
+          )}
+          {isMe && message.id.startsWith('pending-') && (
+            <Text style={{ color: colors.textMuted, fontSize: 10 }}>Sending…</Text>
           )}
           {isMe && showReadReceipt && message.isRead && !isDeleted && (
             <Text style={{ color: colors.accent, fontSize: 10 }}>Read</Text>
@@ -743,6 +862,55 @@ export default function DMScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
+  // Voice recording
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSec, setRecordSec] = useState(0);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startVoiceRecording = useCallback(async () => {
+    try {
+      const { status } = await requestRecordingPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Microphone needed', 'Allow microphone access to send voice messages.');
+        return;
+      }
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      setIsRecording(true);
+      setRecordSec(0);
+      recordTimerRef.current = setInterval(() => setRecordSec(s => s + 1), 1000);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {
+      setIsRecording(false);
+    }
+  }, [recorder]);
+
+  const finishVoiceRecording = useCallback(async (send: boolean) => {
+    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
+    setIsRecording(false);
+    try {
+      await recorder.stop();
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      const uri = recorder.uri;
+      if (send && uri && recordSec >= 1) {
+        sendVoiceDM.mutate({ uri, durationSec: recordSec, replyToId: replyingTo?.id });
+        setReplyingTo(null);
+      } else if (send) {
+        // sub-second tap — treat as accidental
+      }
+    } catch {
+      // recording failed — nothing to send
+    }
+    setRecordSec(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recorder, recordSec, replyingTo]);
+
+  useEffect(() => () => {
+    if (recordTimerRef.current) clearInterval(recordTimerRef.current);
+  }, []);
+
   const listRef = useRef<FlatList<any>>(null);
   const inputRef = useRef<RNTextInput>(null);
   const searchInputRef = useRef<RNTextInput>(null);
@@ -750,6 +918,7 @@ export default function DMScreen() {
 
   const remote = isSupabaseRemote();
   const myId = userId ?? 'me';
+  usePresenceTracking(remote ? (userId ?? undefined) : undefined);
 
   // Conversation resolution
   const localConversation = conversations.find(c => c.id === id);
@@ -778,6 +947,7 @@ export default function DMScreen() {
   const remoteMessages = (remoteMessagePages?.pages ?? []).flat();
   const sendRemote = useSendRemoteDM(id, conversation?.userId);
   const sendImageDM = useSendImageDM(id, conversation?.userId);
+  const sendVoiceDM = useSendVoiceDM(id, conversation?.userId);
   const sendLinkDM = useSendLinkDM(id, conversation?.userId);
   const sendContactDM = useSendContactDM(id, conversation?.userId);
   const sendEchoDM = useSendEchoDM(id, conversation?.userId);
@@ -1520,62 +1690,127 @@ export default function DMScreen() {
           borderTopWidth: 1, borderTopColor: colors.border,
           gap: 8,
         }}>
-          {/* Image picker */}
-          {!editingMessage && (
-            <Pressable
-              onPress={() => setAttachmentMenuOpen(open => !open)}
-              disabled={imageUploading}
-              style={{
-                width: 40, height: 40, borderRadius: 20,
-                alignItems: 'center', justifyContent: 'center',
-                backgroundColor: colors.surface,
-                borderWidth: 1, borderColor: colors.border,
-              }}
-            >
-              {imageUploading
-                ? <ActivityIndicator size="small" color={colors.accent} />
-                : <Plus color={colors.textSecondary} size={19} weight={attachmentMenuOpen ? 'fill' : 'regular'} />
-              }
-            </Pressable>
+          {isRecording ? (
+            <>
+              {/* Recording strip */}
+              <Pressable
+                onPress={() => void finishVoiceRecording(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel recording"
+                style={{
+                  width: 40, height: 40, borderRadius: 20,
+                  alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: colors.surface,
+                  borderWidth: 1, borderColor: colors.border,
+                }}
+              >
+                <X color={colors.textSecondary} size={18} />
+              </Pressable>
+              <View style={{
+                flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10,
+                paddingHorizontal: 14,
+                backgroundColor: colors.inputBg,
+                borderWidth: 1, borderColor: '#EF4444AA',
+                borderRadius: radius.card,
+              }}>
+                <Animated.View entering={FadeIn.duration(200)}>
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' }} />
+                </Animated.View>
+                <Text style={{ color: colors.text, fontSize: 15, fontVariant: ['tabular-nums'], fontWeight: '600' }}>
+                  {Math.floor(recordSec / 60)}:{String(recordSec % 60).padStart(2, '0')}
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, flex: 1 }} numberOfLines={1}>
+                  Recording voice message…
+                </Text>
+              </View>
+              <AnimatedPressable
+                onPress={() => void finishVoiceRecording(true)}
+                scaleValue={0.9}
+                haptic="medium"
+                style={{
+                  width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: colors.accent,
+                }}
+              >
+                <PaperPlaneTilt color="#fff" size={18} weight="fill" />
+              </AnimatedPressable>
+            </>
+          ) : (
+            <>
+              {/* Image picker */}
+              {!editingMessage && (
+                <Pressable
+                  onPress={() => setAttachmentMenuOpen(open => !open)}
+                  disabled={imageUploading}
+                  style={{
+                    width: 40, height: 40, borderRadius: 20,
+                    alignItems: 'center', justifyContent: 'center',
+                    backgroundColor: colors.surface,
+                    borderWidth: 1, borderColor: colors.border,
+                  }}
+                >
+                  {imageUploading
+                    ? <ActivityIndicator size="small" color={colors.accent} />
+                    : <Plus color={colors.textSecondary} size={19} weight={attachmentMenuOpen ? 'fill' : 'regular'} />
+                  }
+                </Pressable>
+              )}
+
+              <View style={{
+                flex: 1, minHeight: 44,
+                justifyContent: 'center',
+                paddingHorizontal: 14, paddingVertical: 8,
+                backgroundColor: colors.inputBg,
+                borderWidth: 1, borderColor: editingMessage ? colors.accent : colors.inputBorder,
+                borderRadius: radius.card,
+              }}>
+                <RNTextInput
+                  ref={inputRef}
+                  style={{ color: colors.text, fontSize: 16, lineHeight: 22, maxHeight: 120 }}
+                  placeholder={editingMessage ? 'Edit message…' : 'Message…'}
+                  placeholderTextColor={colors.textMuted}
+                  value={text}
+                  onChangeText={handleTextChange}
+                  onFocus={() => setComposerFocused(true)}
+                  onBlur={() => setComposerFocused(false)}
+                  multiline
+                  maxLength={2000}
+                />
+              </View>
+
+              {/* Empty composer in a remote thread → mic (voice note); else send */}
+              {!canSend && remote && !editingMessage ? (
+                <AnimatedPressable
+                  onPress={() => void startVoiceRecording()}
+                  scaleValue={0.9}
+                  haptic="medium"
+                  style={{
+                    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+                    backgroundColor: colors.surfaceHover,
+                  }}
+                  accessibilityLabel="Record voice message"
+                >
+                  <Microphone color={colors.textSecondary} size={19} weight="fill" />
+                </AnimatedPressable>
+              ) : (
+                <AnimatedPressable
+                  onPress={handleSend}
+                  disabled={!canSend}
+                  scaleValue={0.9}
+                  haptic="medium"
+                  style={{
+                    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+                    backgroundColor: canSend ? (editingMessage ? colors.success ?? colors.accent : colors.accent) : colors.surfaceHover,
+                  }}
+                >
+                  {editingMessage
+                    ? <PencilSimple color="#fff" size={18} weight="fill" />
+                    : <PaperPlaneTilt color="#fff" size={18} weight="fill" />
+                  }
+                </AnimatedPressable>
+              )}
+            </>
           )}
-
-          <View style={{
-            flex: 1, minHeight: 44,
-            justifyContent: 'center',
-            paddingHorizontal: 14, paddingVertical: 8,
-            backgroundColor: colors.inputBg,
-            borderWidth: 1, borderColor: editingMessage ? colors.accent : colors.inputBorder,
-            borderRadius: radius.card,
-          }}>
-            <RNTextInput
-              ref={inputRef}
-              style={{ color: colors.text, fontSize: 16, lineHeight: 22, maxHeight: 120 }}
-              placeholder={editingMessage ? 'Edit message…' : 'Message…'}
-              placeholderTextColor={colors.textMuted}
-              value={text}
-              onChangeText={handleTextChange}
-              onFocus={() => setComposerFocused(true)}
-              onBlur={() => setComposerFocused(false)}
-              multiline
-              maxLength={2000}
-            />
-          </View>
-
-          <AnimatedPressable
-            onPress={handleSend}
-            disabled={!canSend}
-            scaleValue={0.9}
-            haptic="medium"
-            style={{
-              width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-              backgroundColor: canSend ? (editingMessage ? colors.success ?? colors.accent : colors.accent) : colors.surfaceHover,
-            }}
-          >
-            {editingMessage
-              ? <PencilSimple color="#fff" size={18} weight="fill" />
-              : <PaperPlaneTilt color="#fff" size={18} weight="fill" />
-            }
-          </AnimatedPressable>
         </View>
 
       </KeyboardAvoidingView>

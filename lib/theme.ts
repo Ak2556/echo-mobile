@@ -1,4 +1,5 @@
 import { useAppStore } from '../store/useAppStore';
+import { usePresenceStore } from './presence';
 
 // Global animation speed constants. Import ANIM in components instead of
 // hardcoding durations or spring configs.
@@ -298,8 +299,9 @@ const RADIUS_MAP = {
   large:  { sm: 8, md: 12, lg: 16, xl: 20, card: 18, full: 9999 },
 } as const;
 
-// Local online users
-const ONLINE_USER_IDS = new Set(['u1', 'u4', 'u5', 'u7']);
+// Demo-mode online users (mock ids from the local seed feed). Real accounts
+// come from Realtime presence — see lib/presence.ts.
+const MOCK_ONLINE_USER_IDS = new Set(['u1', 'u4', 'u5', 'u7']);
 
 // useTheme Hook
 export function useTheme() {
@@ -313,6 +315,7 @@ export function useTheme() {
   const showAvatars = useAppStore(s => s.showAvatars);
   const roundedCorners = useAppStore(s => s.roundedCorners);
   const onlineStatus = useAppStore(s => s.onlineStatus);
+  const presenceIds = usePresenceStore(s => s.onlineIds);
 
   const selectedBase = THEMES[themeName] || THEMES.midnight;
   // dark mode toggle overrides theme picker in both directions
@@ -358,7 +361,7 @@ export function useTheme() {
   const switchTrack = { false: colors.surfaceHover, true: colors.accent };
 
   const isUserOnline = (userId: string): boolean => {
-    return onlineStatus && ONLINE_USER_IDS.has(userId);
+    return onlineStatus && (presenceIds.has(userId) || MOCK_ONLINE_USER_IDS.has(userId));
   };
 
   // Editorial type pairing: Fraunces (serif) carries display and quotes;
