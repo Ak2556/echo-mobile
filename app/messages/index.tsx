@@ -1,9 +1,9 @@
-import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, Text, Alert, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PencilSimple, Envelope, SealCheck } from 'phosphor-react-native';
+import { ArrowLeft, PencilSimple, Envelope, SealCheck, BellSlash, Archive, CaretDown, CaretRight } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -11,7 +11,8 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { Conversation } from '../../types';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
-import { useRemoteConversations } from '../../hooks/queries/useDMs';
+import { useRemoteConversations, useSetDMPref } from '../../hooks/queries/useDMs';
+import { usePresenceTracking } from '../../lib/presence';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation } from '../../lib/supabaseEchoApi';
 
@@ -26,16 +27,20 @@ function getTimeAgo(dateStr: string): string {
   return `${days}d`;
 }
 
-function ConversationCard({ conversation, index, onPress }: {
-  conversation: Conversation; index: number; onPress: () => void;
+type InboxConversation = Conversation & { muted?: boolean; archived?: boolean };
+
+function ConversationCard({ conversation, index, onPress, onLongPress }: {
+  conversation: InboxConversation; index: number; onPress: () => void; onLongPress?: () => void;
 }) {
   const { colors, fontSizes, showAvatars, animation, isUserOnline } = useTheme();
   const online = isUserOnline(conversation.userId);
+  const showUnread = conversation.unreadCount > 0 && !conversation.muted;
 
   return (
     <Animated.View entering={animation(FadeIn.delay(index * 20).duration(80))}>
       <AnimatedPressable
         onPress={onPress}
+        onLongPress={onLongPress}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -78,7 +83,7 @@ function ConversationCard({ conversation, index, onPress }: {
                 }}
               />
             )}
-            {conversation.unreadCount > 0 && (
+            {showUnread && (
               <Animated.View
                 entering={animation(FadeIn.duration(120))}
                 style={{
@@ -106,18 +111,19 @@ function ConversationCard({ conversation, index, onPress }: {
             <Text style={{
               flexShrink: 1,
               fontWeight: '600', fontSize: fontSizes.body,
-              color: conversation.unreadCount > 0 ? colors.text : colors.textSecondary,
+              color: showUnread ? colors.text : colors.textSecondary,
             }} numberOfLines={1}>
               {conversation.displayName}
             </Text>
             {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+            {conversation.muted && <BellSlash color={colors.textMuted} size={13} weight="fill" />}
             {online && <Text style={{ color: colors.success, fontSize: fontSizes.caption }}>online</Text>}
           </View>
           <Text
             style={{
               fontSize: fontSizes.small, marginTop: 2,
-              color: conversation.unreadCount > 0 ? colors.textSecondary : colors.textMuted,
-              fontWeight: conversation.unreadCount > 0 ? '500' : '400',
+              color: showUnread ? colors.textSecondary : colors.textMuted,
+              fontWeight: showUnread ? '500' : '400',
             }}
             numberOfLines={1}
           >
@@ -134,14 +140,17 @@ function ConversationCard({ conversation, index, onPress }: {
 }
 
 export default function MessagesListScreen() {
+  usePresenceTracking(useAppStore(s => s.userId) ?? undefined);
   const router = useRouter();
   const { conversations: localConversations } = useAppStore();
-  const { colors } = useTheme();
+  const { colors, fontSizes } = useTheme();
   const remote = isSupabaseRemote();
   const { data: remoteConvs = [], isLoading: remoteLoading } = useRemoteConversations();
+  const setPref = useSetDMPref();
+  const [showArchived, setShowArchived] = useState(false);
 
   // Resolve conversations: use remote when available, local only in non-remote mode
-  const conversations: Conversation[] = remote
+  const conversations: InboxConversation[] = remote
     ? remoteConvs.map((rc: RemoteConversation) => ({
         id: rc.id,
         userId: rc.otherUserId,
@@ -152,11 +161,39 @@ export default function MessagesListScreen() {
         lastMessage: rc.lastMessage ?? '',
         lastMessageAt: rc.lastMessageAt ?? new Date().toISOString(),
         unreadCount: rc.unreadCount,
+        muted: rc.muted,
+        archived: rc.archived,
       }))
     : localConversations;
 
   const sorted = [...conversations].sort(
     (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+  );
+  const active = sorted.filter(c => !c.archived);
+  const archived = sorted.filter(c => c.archived);
+
+  const openActions = (c: InboxConversation) => {
+    if (!remote) return;
+    Alert.alert(c.displayName, undefined, [
+      {
+        text: c.muted ? 'Unmute notifications' : 'Mute notifications',
+        onPress: () => setPref.mutate({ conversationId: c.id, patch: { muted: !c.muted } }),
+      },
+      {
+        text: c.archived ? 'Unarchive' : 'Archive',
+        onPress: () => setPref.mutate({ conversationId: c.id, patch: { archived: !c.archived } }),
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const renderCard = (item: InboxConversation, index: number) => (
+    <ConversationCard
+      conversation={item}
+      index={index}
+      onPress={() => router.push(`/messages/${item.id}`)}
+      onLongPress={() => openActions(item)}
+    />
   );
 
   if (remote && remoteLoading) {
@@ -190,7 +227,7 @@ export default function MessagesListScreen() {
         </AnimatedPressable>
       </View>
 
-      {sorted.length === 0 ? (
+      {active.length === 0 && archived.length === 0 ? (
         <EmptyState
           icon={<Envelope color="#6366F1" size={32} />}
           title="No messages yet"
@@ -200,15 +237,35 @@ export default function MessagesListScreen() {
         />
       ) : (
         <FlashList
-          data={sorted}
-          renderItem={({ item, index }) => (
-            <ConversationCard
-              conversation={item}
-              index={index}
-              onPress={() => router.push(`/messages/${item.id}`)}
-            />
-          )}
+          data={active}
+          renderItem={({ item, index }) => renderCard(item, index)}
           keyExtractor={item => item.id}
+          ListFooterComponent={archived.length > 0 ? (
+            <View>
+              <Pressable
+                onPress={() => setShowArchived(v => !v)}
+                accessibilityRole="button"
+                accessibilityLabel={showArchived ? 'Hide archived conversations' : 'Show archived conversations'}
+              >
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 8,
+                  paddingHorizontal: 16, paddingVertical: 14,
+                  borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
+                }}>
+                  <Archive color={colors.textMuted} size={17} />
+                  <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '600', flex: 1 }}>
+                    Archived · {archived.length}
+                  </Text>
+                  {showArchived
+                    ? <CaretDown color={colors.textMuted} size={14} />
+                    : <CaretRight color={colors.textMuted} size={14} />}
+                </View>
+              </Pressable>
+              {showArchived && archived.map((item, i) => (
+                <React.Fragment key={item.id}>{renderCard(item, i)}</React.Fragment>
+              ))}
+            </View>
+          ) : null}
         />
       )}
     </SafeAreaView>
