@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, type Href } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   BookOpen,
@@ -36,7 +36,7 @@ import {
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { track } from '../../lib/analytics';
-import { formatPrice } from '../../lib/currency';
+import { formatPrice, type CurrencyCode } from '../../lib/currency';
 import {
   fetchListings,
   LISTING_CATEGORIES,
@@ -48,6 +48,7 @@ import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { useAppStore } from '../../store/useAppStore';
 import { getTargetCategory } from '../../lib/targetCategories';
+import { clearRecentListings, getRecentListings, recordListingView, type RecentListing } from '../../lib/marketplaceRecents';
 
 const CARD_GAP = 12;
 const CARD_H_PADDING = 16;
@@ -155,6 +156,15 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
     <AnimatedPressable
       onPress={() => {
         track('marketplace_listing_opened', { listing_id: item.id, category: item.category });
+        void recordListingView({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          currency: item.currency,
+          photo: item.photoUrls[0] ?? null,
+          category: item.category,
+          condition: item.condition,
+        });
         router.push(`/listing/${item.id}` as Href);
       }}
       depth={featured ? 'medium' : 'soft'}
@@ -386,6 +396,50 @@ function SpotlightRail({ items, width }: { items: ListingWithSeller[]; width: nu
   );
 }
 
+/** Compact "jump back in" thumbnail for a recently viewed listing. */
+function RecentListingChip({ item }: { item: RecentListing }) {
+  const { colors, font } = useTheme();
+  const meta = categoryMeta(item.category);
+  return (
+    <AnimatedPressable
+      onPress={() => router.push(`/listing/${item.id}` as Href)}
+      fadeOnPress
+      haptic="light"
+      style={{ width: 132 }}
+      accessibilityLabel={`Open ${item.title}`}
+    >
+      <View style={{ width: 132, height: 100, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+        {item.photo ? (
+          <Image source={{ uri: item.photo }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+        ) : (
+          <LinearGradient colors={[`${meta.color}35`, `${meta.color}0D`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+            <Tag color={meta.color} size={24} weight="bold" />
+          </LinearGradient>
+        )}
+        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 46 }} pointerEvents="none" />
+        <Text style={{ position: 'absolute', left: 8, bottom: 7, color: '#fff', fontSize: 12.5, fontFamily: 'Inter_700Bold' }} numberOfLines={1}>
+          {formatPrice(item.price, item.currency as CurrencyCode)}
+        </Text>
+      </View>
+      <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11.5, marginTop: 5 }]} numberOfLines={1}>
+        {item.title}
+      </Text>
+    </AnimatedPressable>
+  );
+}
+
+function RecentlyViewedRail({ items, onClear }: { items: RecentListing[]; onClear: () => void }) {
+  if (!items.length) return null;
+  return (
+    <View style={{ marginBottom: 18 }}>
+      <SectionHeader title="Recently viewed" actionLabel="Clear" onAction={onClear} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+        {items.map(item => <RecentListingChip key={`recent-${item.id}`} item={item} />)}
+      </ScrollView>
+    </View>
+  );
+}
+
 export default function MarketplaceScreen() {
   const insets = useSafeAreaInsets();
   const { colors, font, fontSizes } = useTheme();
@@ -403,8 +457,22 @@ export default function MarketplaceScreen() {
   const [condition, setCondition] = useState<ConditionFilter>('All');
   const [mode, setMode] = useState<MarketMode>('all');
   const [sort, setSort] = useState<SortMode>('newest');
+  const [recentViewed, setRecentViewed] = useState<RecentListing[]>([]);
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Refresh "recently viewed" each time the tab regains focus (i.e. after
+  // returning from a listing detail).
+  useFocusEffect(
+    useCallback(() => {
+      getRecentListings().then(setRecentViewed).catch(() => setRecentViewed([]));
+    }, []),
+  );
+
+  const clearRecents = useCallback(() => {
+    void clearRecentListings();
+    setRecentViewed([]);
+  }, []);
 
   const load = useCallback(async (q: string, cat: string, refresh = false) => {
     if (refresh) setRefreshing(true); else setLoading(true);
@@ -540,6 +608,8 @@ export default function MarketplaceScreen() {
           <FilterChip key={item} label={item === 'All' ? 'Any condition' : item} active={condition === item} onPress={() => setCondition(item)} />
         ))}
       </ScrollView>
+
+      {!query.trim() && category === 'All' ? <RecentlyViewedRail items={recentViewed} onClear={clearRecents} /> : null}
 
       <SpotlightRail items={spotlight} width={spotlightWidth} />
 

@@ -29,7 +29,7 @@ import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
 
-function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId }: any) {
+function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
   const online = isUserOnline(user.id);
   const primaryTopic = creatorProfile?.topics?.[0];
@@ -185,7 +185,14 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
                 </Text>
               </AnimatedPressable>
             </Animated.View>
-            <AnimatedPressable onPress={onMessage} className="py-2.5 px-4" style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }} scaleValue={0.92} haptic="light">
+            <AnimatedPressable
+              onPress={onMessage}
+              disabled={messageLoading}
+              className="py-2.5 px-4"
+              style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border, opacity: messageLoading ? 0.55 : 1 }}
+              scaleValue={0.92}
+              haptic="light"
+            >
               <Envelope color={colors.text} size={20} />
             </AnimatedPressable>
             <AnimatedPressable onPress={onShare} className="py-2.5 px-4" style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }} scaleValue={0.92} haptic="light">
@@ -208,7 +215,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
               emphasis: 'primary',
             } : {
               key: 'message',
-              label: 'Message',
+              label: messageLoading ? 'Opening...' : 'Message',
               icon: <Envelope color={colors.textSecondary} size={18} />,
               onPress: onMessage,
               emphasis: 'primary',
@@ -265,6 +272,21 @@ export default function UserProfileScreen() {
   } = useAppStore();
   const { data: feed } = useFeed();
   const [showMenu, setShowMenu] = useState(false);
+
+  const openDirectMessage = async (targetUser: any) => {
+    if (!targetUser?.id || startConvMut.isPending) return;
+    try {
+      if (remote) {
+        const convId = await startConvMut.mutateAsync(targetUser.id);
+        router.push(`/messages/${convId}`);
+        return;
+      }
+      const convId = getOrCreateConversation(targetUser);
+      router.push(`/messages/${convId}`);
+    } catch {
+      showToast('Could not open messages', 'Error');
+    }
+  };
 
   if (remote) {
     if (remoteBundle.isPending) {
@@ -331,9 +353,8 @@ export default function UserProfileScreen() {
               blocked={blocked}
               muted={muted}
               onFollow={() => followMut.mutate({ userId: user.id, follow: !remoteFollowing })}
-              onMessage={() => {
-                void startConvMut.mutateAsync(user.id).then(convId => router.push(`/messages/${convId}`));
-              }}
+              onMessage={() => { void openDirectMessage(user); }}
+              messageLoading={startConvMut.isPending}
               onShare={() => { void Share.share({ message: userUrl(user.username), url: userUrl(user.username) }); }}
               onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
               onMute={() => {
@@ -414,7 +435,8 @@ export default function UserProfileScreen() {
             blocked={blocked}
             muted={muted}
             onFollow={() => toggleFollow(user.id)}
-            onMessage={() => { const convId = getOrCreateConversation(user); router.push(`/messages/${convId}`); }}
+            onMessage={() => { void openDirectMessage(user); }}
+            messageLoading={startConvMut.isPending}
             onShare={() => { void Share.share({ message: userUrl(user.username), url: userUrl(user.username) }); }}
             onReport={() => router.push({ pathname: '/report', params: { targetType: 'user', targetId: user.id, targetName: user.username } })}
             onMute={() => toggleMute(user.id)}

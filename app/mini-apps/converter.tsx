@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-
 import { ArrowsLeftRight } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { useTheme } from '../../lib/theme';
 
 interface Unit { label: string; toBase: number }
@@ -175,6 +176,22 @@ export default function ConverterScreen() {
             <Text style={{ color: accent, fontWeight: '700' }}>{result} {cat.units[toIdx]?.label}</Text>
           </Text>
         </GlassPanel>
+
+        <EdgeFeaturePanel
+          appName="Converter"
+          accent={accent}
+          headline="Conversions you can reuse"
+          caption="Share exact conversions, post quick references, or ask Echo to explain the formula."
+          metrics={[
+            { label: 'Category', value: cat.name },
+            { label: 'From', value: cat.units[fromIdx]?.label ?? '-' },
+            { label: 'To', value: cat.units[toIdx]?.label ?? '-' },
+          ]}
+          prompt={`Explain this conversion clearly: ${input || '0'} ${cat.units[fromIdx]?.label} = ${result} ${cat.units[toIdx]?.label}.`}
+          shareText={`${input || '0'} ${cat.units[fromIdx]?.label} = ${result} ${cat.units[toIdx]?.label}`}
+          publishTitle="Useful conversion"
+          publishBody={`${input || '0'} ${cat.units[fromIdx]?.label} equals ${result} ${cat.units[toIdx]?.label}.`}
+        />
       </ScrollView>
     </MiniAppShell>
   );

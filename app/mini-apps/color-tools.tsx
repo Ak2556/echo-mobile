@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, StyleSheet , Clipboard } from 'react-
 import { Check, Copy, FloppyDisk, Shuffle } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { useTheme } from '../../lib/theme';
 
 function hexToRgb(hex: string) {
@@ -103,6 +104,22 @@ export default function ColorToolsScreen() {
           <View style={{ height: 4 }} />
         </GlassPanel>
       )}
+
+      <EdgeFeaturePanel
+        appName="Color Tools"
+        accent={hex}
+        headline="Make palettes usable"
+        caption="Share accessible color specs, post a palette decision, or ask Echo for UI usage guidance."
+        metrics={[
+          { label: 'HEX', value: hex.toUpperCase() },
+          { label: 'RGB', value: rgb ? `${rgb.r},${rgb.g},${rgb.b}` : '-' },
+          { label: 'Saved', value: `${saved.length}` },
+        ]}
+        prompt={`Suggest an accessible UI palette and usage rules around ${hex}.`}
+        shareText={rgb && hsl ? `${hex.toUpperCase()} · rgb(${rgb.r}, ${rgb.g}, ${rgb.b}) · hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%) · ${contrast(hex)}` : hex}
+        publishTitle="Color decision"
+        publishBody={`Selected ${hex.toUpperCase()} for a design direction. Contrast: ${contrast(hex)}.`}
+      />
 
       {/* Saved */}
       {saved.length > 0 && (

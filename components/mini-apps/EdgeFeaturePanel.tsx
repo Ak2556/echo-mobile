@@ -1,13 +1,16 @@
 import React from 'react';
-import { Share, StyleSheet, Text, View } from 'react-native';
+import { Share, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { ArrowUpRight, ChatCircleText, ShareNetwork, Sparkle, UsersThree } from 'phosphor-react-native';
+import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, Sparkle, UsersThree } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
+import { createNote } from '../../lib/notes';
+import { miniAppDeepLink, miniAppSnapshotText, relatedMiniApps } from '../../lib/miniAppIntegration';
 
 interface EdgeFeaturePanelProps {
+  appId?: string;
   appName: string;
   accent: string;
   headline: string;
@@ -20,6 +23,7 @@ interface EdgeFeaturePanelProps {
 }
 
 export function EdgeFeaturePanel({
+  appId,
   appName,
   accent,
   headline,
@@ -32,11 +36,11 @@ export function EdgeFeaturePanel({
 }: EdgeFeaturePanelProps) {
   const { colors } = useTheme();
   const router = useRouter();
+  const connectedApps = relatedMiniApps(appId ?? appName, 4);
+  const snapshot = miniAppSnapshotText({ appName, headline, caption, metrics, shareText });
 
   const shareProgress = () => {
-    const message = shareText
-      ?? `${appName} progress\n${metrics.map(metric => `${metric.label}: ${metric.value}`).join('\n')}`;
-    Share.share({ message }).catch(() => showToast('Could not open share sheet', 'Error'));
+    Share.share({ message: snapshot }).catch(() => showToast('Could not open share sheet', 'Error'));
   };
 
   const publish = () => {
@@ -44,9 +48,19 @@ export function EdgeFeaturePanel({
       pathname: '/create-post',
       params: {
         prefillTitle: publishTitle ?? `${appName} progress`,
-        prefillBody: publishBody ?? shareText ?? caption,
+        prefillBody: publishBody ?? snapshot,
       },
     });
+  };
+
+  const saveSnapshot = () => {
+    void createNote({
+      title: `${appName} snapshot`,
+      body: snapshot,
+      color: accent,
+    })
+      .then(() => showToast('Saved to Notes', 'Saved'))
+      .catch(() => showToast('Could not save note', 'Error'));
   };
 
   const openTargetProgress = () => router.push('/target-progress' as Href);
@@ -101,10 +115,50 @@ export function EdgeFeaturePanel({
             openEcho();
           }}
         />
+        <EdgeAction label="Note" icon={<NotePencil color={colors.textSecondary} size={15} weight="bold" />} onPress={saveSnapshot} />
         <EdgeAction label="Share" icon={<ShareNetwork color={colors.textSecondary} size={15} weight="bold" />} onPress={shareProgress} />
         <EdgeAction label="Compare" icon={<UsersThree color={colors.textSecondary} size={15} weight="bold" />} onPress={openTargetProgress} />
         <EdgeAction label="Post" icon={<ArrowUpRight color={colors.textSecondary} size={15} weight="bold" />} onPress={publish} />
       </View>
+
+      {connectedApps.length > 0 ? (
+        <View style={{ marginTop: 14 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', letterSpacing: 0.7, textTransform: 'uppercase', marginBottom: 8 }}>
+            Continue in
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {connectedApps.map(app => (
+              <AnimatedPressable
+                key={app.id}
+                onPress={() => router.push(miniAppDeepLink(app))}
+                haptic="light"
+                style={{
+                  minHeight: 40,
+                  maxWidth: 170,
+                  borderRadius: 999,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  backgroundColor: colors.surface,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.glassBorder,
+                }}
+              >
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: app.color }} />
+                <View style={{ minWidth: 0 }}>
+                  <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900' }} numberOfLines={1}>
+                    {app.name}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700' }} numberOfLines={1}>
+                    {app.description}
+                  </Text>
+                </View>
+              </AnimatedPressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
     </GlassPanel>
   );
 }

@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, Info, Clock, Storefront, SquaresFour, Target } from 'phosphor-react-native';
+import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, Info, Clock, SquaresFour, Target } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
@@ -75,97 +75,58 @@ function HomeHero({
   username,
   targetLabel,
   targetOutcome,
-  publishedCount,
-  unreadCount,
-  liveCount,
 }: {
   username: string;
   targetLabel: string;
   targetOutcome: string;
-  publishedCount: number;
-  unreadCount: number;
-  liveCount: number;
 }) {
   const router = useRouter();
   const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
+  const sub = (targetOutcome || targetLabel || '').trim();
   return (
-    <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 14 : 10, marginBottom: 14 }}>
-      <View style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-        <LinearGradient
-          colors={[`${colors.accent}35`, `${colors.accent}0D`, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-        <View style={{ padding: layout.isPhone ? 15 : 18, gap: 14 }}>
-          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-            <View style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}20` }}>
-              <Sparkle color={colors.accent} size={24} weight="fill" />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 24 : 29, lineHeight: layout.isPhone ? 29 : 35 }]} numberOfLines={2}>
-                {username ? `Welcome back, ${username}` : 'Build your Echo today'}
-              </Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 3 }]} numberOfLines={2}>
-                {targetOutcome || targetLabel}
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <HeroMetric value={String(publishedCount)} label="Echoes" />
-            <HeroMetric value={String(liveCount)} label="Live ideas" />
-            <HeroMetric value={String(unreadCount)} label="Unread" />
-          </View>
-
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <HeroAction icon={<ChatCircleText color="#fff" size={17} weight="bold" />} label="Chat" filled onPress={() => router.push('/(tabs)/chat')} />
-            <HeroAction icon={<Target color={colors.accent} size={17} weight="bold" />} label="Progress" onPress={() => router.push('/target-progress')} />
-            <HeroAction icon={<Storefront color={colors.accent} size={17} weight="bold" />} label="Market" onPress={() => router.push('/(tabs)/marketplace')} />
-            <HeroAction icon={<SquaresFour color={colors.accent} size={17} weight="bold" />} label="Tools" onPress={() => router.push('/(tabs)/apps')} />
-          </View>
-        </View>
+    <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 12 : 8, marginBottom: 12 }}>
+      <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 23 : 28, lineHeight: layout.isPhone ? 28 : 34 }]} numberOfLines={1}>
+        {username ? `Welcome back, ${username}` : 'Build your Echo today'}
+      </Text>
+      {sub ? (
+        <Text style={[font.body, { color: colors.textMuted, fontSize: 13.5, lineHeight: 18, marginTop: 2 }]} numberOfLines={1}>
+          {sub}
+        </Text>
+      ) : null}
+      {/* Only the destinations that aren't already in the bottom tab bar —
+          Chat and Market live there, so shortcuts to them would be clutter. */}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+        <QuickLink icon={<SquaresFour color={colors.accent} size={16} weight="bold" />} label="Tools" onPress={() => router.push('/(tabs)/apps')} />
+        <QuickLink icon={<Target color={colors.accent} size={16} weight="bold" />} label="Progress" onPress={() => router.push('/target-progress')} />
       </View>
     </View>
   );
 }
 
-function HeroMetric({ value, label }: { value: string; label: string }) {
-  const { colors, font } = useTheme();
-  return (
-    <View style={{ flex: 1, minWidth: 82, borderRadius: 15, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 9 }}>
-      <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>{value}</Text>
-      <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>{label}</Text>
-    </View>
-  );
-}
-
-function HeroAction({ icon, label, onPress, filled = false }: { icon: React.ReactNode; label: string; onPress: () => void; filled?: boolean }) {
+function QuickLink({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
   const { colors, font } = useTheme();
   return (
     <Pressable
       onPress={onPress}
-      style={{
-        minHeight: 40,
-        flexGrow: 1,
-        flexBasis: '22%',
-        borderRadius: 14,
-        backgroundColor: filled ? colors.accent : colors.surface,
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+    >
+      <View style={{
+        minHeight: 34,
+        borderRadius: 999,
+        backgroundColor: colors.surface,
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: filled ? colors.accent : colors.border,
+        borderColor: colors.border,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
         gap: 7,
-        paddingHorizontal: 10,
-      }}
-    >
-      {icon}
-      <Text style={[font.bodyBold, { color: filled ? '#fff' : colors.textSecondary, fontSize: 13 }]} numberOfLines={1}>
-        {label}
-      </Text>
+        paddingHorizontal: 13,
+      }}>
+        {icon}
+        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 13 }]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -344,9 +305,6 @@ export default function DiscoverScreen() {
         username={username}
         targetLabel={targetCategory.label}
         targetOutcome={targetOutcome}
-        publishedCount={publishedCount}
-        unreadCount={unreadNotifs}
-        liveCount={popularItems.length}
       />
       <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} onInfo={() => setAboutFeedVisible(true)} />
 
@@ -383,7 +341,7 @@ export default function DiscoverScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-      <TargetToolsPanel compact />
+      <TargetToolsPanel dense />
       {features.stories && !remote && (
         <>
           <SectionHeader label="Your Stories" />

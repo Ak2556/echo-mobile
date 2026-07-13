@@ -23,6 +23,8 @@ import { formatPrice } from '../../lib/currency';
 import { fetchListing, ListingWithSeller, updateListingStatus } from '../../lib/marketplaceApi';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 
 const CONDITION_COLOR: Record<string, string> = {
   'New': '#10B981',
@@ -36,6 +38,9 @@ export default function ListingDetailScreen() {
   const { colors, fontSizes, radius } = useTheme();
   const insets = useSafeAreaInsets();
   const currentUserId = useAppStore(s => s.userId);
+  const getOrCreateConversation = useAppStore(s => s.getOrCreateConversation);
+  const remote = isSupabaseRemote();
+  const startConvMut = useStartRemoteConversation();
 
   const [listing, setListing] = useState<ListingWithSeller | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,9 +56,31 @@ export default function ListingDetailScreen() {
 
   const isMine = listing?.sellerId === currentUserId;
 
-  const handleMessage = () => {
+  const handleMessage = async () => {
     if (!listing) return;
-    router.push({ pathname: '/messages/[id]', params: { id: listing.sellerId } } as any);
+    try {
+      if (remote) {
+        const conversationId = await startConvMut.mutateAsync(listing.sellerId);
+        router.push({ pathname: '/messages/[id]', params: { id: conversationId } } as any);
+        return;
+      }
+      const conversationId = getOrCreateConversation({
+        id: listing.sellerId,
+        username: listing.sellerUsername,
+        displayName: listing.sellerName,
+        avatarColor: listing.sellerAvatarColor,
+        avatarUrl: listing.sellerAvatarUrl ?? undefined,
+        bio: '',
+        isVerified: listing.sellerIsVerified,
+        followerCount: 0,
+        followingCount: 0,
+        echoCount: 0,
+        createdAt: listing.createdAt,
+      });
+      router.push({ pathname: '/messages/[id]', params: { id: conversationId } } as any);
+    } catch {
+      showToast('Could not open messages', 'Error');
+    }
   };
 
   const handleShare = async () => {
@@ -337,9 +364,11 @@ export default function ListingDetailScreen() {
         }}>
           <AnimatedPressable
             onPress={handleMessage}
+            disabled={startConvMut.isPending}
             depth="medium"
             style={{
               backgroundColor: colors.accent,
+              opacity: startConvMut.isPending ? 0.65 : 1,
               borderRadius: radius.full,
               paddingVertical: 14,
               flexDirection: 'row',
@@ -350,7 +379,7 @@ export default function ListingDetailScreen() {
           >
             <ChatCircle color="#fff" size={20} weight="fill" />
             <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: fontSizes.body }}>
-              Message seller
+              {startConvMut.isPending ? 'Opening chat...' : 'Message seller'}
             </Text>
           </AnimatedPressable>
         </View>

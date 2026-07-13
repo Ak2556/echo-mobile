@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet , Clipboard } 
 import { Check, Copy, Trash, CornersIn, CornersOut, Warning, CheckCircle } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { useTheme } from '../../lib/theme';
 
 type ViewMode = 'formatted' | 'minified';
@@ -119,6 +120,21 @@ export default function JsonFormatterScreen() {
             </GlassPanel>
           </View>
         ) : null}
+        <EdgeFeaturePanel
+          appName="JSON Tools"
+          accent={error ? '#EF4444' : parsed ? '#10B981' : accent}
+          headline="Debug data faster"
+          caption="Validate, summarize, and turn JSON structures into implementation notes."
+          metrics={[
+            { label: 'Status', value: error ? 'Invalid' : parsed ? 'Valid' : 'Empty' },
+            { label: 'Keys', value: stats ? `${stats.keys}` : '0' },
+            { label: 'Size', value: stats?.size ?? '0B' },
+          ]}
+          prompt={error ? `Explain this JSON parse error and how to fix it: ${error}` : 'Summarize this JSON schema and identify the important fields.'}
+          shareText={error ? `JSON error: ${error}` : output ? `Valid JSON · ${stats?.keys ?? 0} keys · ${stats?.size ?? '0B'}` : 'JSON Tools ready.'}
+          publishTitle="JSON note"
+          publishBody={error ? `JSON parse error: ${error}` : output ? `Validated JSON with ${stats?.keys ?? 0} keys and size ${stats?.size ?? '0B'}.` : 'Prepared JSON validation workflow.'}
+        />
       </View>
     </MiniAppShell>
   );

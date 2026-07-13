@@ -11,6 +11,7 @@ import {
 } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -202,6 +203,22 @@ export default function CameraApp() {
           </Text>
         </AnimatedPressable>
       </Animated.View>
+
+      <EdgeFeaturePanel
+        appName="Camera"
+        accent={ACCENT}
+        headline="Capture with intent"
+        caption="Use photos and clips as proof, progress updates, listing media, or Echo drafts."
+        metrics={[
+          { label: 'Captured', value: `${captured.length}` },
+          { label: 'Photos', value: `${captured.filter(item => item.type === 'photo').length}` },
+          { label: 'Videos', value: `${captured.filter(item => item.type === 'video').length}` },
+        ]}
+        prompt="Help me choose the best way to use this capture as proof, a post, or a useful progress update."
+        shareText={`Camera captures: ${captured.length} total, ${captured.filter(item => item.type === 'photo').length} photos, ${captured.filter(item => item.type === 'video').length} videos.`}
+        publishTitle="Captured progress"
+        publishBody={`Captured ${captured.length} media items: ${captured.filter(item => item.type === 'photo').length} photos and ${captured.filter(item => item.type === 'video').length} videos.`}
+      />
 
       {/* Captured gallery */}
       {captured.length > 0 && (

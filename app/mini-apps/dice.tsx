@@ -7,6 +7,7 @@ import Animated, {
 import { ArrowClockwise, DiceSix } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 
@@ -206,6 +207,22 @@ export default function DiceApp() {
           </View>
         </GlassPanel>
       )}
+
+      <EdgeFeaturePanel
+        appName="Dice & Coin"
+        accent={selectedDie.color}
+        headline="Random decisions with a record"
+        caption="Use rolls for games, quick choices, transparent draws, or shareable decision logs."
+        metrics={[
+          { label: 'Die', value: selectedDie.label },
+          { label: 'Count', value: `${diceCount}` },
+          { label: 'History', value: `${history.length}` },
+        ]}
+        prompt="Help me turn this random decision into a fair rule or group-friendly explanation."
+        shareText={`Dice history: ${history.slice(0, 8).map(h => h.die === 'Coin' ? `Coin ${h.result === 1 ? 'heads' : 'tails'}` : `${h.die}=${h.result}`).join(', ') || 'No rolls yet'}.`}
+        publishTitle="Random decision"
+        publishBody={`Used Dice & Coin for a transparent random decision. Latest result: ${result ?? (coinFace ?? 'none')}.`}
+      />
     </MiniAppShell>
   );
 }

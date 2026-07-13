@@ -134,16 +134,18 @@ export default function SearchScreen() {
             <ExploreHero colors={colors} font={font} layout={layout} />
 
             {recentSearches.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: layout.gutter, gap: 8, paddingBottom: 2 }}
-                style={{ marginBottom: 16 }}
-              >
-                {recentSearches.slice(0, 8).map(item => (
-                  <PillButton key={item} label={item} onPress={() => setQuery(item)} />
-                ))}
-              </ScrollView>
+              <View style={{ marginBottom: 16 }}>
+                <SectionHeader label="Recent" actionLabel="Clear" onAction={() => setRecentSearches([])} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: layout.gutter, gap: 8, paddingBottom: 2 }}
+                >
+                  {recentSearches.slice(0, 8).map(item => (
+                    <PillButton key={item} label={item} onPress={() => setQuery(item)} />
+                  ))}
+                </ScrollView>
+              </View>
             )}
 
             <SectionHeader label="Browse Topics" />

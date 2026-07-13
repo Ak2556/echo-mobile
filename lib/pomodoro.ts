@@ -2,6 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 
 export const POMODORO_KEY = 'mini:pomodoro';
+export const POMODORO_ACTIVE_KEY = 'mini:pomodoro:active';
+
+export type PomodoroMode = 'focus' | 'short' | 'long';
 
 /** One completed focus block (breaks aren't logged — only real work counts). */
 export interface FocusSession {
@@ -26,6 +29,15 @@ export interface PomodoroSettings {
 export interface PomodoroDoc {
   sessions: FocusSession[];
   settings: PomodoroSettings;
+}
+
+export interface ActivePomodoroTimer {
+  mode: PomodoroMode;
+  label: string;
+  startedAt: string;
+  endAt: string;
+  totalSeconds: number;
+  notificationId?: string | null;
 }
 
 export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
@@ -71,6 +83,43 @@ export async function loadPomodoro(): Promise<PomodoroDoc> {
 export async function savePomodoro(doc: PomodoroDoc): Promise<void> {
   await AsyncStorage.setItem(POMODORO_KEY, JSON.stringify(doc));
   pushMiniApp('pomodoro', doc);
+}
+
+function normalizeActiveTimer(raw: unknown): ActivePomodoroTimer | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const timer = raw as Partial<ActivePomodoroTimer>;
+  if (timer.mode !== 'focus' && timer.mode !== 'short' && timer.mode !== 'long') return null;
+  if (typeof timer.startedAt !== 'string' || Number.isNaN(Date.parse(timer.startedAt))) return null;
+  if (typeof timer.endAt !== 'string' || Number.isNaN(Date.parse(timer.endAt))) return null;
+  const totalSeconds = clamp(timer.totalSeconds, 1, 120 * 60, 25 * 60);
+  return {
+    mode: timer.mode,
+    label: typeof timer.label === 'string' ? timer.label : '',
+    startedAt: timer.startedAt,
+    endAt: timer.endAt,
+    totalSeconds,
+    notificationId: typeof timer.notificationId === 'string' ? timer.notificationId : null,
+  };
+}
+
+export async function loadActivePomodoroTimer(): Promise<ActivePomodoroTimer | null> {
+  try {
+    return normalizeActiveTimer(JSON.parse((await AsyncStorage.getItem(POMODORO_ACTIVE_KEY)) ?? 'null'));
+  } catch {
+    return null;
+  }
+}
+
+export async function saveActivePomodoroTimer(timer: ActivePomodoroTimer): Promise<void> {
+  await AsyncStorage.setItem(POMODORO_ACTIVE_KEY, JSON.stringify(timer));
+}
+
+export async function clearActivePomodoroTimer(): Promise<void> {
+  await AsyncStorage.removeItem(POMODORO_ACTIVE_KEY);
+}
+
+export function remainingSecondsForActive(timer: ActivePomodoroTimer, now = Date.now()): number {
+  return Math.max(0, Math.ceil((Date.parse(timer.endAt) - now) / 1000));
 }
 
 const dayOf = (iso: string) => iso.slice(0, 10);

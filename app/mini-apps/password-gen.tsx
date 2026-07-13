@@ -3,6 +3,7 @@ import { View, Text, Pressable, Switch, Clipboard, StyleSheet } from 'react-nati
 import { ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { useTheme } from '../../lib/theme';
 
 const CHARS = {
@@ -161,6 +162,22 @@ export default function PasswordGenScreen() {
         <Toggle label="Symbols" sub="! @ # $ % …" value={useSymbols} onChange={setUseSymbols} colors={colors} />
         <View style={{ height: 4 }} />
       </GlassPanel>
+
+      <EdgeFeaturePanel
+        appName="Passwords"
+        accent={sw?.color ?? accent}
+        headline="Generate, audit, then replace"
+        caption="Use strength checks to plan account upgrades without sharing the secret itself."
+        metrics={[
+          { label: 'Length', value: `${length}` },
+          { label: 'Strength', value: sw?.label ?? 'None' },
+          { label: 'Recent', value: `${history.length}` },
+        ]}
+        prompt="Help me create a safe password rotation plan for my important accounts."
+        shareText={`Password generator settings: ${length} characters, uppercase ${useUpper ? 'on' : 'off'}, lowercase ${useLower ? 'on' : 'off'}, numbers ${useDigits ? 'on' : 'off'}, symbols ${useSymbols ? 'on' : 'off'}.`}
+        publishTitle="Password hygiene"
+        publishBody={`I generated a ${length}-character password with ${sw?.label ?? 'unrated'} strength and reviewed my password settings without sharing the secret.`}
+      />
 
       {/* History */}
       {history.length > 0 && (
