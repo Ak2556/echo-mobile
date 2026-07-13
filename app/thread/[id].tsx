@@ -21,6 +21,7 @@ import { useFeed } from '../../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
+import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { inferTopics } from '../../lib/echoUX';
 
 export default function ThreadDetailScreen() {
@@ -33,6 +34,7 @@ export default function ThreadDetailScreen() {
   const { colors, radius, fontSizes, showAvatars, font } = useTheme();
   const insets = useSafeAreaInsets();
   const remoteBm = useToggleRemoteBookmark();
+  const startConvMut = useStartRemoteConversation();
   const [showMenu, setShowMenu] = useState(false);
   // Pull the owner's profile to know whether THIS echo is currently their pin.
   const ownProfile = useRemoteProfileBundle(remote ? currentUserId : undefined);
@@ -100,7 +102,7 @@ export default function ThreadDetailScreen() {
     ]);
   };
 
-  const handleMessageAboutEcho = () => {
+  const handleMessageAboutEcho = async () => {
     const user = {
       id: item.userId,
       username: item.username,
@@ -114,17 +116,23 @@ export default function ThreadDetailScreen() {
       echoCount: 0,
       createdAt: item.createdAt,
     };
-    const conversationId = getOrCreateConversation(user);
-    router.push({
-      pathname: '/messages/[id]',
-      params: {
-        id: conversationId,
-        echoId: item.id,
-        echoTitle: item.editorialTitle || item.prompt,
-        echoPreview: item.authorNote || item.response || item.prompt,
-        echoAuthor: item.displayName || item.username,
-      },
-    });
+    try {
+      const conversationId = remote
+        ? await startConvMut.mutateAsync(item.userId)
+        : getOrCreateConversation(user);
+      router.push({
+        pathname: '/messages/[id]',
+        params: {
+          id: conversationId,
+          echoId: item.id,
+          echoTitle: item.editorialTitle || item.prompt,
+          echoPreview: item.authorNote || item.response || item.prompt,
+          echoAuthor: item.displayName || item.username,
+        },
+      });
+    } catch {
+      showToast('Could not open messages', 'Error');
+    }
   };
 
   const connectionActions = [

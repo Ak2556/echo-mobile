@@ -303,6 +303,25 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 // Profile select helper
 const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id, is_moderator';
 const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, perspective_type, perspective_note, source_url, source_conversation_id, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response, post_type';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function normalizeProfileIdentifier(identifier: string): string {
+  return identifier.trim().replace(/^@/, '');
+}
+
+async function resolveProfileId(identifier: string): Promise<string> {
+  const normalized = normalizeProfileIdentifier(identifier);
+  if (UUID_RE.test(normalized)) return normalized;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', normalized)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.id) throw new Error('User not found');
+  return data.id as string;
+}
 
 export async function getSessionUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -1237,11 +1256,14 @@ export async function insertRemoteComment(echoId: string, content: string, paren
 }
 
 export async function fetchRemoteProfile(userId: string): Promise<SupabaseProfileRow | null> {
-  const { data, error } = await supabase
+  const identifier = normalizeProfileIdentifier(userId);
+  const query = supabase
     .from('profiles')
-    .select(PROFILE_SELECT)
-    .eq('id', userId)
-    .maybeSingle();
+    .select(PROFILE_SELECT);
+  const { data, error } = await (UUID_RE.test(identifier)
+    ? query.eq('id', identifier)
+    : query.eq('username', identifier)
+  ).maybeSingle();
   if (error) throw error;
   return data as SupabaseProfileRow | null;
 }
@@ -2518,17 +2540,14 @@ function dmPreviewText(kind: string | null | undefined, text: string | null | un
 export async function getOrCreateRemoteConversation(recipientId: string): Promise<string> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
+  const resolvedRecipientId = await resolveProfileId(recipientId);
+  if (resolvedRecipientId === uid) throw new Error('Cannot message yourself');
 
-  const userA = uid < recipientId ? uid : recipientId;
-  const userB = uid < recipientId ? recipientId : uid;
-
-  const { data: conv, error } = await supabase
-    .from('dm_conversations')
-    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
-    .select('id')
-    .single();
+  const { data, error } = await supabase.rpc('get_or_create_dm_conversation', {
+    p_recipient_id: resolvedRecipientId,
+  });
   if (error) throw error;
-  return conv.id as string;
+  return data as string;
 }
 
 export async function createRemoteGroupConversation(title: string, memberIds: string[]): Promise<string> {
@@ -2596,20 +2615,12 @@ export async function sendRemoteDM(
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
 
-  const userA = uid < recipientId ? uid : recipientId;
-  const userB = uid < recipientId ? recipientId : uid;
-
-  const { data: conv, error: convErr } = await supabase
-    .from('dm_conversations')
-    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
-    .select('id')
-    .single();
-  if (convErr) throw convErr;
+  const conversationId = await getOrCreateRemoteConversation(recipientId);
 
   const { error: msgErr } = await supabase
     .from('direct_messages')
     .insert({
-      conversation_id: conv.id,
+      conversation_id: conversationId,
       sender_id: uid,
       kind: 'text',
       text: content,
@@ -2617,7 +2628,7 @@ export async function sendRemoteDM(
     });
   if (msgErr) throw msgErr;
 
-  return { conversationId: conv.id };
+  return { conversationId };
 }
 
 export async function sendRemoteDMLink(
@@ -2630,20 +2641,12 @@ export async function sendRemoteDMLink(
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
 
-  const userA = uid < recipientId ? uid : recipientId;
-  const userB = uid < recipientId ? recipientId : uid;
-
-  const { data: conv, error: convErr } = await supabase
-    .from('dm_conversations')
-    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
-    .select('id')
-    .single();
-  if (convErr) throw convErr;
+  const conversationId = await getOrCreateRemoteConversation(recipientId);
 
   const { error: msgErr } = await supabase
     .from('direct_messages')
     .insert({
-      conversation_id: conv.id,
+      conversation_id: conversationId,
       sender_id: uid,
       kind: 'link',
       text: JSON.stringify({ url, title: title ?? url, subtitle }),
@@ -2651,7 +2654,7 @@ export async function sendRemoteDMLink(
     });
   if (msgErr) throw msgErr;
 
-  return { conversationId: conv.id };
+  return { conversationId };
 }
 
 export async function sendRemoteDMLinkToConversation(
@@ -2676,20 +2679,12 @@ export async function sendRemoteDMContact(
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
 
-  const userA = uid < recipientId ? uid : recipientId;
-  const userB = uid < recipientId ? recipientId : uid;
-
-  const { data: conv, error: convErr } = await supabase
-    .from('dm_conversations')
-    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
-    .select('id')
-    .single();
-  if (convErr) throw convErr;
+  const conversationId = await getOrCreateRemoteConversation(recipientId);
 
   const { error: msgErr } = await supabase
     .from('direct_messages')
     .insert({
-      conversation_id: conv.id,
+      conversation_id: conversationId,
       sender_id: uid,
       kind: 'link',
       text: JSON.stringify({ type: 'contact', ...contact }),
@@ -2697,7 +2692,7 @@ export async function sendRemoteDMContact(
     });
   if (msgErr) throw msgErr;
 
-  return { conversationId: conv.id };
+  return { conversationId };
 }
 
 export async function sendRemoteDMContactToConversation(
@@ -2721,20 +2716,12 @@ export async function sendRemoteDMEcho(
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
 
-  const userA = uid < recipientId ? uid : recipientId;
-  const userB = uid < recipientId ? recipientId : uid;
-
-  const { data: conv, error: convErr } = await supabase
-    .from('dm_conversations')
-    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
-    .select('id')
-    .single();
-  if (convErr) throw convErr;
+  const conversationId = await getOrCreateRemoteConversation(recipientId);
 
   const { error: msgErr } = await supabase
     .from('direct_messages')
     .insert({
-      conversation_id: conv.id,
+      conversation_id: conversationId,
       sender_id: uid,
       kind: 'echo',
       shared_echo_id: echo.id,
@@ -2743,7 +2730,7 @@ export async function sendRemoteDMEcho(
     });
   if (msgErr) throw msgErr;
 
-  return { conversationId: conv.id };
+  return { conversationId };
 }
 
 export async function sendRemoteDMEchoToConversation(
@@ -2779,20 +2766,8 @@ export async function sendDMImage(
   mimeType: string,
   replyToId?: string,
 ): Promise<{ conversationId: string }> {
-  const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
-
-  const userA = uid < recipientId ? uid : recipientId;
-  const userB = uid < recipientId ? recipientId : uid;
-
-  const { data: conv, error: convErr } = await supabase
-    .from('dm_conversations')
-    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
-    .select('id')
-    .single();
-  if (convErr) throw new Error(`Conversation failed: ${convErr.message}`);
-
-  return sendDMImageToConversation(conv.id as string, uri, mimeType, replyToId);
+  const conversationId = await getOrCreateRemoteConversation(recipientId);
+  return sendDMImageToConversation(conversationId, uri, mimeType, replyToId);
 }
 
 export async function sendDMImageToConversation(
@@ -2829,20 +2804,8 @@ export async function sendDMVoice(
   durationSec: number,
   replyToId?: string,
 ): Promise<{ conversationId: string }> {
-  const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
-
-  const userA = uid < recipientId ? uid : recipientId;
-  const userB = uid < recipientId ? recipientId : uid;
-
-  const { data: conv, error: convErr } = await supabase
-    .from('dm_conversations')
-    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
-    .select('id')
-    .single();
-  if (convErr) throw new Error(`Conversation failed: ${convErr.message}`);
-
-  return sendDMVoiceToConversation(conv.id as string, uri, durationSec, replyToId);
+  const conversationId = await getOrCreateRemoteConversation(recipientId);
+  return sendDMVoiceToConversation(conversationId, uri, durationSec, replyToId);
 }
 
 export async function sendDMVoiceToConversation(
@@ -2890,19 +2853,12 @@ export async function forwardDMMessage(
   if (srcErr || !src) throw new Error('Message not found');
   if (src.deleted_at) throw new Error('Message was deleted');
 
-  const userA = uid < recipientId ? uid : recipientId;
-  const userB = uid < recipientId ? recipientId : uid;
-  const { data: conv, error: convErr } = await supabase
-    .from('dm_conversations')
-    .upsert({ user_a: userA, user_b: userB }, { onConflict: 'user_a,user_b' })
-    .select('id')
-    .single();
-  if (convErr) throw new Error(`Conversation failed: ${convErr.message}`);
+  const conversationId = await getOrCreateRemoteConversation(recipientId);
 
   const { error: msgErr } = await supabase
     .from('direct_messages')
     .insert({
-      conversation_id: conv.id,
+      conversation_id: conversationId,
       sender_id: uid,
       kind: src.kind,
       text: src.text,
@@ -2911,7 +2867,7 @@ export async function forwardDMMessage(
     });
   if (msgErr) throw new Error(`Forward failed: ${msgErr.message}`);
 
-  return { conversationId: conv.id as string };
+  return { conversationId };
 }
 
 /** Set or clear the pinned message for a conversation. */

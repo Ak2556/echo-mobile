@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { Plus, X, Globe, Sun, Moon } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { useTheme } from '../../lib/theme';
 
 interface City { name: string; timezone: string; flag: string; region: string }
@@ -95,6 +96,25 @@ export default function WorldClockScreen() {
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{localTz.split('/').pop()?.replace(/_/g, ' ')}</Text>
           </View>
         </GlassPanel>
+
+        <EdgeFeaturePanel
+          appName="World Clock"
+          accent={accent}
+          headline="Plan across time zones"
+          caption="Share meeting windows, coordinate groups, or ask Echo to find the least painful time."
+          metrics={[
+            { label: 'Cities', value: `${selected.length}` },
+            { label: 'Local', value: localTime.slice(0, 5) },
+            { label: 'Mode', value: isLocalDay ? 'Day' : 'Night' },
+          ]}
+          prompt={`Find a good meeting time across these cities: ${selected.join(', ')}.`}
+          shareText={`World clock: ${selected.map(name => {
+            const city = ALL_CITIES.find(c => c.name === name);
+            return city ? `${city.name} ${getTimeInZone(city.timezone).time.slice(0, 5)}` : name;
+          }).join(' · ')}`}
+          publishTitle="Time zone plan"
+          publishBody={`Planning across ${selected.length} cities: ${selected.join(', ')}.`}
+        />
 
         {/* Search panel */}
         {showSearch && (

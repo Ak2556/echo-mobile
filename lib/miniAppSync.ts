@@ -9,8 +9,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { isSupabaseRemote } from './remoteConfig';
+import type { TargetMiniAppId } from './targetCategories';
 
-export type MiniApp = 'notes' | 'habits' | 'expenses' | 'fitness' | 'pomodoro';
+export type MiniApp = TargetMiniAppId;
 
 const stampKey = (app: MiniApp) => `mini:${app}:updatedAt`;
 

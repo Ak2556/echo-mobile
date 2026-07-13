@@ -11,6 +11,7 @@ import {
 } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -206,6 +207,22 @@ export default function VideoPlayerApp() {
               </Text>
             ) : null}
           </GlassPanel>
+
+          <EdgeFeaturePanel
+            appName="Video Player"
+            accent={accent}
+            headline="Review clips with purpose"
+            caption="Turn videos into notes, progress updates, feedback loops, or publish-ready summaries."
+            metrics={[
+              { label: 'Duration', value: formatDuration(duration || video.duration) },
+              { label: 'Progress', value: `${Math.round(progressPct)}%` },
+              { label: 'Sound', value: isMuted ? 'Muted' : 'On' },
+            ]}
+            prompt="Help me review this video and extract useful feedback, next actions, or a post summary."
+            shareText={`Video review: ${video.name}, duration ${formatDuration(duration || video.duration)}, progress ${Math.round(progressPct)}%.`}
+            publishTitle="Video review"
+            publishBody={`Reviewed ${video.name}. Duration ${formatDuration(duration || video.duration)}.`}
+          />
         </Animated.View>
       ) : (
         <Animated.View entering={FadeInDown.delay(40).duration(220)} style={{ alignItems: 'center', paddingVertical: 80, gap: 16 }}>

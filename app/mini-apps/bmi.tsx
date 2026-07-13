@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { Barbell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -311,6 +312,22 @@ export default function BmiScreen() {
               <Text style={{ color: cat.color, fontSize: 14, fontWeight: '600', lineHeight: 20 }}>{cat.advice}</Text>
             </View>
           </GlassPanel>
+
+          <EdgeFeaturePanel
+            appName="BMI Calculator"
+            accent={cat.color}
+            headline="Turn body metrics into a plan"
+            caption="Share non-sensitive targets, compare progress, or move calories/macros into Fitness."
+            metrics={[
+              { label: 'BMI', value: bmi.toFixed(1) },
+              { label: 'Category', value: cat.marker },
+              { label: 'Ideal', value: getIdealRange() },
+            ]}
+            prompt={`Create a realistic health plan from BMI ${bmi.toFixed(1)} (${cat.label}) and ideal range ${getIdealRange()}.`}
+            shareText={`BMI: ${bmi.toFixed(1)} (${cat.label}). Ideal weight range: ${getIdealRange()}.`}
+            publishTitle="Health baseline"
+            publishBody={`My current BMI baseline is ${bmi.toFixed(1)} (${cat.label}). Ideal weight range: ${getIdealRange()}.`}
+          />
 
           {/* Legend */}
           <GlassPanel variant="light" borderRadius={24} contentStyle={{ overflow: 'hidden' }}>

@@ -8,7 +8,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { getTargetCategory } from '../../lib/targetCategories';
 import { miniAppById } from '../../lib/miniAppCatalog';
 
-export function TargetToolsPanel({ compact = false }: { compact?: boolean }) {
+export function TargetToolsPanel({ compact = false, dense = false }: { compact?: boolean; dense?: boolean }) {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
   const layout = useResponsiveLayout();
@@ -18,8 +18,59 @@ export function TargetToolsPanel({ compact = false }: { compact?: boolean }) {
   const category = getTargetCategory(targetCategory);
   const apps = useMemo(() => {
     const ids = targetMiniApps.length ? targetMiniApps : category.apps;
-    return ids.map(id => miniAppById(id)).filter(Boolean).slice(0, compact ? 3 : 5);
-  }, [category.apps, compact, targetMiniApps]);
+    return ids.map(id => miniAppById(id)).filter(Boolean).slice(0, dense ? 4 : compact ? 3 : 5);
+  }, [category.apps, compact, dense, targetMiniApps]);
+
+  // Dense: a single slim row of the target's tools + a progress button. The
+  // target label/outcome already live in the Home hero, so this variant keeps
+  // only what the hero doesn't — direct access to the specific mini-apps.
+  if (dense) {
+    return (
+      <View style={{
+        marginHorizontal: layout.gutter,
+        marginTop: 4,
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        borderRadius: radius.card,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        paddingLeft: 12,
+        paddingRight: 8,
+        paddingVertical: 8,
+      }}>
+        <Target color={colors.accent} size={18} weight="bold" />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ gap: 7, alignItems: 'center' }}>
+          {apps.map(app => app ? (
+            <Pressable
+              key={app.id}
+              onPress={() => router.push(app.route)}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${app.name}`}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+            >
+              <View style={{ borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 7 }}>
+                <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12.5 }]} numberOfLines={1}>
+                  {app.name}
+                </Text>
+              </View>
+            </Pressable>
+          ) : null)}
+        </ScrollView>
+        <Pressable
+          onPress={() => router.push('/target-progress' as Href)}
+          accessibilityRole="button"
+          accessibilityLabel="Open progress"
+          hitSlop={6}
+          style={{ width: 32, height: 32, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}
+        >
+          <ChartLineUp color={colors.accent} size={16} weight="bold" />
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={{

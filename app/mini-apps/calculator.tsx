@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Share, Clipboard } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
+import { Copy, ShareNetwork } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { showToast } from '../../components/ui/Toast';
 
 const GAP = 10;
 const PAD = 16;
@@ -107,9 +110,27 @@ export default function CalculatorScreen() {
   const fontSize = display.length > 12 ? 36 : display.length > 8 ? 48 : 68;
   const keypadWidth = Math.min(layout.contentWidth - layout.gutter * 2, 390);
   const btnSize = Math.floor((keypadWidth - GAP * 3) / 4);
+  const shareCalculation = () => {
+    const lines = history.length ? history : [`Result: ${display}`];
+    Share.share({ message: `Calculator - Echo\n${lines.join('\n')}` }).catch(() => {});
+  };
+  const copyResult = () => {
+    Clipboard.setString(display);
+    showToast('Result copied');
+  };
+  const HeaderActions = (
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      <AnimatedPressable onPress={copyResult} haptic="light" style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+        <Copy color={colors.textSecondary} size={17} weight="bold" />
+      </AnimatedPressable>
+      <AnimatedPressable onPress={shareCalculation} haptic="light" style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
+        <ShareNetwork color="#fff" size={17} weight="bold" />
+      </AnimatedPressable>
+    </View>
+  );
 
   return (
-    <MiniAppShell title="Calculator" subtitle="Scientific & history" scrollable={false}>
+    <MiniAppShell title="Calculator" subtitle="Scientific & history" headerRight={HeaderActions} scrollable={false}>
       <View style={{ flex: 1, justifyContent: 'flex-end', width: keypadWidth + PAD * 2, maxWidth: '100%', alignSelf: 'center', paddingHorizontal: PAD, paddingBottom: 24 }}>
         {/* History */}
         {history.length > 0 && (

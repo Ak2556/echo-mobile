@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, StyleSheet, Share } from 'react-nativ
 import { Minus, Plus, Users, ShareNetwork, X } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -296,6 +297,25 @@ export default function BillSplitterScreen() {
         <ShareNetwork color={accent} size={17} weight="bold" />
         <Text style={{ color: accent, fontWeight: '800', fontSize: 15 }}>Share the split</Text>
       </AnimatedPressable>
+
+      <EdgeFeaturePanel
+        appName="Bill Splitter"
+        accent={accent}
+        headline="Settle without confusion"
+        caption="Turn a bill into a clean shareable split, group accountability, or expense note."
+        metrics={[
+          { label: 'Total', value: `$${fmt(total)}` },
+          { label: 'People', value: `${people.length}` },
+          { label: 'Tip', value: `${effectiveTip}%` },
+        ]}
+        prompt="Check this bill split for fairness and explain it simply for the group."
+        shareText={[
+          `Bill total: $${fmt(total)}`,
+          ...people.map(p => `${p.name}: $${fmt(owed(p))}`),
+        ].join('\n')}
+        publishTitle="Bill split"
+        publishBody={`Split a $${fmt(total)} bill between ${people.length} people using ${mode} mode. Tip was ${effectiveTip}%.`}
+      />
     </MiniAppShell>
   );
 }

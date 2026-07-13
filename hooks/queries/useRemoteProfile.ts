@@ -48,14 +48,15 @@ export function useRemoteProfileBundle(userId: string | undefined) {
       if (!userId) return null;
       const profile = await fetchRemoteProfile(userId);
       if (!profile) return null;
+      const profileId = profile.id;
       const [echoes, followerCount, followingCount, sessionUid] = await Promise.all([
-        fetchRemoteEchoesByAuthor(userId),
-        fetchRemoteFollowersCount(userId),
-        fetchRemoteFollowingCount(userId),
+        fetchRemoteEchoesByAuthor(profileId),
+        fetchRemoteFollowersCount(profileId),
+        fetchRemoteFollowingCount(profileId),
         getSessionUserId(),
       ]);
-      const isSelf = sessionUid === userId;
-      const isFollowing = sessionUid && !isSelf ? await isRemoteFollowing(userId) : false;
+      const isSelf = sessionUid === profileId;
+      const isFollowing = sessionUid && !isSelf ? await isRemoteFollowing(profileId) : false;
       // Resolve the pinned echo if any. Use a local list first to avoid an
       // extra round-trip when the pin is one of the most recent echoes.
       let pinnedEcho: FeedItem | null = null;
