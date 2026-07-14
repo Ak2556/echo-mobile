@@ -286,24 +286,26 @@ export default function NotificationsScreen() {
               </View>
             )}
           </View>
-          <AnimatedPressable
-            onPress={remote ? () => markAllRemote.mutate() : markAllNotificationsRead}
-            performanceMode="hot"
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingHorizontal: 12,
-              paddingVertical: 7,
-              borderRadius: 99,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.border,
-            }}
-            haptic="medium"
-          >
-            <Checks color={colors.textSecondary} size={14} />
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>Read all</Text>
-          </AnimatedPressable>
+          {unreadCount > 0 && (
+            <AnimatedPressable
+              onPress={remote ? () => markAllRemote.mutate() : markAllNotificationsRead}
+              performanceMode="hot"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+                borderRadius: 99,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: colors.border,
+              }}
+              haptic="medium"
+            >
+              <Checks color={colors.textSecondary} size={14} />
+              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>Read all</Text>
+            </AnimatedPressable>
+          )}
         </View>
 
         {/* Filter tabs */}

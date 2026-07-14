@@ -1,23 +1,23 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope, BookmarkSimple, Sparkle, Quotes, CheckCircle, ShieldWarning } from 'phosphor-react-native';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
-import { GlassPanel } from '../ui/GlassPanel';
+import { Avatar } from '../ui/Avatar';
 import { Notification } from '../../types';
 import { useTheme } from '../../lib/theme';
 
-const BG_MAP: Record<string, string> = {
-  like: 'rgba(239,68,68,0.15)',
-  comment: 'rgba(59,130,246,0.15)',
-  follow: 'rgba(16,185,129,0.15)',
-  repost: 'rgba(139,92,246,0.15)',
-  mention: 'rgba(245,158,11,0.15)',
-  dm: 'rgba(6,182,212,0.15)',
-  reaction: 'rgba(236,72,153,0.15)',
-  bookmark: 'rgba(234,179,8,0.15)',
-  quote: 'rgba(139,92,246,0.15)',
-  report_resolved: 'rgba(16,185,129,0.15)',
-  content_removed: 'rgba(239,68,68,0.15)',
+const TYPE_COLOR: Record<string, string> = {
+  like: '#EF4444',
+  comment: '#3B82F6',
+  follow: '#10B981',
+  repost: '#8B5CF6',
+  mention: '#F59E0B',
+  dm: '#06B6D4',
+  reaction: '#EC4899',
+  bookmark: '#EAB308',
+  quote: '#8B5CF6',
+  report_resolved: '#10B981',
+  content_removed: '#EF4444',
 };
 
 const REACTION_LABEL: Record<string, string> = {
@@ -26,6 +26,10 @@ const REACTION_LABEL: Record<string, string> = {
   agree: 'agree',
   disagree: 'rethink',
 };
+
+// Notifications with no real actor — they get a standalone type-icon avatar
+// rather than a person's photo.
+const SYSTEM_TYPES = new Set(['report_resolved', 'content_removed']);
 
 function actionTextFor(n: Notification): string {
   switch (n.type) {
@@ -47,22 +51,52 @@ function actionTextFor(n: Notification): string {
   }
 }
 
-function NotifIcon({ type }: { type: string }) {
-  const p = { size: 18, weight: 'regular' as const };
+function NotifIcon({ type, size, color }: { type: string; size: number; color: string }) {
+  const p = { size, weight: 'fill' as const, color };
   switch (type) {
-    case 'like':     return <HeartStraight    {...p} color="#EF4444" />;
-    case 'comment':  return <ChatCircle       {...p} color="#3B82F6" />;
-    case 'follow':   return <UserPlus         {...p} color="#10B981" />;
-    case 'repost':   return <ArrowsClockwise  {...p} color="#8B5CF6" />;
-    case 'mention':  return <At               {...p} color="#F59E0B" />;
-    case 'dm':       return <Envelope         {...p} color="#06B6D4" />;
-    case 'reaction': return <Sparkle          {...p} color="#EC4899" />;
-    case 'bookmark':         return <BookmarkSimple   {...p} color="#EAB308" />;
-    case 'quote':            return <Quotes           {...p} color="#8B5CF6" />;
-    case 'report_resolved':  return <CheckCircle      {...p} color="#10B981" />;
-    case 'content_removed':  return <ShieldWarning    {...p} color="#EF4444" />;
-    default:                 return <HeartStraight    {...p} color="#EF4444" />;
+    case 'like':            return <HeartStraight   {...p} />;
+    case 'comment':         return <ChatCircle      {...p} />;
+    case 'follow':          return <UserPlus        {...p} />;
+    case 'repost':          return <ArrowsClockwise {...p} />;
+    case 'mention':         return <At              {...p} />;
+    case 'dm':              return <Envelope        {...p} />;
+    case 'reaction':        return <Sparkle         {...p} />;
+    case 'bookmark':        return <BookmarkSimple  {...p} />;
+    case 'quote':           return <Quotes          {...p} />;
+    case 'report_resolved': return <CheckCircle     {...p} />;
+    case 'content_removed': return <ShieldWarning   {...p} />;
+    default:                return <HeartStraight   {...p} />;
   }
+}
+
+/** Person's avatar (real photo when available) with a small type-icon badge. */
+function AvatarWithBadge({ n }: { n: Notification }) {
+  const { colors } = useTheme();
+  const color = TYPE_COLOR[n.type] ?? colors.accent;
+  const isSystem = SYSTEM_TYPES.has(n.type);
+
+  return (
+    <View style={{ width: 44, height: 44, marginRight: 12 }}>
+      {isSystem ? (
+        <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: `${color}22` }}>
+          <NotifIcon type={n.type} size={20} color={color} />
+        </View>
+      ) : (
+        <>
+          <Avatar name={n.fromDisplayName || n.fromUsername} color={n.fromAvatarColor} url={n.fromAvatarUrl} size={44} />
+          <View style={{
+            position: 'absolute', bottom: -2, right: -2,
+            width: 20, height: 20, borderRadius: 10,
+            alignItems: 'center', justifyContent: 'center',
+            backgroundColor: color,
+            borderWidth: 2, borderColor: colors.bg,
+          }}>
+            <NotifIcon type={n.type} size={11} color="#fff" />
+          </View>
+        </>
+      )}
+    </View>
+  );
 }
 
 function getTimeAgo(dateStr: string): string {
@@ -84,111 +118,54 @@ interface NotificationCardProps {
 }
 
 export function NotificationCard({ notification, onPress, onLongPress }: NotificationCardProps) {
-  const { colors, fontSizes, showAvatars, radius } = useTheme();
-  const bg = BG_MAP[notification.type] ?? 'rgba(239,68,68,0.15)';
+  const { colors, fontSizes } = useTheme();
+  const unread = !notification.isRead;
 
   return (
-    <View style={{ marginHorizontal: 16, marginVertical: 4 }}>
-      <GlassPanel
-        variant="light"
-        borderRadius={radius.card}
-        tintOverride={
-          !notification.isRead
-            ? (colors.isDark
-                ? `${colors.accent}18`
-                : `${colors.accent}0F`)
-            : undefined
-        }
-      >
-        <AnimatedPressable
-          onPress={onPress}
-          onLongPress={onLongPress}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            borderLeftWidth: !notification.isRead ? 2.5 : 0,
-            borderLeftColor: colors.accent,
-          }}
-          scaleValue={0.98}
-          haptic="light"
-        >
-          <View
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 12,
-              backgroundColor: bg,
-            }}
-          >
-            <NotifIcon type={notification.type} />
-          </View>
+    <AnimatedPressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      fadeOnPress
+      haptic="light"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: unread ? (colors.isDark ? `${colors.accent}12` : `${colors.accent}0A`) : 'transparent',
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
+      }}
+    >
+      <AvatarWithBadge n={notification} />
 
-          {showAvatars && (
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 12,
-                backgroundColor: notification.fromAvatarColor,
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-                {notification.fromDisplayName.charAt(0).toUpperCase()}
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <Text style={{ color: colors.text, fontSize: fontSizes.small, flexShrink: 1 }} numberOfLines={2}>
+            {!SYSTEM_TYPES.has(notification.type) && (
+              <Text style={{ fontFamily: 'Inter_700Bold' }}>{notification.fromDisplayName}</Text>
+            )}
+            {!SYSTEM_TYPES.has(notification.type) ? ' ' : ''}{actionTextFor(notification)}
+          </Text>
+          {notification.groupCount && notification.groupCount > 1 && (
+            <View style={{ backgroundColor: colors.accentMuted, paddingHorizontal: 7, paddingVertical: 1, borderRadius: 999, alignSelf: 'flex-start' }}>
+              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', fontVariant: ['tabular-nums'], letterSpacing: 0.2 }}>
+                +{notification.groupCount - 1}
               </Text>
             </View>
           )}
+        </View>
+        {notification.targetPreview && notification.type !== 'reaction' && !SYSTEM_TYPES.has(notification.type) && (
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
+            {notification.targetPreview}
+          </Text>
+        )}
+      </View>
 
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <Text style={{ color: colors.text, fontSize: fontSizes.small, flexShrink: 1 }} numberOfLines={2}>
-                <Text style={{ fontWeight: '700' }}>{notification.fromDisplayName}</Text>
-                {' '}{actionTextFor(notification)}
-              </Text>
-              {notification.groupCount && notification.groupCount > 1 && (
-                <View style={{
-                  backgroundColor: colors.accentMuted,
-                  paddingHorizontal: 7,
-                  paddingVertical: 1,
-                  borderRadius: 999,
-                  alignSelf: 'flex-start',
-                }}>
-                  <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', fontVariant: ['tabular-nums'], letterSpacing: 0.2 }}>
-                    +{notification.groupCount - 1}
-                  </Text>
-                </View>
-              )}
-            </View>
-            {notification.targetPreview && notification.type !== 'reaction' && (
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
-                {notification.targetPreview}
-              </Text>
-            )}
-          </View>
-
-          <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(notification.createdAt)}</Text>
-            {!notification.isRead && (
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: colors.accent,
-                  marginTop: 6,
-                }}
-              />
-            )}
-          </View>
-        </AnimatedPressable>
-      </GlassPanel>
-    </View>
+      <View style={{ alignItems: 'flex-end', marginLeft: 8, gap: 6 }}>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(notification.createdAt)}</Text>
+        {unread && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent }} />}
+      </View>
+    </AnimatedPressable>
   );
 }
