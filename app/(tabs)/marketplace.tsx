@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
@@ -35,6 +34,8 @@ import {
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
+import { ListingCardSkeleton } from '../../components/ui/Skeleton';
+import { ErrorState, classifyError } from '../../components/common/ErrorState';
 import { track } from '../../lib/analytics';
 import { formatPrice, type CurrencyCode } from '../../lib/currency';
 import {
@@ -57,16 +58,17 @@ type SortMode = 'newest' | 'price-low' | 'price-high';
 type MarketMode = 'all' | 'services' | 'local' | 'digital';
 type ConditionFilter = ListingCondition | 'All';
 
+// Warm editorial palette (lib/avatarPalette.ts) mapped by category.
 const CATEGORY_META: Record<string, { color: string; Icon: React.ComponentType<any> }> = {
   All: { color: '#E06030', Icon: Storefront },
-  'Books & Learning': { color: '#3B82F6', Icon: BookOpen },
-  'Tech & Gear': { color: '#06B6D4', Icon: Monitor },
-  Workspace: { color: '#10B981', Icon: Briefcase },
-  Creative: { color: '#EC4899', Icon: Palette },
-  Services: { color: '#8B5CF6', Icon: Wrench },
-  Clothing: { color: '#F97316', Icon: TShirt },
-  Home: { color: '#F59E0B', Icon: House },
-  Other: { color: '#64748B', Icon: DotsThree },
+  'Books & Learning': { color: '#4E7A8B', Icon: BookOpen },
+  'Tech & Gear': { color: '#4E8B7A', Icon: Monitor },
+  Workspace: { color: '#7A8B4E', Icon: Briefcase },
+  Creative: { color: '#B35D6B', Icon: Palette },
+  Services: { color: '#8B5E7D', Icon: Wrench },
+  Clothing: { color: '#C65F3F', Icon: TShirt },
+  Home: { color: '#B08536', Icon: House },
+  Other: { color: '#8B6F4E', Icon: DotsThree },
 };
 
 function timeAgo(iso: string): string {
@@ -451,6 +453,7 @@ export default function MarketplaceScreen() {
 
   const [listings, setListings] = useState<ListingWithSeller[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('All');
@@ -479,8 +482,10 @@ export default function MarketplaceScreen() {
     try {
       const data = await fetchListings({ category: cat !== 'All' ? cat : undefined, query: q });
       setListings(data);
-    } catch {
+      setLoadError(null);
+    } catch (e) {
       setListings([]);
+      setLoadError(e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -678,9 +683,17 @@ export default function MarketplaceScreen() {
       </View>
 
       {loading && !refreshing ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.accent} />
+        <View style={{ flex: 1, paddingHorizontal: CARD_H_PADDING, paddingTop: 8 }}>
+          {Array.from({ length: Math.ceil(6 / columns) }).map((_, row) => (
+            <View key={row} style={{ flexDirection: 'row', gap: CARD_GAP, marginBottom: CARD_GAP }}>
+              {Array.from({ length: columns }).map((__, col) => (
+                <ListingCardSkeleton key={col} />
+              ))}
+            </View>
+          ))}
         </View>
+      ) : loadError && listings.length === 0 ? (
+        <ErrorState kind={classifyError(loadError)} onRetry={() => load(query, category)} />
       ) : (
         <FlatList
           key={columns}

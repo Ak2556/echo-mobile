@@ -7,6 +7,7 @@ import {
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { safeBack } from '../../lib/safeBack';
 import {
   ArrowLeft, PaperPlaneTilt, Quotes, SealCheck,
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
@@ -1509,7 +1510,7 @@ export default function DMScreen() {
       return (
         <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-            <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
+            <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
               <ArrowLeft color={colors.text} size={24} />
             </AnimatedPressable>
           </View>
@@ -1520,7 +1521,7 @@ export default function DMScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>Conversation not found</Text>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => safeBack('/messages')}>
           <Text style={{ color: colors.accent, fontWeight: '600' }}>Go back</Text>
         </Pressable>
       </SafeAreaView>
@@ -1540,35 +1541,45 @@ export default function DMScreen() {
         paddingHorizontal: 16, paddingVertical: 12,
         borderBottomWidth: 1, borderBottomColor: colors.border,
       }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 10 }} scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 10 }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
 
-        <View style={{ marginRight: 10 }}>
-          <Avatar
-            name={conversation.displayName ?? '?'}
-            color={conversation.avatarColor}
-            url={conversation.isGroup ? undefined : conversation.avatarUrl}
-            size={40}
-            online={online}
-          >
-            {conversation.isGroup ? <Users color="#fff" size={17} weight="fill" /> : undefined}
-          </Avatar>
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
-              {conversation.displayName}
-            </Text>
-            {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+        <Pressable
+          onPress={() => {
+            if (conversation.isGroup) router.push(`/group/${id}`);
+            else if (conversation.userId) router.push(`/user/${conversation.userId}`);
+          }}
+          style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+          accessibilityRole="button"
+          accessibilityLabel={conversation.isGroup ? 'Group info' : 'View profile'}
+        >
+          <View style={{ marginRight: 10 }}>
+            <Avatar
+              name={conversation.displayName ?? '?'}
+              color={conversation.avatarColor}
+              url={conversation.isGroup ? undefined : conversation.avatarUrl}
+              size={40}
+              online={online}
+            >
+              {conversation.isGroup ? <Users color="#fff" size={17} weight="fill" /> : undefined}
+            </Avatar>
           </View>
-          <Text style={{ color: online ? colors.success : colors.textMuted, fontSize: 12 }}>
-            {conversation.isGroup
-              ? `${conversation.memberCount ?? 1} members`
-              : online ? 'Online now' : `@${conversation.username}`}
-          </Text>
-        </View>
+
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
+                {conversation.displayName}
+              </Text>
+              {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+            </View>
+            <Text style={{ color: online ? colors.success : colors.textMuted, fontSize: 12 }}>
+              {conversation.isGroup
+                ? `${conversation.memberCount ?? 1} members · tap to manage`
+                : online ? 'Online now' : `@${conversation.username}`}
+            </Text>
+          </View>
+        </Pressable>
 
         <Pressable
           onPress={() => {

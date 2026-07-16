@@ -1,5 +1,6 @@
 import { useAppStore } from '../store/useAppStore';
 import { usePresenceStore } from './presence';
+import { buildFontPreset } from './fontPresets';
 
 // Global animation speed constants. Import ANIM in components instead of
 // hardcoding durations or spring configs.
@@ -30,6 +31,7 @@ export interface ThemeColors {
   danger: string;
   dangerMuted: string;
   success: string;
+  warning: string;
   tabBar: string;
   tabBorder: string;
   inputBg: string;
@@ -69,6 +71,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#EF4444',
     dangerMuted: 'rgba(239,68,68,0.15)',
     success: '#22C55E',
+    warning: '#F59E0B',
     tabBar: '#0C0B09',
     tabBorder: '#282319',
     inputBg: '#161411',
@@ -92,6 +95,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#EF4444',
     dangerMuted: 'rgba(239,68,68,0.12)',
     success: '#22C55E',
+    warning: '#F59E0B',
     tabBar: '#000000',
     tabBorder: '#111111',
     inputBg: '#0A0A0A',
@@ -115,6 +119,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#F87171',
     dangerMuted: 'rgba(248,113,113,0.15)',
     success: '#34D399',
+    warning: '#FBBF24',
     tabBar: '#070D18',
     tabBorder: '#152035',
     inputBg: '#111B2E',
@@ -138,6 +143,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#EF4444',
     dangerMuted: 'rgba(239,68,68,0.15)',
     success: '#22C55E',
+    warning: '#F59E0B',
     tabBar: '#120A07',
     tabBorder: '#2D1A12',
     inputBg: '#261510',
@@ -161,6 +167,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#F87171',
     dangerMuted: 'rgba(248,113,113,0.15)',
     success: '#34D399',
+    warning: '#FBBF24',
     tabBar: '#071009',
     tabBorder: '#142B1E',
     inputBg: '#101F18',
@@ -184,6 +191,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#F87171',
     dangerMuted: 'rgba(248,113,113,0.15)',
     success: '#34D399',
+    warning: '#FBBF24',
     tabBar: '#0A0812',
     tabBorder: '#211E32',
     inputBg: '#1A1726',
@@ -210,6 +218,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#DC2626',
     dangerMuted: 'rgba(220,38,38,0.10)',
     success: '#15803D',
+    warning: '#B45309',
     tabBar: '#FAF7F1',
     tabBorder: '#E5DFD2',
     inputBg: '#FFFFFF',
@@ -237,6 +246,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#DC2626',
     dangerMuted: 'rgba(220,38,38,0.12)',
     success: '#15803D',
+    warning: '#B45309',
     tabBar: '#FEF9EE',
     tabBorder: '#D9C8AA',
     inputBg: '#FEF9EE',
@@ -264,6 +274,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     danger: '#DC2626',
     dangerMuted: 'rgba(220,38,38,0.12)',
     success: '#15803D',
+    warning: '#B45309',
     tabBar: '#FFFFFF',
     tabBorder: '#BFDBFE',
     inputBg: '#FFFFFF',
@@ -310,6 +321,7 @@ export function useTheme() {
   const accentColor = useAppStore(s => s.accentColor);
   const pureBlackBg = useAppStore(s => s.pureBlackBackground);
   const fontSize = useAppStore(s => s.fontSize);
+  const fontStyle = useAppStore(s => s.fontStyle);
   const fontScale = useAppStore(s => s.fontScale);
   const reduceAnimations = useAppStore(s => s.reduceAnimations);
   const showAvatars = useAppStore(s => s.showAvatars);
@@ -364,19 +376,7 @@ export function useTheme() {
     return onlineStatus && (presenceIds.has(userId) || MOCK_ONLINE_USER_IDS.has(userId));
   };
 
-  // Editorial type pairing: Fraunces (serif) carries display and quotes;
-  // Inter carries UI labels and body. Serif display is the app's voice —
-  // don't use it below ~17pt or it loses its character.
-  const font = {
-    body:         { fontFamily: 'Inter_400Regular' },
-    bodyMedium:   { fontFamily: 'Inter_500Medium' },
-    bodySemibold: { fontFamily: 'Inter_600SemiBold' },
-    bodyBold:     { fontFamily: 'Inter_700Bold' },
-    display:      { fontFamily: 'Fraunces_500Medium' as const, letterSpacing: -0.3 },
-    displayBlack: { fontFamily: 'Fraunces_600SemiBold' as const, letterSpacing: -0.5 },
-    serif:        { fontFamily: 'Fraunces_400Regular' as const, letterSpacing: -0.2 },
-    quote:        { fontFamily: 'Fraunces_400Regular_Italic' as const, letterSpacing: -0.2 },
-  };
+  const font = buildFontPreset(fontStyle);
 
   return {
     colors,

@@ -60,7 +60,7 @@ export default function JsonFormatterScreen() {
       </Pressable>
       <Pressable
         onPress={copy}
-        style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: copied ? '#10B981' : accent, flexDirection: 'row', alignItems: 'center', gap: 5 }}
+        style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: copied ? colors.success : accent, flexDirection: 'row', alignItems: 'center', gap: 5 }}
       >
         {copied ? <Check color="#fff" size={15} weight="bold" /> : <Copy color="#fff" size={15} weight="bold" />}
         <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{copied ? 'Done!' : 'Copy'}</Text>
@@ -88,20 +88,20 @@ export default function JsonFormatterScreen() {
             placeholderTextColor={colors.textMuted}
             style={{
               backgroundColor: '#0D1117', borderRadius: 18, borderWidth: 1.5,
-              borderColor: error ? '#EF4444' : parsed ? '#10B981' : colors.glassBorder,
+              borderColor: error ? colors.danger : parsed ? colors.success : colors.glassBorder,
               padding: 16, color: '#E2E8F0', fontSize: 13, fontFamily: 'monospace',
               height: 160, textAlignVertical: 'top', lineHeight: 20,
             }}
           />
           {error ? (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, padding: 12, backgroundColor: '#EF444418', borderRadius: 12, borderWidth: 1, borderColor: '#EF444433' }}>
-              <Warning color="#EF4444" size={16} weight="fill" />
-              <Text style={{ color: '#EF4444', fontSize: 13, flex: 1, fontFamily: 'monospace' }}>{error}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, padding: 12, backgroundColor: colors.danger + '18', borderRadius: 12, borderWidth: 1, borderColor: colors.danger + '33' }}>
+              <Warning color={colors.danger} size={16} weight="fill" />
+              <Text style={{ color: colors.danger, fontSize: 13, flex: 1, fontFamily: 'monospace' }}>{error}</Text>
             </View>
           ) : parsed ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-              <CheckCircle color="#10B981" size={16} weight="fill" />
-              <Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>Valid JSON</Text>
+              <CheckCircle color={colors.success} size={16} weight="fill" />
+              <Text style={{ color: colors.success, fontSize: 13, fontWeight: '600' }}>Valid JSON</Text>
               {stats && <Text style={{ color: colors.textMuted, fontSize: 13 }}>· {stats.keys} keys · {stats.size}</Text>}
             </View>
           ) : null}
@@ -122,7 +122,7 @@ export default function JsonFormatterScreen() {
         ) : null}
         <EdgeFeaturePanel
           appName="JSON Tools"
-          accent={error ? '#EF4444' : parsed ? '#10B981' : accent}
+          accent={error ? colors.danger : parsed ? colors.success : accent}
           headline="Debug data faster"
           caption="Validate, summarize, and turn JSON structures into implementation notes."
           metrics={[

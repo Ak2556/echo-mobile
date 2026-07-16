@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../lib/auth';
+import { getRememberedStartRoute } from '../lib/navigationMemory';
 
 /**
  * Initial route. Reads auth status from the central store and renders the
@@ -30,7 +31,7 @@ export default function Index() {
   }
 
   if (status === 'ready') {
-    return <Redirect href="/(tabs)/home" />;
+    return <Redirect href={getRememberedStartRoute()} />;
   }
 
   if (status === 'needs-onboarding') {

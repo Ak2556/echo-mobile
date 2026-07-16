@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { Pressable, View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '../../lib/theme';
 import { warmAvatarColor } from '../../lib/avatarPalette';
+import { ZoomableImageViewer } from './ZoomableImageViewer';
 
 /**
  * The one list avatar. Renders the profile photo when there is one, falling
@@ -19,6 +20,7 @@ export function Avatar({
   url,
   size = 44,
   online = false,
+  zoomable = true,
   children,
 }: {
   name: string;
@@ -27,16 +29,18 @@ export function Avatar({
   size?: number;
   /** show the presence dot */
   online?: boolean;
+  /** tap the photo to inspect it fullscreen */
+  zoomable?: boolean;
   /** optional glyph instead of the initial (e.g. group icon) */
   children?: React.ReactNode;
 }) {
   const { colors, showAvatars } = useTheme();
   const [imgError, setImgError] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const bg = warmAvatarColor(color, name);
   const showPhoto = showAvatars && !!url && !imgError;
-
-  return (
-    <View style={{ width: size, height: size }}>
+  const content = (
+    <>
       {showPhoto ? (
         <Image
           source={{ uri: url! }}
@@ -71,6 +75,32 @@ export function Avatar({
           borderWidth: 2, borderColor: colors.bg,
         }} />
       )}
-    </View>
+    </>
+  );
+
+  return (
+    <>
+      {showPhoto && zoomable ? (
+        <Pressable
+          onPress={(event) => {
+            event.stopPropagation?.();
+            setViewerOpen(true);
+          }}
+          style={{ width: size, height: size }}
+        >
+          {content}
+        </Pressable>
+      ) : (
+        <View style={{ width: size, height: size }}>{content}</View>
+      )}
+      {showPhoto ? (
+        <ZoomableImageViewer
+          visible={viewerOpen}
+          uris={[url!]}
+          title={name}
+          onClose={() => setViewerOpen(false)}
+        />
+      ) : null}
+    </>
   );
 }

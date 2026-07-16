@@ -84,11 +84,11 @@ export default function WorldClockScreen() {
           variant="medium"
           borderRadius={28}
           contentStyle={{ padding: 20 }}
-          style={{ marginBottom: 12, borderColor: (isLocalDay ? '#F59E0B' : '#3B82F6') + '33' }}
+          style={{ marginBottom: 12, borderColor: (isLocalDay ? '#B08536' : '#5E748B') + '33' }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            {isLocalDay ? <Sun color="#F59E0B" size={18} weight="fill" /> : <Moon color="#3B82F6" size={18} weight="fill" />}
-            <Text style={{ color: isLocalDay ? '#F59E0B' : '#3B82F6', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 }}>MY LOCATION</Text>
+            {isLocalDay ? <Sun color="#B08536" size={18} weight="fill" /> : <Moon color="#5E748B" size={18} weight="fill" />}
+            <Text style={{ color: isLocalDay ? '#B08536' : '#5E748B', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 }}>MY LOCATION</Text>
           </View>
           <Text style={{ color: colors.text, fontSize: 52, fontWeight: '200', letterSpacing: -3, lineHeight: 56 }}>{localTime.slice(0, 5)}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
@@ -165,8 +165,8 @@ export default function WorldClockScreen() {
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                   <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{city.name}</Text>
-                  <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: (day ? '#F59E0B' : '#3B82F6') + '18' }}>
-                    <Text style={{ color: day ? '#F59E0B' : '#3B82F6', fontSize: 10, fontWeight: '700' }}>{timeOfDay}</Text>
+                  <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: (day ? '#B08536' : '#5E748B') + '18' }}>
+                    <Text style={{ color: day ? '#B08536' : '#5E748B', fontSize: 10, fontWeight: '700' }}>{timeOfDay}</Text>
                   </View>
                 </View>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{date} · {city.region}</Text>

@@ -2,6 +2,7 @@ import { persistGet, persistSet, storage } from '../persist';
 import type { EchoAIModel } from '../../lib/api';
 import type { CurrencyCode } from '../../lib/currency';
 import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/targetCategories';
+import type { FontStyleName } from '../../lib/fontPresets';
 
 export interface SettingsSlice {
   // ── Core ──
@@ -32,6 +33,7 @@ export interface SettingsSlice {
   // ── Appearance ──
   theme: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic';
   setTheme: (v: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic') => void;
+  fontStyle: FontStyleName; setFontStyle: (v: FontStyleName) => void;
   fontSize: 'small' | 'medium' | 'large'; setFontSize: (v: 'small' | 'medium' | 'large') => void;
   compactFeed: boolean; setCompactFeed: (v: boolean) => void;
   dismissedFirstEchoCoach: boolean; setDismissedFirstEchoCoach: (v: boolean) => void;
@@ -48,6 +50,9 @@ export interface SettingsSlice {
   showTypingIndicator: boolean; setShowTypingIndicator: (v: boolean) => void;
   streamResponses: boolean; setStreamResponses: (v: boolean) => void;
   personaLearningEnabled: boolean; setPersonaLearningEnabled: (v: boolean) => void;
+  proactiveAiEnabled: boolean; setProactiveAiEnabled: (v: boolean) => void;
+  /** ephemeral: a proactive check-in is waiting (drives the Chat-tab dot) */
+  proactiveCheckinPending: boolean; setProactiveCheckinPending: (v: boolean) => void;
   // ── Content & Feed ──
   autoplayStories: boolean; setAutoplayStories: (v: boolean) => void;
   dataSaver: boolean; setDataSaver: (v: boolean) => void;
@@ -139,6 +144,8 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     activityStatus: b('activityStatus', true), setActivityStatus: s(set, 'activityStatus'),
     theme: persistGet<'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic'>('theme', 'midnight'),
     setTheme: (v) => { persistSet('theme', v); set({ theme: v }); },
+    fontStyle: persistGet<FontStyleName>('fontStyle', 'editorial'),
+    setFontStyle: (v) => { persistSet('fontStyle', v); set({ fontStyle: v }); },
     fontSize: persistGet<'small' | 'medium' | 'large'>('fontSize', 'medium'),
     setFontSize: (v) => { persistSet('fontSize', v); set({ fontSize: v }); },
     compactFeed: b('compactFeed', false), setCompactFeed: s(set, 'compactFeed'),
@@ -159,6 +166,9 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     showTypingIndicator: b('showTypingIndicator', true), setShowTypingIndicator: s(set, 'showTypingIndicator'),
     streamResponses: b('streamResponses', true), setStreamResponses: s(set, 'streamResponses'),
     personaLearningEnabled: b('personaLearningEnabled', true), setPersonaLearningEnabled: s(set, 'personaLearningEnabled'),
+    proactiveAiEnabled: b('proactiveAiEnabled', true), setProactiveAiEnabled: s(set, 'proactiveAiEnabled'),
+    // Not persisted — recomputed each session from proactiveCheckin.
+    proactiveCheckinPending: false, setProactiveCheckinPending: (v: boolean) => set({ proactiveCheckinPending: v }),
     autoplayStories: b('autoplayStories', true), setAutoplayStories: s(set, 'autoplayStories'),
     dataSaver: b('dataSaver', false), setDataSaver: s(set, 'dataSaver'),
     sensitiveContentFilter: b('sensitiveContentFilter', true), setSensitiveContentFilter: s(set, 'sensitiveContentFilter'),

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { Pressable, View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { SealCheck } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { warmAvatarColor } from '../../lib/avatarPalette';
+import { ZoomableImageViewer } from './ZoomableImageViewer';
 
 interface ProfileAvatarProps {
   displayName: string;
@@ -25,6 +26,7 @@ export function ProfileAvatar({
   const { colors } = useTheme();
   const avatarColor = warmAvatarColor(rawAvatarColor, displayName);
   const [imgError, setImgError] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const haloSize = size + 20;
   const ringSize = size + 8;
   const initial = (displayName || '?').charAt(0).toUpperCase();
@@ -54,18 +56,26 @@ export function ProfileAvatar({
         }}
       >
         {avatarUrl && !imgError ? (
-          <Image
-            source={{ uri: avatarUrl }}
-            style={{
-              width: size,
-              height: size,
-              borderRadius: size / 2,
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation?.();
+              setViewerOpen(true);
             }}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={200}
-            onError={() => setImgError(true)}
-          />
+            style={{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden' }}
+          >
+            <Image
+              source={{ uri: avatarUrl }}
+              style={{
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+              }}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={200}
+              onError={() => setImgError(true)}
+            />
+          </Pressable>
         ) : (
           <View
             style={{
@@ -88,6 +98,14 @@ export function ProfileAvatar({
           <SealCheck size={18} weight="fill" color={colors.accent} />
         </View>
       )}
+      {avatarUrl && !imgError ? (
+        <ZoomableImageViewer
+          visible={viewerOpen}
+          uris={[avatarUrl]}
+          title={displayName}
+          onClose={() => setViewerOpen(false)}
+        />
+      ) : null}
     </View>
   );
 }

@@ -16,6 +16,7 @@ import {
   X,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { IconBadge } from '../../components/ui/IconBadge';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ProfilePhotoPreview } from '../../components/ui/ProfilePhotoPreview';
 import { PostsGrid } from '../../components/profile/PostsGrid';
@@ -85,7 +86,7 @@ function ProfileCompletionBanner({
 // the gear icon in the header. Apps stays gated behind feature flag.
 const SETTINGS_ROWS: { key: string; Icon: React.ComponentType<any>; label: string; route: Href | null }[] = [
   { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
-  ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Apps', route: '/(tabs)/apps' as Href }] : []),
+  ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Tools', route: '/(tabs)/apps' as Href }] : []),
   { key: 'verify', Icon: SealCheck, label: 'Get verified', route: '/get-verified' },
 ];
 
@@ -357,19 +358,25 @@ export default function ProfileScreen() {
         <View style={styles.accountArea}>
           <SectionLabel label="Account" colors={colors} font={font} />
           <View style={styles.menuPanel}>
-            {SETTINGS_ROWS.map(({ key, Icon, label, route }, index) => (
-              <React.Fragment key={key}>
-                <ProfileListRow
-                  icon={<Icon color={colors.textSecondary} size={18} />}
-                  label={label}
-                  colors={colors}
-                  radius={radius}
-                  font={font}
-                  onPress={() => route ? router.push(route) : openFollowers('followers')}
-                />
-                {index < SETTINGS_ROWS.length - 1 ? <View style={[styles.menuDivider, { backgroundColor: colors.border }]} /> : null}
-              </React.Fragment>
-            ))}
+            {SETTINGS_ROWS.map(({ key, Icon, label, route }, index) => {
+              const iconColor = key === 'apps' ? '#4F83F1' : key === 'verify' ? colors.accent : colors.textSecondary;
+              const mutedIcon = key === 'bookmarks';
+              return (
+                <React.Fragment key={key}>
+                  <ProfileListRow
+                    icon={<Icon color={mutedIcon ? iconColor : '#fff'} size={18} weight={mutedIcon ? 'regular' : 'bold'} />}
+                    iconColor={iconColor}
+                    iconMuted={mutedIcon}
+                    label={label}
+                    colors={colors}
+                    radius={radius}
+                    font={font}
+                    onPress={() => route ? router.push(route) : openFollowers('followers')}
+                  />
+                  {index < SETTINGS_ROWS.length - 1 ? <View style={[styles.menuDivider, { backgroundColor: colors.border }]} /> : null}
+                </React.Fragment>
+              );
+            })}
           </View>
 
           {/* QUICK CONTROLS removed — notifications toggle lives in
@@ -711,6 +718,8 @@ function SectionLabel({
 
 function ProfileListRow({
   icon,
+  iconColor,
+  iconMuted = false,
   label,
   colors,
   radius,
@@ -720,6 +729,8 @@ function ProfileListRow({
   accessibilityLabel,
 }: {
   icon: React.ReactNode;
+  iconColor?: string;
+  iconMuted?: boolean;
   label: string;
   colors: ProfileColors;
   radius: ProfileRadius;
@@ -730,9 +741,9 @@ function ProfileListRow({
 }) {
   const rowContent = (
     <>
-      <View style={styles.listRowIconTile}>
+      <IconBadge color={iconColor ?? colors.accent} size={34} radius={12} muted={iconMuted} style={styles.listRowIconTile}>
         {icon}
-      </View>
+      </IconBadge>
       <Text
         style={[font.bodySemibold, styles.listRowLabel, { color: colors.text }]}
         numberOfLines={1}
@@ -1074,8 +1085,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   listRowIconTile: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,

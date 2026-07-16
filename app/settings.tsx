@@ -17,6 +17,7 @@ import {
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
+import { IconBadge } from '../components/ui/IconBadge';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
@@ -25,11 +26,13 @@ import { deleteRemoteAIConversations, updateRemoteProfile, fetchCurrentUserProfi
 import { clearPushToken, registerForPush } from '../lib/push';
 import { useResponsiveLayout } from '../lib/responsive';
 import { isSupabaseRemote } from '../lib/remoteConfig';
+import { captureException } from '../lib/monitoring';
 import { setPersonaEnabled } from '../lib/persona';
 import { track } from '../lib/analytics';
 import { isSafeExternalUrl } from '../lib/urlSafety';
 import { publicWebUrl } from '../lib/echoUrl';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
+import { FONT_STYLE_OPTIONS, fontStyleLabel } from '../lib/fontPresets';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@echo.app';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@echo.app';
@@ -60,19 +63,15 @@ function SettingsRow({ icon: Icon, iconColor, label, subtitle, right, onPress, d
         paddingHorizontal: 4,
       }}
     >
-      <View
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: radius.md,
-          backgroundColor: destructive ? colors.dangerMuted : `${resolvedIconColor}18`,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 12,
-        }}
+      <IconBadge
+        color={resolvedIconColor}
+        size={38}
+        radius={radius.md}
+        muted={!destructive}
+        style={{ marginRight: 12 }}
       >
-        <Icon color={resolvedIconColor} size={18} weight={iconColor || destructive ? 'bold' : 'regular'} />
-      </View>
+        <Icon color={destructive ? '#fff' : resolvedIconColor} size={18} weight={iconColor || destructive ? 'bold' : 'regular'} />
+      </IconBadge>
       <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
         <Text style={[font.bodySemibold, { color: destructive ? colors.danger : colors.text, fontSize: fontSizes.body }]} numberOfLines={1}>{label}</Text>
         {subtitle && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={2}>{subtitle}</Text>}
@@ -113,8 +112,8 @@ function SettingsHero({
   const visibleAvatar = profilePhotoVisible ? avatarUrl : undefined;
   const quickActions = [
     { label: 'Edit profile', subtitle: `@${username}`, icon: PencilSimple, color: colors.accent, onPress: onEditProfile },
-    { label: 'Target tools', subtitle: 'Progress', icon: Target, color: '#10B981', onPress: onTarget },
-    { label: 'AI memory', subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: '#8B5CF6', onPress: onAiMemory },
+    { label: 'Target tools', subtitle: 'Progress', icon: Target, color: '#7A8B4E', onPress: onTarget },
+    { label: 'AI memory', subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: '#8B5E7D', onPress: onAiMemory },
   ];
 
   return (
@@ -177,9 +176,9 @@ function SettingsHero({
                 scaleValue={0.96}
                 haptic="light"
               >
-                <View style={{ width: 34, height: 34, borderRadius: 13, backgroundColor: `${action.color}1F`, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon color={action.color} size={18} weight="bold" />
-                </View>
+                <IconBadge color={action.color} size={36} radius={13}>
+                  <Icon color="#fff" size={18} weight="bold" />
+                </IconBadge>
                 <View>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]} numberOfLines={1}>{action.label}</Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>{action.subtitle}</Text>
@@ -329,17 +328,18 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
 }
 
 // Accent Color Picker
+// Warm editorial palette (lib/avatarPalette.ts) — one voice across the app.
 const ACCENT_COLORS = [
-  { color: '#3B82F6', name: 'Blue' },
-  { color: '#EF4444', name: 'Red' },
-  { color: '#10B981', name: 'Green' },
-  { color: '#F59E0B', name: 'Amber' },
-  { color: '#8B5CF6', name: 'Purple' },
-  { color: '#EC4899', name: 'Pink' },
-  { color: '#06B6D4', name: 'Cyan' },
-  { color: '#F97316', name: 'Orange' },
-  { color: '#14B8A6', name: 'Teal' },
-  { color: '#6366F1', name: 'Indigo' },
+  { color: '#C65F3F', name: 'Terracotta' },
+  { color: '#B08536', name: 'Ochre' },
+  { color: '#7A8B4E', name: 'Olive' },
+  { color: '#4E8B7A', name: 'Sage' },
+  { color: '#4E7A8B', name: 'Steel' },
+  { color: '#5E748B', name: 'Dusk' },
+  { color: '#8B5E7D', name: 'Plum' },
+  { color: '#B35D6B', name: 'Rose' },
+  { color: '#A04E4E', name: 'Brick' },
+  { color: '#8B6F4E', name: 'Caramel' },
 ];
 
 function AccentColorPicker({ value, onChange, onClose, theme }: {
@@ -518,12 +518,24 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     if (!isSupabaseRemote()) return;
-    fetchCurrentUserProfile().then(p => {
-      if (p?.is_moderator) setIsModerator(true);
-    }).catch(() => {});
+    let cancelled = false;
+    // Capability probe: a transient failure would otherwise hide the moderator
+    // section forever. Retry once, then report so it isn't silently lost.
+    const probe = (attempt: number) => {
+      fetchCurrentUserProfile()
+        .then(p => { if (!cancelled && p?.is_moderator) setIsModerator(true); })
+        .catch(e => {
+          if (cancelled) return;
+          if (attempt === 0) setTimeout(() => probe(1), 1500);
+          else captureException(e, { tags: { source: 'settings_moderator_probe' } });
+        });
+    };
+    probe(0);
+    return () => { cancelled = true; };
   }, []);
 
   const [showFontPicker, setShowFontPicker] = useState(false);
+  const [showFontStylePicker, setShowFontStylePicker] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [showBubblePicker, setShowBubblePicker] = useState(false);
   const [showDmPicker, setShowDmPicker] = useState(false);
@@ -743,6 +755,8 @@ export default function SettingsScreen() {
   };
 
   const fontLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.fontSize];
+  const fontStyleValue = s.fontStyle ?? 'editorial';
+  const fontStyleText = fontStyleLabel(fontStyleValue);
   const modelLabel = {
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
     'gemini-2.5-pro': 'Gemini 2.5 Pro',
@@ -841,7 +855,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Bell} label="Notification Preferences" subtitle="Customize which notifications you receive" onPress={() => router.push('/notification-prefs')} />
             {divider}
-            <SettingsRow theme={theme} icon={Lock} iconColor="#F59E0B" label="Private Account" subtitle="Safer default while you're learning the app" right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
+            <SettingsRow theme={theme} icon={Lock} iconColor="#B08536" label="Private Account" subtitle="Safer default while you're learning the app" right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
             {divider}
             <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
           </GlassPanel>
@@ -905,7 +919,7 @@ export default function SettingsScreen() {
               }
             />
             {divider}
-            <SettingsRow theme={theme} icon={Moon} iconColor="#8B5CF6" label="Dark Mode" subtitle="Always on for OLED savings" right={SwitchEl(s.darkMode, s.setDarkMode)} />
+            <SettingsRow theme={theme} icon={Moon} iconColor="#8B5E7D" label="Dark Mode" subtitle="Always on for OLED savings" right={SwitchEl(s.darkMode, s.setDarkMode)} />
             {divider}
             <SettingsRow theme={theme} icon={DeviceMobile} label="Pure Black Background" subtitle="True black for AMOLED screens" right={SwitchEl(s.pureBlackBackground, s.setPureBlackBackground)} />
             {divider}
@@ -925,6 +939,16 @@ export default function SettingsScreen() {
             />
             {divider}
             <SettingsRow theme={theme} icon={TextT} label="Font Size" subtitle={fontLabel} onPress={() => setShowFontPicker(true)} right={chevronValue(fontLabel)} />
+            {divider}
+            <SettingsRow
+              theme={theme}
+              icon={TextT}
+              iconColor={colors.accent}
+              label="Font Style"
+              subtitle="Choose the typography personality across Echo"
+              onPress={() => setShowFontStylePicker(true)}
+              right={chevronValue(fontStyleText)}
+            />
             {divider}
             <SettingsRow theme={theme} icon={Rectangle} label="Corner Radius" subtitle={`${cornerLabel} rounded corners`} onPress={() => setShowCornerPicker(true)} right={chevronValue(cornerLabel)} />
             {divider}
@@ -1068,6 +1092,17 @@ export default function SettingsScreen() {
           value={s.fontSize}
           onChange={(v) => { s.setFontSize(v); showToast(`Font size: ${v}`, 'Font'); }}
           onClose={() => setShowFontPicker(false)}
+        />
+      )}
+
+      {showFontStylePicker && (
+        <OptionPicker
+          theme={theme}
+          title="Font Style"
+          options={FONT_STYLE_OPTIONS}
+          value={fontStyleValue}
+          onChange={(v) => { s.setFontStyle(v); showToast(`Font style: ${fontStyleLabel(v)}`, 'Typography'); }}
+          onClose={() => setShowFontStylePicker(false)}
         />
       )}
 

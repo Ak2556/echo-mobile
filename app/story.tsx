@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StatusBar } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { safeBack } from '../lib/safeBack';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming, FadeInDown } from 'react-native-reanimated';
 import { X, Eye } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
@@ -13,7 +14,6 @@ const PAUSED_DURATION = 999999;
 
 export default function StoryScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
-  const router = useRouter();
   const { getActiveStories, markStoryViewed, autoplayStories } = useAppStore();
   const { colors, radius, fontSizes, animation } = useTheme();
 
@@ -39,7 +39,7 @@ export default function StoryScreen() {
         if (currentIndex < userStories.length - 1) {
           setCurrentIndex(i => i + 1);
         } else {
-          router.back();
+          safeBack();
         }
       }, STORY_DURATION);
     }
@@ -61,7 +61,7 @@ export default function StoryScreen() {
     if (currentIndex < userStories.length - 1) {
       setCurrentIndex(i => i + 1);
     } else {
-      router.back();
+      safeBack();
     }
   };
 
@@ -76,7 +76,7 @@ export default function StoryScreen() {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.bgPure }}>
         <Text style={{ color: colors.textSecondary }}>No stories available</Text>
-        <AnimatedPressable onPress={() => router.back()} className="mt-4" scaleValue={0.95} haptic="light">
+        <AnimatedPressable onPress={() => safeBack()} className="mt-4" scaleValue={0.95} haptic="light">
           <Text style={{ color: colors.accent }}>Close</Text>
         </AnimatedPressable>
       </View>
@@ -111,7 +111,7 @@ export default function StoryScreen() {
             </Text>
           </View>
         </View>
-        <AnimatedPressable onPress={() => router.back()} className="p-2" scaleValue={0.85} haptic="light">
+        <AnimatedPressable onPress={() => safeBack()} className="p-2" scaleValue={0.85} haptic="light">
           <X color={colors.text} size={24} />
         </AnimatedPressable>
       </View>

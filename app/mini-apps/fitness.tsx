@@ -25,7 +25,7 @@ import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
 import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
 import { FoodItem, searchFoods } from '../../lib/foodDatabase';
 
-const TEAL = '#14B8A6';
+const TEAL = '#4E8B7A'; // sage — warm editorial palette
 type Tab = 'meals' | 'workouts' | 'progress' | 'library';
 
 const TABS: { key: Tab; label: string }[] = [
@@ -593,7 +593,7 @@ export default function FitnessApp() {
               </AnimatedPressable>
             </View>
             <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden', marginTop: 12 }}>
-              <View style={{ height: '100%', width: `${calPct}%`, backgroundColor: totals.calories > doc.goals.calories ? '#EF4444' : TEAL, borderRadius: 4 }} />
+              <View style={{ height: '100%', width: `${calPct}%`, backgroundColor: totals.calories > doc.goals.calories ? colors.danger : TEAL, borderRadius: 4 }} />
             </View>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
               {[
@@ -613,22 +613,22 @@ export default function FitnessApp() {
           {/* Water */}
           <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Drop color="#38BDF8" size={26} weight="fill" />
+              <Drop color="#4E7A8B" size={26} weight="fill" />
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
                   {waterToday >= 1000 ? `${(waterToday / 1000).toFixed(1)} L` : `${waterToday} ml`}
                   <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>  of {(doc.goals.waterMl / 1000).toFixed(1)} L</Text>
                 </Text>
                 <View style={{ height: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden', marginTop: 7 }}>
-                  <View style={{ height: '100%', width: `${Math.min(100, Math.round((waterToday / doc.goals.waterMl) * 100))}%`, backgroundColor: '#38BDF8', borderRadius: 3 }} />
+                  <View style={{ height: '100%', width: `${Math.min(100, Math.round((waterToday / doc.goals.waterMl) * 100))}%`, backgroundColor: '#4E7A8B', borderRadius: 3 }} />
                 </View>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
               {[{ label: '+250 ml', ml: 250 }, { label: '+500 ml', ml: 500 }, { label: '+1 L', ml: 1000 }].map(opt => (
                 <Pressable key={opt.ml} onPress={() => addWater(opt.ml)} style={{ flex: 1 }}>
-                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: '#38BDF818', borderWidth: 1, borderColor: '#38BDF833' }}>
-                    <Text style={{ color: '#38BDF8', fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{opt.label}</Text>
+                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: '#4E7A8B18', borderWidth: 1, borderColor: '#4E7A8B33' }}>
+                    <Text style={{ color: '#4E7A8B', fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{opt.label}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -812,7 +812,7 @@ export default function FitnessApp() {
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> kg</Text>
                 </Text>
                 {sortedWeights.length > 1 && (
-                  <Text style={{ color: delta <= 0 ? '#10B981' : '#F59E0B', fontSize: 13, fontWeight: '700', marginTop: 2 }}>
+                  <Text style={{ color: delta <= 0 ? colors.success : colors.warning, fontSize: 13, fontWeight: '700', marginTop: 2 }}>
                     {delta > 0 ? '+' : ''}{delta.toFixed(1)} kg since {new Date(firstWeight.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                   </Text>
                 )}
@@ -873,7 +873,7 @@ export default function FitnessApp() {
                     <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{f.label.toUpperCase()}</Text>
                     <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 2 }}>{cur} <Text style={{ fontSize: 12, color: colors.textMuted }}>cm</Text></Text>
                     {prev && d !== 0 ? (
-                      <Text style={{ color: d < 0 ? '#10B981' : '#F59E0B', fontSize: 11.5, fontWeight: '700' }}>{d > 0 ? '+' : ''}{d.toFixed(1)}</Text>
+                      <Text style={{ color: d < 0 ? colors.success : colors.warning, fontSize: 11.5, fontWeight: '700' }}>{d > 0 ? '+' : ''}{d.toFixed(1)}</Text>
                     ) : null}
                   </View>
                 );
@@ -904,8 +904,8 @@ export default function FitnessApp() {
                           {latest.sets} × {latest.reps} @ {latest.weight} kg · est 1RM {Math.round(cur1rm)} kg
                         </Text>
                       </View>
-                      {up ? <TrendUp color="#10B981" size={18} weight="bold" /> : null}
-                      {down ? <TrendUp color="#F59E0B" size={18} weight="bold" style={{ transform: [{ scaleY: -1 }] }} /> : null}
+                      {up ? <TrendUp color={colors.success} size={18} weight="bold" /> : null}
+                      {down ? <TrendUp color={colors.warning} size={18} weight="bold" style={{ transform: [{ scaleY: -1 }] }} /> : null}
                       {!up && !down ? <Text style={{ color: colors.textMuted, fontSize: 12 }}>{points.length}×</Text> : null}
                     </View>
                   );

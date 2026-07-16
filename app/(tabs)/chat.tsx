@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, usePathname, type Href } from 'expo-router';
+import { useRouter, usePathname, useFocusEffect, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,6 +19,9 @@ import { streamEchoAI, isRateLimitError } from '../../lib/api';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { generateSessionTitle } from '../../lib/aiTitle';
+import { gatherProactiveContext, pickProactiveOpener, expandChip, type ProactiveOpener } from '../../lib/proactiveAI';
+import { syncProactiveNudges } from '../../lib/proactiveNudges';
+import { markCheckinSeen } from '../../lib/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { Avatar } from '../../components/ui/Avatar';
@@ -36,6 +39,7 @@ import type { Conversation } from '../../types';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { getTargetCategory } from '../../lib/targetCategories';
 import { miniAppById } from '../../lib/miniAppCatalog';
+import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 
 // ─── DM colour token (teal, distinct from AI accent) ────────────────────────
 // One accent per app: the DM surfaces use the same warm brand accent as
@@ -419,18 +423,23 @@ function ChatEmptyLaunchpad({
   targetOutcome,
   targetAppIds,
   onPrompt,
+  opener,
+  onSend,
   showPrivacy,
 }: {
   targetLabel: string;
   targetOutcome: string;
   targetAppIds: string[];
   onPrompt: (value: string) => void;
+  opener?: ProactiveOpener | null;
+  onSend?: (value: string) => void;
   showPrivacy: boolean;
 }) {
   const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
   const router = useRouter();
   const toolApps = targetAppIds.map(id => miniAppById(id)).filter(Boolean).slice(0, 3);
+  const firstTool = toolApps[0];
   const quickActions = [
     {
       key: 'target',
@@ -450,7 +459,7 @@ function ChatEmptyLaunchpad({
       key: 'tools',
       title: 'Open tools',
       subtitle: toolApps.map(app => app?.name).filter(Boolean).join(' · ') || 'Mini apps',
-      icon: <SquaresFour color={colors.accent} size={19} weight="bold" />,
+      icon: firstTool ? <MiniAppIcon id={firstTool.id} color={firstTool.color} size={30} /> : <SquaresFour color={colors.accent} size={19} weight="bold" />,
       onPress: () => router.push('/(tabs)/apps' as Href),
     },
   ];
@@ -471,12 +480,20 @@ function ChatEmptyLaunchpad({
               <Sparkle color={colors.accent} size={28} weight="fill" />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 28 : 34, lineHeight: layout.isPhone ? 33 : 40 }]}>
-                What should Echo help you finish?
-              </Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }]} numberOfLines={2}>
-                {targetOutcome || `Start with ${targetLabel.toLowerCase()}, a draft, or a decision.`}
-              </Text>
+              {opener ? (
+                <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 21 : 25, lineHeight: layout.isPhone ? 28 : 33 }]}>
+                  {opener.message}
+                </Text>
+              ) : (
+                <>
+                  <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 28 : 34, lineHeight: layout.isPhone ? 33 : 40 }]}>
+                    What should Echo help you finish?
+                  </Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }]} numberOfLines={2}>
+                    {targetOutcome || `Start with ${targetLabel.toLowerCase()}, a draft, or a decision.`}
+                  </Text>
+                </>
+              )}
               {showPrivacy ? (
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 11, lineHeight: 15, marginTop: 8 }]} numberOfLines={1}>
                   Avoid private details in AI prompts.
@@ -484,6 +501,30 @@ function ChatEmptyLaunchpad({
               ) : null}
             </View>
           </View>
+
+          {opener && opener.chips.length > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {opener.chips.map(chip => (
+                <Pressable
+                  key={chip}
+                  onPress={() => (onSend ?? onPrompt)(expandChip(chip))}
+                  accessibilityRole="button"
+                  style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}
+                >
+                  <View style={{
+                    borderRadius: 999,
+                    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.72)',
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: colors.glassBorder,
+                    paddingHorizontal: 14,
+                    paddingVertical: 9,
+                  }}>
+                    <Text style={[font.bodySemibold, { color: colors.text, fontSize: 13.5 }]}>{chip}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
 
           <Pressable
             onPress={() => onPrompt('Echo, help me with ')}
@@ -597,6 +638,10 @@ export default function ChatScreen() {
   const streamResponses = useAppStore(s => s.streamResponses);
   const personaLearningEnabled = useAppStore(s => s.personaLearningEnabled);
   const accountUserId = useAppStore(s => s.userId);
+  const username = useAppStore(s => s.username);
+  const displayName = useAppStore(s => s.displayName);
+  const proactiveAiEnabled = useAppStore(s => s.proactiveAiEnabled);
+  const setCheckinPending = useAppStore(s => s.setProactiveCheckinPending);
   const targetCategoryId = useAppStore(s => s.targetCategory);
   const targetOutcome = useAppStore(s => s.targetOutcome);
   const targetMiniApps = useAppStore(s => s.targetMiniApps);
@@ -607,6 +652,41 @@ export default function ChatScreen() {
 
   // Mode: AI chat vs DM inbox
   const [chatMode, setChatMode] = useState<'ai' | 'dm'>('ai');
+
+  // Proactive opener: Echo greets first with a message tied to the user's real
+  // day (streak at risk, habits due, target, time). Recomputed each time the
+  // Chat tab regains focus so the greeting stays current.
+  const [opener, setOpener] = useState<ProactiveOpener | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      const name = (displayName || username || '').trim().split(/\s+/)[0] ?? '';
+      // Most recent prior conversation that actually has history — for continuity.
+      const { sessions: allSessions, currentSessionId: curId } = useAppStore.getState();
+      const prior = allSessions
+        .filter(s => s.id !== curId && (s.messageCount ?? 0) > 0)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+      const lastChat = prior
+        ? { title: prior.title, ageDays: Math.max(0, Math.floor((Date.now() - Date.parse(prior.updatedAt)) / 86400000)) }
+        : null;
+      gatherProactiveContext({ name, targetOutcome, lastChat })
+        .then(ctx => {
+          if (cancelled) return;
+          setOpener(pickProactiveOpener(ctx));
+          // Reach-back nudges carry the live context (e.g. the streak name).
+          void syncProactiveNudges(proactiveAiEnabled, ctx);
+        })
+        .catch(() => {});
+      return () => { cancelled = true; };
+    }, [displayName, username, targetOutcome, proactiveAiEnabled]),
+  );
+
+  // Viewing the AI chat clears the "check-in waiting" dot for the day.
+  useFocusEffect(
+    useCallback(() => {
+      if (chatMode === 'ai') { void markCheckinSeen(); setCheckinPending(false); }
+    }, [chatMode, setCheckinPending]),
+  );
 
   // Ephemeral live items: persisted text messages + transient tool cards.
   const [toolItems, setToolItems] = useState<Record<string, ToolCallItem>>({});
@@ -1070,6 +1150,8 @@ export default function ChatScreen() {
       targetOutcome={targetOutcome}
       targetAppIds={targetMiniApps.length ? targetMiniApps : targetCategory.apps}
       onPrompt={setDraft}
+      opener={opener}
+      onSend={handleSend}
       showPrivacy={showFirstChatPanel}
     />
   ) : null;

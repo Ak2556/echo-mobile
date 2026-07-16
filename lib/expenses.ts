@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CURRENCY_MAP, type CurrencyCode } from './currency';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 
 export const TX_KEY = 'mini:expenses';
+export const DEFAULT_EXPENSE_CURRENCY: CurrencyCode = 'USD';
 export type TxType = 'income' | 'expense';
 
 export interface Transaction {
@@ -34,18 +36,27 @@ export interface ExpensesDoc {
   txs: Transaction[];
   /** monthly spending budget; null = not set */
   budget: number | null;
+  /** display currency for this money log */
+  currency: CurrencyCode;
+}
+
+function normalizeCurrency(value: unknown): CurrencyCode {
+  return typeof value === 'string' && CURRENCY_MAP.has(value as CurrencyCode)
+    ? value as CurrencyCode
+    : DEFAULT_EXPENSE_CURRENCY;
 }
 
 function coerceDoc(raw: unknown): ExpensesDoc {
-  if (Array.isArray(raw)) return { txs: raw as Transaction[], budget: null };
+  if (Array.isArray(raw)) return { txs: raw as Transaction[], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
   if (raw && typeof raw === 'object') {
     const doc = raw as Partial<ExpensesDoc>;
     return {
       txs: Array.isArray(doc.txs) ? doc.txs : [],
       budget: typeof doc.budget === 'number' && doc.budget > 0 ? doc.budget : null,
+      currency: normalizeCurrency(doc.currency),
     };
   }
-  return { txs: [], budget: null };
+  return { txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
 }
 
 export async function loadExpensesDoc(): Promise<ExpensesDoc> {
@@ -54,7 +65,7 @@ export async function loadExpensesDoc(): Promise<ExpensesDoc> {
   try {
     return coerceDoc(JSON.parse((await AsyncStorage.getItem(TX_KEY)) ?? 'null'));
   } catch {
-    return { txs: [], budget: null };
+    return { txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
   }
 }
 

@@ -6,6 +6,7 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ArrowLeft, PaperPlaneTilt, Lightning, Broadcast, Clock } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
+import { warmAvatarColor } from '../lib/avatarPalette';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -72,7 +73,7 @@ export default function CreateStoryScreen() {
       userId,
       username: username || 'anonymous',
       displayName: displayName || username || 'anonymous',
-      avatarColor: avatarColor || colors.accent,
+      avatarColor: warmAvatarColor(avatarColor, username ?? displayName ?? 'me'),
       prompt: prompt.trim(),
       response: response.trim(),
       viewCount: 0,

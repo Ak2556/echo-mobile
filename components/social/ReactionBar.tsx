@@ -19,11 +19,12 @@ import type { EchoReaction, ReactionCounts } from '../../types';
  * affordance still lets the viewer pick).
  */
 
+// Warm editorial palette (lib/avatarPalette.ts) — one tint per reaction.
 const REACTION_META: Record<EchoReaction, { shortLabel: string; label: string; tint: string }> = {
-  mind_blown:   { shortLabel: 'Insight', label: 'insightful',   tint: '#A855F7' },
-  taking_notes: { shortLabel: 'Notes',   label: 'taking notes', tint: '#EAB308' },
-  agree:        { shortLabel: 'Agree',   label: 'agree',        tint: '#10B981' },
-  disagree:     { shortLabel: 'Rethink', label: 'rethink',      tint: '#3B82F6' },
+  mind_blown:   { shortLabel: 'Insight', label: 'insightful',   tint: '#8B5E7D' },
+  taking_notes: { shortLabel: 'Notes',   label: 'taking notes', tint: '#B08536' },
+  agree:        { shortLabel: 'Agree',   label: 'agree',        tint: '#7A8B4E' },
+  disagree:     { shortLabel: 'Rethink', label: 'rethink',      tint: '#4E7A8B' },
 };
 
 const ORDER: EchoReaction[] = ['mind_blown', 'taking_notes', 'agree', 'disagree'];

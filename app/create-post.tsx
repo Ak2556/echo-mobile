@@ -283,7 +283,7 @@ export default function CreatePostScreen() {
         id: Date.now().toString(),
         userId: remoteAuthorId ?? userId, username: username || 'anonymous',
         displayName: displayName || username || 'anonymous',
-        avatarColor: avatarColor || colors.accent,
+        avatarColor: warmAvatarColor(avatarColor, username ?? displayName ?? 'me'),
         avatarUrl: visibleAvatarUrl || undefined,
         isVerified: false,
         likes: 0, isLiked: false, isBookmarked: false, isReposted: false,

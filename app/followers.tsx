@@ -7,6 +7,7 @@ import { ArrowLeft, Users } from 'phosphor-react-native';
 import { UserRow } from '../components/social/UserRow';
 import { UserRowSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
+import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -39,6 +40,8 @@ export default function FollowersScreen() {
       : followingLocal;
 
   const loading = remote && (followersRemote.isPending || followingRemote.isPending);
+  const activeQuery = activeTab === 'followers' ? followersRemote : followingRemote;
+  const showError = remote && activeQuery.isError && data.length === 0;
 
   const followersCount = remote ? (followersRemote.data?.length ?? 0) : followersLocal.length;
   const followingCount = remote ? (followingRemote.data?.length ?? 0) : followingLocal.length;
@@ -86,9 +89,11 @@ export default function FollowersScreen() {
           <UserRowSkeleton />
           <UserRowSkeleton />
         </View>
+      ) : showError ? (
+        <ErrorState kind={classifyError(activeQuery.error)} onRetry={() => activeQuery.refetch()} />
       ) : data.length === 0 ? (
         <EmptyState
-          icon={<Users color="#6366F1" size={32} />}
+          icon={<Users color={colors.accent} size={32} />}
           title={activeTab === 'followers' ? 'No followers yet' : 'Not following anyone'}
           subtitle={activeTab === 'followers'
             ? 'Share great echoes and people will follow you!'

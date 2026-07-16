@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { safeBack } from '../lib/safeBack';
 import Animated, { FadeIn, FadeInUp, SlideInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Check, LockSimple, Sparkle, Lightning, Clock } from 'phosphor-react-native';
@@ -136,7 +137,7 @@ function DailyQuestionScreenInner() {
   if (!question) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <ScreenHeader title="Daily Question" onBack={() => router.back()} />
+        <ScreenHeader title="Daily Question" onBack={() => safeBack()} />
         <View style={{ padding: 24, alignItems: 'center', marginTop: 80 }}>
           <Sparkle color={colors.textMuted} size={40} />
           <Text style={{ color: colors.textMuted, marginTop: 16, textAlign: 'center', lineHeight: 22 }}>
@@ -149,7 +150,7 @@ function DailyQuestionScreenInner() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScreenHeader title="Daily Question" onBack={() => router.back()} />
+      <ScreenHeader title="Daily Question" onBack={() => safeBack()} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}

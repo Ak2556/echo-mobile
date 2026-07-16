@@ -245,7 +245,7 @@ export default function BillSplitterScreen() {
         ))}
 
         {mode === 'exact' && billNum > 0 && Math.abs(exactGap) > 0.009 && (
-          <Text style={{ color: exactGap > 0 ? '#F59E0B' : '#EF4444', fontSize: 12.5, fontWeight: '700', marginTop: 2 }}>
+          <Text style={{ color: exactGap > 0 ? colors.warning : colors.danger, fontSize: 12.5, fontWeight: '700', marginTop: 2 }}>
             {exactGap > 0
               ? `$${fmt(exactGap)} of the bill still unclaimed`
               : `Claims exceed the bill by $${fmt(-exactGap)}`}

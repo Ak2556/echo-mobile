@@ -3,21 +3,23 @@ import { View, Text, StyleSheet } from 'react-native';
 import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope, BookmarkSimple, Sparkle, Quotes, CheckCircle, ShieldWarning } from 'phosphor-react-native';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
+import { IconBadge } from '../ui/IconBadge';
 import { Notification } from '../../types';
 import { useTheme } from '../../lib/theme';
 
+// Warm editorial palette (lib/avatarPalette.ts) — one hue per notification type.
 const TYPE_COLOR: Record<string, string> = {
-  like: '#EF4444',
-  comment: '#3B82F6',
-  follow: '#10B981',
-  repost: '#8B5CF6',
-  mention: '#F59E0B',
-  dm: '#06B6D4',
-  reaction: '#EC4899',
-  bookmark: '#EAB308',
-  quote: '#8B5CF6',
-  report_resolved: '#10B981',
-  content_removed: '#EF4444',
+  like: '#A04E4E',
+  comment: '#4E7A8B',
+  follow: '#7A8B4E',
+  repost: '#4E8B7A',
+  mention: '#B08536',
+  dm: '#5E748B',
+  reaction: '#B35D6B',
+  bookmark: '#8B6F4E',
+  quote: '#8B5E7D',
+  report_resolved: '#7A8B4E',
+  content_removed: '#A04E4E',
 };
 
 const REACTION_LABEL: Record<string, string> = {
@@ -78,9 +80,9 @@ function AvatarWithBadge({ n }: { n: Notification }) {
   return (
     <View style={{ width: 44, height: 44, marginRight: 12 }}>
       {isSystem ? (
-        <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: `${color}22` }}>
-          <NotifIcon type={n.type} size={20} color={color} />
-        </View>
+        <IconBadge color={color} size={44} radius={16}>
+          <NotifIcon type={n.type} size={20} color="#fff" />
+        </IconBadge>
       ) : (
         <>
           <Avatar name={n.fromDisplayName || n.fromUsername} color={n.fromAvatarColor} url={n.fromAvatarUrl} size={44} />
