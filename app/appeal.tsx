@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, Scales, CheckCircle, Clock, X } from 'phosphor-react-native';
@@ -17,11 +17,14 @@ import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { fetchMyAppeals, submitAppeal, type MyAppeal } from '../lib/supabaseEchoApi';
+import { ErrorState, classifyError } from '../components/common/ErrorState';
+import { safeBack } from '../lib/safeBack';
 
-const STATUS_CONFIG: Record<MyAppeal['status'], { label: string; color: string; Icon: React.ComponentType<any> }> = {
-  pending:    { label: 'Under review',  color: '#F59E0B', Icon: Clock },
-  upheld:     { label: 'Upheld — decision stands',     color: '#EF4444', Icon: X },
-  overturned: { label: 'Overturned — content restored', color: '#10B981', Icon: CheckCircle },
+// `tone` resolves to a theme token at render so status color adapts per theme.
+const STATUS_CONFIG: Record<MyAppeal['status'], { label: string; tone: 'warning' | 'danger' | 'success'; Icon: React.ComponentType<any> }> = {
+  pending:    { label: 'Under review',  tone: 'warning', Icon: Clock },
+  upheld:     { label: 'Upheld — decision stands',     tone: 'danger', Icon: X },
+  overturned: { label: 'Overturned — content restored', tone: 'success', Icon: CheckCircle },
 };
 
 function timeAgo(iso: string): string {
@@ -46,14 +49,21 @@ export default function AppealScreen() {
 
   const [appeals, setAppeals] = useState<MyAppeal[]>([]);
   const [loading, setLoading] = useState(!isNew);
+  const [loadError, setLoadError] = useState<unknown>(null);
+
+  const loadAppeals = useCallback(() => {
+    setLoading(true);
+    setLoadError(null);
+    fetchMyAppeals()
+      .then((rows) => { setAppeals(rows); setLoadError(null); })
+      .catch((e) => setLoadError(e))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (isNew) return;
-    fetchMyAppeals()
-      .then(setAppeals)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [isNew]);
+    loadAppeals();
+  }, [isNew, loadAppeals]);
 
   const MIN_CHARS = 20;
   const MAX_CHARS = 2000;
@@ -85,7 +95,7 @@ export default function AppealScreen() {
         alignItems: 'center',
         gap: 12,
       }}>
-        <AnimatedPressable onPress={() => router.back()} hitSlop={12} fadeOnPress>
+        <AnimatedPressable onPress={() => safeBack()} hitSlop={12} fadeOnPress accessibilityRole="button" accessibilityLabel="Go back">
           <ArrowLeft color={colors.text} size={22} />
         </AnimatedPressable>
         <View style={{ flex: 1 }}>
@@ -108,7 +118,7 @@ export default function AppealScreen() {
           >
             {submitted ? (
               <Animated.View entering={FadeInDown.springify()} style={{ alignItems: 'center', paddingTop: 48, gap: 16 }}>
-                <CheckCircle color="#10B981" size={56} weight="fill" />
+                <CheckCircle color={colors.success} size={56} weight="fill" />
                 <Text style={{ color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold', textAlign: 'center' }}>
                   Appeal submitted
                 </Text>
@@ -116,7 +126,7 @@ export default function AppealScreen() {
                   {"We'll review your appeal and notify you of the outcome within 14 days, as required by the Digital Services Act."}
                 </Text>
                 <AnimatedPressable
-                  onPress={() => router.back()}
+                  onPress={() => safeBack()}
                   fadeOnPress
                   style={{
                     backgroundColor: colors.accent,
@@ -214,6 +224,8 @@ export default function AppealScreen() {
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <ActivityIndicator color={colors.accent} />
           </View>
+        ) : loadError ? (
+          <ErrorState kind={classifyError(loadError)} onRetry={loadAppeals} />
         ) : (
           <ScrollView
             contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: insets.bottom + 40 }}
@@ -229,13 +241,14 @@ export default function AppealScreen() {
             ) : (
               appeals.map((a, i) => {
                 const cfg = STATUS_CONFIG[a.status];
+                const statusColor = colors[cfg.tone];
                 return (
                   <Animated.View key={a.id} entering={FadeInDown.delay(i * 60).springify()}>
                     <GlassPanel style={{ padding: 16, gap: 10 }}>
                       {/* Status row */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <cfg.Icon color={cfg.color} size={16} weight="fill" />
-                        <Text style={{ color: cfg.color, fontSize: 13, fontFamily: 'Inter_600SemiBold', flex: 1 }}>
+                        <cfg.Icon color={statusColor} size={16} weight="fill" />
+                        <Text style={{ color: statusColor, fontSize: 13, fontFamily: 'Inter_600SemiBold', flex: 1 }}>
                           {cfg.label}
                         </Text>
                         <Text style={{ color: colors.textMuted, fontSize: 11 }}>
@@ -255,7 +268,7 @@ export default function AppealScreen() {
                           borderRadius: radius.md,
                           padding: 12,
                           borderLeftWidth: 3,
-                          borderLeftColor: cfg.color,
+                          borderLeftColor: statusColor,
                         }}>
                           <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
                             Moderator note

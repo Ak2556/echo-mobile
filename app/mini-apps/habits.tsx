@@ -420,7 +420,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
 }
 
 export default function HabitsApp() {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const accent = colors.accent;
   const [habits, setHabits] = useState<Habit[]>([]);
   useEffect(() => { loadHabits().then(setHabits); }, []);
@@ -643,7 +643,7 @@ export default function HabitsApp() {
         <View style={{ marginTop: 8 }}>
           <Pressable onPress={() => setShowArchived(v => !v)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>
+              <Text style={[font.eyebrow, { color: colors.textMuted, flex: 1 }]}>
                 Archived · {archived.length}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 13 }}>{showArchived ? 'Hide' : 'Show'}</Text>

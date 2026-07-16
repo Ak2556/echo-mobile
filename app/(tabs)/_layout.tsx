@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Tabs, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, AppState } from 'react-native';
+import { Tabs, useRouter, type Href } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,12 +9,18 @@ import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
+import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
+import { ReflectiveNavIcon } from '../../components/ui/ReflectiveNavIcon';
 import { showToast } from '../../components/ui/Toast';
 import { tap } from '../../lib/haptics';
 import { clearPushToken, registerForPush } from '../../lib/push';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { isCheckinPending } from '../../lib/proactiveCheckin';
+import { getRecentTools, recordToolOpen } from '../../lib/miniAppRecents';
+import { miniAppById } from '../../lib/miniAppCatalog';
+import { rememberPrimaryTab } from '../../lib/navigationMemory';
 
-const HIDDEN_ROUTES = new Set(['apps', 'notifications']);
+const HIDDEN_ROUTES = new Set(['notifications']);
 const DESKTOP_ROUTES = new Set(['home', 'explore', 'marketplace', 'chat', 'you', 'notifications', 'apps']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
@@ -57,9 +63,30 @@ function BadgeIcon({ children, count }: { children: React.ReactNode; count: numb
   );
 }
 
+/** Small accent dot — a "something's waiting" hint without a count. */
+function DotIcon({ children }: { children: React.ReactNode }) {
+  const { colors } = useTheme();
+  return (
+    <View>
+      {children}
+      <View style={{
+        position: 'absolute',
+        top: -2,
+        right: -5,
+        width: 9,
+        height: 9,
+        borderRadius: 5,
+        backgroundColor: colors.accent,
+        borderWidth: 1.5,
+        borderColor: colors.bg,
+      }} />
+    </View>
+  );
+}
+
 function routeLabel(routeName: string, title?: string): string {
   if (title) return title;
-  if (routeName === 'apps') return 'Apps';
+  if (routeName === 'apps') return 'Tools';
   if (routeName === 'notifications') return 'Alerts';
   return routeName.charAt(0).toUpperCase() + routeName.slice(1);
 }
@@ -170,13 +197,15 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
                 borderLeftColor: colors.accent,
               }}
             >
-              {badgeCount > 0 ? (
-                <BadgeIcon count={badgeCount}>
-                  <IconComp color={color} size={20} weight={isFocused ? 'fill' : 'regular'} />
-                </BadgeIcon>
-              ) : (
-                <IconComp color={color} size={20} weight={isFocused ? 'fill' : 'regular'} />
-              )}
+              <ReflectiveNavIcon active={isFocused} size={30} radius={10}>
+                {badgeCount > 0 ? (
+                  <BadgeIcon count={badgeCount}>
+                    <IconComp color={color} size={18} weight="regular" />
+                  </BadgeIcon>
+                ) : (
+                  <IconComp color={color} size={18} weight="regular" />
+                )}
+              </ReflectiveNavIcon>
               <Text
                 style={[font.bodySemibold, { color, fontSize: 14, lineHeight: lineHeights.small, flex: 1 }]}
                 numberOfLines={1}
@@ -223,8 +252,36 @@ function FloatingTabBar(props: BottomTabBarProps) {
   const notificationsEnabled = useAppStore(s => s.notificationsEnabled);
   const setNotificationsEnabled = useAppStore(s => s.setNotificationsEnabled);
   const markAllNotificationsRead = useAppStore(s => s.markAllNotificationsRead);
+  const proactiveAiEnabled = useAppStore(s => s.proactiveAiEnabled);
+  const checkinPending = useAppStore(s => s.proactiveCheckinPending);
+  const setCheckinPending = useAppStore(s => s.setProactiveCheckinPending);
   const [longPressKey, setLongPressKey] = useState<string | null>(null);
+  const [recentToolIds, setRecentToolIds] = useState<string[]>([]);
   const layout = useResponsiveLayout();
+
+  useEffect(() => {
+    const route = state.routes[state.index];
+    if (route) rememberPrimaryTab(route.name);
+  }, [state.index, state.routes]);
+
+  useEffect(() => {
+    const load = () => { void getRecentTools().then(setRecentToolIds).catch(() => setRecentToolIds([])); };
+    load();
+    const sub = AppState.addEventListener('change', s => { if (s === 'active') load(); });
+    return () => sub.remove();
+  }, []);
+
+  // Recompute the "Echo has a check-in" dot on mount and when the app returns
+  // to the foreground — a new day surfaces a fresh check-in.
+  useEffect(() => {
+    const evaluate = () => {
+      if (!proactiveAiEnabled) { setCheckinPending(false); return; }
+      isCheckinPending().then(setCheckinPending).catch(() => {});
+    };
+    evaluate();
+    const sub = AppState.addEventListener('change', s => { if (s === 'active') evaluate(); });
+    return () => sub.remove();
+  }, [proactiveAiEnabled, setCheckinPending]);
 
   if (layout.navigationKind === 'desktop-sidebar') {
     return <DesktopSidebar {...props} />;
@@ -235,8 +292,12 @@ function FloatingTabBar(props: BottomTabBarProps) {
   const visibleRoutes = state.routes.filter(r => !HIDDEN_ROUTES.has(r.name));
   const isTabletTabs = layout.navigationKind === 'tablet-tabs';
   const tabHeight = isTabletTabs ? 64 : 56;
-  const iconSize = isTabletTabs ? 24 : 22;
-  const labelSize = isTabletTabs ? 11 : 10;
+  const iconSize = isTabletTabs ? 24 : visibleRoutes.length > 5 ? 21 : 22;
+  const labelSize = isTabletTabs ? 11 : visibleRoutes.length > 5 ? 9.5 : 10;
+  const recentToolActions = recentToolIds
+    .map(id => miniAppById(id))
+    .filter((app): app is NonNullable<ReturnType<typeof miniAppById>> => Boolean(app))
+    .slice(0, 3);
 
   const setPushNotifications = async (enabled: boolean) => {
     if (!enabled) {
@@ -253,6 +314,33 @@ function FloatingTabBar(props: BottomTabBarProps) {
 
   const longPressActions = (routeName: string): ActionItem[] | null => {
     switch (routeName) {
+      case 'home':
+        return [
+          ...(recentToolActions[0] ? [{
+            key: 'last-tool',
+            label: `Continue ${recentToolActions[0].name}`,
+            icon: <MiniAppIcon id={recentToolActions[0].id} color={recentToolActions[0].color} size={30} />,
+            onPress: () => {
+              void recordToolOpen(recentToolActions[0].id);
+              router.push(recentToolActions[0].route);
+            },
+          }] : []),
+          { key: 'tools', label: 'Open Tools', icon: <SquaresFour color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/apps' as Href) },
+          { key: 'compose', label: 'New Echo', icon: <PencilSimple color={colors.accent} size={18} />, onPress: () => router.push('/create-post') },
+        ];
+      case 'apps':
+        return [
+          { key: 'tools', label: 'Open Tools', icon: <SquaresFour color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/apps' as Href) },
+          ...recentToolActions.map(app => ({
+            key: app.id,
+            label: `Open ${app.name}`,
+            icon: <MiniAppIcon id={app.id} color={app.color} size={30} />,
+            onPress: () => {
+              void recordToolOpen(app.id);
+              router.push(app.route);
+            },
+          })),
+        ];
       case 'chat':
         return [
           { key: 'inbox',   label: 'Open Messages',    icon: <Envelope     color={colors.accent} size={18} />, onPress: () => router.push('/messages') },
@@ -356,13 +444,19 @@ function FloatingTabBar(props: BottomTabBarProps) {
                   minWidth: 0,
                 }}
               >
-                {badgeCount > 0 ? (
-                  <BadgeIcon count={badgeCount}>
-                    <IconComp color={color} size={iconSize} weight={isFocused ? 'fill' : 'regular'} />
-                  </BadgeIcon>
-                ) : (
-                  <IconComp color={color} size={iconSize} weight={isFocused ? 'fill' : 'regular'} />
-                )}
+                <ReflectiveNavIcon active={isFocused} size={isTabletTabs ? 34 : 30} radius={12}>
+                  {badgeCount > 0 ? (
+                    <BadgeIcon count={badgeCount}>
+                      <IconComp color={color} size={iconSize} weight="regular" />
+                    </BadgeIcon>
+                  ) : route.name === 'chat' && checkinPending && !isFocused ? (
+                    <DotIcon>
+                      <IconComp color={color} size={iconSize} weight="regular" />
+                    </DotIcon>
+                  ) : (
+                    <IconComp color={color} size={iconSize} weight="regular" />
+                  )}
+                </ReflectiveNavIcon>
                 <Text
                   style={{
                     ...font.bodySemibold,
@@ -415,7 +509,7 @@ export default function TabLayout() {
       <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
       <Tabs.Screen name="you" options={{ title: 'You' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Alerts', href: null }} />
-      <Tabs.Screen name="apps" options={{ title: 'Apps', href: null }} />
+      <Tabs.Screen name="apps" options={{ title: 'Tools' }} />
     </Tabs>
   );
 }

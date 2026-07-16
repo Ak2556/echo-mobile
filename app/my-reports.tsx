@@ -9,11 +9,12 @@ import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/theme';
 import { fetchMyReports, type MyReport } from '../lib/supabaseEchoApi';
 
+// `tone` resolves to a theme token at render so status color adapts per theme.
 const STATUS_CONFIG = {
-  open:       { label: 'Pending review',  color: '#F59E0B', Icon: Clock },
-  reviewing:  { label: 'Under review',    color: '#3B82F6', Icon: MagnifyingGlass },
-  resolved:   { label: 'Action taken',    color: '#10B981', Icon: CheckCircle },
-  dismissed:  { label: 'No action taken', color: '#6B7280', Icon: X },
+  open:       { label: 'Pending review',  tone: 'warning',  Icon: Clock },
+  reviewing:  { label: 'Under review',    tone: 'accent',   Icon: MagnifyingGlass },
+  resolved:   { label: 'Action taken',    tone: 'success',  Icon: CheckCircle },
+  dismissed:  { label: 'No action taken', tone: 'textMuted', Icon: X },
 } as const;
 
 function timeAgo(iso: string): string {
@@ -43,7 +44,7 @@ export default function MyReportsScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel="Go back">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title, flex: 1 }]}>My Reports</Text>
@@ -82,13 +83,14 @@ export default function MyReportsScreen() {
           {reports.map((report, i) => {
             const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.open;
             const StatusIcon = cfg.Icon;
+            const statusColor = colors[cfg.tone];
             return (
               <Animated.View key={report.id} entering={FadeInDown.delay(i * 40).duration(220)}>
                 <GlassPanel borderRadius={radius.card} contentStyle={{ padding: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <StatusIcon size={15} color={cfg.color} weight="bold" />
-                      <Text style={[font.bodySemibold, { color: cfg.color, fontSize: fontSizes.caption }]}>{cfg.label}</Text>
+                      <StatusIcon size={15} color={statusColor} weight="bold" />
+                      <Text style={[font.bodySemibold, { color: statusColor, fontSize: fontSizes.caption }]}>{cfg.label}</Text>
                     </View>
                     <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>{timeAgo(report.createdAt)}</Text>
                   </View>

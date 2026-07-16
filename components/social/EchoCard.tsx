@@ -17,6 +17,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { showToast } from '../ui/Toast';
 import { FeedItem } from '../../types';
 import { ACCENT_COLORS, ACCENT_CHIP, accentShadow } from '../../lib/accentDesign';
+import { warmAvatarColor } from '../../lib/avatarPalette';
 import { videoSourceForUri } from '../../lib/videoMedia';
 import { echoUrl } from '../../lib/echoUrl';
 
@@ -230,7 +231,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15 }}>{`Couldn't load video`}</Text>
           <Pressable
             onPress={retryVideo}
-            style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: '#6366F1' }}
+            style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: ACCENT_COLORS.cyan }}
           >
             <Text style={{ color: '#fff', fontWeight: '700' }}>Retry</Text>
           </Pressable>
@@ -290,7 +291,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
               cachePolicy="memory-disk"
             />
           ) : (
-            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: item.avatarColor || '#6366F1', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}>
+            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: warmAvatarColor(item.avatarColor, item.username || item.displayName || '?'), alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}>
               <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initials}</Text>
             </View>
           )}

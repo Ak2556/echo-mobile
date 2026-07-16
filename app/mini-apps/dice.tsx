@@ -11,13 +11,14 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 
+// Warm editorial palette (lib/avatarPalette.ts) — one hue per die.
 const DICE = [
-  { sides: 4,  label: 'D4',  color: '#EF4444' },
-  { sides: 6,  label: 'D6',  color: '#F59E0B' },
-  { sides: 8,  label: 'D8',  color: '#10B981' },
-  { sides: 10, label: 'D10', color: '#06B6D4' },
-  { sides: 12, label: 'D12', color: '#8B5CF6' },
-  { sides: 20, label: 'D20', color: '#6366F1' },
+  { sides: 4,  label: 'D4',  color: '#A04E4E' },
+  { sides: 6,  label: 'D6',  color: '#B08536' },
+  { sides: 8,  label: 'D8',  color: '#7A8B4E' },
+  { sides: 10, label: 'D10', color: '#4E8B7A' },
+  { sides: 12, label: 'D12', color: '#8B5E7D' },
+  { sides: 20, label: 'D20', color: '#5E748B' },
 ];
 
 interface HistoryEntry { die: string; result: number; color: string; ts: number }
@@ -88,7 +89,7 @@ export default function DiceApp() {
     setTimeout(() => {
       const face = Math.random() > 0.5 ? 'heads' : 'tails';
       setCoinFace(face);
-      setHistory(prev => [{ die: 'Coin', result: face === 'heads' ? 1 : 0, color: '#F59E0B', ts: Date.now() }, ...prev.slice(0, 19)]);
+      setHistory(prev => [{ die: 'Coin', result: face === 'heads' ? 1 : 0, color: '#B08536', ts: Date.now() }, ...prev.slice(0, 19)]);
     }, 200);
   };
 
@@ -178,17 +179,17 @@ export default function DiceApp() {
       <View style={{ alignItems: 'center', gap: 16, marginBottom: 14 }}>
         <Animated.View style={coinStyle}>
           <Pressable onPress={flipCoin}>
-            <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: coinFace === 'heads' ? '#F59E0B22' : coinFace === 'tails' ? '#6366F122' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: 3, borderColor: coinFace ? (coinFace === 'heads' ? '#F59E0B' : '#6366F1') : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: coinFace === 'heads' ? '#F59E0B' : coinFace === 'tails' ? '#6366F1' : colors.textMuted, fontSize: 18, fontWeight: '900' }}>{coinFace === 'heads' ? 'H' : coinFace === 'tails' ? 'T' : '?'}</Text>
+            <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: coinFace === 'heads' ? '#B0853622' : coinFace === 'tails' ? '#5E748B22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: 3, borderColor: coinFace ? (coinFace === 'heads' ? '#B08536' : '#5E748B') : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: coinFace === 'heads' ? '#B08536' : coinFace === 'tails' ? '#5E748B' : colors.textMuted, fontSize: 18, fontWeight: '900' }}>{coinFace === 'heads' ? 'H' : coinFace === 'tails' ? 'T' : '?'}</Text>
             </View>
           </Pressable>
         </Animated.View>
         {coinFace && (
           <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
-            <Text style={{ color: coinFace === 'heads' ? '#F59E0B' : '#6366F1', fontSize: 28, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 }}>{coinFace}</Text>
+            <Text style={{ color: coinFace === 'heads' ? '#B08536' : '#5E748B', fontSize: 28, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 }}>{coinFace}</Text>
           </Animated.View>
         )}
-        <AnimatedPressable onPress={flipCoin} scaleValue={0.95} haptic="heavy" style={{ backgroundColor: '#F59E0B', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 40, shadowColor: '#F59E0B', shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+        <AnimatedPressable onPress={flipCoin} scaleValue={0.95} haptic="heavy" style={{ backgroundColor: '#B08536', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 40, shadowColor: '#B08536', shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
           <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Flip Coin</Text>
         </AnimatedPressable>
       </View>

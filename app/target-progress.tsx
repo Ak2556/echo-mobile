@@ -10,6 +10,7 @@ import { getTargetCategory } from '../lib/targetCategories';
 import { getTodayProductivity, type TodayProductivity } from '../lib/localSearch';
 import { buildTargetProgressDigest, type TargetProgressDigest } from '../lib/targetProgress';
 import { setPendingPublishContext } from '../lib/publishContext';
+import { IconBadge } from '../components/ui/IconBadge';
 
 export default function TargetProgressScreen() {
   const router = useRouter();
@@ -73,16 +74,9 @@ export default function TargetProgressScreen() {
         }]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{
-            width: 48,
-            height: 48,
-            borderRadius: 16,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: `${colors.accent}20`,
-          }}>
-            <Target color={colors.accent} size={25} weight="bold" />
-          </View>
+          <IconBadge color={colors.accent} size={48} radius={16}>
+            <Target color="#fff" size={25} weight="bold" />
+          </IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 27, lineHeight: 32 }]}>
               {category.label}
@@ -192,16 +186,9 @@ function ActionButton({
         gap: 12,
       }}
     >
-      <View style={{
-        width: 34,
-        height: 34,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: filled ? 'rgba(255,255,255,0.18)' : `${colors.accent}18`,
-      }}>
+      <IconBadge color={colors.accent} size={34} radius={12} muted={!filled}>
         {icon}
-      </View>
+      </IconBadge>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[font.bodyBold, { color: filled ? '#fff' : colors.text, fontSize: 14 }]}>
           {label}

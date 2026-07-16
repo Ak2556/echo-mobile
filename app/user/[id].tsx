@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Share, View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { safeBack } from '../../lib/safeBack';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import {
@@ -75,7 +76,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
     <View>
       <View className="flex-row items-center justify-between px-4 py-2">
         <AnimatedPressable
-          onPress={() => router.back()}
+          onPress={() => safeBack()}
           className="p-1"
           scaleValue={0.88}
           haptic="light"
@@ -315,7 +316,7 @@ export default function UserProfileScreen() {
               <Text style={{ color: colors.accent }}>Retry</Text>
             </AnimatedPressable>
           ) : null}
-          <AnimatedPressable onPress={() => router.back()} className="mt-4" scaleValue={0.95} haptic="light">
+          <AnimatedPressable onPress={() => safeBack()} className="mt-4" scaleValue={0.95} haptic="light">
             <Text style={{ color: colors.accent }}>Go Back</Text>
           </AnimatedPressable>
         </SafeAreaView>
@@ -412,7 +413,7 @@ export default function UserProfileScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} className="items-center justify-center">
         <Text style={{ color: colors.textSecondary }}>User not found</Text>
-        <AnimatedPressable onPress={() => router.back()} className="mt-4" scaleValue={0.95} haptic="light">
+        <AnimatedPressable onPress={() => safeBack()} className="mt-4" scaleValue={0.95} haptic="light">
           <Text style={{ color: colors.accent }}>Go Back</Text>
         </AnimatedPressable>
       </SafeAreaView>
@@ -452,7 +453,15 @@ export default function UserProfileScreen() {
             creatorProfile={creatorProfile}
           />
         }
-        ListEmptyComponent={<View className="items-center pt-12"><Text style={{ color: colors.textMuted }}>No echoes yet</Text></View>}
+        ListEmptyComponent={
+          <View style={{ paddingTop: 40 }}>
+            <EmptyState
+              icon={<Images color={colors.accent} size={28} weight="duotone" />}
+              title="No echoes yet"
+              subtitle="When they publish, you’ll see it here."
+            />
+          </View>
+        }
       />
     </SafeAreaView>
   );

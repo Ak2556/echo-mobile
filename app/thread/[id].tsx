@@ -4,6 +4,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { safeBack } from '../../lib/safeBack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
@@ -83,7 +84,7 @@ export default function ThreadDetailScreen() {
         ) : (
           <>
             <Text style={{ color: colors.textSecondary }}>Echo not found</Text>
-            <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
+            <Pressable onPress={() => safeBack()} style={{ marginTop: 16 }}>
               <Text style={{ color: colors.accent }}>Go back</Text>
             </Pressable>
           </>
@@ -98,7 +99,7 @@ export default function ThreadDetailScreen() {
   const handleDelete = () => {
     Alert.alert('Delete Echo', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { deleteEcho(item.id); router.back(); } },
+      { text: 'Delete', style: 'destructive', onPress: () => { deleteEcho(item.id); safeBack(); } },
     ]);
   };
 
@@ -178,7 +179,7 @@ export default function ThreadDetailScreen() {
         <BlurView intensity={50} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.72 }]} pointerEvents="none" />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: insets.top + 6, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
+        <Pressable onPress={() => safeBack()} style={{ padding: 4 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
         <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Echo Thread</Text>

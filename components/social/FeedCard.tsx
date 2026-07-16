@@ -17,6 +17,7 @@ import { ReactionBar } from './ReactionBar';
 import { RemixButton } from './RemixButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
+import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
 import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
 import { warmAvatarColor } from '../../lib/avatarPalette';
@@ -38,13 +39,14 @@ interface FeedCardProps {
   pinned?: boolean;
 }
 
+// Warm editorial palette (lib/avatarPalette.ts) — one hue per perspective.
 const PERSPECTIVE_CHIP: Record<PerspectiveType, { verb: string; color: string; dimColor: string }> = {
-  agree:     { verb: 'Builds on',  color: '#10B981', dimColor: '#10B98120' },
-  challenge: { verb: 'Challenges', color: '#F97316', dimColor: '#F9731620' },
-  reframe:   { verb: 'Reframes',   color: '#8B5CF6', dimColor: '#8B5CF620' },
-  story:     { verb: 'Story',      color: '#F59E0B', dimColor: '#F59E0B20' },
-  evidence:  { verb: 'Cites',      color: '#06B6D4', dimColor: '#06B6D420' },
-  question:  { verb: 'Questions',  color: '#3B82F6', dimColor: '#3B82F620' },
+  agree:     { verb: 'Builds on',  color: '#7A8B4E', dimColor: '#7A8B4E20' },
+  challenge: { verb: 'Challenges', color: '#C65F3F', dimColor: '#C65F3F20' },
+  reframe:   { verb: 'Reframes',   color: '#8B5E7D', dimColor: '#8B5E7D20' },
+  story:     { verb: 'Story',      color: '#B08536', dimColor: '#B0853620' },
+  evidence:  { verb: 'Cites',      color: '#4E7A8B', dimColor: '#4E7A8B20' },
+  question:  { verb: 'Questions',  color: '#5E748B', dimColor: '#5E748B20' },
 };
 
 function getTimeAgo(dateStr: string): string {
@@ -60,12 +62,13 @@ function getTimeAgo(dateStr: string): string {
 }
 
 const PollBar = React.memo(function PollBar({ pct }: { pct: number }) {
+  const { colors } = useTheme();
   const width = useSharedValue(0);
   React.useEffect(() => {
     width.value = withTiming(pct, { duration: 500 });
   }, [pct, width]);
   const style = useAnimatedStyle(() => ({ width: `${width.value}%` as any }));
-  return <Animated.View style={[{ height: '100%', borderRadius: 4, backgroundColor: 'rgba(99,102,241,0.4)' }, style]} />;
+  return <Animated.View style={[{ height: '100%', borderRadius: 4, backgroundColor: colors.accent + '66' }, style]} />;
 });
 
 interface PollViewProps {
@@ -148,6 +151,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const [repostSheetOpen, setRepostSheetOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [avatarViewerOpen, setAvatarViewerOpen] = useState(false);
   const toggleMute = useAppStore(s => s.toggleMute);
   const isMuted = useAppStore(s => s.isMuted);
   const notInterestedIds = useAppStore(s => s.notInterestedIds);
@@ -269,6 +273,14 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         onRemix={handleQuoteRepost}
       />
       <ActionSheet visible={menuSheetOpen} onClose={() => setMenuSheetOpen(false)} subtitle={`@${item.username}`} actions={menuActions} />
+      {item.avatarUrl && !avatarError ? (
+        <ZoomableImageViewer
+          visible={avatarViewerOpen}
+          uris={[item.avatarUrl]}
+          title={item.displayName || item.username}
+          onClose={() => setAvatarViewerOpen(false)}
+        />
+      ) : null}
     </>
   );
 
@@ -390,13 +402,21 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                 performanceMode="hot"
               >
                 {item.avatarUrl && !avatarError ? (
-                  <Image
-                    source={{ uri: item.avatarUrl }}
-                    style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                    onError={() => setAvatarError(true)}
-                  />
+                  <Pressable
+                    onPress={(event) => {
+                      event.stopPropagation?.();
+                      setAvatarViewerOpen(true);
+                    }}
+                    style={{ width: 34, height: 34, borderRadius: 17 }}
+                  >
+                    <Image
+                      source={{ uri: item.avatarUrl }}
+                      style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                      onError={() => setAvatarError(true)}
+                    />
+                  </Pressable>
                 ) : (
                   <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: warmAvatarColor(item.avatarColor, item.username), alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' }}>
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
@@ -530,7 +550,14 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         <View className={`flex-row items-center ${compactFeed ? 'mb-2' : 'mb-3'}`}>
           {showAvatars && (
             <AnimatedPressable
-              onPress={(e) => { e.stopPropagation?.(); router.push(`/user/${item.userId}`); }}
+              onPress={(e) => {
+                e.stopPropagation?.();
+                if (item.avatarUrl && !avatarError) {
+                  setAvatarViewerOpen(true);
+                  return;
+                }
+                router.push(`/user/${item.userId}`);
+              }}
               depth="medium"
               fadeOnPress
               haptic="light"

@@ -112,11 +112,16 @@ function RootLayout() {
     if (Platform.OS === 'web') return;
 
     let cancelled = false;
-    const VALID_KINDS = new Set(['daily_question', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved']);
+    const VALID_KINDS = new Set(['daily_question', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin']);
     const route = (data: Record<string, unknown> | null | undefined) => {
       if (!data) return;
       const kind = String(data.kind ?? '');
       if (!VALID_KINDS.has(kind)) return;
+      if (kind === 'echo_checkin') {
+        track('notification_tapped', { kind });
+        router.push('/(tabs)/chat');
+        return;
+      }
       const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
       const routeId = safeRouteId(targetId);
       if (kind === 'daily_question') {
@@ -175,6 +180,7 @@ function RootLayout() {
           <Stack.Screen name="user/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="messages/index" options={{ presentation: 'card' }} />
           <Stack.Screen name="messages/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="group/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="followers" options={{ presentation: 'card' }} />
           <Stack.Screen name="bookmarks" options={{ presentation: 'card' }} />
           <Stack.Screen name="settings" options={{ presentation: 'card' }} />

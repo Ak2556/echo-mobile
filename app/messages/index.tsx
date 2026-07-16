@@ -14,7 +14,7 @@ import { Conversation } from '../../types';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useCreateGroupConversation, useRemoteConversations, useSetDMPref } from '../../hooks/queries/useDMs';
 import { usePresenceTracking } from '../../lib/presence';
-import { FeedCardSkeleton } from '../../components/ui/Skeleton';
+import { ConversationSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation, searchRemoteUsers, UserSearchHit } from '../../lib/supabaseEchoApi';
 
 function getTimeAgo(dateStr: string): string {
@@ -389,9 +389,9 @@ export default function MessagesListScreen() {
             </AnimatedPressable>
           </View>
         </View>
-        <FeedCardSkeleton />
-        <FeedCardSkeleton />
-        <FeedCardSkeleton />
+        <View style={{ paddingTop: 4 }}>
+          {Array.from({ length: 7 }).map((_, i) => <ConversationSkeleton key={i} />)}
+        </View>
       </SafeAreaView>
     );
   }

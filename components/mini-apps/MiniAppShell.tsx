@@ -40,6 +40,10 @@ export function MiniAppShell({
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
   const HEADER_H = insets.top + 62;
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/apps');
+  };
   const contentStyle = {
     width: '100%' as const,
     maxWidth: layout.isDesktop ? 760 : layout.contentMaxWidth,
@@ -113,20 +117,30 @@ export function MiniAppShell({
           }}
         >
           <Pressable
-            onPress={() => router.back()}
+            onPress={goBack}
+            accessibilityRole="button"
+            accessibilityLabel="Back to previous screen"
             style={{
-              width: 36,
+              minWidth: 36,
               height: 36,
               borderRadius: 18,
+              paddingHorizontal: 10,
               backgroundColor: colors.isDark
                 ? 'rgba(255,255,255,0.08)'
                 : 'rgba(0,0,0,0.06)',
               alignItems: 'center',
               justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
               marginRight: 12,
             }}
           >
             <ArrowLeft color={colors.text} size={18} weight="bold" />
+            {!layout.isPhone && (
+              <Text style={{ color: colors.text, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+                Tools
+              </Text>
+            )}
           </Pressable>
 
           <View style={{ flex: 1 }}>

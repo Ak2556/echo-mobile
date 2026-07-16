@@ -3,8 +3,12 @@ import { loadTransactions, summarizeExpenses, formatMoney } from './expenses';
 import { getStreak, loadHabits, todayStr } from './habits';
 import { loadNotes } from './notes';
 import { loadMemos, formatMemoTime } from './voiceMemos';
+import { loadTasks } from './tasks';
+import { loadPlanner } from './planner';
+import { loadShoppingList } from './shoppingList';
+import { learningStats, loadLearningGoals } from './learn';
 
-export type LocalProductivityApp = 'notes' | 'habits' | 'expenses' | 'voice-memo';
+export type LocalProductivityApp = 'notes' | 'habits' | 'expenses' | 'voice-memo' | 'tasks' | 'planner' | 'shopping-list' | 'learn';
 
 export interface LocalSearchResult {
   app: LocalProductivityApp;
@@ -15,6 +19,25 @@ export interface LocalSearchResult {
 }
 
 export interface TodayProductivity {
+  tasks: {
+    open: number;
+    dueToday: number;
+    high: number;
+  };
+  planner: {
+    total: number;
+    open: number;
+    done: number;
+  };
+  shopping: {
+    remaining: number;
+    checked: number;
+  };
+  learn: {
+    goals: number;
+    open: number;
+    active?: string;
+  };
   habits: {
     total: number;
     done: number;
@@ -40,11 +63,15 @@ export interface TodayProductivity {
 export async function searchLocalProductivity(query: string, limit = 12): Promise<LocalSearchResult[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  const [notes, habits, txs, memos] = await Promise.all([
+  const [notes, habits, txs, memos, tasks, planner, shopping, learningGoals] = await Promise.all([
     loadNotes(),
     loadHabits(),
     loadTransactions(),
     loadMemos(),
+    loadTasks(),
+    loadPlanner(),
+    loadShoppingList(),
+    loadLearningGoals(),
   ]);
 
   const results: LocalSearchResult[] = [];
@@ -92,20 +119,111 @@ export async function searchLocalProductivity(query: string, limit = 12): Promis
       });
     }
   }
+  for (const task of tasks) {
+    if (matches(q, task.title, task.notes, task.priority)) {
+      results.push({
+        app: 'tasks',
+        id: task.id,
+        title: task.title,
+        subtitle: `${task.done ? 'Done' : 'Open'}${task.due ? ` · due ${task.due}` : ''}`,
+        route: '/mini-apps/tasks',
+      });
+    }
+  }
+  for (const item of planner) {
+    if (matches(q, item.title, item.slot, item.date)) {
+      results.push({
+        app: 'planner',
+        id: item.id,
+        title: item.title,
+        subtitle: `${item.slot} · ${item.date}`,
+        route: '/mini-apps/planner',
+      });
+    }
+  }
+  for (const item of shopping) {
+    if (matches(q, item.name, item.quantity, item.category)) {
+      results.push({
+        app: 'shopping-list',
+        id: item.id,
+        title: item.name,
+        subtitle: `${item.quantity} · ${item.category}`,
+        route: '/mini-apps/shopping-list',
+      });
+    }
+  }
+  for (const goal of learningGoals) {
+    if (matches(
+      q,
+      goal.title,
+      goal.category,
+      goal.targetOutcome,
+      ...goal.modules.map(module => module.title),
+      ...goal.syllabus.map(week => `${week.title} ${week.objective} ${week.deliverable}`),
+      ...goal.learners.map(learner => `${learner.name} ${learner.target} ${learner.notes ?? ''}`),
+      ...goal.rubric.map(item => `${item.title} ${item.description}`),
+      ...goal.evidence.map(item => `${item.title} ${item.detail}`),
+      ...goal.codeLabs.map(item => `${item.title} ${item.language} ${item.prompt} ${item.starterCode} ${item.notes ?? ''}`),
+      ...goal.resources.map(item => `${item.title} ${item.detail ?? ''}`),
+      goal.oneOnOneProfile.headline,
+      goal.oneOnOneProfile.bio,
+      goal.oneOnOneProfile.teachingStyle,
+      goal.oneOnOneProfile.policies,
+      ...goal.oneOnOneProfile.expertise,
+      ...goal.oneOnOnePackages.map(item => `${item.title} ${item.description} ${item.price} ${item.currency}`),
+      ...goal.oneOnOneSlots.map(item => `${item.label} ${item.durationMinutes}`),
+      ...goal.oneOnOneBookings.map(item => `${item.learnerName} ${item.learnerGoal} ${item.packageTitle} ${item.status} ${item.paymentStatus} ${item.prepNote ?? ''} ${item.homework ?? ''} ${item.followUp ?? ''}`),
+    )) {
+      const stats = learningStats(goal);
+      results.push({
+        app: 'learn',
+        id: goal.id,
+        title: goal.title,
+        subtitle: `${stats.percent}% roadmap · ${stats.learners} learners · ${stats.oneOnOneBookings} 1:1 bookings`,
+        route: '/mini-apps/learn',
+      });
+    }
+  }
 
   return results.slice(0, limit);
 }
 
 export async function getTodayProductivity(): Promise<TodayProductivity> {
-  const [notes, habits, expenseSummary, memos] = await Promise.all([
+  const [notes, habits, expenseSummary, memos, tasks, planner, shopping, learningGoals] = await Promise.all([
     loadNotes(),
     loadHabits(),
     summarizeExpenses({ range: 'week' }),
     loadMemos(),
+    loadTasks(),
+    loadPlanner(),
+    loadShoppingList(),
+    loadLearningGoals(),
   ]);
   const today = todayStr();
   const done = habits.filter(habit => habit.completedDates.includes(today));
+  const openTasks = tasks.filter(task => !task.done);
+  const todayPlans = planner.filter(item => item.date === today);
+  const shoppingOpen = shopping.filter(item => !item.checked);
   return {
+    tasks: {
+      open: openTasks.length,
+      dueToday: openTasks.filter(task => task.due === today).length,
+      high: openTasks.filter(task => task.priority === 'high').length,
+    },
+    planner: {
+      total: todayPlans.length,
+      open: todayPlans.filter(item => !item.done).length,
+      done: todayPlans.filter(item => item.done).length,
+    },
+    shopping: {
+      remaining: shoppingOpen.length,
+      checked: shopping.length - shoppingOpen.length,
+    },
+    learn: {
+      goals: learningGoals.length,
+      open: learningGoals.reduce((sum, goal) => sum + learningStats(goal).open, 0),
+      active: learningGoals[0]?.title,
+    },
     habits: {
       total: habits.length,
       done: done.length,

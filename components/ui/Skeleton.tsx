@@ -85,6 +85,21 @@ export function FeedCardSkeleton() {
   );
 }
 
+export function ListingCardSkeleton() {
+  const { colors } = useTheme();
+  // Mirrors a marketplace grid tile: square media, then title + price rows.
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 18, overflow: 'hidden' }}>
+      <Skeleton width="100%" height={140} borderRadius={0} />
+      <View style={{ padding: 12 }}>
+        <Skeleton width="88%" height={14} className="mb-2" />
+        <Skeleton width="52%" height={12} className="mb-3" />
+        <Skeleton width={70} height={16} borderRadius={8} />
+      </View>
+    </View>
+  );
+}
+
 export function NotificationSkeleton() {
   return (
     <View className="flex-row items-center px-4 py-3">
@@ -106,6 +121,20 @@ export function UserRowSkeleton() {
         <Skeleton width={140} height={12} />
       </View>
       <Skeleton width={80} height={32} borderRadius={16} />
+    </View>
+  );
+}
+
+export function ConversationSkeleton() {
+  // Mirrors a DM inbox row: avatar, name + message preview, trailing timestamp.
+  return (
+    <View className="flex-row items-center px-4 py-3">
+      <Skeleton width={50} height={50} borderRadius={25} />
+      <View className="ml-3 flex-1">
+        <Skeleton width={120} height={14} className="mb-2" />
+        <Skeleton width="70%" height={12} />
+      </View>
+      <Skeleton width={36} height={11} borderRadius={6} />
     </View>
   );
 }

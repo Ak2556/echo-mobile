@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '../../lib/safeBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
@@ -108,7 +109,7 @@ export default function ListingDetailScreen() {
     try {
       await updateListingStatus(listing.id, 'removed');
       showToast('Listing removed', 'CheckCircle');
-      router.back();
+      safeBack('/(tabs)/marketplace');
     } catch {
       showToast('Could not remove listing', 'Error');
     } finally {
@@ -130,7 +131,7 @@ export default function ListingDetailScreen() {
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center' }}>
           This listing is no longer available.
         </Text>
-        <AnimatedPressable onPress={() => router.back()} fadeOnPress style={{ marginTop: 20 }}>
+        <AnimatedPressable onPress={() => safeBack('/(tabs)/marketplace')} fadeOnPress style={{ marginTop: 20 }}>
           <Text style={{ color: colors.accent, fontSize: fontSizes.body }}>Go back</Text>
         </AnimatedPressable>
       </View>
@@ -152,7 +153,7 @@ export default function ListingDetailScreen() {
         zIndex: 10,
       }}>
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => safeBack('/(tabs)/marketplace')}
           hitSlop={12}
           style={{
             width: 36, height: 36, borderRadius: 18,

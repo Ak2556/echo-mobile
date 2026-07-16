@@ -592,15 +592,23 @@ export async function triggerEmbedEcho(echoId: string): Promise<void> {
   // gate itself is unreachable, leaving the row hidden-pending — a retry here
   // is what un-sticks a freshly published post after a transient provider
   // hiccup. Still best-effort overall; the publish UX is never gated on this.
+  let lastError: unknown = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const { error } = await supabase.functions.invoke('embed-echo', { body: { echo_id: echoId } });
       if (!error) return;
-    } catch {
-      // fall through to retry
+      lastError = error;
+    } catch (e) {
+      lastError = e;
     }
     await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
   }
+  // All retries exhausted — the echo may be stuck hidden-pending. Best-effort
+  // overall, but report so a stuck post isn't invisible to us too.
+  captureException(lastError ?? new Error('embed-echo failed after 3 attempts'), {
+    tags: { module: 'supabaseEchoApi', fn: 'triggerEmbedEcho' },
+    extra: { echoId },
+  });
 }
 
 export async function fetchRemoteEchoById(echoId: string): Promise<FeedItem | null> {
@@ -2562,6 +2570,65 @@ export async function createRemoteGroupConversation(title: string, memberIds: st
   });
   if (error) throw error;
   return data as string;
+}
+
+// ── Group admin controls ─────────────────────────────────────────────────────
+
+export type GroupRole = 'admin' | 'member';
+
+export interface GroupMember {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatarColor: string;
+  avatarUrl: string | null;
+  role: GroupRole;
+  joinedAt: string;
+}
+
+export async function fetchGroupMembers(conversationId: string): Promise<GroupMember[]> {
+  const { data, error } = await supabase.rpc('get_group_members', { p_conversation_id: conversationId });
+  if (error) throw error;
+  return ((data ?? []) as Record<string, unknown>[]).map(r => ({
+    userId: r.user_id as string,
+    username: (r.username as string | null) ?? 'unknown',
+    displayName: (r.display_name as string | null) ?? (r.username as string | null) ?? 'User',
+    avatarColor: (r.avatar_color as string | null) ?? '#C65F3F',
+    avatarUrl: (r.avatar_url as string | null) ?? null,
+    role: (r.role as GroupRole) ?? 'member',
+    joinedAt: r.joined_at as string,
+  }));
+}
+
+export async function addGroupMembers(conversationId: string, memberIds: string[]): Promise<void> {
+  const ids = Array.from(new Set(memberIds.filter(Boolean)));
+  if (ids.length === 0) return;
+  const { error } = await supabase.rpc('add_group_members', { p_conversation_id: conversationId, p_member_ids: ids });
+  if (error) throw new Error(error.message);
+}
+
+export async function removeGroupMember(conversationId: string, userId: string): Promise<void> {
+  const { error } = await supabase.rpc('remove_group_member', { p_conversation_id: conversationId, p_user_id: userId });
+  if (error) throw new Error(error.message);
+}
+
+export async function setGroupMemberRole(conversationId: string, userId: string, role: GroupRole): Promise<void> {
+  const { error } = await supabase.rpc('set_group_member_role', { p_conversation_id: conversationId, p_user_id: userId, p_role: role });
+  if (error) throw new Error(error.message);
+}
+
+export async function updateGroupMeta(conversationId: string, title: string, avatarColor?: string): Promise<void> {
+  const { error } = await supabase.rpc('update_group_meta', {
+    p_conversation_id: conversationId,
+    p_title: title,
+    p_avatar_color: avatarColor ?? null,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function leaveGroup(conversationId: string): Promise<void> {
+  const { error } = await supabase.rpc('leave_group', { p_conversation_id: conversationId });
+  if (error) throw new Error(error.message);
 }
 
 async function insertRemoteDMInConversation(

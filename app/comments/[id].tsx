@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { safeBack } from '../../lib/safeBack';
 import { FlashList } from '@shopify/flash-list';
 import { ArrowLeft, PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
 import { TextInput } from '../../components/ui/TextInput';
@@ -98,7 +99,7 @@ export default function CommentsScreen() {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} accessibilityLabel="Go back" accessibilityRole="button">
+        <Pressable onPress={() => safeBack()} style={{ padding: 4, marginRight: 12 }} accessibilityLabel="Go back" accessibilityRole="button">
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
         <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, flex: 1 }}>Comments</Text>

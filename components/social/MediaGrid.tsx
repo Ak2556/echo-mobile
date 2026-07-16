@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import {
-  View, Modal, Pressable, Text, StyleSheet, useWindowDimensions,
+  View, Pressable, Text, StyleSheet,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { X, MagnifyingGlassPlus, CaretLeft, CaretRight } from 'phosphor-react-native';
+import { MagnifyingGlassPlus } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
 
 interface MediaGridProps {
   uris: string[];
@@ -12,15 +13,11 @@ interface MediaGridProps {
 
 export function MediaGrid({ uris }: MediaGridProps) {
   const { radius } = useTheme();
-  const { width, height } = useWindowDimensions();
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const count = uris.length;
 
-  const open = (idx: number) => { setCurrentIdx(idx); setLightboxIdx(idx); };
-  const close = () => setLightboxIdx(null);
-  const prev = () => setCurrentIdx(i => Math.max(0, i - 1));
-  const next = () => setCurrentIdx(i => Math.min(uris.length - 1, i + 1));
+  const open = (idx: number) => setViewerIndex(idx);
+  const close = () => setViewerIndex(null);
 
   const imgStyle = { width: '100%', height: '100%' } as const;
   const r = radius.md;
@@ -87,71 +84,12 @@ export function MediaGrid({ uris }: MediaGridProps) {
         </View>
       )}
 
-      {/* Lightbox */}
-      <Modal visible={lightboxIdx !== null} transparent animationType="fade" onRequestClose={close} statusBarTranslucent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.97)', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Close button */}
-          <Pressable
-            onPress={close}
-            style={{ position: 'absolute', top: 52, right: 20, zIndex: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 20, padding: 8 }}
-          >
-            <X color="#fff" size={20} />
-          </Pressable>
-
-          {/* Page counter */}
-          {uris.length > 1 && (
-            <Text style={{ position: 'absolute', top: 58, left: 0, right: 0, textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '600', zIndex: 10 }}>
-              {currentIdx + 1} / {uris.length}
-            </Text>
-          )}
-
-          {/* Image */}
-          <Image
-            source={{ uri: uris[currentIdx] }}
-            style={{ width, height: height * 0.75 }}
-            contentFit="contain"
-            cachePolicy="memory-disk"
-          />
-
-          {/* Prev / Next arrows */}
-          {uris.length > 1 && (
-            <>
-              {currentIdx > 0 && (
-                <Pressable
-                  onPress={prev}
-                  style={{ position: 'absolute', left: 12, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 24, padding: 10 }}
-                >
-                  <CaretLeft color="#fff" size={22} weight="bold" />
-                </Pressable>
-              )}
-              {currentIdx < uris.length - 1 && (
-                <Pressable
-                  onPress={next}
-                  style={{ position: 'absolute', right: 12, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 24, padding: 10 }}
-                >
-                  <CaretRight color="#fff" size={22} weight="bold" />
-                </Pressable>
-              )}
-            </>
-          )}
-
-          {/* Dot pagination */}
-          {uris.length > 1 && (
-            <View style={{ position: 'absolute', bottom: 48, flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-              {uris.map((_, i) => (
-                <Pressable key={i} onPress={() => setCurrentIdx(i)}>
-                  <View style={{
-                    width: i === currentIdx ? 20 : 7,
-                    height: 7,
-                    borderRadius: 4,
-                    backgroundColor: i === currentIdx ? '#fff' : 'rgba(255,255,255,0.35)',
-                  }} />
-                </Pressable>
-              ))}
-            </View>
-          )}
-        </View>
-      </Modal>
+      <ZoomableImageViewer
+        visible={viewerIndex !== null}
+        uris={uris}
+        initialIndex={viewerIndex ?? 0}
+        onClose={close}
+      />
     </>
   );
 }

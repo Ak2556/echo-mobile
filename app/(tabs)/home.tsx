@@ -41,6 +41,7 @@ import { track } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { TargetToolsPanel } from '../../components/productivity/TargetToolsPanel';
 import { getTargetCategory } from '../../lib/targetCategories';
+import { IconBadge } from '../../components/ui/IconBadge';
 
 
 const NAV_BAR_HEIGHT = 50;
@@ -97,14 +98,14 @@ function HomeHero({
       {/* Only the destinations that aren't already in the bottom tab bar —
           Chat and Market live there, so shortcuts to them would be clutter. */}
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-        <QuickLink icon={<SquaresFour color={colors.accent} size={16} weight="bold" />} label="Tools" onPress={() => router.push('/(tabs)/apps')} />
-        <QuickLink icon={<Target color={colors.accent} size={16} weight="bold" />} label="Progress" onPress={() => router.push('/target-progress')} />
+        <QuickLink icon={<SquaresFour color="#fff" size={15} weight="bold" />} color={colors.accent} label="Tools" onPress={() => router.push('/(tabs)/apps')} />
+        <QuickLink icon={<Target color="#fff" size={15} weight="bold" />} color={colors.accent} label="Progress" onPress={() => router.push('/target-progress')} />
       </View>
     </View>
   );
 }
 
-function QuickLink({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
+function QuickLink({ icon, color, label, onPress }: { icon: React.ReactNode; color: string; label: string; onPress: () => void }) {
   const { colors, font } = useTheme();
   return (
     <Pressable
@@ -121,10 +122,11 @@ function QuickLink({ icon, label, onPress }: { icon: React.ReactNode; label: str
         borderColor: colors.border,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 7,
-        paddingHorizontal: 13,
+        gap: 8,
+        paddingLeft: 6,
+        paddingRight: 13,
       }}>
-        {icon}
+        <IconBadge color={color} size={26} radius={10}>{icon}</IconBadge>
         <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 13 }]}>{label}</Text>
       </View>
     </Pressable>

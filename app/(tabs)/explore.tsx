@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Brain, CaretRight, ChartLineUp, Compass, Cpu, Hash, PaintBrush, RocketLaunch, SquaresFour, UsersThree } from 'phosphor-react-native';
+import { Brain, CaretRight, ChartLineUp, Compass, Cpu, Hash, PaintBrush, RocketLaunch, UsersThree } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -11,6 +11,7 @@ import { Avatar } from '../../components/ui/Avatar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { EmptyState } from '../../components/common/EmptyState';
 import { TargetToolsPanel } from '../../components/productivity/TargetToolsPanel';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -21,14 +22,16 @@ import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { track } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { MINI_APP_CATALOG } from '../../lib/miniAppCatalog';
+import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 
 type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';
 
+// Warm editorial palette (lib/avatarPalette.ts).
 const CATEGORY_FALLBACKS = [
-  { label: 'AI', color: '#3B82F6', Icon: Cpu },
-  { label: 'Design', color: '#F97316', Icon: PaintBrush },
-  { label: 'Productivity', color: '#10B981', Icon: ChartLineUp },
-  { label: 'Startups', color: '#8B5CF6', Icon: RocketLaunch },
+  { label: 'AI', color: '#4E7A8B', Icon: Cpu },
+  { label: 'Design', color: '#C65F3F', Icon: PaintBrush },
+  { label: 'Productivity', color: '#7A8B4E', Icon: ChartLineUp },
+  { label: 'Startups', color: '#8B5E7D', Icon: RocketLaunch },
 ];
 
 const SEARCH_TABS: SearchTab[] = ['all', 'people', 'echoes', 'topics', 'tools'];
@@ -46,7 +49,7 @@ export default function SearchScreen() {
   const followingIds = useAppStore(s => s.followingIds);
   const { colors, radius, font } = useTheme();
   const layout = useResponsiveLayout();
-  const { data: feed = [] } = useFeed();
+  const { data: feed = [], refetch: refetchFeed, isRefetching: isRefetchingFeed } = useFeed();
   const remote = isSupabaseRemote();
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
@@ -129,6 +132,14 @@ export default function SearchScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetchingFeed}
+              onRefresh={refetchFeed}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+            />
+          }
         >
           <View style={layout.wideContentStyle}>
             <ExploreHero colors={colors} font={font} layout={layout} />
@@ -341,7 +352,7 @@ function SearchResults({
             {toolMatches.map(tool => (
               <ActionRow
                 key={tool.id}
-                icon={<SquaresFour color={colors.accent} size={20} weight="bold" />}
+                icon={<MiniAppIcon id={tool.id} color={tool.color} size={34} />}
                 title={tool.name}
                 subtitle={tool.description}
                 onPress={() => router.push(tool.route)}
@@ -533,14 +544,12 @@ function PillButton({ label, onPress }: { label: string; onPress: () => void }) 
 }
 
 function EmptyCopy({ title, subtitle }: { title: string; subtitle: string }) {
-  const { colors, font } = useTheme();
+  const { colors } = useTheme();
   return (
-    <View style={{ alignItems: 'center', paddingTop: 72, paddingHorizontal: 32, paddingBottom: 24 }}>
-      <View style={{ width: 48, height: 48, borderRadius: 18, backgroundColor: `${colors.accent}18`, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-        <UsersThree color={colors.accent} size={24} weight="bold" />
-      </View>
-      <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, textAlign: 'center' }]}>{title}</Text>
-      <Text style={[font.body, { color: colors.textMuted, marginTop: 8, textAlign: 'center', lineHeight: 20 }]}>{subtitle}</Text>
-    </View>
+    <EmptyState
+      icon={<UsersThree color={colors.accent} size={30} weight="bold" />}
+      title={title}
+      subtitle={subtitle}
+    />
   );
 }

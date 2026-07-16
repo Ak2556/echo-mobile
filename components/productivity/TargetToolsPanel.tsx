@@ -7,6 +7,8 @@ import { useResponsiveLayout } from '../../lib/responsive';
 import { useAppStore } from '../../store/useAppStore';
 import { getTargetCategory } from '../../lib/targetCategories';
 import { miniAppById } from '../../lib/miniAppCatalog';
+import { MiniAppIcon } from '../mini-apps/MiniAppIcon';
+import { IconBadge } from '../ui/IconBadge';
 
 export function TargetToolsPanel({ compact = false, dense = false }: { compact?: boolean; dense?: boolean }) {
   const router = useRouter();
@@ -41,7 +43,9 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
         paddingRight: 8,
         paddingVertical: 8,
       }}>
-        <Target color={colors.accent} size={18} weight="bold" />
+        <IconBadge color={colors.accent} size={30} radius={11} muted>
+          <Target color={colors.accent} size={16} weight="bold" />
+        </IconBadge>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ gap: 7, alignItems: 'center' }}>
           {apps.map(app => app ? (
             <Pressable
@@ -51,7 +55,8 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
               accessibilityLabel={`Open ${app.name}`}
               style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
             >
-              <View style={{ borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 7 }}>
+              <View style={{ borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surfaceHover, paddingLeft: 6, paddingRight: 12, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                <MiniAppIcon id={app.id} color={app.color} size={26} />
                 <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12.5 }]} numberOfLines={1}>
                   {app.name}
                 </Text>
@@ -64,9 +69,10 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
           accessibilityRole="button"
           accessibilityLabel="Open progress"
           hitSlop={6}
-          style={{ width: 32, height: 32, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}
         >
-          <ChartLineUp color={colors.accent} size={16} weight="bold" />
+          <IconBadge color={colors.accent} size={32} radius={11} muted>
+            <ChartLineUp color={colors.accent} size={16} weight="bold" />
+          </IconBadge>
         </Pressable>
       </View>
     );
@@ -85,16 +91,9 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
       gap: 12,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{
-          width: 38,
-          height: 38,
-          borderRadius: 13,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: `${colors.accent}20`,
-        }}>
-          <Target color={colors.accent} size={21} weight="bold" />
-        </View>
+        <IconBadge color={colors.accent} size={40} radius={14}>
+          <Target color="#fff" size={21} weight="bold" />
+        </IconBadge>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>
             {category.label}
@@ -107,16 +106,10 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
           onPress={() => router.push('/target-progress' as Href)}
           accessibilityRole="button"
           accessibilityLabel="Open progress"
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 12,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: colors.surfaceHover,
-          }}
         >
-          <ChartLineUp color={colors.accent} size={18} weight="bold" />
+          <IconBadge color={colors.accent} size={34} radius={12} muted>
+            <ChartLineUp color={colors.accent} size={18} weight="bold" />
+          </IconBadge>
         </Pressable>
       </View>
 
@@ -136,12 +129,17 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
               paddingVertical: 10,
             }}
           >
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 12 }]} numberOfLines={1}>
-              {app.name}
-            </Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>
-              {app.description}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <MiniAppIcon id={app.id} color={app.color} size={30} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[font.bodyBold, { color: colors.text, fontSize: 12 }]} numberOfLines={1}>
+                  {app.name}
+                </Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>
+                  {app.description}
+                </Text>
+              </View>
+            </View>
           </Pressable>
         ) : null)}
       </ScrollView>

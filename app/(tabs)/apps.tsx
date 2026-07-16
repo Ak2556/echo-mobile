@@ -6,89 +6,37 @@ import Animated, { Extrapolation, FadeIn, FadeInDown, interpolate, useAnimatedPr
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import {
-  Calculator, ArrowsLeftRight, Receipt, Timer,
-  Key, Globe, BracketsCurly, FileText,
-  Palette, Pulse,
-  Camera, Microphone, NotePencil, CheckCircle, Wallet, DiceSix, VideoCamera, Target, Barbell,
-  MagnifyingGlass, ArrowRight, CaretRight, X,
-} from 'phosphor-react-native';
+import { Pulse, Target, MagnifyingGlass, CaretRight, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
-import { getTodayProductivity, LocalProductivityApp, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
+import { getTodayProductivity, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
 import { formatMoney } from '../../lib/expenses';
-import { formatMemoTime } from '../../lib/voiceMemos';
 import { MOTION } from '../../lib/motion';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { TARGET_CATEGORIES, getTargetCategory } from '../../lib/targetCategories';
 import { useAppStore } from '../../store/useAppStore';
 import { MINI_APP_CATALOG, type MiniAppCatalogItem } from '../../lib/miniAppCatalog';
+import { resolveMiniAppId } from '../../lib/miniAppIntegration';
 import { getRecentTools, recordToolOpen } from '../../lib/miniAppRecents';
+import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 
 const PAD = 20;
 const GAP = 12;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
-type ToolLane = 'all' | 'focus' | 'capture' | 'money' | 'health' | 'utility' | 'media';
+type ToolLane = 'all' | 'plan' | 'focus' | 'money' | 'health' | 'capture' | 'utility';
 
 const TOOL_LANES: { id: ToolLane; label: string; apps?: string[] }[] = [
   { id: 'all', label: 'All' },
-  { id: 'focus', label: 'Focus', apps: ['pomodoro', 'habits', 'notes', 'markdown', 'voice-memo'] },
-  { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'camera', 'markdown', 'color-tools'] },
-  { id: 'money', label: 'Money', apps: ['expenses', 'calculator', 'bill-splitter', 'converter'] },
-  { id: 'health', label: 'Health', apps: ['fitness', 'habits', 'bmi', 'camera'] },
-  { id: 'utility', label: 'Utility', apps: ['calculator', 'converter', 'world-clock', 'json-formatter', 'password-gen', 'dice'] },
-  { id: 'media', label: 'Media', apps: ['camera', 'video-player', 'voice-memo', 'color-tools'] },
+  { id: 'plan', label: 'Plan', apps: ['learn', 'tasks', 'planner', 'notes', 'habits'] },
+  { id: 'focus', label: 'Focus', apps: ['pomodoro', 'learn', 'tasks', 'habits', 'notes'] },
+  { id: 'money', label: 'Money', apps: ['expenses', 'shopping-list', 'calculator', 'notes'] },
+  { id: 'health', label: 'Health', apps: ['fitness', 'habits', 'planner', 'notes'] },
+  { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'camera', 'markdown', 'tasks'] },
+  { id: 'utility', label: 'Utility', apps: ['calculator', 'world-clock', 'password-gen', 'markdown'] },
 ];
 
 type MiniApp = MiniAppCatalogItem;
 const APPS: MiniApp[] = MINI_APP_CATALOG;
-
-/** Darken a #RRGGBB color by a 0..1 factor. */
-function shade(hex: string, factor: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  const f = (c: number) => Math.max(0, Math.round(c * (1 - factor)));
-  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(f);
-  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
-}
-
-/** iOS-style icon plate: gradient rounded-square + white fill glyph. */
-function IconPlate({ id, color, size = 44 }: { id: string; color: string; size?: number }) {
-  return (
-    <LinearGradient
-      colors={[color, shade(color, 0.35)]}
-      start={{ x: 0.1, y: 0 }}
-      end={{ x: 0.9, y: 1 }}
-      style={{ width: size, height: size, borderRadius: size * 0.29, alignItems: 'center', justifyContent: 'center' }}
-    >
-      <AppIcon id={id} color="#fff" size={Math.round(size * 0.52)} />
-    </LinearGradient>
-  );
-}
-
-function AppIcon({ id, color, size = 28 }: { id: string; color: string; size?: number }) {
-  const p = { color, size, weight: 'fill' as const };
-  switch (id) {
-    case 'calculator':    return <Calculator      {...p} />;
-    case 'converter':     return <ArrowsLeftRight  {...p} />;
-    case 'bill-splitter': return <Receipt          {...p} />;
-    case 'pomodoro':      return <Timer            {...p} />;
-    case 'password-gen':  return <Key              {...p} />;
-    case 'world-clock':   return <Globe            {...p} />;
-    case 'json-formatter':return <BracketsCurly    {...p} />;
-    case 'markdown':      return <FileText         {...p} />;
-    case 'color-tools':   return <Palette          {...p} />;
-    case 'bmi':           return <Pulse            {...p} />;
-    case 'fitness':       return <Barbell          {...p} />;
-    case 'camera':        return <Camera           {...p} />;
-    case 'voice-memo':    return <Microphone       {...p} />;
-    case 'notes':         return <NotePencil       {...p} />;
-    case 'habits':        return <CheckCircle      {...p} />;
-    case 'expenses':      return <Wallet           {...p} />;
-    case 'dice':          return <DiceSix          {...p} />;
-    case 'video-player':  return <VideoCamera      {...p} />;
-    default:              return <Calculator       {...p} />;
-  }
-}
 
 /** Eyebrow section label — quiet, letterspaced, the app's editorial voice. */
 function Eyebrow({ children, trailing }: { children: React.ReactNode; trailing?: React.ReactNode }) {
@@ -133,7 +81,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
-          <IconPlate id={app.id} color={app.color} size={44} />
+          <MiniAppIcon id={app.id} color={app.color} size={44} />
           <View style={{ marginTop: 12 }}>
             <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold', lineHeight: 19 }} numberOfLines={1}>
               {app.name}
@@ -165,7 +113,7 @@ function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => v
         backgroundColor: colors.surface,
         borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
       }}>
-        <IconPlate id={app.id} color={app.color} size={32} />
+        <MiniAppIcon id={app.id} color={app.color} size={32} />
         <Text style={{ color: colors.text, fontSize: 13.5, fontFamily: 'Inter_600SemiBold' }} numberOfLines={1}>
           {app.name}
         </Text>
@@ -188,6 +136,58 @@ function StatChip({ value, label, sub, color, onPress }: {
         <Text style={{ color: colors.textMuted, fontSize: 11.5, marginTop: 1 }} numberOfLines={1}>{sub}</Text>
       </View>
     </Pressable>
+  );
+}
+
+function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
+  primary?: MiniApp;
+  targetApps: MiniApp[];
+  targetLabel: string;
+  onOpen: (app: MiniApp) => void;
+}) {
+  const { colors } = useTheme();
+  const accent = primary?.color ?? colors.accent;
+
+  return (
+    <View style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+      <LinearGradient colors={[`${accent}26`, `${colors.accent}0C`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+      <View style={{ padding: 16, gap: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 11.5, fontFamily: 'Inter_700Bold', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+              Smart start
+            </Text>
+            <Text style={{ color: colors.text, fontSize: 20, lineHeight: 25, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }} numberOfLines={1}>
+              {primary ? `Continue ${primary.name}` : `Tools for ${targetLabel}`}
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={2}>
+              {primary ? 'Echo remembers where you left off.' : 'A short path based on your current target.'}
+            </Text>
+          </View>
+          {primary ? (
+            <Pressable onPress={() => onOpen(primary)} accessibilityRole="button" accessibilityLabel={`Continue ${primary.name}`} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+              <MiniAppIcon id={primary.id} color={primary.color} size={52} />
+            </Pressable>
+          ) : (
+            <View style={{ width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}1F` }}>
+              <Target color={colors.accent} size={25} weight="bold" />
+            </View>
+          )}
+        </View>
+        {targetApps.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {targetApps.slice(0, 4).map(app => (
+              <Pressable key={app.id} onPress={() => onOpen(app)} accessibilityRole="button" accessibilityLabel={`Open ${app.name}`}>
+                <View style={{ height: 38, borderRadius: 999, paddingLeft: 6, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                  <MiniAppIcon id={app.id} color={app.color} size={28} />
+                  <Text style={{ color: colors.text, fontSize: 12.5, fontFamily: 'Inter_600SemiBold' }}>{app.name}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+    </View>
   );
 }
 
@@ -265,7 +265,10 @@ export default function AppsScreen() {
   const searching = q.length > 0;
 
   const toolMatches = useMemo(() => searching
-    ? APPS.filter(a => a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q))
+    ? APPS.filter(a => {
+        const alias = resolveMiniAppId(q);
+        return a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q) || alias === a.id;
+      })
     : [], [q, searching]);
 
   const laneApps = useMemo(() => {
@@ -278,6 +281,10 @@ export default function AppsScreen() {
   const recentApps = useMemo(
     () => recents.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a)).slice(0, 6),
     [recents, appById],
+  );
+  const targetApps = useMemo(
+    () => selectedTarget.apps.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a)),
+    [selectedTarget.apps, appById],
   );
 
   const renderGrid = (list: MiniApp[]) => {
@@ -354,6 +361,13 @@ export default function AppsScreen() {
         ) : (
           /* ── Browse ── */
           <>
+            <SmartStartCard
+              primary={recentApps[0]}
+              targetApps={targetApps}
+              targetLabel={selectedTarget.label}
+              onOpen={openTool}
+            />
+
             {/* Category lanes */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
               {TOOL_LANES.map(l => {
@@ -393,10 +407,10 @@ export default function AppsScreen() {
               <View>
                 <Eyebrow>Today</Eyebrow>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: GAP }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
-                  <StatChip color={colors.accent} value={`${dashboard.habits.percent}%`} label="Habits" sub={`${dashboard.habits.done}/${dashboard.habits.total} done`} onPress={() => router.push('/mini-apps/habits' as Href)} />
+                  <StatChip color="#4F7DF3" value={`${dashboard.tasks.open}`} label="Open tasks" sub={`${dashboard.tasks.dueToday} due today`} onPress={() => router.push('/mini-apps/tasks' as Href)} />
+                  <StatChip color="#7C6CE8" value={`${dashboard.planner.open}`} label="Plan open" sub={`${dashboard.planner.done}/${dashboard.planner.total} done`} onPress={() => router.push('/mini-apps/planner' as Href)} />
+                  <StatChip color="#12A878" value={`${dashboard.shopping.remaining}`} label="Shopping" sub={`${dashboard.shopping.checked} checked`} onPress={() => router.push('/mini-apps/shopping-list' as Href)} />
                   <StatChip color="#8B5E7D" value={`$${formatMoney(Math.abs(dashboard.expenses.balance))}`} label="Weekly balance" sub={`$${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
-                  <StatChip color="#B08536" value={`${dashboard.notes.total}`} label="Notes" sub={dashboard.notes.recent[0]?.title ?? 'None yet'} onPress={() => router.push('/mini-apps/notes' as Href)} />
-                  <StatChip color="#4E7A8B" value={`${dashboard.voiceMemos.total}`} label="Voice memos" sub={dashboard.voiceMemos.recent[0] ? formatMemoTime(dashboard.voiceMemos.recent[0].duration) : 'None yet'} onPress={() => router.push('/mini-apps/voice-memo' as Href)} />
                 </ScrollView>
               </View>
             )}

@@ -11,6 +11,7 @@ import { useThinkingPartners } from '../hooks/queries/useThinkingPartners';
 import { useToggleRemoteFollow } from '../hooks/queries/useSupabaseSocial';
 import { GRADIENTS, ACCENT_COLORS, accentShadow, feedbackHaptic } from '../lib/accentDesign';
 import { useAppStore } from '../store/useAppStore';
+import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { track } from '../lib/analytics';
 import type { ThinkingPartnerMode } from '../lib/supabaseEchoApi';
 import type { User } from '../types';
@@ -25,7 +26,7 @@ export default function ThinkingPartnersScreen() {
   const router = useRouter();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const [mode, setMode] = useState<ThinkingPartnerMode>('similar');
-  const { data, isLoading, isError } = useThinkingPartners(mode);
+  const { data, isLoading, isError, error, refetch } = useThinkingPartners(mode);
   const partners = (data ?? []) as Partner[];
 
   // One view event per screen open — lets retention be sliced by exposure.
@@ -41,7 +42,7 @@ export default function ThinkingPartnersScreen() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }} accessibilityRole="button" accessibilityLabel="Go back">
           <ArrowLeft color="#fff" size={24} />
         </Pressable>
         <View style={styles.headerCenter}>
@@ -79,9 +80,7 @@ export default function ThinkingPartnersScreen() {
           <Text style={styles.muted}>Finding people…</Text>
         </View>
       ) : isError ? (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>Couldn&apos;t load matches right now.</Text>
-        </View>
+        <ErrorState kind={classifyError(error)} onRetry={() => refetch()} />
       ) : partners.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.emptyTitle}>Nothing to match yet</Text>

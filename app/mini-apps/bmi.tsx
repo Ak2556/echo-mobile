@@ -20,12 +20,12 @@ const ACTIVITY_LEVELS = [
 ];
 
 const CATS = [
-  { label: 'Underweight', range: '< 18.5', color: '#38BDF8', min: 0, max: 18.5, marker: 'Low', advice: 'Consider consulting a nutritionist to reach a healthy weight.' },
-  { label: 'Normal', range: '18.5–24.9', color: '#22C55E', min: 18.5, max: 25, marker: 'OK', advice: "You're in the healthy range. Keep it up!" },
-  { label: 'Overweight', range: '25–29.9', color: '#F59E0B', min: 25, max: 30, marker: 'High', advice: 'Light diet changes and regular exercise can help.' },
-  { label: 'Obese I', range: '30–34.9', color: '#F97316', min: 30, max: 35, marker: 'I', advice: 'Consult a doctor and consider a structured program.' },
-  { label: 'Obese II', range: '35–39.9', color: '#EF4444', min: 35, max: 40, marker: 'II', advice: 'Medical supervision is strongly recommended.' },
-  { label: 'Obese III', range: '≥ 40', color: '#991B1B', min: 40, max: 99, marker: 'III', advice: 'Please seek professional medical advice immediately.' },
+  { label: 'Underweight', range: '< 18.5', color: '#4E7A8B', min: 0, max: 18.5, marker: 'Low', advice: 'Consider consulting a nutritionist to reach a healthy weight.' },
+  { label: 'Normal', range: '18.5–24.9', color: '#7A8B4E', min: 18.5, max: 25, marker: 'OK', advice: "You're in the healthy range. Keep it up!" },
+  { label: 'Overweight', range: '25–29.9', color: '#B08536', min: 25, max: 30, marker: 'High', advice: 'Light diet changes and regular exercise can help.' },
+  { label: 'Obese I', range: '30–34.9', color: '#C65F3F', min: 30, max: 35, marker: 'I', advice: 'Consult a doctor and consider a structured program.' },
+  { label: 'Obese II', range: '35–39.9', color: '#A04E4E', min: 35, max: 40, marker: 'II', advice: 'Medical supervision is strongly recommended.' },
+  { label: 'Obese III', range: '≥ 40', color: '#7D3A3A', min: 40, max: 99, marker: 'III', advice: 'Please seek professional medical advice immediately.' },
 ];
 
 function getCat(bmi: number) {
@@ -283,7 +283,7 @@ export default function BmiScreen() {
                   onPress={() => void applyToFitness()}
                   disabled={applying}
                   scaleValue={0.96} haptic="medium"
-                  style={{ backgroundColor: '#14B8A6', borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: applying ? 0.6 : 1 }}
+                  style={{ backgroundColor: '#4E8B7A', borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: applying ? 0.6 : 1 }}
                 >
                   <Barbell color="#fff" size={16} weight="fill" />
                   <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14.5 }}>

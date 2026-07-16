@@ -200,7 +200,7 @@ export default function ProductOnboardingScreen() {
                   })}
                 </View>
 
-                <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 16 }]}>
+                <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 16 }]}>
                   Your target system
                 </Text>
 

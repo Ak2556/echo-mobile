@@ -23,6 +23,7 @@ import { useTheme } from '../../lib/theme';
 import { ToolCallCard, ToolCallItem } from './ToolCallCard';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
+import { IconBadge } from '../ui/IconBadge';
 import { usePerformanceProfile } from '../../lib/performance';
 
 type Item =
@@ -44,7 +45,7 @@ export function CommandPalette() {
     { key: 'create', label: 'New Echo', href: '/create-post', icon: <PencilSimple color={colors.accent} size={16} /> },
     { key: 'search', label: 'Explore', href: '/(tabs)/explore', icon: <MagnifyingGlass color={colors.accent} size={16} /> },
     { key: 'messages', label: 'Messages', href: '/messages', icon: <Envelope color={colors.accent} size={16} /> },
-    { key: 'apps', label: 'Mini apps', href: '/(tabs)/apps', icon: <SquaresFour color={colors.accent} size={16} /> },
+    { key: 'apps', label: 'Tools', href: '/(tabs)/apps', icon: <SquaresFour color={colors.accent} size={16} /> },
     { key: 'partners', label: 'Thinking partners', href: '/thinking-partners', icon: <Brain color={colors.accent} size={16} /> },
     { key: 'settings', label: 'Settings', href: '/settings', icon: <GearSix color={colors.accent} size={16} /> },
   ];
@@ -353,7 +354,9 @@ export function CommandPalette() {
                             borderColor: colors.glassBorder,
                           }}
                         >
-                          {shortcut.icon}
+                          <IconBadge color={colors.accent} size={24} radius={9} muted>
+                            {shortcut.icon}
+                          </IconBadge>
                           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>
                             {shortcut.label}
                           </Text>

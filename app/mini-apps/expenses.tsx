@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Share,
+  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Share, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
+import * as FS from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
@@ -12,13 +14,14 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
+import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '../../lib/currency';
 import {
-  EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, categoryMarker,
-  currentMonthKey, formatDate, formatMoney, loadExpensesDoc, monthKey, monthLabel,
+  DEFAULT_EXPENSE_CURRENCY, EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, categoryMarker,
+  currentMonthKey, formatDate, loadExpensesDoc, monthKey, monthLabel,
   saveExpensesDoc, shiftMonth, transactionsToCsv,
 } from '../../lib/expenses';
 
-function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClose: () => void }) {
+function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd: (tx: Transaction) => void; onClose: () => void }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [type, setType] = useState<TxType>('expense');
@@ -26,7 +29,7 @@ function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClos
   const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
   const cats = type === 'expense' ? EXPENSE_CATS : INCOME_CATS;
-  const ACCENT = type === 'expense' ? '#EF4444' : '#10B981';
+  const ACCENT = type === 'expense' ? colors.danger : colors.success;
 
   const submit = () => {
     const num = parseFloat(amount.replace(/,/g, ''));
@@ -48,7 +51,7 @@ function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClos
           {/* Type toggle */}
           <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }}>
             {(['expense', 'income'] as TxType[]).map(t => (
-              <Pressable key={t} onPress={() => { setType(t); setCategory(''); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' ? '#EF4444' : '#10B981') : 'transparent' }}>
+              <Pressable key={t} onPress={() => { setType(t); setCategory(''); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' ? colors.danger : colors.success) : 'transparent' }}>
                 <Text style={{ color: type === t ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>{t}</Text>
               </Pressable>
             ))}
@@ -58,7 +61,7 @@ function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClos
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>AMOUNT</Text>
             <GlassPanel variant="medium" borderRadius={14} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }} style={{ borderColor: ACCENT + '44' }}>
-              <Text style={{ color: ACCENT, fontSize: 22, fontWeight: '900', marginRight: 8 }}>$</Text>
+              <Text style={{ color: ACCENT, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
               <TextInput value={amount} onChangeText={setAmount} placeholder="0.00" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
             </GlassPanel>
           </View>
@@ -93,7 +96,7 @@ function AddModal({ onAdd, onClose }: { onAdd: (tx: Transaction) => void; onClos
   );
 }
 
-function BudgetModal({ budget, onSave, onClose }: { budget: number | null; onSave: (b: number | null) => void; onClose: () => void }) {
+function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | null; currency: CurrencyCode; onSave: (b: number | null) => void; onClose: () => void }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [value, setValue] = useState(budget ? String(budget) : '');
@@ -114,7 +117,7 @@ function BudgetModal({ budget, onSave, onClose }: { budget: number | null; onSav
             How much do you plan to spend per month? Leave empty to remove the budget.
           </Text>
           <GlassPanel variant="medium" borderRadius={14} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
-            <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '900', marginRight: 8 }}>$</Text>
+            <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
             <TextInput value={value} onChangeText={setValue} placeholder="1500" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
           </GlassPanel>
           <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
@@ -126,10 +129,73 @@ function BudgetModal({ budget, onSave, onClose }: { budget: number | null; onSav
   );
 }
 
+function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSelect: (currency: CurrencyCode) => void; onClose: () => void }) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const filtered = CURRENCIES.filter(currency => !q || `${currency.code} ${currency.label}`.toLowerCase().includes(q));
+  return (
+    <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>Currency</Text>
+          <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
+        </View>
+        <View style={{ padding: 20, gap: 14, flex: 1 }}>
+          <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 }}>
+            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search USD, INR, Euro, Yen..."
+              placeholderTextColor={colors.textMuted}
+              style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingHorizontal: 10, paddingVertical: 12 }}
+            />
+          </GlassPanel>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: insets.bottom + 20 }}>
+            {filtered.map(currency => {
+              const active = currency.code === value;
+              return (
+                <Pressable
+                  key={currency.code}
+                  onPress={() => {
+                    onSelect(currency.code);
+                    onClose();
+                  }}
+                >
+                  <View style={{
+                    minHeight: 58,
+                    borderRadius: 16,
+                    paddingHorizontal: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    backgroundColor: active ? colors.accent + '22' : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    borderWidth: active ? 1.5 : StyleSheet.hairlineWidth,
+                    borderColor: active ? colors.accent : colors.glassBorder,
+                  }}>
+                    <Text style={{ fontSize: 23 }}>{currency.flag}</Text>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={{ color: active ? colors.accent : colors.text, fontSize: 15, fontWeight: '800' }}>{currency.code}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{currency.label}</Text>
+                    </View>
+                    <Text style={{ color: active ? colors.accent : colors.textSecondary, fontSize: 15, fontWeight: '900' }}>{currency.symbol}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function ExpensesApp() {
   const { colors } = useTheme();
   const accent = colors.accent;
-  const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], budget: null });
+  const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
   useFocusEffect(
     React.useCallback(() => {
       loadExpensesDoc().then(setDoc);
@@ -137,9 +203,11 @@ export default function ExpensesApp() {
   );
   const [showAdd, setShowAdd] = useState(false);
   const [showBudget, setShowBudget] = useState(false);
+  const [showCurrency, setShowCurrency] = useState(false);
   const [filter, setFilter] = useState<'all' | TxType>('all');
   const [month, setMonth] = useState(currentMonthKey());
   const [query, setQuery] = useState('');
+  const money = (amount: number) => formatPrice(amount, doc.currency);
 
   const txs = doc.txs;
   const searching = query.trim().length > 0;
@@ -180,8 +248,6 @@ export default function ExpensesApp() {
     if (txs.length === 0) { showToast('Nothing to export yet', 'Export'); return; }
     const csv = transactionsToCsv(txs);
     try {
-      const FS = require('expo-file-system/legacy');
-      const Sharing = require('expo-sharing');
       const path = `${FS.cacheDirectory}echo-expenses.csv`;
       await FS.writeAsStringAsync(path, csv);
       if (await Sharing.isAvailableAsync()) {
@@ -196,6 +262,9 @@ export default function ExpensesApp() {
 
   const HeaderBtns = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
+      <AnimatedPressable onPress={() => setShowCurrency(true)} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, paddingHorizontal: 11, paddingVertical: 10 }}>
+        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{doc.currency}</Text>
+      </AnimatedPressable>
       <AnimatedPressable onPress={exportCsv} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, padding: 10 }}>
         <Export color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
@@ -225,12 +294,12 @@ export default function ExpensesApp() {
       )}
 
       {/* Balance card */}
-      <GlassPanel variant="medium" borderRadius={28} contentStyle={{ padding: 24 }} style={{ marginBottom: 14, shadowColor: balance >= 0 ? '#10B981' : '#EF4444', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 4 } }} elevated>
+      <GlassPanel variant="medium" borderRadius={28} contentStyle={{ padding: 24 }} style={{ marginBottom: 14, shadowColor: balance >= 0 ? colors.success : colors.danger, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 4 } }} elevated>
         <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>
-          {searching ? 'Matching balance' : 'Balance'}
+          {searching ? 'Matching balance' : `Balance · ${doc.currency}`}
         </Text>
-        <Text style={{ color: balance >= 0 ? '#10B981' : '#EF4444', fontSize: 40, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
-          {balance < 0 ? '-' : ''}${formatMoney(Math.abs(balance))}
+        <Text style={{ color: balance >= 0 ? colors.success : colors.danger, fontSize: 40, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+          {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
         </Text>
         <View style={{ flexDirection: 'row', marginTop: 20, gap: 12 }}>
           <View style={{ flex: 1, backgroundColor: '#10B98118', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#10B98133' }}>
@@ -238,14 +307,14 @@ export default function ExpensesApp() {
               <ArrowDown color="#10B981" size={14} weight="bold" />
               <Text style={{ color: '#10B981', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>INCOME</Text>
             </View>
-            <Text style={{ color: '#10B981', fontSize: 20, fontWeight: '800' }}>${formatMoney(income)}</Text>
+            <Text style={{ color: '#10B981', fontSize: 20, fontWeight: '800' }}>{money(income)}</Text>
           </View>
           <View style={{ flex: 1, backgroundColor: '#EF444418', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#EF444433' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <ArrowUp color="#EF4444" size={14} weight="bold" />
               <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>EXPENSES</Text>
             </View>
-            <Text style={{ color: '#EF4444', fontSize: 20, fontWeight: '800' }}>${formatMoney(expense)}</Text>
+            <Text style={{ color: '#EF4444', fontSize: 20, fontWeight: '800' }}>{money(expense)}</Text>
           </View>
         </View>
 
@@ -255,7 +324,7 @@ export default function ExpensesApp() {
             <View style={{ marginTop: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 0.8 }}>
-                  {doc.budget ? `BUDGET · $${formatMoney(expense)} of $${formatMoney(doc.budget)}` : 'SET A MONTHLY BUDGET'}
+                  {doc.budget ? `BUDGET · ${money(expense)} of ${money(doc.budget)}` : 'SET A MONTHLY BUDGET'}
                 </Text>
                 <PencilSimple color={colors.textMuted} size={14} />
               </View>
@@ -266,7 +335,7 @@ export default function ExpensesApp() {
               ) : null}
               {overBudget ? (
                 <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: '700', marginTop: 6 }}>
-                  ${formatMoney(expense - (doc.budget ?? 0))} over budget
+                  {money(expense - (doc.budget ?? 0))} over budget
                 </Text>
               ) : null}
             </View>
@@ -280,14 +349,14 @@ export default function ExpensesApp() {
         headline="Money decisions, not just logs"
         caption="Turn spending data into budget coaching, accountability, and weekly finance updates."
         metrics={[
-          { label: 'Balance', value: `${balance < 0 ? '-' : ''}$${formatMoney(Math.abs(balance))}` },
-          { label: 'Spent', value: `$${formatMoney(expense)}` },
+          { label: 'Balance', value: `${balance < 0 ? '-' : ''}${money(Math.abs(balance))}` },
+          { label: 'Spent', value: money(expense) },
           { label: 'Budget', value: doc.budget ? `${budgetPct}%` : 'Off' },
         ]}
         prompt="Review my expense pattern and tell me where to adjust this week without making the plan unrealistic."
-        shareText={`Expenses progress: income $${formatMoney(income)}, expenses $${formatMoney(expense)}, balance ${balance < 0 ? '-' : ''}$${formatMoney(Math.abs(balance))}${doc.budget ? `, budget used ${budgetPct}%` : ''}.`}
+        shareText={`Expenses progress: income ${money(income)}, expenses ${money(expense)}, balance ${balance < 0 ? '-' : ''}${money(Math.abs(balance))}${doc.budget ? `, budget used ${budgetPct}%` : ''}.`}
         publishTitle="Budget progress"
-        publishBody={`This period I logged $${formatMoney(income)} income, $${formatMoney(expense)} expenses, and a ${balance >= 0 ? 'positive' : 'negative'} balance of ${balance < 0 ? '-' : ''}$${formatMoney(Math.abs(balance))}.`}
+        publishBody={`This period I logged ${money(income)} income, ${money(expense)} expenses, and a ${balance >= 0 ? 'positive' : 'negative'} balance of ${balance < 0 ? '-' : ''}${money(Math.abs(balance))}.`}
       />
 
       {/* Category breakdown */}
@@ -298,7 +367,7 @@ export default function ExpensesApp() {
             <View key={cat} style={{ marginBottom: 10 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                 <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '600' }}>{cat}</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontVariant: ['tabular-nums'] }}>${formatMoney(amt)}</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontVariant: ['tabular-nums'] }}>{money(amt)}</Text>
               </View>
               <View style={{ height: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderRadius: 3, overflow: 'hidden' }}>
                 <View style={{ height: '100%', width: `${Math.max(4, Math.round((amt / maxCat) * 100))}%`, backgroundColor: '#EF4444AA', borderRadius: 3 }} />
@@ -356,7 +425,7 @@ export default function ExpensesApp() {
               </Text>
             </View>
             <Text style={{ color: tx.type === 'income' ? '#10B981' : '#EF4444', fontSize: 17, fontWeight: '800' }}>
-              {tx.type === 'income' ? '+' : '-'}${formatMoney(tx.amount)}
+              {tx.type === 'income' ? '+' : '-'}{money(tx.amount)}
             </Text>
             <AnimatedPressable onPress={() => deleteTx(tx.id)} scaleValue={0.85} haptic="light">
               <Trash color={colors.textMuted} size={17} />
@@ -365,8 +434,9 @@ export default function ExpensesApp() {
         </Animated.View>
       ))}
 
-      {showAdd && <AddModal onAdd={addTx} onClose={() => setShowAdd(false)} />}
-      {showBudget && <BudgetModal budget={doc.budget} onSave={b => update({ ...doc, budget: b })} onClose={() => setShowBudget(false)} />}
+      {showAdd && <AddModal currency={doc.currency} onAdd={addTx} onClose={() => setShowAdd(false)} />}
+      {showBudget && <BudgetModal budget={doc.budget} currency={doc.currency} onSave={b => update({ ...doc, budget: b })} onClose={() => setShowBudget(false)} />}
+      {showCurrency && <CurrencyModal value={doc.currency} onSelect={currency => update({ ...doc, currency })} onClose={() => setShowCurrency(false)} />}
     </MiniAppShell>
   );
 }

@@ -13,7 +13,8 @@ const CHARS = {
   symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
 };
 
-function getStrength(pwd: string): { label: string; color: string; score: number; icon: any } {
+// `tone` resolves to a theme token at render so strength color adapts per theme.
+function getStrength(pwd: string): { label: string; tone: 'danger' | 'warning' | 'accent' | 'success'; score: number; icon: any } {
   let s = 0;
   if (pwd.length >= 8) s++;
   if (pwd.length >= 12) s++;
@@ -22,10 +23,10 @@ function getStrength(pwd: string): { label: string; color: string; score: number
   if (/[a-z]/.test(pwd)) s++;
   if (/[0-9]/.test(pwd)) s++;
   if (/[^A-Za-z0-9]/.test(pwd)) s++;
-  if (s <= 2) return { label: 'Weak', color: '#EF4444', score: s, icon: Warning };
-  if (s <= 4) return { label: 'Fair', color: '#F59E0B', score: s, icon: ShieldWarning };
-  if (s <= 5) return { label: 'Good', color: '#3B82F6', score: s, icon: ShieldCheck };
-  return { label: 'Strong', color: '#10B981', score: s, icon: ShieldCheck };
+  if (s <= 2) return { label: 'Weak', tone: 'danger', score: s, icon: Warning };
+  if (s <= 4) return { label: 'Fair', tone: 'warning', score: s, icon: ShieldWarning };
+  if (s <= 5) return { label: 'Good', tone: 'accent', score: s, icon: ShieldCheck };
+  return { label: 'Strong', tone: 'success', score: s, icon: ShieldCheck };
 }
 
 const LENGTHS = [8, 12, 16, 20, 24, 32];
@@ -71,7 +72,8 @@ export default function PasswordGenScreen() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const sw = password ? getStrength(password) : null;
+  const swRaw = password ? getStrength(password) : null;
+  const sw = swRaw ? { ...swRaw, color: colors[swRaw.tone] } : null;
   const StrengthIcon = sw?.icon;
 
   return (
@@ -118,9 +120,9 @@ export default function PasswordGenScreen() {
             style={{
               flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
               paddingHorizontal: 22, paddingVertical: 16, borderRadius: 18,
-              backgroundColor: copied ? '#10B981' : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+              backgroundColor: copied ? colors.success : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
               borderWidth: StyleSheet.hairlineWidth,
-              borderColor: copied ? '#10B981' : colors.glassBorder,
+              borderColor: copied ? colors.success : colors.glassBorder,
             }}
           >
             {copied ? <Check color="#fff" size={20} weight="bold" /> : <Copy color={colors.text} size={20} weight="bold" />}
