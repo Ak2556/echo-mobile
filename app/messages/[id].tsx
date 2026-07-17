@@ -60,7 +60,7 @@ import {
   useForwardMessage,
   useRemoteConversations,
 } from '../../hooks/queries/useDMs';
-import { markMessagesRead } from '../../lib/supabaseEchoApi';
+import { markMessagesRead, fetchGroupMembers, type GroupMember } from '../../lib/supabaseEchoApi';
 import { usePresenceTracking } from '../../lib/presence';
 import type { RemoteMessageReaction } from '../../lib/supabaseEchoApi';
 import type { Conversation, DirectMessage } from '../../types';
@@ -571,18 +571,19 @@ function emojiInfo(text: string): { only: boolean; count: number } {
   return { only: stripped.length === 0, count };
 }
 
-type InlineSpan = { type: 'text' | 'bold' | 'italic' | 'strike' | 'code'; text: string };
+type InlineSpan = { type: 'text' | 'bold' | 'italic' | 'strike' | 'code' | 'mention'; text: string };
 
-/** Non-nested inline markdown: **bold** __bold__ *italic* _italic_ ~~strike~~ `code`. */
+/** Non-nested inline markdown + @mentions: **bold** *italic* ~~strike~~ `code` @user. */
 function parseInline(text: string): InlineSpan[] {
   const parts: InlineSpan[] = [];
-  const re = /(\*\*.+?\*\*|__.+?__|~~.+?~~|`.+?`|\*.+?\*|_.+?_)/g;
+  const re = /(\*\*.+?\*\*|__.+?__|~~.+?~~|`.+?`|\*.+?\*|_.+?_|@[a-zA-Z0-9_]{2,})/g;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push({ type: 'text', text: text.slice(last, m.index) });
     const tok = m[0];
-    if (tok.startsWith('**') || tok.startsWith('__')) parts.push({ type: 'bold', text: tok.slice(2, -2) });
+    if (tok.startsWith('@')) parts.push({ type: 'mention', text: tok });
+    else if (tok.startsWith('**') || tok.startsWith('__')) parts.push({ type: 'bold', text: tok.slice(2, -2) });
     else if (tok.startsWith('~~')) parts.push({ type: 'strike', text: tok.slice(2, -2) });
     else if (tok.startsWith('`')) parts.push({ type: 'code', text: tok.slice(1, -1) });
     else parts.push({ type: 'italic', text: tok.slice(1, -1) });
@@ -607,6 +608,7 @@ function FormattedText({ content, color, size }: { content: string; color: strin
         if (p.type === 'code') return (
           <Text key={i} style={{ fontFamily: 'monospace', fontSize: size - 1, color: colors.accent, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>{` ${p.text} `}</Text>
         );
+        if (p.type === 'mention') return <Text key={i} style={{ color: colors.accent, fontWeight: '700' }}>{p.text}</Text>;
         return <Text key={i}>{p.text}</Text>;
       })}
     </Text>
@@ -1431,6 +1433,7 @@ export default function DMScreen() {
   const [catchupLoading, setCatchupLoading] = useState(false);
   const [effect, setEffect] = useState<EffectKind | null>(null);
   const lastEffectIdRef = useRef<string | null>(null);
+  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const [activeMessage, setActiveMessage] = useState<NormalizedMessage | null>(null);
   const [savedMsgs, setSavedMsgs] = useState<SavedMessage[]>(() => {
     const v = persistGet<SavedMessage[]>('chat:savedMessages', []);
@@ -1646,6 +1649,28 @@ export default function DMScreen() {
     const fx = detectEffect(newest.content);
     if (fx) setEffect(fx);
   }, [messages, myId]);
+
+  // Group members power @mention autocomplete.
+  useEffect(() => {
+    if (remote && isGroupConversation && id) {
+      fetchGroupMembers(id).then(setGroupMembers).catch(() => setGroupMembers([]));
+    }
+  }, [remote, isGroupConversation, id]);
+
+  const mentionMatch = isGroupConversation ? /(?:^|\s)@(\w*)$/.exec(text) : null;
+  const mentionResults = mentionMatch
+    ? groupMembers
+        .filter(mem => mem.userId !== myId)
+        .filter(mem => {
+          const q = mentionMatch[1].toLowerCase();
+          return !q || mem.username.toLowerCase().includes(q) || mem.displayName.toLowerCase().includes(q);
+        })
+        .slice(0, 6)
+    : [];
+  const insertMention = (mem: GroupMember) => {
+    setText(t => t.replace(/@\w*$/, `@${mem.username} `));
+    inputRef.current?.focus();
+  };
 
   const searchTerm = searchQuery.trim().toLowerCase();
   const visibleMessages = searchTerm
@@ -2464,8 +2489,30 @@ export default function DMScreen() {
           </Animated.View>
         )}
 
+        {/* @mention autocomplete */}
+        {mentionResults.length > 0 && (
+          <View style={{ maxHeight: 210, marginHorizontal: 12, marginBottom: 6, borderRadius: 16, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {mentionResults.map(mem => (
+                <Pressable
+                  key={mem.userId}
+                  onPress={() => insertMention(mem)}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 9, opacity: pressed ? 0.6 : 1 })}
+                >
+                  <Avatar name={mem.displayName} color={mem.avatarColor} url={mem.avatarUrl ?? undefined} size={32} />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{mem.displayName}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>@{mem.username}</Text>
+                  </View>
+                  {mem.role === 'admin' && <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800' }}>ADMIN</Text>}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Tone / polish — offered while you have a draft */}
-        {text.trim().length > 1 && (
+        {text.trim().length > 1 && mentionResults.length === 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
               {[{ id: 'warmer', label: 'Warmer' }, { id: 'shorter', label: 'Shorter' }, { id: 'funnier', label: 'Funnier' }, { id: 'fix', label: 'Fix' }].map(t => {
