@@ -13,7 +13,7 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
-  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart,
+  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -551,7 +551,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
 // ─── DMBubble ────────────────────────────────────────────────────────────────
 
 function DMBubble({
-  message, isMe, showReadReceipt, myUserId, grouped, animate,
+  message, isMe, showReadReceipt, myUserId, grouped, animate, translation, translating,
   onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry,
 }: {
   message: NormalizedMessage;
@@ -560,6 +560,8 @@ function DMBubble({
   myUserId: string;
   grouped: boolean;
   animate?: boolean;
+  translation?: string;
+  translating?: boolean;
   onLongPress: () => void;
   onReactionToggle: (val: string, hasReacted: boolean) => void;
   onReplyPress: (replyToId: string) => void;
@@ -783,6 +785,24 @@ function DMBubble({
           )}
           {renderContent()}
 
+          {(translation || translating) && (
+            <Animated.View
+              entering={FadeIn.duration(160)}
+              style={{
+                marginTop: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14,
+                backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.accent}40`,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                <Translate color={colors.accent} size={12} weight="bold" />
+                <Text style={{ color: colors.accent, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6 }}>TRANSLATION</Text>
+              </View>
+              <Text style={{ color: colors.textSecondary, fontSize: textSize - 1, lineHeight: (textSize - 1) * 1.35 }}>
+                {translation || 'Translating…'}
+              </Text>
+            </Animated.View>
+          )}
+
           {!isDeleted && message.reactions.length > 0 && (
             <ReactionBar
               reactions={message.reactions}
@@ -917,7 +937,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
 
 function MessageActionSheet({
   visible, message, isOwn, myUserId, isPinned,
-  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward,
+  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward, onTranslate, onSmartReply,
 }: {
   visible: boolean;
   message: NormalizedMessage | null;
@@ -932,6 +952,8 @@ function MessageActionSheet({
   onEdit: () => void;
   onPin: () => void;
   onForward: () => void;
+  onTranslate: () => void;
+  onSmartReply: () => void;
 }) {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
@@ -962,7 +984,7 @@ function MessageActionSheet({
         {icon}
       </View>
       <Text
-        style={{ flex: 1, color: destructive ? '#ef4444' : colors.text, fontSize: 16, lineHeight: 21, fontWeight: '700' }}
+        style={{ flex: 1, color: destructive ? colors.danger : colors.text, fontSize: 16, lineHeight: 21, fontWeight: '700' }}
         numberOfLines={1}
         maxFontSizeMultiplier={1.15}
       >
@@ -1020,6 +1042,20 @@ function MessageActionSheet({
           </View>
         )}
 
+        {/* Ask Echo — AI actions */}
+        {isText && (
+          <View style={{
+            borderRadius: 18, overflow: 'hidden', marginBottom: 8,
+            borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.accent}44`,
+            backgroundColor: colors.surface,
+          }}>
+            {!isOwn && (
+              <Row icon={<Sparkle color={colors.accent} size={18} weight="fill" />} label="Reply with Echo" onPress={onSmartReply} bordered={false} />
+            )}
+            <Row icon={<Translate color={colors.accent} size={18} weight="bold" />} label="Translate" onPress={onTranslate} bordered={!isOwn} />
+          </View>
+        )}
+
         {/* Actions */}
         <View style={{
           borderRadius: 18, overflow: 'hidden',
@@ -1046,7 +1082,7 @@ function MessageActionSheet({
             />
           )}
           {isOwn && !isDeleted && (
-            <Row icon={<Trash color="#ef4444" size={18} />} label="Delete" destructive onPress={onDelete} />
+            <Row icon={<Trash color={colors.danger} size={18} />} label="Delete" destructive onPress={onDelete} />
           )}
         </View>
 
@@ -1098,6 +1134,8 @@ export default function DMScreen() {
   const [sharedPending, setSharedPending] = useState(Boolean(echoId));
   const [quickAction, setQuickAction] = useState<string | null>(null);
   const [replyLoading, setReplyLoading] = useState<string | null>(null);
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
   const [activeMessage, setActiveMessage] = useState<NormalizedMessage | null>(null);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<NormalizedMessage | null>(null);
@@ -1623,6 +1661,31 @@ export default function DMScreen() {
     }
   }, [replyLoading, conversation, messages, myId, hapticEnabled]);
 
+  // Inline AI translation — tap Translate on a message; the result streams in
+  // and renders under the bubble. Tap again to hide.
+  const handleTranslate = useCallback(async (msg: NormalizedMessage) => {
+    if (!msg.content) return;
+    if (translations[msg.id]) {
+      setTranslations(prev => { const next = { ...prev }; delete next[msg.id]; return next; });
+      return;
+    }
+    setTranslatingId(msg.id);
+    if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    let acc = '';
+    try {
+      await streamEchoAI({
+        message: `Translate the following message to English. If it is already English, translate it to Spanish instead. Output only the translation, no quotes or notes:\n\n${msg.content}`,
+        onEvent: e => { if (e.type === 'text_delta') { acc += e.delta; setTranslations(prev => ({ ...prev, [msg.id]: acc.trim() })); } },
+      });
+      setTranslations(prev => ({ ...prev, [msg.id]: acc.trim() || '—' }));
+    } catch {
+      showToast('Couldn’t translate right now', 'Offline');
+      setTranslations(prev => { const next = { ...prev }; delete next[msg.id]; return next; });
+    } finally {
+      setTranslatingId(null);
+    }
+  }, [translations, hapticEnabled]);
+
   const cancelComposerExtra = useCallback(() => {
     setReplyingTo(null);
     setEditingMessage(null);
@@ -1906,6 +1969,8 @@ export default function DMScreen() {
                 message={msg}
                 isMe={remote ? msg.senderId === myId : msg.senderId === 'me'}
                 animate={firstAppearance && isFresh}
+                translation={translations[msg.id]}
+                translating={translatingId === msg.id}
                 showReadReceipt={readReceipts}
                 myUserId={myId}
                 grouped={grouped}
@@ -2259,6 +2324,8 @@ export default function DMScreen() {
         onEdit={handleEdit}
         onPin={handlePin}
         onForward={() => { if (activeMessage) setForwardTarget(activeMessage); }}
+        onTranslate={() => { if (activeMessage) void handleTranslate(activeMessage); }}
+        onSmartReply={() => void generateSmartReply('draft')}
       />
 
       <ForwardSheet
