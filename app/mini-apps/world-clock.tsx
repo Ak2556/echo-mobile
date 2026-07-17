@@ -90,7 +90,7 @@ export default function WorldClockScreen() {
             {isLocalDay ? <Sun color="#B08536" size={18} weight="fill" /> : <Moon color="#5E748B" size={18} weight="fill" />}
             <Text style={{ color: isLocalDay ? '#B08536' : '#5E748B', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 }}>MY LOCATION</Text>
           </View>
-          <Text style={{ color: colors.text, fontSize: 52, fontWeight: '200', letterSpacing: -3, lineHeight: 56 }}>{localTime.slice(0, 5)}</Text>
+          <Text style={{ color: colors.text, fontSize: 52, fontFamily: 'Fraunces_400Regular', letterSpacing: -2, lineHeight: 58 }}>{localTime.slice(0, 5)}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
             <Text style={{ color: colors.textMuted, fontSize: 14 }}>{localDate}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{localTz.split('/').pop()?.replace(/_/g, ' ')}</Text>
@@ -172,7 +172,7 @@ export default function WorldClockScreen() {
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{date} · {city.region}</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ color: colors.text, fontSize: 28, fontWeight: '200', letterSpacing: -1 }}>{time.slice(0, 5)}</Text>
+                <Text style={{ color: colors.text, fontSize: 28, fontFamily: 'Fraunces_400Regular', letterSpacing: -1 }}>{time.slice(0, 5)}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 11 }}>{time.slice(6)}</Text>
               </View>
               <Pressable
