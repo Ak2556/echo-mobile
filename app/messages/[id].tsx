@@ -26,7 +26,7 @@ import {
   type AudioPlayer,
 } from 'expo-audio';
 import Animated, {
-  FadeIn, FadeOut, SlideInDown, SlideOutDown,
+  FadeIn, FadeInUp, FadeOut, SlideInDown, SlideOutDown,
   runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -493,7 +493,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
 // ─── DMBubble ────────────────────────────────────────────────────────────────
 
 function DMBubble({
-  message, isMe, showReadReceipt, myUserId, grouped,
+  message, isMe, showReadReceipt, myUserId, grouped, animate,
   onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry,
 }: {
   message: NormalizedMessage;
@@ -501,6 +501,7 @@ function DMBubble({
   showReadReceipt: boolean;
   myUserId: string;
   grouped: boolean;
+  animate?: boolean;
   onLongPress: () => void;
   onReactionToggle: (val: string, hasReacted: boolean) => void;
   onReplyPress: (replyToId: string) => void;
@@ -700,7 +701,10 @@ function DMBubble({
   };
 
   return (
-    <View style={{ paddingHorizontal: 16, paddingVertical: grouped ? 1 : 4, alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+    <Animated.View
+      entering={animate ? FadeInUp.springify().damping(19).stiffness(190).mass(0.55) : undefined}
+      style={{ paddingHorizontal: 16, paddingVertical: grouped ? 1 : 4, alignItems: isMe ? 'flex-end' : 'flex-start' }}
+    >
       <GestureDetector gesture={bubbleGesture}>
         <Animated.View style={[{ maxWidth: '82%' }, swipeStyle]}>
           <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -6, alignSelf: 'center', zIndex: 5 }, heartPopStyle]}>
@@ -752,7 +756,7 @@ function DMBubble({
           )}
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -1098,6 +1102,10 @@ export default function DMScreen() {
   }, []);
 
   const listRef = useRef<FlatList<any>>(null);
+  // Entrance motion: animate a bubble only the first time it renders AND only if
+  // it arrived this session — so the initial load and scroll-back never replay.
+  const animatedIds = useRef<Set<string>>(new Set());
+  const openedAtRef = useRef(Date.now());
   const inputRef = useRef<RNTextInput>(null);
   const searchInputRef = useRef<RNTextInput>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1818,10 +1826,14 @@ export default function DMScreen() {
             if (item.type === 'date') return <DateSeparator label={item.label} />;
             if (item.type === 'unread') return <UnreadDivider />;
             const { msg, grouped } = item;
+            const firstAppearance = !animatedIds.current.has(msg.id);
+            if (firstAppearance) animatedIds.current.add(msg.id);
+            const isFresh = new Date(msg.createdAt).getTime() > openedAtRef.current - 2000;
             return (
               <DMBubble
                 message={msg}
                 isMe={remote ? msg.senderId === myId : msg.senderId === 'me'}
+                animate={firstAppearance && isFresh}
                 showReadReceipt={readReceipts}
                 myUserId={myId}
                 grouped={grouped}
