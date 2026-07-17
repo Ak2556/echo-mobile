@@ -13,7 +13,7 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
-  Microphone, Play, Pause, ShareFat, WarningCircle, Users,
+  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -27,7 +27,7 @@ import {
 } from 'expo-audio';
 import Animated, {
   FadeIn, FadeOut, SlideInDown, SlideOutDown,
-  runOnJS, useAnimatedStyle, useSharedValue, withSpring,
+  runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -538,6 +538,27 @@ function DMBubble({
     opacity: Math.min(1, Math.abs(tx.value) / SWIPE_TRIGGER),
   }));
 
+  // Double-tap a text bubble to toss a ❤️ — the beloved iMessage/IG gesture.
+  // Scoped to text so it never fights the single-tap on media/link/echo cards.
+  const isTextBubble = !!message.content && !['image', 'voice', 'echo', 'link', 'contact'].includes(message.kind);
+  const hasHeart = message.reactions.some(r => r.value === '❤️' && r.userId === myUserId);
+  const heartPop = useSharedValue(0);
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .maxDuration(280)
+    .enabled(isTextBubble && !isDeleted && !isFailed)
+    .onStart(() => {
+      heartPop.value = withSpring(1, { damping: 10, stiffness: 260 }, () => {
+        heartPop.value = withTiming(0, { duration: 320 });
+      });
+      runOnJS(onReactionToggle)('❤️', hasHeart);
+    });
+  const bubbleGesture = Gesture.Simultaneous(swipePan, doubleTap);
+  const heartPopStyle = useAnimatedStyle(() => ({
+    opacity: heartPop.value,
+    transform: [{ scale: 0.6 + heartPop.value * 0.9 }],
+  }));
+
   const bubbleBg = isMe ? colors.accent : colors.surface;
   const textColor = isMe ? '#fff' : colors.text;
 
@@ -649,8 +670,13 @@ function DMBubble({
       return (
         <Pressable onLongPress={onLongPress} delayLongPress={350}>
           <View style={{
-            paddingHorizontal: 15, paddingVertical: 11,
-            borderRadius: 20,
+            paddingHorizontal: 15, paddingVertical: 10,
+            // Asymmetric corners give a speech-bubble tail toward the sender's
+            // side, so even a one-word message reads as a bubble, not a circle.
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            borderBottomLeftRadius: isMe ? 20 : 7,
+            borderBottomRightRadius: isMe ? 7 : 20,
             backgroundColor: isMe ? bubbleBg : colors.surfaceHover,
           }}>
             {message.replyToId && (
@@ -674,8 +700,11 @@ function DMBubble({
 
   return (
     <View style={{ paddingHorizontal: 16, paddingVertical: grouped ? 1 : 4, alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-      <GestureDetector gesture={swipePan}>
+      <GestureDetector gesture={bubbleGesture}>
         <Animated.View style={[{ maxWidth: '82%' }, swipeStyle]}>
+          <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -6, alignSelf: 'center', zIndex: 5 }, heartPopStyle]}>
+            <Heart color="#F0506E" size={38} weight="fill" />
+          </Animated.View>
           {canSwipe && (
             <Animated.View
               pointerEvents="none"
@@ -704,8 +733,8 @@ function DMBubble({
       {isFailed ? (
         <Pressable onPress={onRetry} hitSlop={8}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3, marginHorizontal: 2 }}>
-            <WarningCircle color="#EF4444" size={12} weight="fill" />
-            <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '700' }}>Failed to send — tap to retry</Text>
+            <WarningCircle color={colors.danger} size={12} weight="fill" />
+            <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700' }}>Failed to send — tap to retry</Text>
           </View>
         </Pressable>
       ) : !grouped && (
@@ -1692,7 +1721,9 @@ export default function DMScreen() {
           ref={listRef}
           data={listData}
           keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.type === 'unread' ? 'unread-divider' : item.msg.id}
-          contentContainerStyle={{ paddingVertical: 10 }}
+          // flexGrow + flex-end anchor short threads to the bottom (just above
+          // the composer) instead of floating at the top, like every chat app.
+          contentContainerStyle={{ paddingVertical: 10, flexGrow: 1, justifyContent: 'flex-end' }}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => {
             if (isAtBottom) listRef.current?.scrollToEnd({ animated: false });
@@ -1716,6 +1747,27 @@ export default function DMScreen() {
                 Try a different word, link, contact, or photo search.
               </Text>
             </View>
+          ) : conversation ? (
+            // First impression: a warm start-of-conversation moment instead of a
+            // black void — with an Echo-flavored nudge toward the AI quick-replies.
+            <Animated.View entering={FadeIn.duration(300)} style={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 14 }}>
+              <Avatar
+                name={conversation.displayName}
+                color={conversation.avatarColor}
+                url={conversation.isGroup ? undefined : conversation.avatarUrl}
+                size={78}
+              >
+                {conversation.isGroup ? <Users color="#fff" size={30} weight="fill" /> : undefined}
+              </Avatar>
+              <Text style={{ color: colors.text, fontFamily: 'Fraunces_600SemiBold', fontSize: 23, textAlign: 'center', letterSpacing: -0.3 }}>
+                {conversation.isGroup ? conversation.displayName : `Say hi to ${conversation.displayName}`}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 300 }}>
+                {conversation.isGroup
+                  ? 'This is the start of the group. Send something to get it going.'
+                  : 'The start of your conversation. Send the first message — Echo can help you find the words.'}
+              </Text>
+            </Animated.View>
           ) : null}
           renderItem={({ item }) => {
             if (item.type === 'date') return <DateSeparator label={item.label} />;
@@ -1899,11 +1951,11 @@ export default function DMScreen() {
                 flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10,
                 paddingHorizontal: 14,
                 backgroundColor: colors.inputBg,
-                borderWidth: 1, borderColor: '#EF4444AA',
+                borderWidth: 1, borderColor: colors.danger + 'AA',
                 borderRadius: radius.card,
               }}>
                 <Animated.View entering={FadeIn.duration(200)}>
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' }} />
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.danger }} />
                 </Animated.View>
                 <Text style={{ color: colors.text, fontSize: 15, fontVariant: ['tabular-nums'], fontWeight: '600' }}>
                   {Math.floor(recordSec / 60)}:{String(recordSec % 60).padStart(2, '0')}
