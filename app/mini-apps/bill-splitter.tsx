@@ -262,7 +262,7 @@ export default function BillSplitterScreen() {
       {mode === 'even' ? (
         <View style={{ backgroundColor: accent, borderRadius: 28, padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 28, shadowOffset: { width: 0, height: 8 } }}>
           <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Each person pays</Text>
-          <Text style={{ color: '#fff', fontSize: 64, fontWeight: '700', letterSpacing: -3, lineHeight: 68 }}>${fmt(total / people.length)}</Text>
+          <Text style={{ color: '#fff', fontSize: 60, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -2, lineHeight: 66 }}>${fmt(total / people.length)}</Text>
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 6 }}>
             Incl. ${fmt(tipAmount / people.length)} tip{taxNum > 0 ? ` · $${fmt(taxNum / people.length)} tax` : ''}
           </Text>
