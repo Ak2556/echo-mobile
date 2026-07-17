@@ -74,6 +74,16 @@ const QUICK_STARTERS: Record<string, string> = {
   draft:    'This could probably turn into a follow-up Echo about ',
 };
 
+// Built-in sticker packs — tapping one sends it as a jumbo emoji message.
+const STICKER_PACKS: { id: string; tab: string; stickers: string[] }[] = [
+  { id: 'love', tab: '❤️', stickers: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🤍', '🖤', '💖', '💕', '💞', '💓', '💗', '💘', '💝', '😍', '🥰', '😘'] },
+  { id: 'faces', tab: '😂', stickers: ['😂', '🤣', '😅', '😊', '😉', '😎', '🤩', '🥳', '😇', '🙃', '😌', '🤗', '🫶', '🤭', '😏', '🥲', '🥹', '😤'] },
+  { id: 'celebrate', tab: '🎉', stickers: ['🎉', '🎊', '🥳', '🎈', '🎁', '🍾', '🥂', '✨', '⭐', '🌟', '💫', '🏆', '🙌', '👏', '🔥', '💯', '🎯', '🚀'] },
+  { id: 'hands', tab: '👍', stickers: ['👍', '👎', '👌', '🤌', '✌️', '🤞', '🫰', '🤙', '👋', '🙏', '🤝', '💪', '👏', '🙌', '🫶', '🫡', '🤟', '🤘'] },
+  { id: 'feels', tab: '🥺', stickers: ['🥺', '😭', '😢', '😔', '😞', '😩', '😫', '😳', '🤔', '😴', '🤯', '😵', '🫠', '😬', '🙄', '😑', '😮', '🤨'] },
+  { id: 'vibes', tab: '🌙', stickers: ['🌙', '☀️', '⚡', '🌈', '🌸', '🍀', '🌊', '☕', '🎵', '💤', '👀', '💭', '🫧', '🕊️', '🦋', '🌻', '🍕', '🎮'] },
+];
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface NormalizedMessage {
@@ -1004,6 +1014,59 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
   );
 }
 
+// ─── StickerSheet ────────────────────────────────────────────────────────────
+
+function StickerSheet({ visible, onSelect, onClose }: {
+  visible: boolean;
+  onSelect: (sticker: string) => void;
+  onClose: () => void;
+}) {
+  const { colors, reduceAnimations } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [pack, setPack] = useState(STICKER_PACKS[0].id);
+  const active = STICKER_PACKS.find(p => p.id === pack) ?? STICKER_PACKS[0];
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <Animated.View entering={reduceAnimations ? undefined : FadeIn.duration(180)} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+        <Pressable style={{ flex: 1 }} onPress={onClose} />
+      </Animated.View>
+      <Animated.View
+        entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
+        exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+      >
+        <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 8 }}>
+            <Sparkle color={colors.accent} size={16} weight="fill" />
+            <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>Stickers</Text>
+            <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
+          </View>
+          <ScrollView style={{ maxHeight: 264 }} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, paddingBottom: 6 }} showsVerticalScrollIndicator={false}>
+            {active.stickers.map(s => (
+              <Pressable
+                key={s}
+                onPress={() => { onSelect(s); onClose(); }}
+                accessibilityRole="button"
+                accessibilityLabel={`Send ${s} sticker`}
+                style={({ pressed }) => ({ width: '16.66%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1, transform: [{ scale: pressed ? 0.85 : 1 }] })}
+              >
+                <Text style={{ fontSize: 38 }}>{s}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 8, paddingHorizontal: 12, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+            {STICKER_PACKS.map(p => (
+              <Pressable key={p.id} onPress={() => setPack(p.id)} style={{ paddingHorizontal: 10, paddingVertical: 7, borderRadius: 12, backgroundColor: pack === p.id ? colors.accentMuted : 'transparent' }}>
+                <Text style={{ fontSize: 22 }}>{p.tab}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
 // ─── ForwardSheet ────────────────────────────────────────────────────────────
 
 function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
@@ -1301,6 +1364,7 @@ export default function DMScreen() {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [imageUploading, setImageUploading] = useState(false);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [stickerOpen, setStickerOpen] = useState(false);
   const [composerFocused, setComposerFocused] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1629,6 +1693,19 @@ export default function DMScreen() {
     }
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
   }, [text, id, hapticEnabled, remote, sendRemote, sendDM, editingMessage, editMessage, replyingTo, sendLinkDM, sendLocalLink]);
+
+  const sendSticker = useCallback((sticker: string) => {
+    if (!id) return;
+    if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const fx = detectEffect(sticker);
+    if (fx) setEffect(fx);
+    if (remote) {
+      sendRemote.mutate({ content: sticker }, { onError: () => Alert.alert('Error', 'Failed to send sticker. Please try again.') });
+    } else {
+      sendDM(id, sticker);
+    }
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+  }, [id, hapticEnabled, remote, sendRemote, sendDM]);
 
   const sendPickedImage = useCallback((asset: ImagePicker.ImagePickerAsset) => {
     setAttachmentMenuOpen(false);
@@ -2370,6 +2447,7 @@ export default function DMScreen() {
               borderColor: colors.border,
             }}>
               {[
+                { key: 'stickers', label: 'Stickers', icon: <Sparkle color={colors.accent} size={17} weight="fill" />, onPress: () => { setAttachmentMenuOpen(false); setStickerOpen(true); } },
                 { key: 'camera', label: 'Camera', icon: <Camera color={colors.accent} size={17} weight="bold" />, onPress: handleTakePhoto },
                 { key: 'gallery', label: 'Gallery', icon: <Images color={colors.accent} size={17} weight="bold" />, onPress: handlePickImage },
                 ...(!conversation?.isGroup ? [{ key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={17} weight="bold" />, onPress: handleShareContact }] : []),
@@ -2598,6 +2676,9 @@ export default function DMScreen() {
       />
 
       {effect && <MessageEffect kind={effect} onDone={() => setEffect(null)} />}
+
+      <StickerSheet visible={stickerOpen} onSelect={sendSticker} onClose={() => setStickerOpen(false)} />
+
 
       {/* Catch-me-up summary */}
       <Modal visible={catchup !== null} transparent animationType="none" onRequestClose={() => setCatchup(null)}>
