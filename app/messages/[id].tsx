@@ -14,7 +14,7 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
-  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush,
+  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -696,6 +696,7 @@ function MessageEffect({ kind, onDone }: { kind: EffectKind; onDone: () => void 
 
 function DMBubble({
   message, isMe, showReadReceipt, myUserId, grouped, animate, translation, translating, saved,
+  selectionMode, selected, onSelectToggle,
   onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry,
 }: {
   message: NormalizedMessage;
@@ -707,6 +708,9 @@ function DMBubble({
   translation?: string;
   translating?: boolean;
   saved?: boolean;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onSelectToggle?: () => void;
   onLongPress: () => void;
   onReactionToggle: (val: string, hasReacted: boolean) => void;
   onReplyPress: (replyToId: string) => void;
@@ -918,8 +922,15 @@ function DMBubble({
   return (
     <Animated.View
       entering={animate ? FadeInUp.springify().damping(19).stiffness(190).mass(0.55) : undefined}
-      style={{ paddingHorizontal: 16, paddingVertical: grouped ? 1 : 4, alignItems: isMe ? 'flex-end' : 'flex-start' }}
+      style={{ paddingVertical: grouped ? 1 : 4, backgroundColor: selected ? colors.accentMuted : 'transparent' }}
     >
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
+      {selectionMode && (
+        <View style={{ marginRight: 10 }}>
+          {selected ? <CheckCircle color={colors.accent} size={22} weight="fill" /> : <View style={{ width: 21, height: 21, borderRadius: 11, borderWidth: 2, borderColor: colors.textMuted }} />}
+        </View>
+      )}
+      <View style={{ flex: 1, alignItems: isMe ? 'flex-end' : 'flex-start' }}>
       <GestureDetector gesture={bubbleGesture}>
         <Animated.View style={[{ maxWidth: '82%' }, swipeStyle]}>
           <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -6, alignSelf: 'center', zIndex: 5 }, heartPopStyle]}>
@@ -990,6 +1001,11 @@ function DMBubble({
           )}
         </View>
       )}
+      </View>
+      {selectionMode && (
+        <Pressable onPress={onSelectToggle} style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={selected ? 'Deselect message' : 'Select message'} />
+      )}
+    </View>
     </Animated.View>
   );
 }
@@ -1233,7 +1249,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
 
 function MessageActionSheet({
   visible, message, isOwn, myUserId, isPinned,
-  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward, onTranslate, onSmartReply, onSave, isSaved,
+  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward, onTranslate, onSmartReply, onSave, isSaved, onSelect,
 }: {
   visible: boolean;
   message: NormalizedMessage | null;
@@ -1242,6 +1258,7 @@ function MessageActionSheet({
   isPinned: boolean;
   isSaved: boolean;
   onSave: () => void;
+  onSelect: () => void;
   onClose: () => void;
   onCopy: () => void;
   onDelete: () => void;
@@ -1369,6 +1386,9 @@ function MessageActionSheet({
           {!isDeleted && !message.id.startsWith('pending-') && !message.id.startsWith('failed-') && (
             <Row icon={<ShareFat color={colors.text} size={18} />} label="Forward" onPress={onForward} />
           )}
+          {!isDeleted && (
+            <Row icon={<Checks color={colors.text} size={18} />} label="Select" onPress={onSelect} />
+          )}
           {isText && isOwn && (
             <Row icon={<PencilSimple color={colors.text} size={18} />} label="Edit" onPress={onEdit} />
           )}
@@ -1453,6 +1473,8 @@ export default function DMScreen() {
     return Array.isArray(v) ? v : [];
   });
   const [showSaved, setShowSaved] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showWallpaper, setShowWallpaper] = useState(false);
   const [wallpaperId, setWallpaperId] = useState('default');
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
@@ -1959,6 +1981,29 @@ export default function DMScreen() {
     if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [activeMessage, id, myId, conversation, hapticEnabled]);
 
+  const enterSelection = useCallback((seedId: string) => {
+    setSelectionMode(true);
+    setSelectedIds([seedId]);
+  }, []);
+  const exitSelection = useCallback(() => { setSelectionMode(false); setSelectedIds([]); }, []);
+  const toggleSelect = useCallback((mid: string) => {
+    setSelectedIds(prev => prev.includes(mid) ? prev.filter(x => x !== mid) : [...prev, mid]);
+  }, []);
+  const bulkCopy = useCallback(() => {
+    const texts = messages.filter(m => selectedIds.includes(m.id) && m.content).map(m => m.content);
+    if (texts.length) void import('react-native').then(({ Share }) => Share.share({ message: texts.join('\n\n') }));
+    exitSelection();
+  }, [messages, selectedIds, exitSelection]);
+  const bulkDelete = useCallback(() => {
+    if (!remote) { exitSelection(); return; }
+    const own = messages.filter(m => selectedIds.includes(m.id) && m.senderId === myId && !m.deletedAt);
+    if (!own.length) { exitSelection(); return; }
+    Alert.alert(`Delete ${own.length} message${own.length === 1 ? '' : 's'}?`, 'This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => { own.forEach(m => deleteMessage.mutate(m.id)); exitSelection(); } },
+    ]);
+  }, [remote, messages, selectedIds, myId, deleteMessage, exitSelection]);
+
   const handleCopy = useCallback(() => {
     if (activeMessage?.content) {
       void import('react-native').then(({ Share }) => Share.share({ message: activeMessage.content! }));
@@ -2464,6 +2509,9 @@ export default function DMScreen() {
                 translation={translations[msg.id]}
                 translating={translatingId === msg.id}
                 saved={savedIdSet.has(msg.id)}
+                selectionMode={selectionMode}
+                selected={selectedIds.includes(msg.id)}
+                onSelectToggle={() => toggleSelect(msg.id)}
                 showReadReceipt={readReceipts}
                 myUserId={myId}
                 grouped={grouped}
@@ -2878,9 +2926,31 @@ export default function DMScreen() {
         onSmartReply={() => void generateSmartReply('draft')}
         onSave={handleToggleSave}
         isSaved={!!activeMessage && savedIdSet.has(activeMessage.id)}
+        onSelect={() => { if (activeMessage) enterSelection(activeMessage.id); }}
       />
 
       {effect && <MessageEffect kind={effect} onDone={() => setEffect(null)} />}
+
+      {selectionMode && (
+        <Animated.View
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(120)}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30 }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18, paddingHorizontal: 18, paddingTop: 14, paddingBottom: insets.bottom + 14, backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+            <Pressable onPress={exitSelection} hitSlop={8} accessibilityLabel="Cancel selection"><X color={colors.text} size={22} /></Pressable>
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', flex: 1 }}>
+              {selectedIds.length} selected
+            </Text>
+            <Pressable onPress={bulkCopy} disabled={!selectedIds.length} hitSlop={8} accessibilityLabel="Copy selected">
+              <Copy color={selectedIds.length ? colors.accent : colors.textMuted} size={22} />
+            </Pressable>
+            <Pressable onPress={bulkDelete} disabled={!selectedIds.length} hitSlop={8} accessibilityLabel="Delete selected">
+              <Trash color={selectedIds.length ? colors.danger : colors.textMuted} size={22} />
+            </Pressable>
+          </View>
+        </Animated.View>
+      )}
 
       <StickerSheet visible={stickerOpen} onSelect={sendSticker} onClose={() => setStickerOpen(false)} />
 
