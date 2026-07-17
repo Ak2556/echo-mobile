@@ -548,6 +548,60 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
   );
 }
 
+// ─── Rich text + emoji jumbo ─────────────────────────────────────────────────
+
+/** How many emoji, and whether the message is nothing but emoji (→ jumbo). */
+function emojiInfo(text: string): { only: boolean; count: number } {
+  const trimmed = text.trim();
+  const matches = trimmed.match(/\p{Extended_Pictographic}/gu);
+  const count = matches?.length ?? 0;
+  if (count === 0) return { only: false, count: 0 };
+  const stripped = trimmed.replace(/\p{Extended_Pictographic}/gu, '').replace(/[️‍\s]/gu, '');
+  return { only: stripped.length === 0, count };
+}
+
+type InlineSpan = { type: 'text' | 'bold' | 'italic' | 'strike' | 'code'; text: string };
+
+/** Non-nested inline markdown: **bold** __bold__ *italic* _italic_ ~~strike~~ `code`. */
+function parseInline(text: string): InlineSpan[] {
+  const parts: InlineSpan[] = [];
+  const re = /(\*\*.+?\*\*|__.+?__|~~.+?~~|`.+?`|\*.+?\*|_.+?_)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push({ type: 'text', text: text.slice(last, m.index) });
+    const tok = m[0];
+    if (tok.startsWith('**') || tok.startsWith('__')) parts.push({ type: 'bold', text: tok.slice(2, -2) });
+    else if (tok.startsWith('~~')) parts.push({ type: 'strike', text: tok.slice(2, -2) });
+    else if (tok.startsWith('`')) parts.push({ type: 'code', text: tok.slice(1, -1) });
+    else parts.push({ type: 'italic', text: tok.slice(1, -1) });
+    last = m.index + tok.length;
+  }
+  if (last < text.length) parts.push({ type: 'text', text: text.slice(last) });
+  return parts;
+}
+
+function FormattedText({ content, color, size }: { content: string; color: string; size: number }) {
+  const { colors } = useTheme();
+  const parts = useMemo(() => parseInline(content), [content]);
+  if (parts.length === 1 && parts[0].type === 'text') {
+    return <Text style={{ color, fontSize: size, lineHeight: size * 1.38 }}>{content}</Text>;
+  }
+  return (
+    <Text style={{ color, fontSize: size, lineHeight: size * 1.38 }}>
+      {parts.map((p, i) => {
+        if (p.type === 'bold') return <Text key={i} style={{ fontWeight: '800' }}>{p.text}</Text>;
+        if (p.type === 'italic') return <Text key={i} style={{ fontStyle: 'italic' }}>{p.text}</Text>;
+        if (p.type === 'strike') return <Text key={i} style={{ textDecorationLine: 'line-through' }}>{p.text}</Text>;
+        if (p.type === 'code') return (
+          <Text key={i} style={{ fontFamily: 'monospace', fontSize: size - 1, color: colors.accent, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>{` ${p.text} `}</Text>
+        );
+        return <Text key={i}>{p.text}</Text>;
+      })}
+    </Text>
+  );
+}
+
 // ─── DMBubble ────────────────────────────────────────────────────────────────
 
 function DMBubble({
@@ -729,6 +783,18 @@ function DMBubble({
     }
 
     if (message.content) {
+      const emoji = emojiInfo(message.content);
+      // Emoji-only messages go jumbo with no bubble, like iMessage.
+      const jumbo = emoji.only && emoji.count <= 6 && !message.replyToId;
+      if (jumbo) {
+        return (
+          <Pressable onLongPress={onLongPress} delayLongPress={350} style={{ paddingVertical: 2, paddingHorizontal: 2 }}>
+            <Text style={{ fontSize: emoji.count <= 2 ? 46 : emoji.count <= 4 ? 36 : 30, lineHeight: emoji.count <= 2 ? 56 : 44 }}>
+              {message.content}
+            </Text>
+          </Pressable>
+        );
+      }
       return (
         <Pressable onLongPress={onLongPress} delayLongPress={350}>
           <View style={{
@@ -749,9 +815,7 @@ function DMBubble({
                 isMe={isMe}
               />
             )}
-            <Text style={{ color: textColor, fontSize: textSize, lineHeight: textSize * 1.38 }}>
-              {message.content}
-            </Text>
+            <FormattedText content={message.content} color={textColor} size={textSize} />
           </View>
         </Pressable>
       );
