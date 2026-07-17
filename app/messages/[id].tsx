@@ -5,6 +5,7 @@ import {
   ActivityIndicator, Alert, Linking, Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
@@ -13,7 +14,7 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
-  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple,
+  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -83,6 +84,18 @@ interface SavedMessage {
   fromName: string;
   savedAt: string;
 }
+
+// Per-conversation chat wallpapers — a subtle warm tint wash over the theme bg
+// (works in light + dark, and message bubbles stay readable over it).
+const WALLPAPERS: { id: string; tint: string | null }[] = [
+  { id: 'default', tint: null },
+  { id: 'terracotta', tint: '#C65F3F' },
+  { id: 'ochre', tint: '#B08536' },
+  { id: 'sage', tint: '#4E8B7A' },
+  { id: 'dusk', tint: '#5E748B' },
+  { id: 'plum', tint: '#8B5E7D' },
+  { id: 'rose', tint: '#B35D6B' },
+];
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1440,6 +1453,8 @@ export default function DMScreen() {
     return Array.isArray(v) ? v : [];
   });
   const [showSaved, setShowSaved] = useState(false);
+  const [showWallpaper, setShowWallpaper] = useState(false);
+  const [wallpaperId, setWallpaperId] = useState('default');
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<NormalizedMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<NormalizedMessage | null>(null);
@@ -1671,6 +1686,10 @@ export default function DMScreen() {
     setText(t => t.replace(/@\w*$/, `@${mem.username} `));
     inputRef.current?.focus();
   };
+
+  useEffect(() => { if (id) setWallpaperId(persistGet<string>('chat:wallpaper:' + id, 'default')); }, [id]);
+  const applyWallpaper = (wid: string) => { setWallpaperId(wid); if (id) persistSet('chat:wallpaper:' + id, wid); };
+  const wallpaperTint = WALLPAPERS.find(w => w.id === wallpaperId)?.tint ?? null;
 
   const searchTerm = searchQuery.trim().toLowerCase();
   const visibleMessages = searchTerm
@@ -2175,6 +2194,16 @@ export default function DMScreen() {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.bg }}>
 
+      {wallpaperTint && (
+        <LinearGradient
+          colors={[`${wallpaperTint}2B`, `${wallpaperTint}12`, 'transparent']}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      )}
+
       {/* Header */}
       <View style={{
         flexDirection: 'row', alignItems: 'center',
@@ -2271,6 +2300,21 @@ export default function DMScreen() {
             })}
           >
             <BookmarkSimple color={colors.accent} size={17} weight="fill" />
+          </Pressable>
+        )}
+
+        {!searchOpen && (
+          <Pressable
+            onPress={() => setShowWallpaper(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Chat wallpaper"
+            style={({ pressed }) => ({
+              width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
+              backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
+              opacity: pressed ? 0.65 : 1,
+            })}
+          >
+            <PaintBrush color={colors.textSecondary} size={17} weight="bold" />
           </Pressable>
         )}
       </View>
@@ -2839,6 +2883,49 @@ export default function DMScreen() {
       {effect && <MessageEffect kind={effect} onDone={() => setEffect(null)} />}
 
       <StickerSheet visible={stickerOpen} onSelect={sendSticker} onClose={() => setStickerOpen(false)} />
+
+      {/* Chat wallpaper picker */}
+      <Modal visible={showWallpaper} transparent animationType="none" onRequestClose={() => setShowWallpaper(false)}>
+        <Animated.View entering={reduceAnimations ? undefined : FadeIn.duration(180)} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <Pressable style={{ flex: 1 }} onPress={() => setShowWallpaper(false)} />
+        </Animated.View>
+        <Animated.View
+          entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
+          exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+        >
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 14, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 14 }}>
+              <PaintBrush color={colors.accent} size={16} weight="bold" />
+              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>Chat wallpaper</Text>
+              <Pressable onPress={() => setShowWallpaper(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 }}>
+              {WALLPAPERS.map(w => {
+                const selected = wallpaperId === w.id;
+                return (
+                  <Pressable
+                    key={w.id}
+                    onPress={() => applyWallpaper(w.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Wallpaper ${w.id}`}
+                    style={{ width: 64, height: 92, borderRadius: 16, overflow: 'hidden', borderWidth: 2, borderColor: selected ? colors.accent : colors.border, backgroundColor: colors.bg }}
+                  >
+                    {w.tint ? (
+                      <LinearGradient colors={[`${w.tint}55`, `${w.tint}18`, colors.bg]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} />
+                    ) : null}
+                    {selected && (
+                      <View style={{ position: 'absolute', top: 5, right: 5, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </Animated.View>
+      </Modal>
 
       {/* Saved messages */}
       <Modal visible={showSaved} transparent animationType="none" onRequestClose={() => setShowSaved(false)}>
