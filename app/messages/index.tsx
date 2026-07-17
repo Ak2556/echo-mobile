@@ -3,8 +3,10 @@ import { StyleSheet, View, Text, Alert, Pressable, Modal, TextInput, ScrollView,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PencilSimple, Envelope, SealCheck, BellSlash, Archive, CaretDown, CaretRight, Users, X, MagnifyingGlass, Check } from 'phosphor-react-native';
+import { ArrowLeft, PencilSimple, Envelope, SealCheck, BellSlash, Archive, CaretDown, CaretRight, Users, X, MagnifyingGlass, Check, PushPin } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { Swipeable } from 'react-native-gesture-handler';
+import { persistGet, persistSet } from '../../store/persist';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { Avatar } from '../../components/ui/Avatar';
@@ -212,8 +214,8 @@ function CreateGroupModal({
   );
 }
 
-function ConversationCard({ conversation, index, onPress, onLongPress }: {
-  conversation: InboxConversation; index: number; onPress: () => void; onLongPress?: () => void;
+function ConversationCard({ conversation, index, pinned, onPress, onLongPress }: {
+  conversation: InboxConversation; index: number; pinned?: boolean; onPress: () => void; onLongPress?: () => void;
 }) {
   const { colors, fontSizes, showAvatars, animation, isUserOnline } = useTheme();
   const online = !conversation.isGroup && isUserOnline(conversation.userId);
@@ -297,9 +299,12 @@ function ConversationCard({ conversation, index, onPress, onLongPress }: {
           </Text>
         </View>
 
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8 }}>
-          {getTimeAgo(conversation.lastMessageAt)}
-        </Text>
+        <View style={{ alignItems: 'flex-end', marginLeft: 8, gap: 4 }}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+            {getTimeAgo(conversation.lastMessageAt)}
+          </Text>
+          {pinned && <PushPin color={colors.accent} size={13} weight="fill" />}
+        </View>
       </AnimatedPressable>
     </Animated.View>
   );
@@ -315,6 +320,10 @@ export default function MessagesListScreen() {
   const setPref = useSetDMPref();
   const [showArchived, setShowArchived] = useState(false);
   const [groupModalOpen, setGroupModalOpen] = useState(false);
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
+    const v = persistGet<string[]>('chat:pinnedConversations', []);
+    return Array.isArray(v) ? v : [];
+  });
 
   // Deep-link support: /messages?newGroup=1 (chat-tab "New group" button)
   const { newGroup } = useLocalSearchParams<{ newGroup?: string }>();
@@ -342,15 +351,33 @@ export default function MessagesListScreen() {
       }))
     : localConversations;
 
-  const sorted = [...conversations].sort(
-    (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-  );
+  // Pinned conversations live locally (no backend field needed) and always
+  // sort to the top, like every top messaging app.
+  const isPinned = (id: string) => pinnedIds.includes(id);
+  const togglePin = (id: string) => {
+    setPinnedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(p => p !== id) : [id, ...prev].slice(0, 12);
+      persistSet('chat:pinnedConversations', next);
+      return next;
+    });
+  };
+
+  const sorted = [...conversations].sort((a, b) => {
+    const pa = isPinned(a.id) ? 1 : 0;
+    const pb = isPinned(b.id) ? 1 : 0;
+    if (pa !== pb) return pb - pa;
+    return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
+  });
   const active = sorted.filter(c => !c.archived);
   const archived = sorted.filter(c => c.archived);
 
   const openActions = (c: InboxConversation) => {
     if (!remote) return;
     Alert.alert(c.displayName, undefined, [
+      {
+        text: isPinned(c.id) ? 'Unpin' : 'Pin to top',
+        onPress: () => togglePin(c.id),
+      },
       {
         text: c.muted ? 'Unmute notifications' : 'Mute notifications',
         onPress: () => setPref.mutate({ conversationId: c.id, patch: { muted: !c.muted } }),
@@ -363,13 +390,54 @@ export default function MessagesListScreen() {
     ]);
   };
 
+  const SwipeAction = ({ icon, label, bg, onPress }: { icon: React.ReactNode; label: string; bg: string; onPress: () => void }) => (
+    <Pressable onPress={onPress} style={{ width: 76, alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: bg }}>
+      {icon}
+      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{label}</Text>
+    </Pressable>
+  );
+
   const renderCard = (item: InboxConversation, index: number) => (
-    <ConversationCard
-      conversation={item}
-      index={index}
-      onPress={() => router.push(`/messages/${item.id}`)}
-      onLongPress={() => openActions(item)}
-    />
+    <Swipeable
+      key={item.id}
+      overshootRight={false}
+      renderRightActions={() => (
+        <View style={{ flexDirection: 'row' }}>
+          <SwipeAction
+            icon={<PushPin color="#fff" size={19} weight={isPinned(item.id) ? 'fill' : 'regular'} />}
+            label={isPinned(item.id) ? 'Unpin' : 'Pin'}
+            bg={colors.accent}
+            onPress={() => togglePin(item.id)}
+          />
+          {remote && (
+            <SwipeAction
+              icon={<BellSlash color="#fff" size={19} weight={item.muted ? 'fill' : 'regular'} />}
+              label={item.muted ? 'Unmute' : 'Mute'}
+              bg={colors.textMuted}
+              onPress={() => setPref.mutate({ conversationId: item.id, patch: { muted: !item.muted } })}
+            />
+          )}
+          {remote && (
+            <SwipeAction
+              icon={<Archive color="#fff" size={19} weight={item.archived ? 'fill' : 'regular'} />}
+              label={item.archived ? 'Restore' : 'Archive'}
+              bg={colors.danger}
+              onPress={() => setPref.mutate({ conversationId: item.id, patch: { archived: !item.archived } })}
+            />
+          )}
+        </View>
+      )}
+    >
+      <View style={{ backgroundColor: colors.bg }}>
+        <ConversationCard
+          conversation={item}
+          index={index}
+          pinned={isPinned(item.id)}
+          onPress={() => router.push(`/messages/${item.id}`)}
+          onLongPress={() => openActions(item)}
+        />
+      </View>
+    </Swipeable>
   );
 
   if (remote && remoteLoading) {
