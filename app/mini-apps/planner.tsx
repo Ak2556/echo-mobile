@@ -5,6 +5,7 @@ import { CaretLeft, CaretRight, CheckCircle, CircleDashed, Plus, Trash } from 'p
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniChip, MiniButton } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
@@ -13,8 +14,8 @@ import {
 } from '../../lib/planner';
 
 export default function PlannerScreen() {
-  const { colors } = useTheme();
-  const accent = '#7C6CE8';
+  const { colors, font } = useTheme();
+  const accent = '#8B5E7D'; // plum — warm editorial palette
   const [items, setItems] = useState<PlannerItem[]>([]);
   const [date, setDate] = useState(plannerToday());
   const [title, setTitle] = useState('');
@@ -87,19 +88,10 @@ export default function PlannerScreen() {
         />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {PLANNER_SLOTS.map(item => (
-            <Pressable key={item.id} onPress={() => setSlot(item.id)} style={{ flex: 1 }}>
-              <View style={{ height: 36, borderRadius: 999, backgroundColor: slot === item.id ? accent : colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: slot === item.id ? '#fff' : colors.textMuted, fontSize: 12, fontWeight: '800' }}>{item.label}</Text>
-              </View>
-            </Pressable>
+            <MiniChip key={item.id} accent={accent} label={item.label} active={slot === item.id} onPress={() => setSlot(item.id)} />
           ))}
         </View>
-        <Pressable onPress={add}>
-          <View style={{ height: 48, borderRadius: 16, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-            <Plus color="#fff" size={18} weight="bold" />
-            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>Add to day</Text>
-          </View>
-        </Pressable>
+        <MiniButton label="Add to day" accent={accent} onPress={add} icon={<Plus color="#fff" size={18} weight="bold" />} />
       </GlassPanel>
 
       <View style={{ gap: 14 }}>
@@ -107,7 +99,7 @@ export default function PlannerScreen() {
           const rows = dayItems.filter(item => item.slot === section.id);
           return (
             <View key={section.id}>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>
+              <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 8 }]}>
                 {section.label}
               </Text>
               <View style={{ gap: 8 }}>

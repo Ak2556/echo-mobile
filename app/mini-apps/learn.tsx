@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import {
   BookOpen,
@@ -92,7 +93,7 @@ type LearnTab = 'today' | 'library' | 'oneOnOne' | 'studio' | 'people' | 'roadma
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { colors } = useTheme();
   return (
-    <Pressable onPress={onPress}>
+    <AnimatedPressable onPress={onPress} scaleValue={0.94} haptic="light" accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }}>
       <View style={{
         borderRadius: 999,
         paddingHorizontal: 12,
@@ -103,24 +104,27 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
       }}>
         <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{label}</Text>
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
+// Matches MiniStatCard's suite look (Fraunces accent value + eyebrow label);
+// keeps minWidth so the 4-up stat rows in deeper tabs still wrap gracefully.
 function Stat({ label, value }: { label: string; value: string }) {
   const { colors, font } = useTheme();
   return (
     <View style={{
       flex: 1,
       minWidth: 92,
-      borderRadius: 16,
-      padding: 12,
-      backgroundColor: colors.surfaceHover,
+      borderRadius: 14,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
+      borderColor: colors.glassBorder,
     }}>
-      <Text style={[font.bodyBold, { color: colors.text, fontSize: 19 }]}>{value}</Text>
-      <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]}>{label}</Text>
+      <Text style={[font.display, { color: ACCENT, fontSize: 22 }]} numberOfLines={1}>{value}</Text>
+      <Text style={[font.eyebrow, { color: colors.textMuted, fontSize: 10.5, marginTop: 3 }]} numberOfLines={1}>{label}</Text>
     </View>
   );
 }
@@ -465,16 +469,16 @@ export default function LearnScreen() {
       subtitle={activeGoal ? `${MODE_LABELS[activeGoal.mode]} -> ${activeGoal.title}` : 'Skills, subjects, and classrooms'}
       headerRight={(
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Pressable onPress={() => setTab('settings')} accessibilityRole="button" accessibilityLabel="Learning settings">
+          <AnimatedPressable onPress={() => setTab('settings')} scaleValue={0.9} haptic="light" accessibilityRole="button" accessibilityLabel="Learning settings">
             <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
               <GearSix color={colors.textSecondary} size={18} weight="bold" />
             </View>
-          </Pressable>
-          <Pressable onPress={() => setShowSetup(true)} accessibilityRole="button" accessibilityLabel="Create learning goal">
+          </AnimatedPressable>
+          <AnimatedPressable onPress={() => setShowSetup(true)} scaleValue={0.9} haptic="medium" accessibilityRole="button" accessibilityLabel="Create learning goal">
             <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' }}>
               <Plus color="#fff" size={18} weight="bold" />
             </View>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       )}
     >
@@ -1815,11 +1819,11 @@ function LearnInput({ value, onChangeText, placeholder, multiline = false, stron
 
 function InlineButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress}>
+    <AnimatedPressable onPress={onPress} scaleValue={0.96} haptic="medium" accessibilityRole="button" accessibilityLabel={label}>
       <View style={{ minHeight: 42, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{label}</Text>
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -1827,7 +1831,7 @@ function SmallAction({ label, onPress, danger = false }: { label: string; onPres
   const { colors } = useTheme();
   const color = danger ? colors.danger : ACCENT;
   return (
-    <Pressable onPress={onPress}>
+    <AnimatedPressable onPress={onPress} scaleValue={0.93} haptic="light" accessibilityRole="button" accessibilityLabel={label}>
       <View style={{
         borderRadius: 999,
         minHeight: 34,
@@ -1840,7 +1844,7 @@ function SmallAction({ label, onPress, danger = false }: { label: string; onPres
       }}>
         <Text style={{ color, fontSize: 11, fontWeight: '900' }}>{label}</Text>
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -1851,21 +1855,25 @@ function ActionButton({ icon, label, onPress, filled = false }: {
   filled?: boolean;
 }) {
   const { colors } = useTheme();
+  // flex lives on the plain wrapper View — a flex prop on AnimatedPressable
+  // would drop and collapse the cell to content width.
   return (
-    <Pressable onPress={onPress} style={{ flex: 1 }}>
-      <View style={{
-        minHeight: 50,
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-        backgroundColor: filled ? ACCENT : colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: filled ? ACCENT : colors.border,
-      }}>
-        {icon}
-        <Text style={{ color: filled ? '#fff' : colors.textSecondary, fontSize: 11, fontWeight: '900' }}>{label}</Text>
-      </View>
-    </Pressable>
+    <View style={{ flex: 1 }}>
+      <AnimatedPressable onPress={onPress} scaleValue={0.95} haptic="light" accessibilityRole="button" accessibilityLabel={label}>
+        <View style={{
+          minHeight: 50,
+          borderRadius: 16,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+          backgroundColor: filled ? ACCENT : colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: filled ? ACCENT : colors.border,
+        }}>
+          {icon}
+          <Text style={{ color: filled ? '#fff' : colors.textSecondary, fontSize: 11, fontWeight: '900' }}>{label}</Text>
+        </View>
+      </AnimatedPressable>
+    </View>
   );
 }

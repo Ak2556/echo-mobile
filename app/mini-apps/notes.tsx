@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TextInput, Pressable,
   KeyboardAvoidingView, Platform, Alert, Modal, StyleSheet, Share,
@@ -16,6 +16,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniHero, MiniChip, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { showToast } from '../../components/ui/Toast';
 import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/notes';
 
@@ -115,6 +116,20 @@ function countWords(text: string) {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
 }
 
+// Strip list/checkbox/heading markup so the card preview reads as prose
+// instead of showing literal "- [ ]" and "##" tokens. Checked items get a ✓.
+function previewText(body: string) {
+  return body
+    .split(/\r?\n/)
+    .map(line => line
+      .replace(/^\s*[-*]\s+\[[xX]\]\s+/, '✓ ')
+      .replace(/^\s*[-*]\s+\[ \]\s+/, '○ ')
+      .replace(/^\s*#{1,6}\s+/, '')
+      .replace(/^\s*[-*]\s+/, '• '))
+    .join('\n')
+    .trim();
+}
+
 function checklistStats(body: string) {
   const matches = Array.from(body.matchAll(/^\s*[-*]\s+\[([ xX])\]\s+(.+)$/gm));
   const total = matches.length;
@@ -153,59 +168,6 @@ function applyTemplate(template: NoteTemplate): Note {
     createdAt: now,
     updatedAt: now,
   };
-}
-
-function FilterChip({
-  label,
-  active,
-  onPress,
-  icon,
-}: {
-  label: string;
-  active?: boolean;
-  onPress: () => void;
-  icon?: React.ReactNode;
-}) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 12,
-        paddingVertical: 9,
-        borderRadius: 999,
-        backgroundColor: active ? colors.accent : colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: active ? colors.accent : colors.glassBorder,
-      }}
-    >
-      {icon}
-      <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 13, fontWeight: '800' }}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
-  const { colors } = useTheme();
-  return (
-    <View style={{
-      flex: 1,
-      minWidth: 92,
-      borderRadius: 18,
-      padding: 12,
-      backgroundColor: colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.04)',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.glassBorder,
-    }}>
-      <Text style={{ color, fontSize: 20, fontWeight: '900' }}>{value}</Text>
-      <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2, fontWeight: '700' }}>{label}</Text>
-    </View>
-  );
 }
 
 function NoteEditor({
@@ -283,8 +245,15 @@ function NoteEditor({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', gap: 9, paddingHorizontal: 14 }}
             >
-              {NOTE_COLORS.map(c => (
-                <Pressable key={c} onPress={() => setColor(c)}>
+              {NOTE_COLORS.map((c, ci) => (
+                <Pressable
+                  key={c}
+                  onPress={() => setColor(c)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Note color ${ci + 1}`}
+                  accessibilityState={{ selected: color === c }}
+                  hitSlop={6}
+                >
                   <View style={{
                     width: 22,
                     height: 22,
@@ -400,8 +369,9 @@ function NoteEditor({
                 { id: 'journal', label: 'Journal', icon: <TextB color={kind === 'journal' ? '#fff' : colors.textMuted} size={14} /> },
                 { id: 'research', label: 'Research', icon: <FolderOpen color={kind === 'research' ? '#fff' : colors.textMuted} size={14} /> },
               ].map(item => (
-                <FilterChip
+                <MiniChip
                   key={item.id}
+                  accent={color}
                   label={item.label}
                   active={kind === item.id}
                   onPress={() => setKind(item.id as NonNullable<Note['kind']>)}
@@ -510,7 +480,7 @@ function NoteCard({
                 {note.title}
               </Text>
               {note.pinned ? <PushPin color={note.color} size={15} weight="fill" /> : null}
-              {note.favorite ? <Star color="#F59E0B" size={15} weight="fill" /> : null}
+              {note.favorite ? <Star color="#B08536" size={15} weight="fill" /> : null}
             </View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }} numberOfLines={1}>
               {folderName(note)} · {formatDate(note.updatedAt)} · {words} words
@@ -520,7 +490,7 @@ function NoteCard({
 
         {note.body ? (
           <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 13 }} numberOfLines={4}>
-            {note.body}
+            {previewText(note.body)}
           </Text>
         ) : null}
 
@@ -548,38 +518,57 @@ function NoteCard({
         ) : null}
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 }}>
-          {[
-            { key: 'pin', icon: <PushPin color={note.pinned ? note.color : colors.textMuted} size={16} weight={note.pinned ? 'fill' : 'regular'} />, onPress: onPin },
-            { key: 'favorite', icon: <Star color={note.favorite ? '#F59E0B' : colors.textMuted} size={16} weight={note.favorite ? 'fill' : 'regular'} />, onPress: onFavorite },
-            { key: 'share', icon: <ShareNetwork color={colors.textMuted} size={16} />, onPress: onShare },
-            { key: 'copy', icon: <Copy color={colors.textMuted} size={16} />, onPress: onDuplicate },
-            { key: 'archive', icon: <Archive color={note.archived ? note.color : colors.textMuted} size={16} />, onPress: onArchive },
-            { key: 'delete', icon: <Trash color={colors.textMuted} size={16} />, onPress: onDelete },
-          ].map(action => (
-            <AnimatedPressable key={action.key} onPress={action.onPress} haptic="light" style={{
-              width: 34,
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8, alignItems: 'center' }}
+            style={{ flex: 1 }}
+          >
+            {[
+              { key: 'pin', label: note.pinned ? 'Unpin note' : 'Pin note', icon: <PushPin color={note.pinned ? note.color : colors.textMuted} size={16} weight={note.pinned ? 'fill' : 'regular'} />, onPress: onPin },
+              { key: 'favorite', label: note.favorite ? 'Remove favorite' : 'Add to favorites', icon: <Star color={note.favorite ? '#B08536' : colors.textMuted} size={16} weight={note.favorite ? 'fill' : 'regular'} />, onPress: onFavorite },
+              { key: 'share', label: 'Share note', icon: <ShareNetwork color={colors.textMuted} size={16} />, onPress: onShare },
+              { key: 'copy', label: 'Duplicate note', icon: <Copy color={colors.textMuted} size={16} />, onPress: onDuplicate },
+              { key: 'archive', label: note.archived ? 'Restore note' : 'Archive note', icon: <Archive color={note.archived ? note.color : colors.textMuted} size={16} />, onPress: onArchive },
+              { key: 'delete', label: 'Delete note', icon: <Trash color={colors.textMuted} size={16} />, onPress: onDelete },
+            ].map(action => (
+              <AnimatedPressable
+                key={action.key}
+                onPress={action.onPress}
+                haptic="light"
+                accessibilityRole="button"
+                accessibilityLabel={action.label}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 17,
+                  backgroundColor: colors.surface,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.glassBorder,
+                }}
+              >
+                {action.icon}
+              </AnimatedPressable>
+            ))}
+          </ScrollView>
+          <AnimatedPressable
+            onPress={onPublish}
+            haptic="medium"
+            accessibilityRole="button"
+            accessibilityLabel="Publish note as an Echo"
+            style={{
+              paddingHorizontal: 13,
               height: 34,
               borderRadius: 17,
-              backgroundColor: colors.surface,
+              backgroundColor: `${note.color}22`,
               alignItems: 'center',
               justifyContent: 'center',
               borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.glassBorder,
-            }}>
-              {action.icon}
-            </AnimatedPressable>
-          ))}
-          <View style={{ flex: 1 }} />
-          <AnimatedPressable onPress={onPublish} haptic="medium" style={{
-            paddingHorizontal: 13,
-            height: 34,
-            borderRadius: 17,
-            backgroundColor: `${note.color}22`,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: `${note.color}55`,
-          }}>
+              borderColor: `${note.color}55`,
+            }}
+          >
             <Text style={{ color: note.color, fontSize: 12, fontWeight: '900' }}>Echo</Text>
           </AnimatedPressable>
         </View>
@@ -591,7 +580,7 @@ function NoteCard({
 export default function NotesApp() {
   const { colors } = useTheme();
   const router = useRouter();
-  const accent = '#F59E0B';
+  const accent = '#B08536'; // ochre — warm editorial palette
   const [notes, setNotes] = useState<Note[]>([]);
   const [editing, setEditing] = useState<Note | null>(null);
   const [showEditor, setShowEditor] = useState(false);
@@ -600,7 +589,8 @@ export default function NotesApp() {
   const [folderFilter, setFolderFilter] = useState('All');
   const [sortMode, setSortMode] = useState<SortMode>('recent');
 
-  useEffect(() => { loadNotes().then(setNotes); }, []);
+  // useFocusEffect covers the initial focus too, so this is the single load
+  // path — it also refreshes when returning from the editor or another tab.
   useFocusEffect(
     React.useCallback(() => {
       loadNotes().then(setNotes);
@@ -707,32 +697,17 @@ export default function NotesApp() {
       headerRight={NewBtn}
       bottomPad={56}
     >
-      <GlassPanel
-        variant="medium"
-        borderRadius={26}
-        elevated
-        tintOverride={colors.isDark ? 'rgba(34,24,10,0.72)' : 'rgba(255,251,235,0.9)'}
-        style={{ marginBottom: 14, borderColor: `${accent}44` }}
-        contentStyle={{ padding: 18 }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 18, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
-            <NotePencil color={accent} size={25} weight="bold" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontSize: 23, fontWeight: '900' }}>Capture everything.</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 3, lineHeight: 18 }}>
-              Ideas, checklists, meetings, research, and Echo drafts in one place.
-            </Text>
-          </View>
-        </View>
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>
-          <StatPill label="Pinned" value={`${pinnedCount}`} color={accent} />
-          <StatPill label="Favorites" value={`${favoriteCount}`} color="#F59E0B" />
-          <StatPill label="Checklists" value={`${checklistCount}`} color="#10B981" />
-        </View>
-      </GlassPanel>
+      <MiniHero
+        accent={accent}
+        icon={<NotePencil color={accent} size={24} weight="bold" />}
+        title="Capture everything."
+        subtitle="Ideas, checklists, meetings, research, and Echo drafts in one place."
+        stats={[
+          { label: 'Pinned', value: `${pinnedCount}` },
+          { label: 'Favorites', value: `${favoriteCount}` },
+          { label: 'Lists', value: `${checklistCount}` },
+        ]}
+      />
 
       <EdgeFeaturePanel
         appName="Notes"
@@ -797,14 +772,15 @@ export default function NotesApp() {
           { id: 'archive', label: 'Archive', icon: <Archive color={view === 'archive' ? '#fff' : colors.textMuted} size={14} /> },
           { id: 'all', label: 'All', icon: <FunnelSimple color={view === 'all' ? '#fff' : colors.textMuted} size={14} /> },
         ].map(item => (
-          <FilterChip key={item.id} label={item.label} active={view === item.id} onPress={() => setView(item.id as NoteView)} icon={item.icon} />
+          <MiniChip key={item.id} accent={accent} label={item.label} active={view === item.id} onPress={() => setView(item.id as NoteView)} icon={item.icon} />
         ))}
       </ScrollView>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
         {folders.map(folder => (
-          <FilterChip
+          <MiniChip
             key={folder}
+            accent={accent}
             label={folder}
             active={folderFilter === folder}
             onPress={() => setFolderFilter(folder)}
@@ -816,24 +792,19 @@ export default function NotesApp() {
           { id: 'oldest', label: 'Oldest' },
           { id: 'title', label: 'A-Z' },
         ].map(mode => (
-          <FilterChip key={mode.id} label={mode.label} active={sortMode === mode.id} onPress={() => setSortMode(mode.id as SortMode)} />
+          <MiniChip key={mode.id} accent={accent} label={mode.label} active={sortMode === mode.id} onPress={() => setSortMode(mode.id as SortMode)} />
         ))}
       </ScrollView>
 
       {filtered.length === 0 ? (
-        <View style={{ alignItems: 'center', paddingVertical: 56, gap: 12 }}>
-          <NotePencil color={colors.glassBorder} size={54} weight="thin" />
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900' }}>
-            {search ? 'No matching notes' : view === 'archive' ? 'Archive is empty' : 'No notes yet'}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20, maxWidth: 280 }}>
-            {search ? 'Try another word, folder, or tag.' : 'Start with a template or capture a blank note.'}
-          </Text>
-          <AnimatedPressable onPress={() => openNew()} haptic="medium" style={{ marginTop: 6, backgroundColor: accent, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Plus color="#fff" size={16} weight="bold" />
-            <Text style={{ color: '#fff', fontWeight: '900' }}>Create note</Text>
-          </AnimatedPressable>
-        </View>
+        <MiniEmptyState
+          accent={accent}
+          icon={<NotePencil color={colors.textMuted} size={44} weight="thin" />}
+          title={search ? 'No matching notes' : view === 'archive' ? 'Archive is empty' : 'No notes yet'}
+          subtitle={search ? 'Try another word, folder, or tag.' : 'Start with a template or capture a blank note.'}
+          actionLabel={search ? undefined : 'Create note'}
+          onAction={search ? undefined : () => openNew()}
+        />
       ) : (
         <View style={{ gap: 12 }}>
           {filtered.map((note, i) => (

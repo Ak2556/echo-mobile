@@ -5,6 +5,8 @@ import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash } from 'phosphor-r
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniEmptyState, MiniChip, MiniStatCard } from '../../components/mini-apps/MiniKit';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
@@ -14,7 +16,7 @@ import {
 
 export default function ShoppingListScreen() {
   const { colors } = useTheme();
-  const accent = '#12A878';
+  const accent = '#7A8B4E'; // olive — warm editorial palette
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('1');
@@ -88,11 +90,7 @@ export default function ShoppingListScreen() {
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {SHOPPING_CATEGORIES.map(item => (
-            <Pressable key={item} onPress={() => setCategory(item)}>
-              <View style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: category === item ? accent : colors.surfaceHover }}>
-                <Text style={{ color: category === item ? '#fff' : colors.textMuted, fontSize: 12, fontWeight: '800' }}>{item}</Text>
-              </View>
-            </Pressable>
+            <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => setCategory(item)} />
           ))}
         </View>
         <Pressable onPress={add}>
@@ -104,29 +102,19 @@ export default function ShoppingListScreen() {
       </GlassPanel>
 
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
-        <View style={{ flex: 1, borderRadius: 18, padding: 12, backgroundColor: colors.surface }}>
-          <Text style={{ color: accent, fontSize: 22, fontWeight: '900' }}>{stats.remaining}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800' }}>Remaining</Text>
-        </View>
-        <View style={{ flex: 1, borderRadius: 18, padding: 12, backgroundColor: colors.surface }}>
-          <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900' }}>{stats.checked}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800' }}>Checked</Text>
-        </View>
-        <Pressable onPress={clearChecked} style={{ flex: 1 }}>
-          <View style={{ flex: 1, borderRadius: 18, padding: 12, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+        <MiniStatCard value={`${stats.remaining}`} label="Remaining" accent={accent} />
+        <MiniStatCard value={`${stats.checked}`} label="Checked" />
+        <AnimatedPressable onPress={clearChecked} scaleValue={0.95} haptic="light" accessibilityRole="button" accessibilityLabel="Clear checked items" style={{ flex: 1 }}>
+          <View style={{ flex: 1, borderRadius: 14, paddingVertical: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
             <Trash color={colors.textMuted} size={18} />
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800', marginTop: 4 }}>Clear</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>Clear</Text>
           </View>
-        </Pressable>
+        </AnimatedPressable>
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
         {categories.map(item => (
-          <Pressable key={item} onPress={() => setFilter(item)}>
-            <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: filter === item ? accent : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: filter === item ? accent : colors.glassBorder }}>
-              <Text style={{ color: filter === item ? '#fff' : colors.textMuted, fontSize: 12, fontWeight: '800' }}>{item}</Text>
-            </View>
-          </Pressable>
+          <MiniChip key={item} accent={accent} label={item} active={filter === item} onPress={() => setFilter(item)} />
         ))}
       </View>
 
@@ -153,11 +141,12 @@ export default function ShoppingListScreen() {
           </GlassPanel>
         ))}
         {visible.length === 0 && (
-          <View style={{ alignItems: 'center', paddingVertical: 38 }}>
-            <ShoppingCart color={colors.textMuted} size={36} weight="thin" />
-            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900', marginTop: 10 }}>No items</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 4 }}>Add what you need before the next run.</Text>
-          </View>
+          <MiniEmptyState
+            accent={accent}
+            icon={<ShoppingCart color={colors.textMuted} size={40} weight="thin" />}
+            title="No items"
+            subtitle="Add what you need before the next run."
+          />
         )}
       </View>
 
