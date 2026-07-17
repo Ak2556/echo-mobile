@@ -28,6 +28,7 @@ import {
 import Animated, {
   FadeIn, FadeInUp, FadeOut, SlideInDown, SlideOutDown, ZoomIn, LinearTransition,
   runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
+  withRepeat, withSequence, withDelay,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -328,18 +329,35 @@ function ReactionBar({
 
 // ─── TypingDots ───────────────────────────────────────────────────────────────
 
+function TypingDot({ delay, color }: { delay: number; color: string }) {
+  const v = useSharedValue(0.35);
+  React.useEffect(() => {
+    v.value = withDelay(delay, withRepeat(withSequence(
+      withTiming(1, { duration: 360 }),
+      withTiming(0.35, { duration: 360 }),
+    ), -1, false));
+  }, [delay, v]);
+  const style = useAnimatedStyle(() => ({ opacity: v.value, transform: [{ scale: 0.75 + v.value * 0.45 }] }));
+  return <Animated.View style={[{ width: 7, height: 7, borderRadius: 4, backgroundColor: color }, style]} />;
+}
+
 function TypingDots() {
-  const { colors, radius } = useTheme();
+  const { colors } = useTheme();
   return (
-    <View style={{ paddingHorizontal: 16, paddingVertical: 6, alignItems: 'flex-start' }}>
+    <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={{ paddingHorizontal: 16, paddingVertical: 6, alignItems: 'flex-start' }}>
       <View style={{
-        paddingHorizontal: 16, paddingVertical: 11,
-        borderRadius: radius.card, backgroundColor: colors.surface,
-        borderWidth: 1, borderColor: colors.border,
+        flexDirection: 'row', gap: 5, alignItems: 'center',
+        paddingHorizontal: 15, paddingVertical: 13,
+        // Match the received-bubble shape (tail on the bottom-left).
+        borderTopLeftRadius: 20, borderTopRightRadius: 20,
+        borderBottomLeftRadius: 7, borderBottomRightRadius: 20,
+        backgroundColor: colors.surfaceHover,
       }}>
-        <Text style={{ color: colors.textMuted, fontSize: 20, letterSpacing: 3, lineHeight: 22 }}>···</Text>
+        <TypingDot delay={0} color={colors.textMuted} />
+        <TypingDot delay={160} color={colors.textMuted} />
+        <TypingDot delay={320} color={colors.textMuted} />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -1656,10 +1674,14 @@ export default function DMScreen() {
               </Text>
               {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
             </View>
-            <Text style={{ color: online ? colors.success : colors.textMuted, fontSize: 12 }}>
+            <Text style={{
+              color: partnerIsTyping ? colors.accent : online ? colors.success : colors.textMuted,
+              fontSize: 12,
+              fontWeight: partnerIsTyping ? '600' : '400',
+            }}>
               {conversation.isGroup
-                ? `${conversation.memberCount ?? 1} members · tap to manage`
-                : online ? 'Online now' : `@${conversation.username}`}
+                ? (partnerIsTyping ? 'someone is typing…' : `${conversation.memberCount ?? 1} members · tap to manage`)
+                : partnerIsTyping ? 'typing…' : online ? 'Online now' : `@${conversation.username}`}
             </Text>
           </View>
         </Pressable>
