@@ -840,13 +840,38 @@ function DMBubble({
 
 // ─── UnreadDivider ───────────────────────────────────────────────────────────
 
-function UnreadDivider() {
+function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?: boolean; onCatchUp?: () => void }) {
   const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10 }}>
-      <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
-      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>NEW MESSAGES</Text>
-      <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
+    <View style={{ paddingHorizontal: 16, paddingVertical: 10, gap: 9 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
+        <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>NEW MESSAGES</Text>
+        <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
+      </View>
+      {onCatchUp && (count ?? 0) >= 3 && (
+        <View style={{ alignItems: 'center' }}>
+          <AnimatedPressable
+            onPress={onCatchUp}
+            disabled={loading}
+            haptic="light"
+            scaleValue={0.96}
+            accessibilityRole="button"
+            accessibilityLabel="Catch me up on unread messages"
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 6,
+              paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+              backgroundColor: colors.accentMuted,
+              borderWidth: 1, borderColor: `${colors.accent}55`,
+            }}
+          >
+            {loading ? <ActivityIndicator size="small" color={colors.accent} /> : <Sparkle color={colors.accent} size={13} weight="fill" />}
+            <Text style={{ color: colors.accent, fontSize: 12.5, fontWeight: '800' }}>
+              Catch me up on {count} message{count === 1 ? '' : 's'}
+            </Text>
+          </AnimatedPressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -1137,6 +1162,8 @@ export default function DMScreen() {
   const [polishing, setPolishing] = useState<string | null>(null);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translatingId, setTranslatingId] = useState<string | null>(null);
+  const [catchup, setCatchup] = useState<string | null>(null);
+  const [catchupLoading, setCatchupLoading] = useState(false);
   const [activeMessage, setActiveMessage] = useState<NormalizedMessage | null>(null);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<NormalizedMessage | null>(null);
@@ -1662,6 +1689,38 @@ export default function DMScreen() {
     }
   }, [replyLoading, conversation, messages, myId, hapticEnabled]);
 
+  // "Catch me up": summarize the unread messages from the other person. The
+  // retention superpower — open a busy thread and Echo tells you what you missed.
+  const unreadPartnerMsgs = useMemo(() => {
+    const firstId = firstUnreadIdRef.current;
+    if (!firstId) return [] as NormalizedMessage[];
+    const idx = messages.findIndex(m => m.id === firstId);
+    if (idx < 0) return [] as NormalizedMessage[];
+    return messages.slice(idx).filter(m => m.senderId !== myId && !m.deletedAt && m.content);
+  }, [messages, myId]);
+
+  const handleCatchUp = useCallback(async () => {
+    if (catchupLoading || unreadPartnerMsgs.length === 0) return;
+    setCatchup('');
+    setCatchupLoading(true);
+    if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const them = conversation?.displayName ?? 'they';
+    const transcript = unreadPartnerMsgs.map(m => `${them}: ${m.content}`).join('\n');
+    let acc = '';
+    try {
+      await streamEchoAI({
+        message: `Summarize what ${them} said in these unread messages — 2-4 short bullet points, capturing any questions or things I need to act on. Be concise and friendly.\n\n${transcript}`,
+        onEvent: e => { if (e.type === 'text_delta') { acc += e.delta; setCatchup(acc.trimStart()); } },
+      });
+      setCatchup(acc.trim() || 'Nothing much to catch up on.');
+    } catch {
+      setCatchup(null);
+      showToast('Couldn’t summarize right now', 'Offline');
+    } finally {
+      setCatchupLoading(false);
+    }
+  }, [catchupLoading, unreadPartnerMsgs, conversation, hapticEnabled]);
+
   // Tone/polish: rewrite the current draft in a chosen voice, streamed back into
   // the composer. Echo helps you say it better before you hit send.
   const polishDraft = useCallback(async (tone: string) => {
@@ -1990,7 +2049,7 @@ export default function DMScreen() {
           ) : null}
           renderItem={({ item }) => {
             if (item.type === 'date') return <DateSeparator label={item.label} />;
-            if (item.type === 'unread') return <UnreadDivider />;
+            if (item.type === 'unread') return <UnreadDivider count={unreadPartnerMsgs.length} loading={catchupLoading} onCatchUp={handleCatchUp} />;
             const { msg, grouped } = item;
             const firstAppearance = !animatedIds.current.has(msg.id);
             if (firstAppearance) animatedIds.current.add(msg.id);
@@ -2392,6 +2451,35 @@ export default function DMScreen() {
         onTranslate={() => { if (activeMessage) void handleTranslate(activeMessage); }}
         onSmartReply={() => void generateSmartReply('draft')}
       />
+
+      {/* Catch-me-up summary */}
+      <Modal visible={catchup !== null} transparent animationType="none" onRequestClose={() => setCatchup(null)}>
+        <Animated.View entering={reduceAnimations ? undefined : FadeIn.duration(180)} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <Pressable style={{ flex: 1 }} onPress={() => setCatchup(null)} />
+        </Animated.View>
+        <Animated.View
+          entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
+          exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingBottom: Math.max(insets.bottom, 12) + 12 }}
+        >
+          <View style={{ borderRadius: 22, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.accent}44`, padding: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Sparkle color={colors.accent} size={18} weight="fill" />
+              <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold' }}>Caught up</Text>
+              <View style={{ flex: 1 }} />
+              <Pressable onPress={() => setCatchup(null)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
+            </View>
+            {catchupLoading && !catchup ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
+                <ActivityIndicator size="small" color={colors.accent} />
+                <Text style={{ color: colors.textMuted, fontSize: 14 }}>Reading your unread messages…</Text>
+              </View>
+            ) : (
+              <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 23 }}>{catchup}</Text>
+            )}
+          </View>
+        </Animated.View>
+      </Modal>
 
       <ForwardSheet
         visible={!!forwardTarget}
