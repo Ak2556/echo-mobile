@@ -13,7 +13,7 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
-  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate,
+  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -75,6 +75,14 @@ const QUICK_STARTERS: Record<string, string> = {
   summary:  'My short take: this Echo felt especially useful because ',
   draft:    'This could probably turn into a follow-up Echo about ',
 };
+
+interface SavedMessage {
+  id: string;
+  content: string;
+  conversationId: string;
+  fromName: string;
+  savedAt: string;
+}
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -672,7 +680,7 @@ function MessageEffect({ kind, onDone }: { kind: EffectKind; onDone: () => void 
 // ─── DMBubble ────────────────────────────────────────────────────────────────
 
 function DMBubble({
-  message, isMe, showReadReceipt, myUserId, grouped, animate, translation, translating,
+  message, isMe, showReadReceipt, myUserId, grouped, animate, translation, translating, saved,
   onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry,
 }: {
   message: NormalizedMessage;
@@ -683,6 +691,7 @@ function DMBubble({
   animate?: boolean;
   translation?: string;
   translating?: boolean;
+  saved?: boolean;
   onLongPress: () => void;
   onReactionToggle: (val: string, hasReacted: boolean) => void;
   onReplyPress: (replyToId: string) => void;
@@ -953,6 +962,7 @@ function DMBubble({
         </Pressable>
       ) : !grouped && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3, marginHorizontal: 2 }}>
+          {saved && <BookmarkSimple color={colors.accent} size={11} weight="fill" />}
           <Text style={{ color: colors.textMuted, fontSize: 10 }}>{formatTime(message.createdAt)}</Text>
           {message.editedAt && !isDeleted && (
             <Text style={{ color: colors.textMuted, fontSize: 10, fontStyle: 'italic' }}>Edited</Text>
@@ -1208,13 +1218,15 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
 
 function MessageActionSheet({
   visible, message, isOwn, myUserId, isPinned,
-  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward, onTranslate, onSmartReply,
+  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward, onTranslate, onSmartReply, onSave, isSaved,
 }: {
   visible: boolean;
   message: NormalizedMessage | null;
   isOwn: boolean;
   myUserId: string;
   isPinned: boolean;
+  isSaved: boolean;
+  onSave: () => void;
   onClose: () => void;
   onCopy: () => void;
   onDelete: () => void;
@@ -1345,6 +1357,13 @@ function MessageActionSheet({
           {isText && isOwn && (
             <Row icon={<PencilSimple color={colors.text} size={18} />} label="Edit" onPress={onEdit} />
           )}
+          {isText && (
+            <Row
+              icon={<BookmarkSimple color={colors.text} size={18} weight={isSaved ? 'fill' : 'regular'} />}
+              label={isSaved ? 'Unsave' : 'Save message'}
+              onPress={onSave}
+            />
+          )}
           {!isDeleted && (
             <Row
               icon={<PushPin color={colors.text} size={18} weight={isPinned ? 'fill' : 'regular'} />}
@@ -1413,6 +1432,11 @@ export default function DMScreen() {
   const [effect, setEffect] = useState<EffectKind | null>(null);
   const lastEffectIdRef = useRef<string | null>(null);
   const [activeMessage, setActiveMessage] = useState<NormalizedMessage | null>(null);
+  const [savedMsgs, setSavedMsgs] = useState<SavedMessage[]>(() => {
+    const v = persistGet<SavedMessage[]>('chat:savedMessages', []);
+    return Array.isArray(v) ? v : [];
+  });
+  const [showSaved, setShowSaved] = useState(false);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<NormalizedMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<NormalizedMessage | null>(null);
@@ -1874,6 +1898,23 @@ export default function DMScreen() {
     setActionSheetVisible(true);
   }, [hapticEnabled]);
 
+  const savedIdSet = useMemo(() => new Set(savedMsgs.filter(s => s.conversationId === id).map(s => s.id)), [savedMsgs, id]);
+  const conversationSaved = useMemo(() => savedMsgs.filter(s => s.conversationId === id), [savedMsgs, id]);
+
+  const handleToggleSave = useCallback(() => {
+    const m = activeMessage;
+    if (!m || !m.content || !id) return;
+    setSavedMsgs(prev => {
+      const exists = prev.some(s => s.id === m.id);
+      const next = exists
+        ? prev.filter(s => s.id !== m.id)
+        : [{ id: m.id, content: m.content!, conversationId: id, fromName: m.senderId === myId ? 'You' : (conversation?.displayName ?? 'Them'), savedAt: new Date().toISOString() }, ...prev].slice(0, 200);
+      persistSet('chat:savedMessages', next);
+      return next;
+    });
+    if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, [activeMessage, id, myId, conversation, hapticEnabled]);
+
   const handleCopy = useCallback(() => {
     if (activeMessage?.content) {
       void import('react-native').then(({ Share }) => Share.share({ message: activeMessage.content! }));
@@ -2192,6 +2233,21 @@ export default function DMScreen() {
             : <MagnifyingGlass color={colors.textSecondary} size={17} weight="bold" />
           }
         </Pressable>
+
+        {conversationSaved.length > 0 && !searchOpen && (
+          <Pressable
+            onPress={() => setShowSaved(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Saved messages"
+            style={({ pressed }) => ({
+              width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
+              backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
+              opacity: pressed ? 0.65 : 1,
+            })}
+          >
+            <BookmarkSimple color={colors.accent} size={17} weight="fill" />
+          </Pressable>
+        )}
       </View>
 
       {searchOpen && (
@@ -2338,6 +2394,7 @@ export default function DMScreen() {
                 animate={firstAppearance && isFresh}
                 translation={translations[msg.id]}
                 translating={translatingId === msg.id}
+                saved={savedIdSet.has(msg.id)}
                 showReadReceipt={readReceipts}
                 myUserId={myId}
                 grouped={grouped}
@@ -2728,11 +2785,53 @@ export default function DMScreen() {
         onForward={() => { if (activeMessage) setForwardTarget(activeMessage); }}
         onTranslate={() => { if (activeMessage) void handleTranslate(activeMessage); }}
         onSmartReply={() => void generateSmartReply('draft')}
+        onSave={handleToggleSave}
+        isSaved={!!activeMessage && savedIdSet.has(activeMessage.id)}
       />
 
       {effect && <MessageEffect kind={effect} onDone={() => setEffect(null)} />}
 
       <StickerSheet visible={stickerOpen} onSelect={sendSticker} onClose={() => setStickerOpen(false)} />
+
+      {/* Saved messages */}
+      <Modal visible={showSaved} transparent animationType="none" onRequestClose={() => setShowSaved(false)}>
+        <Animated.View entering={reduceAnimations ? undefined : FadeIn.duration(180)} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <Pressable style={{ flex: 1 }} onPress={() => setShowSaved(false)} />
+        </Animated.View>
+        <Animated.View
+          entering={reduceAnimations ? undefined : SlideInDown.duration(220)}
+          exiting={reduceAnimations ? undefined : SlideOutDown.duration(160)}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+        >
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, maxHeight: '70%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
+              <BookmarkSimple color={colors.accent} size={16} weight="fill" />
+              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>Saved messages</Text>
+              <Pressable onPress={() => setShowSaved(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
+            </View>
+            <FlatList
+              data={conversationSaved}
+              keyExtractor={s => s.id}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8 }}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <View style={{ paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, flexDirection: 'row', gap: 10 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 3 }}>{item.fromName}</Text>
+                    <Text style={{ color: colors.text, fontSize: 14, lineHeight: 20 }}>{item.content}</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setSavedMsgs(prev => { const next = prev.filter(s => s.id !== item.id); persistSet('chat:savedMessages', next); return next; })}
+                    hitSlop={8}
+                  >
+                    <BookmarkSimple color={colors.accent} size={18} weight="fill" />
+                  </Pressable>
+                </View>
+              )}
+            />
+          </View>
+        </Animated.View>
+      </Modal>
 
 
       {/* Catch-me-up summary */}
