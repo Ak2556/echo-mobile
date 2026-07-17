@@ -33,6 +33,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { showToast } from '../../components/ui/Toast';
+import { streamEchoAI } from '../../lib/api';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -1034,6 +1035,7 @@ export default function DMScreen() {
   const [text, setText] = useState('');
   const [sharedPending, setSharedPending] = useState(Boolean(echoId));
   const [quickAction, setQuickAction] = useState<string | null>(null);
+  const [replyLoading, setReplyLoading] = useState<string | null>(null);
   const [activeMessage, setActiveMessage] = useState<NormalizedMessage | null>(null);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<NormalizedMessage | null>(null);
@@ -1508,6 +1510,49 @@ export default function DMScreen() {
     typingTimer.current = setTimeout(() => sendTypingEvent(), 1500);
   }, [remote, sendTypingEvent]);
 
+  // Smart replies: read the actual conversation and stream a contextual
+  // suggestion into the composer (the "Echo is writing" effect), so the chips
+  // feel like magic instead of canned starters. Falls back to a static starter
+  // offline. This is Echo's edge — helping you say the right thing in a DM.
+  const generateSmartReply = useCallback(async (intent: string) => {
+    if (replyLoading) return;
+    setQuickAction(intent);
+    setReplyLoading(intent);
+    if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const them = conversation?.displayName ?? 'them';
+    const recent = messages.filter(m => !m.deletedAt && m.content).slice(-8);
+    const transcript = recent
+      .map(m => `${m.senderId === myId ? 'Me' : them}: ${m.content}`)
+      .join('\n');
+    const instruction: Record<string, string> = {
+      followup: `Write one short, natural follow-up question that continues this chat. Casual, friendly, no quotes.`,
+      summary: `Write a brief reply from "Me" sharing my perspective on the latest message. One or two sentences, casual, no quotes.`,
+      draft: `Write a thoughtful, warm reply from "Me" to the latest message. One or two sentences, casual, no quotes.`,
+    };
+    const task = instruction[intent] ?? instruction.draft;
+    const prompt = transcript
+      ? `Help me reply in a private chat with ${them}. Recent conversation:\n\n${transcript}\n\n${task} Output only the message text, nothing else.`
+      : `Help me open a friendly private chat with ${them}. Write one warm, casual opening message. Output only the message text, nothing else.`;
+    let acc = '';
+    try {
+      await streamEchoAI({
+        message: prompt,
+        onEvent: e => {
+          if (e.type === 'text_delta') { acc += e.delta; setText(acc.replace(/^["']|["']$/g, '').trimStart()); }
+        },
+      });
+      const cleaned = acc.replace(/^["']|["']$/g, '').trim();
+      setText(cleaned || (QUICK_STARTERS[intent] ?? ''));
+      if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      setText(QUICK_STARTERS[intent] ?? '');
+      showToast('Couldn’t reach Echo — starter added', 'Offline');
+    } finally {
+      setReplyLoading(null);
+      inputRef.current?.focus();
+    }
+  }, [replyLoading, conversation, messages, myId, hapticEnabled]);
+
   const cancelComposerExtra = useCallback(() => {
     setReplyingTo(null);
     setEditingMessage(null);
@@ -1850,25 +1895,40 @@ export default function DMScreen() {
         {!composerFocused && !editingMessage && !replyingTo && (
           <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              {Object.entries({ followup: 'Follow-up', summary: 'Your take', draft: 'Draft' }).map(([key, label]) => (
-                <Pressable
-                  key={key}
-                  onPress={() => { setQuickAction(key); setText(QUICK_STARTERS[key]); }}
-                  style={{
-                    paddingHorizontal: 12, paddingVertical: 7,
-                    borderRadius: radius.full, flexShrink: 1,
-                    backgroundColor: quickAction === key ? colors.accentMuted : colors.surface,
-                    borderWidth: 1, borderColor: quickAction === key ? colors.accent : colors.border,
-                  }}
-                >
-                  <Text style={{
-                    color: quickAction === key ? colors.accent : colors.textSecondary,
-                    fontSize: 12, fontWeight: '600',
-                  }} numberOfLines={1}>
-                    {label}
-                  </Text>
-                </Pressable>
-              ))}
+              {Object.entries({ followup: 'Follow-up', summary: 'Your take', draft: 'Draft' }).map(([key, label]) => {
+                const busy = replyLoading === key;
+                const disabled = !!replyLoading && !busy;
+                return (
+                  <AnimatedPressable
+                    key={key}
+                    onPress={() => void generateSmartReply(key)}
+                    disabled={!!replyLoading}
+                    scaleValue={0.95}
+                    haptic="light"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Echo: ${label}`}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 5,
+                      paddingHorizontal: 12, paddingVertical: 7,
+                      borderRadius: radius.full, flexShrink: 1,
+                      opacity: disabled ? 0.5 : 1,
+                      backgroundColor: quickAction === key ? colors.accentMuted : colors.surface,
+                      borderWidth: 1, borderColor: quickAction === key ? colors.accent : colors.border,
+                    }}
+                  >
+                    {busy
+                      ? <ActivityIndicator size="small" color={colors.accent} />
+                      : <Sparkle color={quickAction === key ? colors.accent : colors.textMuted} size={12} weight="fill" />
+                    }
+                    <Text style={{
+                      color: quickAction === key ? colors.accent : colors.textSecondary,
+                      fontSize: 12, fontWeight: '600',
+                    }} numberOfLines={1}>
+                      {busy ? 'Echo…' : label}
+                    </Text>
+                  </AnimatedPressable>
+                );
+              })}
             </View>
           </View>
         )}
