@@ -35,6 +35,8 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { showToast } from '../../components/ui/Toast';
 import { streamEchoAI } from '../../lib/api';
+import { EMOJI_CATEGORIES, searchEmoji } from '../../lib/emojiData';
+import { persistGet, persistSet } from '../../store/persist';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -74,15 +76,6 @@ const QUICK_STARTERS: Record<string, string> = {
   draft:    'This could probably turn into a follow-up Echo about ',
 };
 
-// Built-in sticker packs — tapping one sends it as a jumbo emoji message.
-const STICKER_PACKS: { id: string; tab: string; stickers: string[] }[] = [
-  { id: 'love', tab: '❤️', stickers: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🤍', '🖤', '💖', '💕', '💞', '💓', '💗', '💘', '💝', '😍', '🥰', '😘'] },
-  { id: 'faces', tab: '😂', stickers: ['😂', '🤣', '😅', '😊', '😉', '😎', '🤩', '🥳', '😇', '🙃', '😌', '🤗', '🫶', '🤭', '😏', '🥲', '🥹', '😤'] },
-  { id: 'celebrate', tab: '🎉', stickers: ['🎉', '🎊', '🥳', '🎈', '🎁', '🍾', '🥂', '✨', '⭐', '🌟', '💫', '🏆', '🙌', '👏', '🔥', '💯', '🎯', '🚀'] },
-  { id: 'hands', tab: '👍', stickers: ['👍', '👎', '👌', '🤌', '✌️', '🤞', '🫰', '🤙', '👋', '🙏', '🤝', '💪', '👏', '🙌', '🫶', '🫡', '🤟', '🤘'] },
-  { id: 'feels', tab: '🥺', stickers: ['🥺', '😭', '😢', '😔', '😞', '😩', '😫', '😳', '🤔', '😴', '🤯', '😵', '🫠', '😬', '🙄', '😑', '😮', '🤨'] },
-  { id: 'vibes', tab: '🌙', stickers: ['🌙', '☀️', '⚡', '🌈', '🌸', '🍀', '🌊', '☕', '🎵', '💤', '👀', '💭', '🫧', '🕊️', '🦋', '🌻', '🍕', '🎮'] },
-];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1016,6 +1009,8 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
 
 // ─── StickerSheet ────────────────────────────────────────────────────────────
 
+const EMOJI_RECENTS_KEY = 'chat:emojiRecents';
+
 function StickerSheet({ visible, onSelect, onClose }: {
   visible: boolean;
   onSelect: (sticker: string) => void;
@@ -1023,8 +1018,36 @@ function StickerSheet({ visible, onSelect, onClose }: {
 }) {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
-  const [pack, setPack] = useState(STICKER_PACKS[0].id);
-  const active = STICKER_PACKS.find(p => p.id === pack) ?? STICKER_PACKS[0];
+  const [category, setCategory] = useState('recents');
+  const [query, setQuery] = useState('');
+  const [recents, setRecents] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (visible) {
+      const r = persistGet<string[]>(EMOJI_RECENTS_KEY, []);
+      setRecents(Array.isArray(r) ? r : []);
+      setCategory(r.length ? 'recents' : EMOJI_CATEGORIES[0].id);
+      setQuery('');
+    }
+  }, [visible]);
+
+  const pick = (emoji: string) => {
+    const next = [emoji, ...recents.filter(e => e !== emoji)].slice(0, 32);
+    setRecents(next);
+    persistSet(EMOJI_RECENTS_KEY, next);
+    onSelect(emoji);
+    onClose();
+  };
+
+  const q = query.trim();
+  const data: string[] = q
+    ? searchEmoji(q)
+    : category === 'recents'
+      ? recents
+      : (EMOJI_CATEGORIES.find(c => c.id === category)?.emojis ?? []);
+
+  const tabs = [{ id: 'recents', icon: '🕐' }, ...EMOJI_CATEGORIES.map(c => ({ id: c.id, icon: c.icon }))];
+
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Animated.View entering={reduceAnimations ? undefined : FadeIn.duration(180)} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
@@ -1036,31 +1059,63 @@ function StickerSheet({ visible, onSelect, onClose }: {
         style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
       >
         <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
             <Sparkle color={colors.accent} size={16} weight="fill" />
-            <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>Stickers</Text>
+            <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>Emoji & Stickers</Text>
             <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
           </View>
-          <ScrollView style={{ maxHeight: 264 }} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, paddingBottom: 6 }} showsVerticalScrollIndicator={false}>
-            {active.stickers.map(s => (
-              <Pressable
-                key={s}
-                onPress={() => { onSelect(s); onClose(); }}
-                accessibilityRole="button"
-                accessibilityLabel={`Send ${s} sticker`}
-                style={({ pressed }) => ({ width: '16.66%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1, transform: [{ scale: pressed ? 0.85 : 1 }] })}
-              >
-                <Text style={{ fontSize: 38 }}>{s}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 8, paddingHorizontal: 12, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-            {STICKER_PACKS.map(p => (
-              <Pressable key={p.id} onPress={() => setPack(p.id)} style={{ paddingHorizontal: 10, paddingVertical: 7, borderRadius: 12, backgroundColor: pack === p.id ? colors.accentMuted : 'transparent' }}>
-                <Text style={{ fontSize: 22 }}>{p.tab}</Text>
-              </Pressable>
-            ))}
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, height: 40, borderRadius: 12, backgroundColor: colors.inputBg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.inputBorder }}>
+            <MagnifyingGlass color={colors.textMuted} size={16} />
+            <RNTextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search emoji"
+              placeholderTextColor={colors.textMuted}
+              style={{ flex: 1, color: colors.text, fontSize: 15 }}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {query.length > 0 && <Pressable onPress={() => setQuery('')} hitSlop={8}><X color={colors.textMuted} size={15} /></Pressable>}
           </View>
+
+          <FlatList
+            data={data}
+            key={q ? 'search' : category}
+            keyExtractor={(item, i) => `${item}-${i}`}
+            numColumns={7}
+            style={{ height: 250 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 8 }}
+            ListEmptyComponent={
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 14 }}>
+                  {q ? 'No emoji found' : 'Your recent emoji show up here'}
+                </Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => pick(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`Send ${item}`}
+                style={({ pressed }) => ({ width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1, transform: [{ scale: pressed ? 0.82 : 1 }] })}
+              >
+                <Text style={{ fontSize: 30 }}>{item}</Text>
+              </Pressable>
+            )}
+          />
+
+          {!q && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 10, gap: 2, alignItems: 'center' }} style={{ borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, paddingTop: 8 }}>
+              {tabs.map(t => (
+                <Pressable key={t.id} onPress={() => setCategory(t.id)} style={{ paddingHorizontal: 9, paddingVertical: 6, borderRadius: 11, backgroundColor: category === t.id ? colors.accentMuted : 'transparent' }}>
+                  <Text style={{ fontSize: 20 }}>{t.icon}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
         </View>
       </Animated.View>
     </Modal>
