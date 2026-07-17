@@ -5,6 +5,7 @@ import { CheckCircle, CircleDashed, Flag, Plus, Trash } from 'phosphor-react-nat
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniChip, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
@@ -28,7 +29,7 @@ const DUE_OPTIONS = [
 
 export default function TasksScreen() {
   const { colors } = useTheme();
-  const accent = '#4F7DF3';
+  const accent = '#5E748B'; // dusk — warm editorial palette
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
@@ -126,11 +127,13 @@ export default function TasksScreen() {
 
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
         {(['open', 'today', 'high', 'done'] as Filter[]).map(item => (
-          <Pressable key={item} onPress={() => setFilter(item)} style={{ flex: 1 }}>
-            <View style={{ height: 36, borderRadius: 999, backgroundColor: filter === item ? accent : colors.surface, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: filter === item ? '#fff' : colors.textMuted, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' }}>{item}</Text>
-            </View>
-          </Pressable>
+          <MiniChip
+            key={item}
+            accent={accent}
+            label={item.charAt(0).toUpperCase() + item.slice(1)}
+            active={filter === item}
+            onPress={() => setFilter(item)}
+          />
         ))}
       </View>
 
@@ -161,11 +164,12 @@ export default function TasksScreen() {
           );
         })}
         {visible.length === 0 && (
-          <View style={{ alignItems: 'center', paddingVertical: 36 }}>
-            <CheckCircle color={colors.textMuted} size={34} weight="thin" />
-            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 10 }}>Nothing here</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 4 }}>Change filters or add your next task.</Text>
-          </View>
+          <MiniEmptyState
+            accent={accent}
+            icon={<CheckCircle color={colors.textMuted} size={40} weight="thin" />}
+            title="Nothing here"
+            subtitle="Change filters or add your next task."
+          />
         )}
       </View>
 

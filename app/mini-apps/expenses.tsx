@@ -11,6 +11,7 @@ import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Expo
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -194,7 +195,7 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
 
 export default function ExpensesApp() {
   const { colors } = useTheme();
-  const accent = colors.accent;
+  const accent = '#8B6F4E'; // caramel — warm editorial palette
   const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
   useFocusEffect(
     React.useCallback(() => {
@@ -302,19 +303,19 @@ export default function ExpensesApp() {
           {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
         </Text>
         <View style={{ flexDirection: 'row', marginTop: 20, gap: 12 }}>
-          <View style={{ flex: 1, backgroundColor: '#10B98118', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#10B98133' }}>
+          <View style={{ flex: 1, backgroundColor: colors.success + '18', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.success + '33' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <ArrowDown color="#10B981" size={14} weight="bold" />
-              <Text style={{ color: '#10B981', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>INCOME</Text>
+              <ArrowDown color={colors.success} size={14} weight="bold" />
+              <Text style={{ color: colors.success, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>INCOME</Text>
             </View>
-            <Text style={{ color: '#10B981', fontSize: 20, fontWeight: '800' }}>{money(income)}</Text>
+            <Text style={{ color: colors.success, fontSize: 20, fontWeight: '800' }}>{money(income)}</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: '#EF444418', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#EF444433' }}>
+          <View style={{ flex: 1, backgroundColor: colors.danger + '18', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.danger + '33' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <ArrowUp color="#EF4444" size={14} weight="bold" />
-              <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>EXPENSES</Text>
+              <ArrowUp color={colors.danger} size={14} weight="bold" />
+              <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>EXPENSES</Text>
             </View>
-            <Text style={{ color: '#EF4444', fontSize: 20, fontWeight: '800' }}>{money(expense)}</Text>
+            <Text style={{ color: colors.danger, fontSize: 20, fontWeight: '800' }}>{money(expense)}</Text>
           </View>
         </View>
 
@@ -330,11 +331,11 @@ export default function ExpensesApp() {
               </View>
               {doc.budget ? (
                 <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-                  <View style={{ height: '100%', width: `${budgetPct}%`, backgroundColor: overBudget ? '#EF4444' : budgetPct > 80 ? '#F59E0B' : '#10B981', borderRadius: 4 }} />
+                  <View style={{ height: '100%', width: `${budgetPct}%`, backgroundColor: overBudget ? colors.danger : budgetPct > 80 ? colors.warning : colors.success, borderRadius: 4 }} />
                 </View>
               ) : null}
               {overBudget ? (
-                <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: '700', marginTop: 6 }}>
+                <Text style={{ color: colors.danger, fontSize: 12, fontWeight: '700', marginTop: 6 }}>
                   {money(expense - (doc.budget ?? 0))} over budget
                 </Text>
               ) : null}
@@ -370,7 +371,7 @@ export default function ExpensesApp() {
                 <Text style={{ color: colors.textSecondary, fontSize: 13, fontVariant: ['tabular-nums'] }}>{money(amt)}</Text>
               </View>
               <View style={{ height: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderRadius: 3, overflow: 'hidden' }}>
-                <View style={{ height: '100%', width: `${Math.max(4, Math.round((amt / maxCat) * 100))}%`, backgroundColor: '#EF4444AA', borderRadius: 3 }} />
+                <View style={{ height: '100%', width: `${Math.max(4, Math.round((amt / maxCat) * 100))}%`, backgroundColor: colors.danger + 'AA', borderRadius: 3 }} />
               </View>
             </View>
           ))}
@@ -395,7 +396,7 @@ export default function ExpensesApp() {
       <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
         {(['all', 'income', 'expense'] as const).map(f => (
           <Pressable key={f} onPress={() => setFilter(f)} style={{ flex: 1 }}>
-            <View style={{ paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: filter === f ? (f === 'income' ? '#10B981' : f === 'expense' ? '#EF4444' : accent) : 'transparent' }}>
+            <View style={{ paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: filter === f ? (f === 'income' ? colors.success : f === 'expense' ? colors.danger : accent) : 'transparent' }}>
               <Text style={{ color: filter === f ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>{f}</Text>
             </View>
           </Pressable>
@@ -404,18 +405,18 @@ export default function ExpensesApp() {
 
       {/* Transactions */}
       {filtered.length === 0 && (
-        <View style={{ alignItems: 'center', paddingVertical: 48, gap: 12 }}>
-          <Wallet color={colors.glassBorder} size={48} weight="thin" />
-          <Text style={{ color: colors.textMuted, fontSize: 15 }}>
-            {searching ? 'No matches' : `Nothing in ${monthLabel(month)}`}
-          </Text>
-        </View>
+        <MiniEmptyState
+          accent={accent}
+          icon={<Wallet color={colors.textMuted} size={48} weight="thin" />}
+          title={searching ? 'No matches' : `Nothing in ${monthLabel(month)}`}
+          subtitle={searching ? 'Try a different search or category.' : 'Add an expense or income to start tracking this month.'}
+        />
       )}
 
       {filtered.map((tx, i) => (
         <Animated.View key={tx.id} entering={FadeInDown.delay(Math.min(i, 8) * 40).duration(220)} style={{ marginBottom: 10 }}>
           <GlassPanel variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}>
-            <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: tx.type === 'income' ? '#10B98118' : '#EF444418', borderWidth: 1, borderColor: tx.type === 'income' ? '#10B98133' : '#EF444433', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: tx.type === 'income' ? colors.success + '18' : colors.danger + '18', borderWidth: 1, borderColor: tx.type === 'income' ? colors.success + '33' : colors.danger + '33', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{categoryMarker(tx.category)}</Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -424,7 +425,7 @@ export default function ExpensesApp() {
                 {tx.note ? `${tx.note} · ${formatDate(tx.date)}` : formatDate(tx.date)}
               </Text>
             </View>
-            <Text style={{ color: tx.type === 'income' ? '#10B981' : '#EF4444', fontSize: 17, fontWeight: '800' }}>
+            <Text style={{ color: tx.type === 'income' ? colors.success : colors.danger, fontSize: 17, fontWeight: '800' }}>
               {tx.type === 'income' ? '+' : '-'}{money(tx.amount)}
             </Text>
             <AnimatedPressable onPress={() => deleteTx(tx.id)} scaleValue={0.85} haptic="light">

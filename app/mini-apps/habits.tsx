@@ -13,6 +13,7 @@ import { Plus, Minus, CheckCircle, CircleDashed, Fire, Trash, X, Camera, Images,
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -285,7 +286,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
 }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const accent = colors.accent;
+  const accent = '#C65F3F'; // terracotta — warm editorial palette
   const [name, setName] = useState(initial?.name ?? '');
   const [marker, setMarker] = useState(initial?.marker ?? HABIT_MARKERS[0]);
   const [color, setColor] = useState(initial?.color ?? accent);
@@ -421,7 +422,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
 
 export default function HabitsApp() {
   const { colors, font } = useTheme();
-  const accent = colors.accent;
+  const accent = '#C65F3F'; // terracotta — warm editorial palette
   const [habits, setHabits] = useState<Habit[]>([]);
   useEffect(() => { loadHabits().then(setHabits); }, []);
   useFocusEffect(
@@ -556,13 +557,14 @@ export default function HabitsApp() {
       />
 
       {active.length === 0 && archived.length === 0 && (
-        <View style={{ alignItems: 'center', paddingVertical: 60, gap: 12 }}>
-          <Fire color={colors.glassBorder} size={48} weight="thin" />
-          <Text style={{ color: colors.textMuted, fontSize: 15 }}>No habits yet</Text>
-          <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.96} haptic="medium" style={{ backgroundColor: accent, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 12 }}>
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Add your first habit</Text>
-          </AnimatedPressable>
-        </View>
+        <MiniEmptyState
+          accent={accent}
+          icon={<Fire color={colors.textMuted} size={48} weight="thin" />}
+          title="No habits yet"
+          subtitle="Build a routine you can keep — start with one small daily habit."
+          actionLabel="Add your first habit"
+          onAction={() => setShowAdd(true)}
+        />
       )}
 
       {active.map((habit, i) => {

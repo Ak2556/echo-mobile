@@ -42,8 +42,8 @@ function timerColor(mode: Mode, remainingRatio: number): string {
   const clamped = Math.max(0, Math.min(1, remainingRatio));
   if (mode !== 'focus') {
     if (clamped > 0.66) return '#4E8B7A';
-    if (clamped > 0.33) return '#3B82F6';
-    return '#06B6D4';
+    if (clamped > 0.33) return '#4E7A8B';
+    return '#5E748B';
   }
   if (clamped > 0.66) return '#4E8B7A';
   if (clamped > 0.33) return '#C6A34A';
@@ -409,7 +409,7 @@ export default function PomodoroScreen() {
       mode === 'focus' ? [0, 0.15, 0.33, 0.66, 1] : [0, 0.33, 0.66, 1],
       mode === 'focus'
         ? ['#E84848', '#E84848', '#D97745', '#C6A34A', '#4E8B7A']
-        : ['#06B6D4', '#06B6D4', '#3B82F6', '#4E8B7A'],
+        : ['#5E748B', '#5E748B', '#4E7A8B', '#4E8B7A'],
     ),
   }));
   const pulseStyle = useAnimatedStyle(() => ({

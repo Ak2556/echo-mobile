@@ -1,7 +1,7 @@
 import React from 'react';
 import { Share, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, Sparkle, UsersThree, type Icon } from 'phosphor-react-native';
+import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, UsersThree, type Icon } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -35,7 +35,7 @@ export function EdgeFeaturePanel({
   publishTitle,
   publishBody,
 }: EdgeFeaturePanelProps) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const router = useRouter();
   const connectedApps = relatedMiniApps(appId ?? appName, 4);
   const snapshot = miniAppSnapshotText({ appName, headline, caption, metrics, shareText });
@@ -67,112 +67,135 @@ export function EdgeFeaturePanel({
   const openTargetProgress = () => router.push('/target-progress' as Href);
   const openEcho = () => router.push('/chat' as Href);
 
+  const secondary: { label: string; a11y: string; Icon: Icon; onPress: () => void }[] = [
+    { label: 'Note', a11y: 'Save a snapshot to Notes', Icon: NotePencil, onPress: saveSnapshot },
+    { label: 'Share', a11y: 'Share progress', Icon: ShareNetwork, onPress: shareProgress },
+    { label: 'Compare', a11y: 'Compare consistency', Icon: UsersThree, onPress: openTargetProgress },
+    { label: 'Post', a11y: 'Post progress as an Echo', Icon: ArrowUpRight, onPress: publish },
+  ];
+
   return (
     <GlassPanel
       variant="medium"
       borderRadius={24}
       elevated
       tintOverride={colors.isDark ? 'rgba(17,17,17,0.84)' : 'rgba(255,255,255,0.92)'}
-      style={{ borderColor: `${accent}44`, marginBottom: 14 }}
-      contentStyle={{ padding: 16 }}
+      style={{ borderColor: `${accent}33`, marginBottom: 14 }}
+      contentStyle={{ padding: 18 }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
-          <Sparkle color={accent} size={22} weight="fill" />
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }} numberOfLines={1}>{headline}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 18, marginTop: 2 }} numberOfLines={2}>{caption}</Text>
-        </View>
-      </View>
+      {/* Editorial header — warm accent rule + Fraunces headline, matching EmptyState. */}
+      <View style={{ width: 24, height: 2, backgroundColor: accent, borderRadius: 1, marginBottom: 12 }} />
+      <Text style={[font.display, { color: colors.text, fontSize: 20, lineHeight: 25 }]}>{headline}</Text>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }]}>{caption}</Text>
 
       {metrics.length > 0 ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
           {metrics.slice(0, 3).map(metric => (
             <View key={metric.label} style={{
               flex: 1,
-              minWidth: 88,
-              borderRadius: 16,
-              padding: 11,
+              borderRadius: 14,
+              paddingVertical: 12,
+              paddingHorizontal: 12,
               backgroundColor: colors.surface,
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: colors.glassBorder,
             }}>
-              <Text style={{ color: accent, fontSize: 17, fontWeight: '900' }} numberOfLines={1}>{metric.value}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', marginTop: 2 }} numberOfLines={1}>{metric.label}</Text>
+              <Text style={[font.display, { color: accent, fontSize: 22 }]} numberOfLines={1}>{metric.value}</Text>
+              <Text style={[font.eyebrow, { color: colors.textMuted, fontSize: 10.5, marginTop: 3 }]} numberOfLines={1}>{metric.label}</Text>
             </View>
           ))}
         </View>
       ) : null}
 
-      <View style={{
-        marginTop: 14,
-        gap: 8,
-      }}>
-        <EdgeAction
-          label="Coach"
-          IconComponent={ChatCircleText}
-          active
-          primary
-          color={accent}
-          onPress={() => {
-            if (prompt) showToast('Open Echo Chat and paste the coaching prompt', prompt.slice(0, 48));
-            openEcho();
-          }}
-        />
-        <View style={{ gap: 8 }}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <EdgeAction label="Note" IconComponent={NotePencil} color="#A78BFA" onPress={saveSnapshot} />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <EdgeAction label="Share" IconComponent={ShareNetwork} color="#22C55E" onPress={shareProgress} />
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <EdgeAction label="Compare" IconComponent={UsersThree} color="#F59E0B" onPress={openTargetProgress} />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <EdgeAction label="Post" IconComponent={ArrowUpRight} color="#38BDF8" onPress={publish} />
-            </View>
-          </View>
+      {/* Primary — Ask Echo. Layout lives on the inner View so it can't drop. */}
+      <AnimatedPressable
+        onPress={() => {
+          if (prompt) showToast('Open Echo Chat and paste the coaching prompt', prompt.slice(0, 48));
+          openEcho();
+        }}
+        haptic="medium"
+        accessibilityRole="button"
+        accessibilityLabel="Ask Echo to coach you"
+        style={{ marginTop: 16 }}
+      >
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          borderRadius: 16,
+          paddingHorizontal: 16,
+          paddingVertical: 15,
+          backgroundColor: accent,
+        }}>
+          <ChatCircleText color="#fff" size={18} weight="fill" />
+          <Text style={[font.bodyBold, { color: '#fff', fontSize: 15, flex: 1 }]}>Ask Echo</Text>
+          <ArrowUpRight color="#fff" size={16} weight="bold" />
         </View>
+      </AnimatedPressable>
+
+      {/* Secondary — one quiet treatment, four equal cells. Flex lives on a
+          plain wrapper View (a flex prop on AnimatedPressable would drop, and
+          the cells would collapse to content width). */}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+        {secondary.map(action => (
+          <View key={action.label} style={{ flex: 1 }}>
+            <AnimatedPressable
+              onPress={action.onPress}
+              haptic="light"
+              accessibilityRole="button"
+              accessibilityLabel={action.a11y}
+            >
+              <View style={{
+                alignItems: 'center',
+                gap: 6,
+                paddingVertical: 12,
+                borderRadius: 14,
+                backgroundColor: colors.surface,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: colors.glassBorder,
+              }}>
+                <action.Icon color={accent} size={17} weight="bold" />
+                <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11 }]} numberOfLines={1}>{action.label}</Text>
+              </View>
+            </AnimatedPressable>
+          </View>
+        ))}
       </View>
 
       {connectedApps.length > 0 ? (
-        <View style={{ marginTop: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', letterSpacing: 0.7, textTransform: 'uppercase', marginBottom: 8 }}>
-            Continue in
-          </Text>
+        <View style={{ marginTop: 18 }}>
+          <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 10 }]}>Continue in</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {connectedApps.map(app => (
               <AnimatedPressable
                 key={app.id}
                 onPress={() => router.push(miniAppDeepLink(app))}
                 haptic="light"
-                style={{
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${app.name}`}
+              >
+                <View style={{
                   minHeight: 40,
-                  maxWidth: 170,
+                  maxWidth: 190,
                   borderRadius: 999,
                   paddingLeft: 6,
-                  paddingRight: 12,
+                  paddingRight: 14,
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 8,
                   backgroundColor: colors.surface,
                   borderWidth: StyleSheet.hairlineWidth,
                   borderColor: colors.glassBorder,
-                }}
-              >
-                <MiniAppIcon id={app.id} color={app.color} size={30} />
-                <View style={{ minWidth: 0 }}>
-                  <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900' }} numberOfLines={1}>
-                    {app.name}
-                  </Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700' }} numberOfLines={1}>
-                    {app.description}
-                  </Text>
+                }}>
+                  <MiniAppIcon id={app.id} color={app.color} size={30} />
+                  <View style={{ minWidth: 0 }}>
+                    <Text style={[font.bodySemibold, { color: colors.text, fontSize: 12 }]} numberOfLines={1}>
+                      {app.name}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 10.5 }} numberOfLines={1}>
+                      {app.description}
+                    </Text>
+                  </View>
                 </View>
               </AnimatedPressable>
             ))}
@@ -180,69 +203,5 @@ export function EdgeFeaturePanel({
         </View>
       ) : null}
     </GlassPanel>
-  );
-}
-
-function EdgeAction({
-  label,
-  IconComponent,
-  onPress,
-  active,
-  primary,
-  color,
-}: {
-  label: string;
-  IconComponent: Icon;
-  onPress: () => void;
-  active?: boolean;
-  primary?: boolean;
-  color?: string;
-}) {
-  const { colors } = useTheme();
-  const tint = color ?? colors.accent;
-  const buttonBg = colors.isDark ? 'rgba(255,255,255,0.105)' : 'rgba(255,255,255,0.95)';
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      haptic="light"
-      style={{
-        minHeight: primary ? 52 : 50,
-        width: '100%',
-        borderRadius: 15,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-        gap: 8,
-        overflow: 'hidden',
-        backgroundColor: active ? tint : buttonBg,
-        borderWidth: 1,
-        borderColor: active ? tint : colors.isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.10)',
-        shadowColor: active ? tint : '#000',
-        shadowOpacity: active ? 0.2 : colors.isDark ? 0.14 : 0.06,
-        shadowRadius: active ? 12 : 7,
-        shadowOffset: { width: 0, height: 3 },
-      }}
-    >
-      <View style={{
-        width: 26,
-        height: 26,
-        borderRadius: 9,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: active ? 'rgba(255,255,255,0.18)' : `${tint}18`,
-      }}>
-        <IconComponent color={active ? '#fff' : tint} size={15} weight="bold" />
-      </View>
-      <Text style={{ color: active ? '#fff' : colors.text, fontSize: 14, fontWeight: '900', textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
-        {label}
-      </Text>
-      {primary ? (
-        <View style={{ marginLeft: 'auto', width: 26, height: 26, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-          <ArrowUpRight color="#fff" size={14} weight="bold" />
-        </View>
-      ) : null}
-    </AnimatedPressable>
   );
 }

@@ -18,20 +18,41 @@ export interface Note {
   updatedAt: string;
 }
 
-export const NOTE_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899'];
+// Warm editorial palette (lib/avatarPalette.ts) — steel, olive, ochre, brick,
+// plum, sage, rose.
+export const NOTE_COLORS = ['#4E7A8B', '#7A8B4E', '#B08536', '#A04E4E', '#8B5E7D', '#4E8B7A', '#B35D6B'];
+
+// Legacy Tailwind hues -> their warm equivalents, so notes saved before the
+// palette migration re-map to the new swatches (and the editor highlights them)
+// instead of silently falling back to the first color.
+const LEGACY_COLOR_MIGRATION: Record<string, string> = {
+  '#6366F1': '#4E7A8B',
+  '#10B981': '#7A8B4E',
+  '#F59E0B': '#B08536',
+  '#EF4444': '#A04E4E',
+  '#8B5CF6': '#8B5E7D',
+  '#06B6D4': '#4E8B7A',
+  '#EC4899': '#B35D6B',
+};
+
+function migrateColor(color: string): string {
+  return LEGACY_COLOR_MIGRATION[color] ?? color;
+}
 
 export async function loadNotes(): Promise<Note[]> {
   // Cloud copy wins when a newer device wrote it (cross-device sync);
   // otherwise fall through to the local collection.
   const remote = await pullMiniAppIfNewer('notes');
   if (Array.isArray(remote)) {
-    await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(remote));
-    return remote as Note[];
+    const migrated = (remote as Note[]).map(n => ({ ...n, color: migrateColor(n.color) }));
+    await AsyncStorage.setItem(NOTES_KEY, JSON.stringify(migrated));
+    return migrated;
   }
   try {
     const raw = await AsyncStorage.getItem(NOTES_KEY);
     const parsed = JSON.parse(raw ?? '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return (parsed as Note[]).map(n => ({ ...n, color: migrateColor(n.color) }));
   } catch {
     return [];
   }

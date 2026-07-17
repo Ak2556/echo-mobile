@@ -10,6 +10,7 @@ import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, Pencil
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { ExerciseDemo } from '../../components/mini-apps/ExerciseDemo';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
@@ -46,7 +47,7 @@ function SheetHeader({ title, onClose }: { title: string; onClose: () => void })
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
       <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{title}</Text>
-      <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
+      <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light" accessibilityRole="button" accessibilityLabel={`Close ${title}`}><X color={colors.textMuted} size={22} /></AnimatedPressable>
     </View>
   );
 }
@@ -333,7 +334,7 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
                   />
                 </View>
                 {rows.length > 1 && (
-                  <AnimatedPressable onPress={() => setRows(rows.filter((_, j) => j !== i))} scaleValue={0.85} haptic="light" style={{ paddingBottom: 12 }}>
+                  <AnimatedPressable onPress={() => setRows(rows.filter((_, j) => j !== i))} scaleValue={0.85} haptic="light" style={{ paddingBottom: 12 }} accessibilityRole="button" accessibilityLabel={`Remove exercise ${i + 1}`}>
                     <Trash color={colors.textMuted} size={17} />
                   </AnimatedPressable>
                 )}
@@ -465,7 +466,7 @@ function WeightChart({ entries, colors }: { entries: WeightEntry[]; colors: any 
 // ── Screen ───────────────────────────────────────────────────────────────────
 
 export default function FitnessApp() {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const [doc, setDoc] = useState<FitnessDoc | null>(null);
   const [tab, setTab] = useState<Tab>('meals');
   const [showAddMeal, setShowAddMeal] = useState(false);
@@ -494,6 +495,7 @@ export default function FitnessApp() {
     <AnimatedPressable
       onPress={() => (tab === 'meals' ? setShowAddMeal(true) : setShowAddWorkout(true))}
       scaleValue={0.88} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 12, padding: 10 }}
+      accessibilityRole="button" accessibilityLabel={tab === 'meals' ? 'Add meal' : 'Add workout'}
     >
       <Plus color="#fff" size={18} weight="bold" />
     </AnimatedPressable>
@@ -552,7 +554,14 @@ export default function FitnessApp() {
       {/* Tabs */}
       <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
         {TABS.map(t => (
-          <Pressable key={t.key} onPress={() => setTab(t.key)} style={{ flex: 1 }}>
+          <Pressable
+            key={t.key}
+            onPress={() => setTab(t.key)}
+            style={{ flex: 1 }}
+            accessibilityRole="tab"
+            accessibilityLabel={t.label}
+            accessibilityState={{ selected: tab === t.key }}
+          >
             <View style={{ paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: tab === t.key ? TEAL : 'transparent' }}>
               <Text style={{ color: tab === t.key ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{t.label}</Text>
             </View>
@@ -588,7 +597,7 @@ export default function FitnessApp() {
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> / {doc.goals.calories} kcal</Text>
                 </Text>
               </View>
-              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" style={{ padding: 6 }}>
+              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" style={{ padding: 6 }} accessibilityRole="button" accessibilityLabel="Edit nutrition goals">
                 <PencilSimple color={colors.textMuted} size={17} />
               </AnimatedPressable>
             </View>
@@ -626,30 +635,31 @@ export default function FitnessApp() {
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
               {[{ label: '+250 ml', ml: 250 }, { label: '+500 ml', ml: 500 }, { label: '+1 L', ml: 1000 }].map(opt => (
-                <Pressable key={opt.ml} onPress={() => addWater(opt.ml)} style={{ flex: 1 }}>
+                <AnimatedPressable key={opt.ml} onPress={() => addWater(opt.ml)} scaleValue={0.94} haptic="light" style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={`Add ${opt.label} of water`}>
                   <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: '#4E7A8B18', borderWidth: 1, borderColor: '#4E7A8B33' }}>
                     <Text style={{ color: '#4E7A8B', fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{opt.label}</Text>
                   </View>
-                </Pressable>
+                </AnimatedPressable>
               ))}
               {waterToday > 0 && (
-                <Pressable onPress={undoWater}>
+                <AnimatedPressable onPress={undoWater} scaleValue={0.94} haptic="light" accessibilityRole="button" accessibilityLabel="Undo last water entry">
                   <View style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                     <Text style={{ color: colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>Undo</Text>
                   </View>
-                </Pressable>
+                </AnimatedPressable>
               )}
             </View>
           </GlassPanel>
 
           {totals.meals.length === 0 && (
-            <View style={{ alignItems: 'center', paddingVertical: 48, gap: 12 }}>
-              <ForkKnife color={colors.glassBorder} size={44} weight="thin" />
-              <Text style={{ color: colors.textMuted, fontSize: 15 }}>Nothing logged today</Text>
-              <AnimatedPressable onPress={() => setShowAddMeal(true)} scaleValue={0.96} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 12 }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Log your first meal</Text>
-              </AnimatedPressable>
-            </View>
+            <MiniEmptyState
+              accent={TEAL}
+              icon={<ForkKnife color={colors.textMuted} size={44} weight="thin" />}
+              title="Nothing logged today"
+              subtitle="Add a meal to start tracking calories and macros."
+              actionLabel="Log your first meal"
+              onAction={() => setShowAddMeal(true)}
+            />
           )}
 
           {MEAL_KINDS.map(k => {
@@ -657,7 +667,7 @@ export default function FitnessApp() {
             if (meals.length === 0) return null;
             return (
               <View key={k.kind} style={{ marginBottom: 14 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8 }}>{k.label}</Text>
+                <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 8 }]}>{k.label}</Text>
                 {meals.map((m, i) => (
                   <Animated.View key={m.id} entering={FadeInDown.delay(i * 40).duration(220)} style={{ marginBottom: 8 }}>
                     <GlassPanel variant="medium" borderRadius={16} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
@@ -668,7 +678,7 @@ export default function FitnessApp() {
                         </Text>
                       </View>
                       <Text style={{ color: TEAL, fontSize: 16, fontWeight: '800' }}>{Math.round(m.calories)} kcal</Text>
-                      <AnimatedPressable onPress={() => removeItem('meal', () => ({ ...doc, meals: doc.meals.filter(x => x.id !== m.id) }))} scaleValue={0.85} haptic="light">
+                      <AnimatedPressable onPress={() => removeItem('meal', () => ({ ...doc, meals: doc.meals.filter(x => x.id !== m.id) }))} scaleValue={0.85} haptic="light" accessibilityRole="button" accessibilityLabel={`Delete ${m.name}`}>
                         <Trash color={colors.textMuted} size={16} />
                       </AnimatedPressable>
                     </GlassPanel>
@@ -716,7 +726,7 @@ export default function FitnessApp() {
 
           {/* Routines — the follow-along entry point */}
           <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 10 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>
+            <Text style={[font.eyebrow, { color: colors.textMuted, flex: 1 }]}>
               Routines
             </Text>
             <Pressable onPress={() => setRoutineEditor('new')} hitSlop={10}>
@@ -735,6 +745,9 @@ export default function FitnessApp() {
                     onPress={() => setRoutineEditor(r)}
                     onLongPress={() => removeItem('routine', () => ({ ...doc, routines: doc.routines.filter(x => x.id !== r.id) }))}
                     style={{ flex: 1 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Edit routine ${r.title}`}
+                    accessibilityHint="Double tap to edit, long press to delete"
                   >
                     <Text style={{ color: colors.text, fontSize: 15.5, fontWeight: '800' }}>{r.title}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
@@ -744,6 +757,7 @@ export default function FitnessApp() {
                   <AnimatedPressable
                     onPress={() => setActiveRoutine(r)}
                     scaleValue={0.9} haptic="medium"
+                    accessibilityRole="button" accessibilityLabel={`Start routine ${r.title}`}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: TEAL, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 }}
                   >
                     <Play color="#fff" size={13} weight="fill" />
@@ -755,19 +769,20 @@ export default function FitnessApp() {
           )}
 
           {doc.workouts.length > 0 && (
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 10 }}>
+            <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 10 }]}>
               History
             </Text>
           )}
 
           {doc.workouts.length === 0 && (
-            <View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
-              <Barbell color={colors.glassBorder} size={44} weight="thin" />
-              <Text style={{ color: colors.textMuted, fontSize: 15 }}>No workouts logged</Text>
-              <AnimatedPressable onPress={() => setShowAddWorkout(true)} scaleValue={0.96} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 12 }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Log your first workout</Text>
-              </AnimatedPressable>
-            </View>
+            <MiniEmptyState
+              accent={TEAL}
+              icon={<Barbell color={colors.textMuted} size={44} weight="thin" />}
+              title="No workouts logged"
+              subtitle="Log a session to track volume, streaks, and PRs."
+              actionLabel="Log your first workout"
+              onAction={() => setShowAddWorkout(true)}
+            />
           )}
 
           {doc.workouts.map((w, i) => (
@@ -782,7 +797,7 @@ export default function FitnessApp() {
                     </Text>
                   </View>
                   <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800' }}>{Math.round(workoutVolume(w)).toLocaleString()} kg</Text>
-                  <AnimatedPressable onPress={() => removeItem('workout', () => ({ ...doc, workouts: doc.workouts.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light" style={{ marginLeft: 12 }}>
+                  <AnimatedPressable onPress={() => removeItem('workout', () => ({ ...doc, workouts: doc.workouts.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light" style={{ marginLeft: 12 }} accessibilityRole="button" accessibilityLabel={`Delete workout ${w.title}`}>
                     <Trash color={colors.textMuted} size={16} />
                   </AnimatedPressable>
                 </View>
@@ -843,7 +858,7 @@ export default function FitnessApp() {
               <Text style={{ color: colors.textMuted, fontSize: 13, marginRight: 14 }}>
                 {new Date(w.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
               </Text>
-              <AnimatedPressable onPress={() => removeItem('entry', () => ({ ...doc, weights: doc.weights.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light">
+              <AnimatedPressable onPress={() => removeItem('entry', () => ({ ...doc, weights: doc.weights.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light" accessibilityRole="button" accessibilityLabel={`Delete weight entry ${w.kg.toFixed(1)} kg`}>
                 <Trash color={colors.textMuted} size={15} />
               </AnimatedPressable>
             </View>
@@ -856,7 +871,7 @@ export default function FitnessApp() {
 
           {/* Body measurements */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 10 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 }}>Measurements</Text>
+            <Text style={[font.eyebrow, { color: colors.textMuted, flex: 1 }]}>Measurements</Text>
             <AnimatedPressable onPress={() => setShowMeasure(true)} scaleValue={0.9} haptic="light" style={{ backgroundColor: TEAL + '18', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 }}>
               <Text style={{ color: TEAL, fontWeight: '700', fontSize: 12.5 }}>+ Log</Text>
             </AnimatedPressable>
@@ -888,7 +903,7 @@ export default function FitnessApp() {
           {/* Lift progress */}
           {lifts.length > 0 && (
             <>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 24, marginBottom: 10 }}>Lifts</Text>
+              <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 24, marginBottom: 10 }]}>Lifts</Text>
               <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
                 {lifts.map(({ name, points }, i) => {
                   const [latest, prev] = points;
@@ -915,7 +930,7 @@ export default function FitnessApp() {
           )}
 
           {/* Weekly + monthly logs */}
-          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 24, marginBottom: 10 }}>Weekly log</Text>
+          <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 24, marginBottom: 10 }]}>Weekly log</Text>
           <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
             {weekly.map((wk, i) => (
               <View key={wk.label} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < weekly.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
@@ -929,7 +944,7 @@ export default function FitnessApp() {
             ))}
           </GlassPanel>
 
-          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 20, marginBottom: 10 }}>Monthly log</Text>
+          <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 20, marginBottom: 10 }]}>Monthly log</Text>
           <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }}>
             {monthly.map((mo, i) => (
               <View key={mo.label} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < monthly.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>

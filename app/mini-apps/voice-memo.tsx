@@ -21,6 +21,7 @@ import {
 } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
@@ -248,10 +249,12 @@ export default function VoiceMemoApp() {
 
       {/* Memo list */}
       {memos.length === 0 ? (
-        <View style={{ alignItems: 'center', paddingVertical: 60, gap: 12 }}>
-          <MicrophoneStage color={colors.glassBorder} size={48} weight="thin" />
-          <Text style={{ color: colors.textMuted, fontSize: 15 }}>No recordings yet</Text>
-        </View>
+        <MiniEmptyState
+          accent={colors.accent}
+          icon={<MicrophoneStage color={colors.textMuted} size={48} weight="thin" />}
+          title="No recordings yet"
+          subtitle="Tap record to capture your first voice memo."
+        />
       ) : (
         memos.map((memo, i) => (
           <Animated.View key={memo.id} entering={FadeInDown.delay(i * 40).duration(220)} style={{ marginBottom: 10 }}>
