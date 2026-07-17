@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, KeyboardAvoidingView, Platform, FlatList,
+  View, Text, KeyboardAvoidingView, Platform, FlatList, ScrollView,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
   ActivityIndicator, Alert, Linking,
 } from 'react-native';
@@ -1134,6 +1134,7 @@ export default function DMScreen() {
   const [sharedPending, setSharedPending] = useState(Boolean(echoId));
   const [quickAction, setQuickAction] = useState<string | null>(null);
   const [replyLoading, setReplyLoading] = useState<string | null>(null);
+  const [polishing, setPolishing] = useState<string | null>(null);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translatingId, setTranslatingId] = useState<string | null>(null);
   const [activeMessage, setActiveMessage] = useState<NormalizedMessage | null>(null);
@@ -1661,6 +1662,36 @@ export default function DMScreen() {
     }
   }, [replyLoading, conversation, messages, myId, hapticEnabled]);
 
+  // Tone/polish: rewrite the current draft in a chosen voice, streamed back into
+  // the composer. Echo helps you say it better before you hit send.
+  const polishDraft = useCallback(async (tone: string) => {
+    const draft = text.trim();
+    if (!draft || polishing) return;
+    setPolishing(tone);
+    if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const how: Record<string, string> = {
+      warmer: 'Make it warmer and friendlier',
+      shorter: 'Make it shorter and more concise',
+      funnier: 'Make it more playful and lightly funny',
+      fix: 'Fix spelling, grammar, and punctuation only',
+    };
+    const prompt = `Rewrite the following chat message. ${how[tone] ?? how.fix}. Keep my meaning and casual voice. Output only the rewritten message, no quotes or notes:\n\n${draft}`;
+    let acc = '';
+    try {
+      await streamEchoAI({
+        message: prompt,
+        onEvent: e => { if (e.type === 'text_delta') { acc += e.delta; setText(acc.replace(/^["']|["']$/g, '').trimStart()); } },
+      });
+      setText(acc.replace(/^["']|["']$/g, '').trim() || draft);
+      if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      setText(draft);
+      showToast('Couldn’t reach Echo', 'Offline');
+    } finally {
+      setPolishing(null);
+    }
+  }, [text, polishing, hapticEnabled]);
+
   // Inline AI translation — tap Translate on a message; the result streams in
   // and renders under the bubble. Tap again to hide.
   const handleTranslate = useCallback(async (msg: NormalizedMessage) => {
@@ -2040,8 +2071,42 @@ export default function DMScreen() {
           </Animated.View>
         )}
 
+        {/* Tone / polish — offered while you have a draft */}
+        {text.trim().length > 1 && (
+          <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
+              {[{ id: 'warmer', label: 'Warmer' }, { id: 'shorter', label: 'Shorter' }, { id: 'funnier', label: 'Funnier' }, { id: 'fix', label: 'Fix' }].map(t => {
+                const busy = polishing === t.id;
+                return (
+                  <AnimatedPressable
+                    key={t.id}
+                    onPress={() => void polishDraft(t.id)}
+                    disabled={!!polishing}
+                    scaleValue={0.95}
+                    haptic="light"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Rewrite ${t.label}`}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 5,
+                      paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full,
+                      opacity: polishing && !busy ? 0.5 : 1,
+                      backgroundColor: colors.surface,
+                      borderWidth: 1, borderColor: colors.border,
+                    }}
+                  >
+                    {busy
+                      ? <ActivityIndicator size="small" color={colors.accent} />
+                      : <Sparkle color={colors.textMuted} size={12} weight="fill" />}
+                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600' }} numberOfLines={1}>{t.label}</Text>
+                  </AnimatedPressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Quick starters */}
-        {!composerFocused && !editingMessage && !replyingTo && (
+        {!composerFocused && !editingMessage && !replyingTo && text.trim().length === 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {Object.entries({ followup: 'Follow-up', summary: 'Your take', draft: 'Draft' }).map(([key, label]) => {
