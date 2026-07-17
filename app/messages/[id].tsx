@@ -26,7 +26,7 @@ import {
   type AudioPlayer,
 } from 'expo-audio';
 import Animated, {
-  FadeIn, FadeInUp, FadeOut, SlideInDown, SlideOutDown,
+  FadeIn, FadeInUp, FadeOut, SlideInDown, SlideOutDown, ZoomIn, LinearTransition,
   runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -303,23 +303,24 @@ function ReactionBar({
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
       {Object.entries(grouped).map(([val, { count, hasReacted }]) => (
-        <Pressable
-          key={val}
-          onPress={() => onToggle(val, hasReacted)}
-          style={{
-            flexDirection: 'row', alignItems: 'center', gap: 3,
-            paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
-            backgroundColor: hasReacted ? colors.accentMuted : colors.surface,
-            borderWidth: 1, borderColor: hasReacted ? colors.accent : colors.border,
-          }}
-        >
-          <Text style={{ fontSize: 14 }}>{val}</Text>
-          {count > 1 && (
-            <Text style={{ fontSize: 11, fontWeight: '600', color: hasReacted ? colors.accent : colors.textMuted }}>
-              {count}
-            </Text>
-          )}
-        </Pressable>
+        <Animated.View key={val} entering={ZoomIn.springify().damping(13).stiffness(240).mass(0.5)} layout={LinearTransition.springify()}>
+          <Pressable
+            onPress={() => onToggle(val, hasReacted)}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 3,
+              paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
+              backgroundColor: hasReacted ? colors.accentMuted : colors.surface,
+              borderWidth: 1, borderColor: hasReacted ? colors.accent : colors.border,
+            }}
+          >
+            <Text style={{ fontSize: 14 }}>{val}</Text>
+            {count > 1 && (
+              <Text style={{ fontSize: 11, fontWeight: '600', color: hasReacted ? colors.accent : colors.textMuted }}>
+                {count}
+              </Text>
+            )}
+          </Pressable>
+        </Animated.View>
       ))}
     </View>
   );
