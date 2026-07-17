@@ -157,6 +157,45 @@ function isSameDay(a: string, b: string): boolean {
     da.getDate() === db.getDate();
 }
 
+function localDayKey(d: Date): string {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+/**
+ * Conversation streak (Snapchat-style): consecutive days where BOTH people sent
+ * at least one message, anchored to today (or yesterday, so it survives until
+ * you reply). A gentle daily reason to come back. Computed from loaded history,
+ * so very long streaks past the first page are an approximation — fine for a
+ * momentum signal.
+ */
+function conversationStreak(messages: NormalizedMessage[], myId: string): number {
+  if (messages.length < 2) return 0;
+  const days = new Map<string, { me: boolean; them: boolean }>();
+  for (const m of messages) {
+    if (m.deletedAt) continue;
+    const key = localDayKey(new Date(m.createdAt));
+    const e = days.get(key) ?? { me: false, them: false };
+    if (m.senderId === myId) e.me = true; else e.them = true;
+    days.set(key, e);
+  }
+  const isMutual = (d: Date) => {
+    const e = days.get(localDayKey(d));
+    return !!e && e.me && e.them;
+  };
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (!isMutual(today) && !isMutual(yesterday)) return 0;
+  const cursor = new Date(today);
+  if (!isMutual(today)) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  for (let i = 0; i < 730 && isMutual(cursor); i++) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
 function isGroupedWithPrev(msg: NormalizedMessage, prev: NormalizedMessage | undefined): boolean {
   if (!prev || msg.senderId !== prev.senderId) return false;
   if (prev.deletedAt || msg.deletedAt) return false;
@@ -1253,6 +1292,10 @@ export default function DMScreen() {
       });
 
   const online = conversation && !conversation.isGroup && conversation.userId ? isUserOnline(conversation.userId) : false;
+  const streak = useMemo(
+    () => (conversation && !conversation.isGroup ? conversationStreak(messages, myId) : 0),
+    [messages, myId, conversation],
+  );
   const searchTerm = searchQuery.trim().toLowerCase();
   const visibleMessages = searchTerm
     ? messages.filter(message => messageSearchText(message).includes(searchTerm))
@@ -1669,10 +1712,16 @@ export default function DMScreen() {
 
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }} numberOfLines={1}>
                 {conversation.displayName}
               </Text>
               {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+              {streak >= 2 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 1, backgroundColor: colors.accentMuted, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 }}>
+                  <Text style={{ fontSize: 11 }}>🔥</Text>
+                  <Text style={{ color: colors.accent, fontSize: 11.5, fontWeight: '800' }}>{streak}</Text>
+                </View>
+              )}
             </View>
             <Text style={{
               color: partnerIsTyping ? colors.accent : online ? colors.success : colors.textMuted,
