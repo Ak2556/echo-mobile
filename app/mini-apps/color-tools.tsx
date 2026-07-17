@@ -41,8 +41,8 @@ const RANDOMS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#0
 
 export default function ColorToolsScreen() {
   const { colors } = useTheme();
-  const [hex, setHex] = useState('#3B82F6');
-  const [inputHex, setInputHex] = useState('#3B82F6');
+  const [hex, setHex] = useState('#C65F3F');
+  const [inputHex, setInputHex] = useState('#C65F3F');
   const [copied, setCopied] = useState('');
   const [saved, setSaved] = useState<string[]>([]);
 
@@ -98,7 +98,7 @@ export default function ColorToolsScreen() {
             >
               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', width: 52 }}>{row.label}</Text>
               <Text style={{ color: colors.text, fontSize: 14, fontFamily: 'monospace', flex: 1 }}>{row.value}</Text>
-              {copied === row.value ? <Check color="#10B981" size={16} weight="bold" /> : <Copy color={colors.textMuted} size={16} />}
+              {copied === row.value ? <Check color={colors.success} size={16} weight="bold" /> : <Copy color={colors.textMuted} size={16} />}
             </Pressable>
           ))}
           <View style={{ height: 4 }} />
@@ -107,7 +107,7 @@ export default function ColorToolsScreen() {
 
       <EdgeFeaturePanel
         appName="Color Tools"
-        accent={hex}
+        accent={colors.accent}
         headline="Make palettes usable"
         caption="Share accessible color specs, post a palette decision, or ask Echo for UI usage guidance."
         metrics={[
