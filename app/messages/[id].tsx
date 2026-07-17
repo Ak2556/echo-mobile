@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   View, Text, KeyboardAvoidingView, Platform, FlatList, ScrollView,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
-  ActivityIndicator, Alert, Linking,
+  ActivityIndicator, Alert, Linking, Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -599,6 +599,70 @@ function FormattedText({ content, color, size }: { content: string; color: strin
         return <Text key={i}>{p.text}</Text>;
       })}
     </Text>
+  );
+}
+
+// ─── Send effects ────────────────────────────────────────────────────────────
+
+type EffectKind = 'confetti' | 'hearts';
+
+/** Trigger words → a full-screen celebration, like iMessage screen effects. */
+function detectEffect(text: string): EffectKind | null {
+  const t = text.toLowerCase();
+  if (/congrat|🎉|🎊|🥳|🎂|happy birthday|woohoo|let'?s go|nailed it|you did it/.test(t)) return 'confetti';
+  if (/\bi love you\b|love you|love it|love this|😍|🥰|❤️|💕|💖|💗/.test(t)) return 'hearts';
+  return null;
+}
+
+function EffectParticle({ x, emoji, delay, size, drift, kind }: { x: number; emoji: string; delay: number; size: number; drift: number; kind: EffectKind }) {
+  const { height } = Dimensions.get('window');
+  const progress = useSharedValue(0);
+  React.useEffect(() => {
+    progress.value = withDelay(delay, withTiming(1, { duration: 2200 }));
+  }, [delay, progress]);
+  const style = useAnimatedStyle(() => {
+    const p = progress.value;
+    const startY = kind === 'confetti' ? -50 : height + 50;
+    const endY = kind === 'confetti' ? height + 50 : -60;
+    return {
+      transform: [
+        { translateX: x + drift * p },
+        { translateY: startY + (endY - startY) * p },
+        { rotate: `${p * 360 * (kind === 'confetti' ? 1 : 0.25)}deg` },
+      ],
+      opacity: kind === 'hearts' ? 1 - p * 0.85 : (p < 0.85 ? 1 : Math.max(0, (1 - p) / 0.15)),
+    };
+  });
+  return (
+    <Animated.View style={[{ position: 'absolute', top: 0, left: 0 }, style]}>
+      <Text style={{ fontSize: size }}>{emoji}</Text>
+    </Animated.View>
+  );
+}
+
+function MessageEffect({ kind, onDone }: { kind: EffectKind; onDone: () => void }) {
+  const { width } = Dimensions.get('window');
+  const set = kind === 'confetti' ? ['🎉', '🎊', '✨', '🎈', '⭐'] : ['❤️', '💕', '💖', '💗', '🥰'];
+  const particles = useMemo(
+    () => Array.from({ length: 22 }).map((_, i) => ({
+      id: i,
+      x: Math.random() * width,
+      emoji: set[i % set.length],
+      delay: Math.random() * 500,
+      size: 20 + Math.random() * 18,
+      drift: (Math.random() - 0.5) * 90,
+    })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  React.useEffect(() => {
+    const t = setTimeout(onDone, 2700);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <Animated.View pointerEvents="none" exiting={FadeOut.duration(300)} style={StyleSheet.absoluteFill}>
+      {particles.map(p => <EffectParticle key={p.id} {...p} kind={kind} />)}
+    </Animated.View>
   );
 }
 
@@ -1228,6 +1292,8 @@ export default function DMScreen() {
   const [translatingId, setTranslatingId] = useState<string | null>(null);
   const [catchup, setCatchup] = useState<string | null>(null);
   const [catchupLoading, setCatchupLoading] = useState(false);
+  const [effect, setEffect] = useState<EffectKind | null>(null);
+  const lastEffectIdRef = useRef<string | null>(null);
   const [activeMessage, setActiveMessage] = useState<NormalizedMessage | null>(null);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [replyingTo, setReplyingTo] = useState<NormalizedMessage | null>(null);
@@ -1426,6 +1492,18 @@ export default function DMScreen() {
     () => (conversation && !conversation.isGroup ? conversationStreak(messages, myId) : 0),
     [messages, myId, conversation],
   );
+
+  // Play a screen effect when a fresh celebratory message arrives from them.
+  useEffect(() => {
+    const newest = messages[messages.length - 1];
+    if (!newest || newest.senderId === myId || newest.deletedAt || !newest.content) return;
+    if (lastEffectIdRef.current === newest.id) return;
+    lastEffectIdRef.current = newest.id;
+    if (new Date(newest.createdAt).getTime() < openedAtRef.current - 2000) return;
+    const fx = detectEffect(newest.content);
+    if (fx) setEffect(fx);
+  }, [messages, myId]);
+
   const searchTerm = searchQuery.trim().toLowerCase();
   const visibleMessages = searchTerm
     ? messages.filter(message => messageSearchText(message).includes(searchTerm))
@@ -1522,6 +1600,9 @@ export default function DMScreen() {
 
     const replyToId = replyingTo?.id;
     setReplyingTo(null);
+    // iMessage-style screen effect on celebratory sends.
+    const fx = detectEffect(content);
+    if (fx) setEffect(fx);
     const link = firstUrl(content);
 
     if (link && content === link) {
@@ -2515,6 +2596,8 @@ export default function DMScreen() {
         onTranslate={() => { if (activeMessage) void handleTranslate(activeMessage); }}
         onSmartReply={() => void generateSmartReply('draft')}
       />
+
+      {effect && <MessageEffect kind={effect} onDone={() => setEffect(null)} />}
 
       {/* Catch-me-up summary */}
       <Modal visible={catchup !== null} transparent animationType="none" onRequestClose={() => setCatchup(null)}>
