@@ -69,8 +69,8 @@ export default function JsonFormatterScreen() {
   ) : undefined;
 
   return (
-    <MiniAppShell title="JSON Tools" subtitle="Format · validate · minify" headerRight={HeaderActions} scrollable={false}>
-      <View style={{ flex: 1, paddingHorizontal: 20 }}>
+    <MiniAppShell title="JSON Tools" subtitle="Format · validate · minify" headerRight={HeaderActions}>
+      <View>
         {/* Input */}
         <View style={{ marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -109,10 +109,10 @@ export default function JsonFormatterScreen() {
 
         {/* Output */}
         {output ? (
-          <View style={{ flex: 1 }}>
+          <View style={{ marginBottom: 14 }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>OUTPUT</Text>
-            <GlassPanel variant="medium" borderRadius={18} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
-              <ScrollView style={{ flex: 1, backgroundColor: '#0D1117', borderRadius: 18 }} contentContainerStyle={{ padding: 16 }}>
+            <GlassPanel variant="medium" borderRadius={18}>
+              <ScrollView style={{ maxHeight: 360, backgroundColor: '#0D1117', borderRadius: 18 }} contentContainerStyle={{ padding: 16 }} nestedScrollEnabled>
                 <Text style={{ fontFamily: 'monospace', fontSize: 13, lineHeight: 22 }}>
                   {tokens.map((t, i) => <Text key={i} style={{ color: t.color }}>{t.text}</Text>)}
                 </Text>

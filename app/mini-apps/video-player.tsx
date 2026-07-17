@@ -12,6 +12,7 @@ import {
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -140,7 +141,7 @@ export default function VideoPlayerApp() {
           contentStyle={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 }}
         >
           <Pressable onPress={recordVideo} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <VideoCamera color="#EF4444" size={20} />
+            <VideoCamera color={colors.danger} size={20} />
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Record</Text>
           </Pressable>
         </GlassPanel>
@@ -225,15 +226,12 @@ export default function VideoPlayerApp() {
           />
         </Animated.View>
       ) : (
-        <Animated.View entering={FadeInDown.delay(40).duration(220)} style={{ alignItems: 'center', paddingVertical: 80, gap: 16 }}>
-          <View style={{ width: 88, height: 88, borderRadius: 28, backgroundColor: accent + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: accent + '30' }}>
-            <VideoCamera color={accent} size={40} weight="duotone" />
-          </View>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>No Video Loaded</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', maxWidth: 240 }}>
-            Pick a video from your library or record a new one to start playing.
-          </Text>
-        </Animated.View>
+        <MiniEmptyState
+          accent={accent}
+          icon={<VideoCamera color={colors.textMuted} size={44} weight="duotone" />}
+          title="No video loaded"
+          subtitle="Pick a video from your library or record a new one to start playing."
+        />
       )}
     </MiniAppShell>
   );

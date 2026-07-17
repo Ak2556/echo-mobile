@@ -3,7 +3,6 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-
 import { Trash } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
-import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { useTheme } from '../../lib/theme';
 
 const SAMPLE = `# Hello, Markdown!
@@ -130,23 +129,7 @@ export default function MarkdownScreen() {
 
   return (
     <MiniAppShell title="Markdown" subtitle={`${words} words · ${chars} chars`} headerRight={ClearBtn} scrollable={false}>
-      <View style={{ flex: 1, padding: 16 }}>
-        <EdgeFeaturePanel
-          appName="Markdown"
-          accent={colors.accent}
-          headline="Draft once, publish anywhere"
-          caption="Use markdown drafts as source material for posts, notes, documentation, and Echo updates."
-          metrics={[
-            { label: 'Words', value: `${words}` },
-            { label: 'Chars', value: `${chars}` },
-            { label: 'Mode', value: tab === 'edit' ? 'Edit' : 'Preview' },
-          ]}
-          prompt="Review this markdown draft and turn it into a sharper public Echo or action-oriented summary."
-          shareText={`Markdown draft progress: ${words} words and ${chars} characters.`}
-          publishTitle="Markdown draft"
-          publishBody={text}
-        />
-
+      <View style={{ flex: 1, paddingTop: 4 }}>
         <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 12 }}>
           {[{ id: 'edit', label: 'Editor' }, { id: 'preview', label: 'Preview' }].map(t => (
             <Pressable
