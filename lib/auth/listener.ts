@@ -9,6 +9,7 @@ import { identifyUser, clearUser, captureException } from '../monitoring';
 import { isSupabaseRemote } from '../remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes, fetchAndApplyRemoteSettings } from '../supabaseEchoApi';
 import { loadPersonaProfile } from '../persona';
+import { syncNotificationProfile } from '../personalNudges';
 import { useAuthStore } from './store';
 import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
@@ -86,6 +87,9 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
         const cm = new Set(s.mutedIds);
         blockedIds.forEach(id => { if (!cb.has(id)) s.toggleBlock(id); });
         mutedIds.forEach(id => { if (!cm.has(id)) s.toggleMute(id); });
+        // Now that remote consent is applied, sync (or clear) the server-side
+        // notification profile for personalized fan-out. Gated on consent.
+        void syncNotificationProfile(s.personalizedNotifications);
       })
       .catch(() => {});
   }

@@ -114,6 +114,7 @@ function titleFor(t: string, actorName: string, preview?: string): string {
       const emoji = preview ? preview.trim().split(/\s+/)[0] : '';
       return emoji ? `${actorName} reacted ${emoji} to your answer` : `${actorName} reacted to your answer`;
     }
+    case 'personal_nudge': return 'Echo';
     default: return 'Echo';
   }
 }
@@ -130,6 +131,8 @@ function messageFor(t: string, preview?: string): string {
       const parts = (preview ?? '').trim().split(/\s+/);
       return parts.slice(1).join(' ').slice(0, 140);
     }
+    case 'personal_nudge':
+      return (preview ?? '').slice(0, 140);
     default:
       return '';
   }
