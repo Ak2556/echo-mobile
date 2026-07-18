@@ -1,0 +1,175 @@
+import React, { Suspense } from 'react';
+import { View, Text, Dimensions, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, SlideInDown, SlideOutDown,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Sparkle, X, ArrowsInSimple, GridFour } from 'phosphor-react-native';
+import { useTheme } from '../../lib/theme';
+import { useAuthStore } from '../../lib/auth/store';
+import { useFloatingApp } from '../../store/floatingApp';
+import { FLOATING_APPS, floatingAppMeta } from '../../lib/miniAppRegistry';
+import { IconButton } from '../ui/IconButton';
+
+const BUBBLE = 54;
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+
+export function FloatingMiniApp() {
+  const mode = useFloatingApp(s => s.mode);
+  const authed = useAuthStore(s => s.status === 'ready');
+  // Only overlay the signed-in app — never the auth/onboarding flow.
+  if (!authed || mode === 'closed') return null;
+  // box-none: this full-screen layer ignores touches except on its children,
+  // so the app underneath stays scrollable "alongside" the floating tool.
+  return (
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="box-none">
+      {mode === 'bubble' ? <Bubble /> : <Panel />}
+    </View>
+  );
+}
+
+function Bubble() {
+  const { colors } = useTheme();
+  const { x, y, appId, openApp, openPicker, setPosition } = useFloatingApp();
+  const meta = floatingAppMeta(appId);
+
+  const startX = x >= 0 ? x : SCREEN_W - BUBBLE - 14;
+  const startY = y >= 0 ? y : SCREEN_H * 0.62;
+  const tx = useSharedValue(startX);
+  const ty = useSharedValue(startY);
+  const offX = useSharedValue(0);
+  const offY = useSharedValue(0);
+
+  const open = () => (meta ? openApp(meta.id) : openPicker());
+
+  const pan = Gesture.Pan()
+    .onStart(() => { offX.value = tx.value; offY.value = ty.value; })
+    .onUpdate((e) => {
+      tx.value = Math.max(6, Math.min(SCREEN_W - BUBBLE - 6, offX.value + e.translationX));
+      ty.value = Math.max(60, Math.min(SCREEN_H - BUBBLE - 90, offY.value + e.translationY));
+    })
+    .onEnd(() => {
+      // Snap to the nearest side edge.
+      const snapX = tx.value + BUBBLE / 2 < SCREEN_W / 2 ? 6 : SCREEN_W - BUBBLE - 6;
+      tx.value = withSpring(snapX, { damping: 18, stiffness: 200 });
+      runOnJS(setPosition)(snapX, ty.value);
+    });
+  const tap = Gesture.Tap().maxDistance(8).onEnd(() => runOnJS(open)());
+  const gesture = Gesture.Exclusive(pan, tap);
+
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value }] }));
+
+  return (
+    <GestureDetector gesture={gesture}>
+      <Animated.View
+        entering={FadeIn.duration(180)}
+        style={[{
+          position: 'absolute', width: BUBBLE, height: BUBBLE, borderRadius: BUBBLE / 2,
+          alignItems: 'center', justifyContent: 'center',
+          backgroundColor: colors.accent,
+          shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 8,
+          borderWidth: 2, borderColor: colors.bg,
+        }, style]}
+        accessibilityRole="button"
+        accessibilityLabel={meta ? `Open ${meta.name}` : 'Open mini-apps'}
+      >
+        {meta ? <meta.Icon color="#fff" size={24} weight="fill" /> : <Sparkle color="#fff" size={24} weight="fill" />}
+      </Animated.View>
+    </GestureDetector>
+  );
+}
+
+function Panel() {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { appId, openApp, openPicker, minimize, close } = useFloatingApp();
+  const meta = floatingAppMeta(appId);
+
+  // Bottom sheet ~72% of the screen; the top stays touchable (box-none parent).
+  const panelHeight = Math.round(SCREEN_H * 0.72);
+
+  const dragY = useSharedValue(0);
+  const pan = Gesture.Pan()
+    .onUpdate((e) => { dragY.value = Math.max(0, e.translationY); })
+    .onEnd((e) => {
+      if (e.translationY > 90) runOnJS(minimize)();
+      dragY.value = withSpring(0, { damping: 20, stiffness: 220 });
+    });
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: dragY.value }] }));
+
+  return (
+    <Animated.View
+      entering={SlideInDown.duration(240)}
+      exiting={SlideOutDown.duration(180)}
+      style={[{
+        position: 'absolute', left: 0, right: 0, bottom: 0, height: panelHeight,
+        backgroundColor: colors.bg,
+        borderTopLeftRadius: 24, borderTopRightRadius: 24,
+        borderWidth: 1, borderColor: colors.glassBorder, borderBottomWidth: 0,
+        shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 16,
+        overflow: 'hidden',
+      }, sheetStyle]}
+    >
+      {/* Header — drag the grip to minimize; switch apps / close on the right. */}
+      <GestureDetector gesture={pan}>
+        <View style={{ paddingTop: 8, paddingHorizontal: 14, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
+          <View style={{ alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: colors.textMuted, opacity: 0.5, marginBottom: 8 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {meta ? <meta.Icon color={colors.accent} size={18} weight="fill" /> : <Sparkle color={colors.accent} size={18} weight="fill" />}
+            <Text style={{ flex: 1, color: colors.text, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>
+              {meta ? meta.name : 'Mini apps'}
+            </Text>
+            {meta ? (
+              <IconButton icon={GridFour} label="Switch app" onPress={openPicker} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
+            ) : null}
+            <IconButton icon={ArrowsInSimple} label="Minimize" onPress={minimize} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
+            <IconButton icon={X} label="Close" onPress={close} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
+          </View>
+        </View>
+      </GestureDetector>
+
+      {/* Body — the picker grid, or the embedded mini-app. */}
+      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
+        {meta ? (
+          <Suspense fallback={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.accent} /></View>}>
+            <meta.Component />
+          </Suspense>
+        ) : (
+          <Picker onPick={openApp} />
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
+function Picker({ onPick }: { onPick: (id: string) => void }) {
+  const { colors } = useTheme();
+  return (
+    <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 14, textTransform: 'uppercase' }}>
+        Pick a tool to float
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+        {FLOATING_APPS.map(app => (
+          <Pressable
+            key={app.id}
+            onPress={() => onPick(app.id)}
+            accessibilityRole="button"
+            accessibilityLabel={app.name}
+            style={({ pressed }) => ({
+              width: '30%', alignItems: 'center', gap: 8, paddingVertical: 14, borderRadius: 16,
+              backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.glassBorder,
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent + '1A' }}>
+              <app.Icon color={colors.accent} size={22} weight="fill" />
+            </View>
+            <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }} numberOfLines={1}>{app.name}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
