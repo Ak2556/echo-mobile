@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { safeBack } from '../lib/safeBack';
 import Animated, { FadeIn, FadeInUp, SlideInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Check, LockSimple, Sparkle, Lightning, Clock } from 'phosphor-react-native';
+import { ArrowLeft, Check, LockSimple, Sparkle, Lightning, Clock, Flame } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
@@ -19,6 +19,7 @@ import {
   submitDailyAnswer,
   fetchDailyAnswers,
   fetchDivergentDailyAnswers,
+  fetchDailyAnswerStreak,
   type DailyQuestion,
   type DailyAnswerWithAuthor,
   type DivergentDailyAnswer,
@@ -52,6 +53,7 @@ function DailyQuestionScreenInner() {
   const [divergent, setDivergent] = useState<DivergentDailyAnswer[]>([]);
   const [answersLoading, setAnswersLoading] = useState(false);
   const [view, setView] = useState<'recent' | 'divergent'>('recent');
+  const [streak, setStreak] = useState(0);
   const mounted = useRef(true);
 
   useEffect(() => { return () => { mounted.current = false; }; }, []);
@@ -71,6 +73,7 @@ function DailyQuestionScreenInner() {
             setMyAnswer(prior);
             setDraft(prior);
           }
+          fetchDailyAnswerStreak().then((s) => { if (mounted.current) setStreak(s); }).catch(() => {});
         }
       } finally {
         if (mounted.current) setLoading(false);
@@ -117,8 +120,12 @@ function DailyQuestionScreenInner() {
     try {
       await submitDailyAnswer(question.id, draft.trim());
       track('daily_answer_submitted', { question_id: question.id, is_update: !!myAnswer, length: draft.trim().length });
+      const firstAnswerToday = !myAnswer;
       setMyAnswer(draft.trim());
       showToast('Your answer is in.', 'Saved');
+      if (firstAnswerToday) {
+        fetchDailyAnswerStreak().then((s) => { if (mounted.current) setStreak(s); }).catch(() => {});
+      }
     } catch (e) {
       Alert.alert('Could not submit', (e as Error).message);
     } finally {
@@ -175,9 +182,19 @@ function DailyQuestionScreenInner() {
               end={{ x: 1, y: 1 }}
               style={{ padding: 20 }}
             >
-              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1.2, marginBottom: 10, fontFamily: 'Inter_600SemiBold' }}>
-                TODAY · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1.2, fontFamily: 'Inter_600SemiBold' }}>
+                  TODAY · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                </Text>
+                {streak > 0 && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
+                    <Flame color="#fff" size={13} weight="fill" />
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
+                      {streak} day{streak === 1 ? '' : 's'}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <Text style={{ color: '#fff', fontSize: 24, lineHeight: 32, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
                 {question.question}
               </Text>
