@@ -266,8 +266,8 @@ export default function CameraApp() {
         {/* Center icon */}
         <View style={{ alignItems: 'center', gap: 16 }}>
           {mode === 'photo'
-            ? <Camera color={ACCENT} size={72} weight="thin" />
-            : <VideoCamera color={ACCENT} size={72} weight="thin" />}
+            ? <Camera color={ACCENT} size={72} weight="duotone" />
+            : <VideoCamera color={ACCENT} size={72} weight="duotone" />}
           <Text style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 40 }}>
             {mode === 'photo' ? 'Tap the capture button to\ntake a photo' : 'Tap the capture button to\nstart recording'}
           </Text>

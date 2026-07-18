@@ -665,7 +665,7 @@ export default function FitnessApp() {
           {totals.meals.length === 0 && (
             <MiniEmptyState
               accent={TEAL}
-              icon={<ForkKnife color={colors.textMuted} size={44} weight="thin" />}
+              icon={<ForkKnife color={colors.textMuted} size={44} weight="duotone" />}
               title="Nothing logged today"
               subtitle="Log the first meal to see calories, protein, and daily direction."
               actionLabel="Log your first meal"
@@ -788,7 +788,7 @@ export default function FitnessApp() {
           {doc.workouts.length === 0 && (
             <MiniEmptyState
               accent={TEAL}
-              icon={<Barbell color={colors.textMuted} size={44} weight="thin" />}
+              icon={<Barbell color={colors.textMuted} size={44} weight="duotone" />}
               title="No workouts logged"
               subtitle="Log a session to track volume, streaks, PRs, and consistency."
               actionLabel="Log your first workout"

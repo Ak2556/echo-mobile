@@ -568,7 +568,7 @@ export default function HabitsApp() {
       {active.length === 0 && archived.length === 0 && (
         <MiniEmptyState
           accent={accent}
-          icon={<Fire color={colors.textMuted} size={48} weight="thin" />}
+          icon={<Fire color={colors.textMuted} size={48} weight="duotone" />}
           title="No habits yet"
           subtitle="Start with one small behavior you can repeat and prove."
           actionLabel="Add your first habit"

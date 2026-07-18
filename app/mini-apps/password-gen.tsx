@@ -251,7 +251,7 @@ export default function PasswordGenScreen() {
           </>
         ) : (
           <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-            <LockKey color={colors.textMuted} size={32} weight="thin" />
+            <LockKey color={colors.textMuted} size={32} weight="duotone" />
             <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8 }}>Tap Generate to create a secret</Text>
           </View>
         )}

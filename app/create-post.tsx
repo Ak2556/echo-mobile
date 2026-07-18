@@ -786,7 +786,7 @@ export default function CreatePostScreen() {
                 </View>
               ) : (
                 <View style={[s.surface, { height: 140, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
-                  <ImageIcon color={colors.border} size={40} weight="thin" />
+                  <ImageIcon color={colors.border} size={40} weight="duotone" />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>No photos selected</Text>
                 </View>
               )}
@@ -843,7 +843,7 @@ export default function CreatePostScreen() {
                 </View>
               ) : (
                 <View style={[s.surface, { height: 160, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
-                  <VideoCamera color={colors.border} size={44} weight="thin" />
+                  <VideoCamera color={colors.border} size={44} weight="duotone" />
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>No video selected</Text>
                 </View>
               )}

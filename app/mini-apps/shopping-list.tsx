@@ -154,7 +154,7 @@ export default function ShoppingListScreen() {
         {visible.length === 0 && (
           <MiniEmptyState
             accent={accent}
-            icon={<ShoppingCart color={colors.textMuted} size={40} weight="thin" />}
+            icon={<ShoppingCart color={colors.textMuted} size={40} weight="duotone" />}
             title="No items"
             subtitle="Add the next essentials before the next store run."
           />

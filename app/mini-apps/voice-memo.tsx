@@ -306,7 +306,7 @@ export default function VoiceMemoApp() {
       {memos.length === 0 ? (
         <MiniEmptyState
           accent={colors.accent}
-          icon={<MicrophoneStage color={colors.textMuted} size={48} weight="thin" />}
+          icon={<MicrophoneStage color={colors.textMuted} size={48} weight="duotone" />}
           title="No recordings yet"
           subtitle="Record the first thought, meeting, practice run, or proof worth keeping."
         />
