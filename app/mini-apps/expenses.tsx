@@ -511,7 +511,7 @@ export default function ExpensesApp() {
       {filtered.length === 0 && (
         <MiniEmptyState
           accent={accent}
-          icon={<Wallet color={colors.textMuted} size={48} weight="thin" />}
+          icon={<Wallet color={colors.textMuted} size={48} weight="duotone" />}
           title={searching ? 'No matches' : `Nothing in ${monthLabel(month)}`}
           subtitle={searching ? 'Try a different search or category.' : 'Add the first money move to see this month clearly.'}
         />

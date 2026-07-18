@@ -765,7 +765,7 @@ export default function LearnScreen() {
         </>
       ) : !showSetup ? (
         <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 18, alignItems: 'center' }}>
-          <GraduationCap color={ACCENT} size={42} weight="thin" />
+          <GraduationCap color={ACCENT} size={42} weight="duotone" />
           <Text style={[font.display, { color: colors.text, fontSize: 24, marginTop: 12 }]}>No learning path yet</Text>
           <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 19, marginTop: 6 }]}>
             Create one path for a subject, skill, exam, class, or coaching target.

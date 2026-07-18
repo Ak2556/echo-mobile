@@ -430,7 +430,7 @@ export default function AppsScreen() {
             )}
             {toolMatches.length === 0 && results.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 40, gap: 8 }}>
-                <MagnifyingGlass color={colors.glassBorder} size={34} weight="thin" />
+                <MagnifyingGlass color={colors.glassBorder} size={34} weight="duotone" />
                 <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>No matches</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>Try a tool name, or a note, habit, or expense term.</Text>
               </View>
@@ -535,7 +535,7 @@ export default function AppsScreen() {
             </View>
 
             <View style={{ alignItems: 'center', paddingVertical: 12, gap: 6 }}>
-              <Pulse color={colors.textMuted} size={22} weight="thin" />
+              <Pulse color={colors.textMuted} size={22} weight="bold" />
               <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '500' }}>Private · Ready</Text>
             </View>
           </>

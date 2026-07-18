@@ -177,7 +177,7 @@ export default function TasksScreen() {
         {visible.length === 0 && (
           <MiniEmptyState
             accent={accent}
-            icon={<CheckCircle color={colors.textMuted} size={40} weight="thin" />}
+            icon={<CheckCircle color={colors.textMuted} size={40} weight="duotone" />}
             title="Nothing here"
             subtitle="Add the next task that actually moves something forward."
           />

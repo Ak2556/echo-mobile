@@ -799,7 +799,7 @@ export default function NotesApp() {
       {filtered.length === 0 ? (
         <MiniEmptyState
           accent={accent}
-          icon={<NotePencil color={colors.textMuted} size={44} weight="thin" />}
+          icon={<NotePencil color={colors.textMuted} size={44} weight="duotone" />}
           title={search ? 'No matching notes' : view === 'archive' ? 'Archive is empty' : 'No notes yet'}
           subtitle={search ? 'Try another word, folder, or tag.' : 'Start with a template or capture a blank note.'}
           actionLabel={search ? undefined : 'Create note'}
