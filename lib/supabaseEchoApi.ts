@@ -2171,12 +2171,20 @@ export async function triggerEmbedDailyAnswer(answerId: string): Promise<void> {
 
 /** Fetch all answers for a given daily question, with author profile snippets.
  *  Reveal-after-answer is enforced client-side — callers should pass the viewer's
- *  own answer state and only render this list when the viewer has answered. */
-export async function fetchDailyAnswers(questionId: string, limit = 100): Promise<DailyAnswerWithAuthor[]> {
-  const { data: rows, error } = await supabase
+ *  own answer state and only render this list when the viewer has answered.
+ *  `onlyUserIds`, when given, scopes the feed to those authors (e.g. Following). */
+export async function fetchDailyAnswers(
+  questionId: string,
+  limit = 100,
+  onlyUserIds?: string[],
+): Promise<DailyAnswerWithAuthor[]> {
+  if (onlyUserIds && onlyUserIds.length === 0) return [];
+  let query = supabase
     .from('daily_answers')
     .select('id, question_id, user_id, answer, echo_id, created_at')
-    .eq('question_id', questionId)
+    .eq('question_id', questionId);
+  if (onlyUserIds) query = query.in('user_id', onlyUserIds);
+  const { data: rows, error } = await query
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
@@ -2239,6 +2247,20 @@ export async function fetchDailyAnswers(questionId: string, limit = 100): Promis
       myReactions: [...(mineByAnswer.get(r.id) ?? [])],
     };
   });
+}
+
+/** Fetch daily answers only from people the viewer follows. Returns [] when
+ *  signed out or following no one. */
+export async function fetchFollowingDailyAnswers(questionId: string, limit = 100): Promise<DailyAnswerWithAuthor[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+  const { data, error } = await supabase
+    .from('follows')
+    .select('following_id')
+    .eq('follower_id', uid);
+  if (error) return [];
+  const ids = (data as Array<{ following_id: string }> ?? []).map(r => r.following_id);
+  return fetchDailyAnswers(questionId, limit, ids);
 }
 
 /**
