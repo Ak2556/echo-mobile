@@ -24,6 +24,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
 import { signOut } from '../lib/auth';
 import { deleteRemoteAIConversations, updateRemoteProfile, fetchCurrentUserProfile } from '../lib/supabaseEchoApi';
+import { syncNotificationProfile } from '../lib/personalNudges';
 import { clearPushToken, registerForPush } from '../lib/push';
 import { useResponsiveLayout } from '../lib/responsive';
 import { isSupabaseRemote } from '../lib/remoteConfig';
@@ -702,6 +703,8 @@ export default function SettingsScreen() {
     if (!isSupabaseRemote()) return;
     try {
       await updateRemoteProfile({ personalized_notifications: enabled });
+      // Upload the derived profile now, or clear it immediately on opt-out.
+      void syncNotificationProfile(enabled);
     } catch (e) {
       s.setPersonalizedNotifications(prev);
       Alert.alert('Could not update setting', (e as Error).message);

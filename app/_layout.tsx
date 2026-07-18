@@ -20,6 +20,7 @@ import { useCommandPalette } from '../lib/commandPalette';
 import { AuthListenerProvider } from '../lib/auth';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
+import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
 import '../global.css';
 
 LogBox.ignoreLogs(['[expo-notifications] Error reading persisted server registration info']);
@@ -131,8 +132,10 @@ function RootLayout() {
       if (kind === 'personal_nudge') {
         // The tap is our on-device "opened" signal — it resets nudge back-off.
         noteNudgeOpened();
-        track('notification_tapped', { kind, surface: String(data.surface ?? '') });
-        const surface = String(data.surface ?? '');
+        // Local nudges carry `surface`; server (personalized-fanout) nudges
+        // carry it in `target_kind`.
+        const surface = String(data.surface ?? data.target_kind ?? '');
+        track('notification_tapped', { kind, surface });
         if (surface === 'daily') router.push('/daily-question');
         else if (surface === 'dm') router.push('/(tabs)/chat');
         else if (surface === 'feed') router.push('/(tabs)/home');
@@ -186,6 +189,7 @@ function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthListenerProvider />
         <UniversalLinkRouter />
+        <PomodoroRuntimeHost />
         <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="auth" options={{ animation: 'fade' }} />
