@@ -14,6 +14,7 @@ import {
   BellSlash, Rectangle, FileText,
   Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
   Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
+  Sparkle,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -695,6 +696,18 @@ export default function SettingsScreen() {
     }
   };
 
+  const handlePersonalizedNotifications = async (enabled: boolean) => {
+    const prev = s.personalizedNotifications;
+    s.setPersonalizedNotifications(enabled);
+    if (!isSupabaseRemote()) return;
+    try {
+      await updateRemoteProfile({ personalized_notifications: enabled });
+    } catch (e) {
+      s.setPersonalizedNotifications(prev);
+      Alert.alert('Could not update setting', (e as Error).message);
+    }
+  };
+
   const handleDmPrivacy = async (v: 'everyone' | 'followers' | 'nobody') => {
     const prev = s.dmPrivacy;
     s.setDmPrivacy(v);
@@ -879,6 +892,8 @@ export default function SettingsScreen() {
             />
             {divider}
             <SettingsRow theme={theme} icon={ChatCircle} label="Read Receipts" subtitle="Show when you've read messages" right={SwitchEl(s.readReceipts, handleReadReceipts)} />
+            {divider}
+            <SettingsRow theme={theme} icon={Sparkle} iconColor={colors.accent} label="Personalized Notifications" subtitle="Let Echo learn your best times and interests to time reminders. Off by default; no profiling until you turn it on." right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
             {divider}
             <SettingsRow theme={theme} icon={Envelope} label="Who Can Message You" subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
