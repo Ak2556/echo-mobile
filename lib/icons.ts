@@ -5,9 +5,8 @@
  * (bold/fill/regular/thin/duotone) and ad-hoc sizes from 11→48px with no
  * system. This module is the single source of truth for the app-wide sweep.
  *
- * Weight roles — editorial restraint, so a light resting stroke, not bold
- * everywhere:
- *   • resting  → `regular`  most standalone / inline UI icons
+ * Weight roles — confident, high-contrast (the app already leans bold):
+ *   • resting  → `bold`     most standalone / inline UI icons
  *   • active   → `fill`     selected / active / accent-emphasis glyphs
  *   • hero     → `duotone`  large decorative icons (empty states, features)
  *  (`thin` is retired — too fragile at UI sizes.)
@@ -34,7 +33,7 @@ export const ICON_SIZE = {
 export type IconSizeToken = keyof typeof ICON_SIZE;
 
 export const ICON_WEIGHT = {
-  resting: 'regular',
+  resting: 'bold',
   active: 'fill',
   hero: 'duotone',
 } as const satisfies Record<string, IconWeight>;
