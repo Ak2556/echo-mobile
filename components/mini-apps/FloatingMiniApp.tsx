@@ -10,6 +10,7 @@ import { useTheme } from '../../lib/theme';
 import { useAuthStore } from '../../lib/auth/store';
 import { useFloatingApp } from '../../store/floatingApp';
 import { FLOATING_APPS, floatingAppMeta } from '../../lib/miniAppRegistry';
+import { MiniAppEmbedContext } from '../../lib/miniAppEmbed';
 import { IconButton } from '../ui/IconButton';
 
 const BUBBLE = 54;
@@ -135,9 +136,11 @@ function Panel() {
       {/* Body — the picker grid, or the embedded mini-app. */}
       <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         {meta ? (
-          <Suspense fallback={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.accent} /></View>}>
-            <meta.Component />
-          </Suspense>
+          <MiniAppEmbedContext.Provider value={true}>
+            <Suspense fallback={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.accent} /></View>}>
+              <meta.Component />
+            </Suspense>
+          </MiniAppEmbedContext.Provider>
         ) : (
           <Picker onPick={openApp} />
         )}
