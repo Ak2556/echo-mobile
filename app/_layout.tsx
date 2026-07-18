@@ -21,6 +21,7 @@ import { AuthListenerProvider } from '../lib/auth';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
+import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
 import '../global.css';
 
 LogBox.ignoreLogs(['[expo-notifications] Error reading persisted server registration info']);
@@ -239,6 +240,7 @@ function RootLayout() {
           <Stack.Screen name="listing/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="appeal" options={{ presentation: 'card' }} />
         </Stack>
+        <FloatingMiniApp />
         <ToastProvider />
         <ConsentBanner />
         {commandPaletteOpen ? <CommandPalette /> : null}
