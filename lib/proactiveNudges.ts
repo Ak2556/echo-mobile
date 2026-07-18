@@ -25,6 +25,15 @@ async function cancelExisting(): Promise<void> {
 }
 
 /**
+ * One-time migration: cancel legacy fixed-slot check-ins now that personalized
+ * nudges (lib/personalNudges) own reach-back scheduling. Idempotent — once the
+ * stored ids are cleared, subsequent calls are no-ops.
+ */
+export async function cancelLegacyProactiveNudges(): Promise<void> {
+  await cancelExisting();
+}
+
+/**
  * Idempotently (re)schedule the daily Echo check-ins. Safe to call on every
  * app open — it cancels the previous set first. Requests notification
  * permission once; if denied, quietly does nothing. When a live context is

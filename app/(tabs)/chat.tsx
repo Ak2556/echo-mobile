@@ -20,7 +20,7 @@ import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { generateSessionTitle } from '../../lib/aiTitle';
 import { gatherProactiveContext, pickProactiveOpener, expandChip, type ProactiveOpener } from '../../lib/proactiveAI';
-import { syncProactiveNudges } from '../../lib/proactiveNudges';
+import { syncPersonalNudges, recordAppOpen } from '../../lib/personalNudges';
 import { markCheckinSeen } from '../../lib/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -660,6 +660,7 @@ export default function ChatScreen() {
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
+      recordAppOpen('chat');
       const name = (displayName || username || '').trim().split(/\s+/)[0] ?? '';
       // Most recent prior conversation that actually has history — for continuity.
       const { sessions: allSessions, currentSessionId: curId } = useAppStore.getState();
@@ -673,8 +674,9 @@ export default function ChatScreen() {
         .then(ctx => {
           if (cancelled) return;
           setOpener(pickProactiveOpener(ctx));
-          // Reach-back nudges carry the live context (e.g. the streak name).
-          void syncProactiveNudges(proactiveAiEnabled, ctx);
+          // Personalized reach-back nudges: learned timing + interest, with the
+          // live streak-at-risk signal leading when the chain is on the line.
+          void syncPersonalNudges(proactiveAiEnabled, { streakAtRisk: ctx.streakAtRisk });
         })
         .catch(() => {});
       return () => { cancelled = true; };

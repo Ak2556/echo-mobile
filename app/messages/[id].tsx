@@ -38,6 +38,7 @@ import { showToast } from '../../components/ui/Toast';
 import { streamEchoAI } from '../../lib/api';
 import { EMOJI_CATEGORIES, searchEmoji } from '../../lib/emojiData';
 import { persistGet, persistSet } from '../../store/persist';
+import { recordAppOpen } from '../../lib/personalNudges';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -1752,6 +1753,7 @@ export default function DMScreen() {
     inputRef.current?.focus();
   };
 
+  useEffect(() => { recordAppOpen('dm'); }, []);
   useEffect(() => { if (id) setWallpaperId(persistGet<string>('chat:wallpaper:' + id, 'default')); }, [id]);
   const applyWallpaper = (wid: string) => { setWallpaperId(wid); if (id) persistSet('chat:wallpaper:' + id, wid); };
   const wallpaperTint = WALLPAPERS.find(w => w.id === wallpaperId)?.tint ?? null;

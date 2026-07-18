@@ -26,6 +26,7 @@ import {
 } from '../lib/supabaseEchoApi';
 import { track } from '../lib/analytics';
 import { captureException } from '../lib/monitoring';
+import { recordAppOpen } from '../lib/personalNudges';
 
 /**
  * Daily Question — Echo's twist on BeReal's daily ritual.
@@ -67,6 +68,7 @@ function DailyQuestionScreenInner() {
         setQuestion(q);
         if (q) {
           track('daily_question_viewed', { question_id: q.id });
+          recordAppOpen('daily');
           const prior = await fetchOwnDailyAnswer(q.id);
           if (!mounted.current) return;
           if (prior) {

@@ -35,6 +35,7 @@ import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { feedbackHaptic } from '../../lib/accentDesign';
 import { pingDailyActivity } from '../../lib/retention';
+import { recordAppOpen } from '../../lib/personalNudges';
 import { features } from '../../lib/featureFlags';
 import { getTopPerspectiveSummary } from '../../lib/perspectives';
 import { track } from '../../lib/analytics';
@@ -228,7 +229,7 @@ export default function DiscoverScreen() {
   const { data: evolvingNow = [] } = useTrendingEvolutions(8);
   const targetCategory = useMemo(() => getTargetCategory(targetCategoryId), [targetCategoryId]);
 
-  useEffect(() => { pingDailyActivity(); }, []);
+  useEffect(() => { pingDailyActivity(); recordAppOpen('feed'); }, []);
 
   const scrollY = useSharedValue(0);
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
