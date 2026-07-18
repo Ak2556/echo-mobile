@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { Avatar } from '../../components/ui/Avatar';
+import { IconButton } from '../../components/ui/IconButton';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { fetchRemoteEchoById, setPinnedEcho } from '../../lib/supabaseEchoApi';
 import { showToast } from '../../components/ui/Toast';
@@ -333,12 +334,25 @@ export default function ThreadDetailScreen() {
               <ChatCircle color={colors.textSecondary} size={20} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{item.commentCount ?? 0}</Text>
             </Pressable>
-            <Pressable onPress={toggleBm} style={{ padding: 8, borderRadius: radius.full, backgroundColor: colors.surface }}>
-              <BookmarkSimple color={bookmarked ? colors.accent : colors.textSecondary} size={20} weight="fill" />
-            </Pressable>
-            <Pressable onPress={() => router.push({ pathname: '/share', params: { prompt: item.prompt, response: item.response } })} style={{ padding: 8, borderRadius: radius.full, backgroundColor: colors.surface }}>
-              <ShareNetwork color={colors.textSecondary} size={22} />
-            </Pressable>
+            <IconButton
+              icon={BookmarkSimple}
+              label={bookmarked ? 'Remove bookmark' : 'Bookmark'}
+              onPress={toggleBm}
+              size="md"
+              role="active"
+              color={bookmarked ? colors.accent : colors.textSecondary}
+              variant="surface"
+              hitSize={38}
+            />
+            <IconButton
+              icon={ShareNetwork}
+              label="Share"
+              onPress={() => router.push({ pathname: '/share', params: { prompt: item.prompt, response: item.response } })}
+              size="md"
+              color={colors.textSecondary}
+              variant="surface"
+              hitSize={38}
+            />
           </View>
         </View>
 
