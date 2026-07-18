@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle, Sparkle } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { miniAppByRoute, type MiniAppCatalogItem } from '../../lib/miniAppCatalog';
+import { useMiniAppEmbedded } from '../../lib/miniAppEmbed';
 import { MiniAppIcon } from './MiniAppIcon';
 
 interface MiniAppShellProps {
@@ -39,12 +40,14 @@ export function MiniAppShell({
   const router = useRouter();
   const pathname = usePathname();
   const layout = useResponsiveLayout();
+  const embedded = useMiniAppEmbedded();
   const appMeta = miniAppByRoute(pathname);
   const accent = appMeta?.color ?? colors.accent;
 
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
-  const HEADER_H = insets.top + (appMeta ? 78 : 62);
+  // Embedded in the floating panel: the panel owns the header + top inset.
+  const HEADER_H = embedded ? 0 : insets.top + (appMeta ? 78 : 62);
   const goBack = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/apps');
@@ -86,7 +89,7 @@ export function MiniAppShell({
           keyboardShouldPersistTaps="handled"
         >
           <View style={contentStyle}>
-            {appMeta ? <MiniWorkspaceBrief app={appMeta} /> : null}
+            {appMeta && !embedded ? <MiniWorkspaceBrief app={appMeta} /> : null}
             {children}
           </View>
         </ScrollView>
@@ -96,7 +99,8 @@ export function MiniAppShell({
         </View>
       )}
 
-      {/* Glass header */}
+      {/* Glass header — the floating panel supplies its own, so skip it there. */}
+      {!embedded && (
       <View
         style={{
           position: 'absolute',
@@ -217,6 +221,7 @@ export function MiniAppShell({
           }}
         />
       </View>
+      )}
     </View>
   );
 }
