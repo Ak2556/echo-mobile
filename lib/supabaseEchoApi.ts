@@ -2529,7 +2529,7 @@ export interface RemoteDirectMessage {
 }
 
 function dmPreviewText(kind: string | null | undefined, text: string | null | undefined): string | null {
-  if (kind === 'image') return 'Photo';
+  if (kind === 'image') return text?.trim() ? `📷 ${text.trim()}` : 'Photo';
   if (kind === 'voice') return 'Voice message';
   if (kind === 'echo') return 'Shared Echo';
   if (kind === 'link') {
@@ -2832,9 +2832,10 @@ export async function sendDMImage(
   uri: string,
   mimeType: string,
   replyToId?: string,
+  caption?: string,
 ): Promise<{ conversationId: string }> {
   const conversationId = await getOrCreateRemoteConversation(recipientId);
-  return sendDMImageToConversation(conversationId, uri, mimeType, replyToId);
+  return sendDMImageToConversation(conversationId, uri, mimeType, replyToId, caption);
 }
 
 export async function sendDMImageToConversation(
@@ -2842,6 +2843,7 @@ export async function sendDMImageToConversation(
   uri: string,
   mimeType: string,
   replyToId?: string,
+  caption?: string,
 ): Promise<{ conversationId: string }> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
@@ -2857,9 +2859,11 @@ export async function sendDMImageToConversation(
     .upload(path, bytes, { contentType, cacheControl: '31536000' });
   if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
 
+  const trimmedCaption = caption?.trim();
   return insertRemoteDMInConversation(conversationId, {
     kind: 'image',
     mediaUrl: path,
+    text: trimmedCaption ? trimmedCaption : null,
     replyToId,
   });
 }

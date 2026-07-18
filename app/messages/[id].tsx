@@ -14,7 +14,7 @@ import {
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
-  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle,
+  Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -321,7 +321,7 @@ function ReplyCard({
   const { colors, radius } = useTheme();
   const preview = isDeleted
     ? 'Deleted message'
-    : kind === 'image' ? '📷 Photo'
+    : kind === 'image' ? (content?.trim() ? `📷 ${content.trim()}` : '📷 Photo')
     : kind === 'voice' ? '🎙️ Voice message'
     : kind === 'link' ? '🔗 Link'
     : kind === 'contact' ? '👤 Contact'
@@ -449,7 +449,7 @@ function PinnedMessageBanner({
 }: { content: string | null; kind: string; onUnpin: () => void }) {
   const { colors } = useTheme();
   const label = kind === 'image'
-    ? '📷 Photo'
+    ? (content?.trim() ? `📷 ${content.trim()}` : '📷 Photo')
     : kind === 'voice'
       ? '🎙️ Voice'
       : kind === 'link'
@@ -497,8 +497,23 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
   const { colors } = useTheme();
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
+  const [speed, setSpeed] = useState(1);
   const playerRef = useRef<AudioPlayer | null>(null);
   const subRef = useRef<{ remove: () => void } | null>(null);
+
+  // A stable per-message waveform derived from the audio URL.
+  const bars = useMemo(() => {
+    let seed = 0;
+    for (let i = 0; i < url.length; i++) seed = (seed * 31 + url.charCodeAt(i)) & 0x7fffffff;
+    const rand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed % 1000) / 1000; };
+    return Array.from({ length: 26 }).map(() => 0.3 + rand() * 0.7);
+  }, [url]);
+
+  const cycleSpeed = () => {
+    const next = speed === 1 ? 1.5 : speed === 1.5 ? 2 : 1;
+    setSpeed(next);
+    try { playerRef.current?.setPlaybackRate(next); } catch { /* best effort */ }
+  };
 
   useEffect(() => () => {
     subRef.current?.remove();
@@ -521,6 +536,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
         if (typeof status.currentTime === 'number') setPosition(status.currentTime);
         if (status.didJustFinish) stop();
       });
+      try { player.setPlaybackRate(speed); } catch { /* best effort */ }
       player.play();
       playerRef.current = player;
       setPlaying(true);
@@ -559,14 +575,23 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
             : <Play color={isMe ? '#fff' : colors.accent} size={15} weight="fill" />}
         </Pressable>
         <View style={{ flex: 1, gap: 5 }}>
-          <View style={{ height: 3.5, borderRadius: 2, backgroundColor: track, overflow: 'hidden' }}>
-            <View style={{ height: '100%', width: `${Math.round(progress * 100)}%`, backgroundColor: fill, borderRadius: 2 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', height: 22, gap: 2 }}>
+            {bars.map((h, i) => {
+              const played = (i + 0.5) / bars.length <= progress;
+              return <View key={i} style={{ width: 2.5, borderRadius: 2, height: 5 + h * 16, backgroundColor: played ? fill : track }} />;
+            })}
           </View>
           <Text style={{ color: isMe ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontSize: 11, fontVariant: ['tabular-nums'] }}>
             {playing ? fmtVoiceTime(position) : fmtVoiceTime(durationSec)}
           </Text>
         </View>
-        <Microphone color={isMe ? 'rgba(255,255,255,0.7)' : colors.textMuted} size={14} weight="fill" />
+        {playing || speed !== 1 ? (
+          <Pressable onPress={cycleSpeed} hitSlop={6} accessibilityLabel="Playback speed" style={{ paddingHorizontal: 6, paddingVertical: 3, borderRadius: 9, backgroundColor: isMe ? 'rgba(255,255,255,0.22)' : colors.accent + '22' }}>
+            <Text style={{ color: isMe ? '#fff' : colors.accent, fontSize: 11, fontWeight: '800' }}>{speed}×</Text>
+          </Pressable>
+        ) : (
+          <Microphone color={isMe ? 'rgba(255,255,255,0.7)' : colors.textMuted} size={14} weight="fill" />
+        )}
       </View>
     </Pressable>
   );
@@ -789,13 +814,18 @@ function DMBubble({
     }
 
     if (message.kind === 'image' && message.mediaUrl) {
+      const caption = message.content?.trim();
       return (
         <Pressable
           onPress={() => onImagePress?.(message.mediaUrl!)}
           onLongPress={onLongPress}
           delayLongPress={350}
         >
-          <View style={{ borderRadius: radius.card, overflow: 'hidden' }}>
+          <View style={{
+            borderRadius: radius.card,
+            overflow: 'hidden',
+            backgroundColor: caption ? (isMe ? bubbleBg : colors.surfaceHover) : 'transparent',
+          }}>
             {message.replyToId && (
               <ReplyCard
                 content={message.replyToContent}
@@ -806,10 +836,21 @@ function DMBubble({
             )}
             <Image
               source={{ uri: message.mediaUrl }}
-              style={{ width: 220, height: 165, borderRadius: radius.card }}
+              style={{
+                width: 220,
+                height: 165,
+                borderRadius: radius.card,
+                borderBottomLeftRadius: caption ? 0 : radius.card,
+                borderBottomRightRadius: caption ? 0 : radius.card,
+              }}
               contentFit="cover"
               transition={200}
             />
+            {caption ? (
+              <View style={{ width: 220, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 10 }}>
+                <FormattedText content={caption} color={textColor} size={textSize} />
+              </View>
+            ) : null}
           </View>
         </Pressable>
       );
@@ -993,11 +1034,13 @@ function DMBubble({
           {message.editedAt && !isDeleted && (
             <Text style={{ color: colors.textMuted, fontSize: 10, fontStyle: 'italic' }}>Edited</Text>
           )}
-          {isMe && message.id.startsWith('pending-') && (
-            <Text style={{ color: colors.textMuted, fontSize: 10 }}>Sending…</Text>
-          )}
-          {isMe && showReadReceipt && message.isRead && !isDeleted && (
-            <Text style={{ color: colors.accent, fontSize: 10 }}>Read</Text>
+          {/* Delivery ticks: sending → delivered (grey ✓✓) → read (accent ✓✓). */}
+          {isMe && !isDeleted && (
+            message.id.startsWith('pending-')
+              ? <Check color={colors.textMuted} size={12} weight="bold" />
+              : (showReadReceipt && message.isRead)
+                ? <Checks color={colors.accent} size={13} weight="bold" />
+                : <Checks color={colors.textMuted} size={13} weight="regular" />
           )}
         </View>
       )}
@@ -1855,12 +1898,15 @@ export default function DMScreen() {
   const sendPickedImage = useCallback((asset: ImagePicker.ImagePickerAsset) => {
     setAttachmentMenuOpen(false);
     setImageUploading(true);
+    const caption = text.trim();
+    if (caption) setText('');
     try {
       if (remote) {
         sendImageDM.mutate({
           uri: asset.uri,
           mimeType: asset.mimeType ?? 'image/jpeg',
           replyToId: replyingTo?.id,
+          caption: caption || undefined,
         }, {
           onSettled: () => {
             setImageUploading(false);
@@ -1881,7 +1927,7 @@ export default function DMScreen() {
     } catch {
       setImageUploading(false);
     }
-  }, [sendImageDM, replyingTo, remote, id, sendLocalImage]);
+  }, [sendImageDM, replyingTo, remote, id, sendLocalImage, text]);
 
   const handlePickImage = useCallback(async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
