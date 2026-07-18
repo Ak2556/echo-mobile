@@ -294,15 +294,15 @@ export function useSendImageDM(
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ uri, mimeType, replyToId }: { uri: string; mimeType: string; replyToId?: string }) => {
+    mutationFn: ({ uri, mimeType, replyToId, caption }: { uri: string; mimeType: string; replyToId?: string; caption?: string }) => {
       if (isGroup) {
         if (!conversationId) throw new Error('No conversation');
-        return sendDMImageToConversation(conversationId, uri, mimeType, replyToId);
+        return sendDMImageToConversation(conversationId, uri, mimeType, replyToId, caption);
       }
       if (!recipientId) throw new Error('No recipient');
-      return sendDMImage(recipientId, uri, mimeType, replyToId);
+      return sendDMImage(recipientId, uri, mimeType, replyToId, caption);
     },
-    onMutate: async ({ uri }) => {
+    onMutate: async ({ uri, caption }) => {
       await qc.cancelQueries({ queryKey: ['messages', conversationId] });
       const snapshot = qc.getQueryData(['messages', conversationId]);
 
@@ -311,7 +311,7 @@ export function useSendImageDM(
         id: `pending-img-${Date.now()}`,
         conversationId: conversationId ?? '',
         senderId: uid ?? 'me',
-        content: null,
+        content: caption?.trim() ? caption.trim() : null,
         kind: 'image',
         createdAt: new Date().toISOString(),
         readAt: null,
