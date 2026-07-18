@@ -7,6 +7,7 @@ import {
   SupabaseProfileRow,
 } from './mapSupabaseEcho';
 import { captureException } from './monitoring';
+import { computeDayStreak } from './dailyStreak';
 
 // Escape PostgREST filter special characters before interpolating into .or() strings.
 // Prevents filter injection where a crafted query like "x%,id.neq.y" alters the filter shape.
@@ -2101,6 +2102,28 @@ export async function fetchOwnDailyAnswer(questionId: string): Promise<string | 
     .maybeSingle();
   if (error || !data) return null;
   return (data as { answer: string }).answer;
+}
+
+/**
+ * The viewer's consecutive-day Daily Question streak. Joins each of the
+ * viewer's answers to its question's `active_date` and counts the unbroken
+ * run ending today/yesterday. Returns 0 for signed-out or on error.
+ */
+export async function fetchDailyAnswerStreak(): Promise<number> {
+  const uid = await getSessionUserId();
+  if (!uid) return 0;
+  const { data, error } = await supabase
+    .from('daily_answers')
+    .select('question:daily_questions!inner(active_date)')
+    .eq('user_id', uid);
+  if (error || !data) return 0;
+  const keys = (data as Array<{ question: { active_date: string } | { active_date: string }[] | null }>)
+    .flatMap((r) => {
+      const q = r.question;
+      if (!q) return [] as string[];
+      return Array.isArray(q) ? q.map((x) => x.active_date) : [q.active_date];
+    });
+  return computeDayStreak(keys);
 }
 
 /** Submit (or replace) the viewer's answer to a daily question. */
