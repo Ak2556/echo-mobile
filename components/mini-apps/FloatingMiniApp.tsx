@@ -5,7 +5,7 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { Sparkle, X, ArrowsInSimple, GridFour } from 'phosphor-react-native';
+import { Sparkle, ArrowsInSimple, GridFour } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useAuthStore } from '../../lib/auth/store';
 import { useFloatingApp } from '../../store/floatingApp';
@@ -22,8 +22,12 @@ export function FloatingMiniApp() {
   if (!authed || mode === 'closed') return null;
   // box-none: this full-screen layer ignores touches except on its children,
   // so the app underneath stays scrollable "alongside" the floating tool.
+  // High zIndex/elevation keeps it above screen content (Toast sits at 9999).
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="box-none">
+    <View
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9998, elevation: 24 }}
+      pointerEvents="box-none"
+    >
       {mode === 'bubble' ? <Bubble /> : <Panel />}
     </View>
   );
@@ -83,7 +87,7 @@ function Bubble() {
 function Panel() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { appId, openApp, openPicker, minimize, close } = useFloatingApp();
+  const { appId, openApp, openPicker, minimize } = useFloatingApp();
   const meta = floatingAppMeta(appId);
 
   // Bottom sheet ~72% of the screen; the top stays touchable (box-none parent).
@@ -123,8 +127,7 @@ function Panel() {
             {meta ? (
               <IconButton icon={GridFour} label="Switch app" onPress={openPicker} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
             ) : null}
-            <IconButton icon={ArrowsInSimple} label="Minimize" onPress={minimize} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
-            <IconButton icon={X} label="Close" onPress={close} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
+            <IconButton icon={ArrowsInSimple} label="Minimize to bubble" onPress={minimize} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
           </View>
         </View>
       </GestureDetector>
