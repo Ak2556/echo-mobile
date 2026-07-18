@@ -150,7 +150,7 @@ export default function ModVerificationsScreen() {
         >
           {items.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: 60, gap: 10 }}>
-              <SealCheck color={colors.glassBorder} size={44} weight="thin" />
+              <SealCheck color={colors.glassBorder} size={44} weight="duotone" />
               <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.body }]}>No pending verifications</Text>
             </View>
           ) : items.map((item, i) => (
