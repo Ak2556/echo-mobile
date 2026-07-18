@@ -15,6 +15,7 @@ import {
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
   Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
+  ChatCircleText,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,6 +40,7 @@ import { streamEchoAI } from '../../lib/api';
 import { EMOJI_CATEGORIES, searchEmoji } from '../../lib/emojiData';
 import { persistGet, persistSet } from '../../store/persist';
 import { recordAppOpen } from '../../lib/personalNudges';
+import { IconButton } from '../../components/ui/IconButton';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -62,9 +64,8 @@ import {
   useForwardMessage,
   useRemoteConversations,
 } from '../../hooks/queries/useDMs';
-import { markMessagesRead, fetchGroupMembers, type GroupMember } from '../../lib/supabaseEchoApi';
+import { markMessagesRead, fetchGroupMembers, type GroupMember, type RemoteMessageReaction } from '../../lib/supabaseEchoApi';
 import { usePresenceTracking } from '../../lib/presence';
-import type { RemoteMessageReaction } from '../../lib/supabaseEchoApi';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
 
@@ -122,6 +123,7 @@ interface NormalizedMessage {
   contactUsername: string | null;
   contactDisplayName: string | null;
   contactAvatarColor: string | null;
+  contactAvatarUrl: string | null;
   replyToId: string | null;
   replyToContent: string | null;
   replyToSenderId: string | null;
@@ -290,8 +292,8 @@ function LinkShareCard({ url, title, subtitle }: { url: string; title?: string |
 }
 
 function ContactShareCard({
-  displayName, username, avatarColor,
-}: { displayName: string; username: string; avatarColor: string }) {
+  displayName, username, avatarColor, avatarUrl,
+}: { displayName: string; username: string; avatarColor: string; avatarUrl?: string | null }) {
   const { colors, radius } = useTheme();
   return (
     <View style={{
@@ -300,7 +302,7 @@ function ContactShareCard({
       backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
       marginTop: 4, minWidth: 220,
     }}>
-      <Avatar name={displayName} color={avatarColor} size={42} />
+      <Avatar name={displayName} color={avatarColor} url={avatarUrl} size={42} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }} numberOfLines={1}>
           {displayName}
@@ -750,6 +752,11 @@ function DMBubble({
   const textSize = ({ small: 14, medium: 16, large: 18 } as Record<string, number>)[fontSizeSetting] ?? 16;
   const isDeleted = !!message.deletedAt;
   const isFailed = message.id.startsWith('failed-');
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [message.mediaUrl]);
 
   // Swipe-to-reply: drag the bubble toward the center; past the threshold a
   // reply is armed and springs back. Own messages swipe left, others right.
@@ -814,8 +821,48 @@ function DMBubble({
       );
     }
 
-    if (message.kind === 'image' && message.mediaUrl) {
+    if (message.kind === 'image') {
       const caption = message.content?.trim();
+      if (!message.mediaUrl || imageFailed) {
+        return (
+          <Pressable onLongPress={onLongPress} delayLongPress={350}>
+            <View style={{
+              width: 220,
+              minHeight: 138,
+              borderRadius: radius.card,
+              padding: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isMe ? colors.accentMuted : colors.surfaceHover,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: isMe ? `${colors.accent}66` : colors.border,
+            }}>
+              {message.replyToId && (
+                <ReplyCard
+                  content={message.replyToContent}
+                  kind={message.replyToKind}
+                  isDeleted={message.replyToDeleted}
+                  isMe={isMe}
+                />
+              )}
+              <View style={{ width: 46, height: 46, borderRadius: 18, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                <Images color={colors.textMuted} size={23} weight="bold" />
+              </View>
+              <Text style={{ color: isMe ? colors.accent : colors.text, fontSize: 14, fontWeight: '900', textAlign: 'center' }}>
+                Image unavailable
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 17, textAlign: 'center', marginTop: 4 }}>
+                The preview could not be loaded.
+              </Text>
+              {caption ? (
+                <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18, textAlign: 'center', marginTop: 8 }} numberOfLines={2}>
+                  {caption}
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
+        );
+      }
       return (
         <Pressable
           onPress={() => onImagePress?.(message.mediaUrl!)}
@@ -837,6 +884,7 @@ function DMBubble({
             )}
             <Image
               source={{ uri: message.mediaUrl }}
+              onError={() => setImageFailed(true)}
               style={{
                 width: 220,
                 height: 165,
@@ -914,6 +962,7 @@ function DMBubble({
             displayName={message.contactDisplayName}
             username={message.contactUsername}
             avatarColor={message.contactAvatarColor ?? colors.accent}
+            avatarUrl={message.contactAvatarUrl}
           />
         </Pressable>
       );
@@ -1320,30 +1369,82 @@ function MessageActionSheet({
 
   const isDeleted = !!message.deletedAt;
   const isText = message.kind === 'text' && !isDeleted;
+  const isPending = message.id.startsWith('pending-') || message.id.startsWith('failed-');
+  const previewLabel = isDeleted
+    ? 'Deleted message'
+    : message.kind === 'image'
+      ? (message.content?.trim() || 'Photo')
+      : message.kind === 'voice'
+        ? 'Voice message'
+        : message.kind === 'link'
+          ? (message.linkTitle || message.linkUrl || 'Link')
+          : message.kind === 'echo'
+            ? (message.sharedEchoTitle || 'Shared Echo')
+            : message.kind === 'contact'
+              ? (message.contactDisplayName || 'Contact')
+              : (message.content || 'Message');
 
-  const Row = ({
-    icon, label, destructive, onPress, bordered = true,
+  const runAndClose = (fn: () => void) => {
+    fn();
+    onClose();
+  };
+
+  const ActionButton = ({
+    icon, label, destructive, accent, onPress, disabled,
   }: {
-    icon: React.ReactNode; label: string; destructive?: boolean;
-    onPress: () => void; bordered?: boolean;
+    icon: React.ReactNode;
+    label: string;
+    destructive?: boolean;
+    accent?: boolean;
+    onPress: () => void;
+    disabled?: boolean;
   }) => (
     <Pressable
-      onPress={() => { onPress(); onClose(); }}
+      onPress={() => runAndClose(onPress)}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={({ pressed }) => ({
-        minHeight: 56,
-        flexDirection: 'row',
+        width: '31.8%',
+        minHeight: 72,
+        borderRadius: 18,
+        paddingHorizontal: 8,
+        paddingVertical: 10,
         alignItems: 'center',
-        paddingHorizontal: 18,
-        opacity: pressed ? 0.6 : 1,
-        borderTopWidth: bordered ? StyleSheet.hairlineWidth : 0,
-        borderTopColor: colors.border,
+        justifyContent: 'center',
+        gap: 7,
+        opacity: disabled ? 0.38 : pressed ? 0.65 : 1,
+        backgroundColor: accent
+          ? colors.accentMuted
+          : destructive
+            ? `${colors.danger}18`
+            : (colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)'),
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: accent ? `${colors.accent}66` : destructive ? `${colors.danger}55` : colors.border,
       })}
     >
-      <View style={{ width: 28, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+      <View style={{
+        width: 34,
+        height: 34,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: accent
+          ? `${colors.accent}22`
+          : destructive
+            ? `${colors.danger}18`
+            : colors.surface,
+      }}>
         {icon}
       </View>
       <Text
-        style={{ flex: 1, color: destructive ? colors.danger : colors.text, fontSize: 16, lineHeight: 21, fontWeight: '700' }}
+        style={{
+          color: accent ? colors.accent : destructive ? colors.danger : colors.textSecondary,
+          fontSize: 11.5,
+          lineHeight: 14,
+          fontWeight: '900',
+          textAlign: 'center',
+        }}
         numberOfLines={1}
         maxFontSizeMultiplier={1.15}
       >
@@ -1351,6 +1452,67 @@ function MessageActionSheet({
       </Text>
     </Pressable>
   );
+
+  const actions = [
+    !isDeleted ? {
+      key: 'reply',
+      label: 'Reply',
+      icon: <ArrowBendUpLeft color={colors.text} size={17} weight="bold" />,
+      onPress: onReply,
+    } : null,
+    isText ? {
+      key: 'copy',
+      label: 'Copy',
+      icon: <Copy color={colors.text} size={17} weight="bold" />,
+      onPress: onCopy,
+    } : null,
+    !isDeleted && !isPending ? {
+      key: 'forward',
+      label: 'Forward',
+      icon: <ShareFat color={colors.text} size={17} weight="bold" />,
+      onPress: onForward,
+    } : null,
+    !isDeleted ? {
+      key: 'select',
+      label: 'Select',
+      icon: <Checks color={colors.text} size={17} weight="bold" />,
+      onPress: onSelect,
+    } : null,
+    isText && isOwn ? {
+      key: 'edit',
+      label: 'Edit',
+      icon: <PencilSimple color={colors.text} size={17} weight="bold" />,
+      onPress: onEdit,
+    } : null,
+    isText ? {
+      key: 'save',
+      label: isSaved ? 'Unsave' : 'Save',
+      icon: <BookmarkSimple color={isSaved ? colors.accent : colors.text} size={17} weight={isSaved ? 'fill' : 'bold'} />,
+      onPress: onSave,
+      accent: isSaved,
+    } : null,
+    !isDeleted ? {
+      key: 'pin',
+      label: isPinned ? 'Unpin' : 'Pin',
+      icon: <PushPin color={isPinned ? colors.accent : colors.text} size={17} weight={isPinned ? 'fill' : 'bold'} />,
+      onPress: onPin,
+      accent: isPinned,
+    } : null,
+    isOwn && !isDeleted ? {
+      key: 'delete',
+      label: 'Delete',
+      icon: <Trash color={colors.danger} size={17} weight="bold" />,
+      onPress: onDelete,
+      destructive: true,
+    } : null,
+  ].filter(Boolean) as {
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    onPress: () => void;
+    accent?: boolean;
+    destructive?: boolean;
+  }[];
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -1370,106 +1532,181 @@ function MessageActionSheet({
           paddingBottom: Math.max(insets.bottom, 12) + 18,
         }}
       >
-        {/* Emoji quick-react strip */}
-        {!isDeleted && (
-          <View style={{
-            borderRadius: 18, overflow: 'hidden', marginBottom: 8,
-            borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
-            backgroundColor: colors.surface,
-          }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12, paddingHorizontal: 4 }}>
-              {QUICK_REACTIONS.map(emoji => {
-                const alreadyReacted = message.reactions.some(r => r.value === emoji && r.userId === myUserId);
-                return (
+        <View style={{
+          borderRadius: 28,
+          overflow: 'hidden',
+          backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          shadowColor: '#000',
+          shadowOpacity: 0.24,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: -8 },
+        }}>
+          <LinearGradient
+            colors={[`${colors.accent}1F`, 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0.7 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
+          </View>
+
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
+              <View style={{
+                width: 42,
+                height: 42,
+                borderRadius: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.accentMuted,
+              }}>
+                {isText
+                  ? <ChatCircleText color={colors.accent} size={20} weight="fill" />
+                  : message.kind === 'image'
+                    ? <Images color={colors.accent} size={20} weight="bold" />
+                    : message.kind === 'voice'
+                      ? <Microphone color={colors.accent} size={20} weight="fill" />
+                      : <Sparkle color={colors.accent} size={20} weight="fill" />
+                }
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>
+                  Message actions
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={1}>
+                  {previewLabel}
+                </Text>
+              </View>
+              <Pressable
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close message actions"
+                hitSlop={8}
+                style={({ pressed }) => ({
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  opacity: pressed ? 0.65 : 1,
+                })}
+              >
+                <X color={colors.textMuted} size={17} weight="bold" />
+              </Pressable>
+            </View>
+
+            {!isDeleted && (
+              <View style={{
+                borderRadius: 22,
+                backgroundColor: colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)',
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: colors.border,
+                paddingVertical: 8,
+                paddingHorizontal: 7,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+                {QUICK_REACTIONS.map(emoji => {
+                  const alreadyReacted = message.reactions.some(r => r.value === emoji && r.userId === myUserId);
+                  return (
+                    <Pressable
+                      key={emoji}
+                      onPress={() => { onReact(emoji, alreadyReacted); onClose(); }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`React ${emoji}`}
+                      style={({ pressed }) => ({
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: alreadyReacted ? colors.accentMuted : 'transparent',
+                        opacity: pressed ? 0.6 : 1,
+                        borderWidth: alreadyReacted ? 1 : 0,
+                        borderColor: colors.accent,
+                      })}
+                    >
+                      <Text style={{ fontSize: 23 }}>{emoji}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+
+            {isText && (
+              <View style={{ flexDirection: 'row', gap: 9 }}>
+                {!isOwn ? (
                   <Pressable
-                    key={emoji}
-                    onPress={() => { onReact(emoji, alreadyReacted); onClose(); }}
+                    onPress={() => runAndClose(onSmartReply)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Reply with Echo"
                     style={({ pressed }) => ({
-                      width: 46, height: 46, borderRadius: 23,
-                      alignItems: 'center', justifyContent: 'center',
-                      backgroundColor: alreadyReacted ? colors.accentMuted : 'transparent',
-                      opacity: pressed ? 0.6 : 1,
-                      borderWidth: alreadyReacted ? 1 : 0,
-                      borderColor: colors.accent,
+                      flex: 1,
+                      minHeight: 54,
+                      borderRadius: 18,
+                      paddingHorizontal: 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 9,
+                      backgroundColor: colors.accentMuted,
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: `${colors.accent}66`,
+                      opacity: pressed ? 0.68 : 1,
                     })}
                   >
-                    <Text style={{ fontSize: 22 }}>{emoji}</Text>
+                    <Sparkle color={colors.accent} size={18} weight="fill" />
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={{ color: colors.accent, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>Echo reply</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>Draft in context</Text>
+                    </View>
                   </Pressable>
-                );
-              })}
+                ) : null}
+                <Pressable
+                  onPress={() => runAndClose(onTranslate)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Translate message"
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: 54,
+                    borderRadius: 18,
+                    paddingHorizontal: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 9,
+                    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)',
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.68 : 1,
+                  })}
+                >
+                  <Translate color={colors.accent} size={18} weight="bold" />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>Translate</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>Inline helper</Text>
+                  </View>
+                </Pressable>
+              </View>
+            )}
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
+              {actions.map(action => (
+                <ActionButton
+                  key={action.key}
+                  icon={action.icon}
+                  label={action.label}
+                  onPress={action.onPress}
+                  accent={action.accent}
+                  destructive={action.destructive}
+                />
+              ))}
             </View>
           </View>
-        )}
-
-        {/* Ask Echo — AI actions */}
-        {isText && (
-          <View style={{
-            borderRadius: 18, overflow: 'hidden', marginBottom: 8,
-            borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.accent}44`,
-            backgroundColor: colors.surface,
-          }}>
-            {!isOwn && (
-              <Row icon={<Sparkle color={colors.accent} size={18} weight="fill" />} label="Reply with Echo" onPress={onSmartReply} bordered={false} />
-            )}
-            <Row icon={<Translate color={colors.accent} size={18} weight="bold" />} label="Translate" onPress={onTranslate} bordered={!isOwn} />
-          </View>
-        )}
-
-        {/* Actions */}
-        <View style={{
-          borderRadius: 18, overflow: 'hidden',
-          borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
-          backgroundColor: colors.surface,
-        }}>
-          {!isDeleted && (
-            <Row icon={<ArrowBendUpLeft color={colors.text} size={18} />} label="Reply" onPress={onReply} bordered={false} />
-          )}
-          {isText && (
-            <Row icon={<Copy color={colors.text} size={18} />} label="Copy" onPress={onCopy} />
-          )}
-          {!isDeleted && !message.id.startsWith('pending-') && !message.id.startsWith('failed-') && (
-            <Row icon={<ShareFat color={colors.text} size={18} />} label="Forward" onPress={onForward} />
-          )}
-          {!isDeleted && (
-            <Row icon={<Checks color={colors.text} size={18} />} label="Select" onPress={onSelect} />
-          )}
-          {isText && isOwn && (
-            <Row icon={<PencilSimple color={colors.text} size={18} />} label="Edit" onPress={onEdit} />
-          )}
-          {isText && (
-            <Row
-              icon={<BookmarkSimple color={colors.text} size={18} weight={isSaved ? 'fill' : 'regular'} />}
-              label={isSaved ? 'Unsave' : 'Save message'}
-              onPress={onSave}
-            />
-          )}
-          {!isDeleted && (
-            <Row
-              icon={<PushPin color={colors.text} size={18} weight={isPinned ? 'fill' : 'regular'} />}
-              label={isPinned ? 'Unpin' : 'Pin'}
-              onPress={onPin}
-            />
-          )}
-          {isOwn && !isDeleted && (
-            <Row icon={<Trash color={colors.danger} size={18} />} label="Delete" destructive onPress={onDelete} />
-          )}
         </View>
-
-        {/* Cancel */}
-        <Pressable
-          onPress={onClose}
-          style={({ pressed }) => ({
-            marginTop: 8, borderRadius: 18, overflow: 'hidden',
-            backgroundColor: colors.surface,
-            borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
-            minHeight: 54, alignItems: 'center', justifyContent: 'center',
-            opacity: pressed ? 0.7 : 1,
-          })}
-        >
-          <Text style={{ color: colors.text, fontSize: 16, lineHeight: 21, fontWeight: '800' }} maxFontSizeMultiplier={1.15}>
-            Cancel
-          </Text>
-        </Pressable>
       </Animated.View>
     </Modal>
   );
@@ -1499,7 +1736,7 @@ export default function DMScreen() {
   const readReceipts = useAppStore(s => s.readReceipts);
   const { colors, radius, isUserOnline, reduceAnimations } = useTheme();
 
-  const [text, setText] = useState('');
+  const [text, setText] = useState(() => id ? persistGet<string>('chat:draft:' + id, '') : '');
   const [sharedPending, setSharedPending] = useState(Boolean(echoId));
   const [quickAction, setQuickAction] = useState<string | null>(null);
   const [replyLoading, setReplyLoading] = useState<string | null>(null);
@@ -1595,6 +1832,16 @@ export default function DMScreen() {
   const myId = userId ?? 'me';
   usePresenceTracking(remote ? (userId ?? undefined) : undefined);
 
+  useEffect(() => {
+    if (!id) return;
+    setText(persistGet<string>('chat:draft:' + id, ''));
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || editingMessage) return;
+    persistSet('chat:draft:' + id, text);
+  }, [id, text, editingMessage]);
+
   // Conversation resolution
   const localConversation = conversations.find(c => c.id === id);
   const { data: remoteConvData, isLoading: convLoading } = useRemoteConversation(
@@ -1674,6 +1921,7 @@ export default function DMScreen() {
           contactUsername: contact ? ((contact.username as string | undefined) ?? null) : null,
           contactDisplayName: contact ? ((contact.displayName as string | undefined) ?? null) : null,
           contactAvatarColor: contact ? ((contact.avatarColor as string | undefined) ?? null) : null,
+          contactAvatarUrl: contact ? ((contact.avatarUrl as string | undefined) ?? null) : null,
           replyToId: m.replyToId,
           replyToContent: m.replyToContent,
           replyToSenderId: m.replyToSenderId,
@@ -1705,6 +1953,7 @@ export default function DMScreen() {
           contactUsername: m.contactUsername ?? null,
           contactDisplayName: m.contactDisplayName ?? null,
           contactAvatarColor: m.contactAvatarColor ?? null,
+          contactAvatarUrl: m.contactAvatarUrl ?? null,
           replyToId: null,
           replyToContent: null,
           replyToSenderId: null,
@@ -1968,6 +2217,7 @@ export default function DMScreen() {
       username: conversation.username,
       displayName: conversation.displayName,
       avatarColor: conversation.avatarColor,
+      avatarUrl: conversation.avatarUrl ?? null,
     };
     const replyToId = replyingTo?.id;
     setReplyingTo(null);
@@ -2353,63 +2603,44 @@ export default function DMScreen() {
           </View>
         </Pressable>
 
-        <Pressable
-          onPress={() => {
-            setSearchOpen(open => {
-              const next = !open;
-              if (!next) setSearchQuery('');
-              return next;
-            });
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={searchOpen ? 'Close message search' : 'Search messages'}
-          style={({ pressed }) => ({
-            width: 38,
-            height: 38,
-            borderRadius: 19,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: searchOpen ? colors.accentMuted : colors.surface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: searchOpen ? colors.accent : colors.border,
-            opacity: pressed ? 0.65 : 1,
-          })}
-        >
-          {searchOpen
-            ? <X color={colors.accent} size={17} weight="bold" />
-            : <MagnifyingGlass color={colors.textSecondary} size={17} weight="bold" />
-          }
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+          <IconButton
+            icon={searchOpen ? X : MagnifyingGlass}
+            label={searchOpen ? 'Close message search' : 'Search messages'}
+            onPress={() => setSearchOpen(open => { const next = !open; if (!next) setSearchQuery(''); return next; })}
+            size="sm"
+            role={searchOpen ? 'active' : 'resting'}
+            color={searchOpen ? colors.accent : colors.textSecondary}
+            variant={searchOpen ? 'tinted' : 'surface'}
+            hitSize={38}
+          />
 
-        {conversationSaved.length > 0 && !searchOpen && (
-          <Pressable
-            onPress={() => setShowSaved(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Saved messages"
-            style={({ pressed }) => ({
-              width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
-              backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
-              opacity: pressed ? 0.65 : 1,
-            })}
-          >
-            <BookmarkSimple color={colors.accent} size={17} weight="fill" />
-          </Pressable>
-        )}
+          {conversationSaved.length > 0 && !searchOpen ? (
+            <IconButton
+              icon={BookmarkSimple}
+              label="Saved messages"
+              onPress={() => setShowSaved(true)}
+              size="sm"
+              role="active"
+              color={colors.accent}
+              variant="surface"
+              hitSize={38}
+            />
+          ) : null}
 
-        {!searchOpen && (
-          <Pressable
-            onPress={() => setShowWallpaper(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Chat wallpaper"
-            style={({ pressed }) => ({
-              width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
-              backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
-              opacity: pressed ? 0.65 : 1,
-            })}
-          >
-            <PaintBrush color={colors.textSecondary} size={17} weight="bold" />
-          </Pressable>
-        )}
+          {!searchOpen ? (
+            <IconButton
+              icon={PaintBrush}
+              label="Chat wallpaper"
+              onPress={() => setShowWallpaper(true)}
+              size="sm"
+              role="resting"
+              color={colors.textSecondary}
+              variant="surface"
+              hitSize={38}
+            />
+          ) : null}
+        </View>
       </View>
 
       {searchOpen && (
@@ -2738,9 +2969,10 @@ export default function DMScreen() {
           >
             <View style={{
               flexDirection: 'row',
+              flexWrap: 'wrap',
               gap: 8,
-              padding: 8,
-              borderRadius: radius.card,
+              padding: 10,
+              borderRadius: 22,
               backgroundColor: colors.surface,
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: colors.border,
@@ -2755,20 +2987,25 @@ export default function DMScreen() {
                 <Pressable
                   key={action.key}
                   onPress={action.onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={action.label}
                   style={({ pressed }) => ({
-                    flex: 1,
-                    minHeight: 42,
-                    borderRadius: radius.card - 4,
+                    width: '31%',
+                    minHeight: 68,
+                    borderRadius: 18,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    flexDirection: 'row',
-                    gap: 6,
-                    backgroundColor: colors.inputBg,
+                    gap: 7,
+                    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)',
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: colors.border,
                     opacity: pressed ? 0.65 : 1,
                   })}
                 >
-                  {action.icon}
-                  <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }} numberOfLines={1}>
+                  <View style={{ width: 34, height: 34, borderRadius: 14, backgroundColor: colors.accentMuted, alignItems: 'center', justifyContent: 'center' }}>
+                    {action.icon}
+                  </View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11.5, lineHeight: 14, fontWeight: '900', textAlign: 'center' }} numberOfLines={1}>
                     {action.label}
                   </Text>
                 </Pressable>
