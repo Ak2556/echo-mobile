@@ -22,6 +22,7 @@ export type AnalyticsEvent =
   | 'daily_question_viewed'
   | 'daily_answer_submitted'
   | 'daily_divergence_viewed'
+  | 'daily_following_viewed'
   | 'thinking_partners_viewed'
   | 'thinking_partner_followed'
   | 'thinking_fingerprint_viewed'

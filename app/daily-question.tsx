@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { safeBack } from '../lib/safeBack';
 import Animated, { FadeIn, FadeInUp, SlideInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Check, LockSimple, Sparkle, Lightning, Clock, Flame } from 'phosphor-react-native';
+import { ArrowLeft, Check, LockSimple, Sparkle, Lightning, Clock, Flame, Users } from 'phosphor-react-native';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
@@ -18,6 +18,7 @@ import {
   fetchOwnDailyAnswer,
   submitDailyAnswer,
   fetchDailyAnswers,
+  fetchFollowingDailyAnswers,
   fetchDivergentDailyAnswers,
   fetchDailyAnswerStreak,
   toggleDailyAnswerReaction,
@@ -53,9 +54,10 @@ function DailyQuestionScreenInner() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<DailyAnswerWithAuthor[]>([]);
+  const [following, setFollowing] = useState<DailyAnswerWithAuthor[]>([]);
   const [divergent, setDivergent] = useState<DivergentDailyAnswer[]>([]);
   const [answersLoading, setAnswersLoading] = useState(false);
-  const [view, setView] = useState<'recent' | 'divergent'>('recent');
+  const [view, setView] = useState<'recent' | 'following' | 'divergent'>('recent');
   const [streak, setStreak] = useState(0);
   const mounted = useRef(true);
 
@@ -90,12 +92,14 @@ function DailyQuestionScreenInner() {
       if (!question || !myAnswer) return;
       setAnswersLoading(true);
       try {
-        const [recent, diverging] = await Promise.all([
+        const [recent, follows, diverging] = await Promise.all([
           fetchDailyAnswers(question.id),
+          fetchFollowingDailyAnswers(question.id).catch(() => [] as DailyAnswerWithAuthor[]),
           fetchDivergentDailyAnswers(question.id).catch(() => [] as DivergentDailyAnswer[]),
         ]);
         if (!mounted.current) return;
         setAnswers(recent);
+        setFollowing(follows);
         setDivergent(diverging);
       } catch (e) {
         captureException(e, { tags: { screen: 'daily-question', action: 'fetch-answers' } });
@@ -134,6 +138,7 @@ function DailyQuestionScreenInner() {
       };
     };
     setAnswers(prev => prev.map(mutate));
+    setFollowing(prev => prev.map(mutate));
     setDivergent(prev => prev.map(d => ({ ...mutate(d), divergence: d.divergence })));
     try {
       await toggleDailyAnswerReaction(answerId, emoji);
@@ -306,14 +311,16 @@ function DailyQuestionScreenInner() {
             <Animated.View entering={SlideInDown.duration(220)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginHorizontal: 4 }}>
                 <Text style={{ color: colors.text, fontWeight: '700', fontSize: 17 }}>
-                  {view === 'divergent' ? 'Most divergent takes' : "Everyone's takes"}
+                  {view === 'divergent' ? 'Most divergent takes'
+                    : view === 'following' ? 'From people you follow'
+                    : "Everyone's takes"}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-                  {answers.length} answer{answers.length === 1 ? '' : 's'}
+                  {(view === 'divergent' ? divergent.length : view === 'following' ? following.length : answers.length)} answer{(view === 'divergent' ? divergent.length : view === 'following' ? following.length : answers.length) === 1 ? '' : 's'}
                 </Text>
               </View>
 
-              {/* Recent ↔ divergence toggle */}
+              {/* Recent · Following · Divergence toggle */}
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
                 <ViewChip
                   active={view === 'recent'}
@@ -322,13 +329,22 @@ function DailyQuestionScreenInner() {
                   label="Recent"
                 />
                 <ViewChip
+                  active={view === 'following'}
+                  onPress={() => {
+                    if (view !== 'following') track('daily_following_viewed', { question_id: question.id, answer_count: following.length });
+                    setView('following');
+                  }}
+                  icon={<Users size={14} weight="fill" color={view === 'following' ? '#fff' : colors.textMuted} />}
+                  label="Following"
+                />
+                <ViewChip
                   active={view === 'divergent'}
                   onPress={() => {
                     if (view !== 'divergent') track('daily_divergence_viewed', { question_id: question.id, answer_count: divergent.length });
                     setView('divergent');
                   }}
                   icon={<Lightning size={14} weight="fill" color={view === 'divergent' ? '#fff' : colors.textMuted} />}
-                  label="Most divergent"
+                  label="Divergent"
                 />
               </View>
 
@@ -358,6 +374,26 @@ function DailyQuestionScreenInner() {
                 ) : (
                   divergent.map((a) => (
                     <AnswerCard key={a.id} a={a} divergence={a.divergence} onReact={handleReact} />
+                  ))
+                )
+              ) : view === 'following' ? (
+                following.length === 0 ? (
+                  <View style={{
+                    backgroundColor: colors.surface,
+                    borderRadius: radius.lg,
+                    padding: 20,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    alignItems: 'center',
+                  }}>
+                    <Users color={colors.accent} size={24} weight="fill" />
+                    <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
+                      No one you follow has answered yet. Follow more people, or check back later.
+                    </Text>
+                  </View>
+                ) : (
+                  following.map((a) => (
+                    <AnswerCard key={a.id} a={a} onReact={handleReact} />
                   ))
                 )
               ) : answers.length === 0 ? (
