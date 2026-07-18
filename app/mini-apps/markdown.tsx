@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-
 import { Trash } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 
 const SAMPLE = `# Hello, Markdown!
@@ -128,8 +129,19 @@ export default function MarkdownScreen() {
   );
 
   return (
-    <MiniAppShell title="Markdown" subtitle={`${words} words · ${chars} chars`} headerRight={ClearBtn} scrollable={false}>
+    <MiniAppShell title="Markdown" subtitle="Write" headerRight={ClearBtn} scrollable={false}>
       <View style={{ flex: 1, paddingTop: 4 }}>
+        <MiniCommandDeck
+          compact
+          accent={colors.accent}
+          title="Publish-ready writing"
+          subtitle="Draft, preview, publish."
+          metrics={[
+            { label: 'Words', value: `${words}` },
+            { label: 'Chars', value: `${chars}` },
+            { label: 'View', value: tab === 'edit' ? 'Edit' : 'Preview' },
+          ]}
+        />
         <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 12 }}>
           {[{ id: 'edit', label: 'Editor' }, { id: 'preview', label: 'Preview' }].map(t => (
             <Pressable

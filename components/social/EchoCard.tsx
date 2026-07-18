@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, Pressable, ActivityIndicator, useWindowDimensions, Share,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
@@ -15,9 +14,9 @@ import {
 } from 'phosphor-react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { showToast } from '../ui/Toast';
+import { Avatar } from '../ui/Avatar';
 import { FeedItem } from '../../types';
 import { ACCENT_COLORS, ACCENT_CHIP, accentShadow } from '../../lib/accentDesign';
-import { warmAvatarColor } from '../../lib/avatarPalette';
 import { videoSourceForUri } from '../../lib/videoMedia';
 import { echoUrl } from '../../lib/echoUrl';
 
@@ -205,8 +204,6 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
     void player.replaceAsync(videoSourceForUri(videoUri));
   };
 
-  const initials = (item.displayName || item.username || '?').charAt(0).toUpperCase();
-
   return (
     <View style={{ width: '100%', height: SCREEN_H, backgroundColor: '#000' }}>
       {/* Video */}
@@ -283,18 +280,14 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
         )}
         {/* Author row */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          {item.avatarUrl ? (
-            <Image
-              source={{ uri: item.avatarUrl }}
-              style={{ width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: '#fff' }}
-              contentFit="cover"
-              cachePolicy="memory-disk"
+          <View style={{ borderRadius: 23, borderWidth: 2, borderColor: '#fff' }}>
+            <Avatar
+              name={item.displayName || item.username || '?'}
+              color={item.avatarColor}
+              url={item.avatarUrl}
+              size={42}
             />
-          ) : (
-            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: warmAvatarColor(item.avatarColor, item.username || item.displayName || '?'), alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initials}</Text>
-            </View>
-          )}
+          </View>
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}>

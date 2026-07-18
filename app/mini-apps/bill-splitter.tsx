@@ -4,6 +4,7 @@ import { Minus, Plus, Users, ShareNetwork, X } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -25,6 +26,54 @@ const defaultPeople = (): Person[] => [
   { id: 1, name: 'Person 1', shares: 1, exact: '' },
   { id: 2, name: 'Person 2', shares: 1, exact: '' },
 ];
+
+function SplitPulse({
+  accent,
+  total,
+  extras,
+  people,
+  perPerson,
+  mode,
+  fmt,
+}: {
+  accent: string;
+  total: number;
+  extras: number;
+  people: number;
+  perPerson: number;
+  mode: SplitMode;
+  fmt: (n: number) => string;
+}) {
+  const { colors } = useTheme();
+  const serviceLoad = total > 0 ? Math.round((extras / total) * 100) : 0;
+  const rows = [
+    { label: 'Each', value: `$${fmt(perPerson)}`, detail: mode === 'even' ? 'even split' : mode },
+    { label: 'Extras', value: `$${fmt(extras)}`, detail: `${serviceLoad}% total` },
+    { label: 'Group', value: `${people}`, detail: people === 1 ? 'person' : 'people' },
+  ];
+  return (
+    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: accent, fontSize: 18, fontWeight: '900' }}>$</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Settlement pulse</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Fair, clear, shareable.</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {rows.map(row => (
+          <View key={row.label} style={{ flex: 1, minHeight: 64, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <Text style={{ color: accent, fontSize: row.value.length > 7 ? 14 : 17, fontWeight: '900' }} numberOfLines={1}>{row.value}</Text>
+            <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{row.label}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{row.detail}</Text>
+          </View>
+        ))}
+      </View>
+    </GlassPanel>
+  );
+}
 
 export default function BillSplitterScreen() {
   const { colors } = useTheme();
@@ -88,7 +137,19 @@ export default function BillSplitterScreen() {
   );
 
   return (
-    <MiniAppShell title="Bill Splitter" subtitle="Split evenly, by shares, or exactly" headerRight={ShareBtn}>
+    <MiniAppShell title="Bill Splitter" subtitle="Split" headerRight={ShareBtn}>
+      <MiniCommandDeck
+        accent={accent}
+        title="Split the bill without friction"
+        subtitle="Tax, tip, shares, exact orders."
+        metrics={[
+          { label: 'Total', value: `$${fmt(total)}`, detail: 'with extras' },
+          { label: 'People', value: `${people.length}`, detail: 'included' },
+          { label: 'Mode', value: mode === 'even' ? 'Even' : mode === 'shares' ? 'Shares' : 'Exact', detail: 'split logic' },
+        ]}
+        chips={['One tap share', 'Exact orders', 'Tip logic']}
+      />
+      <SplitPulse accent={accent} total={total} extras={extras} people={people.length} perPerson={total / people.length} mode={mode} fmt={fmt} />
       {/* Bill + tax */}
       <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>BILL AMOUNT</Text>

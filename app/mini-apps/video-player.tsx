@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, Pressable, Alert,
+  View, Text, Pressable, Alert, StyleSheet,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -12,7 +12,7 @@ import {
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -30,6 +30,45 @@ interface VideoMeta {
   duration: number;
   width?: number;
   height?: number;
+}
+
+function VideoPulse({ accent, video, position, duration, isMuted }: {
+  accent: string;
+  video: VideoMeta | null;
+  position: number;
+  duration: number;
+  isMuted: boolean;
+}) {
+  const { colors } = useTheme();
+  const progress = duration > 0 ? Math.round((position / duration) * 100) : 0;
+  const aspect = video?.width && video.height ? `${video.width}x${video.height}` : 'None';
+  const tiles = [
+    { label: 'Loaded', value: video ? 'Yes' : 'No', detail: video ? 'ready' : 'choose' },
+    { label: 'Progress', value: `${progress}%`, detail: formatDuration(position) },
+    { label: 'Sound', value: isMuted ? 'Muted' : 'On', detail: aspect },
+  ];
+  return (
+    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+          <VideoCamera color={accent} size={20} weight="fill" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Review cockpit</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Watch, note, publish.</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {tiles.map(tile => (
+          <View key={tile.label} style={{ flex: 1, minHeight: 62, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <Text style={{ color: accent, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>{tile.value}</Text>
+            <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{tile.label}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{tile.detail}</Text>
+          </View>
+        ))}
+      </View>
+    </GlassPanel>
+  );
 }
 
 export default function VideoPlayerApp() {
@@ -122,7 +161,19 @@ export default function VideoPlayerApp() {
   const progressPct = duration > 0 ? (position / duration) * 100 : 0;
 
   return (
-    <MiniAppShell title="Video Player" subtitle="Pick or record a video">
+    <MiniAppShell title="Video Player" subtitle="Playback">
+      <MiniCommandDeck
+        accent={accent}
+        title="Video review without leaving Echo"
+        subtitle="Load, play, extract, share."
+        metrics={[
+          { label: 'Duration', value: video ? formatDuration(duration || video.duration) : '0:00', detail: 'clip' },
+          { label: 'Progress', value: `${Math.round(progressPct)}%`, detail: 'watched' },
+          { label: 'Sound', value: isMuted ? 'Muted' : 'On', detail: 'audio' },
+        ]}
+        chips={['Review notes', 'Progress clips', 'Post-ready']}
+      />
+      <VideoPulse accent={accent} video={video} position={position} duration={duration || video?.duration || 0} isMuted={isMuted} />
       {/* Pick / Record buttons */}
       <Animated.View entering={FadeInDown.duration(220)} style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
         <GlassPanel
@@ -230,7 +281,7 @@ export default function VideoPlayerApp() {
           accent={accent}
           icon={<VideoCamera color={colors.textMuted} size={44} weight="duotone" />}
           title="No video loaded"
-          subtitle="Pick a video from your library or record a new one to start playing."
+          subtitle="Pick or record a video."
         />
       )}
     </MiniAppShell>

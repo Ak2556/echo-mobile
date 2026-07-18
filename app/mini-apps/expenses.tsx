@@ -7,11 +7,11 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass } from 'phosphor-react-native';
+import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -65,6 +65,15 @@ function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd:
               <Text style={{ color: ACCENT, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
               <TextInput value={amount} onChangeText={setAmount} placeholder="0.00" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
             </GlassPanel>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              {[10, 25, 50, 100].map(v => (
+                <Pressable key={v} onPress={() => setAmount(String(v))} style={{ flex: 1 }}>
+                  <View style={{ minHeight: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '900' }}>{getCurrencySymbol(currency)}{v}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
           </View>
 
           {/* Category */}
@@ -94,6 +103,81 @@ function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd:
         </View>
       </View>
     </Modal>
+  );
+}
+
+function daysInMonthKey(key: string): number {
+  const [year, month] = key.split('-').map(Number);
+  return new Date(year, month, 0).getDate();
+}
+
+function elapsedDaysForMonth(key: string): number {
+  if (key !== currentMonthKey()) return daysInMonthKey(key);
+  return new Date().getDate();
+}
+
+function MoneyPulsePanel({
+  accent,
+  income,
+  expense,
+  balance,
+  budget,
+  month,
+  money,
+}: {
+  accent: string;
+  income: number;
+  expense: number;
+  balance: number;
+  budget: number | null;
+  month: string;
+  money: (amount: number) => string;
+}) {
+  const { colors } = useTheme();
+  const elapsed = elapsedDaysForMonth(month);
+  const totalDays = daysInMonthKey(month);
+  const daysLeft = Math.max(0, totalDays - elapsed);
+  const projectedSpend = elapsed > 0 ? Math.round((expense / elapsed) * totalDays) : expense;
+  const remainingBudget = budget != null ? Math.max(0, budget - expense) : null;
+  const dailyRoom = remainingBudget != null ? remainingBudget / Math.max(daysLeft || 1, 1) : null;
+  const saveRate = income > 0 ? Math.round((balance / income) * 100) : 0;
+  const pressure = !budget ? 'No budget' : projectedSpend <= budget ? 'On track' : 'Over pace';
+  const pressureColor = !budget ? accent : projectedSpend <= budget ? colors.success : colors.danger;
+  const tiles = [
+    { label: 'Pressure', value: pressure, detail: budget ? `${Math.min(999, Math.round((projectedSpend / budget) * 100))}% pace` : 'set budget', icon: Gauge, color: pressureColor },
+    { label: 'Daily room', value: dailyRoom == null ? 'Set' : money(dailyRoom), detail: `${daysLeft} days left`, icon: CalendarCheck, color: accent },
+    { label: 'Projected', value: money(projectedSpend), detail: 'month end', icon: TrendUp, color: projectedSpend <= (budget ?? Number.POSITIVE_INFINITY) ? colors.success : colors.danger },
+    { label: 'Save rate', value: income > 0 ? `${saveRate}%` : 'None', detail: balance >= 0 ? 'positive' : 'negative', icon: balance >= 0 ? Target : TrendDown, color: balance >= 0 ? colors.success : colors.danger },
+  ];
+  return (
+    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${pressureColor}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${pressureColor}20`, alignItems: 'center', justifyContent: 'center' }}>
+          <Receipt color={pressureColor} size={20} weight="fill" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Money pulse</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>
+            Pace, room, forecast.
+          </Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {tiles.map(tile => {
+          const Icon = tile.icon;
+          return (
+            <View key={tile.label} style={{ width: '48.5%', minHeight: 68, borderRadius: 17, padding: 11, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Icon color={tile.color} size={14} weight="bold" />
+                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>{tile.label}</Text>
+              </View>
+              <Text style={{ color: tile.color, fontSize: tile.value.length > 8 ? 14 : 17, fontWeight: '900', marginTop: 7 }} numberOfLines={1}>{tile.value}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }} numberOfLines={1}>{tile.detail}</Text>
+            </View>
+          );
+        })}
+      </View>
+    </GlassPanel>
   );
 }
 
@@ -276,7 +360,27 @@ export default function ExpensesApp() {
   );
 
   return (
-    <MiniAppShell title="Expenses" subtitle="Income & budget log" headerRight={HeaderBtns}>
+    <MiniAppShell title="Expenses" subtitle="Control" headerRight={HeaderBtns}>
+      <MiniCommandDeck
+        accent={balance >= 0 ? colors.success : colors.danger}
+        title="Money decision board"
+        subtitle="Income, spend, budget."
+        metrics={[
+          { label: 'Balance', value: money(Math.abs(balance)), detail: balance >= 0 ? 'positive' : 'negative' },
+          { label: 'Spent', value: money(expense), detail: monthLabel(month) },
+          { label: 'Budget', value: doc.budget ? `${budgetPct}%` : 'Set', detail: doc.currency },
+        ]}
+        chips={['Multi-currency', 'Budget pressure', 'CSV export']}
+      />
+      <MoneyPulsePanel
+        accent={accent}
+        income={income}
+        expense={expense}
+        balance={balance}
+        budget={doc.budget}
+        month={month}
+        money={money}
+      />
       {/* Month switcher */}
       {!searching && (
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -409,7 +513,7 @@ export default function ExpensesApp() {
           accent={accent}
           icon={<Wallet color={colors.textMuted} size={48} weight="thin" />}
           title={searching ? 'No matches' : `Nothing in ${monthLabel(month)}`}
-          subtitle={searching ? 'Try a different search or category.' : 'Add an expense or income to start tracking this month.'}
+          subtitle={searching ? 'Try a different search or category.' : 'Add the first money move to see this month clearly.'}
         />
       )}
 

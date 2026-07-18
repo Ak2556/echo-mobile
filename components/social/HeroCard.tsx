@@ -7,6 +7,7 @@ import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
 import { VideoPreview } from './VideoPreview';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { Avatar } from '../ui/Avatar';
 import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import { usePerformanceProfile } from '../../lib/performance';
@@ -122,19 +123,14 @@ export function HeroCard({ item, onPress, scrollX, cardIndex = 0 }: HeroCardProp
           gap: 8,
         }}
       >
-        <View
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 11,
-            backgroundColor: item.avatarColor ?? colors.accent,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>
-            {(item.displayName || item.username).charAt(0).toUpperCase()}
-          </Text>
+        <View style={{ borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.82)' }}>
+          <Avatar
+            name={item.displayName || item.username}
+            color={item.avatarColor}
+            url={item.avatarUrl}
+            size={22}
+            zoomable={false}
+          />
         </View>
 
         <Text style={[font.bodySemibold, { color: '#fff', fontSize: 11, flex: 1 }]} numberOfLines={1}>

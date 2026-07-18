@@ -260,6 +260,7 @@ export interface DirectMessage {
   contactUsername?: string;
   contactDisplayName?: string;
   contactAvatarColor?: string;
+  contactAvatarUrl?: string;
 }
 
 export interface Conversation {

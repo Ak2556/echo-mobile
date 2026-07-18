@@ -20,7 +20,10 @@
         "NSMicrophoneUsageDescription": "Echo uses your microphone to record voice memos in the mini-apps section.",
         "NSCameraUsageDescription": "Echo uses your camera to take photos for your profile and marketplace listings.",
         "NSPhotoLibraryUsageDescription": "Echo accesses your photo library so you can upload photos to your profile, marketplace listings, and send images in direct messages.",
-        "NSPhotoLibraryAddUsageDescription": "Echo saves images to your photo library."
+        "NSPhotoLibraryAddUsageDescription": "Echo saves images to your photo library.",
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {

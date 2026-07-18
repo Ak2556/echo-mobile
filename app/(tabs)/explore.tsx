@@ -394,7 +394,7 @@ function ExploreHero({ colors, font, layout }: { colors: any; font: any; layout:
           </View>
           <View style={{ maxWidth: 680 }}>
             <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 24 : 30, lineHeight: layout.isPhone ? 29 : 36 }]}>
-              Discover people, ideas, and tools that move your target forward.
+              Find what moves you.
             </Text>
           </View>
         </View>

@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SealCheck } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
+import { Avatar } from '../ui/Avatar';
 
 interface QuotedEchoCardProps {
   echo: NonNullable<FeedItem['quotedEcho']>;
@@ -28,15 +28,13 @@ export function QuotedEchoCard({ echo, compact }: QuotedEchoCardProps) {
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        {echo.avatarUrl ? (
-          <Image source={{ uri: echo.avatarUrl }} style={{ width: 22, height: 22, borderRadius: 11 }} contentFit="cover" cachePolicy="memory-disk" />
-        ) : (
-          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: echo.avatarColor || colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>
-              {(echo.displayName || echo.username).charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        )}
+        <Avatar
+          name={echo.displayName || echo.username}
+          color={echo.avatarColor}
+          url={echo.avatarUrl}
+          size={22}
+          zoomable={false}
+        />
         <Text style={{ color: colors.text, fontSize: fontSizes.caption, fontWeight: '700' }}>{echo.displayName || echo.username}</Text>
         {echo.isVerified && <SealCheck color={colors.accent} size={12} weight="fill" />}
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{echo.username}</Text>

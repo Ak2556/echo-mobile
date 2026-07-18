@@ -1,16 +1,15 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SealCheck } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
+import { Avatar } from '../ui/Avatar';
 import { showToast } from '../ui/Toast';
 import { User } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { track } from '../../lib/analytics';
-import { warmAvatarColor } from '../../lib/avatarPalette';
 
 interface UserRowProps {
   user: User;
@@ -72,23 +71,13 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
           scaleValue={0.9}
           haptic="light"
         >
-          {user.avatarUrl ? (
-            <Image
-              source={{ uri: user.avatarUrl }}
-              style={{ width: 44, height: 44, borderRadius: 22 }}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-            />
-          ) : (
-            <View
-              className="w-11 h-11 rounded-full items-center justify-center"
-              style={{ backgroundColor: warmAvatarColor(user.avatarColor, user.username) }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>
-                {user.displayName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
+          <Avatar
+            name={user.displayName || user.username}
+            color={user.avatarColor}
+            url={user.avatarUrl}
+            size={44}
+            zoomable={false}
+          />
         </AnimatedPressable>
       )}
 

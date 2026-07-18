@@ -4,6 +4,7 @@ import { Check, Copy, Trash, CornersIn, CornersOut, Warning, CheckCircle } from 
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 
 type ViewMode = 'formatted' | 'minified';
@@ -28,6 +29,63 @@ function colorize(json: string): { text: string; color: string }[] {
   return tokens;
 }
 
+function inspectJson(value: unknown): { root: string; arrays: number; objects: number } {
+  let arrays = 0;
+  let objects = 0;
+  const walk = (node: unknown) => {
+    if (Array.isArray(node)) {
+      arrays += 1;
+      node.forEach(walk);
+      return;
+    }
+    if (node && typeof node === 'object') {
+      objects += 1;
+      Object.values(node as Record<string, unknown>).forEach(walk);
+    }
+  };
+  walk(value);
+  return {
+    root: Array.isArray(value) ? 'Array' : value && typeof value === 'object' ? 'Object' : typeof value,
+    arrays,
+    objects,
+  };
+}
+
+function JsonPulse({ accent, status, stats, inspection }: {
+  accent: string;
+  status: 'Empty' | 'Valid' | 'Invalid';
+  stats: { keys: number; size: string } | null;
+  inspection: { root: string; arrays: number; objects: number } | null;
+}) {
+  const { colors } = useTheme();
+  const rows = [
+    { label: 'Root', value: inspection?.root ?? '-' },
+    { label: 'Objects', value: `${inspection?.objects ?? 0}` },
+    { label: 'Arrays', value: `${inspection?.arrays ?? 0}` },
+  ];
+  return (
+    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+          {status === 'Invalid' ? <Warning color={accent} size={20} weight="fill" /> : <CheckCircle color={accent} size={20} weight="fill" />}
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Data cockpit</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{status}. {stats ? `${stats.keys} keys, ${stats.size}.` : 'Paste JSON to inspect.'}</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {rows.map(row => (
+          <View key={row.label} style={{ flex: 1, minHeight: 58, borderRadius: 15, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <Text style={{ color: accent, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>{row.value}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase', marginTop: 5 }}>{row.label}</Text>
+          </View>
+        ))}
+      </View>
+    </GlassPanel>
+  );
+}
+
 export default function JsonFormatterScreen() {
   const { colors } = useTheme();
   const accent = colors.accent;
@@ -48,6 +106,9 @@ export default function JsonFormatterScreen() {
   const copy = () => { if (!output) return; Clipboard.setString(output); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   const tokens = output ? colorize(output) : [];
   const stats = parsed ? (() => { const s = JSON.stringify(parsed); const keys = (s.match(/"[^"]+"\s*:/g)||[]).length; const sz = new Blob([s]).size; return { keys, size: sz > 1024 ? `${(sz/1024).toFixed(1)}KB` : `${sz}B` }; })() : null;
+  const inspection = parsed ? inspectJson(parsed) : null;
+  const status = error ? 'Invalid' : parsed ? 'Valid' : 'Empty';
+  const statusAccent = error ? colors.danger : parsed ? colors.success : accent;
 
   const HeaderActions = output ? (
     <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -69,8 +130,20 @@ export default function JsonFormatterScreen() {
   ) : undefined;
 
   return (
-    <MiniAppShell title="JSON Tools" subtitle="Format · validate · minify" headerRight={HeaderActions}>
+    <MiniAppShell title="JSON Tools" subtitle="Clean" headerRight={HeaderActions}>
       <View>
+        <MiniCommandDeck
+          accent={statusAccent}
+          title="Format data into clarity"
+          subtitle="Validate, inspect, copy."
+          metrics={[
+            { label: 'Status', value: status, detail: 'parser' },
+            { label: 'Keys', value: stats ? `${stats.keys}` : '0', detail: 'fields' },
+            { label: 'Size', value: stats?.size ?? '0B', detail: viewMode },
+          ]}
+          chips={['Pretty print', 'Minify', 'Schema read']}
+        />
+        <JsonPulse accent={statusAccent} status={status} stats={stats} inspection={inspection} />
         {/* Input */}
         <View style={{ marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>

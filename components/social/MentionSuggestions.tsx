@@ -3,6 +3,7 @@ import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SealCheck } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { searchRemoteUsers, UserSearchHit } from '../../lib/supabaseEchoApi';
+import { Avatar } from '../ui/Avatar';
 
 interface MentionSuggestionsProps {
   /** Current full text of the input the user is typing in. */
@@ -122,20 +123,14 @@ export function MentionSuggestions({ text, caret, onPick, bottom = 64 }: Mention
               borderTopColor: colors.border,
             })}
           >
-            <View
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 17,
-                backgroundColor: u.avatar_color || colors.accent,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 10,
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-                {(u.display_name || u.username).charAt(0).toUpperCase()}
-              </Text>
+            <View style={{ marginRight: 10 }}>
+              <Avatar
+                name={u.display_name || u.username}
+                color={u.avatar_color}
+                url={u.avatar_url}
+                size={34}
+                zoomable={false}
+              />
             </View>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>

@@ -21,6 +21,7 @@ import {
 } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { showToast } from '../../components/ui/Toast';
@@ -466,7 +467,7 @@ export default function LearnScreen() {
   return (
     <MiniAppShell
       title="Learn"
-      subtitle={activeGoal ? `${MODE_LABELS[activeGoal.mode]} -> ${activeGoal.title}` : 'Skills, subjects, and classrooms'}
+      subtitle={activeGoal ? 'Master' : 'Master'}
       headerRight={(
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <AnimatedPressable onPress={() => setTab('settings')} scaleValue={0.9} haptic="light" accessibilityRole="button" accessibilityLabel="Learning settings">
@@ -503,6 +504,17 @@ export default function LearnScreen() {
       {activeGoal && stats ? (
         <>
           <Hero goal={activeGoal} stats={stats} />
+          <MiniCommandDeck
+            accent={ACCENT}
+            title="Mastery studio"
+            subtitle="Paths, practice, proof."
+            metrics={[
+              { label: 'Progress', value: `${stats.percent}%`, detail: 'path' },
+              { label: 'Quiz', value: `${stats.quizScore}%`, detail: 'score' },
+              { label: 'Study', value: `${activeGoal.studyMinutes}`, detail: 'minutes' },
+            ]}
+            chips={['Code-along', '1:1 teaching', 'Echo partner']}
+          />
 
           {goals.length > 1 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 12 }}>
@@ -1012,7 +1024,7 @@ function OneOnOneTab(props: {
         </View>
       </GlassPanel>
 
-      <SectionTitle title="Teacher offer" subtitle="Profile, pricing, rules" />
+      <SectionTitle title="Teacher offer" subtitle="Offer" />
       <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.oneHeadline} onChangeText={props.setOneHeadline} placeholder="Offer headline" strong />
         <LearnInput value={props.oneBio} onChangeText={props.setOneBio} placeholder="What you help learners achieve" multiline />
@@ -1082,7 +1094,7 @@ function OneOnOneTab(props: {
         </GlassPanel>
       </View>
 
-      <SectionTitle title="Learner booking" subtitle="Create a paid 1:1 request" />
+      <SectionTitle title="Learner booking" subtitle="Book" />
       <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.bookingLearner} onChangeText={props.setBookingLearner} placeholder="Learner name" />
         <LearnInput value={props.bookingGoal} onChangeText={props.setBookingGoal} placeholder="What they want to master" multiline />
@@ -1099,7 +1111,7 @@ function OneOnOneTab(props: {
         </View>
       </GlassPanel>
 
-      <SectionTitle title="Booking pipeline" subtitle="Accept, collect payment, teach, follow up" />
+      <SectionTitle title="Booking pipeline" subtitle="Pipeline" />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.oneOnOneBookings.length === 0 ? (
           <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 16 }}>
@@ -1176,7 +1188,7 @@ function StudioTab(props: {
         <Stat label="Evidence" value={`${props.stats.evidence}`} />
       </View>
 
-      <SectionTitle title="Course studio" subtitle="Syllabus, deliverables, and outcomes" />
+      <SectionTitle title="Course studio" subtitle="Syllabus" />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.syllabus.map(week => (
           <Pressable key={week.id} onPress={() => props.onToggleWeek(week.id)}>
@@ -1220,7 +1232,7 @@ function StudioTab(props: {
         </GlassPanel>
       </View>
 
-      <SectionTitle title="Evidence locker" subtitle="Proof, submissions, links, screenshots, notes" />
+      <SectionTitle title="Evidence locker" subtitle="Proof" />
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
         <LearnInput value={props.evidenceTitle} onChangeText={props.setEvidenceTitle} placeholder="Evidence title" />
         <LearnInput value={props.evidenceDetail} onChangeText={props.setEvidenceDetail} placeholder="Paste link, describe submission, or write proof" multiline />
@@ -1268,7 +1280,7 @@ function PeopleTab(props: {
         <Stat label="Mode" value={MODE_LABELS[props.goal.mode]} />
       </View>
 
-      <SectionTitle title="Learner roster" subtitle="For students, clients, groups, or yourself" />
+      <SectionTitle title="Learner roster" subtitle="People" />
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.learnerName} onChangeText={props.setLearnerName} placeholder="Name" />
         <LearnInput value={props.learnerTarget} onChangeText={props.setLearnerTarget} placeholder="Personal target or class outcome" />
@@ -1462,7 +1474,7 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
   const { colors, font } = useTheme();
   return (
     <>
-      <SectionTitle title="Coach prompts" subtitle="Ask Echo or guide a session" />
+      <SectionTitle title="Coach prompts" subtitle="Coach" />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {prompts.map(prompt => (
           <Pressable key={prompt} onPress={onChat}>
@@ -1586,7 +1598,7 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
         <Stat label="Milestones" value={`${stats.milestoneDone}/${goal.milestones.length}`} />
       </View>
 
-      <SectionTitle title="Milestone proof" subtitle="Turn learning into visible outcomes" />
+      <SectionTitle title="Milestone proof" subtitle="Outcomes" />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {goal.milestones.map(milestone => (
           <Pressable key={milestone.id} onPress={() => onToggleMilestone(milestone.id)}>
@@ -1692,24 +1704,24 @@ function SettingsTab(props: {
         <InlineButton label="Apply path settings" onPress={props.onApplyPath} />
       </GlassPanel>
 
-      <SectionTitle title="Learn defaults" subtitle="Used for new paths and code-alongs" />
+      <SectionTitle title="Learn defaults" subtitle="Defaults" />
       <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.defaultCodeLanguage} onChangeText={props.setDefaultCodeLanguage} placeholder="Default code language or tool" />
         <SettingsToggle
           title="Show teaching tools"
-          subtitle="Course studio, classroom, learner roster, assignments"
+          subtitle="Course, class, roster, assignments"
           value={props.settings.showTeacherTools}
           onValueChange={(showTeacherTools) => props.onUpdateSettings({ ...props.settings, showTeacherTools })}
         />
         <SettingsToggle
           title="Show code-along labs"
-          subtitle="Practice tab includes code/formula/build exercises"
+          subtitle="Code, formulas, builds"
           value={props.settings.showCodeLabs}
           onValueChange={(showCodeLabs) => props.onUpdateSettings({ ...props.settings, showCodeLabs })}
         />
         <SettingsToggle
           title="Auto-link study notes"
-          subtitle="Notes made in Learn are saved to Notes and attached as resources"
+          subtitle="Save Learn notes to Notes"
           value={props.settings.autoLinkNotes}
           onValueChange={(autoLinkNotes) => props.onUpdateSettings({ ...props.settings, autoLinkNotes })}
         />

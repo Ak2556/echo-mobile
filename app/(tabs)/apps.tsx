@@ -6,7 +6,7 @@ import Animated, { Extrapolation, FadeIn, FadeInDown, interpolate, useAnimatedPr
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Pulse, Target, MagnifyingGlass, CaretRight, X } from 'phosphor-react-native';
+import { Pulse, Target, MagnifyingGlass, CaretRight, X, Sparkle, Stack, CheckCircle } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { getTodayProductivity, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
 import { formatMoney } from '../../lib/expenses';
@@ -23,16 +23,17 @@ const PAD = 20;
 const GAP = 12;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
-type ToolLane = 'all' | 'plan' | 'focus' | 'money' | 'health' | 'capture' | 'utility';
+type ToolLane = 'all' | 'master' | 'plan' | 'focus' | 'money' | 'health' | 'capture' | 'utility';
 
 const TOOL_LANES: { id: ToolLane; label: string; apps?: string[] }[] = [
   { id: 'all', label: 'All' },
+  { id: 'master', label: 'Master', apps: ['learn', 'notes', 'pomodoro', 'tasks'] },
   { id: 'plan', label: 'Plan', apps: ['learn', 'tasks', 'planner', 'notes', 'habits'] },
   { id: 'focus', label: 'Focus', apps: ['pomodoro', 'learn', 'tasks', 'habits', 'notes'] },
   { id: 'money', label: 'Money', apps: ['expenses', 'shopping-list', 'calculator', 'notes'] },
   { id: 'health', label: 'Health', apps: ['fitness', 'habits', 'planner', 'notes'] },
   { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'camera', 'markdown', 'tasks'] },
-  { id: 'utility', label: 'Utility', apps: ['calculator', 'world-clock', 'password-gen', 'markdown'] },
+  { id: 'utility', label: 'Utility', apps: ['calculator', 'world-clock', 'password-gen'] },
 ];
 
 type MiniApp = MiniAppCatalogItem;
@@ -65,7 +66,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
         style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.965 : 1 }] })}
       >
         <View style={{
-          minHeight: 120,
+          minHeight: 178,
           borderRadius: 20,
           overflow: 'hidden',
           backgroundColor: colors.surface,
@@ -81,18 +82,89 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
-          <MiniAppIcon id={app.id} color={app.color} size={44} />
-          <View style={{ marginTop: 12 }}>
-            <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold', lineHeight: 19 }} numberOfLines={1}>
-              {app.name}
-            </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 16, marginTop: 2 }} numberOfLines={2}>
-              {app.description}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11 }}>
+            <MiniAppIcon id={app.id} color={app.color} size={44} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 10.5, fontFamily: 'Inter_700Bold', letterSpacing: 1, textTransform: 'uppercase' }} numberOfLines={1}>
+                {app.suite}
+              </Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Inter_700Bold', lineHeight: 20, marginTop: 2 }} numberOfLines={1}>
+                {app.name}
+              </Text>
+            </View>
+          </View>
+          <View style={{ marginTop: 13 }}>
+            <Text style={{ color: colors.text, fontSize: 13.2, fontFamily: 'Inter_600SemiBold', lineHeight: 18 }} numberOfLines={3}>
+              {app.promise}
             </Text>
           </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+            {app.highlights.slice(0, 2).map(item => (
+              <View key={item} style={{ borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 10.8, fontFamily: 'Inter_600SemiBold' }} numberOfLines={1}>{item}</Text>
+              </View>
+            ))}
+          </View>
+          <Text style={{ color: colors.textMuted, fontSize: 11.2, lineHeight: 15, marginTop: 11 }} numberOfLines={1}>
+            Replaces {app.replaces.slice(0, 2).join(' + ')}
+          </Text>
         </View>
       </Pressable>
     </Animated.View>
+  );
+}
+
+function EssentialSuiteCard({ apps, onOpen }: { apps: MiniApp[]; onOpen: (app: MiniApp) => void }) {
+  const { colors } = useTheme();
+  const lead = apps[0];
+  return (
+    <View style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+      <LinearGradient
+        colors={[`${colors.accent}24`, 'rgba(255,255,255,0.02)', 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+      <View style={{ padding: 17, gap: 15 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
+          <View style={{ width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}1F` }}>
+            <Stack color={colors.accent} size={24} weight="fill" />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={{ color: colors.text, fontSize: 21, lineHeight: 26, fontFamily: 'Fraunces_600SemiBold' }} numberOfLines={2}>
+              15 essential apps, one connected system
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={2}>
+              Each tool shares Echo actions, search, targets, recents, and app memory.
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {[
+            ['No app hopping', 'All tools live here'],
+            ['Context aware', 'Coach uses your work'],
+            ['Share progress', 'Post or compare anytime'],
+          ].map(([title, sub]) => (
+            <View key={title} style={{ flex: 1, borderRadius: 16, padding: 11, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <CheckCircle color={colors.accent} size={15} weight="fill" />
+              <Text style={{ color: colors.text, fontSize: 11.5, fontFamily: 'Inter_700Bold', marginTop: 7 }} numberOfLines={1}>{title}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 10.5, lineHeight: 14, marginTop: 2 }} numberOfLines={2}>{sub}</Text>
+            </View>
+          ))}
+        </View>
+
+        {lead ? (
+          <Pressable onPress={() => onOpen(lead)} accessibilityRole="button" accessibilityLabel={`Open ${lead.name}`} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
+            <View style={{ minHeight: 50, borderRadius: 16, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, paddingHorizontal: 16 }}>
+              <Sparkle color="#fff" size={18} weight="fill" />
+              <Text style={{ color: '#fff', fontSize: 14.5, fontFamily: 'Inter_700Bold' }}>Start with {lead.name}</Text>
+            </View>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
@@ -267,7 +339,13 @@ export default function AppsScreen() {
   const toolMatches = useMemo(() => searching
     ? APPS.filter(a => {
         const alias = resolveMiniAppId(q);
-        return a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q) || alias === a.id;
+        return a.name.toLowerCase().includes(q)
+          || a.description.toLowerCase().includes(q)
+          || a.promise.toLowerCase().includes(q)
+          || a.suite.toLowerCase().includes(q)
+          || a.highlights.some(h => h.toLowerCase().includes(q))
+          || a.replaces.some(r => r.toLowerCase().includes(q))
+          || alias === a.id;
       })
     : [], [q, searching]);
 
@@ -368,6 +446,10 @@ export default function AppsScreen() {
               onOpen={openTool}
             />
 
+            {lane === 'all' && (
+              <EssentialSuiteCard apps={APPS} onOpen={openTool} />
+            )}
+
             {/* Category lanes */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
               {TOOL_LANES.map(l => {
@@ -398,7 +480,7 @@ export default function AppsScreen() {
 
             {/* Tools grid */}
             <View style={{ gap: GAP }}>
-              <Eyebrow>{lane === 'all' ? `All tools · ${APPS.length}` : `${TOOL_LANES.find(l => l.id === lane)?.label} · ${laneApps.length}`}</Eyebrow>
+              <Eyebrow>{lane === 'all' ? `Premium essentials · ${APPS.length}` : `${TOOL_LANES.find(l => l.id === lane)?.label} suite · ${laneApps.length}`}</Eyebrow>
               {renderGrid(laneApps)}
             </View>
 
@@ -454,7 +536,7 @@ export default function AppsScreen() {
 
             <View style={{ alignItems: 'center', paddingVertical: 12, gap: 6 }}>
               <Pulse color={colors.textMuted} size={22} weight="thin" />
-              <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '500' }}>No internet needed · Zero data collected</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '500' }}>Private · Ready</Text>
             </View>
           </>
         )}
@@ -466,7 +548,7 @@ export default function AppsScreen() {
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }, headerBgStyle]} />
         <View style={{ width: '100%', maxWidth: contentMaxWidth, alignSelf: 'center', paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
           <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>Echo Tools</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>Think, capture, and post better</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>15 connected essentials</Text>
         </View>
         <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }, headerBorderStyle]} />
       </View>

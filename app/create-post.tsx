@@ -588,18 +588,14 @@ export default function CreatePostScreen() {
 
           {/* Author */}
           <Animated.View entering={animation(FadeInDown.delay(40).duration(220))} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 }}>
-            {visibleAvatarUrl ? (
-              <Image
-                source={{ uri: visibleAvatarUrl }}
-                style={{ width: 40, height: 40, borderRadius: 20, marginRight: 10 }}
-                contentFit="cover"
-                cachePolicy="memory-disk"
+            <View style={{ marginRight: 10 }}>
+              <Avatar
+                name={displayName || username || 'You'}
+                color={avatarColor}
+                url={visibleAvatarUrl || undefined}
+                size={40}
               />
-            ) : (
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: warmAvatarColor(avatarColor, username ?? 'me'), alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.body }}>{(username || '?').charAt(0).toUpperCase()}</Text>
-              </View>
-            )}
+            </View>
             <View>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{displayName || username || 'You'}</Text>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{username || 'anonymous'}</Text>

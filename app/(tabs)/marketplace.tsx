@@ -293,7 +293,7 @@ function MarketHero({ total, services, targetLabel, onSell }: { total: number; s
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 33 }]}>
-              Market for builders, creators, and focused people.
+              Buy what helps. Sell what others need.
             </Text>
           </View>
         </View>
@@ -657,7 +657,7 @@ export default function MarketplaceScreen() {
                 Market
               </Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]} numberOfLines={1}>
-                Buy, sell, and hire inside Echo
+                Everyone can buy. Anyone can sell.
               </Text>
             </View>
           </View>
@@ -722,7 +722,7 @@ export default function MarketplaceScreen() {
                 No listings found
               </Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center' }]}>
-                Change filters or create the first listing for this lane.
+                Try another lane or seed the market with the first useful listing.
               </Text>
               <Pressable
                 onPress={() => router.push('/create-listing' as Href)}

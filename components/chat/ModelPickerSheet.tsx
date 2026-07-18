@@ -25,21 +25,21 @@ const MODELS: ModelMeta[] = [
   {
     key: 'gemini-2.5-flash',
     name: 'Flash',
-    tagline: 'Fast, balanced — the default',
+    tagline: 'Balanced',
     Icon: Lightning,
     accent: '#FACC15', // amber — speed
   },
   {
     key: 'gemini-2.5-pro',
     name: 'Pro',
-    tagline: 'Deepest thinking, slower',
+    tagline: 'Deep',
     Icon: Star,
     accent: '#A78BFA', // violet — premium
   },
   {
     key: 'gemini-2.5-flash-lite',
     name: 'Lite',
-    tagline: 'Light replies, fewer compute hits',
+    tagline: 'Fast',
     Icon: Sparkle,
     accent: '#38BDF8', // cyan — featherweight
   },
