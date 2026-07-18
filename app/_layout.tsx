@@ -5,6 +5,8 @@ import { Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../lib/analytics';
+import { recordAppOpen, noteNudgeOpened } from '../lib/personalNudges';
+import { cancelLegacyProactiveNudges } from '../lib/proactiveNudges';
 import { captureException, initMonitoring, wrapRoot } from '../lib/monitoring';
 import { getAnalyticsConsent } from '../lib/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
@@ -101,10 +103,14 @@ function RootLayout() {
     Fraunces_600SemiBold,
   });
 
-  // One app_open per cold start.
+  // One app_open per cold start. Also feeds the on-device engagement model
+  // (learns *when* this user is active) that drives personalized nudge timing.
   useEffect(() => {
     const coldMs = Date.now() - COLD_START_T0;
     track('app_open', { cold_ms: coldMs });
+    recordAppOpen();
+    // Retire the old fixed-slot check-ins in favor of personalized nudges.
+    void cancelLegacyProactiveNudges();
   }, []);
 
   // Push notification taps.
@@ -112,7 +118,7 @@ function RootLayout() {
     if (Platform.OS === 'web') return;
 
     let cancelled = false;
-    const VALID_KINDS = new Set(['daily_question', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin']);
+    const VALID_KINDS = new Set(['daily_question', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin', 'personal_nudge']);
     const route = (data: Record<string, unknown> | null | undefined) => {
       if (!data) return;
       const kind = String(data.kind ?? '');
@@ -120,6 +126,18 @@ function RootLayout() {
       if (kind === 'echo_checkin') {
         track('notification_tapped', { kind });
         router.push('/(tabs)/chat');
+        return;
+      }
+      if (kind === 'personal_nudge') {
+        // The tap is our on-device "opened" signal — it resets nudge back-off.
+        noteNudgeOpened();
+        track('notification_tapped', { kind, surface: String(data.surface ?? '') });
+        const surface = String(data.surface ?? '');
+        if (surface === 'daily') router.push('/daily-question');
+        else if (surface === 'dm') router.push('/(tabs)/chat');
+        else if (surface === 'feed') router.push('/(tabs)/home');
+        else if (surface === 'marketplace') router.push('/(tabs)/marketplace');
+        else router.push('/(tabs)/chat');
         return;
       }
       const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
