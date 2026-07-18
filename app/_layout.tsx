@@ -118,7 +118,7 @@ function RootLayout() {
     if (Platform.OS === 'web') return;
 
     let cancelled = false;
-    const VALID_KINDS = new Set(['daily_question', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin', 'personal_nudge']);
+    const VALID_KINDS = new Set(['daily_question', 'daily_react', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin', 'personal_nudge']);
     const route = (data: Record<string, unknown> | null | undefined) => {
       if (!data) return;
       const kind = String(data.kind ?? '');
@@ -142,7 +142,7 @@ function RootLayout() {
       }
       const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
       const routeId = safeRouteId(targetId);
-      if (kind === 'daily_question') {
+      if (kind === 'daily_question' || kind === 'daily_react') {
         track('notification_tapped', { kind });
         router.push('/daily-question');
         return;

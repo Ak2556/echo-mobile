@@ -109,6 +109,11 @@ function titleFor(t: string, actorName: string, preview?: string): string {
     }
     case 'bookmark': return `${actorName} saved your echo`;
     case 'quote': return `${actorName} quoted your echo`;
+    case 'daily_react': {
+      // preview is "<emoji>  <answer snippet>" — lead the title with the emoji.
+      const emoji = preview ? preview.trim().split(/\s+/)[0] : '';
+      return emoji ? `${actorName} reacted ${emoji} to your answer` : `${actorName} reacted to your answer`;
+    }
     default: return 'Echo';
   }
 }
@@ -120,6 +125,11 @@ function messageFor(t: string, preview?: string): string {
     case 'mention':
     case 'quote':
       return (preview ?? '').slice(0, 140);
+    case 'daily_react': {
+      // Drop the leading emoji token; show the answer snippet as the body.
+      const parts = (preview ?? '').trim().split(/\s+/);
+      return parts.slice(1).join(' ').slice(0, 140);
+    }
     default:
       return '';
   }
