@@ -2059,6 +2059,10 @@ export interface DailyQuestion {
   question: string;
 }
 
+/** The curated reaction set for daily answers — earnest, not performative. */
+export const DAILY_REACTIONS = ['❤️', '🔥', '💡', '👏', '🤔'] as const;
+export type DailyReaction = (typeof DAILY_REACTIONS)[number];
+
 export interface DailyAnswerWithAuthor {
   id: string;
   question_id: string;
@@ -2073,6 +2077,9 @@ export interface DailyAnswerWithAuthor {
     avatar_url?: string | null;
     is_verified: boolean;
   };
+  /** Reaction tallies for this answer, and which the viewer has given. */
+  reactions: { emoji: string; count: number }[];
+  myReactions: string[];
 }
 
 /** Fetch today's daily question. Returns null when the seed is exhausted. */
@@ -2180,17 +2187,40 @@ export async function fetchDailyAnswers(questionId: string, limit = 100): Promis
   if (!list.length) return [];
 
   const authorIds = [...new Set(list.map(r => r.user_id))];
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, avatar_color, avatar_url, is_verified')
-    .in('id', authorIds);
+  const answerIds = list.map(r => r.id);
+  const uid = await getSessionUserId();
+  const [{ data: profiles }, { data: reactionRows }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_color, avatar_url, is_verified')
+      .in('id', authorIds),
+    supabase
+      .from('daily_answer_reactions')
+      .select('answer_id, emoji, user_id')
+      .in('answer_id', answerIds),
+  ]);
   const profileById = new Map((profiles as Array<{
     id: string; username: string; display_name: string; avatar_color: string;
     avatar_url?: string | null; is_verified: boolean;
   }> ?? []).map(p => [p.id, p]));
 
+  // Aggregate reaction counts per answer, and note the viewer's own reactions.
+  const countsByAnswer = new Map<string, Map<string, number>>();
+  const mineByAnswer = new Map<string, Set<string>>();
+  for (const row of (reactionRows as Array<{ answer_id: string; emoji: string; user_id: string }> ?? [])) {
+    const counts = countsByAnswer.get(row.answer_id) ?? new Map<string, number>();
+    counts.set(row.emoji, (counts.get(row.emoji) ?? 0) + 1);
+    countsByAnswer.set(row.answer_id, counts);
+    if (uid && row.user_id === uid) {
+      const mine = mineByAnswer.get(row.answer_id) ?? new Set<string>();
+      mine.add(row.emoji);
+      mineByAnswer.set(row.answer_id, mine);
+    }
+  }
+
   return list.map((r) => {
     const profile = profileById.get(r.user_id);
+    const counts = countsByAnswer.get(r.id);
     return {
       id: r.id,
       question_id: r.question_id,
@@ -2205,8 +2235,41 @@ export async function fetchDailyAnswers(questionId: string, limit = 100): Promis
         avatar_url: profile?.avatar_url ?? null,
         is_verified: profile?.is_verified ?? false,
       },
+      reactions: counts ? [...counts.entries()].map(([emoji, count]) => ({ emoji, count })) : [],
+      myReactions: [...(mineByAnswer.get(r.id) ?? [])],
     };
   });
+}
+
+/**
+ * Toggle the viewer's reaction on a daily answer. Insert-or-delete on the
+ * unique (answer_id, user_id, emoji); the insert fires fn_daily_reaction_notify,
+ * which notifies the author (and pushes). Returns the new on/off state.
+ */
+export async function toggleDailyAnswerReaction(answerId: string, emoji: string): Promise<boolean> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { data: existing } = await supabase
+    .from('daily_answer_reactions')
+    .select('id')
+    .eq('answer_id', answerId)
+    .eq('user_id', uid)
+    .eq('emoji', emoji)
+    .maybeSingle();
+  if (existing) {
+    const { error } = await supabase
+      .from('daily_answer_reactions')
+      .delete()
+      .eq('id', (existing as { id: string }).id);
+    if (error) throw error;
+    return false;
+  }
+  const { error } = await supabase
+    .from('daily_answer_reactions')
+    .insert({ answer_id: answerId, user_id: uid, emoji });
+  if (error) throw error;
+  bumpQuestProgress('daily_react').catch(() => undefined);
+  return true;
 }
 
 /** A daily answer plus how far it diverges from the day's consensus take. */
@@ -2258,6 +2321,8 @@ export async function fetchDivergentDailyAnswers(questionId: string, limit = 30)
       avatar_url: r.avatar_url ?? null,
       is_verified: r.is_verified ?? false,
     },
+    reactions: [],
+    myReactions: [],
     // cosine distance is 0..2; map to a friendlier 0–100 readout (1.0 distance ≈ orthogonal ≈ 50).
     divergence: Math.max(0, Math.min(100, Math.round(((r.divergence ?? 0) / 2) * 100))),
   }));

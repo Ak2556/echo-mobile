@@ -20,6 +20,8 @@ import {
   fetchDailyAnswers,
   fetchDivergentDailyAnswers,
   fetchDailyAnswerStreak,
+  toggleDailyAnswerReaction,
+  DAILY_REACTIONS,
   type DailyQuestion,
   type DailyAnswerWithAuthor,
   type DivergentDailyAnswer,
@@ -115,6 +117,32 @@ function DailyQuestionScreenInner() {
     () => draft.trim().length > 0 && draft.trim().length <= MAX_ANSWER_LENGTH && !submitting,
     [draft, submitting],
   );
+
+  // Optimistically toggle a reaction on an answer in either list, then persist.
+  const handleReact = async (answerId: string, emoji: string) => {
+    const mutate = (a: DailyAnswerWithAuthor): DailyAnswerWithAuthor => {
+      if (a.id !== answerId) return a;
+      const had = a.myReactions.includes(emoji);
+      const reactions = a.reactions
+        .map(r => r.emoji === emoji ? { ...r, count: r.count + (had ? -1 : 1) } : r)
+        .filter(r => r.count > 0);
+      if (!had && !reactions.some(r => r.emoji === emoji)) reactions.push({ emoji, count: 1 });
+      return {
+        ...a,
+        reactions,
+        myReactions: had ? a.myReactions.filter(e => e !== emoji) : [...a.myReactions, emoji],
+      };
+    };
+    setAnswers(prev => prev.map(mutate));
+    setDivergent(prev => prev.map(d => ({ ...mutate(d), divergence: d.divergence })));
+    try {
+      await toggleDailyAnswerReaction(answerId, emoji);
+    } catch (e) {
+      // Revert on failure by reloading the authoritative lists.
+      captureException(e, { tags: { screen: 'daily-question', action: 'react' } });
+      void loadAnswers();
+    }
+  };
 
   const handleSubmit = async () => {
     if (!question || !canSubmit) return;
@@ -329,7 +357,7 @@ function DailyQuestionScreenInner() {
                   </View>
                 ) : (
                   divergent.map((a) => (
-                    <AnswerCard key={a.id} a={a} divergence={a.divergence} />
+                    <AnswerCard key={a.id} a={a} divergence={a.divergence} onReact={handleReact} />
                   ))
                 )
               ) : answers.length === 0 ? (
@@ -348,7 +376,7 @@ function DailyQuestionScreenInner() {
                 </View>
               ) : (
                 answers.map((a) => (
-                  <AnswerCard key={a.id} a={a} />
+                  <AnswerCard key={a.id} a={a} onReact={handleReact} />
                 ))
               )}
             </Animated.View>
@@ -419,12 +447,18 @@ function ViewChip({
   );
 }
 
-function AnswerCard({ a, divergence }: { a: DailyAnswerWithAuthor; divergence?: number }) {
+function AnswerCard({
+  a, divergence, onReact,
+}: {
+  a: DailyAnswerWithAuthor;
+  divergence?: number;
+  onReact?: (answerId: string, emoji: string) => void;
+}) {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
+  const countFor = (emoji: string) => a.reactions.find(r => r.emoji === emoji)?.count ?? 0;
   return (
-    <AnimatedPressable
-      onPress={() => router.push(`/user/${a.author.username}`)}
+    <View
       style={{
         backgroundColor: colors.surface,
         borderRadius: radius.lg,
@@ -433,47 +467,82 @@ function AnswerCard({ a, divergence }: { a: DailyAnswerWithAuthor; divergence?: 
         borderWidth: 1,
         borderColor: colors.border,
       }}
-      scaleValue={0.98}
-      haptic="none"
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-        <ProfileAvatar
-          displayName={a.author.display_name}
-          avatarColor={a.author.avatar_color}
-          avatarUrl={a.author.avatar_url ?? undefined}
-          size={32}
-          showHalo={false}
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>
-            {a.author.display_name}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-            @{a.author.username}
-          </Text>
-        </View>
-        {divergence != null && (
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 4,
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 99,
-            backgroundColor: colors.accent + '1F',
-          }}>
-            <Lightning size={11} weight="fill" color={colors.accent} />
-            <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '800' }}>
-              {divergence}% divergent
+      {/* Header + answer body navigate to the author's profile. */}
+      <AnimatedPressable onPress={() => router.push(`/user/${a.author.username}`)} scaleValue={0.99} haptic="none">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <ProfileAvatar
+            displayName={a.author.display_name}
+            avatarColor={a.author.avatar_color}
+            avatarUrl={a.author.avatar_url ?? undefined}
+            size={32}
+            showHalo={false}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>
+              {a.author.display_name}
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+              @{a.author.username}
             </Text>
           </View>
-        )}
+          {divergence != null && (
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 99,
+              backgroundColor: colors.accent + '1F',
+            }}>
+              <Lightning size={11} weight="fill" color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '800' }}>
+                {divergence}% divergent
+              </Text>
+            </View>
+          )}
+        </View>
+        <LinkifiedText
+          text={a.answer}
+          style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22 }}
+        />
+      </AnimatedPressable>
+
+      {/* Reaction row — earnest set, count shown when > 0, viewer's own tinted. */}
+      <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
+        {DAILY_REACTIONS.map((emoji) => {
+          const count = countFor(emoji);
+          const mine = a.myReactions.includes(emoji);
+          return (
+            <AnimatedPressable
+              key={emoji}
+              onPress={() => onReact?.(a.id, emoji)}
+              scaleValue={0.9}
+              haptic="light"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 9,
+                paddingVertical: 5,
+                borderRadius: 99,
+                backgroundColor: mine ? colors.accent + '22' : colors.surfaceHover,
+                borderWidth: 1,
+                borderColor: mine ? colors.accent + '66' : 'transparent',
+              }}
+            >
+              <Text style={{ fontSize: 13 }}>{emoji}</Text>
+              {count > 0 && (
+                <Text style={{ color: mine ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, fontWeight: '700' }}>
+                  {count}
+                </Text>
+              )}
+            </AnimatedPressable>
+          );
+        })}
       </View>
-      <LinkifiedText
-        text={a.answer}
-        style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22 }}
-      />
-    </AnimatedPressable>
+    </View>
   );
 }
 
