@@ -40,6 +40,7 @@ import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { getTargetCategory } from '../../lib/targetCategories';
 import { miniAppById } from '../../lib/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
+import { persistGet } from '../../store/persist';
 
 // ─── DM colour token (teal, distinct from AI accent) ────────────────────────
 // One accent per app: the DM surfaces use the same warm brand accent as
@@ -75,19 +76,25 @@ function DMConversationCard({
   }
   const hasUnread = conv.unreadCount > 0;
   const online = !conv.isGroup && isUserOnline(conv.userId);
-  const subtitle = conv.isGroup
+  const draft = persistGet<string>('chat:draft:' + conv.id, '').trim();
+  const subtitle = draft
+    ? `Draft · ${draft}`
+    : conv.isGroup
     ? `${conv.memberCount ?? 1} members${conv.lastMessage ? ` · ${conv.lastMessage}` : ''}`
     : conv.lastMessage || `@${conv.username}`;
 
-  // Editorial row: no box, no chevron chrome — a hairline list where unread
-  // speaks through typographic weight and one accent chip.
   return (
     <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}>
       <View style={{
         flexDirection: 'row', alignItems: 'center',
-        paddingVertical: 14,
-        borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
+        minHeight: 74,
+        paddingHorizontal: 13,
+        paddingVertical: 12,
+        marginBottom: isLast ? 0 : 9,
+        borderRadius: 22,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: hasUnread ? `${colors.accent}66` : colors.border,
+        backgroundColor: hasUnread ? colors.accentMuted : colors.surface,
       }}>
         <View style={{ marginRight: 13 }}>
           <Avatar
@@ -115,14 +122,33 @@ function DMConversationCard({
             {conv.isVerified && <SealCheck color={colors.accent} size={13} weight="fill" />}
           </View>
           <Text style={{
-            color: hasUnread ? colors.textSecondary : colors.textMuted,
+            color: draft ? colors.accent : hasUnread ? colors.textSecondary : colors.textMuted,
             fontSize: 13,
             lineHeight: 18,
             marginTop: 2,
-            fontFamily: hasUnread ? 'Inter_500Medium' : 'Inter_400Regular',
+            fontFamily: draft || hasUnread ? 'Inter_600SemiBold' : 'Inter_400Regular',
           }} numberOfLines={1}>
             {subtitle}
           </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 7 }}>
+            <View style={{
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
+              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+              {conv.isGroup ? <Users color={colors.textMuted} size={11} weight="bold" /> : <ChatCircleText color={colors.textMuted} size={11} weight="bold" />}
+              <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '800' }}>{conv.isGroup ? 'Group' : online ? 'Online' : 'DM'}</Text>
+            </View>
+            {hasUnread ? (
+              <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: colors.accent }}>
+                <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '900' }}>New</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
 
         <View style={{ marginLeft: 12, alignItems: 'flex-end', gap: 6 }}>
@@ -144,6 +170,7 @@ function DMConversationCard({
               </Text>
             </View>
           )}
+          {!hasUnread ? <CaretRight color={colors.textMuted} size={14} /> : null}
         </View>
       </View>
     </Pressable>
@@ -153,43 +180,124 @@ function DMConversationCard({
 function DMInboxHeader({
   count,
   unread,
+  groups,
   onInbox,
   onNewGroup,
 }: {
   count: number;
   unread: number;
+  groups: number;
   onInbox: () => void;
   onNewGroup: () => void;
 }) {
   const { colors, font } = useTheme();
 
-  // Text-as-interface: actions are quiet hairline rows (the same language as
-  // the profile Account panel), and the status is a serif line — the one
-  // typographic moment this pane gets.
   const actions = [
-    { key: 'message', label: 'New message', caption: 'Start a private conversation', Icon: PencilSimple, onPress: onInbox },
-    { key: 'group', label: 'New group', caption: 'Bring a few people together', Icon: Users, onPress: onNewGroup },
+    { key: 'message', label: 'New message', caption: 'Private chat', Icon: PencilSimple, onPress: onInbox, accent: DM_COLOR },
+    { key: 'group', label: 'New group', caption: 'Shared progress', Icon: Users, onPress: onNewGroup, accent: '#38BDF8' },
+  ];
+  const stats = [
+    { label: 'Unread', value: unread },
+    { label: 'Groups', value: groups },
+    { label: 'Total', value: count },
   ];
 
   return (
-    <View style={{ marginBottom: 4 }}>
-      <View>
-        {actions.map((action, i) => (
-          <Pressable key={action.key} onPress={action.onPress} accessibilityRole="button">
+    <View style={{ marginBottom: 10, gap: 12 }}>
+      <View style={{
+        borderRadius: 28,
+        overflow: 'hidden',
+        backgroundColor: colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.border,
+      }}>
+        <LinearGradient
+          colors={[`${DM_COLOR}44`, `${DM_COLOR}12`, 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <View style={{ padding: 17, gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
             <View style={{
-              flexDirection: 'row', alignItems: 'center', gap: 13,
-              paddingVertical: 13,
-              borderBottomWidth: StyleSheet.hairlineWidth,
-              borderBottomColor: colors.border,
-              borderTopWidth: i === 0 ? StyleSheet.hairlineWidth : 0,
-              borderTopColor: colors.border,
+              width: 50,
+              height: 50,
+              borderRadius: 19,
+              backgroundColor: DM_COLOR,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: DM_COLOR,
+              shadowOpacity: 0.22,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 8 },
             }}>
-              <action.Icon color={colors.accent} size={18} weight="regular" />
-              <View style={{ flex: 1 }}>
-                <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14.5 }]}>{action.label}</Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 1 }]}>{action.caption}</Text>
+              <Envelope color="#fff" size={24} weight="fill" />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[font.display, { color: colors.text, fontSize: 24, lineHeight: 30 }]}>Messages that move</Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 4 }]}>
+                {unread ? `${unread} unread.` : count ? `${count} threads · clear.` : 'Start something useful.'}
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {stats.map(stat => (
+              <View
+                key={stat.label}
+                style={{
+                  flex: 1,
+                  borderRadius: 16,
+                  padding: 10,
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)',
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.glassBorder,
+                }}
+              >
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{stat.value}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{stat.label}</Text>
               </View>
-              <CaretRight color={colors.textMuted} size={13} />
+            ))}
+          </View>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        {actions.map(action => (
+          <Pressable
+            key={action.key}
+            onPress={action.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={action.label}
+            style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.68 : 1 })}
+          >
+            <View style={{
+              minHeight: 74,
+              borderRadius: 21,
+              overflow: 'hidden',
+              paddingHorizontal: 13,
+              paddingVertical: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              backgroundColor: colors.surface,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: `${action.accent}55`,
+            }}>
+              <LinearGradient
+                colors={[`${action.accent}22`, `${action.accent}08`, 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <View style={{ width: 40, height: 40, borderRadius: 15, backgroundColor: `${action.accent}24`, alignItems: 'center', justifyContent: 'center' }}>
+                <action.Icon color={action.accent} size={19} weight="bold" />
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[font.bodyBold, { color: colors.text, fontSize: 14.5 }]} numberOfLines={1}>{action.label}</Text>
+                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{action.caption}</Text>
+              </View>
             </View>
           </Pressable>
         ))}
@@ -223,7 +331,7 @@ function DMInboxHeader({
 // ─── DMInboxView ─────────────────────────────────────────────────────────────
 function DMInboxView({ topPad }: { topPad: number }) {
   const router = useRouter();
-  const { colors, fontSizes } = useTheme();
+  const { colors } = useTheme();
   const layout = useResponsiveLayout();
   const remote = isSupabaseRemote();
   const localConversations = useAppStore(s => s.conversations);
@@ -250,6 +358,7 @@ function DMInboxView({ topPad }: { topPad: number }) {
     (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
   );
   const unreadCount = sorted.reduce((sum, c) => sum + c.unreadCount, 0);
+  const groupCount = sorted.filter(c => c.isGroup).length;
   const previewConversations = sorted.slice(0, 6);
 
   if (remote && isLoading) {
@@ -288,6 +397,7 @@ function DMInboxView({ topPad }: { topPad: number }) {
         <DMInboxHeader
           count={sorted.length}
           unread={unreadCount}
+          groups={groupCount}
           onInbox={() => router.push('/messages' as Href)}
           onNewGroup={() => router.push('/messages?newGroup=1' as Href)}
         />
@@ -1282,7 +1392,7 @@ export default function ChatScreen() {
                 {chatMode === 'ai' ? 'Echo Chat' : 'Messages'}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_500Medium' }} numberOfLines={1}>
-                {chatMode === 'ai' ? `${modelLabel(aiModel)} · ${messages.length} message${messages.length === 1 ? '' : 's'}` : 'Private conversations'}
+                {chatMode === 'ai' ? `${modelLabel(aiModel)} · ${messages.length} message${messages.length === 1 ? '' : 's'}` : 'Private · rich · remembered'}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

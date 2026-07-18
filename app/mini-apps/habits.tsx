@@ -13,7 +13,7 @@ import { Plus, Minus, CheckCircle, CircleDashed, Fire, Trash, X, Camera, Images,
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -511,8 +511,6 @@ export default function HabitsApp() {
   const [showArchived, setShowArchived] = useState(false);
   const detailHabit = detailId ? habits.find(h => h.id === detailId) ?? null : null;
 
-  const todayLabel = new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
-
   const AddBtn = (
     <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ backgroundColor: accent, borderRadius: 12, padding: 10 }}>
       <Plus color="#fff" size={18} weight="bold" />
@@ -520,7 +518,18 @@ export default function HabitsApp() {
   );
 
   return (
-    <MiniAppShell title="Habits" subtitle={todayLabel} headerRight={AddBtn}>
+    <MiniAppShell title="Habits" subtitle="Streak" headerRight={AddBtn}>
+      <MiniCommandDeck
+        accent={accent}
+        title="Consistency engine"
+        subtitle="Streaks, proof, recovery."
+        metrics={[
+          { label: 'Today', value: `${doneToday}/${dueToday.length}`, detail: 'due' },
+          { label: 'Best', value: `${bestStreak}`, detail: 'streak' },
+          { label: 'Proof', value: `${proofCount}`, detail: 'logs' },
+        ]}
+        chips={['Proof-backed', 'Reminder-ready', 'Compare progress']}
+      />
       {/* Progress */}
       {dueToday.length > 0 && (
         <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
@@ -561,7 +570,7 @@ export default function HabitsApp() {
           accent={accent}
           icon={<Fire color={colors.textMuted} size={48} weight="thin" />}
           title="No habits yet"
-          subtitle="Build a routine you can keep — start with one small daily habit."
+          subtitle="Start with one small behavior you can repeat and prove."
           actionLabel="Add your first habit"
           onAction={() => setShowAdd(true)}
         />

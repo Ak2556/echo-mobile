@@ -83,6 +83,7 @@ export default function CommentsScreen() {
       username,
       displayName: displayName || username,
       avatarColor,
+      avatarUrl,
       isVerified: false,
       content: text.trim(),
       likes: 0,

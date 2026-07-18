@@ -4,6 +4,7 @@ import { Barbell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -54,6 +55,44 @@ function InputField({ label, value, onChange, placeholder, unit }: { label: stri
         {unit && <Text style={{ color: colors.textMuted, fontSize: 14, marginLeft: 4, marginBottom: 2 }}>{unit}</Text>}
       </View>
     </View>
+  );
+}
+
+function HealthPulse({ accent, bmi, category, idealRange, calories, unit }: {
+  accent: string;
+  bmi: number | null;
+  category: ReturnType<typeof getCat> | null;
+  idealRange: string;
+  calories?: number;
+  unit: Unit;
+}) {
+  const { colors } = useTheme();
+  const tiles = [
+    { label: 'BMI', value: bmi ? bmi.toFixed(1) : 'Set', detail: category?.label ?? 'input' },
+    { label: 'Ideal', value: idealRange, detail: unit === 'metric' ? 'kg range' : 'lb range' },
+    { label: 'Energy', value: calories ? `${calories}` : 'Age', detail: calories ? 'kcal/day' : 'needed' },
+  ];
+  return (
+    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+          <Barbell color={accent} size={20} weight="fill" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Health baseline</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>BMI, range, calories.</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {tiles.map(tile => (
+          <View key={tile.label} style={{ flex: 1, minHeight: 64, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <Text style={{ color: accent, fontSize: tile.value.length > 8 ? 13 : 17, fontWeight: '900' }} numberOfLines={1}>{tile.value}</Text>
+            <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{tile.label}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{tile.detail}</Text>
+          </View>
+        ))}
+      </View>
+    </GlassPanel>
   );
 }
 
@@ -136,6 +175,8 @@ export default function BmiScreen() {
   const bmi = calcBmi();
   const cat = bmi ? getCat(bmi) : null;
   const pct = bmi ? Math.min(100, Math.max(0, ((bmi - 10) / 35) * 100)) : 0;
+  const eNow = energy();
+  const healthAccent = cat?.color ?? accent;
 
   const getIdealRange = (): string => {
     let hM: number;
@@ -148,6 +189,18 @@ export default function BmiScreen() {
 
   return (
     <MiniAppShell title="BMI Calculator" subtitle="Body mass index">
+      <MiniCommandDeck
+        accent={healthAccent}
+        title="Body metrics into targets"
+        subtitle="BMI, energy, macros, Fitness sync."
+        metrics={[
+          { label: 'BMI', value: bmi ? bmi.toFixed(1) : 'Set', detail: 'baseline' },
+          { label: 'Class', value: cat?.marker ?? '-', detail: cat?.label ?? 'pending' },
+          { label: 'Calories', value: eNow ? `${eNow.tdee}` : 'Age', detail: eNow ? 'TDEE' : 'needed' },
+        ]}
+        chips={['BMI range', 'Macro targets', 'Fitness sync']}
+      />
+      <HealthPulse accent={healthAccent} bmi={bmi} category={cat} idealRange={getIdealRange()} calories={eNow?.tdee} unit={unit} />
       {/* Unit toggle */}
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
         {(['metric', 'imperial'] as Unit[]).map(u => (

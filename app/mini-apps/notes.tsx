@@ -16,7 +16,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniHero, MiniChip, MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniChip, MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { showToast } from '../../components/ui/Toast';
 import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/notes';
 
@@ -697,16 +697,16 @@ export default function NotesApp() {
       headerRight={NewBtn}
       bottomPad={56}
     >
-      <MiniHero
+      <MiniCommandDeck
         accent={accent}
-        icon={<NotePencil color={accent} size={24} weight="bold" />}
-        title="Capture everything."
-        subtitle="Ideas, checklists, meetings, research, and Echo drafts in one place."
-        stats={[
-          { label: 'Pinned', value: `${pinnedCount}` },
-          { label: 'Favorites', value: `${favoriteCount}` },
-          { label: 'Lists', value: `${checklistCount}` },
+        title="Knowledge capture system"
+        subtitle="Ideas, drafts, recall."
+        metrics={[
+          { label: 'Active', value: `${activeNotes.length}`, detail: 'notes' },
+          { label: 'Words', value: `${totalWords}`, detail: 'saved' },
+          { label: 'Lists', value: `${checklistCount}`, detail: 'checklists' },
         ]}
+        chips={['Templates', 'Folders', 'Echo drafts']}
       />
 
       <EdgeFeaturePanel

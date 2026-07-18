@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, type ViewStyle, type TextStyle, type StyleProp } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -15,9 +16,119 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
  * are baked in so no app can drift.
  */
 
+function shade(hex: string, factor: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (c: number) => Math.max(0, Math.round(c * (1 - factor)));
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(f);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
 export interface MiniStat {
   label: string;
   value: string;
+}
+
+export interface MiniDeckMetric {
+  label: string;
+  value: string;
+  detail?: string;
+}
+
+export function MiniCommandDeck({
+  accent,
+  title,
+  subtitle,
+  metrics,
+  chips = [],
+  compact = false,
+}: {
+  accent: string;
+  title: string;
+  subtitle: string;
+  metrics: MiniDeckMetric[];
+  chips?: string[];
+  compact?: boolean;
+}) {
+  const { colors, font } = useTheme();
+  return (
+    <GlassPanel
+      variant="medium"
+      borderRadius={compact ? 18 : 22}
+      elevated={!compact}
+      style={{ marginBottom: compact ? 10 : 16, borderColor: `${accent}38` }}
+      contentStyle={{ padding: compact ? 11 : 16 }}
+    >
+      <LinearGradient
+        colors={[`${accent}22`, colors.isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.52)', 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: compact ? 9 : 12 }}>
+        <View style={{ width: compact ? 5 : 6, alignSelf: 'stretch', minHeight: compact ? 38 : 62, borderRadius: 99, backgroundColor: accent }} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[font.display, { color: colors.text, fontSize: compact ? 16 : 21, lineHeight: compact ? 20 : 26 }]} numberOfLines={compact ? 1 : 2}>
+            {title}
+          </Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: compact ? 11.2 : 12.5, lineHeight: compact ? 15 : 17, marginTop: 3 }]} numberOfLines={compact ? 1 : 2}>
+            {subtitle}
+          </Text>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: compact ? 6 : 8, marginTop: compact ? 10 : 15 }}>
+        {metrics.slice(0, 3).map(metric => (
+          <View
+            key={metric.label}
+            style={{
+              flex: 1,
+              minHeight: compact ? 48 : 70,
+              borderRadius: compact ? 12 : 15,
+              padding: compact ? 8 : 11,
+              backgroundColor: colors.surfaceHover,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.glassBorder,
+            }}
+          >
+            <Text style={[font.display, { color: accent, fontSize: compact ? 16 : 22, lineHeight: compact ? 18 : 25 }]} numberOfLines={1}>
+              {metric.value}
+            </Text>
+            <Text style={[font.bodySemibold, { color: colors.text, fontSize: compact ? 10.2 : 11.5, marginTop: compact ? 1 : 3 }]} numberOfLines={1}>
+              {metric.label}
+            </Text>
+            {metric.detail && !compact ? (
+              <Text style={[font.body, { color: colors.textMuted, fontSize: 10.5, marginTop: 1 }]} numberOfLines={1}>
+                {metric.detail}
+              </Text>
+            ) : null}
+          </View>
+        ))}
+      </View>
+
+      {chips.length > 0 && !compact ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 12 }}>
+          {chips.slice(0, 4).map(chip => (
+            <View
+              key={chip}
+              style={{
+                borderRadius: 999,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                backgroundColor: `${accent}17`,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: `${accent}40`,
+              }}
+            >
+              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11.2 }]} numberOfLines={1}>
+                {chip}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </GlassPanel>
+  );
 }
 
 /** Hero block: accent glyph + Fraunces headline + caption + optional stat row. */
@@ -245,10 +356,38 @@ export function MiniButton({
         minHeight: 48,
         borderRadius: 16,
         paddingHorizontal: 20,
+        overflow: 'hidden',
         backgroundColor: filled ? accent : colors.surface,
         borderWidth: filled ? 0 : StyleSheet.hairlineWidth,
         borderColor: colors.glassBorder,
+        shadowColor: filled ? accent : '#000',
+        shadowOpacity: filled ? 0.22 : (colors.isDark ? 0.16 : 0.07),
+        shadowRadius: filled ? 14 : 8,
+        shadowOffset: { width: 0, height: filled ? 8 : 4 },
+        elevation: filled ? 4 : 2,
       }}>
+        {filled ? (
+          <>
+            <LinearGradient
+              colors={[accent, shade(accent, 0.18)]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 1,
+                backgroundColor: 'rgba(255,255,255,0.28)',
+              }}
+            />
+          </>
+        ) : null}
         {icon}
         <Text style={[font.bodyBold, { color: filled ? '#fff' : colors.text, fontSize: 15 }]}>{label}</Text>
       </View>

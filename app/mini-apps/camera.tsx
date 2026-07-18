@@ -1,38 +1,164 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, Image, Pressable,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, StyleSheet,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInDown, ZoomIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import {
   Camera, VideoCamera, CameraRotate,
-  CameraPlus, Trash, X,
+  CameraPlus, Trash, X, SealCheck, ImageSquare, FolderSimple, Stack, Tag,
 } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
+import { CameraCapture, CameraCaptureType, loadCameraCaptures, saveCameraCaptures } from '../../lib/cameraCaptures';
+import { uploadMiniAppMedia } from '../../lib/miniAppMedia';
 
-type Mode = 'photo' | 'video';
-type MediaItem = { uri: string; type: Mode; width?: number; height?: number };
+type Mode = CameraCaptureType;
+type CaptureIntent = 'proof' | 'progress' | 'listing' | 'document';
 
 const VIDEO_COLOR = '#EF4444';
+const INTENTS: { key: CaptureIntent; label: string; detail: string; icon: any }[] = [
+  { key: 'proof', label: 'Proof', detail: 'Evidence', icon: SealCheck },
+  { key: 'progress', label: 'Progress', detail: 'Before/after', icon: Stack },
+  { key: 'listing', label: 'Listing', detail: 'Sell-ready', icon: Tag },
+  { key: 'document', label: 'Document', detail: 'Scan-like', icon: FolderSimple },
+];
+
+function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; accent: string; onChange: (v: CaptureIntent) => void }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 9 }}>
+        Capture intent
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {INTENTS.map(intent => {
+          const Icon = intent.icon;
+          const active = value === intent.key;
+          return (
+            <AnimatedPressable
+              key={intent.key}
+              onPress={() => onChange(intent.key)}
+              scaleValue={0.95}
+              haptic="light"
+              style={{
+                width: '48.5%',
+                minHeight: 62,
+                borderRadius: 17,
+                paddingHorizontal: 12,
+                justifyContent: 'center',
+                backgroundColor: active ? accent : colors.surface,
+                borderWidth: 1,
+                borderColor: active ? `${accent}AA` : colors.glassBorder,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Icon color={active ? '#fff' : accent} size={17} weight="bold" />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ color: active ? '#fff' : colors.text, fontSize: 14, fontWeight: '900' }}>{intent.label}</Text>
+                  <Text style={{ color: active ? 'rgba(255,255,255,0.76)' : colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{intent.detail}</Text>
+                </View>
+              </View>
+            </AnimatedPressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function CaptureReadiness({ accent, mode, intent, captured }: { accent: string; mode: Mode; intent: CaptureIntent; captured: CameraCapture[] }) {
+  const { colors } = useTheme();
+  const synced = captured.filter(c => c.storagePath).length;
+  const currentIntent = captured.filter(c => c.intent === intent).length;
+  const chips = [
+    { label: 'Mode', value: mode === 'photo' ? 'Photo' : 'Video' },
+    { label: 'Intent', value: INTENTS.find(i => i.key === intent)?.label ?? 'Proof' },
+    { label: 'Synced', value: `${synced}/${captured.length}` },
+    { label: 'Set', value: `${currentIntent}` },
+  ];
+  return (
+    <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 15, gap: 12 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+          <ImageSquare color={accent} size={21} weight="fill" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Capture cockpit</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Intent, proof, sync.</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {chips.map(chip => (
+          <View key={chip.label} style={{ flex: 1, minHeight: 52, borderRadius: 15, padding: 9, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '900', textTransform: 'uppercase' }}>{chip.label}</Text>
+            <Text style={{ color: chip.label === 'Intent' ? accent : colors.text, fontSize: 13.5, fontWeight: '900', marginTop: 6 }} numberOfLines={1}>{chip.value}</Text>
+          </View>
+        ))}
+      </View>
+    </GlassPanel>
+  );
+}
 
 export default function CameraApp() {
   const { colors } = useTheme();
   const accent = colors.accent;
   const [mode, setMode] = useState<Mode>('photo');
-  const [captured, setCaptured] = useState<MediaItem[]>([]);
+  const [intent, setIntent] = useState<CaptureIntent>('proof');
+  const [captured, setCaptured] = useState<CameraCapture[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState<MediaItem | null>(null);
+  const [selected, setSelected] = useState<CameraCapture | null>(null);
   const captureScale = useSharedValue(1);
 
   const captureStyle = useAnimatedStyle(() => ({ transform: [{ scale: captureScale.value }] }));
 
   const ACCENT = mode === 'photo' ? accent : VIDEO_COLOR;
+
+  useEffect(() => {
+    loadCameraCaptures().then(setCaptured).catch(() => setCaptured([]));
+  }, []);
+
+  const persistCaptured = (next: CameraCapture[]) => {
+    setCaptured(next);
+    void saveCameraCaptures(next);
+  };
+
+  const saveCapture = (asset: ImagePicker.ImagePickerAsset, type: Mode) => {
+    const item: CameraCapture = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      uri: asset.uri,
+      type,
+      intent,
+      width: asset.width,
+      height: asset.height,
+      createdAt: new Date().toISOString(),
+    };
+    const next = [item, ...captured];
+    persistCaptured(next);
+    void (async () => {
+      try {
+        const uploaded = await uploadMiniAppMedia('camera', asset.uri, {
+          fileName: asset.fileName,
+          mimeType: asset.mimeType,
+        });
+        if (!uploaded?.path) return;
+        setCaptured(prev => {
+          const synced = prev.map(capture => capture.id === item.id ? { ...capture, storagePath: uploaded.path } : capture);
+          void saveCameraCaptures(synced);
+          return synced;
+        });
+        setSelected(prev => prev?.id === item.id ? { ...prev, storagePath: uploaded.path } : prev);
+      } catch {
+        showToast('Saved on this device. Cloud media sync will retry after another edit.', 'Camera');
+      }
+    })();
+  };
 
   const launchCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -51,7 +177,7 @@ export default function CameraApp() {
     setLoading(false);
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      setCaptured(prev => [{ uri: asset.uri, type: mode, width: asset.width, height: asset.height }, ...prev]);
+      saveCapture(asset, mode);
       showToast(mode === 'photo' ? 'Photo captured' : 'Video saved', 'Saved');
     }
   };
@@ -65,14 +191,14 @@ export default function CameraApp() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       const type: Mode = asset.type === 'video' ? 'video' : 'photo';
-      setCaptured(prev => [{ uri: asset.uri, type, width: asset.width, height: asset.height }, ...prev]);
+      saveCapture(asset, type);
       showToast('Added from library', 'Added');
     }
   };
 
   const deleteItem = (index: number) => {
     if (selected === captured[index]) setSelected(null);
-    setCaptured(prev => prev.filter((_, i) => i !== index));
+    persistCaptured(captured.filter((_, i) => i !== index));
   };
 
   const GalleryBtn = (
@@ -83,7 +209,20 @@ export default function CameraApp() {
   );
 
   return (
-    <MiniAppShell title="Camera" subtitle="Capture photos & videos" headerRight={GalleryBtn}>
+    <MiniAppShell title="Camera" subtitle="Prove" headerRight={GalleryBtn}>
+      <MiniCommandDeck
+        accent={ACCENT}
+        title="Proof and progress capture"
+        subtitle="Photos, clips, evidence."
+        metrics={[
+          { label: 'Total', value: `${captured.length}`, detail: 'captures' },
+          { label: 'Photos', value: `${captured.filter(item => item.type === 'photo').length}`, detail: 'still' },
+          { label: 'Videos', value: `${captured.filter(item => item.type === 'video').length}`, detail: 'motion' },
+        ]}
+        chips={['Progress proof', 'Listing media', 'Post-ready']}
+      />
+      <CaptureReadiness accent={ACCENT} mode={mode} intent={intent} captured={captured} />
+      <CaptureIntentRail value={intent} accent={ACCENT} onChange={setIntent} />
       {/* Viewfinder panel */}
       <Animated.View
         entering={FadeInDown.duration(220)}
@@ -132,6 +271,9 @@ export default function CameraApp() {
           <Text style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 40 }}>
             {mode === 'photo' ? 'Tap the capture button to\ntake a photo' : 'Tap the capture button to\nstart recording'}
           </Text>
+          <View style={{ marginTop: 2, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: ACCENT + '22', borderWidth: 1, borderColor: ACCENT + '44' }}>
+            <Text style={{ color: ACCENT, fontSize: 11, fontWeight: '900' }}>{INTENTS.find(i => i.key === intent)?.label}</Text>
+          </View>
         </View>
 
         {/* Mode badge */}
@@ -227,7 +369,7 @@ export default function CameraApp() {
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, flex: 1 }}>
               CAPTURED · {captured.length}
             </Text>
-            <Pressable onPress={() => { setCaptured([]); setSelected(null); }}>
+            <Pressable onPress={() => { persistCaptured([]); setSelected(null); }}>
               <Text style={{ color: colors.textMuted, fontSize: 12 }}>Clear all</Text>
             </Pressable>
           </View>
@@ -236,6 +378,17 @@ export default function CameraApp() {
           {selected && (
             <Animated.View entering={ZoomIn.duration(220)} style={{ marginBottom: 14, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
               <Image source={{ uri: selected.uri }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 20 }} resizeMode="cover" />
+              <View style={{ position: 'absolute', left: 12, bottom: 12, right: 12, flexDirection: 'row', gap: 8 }}>
+                <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(0,0,0,0.58)' }}>
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{selected.intent ? selected.intent[0].toUpperCase() + selected.intent.slice(1) : 'Capture'}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: '700', marginTop: 2 }}>
+                    {selected.width && selected.height ? `${selected.width} x ${selected.height}` : selected.type}
+                  </Text>
+                </View>
+                <View style={{ borderRadius: 14, paddingHorizontal: 12, justifyContent: 'center', backgroundColor: selected.storagePath ? 'rgba(34,197,94,0.26)' : 'rgba(255,255,255,0.14)' }}>
+                  <Text style={{ color: selected.storagePath ? '#86EFAC' : '#fff', fontSize: 11, fontWeight: '900' }}>{selected.storagePath ? 'SYNCED' : 'LOCAL'}</Text>
+                </View>
+              </View>
               {selected.type === 'video' && (
                 <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
                   <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 40, padding: 16 }}>
@@ -255,7 +408,7 @@ export default function CameraApp() {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
             {captured.map((item, i) => (
-              <Animated.View key={i} entering={ZoomIn.delay(i * 30).duration(220)}>
+              <Animated.View key={item.id} entering={ZoomIn.delay(i * 30).duration(220)}>
                 <Pressable
                   onPress={() => setSelected(selected?.uri === item.uri ? null : item)}
                   style={{

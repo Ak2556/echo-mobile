@@ -8,6 +8,7 @@ import { ArrowClockwise, DiceSix } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 
@@ -47,6 +48,40 @@ function DieFace({ value, sides, color }: { value: number; sides: number; color:
     <View style={{ width: 100, height: 100, borderRadius: 22, backgroundColor: color + '18', borderWidth: 2.5, borderColor: color + '55', alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ color, fontSize: 36, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>{value}</Text>
     </View>
+  );
+}
+
+function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: string; selectedDie: typeof DICE[number]; diceCount: number; history: HistoryEntry[] }) {
+  const { colors } = useTheme();
+  const max = selectedDie.sides * diceCount;
+  const average = ((selectedDie.sides + 1) / 2) * diceCount;
+  const coinFlips = history.filter(item => item.die === 'Coin').length;
+  const stats = [
+    { label: 'Range', value: `${diceCount}-${max}`, detail: 'possible' },
+    { label: 'Average', value: `${average % 1 ? average.toFixed(1) : average}`, detail: 'expected' },
+    { label: 'Coin', value: `${coinFlips}`, detail: 'flips' },
+  ];
+  return (
+    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+          <DiceSix color={accent} size={22} weight="duotone" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Chance board</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Rolls, odds, record.</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {stats.map(stat => (
+          <View key={stat.label} style={{ flex: 1, minHeight: 62, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <Text style={{ color: accent, fontSize: 17, fontWeight: '900' }} numberOfLines={1}>{stat.value}</Text>
+            <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{stat.label}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }}>{stat.detail}</Text>
+          </View>
+        ))}
+      </View>
+    </GlassPanel>
   );
 }
 
@@ -100,7 +135,19 @@ export default function DiceApp() {
   );
 
   return (
-    <MiniAppShell title="Dice & Coin" subtitle="Roll dice, flip coins" headerRight={ClearBtn}>
+    <MiniAppShell title="Dice & Coin" subtitle="Chance" headerRight={ClearBtn}>
+      <MiniCommandDeck
+        accent={selectedDie.color}
+        title="Fair random decisions"
+        subtitle="Roll, flip, explain, share."
+        metrics={[
+          { label: 'Die', value: selectedDie.label, detail: `${selectedDie.sides} sides` },
+          { label: 'Count', value: `${diceCount}`, detail: 'dice' },
+          { label: 'History', value: `${history.length}`, detail: 'logged' },
+        ]}
+        chips={['Games', 'Draws', 'Group proof']}
+      />
+      <ChancePulse accent={selectedDie.color} selectedDie={selectedDie} diceCount={diceCount} history={history} />
       {/* Die selector */}
       <GlassPanel variant="medium" borderRadius={20} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>SELECT DIE</Text>

@@ -5,7 +5,7 @@ import { CheckCircle, CircleDashed, Flag, Plus, Trash } from 'phosphor-react-nat
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniChip, MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniChip, MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
@@ -83,7 +83,18 @@ export default function TasksScreen() {
   };
 
   return (
-    <MiniAppShell title="Tasks" subtitle={`${stats.open} open · ${stats.dueToday} due today`}>
+    <MiniAppShell title="Tasks" subtitle="Action">
+      <MiniCommandDeck
+        accent={accent}
+        title="Your execution queue"
+        subtitle="Priorities, dates, action."
+        metrics={[
+          { label: 'Open', value: `${stats.open}`, detail: 'active' },
+          { label: 'Today', value: `${stats.dueToday}`, detail: 'due now' },
+          { label: 'High', value: `${stats.high}`, detail: 'priority' },
+        ]}
+        chips={['Plan next 3', 'Share progress', 'Break blockers']}
+      />
       <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 12 }} style={{ marginBottom: 16 }}>
         <TextInput
           value={title}
@@ -168,7 +179,7 @@ export default function TasksScreen() {
             accent={accent}
             icon={<CheckCircle color={colors.textMuted} size={40} weight="thin" />}
             title="Nothing here"
-            subtitle="Change filters or add your next task."
+            subtitle="Add the next task that actually moves something forward."
           />
         )}
       </View>

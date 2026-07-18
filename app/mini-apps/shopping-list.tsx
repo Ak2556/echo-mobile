@@ -5,7 +5,7 @@ import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash } from 'phosphor-r
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniEmptyState, MiniChip, MiniStatCard } from '../../components/mini-apps/MiniKit';
+import { MiniEmptyState, MiniChip, MiniCommandDeck, MiniStatCard } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
@@ -68,7 +68,18 @@ export default function ShoppingListScreen() {
   };
 
   return (
-    <MiniAppShell title="Shopping List" subtitle={`${stats.remaining} remaining · ${stats.categories} categories`}>
+    <MiniAppShell title="Shopping List" subtitle="Buy">
+      <MiniCommandDeck
+        accent={accent}
+        title="Shop with less waste"
+        subtitle="Essentials, grouped."
+        metrics={[
+          { label: 'Left', value: `${stats.remaining}`, detail: 'to buy' },
+          { label: 'Checked', value: `${stats.checked}`, detail: 'done' },
+          { label: 'Groups', value: `${stats.categories}`, detail: 'aisles' },
+        ]}
+        chips={['Store run', 'Budget check', 'Recurring essentials']}
+      />
       <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 12 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <TextInput
@@ -145,7 +156,7 @@ export default function ShoppingListScreen() {
             accent={accent}
             icon={<ShoppingCart color={colors.textMuted} size={40} weight="thin" />}
             title="No items"
-            subtitle="Add what you need before the next run."
+            subtitle="Add the next essentials before the next store run."
           />
         )}
       </View>

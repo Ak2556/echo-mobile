@@ -1,190 +1,313 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
-import { Plus, X, Globe, Sun, Moon } from 'phosphor-react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, MagnifyingGlass, Moon, Plus, Sun, X } from 'phosphor-react-native';
+import { useFocusEffect } from 'expo-router';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
+import {
+  PRESET_CITIES,
+  WorldClockCity,
+  WeatherSnapshot,
+  fetchCityWeather,
+  loadWorldClockCities,
+  saveWorldClockCities,
+  searchWorldClockLocations,
+} from '../../lib/worldClock';
 
-interface City { name: string; timezone: string; flag: string; region: string }
-
-const ALL_CITIES: City[] = [
-  { name: 'New York', timezone: 'America/New_York', flag: '🇺🇸', region: 'EST' },
-  { name: 'Los Angeles', timezone: 'America/Los_Angeles', flag: '🇺🇸', region: 'PST' },
-  { name: 'London', timezone: 'Europe/London', flag: '🇬🇧', region: 'GMT' },
-  { name: 'Paris', timezone: 'Europe/Paris', flag: '🇫🇷', region: 'CET' },
-  { name: 'Dubai', timezone: 'Asia/Dubai', flag: '🇦🇪', region: 'GST' },
-  { name: 'Mumbai', timezone: 'Asia/Kolkata', flag: '🇮🇳', region: 'IST' },
-  { name: 'Singapore', timezone: 'Asia/Singapore', flag: '🇸🇬', region: 'SGT' },
-  { name: 'Tokyo', timezone: 'Asia/Tokyo', flag: '🇯🇵', region: 'JST' },
-  { name: 'Beijing', timezone: 'Asia/Shanghai', flag: '🇨🇳', region: 'CST' },
-  { name: 'Seoul', timezone: 'Asia/Seoul', flag: '🇰🇷', region: 'KST' },
-  { name: 'Sydney', timezone: 'Australia/Sydney', flag: '🇦🇺', region: 'AEST' },
-  { name: 'São Paulo', timezone: 'America/Sao_Paulo', flag: '🇧🇷', region: 'BRT' },
-  { name: 'Toronto', timezone: 'America/Toronto', flag: '🇨🇦', region: 'EST' },
-  { name: 'Cairo', timezone: 'Africa/Cairo', flag: '🇪🇬', region: 'EET' },
-  { name: 'Moscow', timezone: 'Europe/Moscow', flag: '🇷🇺', region: 'MSK' },
-  { name: 'Istanbul', timezone: 'Europe/Istanbul', flag: '🇹🇷', region: 'TRT' },
-  { name: 'Karachi', timezone: 'Asia/Karachi', flag: '🇵🇰', region: 'PKT' },
-  { name: 'Bangkok', timezone: 'Asia/Bangkok', flag: '🇹🇭', region: 'ICT' },
-  { name: 'Hong Kong', timezone: 'Asia/Hong_Kong', flag: '🇭🇰', region: 'HKT' },
-  { name: 'Berlin', timezone: 'Europe/Berlin', flag: '🇩🇪', region: 'CET' },
-  { name: 'Mexico City', timezone: 'America/Mexico_City', flag: '🇲🇽', region: 'CST' },
-  { name: 'Chicago', timezone: 'America/Chicago', flag: '🇺🇸', region: 'CST' },
-];
-
-const DEFAULT = ['New York', 'London', 'Dubai', 'Tokyo'];
-
-function getTimeInZone(tz: string) {
+function getTimeInZone(timezone: string) {
   const now = new Date();
-  const t = now.toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  const d = now.toLocaleDateString('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' });
-  const h = parseInt(t.split(':')[0]);
-  return { time: t, date: d, hour: h };
+  try {
+    const time = now.toLocaleTimeString('en-US', { timeZone: timezone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const date = now.toLocaleDateString('en-US', { timeZone: timezone, weekday: 'short', month: 'short', day: 'numeric' });
+    const hour = Number(time.split(':')[0]);
+    return { time, date, hour: Number.isFinite(hour) ? hour : 12 };
+  } catch {
+    return { time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }), date: 'UTC', hour: 12 };
+  }
+}
+
+function weatherIcon(code: number, color: string, size = 18) {
+  if ([45, 48].includes(code)) return <CloudFog color={color} size={size} weight="bold" />;
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return <CloudRain color={color} size={size} weight="bold" />;
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return <CloudSnow color={color} size={size} weight="bold" />;
+  if ([95, 96, 99].includes(code)) return <CloudLightning color={color} size={size} weight="bold" />;
+  return <CloudSun color={color} size={size} weight="bold" />;
+}
+
+function timeOfDay(hour: number) {
+  if (hour < 6) return 'Late';
+  if (hour < 12) return 'Morning';
+  if (hour < 17) return 'Afternoon';
+  if (hour < 20) return 'Evening';
+  return 'Night';
 }
 
 export default function WorldClockScreen() {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const accent = colors.accent;
-
-  const [selected, setSelected] = useState<string[]>(DEFAULT);
+  const [cities, setCities] = useState<WorldClockCity[]>([]);
+  const [weather, setWeather] = useState<Record<string, WeatherSnapshot | null>>({});
   const [, setTick] = useState(0);
-  const [search, setSearch] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<WorldClockCity[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [searching, setSearching] = useState(false);
+
+  useFocusEffect(React.useCallback(() => {
+    loadWorldClockCities().then(setCities).catch(() => setCities([]));
+  }, []));
 
   useEffect(() => {
-    const t = setInterval(() => setTick(n => n + 1), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setTick(value => value + 1), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const addCity = (city: City) => {
-    if (!selected.includes(city.name)) setSelected(s => [...s, city.name]);
-    setShowSearch(false); setSearch('');
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const pairs = await Promise.all(cities.map(async city => [city.id, await fetchCityWeather(city)] as const));
+      if (!cancelled) setWeather(Object.fromEntries(pairs));
+    };
+    if (cities.length) void run();
+    return () => { cancelled = true; };
+  }, [cities]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!query.trim()) { setResults(PRESET_CITIES.filter(city => !cities.some(item => item.id === city.id)).slice(0, 8)); return; }
+      setSearching(true);
+      const found = await searchWorldClockLocations(query);
+      if (!cancelled) {
+        const existing = new Set(cities.map(city => `${city.name.toLowerCase()}-${city.timezone}`));
+        setResults(found.filter(city => !existing.has(`${city.name.toLowerCase()}-${city.timezone}`)));
+        setSearching(false);
+      }
+    };
+    void run();
+    return () => { cancelled = true; };
+  }, [cities, query]);
+
+  const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const localCity = useMemo<WorldClockCity>(() => ({
+    id: 'local',
+    name: localTimezone.split('/').pop()?.replace(/_/g, ' ') || 'Local',
+    timezone: localTimezone,
+    region: 'My location',
+    flag: '⌖',
+    source: 'local',
+  }), [localTimezone]);
+  const local = getTimeInZone(localTimezone);
+  const localWeather = weather.local;
+  const isLocalDay = local.hour >= 6 && local.hour < 20;
+
+  const addCity = async (city: WorldClockCity) => {
+    const next = [...cities, city];
+    setCities(next);
+    await saveWorldClockCities(next);
+    setAdding(false);
+    setQuery('');
   };
 
-  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const { time: localTime, date: localDate, hour: localHour } = getTimeInZone(localTz);
-  const isLocalDay = localHour >= 6 && localHour < 20;
+  const removeCity = async (cityId: string) => {
+    const next = cities.filter(city => city.id !== cityId);
+    setCities(next);
+    await saveWorldClockCities(next);
+  };
 
   const AddButton = (
-    <Pressable
-      onPress={() => setShowSearch(s => !s)}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, backgroundColor: accent, shadowColor: accent, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 3 } }}
-    >
-      <Plus color="#fff" size={18} weight="bold" />
-      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Add</Text>
-    </Pressable>
+    <AnimatedPressable onPress={() => setAdding(value => !value)} scaleValue={0.9} haptic="medium" accessibilityLabel="Add location">
+      <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
+        {adding ? <X color="#fff" size={18} weight="bold" /> : <Plus color="#fff" size={18} weight="bold" />}
+      </View>
+    </AnimatedPressable>
   );
 
   return (
-    <MiniAppShell title="World Clock" subtitle={`${selected.length} cities`} headerRight={AddButton} scrollPadding={0}>
-      {/* Local hero */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
-        <GlassPanel
-          variant="medium"
-          borderRadius={28}
-          contentStyle={{ padding: 20 }}
-          style={{ marginBottom: 12, borderColor: (isLocalDay ? '#B08536' : '#5E748B') + '33' }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            {isLocalDay ? <Sun color="#B08536" size={18} weight="fill" /> : <Moon color="#5E748B" size={18} weight="fill" />}
-            <Text style={{ color: isLocalDay ? '#B08536' : '#5E748B', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 }}>MY LOCATION</Text>
+    <MiniAppShell title="World Clock" subtitle="Meet" headerRight={AddButton}>
+      <MiniCommandDeck
+        accent={accent}
+        title="Time, weather, and coordination"
+        subtitle="Time, weather, meetings."
+        metrics={[
+          { label: 'Saved', value: `${cities.length}`, detail: 'locations' },
+          { label: 'Local', value: local.time.slice(0, 5), detail: isLocalDay ? 'day' : 'night' },
+          { label: 'Weather', value: `${Object.values(weather).filter(Boolean).length}`, detail: 'loaded' },
+        ]}
+        chips={['Custom places', 'Weather now', 'Meeting planning']}
+      />
+
+      <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 18 }} style={{ marginBottom: 14, borderColor: `${isLocalDay ? '#B08536' : '#5E748B'}44` }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
+          <View style={{ width: 48, height: 48, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: `${isLocalDay ? '#B08536' : '#5E748B'}22` }}>
+            {isLocalDay ? <Sun color="#B08536" size={24} weight="fill" /> : <Moon color="#5E748B" size={24} weight="fill" />}
           </View>
-          <Text style={{ color: colors.text, fontSize: 52, fontFamily: 'Fraunces_400Regular', letterSpacing: -2, lineHeight: 58 }}>{localTime.slice(0, 5)}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 14 }}>{localDate}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{localTz.split('/').pop()?.replace(/_/g, ' ')}</Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[font.eyebrow, { color: colors.textMuted }]} numberOfLines={1}>My Location</Text>
+            <Text style={[font.display, { color: colors.text, fontSize: 42, lineHeight: 48 }]} numberOfLines={1}>{local.time.slice(0, 5)}</Text>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 12.5 }]} numberOfLines={1}>{local.date} · {localCity.name}</Text>
+          </View>
+          <WeatherBadge snapshot={localWeather} fallback="Weather" />
+        </View>
+      </GlassPanel>
+
+      {adding ? (
+        <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 14 }} style={{ marginBottom: 14, borderColor: `${accent}3A` }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, borderRadius: 15, paddingHorizontal: 12, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <MagnifyingGlass color={colors.textMuted} size={18} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Add any city or location..."
+              placeholderTextColor={colors.textMuted}
+              autoFocus
+              style={{ flex: 1, color: colors.text, fontSize: 15, paddingVertical: 10 }}
+              returnKeyType="search"
+            />
+            {searching ? <ActivityIndicator color={accent} size="small" /> : null}
+          </View>
+          <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 11.5, marginTop: 12, marginBottom: 8 }]}>
+            {query.trim() ? 'Search results' : 'Popular locations'}
+          </Text>
+          <View style={{ gap: 8 }}>
+            {results.slice(0, 6).map(city => (
+              <LocationResult key={`${city.id}-${city.timezone}`} city={city} onAdd={() => addCity(city)} />
+            ))}
+            {results.length === 0 && !searching ? (
+              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 18 }]}>
+                No locations found. Try a city, country, or region name.
+              </Text>
+            ) : null}
           </View>
         </GlassPanel>
+      ) : null}
 
-        <EdgeFeaturePanel
-          appName="World Clock"
-          accent={accent}
-          headline="Plan across time zones"
-          caption="Share meeting windows, coordinate groups, or ask Echo to find the least painful time."
-          metrics={[
-            { label: 'Cities', value: `${selected.length}` },
-            { label: 'Local', value: localTime.slice(0, 5) },
-            { label: 'Mode', value: isLocalDay ? 'Day' : 'Night' },
-          ]}
-          prompt={`Find a good meeting time across these cities: ${selected.join(', ')}.`}
-          shareText={`World clock: ${selected.map(name => {
-            const city = ALL_CITIES.find(c => c.name === name);
-            return city ? `${city.name} ${getTimeInZone(city.timezone).time.slice(0, 5)}` : name;
-          }).join(' · ')}`}
-          publishTitle="Time zone plan"
-          publishBody={`Planning across ${selected.length} cities: ${selected.join(', ')}.`}
-        />
-
-        {/* Search panel */}
-        {showSearch && (
-          <GlassPanel variant="heavy" borderRadius={20} style={{ marginBottom: 12, maxHeight: 280 }} contentStyle={{ overflow: 'hidden' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, gap: 10 }}>
-              <Globe color={colors.textMuted} size={18} />
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder="Search cities or regions…"
-                placeholderTextColor={colors.textMuted}
-                autoFocus
-                style={{ flex: 1, color: colors.text, fontSize: 15 }}
-              />
-              <Pressable onPress={() => { setShowSearch(false); setSearch(''); }}>
-                <X color={colors.textMuted} size={18} weight="bold" />
-              </Pressable>
-            </View>
-            {ALL_CITIES.filter(c => !selected.includes(c.name) && (c.name.toLowerCase().includes(search.toLowerCase()) || c.region.toLowerCase().includes(search.toLowerCase()))).map(city => {
-              const { time } = getTimeInZone(city.timezone);
-              return (
-                <Pressable key={city.name} onPress={() => addCity(city)} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-                  <Text style={{ fontSize: 26, marginRight: 12 }}>{city.flag}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontWeight: '600', fontSize: 15 }}>{city.name}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{city.region}</Text>
-                  </View>
-                  <Text style={{ color: colors.textSecondary, fontSize: 16, fontWeight: '300' }}>{time.slice(0, 5)}</Text>
-                </Pressable>
-              );
-            })}
-          </GlassPanel>
-        )}
+      <View style={{ gap: 10 }}>
+        {cities.map(city => (
+          <CityCard
+            key={`${city.id}-${city.timezone}`}
+            city={city}
+            weather={weather[city.id]}
+            onRemove={() => removeCity(city.id)}
+          />
+        ))}
       </View>
 
-      {/* Cities list */}
-      <View style={{ paddingHorizontal: 20, paddingBottom: 32, gap: 10 }}>
-        {selected.map(name => {
-          const city = ALL_CITIES.find(c => c.name === name);
-          if (!city) return null;
-          const { time, date, hour } = getTimeInZone(city.timezone);
-          const day = hour >= 6 && hour < 20;
-          const timeOfDay = hour < 6 ? 'Late Night' : hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : hour < 20 ? 'Evening' : 'Night';
-
-          return (
-            <GlassPanel key={name} variant="medium" borderRadius={24} contentStyle={{ padding: 18, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 36, marginRight: 14 }}>{city.flag}</Text>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{city.name}</Text>
-                  <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: (day ? '#B08536' : '#5E748B') + '18' }}>
-                    <Text style={{ color: day ? '#B08536' : '#5E748B', fontSize: 10, fontWeight: '700' }}>{timeOfDay}</Text>
-                  </View>
-                </View>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{date} · {city.region}</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ color: colors.text, fontSize: 28, fontFamily: 'Fraunces_400Regular', letterSpacing: -1 }}>{time.slice(0, 5)}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11 }}>{time.slice(6)}</Text>
-              </View>
-              <Pressable
-                onPress={() => setSelected(s => s.filter(x => x !== name))}
-                style={{ marginLeft: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <X color={colors.textMuted} size={14} weight="bold" />
-              </Pressable>
-            </GlassPanel>
-          );
-        })}
-      </View>
+      <EdgeFeaturePanel
+        appId="world-clock"
+        appName="World Clock"
+        accent={accent}
+        headline="Plan across time zones"
+        caption="Use live time and weather to coordinate calls, classes, travel, and group work."
+        metrics={[
+          { label: 'Saved', value: `${cities.length}` },
+          { label: 'Local', value: local.time.slice(0, 5) },
+          { label: 'Weather', value: `${Object.values(weather).filter(Boolean).length}` },
+        ]}
+        prompt={`Find a good meeting time across these locations: ${cities.map(city => city.name).join(', ')}.`}
+        shareText={`World clock: ${cities.map(city => `${city.name} ${getTimeInZone(city.timezone).time.slice(0, 5)}`).join(' · ')}`}
+        publishTitle="Time zone plan"
+        publishBody={`Planning across ${cities.length} locations with time and weather context.`}
+      />
     </MiniAppShell>
+  );
+}
+
+function WeatherBadge({ snapshot, fallback }: { snapshot?: WeatherSnapshot | null; fallback: string }) {
+  const { colors, font } = useTheme();
+  const accent = snapshot ? colors.accent : colors.textMuted;
+  return (
+    <View style={{ minWidth: 76, alignItems: 'flex-end' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 6, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+        {snapshot ? weatherIcon(snapshot.code, accent, 16) : <CloudSun color={accent} size={16} />}
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: 12.5 }]} numberOfLines={1}>
+          {snapshot ? `${Math.round(snapshot.temperature)}°` : '--'}
+        </Text>
+      </View>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: 10.5, marginTop: 4 }]} numberOfLines={1}>
+        {snapshot?.label ?? fallback}
+      </Text>
+    </View>
+  );
+}
+
+function LocationResult({ city, onAdd }: { city: WorldClockCity; onAdd: () => void }) {
+  const { colors, font } = useTheme();
+  const clock = getTimeInZone(city.timezone);
+  return (
+    <Pressable onPress={onAdd} accessibilityRole="button" accessibilityLabel={`Add ${city.name}`}>
+      <View style={{ minHeight: 56, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+        <Text style={{ fontSize: 24 }}>{city.flag}</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 14.5 }]} numberOfLines={1}>{city.name}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]} numberOfLines={1}>{city.region} · {city.timezone}</Text>
+        </View>
+        <Text style={[font.display, { color: colors.text, fontSize: 20 }]}>{clock.time.slice(0, 5)}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function CityCard({ city, weather, onRemove }: { city: WorldClockCity; weather?: WeatherSnapshot | null; onRemove: () => void }) {
+  const { colors, font } = useTheme();
+  const clock = getTimeInZone(city.timezone);
+  const day = clock.hour >= 6 && clock.hour < 20;
+  const tone = day ? '#B08536' : '#5E748B';
+  return (
+    <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 15 }} style={{ borderColor: `${tone}2F` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ width: 48, height: 48, borderRadius: 17, backgroundColor: `${tone}1F`, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 25 }}>{city.flag}</Text>
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flexShrink: 1 }]} numberOfLines={1}>{city.name}</Text>
+            <View style={{ borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, backgroundColor: `${tone}18` }}>
+              <Text style={{ color: tone, fontSize: 10.2, fontFamily: 'Inter_700Bold' }}>{timeOfDay(clock.hour)}</Text>
+            </View>
+          </View>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{clock.date} · {city.region}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 7 }}>
+            <WeatherInline snapshot={weather} />
+          </View>
+        </View>
+        <View style={{ alignItems: 'flex-end', gap: 7 }}>
+          <Text style={[font.display, { color: colors.text, fontSize: 29, lineHeight: 34 }]}>{clock.time.slice(0, 5)}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 10.5 }]}>{clock.time.slice(6)}</Text>
+        </View>
+        <Pressable onPress={onRemove} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${city.name}`}>
+          <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <X color={colors.textMuted} size={13} weight="bold" />
+          </View>
+        </Pressable>
+      </View>
+    </GlassPanel>
+  );
+}
+
+function WeatherInline({ snapshot }: { snapshot?: WeatherSnapshot | null }) {
+  const { colors, font } = useTheme();
+  if (!snapshot) {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        <CloudSun color={colors.textMuted} size={14} />
+        <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]}>Weather unavailable</Text>
+      </View>
+    );
+  }
+  return (
+    <>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        {weatherIcon(snapshot.code, colors.accent, 14)}
+        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11.5 }]}>
+          {Math.round(snapshot.temperature)}° · {snapshot.label}
+        </Text>
+      </View>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]}>{Math.round(snapshot.windSpeed)} km/h</Text>
+    </>
   );
 }

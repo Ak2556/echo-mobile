@@ -458,7 +458,7 @@ export function useSendContactDM(
 
   return useMutation({
     mutationFn: ({ contact, replyToId }: {
-      contact: { userId: string; username: string; displayName: string; avatarColor: string };
+      contact: { userId: string; username: string; displayName: string; avatarColor: string; avatarUrl?: string | null };
       replyToId?: string;
     }) => {
       if (isGroup) {

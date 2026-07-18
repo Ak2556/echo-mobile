@@ -1,9 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, Pressable, Switch, Clipboard, StyleSheet } from 'react-native';
-import { ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning } from 'phosphor-react-native';
+import * as Crypto from 'expo-crypto';
+import { ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning, Key, DiceSix, Fingerprint, EyeSlash, Vault, Timer } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 
 const CHARS = {
@@ -12,6 +14,14 @@ const CHARS = {
   digits: '0123456789',
   symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
 };
+const AMBIGUOUS = /[O0Il1|]/g;
+const PASSPHRASE_WORDS = [
+  'anchor', 'atlas', 'bright', 'canyon', 'cedar', 'cobalt', 'delta', 'ember',
+  'falcon', 'forest', 'harbor', 'honest', 'island', 'jupiter', 'lantern',
+  'magnet', 'meadow', 'noble', 'orbit', 'pixel', 'quiet', 'river', 'signal',
+  'silver', 'summit', 'timber', 'velvet', 'voyage', 'winter', 'zenith',
+];
+type GeneratorMode = 'password' | 'passphrase' | 'pin';
 
 // `tone` resolves to a theme token at render so strength color adapts per theme.
 function getStrength(pwd: string): { label: string; tone: 'danger' | 'warning' | 'accent' | 'success'; score: number; icon: any } {
@@ -31,6 +41,93 @@ function getStrength(pwd: string): { label: string; tone: 'danger' | 'warning' |
 
 const LENGTHS = [8, 12, 16, 20, 24, 32];
 
+function randomIndex(max: number): number {
+  const bytes = Crypto.getRandomBytes(4);
+  const value = ((bytes[0] << 24) >>> 0) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3];
+  return value % max;
+}
+
+function shuffle(chars: string[]): string[] {
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomIndex(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars;
+}
+
+function generateFromPool(length: number, pools: string[]): string {
+  const fullPool = pools.join('');
+  const required = pools.map(pool => pool[randomIndex(pool.length)]);
+  const rest = Array.from({ length: Math.max(0, length - required.length) }, () => fullPool[randomIndex(fullPool.length)]);
+  return shuffle([...required, ...rest]).join('');
+}
+
+function generatePassphrase(words = 4): string {
+  return Array.from({ length: words }, () => PASSPHRASE_WORDS[randomIndex(PASSPHRASE_WORDS.length)]).join('-');
+}
+
+function crackTimeLabel(pwd: string): string {
+  if (!pwd) return 'None';
+  const pool =
+    (/[a-z]/.test(pwd) ? 26 : 0) +
+    (/[A-Z]/.test(pwd) ? 26 : 0) +
+    (/[0-9]/.test(pwd) ? 10 : 0) +
+    (/[^A-Za-z0-9]/.test(pwd) ? 32 : 0);
+  const guesses = Math.pow(Math.max(pool, 10), Math.min(pwd.length, 18));
+  const seconds = guesses / 1_000_000_000;
+  if (seconds < 60) return 'Seconds';
+  if (seconds < 3600) return 'Minutes';
+  if (seconds < 86400) return 'Hours';
+  if (seconds < 31_536_000) return 'Months';
+  if (seconds < 31_536_000_000) return 'Years';
+  return 'Centuries';
+}
+
+function SecurityCoach({ strength, crackTime, hasSymbols, noAmbiguous, colors, accent }: {
+  strength: ReturnType<typeof getStrength> | null;
+  crackTime: string;
+  hasSymbols: boolean;
+  noAmbiguous: boolean;
+  colors: any;
+  accent: string;
+}) {
+  const items = [
+    { label: 'Random', value: 'Crypto', icon: Key },
+    { label: 'Guess time', value: crackTime, icon: Timer },
+    { label: 'Readable', value: noAmbiguous ? 'Clean' : 'Mixed', icon: EyeSlash },
+    { label: 'Policy', value: hasSymbols ? 'Strict' : 'Friendly', icon: Vault },
+  ];
+  return (
+    <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 15, gap: 12 }} style={{ marginBottom: 14, borderColor: `${strength ? colors[strength.tone] : accent}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${strength ? colors[strength.tone] : accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+          <ShieldCheck color={strength ? colors[strength.tone] : accent} size={20} weight="fill" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Security cockpit</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>
+            Generate. Copy. Rotate.
+          </Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {items.map(item => {
+          const Icon = item.icon;
+          return (
+            <View key={item.label} style={{ width: '48.5%', minHeight: 58, borderRadius: 16, padding: 11, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Icon color={accent} size={14} weight="bold" />
+                <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase' }}>{item.label}</Text>
+              </View>
+              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900', marginTop: 6 }} numberOfLines={1}>{item.value}</Text>
+            </View>
+          );
+        })}
+      </View>
+    </GlassPanel>
+  );
+}
+
 function Toggle({ label, sub, value, onChange, colors }: { label: string; sub: string; value: boolean; onChange: (v: boolean) => void; colors: any }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
@@ -48,36 +145,91 @@ export default function PasswordGenScreen() {
   const accent = colors.accent;
 
   const [length, setLength] = useState(16);
+  const [mode, setMode] = useState<GeneratorMode>('password');
   const [useUpper, setUseUpper] = useState(true);
   const [useLower, setUseLower] = useState(true);
   const [useDigits, setUseDigits] = useState(true);
   const [useSymbols, setUseSymbols] = useState(false);
+  const [avoidAmbiguous, setAvoidAmbiguous] = useState(true);
   const [password, setPassword] = useState('');
   const [copied, setCopied] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
 
   const generate = useCallback(() => {
-    let pool = (useUpper ? CHARS.upper : '') + (useLower ? CHARS.lower : '') + (useDigits ? CHARS.digits : '') + (useSymbols ? CHARS.symbols : '');
-    if (!pool) pool = CHARS.lower;
     let pwd = '';
-    for (let i = 0; i < length; i++) pwd += pool[Math.floor(Math.random() * pool.length)];
+    if (mode === 'pin') {
+      pwd = generateFromPool(Math.min(length, 12), [CHARS.digits]);
+    } else if (mode === 'passphrase') {
+      pwd = generatePassphrase(length >= 24 ? 5 : 4);
+    } else {
+      const pools = [
+        useUpper ? CHARS.upper : '',
+        useLower ? CHARS.lower : '',
+        useDigits ? CHARS.digits : '',
+        useSymbols ? CHARS.symbols : '',
+      ]
+        .filter(Boolean)
+        .map(pool => avoidAmbiguous ? pool.replace(AMBIGUOUS, '') : pool);
+      pwd = generateFromPool(length, pools.length > 0 ? pools : [CHARS.lower]);
+    }
     setPassword(pwd);
     setHistory(h => [pwd, ...h].slice(0, 6));
     setCopied(false);
-  }, [length, useUpper, useLower, useDigits, useSymbols]);
+  }, [avoidAmbiguous, length, mode, useUpper, useLower, useDigits, useSymbols]);
 
   const copy = () => {
     Clipboard.setString(password);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => {
+      setCopied(false);
+      Clipboard.setString('');
+    }, 30000);
   };
 
   const swRaw = password ? getStrength(password) : null;
   const sw = swRaw ? { ...swRaw, color: colors[swRaw.tone] } : null;
   const StrengthIcon = sw?.icon;
+  const crackTime = crackTimeLabel(password);
 
   return (
-    <MiniAppShell title="Passwords" subtitle="Secure generator">
+    <MiniAppShell title="Passwords" subtitle="Secure">
+      <MiniCommandDeck
+        accent={sw?.color ?? accent}
+        title="Security without app switching"
+        subtitle="Generate, audit, copy."
+        metrics={[
+          { label: 'Length', value: `${length}`, detail: 'chars' },
+          { label: 'Strength', value: sw?.label ?? 'None', detail: 'current' },
+          { label: 'Recent', value: `${history.length}`, detail: 'local' },
+        ]}
+        chips={['Strong generator', 'Copy fast', 'Rotation plan']}
+      />
+      <SecurityCoach
+        strength={swRaw}
+        crackTime={crackTime}
+        hasSymbols={useSymbols || mode === 'passphrase'}
+        noAmbiguous={avoidAmbiguous}
+        colors={colors}
+        accent={accent}
+      />
+      <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }} style={{ marginBottom: 14 }}>
+        {([
+          { key: 'password', label: 'Strong', icon: LockKey },
+          { key: 'passphrase', label: 'Phrase', icon: DiceSix },
+          { key: 'pin', label: 'PIN', icon: Fingerprint },
+        ] as const).map(item => {
+          const Icon = item.icon;
+          const active = mode === item.key;
+          return (
+            <Pressable key={item.key} onPress={() => setMode(item.key)} style={{ flex: 1 }}>
+              <View style={{ minHeight: 46, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, backgroundColor: active ? accent : 'transparent' }}>
+                <Icon color={active ? '#fff' : colors.textMuted} size={15} weight="bold" />
+                <Text style={{ color: active ? '#fff' : colors.textMuted, fontSize: 12.5, fontWeight: '900' }}>{item.label}</Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </GlassPanel>
       {/* Password display */}
       <GlassPanel
         variant="medium"
@@ -100,7 +252,7 @@ export default function PasswordGenScreen() {
         ) : (
           <View style={{ alignItems: 'center', paddingVertical: 16 }}>
             <LockKey color={colors.textMuted} size={32} weight="thin" />
-            <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8 }}>Tap Generate to create a password</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8 }}>Tap Generate to create a secret</Text>
           </View>
         )}
       </GlassPanel>
@@ -135,7 +287,9 @@ export default function PasswordGenScreen() {
       <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>LENGTH</Text>
-          <Text style={{ color: accent, fontSize: 16, fontWeight: '800' }}>{length} chars</Text>
+          <Text style={{ color: accent, fontSize: 16, fontWeight: '800' }}>
+            {mode === 'passphrase' ? `${length >= 24 ? 5 : 4} words` : `${mode === 'pin' ? Math.min(length, 12) : length} chars`}
+          </Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           {LENGTHS.map(l => (
@@ -162,6 +316,7 @@ export default function PasswordGenScreen() {
         <Toggle label="Lowercase" sub="a b c … z" value={useLower} onChange={setUseLower} colors={colors} />
         <Toggle label="Numbers" sub="0 1 2 … 9" value={useDigits} onChange={setUseDigits} colors={colors} />
         <Toggle label="Symbols" sub="! @ # $ % …" value={useSymbols} onChange={setUseSymbols} colors={colors} />
+        <Toggle label="Avoid confusing chars" sub="Removes O, 0, I, l, 1, |" value={avoidAmbiguous} onChange={setAvoidAmbiguous} colors={colors} />
         <View style={{ height: 4 }} />
       </GlassPanel>
 

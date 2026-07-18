@@ -3,7 +3,12 @@ import { StyleSheet, View, Text, Alert, Pressable, Modal, TextInput, ScrollView,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PencilSimple, Envelope, SealCheck, BellSlash, Archive, CaretDown, CaretRight, Users, X, MagnifyingGlass, Check, PushPin } from 'phosphor-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  ArrowLeft, PencilSimple, Envelope, SealCheck, BellSlash, Archive,
+  CaretDown, CaretRight, Users, X, MagnifyingGlass, Check, PushPin,
+  ChatCircleText, Lightning, Camera, LinkSimple, Microphone,
+} from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import { persistGet, persistSet } from '../../store/persist';
@@ -18,6 +23,7 @@ import { useCreateGroupConversation, useRemoteConversations, useSetDMPref } from
 import { usePresenceTracking } from '../../lib/presence';
 import { ConversationSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation, searchRemoteUsers, UserSearchHit } from '../../lib/supabaseEchoApi';
+import { safeBack } from '../../lib/safeBack';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -36,6 +42,18 @@ type InboxConversation = Conversation & {
   isGroup?: boolean;
   memberCount?: number;
 };
+
+type InboxFilter = 'all' | 'unread' | 'people' | 'groups' | 'pinned';
+
+function previewMeta(conversation: InboxConversation): { label: string; icon: React.ReactNode } {
+  const text = conversation.lastMessage || '';
+  const lower = text.toLowerCase();
+  if (lower.includes('photo')) return { label: 'Photo', icon: null };
+  if (lower.includes('voice')) return { label: 'Voice', icon: null };
+  if (lower.includes('link')) return { label: 'Link', icon: null };
+  if (conversation.isGroup) return { label: `${conversation.memberCount ?? 1} members`, icon: null };
+  return { label: text || `@${conversation.username}`, icon: null };
+}
 
 function CreateGroupModal({
   visible,
@@ -220,6 +238,13 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
   const { colors, fontSizes, showAvatars, animation, isUserOnline } = useTheme();
   const online = !conversation.isGroup && isUserOnline(conversation.userId);
   const showUnread = conversation.unreadCount > 0 && !conversation.muted;
+  const meta = previewMeta(conversation);
+  const draft = persistGet<string>('chat:draft:' + conversation.id, '').trim();
+  const preview = draft
+    ? `Draft · ${draft}`
+    : conversation.isGroup && conversation.lastMessage
+    ? `${meta.label} · ${conversation.lastMessage}`
+    : meta.label;
 
   return (
     <Animated.View entering={animation(FadeIn.delay(index * 20).duration(80))}>
@@ -229,10 +254,17 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
+          marginHorizontal: 16,
+          marginVertical: 5,
+          padding: 13,
+          borderRadius: 24,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: showUnread ? `${colors.accent}66` : colors.border,
+          backgroundColor: showUnread ? colors.accentMuted : colors.surface,
+          shadowColor: showUnread ? colors.accent : '#000',
+          shadowOpacity: showUnread ? 0.14 : 0.05,
+          shadowRadius: showUnread ? 14 : 8,
+          shadowOffset: { width: 0, height: 6 },
         }}
         scaleValue={0.98}
         haptic="light"
@@ -265,7 +297,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
                   borderColor: colors.bg,
                 }}
               >
-                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{conversation.unreadCount}</Text>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}</Text>
               </Animated.View>
             )}
           </View>
@@ -275,38 +307,298 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={{
               flexShrink: 1,
-              fontWeight: '600', fontSize: fontSizes.body,
-              color: showUnread ? colors.text : colors.textSecondary,
+              fontWeight: showUnread ? '800' : '700',
+              fontSize: fontSizes.body,
+              color: colors.text,
             }} numberOfLines={1}>
               {conversation.displayName}
             </Text>
             {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
             {conversation.muted && <BellSlash color={colors.textMuted} size={13} weight="fill" />}
             {conversation.isGroup && <Users color={colors.textMuted} size={13} weight="fill" />}
-            {online && <Text style={{ color: colors.success, fontSize: fontSizes.caption }}>online</Text>}
+            {pinned && <PushPin color={colors.accent} size={13} weight="fill" />}
           </View>
           <Text
             style={{
               fontSize: fontSizes.small, marginTop: 2,
-              color: showUnread ? colors.textSecondary : colors.textMuted,
-              fontWeight: showUnread ? '500' : '400',
+              color: draft ? colors.accent : showUnread ? colors.textSecondary : colors.textMuted,
+              fontWeight: draft || showUnread ? '700' : '400',
             }}
             numberOfLines={1}
           >
-            {conversation.isGroup && conversation.memberCount
-              ? `${conversation.memberCount} members · ${conversation.lastMessage}`
-              : conversation.lastMessage}
+            {preview}
           </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
+              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+            }}>
+              {conversation.lastMessage.toLowerCase().includes('photo')
+                ? <Camera color={colors.textMuted} size={11} weight="bold" />
+                : conversation.lastMessage.toLowerCase().includes('voice')
+                  ? <Microphone color={colors.textMuted} size={11} weight="bold" />
+                  : conversation.lastMessage.toLowerCase().includes('link')
+                    ? <LinkSimple color={colors.textMuted} size={11} weight="bold" />
+                    : <ChatCircleText color={colors.textMuted} size={11} weight="bold" />
+              }
+              <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700' }} numberOfLines={1}>
+                {conversation.isGroup ? 'Group' : online ? 'Online' : 'DM'}
+              </Text>
+            </View>
+            {showUnread ? (
+              <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: colors.accent }}>
+                <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '800' }}>New</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
 
-        <View style={{ alignItems: 'flex-end', marginLeft: 8, gap: 4 }}>
+        <View style={{ alignItems: 'flex-end', marginLeft: 8, gap: 8 }}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
             {getTimeAgo(conversation.lastMessageAt)}
           </Text>
-          {pinned && <PushPin color={colors.accent} size={13} weight="fill" />}
+          <CaretRight color={colors.textMuted} size={16} />
         </View>
       </AnimatedPressable>
     </Animated.View>
+  );
+}
+
+function InboxHero({
+  total,
+  unread,
+  groups,
+  pinned,
+  onNewGroup,
+  onFindPeople,
+}: {
+  total: number;
+  unread: number;
+  groups: number;
+  pinned: number;
+  onNewGroup: () => void;
+  onFindPeople: () => void;
+}) {
+  const { colors } = useTheme();
+  const stats = [
+    { label: 'Unread', value: unread },
+    { label: 'Groups', value: groups },
+    { label: 'Pinned', value: pinned },
+  ];
+  return (
+    <View style={{ marginHorizontal: 16, marginTop: 14, marginBottom: 10, borderRadius: 28, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+      <LinearGradient
+        colors={[`${colors.accent}4A`, `${colors.accent}16`, 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+      <View style={{ padding: 18, gap: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+          <View style={{ width: 52, height: 52, borderRadius: 19, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+            <ChatCircleText color="#fff" size={27} weight="fill" />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={{ color: colors.text, fontSize: 26, lineHeight: 31, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
+              Stay close, move things forward.
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
+              {total ? `${total} active conversations with Echo tools for replies, media, groups, saves, and catch-up.` : 'Start with one useful conversation, then let Echo help keep it alive.'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {stats.map(stat => (
+            <View key={stat.label} style={{ flex: 1, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 10, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{stat.value}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{stat.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Pressable
+            onPress={onFindPeople}
+            accessibilityRole="button"
+            style={({ pressed }) => ({
+              flex: 1,
+              minHeight: 46,
+              borderRadius: 16,
+              backgroundColor: colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 8,
+              opacity: pressed ? 0.72 : 1,
+            })}
+          >
+            <PencilSimple color="#fff" size={17} weight="bold" />
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '900' }}>New chat</Text>
+          </Pressable>
+          <Pressable
+            onPress={onNewGroup}
+            accessibilityRole="button"
+            style={({ pressed }) => ({
+              flex: 1,
+              minHeight: 46,
+              borderRadius: 16,
+              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 8,
+              opacity: pressed ? 0.72 : 1,
+            })}
+          >
+            <Users color={colors.text} size={17} weight="bold" />
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>New group</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function InboxToolbar({
+  query,
+  onQueryChange,
+  filter,
+  onFilterChange,
+  counts,
+}: {
+  query: string;
+  onQueryChange: (value: string) => void;
+  filter: InboxFilter;
+  onFilterChange: (value: InboxFilter) => void;
+  counts: Record<InboxFilter, number>;
+}) {
+  const { colors, fontSizes } = useTheme();
+  const filters: { key: InboxFilter; label: string; icon: React.ReactNode }[] = [
+    { key: 'all', label: 'All', icon: <Envelope color={filter === 'all' ? '#fff' : colors.textMuted} size={13} weight="bold" /> },
+    { key: 'unread', label: 'Unread', icon: <Lightning color={filter === 'unread' ? '#fff' : colors.textMuted} size={13} weight="fill" /> },
+    { key: 'people', label: 'People', icon: <ChatCircleText color={filter === 'people' ? '#fff' : colors.textMuted} size={13} weight="bold" /> },
+    { key: 'groups', label: 'Groups', icon: <Users color={filter === 'groups' ? '#fff' : colors.textMuted} size={13} weight="bold" /> },
+    { key: 'pinned', label: 'Pinned', icon: <PushPin color={filter === 'pinned' ? '#fff' : colors.textMuted} size={13} weight="fill" /> },
+  ];
+  return (
+    <View style={{ paddingHorizontal: 16, gap: 12, marginBottom: 8 }}>
+      <View style={{
+        minHeight: 48,
+        borderRadius: 18,
+        paddingHorizontal: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        backgroundColor: colors.inputBg,
+        borderWidth: 1,
+        borderColor: colors.inputBorder,
+      }}>
+        <MagnifyingGlass color={colors.textMuted} size={17} />
+        <TextInput
+          value={query}
+          onChangeText={onQueryChange}
+          placeholder="Search names, messages, groups"
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 10 }}
+        />
+        {query.trim() ? (
+          <Pressable onPress={() => onQueryChange('')} hitSlop={8}>
+            <X color={colors.textMuted} size={16} />
+          </Pressable>
+        ) : null}
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 9, paddingVertical: 2, paddingRight: 2 }}
+      >
+        {filters.map(item => {
+          const active = filter === item.key;
+          return (
+            <Pressable
+              key={item.key}
+              onPress={() => onFilterChange(item.key)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              style={({ pressed }) => ({
+                minWidth: 116,
+                minHeight: 54,
+                borderRadius: 19,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                justifyContent: 'center',
+                backgroundColor: active
+                  ? colors.accent
+                  : (colors.isDark ? 'rgba(255,255,255,0.075)' : '#fff'),
+                borderWidth: 1,
+                borderColor: active ? colors.accent : colors.border,
+                shadowColor: '#000',
+                shadowOpacity: colors.isDark ? 0.18 : 0.06,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 4 },
+                opacity: pressed ? 0.72 : 1,
+              })}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: active ? 'rgba(255,255,255,0.18)' : colors.surface,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: active ? 'rgba(255,255,255,0.28)' : colors.border,
+                }}>
+                  {item.icon}
+                </View>
+                <Text
+                  style={{
+                    flex: 1,
+                    color: active ? '#fff' : colors.text,
+                    fontSize: 13,
+                    lineHeight: 16,
+                    fontWeight: '900',
+                  }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.82}
+                >
+                  {item.label}
+                </Text>
+                <View style={{
+                  minWidth: 24,
+                  height: 24,
+                  borderRadius: 12,
+                  paddingHorizontal: 7,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: active
+                    ? 'rgba(255,255,255,0.2)'
+                    : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+                }}>
+                  <Text style={{ color: active ? '#fff' : colors.textMuted, fontSize: 12, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                    {counts[item.key]}
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -324,6 +616,8 @@ export default function MessagesListScreen() {
     const v = persistGet<string[]>('chat:pinnedConversations', []);
     return Array.isArray(v) ? v : [];
   });
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<InboxFilter>('all');
 
   // Deep-link support: /messages?newGroup=1 (chat-tab "New group" button)
   const { newGroup } = useLocalSearchParams<{ newGroup?: string }>();
@@ -370,6 +664,28 @@ export default function MessagesListScreen() {
   });
   const active = sorted.filter(c => !c.archived);
   const archived = sorted.filter(c => c.archived);
+  const unreadTotal = active.reduce((sum, c) => sum + (c.muted ? 0 : c.unreadCount), 0);
+  const queryText = query.trim().toLowerCase();
+  const counts: Record<InboxFilter, number> = {
+    all: active.length,
+    unread: active.filter(c => c.unreadCount > 0 && !c.muted).length,
+    people: active.filter(c => !c.isGroup).length,
+    groups: active.filter(c => c.isGroup).length,
+    pinned: active.filter(c => isPinned(c.id)).length,
+  };
+  const filteredActive = active.filter(c => {
+    if (filter === 'unread' && !(c.unreadCount > 0 && !c.muted)) return false;
+    if (filter === 'people' && c.isGroup) return false;
+    if (filter === 'groups' && !c.isGroup) return false;
+    if (filter === 'pinned' && !isPinned(c.id)) return false;
+    if (!queryText) return true;
+    return [
+      c.displayName,
+      c.username,
+      c.lastMessage,
+      c.isGroup ? 'group' : 'dm',
+    ].filter(Boolean).join(' ').toLowerCase().includes(queryText);
+  });
 
   const openActions = (c: InboxConversation) => {
     if (!remote) return;
@@ -444,7 +760,7 @@ export default function MessagesListScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
+          <AnimatedPressable onPress={() => safeBack('/(tabs)/chat')} className="p-1" scaleValue={0.88} haptic="light">
             <ArrowLeft color={colors.text} size={24} />
           </AnimatedPressable>
           <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Messages</Text>
@@ -466,35 +782,81 @@ export default function MessagesListScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
+      }}>
+        <AnimatedPressable onPress={() => safeBack('/(tabs)/chat')} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface }} scaleValue={0.88} haptic="light">
+          <ArrowLeft color={colors.text} size={22} />
         </AnimatedPressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Messages</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <AnimatedPressable onPress={() => setGroupModalOpen(true)} className="p-1" scaleValue={0.88} haptic="light">
-            <Users color={colors.accent} size={22} weight="bold" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={{ color: colors.text, fontSize: 24, lineHeight: 29, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Messages</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
+            {unreadTotal ? `${unreadTotal} unread · Echo-ready` : 'Private · rich · remembered'}
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+          <AnimatedPressable onPress={() => setGroupModalOpen(true)} style={{ width: 40, height: 40, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }} scaleValue={0.88} haptic="light">
+            <Users color={colors.accent} size={20} weight="bold" />
           </AnimatedPressable>
-          <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} className="p-1" scaleValue={0.88} haptic="light">
-            <PencilSimple color={colors.accent} size={22} />
+          <AnimatedPressable onPress={() => router.push('/(tabs)/explore')} style={{ width: 40, height: 40, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }} scaleValue={0.88} haptic="light">
+            <PencilSimple color="#fff" size={20} weight="bold" />
           </AnimatedPressable>
         </View>
       </View>
 
-      {active.length === 0 && archived.length === 0 ? (
-        <EmptyState
-          icon={<Envelope color="#6366F1" size={32} />}
-          title="No messages yet"
-          subtitle="Start a conversation by visiting someone's profile and tapping the message button."
-          actionLabel="Find people"
-          onAction={() => router.push('/(tabs)/explore')}
-        />
-      ) : (
-        <FlashList
-          data={active}
-          renderItem={({ item, index }) => renderCard(item, index)}
-          keyExtractor={item => item.id}
-          ListFooterComponent={archived.length > 0 ? (
+      <FlashList
+        data={filteredActive}
+        renderItem={({ item, index }) => renderCard(item, index)}
+        keyExtractor={item => item.id}
+        ListHeaderComponent={(
+          <View>
+            <InboxHero
+              total={active.length}
+              unread={unreadTotal}
+              groups={counts.groups}
+              pinned={counts.pinned}
+              onNewGroup={() => setGroupModalOpen(true)}
+              onFindPeople={() => router.push('/(tabs)/explore')}
+            />
+            <InboxToolbar
+              query={query}
+              onQueryChange={setQuery}
+              filter={filter}
+              onFilterChange={setFilter}
+              counts={counts}
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 4, paddingBottom: 6 }}>
+              <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>
+                {filter === 'all' ? 'Recent conversations' : `${filter[0].toUpperCase()}${filter.slice(1)} conversations`}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>
+                {filteredActive.length} shown
+              </Text>
+            </View>
+          </View>
+        )}
+        ListEmptyComponent={(
+          <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 26 }}>
+            <EmptyState
+              icon={<Envelope color={colors.accent} size={32} />}
+              title={queryText || filter !== 'all' ? 'No matching conversations' : 'No messages yet'}
+              subtitle={queryText || filter !== 'all'
+                ? 'Try another filter or search term.'
+                : 'Start a conversation by visiting someone’s profile and tapping the message button.'}
+              actionLabel={queryText || filter !== 'all' ? 'Show all' : 'Find people'}
+              onAction={() => {
+                if (queryText || filter !== 'all') { setQuery(''); setFilter('all'); }
+                else router.push('/(tabs)/explore');
+              }}
+            />
+          </View>
+        )}
+        ListFooterComponent={archived.length > 0 ? (
             <View>
               <Pressable
                 onPress={() => setShowArchived(v => !v)}
@@ -519,9 +881,8 @@ export default function MessagesListScreen() {
                 <React.Fragment key={item.id}>{renderCard(item, i)}</React.Fragment>
               ))}
             </View>
-          ) : null}
-        />
-      )}
+        ) : <View style={{ height: 18 }} />}
+      />
       <CreateGroupModal
         visible={groupModalOpen}
         onClose={() => setGroupModalOpen(false)}

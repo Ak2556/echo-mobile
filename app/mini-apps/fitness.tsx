@@ -10,7 +10,7 @@ import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, Pencil
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { ExerciseDemo } from '../../components/mini-apps/ExerciseDemo';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
@@ -501,7 +501,7 @@ export default function FitnessApp() {
     </AnimatedPressable>
   ) : undefined;
 
-  if (!doc) return <MiniAppShell title="Fitness" subtitle="Meals · workouts · progress"><View /></MiniAppShell>;
+  if (!doc) return <MiniAppShell title="Fitness" subtitle="Fit"><View /></MiniAppShell>;
 
   const totals = todayMealTotals(doc.meals);
   const calPct = Math.min(100, Math.round((totals.calories / doc.goals.calories) * 100));
@@ -550,7 +550,18 @@ export default function FitnessApp() {
   };
 
   return (
-    <MiniAppShell title="Fitness" subtitle="Meals · workouts · progress" headerRight={AddBtn}>
+    <MiniAppShell title="Fitness" subtitle="Fit" headerRight={AddBtn}>
+      <MiniCommandDeck
+        accent={TEAL}
+        title="Health operating system"
+        subtitle="Meals, workouts, metrics."
+        metrics={[
+          { label: 'Calories', value: `${Math.round(totals.calories)}`, detail: `${calPct}% goal` },
+          { label: 'Water', value: `${Math.round(waterToday / 1000)}L`, detail: 'today' },
+          { label: 'Workouts', value: `${weekCount}`, detail: 'this week' },
+        ]}
+        chips={['Meals + macros', 'Workout flow', 'Progress trends']}
+      />
       {/* Tabs */}
       <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
         {TABS.map(t => (
@@ -656,7 +667,7 @@ export default function FitnessApp() {
               accent={TEAL}
               icon={<ForkKnife color={colors.textMuted} size={44} weight="thin" />}
               title="Nothing logged today"
-              subtitle="Add a meal to start tracking calories and macros."
+              subtitle="Log the first meal to see calories, protein, and daily direction."
               actionLabel="Log your first meal"
               onAction={() => setShowAddMeal(true)}
             />
@@ -779,7 +790,7 @@ export default function FitnessApp() {
               accent={TEAL}
               icon={<Barbell color={colors.textMuted} size={44} weight="thin" />}
               title="No workouts logged"
-              subtitle="Log a session to track volume, streaks, and PRs."
+              subtitle="Log a session to track volume, streaks, PRs, and consistency."
               actionLabel="Log your first workout"
               onAction={() => setShowAddWorkout(true)}
             />

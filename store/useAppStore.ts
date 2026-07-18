@@ -10,7 +10,7 @@ type AppState = AuthSlice & ChatSlice & SocialSlice & SettingsSlice & RetentionS
 export const useAppStore = create<AppState>()((set, get) => ({
   ...createAuthSlice(set, get),
   ...createChatSlice(set, get as () => ChatSlice),
-  ...createSocialSlice(set, get as () => SocialSlice & { username: string; displayName: string; avatarColor: string }),
+  ...createSocialSlice(set, get as () => SocialSlice & { username: string; displayName: string; avatarColor: string; avatarUrl: string }),
   ...createSettingsSlice(set, get),
   ...createRetentionSlice(set, get as () => RetentionSlice),
 }));

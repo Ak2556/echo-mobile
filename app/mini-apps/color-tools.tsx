@@ -4,6 +4,7 @@ import { Check, Copy, FloppyDisk, Shuffle } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 
 function hexToRgb(hex: string) {
@@ -39,6 +40,63 @@ const PALETTES = [
 
 const RANDOMS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1'];
 
+function clamp(v: number) {
+  return Math.max(0, Math.min(255, Math.round(v)));
+}
+
+function rgbToHex(r: number, g: number, b: number) {
+  return `#${[r, g, b].map(v => clamp(v).toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+}
+
+function mix(hex: string, amount: number, target = 255) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  return rgbToHex(
+    rgb.r + (target - rgb.r) * amount,
+    rgb.g + (target - rgb.g) * amount,
+    rgb.b + (target - rgb.b) * amount,
+  );
+}
+
+function ColorIntelligencePanel({ hex, saved }: { hex: string; saved: string[] }) {
+  const { colors } = useTheme();
+  const rgb = hexToRgb(hex);
+  const hsl = rgb ? rgbToHsl(rgb.r, rgb.g, rgb.b) : null;
+  const whiteContrast = rgb ? (1.05 / (lum(rgb.r, rgb.g, rgb.b) + 0.05)) : 0;
+  const blackContrast = rgb ? ((lum(rgb.r, rgb.g, rgb.b) + 0.05) / 0.05) : 0;
+  const bestText = whiteContrast >= blackContrast ? 'White' : 'Black';
+  const system = hsl ? (hsl.s < 18 ? 'Neutral' : hsl.l < 30 ? 'Deep' : hsl.l > 72 ? 'Soft' : 'Vivid') : 'Draft';
+  const shades = [mix(hex, 0.66), mix(hex, 0.34), hex.toUpperCase(), mix(hex, 0.22, 0), mix(hex, 0.44, 0)];
+  return (
+    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${hex}55` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: hex, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Palette intelligence</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Contrast, tone, scale.</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {[
+          { label: 'Text', value: bestText },
+          { label: 'Tone', value: system },
+          { label: 'Saved', value: `${saved.length}` },
+        ].map(item => (
+          <View key={item.label} style={{ flex: 1, minHeight: 58, borderRadius: 15, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <Text style={{ color: hex, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>{item.value}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase', marginTop: 5 }}>{item.label}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 6, height: 42 }}>
+        {shades.map(shade => (
+          <View key={shade} style={{ flex: 1, borderRadius: 12, backgroundColor: shade, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
+        ))}
+      </View>
+    </GlassPanel>
+  );
+}
+
 export default function ColorToolsScreen() {
   const { colors } = useTheme();
   const [hex, setHex] = useState('#C65F3F');
@@ -60,7 +118,19 @@ export default function ColorToolsScreen() {
   const save = () => { if (!saved.includes(hex)) setSaved(s=>[hex,...s].slice(0,20)); };
 
   return (
-    <MiniAppShell title="Color Tools" subtitle="HEX · RGB · HSL · palettes">
+    <MiniAppShell title="Color Tools" subtitle="Color">
+      <MiniCommandDeck
+        accent={hex}
+        title="Design color that can ship"
+        subtitle="Pick, test, copy, reuse."
+        metrics={[
+          { label: 'HEX', value: hex.toUpperCase(), detail: 'current' },
+          { label: 'Contrast', value: rgb ? contrast(hex).split(' ')[0] : '-', detail: 'vs white' },
+          { label: 'Saved', value: `${saved.length}`, detail: 'palette' },
+        ]}
+        chips={['Accessible', 'Swatches', 'Specs']}
+      />
+      <ColorIntelligencePanel hex={hex} saved={saved} />
       {/* Hero swatch */}
       <View style={{ height: 160, borderRadius: 28, backgroundColor: hex, alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, shadowColor: hex, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 } }}>
         <TextInput

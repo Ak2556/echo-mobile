@@ -5,7 +5,7 @@ import { CaretLeft, CaretRight, CheckCircle, CircleDashed, Plus, Trash } from 'p
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniChip, MiniButton } from '../../components/mini-apps/MiniKit';
+import { MiniChip, MiniButton, MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
@@ -60,7 +60,18 @@ export default function PlannerScreen() {
   };
 
   return (
-    <MiniAppShell title="Planner" subtitle={`${dayLabel} · ${stats.open} open`}>
+    <MiniAppShell title="Planner" subtitle="Plan">
+      <MiniCommandDeck
+        accent={accent}
+        title="A day you can actually run"
+        subtitle="Morning, afternoon, evening."
+        metrics={[
+          { label: 'Total', value: `${stats.total}`, detail: dayLabel },
+          { label: 'Open', value: `${stats.open}`, detail: 'left' },
+          { label: 'Done', value: `${stats.done}`, detail: 'closed' },
+        ]}
+        chips={['Rebalance day', 'Protect focus', 'End-of-day recap']}
+      />
       <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Pressable onPress={() => setDate(shiftPlannerDate(date, -1))} hitSlop={8}>

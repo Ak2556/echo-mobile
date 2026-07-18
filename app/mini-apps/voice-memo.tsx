@@ -11,6 +11,7 @@ import {
   useAudioRecorder,
   type AudioPlayer,
 } from 'expo-audio';
+import * as FileSystem from 'expo-file-system/legacy';
 import Animated, {
   FadeInDown, useSharedValue, useAnimatedStyle,
   withRepeat, withSequence, withTiming, cancelAnimation,
@@ -21,14 +22,30 @@ import {
 } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
-import { MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
+import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/miniAppMedia';
 import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/voiceMemos';
 
 const REC_COLOR = '#EF4444';
+
+async function playbackCandidates(memo: Memo): Promise<string[]> {
+  const candidates: string[] = [];
+  if (/^https?:\/\//i.test(memo.uri)) {
+    candidates.push(memo.uri);
+  } else if (memo.uri) {
+    try {
+      const info = await FileSystem.getInfoAsync(memo.uri);
+      if (info.exists) candidates.push(memo.uri);
+    } catch {}
+  }
+  const remote = await getMiniAppMediaUrl(memo.storagePath);
+  if (remote) candidates.push(remote);
+  return Array.from(new Set(candidates));
+}
 
 export default function VoiceMemoApp() {
   const { colors } = useTheme();
@@ -101,8 +118,18 @@ export default function VoiceMemoApp() {
     };
     const updated = [memo, ...memos];
     setMemos(updated);
-    saveMemos(updated);
+    await saveMemos(updated);
     showToast('Memo saved', 'Saved');
+    try {
+      const uploaded = await uploadMiniAppMedia('voice-memo', uri, { extension: 'm4a', mimeType: 'audio/mp4' });
+      if (uploaded?.path) {
+        const synced = updated.map(item => item.id === memo.id ? { ...item, storagePath: uploaded.path } : item);
+        setMemos(synced);
+        await saveMemos(synced);
+      }
+    } catch {
+      showToast('Saved on this device. Cloud audio sync will retry after another edit.', 'Voice Memo');
+    }
   };
 
   const playMemo = async (memo: Memo) => {
@@ -111,21 +138,38 @@ export default function VoiceMemoApp() {
       setPlayingId(null);
       return;
     }
+    const candidates = await playbackCandidates(memo);
+    if (candidates.length === 0) {
+      showToast('Audio file is not available on this device', 'Voice Memo');
+      return;
+    }
     playbackSubscriptionRef.current?.remove();
     if (sound) { sound.remove(); setSound(null); }
-    const nextSound = createAudioPlayer({ uri: memo.uri });
-    playbackSubscriptionRef.current = nextSound.addListener('playbackStatusUpdate', status => {
-      if (status.didJustFinish) {
-        setPlayingId(null);
-        playbackSubscriptionRef.current?.remove();
-        playbackSubscriptionRef.current = null;
-        nextSound.remove();
-        setSound(null);
+    for (const uri of candidates) {
+      try {
+        const nextSound = createAudioPlayer({ uri });
+        playbackSubscriptionRef.current = nextSound.addListener('playbackStatusUpdate', status => {
+          if (status.didJustFinish) {
+            setPlayingId(null);
+            playbackSubscriptionRef.current?.remove();
+            playbackSubscriptionRef.current = null;
+            nextSound.remove();
+            setSound(null);
+          }
+        });
+        nextSound.play();
+        setSound(nextSound);
+        setPlayingId(memo.id);
+        return;
+      } catch {
+        if (playbackSubscriptionRef.current) {
+          playbackSubscriptionRef.current?.remove();
+          playbackSubscriptionRef.current = null;
+        }
       }
-    });
-    nextSound.play();
-    setSound(nextSound);
-    setPlayingId(memo.id);
+    }
+    setPlayingId(null);
+    showToast('Audio file is not available on this device', 'Voice Memo');
   };
 
   const deleteMemo = (id: string) => {
@@ -163,7 +207,18 @@ export default function VoiceMemoApp() {
   );
 
   return (
-    <MiniAppShell title="Voice Memo" subtitle="Tap to record" headerRight={CountBadge}>
+    <MiniAppShell title="Voice Memo" subtitle="Record" headerRight={CountBadge}>
+      <MiniCommandDeck
+        accent={isRecording ? REC_COLOR : accent}
+        title="Voice-to-action capture"
+        subtitle="Thoughts, meetings, practice, proof."
+        metrics={[
+          { label: 'Memos', value: `${memos.length}`, detail: 'saved' },
+          { label: 'Minutes', value: `${Math.round(memos.reduce((sum, memo) => sum + memo.duration, 0) / 60)}`, detail: 'captured' },
+          { label: 'Now', value: formatMemoTime(recordDuration), detail: isRecording ? 'live' : 'idle' },
+        ]}
+        chips={['Turn into note', 'Practice proof', 'Draft from audio']}
+      />
       {/* Recording widget */}
       <GlassPanel
         variant="medium"
@@ -253,7 +308,7 @@ export default function VoiceMemoApp() {
           accent={colors.accent}
           icon={<MicrophoneStage color={colors.textMuted} size={48} weight="thin" />}
           title="No recordings yet"
-          subtitle="Tap record to capture your first voice memo."
+          subtitle="Record the first thought, meeting, practice run, or proof worth keeping."
         />
       ) : (
         memos.map((memo, i) => (

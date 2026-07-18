@@ -6,6 +6,7 @@ interface AuthFields {
   username: string;
   displayName: string;
   avatarColor: string;
+  avatarUrl: string;
 }
 
 export interface SocialSlice {
@@ -226,6 +227,7 @@ export function createSocialSlice(
             fromUsername: get().username,
             fromDisplayName: get().displayName || get().username,
             fromAvatarColor: get().avatarColor,
+            fromAvatarUrl: get().avatarUrl || undefined,
             isRead: true,
             createdAt: new Date().toISOString(),
           });
@@ -334,6 +336,7 @@ export function createSocialSlice(
         contactUsername: username,
         contactDisplayName: displayName,
         contactAvatarColor: user.avatarColor,
+        contactAvatarUrl: user.avatarUrl,
         linkTitle: displayName,
         linkSubtitle: `@${username}`,
         isRead: true,
@@ -386,7 +389,22 @@ export function createSocialSlice(
     },
     getOrCreateConversation: (user) => {
       const existing = get().conversations.find(c => c.userId === user.id);
-      if (existing) return existing.id;
+      if (existing) {
+        const next: Conversation = {
+          ...existing,
+          username: user.username || existing.username,
+          displayName: user.displayName || existing.displayName,
+          avatarColor: user.avatarColor || existing.avatarColor,
+          avatarUrl: user.avatarUrl || existing.avatarUrl,
+          isVerified: user.isVerified ?? existing.isVerified,
+        };
+        if (next.avatarUrl !== existing.avatarUrl || next.displayName !== existing.displayName || next.username !== existing.username || next.avatarColor !== existing.avatarColor || next.isVerified !== existing.isVerified) {
+          const conversations = get().conversations.map(c => c.id === existing.id ? next : c);
+          persistSet('conversations', conversations);
+          set({ conversations });
+        }
+        return existing.id;
+      }
       const id = `conv_${Date.now()}`;
       const conv: Conversation = {
         id,
@@ -394,6 +412,7 @@ export function createSocialSlice(
         username: user.username,
         displayName: user.displayName,
         avatarColor: user.avatarColor,
+        avatarUrl: user.avatarUrl,
         isVerified: user.isVerified,
         lastMessage: '',
         lastMessageAt: new Date().toISOString(),

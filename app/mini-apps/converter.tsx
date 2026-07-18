@@ -4,6 +4,7 @@ import { ArrowsLeftRight } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
+import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
 
 interface Unit { label: string; toBase: number }
@@ -59,6 +60,33 @@ function convertTemp(val: number, from: string, to: string): number {
   return to === '°Celsius' ? c : to === '°Fahrenheit' ? c * 9 / 5 + 32 : c + 273.15;
 }
 
+function ConversionPulse({ accent, category, from, to, input, result }: { accent: string; category: string; from: string; to: string; input: string; result: string }) {
+  const { colors } = useTheme();
+  const valid = result !== '—';
+  return (
+    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
+          <ArrowsLeftRight color={accent} size={20} weight="bold" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Conversion cockpit</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Exact answer, reusable context.</Text>
+        </View>
+      </View>
+      <View style={{ borderRadius: 18, padding: 14, backgroundColor: valid ? `${accent}14` : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: valid ? `${accent}44` : colors.glassBorder }}>
+        <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase', marginBottom: 5 }}>{category}</Text>
+        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>
+          {input || '0'} {from}
+        </Text>
+        <Text style={{ color: accent, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 4 }} numberOfLines={1} adjustsFontSizeToFit>
+          {result} {to}
+        </Text>
+      </View>
+    </GlassPanel>
+  );
+}
+
 export default function ConverterScreen() {
   const { colors } = useTheme();
   const [catIdx, setCatIdx] = useState(0);
@@ -80,7 +108,7 @@ export default function ConverterScreen() {
   const result = convert();
 
   return (
-    <MiniAppShell title="Converter" subtitle="Units & measures" scrollPadding={0}>
+    <MiniAppShell title="Converter" subtitle="Convert" scrollPadding={0}>
       {/* Category pills */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingBottom: 12, paddingTop: 4 }}>
         {CATEGORIES.map((c, i) => (
@@ -102,6 +130,25 @@ export default function ConverterScreen() {
       </ScrollView>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, gap: 14 }} showsVerticalScrollIndicator={false}>
+        <MiniCommandDeck
+          accent={accent}
+          title="Universal quick converter"
+          subtitle="Units, formula, shareable answer."
+          metrics={[
+            { label: 'Category', value: cat.marker, detail: cat.name },
+            { label: 'From', value: cat.units[fromIdx]?.label ?? '-', detail: 'source' },
+            { label: 'To', value: cat.units[toIdx]?.label ?? '-', detail: 'target' },
+          ]}
+          chips={['Length', 'Data', 'Energy', 'Pressure']}
+        />
+        <ConversionPulse
+          accent={accent}
+          category={cat.name}
+          from={cat.units[fromIdx]?.label ?? '-'}
+          to={cat.units[toIdx]?.label ?? '-'}
+          input={input}
+          result={result}
+        />
         {/* FROM */}
         <GlassPanel variant="medium" borderRadius={24} style={{ borderColor: accent + '55', borderWidth: 1 }} contentStyle={{ padding: 20 }}>
           <Text style={{ color: accent, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>FROM</Text>
