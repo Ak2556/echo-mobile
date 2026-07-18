@@ -27,6 +27,8 @@ export interface SettingsSlice {
   // ── Privacy ──
   readReceipts: boolean; setReadReceipts: (v: boolean) => void;
   onlineStatus: boolean; setOnlineStatus: (v: boolean) => void;
+  /** DSA opt-in: behavioral profiling to personalize notification timing/content. Default off. */
+  personalizedNotifications: boolean; setPersonalizedNotifications: (v: boolean) => void;
   dmPrivacy: 'everyone' | 'followers' | 'nobody';
   setDmPrivacy: (v: 'everyone' | 'followers' | 'nobody') => void;
   activityStatus: boolean; setActivityStatus: (v: boolean) => void;
@@ -139,6 +141,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     soundEnabled: b('soundEnabled', true), setSoundEnabled: s(set, 'soundEnabled'),
     readReceipts: b('readReceipts', true), setReadReceipts: s(set, 'readReceipts'),
     onlineStatus: b('onlineStatus', true), setOnlineStatus: s(set, 'onlineStatus'),
+    personalizedNotifications: b('personalizedNotifications', false), setPersonalizedNotifications: s(set, 'personalizedNotifications'),
     dmPrivacy: persistGet<'everyone' | 'followers' | 'nobody'>('dmPrivacy', 'everyone'),
     setDmPrivacy: (v) => { persistSet('dmPrivacy', v); set({ dmPrivacy: v }); },
     activityStatus: b('activityStatus', true), setActivityStatus: s(set, 'activityStatus'),

@@ -1425,6 +1425,7 @@ export async function updateRemoteProfile(updates: {
   activity_status?: boolean;
   online_status?: boolean;
   read_receipts?: boolean;
+  personalized_notifications?: boolean;
   // content + AI prefs — synced across all devices
   ai_model?: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.5-flash-lite';
   sensitive_content_filter?: boolean;
@@ -1444,7 +1445,7 @@ export async function fetchAndApplyRemoteSettings(): Promise<void> {
   if (!uid) return;
   const { data, error } = await supabase
     .from('profiles')
-    .select('ai_model, sensitive_content_filter, content_language, stream_responses, auto_save_chats, is_private, dm_privacy, activity_status, online_status, read_receipts')
+    .select('ai_model, sensitive_content_filter, content_language, stream_responses, auto_save_chats, is_private, dm_privacy, activity_status, online_status, read_receipts, personalized_notifications')
     .eq('id', uid)
     .single();
   if (error || !data) return;
@@ -1460,6 +1461,7 @@ export async function fetchAndApplyRemoteSettings(): Promise<void> {
   if (data.activity_status != null)           s.setActivityStatus(data.activity_status);
   if (data.online_status != null)             s.setOnlineStatus(data.online_status);
   if (data.read_receipts != null)             s.setReadReceipts(data.read_receipts);
+  if (data.personalized_notifications != null) s.setPersonalizedNotifications(data.personalized_notifications);
 }
 
 // Badges
@@ -2850,7 +2852,7 @@ export async function sendRemoteDMLinkToConversation(
 
 export async function sendRemoteDMContact(
   recipientId: string,
-  contact: { userId: string; username: string; displayName: string; avatarColor: string },
+  contact: { userId: string; username: string; displayName: string; avatarColor: string; avatarUrl?: string | null },
   replyToId?: string,
 ): Promise<{ conversationId: string }> {
   const uid = await getSessionUserId();
@@ -2874,7 +2876,7 @@ export async function sendRemoteDMContact(
 
 export async function sendRemoteDMContactToConversation(
   conversationId: string,
-  contact: { userId: string; username: string; displayName: string; avatarColor: string },
+  contact: { userId: string; username: string; displayName: string; avatarColor: string; avatarUrl?: string | null },
   replyToId?: string,
 ): Promise<{ conversationId: string }> {
   return insertRemoteDMInConversation(conversationId, {
