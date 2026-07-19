@@ -185,20 +185,20 @@ function Picker({ onPick }: { onPick: (id: string) => void }) {
           // actual name (avoids the catalog's marketing labels like "Write").
           const color = CATALOG_BY_ID.get(app.id)?.color ?? app.color ?? colors.accent;
           return (
-            <Animated.View key={app.id} entering={FadeInDown.delay(Math.min(i, 12) * 24).duration(240)} style={{ width: '25%', marginBottom: 18 }}>
+            <Animated.View key={app.id} entering={FadeInDown.delay(Math.min(i, 12) * 24).duration(240)} style={{ width: '25%', marginBottom: 18, alignItems: 'center' }}>
               <Pressable
                 onPress={() => onPick(app.id)}
                 accessibilityRole="button"
                 accessibilityLabel={app.name}
                 style={({ pressed }) => ({
-                  width: '100%', alignItems: 'center', paddingHorizontal: 4,
+                  alignItems: 'center',
                   opacity: pressed ? 0.6 : 1,
                   transform: [{ scale: pressed ? 0.94 : 1 }],
                 })}
               >
                 <MiniAppIcon id={app.id} color={color} size={54} />
                 <Text
-                  style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11, lineHeight: 14, marginTop: 8, textAlign: 'center', alignSelf: 'stretch' }]}
+                  style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11, lineHeight: 14, marginTop: 8, textAlign: 'center', maxWidth: 84 }]}
                   numberOfLines={1}
                 >
                   {app.name}
