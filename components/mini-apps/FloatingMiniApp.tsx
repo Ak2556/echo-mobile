@@ -191,14 +191,14 @@ function Picker({ onPick }: { onPick: (id: string) => void }) {
                 accessibilityRole="button"
                 accessibilityLabel={app.name}
                 style={({ pressed }) => ({
-                  alignItems: 'center', paddingHorizontal: 4,
+                  width: '100%', alignItems: 'center', paddingHorizontal: 4,
                   opacity: pressed ? 0.6 : 1,
                   transform: [{ scale: pressed ? 0.94 : 1 }],
                 })}
               >
                 <MiniAppIcon id={app.id} color={color} size={54} />
                 <Text
-                  style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11, lineHeight: 14, marginTop: 8, textAlign: 'center', width: '100%' }]}
+                  style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11, lineHeight: 14, marginTop: 8, textAlign: 'center', alignSelf: 'stretch' }]}
                   numberOfLines={1}
                 >
                   {app.name}
