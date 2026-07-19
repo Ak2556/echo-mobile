@@ -11,6 +11,7 @@ import {
   FileText,
   GraduationCap,
   Globe,
+  ImageSquare,
   Key,
   ListChecks,
   Microphone,
@@ -20,6 +21,9 @@ import {
   ShoppingCart,
   Timer,
   Wallet,
+  DiceFive,
+  Code,
+  Palette,
 } from 'phosphor-react-native';
 
 type MiniAppIconWeight = 'regular' | 'bold' | 'fill';
@@ -61,8 +65,13 @@ export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppG
     case 'password-gen': return <Key {...p} />;
     case 'voice-memo': return <Microphone {...p} />;
     case 'camera': return <Camera {...p} />;
+    case 'image-editor': return <ImageSquare {...p} />;
     case 'world-clock': return <Globe {...p} />;
     case 'markdown': return <FileText {...p} />;
+    case 'dice': return <DiceFive {...p} />;
+    case 'json-formatter': return <Code {...p} />;
+    case 'color-tools': return <Palette {...p} />;
+    case 'converter': return <ArrowsLeftRight {...p} />;
     default: return <ListChecks {...p} />;
   }
 }
