@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import React, {
   useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle,
 } from 'react';
@@ -161,16 +162,16 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
           )}
 
           {mode === 'adjust' && (
-            <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
               {!SKIA_OK && (
-                <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 8 }}>Preview + color edits apply on the next app build.</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 8 }}>Color edits apply once the app is rebuilt with the editor engine.</Text>
               )}
               <Slider label="Exposure" value={adjust.exposure} onChange={v => patchAdjust('exposure', v)} accent={colors.accent} />
               <Slider label="Brightness" value={adjust.brightness} onChange={v => patchAdjust('brightness', v)} accent={colors.accent} />
               <Slider label="Contrast" value={adjust.contrast} onChange={v => patchAdjust('contrast', v)} accent={colors.accent} />
               <Slider label="Saturation" value={adjust.saturation} onChange={v => patchAdjust('saturation', v)} accent={colors.accent} />
               <Slider label="Warmth" value={adjust.warmth} onChange={v => patchAdjust('warmth', v)} accent={colors.accent} />
-            </ScrollView>
+            </View>
           )}
 
           {mode === 'filter' && (
