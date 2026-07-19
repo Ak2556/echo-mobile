@@ -146,7 +146,7 @@ function Panel() {
               ? <MiniAppIcon id={meta.id} color={brand} size={28} />
               : <Sparkle color={colors.accent} size={20} weight="fill" />}
             <Text style={{ flex: 1, color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }} numberOfLines={1}>
-              {meta ? (CATALOG_BY_ID.get(meta.id)?.name ?? meta.name) : 'Mini apps'}
+              {meta ? meta.name : 'Mini apps'}
             </Text>
             {meta ? (
               <IconButton icon={GridFour} label="Switch app" onPress={openPicker} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
@@ -181,27 +181,27 @@ function Picker({ onPick }: { onPick: (id: string) => void }) {
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {FLOATING_APPS.map((app, i) => {
-          const cat = CATALOG_BY_ID.get(app.id);
-          const color = cat?.color ?? app.color ?? colors.accent;
-          const name = cat?.name ?? app.name;
+          // Catalog supplies the tile colour; the registry supplies the tool's
+          // actual name (avoids the catalog's marketing labels like "Write").
+          const color = CATALOG_BY_ID.get(app.id)?.color ?? app.color ?? colors.accent;
           return (
-            <Animated.View key={app.id} entering={FadeInDown.delay(Math.min(i, 12) * 24).duration(240)} style={{ width: '25%' }}>
+            <Animated.View key={app.id} entering={FadeInDown.delay(Math.min(i, 12) * 24).duration(240)} style={{ width: '25%', marginBottom: 18 }}>
               <Pressable
                 onPress={() => onPick(app.id)}
                 accessibilityRole="button"
-                accessibilityLabel={name}
+                accessibilityLabel={app.name}
                 style={({ pressed }) => ({
-                  alignItems: 'center', paddingVertical: 12, borderRadius: 16,
+                  alignItems: 'center', paddingHorizontal: 4,
                   opacity: pressed ? 0.6 : 1,
                   transform: [{ scale: pressed ? 0.94 : 1 }],
                 })}
               >
-                <MiniAppIcon id={app.id} color={color} size={52} />
+                <MiniAppIcon id={app.id} color={color} size={54} />
                 <Text
-                  style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11.5, marginTop: 7, textAlign: 'center' }]}
+                  style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11, lineHeight: 14, marginTop: 8, textAlign: 'center', width: '100%' }]}
                   numberOfLines={1}
                 >
-                  {name}
+                  {app.name}
                 </Text>
               </Pressable>
             </Animated.View>
