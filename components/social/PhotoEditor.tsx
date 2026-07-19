@@ -5,7 +5,7 @@ import React, {
 import {
   Modal, View, Text, Pressable, ActivityIndicator, Image as RNImage, ScrollView, LayoutChangeEvent,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import {
   X, Check, ArrowClockwise, ArrowCounterClockwise, FlipHorizontal, FlipVertical, Crop,
@@ -18,15 +18,27 @@ import {
   finalMatrix, hasAdjustments, FILTER_PRESETS, NO_ADJUST, type Adjustments,
 } from '../../lib/photoFilters';
 
+type OptionalManipulator = {
+  manipulateAsync: (uri: string, actions: unknown[], options: { compress?: number; format?: unknown }) => Promise<{ uri: string; width: number; height: number }>;
+  SaveFormat: { JPEG: unknown };
+  FlipType: { Horizontal: unknown; Vertical: unknown };
+};
+
+type OptionalFileSystem = {
+  cacheDirectory?: string | null;
+  EncodingType: { Base64: string };
+  writeAsStringAsync: (fileUri: string, contents: string, options: { encoding: string }) => Promise<void>;
+};
+
 // ── Lazy natives (OTA-safe: never touched at module load on builds lacking them) ──
-function getManipulator(): typeof import('expo-image-manipulator') | null {
-  try { return require('expo-image-manipulator'); } catch { return null; }
+function getManipulator(): OptionalManipulator | null {
+  try { return require('expo-image-manipulator') as OptionalManipulator; } catch { return null; }
 }
-let Sk: typeof import('@shopify/react-native-skia') | null = null;
+let Sk: any = null;
 try { Sk = require('@shopify/react-native-skia'); } catch { Sk = null; }
 const SKIA_OK = !!Sk;
-function getFileSystem(): typeof import('expo-file-system/legacy') | null {
-  try { return require('expo-file-system/legacy'); } catch { return null; }
+function getFileSystem(): OptionalFileSystem | null {
+  try { return require('expo-file-system/legacy') as OptionalFileSystem; } catch { return null; }
 }
 
 interface PhotoEditorProps {
@@ -106,6 +118,9 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>
+      {/* RN Modals are a separate window, so the app's safe-area context doesn't
+          reach them — nest a provider so the header clears the status bar. */}
+      <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top', 'bottom']}>
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
@@ -199,6 +214,7 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
           )}
         </View>
       </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 }
@@ -227,7 +243,7 @@ interface SkiaPreviewProps {
   matrix: number[];
   boxW: number;
   boxH: number;
-  skia: NonNullable<typeof Sk>;
+  skia: any;
 }
 const SkiaColorPreview = forwardRef<{ bake: () => Promise<string | null> }, SkiaPreviewProps>(
   function SkiaColorPreview({ uri, matrix, boxW, boxH, skia }, ref) {
