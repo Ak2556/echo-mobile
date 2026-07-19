@@ -15,7 +15,7 @@ import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-rean
 import {
   ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
   VideoCamera, ChartBar, X, Plus, Clock, Camera, Images, CheckCircle, Question,
-  Users, MagnifyingGlass,
+  Users, MagnifyingGlass, PencilSimple, CaretLeft, CaretRight,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
@@ -31,6 +31,9 @@ import { getPushPermissionStatus, registerForPush } from '../lib/push';
 import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
+import { PhotoEditor } from '../components/social/PhotoEditor';
+
+const MAX_PHOTOS = 6;
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll' | 'musing';
@@ -103,6 +106,7 @@ export default function CreatePostScreen() {
 
   // Photo state — up to 4 device assets
   const [images, setImages] = useState<LocalImageUpload[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const imageUris = images.map(image => image.uri);
 
   // Video state — single device URI
@@ -175,7 +179,7 @@ export default function CreatePostScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
-      selectionLimit: 4 - imageUris.length,
+      selectionLimit: MAX_PHOTOS - imageUris.length,
       quality: 0.72,
     });
     if (!result.canceled) {
@@ -183,7 +187,7 @@ export default function CreatePostScreen() {
         uri: asset.uri,
         mimeType: asset.mimeType,
         fileName: asset.fileName,
-      }))].slice(0, 4));
+      }))].slice(0, MAX_PHOTOS));
     }
   };
 
@@ -204,11 +208,26 @@ export default function CreatePostScreen() {
         uri: asset.uri,
         mimeType: asset.mimeType,
         fileName: asset.fileName,
-      }].slice(0, 4));
+      }].slice(0, MAX_PHOTOS));
     }
   };
 
   const removeImage = (idx: number) => setImages(prev => prev.filter((_, i) => i !== idx));
+
+  // Reorder within the thumbnail strip.
+  const moveImage = (idx: number, dir: -1 | 1) => setImages(prev => {
+    const to = idx + dir;
+    if (to < 0 || to >= prev.length) return prev;
+    const next = [...prev];
+    [next[idx], next[to]] = [next[to], next[idx]];
+    return next;
+  });
+
+  // Replace an image with its edited version (base64 is now stale — drop it).
+  const applyEdit = (uri: string) => {
+    setImages(prev => prev.map((img, i) => i === editingIndex ? { ...img, uri, base64: null } : img));
+    setEditingIndex(null);
+  };
 
   const pickVideo = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -740,16 +759,16 @@ export default function CreatePostScreen() {
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                 <Pressable
                   onPress={pickImages}
-                  disabled={imageUris.length >= 4}
-                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= 4 ? 0.4 : 1 }]}
+                  disabled={imageUris.length >= MAX_PHOTOS}
+                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= MAX_PHOTOS ? 0.4 : 1 }]}
                 >
                   <Images color={colors.accent} size={20} />
                   <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>Library</Text>
                 </Pressable>
                 <Pressable
                   onPress={takePhoto}
-                  disabled={imageUris.length >= 4}
-                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= 4 ? 0.4 : 1 }]}
+                  disabled={imageUris.length >= MAX_PHOTOS}
+                  style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= MAX_PHOTOS ? 0.4 : 1 }]}
                 >
                   <Camera color={colors.text} size={20} />
                   <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>Camera</Text>
@@ -757,8 +776,8 @@ export default function CreatePostScreen() {
               </View>
 
               {/* Count */}
-              <Text style={[s.label, { color: imageUris.length >= 4 ? colors.accent : colors.textMuted }]}>
-                {imageUris.length}/4 selected
+              <Text style={[s.label, { color: imageUris.length >= MAX_PHOTOS ? colors.accent : colors.textMuted }]}>
+                {imageUris.length}/{MAX_PHOTOS} selected{imageUris.length > 1 ? ' · tap ✎ to edit, arrows to reorder' : ''}
               </Text>
 
               {/* Thumbnail grid */}
@@ -777,10 +796,42 @@ export default function CreatePostScreen() {
                       <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                       <Pressable
                         onPress={() => removeImage(idx)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Remove photo"
                         style={{ position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4 }}
                       >
                         <X color="#fff" size={14} />
                       </Pressable>
+                      <Pressable
+                        onPress={() => setEditingIndex(idx)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Edit photo"
+                        style={{ position: 'absolute', top: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4 }}
+                      >
+                        <PencilSimple color="#fff" size={14} weight="bold" />
+                      </Pressable>
+                      {imageUris.length > 1 && (
+                        <View style={{ position: 'absolute', bottom: 6, alignSelf: 'center', flexDirection: 'row', gap: 6 }}>
+                          <Pressable
+                            onPress={() => moveImage(idx, -1)}
+                            disabled={idx === 0}
+                            accessibilityRole="button"
+                            accessibilityLabel="Move photo left"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4, opacity: idx === 0 ? 0.35 : 1 }}
+                          >
+                            <CaretLeft color="#fff" size={14} weight="bold" />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => moveImage(idx, 1)}
+                            disabled={idx === imageUris.length - 1}
+                            accessibilityRole="button"
+                            accessibilityLabel="Move photo right"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4, opacity: idx === imageUris.length - 1 ? 0.35 : 1 }}
+                          >
+                            <CaretRight color="#fff" size={14} weight="bold" />
+                          </Pressable>
+                        </View>
+                      )}
                     </View>
                   ))}
                 </View>
@@ -945,6 +996,13 @@ export default function CreatePostScreen() {
           />
         )}
       </KeyboardAvoidingView>
+
+      <PhotoEditor
+        visible={editingIndex !== null}
+        uri={editingIndex !== null ? imageUris[editingIndex] : null}
+        onDone={applyEdit}
+        onCancel={() => setEditingIndex(null)}
+      />
     </SafeAreaView>
   );
 }
