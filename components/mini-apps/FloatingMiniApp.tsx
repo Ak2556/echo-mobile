@@ -49,7 +49,7 @@ function Bubble() {
   const { x, y, appId, openApp, openPicker, setPosition } = useFloatingApp();
   const meta = floatingAppMeta(appId);
   // Minimized bubble carries the active app's own colour (like its Tools tile).
-  const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? colors.accent) : colors.accent;
+  const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? meta.color ?? colors.accent) : colors.accent;
 
   const startX = x >= 0 ? x : SCREEN_W - BUBBLE - 14;
   const startY = y >= 0 ? y : SCREEN_H * 0.62;
@@ -102,7 +102,7 @@ function Panel() {
   const insets = useSafeAreaInsets();
   const { appId, openApp, openPicker, minimize } = useFloatingApp();
   const meta = floatingAppMeta(appId);
-  const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? colors.accent) : colors.accent;
+  const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? meta.color ?? colors.accent) : colors.accent;
 
   // Bottom sheet ~72% of the screen; the top stays touchable (box-none parent).
   const panelHeight = Math.round(SCREEN_H * 0.72);
@@ -143,7 +143,7 @@ function Panel() {
           <View style={{ alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: colors.textMuted, opacity: 0.5, marginBottom: 8 }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
             {meta
-              ? <MiniAppIcon id={meta.id} color={CATALOG_BY_ID.get(meta.id)?.color ?? colors.accent} size={28} />
+              ? <MiniAppIcon id={meta.id} color={brand} size={28} />
               : <Sparkle color={colors.accent} size={20} weight="fill" />}
             <Text style={{ flex: 1, color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }} numberOfLines={1}>
               {meta ? (CATALOG_BY_ID.get(meta.id)?.name ?? meta.name) : 'Mini apps'}
@@ -182,7 +182,7 @@ function Picker({ onPick }: { onPick: (id: string) => void }) {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {FLOATING_APPS.map((app, i) => {
           const cat = CATALOG_BY_ID.get(app.id);
-          const color = cat?.color ?? colors.accent;
+          const color = cat?.color ?? app.color ?? colors.accent;
           const name = cat?.name ?? app.name;
           return (
             <Animated.View key={app.id} entering={FadeInDown.delay(Math.min(i, 12) * 24).duration(240)} style={{ width: '25%' }}>
