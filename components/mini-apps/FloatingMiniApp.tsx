@@ -1,8 +1,9 @@
 import React, { Suspense } from 'react';
 import { View, Text, Dimensions, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
-  useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, SlideInDown, SlideOutDown,
+  useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Sparkle, ArrowsInSimple, GridFour } from 'phosphor-react-native';
@@ -11,7 +12,7 @@ import { useAuthStore } from '../../lib/auth/store';
 import { useFloatingApp } from '../../store/floatingApp';
 import { FLOATING_APPS, floatingAppMeta } from '../../lib/miniAppRegistry';
 import { MiniAppEmbedContext } from '../../lib/miniAppEmbed';
-import { MiniAppIcon } from './MiniAppIcon';
+import { MiniAppIcon, MiniAppGlyph } from './MiniAppIcon';
 import { MINI_APP_CATALOG } from '../../lib/miniAppCatalog';
 import { IconButton } from '../ui/IconButton';
 
@@ -47,6 +48,8 @@ function Bubble() {
   const { colors } = useTheme();
   const { x, y, appId, openApp, openPicker, setPosition } = useFloatingApp();
   const meta = floatingAppMeta(appId);
+  // Minimized bubble carries the active app's own colour (like its Tools tile).
+  const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? colors.accent) : colors.accent;
 
   const startX = x >= 0 ? x : SCREEN_W - BUBBLE - 14;
   const startY = y >= 0 ? y : SCREEN_H * 0.62;
@@ -81,14 +84,14 @@ function Bubble() {
         style={[{
           position: 'absolute', width: BUBBLE, height: BUBBLE, borderRadius: BUBBLE / 2,
           alignItems: 'center', justifyContent: 'center',
-          backgroundColor: colors.accent,
-          shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 8,
+          backgroundColor: brand,
+          shadowColor: brand, shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 8,
           borderWidth: 2, borderColor: colors.bg,
         }, style]}
         accessibilityRole="button"
         accessibilityLabel={meta ? `Open ${meta.name}` : 'Open mini-apps'}
       >
-        {meta ? <meta.Icon color="#fff" size={24} weight="fill" /> : <Sparkle color="#fff" size={24} weight="fill" />}
+        {meta ? <MiniAppGlyph id={meta.id} color="#fff" size={24} /> : <Sparkle color="#fff" size={24} weight="fill" />}
       </Animated.View>
     </GestureDetector>
   );
@@ -99,6 +102,7 @@ function Panel() {
   const insets = useSafeAreaInsets();
   const { appId, openApp, openPicker, minimize } = useFloatingApp();
   const meta = floatingAppMeta(appId);
+  const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? colors.accent) : colors.accent;
 
   // Bottom sheet ~72% of the screen; the top stays touchable (box-none parent).
   const panelHeight = Math.round(SCREEN_H * 0.72);
@@ -125,6 +129,14 @@ function Panel() {
         overflow: 'hidden',
       }, sheetStyle]}
     >
+      {/* Ambient accent wash, matching the app's editorial cards. */}
+      <LinearGradient
+        colors={[`${brand}22`, `${brand}0A`, 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 200 }}
+        pointerEvents="none"
+      />
       {/* Header — drag the grip to minimize; switch apps / close on the right. */}
       <GestureDetector gesture={pan}>
         <View style={{ paddingTop: 8, paddingHorizontal: 14, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
@@ -168,30 +180,31 @@ function Picker({ onPick }: { onPick: (id: string) => void }) {
         Pick a tool to float
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {FLOATING_APPS.map(app => {
+        {FLOATING_APPS.map((app, i) => {
           const cat = CATALOG_BY_ID.get(app.id);
           const color = cat?.color ?? colors.accent;
           const name = cat?.name ?? app.name;
           return (
-            <Pressable
-              key={app.id}
-              onPress={() => onPick(app.id)}
-              accessibilityRole="button"
-              accessibilityLabel={name}
-              style={({ pressed }) => ({
-                width: '25%', alignItems: 'center', paddingVertical: 12, borderRadius: 16,
-                opacity: pressed ? 0.6 : 1,
-                transform: [{ scale: pressed ? 0.94 : 1 }],
-              })}
-            >
-              <MiniAppIcon id={app.id} color={color} size={52} />
-              <Text
-                style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11.5, marginTop: 7, textAlign: 'center' }]}
-                numberOfLines={1}
+            <Animated.View key={app.id} entering={FadeInDown.delay(Math.min(i, 12) * 24).duration(240)} style={{ width: '25%' }}>
+              <Pressable
+                onPress={() => onPick(app.id)}
+                accessibilityRole="button"
+                accessibilityLabel={name}
+                style={({ pressed }) => ({
+                  alignItems: 'center', paddingVertical: 12, borderRadius: 16,
+                  opacity: pressed ? 0.6 : 1,
+                  transform: [{ scale: pressed ? 0.94 : 1 }],
+                })}
               >
-                {name}
-              </Text>
-            </Pressable>
+                <MiniAppIcon id={app.id} color={color} size={52} />
+                <Text
+                  style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11.5, marginTop: 7, textAlign: 'center' }]}
+                  numberOfLines={1}
+                >
+                  {name}
+                </Text>
+              </Pressable>
+            </Animated.View>
           );
         })}
       </View>
