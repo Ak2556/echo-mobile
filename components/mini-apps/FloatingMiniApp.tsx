@@ -11,7 +11,16 @@ import { useAuthStore } from '../../lib/auth/store';
 import { useFloatingApp } from '../../store/floatingApp';
 import { FLOATING_APPS, floatingAppMeta } from '../../lib/miniAppRegistry';
 import { MiniAppEmbedContext } from '../../lib/miniAppEmbed';
+import { MiniAppIcon } from './MiniAppIcon';
+import { MINI_APP_CATALOG } from '../../lib/miniAppCatalog';
 import { IconButton } from '../ui/IconButton';
+
+// Per-app branding (colour + display name) from the shared catalog, so the
+// floating picker reads exactly like the Tools tab. Falls back to the
+// registry's own name + accent for anything not in the catalog.
+const CATALOG_BY_ID = new Map<string, (typeof MINI_APP_CATALOG)[number]>(
+  MINI_APP_CATALOG.map(a => [a.id, a]),
+);
 
 const BUBBLE = 54;
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -120,10 +129,12 @@ function Panel() {
       <GestureDetector gesture={pan}>
         <View style={{ paddingTop: 8, paddingHorizontal: 14, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
           <View style={{ alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: colors.textMuted, opacity: 0.5, marginBottom: 8 }} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {meta ? <meta.Icon color={colors.accent} size={18} weight="fill" /> : <Sparkle color={colors.accent} size={18} weight="fill" />}
-            <Text style={{ flex: 1, color: colors.text, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>
-              {meta ? meta.name : 'Mini apps'}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+            {meta
+              ? <MiniAppIcon id={meta.id} color={CATALOG_BY_ID.get(meta.id)?.color ?? colors.accent} size={28} />
+              : <Sparkle color={colors.accent} size={20} weight="fill" />}
+            <Text style={{ flex: 1, color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }} numberOfLines={1}>
+              {meta ? (CATALOG_BY_ID.get(meta.id)?.name ?? meta.name) : 'Mini apps'}
             </Text>
             {meta ? (
               <IconButton icon={GridFour} label="Switch app" onPress={openPicker} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
@@ -150,31 +161,39 @@ function Panel() {
 }
 
 function Picker({ onPick }: { onPick: (id: string) => void }) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }}>
-      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 14, textTransform: 'uppercase' }}>
+    <ScrollView contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 14, paddingBottom: 24 }}>
+      <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 14, marginHorizontal: 4 }]}>
         Pick a tool to float
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-        {FLOATING_APPS.map(app => (
-          <Pressable
-            key={app.id}
-            onPress={() => onPick(app.id)}
-            accessibilityRole="button"
-            accessibilityLabel={app.name}
-            style={({ pressed }) => ({
-              width: '30%', alignItems: 'center', gap: 8, paddingVertical: 14, borderRadius: 16,
-              backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.glassBorder,
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent + '1A' }}>
-              <app.Icon color={colors.accent} size={22} weight="fill" />
-            </View>
-            <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }} numberOfLines={1}>{app.name}</Text>
-          </Pressable>
-        ))}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        {FLOATING_APPS.map(app => {
+          const cat = CATALOG_BY_ID.get(app.id);
+          const color = cat?.color ?? colors.accent;
+          const name = cat?.name ?? app.name;
+          return (
+            <Pressable
+              key={app.id}
+              onPress={() => onPick(app.id)}
+              accessibilityRole="button"
+              accessibilityLabel={name}
+              style={({ pressed }) => ({
+                width: '25%', alignItems: 'center', paddingVertical: 12, borderRadius: 16,
+                opacity: pressed ? 0.6 : 1,
+                transform: [{ scale: pressed ? 0.94 : 1 }],
+              })}
+            >
+              <MiniAppIcon id={app.id} color={color} size={52} />
+              <Text
+                style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11.5, marginTop: 7, textAlign: 'center' }]}
+                numberOfLines={1}
+              >
+                {name}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
     </ScrollView>
   );
