@@ -2,11 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, Pressable, ActivityIndicator, Image as RNImage } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { manipulateAsync, FlipType, SaveFormat } from 'expo-image-manipulator';
 import {
   X, Check, ArrowClockwise, ArrowCounterClockwise, FlipHorizontal, FlipVertical, Crop,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { showToast } from '../ui/Toast';
+
+// Lazy-required so this screen never touches the native module at load — an OTA
+// can reach a build that predates expo-image-manipulator without crashing; the
+// transforms simply no-op there until the next build.
+function getManipulator(): typeof import('expo-image-manipulator') | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('expo-image-manipulator');
+  } catch {
+    return null;
+  }
+}
 
 interface PhotoEditorProps {
   visible: boolean;
@@ -43,11 +55,18 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
     );
   }, [visible, uri]);
 
-  const run = async (actions: Parameters<typeof manipulateAsync>[1]) => {
+  // `build` receives the (lazily-resolved) module so callers can reference
+  // FlipType etc. without a static import.
+  const run = async (build: (m: NonNullable<ReturnType<typeof getManipulator>>) => unknown[]) => {
     if (!cur || busy) return;
+    const m = getManipulator();
+    if (!m) {
+      showToast('Photo editing needs the latest app version', 'Update needed');
+      return;
+    }
     setBusy(true);
     try {
-      const r = await manipulateAsync(cur.uri, actions, { compress: 0.9, format: SaveFormat.JPEG });
+      const r = await m.manipulateAsync(cur.uri, build(m) as never, { compress: 0.9, format: m.SaveFormat.JPEG });
       setCur({ uri: r.uri, w: r.width, h: r.height });
       setDirty(true);
     } catch {
@@ -63,7 +82,7 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
     let cw = cur.w, ch = cur.h, ox = 0, oy = 0;
     if (a > ratio) { cw = Math.round(cur.h * ratio); ox = Math.round((cur.w - cw) / 2); }
     else { ch = Math.round(cur.w / ratio); oy = Math.round((cur.h - ch) / 2); }
-    void run([{ crop: { originX: ox, originY: oy, width: cw, height: ch } }]);
+    void run(() => [{ crop: { originX: ox, originY: oy, width: cw, height: ch } }]);
   };
 
   return (
@@ -102,10 +121,10 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
 
         {/* Transform tools */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}>
-          <Tool icon={<ArrowCounterClockwise color="#fff" size={22} weight="bold" />} label="Rotate" onPress={() => run([{ rotate: -90 }])} />
-          <Tool icon={<ArrowClockwise color="#fff" size={22} weight="bold" />} label="Rotate" onPress={() => run([{ rotate: 90 }])} />
-          <Tool icon={<FlipHorizontal color="#fff" size={22} weight="bold" />} label="Flip" onPress={() => run([{ flip: FlipType.Horizontal }])} />
-          <Tool icon={<FlipVertical color="#fff" size={22} weight="bold" />} label="Flip" onPress={() => run([{ flip: FlipType.Vertical }])} />
+          <Tool icon={<ArrowCounterClockwise color="#fff" size={22} weight="bold" />} label="Rotate" onPress={() => run(() => [{ rotate: -90 }])} />
+          <Tool icon={<ArrowClockwise color="#fff" size={22} weight="bold" />} label="Rotate" onPress={() => run(() => [{ rotate: 90 }])} />
+          <Tool icon={<FlipHorizontal color="#fff" size={22} weight="bold" />} label="Flip" onPress={() => run(m => [{ flip: m.FlipType.Horizontal }])} />
+          <Tool icon={<FlipVertical color="#fff" size={22} weight="bold" />} label="Flip" onPress={() => run(m => [{ flip: m.FlipType.Vertical }])} />
         </View>
 
         {/* Aspect crop */}
