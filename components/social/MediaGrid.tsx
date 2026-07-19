@@ -9,9 +9,12 @@ import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
 
 interface MediaGridProps {
   uris: string[];
+  /** Fill this exact height instead of the default aspect heights (e.g. the
+   *  full-bleed hero card). Multi-image grids split it across their rows. */
+  height?: number;
 }
 
-export function MediaGrid({ uris }: MediaGridProps) {
+export function MediaGrid({ uris, height }: MediaGridProps) {
   const { radius } = useTheme();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const count = uris.length;
@@ -21,12 +24,16 @@ export function MediaGrid({ uris }: MediaGridProps) {
 
   const imgStyle = { width: '100%', height: '100%' } as const;
   const r = radius.md;
+  // When a fixed height is requested, drop the per-image border radius so the
+  // media reads as one full-bleed surface (the card supplies the rounding).
+  const rowRadius = height ? 0 : r;
+  const rowH2 = height ? (height - 3) / 2 : 160;
 
   return (
     <>
       {/* 1 image */}
       {count === 1 && (
-        <Pressable onPress={() => open(0)} style={{ borderRadius: radius.card, overflow: 'hidden', height: 240 }}>
+        <Pressable onPress={() => open(0)} style={{ borderRadius: height ? 0 : radius.card, overflow: 'hidden', height: height ?? 240 }}>
           <Image source={{ uri: uris[0] }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
           <ZoomHint />
         </Pressable>
@@ -34,9 +41,9 @@ export function MediaGrid({ uris }: MediaGridProps) {
 
       {/* 2 images */}
       {count === 2 && (
-        <View style={{ flexDirection: 'row', gap: 3, height: 200 }}>
+        <View style={{ flexDirection: 'row', gap: 3, height: height ?? 200 }}>
           {uris.map((uri, i) => (
-            <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: r, overflow: 'hidden' }}>
+            <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
               <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
             </Pressable>
           ))}
@@ -45,13 +52,13 @@ export function MediaGrid({ uris }: MediaGridProps) {
 
       {/* 3 images */}
       {count === 3 && (
-        <View style={{ flexDirection: 'row', gap: 3, height: 220 }}>
-          <Pressable onPress={() => open(0)} style={{ flex: 1.4, borderRadius: r, overflow: 'hidden' }}>
+        <View style={{ flexDirection: 'row', gap: 3, height: height ?? 220 }}>
+          <Pressable onPress={() => open(0)} style={{ flex: 1.4, borderRadius: rowRadius, overflow: 'hidden' }}>
             <Image source={{ uri: uris[0] }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
           </Pressable>
           <View style={{ flex: 1, gap: 3 }}>
             {uris.slice(1).map((uri, i) => (
-              <Pressable key={i} onPress={() => open(i + 1)} style={{ flex: 1, borderRadius: r, overflow: 'hidden' }}>
+              <Pressable key={i} onPress={() => open(i + 1)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
                 <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
               </Pressable>
             ))}
@@ -62,16 +69,16 @@ export function MediaGrid({ uris }: MediaGridProps) {
       {/* 4 images */}
       {count >= 4 && (
         <View style={{ gap: 3 }}>
-          <View style={{ flexDirection: 'row', gap: 3, height: 160 }}>
+          <View style={{ flexDirection: 'row', gap: 3, height: rowH2 }}>
             {uris.slice(0, 2).map((uri, i) => (
-              <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: r, overflow: 'hidden' }}>
+              <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
                 <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
               </Pressable>
             ))}
           </View>
-          <View style={{ flexDirection: 'row', gap: 3, height: 160 }}>
+          <View style={{ flexDirection: 'row', gap: 3, height: rowH2 }}>
             {uris.slice(2, 4).map((uri, i) => (
-              <Pressable key={i} onPress={() => open(i + 2)} style={{ flex: 1, borderRadius: r, overflow: 'hidden' }}>
+              <Pressable key={i} onPress={() => open(i + 2)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
                 <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
                 {i === 1 && count > 4 && (
                   <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
