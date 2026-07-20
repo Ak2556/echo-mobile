@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { View, Text, Dimensions, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { View, Text, useWindowDimensions, ActivityIndicator, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -24,7 +24,6 @@ const CATALOG_BY_ID = new Map<string, (typeof MINI_APP_CATALOG)[number]>(
 );
 
 const BUBBLE = 54;
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 export function FloatingMiniApp() {
   const mode = useFloatingApp(s => s.mode);
@@ -46,6 +45,7 @@ export function FloatingMiniApp() {
 
 function Bubble() {
   const { colors } = useTheme();
+  const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const { x, y, appId, openApp, openPicker, setPosition } = useFloatingApp();
   const meta = floatingAppMeta(appId);
   // Minimized bubble carries the active app's own colour (like its Tools tile).
@@ -100,7 +100,12 @@ function Bubble() {
 function Panel() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const { appId, openApp, openPicker, minimize } = useFloatingApp();
+  // On tablets/desktop the panel is a centred card, not a full-width sheet.
+  const wide = SCREEN_W >= 744;
+  const panelWidth = wide ? Math.min(560, SCREEN_W - 48) : SCREEN_W;
+  const sideInset = wide ? (SCREEN_W - panelWidth) / 2 : 0;
   const meta = floatingAppMeta(appId);
   const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? meta.color ?? colors.accent) : colors.accent;
 
@@ -121,7 +126,7 @@ function Panel() {
       entering={SlideInDown.duration(240)}
       exiting={SlideOutDown.duration(180)}
       style={[{
-        position: 'absolute', left: 0, right: 0, bottom: 0, height: panelHeight,
+        position: 'absolute', left: sideInset, right: sideInset, bottom: 0, height: panelHeight,
         backgroundColor: colors.bg,
         borderTopLeftRadius: 24, borderTopRightRadius: 24,
         borderWidth: 1, borderColor: colors.glassBorder, borderBottomWidth: 0,
