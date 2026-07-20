@@ -302,8 +302,13 @@ export default function DiscoverScreen() {
 
   const popularItems = scopedAll;
 
+  // Tablet/desktop: the feed becomes a two-column masonry inside a wider
+  // centred container; the header shares that same width so it aligns.
+  const wideFeed = layout.isWide;
+  const feedWideStyle = { width: '100%' as const, maxWidth: layout.wideMaxWidth, alignSelf: 'center' as const };
+
   const ListHeader = (
-    <View style={layout.contentStyle}>
+    <View style={wideFeed ? feedWideStyle : layout.contentStyle}>
       <HomeHero
         username={username}
         targetLabel={targetCategory.label}
@@ -494,10 +499,18 @@ export default function DiscoverScreen() {
           )}
           <FlashList
             data={popularItems}
+            numColumns={wideFeed ? 2 : 1}
+            masonry={wideFeed}
+            optimizeItemArrangement={wideFeed}
+            style={wideFeed ? feedWideStyle : undefined}
             renderItem={({ item, index }) => (
-              <View style={layout.contentStyle}>
+              wideFeed ? (
                 <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
-              </View>
+              ) : (
+                <View style={layout.contentStyle}>
+                  <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
+                </View>
+              )
             )}
             keyExtractor={item => item.id}
             contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
