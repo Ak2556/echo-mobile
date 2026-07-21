@@ -72,26 +72,25 @@ function NotifIcon({ type, size, color }: { type: string; size: number; color: s
 }
 
 /** Person's avatar (real photo when available) with a small type-icon badge. */
-function AvatarWithBadge({ n }: { n: Notification }) {
+function AvatarWithBadge({ n, color }: { n: Notification; color: string }) {
   const { colors } = useTheme();
-  const color = TYPE_COLOR[n.type] ?? colors.accent;
   const isSystem = SYSTEM_TYPES.has(n.type);
 
   return (
-    <View style={{ width: 44, height: 44, marginRight: 12 }}>
+    <View style={{ width: 46, height: 46 }}>
       {isSystem ? (
-        <IconBadge color={color} size={44} radius={16}>
-          <NotifIcon type={n.type} size={20} color="#fff" />
+        <IconBadge color={color} size={46} radius={16}>
+          <NotifIcon type={n.type} size={21} color="#fff" />
         </IconBadge>
       ) : (
         <>
-          <Avatar name={n.fromDisplayName || n.fromUsername} color={n.fromAvatarColor} url={n.fromAvatarUrl} size={44} />
+          <Avatar name={n.fromDisplayName || n.fromUsername} color={n.fromAvatarColor} url={n.fromAvatarUrl} size={46} />
           <View style={{
-            position: 'absolute', bottom: -2, right: -2,
-            width: 20, height: 20, borderRadius: 10,
+            position: 'absolute', bottom: -3, right: -3,
+            width: 22, height: 22, borderRadius: 11,
             alignItems: 'center', justifyContent: 'center',
             backgroundColor: color,
-            borderWidth: 2, borderColor: colors.bg,
+            borderWidth: 2.5, borderColor: colors.bg,
           }}>
             <NotifIcon type={n.type} size={11} color="#fff" />
           </View>
@@ -121,7 +120,11 @@ interface NotificationCardProps {
 
 export function NotificationCard({ notification, onPress, onLongPress }: NotificationCardProps) {
   const { colors, fontSizes } = useTheme();
-  const unread = !notification.isRead;
+  const n = notification;
+  const unread = !n.isRead;
+  const color = TYPE_COLOR[n.type] ?? colors.accent;
+  const isSystem = SYSTEM_TYPES.has(n.type);
+  const grouped = !!(n.groupCount && n.groupCount > 1);
 
   return (
     <AnimatedPressable
@@ -130,46 +133,55 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
       fadeOnPress
       haptic="light"
       style={{
+        marginHorizontal: 16,
+        marginBottom: 9,
+        borderRadius: 18,
+        // Unread cards carry a whisper of the type's hue + a matching hairline;
+        // read cards are the plain surface — same language as feed/tool cards.
+        backgroundColor: unread ? color + (colors.isDark ? '1A' : '10') : colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: unread ? color + '55' : colors.glassBorder,
         flexDirection: 'row',
-        alignItems: 'flex-start',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: unread ? (colors.isDark ? `${colors.accent}12` : `${colors.accent}0A`) : 'transparent',
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
+        alignItems: 'center',
+        paddingVertical: 13,
+        paddingHorizontal: 13,
+        gap: 12,
       }}
     >
-      <AvatarWithBadge n={notification} />
+      <AvatarWithBadge n={n} color={color} />
 
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <Text style={{ color: colors.text, fontSize: fontSizes.small, flexShrink: 1 }} numberOfLines={2}>
-            {!SYSTEM_TYPES.has(notification.type) && (
-              <Text style={{ fontFamily: 'Inter_700Bold' }}>{notification.fromDisplayName}</Text>
-            )}
-            {!SYSTEM_TYPES.has(notification.type) ? ' ' : ''}{actionTextFor(notification)}
+      <View style={{ flex: 1, minWidth: 0 }}>
+        {/* Name line + timestamp, so the time is always attached to the row. */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+          <Text style={{ color: colors.text, fontSize: fontSizes.small, lineHeight: 19, flex: 1 }} numberOfLines={2}>
+            {!isSystem && <Text style={{ fontFamily: 'Inter_700Bold' }}>{n.fromDisplayName || n.fromUsername}</Text>}
+            {!isSystem ? ' ' : ''}
+            <Text style={{ color: colors.textSecondary }}>{actionTextFor(n)}</Text>
           </Text>
-          {notification.groupCount && notification.groupCount > 1 && (
-            <View style={{ backgroundColor: colors.accentMuted, paddingHorizontal: 7, paddingVertical: 1, borderRadius: 999, alignSelf: 'flex-start' }}>
-              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800', fontVariant: ['tabular-nums'], letterSpacing: 0.2 }}>
-                +{notification.groupCount - 1}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingTop: 1 }}>
+            <Text style={{ color: unread ? color : colors.textMuted, fontSize: fontSizes.caption, fontWeight: unread ? '700' : '400' }}>
+              {getTimeAgo(n.createdAt)}
+            </Text>
+            {unread && <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: color }} />}
+          </View>
+        </View>
+
+        {/* Grouped count + who-else line. */}
+        {grouped && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+            <View style={{ backgroundColor: color + '26', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+              <Text style={{ color, fontSize: 10.5, fontFamily: 'Inter_700Bold', fontVariant: ['tabular-nums'], letterSpacing: 0.2 }}>
+                +{(n.groupCount ?? 1) - 1} more
               </Text>
             </View>
-          )}
-        </View>
-        {notification.targetPreview && notification.type !== 'reaction' && !SYSTEM_TYPES.has(notification.type) && (
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>
-            {notification.targetPreview}
+          </View>
+        )}
+
+        {n.targetPreview && n.type !== 'reaction' && !isSystem && !grouped && (
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: 16, marginTop: 3 }} numberOfLines={2}>
+            {n.targetPreview}
           </Text>
         )}
-      </View>
-
-      {/* Time + unread dot, paired and top-aligned with the name line. */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8, gap: 6, paddingTop: 1 }}>
-        <Text style={{ color: unread ? colors.accent : colors.textMuted, fontSize: fontSizes.caption }}>
-          {getTimeAgo(notification.createdAt)}
-        </Text>
-        {unread && <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.accent }} />}
       </View>
     </AnimatedPressable>
   );
