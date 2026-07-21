@@ -13,6 +13,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { Notification } from '../../types';
 import { usePerformanceProfile } from '../../lib/performance';
+import { useResponsiveLayout } from '../../lib/responsive';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import {
   useRemoteNotifications,
@@ -88,6 +89,7 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
   const { colors, animation, font } = useTheme();
+  const layout = useResponsiveLayout();
   const performance = usePerformanceProfile('hot');
   const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'reactions' | 'saves' | 'quotes' | 'follows' | 'reposts'>('all');
 
@@ -165,19 +167,23 @@ export default function NotificationsScreen() {
   const renderItem = ({ item }: { item: ListItem }) => {
     if (item.type === 'header') {
       return (
-        <View style={{ paddingHorizontal: 16, paddingTop: 22, paddingBottom: 10 }}>
-          <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
-            {item.label}
-          </Text>
+        <View style={layout.contentStyle}>
+          <View style={{ paddingHorizontal: 16, paddingTop: 22, paddingBottom: 10 }}>
+            <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
+              {item.label}
+            </Text>
+          </View>
         </View>
       );
     }
     return (
-      <NotificationCard
-        notification={item.data}
-        onPress={() => handlePress(item.data)}
-        onLongPress={() => useAppStore.getState().toggleMute(item.data.fromUserId)}
-      />
+      <View style={layout.contentStyle}>
+        <NotificationCard
+          notification={item.data}
+          onPress={() => handlePress(item.data)}
+          onLongPress={() => useAppStore.getState().toggleMute(item.data.fromUserId)}
+        />
+      </View>
     );
   };
 
@@ -258,10 +264,10 @@ export default function NotificationsScreen() {
           ]}
         />
 
+        <View style={[layout.contentStyle, { paddingTop: insets.top + 2 }]}>
         {/* Title row */}
         <View
           style={{
-            paddingTop: insets.top + 2,
             paddingHorizontal: 16,
             paddingBottom: 8,
             flexDirection: 'row',
@@ -338,6 +344,7 @@ export default function NotificationsScreen() {
             </AnimatedPressable>
           ))}
         </Animated.ScrollView>
+        </View>
 
         {/* Bottom border */}
         <View
