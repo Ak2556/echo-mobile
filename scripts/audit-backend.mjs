@@ -102,7 +102,7 @@ console.log('\n[3/3] Enum ↔ check-constraint sync');
     {
       name: 'marketplace_listings.currency',
       db: latestConstraint('currency'),
-      app: [...readFileSync(join(ROOT, 'lib/currency.ts'), 'utf8').matchAll(/CurrencyCode = ([^;]+);/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1])),
+      app: [...new Set([...readFileSync(join(ROOT, 'lib/currency.ts'), 'utf8').matchAll(/code:\s*'([^']+)'/g)].map((m) => m[1]))],
     },
     {
       name: 'profiles.ai_model',

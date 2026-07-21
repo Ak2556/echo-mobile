@@ -13,6 +13,7 @@ export type TargetMiniAppId =
   | 'bmi'
   | 'fitness'
   | 'camera'
+  | 'image-editor'
   | 'voice-memo'
   | 'notes'
   | 'habits'
@@ -117,7 +118,7 @@ export const TARGET_CATEGORIES: TargetCategory[] = [
     label: 'Content',
     outcome: 'Create posts, videos, and ideas consistently',
     prompt: 'Help me design a content system that captures raw ideas, turns them into drafts, and tracks publishing consistency.',
-    apps: ['camera', 'planner', 'voice-memo', 'notes'],
+    apps: ['camera', 'image-editor', 'voice-memo', 'notes'],
     metrics: ['Ideas captured', 'Drafts', 'Published posts'],
     starter: 'Record one rough idea before polishing it.',
   },
@@ -180,7 +181,7 @@ export const TARGET_CATEGORIES: TargetCategory[] = [
     label: 'Creativity',
     outcome: 'Make more original work',
     prompt: 'Help me build a creative practice that captures inspiration, schedules making time, and turns drafts into shareable work.',
-    apps: ['notes', 'voice-memo', 'planner', 'camera'],
+    apps: ['notes', 'image-editor', 'voice-memo', 'camera'],
     metrics: ['Drafts', 'Inspiration', 'Creative sessions'],
     starter: 'Capture the seed of one idea before judging it.',
   },

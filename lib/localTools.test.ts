@@ -8,7 +8,33 @@ import { saveMemos } from './voiceMemos';
 import { saveNotes } from './notes';
 import { saveTransactions } from './expenses';
 
-const storage = new Map<string, string>();
+const storage = vi.hoisted(() => new Map<string, string>());
+
+vi.mock('react-native', () => ({
+  Platform: { OS: 'ios', select: (values: Record<string, unknown>) => values.ios ?? values.default },
+  NativeModules: { BlobModule: {} },
+  AppState: { currentState: 'active', addEventListener: vi.fn(() => ({ remove: vi.fn() })) },
+  Share: { share: vi.fn(() => Promise.resolve({ action: 'sharedAction' })) },
+}));
+
+vi.mock('react-native-url-polyfill/auto', () => ({}));
+
+vi.mock('./supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    })),
+    rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    storage: { from: vi.fn(() => ({ getPublicUrl: vi.fn(() => ({ data: { publicUrl: '' } })) })) },
+  },
+}));
 
 vi.mock('@react-native-async-storage/async-storage', () => ({
   default: {

@@ -71,7 +71,6 @@ export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppG
     case 'dice': return <DiceFive {...p} />;
     case 'json-formatter': return <Code {...p} />;
     case 'color-tools': return <Palette {...p} />;
-    case 'converter': return <ArrowsLeftRight {...p} />;
     default: return <ListChecks {...p} />;
   }
 }
