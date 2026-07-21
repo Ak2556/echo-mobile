@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShareSheet } from '../common/ShareSheet';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
@@ -11,24 +11,21 @@ import { useRouter } from 'expo-router';
 import { MediaGrid } from './MediaGrid';
 import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
-import { LikeButton } from './LikeButton';
 import { LinkifiedText } from './LinkifiedText';
 import { ReactionBar } from './ReactionBar';
-import { RemixButton } from './RemixButton';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
 import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
-import { SpringCounter } from '../ui/SpringCounter';
 import { showToast } from '../ui/Toast';
 import { warmAvatarColor } from '../../lib/avatarPalette';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, GitBranch } from 'phosphor-react-native';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, PerspectiveType, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
-import { useToggleRemoteBookmark, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
+import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
 import { usePerformanceProfile } from '../../lib/performance';
 import { useResponsiveLayout } from '../../lib/responsive';
 
@@ -133,20 +130,28 @@ function PollView({ poll, echoId, votePoll, colors, radius, fontSizes }: PollVie
   );
 }
 
+function formatCount(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k`;
+  return String(n);
+}
+
 export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const remote = isSupabaseRemote();
   const remoteBm = useToggleRemoteBookmark();
+  const remoteLike = useToggleRemoteLike();
   const remoteRp = useToggleRemoteRepost();
   const { colors, radius, fontSizes, font, reduceAnimations, showAvatars } = useTheme();
   const performance = usePerformanceProfile('hot');
   const layout = useResponsiveLayout();
-  const { isBookmarked, toggleBookmark, isReposted, toggleRepost,
+  const { isBookmarked, toggleBookmark, isReposted, toggleRepost, toggleLike,
     compactFeed, showPreviewCards, votePoll,
   } = useAppStore();
   const bookmarked = remote ? item.isBookmarked : isBookmarked(item.id);
   const reposted = remote ? item.isReposted : isReposted(item.id);
+  const [liked, setLiked] = useState(item.isLiked);
+  const [likeCount, setLikeCount] = useState(item.likes);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [repostSheetOpen, setRepostSheetOpen] = useState(false);
@@ -158,6 +163,11 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const setNotInterestedIds = useAppStore(s => s.setNotInterestedIds);
   const feedFeedback = useAppStore(s => s.feedFeedback);
   const setFeedFeedback = useAppStore(s => s.setFeedFeedback);
+
+  useEffect(() => {
+    setLiked(item.isLiked);
+    setLikeCount(item.likes);
+  }, [item.id, item.isLiked, item.likes]);
 
   const handleMainPress = useCallback(() => {
     if (remote) void recordRemoteEchoView(item.id);
@@ -183,6 +193,26 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     }
     toggleRepost(item.id);
     showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? 'Re-echoed' : '');
+  };
+
+  const handleLikePress = () => {
+    const next = !liked;
+    setLiked(next);
+    setLikeCount(c => next ? c + 1 : Math.max(0, c - 1));
+    if (remote) {
+      remoteLike.mutate(
+        { echoId: item.id, like: next },
+        {
+          onError: () => {
+            setLiked(!next);
+            setLikeCount(c => next ? Math.max(0, c - 1) : c + 1);
+          },
+        }
+      );
+      return;
+    }
+    toggleLike(item.id);
+    qc.invalidateQueries({ queryKey: ['feed'] });
   };
 
   const displayRepostCount = remote
@@ -284,17 +314,78 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     </>
   );
 
-  const iconButtonStyle = {
-    minHeight: 36,
-    minWidth: 34,
-    borderRadius: 18,
-    paddingHorizontal: 9,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    backgroundColor: colors.surfaceHover,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.glassBorder,
-  };
+  const ActionButton = ({
+    label,
+    icon,
+    count,
+    active,
+    color = colors.textMuted,
+    onPress,
+    onLongPress,
+    accessibilityLabel,
+  }: {
+    label: string;
+    icon: React.ReactNode;
+    count?: number;
+    active?: boolean;
+    color?: string;
+    onPress: (e: any) => void;
+    onLongPress?: (e: any) => void;
+    accessibilityLabel?: string;
+  }) => (
+    <AnimatedPressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        height: 46,
+        borderRadius: 17,
+        paddingHorizontal: 6,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: active ? `${color}1F` : colors.surfaceHover,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: active ? `${color}55` : colors.glassBorder,
+        position: 'relative',
+      }}
+      depth="medium"
+      fadeOnPress
+      haptic={active ? 'medium' : 'light'}
+      performanceMode="hot"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityRole="button"
+    >
+      {icon}
+      {count !== undefined && count > 0 ? (
+        <Text
+          style={{
+            position: 'absolute',
+            top: 5,
+            right: 5,
+            minWidth: 17,
+            height: 17,
+            borderRadius: 9,
+            overflow: 'hidden',
+            paddingHorizontal: 4,
+            textAlign: 'center',
+            color: active ? color : colors.textMuted,
+            backgroundColor: active ? `${color}24` : colors.surface,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: active ? `${color}55` : colors.glassBorder,
+            fontSize: 9.5,
+            lineHeight: 16,
+            fontFamily: 'Inter_700Bold',
+            fontVariant: ['tabular-nums'],
+          }}
+          numberOfLines={1}
+        >
+          {formatCount(count)}
+        </Text>
+      ) : null}
+    </AnimatedPressable>
+  );
 
   const ActionsRow = (
     <View style={{ paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder }}>
@@ -306,75 +397,82 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           compact
         />
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, overflow: 'hidden' }}>
-        <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
-        <RemixButton
-          echoId={item.id}
-          remixCount={item.remixCount ?? 0}
-          authorUsername={item.username}
-          authorTitle={item.editorialTitle}
-          compact
-          iconOnly
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+        <ActionButton
+          label="Like"
+          icon={<HeartStraight color={liked ? '#EF4444' : colors.textMuted} size={20} weight={liked ? 'fill' : 'regular'} />}
+          count={likeCount}
+          active={liked}
+          color="#EF4444"
+          onPress={(e) => { e.stopPropagation?.(); handleLikePress(); }}
+          accessibilityLabel={liked ? 'Unlike' : 'Like'}
         />
-
-        <AnimatedPressable
+        <ActionButton
+          label="Branch"
+          icon={<GitBranch color={colors.textMuted} size={19} weight="bold" />}
+          count={item.remixCount || undefined}
+          onPress={(e) => {
+            e.stopPropagation?.();
+            router.push({
+              pathname: '/remix/[id]',
+              params: {
+                id: item.id,
+                author: item.username,
+                ...(item.editorialTitle ? { parentTitle: item.editorialTitle } : {}),
+              },
+            });
+          }}
+          accessibilityLabel="Add perspective"
+        />
+        <ActionButton
+          label="Reply"
+          icon={<ChatCircle color={colors.textMuted} size={20} />}
+          count={item.commentCount || undefined}
           onPress={(e) => { e.stopPropagation?.(); router.push(`/comments/${item.id}`); }}
-          style={[iconButtonStyle, { flexDirection: 'row', gap: 4 }]}
-          depth="medium"
-          fadeOnPress
-          haptic="light"
-          performanceMode="hot"
           accessibilityLabel={`Comment. ${item.commentCount || 0} comments`}
-          accessibilityRole="button"
-        >
-          <ChatCircle color={colors.textMuted} size={19} />
-          {(item.commentCount || 0) > 0 && (
-            <SpringCounter value={item.commentCount || 0} performanceMode="hot" style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontVariant: ['tabular-nums'] }} />
-          )}
-        </AnimatedPressable>
-
-        <AnimatedPressable
+        />
+        <ActionButton
+          label="Repost"
+          icon={<ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={20} weight={reposted ? 'bold' : 'regular'} />}
+          count={displayRepostCount || undefined}
+          active={reposted}
+          color={colors.success}
           onPress={(e) => { e.stopPropagation?.(); handleRepost(); }}
           onLongPress={(e) => { e.stopPropagation?.(); setRepostSheetOpen(true); }}
-          style={[iconButtonStyle, { flexDirection: 'row', gap: 4 }]}
-          depth="medium"
-          fadeOnPress
-          haptic="medium"
-          performanceMode="hot"
           accessibilityLabel={reposted ? 'Undo re-echo' : 'Re-echo'}
-          accessibilityRole="button"
-        >
-          <ArrowsClockwise color={reposted ? colors.success : colors.textMuted} size={19} weight={reposted ? 'bold' : 'regular'} />
-          {displayRepostCount > 0 && (
-            <SpringCounter value={displayRepostCount} performanceMode="hot" style={{ color: reposted ? colors.success : colors.textMuted, fontSize: fontSizes.caption, fontVariant: ['tabular-nums'] }} />
-          )}
-        </AnimatedPressable>
-
-        <AnimatedPressable style={iconButtonStyle} onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }} depth="medium" fadeOnPress haptic="medium" performanceMode="hot" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityRole="button">
-          <BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={19} weight={bookmarked ? 'fill' : 'regular'} />
-        </AnimatedPressable>
-
-        <AnimatedPressable style={iconButtonStyle} onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }} depth="medium" fadeOnPress haptic="light" performanceMode="hot" accessibilityLabel="Share" accessibilityRole="button">
-          <ShareNetwork color={colors.textMuted} size={19} />
-        </AnimatedPressable>
+        />
+        <ActionButton
+          label="Save"
+          icon={<BookmarkSimple color={bookmarked ? colors.accent : colors.textMuted} size={20} weight={bookmarked ? 'fill' : 'regular'} />}
+          active={bookmarked}
+          color={colors.accent}
+          onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }}
+          accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'}
+        />
+        <ActionButton
+          label="Share"
+          icon={<ShareNetwork color={colors.textMuted} size={20} />}
+          onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }}
+          accessibilityLabel="Share"
+        />
       </View>
     </View>
   );
 
   if (isHero && !compactFeed) {
     return (
-      <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: 12, marginVertical: 7 }}>
+      <Animated.View entering={entering} layout={undefined} style={{ marginHorizontal: layout.isPhone ? 10 : 12, marginVertical: 8 }}>
         <AnimatedPressable
           onPress={handleMainPress}
           depth="soft"
           fadeOnPress
           haptic="light"
           performanceMode="hot"
-          style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: colors.surface }}
+          style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}
         >
-          <View style={{ minHeight: 430 }}>
+          <View style={{ height: 430 }}>
             {item.postType === 'photo' && (
-              <MediaGrid uris={item.mediaUris!} />
+              <MediaGrid uris={item.mediaUris!} height={430} />
             )}
             {item.postType === 'video' && item.videoUri && (
               <VideoPreview uri={item.videoUri} height={430} borderRadius={0} />
@@ -465,7 +563,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             </View>
           </View>
         </AnimatedPressable>
-        <View style={{ paddingHorizontal: 6, paddingTop: 8 }}>
+        <View style={{ paddingHorizontal: 4, paddingTop: 9 }}>
           {ActionsRow}
         </View>
         {AllModals}
@@ -478,13 +576,13 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     <Animated.View
       entering={entering}
       layout={undefined}
-      style={compactFeed ? undefined : { marginHorizontal: 12, marginVertical: 7 }}
+      style={compactFeed ? undefined : { marginHorizontal: layout.isPhone ? 10 : 12, marginVertical: 8 }}
     >
       <View style={compactFeed ? {
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
       } : {
-        borderRadius: 24,
+        borderRadius: 22,
         overflow: 'hidden',
         backgroundColor: colors.surface,
         borderWidth: StyleSheet.hairlineWidth,
@@ -511,7 +609,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         performanceMode="hot"
         style={{
           paddingHorizontal: compactFeed ? cardMargin : 18,
-          paddingVertical: compactFeed ? 14 : 18,
+          paddingVertical: compactFeed ? 14 : 17,
         }}
       >
         {item.repostedByUsername && (
@@ -547,7 +645,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           </Pressable>
         )}
 
-        <View className={`flex-row items-center ${compactFeed ? 'mb-2' : 'mb-3'}`}>
+        <View className={`flex-row items-center ${compactFeed ? 'mb-2' : 'mb-3'}`} style={{ gap: 0 }}>
           {showAvatars && (
             <AnimatedPressable
               onPress={(e) => {
@@ -588,14 +686,15 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             depth="soft"
             haptic="none"
             performanceMode="hot"
+            style={{ minWidth: 0 }}
           >
-            <View className="flex-row items-center gap-1">
-              <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: 0 }]}>{item.displayName || item.username}</Text>
+            <View className="flex-row items-center gap-1" style={{ minWidth: 0 }}>
+              <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: 0, flexShrink: 1 }]} numberOfLines={1}>{item.displayName || item.username}</Text>
               {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
-          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 8, paddingVertical: 5, marginRight: 8 }}>
+          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 8, paddingVertical: 5, marginLeft: 8, marginRight: 8 }}>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(item.createdAt)}</Text>
           </View>
           {pinned && <PushPin color={colors.textMuted} size={13} weight="fill" style={{ marginRight: 6 }} />}

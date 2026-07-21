@@ -147,6 +147,17 @@ export const MINI_APP_CATALOG: MiniAppCatalogItem[] = [
     route: '/mini-apps/camera',
   },
   {
+    id: 'image-editor',
+    name: 'Image Editor',
+    description: 'Polish',
+    suite: 'Capture',
+    promise: 'Crop photos, trim video, export.',
+    highlights: ['Crop', 'Trim', 'Export'],
+    replaces: ['Basic photo editor', 'Video trimmer'],
+    color: '#EC4899',
+    route: '/mini-apps/image-editor',
+  },
+  {
     id: 'world-clock',
     name: 'World Clock',
     description: 'Meet',

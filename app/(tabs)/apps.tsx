@@ -32,7 +32,7 @@ const TOOL_LANES: { id: ToolLane; label: string; apps?: string[] }[] = [
   { id: 'focus', label: 'Focus', apps: ['pomodoro', 'learn', 'tasks', 'habits', 'notes'] },
   { id: 'money', label: 'Money', apps: ['expenses', 'shopping-list', 'calculator', 'notes'] },
   { id: 'health', label: 'Health', apps: ['fitness', 'habits', 'planner', 'notes'] },
-  { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'camera', 'markdown', 'tasks'] },
+  { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'camera', 'image-editor', 'markdown', 'tasks'] },
   { id: 'utility', label: 'Utility', apps: ['calculator', 'world-clock', 'password-gen'] },
 ];
 
@@ -133,7 +133,7 @@ function EssentialSuiteCard({ apps, onOpen }: { apps: MiniApp[]; onOpen: (app: M
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ color: colors.text, fontSize: 21, lineHeight: 26, fontFamily: 'Fraunces_600SemiBold' }} numberOfLines={2}>
-              15 essential apps, one connected system
+              {apps.length} essential apps, one connected system
             </Text>
             <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={2}>
               Each tool shares Echo actions, search, targets, recents, and app memory.
