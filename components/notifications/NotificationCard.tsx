@@ -131,7 +131,7 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
       haptic="light"
       style={{
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         paddingHorizontal: 16,
         paddingVertical: 12,
         backgroundColor: unread ? (colors.isDark ? `${colors.accent}12` : `${colors.accent}0A`) : 'transparent',
@@ -164,9 +164,12 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
         )}
       </View>
 
-      <View style={{ alignItems: 'flex-end', marginLeft: 8, gap: 6 }}>
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(notification.createdAt)}</Text>
-        {unread && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent }} />}
+      {/* Time + unread dot, paired and top-aligned with the name line. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8, gap: 6, paddingTop: 1 }}>
+        <Text style={{ color: unread ? colors.accent : colors.textMuted, fontSize: fontSizes.caption }}>
+          {getTimeAgo(notification.createdAt)}
+        </Text>
+        {unread && <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.accent }} />}
       </View>
     </AnimatedPressable>
   );
