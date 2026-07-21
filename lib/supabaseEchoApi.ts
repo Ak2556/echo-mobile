@@ -2470,14 +2470,33 @@ export async function fetchRemoteNotifications(): Promise<import('../types').Not
   if (rows.length === 0) return [];
 
   const actorIds = [...new Set(rows.map((r: { actor_id: string | null }) => r.actor_id).filter(Boolean))] as string[];
-  const { data: profiles } = await supabase.from('profiles').select(PROFILE_SELECT).in('id', actorIds);
+
+  // Echo-targeting notifications (like/comment/reaction/…) — pull the target
+  // echo's title/prompt so the row can show *which* echo it was about.
+  const ECHO_TARGETS = new Set(['like', 'comment', 'reaction', 'repost', 'quote', 'bookmark', 'mention']);
+  const echoIds = [...new Set(
+    rows.filter((r: { type: string; target_id: string | null }) => ECHO_TARGETS.has(r.type) && r.target_id)
+      .map((r: { target_id: string | null }) => r.target_id),
+  )] as string[];
+
+  const [{ data: profiles }, echoRes] = await Promise.all([
+    supabase.from('profiles').select(PROFILE_SELECT).in('id', actorIds),
+    echoIds.length
+      ? supabase.from('public_echoes').select('id, editorial_title, prompt').in('id', echoIds)
+      : Promise.resolve({ data: [] as { id: string; editorial_title: string | null; prompt: string | null }[] }),
+  ]);
   const profileById = new Map((profiles as SupabaseProfileRow[] ?? []).map(p => [p.id, p]));
+  const echoPreviewById = new Map(
+    ((echoRes.data as { id: string; editorial_title: string | null; prompt: string | null }[] | null) ?? [])
+      .map(e => [e.id, (e.editorial_title || e.prompt || '').trim()]),
+  );
 
   return rows.map((r: {
     id: string; type: string; actor_id: string | null; target_kind: string | null;
     target_id: string | null; preview: string | null; read_at: string | null; created_at: string;
   }) => {
     const actor = r.actor_id ? profileById.get(r.actor_id) : undefined;
+    const echoPreview = r.target_id ? echoPreviewById.get(r.target_id) : undefined;
     return {
       id: r.id,
       type: r.type as import('../types').Notification['type'],
@@ -2488,6 +2507,7 @@ export async function fetchRemoteNotifications(): Promise<import('../types').Not
       fromAvatarUrl: actor?.avatar_url ?? undefined,
       targetId: r.target_id ?? undefined,
       targetPreview: r.preview ?? undefined,
+      targetEchoPreview: echoPreview || undefined,
       isRead: r.read_at !== null,
       createdAt: r.created_at,
     };

@@ -146,7 +146,7 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: unread ? color + '55' : colors.glassBorder,
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           paddingVertical: 13,
           paddingHorizontal: 13,
           gap: 12,
@@ -170,21 +170,31 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
           </View>
         </View>
 
-        {/* Grouped count + who-else line. */}
+        {/* Which echo it was about — a quoted snippet with a type-colour rule,
+            so the card carries context instead of empty space. */}
+        {n.targetEchoPreview && (
+          <View style={{ marginTop: 7, borderLeftWidth: 2, borderLeftColor: color + '99', paddingLeft: 9 }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: 17, fontStyle: 'italic' }} numberOfLines={2}>
+              {n.targetEchoPreview}
+            </Text>
+          </View>
+        )}
+
+        {/* Non-echo context (e.g. a comment's own text) when there's no echo snippet. */}
+        {!n.targetEchoPreview && n.targetPreview && n.type !== 'reaction' && !isSystem && !grouped && (
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: 16, marginTop: 3 }} numberOfLines={2}>
+            {n.targetPreview}
+          </Text>
+        )}
+
         {grouped && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 7 }}>
             <View style={{ backgroundColor: color + '26', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
               <Text style={{ color, fontSize: 10.5, fontFamily: 'Inter_700Bold', fontVariant: ['tabular-nums'], letterSpacing: 0.2 }}>
                 +{(n.groupCount ?? 1) - 1} more
               </Text>
             </View>
           </View>
-        )}
-
-        {n.targetPreview && n.type !== 'reaction' && !isSystem && !grouped && (
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: 16, marginTop: 3 }} numberOfLines={2}>
-            {n.targetPreview}
-          </Text>
         )}
       </View>
       </View>
