@@ -231,6 +231,9 @@ export interface Notification {
   fromAvatarUrl?: string;
   targetId?: string; // echo or comment id
   targetPreview?: string;
+  /** Snippet of the target echo (its title/prompt) so the row shows which
+   *  echo was liked/replied to — filled in by the notifications fetch. */
+  targetEchoPreview?: string;
   isRead: boolean;
   createdAt: string;
   /**
