@@ -2482,13 +2482,13 @@ export async function fetchRemoteNotifications(): Promise<import('../types').Not
   const [{ data: profiles }, echoRes] = await Promise.all([
     supabase.from('profiles').select(PROFILE_SELECT).in('id', actorIds),
     echoIds.length
-      ? supabase.from('public_echoes').select('id, editorial_title, prompt').in('id', echoIds)
-      : Promise.resolve({ data: [] as { id: string; editorial_title: string | null; prompt: string | null }[] }),
+      ? supabase.from('public_echoes').select('id, title, prompt, response').in('id', echoIds)
+      : Promise.resolve({ data: [] as { id: string; title: string | null; prompt: string | null; response: string | null }[] }),
   ]);
   const profileById = new Map((profiles as SupabaseProfileRow[] ?? []).map(p => [p.id, p]));
   const echoPreviewById = new Map(
-    ((echoRes.data as { id: string; editorial_title: string | null; prompt: string | null }[] | null) ?? [])
-      .map(e => [e.id, (e.editorial_title || e.prompt || '').trim()]),
+    ((echoRes.data as { id: string; title: string | null; prompt: string | null; response: string | null }[] | null) ?? [])
+      .map(e => [e.id, (e.title || e.prompt || e.response || '').trim().slice(0, 120)]),
   );
 
   return rows.map((r: {
