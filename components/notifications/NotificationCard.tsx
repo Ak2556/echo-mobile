@@ -132,26 +132,25 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
       onLongPress={onLongPress}
       fadeOnPress
       haptic="light"
-      style={{ marginHorizontal: 16, marginBottom: 9 }}
+      // Box styles are safe directly on AnimatedPressable — it partitions the
+      // box onto a plain inner View so Release builds can't drop it.
+      style={{
+        marginHorizontal: 16,
+        marginBottom: 9,
+        borderRadius: 18,
+        overflow: 'hidden',
+        // Unread cards carry a whisper of the type's hue + a matching hairline;
+        // read cards are the plain surface — same language as feed/tool cards.
+        backgroundColor: unread ? color + (colors.isDark ? '1A' : '10') : colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: unread ? color + '55' : colors.glassBorder,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingVertical: 13,
+        paddingHorizontal: 13,
+        gap: 12,
+      }}
     >
-      {/* Card box lives on a plain View — layout props on AnimatedPressable
-          get dropped in Release builds (the recurring layout-drop bug). */}
-      <View
-        style={{
-          borderRadius: 18,
-          overflow: 'hidden',
-          // Unread cards carry a whisper of the type's hue + a matching hairline;
-          // read cards are the plain surface — same language as feed/tool cards.
-          backgroundColor: unread ? color + (colors.isDark ? '1A' : '10') : colors.surface,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: unread ? color + '55' : colors.glassBorder,
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          paddingVertical: 13,
-          paddingHorizontal: 13,
-          gap: 12,
-        }}
-      >
       <AvatarWithBadge n={n} color={color} />
 
       <View style={{ flex: 1, minWidth: 0 }}>
@@ -196,7 +195,6 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
             </View>
           </View>
         )}
-      </View>
       </View>
     </AnimatedPressable>
   );

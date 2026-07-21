@@ -297,9 +297,7 @@ export default function NotificationsScreen() {
               onPress={remote ? () => markAllRemote.mutate() : markAllNotificationsRead}
               performanceMode="hot"
               haptic="medium"
-            >
-              {/* Box on an inner View — layout props on AnimatedPressable drop in Release. */}
-              <View style={{
+              style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 6,
@@ -308,10 +306,10 @@ export default function NotificationsScreen() {
                 borderRadius: 99,
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: colors.border,
-              }}>
-                <Checks color={colors.textSecondary} size={14} />
-                <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>Read all</Text>
-              </View>
+              }}
+            >
+              <Checks color={colors.textSecondary} size={14} />
+              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>Read all</Text>
             </AnimatedPressable>
           )}
         </View>
@@ -324,26 +322,25 @@ export default function NotificationsScreen() {
               onPress={() => setFilter(tab)}
               performanceMode="hot"
               haptic="light"
-            >
-              <View style={{
+              style={{
                 paddingHorizontal: 14,
                 paddingVertical: 6,
                 borderRadius: 99,
                 backgroundColor: filter === tab ? colors.accent : 'transparent',
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: filter === tab ? 'transparent' : colors.border,
-              }}>
-                <Text
-                  style={{
-                    ...font.bodySemibold,
-                    fontSize: 13,
-                    textTransform: 'capitalize',
-                    color: filter === tab ? '#fff' : colors.textSecondary,
-                  }}
-                >
-                  {tab}
-                </Text>
-              </View>
+              }}
+            >
+              <Text
+                style={{
+                  ...font.bodySemibold,
+                  fontSize: 13,
+                  textTransform: 'capitalize',
+                  color: filter === tab ? '#fff' : colors.textSecondary,
+                }}
+              >
+                {tab}
+              </Text>
             </AnimatedPressable>
           ))}
         </Animated.ScrollView>
