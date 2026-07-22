@@ -93,6 +93,9 @@ export default function CreatePostScreen() {
   const [publishedEchoPreview, setPublishedEchoPreview] = useState<{ title: string } | null>(null);
   const [showPushPrePrompt, setShowPushPrePrompt] = useState(false);
   const ceremonyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Synchronous double-submit guard: `publishing` state updates async, so rapid
+  // taps can slip through before the button disables. This closes that window.
+  const publishingRef = useRef(false);
   // Cancel the ceremony timer if the user navigates away before it fires
   React.useEffect(() => () => { if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current); }, []);
   const [response, setResponse] = useState(typeof params.prefillBody === 'string' ? params.prefillBody : '');
@@ -277,7 +280,8 @@ export default function CreatePostScreen() {
   const removePollOption = (idx: number) => { if (pollOptions.length > 2) setPollOptions(p => p.filter((_, i) => i !== idx)); };
 
   const handlePublish = async () => {
-    if (!canPublish) return;
+    if (!canPublish || publishingRef.current) return;
+    publishingRef.current = true;
     setPublishing(true);
 
     try {
@@ -454,6 +458,7 @@ export default function CreatePostScreen() {
     } catch (e) {
       Alert.alert('Publish failed', (e as Error).message);
     } finally {
+      publishingRef.current = false;
       setPublishing(false);
     }
   };

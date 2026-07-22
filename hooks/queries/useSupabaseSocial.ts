@@ -23,6 +23,9 @@ export function useToggleRemoteLike() {
       patchLikeCaches(qc, echoId, like);
       return { echoId };
     },
+    onError: (_e, { echoId, like }) => {
+      patchLikeCaches(qc, echoId, !like); // revert the optimistic toggle
+    },
     onSettled: (_, __, vars) => {
       qc.invalidateQueries({ queryKey: ['feed'] });
       if (vars?.echoId) qc.invalidateQueries({ queryKey: ['comments', vars.echoId] });
@@ -40,6 +43,9 @@ export function useToggleRemoteBookmark() {
       patchBookmarkCaches(qc, echoId, bookmark);
       return { echoId };
     },
+    onError: (_e, { echoId, bookmark }) => {
+      patchBookmarkCaches(qc, echoId, !bookmark);
+    },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['bookmarks'] });
@@ -56,6 +62,9 @@ export function useToggleRemoteRepost() {
     onMutate: async ({ echoId, repost }) => {
       patchRepostCaches(qc, echoId, repost);
       return { echoId };
+    },
+    onError: (_e, { echoId, repost }) => {
+      patchRepostCaches(qc, echoId, !repost);
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
@@ -101,6 +110,9 @@ export function useToggleRemoteFollow() {
     onMutate: async ({ userId, follow }) => {
       patchFollowCaches(qc, userId, follow);
       return { userId };
+    },
+    onError: (_e, { userId, follow }) => {
+      patchFollowCaches(qc, userId, !follow);
     },
     onSettled: (_, __, vars) => {
       qc.invalidateQueries({ queryKey: ['feed'] });
