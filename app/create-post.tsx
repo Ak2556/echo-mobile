@@ -13,11 +13,12 @@ import { VideoPreview } from '../components/social/VideoPreview';
 import { MentionSuggestions, applyMentionPick } from '../components/social/MentionSuggestions';
 import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 import {
-  ArrowLeft, PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
+  PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
   VideoCamera, ChartBar, X, Plus, Clock, Camera, Images, CheckCircle, Question,
   Users, MagnifyingGlass, PencilSimple, CaretLeft, CaretRight,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { warmAvatarColor } from '../lib/avatarPalette';
 import { useAppStore } from '../store/useAppStore';
@@ -571,23 +572,18 @@ export default function CreatePostScreen() {
         </View>
       </Modal>
 
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: colors.text, fontSize: 21, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>New Echo</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>Distill your take.</Text>
-        </View>
-        <AnimatedPressable
-          onPress={() => { void handlePublish(); }} disabled={!canPublish} scaleValue={0.92} haptic="medium"
-          style={{ minWidth: 82, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
-        >
-          <PaperPlaneTilt color="#fff" size={14} />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{publishing ? 'Posting…' : 'Post'}</Text>
-        </AnimatedPressable>
-      </View>
+      <ScreenHeader
+        title="New Echo"
+        right={
+          <AnimatedPressable
+            onPress={() => { void handlePublish(); }} disabled={!canPublish} scaleValue={0.92} haptic="medium"
+            style={{ minWidth: 82, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: canPublish ? colors.accent : colors.surfaceHover, opacity: canPublish ? 1 : 0.5 }}
+          >
+            <PaperPlaneTilt color="#fff" size={14} />
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{publishing ? 'Posting…' : 'Post'}</Text>
+          </AnimatedPressable>
+        }
+      />
 
       {/* Type selector */}
       <ScrollView
