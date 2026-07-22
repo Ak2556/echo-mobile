@@ -21,6 +21,7 @@ import { GlassPanel } from '../components/ui/GlassPanel';
 import { IconBadge } from '../components/ui/IconBadge';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
+import { useTutorialStore } from '../store/tutorialStore';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
 import { signOut } from '../lib/auth';
 import { deleteRemoteAIConversations, updateRemoteProfile, fetchCurrentUserProfile } from '../lib/supabaseEchoApi';
@@ -1074,6 +1075,8 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={FileText} label="Terms of Service" onPress={() => openTrustedExternalUrl(publicWebUrl('/terms'))} />
             {divider}
             <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
+            {divider}
+            <SettingsRow theme={theme} icon={Sparkle} label="Replay app tour" subtitle="Show the guided walkthrough again" onPress={() => { router.push('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
             {divider}
             <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.0.0</Text>} />
           </GlassPanel>

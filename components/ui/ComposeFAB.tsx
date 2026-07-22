@@ -6,6 +6,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { PencilSimpleLine } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
+import { useTutorialTarget } from '../../hooks/useTutorialTarget';
 
 /**
  * Floating compose button — single canonical creation entry point for v1.
@@ -30,6 +31,7 @@ export function ComposeFAB() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const target = useTutorialTarget('compose-fab');
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardWillShow', () => setKeyboardOpen(true));
@@ -57,6 +59,8 @@ export function ComposeFAB() {
       }}
     >
       <View
+        ref={target.ref}
+        onLayout={target.onLayout}
         style={{
           width: 48,
           height: 48,

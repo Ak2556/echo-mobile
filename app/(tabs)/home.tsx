@@ -44,6 +44,8 @@ import { TargetToolsPanel } from '../../components/productivity/TargetToolsPanel
 import { getTargetCategory } from '../../lib/targetCategories';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { useTutorialTarget } from '../../hooks/useTutorialTarget';
+import { useTutorialStore } from '../../store/tutorialStore';
 
 
 const NAV_BAR_HEIGHT = 50;
@@ -143,8 +145,9 @@ function QuickLink({ icon, color, label, onPress }: { icon: React.ReactNode; col
  */
 function HomeNextStep({ hasStartedFirstChat, publishedCount }: { hasStartedFirstChat: boolean; publishedCount: number }) {
   const router = useRouter();
-  const { colors, font, fontSizes, lineHeights } = useTheme();
+  const { font, fontSizes, lineHeights } = useTheme();
   const layout = useResponsiveLayout();
+  const target = useTutorialTarget('home-nextstep');
 
   const step = !hasStartedFirstChat
     ? {
@@ -168,35 +171,35 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount }: { hasStartedFirst
         };
 
   return (
-    <AnimatedPressable
-      onPress={() => router.push(step.route)}
-      haptic="medium"
-      style={{
-        marginHorizontal: layout.gutter,
-        marginTop: 6,
-        marginBottom: 12,
-        borderRadius: 18,
-        overflow: 'hidden',
-      }}
+    <View
+      ref={target.ref}
+      onLayout={target.onLayout}
+      style={{ marginHorizontal: layout.gutter, marginTop: 6, marginBottom: 12 }}
     >
-      <LinearGradient
-        colors={['#E8834E', '#C94F1D']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 16 }}
+      <AnimatedPressable
+        onPress={() => router.push(step.route)}
+        haptic="medium"
+        style={{ borderRadius: 18, overflow: 'hidden' }}
       >
-        <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' }}>
-          {step.icon}
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[font.display, { color: '#fff', fontSize: 17, lineHeight: 22 }]}>{step.title}</Text>
-          <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 2 }}>
-            {step.body}
-          </Text>
-        </View>
-        <ArrowUpRight color="#fff" size={20} weight="bold" />
-      </LinearGradient>
-    </AnimatedPressable>
+        <LinearGradient
+          colors={['#E8834E', '#C94F1D']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 16 }}
+        >
+          <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' }}>
+            {step.icon}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[font.display, { color: '#fff', fontSize: 17, lineHeight: 22 }]}>{step.title}</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 2 }}>
+              {step.body}
+            </Text>
+          </View>
+          <ArrowUpRight color="#fff" size={20} weight="bold" />
+        </LinearGradient>
+      </AnimatedPressable>
+    </View>
   );
 }
 
@@ -289,6 +292,17 @@ export default function DiscoverScreen() {
   // activity) so returning users on a fresh device are never demoted.
   const isEngaged = publishedCount > 0 || hasStartedFirstChat;
   const focusedHome = hasCompletedFirstRun && !isEngaged;
+
+  // Interactive coach-mark tour — runs once for a fresh first-run user.
+  const feedTarget = useTutorialTarget('home-feed');
+  const startTour = useTutorialStore(s => s.startTour);
+  const hasSeenHomeTutorial = useAppStore(s => s.hasSeenHomeTutorial);
+  useEffect(() => {
+    if (focusedHome && !hasSeenHomeTutorial) {
+      const t = setTimeout(() => startTour('home'), 650);
+      return () => clearTimeout(t);
+    }
+  }, [focusedHome, hasSeenHomeTutorial, startTour]);
   const insets = useSafeAreaInsets();
   const layout = useResponsiveLayout();
   const remote = isSupabaseRemote();
@@ -459,7 +473,9 @@ export default function DiscoverScreen() {
           <EvolvingNowRail items={evolvingNow} />
         </>
       )}
-      <SectionHeader label={focusedHome ? 'From the community' : 'Top conversations'} sub={focusedHome ? undefined : 'Live now'} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
+      <View ref={feedTarget.ref} onLayout={feedTarget.onLayout}>
+        <SectionHeader label={focusedHome ? 'From the community' : 'Top conversations'} sub={focusedHome ? undefined : 'Live now'} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
+      </View>
     </View>
   );
 
