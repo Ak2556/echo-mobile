@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Sparkle, Check, Crown } from 'phosphor-react-native';
+import { Sparkle, Check, Crown } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { PLANS } from '../constants/subscriptions';
 import { EmptyState } from '../components/common/EmptyState';
@@ -28,29 +29,7 @@ export default function UpgradeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
-        }}
-      >
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          style={{ padding: 4, marginRight: 12 }}
-        >
-          <ArrowLeft color={colors.text} size={24} />
-        </Pressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, flex: 1 }}>
-          Echo Tiers
-        </Text>
-      </View>
+      <ScreenHeader title="Echo Tiers" />
 
       <ScrollView contentContainerStyle={{ padding: 24, gap: 24 }}>
         <EmptyState

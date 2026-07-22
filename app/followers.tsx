@@ -3,7 +3,8 @@ import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, Users } from 'phosphor-react-native';
+import { Users } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { UserRow } from '../components/social/UserRow';
 import { UserRowSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
@@ -48,12 +49,7 @@ export default function FollowersScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light" performanceMode="hot">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Connections</Text>
-      </View>
+      <ScreenHeader title="Connections" />
 
       <View className="flex-row" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
         {(['followers', 'following'] as const).map(tab => (

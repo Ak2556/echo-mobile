@@ -4,7 +4,8 @@ import { EditMessageModal } from '../components/ai/EditMessageModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, BookmarkSimple, Plus } from 'phosphor-react-native';
+import { BookmarkSimple, Plus } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { FeedCard } from '../components/social/FeedCard';
 import { FeedCardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
@@ -61,16 +62,14 @@ export default function BookmarksScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light" performanceMode="hot">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Bookmarks</Text>
-        <View className="flex-1" />
-        <Pressable onPress={handleNewCollection} hitSlop={10}>
-          <Plus color={colors.textSecondary} size={20} />
-        </Pressable>
-      </View>
+      <ScreenHeader
+        title="Bookmarks"
+        right={
+          <Pressable onPress={handleNewCollection} hitSlop={10} style={{ marginRight: 10 }} accessibilityRole="button" accessibilityLabel="New collection">
+            <Plus color={colors.textSecondary} size={20} />
+          </Pressable>
+        }
+      />
 
       {/* Collection chips */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 14, paddingVertical: 10 }}>

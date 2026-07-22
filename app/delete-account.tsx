@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Alert, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Warning, Trash } from 'phosphor-react-native';
+import { Warning, Trash } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TextInput } from '../components/ui/TextInput';
 import { useTheme } from '../lib/theme';
 import { deleteAccount } from '../lib/supabaseEchoApi';
@@ -50,13 +51,7 @@ export default function DeleteAccountScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={{ padding: 4, marginRight: 12 }}>
-          <ArrowLeft color={colors.text} size={24} />
-        </Pressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }}>Delete account</Text>
-      </View>
+      <ScreenHeader title="Delete account" />
 
       <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }} keyboardShouldPersistTaps="handled">
         {/* Warning hero */}
