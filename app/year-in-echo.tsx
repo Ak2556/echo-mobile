@@ -4,8 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, ChartLineUp, Flame, Heart, Sparkle } from 'phosphor-react-native';
+import { ChartLineUp, Flame, Heart, Sparkle } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { fetchOrComputeYearWrap, type YearWrap } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
@@ -37,12 +38,7 @@ function YearInEchoScreenInner() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }}>Year in Echo {year}</Text>
-      </View>
+      <ScreenHeader title={`Year in Echo ${year}`} />
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
