@@ -153,17 +153,8 @@ function SettingsHero({
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{notificationsEnabled ? t('settings.notificationsOn') : t('settings.notificationsOff')}</Text>
-          </View>
-          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{privateAccount ? t('settings.privateAccount') : t('settings.publicAccount')}</Text>
-          </View>
-          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{modelLabel.replace('Gemini 2.5 ', '')}</Text>
-          </View>
-        </View>
+        {/* Status badges removed — they restated the Push Notifications /
+            Private Account / AI model settings shown in the rows just below. */}
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {quickActions.map(action => {
