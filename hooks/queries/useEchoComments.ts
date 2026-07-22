@@ -20,6 +20,8 @@ export function useEchoComments(echoId: string | undefined) {
 export function useAddRemoteComment(echoId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
+    // Compose screen shows its own error + preserves the draft — skip global toast.
+    meta: { bespoke: true },
     mutationFn: async (input: { content: string; parentId?: string } | string) => {
       if (!echoId) throw new Error('No echo');
       const arg = typeof input === 'string' ? { content: input } : input;
