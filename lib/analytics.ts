@@ -5,6 +5,7 @@ export type AnalyticsEvent =
   | 'signup_completed'
   | 'first_run_started'
   | 'first_run_answered'
+  | 'goal_set'
   | 'signin_completed'
   | 'signout'
   | 'account_deleted'
