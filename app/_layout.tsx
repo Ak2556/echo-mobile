@@ -17,7 +17,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query';
 import { ToastProvider, showToast } from '../components/ui/Toast';
-import { isTransientError, friendlyWriteError } from '../lib/mutationErrors';
+import { friendlyWriteError } from '../lib/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/commandPalette';
 import { AuthListenerProvider } from '../lib/auth';
@@ -72,9 +72,11 @@ const queryClient = new QueryClient({
       refetchOnReconnect: true,
     },
     mutations: {
-      // Auto-retry only transient failures (network/timeout/5xx); never hammer
-      // permanent 4xx/RLS/constraint errors.
-      retry: (count, error) => isTransientError(error) && count < 3,
+      // Default: NO auto-retry. A blind global retry would duplicate
+      // non-idempotent inserts (DM/comment/publish) when the server wrote the
+      // row but the ack was lost. Idempotent mutations (toggles) opt in to
+      // retry individually; the offline outbox handles durable replay safely.
+      retry: false,
       retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 8000),
     },
   },

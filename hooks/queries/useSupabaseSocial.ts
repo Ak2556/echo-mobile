@@ -14,10 +14,16 @@ import { awardXp } from '../../lib/retention';
 import type { EchoReaction } from '../../types';
 import { isAppOnline } from '../../lib/net';
 import { outbox } from '../../store/outbox';
+import { isTransientError } from '../../lib/mutationErrors';
+
+// Toggles are idempotent (DB unique keys + duplicate-swallow) so they can
+// safely auto-retry a transient online failure without risking a duplicate.
+const idempotentRetry = (count: number, error: unknown) => isTransientError(error) && count < 3;
 
 export function useToggleRemoteLike() {
   const qc = useQueryClient();
   return useMutation({
+    retry: idempotentRetry,
     mutationFn: async ({ echoId, like }: { echoId: string; like: boolean }) => {
       // Offline → queue for replay (idempotent) and keep the optimistic UI.
       if (!isAppOnline()) { outbox.enqueue('like', { echoId, like }); return; }
@@ -40,6 +46,7 @@ export function useToggleRemoteLike() {
 export function useToggleRemoteBookmark() {
   const qc = useQueryClient();
   return useMutation({
+    retry: idempotentRetry,
     mutationFn: async ({ echoId, bookmark }: { echoId: string; bookmark: boolean }) => {
       if (!isAppOnline()) { outbox.enqueue('bookmark', { echoId, bookmark }); return; }
       await setRemoteBookmark(echoId, bookmark);
@@ -61,6 +68,7 @@ export function useToggleRemoteBookmark() {
 export function useToggleRemoteRepost() {
   const qc = useQueryClient();
   return useMutation({
+    retry: idempotentRetry,
     mutationFn: async ({ echoId, repost }: { echoId: string; repost: boolean }) => {
       if (!isAppOnline()) { outbox.enqueue('repost', { echoId, repost }); return; }
       await setRemoteRepost(echoId, repost);
@@ -110,6 +118,7 @@ export function useToggleCommentReaction() {
 export function useToggleRemoteFollow() {
   const qc = useQueryClient();
   return useMutation({
+    retry: idempotentRetry,
     mutationFn: async ({ userId, follow }: { userId: string; follow: boolean }) => {
       if (!isAppOnline()) { outbox.enqueue('follow', { userId, follow }); return; }
       await setRemoteFollow(userId, follow);
