@@ -707,9 +707,8 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
-          <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 8, paddingVertical: 5, marginLeft: 8, marginRight: 8 }}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{getTimeAgo(item.createdAt)}</Text>
-          </View>
+          {/* Time is lightweight metadata, not a chip — keeps the header calm. */}
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
           {pinned && <PushPin color={colors.textMuted} size={13} weight="fill" style={{ marginRight: 6 }} />}
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
