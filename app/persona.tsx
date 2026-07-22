@@ -3,7 +3,8 @@ import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Brain, ChatTeardropDots, Check, Clock, ShieldCheck, Trash } from 'phosphor-react-native';
+import { Brain, ChatTeardropDots, Check, Clock, ShieldCheck, Trash } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
@@ -107,22 +108,10 @@ export default function PersonaScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => router.back()}
-          style={[styles.iconButton, { backgroundColor: colors.surfaceHover, borderRadius: radius.md }]}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft color={colors.text} size={22} />
-        </AnimatedPressable>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '800' }}>Personal Persona</Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>
-            Echo learns how you think, write, and decide.
-          </Text>
-        </View>
-      </View>
+      <ScreenHeader
+        title="Personal Persona"
+        subtitle="Echo learns how you think, write, and decide."
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

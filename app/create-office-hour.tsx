@@ -3,7 +3,8 @@ import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Check } from 'phosphor-react-native';
+import { Check } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
@@ -74,22 +75,21 @@ function CreateOfficeHourScreenInner() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Schedule</Text>
-        <AnimatedPressable
-          onPress={() => void handleSubmit()}
-          disabled={!canSubmit}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.lg, backgroundColor: canSubmit ? colors.accent : colors.surfaceHover }}
-          scaleValue={0.93}
-          haptic="medium"
-        >
-          {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Check color="#fff" size={15} weight="bold" />}
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>Create</Text>
-        </AnimatedPressable>
-      </View>
+      <ScreenHeader
+        title="Schedule"
+        right={
+          <AnimatedPressable
+            onPress={() => void handleSubmit()}
+            disabled={!canSubmit}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 7, marginRight: 6, borderRadius: radius.lg, backgroundColor: canSubmit ? colors.accent : colors.surfaceHover }}
+            scaleValue={0.93}
+            haptic="medium"
+          >
+            {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Check color="#fff" size={15} weight="bold" />}
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>Create</Text>
+          </AnimatedPressable>
+        }
+      />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         <Animated.View entering={animation(FadeInDown.duration(220))} style={{ marginBottom: 16 }}>

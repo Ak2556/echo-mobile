@@ -8,6 +8,8 @@ import { safeBack } from '../../lib/safeBack';
 
 interface ScreenHeaderProps {
   title?: string;
+  /** Optional second line under the title (muted). */
+  subtitle?: string;
   /** Left affordance: back arrow (detail screens), close X (modals), or none. */
   leading?: 'back' | 'close' | 'none';
   /** Override the default back/close action (safeBack). */
@@ -29,7 +31,7 @@ interface ScreenHeaderProps {
  *
  * Renders just the row: the parent still owns its SafeAreaView(edges top).
  */
-export function ScreenHeader({ title, leading = 'back', onLeading, right, border = true, safeTop = false }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, leading = 'back', onLeading, right, border = true, safeTop = false }: ScreenHeaderProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const handleLeading = onLeading ?? (() => safeBack());
@@ -60,9 +62,16 @@ export function ScreenHeader({ title, leading = 'back', onLeading, right, border
       )}
 
       {title ? (
-        <Text numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', marginLeft: 2 }}>
-          {title}
-        </Text>
+        <View style={{ flex: 1, marginLeft: 2 }}>
+          <Text numberOfLines={1} style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text numberOfLines={1} style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
       ) : (
         <View style={{ flex: 1 }} />
       )}

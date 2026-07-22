@@ -3,7 +3,8 @@ import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { ArrowLeft, Microphone, Plus, UsersThree, Clock } from 'phosphor-react-native';
+import { Microphone, Plus, UsersThree, Clock } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
@@ -48,20 +49,21 @@ function OfficeHoursScreenInner() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Office Hours</Text>
-        <AnimatedPressable
-          onPress={() => router.push('/create-office-hour')}
-          style={{ padding: 4 }}
-          scaleValue={0.88}
-          haptic="medium"
-        >
-          <Plus color={colors.accent} size={24} weight="bold" />
-        </AnimatedPressable>
-      </View>
+      <ScreenHeader
+        title="Office Hours"
+        right={
+          <AnimatedPressable
+            onPress={() => router.push('/create-office-hour')}
+            style={{ padding: 4, marginRight: 6 }}
+            scaleValue={0.88}
+            haptic="medium"
+            accessibilityRole="button"
+            accessibilityLabel="Schedule office hour"
+          >
+            <Plus color={colors.accent} size={24} weight="bold" />
+          </AnimatedPressable>
+        }
+      />
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
