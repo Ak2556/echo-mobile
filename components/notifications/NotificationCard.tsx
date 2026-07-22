@@ -116,9 +116,12 @@ interface NotificationCardProps {
   notification: Notification;
   onPress: () => void;
   onLongPress?: () => void;
+  /** In a multi-column grid the row controls the outer gutter/gap, so the
+   *  card drops its own horizontal margin and fills its cell. */
+  flush?: boolean;
 }
 
-export function NotificationCard({ notification, onPress, onLongPress }: NotificationCardProps) {
+export function NotificationCard({ notification, onPress, onLongPress, flush = false }: NotificationCardProps) {
   const { colors, fontSizes } = useTheme();
   const n = notification;
   const unread = !n.isRead;
@@ -135,7 +138,7 @@ export function NotificationCard({ notification, onPress, onLongPress }: Notific
       // Box styles are safe directly on AnimatedPressable — it partitions the
       // box onto a plain inner View so Release builds can't drop it.
       style={{
-        marginHorizontal: 16,
+        marginHorizontal: flush ? 0 : 16,
         marginBottom: 9,
         borderRadius: 18,
         overflow: 'hidden',
