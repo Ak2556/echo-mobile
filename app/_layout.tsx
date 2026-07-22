@@ -10,6 +10,7 @@ import { cancelLegacyProactiveNudges } from '../lib/proactiveNudges';
 import { captureException, initMonitoring, wrapRoot } from '../lib/monitoring';
 import { getAnalyticsConsent } from '../lib/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
+import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
 import * as Notifications from 'expo-notifications';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
 import { Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
@@ -242,6 +243,7 @@ function RootLayout() {
           <Stack.Screen name="appeal" options={{ presentation: 'card' }} />
         </Stack>
         <FloatingMiniApp />
+        <TutorialOverlay />
         <ToastProvider />
         <ConsentBanner />
         {commandPaletteOpen ? <CommandPalette /> : null}
