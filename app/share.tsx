@@ -3,7 +3,8 @@ import { View, Text, Pressable, Alert, ScrollView , ActivityIndicator } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ArrowLeft, CheckCircle, Eye, FloppyDisk, Globe, GitBranch, Lock, MagicWand, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
+import { CheckCircle, Eye, FloppyDisk, Globe, GitBranch, Lock, MagicWand, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { FeedItem } from '../types';
@@ -241,20 +242,19 @@ export default function ShareScreen() {
           }}
         />
       )}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
-          <ArrowLeft color={colors.text} size={24} />
-        </Pressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Share Echo</Text>
-        <Pressable
-          onPress={() => { void handlePublish(); }}
-          disabled={publishing}
-          style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: publishing || !canPublish ? colors.surfaceHover : colors.accent, opacity: !canPublish && !publishing ? 0.6 : 1 }}
-        >
-          <PaperPlaneTilt color="#fff" size={14} />
-          <Text style={{ color: '#fff', fontWeight: '700', marginLeft: 8 }}>{publishing ? 'Posting…' : 'Post'}</Text>
-        </Pressable>
-      </View>
+      <ScreenHeader
+        title="Share Echo"
+        right={
+          <Pressable
+            onPress={() => { void handlePublish(); }}
+            disabled={publishing}
+            style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: publishing || !canPublish ? colors.surfaceHover : colors.accent, opacity: !canPublish && !publishing ? 0.6 : 1 }}
+          >
+            <PaperPlaneTilt color="#fff" size={14} />
+            <Text style={{ color: '#fff', fontWeight: '700', marginLeft: 8 }}>{publishing ? 'Posting…' : 'Post'}</Text>
+          </Pressable>
+        }
+      />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {isRemix && (

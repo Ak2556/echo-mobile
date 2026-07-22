@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
+import { PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { TextInput } from '../../components/ui/TextInput';
 import { Avatar } from '../../components/ui/Avatar';
 import { CommentCard } from '../../components/social/CommentCard';
@@ -99,13 +100,10 @@ export default function CommentsScreen() {
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => safeBack()} style={{ padding: 4, marginRight: 12 }} accessibilityLabel="Go back" accessibilityRole="button">
-          <ArrowLeft color={colors.text} size={24} />
-        </Pressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, flex: 1 }}>Comments</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 14 }}>{comments.length}</Text>
-      </View>
+      <ScreenHeader
+        title="Comments"
+        right={<Text style={{ color: colors.textMuted, fontSize: 14, marginRight: 10 }}>{comments.length}</Text>}
+      />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}

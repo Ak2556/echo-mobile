@@ -9,10 +9,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import {
-  ArrowLeft, Check, Lightning, Hash, Image as ImageIcon,
+  Check, Lightning, Hash, Image as ImageIcon,
   VideoCamera, ChartBar, X, Plus, Clock, Link,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
@@ -147,17 +148,16 @@ export default function EditPostScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Edit Echo</Text>
-        <AnimatedPressable onPress={handleSave} disabled={!canSave} scaleValue={0.92} haptic="medium"
-          style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: canSave ? colors.accent : colors.surfaceHover, opacity: canSave ? 1 : 0.5 }}>
-          <Check color="#fff" size={15} />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{saving ? 'Saving…' : 'Save'}</Text>
-        </AnimatedPressable>
-      </View>
+      <ScreenHeader
+        title="Edit Echo"
+        right={
+          <AnimatedPressable onPress={handleSave} disabled={!canSave} scaleValue={0.92} haptic="medium"
+            style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: canSave ? colors.accent : colors.surfaceHover, opacity: canSave ? 1 : 0.5 }}>
+            <Check color="#fff" size={15} />
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small, marginLeft: 6 }}>{saving ? 'Saving…' : 'Save'}</Text>
+          </AnimatedPressable>
+        }
+      />
 
       <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
         {POST_TYPES.map(({ key, label, Icon }) => {
