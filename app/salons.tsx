@@ -3,7 +3,8 @@ import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { ArrowLeft, Plus, UsersThree, Hash } from 'phosphor-react-native';
+import { Plus, UsersThree, Hash } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useTheme } from '../lib/theme';
 import { fetchSalons, setSalonMembership, type Salon } from '../lib/supabaseEchoApi';
@@ -37,20 +38,21 @@ function SalonsScreenInner() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Salons</Text>
-        <AnimatedPressable
-          onPress={() => router.push('/create-salon')}
-          style={{ padding: 4 }}
-          scaleValue={0.88}
-          haptic="medium"
-        >
-          <Plus color={colors.accent} size={24} weight="bold" />
-        </AnimatedPressable>
-      </View>
+      <ScreenHeader
+        title="Salons"
+        right={
+          <AnimatedPressable
+            onPress={() => router.push('/create-salon')}
+            style={{ padding: 4, marginRight: 6 }}
+            scaleValue={0.88}
+            haptic="medium"
+            accessibilityRole="button"
+            accessibilityLabel="Create salon"
+          >
+            <Plus color={colors.accent} size={24} weight="bold" />
+          </AnimatedPressable>
+        }
+      />
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

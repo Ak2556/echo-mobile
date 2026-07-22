@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import { ArrowLeft, ChatCircleText, ShareNetwork, Target, UsersThree, SquaresFour } from 'phosphor-react-native';
+import { ChatCircleText, ShareNetwork, Target, UsersThree, SquaresFour } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { useResponsiveLayout } from '../lib/responsive';
 import { useAppStore } from '../store/useAppStore';
@@ -49,20 +50,7 @@ export default function TargetProgressScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{
-        height: 56,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
-        paddingHorizontal: layout.gutter,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-      }}>
-        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Go back">
-          <ArrowLeft color={colors.text} size={24} />
-        </Pressable>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 18 }]}>Progress</Text>
-      </View>
+      <ScreenHeader title="Progress" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

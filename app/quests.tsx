@@ -3,8 +3,9 @@ import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { ArrowLeft, CheckCircle, Lightning, Trophy } from 'phosphor-react-native';
+import { CheckCircle, Lightning, Trophy } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { fetchActiveQuests, type Quest } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
@@ -34,13 +35,10 @@ function QuestsScreenInner() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Quests</Text>
-        <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>{totalCompleted}/{quests.length} completed</Text>
-      </View>
+      <ScreenHeader
+        title="Quests"
+        right={<Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700', marginRight: 10 }}>{totalCompleted}/{quests.length} completed</Text>}
+      />
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
