@@ -12,6 +12,7 @@ import { useResponsiveLayout } from '../../lib/responsive';
 import { miniAppByRoute, type MiniAppCatalogItem } from '../../lib/miniAppCatalog';
 import { useMiniAppEmbedded } from '../../lib/miniAppEmbed';
 import { MiniAppIcon } from './MiniAppIcon';
+import { useI18n } from '../../lib/i18n';
 
 interface MiniAppShellProps {
   title: string;
@@ -36,6 +37,7 @@ export function MiniAppShell({
   bottomPad = 32,
 }: MiniAppShellProps) {
   const { colors, reduceAnimations } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const pathname = usePathname();
@@ -138,7 +140,7 @@ export function MiniAppShell({
           <Pressable
             onPress={goBack}
             accessibilityRole="button"
-            accessibilityLabel="Back to previous screen"
+            accessibilityLabel={t('common.back')}
             style={{
               minWidth: 36,
               height: 36,
@@ -157,7 +159,7 @@ export function MiniAppShell({
             <ArrowLeft color={colors.text} size={18} weight="bold" />
             {!layout.isPhone && (
               <Text style={{ color: colors.text, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
-                Tools
+                {t('mini.tools')}
               </Text>
             )}
           </Pressable>
@@ -198,7 +200,7 @@ export function MiniAppShell({
                   <Text style={{ color: appMeta.color, fontSize: 10.5, fontFamily: 'Inter_700Bold', letterSpacing: 0.8, textTransform: 'uppercase' }}>{appMeta.suite}</Text>
                 </View>
                 <Text style={{ color: colors.textMuted, fontSize: 11.5, flex: 1 }} numberOfLines={1}>
-                  Replaces {appMeta.replaces.slice(0, 2).join(' + ')}
+                  {t('mini.replaces', { items: appMeta.replaces.slice(0, 2).join(' + ') })}
                 </Text>
               </View>
             ) : null}
@@ -228,7 +230,8 @@ export function MiniAppShell({
 
 function MiniWorkspaceBrief({ app }: { app: MiniAppCatalogItem }) {
   const { colors, font } = useTheme();
-  const chips = [app.suite, 'Echo actions', 'Live context'];
+  const { t } = useI18n();
+  const chips = [app.suite, t('mini.echoActions'), t('mini.liveContext')];
 
   return (
     <View
@@ -255,7 +258,7 @@ function MiniWorkspaceBrief({ app }: { app: MiniAppCatalogItem }) {
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 14.5, lineHeight: 18 }]} numberOfLines={1}>
-              Echo workspace
+              {t('mini.echoWorkspace')}
             </Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 11.6, lineHeight: 15, marginTop: 1 }]} numberOfLines={1}>
               {app.highlights.slice(0, 2).join(' · ')}

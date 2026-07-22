@@ -15,6 +15,7 @@ import {
 } from '../lib/supabaseEchoApi';
 import { getFirstRunFallbackQuestion } from '../lib/firstRunQuestion';
 import { track } from '../lib/analytics';
+import { useI18n } from '../lib/i18n';
 
 /**
  * First-run value moment.
@@ -30,6 +31,7 @@ import { track } from '../lib/analytics';
 export default function WelcomeScreen() {
   const router = useRouter();
   const { colors, radius, fontSizes, font } = useTheme();
+  const { t } = useI18n();
   const hasCompletedFirstRun = useAppStore(s => s.hasCompletedFirstRun);
   const setHasCompletedFirstRun = useAppStore(s => s.setHasCompletedFirstRun);
 
@@ -103,13 +105,13 @@ export default function WelcomeScreen() {
               <Animated.View entering={FadeIn.duration(240)} style={{ marginTop: 8, marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                   <Sparkle color={colors.accent} size={22} weight="fill" />
-                  <Text style={[font.eyebrow, { color: colors.textMuted }]}>WELCOME TO ECHO</Text>
+                  <Text style={[font.eyebrow, { color: colors.textMuted }]}>{t('welcome.eyebrow')}</Text>
                 </View>
                 <Text style={[font.display, { color: colors.text, fontSize: 30, lineHeight: 36, letterSpacing: -0.4 }]}>
-                  Start by thinking out loud.
+                  {t('welcome.startTitle')}
                 </Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 16, lineHeight: 23, marginTop: 10 }}>
-                  Answer today's question — that's it. No setup. We'll show you what Echo can do once you have.
+                  {t('welcome.startBody')}
                 </Text>
               </Animated.View>
 
@@ -118,7 +120,7 @@ export default function WelcomeScreen() {
                 streak={streak}
                 persist={persistAnswer}
                 onSubmitted={handleAnswered}
-                submitFirstLabel="Share my take"
+                submitFirstLabel={t('welcome.shareTake')}
               />
 
               <AnimatedPressable
@@ -127,7 +129,7 @@ export default function WelcomeScreen() {
                 style={{ alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 20 }}
               >
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>
-                  Skip for now
+                  {t('welcome.skipNow')}
                 </Text>
               </AnimatedPressable>
             </>
@@ -152,26 +154,27 @@ function RevealDoors({
   onDoor: (dest: string) => void;
 }) {
   const { colors, radius, font, fontSizes } = useTheme();
+  const { t } = useI18n();
 
   const doors: { icon: React.ReactNode; title: string; body: string; dest: string; tint: string }[] = [
     {
       icon: <UsersThree color="#4E7A8B" size={22} weight="fill" />,
-      title: 'See how others answered',
-      body: 'Real takes from people, revealed now that you’ve shared yours.',
+      title: t('welcome.seeAnswers'),
+      body: t('welcome.seeAnswersBody'),
       dest: '/daily-question',
       tint: '#4E7A8B',
     },
     {
       icon: <ChatCircleText color="#A04E4E" size={22} weight="fill" />,
-      title: 'Go deeper with Echo AI',
-      body: 'Think it through with an AI partner, then publish what’s worth keeping.',
+      title: t('welcome.goDeeper'),
+      body: t('welcome.goDeeperBody'),
       dest: '/(tabs)/chat',
       tint: '#A04E4E',
     },
     {
       icon: <Target color="#7A8B4E" size={22} weight="fill" />,
-      title: 'Set a goal (optional)',
-      body: 'Point Echo at what you want next — it tailors tools and prompts to it.',
+      title: t('welcome.setGoal'),
+      body: t('welcome.setGoalBody'),
       dest: '/onboarding',
       tint: '#7A8B4E',
     },
@@ -186,16 +189,16 @@ function RevealDoors({
         }}>
           <Flame color={colors.accent} size={15} weight="fill" />
           <Text style={{ color: colors.accent, fontSize: fontSizes.small, fontWeight: '800' }}>
-            {streak > 0 ? `Day ${streak} streak started` : 'Nice — your take is in'}
+            {streak > 0 ? t('welcome.streakStarted', { count: streak }) : t('welcome.takeIn')}
           </Text>
         </View>
       </View>
 
       <Text style={[font.display, { color: colors.text, fontSize: 26, lineHeight: 32, letterSpacing: -0.3, textAlign: 'center', marginTop: 12 }]}>
-        That’s Echo.
+        {t('welcome.thatsEcho')}
       </Text>
       <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 8, marginBottom: 22, paddingHorizontal: 8 }}>
-        One question a day is your anchor. From there, three ways to go deeper — explore any of them, or dive into the app.
+        {t('welcome.revealBody')}
       </Text>
 
       {doors.map((d, i) => (
@@ -246,7 +249,7 @@ function RevealDoors({
         }}
         scaleValue={0.97}
       >
-        <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>Enter Echo</Text>
+        <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>{t('welcome.enterEcho')}</Text>
         <ArrowRight color="#fff" size={18} weight="bold" />
       </AnimatedPressable>
     </Animated.View>

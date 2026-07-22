@@ -10,6 +10,7 @@ import { refreshAuthSession, sendPhoneOtp, verifyPhoneOtp } from '../../lib/auth
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { useI18n } from '../../lib/i18n';
 
 const RESEND_COOLDOWN_S = 30;
 
@@ -17,6 +18,7 @@ export default function PhoneAuthScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
   const layout = useResponsiveLayout();
+  const { t, textDirection } = useI18n();
 
   const [step, setStep] = useState<'enter-phone' | 'enter-code'>('enter-phone');
   const [phoneRaw, setPhoneRaw] = useState('');
@@ -50,13 +52,13 @@ export default function PhoneAuthScreen() {
     try {
       const { error, phone } = await sendPhoneOtp(phoneRaw);
       setLoading(false);
-      if (error) { showToast(error, 'Error'); return; }
+      if (error) { showToast(error, t('auth.error')); return; }
       setNormalizedPhone(phone);
       setStep('enter-code');
       setCooldown(RESEND_COOLDOWN_S);
     } catch (e) {
       setLoading(false);
-      showToast(e instanceof Error ? e.message : 'Could not send code. Try again.', 'Error');
+      showToast(e instanceof Error ? e.message : t('auth.sendCodeFailed'), t('auth.error'));
     }
   };
 
@@ -66,11 +68,11 @@ export default function PhoneAuthScreen() {
     try {
       const { error } = await sendPhoneOtp(phoneRaw);
       setLoading(false);
-      if (error) { showToast(error, 'Error'); return; }
+      if (error) { showToast(error, t('auth.error')); return; }
       setCooldown(RESEND_COOLDOWN_S);
     } catch (e) {
       setLoading(false);
-      showToast(e instanceof Error ? e.message : 'Could not resend code. Try again.', 'Error');
+      showToast(e instanceof Error ? e.message : t('auth.resendCodeFailed'), t('auth.error'));
     }
   };
 
@@ -81,7 +83,7 @@ export default function PhoneAuthScreen() {
       const { error } = await verifyPhoneOtp(phoneRaw, code);
       if (error) {
         setLoading(false);
-        showToast(error, 'Error');
+        showToast(error, t('auth.error'));
         return;
       }
 
@@ -97,10 +99,10 @@ export default function PhoneAuthScreen() {
         return;
       }
 
-      showToast('Sign-in did not finish. Try the code again.', 'Error');
+      showToast(t('auth.signInRetry'), t('auth.error'));
     } catch (e) {
       setLoading(false);
-      showToast(e instanceof Error ? e.message : 'Sign-in did not finish. Try the code again.', 'Error');
+      showToast(e instanceof Error ? e.message : t('auth.signInRetry'), t('auth.error'));
     }
   };
 
@@ -146,7 +148,7 @@ export default function PhoneAuthScreen() {
               }}
               style={{ padding: 10, alignSelf: 'flex-start', borderRadius: 999 }}
               accessibilityRole="button"
-              accessibilityLabel="Back"
+              accessibilityLabel={t('common.back')}
               hitSlop={8}
             >
               <ArrowLeft color={colors.text} size={22} weight="bold" />
@@ -156,11 +158,11 @@ export default function PhoneAuthScreen() {
           {step === 'enter-phone' ? (
             <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
 
-              <Text style={[font.display, { color: colors.text, fontSize: 30, letterSpacing: -0.7, marginBottom: 10 }]}>
-                Sign in with phone
+              <Text style={[font.display, textDirection, { color: colors.text, fontSize: 30, letterSpacing: -0.7, marginBottom: 10 }]}>
+                {t('auth.phoneTitle')}
               </Text>
-              <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, lineHeight: 22, marginBottom: 36 }]}>
-                We&apos;ll text you a 6-digit code. Include your country code.
+              <Text style={[font.body, textDirection, { color: colors.textSecondary, fontSize: 15, lineHeight: 22, marginBottom: 36 }]}>
+                {t('auth.phoneBody')}
               </Text>
 
               <View style={inputWrapStyle(phoneFocused)}>
@@ -176,7 +178,7 @@ export default function PhoneAuthScreen() {
                   onSubmitEditing={handleSendPhone}
                   onFocus={() => setPhoneFocused(true)}
                   onBlur={() => setPhoneFocused(false)}
-                  style={[font.body, { flex: 1, color: colors.text, fontSize: 17, paddingVertical: 18 }]}
+                  style={[font.body, textDirection, { flex: 1, color: colors.text, fontSize: 17, paddingVertical: 18 }]}
                 />
               </View>
 
@@ -185,23 +187,23 @@ export default function PhoneAuthScreen() {
                   onPress={handleSendPhone}
                   disabled={!canSendPhone}
                   accessibilityRole="button"
-                  accessibilityLabel="Send code"
+                  accessibilityLabel={t('auth.sendCode')}
                   style={{ paddingVertical: 18, alignItems: 'center', justifyContent: 'center' }}
                 >
                   {loading
                     ? <ActivityIndicator color="#fff" />
-                    : <Text style={[font.bodyBold, { color: canSendPhone ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>Send code</Text>}
+                    : <Text style={[font.bodyBold, { color: canSendPhone ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>{t('auth.sendCode')}</Text>}
                 </Pressable>
               </View>
             </View>
           ) : (
             <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
 
-              <Text style={[font.display, { color: colors.text, fontSize: 30, letterSpacing: -0.7, marginBottom: 10 }]}>
-                Enter the code
+              <Text style={[font.display, textDirection, { color: colors.text, fontSize: 30, letterSpacing: -0.7, marginBottom: 10 }]}>
+                {t('auth.enterCode')}
               </Text>
-              <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, lineHeight: 22, marginBottom: 32 }]}>
-                Sent to <Text style={[font.bodyBold, { color: colors.text }]}>{normalizedPhone}</Text>
+              <Text style={[font.body, textDirection, { color: colors.textSecondary, fontSize: 15, lineHeight: 22, marginBottom: 32 }]}>
+                {t('auth.sentTo')} <Text style={[font.bodyBold, { color: colors.text }]}>{normalizedPhone}</Text>
               </Text>
 
               <View style={inputWrapStyle(codeFocused)}>
@@ -233,12 +235,12 @@ export default function PhoneAuthScreen() {
                   onPress={handleVerify}
                   disabled={!canVerify}
                   accessibilityRole="button"
-                  accessibilityLabel="Verify code"
+                  accessibilityLabel={t('auth.verifyCode')}
                   style={{ paddingVertical: 18, alignItems: 'center', justifyContent: 'center' }}
                 >
                   {loading
                     ? <ActivityIndicator color="#fff" />
-                    : <Text style={[font.bodyBold, { color: canVerify ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>Verify</Text>}
+                    : <Text style={[font.bodyBold, { color: canVerify ? '#fff' : colors.textMuted, fontSize: 16, letterSpacing: -0.2 }]}>{t('auth.verify')}</Text>}
                 </Pressable>
               </View>
 
@@ -258,11 +260,11 @@ export default function PhoneAuthScreen() {
                       paddingVertical: 12, paddingHorizontal: 20,
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={cooldown > 0 ? `Resend in ${cooldown} seconds` : 'Resend code'}
+                    accessibilityLabel={cooldown > 0 ? t('auth.resendInSeconds', { count: cooldown }) : t('auth.resendCode')}
                   >
                     <ArrowClockwise color={cooldown > 0 ? colors.textMuted : colors.accent} size={16} weight="bold" />
                     <Text style={[font.bodySemibold, { color: cooldown > 0 ? colors.textMuted : colors.accent, fontSize: 14 }]}>
-                      {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
+                      {cooldown > 0 ? t('auth.resendIn', { count: cooldown }) : t('auth.resendCode')}
                     </Text>
                   </Pressable>
                 </View>

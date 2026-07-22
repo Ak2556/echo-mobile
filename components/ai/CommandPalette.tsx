@@ -25,6 +25,8 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { IconBadge } from '../ui/IconBadge';
 import { usePerformanceProfile } from '../../lib/performance';
+import { useAppStore } from '../../store/useAppStore';
+import { assistantLanguageInstruction } from '../../lib/languages';
 
 type Item =
   | { kind: 'text'; id: string; role: 'user' | 'assistant'; content: string }
@@ -35,6 +37,7 @@ export function CommandPalette() {
   const router = useRouter();
   const { colors, reduceAnimations } = useTheme();
   const performance = usePerformanceProfile('overlay');
+  const appLanguage = useAppStore(s => s.appLanguage);
   const [input, setInput] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
@@ -89,6 +92,7 @@ export function CommandPalette() {
       try {
         await streamEchoAI({
           conversationId: conversationIdRef.current ?? undefined,
+          personaContext: assistantLanguageInstruction(appLanguage),
           localResult: {
             tool_call_id: tool.id,
             tool_name: tool.name,
@@ -117,7 +121,7 @@ export function CommandPalette() {
         upsertText(`local-stream-err-${Date.now()}`, 'assistant', localContinuationFailureMessage(tool, ok, err?.message ?? 'unknown error'));
       }
     },
-    [],
+    [appLanguage],
   );
 
   const runLocalTool = useCallback(
@@ -143,6 +147,7 @@ export function CommandPalette() {
       await streamEchoAI({
         message: text,
         conversationId: conversationIdRef.current ?? undefined,
+        personaContext: assistantLanguageInstruction(appLanguage),
         onEvent: (e) => {
           if (e.type === 'conversation') conversationIdRef.current = e.id;
           else if (e.type === 'text_delta') upsertText(aid, 'assistant', e.delta);
@@ -176,7 +181,7 @@ export function CommandPalette() {
     } finally {
       setBusy(false);
     }
-  }, [input, busy, runLocalTool]);
+  }, [appLanguage, input, busy, runLocalTool]);
 
   const confirmTool = useCallback(
     async (tool: ToolCallItem, approve: boolean) => {
@@ -187,6 +192,7 @@ export function CommandPalette() {
           try {
             await streamEchoAI({
               conversationId: conversationIdRef.current ?? undefined,
+              personaContext: assistantLanguageInstruction(appLanguage),
               confirm: { tool_call_id: tool.id, tool_name: tool.name, args: tool.args, approve: false },
               onEvent: (e) => {
                 if (e.type === 'text_delta') upsertText(`a-${Date.now()}`, 'assistant', e.delta);
@@ -210,6 +216,7 @@ export function CommandPalette() {
       try {
         await streamEchoAI({
           conversationId: conversationIdRef.current ?? undefined,
+          personaContext: assistantLanguageInstruction(appLanguage),
           confirm: { tool_call_id: tool.id, tool_name: tool.name, args: tool.args, approve },
           onEvent: (e) => {
             if (e.type === 'text_delta') upsertText(`a-${Date.now()}`, 'assistant', e.delta);
@@ -228,7 +235,7 @@ export function CommandPalette() {
         setBusy(false);
       }
     },
-    [runLocalTool],
+    [appLanguage, runLocalTool],
   );
 
   return (

@@ -3,6 +3,22 @@ import type { EchoAIModel } from '../../lib/api';
 import type { CurrencyCode } from '../../lib/currency';
 import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/targetCategories';
 import type { FontStyleName } from '../../lib/fontPresets';
+import { DEFAULT_APP_LANGUAGE, normalizeAppLanguage, type AppLanguageCode } from '../../lib/languages';
+
+const DEFAULT_ACCENT_COLOR = '#7A8B4E';
+const LEGACY_DEFAULT_ACCENT_COLOR = '#E06030';
+
+function getAccentColor(): string {
+  const value = persistGet<string>('accentColor', DEFAULT_ACCENT_COLOR);
+  const migrated = persistGet('accentColorDefaultMigrated', false);
+  if (!migrated && value === LEGACY_DEFAULT_ACCENT_COLOR) {
+    persistSet('accentColor', DEFAULT_ACCENT_COLOR);
+    persistSet('accentColorDefaultMigrated', true);
+    return DEFAULT_ACCENT_COLOR;
+  }
+  if (!migrated) persistSet('accentColorDefaultMigrated', true);
+  return value;
+}
 
 export interface SettingsSlice {
   // ── Core ──
@@ -59,6 +75,7 @@ export interface SettingsSlice {
   autoplayStories: boolean; setAutoplayStories: (v: boolean) => void;
   dataSaver: boolean; setDataSaver: (v: boolean) => void;
   sensitiveContentFilter: boolean; setSensitiveContentFilter: (v: boolean) => void;
+  appLanguage: AppLanguageCode; setAppLanguage: (v: AppLanguageCode) => void;
   contentLanguage: string; setContentLanguage: (v: string) => void;
   feedSort: 'latest' | 'popular' | 'following'; setFeedSort: (v: 'latest' | 'popular' | 'following') => void;
   // ── Interests ──
@@ -161,7 +178,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     compactFeed: b('compactFeed', false), setCompactFeed: s(set, 'compactFeed'),
     dismissedFirstEchoCoach: b('dismissedFirstEchoCoach', false), setDismissedFirstEchoCoach: s(set, 'dismissedFirstEchoCoach'),
     reduceAnimations: b('reduceAnimations', false), setReduceAnimations: s(set, 'reduceAnimations'),
-    accentColor: persistGet('accentColor', '#E06030'),
+    accentColor: getAccentColor(),
     setAccentColor: (v) => { persistSet('accentColor', v); set({ accentColor: v }); },
     showAvatars: b('showAvatars', true), setShowAvatars: s(set, 'showAvatars'),
     showPreviewCards: b('showPreviewCards', true), setShowPreviewCards: s(set, 'showPreviewCards'),
@@ -182,6 +199,8 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     autoplayStories: b('autoplayStories', true), setAutoplayStories: s(set, 'autoplayStories'),
     dataSaver: b('dataSaver', false), setDataSaver: s(set, 'dataSaver'),
     sensitiveContentFilter: b('sensitiveContentFilter', true), setSensitiveContentFilter: s(set, 'sensitiveContentFilter'),
+    appLanguage: normalizeAppLanguage(persistGet<AppLanguageCode>('appLanguage', DEFAULT_APP_LANGUAGE)),
+    setAppLanguage: (v) => { persistSet('appLanguage', normalizeAppLanguage(v)); set({ appLanguage: normalizeAppLanguage(v) }); },
     contentLanguage: persistGet('contentLanguage', 'English'),
     setContentLanguage: (v) => { persistSet('contentLanguage', v); set({ contentLanguage: v }); },
     feedSort: persistGet<'latest' | 'popular' | 'following'>('feedSort', 'latest'),
@@ -237,6 +256,8 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
         targetCategory: DEFAULT_TARGET_CATEGORY_ID,
         targetOutcome: '',
         targetMiniApps: getTargetCategory(DEFAULT_TARGET_CATEGORY_ID).apps,
+        appLanguage: DEFAULT_APP_LANGUAGE,
+        accentColor: DEFAULT_ACCENT_COLOR,
         hasCompletedProductOnboarding: false, onboardingDraftCreated: false,
         hasCompletedFirstRun: false, hasSeenHomeTutorial: false,
       });

@@ -19,6 +19,7 @@ import { isCheckinPending } from '../../lib/proactiveCheckin';
 import { getRecentTools, recordToolOpen } from '../../lib/miniAppRecents';
 import { miniAppById } from '../../lib/miniAppCatalog';
 import { rememberPrimaryTab } from '../../lib/navigationMemory';
+import { useI18n, type TranslationKey } from '../../lib/i18n';
 
 const HIDDEN_ROUTES = new Set(['notifications']);
 const DESKTOP_ROUTES = new Set(['home', 'explore', 'marketplace', 'chat', 'you', 'notifications', 'apps']);
@@ -84,15 +85,26 @@ function DotIcon({ children }: { children: React.ReactNode }) {
   );
 }
 
-function routeLabel(routeName: string, title?: string): string {
+const ROUTE_LABEL_KEYS: Record<string, TranslationKey> = {
+  home: 'nav.home',
+  explore: 'nav.explore',
+  marketplace: 'nav.market',
+  chat: 'nav.chat',
+  you: 'nav.you',
+  notifications: 'nav.alerts',
+  apps: 'nav.tools',
+};
+
+function routeLabel(routeName: string, t: (key: TranslationKey) => string, title?: string): string {
   if (title) return title;
-  if (routeName === 'apps') return 'Tools';
-  if (routeName === 'notifications') return 'Alerts';
+  const key = ROUTE_LABEL_KEYS[routeName];
+  if (key) return t(key);
   return routeName.charAt(0).toUpperCase() + routeName.slice(1);
 }
 
 function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, font, lineHeights } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const layout = useResponsiveLayout();
@@ -155,7 +167,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
         }}
       >
         <PencilSimple color="#fff" size={18} weight="bold" />
-        <Text style={[font.bodyBold, { color: '#fff', fontSize: 14, lineHeight: lineHeights.small }]}>New Echo</Text>
+          <Text style={[font.bodyBold, { color: '#fff', fontSize: 14, lineHeight: lineHeights.small }]}>{t('nav.newEcho')}</Text>
       </Pressable>
 
       <View style={{ gap: 4 }}>
@@ -165,7 +177,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
           if (!IconComp) return null;
 
           const title = descriptors[route.key]?.options.title;
-          const label = routeLabel(route.name, typeof title === 'string' ? title : undefined);
+          const label = routeLabel(route.name, t, typeof title === 'string' ? title : undefined);
           const badgeCount = badges[route.name] ?? 0;
           const color = isFocused ? colors.accent : colors.textSecondary;
 
@@ -236,7 +248,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
         }}
       >
         <MagicWand color={colors.accent} size={17} weight="bold" />
-        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 13, lineHeight: lineHeights.small }]}>Command palette</Text>
+        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 13, lineHeight: lineHeights.small }]}>{t('nav.commandPalette')}</Text>
       </Pressable>
     </View>
   );
@@ -245,6 +257,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
 function FloatingTabBar(props: BottomTabBarProps) {
   const { state, descriptors, navigation } = props;
   const { colors, font, lineHeights } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const unreadNotifications = useAppStore(s => s.unreadNotificationCount());
@@ -433,7 +446,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
                   }
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={descriptors[route.key]?.options.title ?? route.name}
+                accessibilityLabel={descriptors[route.key]?.options.title ?? routeLabel(route.name, t)}
                 accessibilityState={{ selected: isFocused }}
                 style={{
                   flex: 1,
@@ -468,7 +481,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
                   }}
                   numberOfLines={1}
                 >
-                  {descriptors[route.key]?.options.title ?? route.name}
+                  {descriptors[route.key]?.options.title ?? routeLabel(route.name, t)}
                 </Text>
               </Pressable>
             );
@@ -491,6 +504,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
 export default function TabLayout() {
   const layout = useResponsiveLayout();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   return (
     <Tabs
@@ -503,13 +517,13 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Home' }} />
-      <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
-      <Tabs.Screen name="marketplace" options={{ title: 'Market' }} />
-      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
-      <Tabs.Screen name="you" options={{ title: 'You' }} />
-      <Tabs.Screen name="notifications" options={{ title: 'Alerts', href: null }} />
-      <Tabs.Screen name="apps" options={{ title: 'Tools' }} />
+      <Tabs.Screen name="home" options={{ title: t('nav.home') }} />
+      <Tabs.Screen name="explore" options={{ title: t('nav.explore') }} />
+      <Tabs.Screen name="marketplace" options={{ title: t('nav.market') }} />
+      <Tabs.Screen name="chat" options={{ title: t('nav.chat') }} />
+      <Tabs.Screen name="you" options={{ title: t('nav.you') }} />
+      <Tabs.Screen name="notifications" options={{ title: t('nav.alerts'), href: null }} />
+      <Tabs.Screen name="apps" options={{ title: t('nav.tools') }} />
     </Tabs>
   );
 }

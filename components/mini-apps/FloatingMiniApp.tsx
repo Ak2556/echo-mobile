@@ -15,6 +15,7 @@ import { MiniAppEmbedContext } from '../../lib/miniAppEmbed';
 import { MiniAppIcon, MiniAppGlyph } from './MiniAppIcon';
 import { MINI_APP_CATALOG } from '../../lib/miniAppCatalog';
 import { IconButton } from '../ui/IconButton';
+import { useI18n } from '../../lib/i18n';
 
 // Per-app branding (colour + display name) from the shared catalog, so the
 // floating picker reads exactly like the Tools tab. Falls back to the
@@ -45,6 +46,7 @@ export function FloatingMiniApp() {
 
 function Bubble() {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const { x, y, appId, openApp, openPicker, setPosition } = useFloatingApp();
   const meta = floatingAppMeta(appId);
@@ -89,7 +91,7 @@ function Bubble() {
           borderWidth: 2, borderColor: colors.bg,
         }, style]}
         accessibilityRole="button"
-        accessibilityLabel={meta ? `Open ${meta.name}` : 'Open mini-apps'}
+        accessibilityLabel={meta ? `${t('common.open')} ${meta.name}` : `${t('common.open')} ${t('mini.pickerTitle')}`}
       >
         {meta ? <MiniAppGlyph id={meta.id} color="#fff" size={24} /> : <Sparkle color="#fff" size={24} weight="fill" />}
       </Animated.View>
@@ -99,6 +101,7 @@ function Bubble() {
 
 function Panel() {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const { appId, openApp, openPicker, minimize } = useFloatingApp();
@@ -151,12 +154,12 @@ function Panel() {
               ? <MiniAppIcon id={meta.id} color={brand} size={28} />
               : <Sparkle color={colors.accent} size={20} weight="fill" />}
             <Text style={{ flex: 1, color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }} numberOfLines={1}>
-              {meta ? meta.name : 'Mini apps'}
+              {meta ? meta.name : t('mini.pickerTitle')}
             </Text>
             {meta ? (
-              <IconButton icon={GridFour} label="Switch app" onPress={openPicker} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
+              <IconButton icon={GridFour} label={t('mini.switchApp')} onPress={openPicker} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
             ) : null}
-            <IconButton icon={ArrowsInSimple} label="Minimize to bubble" onPress={minimize} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
+            <IconButton icon={ArrowsInSimple} label={t('mini.minimize')} onPress={minimize} size="sm" variant="surface" hitSize={34} color={colors.textSecondary} />
           </View>
         </View>
       </GestureDetector>
@@ -179,13 +182,68 @@ function Panel() {
 
 function Picker({ onPick }: { onPick: (id: string) => void }) {
   const { colors, font } = useTheme();
+  const { t } = useI18n();
+  const [agent, ...tools] = FLOATING_APPS;
+  const agentColor = CATALOG_BY_ID.get(agent.id)?.color ?? agent.color ?? colors.accent;
   return (
     <ScrollView contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 14, paddingBottom: 24 }}>
+      <Pressable
+        onPress={() => onPick(agent.id)}
+        accessibilityRole="button"
+        accessibilityLabel={`${t('common.open')} ${t('mini.echoAi')}`}
+        style={({ pressed }) => ({
+          borderRadius: 24,
+          padding: 14,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: agentColor + '55',
+          backgroundColor: colors.surface,
+          opacity: pressed ? 0.72 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+          shadowColor: agentColor,
+          shadowOpacity: colors.isDark ? 0.18 : 0.12,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 8 },
+          elevation: 3,
+        })}
+      >
+        <LinearGradient
+          colors={[agentColor + '2A', agentColor + '08', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 24 }}
+          pointerEvents="none"
+        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <MiniAppIcon id={agent.id} color={agentColor} size={58} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[font.display, { color: colors.text, fontSize: 24 }]} numberOfLines={1}>
+              {t('mini.echoAi')}
+            </Text>
+            <Text style={[font.body, { color: colors.textMuted, marginTop: 3 }]} numberOfLines={2}>
+              {t('mini.echoAiPitch')}
+            </Text>
+          </View>
+          <View
+            style={{
+              paddingHorizontal: 14,
+              height: 38,
+              borderRadius: 19,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: agentColor,
+            }}
+          >
+            <Text style={[font.bodySemibold, { color: '#fff', fontSize: 13 }]}>{t('common.start')}</Text>
+          </View>
+        </View>
+      </Pressable>
+
       <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 14, marginHorizontal: 4 }]}>
-        Pick a tool to float
+        {t('mini.floatTool')}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {FLOATING_APPS.map((app, i) => {
+        {tools.map((app, i) => {
           // Catalog supplies the tile colour; the registry supplies the tool's
           // actual name (avoids the catalog's marketing labels like "Write").
           const color = CATALOG_BY_ID.get(app.id)?.color ?? app.color ?? colors.accent;

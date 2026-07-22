@@ -46,6 +46,7 @@ import { IconBadge } from '../../components/ui/IconBadge';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTutorialTarget } from '../../hooks/useTutorialTarget';
 import { useTutorialStore } from '../../store/tutorialStore';
+import { useI18n, type TranslationKey } from '../../lib/i18n';
 
 
 const NAV_BAR_HEIGHT = 50;
@@ -80,10 +81,12 @@ function HomeHero({
   username,
   targetLabel,
   targetOutcome,
+  t,
 }: {
   username: string;
   targetLabel: string;
   targetOutcome: string;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
   const router = useRouter();
   const { colors, font } = useTheme();
@@ -92,7 +95,7 @@ function HomeHero({
   return (
     <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 12 : 8, marginBottom: 12 }}>
       <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 23 : 28, lineHeight: layout.isPhone ? 28 : 34 }]} numberOfLines={1}>
-        {username ? `Welcome back, ${username}` : 'Build your Echo today'}
+        {username ? t('home.welcomeBack', { name: username }) : t('home.buildToday')}
       </Text>
       {sub ? (
         <Text style={[font.body, { color: colors.textMuted, fontSize: 13.5, lineHeight: 18, marginTop: 2 }]} numberOfLines={1}>
@@ -102,8 +105,8 @@ function HomeHero({
       {/* Only the destinations that aren't already in the bottom tab bar —
           Chat and Market live there, so shortcuts to them would be clutter. */}
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-        <QuickLink icon={<SquaresFour color="#fff" size={15} weight="bold" />} color={colors.accent} label="Tools" onPress={() => router.push('/(tabs)/apps')} />
-        <QuickLink icon={<Target color="#fff" size={15} weight="bold" />} color={colors.accent} label="Progress" onPress={() => router.push('/target-progress')} />
+        <QuickLink icon={<SquaresFour color="#fff" size={15} weight="bold" />} color={colors.accent} label={t('home.tools')} onPress={() => router.push('/(tabs)/apps')} />
+        <QuickLink icon={<Target color="#fff" size={15} weight="bold" />} color={colors.accent} label={t('home.progress')} onPress={() => router.push('/target-progress')} />
       </View>
     </View>
   );
@@ -143,7 +146,11 @@ function QuickLink({ icon, color, label, onPress }: { icon: React.ReactNode; col
  * priority (chat → first Echo → daily question) so there's exactly one obvious
  * thing to do.
  */
-function HomeNextStep({ hasStartedFirstChat, publishedCount }: { hasStartedFirstChat: boolean; publishedCount: number }) {
+function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
+  hasStartedFirstChat: boolean;
+  publishedCount: number;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
+}) {
   const router = useRouter();
   const { font, fontSizes, lineHeights } = useTheme();
   const layout = useResponsiveLayout();
@@ -152,21 +159,21 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount }: { hasStartedFirst
   const step = !hasStartedFirstChat
     ? {
         icon: <ChatCircleText color="#fff" size={22} weight="fill" />,
-        title: 'Start a conversation with Echo',
-        body: 'Think something through with your AI partner — it only takes a line.',
+        title: t('home.nextStartChat'),
+        body: t('home.nextStartChatBody'),
         route: '/(tabs)/chat' as const,
       }
     : publishedCount === 0
       ? {
           icon: <PencilSimpleLine color="#fff" size={22} weight="fill" />,
-          title: 'Share your first Echo',
-          body: 'A question or a take is enough — publish what’s worth keeping.',
+          title: t('home.nextShareEcho'),
+          body: t('home.nextShareEchoBody'),
           route: '/create-post' as const,
         }
       : {
           icon: <Sparkle color="#fff" size={22} weight="fill" />,
-          title: 'Answer today’s question',
-          body: 'Two minutes. Build a daily thinking streak.',
+          title: t('home.nextDaily'),
+          body: t('home.nextDailyBody'),
           route: '/daily-question' as const,
         };
 
@@ -207,10 +214,12 @@ function FeedScopeRail({
   feedScope,
   setFeedScope,
   onInfo,
+  t,
 }: {
   feedScope: 'semantic' | 'forYou' | 'following' | 'latest';
   setFeedScope: (scope: 'semantic' | 'forYou' | 'following' | 'latest') => void;
   onInfo: () => void;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
   const { colors, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
@@ -219,7 +228,7 @@ function FeedScopeRail({
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {(['semantic', 'forYou', 'following', 'latest'] as const).map(scope => {
           const active = feedScope === scope;
-          const label = scope === 'semantic' ? 'For You' : scope === 'forYou' ? 'Trending' : scope === 'following' ? 'Following' : 'Latest';
+          const label = scope === 'semantic' ? t('home.forYou') : scope === 'forYou' ? t('home.trending') : scope === 'following' ? t('home.following') : t('home.latest');
           return (
             <Pressable
               key={scope}
@@ -249,7 +258,7 @@ function FeedScopeRail({
         onPress={onInfo}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel="About this feed"
+        accessibilityLabel={t('home.aboutFeed')}
         style={{ width: 36, height: 36, borderRadius: 13, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
       >
         <Info color={colors.textMuted} size={18} />
@@ -274,6 +283,7 @@ export default function DiscoverScreen() {
   const feed = useMemo(() => feedData?.pages.flat() ?? [], [feedData]);
   const realtime = useRealtimeNewEchoes();
   const { colors, animation, font, fontSizes, lineHeights } = useTheme();
+  const { t } = useI18n();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, avatarUrl, interests, followingIds } = useAppStore();
   const targetCategoryId = useAppStore(s => s.targetCategory);
@@ -395,9 +405,10 @@ export default function DiscoverScreen() {
         username={username}
         targetLabel={targetCategory.label}
         targetOutcome={targetOutcome}
+        t={t}
       />
       {!focusedHome && (
-        <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} onInfo={() => setAboutFeedVisible(true)} />
+        <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} onInfo={() => setAboutFeedVisible(true)} t={t} />
       )}
 
       <Modal
@@ -415,12 +426,12 @@ export default function DiscoverScreen() {
             onPress={() => {}}
           >
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 20 }} />
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 20, marginBottom: 20 }]}>How this feed works</Text>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 20, marginBottom: 20 }]}>{t('home.feedWorks')}</Text>
             {([
-              { scope: 'semantic', label: 'For You', icon: <Sparkle size={16} color={colors.accent} weight="fill" />, desc: 'Personalised to you. We use your reading history to surface echoes you\'re likely to find interesting, using semantic similarity matching.' },
-              { scope: 'forYou', label: 'Trending', icon: <TrendUp size={16} color={colors.accent} weight="bold" />, desc: 'Ranked by engagement (likes, comments, reposts) combined with recency. No personalisation — the same ranking for every user.' },
-              { scope: 'following', label: 'Following', icon: <Bell size={16} color={colors.accent} weight="bold" />, desc: 'Only echoes from people you follow, ranked by recency and engagement.' },
-              { scope: 'latest', label: 'Latest', icon: <Clock size={16} color={colors.accent} weight="bold" />, desc: 'Pure chronological order. No ranking, no personalisation — every public echo in the order it was posted.' },
+              { scope: 'semantic', label: t('home.forYou'), icon: <Sparkle size={16} color={colors.accent} weight="fill" />, desc: t('home.forYouDesc') },
+              { scope: 'forYou', label: t('home.trending'), icon: <TrendUp size={16} color={colors.accent} weight="bold" />, desc: t('home.trendingDesc') },
+              { scope: 'following', label: t('home.following'), icon: <Bell size={16} color={colors.accent} weight="bold" />, desc: t('home.followingDesc') },
+              { scope: 'latest', label: t('home.latest'), icon: <Clock size={16} color={colors.accent} weight="bold" />, desc: t('home.latestDesc') },
             ] as const).map(({ scope, label, icon, desc }) => (
               <View key={scope} style={{ marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -436,14 +447,14 @@ export default function DiscoverScreen() {
       {!focusedHome && <TargetToolsPanel dense />}
       {!focusedHome && features.stories && !remote && (
         <>
-          <SectionHeader label="Your Stories" />
+          <SectionHeader label={t('home.yourStories')} />
           <StoryCircles />
         </>
       )}
       {/* New users get ONE clear next action instead of three competing cards
           (old checklist + first-echo coach + daily card). */}
       {focusedHome && (
-        <HomeNextStep hasStartedFirstChat={hasStartedFirstChat} publishedCount={publishedCount} />
+        <HomeNextStep hasStartedFirstChat={hasStartedFirstChat} publishedCount={publishedCount} t={t} />
       )}
       {features.dailyQuestion && !focusedHome && (
         <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: 12, marginTop: 4, marginBottom: 6 }}>
@@ -456,10 +467,10 @@ export default function DiscoverScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={[font.display, { color: '#fff', fontSize: 18, lineHeight: 24 }]}>
-                  Today&apos;s question
+                  {t('home.todayQuestion')}
                 </Text>
                 <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, fontFamily: 'Inter_500Medium' }}>
-                  Tap to answer
+                  {t('home.tapToAnswer')}
                 </Text>
               </View>
               <ArrowUpRight color="#fff" size={20} weight="bold" />
@@ -469,12 +480,12 @@ export default function DiscoverScreen() {
       )}
       {!focusedHome && evolvingNow.length > 0 && (
         <>
-          <SectionHeader label="Evolving now" sub="Perspectives" icon={<GitBranch color={colors.accent} size={16} weight="bold" />} />
+          <SectionHeader label={t('home.evolvingNow')} sub={t('home.perspectives')} icon={<GitBranch color={colors.accent} size={16} weight="bold" />} />
           <EvolvingNowRail items={evolvingNow} />
         </>
       )}
       <View ref={feedTarget.ref} onLayout={feedTarget.onLayout}>
-        <SectionHeader label={focusedHome ? 'From the community' : 'Top conversations'} sub={focusedHome ? undefined : 'Live now'} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
+        <SectionHeader label={focusedHome ? t('home.fromCommunity') : t('home.topConversations')} sub={focusedHome ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
       </View>
     </View>
   );
@@ -487,11 +498,11 @@ export default function DiscoverScreen() {
           <View style={layout.contentStyle}>
             {features.stories && !remote && (
               <>
-                <SectionHeader label="Your Stories" />
+                <SectionHeader label={t('home.yourStories')} />
                 <StoryCircles />
               </>
             )}
-            <SectionHeader label="Trending" sub="Live" />
+            <SectionHeader label={t('home.trending')} sub={t('common.live')} />
             <FeedCardSkeleton />
             <FeedCardSkeleton />
           </View>
@@ -511,7 +522,7 @@ export default function DiscoverScreen() {
               }}
             >
               <Text style={[font.bodyBold, { color: '#fff', fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
-                {realtime.count} new echo{realtime.count > 1 ? 'es' : ''} · tap to refresh
+                {t('home.newEchoes', { count: realtime.count, noun: realtime.count > 1 ? 'echoes' : 'echo' })}
               </Text>
             </Pressable>
           )}
@@ -549,15 +560,15 @@ export default function DiscoverScreen() {
               feedScope === 'following' ? (
                 <View style={{ paddingTop: 24, paddingHorizontal: layout.gutter }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title, lineHeight: lineHeights.title, marginBottom: 4 }]}>
-                    Your following feed is quiet
+                    {t('home.followingQuiet')}
                   </Text>
                   <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: lineHeights.small, marginBottom: 20 }]}>
-                    Follow some people to fill this up.
+                    {t('home.followingQuietBody')}
                   </Text>
                   {remote && suggestedUsers.length > 0 ? (
                     <>
                       <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginBottom: 8 }]}>
-                        Suggested people
+                        {t('home.suggestedPeople')}
                       </Text>
                       {suggestedUsers.map(user => (
                         <UserRow
@@ -574,7 +585,7 @@ export default function DiscoverScreen() {
                       onPress={() => router.push('/(tabs)/explore')}
                       style={{ backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, alignSelf: 'flex-start' }}
                     >
-                      <Text style={[font.bodyBold, { color: '#fff', fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>Find people to follow</Text>
+                      <Text style={[font.bodyBold, { color: '#fff', fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>{t('home.findPeople')}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -582,9 +593,9 @@ export default function DiscoverScreen() {
                 <View style={{ paddingTop: 32 }}>
                   <EmptyState
                     icon={<ChatCircleText color={colors.accent} size={28} />}
-                    title="Nothing here yet"
-                    subtitle="Start a chat, then publish what you want to keep."
-                    actionLabel="Open chat"
+                    title={t('home.communityQuietTitle')}
+                    subtitle={t('home.communityQuietBody')}
+                    actionLabel={t('home.openChat')}
                     onAction={() => router.push('/(tabs)/chat')}
                   />
                 </View>
