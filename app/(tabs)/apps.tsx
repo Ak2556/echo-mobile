@@ -18,6 +18,7 @@ import { MINI_APP_CATALOG, type MiniAppCatalogItem } from '../../lib/miniAppCata
 import { resolveMiniAppId } from '../../lib/miniAppIntegration';
 import { getRecentTools, recordToolOpen } from '../../lib/miniAppRecents';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
+import { useI18n } from '../../lib/i18n';
 
 const PAD = 20;
 const GAP = 12;
@@ -54,6 +55,7 @@ function Eyebrow({ children, trailing }: { children: React.ReactNode; trailing?:
 
 function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; width: number; onOpen: (app: MiniApp) => void }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index, 10) * 22).duration(240).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
@@ -62,7 +64,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
       <Pressable
         onPress={() => onOpen(app)}
         accessibilityRole="button"
-        accessibilityLabel={`Open ${app.name}`}
+        accessibilityLabel={`${t('common.open')} ${app.name}`}
         style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.965 : 1 }] })}
       >
         <View style={{
@@ -106,7 +108,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
             ))}
           </View>
           <Text style={{ color: colors.textMuted, fontSize: 11.2, lineHeight: 15, marginTop: 11 }} numberOfLines={1}>
-            Replaces {app.replaces.slice(0, 2).join(' + ')}
+            {t('mini.replaces', { items: app.replaces.slice(0, 2).join(' + ') })}
           </Text>
         </View>
       </Pressable>

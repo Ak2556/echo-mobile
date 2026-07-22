@@ -24,7 +24,7 @@ import {
 } from '../../lib/fitness';
 import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
 import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
-import { FoodItem, searchFoods } from '../../lib/foodDatabase';
+import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods } from '../../lib/foodDatabase';
 
 const TEAL = '#4E8B7A'; // sage — warm editorial palette
 type Tab = 'meals' | 'workouts' | 'progress' | 'library';
@@ -93,15 +93,17 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
   const [search, setSearch] = useState('');
+  const [activeFoodGroup, setActiveFoodGroup] = useState<FoodGroupId>('quick');
   const [picked, setPicked] = useState<FoodItem | null>(null);
   const [qty, setQty] = useState(1);
   const [saveToFoods, setSaveToFoods] = useState(false);
   // Your foods rank above the built-in database.
   const q = search.trim().toLowerCase();
   const customHits: FoodItem[] = q
-    ? customFoods.filter(f => f.name.toLowerCase().includes(q)).slice(0, 4)
-    : [];
-  const results = picked ? [] : [...customHits, ...searchFoods(search).filter(f => !customHits.some(c => c.id === f.id))].slice(0, 8);
+    ? customFoods.filter(f => `${f.name} ${f.serving}`.toLowerCase().includes(q)).slice(0, 6)
+    : activeFoodGroup === 'quick' ? customFoods.slice(0, 4) : [];
+  const builtInHits = q ? searchFoods(search, 18) : foodsForGroup(activeFoodGroup, 16);
+  const results = picked ? [] : [...customHits, ...builtInHits.filter(f => !customHits.some(c => c.id === f.id))].slice(0, 18);
 
   const applyFood = (food: FoodItem, q: number) => {
     setPicked(food);
@@ -150,9 +152,42 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
                 style={{ flex: 1, color: colors.text, fontSize: 15, paddingHorizontal: 10, paddingVertical: 12 }}
               />
             </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10, paddingBottom: 2 }}>
+              {FOOD_GROUPS.map(group => {
+                const active = activeFoodGroup === group.id && !q;
+                return (
+                  <Pressable
+                    key={group.id}
+                    onPress={() => {
+                      setPicked(null);
+                      setSearch('');
+                      setActiveFoodGroup(group.id);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Show ${group.label} foods`}
+                  >
+                    <View style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                      borderRadius: 999,
+                      backgroundColor: active ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: active ? 'transparent' : colors.glassBorder,
+                    }}>
+                      <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>
+                        {group.label}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 8, marginBottom: 2 }}>
+              {q ? `${results.length} matches` : `${FOOD_GROUPS.find(g => g.id === activeFoodGroup)?.label ?? 'Quick'} picks`}
+            </Text>
             {results.map(food => (
               <Pressable key={food.id} onPress={() => applyFood(food, 1)}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }}>{food.name}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{food.serving} · P {food.protein}g · C {food.carbs}g · F {food.fat}g</Text>
@@ -161,6 +196,14 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
                 </View>
               </Pressable>
             ))}
+            {!picked && results.length === 0 && (
+              <View style={{ paddingVertical: 18, alignItems: 'center' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>No match yet</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+                  Type the food, enter calories/macros below, and save it to My foods.
+                </Text>
+              </View>
+            )}
             {picked && (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: TEAL + '12', borderRadius: 14, borderWidth: 1, borderColor: TEAL + '33', padding: 12 }}>
                 <View style={{ flex: 1 }}>

@@ -2,7 +2,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import {
   Calculator, NotePencil, ArrowsLeftRight, DiceFive, Globe, ListChecks,
   ShoppingCart, TextAa, Code, Palette, Key, Receipt, Wallet, CalendarBlank,
-  Scales, Repeat, ImageSquare, type Icon,
+  Scales, Repeat, ImageSquare, Sparkle, type Icon,
 } from 'phosphor-react-native';
 
 /**
@@ -20,12 +20,21 @@ export interface FloatingAppMeta {
   name: string;
   Icon: Icon;
   Component: LazyExoticComponent<ComponentType>;
+  description?: string;
   /** Fallback tile colour for tools not in the productivity catalog (which
    *  supplies its own colour). Warm-palette hues so each reads distinctly. */
   color?: string;
 }
 
 export const FLOATING_APPS: FloatingAppMeta[] = [
+  {
+    id: 'echo-ai',
+    name: 'Echo AI',
+    Icon: Sparkle,
+    description: 'Ask, plan, write, decide.',
+    color: '#E06030',
+    Component: lazy(() => import('../components/mini-apps/FloatingEchoAgent')),
+  },
   { id: 'calculator', name: 'Calculator', Icon: Calculator, Component: lazy(() => import('../app/mini-apps/calculator')) },
   { id: 'notes', name: 'Notes', Icon: NotePencil, Component: lazy(() => import('../app/mini-apps/notes')) },
   { id: 'converter', name: 'Converter', Icon: ArrowsLeftRight, color: '#4E7A8B', Component: lazy(() => import('../app/mini-apps/converter')) },

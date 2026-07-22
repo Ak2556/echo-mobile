@@ -41,6 +41,8 @@ import { getTargetCategory } from '../../lib/targetCategories';
 import { miniAppById } from '../../lib/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
+import { assistantLanguageInstruction } from '../../lib/languages';
+import { useI18n } from '../../lib/i18n';
 
 // ─── DM colour token (teal, distinct from AI accent) ────────────────────────
 // One accent per app: the DM surfaces use the same warm brand accent as
@@ -65,6 +67,7 @@ function DMConversationCard({
   isLast?: boolean;
 }) {
   const { colors, font, isUserOnline } = useTheme();
+  const { t } = useI18n();
   function ago(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const m = Math.floor(diff / 60000);
@@ -80,7 +83,7 @@ function DMConversationCard({
   const subtitle = draft
     ? `Draft · ${draft}`
     : conv.isGroup
-    ? `${conv.memberCount ?? 1} members${conv.lastMessage ? ` · ${conv.lastMessage}` : ''}`
+    ? `${conv.memberCount ?? 1} ${t('common.group')}${conv.lastMessage ? ` · ${conv.lastMessage}` : ''}`
     : conv.lastMessage || `@${conv.username}`;
 
   return (
@@ -141,11 +144,11 @@ function DMConversationCard({
               gap: 4,
             }}>
               {conv.isGroup ? <Users color={colors.textMuted} size={11} weight="bold" /> : <ChatCircleText color={colors.textMuted} size={11} weight="bold" />}
-              <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '800' }}>{conv.isGroup ? 'Group' : online ? 'Online' : 'DM'}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '800' }}>{conv.isGroup ? t('common.group') : online ? t('common.online') : t('common.dm')}</Text>
             </View>
             {hasUnread ? (
               <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: colors.accent }}>
-                <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '900' }}>New</Text>
+                <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '900' }}>{t('common.new')}</Text>
               </View>
             ) : null}
           </View>
@@ -191,15 +194,16 @@ function DMInboxHeader({
   onNewGroup: () => void;
 }) {
   const { colors, font } = useTheme();
+  const { t } = useI18n();
 
   const actions = [
-    { key: 'message', label: 'New message', caption: 'Private chat', Icon: PencilSimple, onPress: onInbox, accent: DM_COLOR },
-    { key: 'group', label: 'New group', caption: 'Shared progress', Icon: Users, onPress: onNewGroup, accent: '#38BDF8' },
+    { key: 'message', label: t('chat.newMessage'), caption: t('chat.privateChat'), Icon: PencilSimple, onPress: onInbox, accent: DM_COLOR },
+    { key: 'group', label: t('chat.newGroup'), caption: t('chat.sharedProgress'), Icon: Users, onPress: onNewGroup, accent: '#38BDF8' },
   ];
   const stats = [
-    { label: 'Unread', value: unread },
-    { label: 'Groups', value: groups },
-    { label: 'Total', value: count },
+    { label: t('common.unread'), value: unread },
+    { label: t('common.group'), value: groups },
+    { label: t('common.total'), value: count },
   ];
 
   return (
@@ -235,9 +239,9 @@ function DMInboxHeader({
               <Envelope color="#fff" size={24} weight="fill" />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[font.display, { color: colors.text, fontSize: 24, lineHeight: 30 }]}>Messages that move</Text>
+              <Text style={[font.display, { color: colors.text, fontSize: 24, lineHeight: 30 }]}>{t('chat.messagesThatMove')}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 4 }]}>
-                {unread ? `${unread} unread.` : count ? `${count} threads · clear.` : 'Start something useful.'}
+                {unread ? t('chat.unreadWaiting', { count: unread }) : count ? t('chat.threadsClear', { count }) : t('chat.startUseful')}
               </Text>
             </View>
           </View>
@@ -311,18 +315,18 @@ function DMInboxHeader({
           letterSpacing: 1.4,
           textTransform: 'uppercase',
         }}>
-          Recent
+          {t('chat.recent')}
         </Text>
         {count > 0 && (
           <Pressable onPress={onInbox} hitSlop={10}>
-            <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 13 }]}>View all</Text>
+            <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 13 }]}>{t('chat.viewAll')}</Text>
           </Pressable>
         )}
       </View>
       <Text style={[font.quote, { color: colors.textSecondary, fontSize: 15, marginTop: 6 }]}>
         {unread
-          ? `${unread} unread ${unread === 1 ? 'message' : 'messages'} waiting.`
-          : count > 0 ? 'All caught up.' : 'Quiet, for now.'}
+          ? t('chat.unreadMessagesWaiting', { count: unread, noun: unread === 1 ? 'message' : 'messages' })
+          : count > 0 ? t('chat.allCaughtUp') : t('chat.quietNow')}
       </Text>
     </View>
   );
@@ -332,6 +336,7 @@ function DMInboxHeader({
 function DMInboxView({ topPad }: { topPad: number }) {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const remote = isSupabaseRemote();
   const localConversations = useAppStore(s => s.conversations);
@@ -416,14 +421,14 @@ function DMInboxView({ topPad }: { topPad: number }) {
         ) : (
           <View style={{ paddingTop: 22, paddingBottom: 12, gap: 9 }}>
             <Text style={{ color: colors.text, fontSize: 21, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
-              Nothing here yet.
+              {t('chat.nothingYet')}
             </Text>
             <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21 }}>
-              Conversations start from a profile — find someone whose thinking you like and say hello.
+              {t('chat.emptyInboxBody')}
             </Text>
             <Pressable onPress={() => router.push('/(tabs)/explore' as Href)} hitSlop={8}>
               <Text style={{ color: colors.accent, fontSize: 14, fontFamily: 'Inter_600SemiBold', marginTop: 4 }}>
-                Find people →
+                {t('chat.findPeople')} →
               </Text>
             </Pressable>
           </View>
@@ -432,13 +437,6 @@ function DMInboxView({ topPad }: { topPad: number }) {
     </View>
   );
 }
-
-const EMPTY_SUGGESTIONS = [
-  { label: 'Target plan', prompt: 'Help me make progress on my target today' },
-  { label: 'Draft Echo', prompt: 'Turn my rough idea into a clear Echo' },
-  { label: 'Next 3 actions', prompt: 'Plan my next 3 focused actions' },
-  { label: 'Challenge me', prompt: 'Challenge my thinking on this decision' },
-];
 
 function modelLabel(model: string): string {
   if (model.includes('pro')) return 'Pro';
@@ -473,6 +471,7 @@ function HeaderIconButton({ icon, onPress, label, accent = false }: { icon: Reac
 
 function ModeSwitch({ mode, onChange }: { mode: 'ai' | 'dm'; onChange: (mode: 'ai' | 'dm') => void }) {
   const { colors, font } = useTheme();
+  const { t } = useI18n();
   return (
     <View style={{
       flexDirection: 'row',
@@ -486,8 +485,8 @@ function ModeSwitch({ mode, onChange }: { mode: 'ai' | 'dm'; onChange: (mode: 'a
       borderColor: colors.border,
     }}>
       {([
-        { key: 'ai' as const, label: 'AI Chat', Icon: Sparkle, color: colors.accent },
-        { key: 'dm' as const, label: 'Messages', Icon: ChatCircleText, color: DM_COLOR },
+        { key: 'ai' as const, label: t('chat.aiChat'), Icon: Sparkle, color: colors.accent },
+        { key: 'dm' as const, label: t('chat.messages'), Icon: ChatCircleText, color: DM_COLOR },
       ]).map(item => {
         const active = mode === item.key;
         return (
@@ -546,29 +545,36 @@ function ChatEmptyLaunchpad({
   showPrivacy: boolean;
 }) {
   const { colors, font } = useTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const router = useRouter();
   const toolApps = targetAppIds.map(id => miniAppById(id)).filter(Boolean).slice(0, 3);
   const firstTool = toolApps[0];
+  const suggestions = [
+    { label: 'Target plan', prompt: t('chat.promptTarget') },
+    { label: t('chat.draftEcho'), prompt: t('chat.promptDraft') },
+    { label: 'Next 3', prompt: 'Plan my next 3 focused actions' },
+    { label: 'Challenge', prompt: 'Challenge my thinking on this decision' },
+  ];
   const quickActions = [
     {
       key: 'target',
-      title: 'Move my target',
+      title: t('chat.moveTarget'),
       subtitle: targetLabel,
       icon: <Target color={colors.accent} size={19} weight="bold" />,
-      onPress: () => onPrompt('Help me make meaningful progress on my target today. Ask me only what you need, then give me the next 3 actions.'),
+      onPress: () => onPrompt(t('chat.promptTarget')),
     },
     {
       key: 'draft',
-      title: 'Draft an Echo',
-      subtitle: 'Turn an idea into a post',
+      title: t('chat.draftEcho'),
+      subtitle: t('chat.turnIdea'),
       icon: <NotePencil color={colors.accent} size={19} weight="bold" />,
-      onPress: () => onPrompt('Help me turn this rough idea into a clear Echo that people would want to respond to: '),
+      onPress: () => onPrompt(t('chat.promptDraft')),
     },
     {
       key: 'tools',
-      title: 'Open tools',
-      subtitle: toolApps.map(app => app?.name).filter(Boolean).join(' · ') || 'Mini apps',
+      title: t('chat.openTools'),
+      subtitle: toolApps.map(app => app?.name).filter(Boolean).join(' · ') || t('chat.miniApps'),
       icon: firstTool ? <MiniAppIcon id={firstTool.id} color={firstTool.color} size={30} /> : <SquaresFour color={colors.accent} size={19} weight="bold" />,
       onPress: () => router.push('/(tabs)/apps' as Href),
     },
@@ -597,16 +603,16 @@ function ChatEmptyLaunchpad({
               ) : (
                 <>
                   <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 28 : 34, lineHeight: layout.isPhone ? 33 : 40 }]}>
-                    What should Echo help you finish?
+                    {t('chat.emptyTitle')}
                   </Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }]} numberOfLines={2}>
-                    {targetOutcome || `Start with ${targetLabel.toLowerCase()}, a draft, or a decision.`}
+                    {targetOutcome || t('chat.emptyBody', { target: targetLabel.toLowerCase() })}
                   </Text>
                 </>
               )}
               {showPrivacy ? (
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 11, lineHeight: 15, marginTop: 8 }]} numberOfLines={1}>
-                  Avoid private details in AI prompts.
+                  {t('chat.avoidPrivate')}
                 </Text>
               ) : null}
             </View>
@@ -637,7 +643,7 @@ function ChatEmptyLaunchpad({
           )}
 
           <Pressable
-            onPress={() => onPrompt('Echo, help me with ')}
+            onPress={() => onPrompt(t('chat.promptPrefix'))}
             accessibilityRole="button"
             style={{
               minHeight: 52,
@@ -652,7 +658,7 @@ function ChatEmptyLaunchpad({
             }}
           >
             <Text style={[font.body, { flex: 1, color: colors.textMuted, fontSize: 16 }]} numberOfLines={1}>
-              Ask Echo anything...
+              {t('chat.askAnything')}
             </Text>
             <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
               <ArrowUpRight color="#fff" size={17} weight="bold" />
@@ -693,7 +699,7 @@ function ChatEmptyLaunchpad({
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {EMPTY_SUGGESTIONS.map(suggestion => (
+        {suggestions.map(suggestion => (
           <AnimatedPressable
             key={suggestion.label}
             onPress={() => onPrompt(suggestion.prompt)}
@@ -724,6 +730,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const pathname = usePathname();
   const { colors, animation, reduceAnimations } = useTheme();
+  const { t } = useI18n();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
   const setAiModel = useAppStore(s => s.setAiModel);
@@ -748,6 +755,7 @@ export default function ChatScreen() {
   const streamResponses = useAppStore(s => s.streamResponses);
   const personaLearningEnabled = useAppStore(s => s.personaLearningEnabled);
   const accountUserId = useAppStore(s => s.userId);
+  const appLanguage = useAppStore(s => s.appLanguage);
   const username = useAppStore(s => s.username);
   const displayName = useAppStore(s => s.displayName);
   const proactiveAiEnabled = useAppStore(s => s.proactiveAiEnabled);
@@ -923,6 +931,13 @@ export default function ChatScreen() {
     conversationIdRef.current = id;
   }, [currentSessionId, setSessionConversationId]);
 
+  const buildEchoContext = useCallback(() => {
+    return [
+      buildPersonaPromptContext(loadPersonaProfile(accountUserId)),
+      assistantLanguageInstruction(appLanguage),
+    ].filter(Boolean).join('\n');
+  }, [accountUserId, appLanguage]);
+
   // Accumulate deltas in buffer — only flush to Zustand/MMKV every 50ms
   const upsertText = useCallback((id: string, role: 'user' | 'assistant', delta: string) => {
     if (!currentSessionId) return;
@@ -958,7 +973,7 @@ export default function ChatScreen() {
           preferredModel: aiModel,
           conversationId: conversationIdRef.current ?? undefined,
           localResult: { tool_call_id: tool.id, tool_name: tool.name, args: tool.args, ok, result, error },
-          personaContext: buildPersonaPromptContext(loadPersonaProfile(accountUserId)),
+          personaContext: buildEchoContext(),
           onAbortHandle: (stop) => { stopStreamRef.current = stop; },
           onEvent: (e) => {
             if (e.type === 'conversation') setConvId(e.id);
@@ -982,7 +997,7 @@ export default function ChatScreen() {
         setStreamingMsgId(null);
       }
     },
-    [accountUserId, aiModel, setConvId, startFlush, stopFlush, upsertText, upsertTool],
+    [aiModel, buildEchoContext, setConvId, startFlush, stopFlush, upsertText, upsertTool],
   );
 
   const navigateFn = useCallback((screen: string) => {
@@ -1035,7 +1050,7 @@ export default function ChatScreen() {
         await streamEchoAI({
           ...opts,
           preferredModel: aiModel,
-          personaContext: opts.personaContext ?? buildPersonaPromptContext(loadPersonaProfile(accountUserId)),
+          personaContext: opts.personaContext ?? buildEchoContext(),
           onAbortHandle: (stop) => { stopStreamRef.current = stop; },
           onEvent: (e) => {
             if (e.type === 'conversation') setConvId(e.id);
@@ -1092,7 +1107,7 @@ export default function ChatScreen() {
         setStreamingMsgId(null);
       }
     },
-    [accountUserId, aiModel, currentSessionId, runLocalTool, setConvId, startFlush, stopFlush, updateSessionLastMessage, upsertText, upsertTool],
+    [aiModel, buildEchoContext, currentSessionId, runLocalTool, setConvId, startFlush, stopFlush, updateSessionLastMessage, upsertText, upsertTool],
   );
 
   const handleStop = useCallback(() => {
@@ -1389,22 +1404,22 @@ export default function ChatScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', lineHeight: 26 }} numberOfLines={1}>
-                {chatMode === 'ai' ? 'Echo Chat' : 'Messages'}
+                {chatMode === 'ai' ? t('chat.title') : t('chat.messages')}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_500Medium' }} numberOfLines={1}>
-                {chatMode === 'ai' ? `${modelLabel(aiModel)} · ${messages.length} message${messages.length === 1 ? '' : 's'}` : 'Private · rich · remembered'}
+                {chatMode === 'ai' ? t('chat.subtitle', { model: modelLabel(aiModel), count: messages.length }) : t('chat.privateConversations')}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {chatMode === 'ai' ? (
                 <>
-                  <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label="Chat sessions" onPress={() => setDrawerOpen(true)} />
-                  <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label="New AI chat" onPress={handleNewChat} />
-                  <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label="Quick actions" onPress={() => setShowActionCenter(true)} />
-                  <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label="Share conversation" onPress={handleShare} accent />
+                  <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
+                  <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={t('nav.newEcho')} onPress={handleNewChat} />
+                  <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
+                  <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label={t('common.share')} onPress={handleShare} accent />
                 </>
               ) : (
-                <HeaderIconButton icon={<PencilSimple color="#fff" size={18} />} label="Open full messages" onPress={() => router.push('/messages' as Href)} accent />
+                <HeaderIconButton icon={<PencilSimple color="#fff" size={18} />} label={t('chat.messages')} onPress={() => router.push('/messages' as Href)} accent />
               )}
             </View>
           </View>

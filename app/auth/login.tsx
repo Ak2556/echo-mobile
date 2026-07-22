@@ -17,14 +17,15 @@ import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { CANCELLED, refreshAuthSession, signInAsDemo, signInWithGoogle } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
+import { useI18n, type TranslationKey } from '../../lib/i18n';
 
-const ROTATING_PROMPTS = [
-  'What’s a song that always pulls you out of a bad mood?',
-  'What did you outgrow this year?',
-  'What’s a sentence you’ve read that you can’t forget?',
-  'What’s the most expensive thing you’ve ever changed your mind about?',
-  'What’s a small ritual that anchors your week?',
-  'What’s an idea you keep returning to?',
+const ROTATING_PROMPT_KEYS: TranslationKey[] = [
+  'auth.prompt.song',
+  'auth.prompt.outgrow',
+  'auth.prompt.sentence',
+  'auth.prompt.changedMind',
+  'auth.prompt.ritual',
+  'auth.prompt.idea',
 ];
 
 const DEMO_ENABLED = !!(process.env.EXPO_PUBLIC_DEMO_EMAIL && process.env.EXPO_PUBLIC_DEMO_PASSWORD);
@@ -33,6 +34,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
   const layout = useResponsiveLayout();
+  const { t, textDirection } = useI18n();
   const isDark = colors.isDark;
 
   const [demoLoading, setDemoLoading] = useState(false);
@@ -45,7 +47,7 @@ export default function LoginScreen() {
     const { error } = await signInWithGoogle();
     if (error) {
       setGoogleLoading(false);
-      if (error !== CANCELLED) showToast(error, 'Error');
+      if (error !== CANCELLED) showToast(error, t('auth.error'));
       return;
     }
     const status = await refreshAuthSession();
@@ -60,7 +62,7 @@ export default function LoginScreen() {
     const { error } = await signInAsDemo();
     if (error) {
       setDemoLoading(false);
-      showToast('Demo sign-in unavailable', 'Error');
+      showToast(t('auth.demoUnavailable'), t('auth.error'));
       return;
     }
     const status = await refreshAuthSession();
@@ -69,8 +71,8 @@ export default function LoginScreen() {
     else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
   };
   useEffect(() => {
-    const t = setInterval(() => setPromptIdx(i => (i + 1) % ROTATING_PROMPTS.length), 4_000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setPromptIdx(i => (i + 1) % ROTATING_PROMPT_KEYS.length), 4_000);
+    return () => clearInterval(timer);
   }, []);
 
   const dotScale = useSharedValue(1);
@@ -140,14 +142,15 @@ export default function LoginScreen() {
                   color: colors.textSecondary,
                   fontSize: 18,
                   textAlign: 'center',
+                  writingDirection: textDirection.writingDirection,
                   lineHeight: 26,
                   letterSpacing: 0,
                 }]}
               >
-                {`“${ROTATING_PROMPTS[promptIdx]}”`}
+                {`"${t(ROTATING_PROMPT_KEYS[promptIdx])}"`}
               </Animated.Text>
               <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 11, marginTop: 14, letterSpacing: 1.6 }]}>
-                A QUESTION WORTH KEEPING
+                {t('auth.loginQuestionLabel').toUpperCase()}
               </Text>
             </View>
           </View>
@@ -158,7 +161,7 @@ export default function LoginScreen() {
                 icon={googleLoading
                   ? null
                   : <GoogleLogo color={isDark ? '#0C0B09' : '#fff'} size={20} weight="bold" />}
-                label={googleLoading ? 'Signing in…' : 'Continue with Google'}
+                label={googleLoading ? t('auth.signingIn') : t('auth.continueGoogle')}
                 onPress={handleGoogle}
                 bg={isDark ? '#FFFFFF' : '#0C0B09'}
                 fg={isDark ? '#0C0B09' : '#fff'}
@@ -171,7 +174,7 @@ export default function LoginScreen() {
             <Animated.View entering={FadeInDown.delay(160).duration(360).springify().mass(0.7)}>
               <PrimaryButton
                 icon={<EnvelopeSimple color="#fff" size={20} weight="bold" />}
-                label="Continue with email"
+                label={t('auth.continueEmail')}
                 onPress={() => router.push('/auth/email')}
                 bg={colors.accent}
                 fg="#fff"
@@ -185,22 +188,22 @@ export default function LoginScreen() {
                 onPress={() => router.push('/auth/phone')}
                 hitSlop={12}
                 accessibilityRole="button"
-                accessibilityLabel="Continue with phone"
+                accessibilityLabel={t('auth.continuePhone')}
                 style={{ paddingVertical: 10, paddingHorizontal: 16 }}
               >
                 <Text style={[font.bodyMedium, { color: colors.textSecondary, fontSize: 14 }]}>
-                  or sign in with{'  '}
-                  <Text style={[font.bodyBold, { color: colors.text }]}>phone</Text>
+                  {t('auth.orSignInWith')}{'  '}
+                  <Text style={[font.bodyBold, { color: colors.text }]}>{t('auth.phone')}</Text>
                 </Text>
               </Pressable>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(260).duration(360)} style={{ alignItems: 'center', marginTop: 8 }}>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16, letterSpacing: 0.1 }]}>
-                By continuing you agree to our{' '}
-                <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>Terms</Text>
+                {t('auth.termsPrefix')}{' '}
+                <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>{t('auth.terms')}</Text>
                 {' & '}
-                <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>Privacy.</Text>
+                <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>{t('auth.privacy')}</Text>
               </Text>
             </Animated.View>
 
@@ -213,7 +216,7 @@ export default function LoginScreen() {
                   style={{ paddingVertical: 8, paddingHorizontal: 16, opacity: demoLoading ? 0.5 : 1 }}
                 >
                   <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>
-                    App Review · <Text style={{ color: colors.textSecondary }}>Open demo account</Text>
+                    {t('auth.appReview')} · <Text style={{ color: colors.textSecondary }}>{t('auth.openDemo')}</Text>
                   </Text>
                 </Pressable>
               </Animated.View>
