@@ -22,6 +22,9 @@ import { IconBadge } from '../components/ui/IconBadge';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTutorialStore } from '../store/tutorialStore';
+import { useOutbox } from '../store/outbox';
+import { setForcedOffline, isForcedOffline } from '../lib/net';
+import { drainOutbox } from '../lib/outboxProcessor';
 import { useTheme, THEMES, ThemeName } from '../lib/theme';
 import { signOut } from '../lib/auth';
 import { deleteRemoteAIConversations, updateRemoteProfile, fetchCurrentUserProfile } from '../lib/supabaseEchoApi';
@@ -36,6 +39,8 @@ import { isSafeExternalUrl } from '../lib/urlSafety';
 import { publicWebUrl } from '../lib/echoUrl';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { FONT_STYLE_OPTIONS, fontStyleLabel } from '../lib/fontPresets';
+import { APP_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguageCode } from '../lib/languages';
+import { useI18n } from '../lib/i18n';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@echo.app';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@echo.app';
@@ -112,11 +117,12 @@ function SettingsHero({
   onAiMemory: () => void;
 }) {
   const { colors, radius, font } = theme;
+  const { t } = useI18n();
   const visibleAvatar = profilePhotoVisible ? avatarUrl : undefined;
   const quickActions = [
-    { label: 'Edit profile', subtitle: `@${username}`, icon: PencilSimple, color: colors.accent, onPress: onEditProfile },
-    { label: 'Target tools', subtitle: 'Progress', icon: Target, color: '#7A8B4E', onPress: onTarget },
-    { label: 'AI memory', subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: '#8B5E7D', onPress: onAiMemory },
+    { label: t('settings.editProfile'), subtitle: `@${username}`, icon: PencilSimple, color: colors.accent, onPress: onEditProfile },
+    { label: t('settings.targetTools'), subtitle: 'Progress', icon: Target, color: '#7A8B4E', onPress: onTarget },
+    { label: t('settings.aiMemory'), subtitle: modelLabel.replace('Gemini 2.5 ', ''), icon: Brain, color: '#8B5E7D', onPress: onAiMemory },
   ];
 
   return (
@@ -139,20 +145,20 @@ function SettingsHero({
           />
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 33 }]} numberOfLines={1}>
-              Settings
+              {t('settings.title')}
             </Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 3 }]} numberOfLines={2}>
-              Tune your profile, privacy, feed, and Echo AI from one place.
+              {t('settings.subtitle')}
             </Text>
           </View>
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{notificationsEnabled ? 'Notifications on' : 'Notifications off'}</Text>
+            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{notificationsEnabled ? t('settings.notificationsOn') : t('settings.notificationsOff')}</Text>
           </View>
           <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{privateAccount ? 'Private account' : 'Public account'}</Text>
+            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{privateAccount ? t('settings.privateAccount') : t('settings.publicAccount')}</Text>
           </View>
           <View style={{ borderRadius: 999, backgroundColor: colors.surfaceHover, paddingHorizontal: 11, paddingVertical: 7 }}>
             <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{modelLabel.replace('Gemini 2.5 ', '')}</Text>
@@ -205,15 +211,16 @@ function SettingsCategoryRail({
   theme: ReturnType<typeof useTheme>;
 }) {
   const { colors, font } = theme;
+  const { t } = useI18n();
   const groups: { key: SettingsGroup; label: string; icon: any }[] = [
-    { key: 'all', label: 'All', icon: SlidersHorizontal },
-    { key: 'essentials', label: 'Essentials', icon: Bell },
-    { key: 'privacy', label: 'Privacy', icon: ShieldCheck },
-    { key: 'display', label: 'Display', icon: Palette },
-    { key: 'feed', label: 'Feed', icon: SquaresFour },
-    { key: 'ai', label: 'AI', icon: Robot },
-    { key: 'data', label: 'Data', icon: Database },
-    { key: 'support', label: 'Support', icon: Question },
+    { key: 'all', label: t('settings.groups.all'), icon: SlidersHorizontal },
+    { key: 'essentials', label: t('settings.groups.essentials'), icon: Bell },
+    { key: 'privacy', label: t('settings.groups.privacy'), icon: ShieldCheck },
+    { key: 'display', label: t('settings.groups.display'), icon: Palette },
+    { key: 'feed', label: t('settings.groups.feed'), icon: SquaresFour },
+    { key: 'ai', label: t('settings.groups.ai'), icon: Robot },
+    { key: 'data', label: t('settings.groups.data'), icon: Database },
+    { key: 'support', label: t('settings.groups.support'), icon: Question },
   ];
 
   return (
@@ -292,37 +299,46 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
           )}
-          <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
+          <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16, maxHeight: '82%' }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
             <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 16, marginLeft: 4 }}>{title}</Text>
-            {options.map(opt => {
-              const active = value === opt.value;
-              return (
-                <AnimatedPressable
-                  key={opt.value}
-                  onPress={() => { onChange(opt.value); onClose(); }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: 14,
-                    paddingHorizontal: 16,
-                    marginBottom: 6,
-                    borderRadius: radius.md,
-                    backgroundColor: active ? colors.accentMuted : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
-                    borderWidth: active ? 1 : StyleSheet.hairlineWidth,
-                    borderColor: active ? colors.accent : colors.glassBorder,
-                  }}
-                  scaleValue={0.97}
-                  haptic="light"
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '500' }}>{opt.label}</Text>
-                    {opt.desc && <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, marginTop: 2 }}>{opt.desc}</Text>}
-                  </View>
-                  {active && <Check color={colors.accent} size={20} />}
-                </AnimatedPressable>
-              );
-            })}
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {options.map(opt => {
+                const active = value === opt.value;
+                return (
+                  <AnimatedPressable
+                    key={opt.value}
+                    onPress={() => { onChange(opt.value); onClose(); }}
+                    style={{
+                      minHeight: opt.desc ? 62 : 52,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      marginBottom: 7,
+                      borderRadius: radius.md,
+                      backgroundColor: active ? colors.accentMuted : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                      borderWidth: active ? 1 : StyleSheet.hairlineWidth,
+                      borderColor: active ? colors.accent : colors.glassBorder,
+                    }}
+                    scaleValue={0.97}
+                    haptic="light"
+                  >
+                    <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+                      <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }} numberOfLines={1}>
+                        {opt.label || String(opt.value)}
+                      </Text>
+                      {opt.desc && (
+                        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, marginTop: 3 }} numberOfLines={1}>
+                          {opt.desc}
+                        </Text>
+                      )}
+                    </View>
+                    {active && <Check color={colors.accent} size={20} />}
+                  </AnimatedPressable>
+                );
+              })}
+            </ScrollView>
           </View>
         </Animated.View>
       </AnimatedPressable>
@@ -514,6 +530,10 @@ export default function SettingsScreen() {
   const router = useRouter();
   const s = useAppStore();
   const theme = useTheme();
+  const { t } = useI18n();
+  // Dev-only: exercise the offline outbox (queue writes, then replay on reconnect).
+  const [forceOffline, setForceOfflineState] = useState(isForcedOffline());
+  const outboxPending = useOutbox(o => o.ops.filter(op => op.status === 'pending').length);
   const { colors, radius, fontSizes, switchTrack, animation } = theme;
   const layout = useResponsiveLayout();
 
@@ -542,6 +562,7 @@ export default function SettingsScreen() {
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [showBubblePicker, setShowBubblePicker] = useState(false);
   const [showDmPicker, setShowDmPicker] = useState(false);
+  const [showAppLanguagePicker, setShowAppLanguagePicker] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [showFeedSortPicker, setShowFeedSortPicker] = useState(false);
   const [showCornerPicker, setShowCornerPicker] = useState(false);
@@ -755,6 +776,11 @@ export default function SettingsScreen() {
     catch (e) { s.setContentLanguage(prev); Alert.alert('Could not update content language', (e as Error).message); }
   };
 
+  const handleAppLanguage = (v: AppLanguageCode) => {
+    s.setAppLanguage(v);
+    showToast(languageLabel(v), t('settings.languageChanged'));
+  };
+
   const handleStreamResponses = async (enabled: boolean) => {
     const prev = s.streamResponses;
     s.setStreamResponses(enabled);
@@ -784,6 +810,7 @@ export default function SettingsScreen() {
   const feedLabel = { latest: 'Latest', popular: 'Popular', following: 'Following' }[s.feedSort];
   const cornerLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.roundedCorners];
   const themeLabel = THEMES[s.theme]?.name ?? 'Midnight';
+  const appLanguageLabel = languageLabel(s.appLanguage);
   const showGroup = (...groups: SettingsGroup[]) => activeGroup === 'all' || groups.includes(activeGroup);
 
   const sectionHeaderStyle = {
@@ -839,7 +866,7 @@ export default function SettingsScreen() {
           <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
             <ArrowLeft color={colors.text} size={24} />
           </AnimatedPressable>
-          <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>Settings</Text>
+          <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>{t('settings.title')}</Text>
         </View>
       </View>
 
@@ -983,13 +1010,15 @@ export default function SettingsScreen() {
         {showGroup('feed') && <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>Content & Feed</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
+            <SettingsRow theme={theme} icon={Globe} iconColor={colors.accent} label={t('settings.appLanguage')} subtitle={t('settings.appLanguageSubtitle')} onPress={() => setShowAppLanguagePicker(true)} right={chevronValue(appLanguageLabel)} />
+            {divider}
             <SettingsRow theme={theme} icon={SquaresFour} label="Feed Sort" subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={SquaresFour} label="Compact Feed" subtitle="Show smaller cards in the feed" right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
             {divider}
             <SettingsRow theme={theme} icon={Broadcast} label="Autoplay Stories" subtitle="Auto-advance through stories" right={SwitchEl(s.autoplayStories, s.setAutoplayStories)} />
             {divider}
-            <SettingsRow theme={theme} icon={Translate} label="Content Language" subtitle={s.contentLanguage} onPress={() => setShowLanguagePicker(true)} right={chevronValue(s.contentLanguage)} />
+            <SettingsRow theme={theme} icon={Translate} label={t('settings.contentLanguage')} subtitle={t('settings.contentLanguageSubtitle')} onPress={() => setShowLanguagePicker(true)} right={chevronValue(s.contentLanguage)} />
             {divider}
             <SettingsRow theme={theme} icon={WifiSlash} label="Data Saver" subtitle="Reduce data usage on mobile" right={SwitchEl(s.dataSaver, s.setDataSaver)} />
           </GlassPanel>
@@ -1076,8 +1105,18 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
             {divider}
-            <SettingsRow theme={theme} icon={Sparkle} label="Replay app tour" subtitle="Show the guided walkthrough again" onPress={() => { router.push('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
+            <SettingsRow theme={theme} icon={Sparkle} label={t('settings.replayTour')} subtitle={t('settings.replayTourSubtitle')} onPress={() => { router.push('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
             {divider}
+            {__DEV__ && (
+              <SettingsRow
+                theme={theme}
+                icon={WifiSlash}
+                label="Simulate offline (dev)"
+                subtitle={`Outbox pending: ${outboxPending}`}
+                right={SwitchEl(forceOffline, (v: boolean) => { setForcedOffline(v); setForceOfflineState(v); if (!v) void drainOutbox(); })}
+              />
+            )}
+            {__DEV__ && divider}
             <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.0.0</Text>} />
           </GlassPanel>
         </Animated.View>}
@@ -1172,22 +1211,26 @@ export default function SettingsScreen() {
         />
       )}
 
+      {showAppLanguagePicker && (
+        <OptionPicker
+          theme={theme}
+          title={t('settings.chooseAppLanguage')}
+          options={APP_LANGUAGES.map(language => ({
+            label: `${language.englishName} (${language.nativeName})`,
+            value: language.code,
+            desc: language.region === 'India' ? t('common.indianLanguage') : t('common.globalLanguage'),
+          }))}
+          value={s.appLanguage}
+          onChange={handleAppLanguage}
+          onClose={() => setShowAppLanguagePicker(false)}
+        />
+      )}
+
       {showLanguagePicker && (
         <OptionPicker
           theme={theme}
-          title="Content Language"
-          options={[
-            { label: 'English', value: 'English' as string },
-            { label: 'Spanish', value: 'Spanish' as string },
-            { label: 'French', value: 'French' as string },
-            { label: 'German', value: 'German' as string },
-            { label: 'Japanese', value: 'Japanese' as string },
-            { label: 'Korean', value: 'Korean' as string },
-            { label: 'Chinese', value: 'Chinese' as string },
-            { label: 'Hindi', value: 'Hindi' as string },
-            { label: 'Portuguese', value: 'Portuguese' as string },
-            { label: 'Arabic', value: 'Arabic' as string },
-          ]}
+          title={t('settings.chooseContentLanguage')}
+          options={CONTENT_LANGUAGE_OPTIONS}
           value={s.contentLanguage}
           onChange={(v) => void handleContentLanguage(v)}
           onClose={() => setShowLanguagePicker(false)}

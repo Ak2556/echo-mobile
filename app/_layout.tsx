@@ -8,6 +8,7 @@ import { track, initAnalytics } from '../lib/analytics';
 import { recordAppOpen, noteNudgeOpened } from '../lib/personalNudges';
 import { cancelLegacyProactiveNudges } from '../lib/proactiveNudges';
 import { captureException, initMonitoring, wrapRoot } from '../lib/monitoring';
+import { startOutbox } from '../lib/outboxProcessor';
 import { getAnalyticsConsent } from '../lib/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
 import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
@@ -45,6 +46,7 @@ function isUnsignedSimulatorNotificationError(error: unknown): boolean {
 }
 
 initMonitoring();
+startOutbox(); // connectivity + replay any queued writes
 if (getAnalyticsConsent() === 'accepted') {
   initAnalytics();
 }
