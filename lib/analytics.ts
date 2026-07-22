@@ -3,6 +3,8 @@ export type AnalyticsEvent =
   | 'app_background'
   | 'signup_started'
   | 'signup_completed'
+  | 'first_run_started'
+  | 'first_run_answered'
   | 'signin_completed'
   | 'signout'
   | 'account_deleted'

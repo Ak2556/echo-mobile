@@ -1,22 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { safeBack } from '../lib/safeBack';
-import Animated, { FadeIn, FadeInUp, SlideInDown } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Check, LockSimple, Sparkle, Lightning, Clock, Flame, Users } from 'phosphor-react-native';
-import { TextInput } from '../components/ui/TextInput';
+import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
+import { ArrowLeft, LockSimple, Sparkle, Lightning, Clock, Users } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
-import { showToast } from '../components/ui/Toast';
 import { LinkifiedText } from '../components/social/LinkifiedText';
+import { DailyQuestionComposer } from '../components/daily/DailyQuestionComposer';
 import { useTheme } from '../lib/theme';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import {
   fetchTodaysDailyQuestion,
   fetchOwnDailyAnswer,
-  submitDailyAnswer,
   fetchDailyAnswers,
   fetchFollowingDailyAnswers,
   fetchDivergentDailyAnswers,
@@ -42,16 +39,12 @@ import { recordAppOpen } from '../lib/personalNudges';
  * we never call fetchDailyAnswers; once you submit, the feed slides in.
  */
 
-const MAX_ANSWER_LENGTH = 600;
-
 function DailyQuestionScreenInner() {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
 
   const [question, setQuestion] = useState<DailyQuestion | null>(null);
   const [myAnswer, setMyAnswer] = useState<string | null>(null);
-  const [draft, setDraft] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<DailyAnswerWithAuthor[]>([]);
   const [following, setFollowing] = useState<DailyAnswerWithAuthor[]>([]);
@@ -75,10 +68,7 @@ function DailyQuestionScreenInner() {
           recordAppOpen('daily');
           const prior = await fetchOwnDailyAnswer(q.id);
           if (!mounted.current) return;
-          if (prior) {
-            setMyAnswer(prior);
-            setDraft(prior);
-          }
+          if (prior) setMyAnswer(prior);
           fetchDailyAnswerStreak().then((s) => { if (mounted.current) setStreak(s); }).catch(() => {});
         }
       } finally {
@@ -117,10 +107,15 @@ function DailyQuestionScreenInner() {
   // Whenever the viewer has answered, load (and refresh) the answer feed.
   useEffect(() => { void loadAnswers(); }, [loadAnswers]);
 
-  const canSubmit = useMemo(
-    () => draft.trim().length > 0 && draft.trim().length <= MAX_ANSWER_LENGTH && !submitting,
-    [draft, submitting],
-  );
+  // After the composer persists an answer, reveal the feed and (on the first
+  // answer of the day) refresh the streak.
+  const handleAnswered = (answer: string) => {
+    const firstAnswerToday = !myAnswer;
+    setMyAnswer(answer);
+    if (firstAnswerToday) {
+      fetchDailyAnswerStreak().then((s) => { if (mounted.current) setStreak(s); }).catch(() => {});
+    }
+  };
 
   // Optimistically toggle a reaction on an answer in either list, then persist.
   const handleReact = async (answerId: string, emoji: string) => {
@@ -146,25 +141,6 @@ function DailyQuestionScreenInner() {
       // Revert on failure by reloading the authoritative lists.
       captureException(e, { tags: { screen: 'daily-question', action: 'react' } });
       void loadAnswers();
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!question || !canSubmit) return;
-    setSubmitting(true);
-    try {
-      await submitDailyAnswer(question.id, draft.trim());
-      track('daily_answer_submitted', { question_id: question.id, is_update: !!myAnswer, length: draft.trim().length });
-      const firstAnswerToday = !myAnswer;
-      setMyAnswer(draft.trim());
-      showToast('Your answer is in.', 'Saved');
-      if (firstAnswerToday) {
-        fetchDailyAnswerStreak().then((s) => { if (mounted.current) setStreak(s); }).catch(() => {});
-      }
-    } catch (e) {
-      Alert.alert('Could not submit', (e as Error).message);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -206,88 +182,12 @@ function DailyQuestionScreenInner() {
             ) : undefined
           }
         >
-          {/* Prompt card — same gradient canvas as the home entry point. */}
-          <Animated.View
-            entering={FadeInUp.delay(50).duration(220)}
-            style={{ borderRadius: 22, overflow: 'hidden', marginBottom: 16 }}
-          >
-            <LinearGradient
-              colors={['#E8834E', '#C94F1D']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ padding: 20 }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1.2, fontFamily: 'Inter_600SemiBold' }}>
-                  TODAY · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                </Text>
-                {streak > 0 && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
-                    <Flame color="#fff" size={13} weight="fill" />
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
-                      {streak} day{streak === 1 ? '' : 's'}
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <Text style={{ color: '#fff', fontSize: 24, lineHeight: 32, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
-                {question.question}
-              </Text>
-            </LinearGradient>
-          </Animated.View>
-
-          {/* Compose card */}
-          <Animated.View
-            entering={FadeInUp.delay(150).duration(220)}
-            style={{
-              backgroundColor: colors.surface,
-              borderRadius: radius.lg,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: colors.border,
-              marginBottom: 16,
-            }}
-          >
-            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 8, fontWeight: '500' }}>
-              {myAnswer ? 'Your answer (you can edit anytime)' : 'Your answer'}
-            </Text>
-            <TextInput
-              value={draft}
-              onChangeText={(t) => setDraft(t.slice(0, MAX_ANSWER_LENGTH))}
-              placeholder="Distill your take in a sentence or two…"
-              multiline
-              numberOfLines={4}
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-                {draft.length}/{MAX_ANSWER_LENGTH}
-              </Text>
-              <AnimatedPressable
-                onPress={() => void handleSubmit()}
-                disabled={!canSubmit}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 99,
-                  backgroundColor: canSubmit ? colors.accent : colors.surfaceHover,
-                }}
-                scaleValue={0.94}
-                haptic="medium"
-              >
-                {submitting ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Check color="#fff" size={14} weight="bold" />
-                )}
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-                  {myAnswer ? 'Update' : 'Submit'}
-                </Text>
-              </AnimatedPressable>
-            </View>
-          </Animated.View>
+          <DailyQuestionComposer
+            question={question}
+            streak={streak}
+            initialAnswer={myAnswer}
+            onSubmitted={handleAnswered}
+          />
 
           {/* Reveal-after-answer gate */}
           {!myAnswer ? (
