@@ -15,7 +15,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Camera, Plus, X } from 'phosphor-react-native';
+import { Camera, Plus, X } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
@@ -159,42 +160,25 @@ export default function CreateListingScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Header */}
-      <View style={{
-        paddingTop: insets.top + 8,
-        paddingBottom: 12,
-        paddingHorizontal: 16,
-        backgroundColor: colors.bg,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-      }}>
-        <AnimatedPressable onPress={() => router.back()} hitSlop={12} fadeOnPress>
-          <ArrowLeft color={colors.text} size={22} />
-        </AnimatedPressable>
-        <Text style={{ flex: 1, color: colors.text, fontSize: 21, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
-          Sell something
-        </Text>
-        <AnimatedPressable
-          onPress={handleSubmit}
-          disabled={!canSubmit}
-          fadeOnPress
-        >
-          <View style={{
-            backgroundColor: canSubmit ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'),
-            paddingHorizontal: 18,
-            paddingVertical: 9,
-            borderRadius: 999,
-          }}>
-            {saving
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={{ color: canSubmit ? '#fff' : colors.textMuted, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>Post</Text>
-            }
-          </View>
-        </AnimatedPressable>
-      </View>
+      <ScreenHeader
+        title="Sell something"
+        safeTop
+        right={
+          <AnimatedPressable onPress={handleSubmit} disabled={!canSubmit} fadeOnPress style={{ marginRight: 6 }}>
+            <View style={{
+              backgroundColor: canSubmit ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'),
+              paddingHorizontal: 18,
+              paddingVertical: 9,
+              borderRadius: 999,
+            }}>
+              {saving
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={{ color: canSubmit ? '#fff' : colors.textMuted, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>Post</Text>
+              }
+            </View>
+          </AnimatedPressable>
+        }
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
