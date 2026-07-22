@@ -387,6 +387,22 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     </AnimatedPressable>
   );
 
+  // Secondary actions (branch, share) — lighter-weight plain icons so the four
+  // primary social actions read as primary. Everything stays reachable.
+  const SecondaryAction = ({ icon, onPress, accessibilityLabel }: { icon: React.ReactNode; onPress: (e: any) => void; accessibilityLabel: string }) => (
+    <AnimatedPressable
+      onPress={onPress}
+      style={{ width: 38, height: 46, borderRadius: 17, alignItems: 'center', justifyContent: 'center' }}
+      fadeOnPress
+      haptic="light"
+      performanceMode="hot"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+    >
+      {icon}
+    </AnimatedPressable>
+  );
+
   const ActionsRow = (
     <View style={{ paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder }}>
       <View style={{ marginBottom: 8 }}>
@@ -406,23 +422,6 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           color="#EF4444"
           onPress={(e) => { e.stopPropagation?.(); handleLikePress(); }}
           accessibilityLabel={liked ? 'Unlike' : 'Like'}
-        />
-        <ActionButton
-          label="Branch"
-          icon={<GitBranch color={colors.textMuted} size={19} weight="bold" />}
-          count={item.remixCount || undefined}
-          onPress={(e) => {
-            e.stopPropagation?.();
-            router.push({
-              pathname: '/remix/[id]',
-              params: {
-                id: item.id,
-                author: item.username,
-                ...(item.editorialTitle ? { parentTitle: item.editorialTitle } : {}),
-              },
-            });
-          }}
-          accessibilityLabel="Add perspective"
         />
         <ActionButton
           label="Reply"
@@ -449,9 +448,23 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }}
           accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'}
         />
-        <ActionButton
-          label="Share"
-          icon={<ShareNetwork color={colors.textMuted} size={20} />}
+        <SecondaryAction
+          icon={<GitBranch color={colors.textMuted} size={18} weight="bold" />}
+          onPress={(e) => {
+            e.stopPropagation?.();
+            router.push({
+              pathname: '/remix/[id]',
+              params: {
+                id: item.id,
+                author: item.username,
+                ...(item.editorialTitle ? { parentTitle: item.editorialTitle } : {}),
+              },
+            });
+          }}
+          accessibilityLabel="Add perspective"
+        />
+        <SecondaryAction
+          icon={<ShareNetwork color={colors.textMuted} size={18} />}
           onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }}
           accessibilityLabel="Share"
         />
