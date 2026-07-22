@@ -3,7 +3,8 @@ import { View, Text, ScrollView, ActivityIndicator, TextInput, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Clock, Scales, CheckCircle, XCircle, Warning, SealCheck } from 'phosphor-react-native';
+import { Clock, Scales, CheckCircle, XCircle, Warning, SealCheck } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/theme';
@@ -176,41 +177,33 @@ export default function ModAppealsScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Header */}
-      <View style={{
-        flexDirection: 'row', alignItems: 'center',
-        paddingHorizontal: 16, paddingVertical: 12,
-        borderBottomWidth: 1, borderBottomColor: colors.border,
-      }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <View style={{ flex: 1 }}>
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title }]}>Appeals Queue</Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
-            DSA Art. 20 · 14-day SLA
-          </Text>
-        </View>
-        <AnimatedPressable
-          onPress={() => router.push('/mod-verifications' as any)}
-          scaleValue={0.9} haptic="light"
-          style={{ padding: 6, marginRight: 8 }}
-          accessibilityLabel="Verification queue"
-        >
-          <SealCheck color={colors.accent} size={20} weight="fill" />
-        </AnimatedPressable>
-        {!loading && (
-          <View style={{
-            paddingHorizontal: 10, paddingVertical: 4,
-            borderRadius: 999,
-            backgroundColor: appeals.length > 0 ? colors.accentMuted : colors.surfaceHover,
-          }}>
-            <Text style={[font.bodySemibold, { color: appeals.length > 0 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption }]}>
-              {appeals.length} pending
-            </Text>
+      <ScreenHeader
+        title="Appeals Queue"
+        subtitle="DSA Art. 20 · 14-day SLA"
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginRight: 8 }}>
+            <AnimatedPressable
+              onPress={() => router.push('/mod-verifications' as any)}
+              scaleValue={0.9} haptic="light"
+              style={{ padding: 6 }}
+              accessibilityLabel="Verification queue"
+            >
+              <SealCheck color={colors.accent} size={20} weight="fill" />
+            </AnimatedPressable>
+            {!loading && (
+              <View style={{
+                paddingHorizontal: 10, paddingVertical: 4,
+                borderRadius: 999,
+                backgroundColor: appeals.length > 0 ? colors.accentMuted : colors.surfaceHover,
+              }}>
+                <Text style={[font.bodySemibold, { color: appeals.length > 0 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption }]}>
+                  {appeals.length} pending
+                </Text>
+              </View>
+            )}
           </View>
-        )}
-      </View>
+        }
+      />
 
       {/* Overdue banner */}
       {overdueCnt > 0 && (

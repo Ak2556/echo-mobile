@@ -11,7 +11,8 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Scales, CheckCircle, Clock, X } from 'phosphor-react-native';
+import { Scales, CheckCircle, Clock, X } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
@@ -84,30 +85,12 @@ export default function AppealScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Header */}
-      <View style={{
-        paddingTop: insets.top + 8,
-        paddingBottom: 12,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-      }}>
-        <AnimatedPressable onPress={() => safeBack()} hitSlop={12} fadeOnPress accessibilityRole="button" accessibilityLabel="Go back">
-          <ArrowLeft color={colors.text} size={22} />
-        </AnimatedPressable>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold' }}>
-            {isNew ? 'Appeal a decision' : 'My appeals'}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', marginTop: 1 }}>
-            {isNew ? 'Art. 20 — DSA internal appeals mechanism' : 'Your appeal history'}
-          </Text>
-        </View>
-        <Scales color={colors.accent} size={22} weight="duotone" />
-      </View>
+      <ScreenHeader
+        safeTop
+        title={isNew ? 'Appeal a decision' : 'My appeals'}
+        subtitle={isNew ? 'Art. 20 — DSA internal appeals mechanism' : 'Your appeal history'}
+        right={<Scales color={colors.accent} size={22} weight="duotone" style={{ marginRight: 8 }} />}
+      />
 
       {/* New appeal form */}
       {isNew && (

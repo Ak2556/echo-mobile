@@ -3,7 +3,8 @@ import { View, Text, ScrollView, ActivityIndicator, Alert, Image, RefreshControl
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, SealCheck, CheckCircle, XCircle } from 'phosphor-react-native';
+import { SealCheck, CheckCircle, XCircle } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/theme';
@@ -129,15 +130,10 @@ export default function ModVerificationsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 12 }}>
-        <AnimatedPressable onPress={() => router.back()} hitSlop={12} fadeOnPress>
-          <ArrowLeft color={colors.text} size={22} />
-        </AnimatedPressable>
-        <Text style={{ flex: 1, color: colors.text, fontSize: 21, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
-          Verification queue
-        </Text>
-        <SealCheck color={colors.accent} size={20} weight="fill" />
-      </View>
+      <ScreenHeader
+        title="Verification queue"
+        right={<SealCheck color={colors.accent} size={20} weight="fill" style={{ marginRight: 8 }} />}
+      />
 
       {items === null ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

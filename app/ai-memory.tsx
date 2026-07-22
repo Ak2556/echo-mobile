@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ArrowLeft, Check, Database, PencilSimple, Trash, X } from 'phosphor-react-native';
+import { Check, Database, PencilSimple, Trash, X } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -90,34 +91,22 @@ export default function AIMemoryScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
       <View style={{ flex: 1 }}>
-        <View style={styles.header}>
-          <AnimatedPressable
-            onPress={() => router.back()}
-            style={[styles.iconButton, { backgroundColor: colors.surfaceHover, borderRadius: radius.md }]}
-          >
-            <ArrowLeft color={colors.text} size={22} />
-          </AnimatedPressable>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700' }}>AI Memory</Text>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>
-              Preferences Echo can reuse in future local actions.
-            </Text>
-          </View>
-          <AnimatedPressable
-            onPress={removeAll}
-            disabled={!items.length}
-            style={[
-              styles.iconButton,
-              {
-                backgroundColor: items.length ? colors.dangerMuted : colors.surfaceHover,
-                borderRadius: radius.md,
-                opacity: items.length ? 1 : 0.45,
-              },
-            ]}
-          >
-            <Trash color={items.length ? colors.danger : colors.textMuted} size={20} />
-          </AnimatedPressable>
-        </View>
+        <ScreenHeader
+          title="AI Memory"
+          subtitle="Preferences Echo can reuse in future local actions."
+          right={
+            <AnimatedPressable
+              onPress={removeAll}
+              disabled={!items.length}
+              style={[
+                styles.iconButton,
+                { backgroundColor: items.length ? colors.dangerMuted : colors.surfaceHover, borderRadius: radius.md, opacity: items.length ? 1 : 0.45, marginRight: 6 },
+              ]}
+            >
+              <Trash color={items.length ? colors.danger : colors.textMuted} size={20} />
+            </AnimatedPressable>
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Animated.View entering={animation(FadeInDown.delay(60).duration(220))}>
