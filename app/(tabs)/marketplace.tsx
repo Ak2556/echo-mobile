@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -461,6 +462,9 @@ export default function MarketplaceScreen() {
   const [mode, setMode] = useState<MarketMode>('all');
   const [sort, setSort] = useState<SortMode>('newest');
   const [recentViewed, setRecentViewed] = useState<RecentListing[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  // Non-default refinements — drives the Filters button badge.
+  const activeFilterCount = (mode !== 'all' ? 1 : 0) + (sort !== 'newest' ? 1 : 0) + (condition !== 'All' ? 1 : 0);
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -580,10 +584,22 @@ export default function MarketplaceScreen() {
             fontFamily: 'Inter_400Regular',
           }}
         />
-        <SlidersHorizontal color={colors.textMuted} size={18} weight="bold" />
+        {/* The sliders icon was a dead affordance — it now opens the Filters
+            sheet holding deal-type / sort / condition (previously three stacked
+            rails). Category stays inline as the primary dimension. */}
+        <Pressable onPress={() => setFiltersOpen(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Filters">
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <SlidersHorizontal color={activeFilterCount > 0 ? colors.accent : colors.textMuted} size={18} weight="bold" />
+            {activeFilterCount > 0 && (
+              <View style={{ minWidth: 16, height: 16, borderRadius: 8, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>{activeFilterCount}</Text>
+              </View>
+            )}
+          </View>
+        </Pressable>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16 }}>
         {(LISTING_CATEGORIES as readonly string[]).map(item => (
           <CategoryPill
             key={item}
@@ -591,26 +607,6 @@ export default function MarketplaceScreen() {
             active={category === item}
             onPress={() => setCategory(item)}
           />
-        ))}
-      </ScrollView>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
-        {([
-          ['all', 'All deals'],
-          ['services', 'Services'],
-          ['local', 'Local pickup'],
-          ['digital', 'Remote/digital'],
-        ] as const).map(([value, label]) => (
-          <FilterChip key={value} label={label} active={mode === value} onPress={() => setMode(value)} />
-        ))}
-      </ScrollView>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16 }}>
-        <FilterChip label="Newest" active={sort === 'newest'} onPress={() => setSort('newest')} />
-        <FilterChip label="Lowest price" active={sort === 'price-low'} onPress={() => setSort('price-low')} />
-        <FilterChip label="Highest price" active={sort === 'price-high'} onPress={() => setSort('price-high')} />
-        {(['All', ...LISTING_CONDITIONS] as ConditionFilter[]).map(item => (
-          <FilterChip key={item} label={item === 'All' ? 'Any condition' : item} active={condition === item} onPress={() => setCondition(item)} />
         ))}
       </ScrollView>
 
@@ -757,6 +753,58 @@ export default function MarketplaceScreen() {
           )}
         />
       )}
+
+      {/* Filters sheet — the deal-type / sort / condition rails, consolidated. */}
+      <Modal visible={filtersOpen} transparent animationType="fade" onRequestClose={() => setFiltersOpen(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setFiltersOpen(false)}>
+          <Pressable
+            style={{ backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 20 }}
+            onPress={() => {}}
+          >
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: 20 }]}>Filters</Text>
+              {activeFilterCount > 0 ? (
+                <Pressable onPress={() => { setMode('all'); setSort('newest'); setCondition('All'); }} hitSlop={8} accessibilityRole="button" accessibilityLabel="Reset filters">
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 14 }]}>Reset</Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>Deal type</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              {([['all', 'All deals'], ['services', 'Services'], ['local', 'Local pickup'], ['digital', 'Remote/digital']] as const).map(([value, label]) => (
+                <FilterChip key={value} label={label} active={mode === value} onPress={() => setMode(value)} />
+              ))}
+            </View>
+
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>Sort</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              <FilterChip label="Newest" active={sort === 'newest'} onPress={() => setSort('newest')} />
+              <FilterChip label="Lowest price" active={sort === 'price-low'} onPress={() => setSort('price-low')} />
+              <FilterChip label="Highest price" active={sort === 'price-high'} onPress={() => setSort('price-high')} />
+            </View>
+
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>Condition</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+              {(['All', ...LISTING_CONDITIONS] as ConditionFilter[]).map(item => (
+                <FilterChip key={item} label={item === 'All' ? 'Any condition' : item} active={condition === item} onPress={() => setCondition(item)} />
+              ))}
+            </View>
+
+            <AnimatedPressable
+              onPress={() => setFiltersOpen(false)}
+              haptic="medium"
+              style={{ backgroundColor: colors.accent, borderRadius: 999, minHeight: 50, alignItems: 'center', justifyContent: 'center' }}
+              scaleValue={0.97}
+            >
+              <Text style={[font.bodyBold, { color: '#fff', fontSize: 15 }]}>
+                Show {sortedListings.length} result{sortedListings.length === 1 ? '' : 's'}
+              </Text>
+            </AnimatedPressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
