@@ -1073,9 +1073,11 @@ export async function setRemoteCommentLike(commentId: string, like: boolean): Pr
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   if (like) {
-    await supabase.from('comment_likes').insert({ comment_id: commentId, user_id: uid });
+    const { error } = await supabase.from('comment_likes').insert({ comment_id: commentId, user_id: uid });
+    if (error && !error.message.includes('duplicate')) throw error;
   } else {
-    await supabase.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', uid);
+    const { error } = await supabase.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', uid);
+    if (error) throw error;
   }
 }
 
@@ -1602,7 +1604,7 @@ export async function bumpQuestProgress(slug: string, delta = 1): Promise<void> 
     const ex = existing as { progress: number; completed_at: string | null; started_at: string };
     const newProgress = Math.min(q.goal_value, ex.progress + delta);
     const completed = newProgress >= q.goal_value;
-    await supabase
+    const { error } = await supabase
       .from('user_quests')
       .update({
         progress: newProgress,
@@ -1611,15 +1613,18 @@ export async function bumpQuestProgress(slug: string, delta = 1): Promise<void> 
       .eq('user_id', uid)
       .eq('quest_id', q.id)
       .eq('started_at', ex.started_at);
+    // Best-effort gamification side-effect — log rather than throw.
+    if (error) captureException(error, { tags: { fn: 'bumpQuestProgress', op: 'update' } });
   } else {
     const completed = delta >= q.goal_value;
-    await supabase.from('user_quests').insert({
+    const { error } = await supabase.from('user_quests').insert({
       user_id: uid,
       quest_id: q.id,
       started_at: winStartIso,
       progress: Math.min(q.goal_value, delta),
       ...(completed ? { completed_at: new Date().toISOString() } : {}),
     });
+    if (error && !error.message.includes('duplicate')) captureException(error, { tags: { fn: 'bumpQuestProgress', op: 'insert' } });
   }
 }
 
@@ -2517,21 +2522,24 @@ export async function fetchRemoteNotifications(): Promise<import('../types').Not
 export async function markRemoteNotificationRead(notificationId: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) return;
-  await supabase
+  const { error } = await supabase
     .from('notifications')
     .update({ read_at: new Date().toISOString() })
     .eq('id', notificationId)
     .eq('user_id', uid);
+  // Background op — log rather than throw (a refetch reconciles the badge).
+  if (error) captureException(error, { tags: { fn: 'markRemoteNotificationRead' } });
 }
 
 export async function markAllRemoteNotificationsRead(): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) return;
-  await supabase
+  const { error } = await supabase
     .from('notifications')
     .update({ read_at: new Date().toISOString() })
     .eq('user_id', uid)
     .is('read_at', null);
+  if (error) captureException(error, { tags: { fn: 'markAllRemoteNotificationsRead' } });
 }
 
 // Search
@@ -3222,12 +3230,14 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
 export async function markMessagesRead(conversationId: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) return;
-  await supabase
+  const { error } = await supabase
     .from('direct_messages')
     .update({ read_at: new Date().toISOString() })
     .eq('conversation_id', conversationId)
     .neq('sender_id', uid)
     .is('read_at', null);
+  // Fire-and-forget from the thread view — log instead of throwing.
+  if (error) captureException(error, { tags: { fn: 'markMessagesRead' } });
 }
 
 /** Soft-delete a message (sender only). */
