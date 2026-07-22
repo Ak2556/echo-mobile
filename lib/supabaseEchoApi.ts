@@ -249,27 +249,38 @@ export async function uploadEchoImages(images: UploadableImage[]): Promise<strin
   await checkRemoteAppRateLimit('echo_image_upload_hour', 60, 3600);
 
   const urls: string[] = [];
-  for (let i = 0; i < Math.min(images.length, 4); i++) {
-    const image = images[i];
-    const { ext, contentType } = assertImageUploadAllowed(image);
-    const path = `${uid}/${Date.now()}_${i}.${ext}`;
+  // All-or-nothing: if any image fails mid-batch, delete the ones already
+  // uploaded so we never leave orphaned files behind a never-published echo.
+  const uploadedPaths: string[] = [];
+  try {
+    for (let i = 0; i < Math.min(images.length, 4); i++) {
+      const image = images[i];
+      const { ext, contentType } = assertImageUploadAllowed(image);
+      const path = `${uid}/${Date.now()}_${i}.${ext}`;
 
-    const uri = typeof image === 'string' ? image : image.uri;
+      const uri = typeof image === 'string' ? image : image.uri;
 
-    if (/^https?:\/\//i.test(uri)) {
-      const body = await imageUploadBody(image);
-      const { error } = await supabase.storage
-        .from('echo-media')
-        .upload(path, body, { contentType });
-      if (error) throw error;
-    } else {
-      await uploadLocalFileWithSignedUrl(uri, path, contentType);
+      if (/^https?:\/\//i.test(uri)) {
+        const body = await imageUploadBody(image);
+        const { error } = await supabase.storage
+          .from('echo-media')
+          .upload(path, body, { contentType });
+        if (error) throw error;
+      } else {
+        await uploadLocalFileWithSignedUrl(uri, path, contentType);
+      }
+      uploadedPaths.push(path);
+
+      const { data } = supabase.storage.from('echo-media').getPublicUrl(path);
+      urls.push(data.publicUrl);
     }
-
-    const { data } = supabase.storage.from('echo-media').getPublicUrl(path);
-    urls.push(data.publicUrl);
+    return urls;
+  } catch (e) {
+    if (uploadedPaths.length) {
+      await supabase.storage.from('echo-media').remove(uploadedPaths).catch(() => {});
+    }
+    throw e;
   }
-  return urls;
 }
 
 /**
@@ -2620,6 +2631,18 @@ export async function updateRemoteEcho(
   if (error) throw error;
 }
 
+/** Delete one of the signed-in user's own echoes on the server. */
+export async function deleteRemoteEcho(echoId: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('public_echoes')
+    .delete()
+    .eq('id', echoId)
+    .eq('author_id', uid);
+  if (error) throw error;
+}
+
 // Direct Messages
 export interface RemoteConversation {
   id: string;
@@ -3000,12 +3023,18 @@ export async function sendDMImageToConversation(
   if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
 
   const trimmedCaption = caption?.trim();
-  return insertRemoteDMInConversation(conversationId, {
-    kind: 'image',
-    mediaUrl: path,
-    text: trimmedCaption ? trimmedCaption : null,
-    replyToId,
-  });
+  try {
+    return await insertRemoteDMInConversation(conversationId, {
+      kind: 'image',
+      mediaUrl: path,
+      text: trimmedCaption ? trimmedCaption : null,
+      replyToId,
+    });
+  } catch (e) {
+    // Message row failed after the upload — remove the orphaned media.
+    await supabase.storage.from(DM_MEDIA_BUCKET).remove([path]).catch(() => {});
+    throw e;
+  }
 }
 
 /** Send a voice DM. Uploads the m4a to dm-media, stores duration (s) in text. */
@@ -3036,12 +3065,17 @@ export async function sendDMVoiceToConversation(
     .upload(path, bytes, { contentType: 'audio/mp4', cacheControl: '31536000' });
   if (upErr) throw new Error(`Voice upload failed: ${upErr.message}`);
 
-  return insertRemoteDMInConversation(conversationId, {
-    kind: 'voice',
-    mediaUrl: path,
-    text: String(Math.max(1, Math.round(durationSec))),
-    replyToId,
-  });
+  try {
+    return await insertRemoteDMInConversation(conversationId, {
+      kind: 'voice',
+      mediaUrl: path,
+      text: String(Math.max(1, Math.round(durationSec))),
+      replyToId,
+    });
+  } catch (e) {
+    await supabase.storage.from(DM_MEDIA_BUCKET).remove([path]).catch(() => {});
+    throw e;
+  }
 }
 
 /**

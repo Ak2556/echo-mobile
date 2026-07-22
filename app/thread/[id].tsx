@@ -11,7 +11,8 @@ import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { Avatar } from '../../components/ui/Avatar';
 import { IconButton } from '../../components/ui/IconButton';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
-import { fetchRemoteEchoById, setPinnedEcho } from '../../lib/supabaseEchoApi';
+import { fetchRemoteEchoById, setPinnedEcho, deleteRemoteEcho } from '../../lib/supabaseEchoApi';
+import { friendlyWriteError } from '../../lib/mutationErrors';
 import { showToast } from '../../components/ui/Toast';
 import { LikeButton } from '../../components/social/LikeButton';
 import { MediaGrid } from '../../components/social/MediaGrid';
@@ -100,7 +101,20 @@ export default function ThreadDetailScreen() {
   const handleDelete = () => {
     Alert.alert('Delete Echo', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { deleteEcho(item.id); safeBack(); } },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        // Remote-first: confirm the server deleted it before removing locally,
+        // so we never tell the user it's gone while it lives on the server.
+        try {
+          if (remote) await deleteRemoteEcho(item.id);
+        } catch (e) {
+          Alert.alert('Delete failed', friendlyWriteError(e));
+          return;
+        }
+        deleteEcho(item.id);
+        qc.invalidateQueries({ queryKey: ['feed'] });
+        qc.invalidateQueries({ queryKey: ['profile'] });
+        safeBack();
+      } },
     ]);
   };
 

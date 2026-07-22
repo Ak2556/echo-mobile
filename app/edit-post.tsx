@@ -16,6 +16,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
+import { friendlyWriteError } from '../lib/mutationErrors';
 import { useTheme } from '../lib/theme';
 import { PollOption } from '../types';
 import { isSupabaseRemote } from '../lib/remoteConfig';
@@ -110,9 +111,10 @@ export default function EditPostScreen() {
     }
 
     setSaving(true);
-    // Optimistic local update immediately
-    updateEcho(echo.id, updates);
 
+    // Remote-first: confirm the server accepted the edit BEFORE mutating local
+    // state. On failure, keep the user on the editor with their buffer intact —
+    // no false "updated" success, no local/server drift.
     if (isSupabaseRemote()) {
       try {
         await updateRemoteEcho(echo.id, {
@@ -121,11 +123,14 @@ export default function EditPostScreen() {
           response: updates.response,
           media_urls: updates.mediaUris,
         });
-      } catch {
-        Alert.alert('Save failed', 'Could not update echo on the server. Your changes are saved locally.');
+      } catch (e) {
+        setSaving(false);
+        Alert.alert('Save failed', friendlyWriteError(e));
+        return;
       }
     }
 
+    updateEcho(echo.id, updates);
     qc.invalidateQueries({ queryKey: ['feed'] });
     qc.invalidateQueries({ queryKey: ['profile'] });
     showToast('Echo updated.', 'Saved');
