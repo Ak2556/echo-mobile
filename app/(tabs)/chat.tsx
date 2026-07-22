@@ -550,12 +550,6 @@ function ChatEmptyLaunchpad({
   const router = useRouter();
   const toolApps = targetAppIds.map(id => miniAppById(id)).filter(Boolean).slice(0, 3);
   const firstTool = toolApps[0];
-  const suggestions = [
-    { label: 'Target plan', prompt: t('chat.promptTarget') },
-    { label: t('chat.draftEcho'), prompt: t('chat.promptDraft') },
-    { label: 'Next 3', prompt: 'Plan my next 3 focused actions' },
-    { label: 'Challenge', prompt: 'Challenge my thinking on this decision' },
-  ];
   const quickActions = [
     {
       key: 'target',
@@ -695,26 +689,6 @@ function ChatEmptyLaunchpad({
             </View>
             {action.key === 'target' ? <ChartLineUp color={colors.textMuted} size={17} weight="bold" /> : <ArrowUpRight color={colors.textMuted} size={17} weight="bold" />}
           </Pressable>
-        ))}
-      </View>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {suggestions.map(suggestion => (
-          <AnimatedPressable
-            key={suggestion.label}
-            onPress={() => onPrompt(suggestion.prompt)}
-            fadeOnPress
-            style={{
-              borderRadius: 999,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-            }}
-          >
-            <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]} numberOfLines={1}>{suggestion.label}</Text>
-          </AnimatedPressable>
         ))}
       </View>
     </View>
@@ -1405,9 +1379,6 @@ export default function ChatScreen() {
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', lineHeight: 26 }} numberOfLines={1}>
                 {chatMode === 'ai' ? t('chat.title') : t('chat.messages')}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_500Medium' }} numberOfLines={1}>
-                {chatMode === 'ai' ? t('chat.subtitle', { model: modelLabel(aiModel), count: messages.length }) : t('chat.privateConversations')}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
