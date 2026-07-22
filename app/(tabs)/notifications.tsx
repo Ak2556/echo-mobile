@@ -24,7 +24,9 @@ const FlashList = _FlashList as React.ComponentType<any>;
 
 type SectionHeader = { type: 'header'; label: 'Today' | 'This Week' | 'Earlier' };
 type SectionItem = { type: 'item'; data: Notification };
-type ListItem = SectionHeader | SectionItem;
+/** A grid row of up to `columns` notifications (used on wide/tablet layouts). */
+type SectionRow = { type: 'row'; data: Notification[] };
+type ListItem = SectionHeader | SectionItem | SectionRow;
 
 const REACTION_LABEL: Record<string, string> = {
   mind_blown: 'insightful',
@@ -53,7 +55,7 @@ function labelForType(n: Notification): string {
   }
 }
 
-function groupNotifications(notifications: Notification[]): ListItem[] {
+function groupNotifications(notifications: Notification[], columns: number): ListItem[] {
   const now = Date.now();
   const dayMs = 86400000;
 
@@ -68,19 +70,24 @@ function groupNotifications(notifications: Notification[]): ListItem[] {
     else earlier.push(n);
   }
 
+  // On wide layouts, chunk each section's items into grid rows of `columns`;
+  // on phone (columns <= 1) each item is its own single-column row.
+  const pushSection = (result: ListItem[], label: SectionHeader['label'], items: Notification[]) => {
+    if (items.length === 0) return;
+    result.push({ type: 'header', label });
+    if (columns <= 1) {
+      items.forEach(n => result.push({ type: 'item', data: n }));
+    } else {
+      for (let i = 0; i < items.length; i += columns) {
+        result.push({ type: 'row', data: items.slice(i, i + columns) });
+      }
+    }
+  };
+
   const result: ListItem[] = [];
-  if (today.length > 0) {
-    result.push({ type: 'header', label: 'Today' });
-    today.forEach(n => result.push({ type: 'item', data: n }));
-  }
-  if (thisWeek.length > 0) {
-    result.push({ type: 'header', label: 'This Week' });
-    thisWeek.forEach(n => result.push({ type: 'item', data: n }));
-  }
-  if (earlier.length > 0) {
-    result.push({ type: 'header', label: 'Earlier' });
-    earlier.forEach(n => result.push({ type: 'item', data: n }));
-  }
+  pushSection(result, 'Today', today);
+  pushSection(result, 'This Week', thisWeek);
+  pushSection(result, 'Earlier', earlier);
   return result;
 }
 
@@ -151,7 +158,11 @@ export default function NotificationsScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications, mutedIds, filter]); // typeFilter is recreated from `filter` which is already in deps
 
-  const listData = useMemo(() => groupNotifications(groupedFlat), [groupedFlat]);
+  // Wide layouts (tablet/desktop) lay notifications out in a 2-column grid at
+  // the wider content width, matching the home feed; phones stay single-column.
+  const columns = layout.isWide ? 2 : 1;
+  const listContentStyle = layout.isWide ? layout.wideContentStyle : layout.contentStyle;
+  const listData = useMemo(() => groupNotifications(groupedFlat, columns), [groupedFlat, columns]);
   // For remote notifications, count unread directly from resolved data
   const unreadCount = remote
     ? notifications.filter(n => !n.isRead).length
@@ -167,7 +178,7 @@ export default function NotificationsScreen() {
   const renderItem = ({ item }: { item: ListItem }) => {
     if (item.type === 'header') {
       return (
-        <View style={layout.contentStyle}>
+        <View style={listContentStyle}>
           <View style={{ paddingHorizontal: 16, paddingTop: 22, paddingBottom: 10 }}>
             <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
               {item.label}
@@ -176,8 +187,33 @@ export default function NotificationsScreen() {
         </View>
       );
     }
+    if (item.type === 'row') {
+      // Wide-layout grid row: cards share the row via flex, the row owns the
+      // outer gutter + inter-column gap. A trailing spacer keeps an odd last
+      // card at column width instead of stretching full-width.
+      return (
+        <View style={listContentStyle}>
+          <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 14 }}>
+            {item.data.map(n => (
+              <View key={n.id} style={{ flex: 1 }}>
+                <NotificationCard
+                  notification={n}
+                  flush
+                  onPress={() => handlePress(n)}
+                  onLongPress={() => useAppStore.getState().toggleMute(n.fromUserId)}
+                />
+              </View>
+            ))}
+            {item.data.length < columns &&
+              Array.from({ length: columns - item.data.length }).map((_, i) => (
+                <View key={`spacer-${i}`} style={{ flex: 1 }} />
+              ))}
+          </View>
+        </View>
+      );
+    }
     return (
-      <View style={layout.contentStyle}>
+      <View style={listContentStyle}>
         <NotificationCard
           notification={item.data}
           onPress={() => handlePress(item.data)}
@@ -222,9 +258,11 @@ export default function NotificationsScreen() {
       ) : (
         <FlashList
           data={listData}
-          keyExtractor={(item: ListItem) =>
-            item.type === 'header' ? `header-${item.label}` : `notif-${item.data.id}`
-          }
+          keyExtractor={(item: ListItem) => {
+            if (item.type === 'header') return `header-${item.label}`;
+            if (item.type === 'row') return `row-${item.data.map(n => n.id).join('-')}`;
+            return `notif-${item.data.id}`;
+          }}
           getItemType={(item: ListItem) => item.type}
           renderItem={renderItem}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
