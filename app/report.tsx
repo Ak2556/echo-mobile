@@ -3,7 +3,8 @@ import { View, Text, Alert, TextInput as RNTextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Warning } from 'phosphor-react-native';
+import { Warning } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { submitRemoteReport } from '../lib/supabaseEchoApi';
@@ -56,12 +57,7 @@ export default function ReportScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Report</Text>
-      </View>
+      <ScreenHeader title="Report" />
 
       <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
         <Animated.View entering={FadeInDown.delay(50).duration(220)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>

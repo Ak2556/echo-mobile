@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  ArrowLeft, HeartStraight, ChatCircle, UserPlus, ArrowsClockwise,
+  HeartStraight, ChatCircle, UserPlus, ArrowsClockwise,
   Quotes, Envelope, SpeakerHigh, Bell,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { showToast } from '../components/ui/Toast';
@@ -69,12 +70,7 @@ export default function NotificationPrefsScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Notification Preferences</Text>
-      </View>
+      <ScreenHeader title="Notification Preferences" />
 
       <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
         <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
