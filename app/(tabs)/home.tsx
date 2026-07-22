@@ -43,6 +43,7 @@ import { useResponsiveLayout } from '../../lib/responsive';
 import { TargetToolsPanel } from '../../components/productivity/TargetToolsPanel';
 import { getTargetCategory } from '../../lib/targetCategories';
 import { IconBadge } from '../../components/ui/IconBadge';
+import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 
 
 const NAV_BAR_HEIGHT = 50;
@@ -134,6 +135,71 @@ function QuickLink({ icon, color, label, onPress }: { icon: React.ReactNode; col
   );
 }
 
+/**
+ * The single next-step card shown on a new user's focused home — replaces the
+ * old checklist + first-echo coach + daily card trio. Picks ONE action by
+ * priority (chat → first Echo → daily question) so there's exactly one obvious
+ * thing to do.
+ */
+function HomeNextStep({ hasStartedFirstChat, publishedCount }: { hasStartedFirstChat: boolean; publishedCount: number }) {
+  const router = useRouter();
+  const { colors, font, fontSizes, lineHeights } = useTheme();
+  const layout = useResponsiveLayout();
+
+  const step = !hasStartedFirstChat
+    ? {
+        icon: <ChatCircleText color="#fff" size={22} weight="fill" />,
+        title: 'Start a conversation with Echo',
+        body: 'Think something through with your AI partner — it only takes a line.',
+        route: '/(tabs)/chat' as const,
+      }
+    : publishedCount === 0
+      ? {
+          icon: <PencilSimpleLine color="#fff" size={22} weight="fill" />,
+          title: 'Share your first Echo',
+          body: 'A question or a take is enough — publish what’s worth keeping.',
+          route: '/create-post' as const,
+        }
+      : {
+          icon: <Sparkle color="#fff" size={22} weight="fill" />,
+          title: 'Answer today’s question',
+          body: 'Two minutes. Build a daily thinking streak.',
+          route: '/daily-question' as const,
+        };
+
+  return (
+    <AnimatedPressable
+      onPress={() => router.push(step.route)}
+      haptic="medium"
+      style={{
+        marginHorizontal: layout.gutter,
+        marginTop: 6,
+        marginBottom: 12,
+        borderRadius: 18,
+        overflow: 'hidden',
+      }}
+    >
+      <LinearGradient
+        colors={['#E8834E', '#C94F1D']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 16 }}
+      >
+        <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' }}>
+          {step.icon}
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[font.display, { color: '#fff', fontSize: 17, lineHeight: 22 }]}>{step.title}</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 2 }}>
+            {step.body}
+          </Text>
+        </View>
+        <ArrowUpRight color="#fff" size={20} weight="bold" />
+      </LinearGradient>
+    </AnimatedPressable>
+  );
+}
+
 function FeedScopeRail({
   feedScope,
   setFeedScope,
@@ -210,17 +276,19 @@ export default function DiscoverScreen() {
   const targetCategoryId = useAppStore(s => s.targetCategory);
   const targetOutcome = useAppStore(s => s.targetOutcome);
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
-  const dismissedCoach = useAppStore(s => s.dismissedFirstEchoCoach);
-  const setDismissedCoach = useAppStore(s => s.setDismissedFirstEchoCoach);
-  const hasCompletedProductOnboarding = useAppStore(s => s.hasCompletedProductOnboarding);
-  const onboardingDraftCreated = useAppStore(s => s.onboardingDraftCreated);
+  const hasCompletedFirstRun = useAppStore(s => s.hasCompletedFirstRun);
   const messagesBySession = useAppStore(s => s.messagesBySession);
   const hasStartedFirstChat = useMemo(
     () => Object.values(messagesBySession).some(messages => messages.some(message => message.role === 'user')),
     [messagesBySession],
   );
-  const showProductChecklist = !hasCompletedProductOnboarding && !onboardingDraftCreated;
-  const showFirstEchoCoach = publishedCount === 0 && !dismissedCoach && !showProductChecklist;
+  // Progressive disclosure: a user who just came through the first-run value
+  // moment gets a focused home — one clear next action, the feed, nothing else
+  // competing above the fold — until they engage (post or chat), then they
+  // graduate to the full rich home. Gated on the first-run flag (not just local
+  // activity) so returning users on a fresh device are never demoted.
+  const isEngaged = publishedCount > 0 || hasStartedFirstChat;
+  const focusedHome = hasCompletedFirstRun && !isEngaged;
   const insets = useSafeAreaInsets();
   const layout = useResponsiveLayout();
   const remote = isSupabaseRemote();
@@ -314,7 +382,9 @@ export default function DiscoverScreen() {
         targetLabel={targetCategory.label}
         targetOutcome={targetOutcome}
       />
-      <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} onInfo={() => setAboutFeedVisible(true)} />
+      {!focusedHome && (
+        <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} onInfo={() => setAboutFeedVisible(true)} />
+      )}
 
       <Modal
         visible={aboutFeedVisible}
@@ -349,87 +419,19 @@ export default function DiscoverScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-      <TargetToolsPanel dense />
-      {features.stories && !remote && (
+      {!focusedHome && <TargetToolsPanel dense />}
+      {!focusedHome && features.stories && !remote && (
         <>
           <SectionHeader label="Your Stories" />
           <StoryCircles />
         </>
       )}
-      {showProductChecklist && (() => {
-        // One compact row pointing at the next incomplete step — the feed,
-        // not onboarding chrome, owns the first screen.
-        const steps = [
-          { label: 'Start your first chat', done: hasStartedFirstChat, onPress: () => router.push('/(tabs)/chat') },
-          { label: 'Create your first draft', done: onboardingDraftCreated, onPress: () => router.push('/onboarding') },
-          { label: 'Publish your first Echo', done: publishedCount > 0, onPress: () => router.push('/create-post') },
-        ];
-        const doneCount = steps.filter(s => s.done).length;
-        const next = steps.find(s => !s.done) ?? steps[steps.length - 1];
-        return (
-          <Pressable
-            onPress={next.onPress}
-            style={{
-              marginHorizontal: layout.gutter,
-              marginTop: 10,
-              marginBottom: 6,
-              paddingVertical: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-              borderBottomWidth: StyleSheet.hairlineWidth,
-              borderBottomColor: colors.border,
-            }}
-          >
-            <Text style={[font.bodySemibold, { color: colors.text, fontSize: fontSizes.small, flex: 1 }]}>
-              {next.label}
-            </Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
-              {doneCount}/{steps.length}
-            </Text>
-          </Pressable>
-        );
-      })()}
-      {showFirstEchoCoach && (
-        <View
-          style={{
-            marginHorizontal: layout.gutter,
-            marginTop: 8,
-            marginBottom: 14,
-            padding: layout.isDesktop ? 14 : 13,
-            borderRadius: layout.isDesktop ? 14 : 12,
-            backgroundColor: colors.surface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <PencilSimpleLine color={colors.accent} size={20} weight="bold" />
-          <Pressable
-            onPress={() => router.push('/create-post')}
-            style={{ flex: 1 }}
-            accessibilityRole="button"
-            accessibilityLabel="Drop your first Echo"
-          >
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small, lineHeight: lineHeights.small }]}>
-              Write your first Echo
-            </Text>
-            <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginTop: 1 }]}>
-              A question or a take is enough.
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setDismissedCoach(true)}
-            hitSlop={8}
-            accessibilityLabel="Dismiss"
-          >
-            <X color={colors.textMuted} size={16} />
-          </Pressable>
-        </View>
+      {/* New users get ONE clear next action instead of three competing cards
+          (old checklist + first-echo coach + daily card). */}
+      {focusedHome && (
+        <HomeNextStep hasStartedFirstChat={hasStartedFirstChat} publishedCount={publishedCount} />
       )}
-      {features.dailyQuestion && !showFirstEchoCoach && (
+      {features.dailyQuestion && !focusedHome && (
         <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: 12, marginTop: 4, marginBottom: 6 }}>
           <View style={{ borderRadius: 20, overflow: 'hidden' }}>
             <LinearGradient
@@ -451,13 +453,13 @@ export default function DiscoverScreen() {
           </View>
         </Pressable>
       )}
-      {evolvingNow.length > 0 && (
+      {!focusedHome && evolvingNow.length > 0 && (
         <>
           <SectionHeader label="Evolving now" sub="Perspectives" icon={<GitBranch color={colors.accent} size={16} weight="bold" />} />
           <EvolvingNowRail items={evolvingNow} />
         </>
       )}
-      <SectionHeader label="Top conversations" sub="Live now" icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
+      <SectionHeader label={focusedHome ? 'From the community' : 'Top conversations'} sub={focusedHome ? undefined : 'Live now'} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
     </View>
   );
 
