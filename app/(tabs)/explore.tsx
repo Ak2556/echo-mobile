@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Brain, CaretRight, ChartLineUp, Compass, Cpu, Hash, PaintBrush, RocketLaunch, UsersThree } from 'phosphor-react-native';
+import { Brain, CaretRight, ChartLineUp, Cpu, Hash, PaintBrush, RocketLaunch, UsersThree } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -142,8 +142,6 @@ export default function SearchScreen() {
           }
         >
           <View style={layout.wideContentStyle}>
-            <ExploreHero colors={colors} font={font} layout={layout} />
-
             {recentSearches.length > 0 && (
               <View style={{ marginBottom: 16 }}>
                 <SectionHeader label="Recent" actionLabel="Clear" onAction={() => setRecentSearches([])} />
@@ -374,32 +372,6 @@ function SearchResults({
         <EmptyCopy title={`No ${activeTab} found`} subtitle="Switch to All or try a broader term." />
       ) : null}
     </ScrollView>
-  );
-}
-
-function ExploreHero({ colors, font, layout }: { colors: any; font: any; layout: ReturnType<typeof useResponsiveLayout> }) {
-  return (
-    <View style={{ paddingHorizontal: layout.gutter, marginBottom: 18 }}>
-      <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface, minHeight: layout.isPhone ? 132 : 148 }}>
-        <LinearGradient
-          colors={[`${colors.accent}34`, `${colors.accent}0F`, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-        <View style={{ padding: layout.isPhone ? 16 : 20, gap: 12 }}>
-          <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: `${colors.accent}22`, alignItems: 'center', justifyContent: 'center' }}>
-            <Compass color={colors.accent} size={22} weight="bold" />
-          </View>
-          <View style={{ maxWidth: 680 }}>
-            <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 24 : 30, lineHeight: layout.isPhone ? 29 : 36 }]}>
-              Find what moves you.
-            </Text>
-          </View>
-        </View>
-      </View>
-    </View>
   );
 }
 
