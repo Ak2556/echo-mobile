@@ -68,14 +68,14 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
         style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.965 : 1 }] })}
       >
         <View style={{
-          minHeight: 178,
+          minHeight: 148,
           borderRadius: 20,
           overflow: 'hidden',
           backgroundColor: colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.glassBorder,
           padding: 15,
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start',
         }}>
           <LinearGradient
             colors={[`${app.color}22`, `${app.color}0A`, 'transparent']}
@@ -84,19 +84,14 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
             <MiniAppIcon id={app.id} color={app.color} size={44} />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 10.5, fontFamily: 'Inter_700Bold', letterSpacing: 1, textTransform: 'uppercase' }} numberOfLines={1}>
-                {app.suite}
-              </Text>
-              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Inter_700Bold', lineHeight: 20, marginTop: 2 }} numberOfLines={1}>
-                {app.name}
-              </Text>
-            </View>
+            <Text style={{ flex: 1, minWidth: 0, color: colors.text, fontSize: 16, fontFamily: 'Inter_700Bold', lineHeight: 20 }} numberOfLines={2}>
+              {app.name}
+            </Text>
           </View>
-          <View style={{ marginTop: 13 }}>
-            <Text style={{ color: colors.text, fontSize: 13.2, fontFamily: 'Inter_600SemiBold', lineHeight: 18 }} numberOfLines={3}>
+          <View style={{ marginTop: 12 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: 'Inter_500Medium', lineHeight: 18 }} numberOfLines={2}>
               {app.promise}
             </Text>
           </View>
@@ -107,9 +102,6 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
               </View>
             ))}
           </View>
-          <Text style={{ color: colors.textMuted, fontSize: 11.2, lineHeight: 15, marginTop: 11 }} numberOfLines={1}>
-            {t('mini.replaces', { items: app.replaces.slice(0, 2).join(' + ') })}
-          </Text>
         </View>
       </Pressable>
     </Animated.View>
@@ -141,20 +133,6 @@ function EssentialSuiteCard({ apps, onOpen }: { apps: MiniApp[]; onOpen: (app: M
               Each tool shares Echo actions, search, targets, recents, and app memory.
             </Text>
           </View>
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {[
-            ['No app hopping', 'All tools live here'],
-            ['Context aware', 'Coach uses your work'],
-            ['Share progress', 'Post or compare anytime'],
-          ].map(([title, sub]) => (
-            <View key={title} style={{ flex: 1, borderRadius: 16, padding: 11, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-              <CheckCircle color={colors.accent} size={15} weight="fill" />
-              <Text style={{ color: colors.text, fontSize: 11.5, fontFamily: 'Inter_700Bold', marginTop: 7 }} numberOfLines={1}>{title}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 10.5, lineHeight: 14, marginTop: 2 }} numberOfLines={2}>{sub}</Text>
-            </View>
-          ))}
         </View>
 
         {lead ? (
