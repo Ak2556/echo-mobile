@@ -3,8 +3,9 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert, Activi
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import {
-  ArrowLeft, Users, Sparkle, MagnifyingGlass, X, Crown, SignOut, BellSlash, UserPlus, CheckCircle,
+  Users, Sparkle, MagnifyingGlass, X, Crown, SignOut, BellSlash, UserPlus, CheckCircle,
 } from 'phosphor-react-native';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useTheme } from '../../lib/theme';
 import { Avatar } from '../../components/ui/Avatar';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -157,12 +158,7 @@ export default function GroupInfoScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 12 }}>
-        <AnimatedPressable onPress={() => router.back()} hitSlop={10} fadeOnPress>
-          <ArrowLeft color={colors.text} size={22} />
-        </AnimatedPressable>
-        <Text style={{ flex: 1, color: colors.text, fontSize: 21, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Group info</Text>
-      </View>
+      <ScreenHeader title="Group info" />
 
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.accent} /></View>
