@@ -552,30 +552,35 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
               </AnimatedPressable>
             </View>
 
-            {/* Title + meta overlay */}
-            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}>
-              {!!(item.editorialTitle ?? item.prompt) && (
-                <Text style={[font.display, { fontSize: 22, color: '#fff', lineHeight: 29, marginBottom: item.authorNote ? 4 : 10 }]} numberOfLines={2}>
+            {/* Title overlay — just the hook, so the image stays clean. The
+                author note + hashtags moved below the media (see strip). */}
+            {!!(item.editorialTitle ?? item.prompt) && (
+              <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}>
+                <Text style={[font.display, { fontSize: 22, color: '#fff', lineHeight: 29 }]} numberOfLines={2}>
                   {item.editorialTitle ?? item.prompt}
                 </Text>
-              )}
-              {!!item.authorNote && (
-                <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 18, marginBottom: 10 }} numberOfLines={2}>
-                  {item.authorNote}
-                </Text>
-              )}
-              {item.hashtags && item.hashtags.length > 0 && (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 2 }}>
-                  {item.hashtags.slice(0, 3).map(tag => (
-                    <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}>
-                      <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '600' }}>#{tag}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </View>
+              </View>
+            )}
           </View>
         </AnimatedPressable>
+        {(!!item.authorNote || (item.hashtags && item.hashtags.length > 0)) && (
+          <View style={{ paddingHorizontal: 14, paddingTop: 10, gap: 6 }}>
+            {!!item.authorNote && (
+              <Text style={{ fontSize: 13.5, color: colors.textSecondary, lineHeight: 19 }} numberOfLines={2}>
+                {item.authorNote}
+              </Text>
+            )}
+            {item.hashtags && item.hashtags.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                {item.hashtags.slice(0, 3).map(tag => (
+                  <Pressable key={tag} onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}>
+                    <Text style={{ color: colors.accent, fontSize: 12.5, fontWeight: '600' }}>#{tag}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
         <View style={{ paddingHorizontal: 4, paddingTop: 9 }}>
           {ActionsRow}
         </View>
