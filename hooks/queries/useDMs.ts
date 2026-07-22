@@ -171,6 +171,9 @@ export function useSendRemoteDM(
   const qc = useQueryClient();
 
   return useMutation({
+    // Bespoke failure UX: the bubble flips to a "failed — tap to retry" state,
+    // so skip the global error toast.
+    meta: { bespoke: true },
     mutationFn: ({ content, replyToId }: { content: string; replyToId?: string }) => {
       if (isGroup) {
         if (!conversationId) throw new Error('No conversation');

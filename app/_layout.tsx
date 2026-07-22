@@ -14,8 +14,9 @@ import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
 import * as Notifications from 'expo-notifications';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
 import { Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from '../components/ui/Toast';
+import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query';
+import { ToastProvider, showToast } from '../components/ui/Toast';
+import { isTransientError, friendlyWriteError } from '../lib/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/commandPalette';
 import { AuthListenerProvider } from '../lib/auth';
@@ -49,6 +50,16 @@ if (getAnalyticsConsent() === 'accepted') {
 }
 
 const queryClient = new QueryClient({
+  // Global write-failure handler: after retries are exhausted, surface a short
+  // honest message. Flows with their own error UX (DM bubbles, comment compose)
+  // opt out via `meta: { bespoke: true }`; anything can silence with meta.silent.
+  mutationCache: new MutationCache({
+    onError: (error, _vars, _ctx, mutation) => {
+      const meta = mutation.options.meta as { bespoke?: boolean; silent?: boolean } | undefined;
+      if (meta?.bespoke || meta?.silent) return;
+      showToast(friendlyWriteError(error), '⚠️');
+    },
+  }),
   defaultOptions: {
     queries: {
       retry: 1,
@@ -57,6 +68,12 @@ const queryClient = new QueryClient({
       refetchOnMount: true,
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
+    },
+    mutations: {
+      // Auto-retry only transient failures (network/timeout/5xx); never hammer
+      // permanent 4xx/RLS/constraint errors.
+      retry: (count, error) => isTransientError(error) && count < 3,
+      retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 8000),
     },
   },
 });
