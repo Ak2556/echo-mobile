@@ -3,7 +3,8 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { ArrowLeft, Camera, SealCheck, ShieldCheck, Timer, XCircle } from 'phosphor-react-native';
+import { Camera, SealCheck, ShieldCheck, Timer, XCircle } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { useAuth } from '../lib/auth';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
@@ -84,18 +85,7 @@ export default function GetVerifiedScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{
-        paddingTop: insets.top + 8, paddingBottom: 12, paddingHorizontal: 16,
-        borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
-        flexDirection: 'row', alignItems: 'center', gap: 12,
-      }}>
-        <AnimatedPressable onPress={() => router.back()} hitSlop={12} fadeOnPress>
-          <ArrowLeft color={colors.text} size={22} />
-        </AnimatedPressable>
-        <Text style={{ flex: 1, color: colors.text, fontSize: 21, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
-          Get verified
-        </Text>
-      </View>
+      <ScreenHeader title="Get verified" safeTop />
 
       {phase === 'loading' && <Center><ActivityIndicator color={colors.accent} /></Center>}
 

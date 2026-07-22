@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, X } from 'phosphor-react-native';
 import { IconButton } from './IconButton';
 import { useTheme } from '../../lib/theme';
@@ -15,6 +16,9 @@ interface ScreenHeaderProps {
   right?: React.ReactNode;
   /** Hairline bottom border. Default true. */
   border?: boolean;
+  /** Add the top safe-area inset (for screens that aren't wrapped in a
+   *  SafeAreaView with top edge). Default false. */
+  safeTop?: boolean;
 }
 
 /**
@@ -25,8 +29,9 @@ interface ScreenHeaderProps {
  *
  * Renders just the row: the parent still owns its SafeAreaView(edges top).
  */
-export function ScreenHeader({ title, leading = 'back', onLeading, right, border = true }: ScreenHeaderProps) {
+export function ScreenHeader({ title, leading = 'back', onLeading, right, border = true, safeTop = false }: ScreenHeaderProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const handleLeading = onLeading ?? (() => safeBack());
 
   return (
@@ -36,7 +41,8 @@ export function ScreenHeader({ title, leading = 'back', onLeading, right, border
         alignItems: 'center',
         gap: 4,
         paddingHorizontal: 10,
-        paddingVertical: 8,
+        paddingTop: 8 + (safeTop ? insets.top : 0),
+        paddingBottom: 8,
         minHeight: 52,
         borderBottomWidth: border ? StyleSheet.hairlineWidth : 0,
         borderBottomColor: colors.border,
