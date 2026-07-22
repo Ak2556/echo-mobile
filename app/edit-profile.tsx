@@ -5,7 +5,8 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Check, Camera, TextAlignLeft, UserCircle } from 'phosphor-react-native';
+import { Check, Camera, TextAlignLeft, UserCircle } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
@@ -150,33 +151,30 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View
-        className="flex-row items-center justify-between px-4 py-3"
-        style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
-      >
-        <AnimatedPressable onPress={() => router.back()} className="p-1" scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Edit Profile</Text>
-        <AnimatedPressable
-          onPress={() => { void handleSave(); }}
-          disabled={saving}
-          className="flex-row items-center gap-1.5 px-4 py-2"
-          style={{
-            borderRadius: radius.lg,
-            backgroundColor: saving ? colors.surfaceHover : colors.accent,
-          }}
-          scaleValue={0.93}
-          haptic="medium"
-        >
-          {saving ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Check color="#fff" size={16} />
-          )}
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: fontSizes.small }}>Save</Text>
-        </AnimatedPressable>
-      </View>
+      <ScreenHeader
+        title="Edit Profile"
+        right={
+          <AnimatedPressable
+            onPress={() => { void handleSave(); }}
+            disabled={saving}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 6,
+              paddingHorizontal: 14, paddingVertical: 7, marginRight: 6,
+              borderRadius: radius.lg,
+              backgroundColor: saving ? colors.surfaceHover : colors.accent,
+            }}
+            scaleValue={0.93}
+            haptic="medium"
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Check color="#fff" size={16} />
+            )}
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: fontSizes.small }}>Save</Text>
+          </AnimatedPressable>
+        }
+      />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView

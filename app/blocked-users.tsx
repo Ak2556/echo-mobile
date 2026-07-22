@@ -3,9 +3,10 @@ import { View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, ShieldSlash } from 'phosphor-react-native';
+import { ShieldSlash } from 'phosphor-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
@@ -41,14 +42,10 @@ export default function BlockedUsersScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Blocked Users</Text>
-        <View className="flex-1" />
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{blockedUsers.length}</Text>
-      </View>
+      <ScreenHeader
+        title="Blocked Users"
+        right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginRight: 8 }}>{blockedUsers.length}</Text>}
+      />
 
       {blockedUsers.length === 0 ? (
         <EmptyState

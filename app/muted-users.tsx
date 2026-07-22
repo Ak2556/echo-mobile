@@ -3,7 +3,8 @@ import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, SpeakerSlash } from 'phosphor-react-native';
+import { SpeakerSlash } from 'phosphor-react-native';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
@@ -24,14 +25,10 @@ export default function MutedUsersScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View className="flex-row items-center px-4 py-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <AnimatedPressable onPress={() => router.back()} className="p-1 mr-3" scaleValue={0.88} haptic="light">
-          <ArrowLeft color={colors.text} size={24} />
-        </AnimatedPressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>Muted Users</Text>
-        <View className="flex-1" />
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{mutedUsers.length}</Text>
-      </View>
+      <ScreenHeader
+        title="Muted Users"
+        right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginRight: 8 }}>{mutedUsers.length}</Text>}
+      />
 
       {mutedUsers.length === 0 ? (
         <EmptyState
