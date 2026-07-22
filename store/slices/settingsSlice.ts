@@ -94,6 +94,13 @@ export interface SettingsSlice {
   setHasCompletedProductOnboarding: (v: boolean) => void;
   onboardingDraftCreated: boolean;
   setOnboardingDraftCreated: (v: boolean) => void;
+  /** Value-first first-run (/welcome) finished — gates whether a new user is
+   *  sent through the daily-question value moment. */
+  hasCompletedFirstRun: boolean;
+  setHasCompletedFirstRun: (v: boolean) => void;
+  /** Home coach-mark tour shown once. Also drives Settings' "Replay tour". */
+  hasSeenHomeTutorial: boolean;
+  setHasSeenHomeTutorial: (v: boolean) => void;
   // ── Feed feedback signals ──
   notInterestedIds: string[];
   setNotInterestedIds: (v: string[]) => void;
@@ -203,6 +210,8 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     hasSentFirstEcho: b('hasSentFirstEcho', false), setHasSentFirstEcho: s(set, 'hasSentFirstEcho'),
     hasCompletedProductOnboarding: b('hasCompletedProductOnboarding', false), setHasCompletedProductOnboarding: s(set, 'hasCompletedProductOnboarding'),
     onboardingDraftCreated: b('onboardingDraftCreated', false), setOnboardingDraftCreated: s(set, 'onboardingDraftCreated'),
+    hasCompletedFirstRun: b('hasCompletedFirstRun', false), setHasCompletedFirstRun: s(set, 'hasCompletedFirstRun'),
+    hasSeenHomeTutorial: b('hasSeenHomeTutorial', false), setHasSeenHomeTutorial: s(set, 'hasSeenHomeTutorial'),
     notInterestedIds: persistGet<string[]>('notInterestedIds', []),
     setNotInterestedIds: (v) => { persistSet('notInterestedIds', v); set({ notInterestedIds: v }); },
     feedFeedback: persistGet<Record<string, 'less' | 'more'>>('feedFeedback', {}),
@@ -229,6 +238,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
         targetOutcome: '',
         targetMiniApps: getTargetCategory(DEFAULT_TARGET_CATEGORY_ID).apps,
         hasCompletedProductOnboarding: false, onboardingDraftCreated: false,
+        hasCompletedFirstRun: false, hasSeenHomeTutorial: false,
       });
     },
     getCacheSize: () => {

@@ -395,7 +395,8 @@ export default function SignupWizard() {
     track('signup_completed', { interests_count: selectedInterests.length });
 
     await refreshAuthSession();
-    router.replace('/onboarding');
+    // Cast: the typed-routes manifest regenerates to include /welcome on build.
+    router.replace('/welcome' as never);
   };
 
   const backHidden = currentStep === 0 || currentStep === 5;
