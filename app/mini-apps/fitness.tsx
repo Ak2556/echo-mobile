@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import Svg, { Circle, Polyline } from 'react-native-svg';
-import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk } from 'phosphor-react-native';
+import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk, GearSix } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
@@ -658,7 +658,23 @@ export default function FitnessApp() {
     >
       <Plus color="#fff" size={18} weight="bold" />
     </AnimatedPressable>
-  ) : undefined;
+  ) : null;
+
+  // Settings gear + add button — in the header so they're always reachable
+  // (the calorie-card pencil can sit under the floating agent overlay).
+  const HeaderActions = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <AnimatedPressable
+        onPress={() => setShowGoals(true)}
+        scaleValue={0.88} haptic="light"
+        style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}
+        accessibilityRole="button" accessibilityLabel="Fitness settings"
+      >
+        <GearSix color={colors.textSecondary} size={19} weight="fill" />
+      </AnimatedPressable>
+      {AddBtn}
+    </View>
+  );
 
   if (!doc) return <MiniAppShell title="Fitness" subtitle="Fit"><View /></MiniAppShell>;
 
@@ -709,7 +725,7 @@ export default function FitnessApp() {
   };
 
   return (
-    <MiniAppShell title="Fitness" subtitle="Fit" headerRight={AddBtn}>
+    <MiniAppShell title="Fitness" subtitle="Fit" headerRight={HeaderActions}>
       <MiniCommandDeck
         accent={TEAL}
         title="Health operating system"
@@ -767,8 +783,8 @@ export default function FitnessApp() {
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> / {doc.goals.calories} kcal</Text>
                 </Text>
               </View>
-              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" style={{ padding: 6 }} accessibilityRole="button" accessibilityLabel="Fitness settings">
-                <PencilSimple color={colors.textMuted} size={17} />
+              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" hitSlop={10} style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }} accessibilityRole="button" accessibilityLabel="Fitness settings">
+                <PencilSimple color={colors.textSecondary} size={17} />
               </AnimatedPressable>
             </View>
             <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden', marginTop: 12 }}>
