@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
+import { pushTasksStructured } from './tasksRemote';
 
 export const TASKS_KEY = 'mini:tasks';
 
@@ -68,6 +69,7 @@ export async function saveTasks(tasks: TaskItem[]): Promise<void> {
     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   await AsyncStorage.setItem(TASKS_KEY, JSON.stringify(sorted));
   pushMiniApp('tasks', sorted);
+  pushTasksStructured(sorted);
 }
 
 export function priorityWeight(priority: TaskPriority): number {
