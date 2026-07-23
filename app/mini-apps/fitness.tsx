@@ -88,6 +88,11 @@ function FoodRow({ food, fav, onTap, onStar }: { food: FoodItem; fav: boolean; o
       <Pressable onPress={onTap} style={{ flex: 1, minWidth: 0 }} accessibilityRole="button" accessibilityLabel={`Add ${food.name}`}>
         <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }} numberOfLines={1}>{food.name}</Text>
         <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{food.serving} · P {food.protein}g · C {food.carbs}g · F {food.fat}g</Text>
+        {(food.fiber != null || food.sugar != null || food.sodium != null) ? (
+          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 1 }} numberOfLines={1}>
+            {[food.fiber != null ? `Fiber ${food.fiber}g` : null, food.sugar != null ? `Sugar ${food.sugar}g` : null, food.sodium != null ? `Na ${food.sodium}mg` : null].filter(Boolean).join(' · ')}
+          </Text>
+        ) : null}
       </Pressable>
       <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800', marginRight: 12 }}>{food.calories} kcal</Text>
       <Pressable onPress={onStar} hitSlop={8} accessibilityRole="button" accessibilityLabel={fav ? `Unfavorite ${food.name}` : `Favorite ${food.name}`}>
@@ -120,6 +125,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
   const [saveToFoods, setSaveToFoods] = useState(false);
   const [fiber, setFiber] = useState('');
   const [sugar, setSugar] = useState('');
+  const [sodium, setSodium] = useState('');
   const [note, setNote] = useState('');
   const [showMore, setShowMore] = useState(false);
   const todayIso = new Date().toISOString().slice(0, 10);
@@ -171,6 +177,10 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
     setProtein(String(Math.round(food.protein * q * 10) / 10));
     setCarbs(String(Math.round(food.carbs * q * 10) / 10));
     setFat(String(Math.round(food.fat * q * 10) / 10));
+    // Carry the catalog's fibre / sugar / sodium through (scaled).
+    setFiber(food.fiber != null ? String(Math.round(food.fiber * q * 10) / 10) : '');
+    setSugar(food.sugar != null ? String(Math.round(food.sugar * q * 10) / 10) : '');
+    setSodium(food.sodium != null ? String(Math.round(food.sodium * q)) : '');
   };
 
   // Prefill the form from a previously logged meal (one-tap re-log).
@@ -203,6 +213,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
       protein: num(protein), carbs: num(carbs), fat: num(fat),
       ...(num(fiber) > 0 ? { fiber: num(fiber) } : {}),
       ...(num(sugar) > 0 ? { sugar: num(sugar) } : {}),
+      ...(num(sodium) > 0 ? { sodium: num(sodium) } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
       date,
     });
@@ -435,6 +446,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Field label="FIBER (g)" value={fiber} onChange={setFiber} placeholder="0" keyboard="decimal-pad" />
                 <Field label="SUGAR (g)" value={sugar} onChange={setSugar} placeholder="0" keyboard="decimal-pad" />
+                <Field label="SODIUM (mg)" value={sodium} onChange={setSodium} placeholder="0" keyboard="decimal-pad" />
               </View>
               <Field label="NOTE" value={note} onChange={setNote} placeholder="e.g. post-workout, home-cooked, extra cheese" />
             </>
