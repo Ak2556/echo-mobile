@@ -82,18 +82,20 @@ export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = tru
 
   return (
     <LinearGradient
-      colors={[color, shade(color, 0.32)]}
-      start={{ x: 0.12, y: 0 }}
-      end={{ x: 0.9, y: 1 }}
+      colors={[color, shade(color, 0.3)]}
+      start={{ x: 0.15, y: 0 }}
+      end={{ x: 0.85, y: 1 }}
       style={{
         width: size,
         height: size,
-        borderRadius: Math.round(size * 0.31),
+        borderRadius: Math.round(size * 0.28),
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
       }}
     >
+      {/* Subtle top sheen for depth — the glyph sits directly on the plate (no
+          inner box) so it reads large and clear even at small sizes. */}
       <View
         pointerEvents="none"
         style={{
@@ -101,24 +103,13 @@ export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = tru
           top: 0,
           left: 0,
           right: 0,
-          height: Math.max(8, size * 0.38),
-          backgroundColor: 'rgba(255,255,255,0.18)',
+          height: Math.max(6, size * 0.34),
+          backgroundColor: 'rgba(255,255,255,0.14)',
           borderBottomLeftRadius: size,
           borderBottomRightRadius: size,
         }}
       />
-      <View
-        style={{
-          width: size * 0.68,
-          height: size * 0.68,
-          borderRadius: size * 0.24,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'rgba(255,255,255,0.13)',
-        }}
-      >
-        <MiniAppGlyph id={id} color="#fff" size={Math.round(size * 0.46)} weight={weight} />
-      </View>
+      <MiniAppGlyph id={id} color="#fff" size={Math.round(size * 0.56)} weight={weight} />
     </LinearGradient>
   );
 }
