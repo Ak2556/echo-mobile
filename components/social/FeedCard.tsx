@@ -145,6 +145,13 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const { colors, radius, fontSizes, font, reduceAnimations, showAvatars } = useTheme();
   const performance = usePerformanceProfile('hot');
   const layout = useResponsiveLayout();
+  // Hero media height: phones keep the fixed portrait-ish media; tablets scale
+  // it with the now-full-width card so it stays a balanced ~5:4 shape, clamped
+  // to a fraction of the screen height so a landscape card never grows taller
+  // than the viewport.
+  const heroHeight = layout.isTablet
+    ? Math.round(Math.min((layout.width - 24) * 0.78, layout.height * 0.62))
+    : 430;
   const { isBookmarked, toggleBookmark, isReposted, toggleRepost, toggleLike,
     compactFeed, showPreviewCards, votePoll,
   } = useAppStore();
@@ -481,12 +488,12 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           performanceMode="hot"
           style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}
         >
-          <View style={{ height: 430 }}>
+          <View style={{ height: heroHeight }}>
             {item.postType === 'photo' && (
-              <MediaGrid uris={item.mediaUris!} height={430} />
+              <MediaGrid uris={item.mediaUris!} height={heroHeight} />
             )}
             {item.postType === 'video' && item.videoUri && (
-              <VideoPreview uri={item.videoUri} height={430} borderRadius={0} />
+              <VideoPreview uri={item.videoUri} height={heroHeight} borderRadius={0} />
             )}
 
             {/* Scrims for overlay legibility */}
