@@ -18,6 +18,7 @@ export interface Meal {
   /** optional extra detail */
   fiber?: number;
   sugar?: number;
+  sodium?: number;
   note?: string;
   date: string;
 }
