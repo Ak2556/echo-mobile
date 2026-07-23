@@ -416,13 +416,16 @@ export default function DiscoverScreen() {
 
   // Tablet/desktop: the feed becomes a two-column masonry inside a wider
   // centred container; the header shares that same width so it aligns.
-  // iPad shows a single-column feed that fills the screen — one card at a time —
-  // instead of a 2-column masonry. Masonry stays only for wide desktop web; the
-  // header shares the same container so everything aligns edge to edge.
+  // iPad shows a single-column feed — one card at a time — instead of a
+  // 2-column masonry. The column is capped at a balanced reading width and
+  // centered so cards keep a natural height-to-width ratio rather than
+  // stretching edge to edge. Masonry stays only for wide desktop web; the
+  // header shares the same width so everything aligns.
   const useMasonry = layout.isDesktop;
+  const feedMaxWidth = layout.isDesktop ? layout.wideMaxWidth : layout.isTablet ? 680 : layout.width;
   const feedContainerStyle = {
     width: '100%' as const,
-    maxWidth: layout.isDesktop ? layout.wideMaxWidth : layout.width,
+    maxWidth: feedMaxWidth,
     alignSelf: 'center' as const,
   };
 
@@ -627,7 +630,7 @@ export default function DiscoverScreen() {
         <View
           style={{
             width: '100%',
-            maxWidth: layout.isDesktop ? layout.wideMaxWidth : layout.width,
+            maxWidth: feedMaxWidth,
             alignSelf: 'center',
             paddingTop: insets.top + (layout.isDesktop ? 10 : 0),
             height: headerHeight,
