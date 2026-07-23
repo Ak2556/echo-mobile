@@ -118,6 +118,17 @@ export interface SettingsSlice {
   /** Home coach-mark tour shown once. Also drives Settings' "Replay tour". */
   hasSeenHomeTutorial: boolean;
   setHasSeenHomeTutorial: (v: boolean) => void;
+  /** The thought assigned to the current calendar day — pinned so the same day
+   *  always shows the same one, personalized to the user's interests. */
+  dailyThought: { dayKey: string; id: string } | null;
+  setDailyThought: (v: { dayKey: string; id: string }) => void;
+  /** Every thought id ever surfaced — so none repeats until the pool is spent. */
+  seenThoughtIds: string[];
+  setSeenThoughtIds: (v: string[]) => void;
+  /** Calendar-day key (YYYY-MM-DD) of the last daily-thought the user dismissed.
+   *  When it equals today's key the card is hidden; a new day surfaces a new one. */
+  dailyThoughtDismissedOn: string | null;
+  dismissDailyThought: (dayKey: string) => void;
   // ── Feed feedback signals ──
   notInterestedIds: string[];
   setNotInterestedIds: (v: string[]) => void;
@@ -231,6 +242,12 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     onboardingDraftCreated: b('onboardingDraftCreated', false), setOnboardingDraftCreated: s(set, 'onboardingDraftCreated'),
     hasCompletedFirstRun: b('hasCompletedFirstRun', false), setHasCompletedFirstRun: s(set, 'hasCompletedFirstRun'),
     hasSeenHomeTutorial: b('hasSeenHomeTutorial', false), setHasSeenHomeTutorial: s(set, 'hasSeenHomeTutorial'),
+    dailyThought: persistGet<{ dayKey: string; id: string } | null>('dailyThought', null),
+    setDailyThought: (v) => { persistSet('dailyThought', v); set({ dailyThought: v }); },
+    seenThoughtIds: persistGet<string[]>('seenThoughtIds', []),
+    setSeenThoughtIds: (v) => { persistSet('seenThoughtIds', v); set({ seenThoughtIds: v }); },
+    dailyThoughtDismissedOn: persistGet<string | null>('dailyThoughtDismissedOn', null),
+    dismissDailyThought: (dayKey) => { persistSet('dailyThoughtDismissedOn', dayKey); set({ dailyThoughtDismissedOn: dayKey }); },
     notInterestedIds: persistGet<string[]>('notInterestedIds', []),
     setNotInterestedIds: (v) => { persistSet('notInterestedIds', v); set({ notInterestedIds: v }); },
     feedFeedback: persistGet<Record<string, 'less' | 'more'>>('feedFeedback', {}),
