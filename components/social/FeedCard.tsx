@@ -339,16 +339,16 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
       style={{
         flex: 1,
         minWidth: 0,
-        height: 46,
-        borderRadius: 17,
-        paddingHorizontal: 6,
+        height: 42,
+        borderRadius: 14,
+        paddingHorizontal: 8,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 5,
         backgroundColor: active ? `${color}1F` : colors.surfaceHover,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: active ? `${color}55` : colors.glassBorder,
-        position: 'relative',
       }}
       depth="medium"
       fadeOnPress
@@ -361,22 +361,9 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
       {count !== undefined && count > 0 ? (
         <Text
           style={{
-            position: 'absolute',
-            top: 5,
-            right: 5,
-            minWidth: 17,
-            height: 17,
-            borderRadius: 9,
-            overflow: 'hidden',
-            paddingHorizontal: 4,
-            textAlign: 'center',
-            color: active ? color : colors.textMuted,
-            backgroundColor: active ? `${color}24` : colors.surface,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: active ? `${color}55` : colors.glassBorder,
-            fontSize: 9.5,
-            lineHeight: 16,
-            fontFamily: 'Inter_700Bold',
+            color: active ? color : colors.textSecondary,
+            fontSize: 12.5,
+            fontFamily: 'Inter_600SemiBold',
             fontVariant: ['tabular-nums'],
           }}
           numberOfLines={1}
@@ -392,7 +379,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const SecondaryAction = ({ icon, onPress, accessibilityLabel }: { icon: React.ReactNode; onPress: (e: any) => void; accessibilityLabel: string }) => (
     <AnimatedPressable
       onPress={onPress}
-      style={{ width: 38, height: 46, borderRadius: 17, alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: 40, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}
       fadeOnPress
       haptic="light"
       performanceMode="hot"
