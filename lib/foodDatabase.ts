@@ -618,6 +618,12 @@ function searchableText(food: FoodItem): string {
   return [food.name, food.serving, ...(food.tags ?? [])].join(' ').toLowerCase();
 }
 
+const FOOD_BY_ID: Record<string, FoodItem> = Object.fromEntries(FOOD_DB.map(f => [f.id, f]));
+
+export function foodById(id: string): FoodItem | undefined {
+  return FOOD_BY_ID[id];
+}
+
 export function foodsForGroup(group: FoodGroupId, limit = 12): FoodItem[] {
   if (group === 'quick') {
     const byId = new Map(FOOD_DB.map(food => [food.id, food]));

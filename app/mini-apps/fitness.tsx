@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import Svg, { Circle, Polyline } from 'react-native-svg';
-import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk, GearSix } from 'phosphor-react-native';
+import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk, GearSix, Star, ClockCounterClockwise } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
@@ -26,7 +26,7 @@ import {
 import { syncFitnessReminders } from '../../lib/fitnessReminders';
 import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
 import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
-import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods } from '../../lib/foodDatabase';
+import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods, foodById } from '../../lib/foodDatabase';
 
 const TEAL = '#4E8B7A'; // sage — warm editorial palette
 type Tab = 'meals' | 'workouts' | 'progress' | 'library';
@@ -81,8 +81,27 @@ function SubmitBtn({ label, onPress }: { label: string; onPress: () => void }) {
 
 // ── Add meal ─────────────────────────────────────────────────────────────────
 
-function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
+function FoodRow({ food, fav, onTap, onStar }: { food: FoodItem; fav: boolean; onTap: () => void; onStar: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+      <Pressable onPress={onTap} style={{ flex: 1, minWidth: 0 }} accessibilityRole="button" accessibilityLabel={`Add ${food.name}`}>
+        <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }} numberOfLines={1}>{food.name}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{food.serving} · P {food.protein}g · C {food.carbs}g · F {food.fat}g</Text>
+      </Pressable>
+      <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800', marginRight: 12 }}>{food.calories} kcal</Text>
+      <Pressable onPress={onStar} hitSlop={8} accessibilityRole="button" accessibilityLabel={fav ? `Unfavorite ${food.name}` : `Favorite ${food.name}`}>
+        <Star color={fav ? '#E8A93E' : colors.textMuted} size={18} weight={fav ? 'fill' : 'regular'} />
+      </Pressable>
+    </View>
+  );
+}
+
+function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite, onAdd, onSaveFood, onClose }: {
   customFoods: CustomFood[];
+  recentMeals: Meal[];
+  favoriteIds: string[];
+  onToggleFavorite: (id: string) => void;
   onAdd: (m: Meal) => void;
   onSaveFood: (f: CustomFood) => void;
   onClose: () => void;
@@ -105,6 +124,10 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
   const [showMore, setShowMore] = useState(false);
   const todayIso = new Date().toISOString().slice(0, 10);
   const [mealDate, setMealDate] = useState(todayIso);
+  const [mealTime, setMealTime] = useState(() => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  });
   // The last 7 calendar days as quick day-picker chips.
   const dayOptions = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - i);
@@ -120,6 +143,25 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
   const builtInHits = q ? searchFoods(search, 18) : foodsForGroup(activeFoodGroup, 16);
   const results = picked ? [] : [...customHits, ...builtInHits.filter(f => !customHits.some(c => c.id === f.id))].slice(0, 18);
 
+  // Starred foods (from the built-in DB or your saved foods), for quick access.
+  const favoriteFoods: FoodItem[] = favoriteIds
+    .map(id => foodById(id) ?? customFoods.find(f => f.id === id))
+    .filter((f): f is FoodItem => !!f);
+  // Recently logged meals, most-recent-first and de-duped by name.
+  const recentDistinct: Meal[] = (() => {
+    const seen = new Set<string>();
+    const out: Meal[] = [];
+    for (const m of recentMeals) {
+      const key = m.name.trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(m);
+      if (out.length >= 6) break;
+    }
+    return out;
+  })();
+  const showQuickExtras = !picked && !q && activeFoodGroup === 'quick';
+
   const applyFood = (food: FoodItem, q: number) => {
     setPicked(food);
     setQty(q);
@@ -129,6 +171,18 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
     setProtein(String(Math.round(food.protein * q * 10) / 10));
     setCarbs(String(Math.round(food.carbs * q * 10) / 10));
     setFat(String(Math.round(food.fat * q * 10) / 10));
+  };
+
+  // Prefill the form from a previously logged meal (one-tap re-log).
+  const applyRecent = (m: Meal) => {
+    setPicked(null);
+    setSearch('');
+    setName(m.name);
+    setKind(m.kind);
+    setCalories(String(m.calories));
+    setProtein(String(m.protein));
+    setCarbs(String(m.carbs));
+    setFat(String(m.fat));
   };
 
   const submit = () => {
@@ -141,7 +195,9 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
         calories: cal, protein: num(protein), carbs: num(carbs), fat: num(fat),
       });
     }
-    const date = mealDate === todayIso ? new Date().toISOString() : new Date(`${mealDate}T12:00:00`).toISOString();
+    const time = /^\d{1,2}:\d{2}$/.test(mealTime.trim()) ? mealTime.trim().padStart(5, '0') : '12:00';
+    const built = new Date(`${mealDate}T${time}:00`);
+    const date = Number.isNaN(built.getTime()) ? new Date().toISOString() : built.toISOString();
     onAdd({
       id: Date.now().toString(), name: name.trim(), kind, calories: cal,
       protein: num(protein), carbs: num(carbs), fat: num(fat),
@@ -202,19 +258,49 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
                 );
               })}
             </ScrollView>
-            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 8, marginBottom: 2 }}>
+
+            {showQuickExtras && favoriteFoods.length > 0 && (
+              <View style={{ marginTop: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <Star color="#E8A93E" size={13} weight="fill" />
+                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>FAVORITES</Text>
+                </View>
+                {favoriteFoods.slice(0, 6).map(food => (
+                  <FoodRow key={`fav-${food.id}`} food={food} fav onTap={() => applyFood(food, 1)} onStar={() => onToggleFavorite(food.id)} />
+                ))}
+              </View>
+            )}
+            {showQuickExtras && recentDistinct.length > 0 && (
+              <View style={{ marginTop: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <ClockCounterClockwise color={colors.textMuted} size={13} weight="bold" />
+                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>RECENT</Text>
+                </View>
+                {recentDistinct.map(m => (
+                  <Pressable key={`recent-${m.id}`} onPress={() => applyRecent(m)} accessibilityRole="button" accessibilityLabel={`Log ${m.name} again`}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{m.name}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>P {m.protein}g · C {m.carbs}g · F {m.fat}g</Text>
+                      </View>
+                      <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800' }}>{Math.round(m.calories)} kcal</Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 10, marginBottom: 2 }}>
               {q ? `${results.length} matches` : `${FOOD_GROUPS.find(g => g.id === activeFoodGroup)?.label ?? 'Quick'} picks`}
             </Text>
             {results.map(food => (
-              <Pressable key={food.id} onPress={() => applyFood(food, 1)}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }}>{food.name}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{food.serving} · P {food.protein}g · C {food.carbs}g · F {food.fat}g</Text>
-                  </View>
-                  <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800' }}>{food.calories} kcal</Text>
-                </View>
-              </Pressable>
+              <FoodRow
+                key={food.id}
+                food={food}
+                fav={favoriteIds.includes(food.id)}
+                onTap={() => applyFood(food, 1)}
+                onStar={() => onToggleFavorite(food.id)}
+              />
             ))}
             {!picked && results.length === 0 && (
               <View style={{ paddingVertical: 18, alignItems: 'center' }}>
@@ -228,7 +314,7 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: TEAL + '12', borderRadius: 14, borderWidth: 1, borderColor: TEAL + '33', padding: 12 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '700' }}>{picked.name}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{qty} × {picked.serving}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>Amount: {qty} × {picked.serving}</Text>
                 </View>
                 <AnimatedPressable onPress={() => applyFood(picked, Math.max(0.25, Math.round((qty - 0.5) * 100) / 100))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)', borderRadius: 10, padding: 8 }}>
                   <Minus color={colors.text} size={14} weight="bold" />
@@ -285,6 +371,36 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
                 );
               })}
             </ScrollView>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginTop: 14, marginBottom: 8 }}>TIME</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <View style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 10 }}>
+                <TextInput
+                  value={mealTime}
+                  onChangeText={setMealTime}
+                  placeholder="HH:MM"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="numbers-and-punctuation"
+                  maxLength={5}
+                  accessibilityLabel="Meal time"
+                  style={{ color: colors.text, fontSize: 15, fontWeight: '800', paddingVertical: 10, minWidth: 64, textAlign: 'center', fontVariant: ['tabular-nums'] }}
+                />
+              </View>
+              {([['Now', ''], ['Morning', '08:00'], ['Noon', '13:00'], ['Evening', '19:00'], ['Night', '22:00']] as const).map(([label, val]) => (
+                <Pressable
+                  key={label}
+                  onPress={() => {
+                    if (val) { setMealTime(val); return; }
+                    const d = new Date();
+                    setMealTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
+                  }}
+                  accessibilityRole="button" accessibilityLabel={label}
+                >
+                  <View style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: mealTime === val ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: mealTime === val ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: mealTime === val ? '#fff' : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{label}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
           </View>
 
           <Field label="MEAL" value={name} onChange={setName} placeholder="e.g. Paneer wrap, Oats + banana" />
@@ -1315,6 +1431,9 @@ export default function FitnessApp() {
       {showAddMeal && (
         <AddMealModal
           customFoods={doc.customFoods}
+          recentMeals={doc.meals}
+          favoriteIds={doc.favoriteFoodIds}
+          onToggleFavorite={id => update({ ...doc, favoriteFoodIds: doc.favoriteFoodIds.includes(id) ? doc.favoriteFoodIds.filter(x => x !== id) : [id, ...doc.favoriteFoodIds] })}
           onAdd={m => { update({ ...doc, meals: [m, ...doc.meals] }); showToast(`${m.name} logged`, 'Saved'); }}
           onSaveFood={f => update({ ...doc, customFoods: [f, ...doc.customFoods.filter(x => x.name.toLowerCase() !== f.name.toLowerCase())] })}
           onClose={() => setShowAddMeal(false)}

@@ -163,6 +163,8 @@ export interface FitnessDoc {
   measurements: MeasurementEntry[];
   routines: Routine[];
   customFoods: CustomFood[];
+  /** ids of foods the user has starred for quick access */
+  favoriteFoodIds: string[];
   goals: FitnessGoals;
   settings: FitnessSettings;
 }
@@ -176,7 +178,7 @@ export const MEAL_KINDS: { kind: MealKind; label: string }[] = [
 
 export const DEFAULT_GOALS: FitnessGoals = { calories: 2200, protein: 120, carbs: 250, fat: 70, waterMl: 2500, workoutsPerWeek: 4 };
 
-const EMPTY: FitnessDoc = { meals: [], workouts: [], weights: [], water: [], measurements: [], routines: [], customFoods: [], goals: DEFAULT_GOALS, settings: DEFAULT_SETTINGS };
+const EMPTY: FitnessDoc = { meals: [], workouts: [], weights: [], water: [], measurements: [], routines: [], customFoods: [], favoriteFoodIds: [], goals: DEFAULT_GOALS, settings: DEFAULT_SETTINGS };
 
 function goalOr(v: unknown, fallback: number): number {
   return Number(v) > 0 ? Number(v) : fallback;
@@ -193,6 +195,7 @@ function normalizeDoc(raw: unknown): FitnessDoc {
     measurements: Array.isArray(doc.measurements) ? doc.measurements : [],
     routines: Array.isArray(doc.routines) ? doc.routines : [],
     customFoods: Array.isArray(doc.customFoods) ? doc.customFoods : [],
+    favoriteFoodIds: Array.isArray(doc.favoriteFoodIds) ? doc.favoriteFoodIds.filter((x): x is string => typeof x === 'string') : [],
     goals: {
       calories: goalOr(doc.goals?.calories, DEFAULT_GOALS.calories),
       protein: goalOr(doc.goals?.protein, DEFAULT_GOALS.protein),
