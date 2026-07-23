@@ -512,7 +512,7 @@ export default function HabitsApp() {
   const detailHabit = detailId ? habits.find(h => h.id === detailId) ?? null : null;
 
   const AddBtn = (
-    <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ backgroundColor: accent, borderRadius: 12, padding: 10 }}>
+    <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: accent }}>
       <Plus color="#fff" size={18} weight="bold" />
     </AnimatedPressable>
   );

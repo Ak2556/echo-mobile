@@ -6,10 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePathname, useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, CheckCircle, Sparkle } from 'phosphor-react-native';
+import { ArrowLeft } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
-import { miniAppByRoute, type MiniAppCatalogItem } from '../../lib/miniAppCatalog';
+import { miniAppByRoute } from '../../lib/miniAppCatalog';
 import { useMiniAppEmbedded } from '../../lib/miniAppEmbed';
 import { MiniAppIcon } from './MiniAppIcon';
 import { useI18n } from '../../lib/i18n';
@@ -49,7 +49,7 @@ export function MiniAppShell({
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
   // Embedded in the floating panel: the panel owns the header + top inset.
-  const HEADER_H = embedded ? 0 : insets.top + (appMeta ? 78 : 62);
+  const HEADER_H = embedded ? 0 : insets.top + 60;
   const goBack = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/apps');
@@ -91,7 +91,6 @@ export function MiniAppShell({
           keyboardShouldPersistTaps="handled"
         >
           <View style={contentStyle}>
-            {appMeta && !embedded ? <MiniWorkspaceBrief app={appMeta} /> : null}
             {children}
           </View>
         </ScrollView>
@@ -194,16 +193,6 @@ export function MiniAppShell({
                 ) : null}
               </View>
             </View>
-            {appMeta ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 7 }}>
-                <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: `${appMeta.color}1F`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${appMeta.color}55` }}>
-                  <Text style={{ color: appMeta.color, fontSize: 10.5, fontFamily: 'Inter_700Bold', letterSpacing: 0.8, textTransform: 'uppercase' }}>{appMeta.suite}</Text>
-                </View>
-                <Text style={{ color: colors.textMuted, fontSize: 11.5, flex: 1 }} numberOfLines={1}>
-                  {t('mini.replaces', { items: appMeta.replaces.slice(0, 2).join(' + ') })}
-                </Text>
-              </View>
-            ) : null}
           </View>
 
           {headerRight ? (
@@ -228,57 +217,3 @@ export function MiniAppShell({
   );
 }
 
-function MiniWorkspaceBrief({ app }: { app: MiniAppCatalogItem }) {
-  const { colors, font } = useTheme();
-  const { t } = useI18n();
-  const chips = [app.suite, t('mini.echoActions'), t('mini.liveContext')];
-
-  return (
-    <View
-      style={{
-        marginBottom: 14,
-        borderRadius: 20,
-        overflow: 'hidden',
-        backgroundColor: colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: `${app.color}3A`,
-      }}
-    >
-      <LinearGradient
-        colors={[`${app.color}22`, colors.isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.52)', 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      <View style={{ padding: 12, gap: 11 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: `${app.color}22` }}>
-            <Sparkle color={app.color} size={17} weight="fill" />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 14.5, lineHeight: 18 }]} numberOfLines={1}>
-              {t('mini.echoWorkspace')}
-            </Text>
-            <Text style={[font.body, { color: colors.textMuted, fontSize: 11.6, lineHeight: 15, marginTop: 1 }]} numberOfLines={1}>
-              {app.highlights.slice(0, 2).join(' · ')}
-            </Text>
-          </View>
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 7 }}>
-          {chips.map(chip => (
-            <View key={chip} style={{ flex: 1, minHeight: 34, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 7, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <CheckCircle color={app.color} size={13} weight="fill" />
-                <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 10.8, flex: 1 }]} numberOfLines={1}>
-                  {chip}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-}

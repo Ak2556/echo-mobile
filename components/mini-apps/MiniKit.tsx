@@ -106,27 +106,6 @@ export function MiniCommandDeck({
         ))}
       </View>
 
-      {chips.length > 0 && !compact ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 12 }}>
-          {chips.slice(0, 4).map(chip => (
-            <View
-              key={chip}
-              style={{
-                borderRadius: 999,
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                backgroundColor: `${accent}17`,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: `${accent}40`,
-              }}
-            >
-              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11.2 }]} numberOfLines={1}>
-                {chip}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
     </GlassPanel>
   );
 }
