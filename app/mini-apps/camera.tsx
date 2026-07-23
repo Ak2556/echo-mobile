@@ -203,7 +203,7 @@ export default function CameraApp() {
 
   const GalleryBtn = (
     <AnimatedPressable onPress={launchGallery} scaleValue={0.9} haptic="light"
-      style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 10, padding: 8 }}>
+      style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 10 }}>
       <CameraPlus color={colors.textMuted} size={20} />
     </AnimatedPressable>
   );

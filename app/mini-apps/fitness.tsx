@@ -537,7 +537,7 @@ export default function FitnessApp() {
   const AddBtn = (tab === 'meals' || tab === 'workouts') ? (
     <AnimatedPressable
       onPress={() => (tab === 'meals' ? setShowAddMeal(true) : setShowAddWorkout(true))}
-      scaleValue={0.88} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 12, padding: 10 }}
+      scaleValue={0.88} haptic="medium" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: TEAL, borderRadius: 12 }}
       accessibilityRole="button" accessibilityLabel={tab === 'meals' ? 'Add meal' : 'Add workout'}
     >
       <Plus color="#fff" size={18} weight="bold" />
