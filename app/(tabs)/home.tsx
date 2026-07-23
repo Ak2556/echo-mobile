@@ -416,11 +416,18 @@ export default function DiscoverScreen() {
 
   // Tablet/desktop: the feed becomes a two-column masonry inside a wider
   // centred container; the header shares that same width so it aligns.
-  const wideFeed = layout.isWide;
-  const feedWideStyle = { width: '100%' as const, maxWidth: layout.wideMaxWidth, alignSelf: 'center' as const };
+  // iPad shows a single-column feed that fills the screen — one card at a time —
+  // instead of a 2-column masonry. Masonry stays only for wide desktop web; the
+  // header shares the same container so everything aligns edge to edge.
+  const useMasonry = layout.isDesktop;
+  const feedContainerStyle = {
+    width: '100%' as const,
+    maxWidth: layout.isDesktop ? layout.wideMaxWidth : layout.width,
+    alignSelf: 'center' as const,
+  };
 
   const ListHeader = (
-    <View style={wideFeed ? feedWideStyle : layout.contentStyle}>
+    <View style={feedContainerStyle}>
       <HomeHero
         username={username}
         t={t}
@@ -482,7 +489,7 @@ export default function DiscoverScreen() {
 
       {isLoading ? (
         <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1, paddingTop: headerHeight }}>
-          <View style={layout.contentStyle}>
+          <View style={feedContainerStyle}>
             {features.stories && !remote && (
               <>
                 <SectionHeader label={t('home.yourStories')} />
@@ -515,17 +522,15 @@ export default function DiscoverScreen() {
           )}
           <FlashList
             data={popularItems}
-            numColumns={wideFeed ? 2 : 1}
-            masonry={wideFeed}
-            optimizeItemArrangement={wideFeed}
-            style={wideFeed ? feedWideStyle : undefined}
+            numColumns={useMasonry ? 2 : 1}
+            masonry={useMasonry}
+            optimizeItemArrangement={useMasonry}
+            style={feedContainerStyle}
             renderItem={({ item, index }) => (
-              wideFeed ? (
+              useMasonry ? (
                 <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
               ) : (
-                <View style={layout.contentStyle}>
-                  <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
-                </View>
+                <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
               )
             )}
             keyExtractor={item => item.id}
@@ -622,7 +627,7 @@ export default function DiscoverScreen() {
         <View
           style={{
             width: '100%',
-            maxWidth: layout.contentMaxWidth,
+            maxWidth: layout.isDesktop ? layout.wideMaxWidth : layout.width,
             alignSelf: 'center',
             paddingTop: insets.top + (layout.isDesktop ? 10 : 0),
             height: headerHeight,
