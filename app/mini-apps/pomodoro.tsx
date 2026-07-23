@@ -936,7 +936,7 @@ export default function PomodoroScreen() {
       <View style={{ backgroundColor: accent + '22', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: accent + '44' }}>
         <Text style={{ color: accent, fontWeight: '800', fontSize: 15, lineHeight: 18 }}>{stats.count}/{stats.goal}</Text>
       </View>
-      <AnimatedPressable onPress={() => setShowSettings(true)} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, padding: 9 }} accessibilityLabel="Timer settings">
+      <AnimatedPressable onPress={() => setShowSettings(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }} accessibilityLabel="Timer settings">
         <GearSix color={colors.textSecondary} size={17} weight="fill" />
       </AnimatedPressable>
     </View>

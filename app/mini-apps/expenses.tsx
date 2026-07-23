@@ -350,10 +350,10 @@ export default function ExpensesApp() {
       <AnimatedPressable onPress={() => setShowCurrency(true)} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, paddingHorizontal: 11, paddingVertical: 10 }}>
         <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{doc.currency}</Text>
       </AnimatedPressable>
-      <AnimatedPressable onPress={exportCsv} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, padding: 10 }}>
+      <AnimatedPressable onPress={exportCsv} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
         <Export color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
-      <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ backgroundColor: accent, borderRadius: 12, padding: 10 }}>
+      <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: accent, borderRadius: 12 }}>
         <Plus color="#fff" size={18} weight="bold" />
       </AnimatedPressable>
     </View>

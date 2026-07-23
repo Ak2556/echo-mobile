@@ -131,7 +131,7 @@ export default function BillSplitterScreen() {
   };
 
   const ShareBtn = (
-    <AnimatedPressable onPress={shareSummary} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, padding: 10 }}>
+    <AnimatedPressable onPress={shareSummary} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
       <ShareNetwork color={colors.text} size={18} weight="bold" />
     </AnimatedPressable>
   );
