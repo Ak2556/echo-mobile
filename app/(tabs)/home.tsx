@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent, Modal } from 'react-native';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, X, GitBranch, ChatCircleText, Info, Clock, SquaresFour, Target } from 'phosphor-react-native';
+import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
@@ -40,9 +40,6 @@ import { features } from '../../lib/featureFlags';
 import { getTopPerspectiveSummary } from '../../lib/perspectives';
 import { track } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
-import { TargetToolsPanel } from '../../components/productivity/TargetToolsPanel';
-import { getTargetCategory } from '../../lib/targetCategories';
-import { IconBadge } from '../../components/ui/IconBadge';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTutorialTarget } from '../../hooks/useTutorialTarget';
 import { useTutorialStore } from '../../store/tutorialStore';
@@ -79,64 +76,19 @@ function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: Rea
 
 function HomeHero({
   username,
-  targetLabel,
-  targetOutcome,
   t,
 }: {
   username: string;
-  targetLabel: string;
-  targetOutcome: string;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
-  const router = useRouter();
   const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
-  const sub = (targetOutcome || targetLabel || '').trim();
   return (
     <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 12 : 8, marginBottom: 12 }}>
       <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 23 : 28, lineHeight: layout.isPhone ? 28 : 34 }]} numberOfLines={1}>
         {username ? t('home.welcomeBack', { name: username }) : t('home.buildToday')}
       </Text>
-      {sub ? (
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 13.5, lineHeight: 18, marginTop: 2 }]} numberOfLines={1}>
-          {sub}
-        </Text>
-      ) : null}
-      {/* Only the destinations that aren't already in the bottom tab bar —
-          Chat and Market live there, so shortcuts to them would be clutter. */}
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-        <QuickLink icon={<SquaresFour color="#fff" size={15} weight="bold" />} color={colors.accent} label={t('home.tools')} onPress={() => router.push('/(tabs)/apps')} />
-        <QuickLink icon={<Target color="#fff" size={15} weight="bold" />} color={colors.accent} label={t('home.progress')} onPress={() => router.push('/target-progress')} />
-      </View>
     </View>
-  );
-}
-
-function QuickLink({ icon, color, label, onPress }: { icon: React.ReactNode; color: string; label: string; onPress: () => void }) {
-  const { colors, font } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-    >
-      <View style={{
-        minHeight: 34,
-        borderRadius: 999,
-        backgroundColor: colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        paddingLeft: 6,
-        paddingRight: 13,
-      }}>
-        <IconBadge color={color} size={26} radius={10}>{icon}</IconBadge>
-        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 13 }]}>{label}</Text>
-      </View>
-    </Pressable>
   );
 }
 
@@ -213,18 +165,16 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
 function FeedScopeRail({
   feedScope,
   setFeedScope,
-  onInfo,
   t,
 }: {
   feedScope: 'semantic' | 'forYou' | 'following' | 'latest';
   setFeedScope: (scope: 'semantic' | 'forYou' | 'following' | 'latest') => void;
-  onInfo: () => void;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
   const { colors, font, fontSizes } = useTheme();
   const layout = useResponsiveLayout();
   return (
-    <View style={{ marginHorizontal: layout.gutter, marginTop: 2, marginBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    <View style={{ marginHorizontal: layout.gutter, marginTop: 2, marginBottom: 14 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {(['semantic', 'forYou', 'following', 'latest'] as const).map(scope => {
           const active = feedScope === scope;
@@ -254,15 +204,6 @@ function FeedScopeRail({
           );
         })}
       </ScrollView>
-      <Pressable
-        onPress={onInfo}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel={t('home.aboutFeed')}
-        style={{ width: 36, height: 36, borderRadius: 13, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
-      >
-        <Info color={colors.textMuted} size={18} />
-      </Pressable>
     </View>
   );
 }
@@ -286,8 +227,6 @@ export default function DiscoverScreen() {
   const { t } = useI18n();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, avatarUrl, interests, followingIds } = useAppStore();
-  const targetCategoryId = useAppStore(s => s.targetCategory);
-  const targetOutcome = useAppStore(s => s.targetOutcome);
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
   const hasCompletedFirstRun = useAppStore(s => s.hasCompletedFirstRun);
   const messagesBySession = useAppStore(s => s.messagesBySession);
@@ -319,8 +258,6 @@ export default function DiscoverScreen() {
   const { data: suggestedUsers = [] } = useSuggestedUsers();
   const followMut = useToggleRemoteFollow();
   const { data: evolvingNow = [] } = useTrendingEvolutions(8);
-  const targetCategory = useMemo(() => getTargetCategory(targetCategoryId), [targetCategoryId]);
-
   useEffect(() => { pingDailyActivity(); recordAppOpen('feed'); }, []);
 
   const scrollY = useSharedValue(0);
@@ -373,7 +310,6 @@ export default function DiscoverScreen() {
   const setFeedScope = useAppStore(s => s.setFeedScope);
   const sensitiveContentFilter = useAppStore(s => s.sensitiveContentFilter);
   const unreadNotifs = useAppStore(s => s.notifications.filter(n => !n.isRead).length);
-  const [aboutFeedVisible, setAboutFeedVisible] = useState(false);
 
   const scopedAll = useMemo(() => {
     if (!feed) return [];
@@ -403,59 +339,15 @@ export default function DiscoverScreen() {
     <View style={wideFeed ? feedWideStyle : layout.contentStyle}>
       <HomeHero
         username={username}
-        targetLabel={targetCategory.label}
-        targetOutcome={targetOutcome}
         t={t}
       />
-      {!focusedHome && (
-        <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} onInfo={() => setAboutFeedVisible(true)} t={t} />
-      )}
-
-      <Modal
-        visible={aboutFeedVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAboutFeedVisible(false)}
-      >
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}
-          onPress={() => setAboutFeedVisible(false)}
-        >
-          <Pressable
-            style={{ backgroundColor: colors.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}
-            onPress={() => {}}
-          >
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 20 }} />
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 20, marginBottom: 20 }]}>{t('home.feedWorks')}</Text>
-            {([
-              { scope: 'semantic', label: t('home.forYou'), icon: <Sparkle size={16} color={colors.accent} weight="fill" />, desc: t('home.forYouDesc') },
-              { scope: 'forYou', label: t('home.trending'), icon: <TrendUp size={16} color={colors.accent} weight="bold" />, desc: t('home.trendingDesc') },
-              { scope: 'following', label: t('home.following'), icon: <Bell size={16} color={colors.accent} weight="bold" />, desc: t('home.followingDesc') },
-              { scope: 'latest', label: t('home.latest'), icon: <Clock size={16} color={colors.accent} weight="bold" />, desc: t('home.latestDesc') },
-            ] as const).map(({ scope, label, icon, desc }) => (
-              <View key={scope} style={{ marginBottom: 16 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  {icon}
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.small }]}>{label}</Text>
-                </View>
-                <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: 20 }]}>{desc}</Text>
-              </View>
-            ))}
-          </Pressable>
-        </Pressable>
-      </Modal>
-      {!focusedHome && <TargetToolsPanel dense />}
-      {!focusedHome && features.stories && !remote && (
-        <>
-          <SectionHeader label={t('home.yourStories')} />
-          <StoryCircles />
-        </>
-      )}
       {/* New users get ONE clear next action instead of three competing cards
           (old checklist + first-echo coach + daily card). */}
       {focusedHome && (
         <HomeNextStep hasStartedFirstChat={hasStartedFirstChat} publishedCount={publishedCount} t={t} />
       )}
+      {/* The daily-question ritual is the north-star action — it leads on an
+          engaged home, right under the greeting, before the feed controls. */}
       {features.dailyQuestion && !focusedHome && (
         <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: 12, marginTop: 4, marginBottom: 6 }}>
           <View style={{ borderRadius: 20, overflow: 'hidden' }}>
@@ -477,6 +369,15 @@ export default function DiscoverScreen() {
             </LinearGradient>
           </View>
         </Pressable>
+      )}
+      {!focusedHome && (
+        <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} t={t} />
+      )}
+      {!focusedHome && features.stories && !remote && (
+        <>
+          <SectionHeader label={t('home.yourStories')} />
+          <StoryCircles />
+        </>
       )}
       {!focusedHome && evolvingNow.length > 0 && (
         <>
