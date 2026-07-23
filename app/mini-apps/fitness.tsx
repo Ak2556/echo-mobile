@@ -1,12 +1,12 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, ScrollView, Switch,
+  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, ScrollView, Switch, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import Svg, { Circle, Polyline } from 'react-native-svg';
-import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk, GearSix, Star, ClockCounterClockwise } from 'phosphor-react-native';
+import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk, GearSix, Star, ClockCounterClockwise, Globe } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
@@ -27,6 +27,7 @@ import { syncFitnessReminders } from '../../lib/fitnessReminders';
 import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
 import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
 import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods, foodById } from '../../lib/foodDatabase';
+import { searchOnlineFoods } from '../../lib/foodApi';
 
 const TEAL = '#4E8B7A'; // sage — warm editorial palette
 type Tab = 'meals' | 'workouts' | 'progress' | 'library';
@@ -128,6 +129,8 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
   const [sodium, setSodium] = useState('');
   const [note, setNote] = useState('');
   const [showMore, setShowMore] = useState(false);
+  const [online, setOnline] = useState<FoodItem[]>([]);
+  const [onlineLoading, setOnlineLoading] = useState(false);
   const todayIso = new Date().toISOString().slice(0, 10);
   const [mealDate, setMealDate] = useState(todayIso);
   const [mealTime, setMealTime] = useState(() => {
@@ -167,6 +170,19 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
     return out;
   })();
   const showQuickExtras = !picked && !q && activeFoodGroup === 'quick';
+
+  // Online food search (Open Food Facts) — debounced, cancel-on-change.
+  useEffect(() => {
+    if (q.length < 3 || picked) { setOnline([]); setOnlineLoading(false); return; }
+    const ctrl = new AbortController();
+    setOnlineLoading(true);
+    const t = setTimeout(() => {
+      searchOnlineFoods(search, ctrl.signal)
+        .then(setOnline)
+        .finally(() => setOnlineLoading(false));
+    }, 500);
+    return () => { clearTimeout(t); ctrl.abort(); };
+  }, [q, search, picked]);
 
   const applyFood = (food: FoodItem, q: number) => {
     setPicked(food);
@@ -313,11 +329,32 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                 onStar={() => onToggleFavorite(food.id)}
               />
             ))}
-            {!picked && results.length === 0 && (
+            {!picked && q.length >= 3 && (
+              <View style={{ marginTop: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <Globe color={colors.textMuted} size={13} weight="bold" />
+                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>ONLINE · OPEN FOOD FACTS</Text>
+                  {onlineLoading ? <ActivityIndicator size="small" color={TEAL} style={{ marginLeft: 4 }} /> : null}
+                </View>
+                {online.map(food => (
+                  <FoodRow
+                    key={food.id}
+                    food={food}
+                    fav={favoriteIds.includes(food.id)}
+                    onTap={() => applyFood(food, 1)}
+                    onStar={() => onToggleFavorite(food.id)}
+                  />
+                ))}
+                {!onlineLoading && online.length === 0 ? (
+                  <Text style={{ color: colors.textMuted, fontSize: 12, paddingVertical: 8 }}>No online matches — offline or nothing found.</Text>
+                ) : null}
+              </View>
+            )}
+            {!picked && q.length > 0 && q.length < 3 && results.length === 0 && (
               <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>No match yet</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>Keep typing…</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
-                  Type the food, enter calories/macros below, and save it to My foods.
+                  Type 3+ letters to also search millions of foods online.
                 </Text>
               </View>
             )}
