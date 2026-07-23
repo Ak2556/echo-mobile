@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
+import { pushFitnessStructured } from './fitnessRemote';
 
 export const FITNESS_KEY = 'mini:fitness';
 
@@ -156,6 +157,7 @@ export async function loadFitness(): Promise<FitnessDoc> {
 export async function saveFitness(doc: FitnessDoc): Promise<void> {
   await AsyncStorage.setItem(FITNESS_KEY, JSON.stringify(doc));
   pushMiniApp('fitness', doc);
+  pushFitnessStructured(doc);
 }
 
 export function isSameDay(iso: string, ref = new Date()): boolean {
