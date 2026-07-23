@@ -12,7 +12,6 @@ import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { EmptyState } from '../../components/common/EmptyState';
-import { TargetToolsPanel } from '../../components/productivity/TargetToolsPanel';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
@@ -174,8 +173,6 @@ export default function SearchScreen() {
                 );
               })}
             </View>
-
-            <TargetToolsPanel compact />
 
             {discovery.conversationStarters.length > 0 && (
               <>

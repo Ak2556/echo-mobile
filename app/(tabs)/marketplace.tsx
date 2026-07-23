@@ -17,7 +17,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   BookOpen,
   Briefcase,
-  CheckCircle,
   DotsThree,
   House,
   MagnifyingGlass,
@@ -25,7 +24,6 @@ import {
   Package,
   Palette,
   Plus,
-  ShieldCheck,
   SlidersHorizontal,
   Storefront,
   Tag,
@@ -276,69 +274,6 @@ function MiniBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
   );
 }
 
-function MarketHero({ total, services, targetLabel, onSell }: { total: number; services: number; targetLabel: string; onSell: () => void }) {
-  const { colors, font } = useTheme();
-  return (
-    <View style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: colors.surface, marginBottom: 14 }}>
-      <LinearGradient
-        colors={[`${colors.accent}42`, `${colors.accent}14`, 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      <View style={{ padding: 18, gap: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: `${colors.accent}22`, alignItems: 'center', justifyContent: 'center' }}>
-            <Storefront color={colors.accent} size={25} weight="bold" />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 33 }]}>
-              Buy what helps. Sell what others need.
-            </Text>
-          </View>
-        </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <HeroStat value={String(total)} label="active" />
-          <HeroStat value={String(services)} label="services" />
-          <HeroStat value={targetLabel} label="target" />
-        </View>
-        <AnimatedPressable
-          onPress={onSell}
-          depth="medium"
-          haptic="medium"
-          style={{
-            minHeight: 46,
-            borderRadius: 16,
-            backgroundColor: colors.accent,
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'row',
-            gap: 8,
-          }}
-        >
-          <Plus color="#fff" size={18} weight="bold" />
-          <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>Sell something</Text>
-        </AnimatedPressable>
-      </View>
-    </View>
-  );
-}
-
-function HeroStat({ value, label }: { value: string; label: string }) {
-  const { colors, font } = useTheme();
-  return (
-    <View style={{ minWidth: 86, flex: 1, borderRadius: 16, backgroundColor: colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 10 }}>
-      <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>
-        {value}
-      </Text>
-      <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 2 }]} numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 function SectionHeader({ title, caption, actionLabel, onAction }: { title: string; caption?: string; actionLabel?: string; onAction?: () => void }) {
   const { colors, font } = useTheme();
   return (
@@ -360,27 +295,6 @@ function SectionHeader({ title, caption, actionLabel, onAction }: { title: strin
           </Text>
         </Pressable>
       ) : null}
-    </View>
-  );
-}
-
-function TrustRow() {
-  const { colors, font } = useTheme();
-  const rows = [
-    { icon: <ShieldCheck color="#10B981" size={17} weight="bold" />, label: 'Profile-first sellers' },
-    { icon: <CheckCircle color="#3B82F6" size={17} weight="bold" />, label: 'DM before deal' },
-    { icon: <Truck color="#F59E0B" size={17} weight="bold" />, label: 'Pickup or shipping' },
-  ];
-  return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-      {rows.map(row => (
-        <View key={row.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, paddingHorizontal: 10, paddingVertical: 7 }}>
-          {row.icon}
-          <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 11 }]}>
-            {row.label}
-          </Text>
-        </View>
-      ))}
     </View>
   );
 }
@@ -547,16 +461,8 @@ export default function MarketplaceScreen() {
     return source.slice(0, 5);
   }, [sortedListings, targetMatches]);
 
-  const serviceCount = listings.filter(item => item.condition === 'Service').length;
   const header = (
     <View style={{ paddingHorizontal: CARD_H_PADDING, paddingTop: 12 }}>
-      <MarketHero
-        total={listings.length}
-        services={serviceCount}
-        targetLabel={targetCategory.label}
-        onSell={() => router.push('/create-listing' as Href)}
-      />
-      <TrustRow />
       <View style={{
         flexDirection: 'row',
         alignItems: 'center',
