@@ -210,11 +210,25 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
                   <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '700' }}>{picked.name}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{qty} × {picked.serving}</Text>
                 </View>
-                <AnimatedPressable onPress={() => applyFood(picked, Math.max(0.5, qty - 0.5))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)', borderRadius: 10, padding: 8 }}>
+                <AnimatedPressable onPress={() => applyFood(picked, Math.max(0.25, Math.round((qty - 0.5) * 100) / 100))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)', borderRadius: 10, padding: 8 }}>
                   <Minus color={colors.text} size={14} weight="bold" />
                 </AnimatedPressable>
-                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginHorizontal: 12, fontVariant: ['tabular-nums'] }}>{qty}</Text>
-                <AnimatedPressable onPress={() => applyFood(picked, qty + 0.5)} scaleValue={0.85} haptic="light" style={{ backgroundColor: TEAL, borderRadius: 10, padding: 8 }}>
+                {/* Custom quantity — type any exact multiplier; keyed to qty so
+                    the +/- buttons re-sync it, blur/done applies what you typed. */}
+                <TextInput
+                  key={`qty-${picked.id}-${qty}`}
+                  defaultValue={String(qty)}
+                  onEndEditing={(e) => {
+                    const n = parseFloat(e.nativeEvent.text.replace(/[^0-9.]/g, ''));
+                    applyFood(picked, Number.isFinite(n) && n > 0 ? n : 1);
+                  }}
+                  keyboardType="decimal-pad"
+                  returnKeyType="done"
+                  selectTextOnFocus
+                  accessibilityLabel="Quantity"
+                  style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginHorizontal: 6, minWidth: 44, textAlign: 'center', fontVariant: ['tabular-nums'], paddingVertical: 4 }}
+                />
+                <AnimatedPressable onPress={() => applyFood(picked, Math.round((qty + 0.5) * 100) / 100)} scaleValue={0.85} haptic="light" style={{ backgroundColor: TEAL, borderRadius: 10, padding: 8 }}>
                   <Plus color="#fff" size={14} weight="bold" />
                 </AnimatedPressable>
               </View>
