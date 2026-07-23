@@ -99,6 +99,19 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
   const [picked, setPicked] = useState<FoodItem | null>(null);
   const [qty, setQty] = useState(1);
   const [saveToFoods, setSaveToFoods] = useState(false);
+  const [fiber, setFiber] = useState('');
+  const [sugar, setSugar] = useState('');
+  const [note, setNote] = useState('');
+  const [showMore, setShowMore] = useState(false);
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const [mealDate, setMealDate] = useState(todayIso);
+  // The last 7 calendar days as quick day-picker chips.
+  const dayOptions = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const iso = d.toISOString().slice(0, 10);
+    const label = i === 0 ? 'Today' : i === 1 ? 'Yesterday' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+    return { iso, label };
+  });
   // Your foods rank above the built-in database.
   const q = search.trim().toLowerCase();
   const customHits: FoodItem[] = q
@@ -128,9 +141,14 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
         calories: cal, protein: num(protein), carbs: num(carbs), fat: num(fat),
       });
     }
+    const date = mealDate === todayIso ? new Date().toISOString() : new Date(`${mealDate}T12:00:00`).toISOString();
     onAdd({
       id: Date.now().toString(), name: name.trim(), kind, calories: cal,
-      protein: num(protein), carbs: num(carbs), fat: num(fat), date: new Date().toISOString(),
+      protein: num(protein), carbs: num(carbs), fat: num(fat),
+      ...(num(fiber) > 0 ? { fiber: num(fiber) } : {}),
+      ...(num(sugar) > 0 ? { sugar: num(sugar) } : {}),
+      ...(note.trim() ? { note: note.trim() } : {}),
+      date,
     });
     onClose();
   };
@@ -235,6 +253,38 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
                 </AnimatedPressable>
               </View>
             )}
+            {picked && (
+              <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                {[0.25, 0.5, 1, 1.5, 2, 3].map(p => {
+                  const active = qty === p;
+                  const label = p === 0.25 ? '¼' : p === 0.5 ? '½' : p === 1.5 ? '1½' : `${p}×`;
+                  return (
+                    <Pressable key={p} onPress={() => applyFood(picked, p)} style={{ flex: 1, minWidth: 44 }} accessibilityRole="button" accessibilityLabel={`Portion ${label}`}>
+                      <View style={{ paddingVertical: 8, borderRadius: 10, alignItems: 'center', backgroundColor: active ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                        <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{label}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+
+          {/* Day — log a meal for today or a recent day. */}
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }}>DAY</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {dayOptions.map(d => {
+                const active = mealDate === d.iso;
+                return (
+                  <Pressable key={d.iso} onPress={() => setMealDate(d.iso)} accessibilityRole="button" accessibilityLabel={d.label}>
+                    <View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: active ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{d.label}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
           </View>
 
           <Field label="MEAL" value={name} onChange={setName} placeholder="e.g. Paneer wrap, Oats + banana" />
@@ -256,6 +306,24 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
             <Field label="CARBS (g)" value={carbs} onChange={setCarbs} placeholder="0" keyboard="decimal-pad" />
             <Field label="FAT (g)" value={fat} onChange={setFat} placeholder="0" keyboard="decimal-pad" />
           </View>
+
+          {/* More detail — optional fiber / sugar / note. */}
+          <Pressable onPress={() => setShowMore(v => !v)} accessibilityRole="button">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {showMore ? <CaretUp color={TEAL} size={14} weight="bold" /> : <CaretDown color={TEAL} size={14} weight="bold" />}
+              <Text style={{ color: TEAL, fontSize: 12.5, fontWeight: '700' }}>{showMore ? 'Hide extra detail' : 'Add fiber, sugar, or a note'}</Text>
+            </View>
+          </Pressable>
+          {showMore && (
+            <>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Field label="FIBER (g)" value={fiber} onChange={setFiber} placeholder="0" keyboard="decimal-pad" />
+                <Field label="SUGAR (g)" value={sugar} onChange={setSugar} placeholder="0" keyboard="decimal-pad" />
+              </View>
+              <Field label="NOTE" value={note} onChange={setNote} placeholder="e.g. post-workout, home-cooked, extra cheese" />
+            </>
+          )}
+
           {!picked && name.trim().length > 0 && (
             <Pressable onPress={() => setSaveToFoods(v => !v)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

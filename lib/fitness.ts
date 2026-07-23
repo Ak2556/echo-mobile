@@ -15,6 +15,10 @@ export interface Meal {
   protein: number;
   carbs: number;
   fat: number;
+  /** optional extra detail */
+  fiber?: number;
+  sugar?: number;
+  note?: string;
   date: string;
 }
 
