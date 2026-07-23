@@ -87,7 +87,10 @@ function FoodRow({ food, fav, onTap, onStar }: { food: FoodItem; fav: boolean; o
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
       <Pressable onPress={onTap} style={{ flex: 1, minWidth: 0 }} accessibilityRole="button" accessibilityLabel={`Add ${food.name}`}>
-        <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600' }} numberOfLines={1}>{food.name}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600', flexShrink: 1 }} numberOfLines={1}>{food.name}</Text>
+          {food.tags?.includes('online') ? <Globe color={colors.textMuted} size={12} weight="bold" /> : null}
+        </View>
         <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{food.serving} · P {food.protein}g · C {food.carbs}g · F {food.fat}g</Text>
         {(food.fiber != null || food.sugar != null || food.sodium != null) ? (
           <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 1 }} numberOfLines={1}>
@@ -150,7 +153,13 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
     ? customFoods.filter(f => `${f.name} ${f.serving}`.toLowerCase().includes(q)).slice(0, 6)
     : activeFoodGroup === 'quick' ? customFoods.slice(0, 4) : [];
   const builtInHits = q ? searchFoods(search, 18) : foodsForGroup(activeFoodGroup, 16);
-  const results = picked ? [] : [...customHits, ...builtInHits.filter(f => !customHits.some(c => c.id === f.id))].slice(0, 18);
+  const localHits = [...customHits, ...builtInHits.filter(f => !customHits.some(c => c.id === f.id))];
+  // One unified list: your foods + built-in catalog first, then online (Open
+  // Food Facts) results filling the tail, de-duped by name so a curated match
+  // always wins over the crowd-sourced one.
+  const localNames = new Set(localHits.map(f => f.name.trim().toLowerCase()));
+  const onlineExtra = q ? online.filter(f => !localNames.has(f.name.trim().toLowerCase())) : [];
+  const results = picked ? [] : [...localHits, ...onlineExtra].slice(0, 30);
 
   // Starred foods (from the built-in DB or your saved foods), for quick access.
   const favoriteFoods: FoodItem[] = favoriteIds
@@ -317,9 +326,12 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
               </View>
             )}
 
-            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 10, marginBottom: 2 }}>
-              {q ? `${results.length} matches` : `${FOOD_GROUPS.find(g => g.id === activeFoodGroup)?.label ?? 'Quick'} picks`}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, marginBottom: 2 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                {q ? `${results.length} ${results.length === 1 ? 'match' : 'matches'}` : `${FOOD_GROUPS.find(g => g.id === activeFoodGroup)?.label ?? 'Quick'} picks`}
+              </Text>
+              {onlineLoading ? <ActivityIndicator size="small" color={TEAL} /> : null}
+            </View>
             {results.map(food => (
               <FoodRow
                 key={food.id}
@@ -329,32 +341,19 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                 onStar={() => onToggleFavorite(food.id)}
               />
             ))}
-            {!picked && q.length >= 3 && (
-              <View style={{ marginTop: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <Globe color={colors.textMuted} size={13} weight="bold" />
-                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>ONLINE · OPEN FOOD FACTS</Text>
-                  {onlineLoading ? <ActivityIndicator size="small" color={TEAL} style={{ marginLeft: 4 }} /> : null}
-                </View>
-                {online.map(food => (
-                  <FoodRow
-                    key={food.id}
-                    food={food}
-                    fav={favoriteIds.includes(food.id)}
-                    onTap={() => applyFood(food, 1)}
-                    onStar={() => onToggleFavorite(food.id)}
-                  />
-                ))}
-                {!onlineLoading && online.length === 0 ? (
-                  <Text style={{ color: colors.textMuted, fontSize: 12, paddingVertical: 8 }}>No online matches — offline or nothing found.</Text>
-                ) : null}
-              </View>
-            )}
             {!picked && q.length > 0 && q.length < 3 && results.length === 0 && (
               <View style={{ paddingVertical: 18, alignItems: 'center' }}>
                 <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>Keep typing…</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
-                  Type 3+ letters to also search millions of foods online.
+                  Type 3+ letters to search millions of foods online too.
+                </Text>
+              </View>
+            )}
+            {!picked && q.length >= 3 && !onlineLoading && results.length === 0 && (
+              <View style={{ paddingVertical: 18, alignItems: 'center' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>No matches</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+                  Nothing found offline or online — enter calories/macros below and save it to My foods.
                 </Text>
               </View>
             )}
