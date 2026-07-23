@@ -422,7 +422,7 @@ export default function DiscoverScreen() {
   // stretching edge to edge. Masonry stays only for wide desktop web; the
   // header shares the same width so everything aligns.
   const useMasonry = layout.isDesktop;
-  const feedMaxWidth = layout.isDesktop ? layout.wideMaxWidth : layout.isTablet ? 680 : layout.width;
+  const feedMaxWidth = layout.isDesktop ? layout.wideMaxWidth : layout.width;
   const feedContainerStyle = {
     width: '100%' as const,
     maxWidth: feedMaxWidth,
