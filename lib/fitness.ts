@@ -75,6 +75,62 @@ export interface FitnessGoals {
   workoutsPerWeek: number;
 }
 
+export type Sex = 'male' | 'female';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'athlete';
+export type GoalType = 'lose' | 'maintain' | 'gain';
+export type WeightUnit = 'kg' | 'lb';
+export type HeightUnit = 'cm' | 'ft';
+export type WaterUnit = 'ml' | 'oz';
+
+/** Body profile, goal, units and reminder prefs — everything that shapes the
+ *  daily targets and how they're displayed. */
+export interface FitnessSettings {
+  sex: Sex;
+  age: number;
+  heightCm: number;
+  activity: ActivityLevel;
+  goalType: GoalType;
+  targetWeightKg: number | null;
+  /** derive the calorie + macro goals from the profile instead of manual entry */
+  autoCalories: boolean;
+  units: { weight: WeightUnit; height: HeightUnit; water: WaterUnit };
+  reminders: { meals: boolean; water: boolean; workout: boolean };
+}
+
+export const ACTIVITY_LABELS: { id: ActivityLevel; label: string; factor: number; hint: string }[] = [
+  { id: 'sedentary', label: 'Sedentary', factor: 1.2, hint: 'Little exercise' },
+  { id: 'light', label: 'Light', factor: 1.375, hint: '1–3 days/wk' },
+  { id: 'moderate', label: 'Moderate', factor: 1.55, hint: '3–5 days/wk' },
+  { id: 'active', label: 'Active', factor: 1.725, hint: '6–7 days/wk' },
+  { id: 'athlete', label: 'Athlete', factor: 1.9, hint: 'Twice daily' },
+];
+
+export const DEFAULT_SETTINGS: FitnessSettings = {
+  sex: 'male',
+  age: 28,
+  heightCm: 170,
+  activity: 'moderate',
+  goalType: 'maintain',
+  targetWeightKg: null,
+  autoCalories: false,
+  units: { weight: 'kg', height: 'cm', water: 'ml' },
+  reminders: { meals: false, water: false, workout: false },
+};
+
+/** Mifflin-St Jeor BMR → TDEE → goal-adjusted calorie & macro targets. */
+export function computeTargets(settings: FitnessSettings, weightKg: number): FitnessGoals {
+  const kg = weightKg > 0 ? weightKg : (settings.targetWeightKg ?? 70);
+  const bmr = 10 * kg + 6.25 * settings.heightCm - 5 * settings.age + (settings.sex === 'male' ? 5 : -161);
+  const factor = ACTIVITY_LABELS.find(a => a.id === settings.activity)?.factor ?? 1.55;
+  const tdee = bmr * factor;
+  const adjust = settings.goalType === 'lose' ? -500 : settings.goalType === 'gain' ? 400 : 0;
+  const calories = Math.max(1200, Math.round((tdee + adjust) / 10) * 10);
+  const protein = Math.round(kg * (settings.goalType === 'lose' ? 2.2 : 1.8));
+  const fat = Math.round((calories * 0.25) / 9);
+  const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4));
+  return { calories, protein, carbs, fat, waterMl: Math.max(2000, Math.round(kg * 35 / 100) * 100), workoutsPerWeek: 4 };
+}
+
 /** A saved workout template — the thing you actually follow along. */
 export interface Routine {
   id: string;
@@ -104,6 +160,7 @@ export interface FitnessDoc {
   routines: Routine[];
   customFoods: CustomFood[];
   goals: FitnessGoals;
+  settings: FitnessSettings;
 }
 
 export const MEAL_KINDS: { kind: MealKind; label: string }[] = [
@@ -115,7 +172,7 @@ export const MEAL_KINDS: { kind: MealKind; label: string }[] = [
 
 export const DEFAULT_GOALS: FitnessGoals = { calories: 2200, protein: 120, carbs: 250, fat: 70, waterMl: 2500, workoutsPerWeek: 4 };
 
-const EMPTY: FitnessDoc = { meals: [], workouts: [], weights: [], water: [], measurements: [], routines: [], customFoods: [], goals: DEFAULT_GOALS };
+const EMPTY: FitnessDoc = { meals: [], workouts: [], weights: [], water: [], measurements: [], routines: [], customFoods: [], goals: DEFAULT_GOALS, settings: DEFAULT_SETTINGS };
 
 function goalOr(v: unknown, fallback: number): number {
   return Number(v) > 0 ? Number(v) : fallback;
@@ -139,6 +196,31 @@ function normalizeDoc(raw: unknown): FitnessDoc {
       fat: goalOr(doc.goals?.fat, DEFAULT_GOALS.fat),
       waterMl: goalOr(doc.goals?.waterMl, DEFAULT_GOALS.waterMl),
       workoutsPerWeek: Math.min(7, goalOr(doc.goals?.workoutsPerWeek, DEFAULT_GOALS.workoutsPerWeek)),
+    },
+    settings: normalizeSettings(doc.settings),
+  };
+}
+
+function normalizeSettings(raw: Partial<FitnessSettings> | undefined): FitnessSettings {
+  const s = raw ?? {};
+  const d = DEFAULT_SETTINGS;
+  return {
+    sex: s.sex === 'female' ? 'female' : 'male',
+    age: Number(s.age) > 0 && Number(s.age) < 120 ? Math.round(Number(s.age)) : d.age,
+    heightCm: Number(s.heightCm) > 60 && Number(s.heightCm) < 250 ? Math.round(Number(s.heightCm)) : d.heightCm,
+    activity: ACTIVITY_LABELS.some(a => a.id === s.activity) ? (s.activity as ActivityLevel) : d.activity,
+    goalType: (['lose', 'maintain', 'gain'] as const).includes(s.goalType as GoalType) ? (s.goalType as GoalType) : d.goalType,
+    targetWeightKg: Number(s.targetWeightKg) > 0 ? Number(s.targetWeightKg) : null,
+    autoCalories: !!s.autoCalories,
+    units: {
+      weight: s.units?.weight === 'lb' ? 'lb' : 'kg',
+      height: s.units?.height === 'ft' ? 'ft' : 'cm',
+      water: s.units?.water === 'oz' ? 'oz' : 'ml',
+    },
+    reminders: {
+      meals: !!s.reminders?.meals,
+      water: !!s.reminders?.water,
+      workout: !!s.reminders?.workout,
     },
   };
 }

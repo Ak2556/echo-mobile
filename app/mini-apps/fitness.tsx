@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
-  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, ScrollView,
+  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, ScrollView, Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -18,10 +18,12 @@ import { showToast } from '../../components/ui/Toast';
 import {
   FitnessDoc, Meal, MealKind, MEAL_KINDS, Workout, WorkoutExercise, WeightEntry,
   MeasurementEntry, MEASUREMENT_FIELDS, Routine, CustomFood,
+  FitnessSettings, FitnessGoals, Sex, ActivityLevel, GoalType, ACTIVITY_LABELS, computeTargets,
   loadFitness, saveFitness, todayMealTotals, todayWaterMl, workoutVolume, isSameDay,
   liftHistory, est1RM, weeklySummaries, monthlySummaries,
   thisWeekWorkoutCount, weeklyStreak, detectPRs,
 } from '../../lib/fitness';
+import { syncFitnessReminders } from '../../lib/fitnessReminders';
 import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
 import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
 import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods } from '../../lib/foodDatabase';
@@ -278,46 +280,146 @@ function AddMealModal({ customFoods, onAdd, onSaveFood, onClose }: {
   );
 }
 
-// ── Edit goals ───────────────────────────────────────────────────────────────
+// ── Fitness settings (profile, goal, targets, units, reminders) ──────────────
 
-function GoalsModal({ doc, onSave, onClose }: { doc: FitnessDoc; onSave: (goals: FitnessDoc['goals']) => void; onClose: () => void }) {
+function SectionLabel({ children }: { children: string }) {
   const { colors } = useTheme();
+  return <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 }}>{children}</Text>;
+}
+
+function Seg<T extends string | number>({ label, value, options, onChange }: { label?: string; value: T; options: { v: T; label: string; hint?: string }[]; onChange: (v: T) => void }) {
+  const { colors } = useTheme();
+  return (
+    <View>
+      {label ? <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }}>{label}</Text> : null}
+      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+        {options.map(o => {
+          const active = o.v === value;
+          return (
+            <Pressable key={String(o.v)} onPress={() => onChange(o.v)} style={{ flex: 1, minWidth: 64 }}>
+              <View style={{ paddingVertical: 10, paddingHorizontal: 6, borderRadius: 12, alignItems: 'center', backgroundColor: active ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{o.label}</Text>
+                {o.hint ? <Text style={{ color: active ? 'rgba(255,255,255,0.8)' : colors.textMuted, fontSize: 9.5, marginTop: 1 }} numberOfLines={1}>{o.hint}</Text> : null}
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function ToggleRow({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 }}>
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>{label}</Text>
+        {hint ? <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{hint}</Text> : null}
+      </View>
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: TEAL, false: colors.border }} />
+    </View>
+  );
+}
+
+function SettingsModal({ doc, weightKg, onSave, onClose }: {
+  doc: FitnessDoc;
+  weightKg: number;
+  onSave: (settings: FitnessSettings, goals: FitnessGoals) => void;
+  onClose: () => void;
+}) {
+  const { colors } = useTheme();
+  const s0 = doc.settings;
+  const [sex, setSex] = useState<Sex>(s0.sex);
+  const [age, setAge] = useState(String(s0.age));
+  const [height, setHeight] = useState(String(s0.heightCm));
+  const [activity, setActivity] = useState<ActivityLevel>(s0.activity);
+  const [goalType, setGoalType] = useState<GoalType>(s0.goalType);
+  const [targetW, setTargetW] = useState(s0.targetWeightKg ? String(s0.targetWeightKg) : '');
+  const [auto, setAuto] = useState(s0.autoCalories);
+  const [wUnit, setWUnit] = useState(s0.units.weight);
+  const [hUnit, setHUnit] = useState(s0.units.height);
+  const [waterUnit, setWaterUnit] = useState(s0.units.water);
+  const [remMeals, setRemMeals] = useState(s0.reminders.meals);
+  const [remWater, setRemWater] = useState(s0.reminders.water);
+  const [remWorkout, setRemWorkout] = useState(s0.reminders.workout);
   const [cal, setCal] = useState(String(doc.goals.calories));
   const [protein, setProtein] = useState(String(doc.goals.protein));
   const [carbs, setCarbs] = useState(String(doc.goals.carbs));
   const [fat, setFat] = useState(String(doc.goals.fat));
   const [water, setWater] = useState(String(doc.goals.waterMl));
   const [weekly, setWeekly] = useState(doc.goals.workoutsPerWeek);
+
+  const build = (): FitnessSettings => ({
+    sex, age: num(age), heightCm: num(height), activity, goalType,
+    targetWeightKg: num(targetW) > 0 ? num(targetW) : null, autoCalories: auto,
+    units: { weight: wUnit, height: hUnit, water: waterUnit },
+    reminders: { meals: remMeals, water: remWater, workout: remWorkout },
+  });
+  const preview = computeTargets(build(), weightKg);
+
   const submit = () => {
-    const goals = { calories: num(cal), protein: num(protein), carbs: num(carbs), fat: num(fat), waterMl: num(water), workoutsPerWeek: weekly };
-    if (Object.values(goals).some(v => v <= 0)) { showToast('Enter valid goals', 'Required'); return; }
-    onSave(goals); onClose();
+    const settings = build();
+    if (settings.age <= 0 || settings.heightCm <= 0) { showToast('Add your age and height', 'Required'); return; }
+    const goals = auto
+      ? computeTargets(settings, weightKg)
+      : { calories: num(cal), protein: num(protein), carbs: num(carbs), fat: num(fat), waterMl: num(water), workoutsPerWeek: weekly };
+    if (Object.values(goals).some(v => v <= 0)) { showToast('Enter valid targets', 'Required'); return; }
+    onSave(settings, goals); onClose();
   };
+
   return (
     <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <SheetHeader title="Daily Targets" onClose={onClose} />
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 20 }} keyboardShouldPersistTaps="handled">
-          <Field label="CALORIES (kcal / day)" value={cal} onChange={setCal} keyboard="decimal-pad" autoFocus />
+        <SheetHeader title="Fitness Settings" onClose={onClose} />
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
+          <SectionLabel>Body</SectionLabel>
+          <Seg label="SEX" value={sex} onChange={setSex} options={[{ v: 'male', label: 'Male' }, { v: 'female', label: 'Female' }]} />
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Field label="PROTEIN (g)" value={protein} onChange={setProtein} keyboard="decimal-pad" />
-            <Field label="CARBS (g)" value={carbs} onChange={setCarbs} keyboard="decimal-pad" />
-            <Field label="FAT (g)" value={fat} onChange={setFat} keyboard="decimal-pad" />
+            <Field label="AGE" value={age} onChange={setAge} keyboard="decimal-pad" />
+            <Field label={`HEIGHT (${hUnit})`} value={height} onChange={setHeight} keyboard="decimal-pad" />
           </View>
-          <Field label="WATER (ml / day)" value={water} onChange={setWater} keyboard="decimal-pad" />
-          <View>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }}>WORKOUTS / WEEK</Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {[2, 3, 4, 5, 6].map(n => (
-                <Pressable key={n} onPress={() => setWeekly(n)} style={{ flex: 1 }}>
-                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: weekly === n ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: weekly === n ? 'transparent' : colors.glassBorder }}>
-                    <Text style={{ color: weekly === n ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>{n}</Text>
-                  </View>
-                </Pressable>
+          <Seg label="ACTIVITY LEVEL" value={activity} onChange={setActivity} options={ACTIVITY_LABELS.map(a => ({ v: a.id, label: a.label, hint: a.hint }))} />
+
+          <SectionLabel>Goal</SectionLabel>
+          <Seg label="I WANT TO" value={goalType} onChange={setGoalType} options={[{ v: 'lose', label: 'Lose' }, { v: 'maintain', label: 'Maintain' }, { v: 'gain', label: 'Gain' }]} />
+          <Field label={`TARGET WEIGHT (${wUnit}) — optional`} value={targetW} onChange={setTargetW} keyboard="decimal-pad" />
+
+          <SectionLabel>Daily Targets</SectionLabel>
+          <ToggleRow label="Auto-calculate from my profile" hint={`Estimated: ${preview.calories} kcal · ${preview.protein}p / ${preview.carbs}c / ${preview.fat}f`} value={auto} onChange={setAuto} />
+          {auto ? (
+            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+              {[['Calories', `${preview.calories}`], ['Protein', `${preview.protein}g`], ['Carbs', `${preview.carbs}g`], ['Fat', `${preview.fat}g`], ['Water', `${preview.waterMl}ml`]].map(([l, v]) => (
+                <View key={l} style={{ flexGrow: 1, minWidth: 90, borderRadius: 12, padding: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                  <Text style={{ color: TEAL, fontSize: 18, fontWeight: '800' }}>{v}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 1 }}>{l}</Text>
+                </View>
               ))}
             </View>
-          </View>
-          <SubmitBtn label="Save Targets" onPress={submit} />
+          ) : (
+            <>
+              <Field label="CALORIES (kcal / day)" value={cal} onChange={setCal} keyboard="decimal-pad" />
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Field label="PROTEIN (g)" value={protein} onChange={setProtein} keyboard="decimal-pad" />
+                <Field label="CARBS (g)" value={carbs} onChange={setCarbs} keyboard="decimal-pad" />
+                <Field label="FAT (g)" value={fat} onChange={setFat} keyboard="decimal-pad" />
+              </View>
+              <Field label={`WATER (${waterUnit} / day)`} value={water} onChange={setWater} keyboard="decimal-pad" />
+            </>
+          )}
+          <Seg label="WORKOUTS / WEEK" value={weekly} onChange={setWeekly} options={[2, 3, 4, 5, 6].map(n => ({ v: n, label: String(n) }))} />
+
+          <SectionLabel>Units</SectionLabel>
+          <Seg label="WEIGHT" value={wUnit} onChange={setWUnit} options={[{ v: 'kg', label: 'kg' }, { v: 'lb', label: 'lb' }]} />
+          <Seg label="HEIGHT" value={hUnit} onChange={setHUnit} options={[{ v: 'cm', label: 'cm' }, { v: 'ft', label: 'ft/in' }]} />
+          <Seg label="WATER" value={waterUnit} onChange={setWaterUnit} options={[{ v: 'ml', label: 'ml' }, { v: 'oz', label: 'oz' }]} />
+
+          <SectionLabel>Reminders</SectionLabel>
+          <ToggleRow label="Log your meals" hint="A daily nudge to track what you ate" value={remMeals} onChange={setRemMeals} />
+          <ToggleRow label="Drink water" hint="Gentle reminders through the day" value={remWater} onChange={setRemWater} />
+          <ToggleRow label="Workout" hint="Stay on track with your weekly target" value={remWorkout} onChange={setRemWorkout} />
+
+          <SubmitBtn label="Save Settings" onPress={submit} />
         </ScrollView>
       </View>
     </Modal>
@@ -665,7 +767,7 @@ export default function FitnessApp() {
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> / {doc.goals.calories} kcal</Text>
                 </Text>
               </View>
-              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" style={{ padding: 6 }} accessibilityRole="button" accessibilityLabel="Edit nutrition goals">
+              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" style={{ padding: 6 }} accessibilityRole="button" accessibilityLabel="Fitness settings">
                 <PencilSimple color={colors.textMuted} size={17} />
               </AnimatedPressable>
             </View>
@@ -1159,7 +1261,7 @@ export default function FitnessApp() {
           onClose={() => setActiveRoutine(null)}
         />
       )}
-      {showGoals && <GoalsModal doc={doc} onSave={goals => { update({ ...doc, goals }); showToast('Targets updated', 'Saved'); }} onClose={() => setShowGoals(false)} />}
+      {showGoals && <SettingsModal doc={doc} weightKg={sortedWeights[0]?.kg ?? 0} onSave={(settings, goals) => { update({ ...doc, settings, goals }); syncFitnessReminders(settings); showToast('Settings saved', 'Saved'); }} onClose={() => setShowGoals(false)} />}
       {showMeasure && <MeasurementModal latest={latestMeasure} onAdd={m => { update({ ...doc, measurements: [m, ...doc.measurements] }); showToast('Measurements logged', 'Saved'); }} onClose={() => setShowMeasure(false)} />}
     </MiniAppShell>
   );
