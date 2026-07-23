@@ -5,12 +5,17 @@
 
 import { supabase } from './supabase';
 import { isSupabaseRemote } from './remoteConfig';
+import { coalesce } from './coalesce';
 import type { ExpensesDoc } from './expenses';
 
 const day = (s: string) => (s || new Date().toISOString()).slice(0, 10);
 const csv = (v: string) => `"${v.replace(/"/g, '""')}"`;
 
 export function pushExpensesStructured(doc: ExpensesDoc): void {
+  coalesce('expenses', doc, flushExpenses);
+}
+
+function flushExpenses(doc: ExpensesDoc): void {
   void (async () => {
     try {
       if (!isSupabaseRemote()) return;

@@ -6,6 +6,7 @@
 
 import { supabase } from './supabase';
 import { isSupabaseRemote } from './remoteConfig';
+import { coalesce } from './coalesce';
 import type { Habit } from './habits';
 
 export interface HabitStat {
@@ -18,6 +19,10 @@ export interface HabitStat {
 
 /** Push the full habits set to the structured tables and reconcile deletions. */
 export function pushHabitsStructured(habits: Habit[]): void {
+  coalesce('habits', habits, flushHabits);
+}
+
+function flushHabits(habits: Habit[]): void {
   void (async () => {
     try {
       if (!isSupabaseRemote()) return;
