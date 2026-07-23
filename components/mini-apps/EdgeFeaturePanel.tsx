@@ -1,13 +1,14 @@
-import React from 'react';
-import { Share, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, UsersThree, type Icon } from 'phosphor-react-native';
+import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, Sparkle, UsersThree, X, type Icon } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
 import { createNote } from '../../lib/notes';
 import { miniAppSnapshotText } from '../../lib/miniAppIntegration';
+import { askMiniAppCoach, coachAppFor } from '../../lib/miniAppCoach';
 
 interface EdgeFeaturePanelProps {
   appId?: string;
@@ -65,6 +66,26 @@ export function EdgeFeaturePanel({
   const openTargetProgress = () => router.push('/target-progress' as Href);
   const openEcho = () => router.push('/chat' as Href);
 
+  // For the four structured apps, "Ask Echo" pulls real data-grounded coaching
+  // from the mini-app-coach edge function and shows it inline; anything else
+  // falls back to opening chat.
+  const coachApp = coachAppFor(appId ?? appName);
+  const [coaching, setCoaching] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const onAskEcho = () => {
+    if (!coachApp) {
+      if (prompt) showToast('Open Echo Chat and paste the coaching prompt', prompt.slice(0, 48));
+      openEcho();
+      return;
+    }
+    setLoading(true);
+    askMiniAppCoach(coachApp)
+      .then(res => setCoaching(res.coaching))
+      .catch(() => { openEcho(); })
+      .finally(() => setLoading(false));
+  };
+
   const secondary: { label: string; a11y: string; Icon: Icon; onPress: () => void }[] = [
     { label: 'Note', a11y: 'Save a snapshot to Notes', Icon: NotePencil, onPress: saveSnapshot },
     { label: 'Share', a11y: 'Share progress', Icon: ShareNetwork, onPress: shareProgress },
@@ -81,13 +102,11 @@ export function EdgeFeaturePanel({
     >
       {/* Primary — Ask Echo. Layout lives on the inner View so it can't drop. */}
       <AnimatedPressable
-        onPress={() => {
-          if (prompt) showToast('Open Echo Chat and paste the coaching prompt', prompt.slice(0, 48));
-          openEcho();
-        }}
+        onPress={onAskEcho}
         haptic="medium"
         accessibilityRole="button"
         accessibilityLabel="Ask Echo to coach you"
+        disabled={loading}
       >
         <View style={{
           flexDirection: 'row',
@@ -99,8 +118,10 @@ export function EdgeFeaturePanel({
           backgroundColor: accent,
         }}>
           <ChatCircleText color="#fff" size={17} weight="fill" />
-          <Text style={[font.bodyBold, { color: '#fff', fontSize: 14.5, flex: 1 }]} numberOfLines={1}>Ask Echo about {appName}</Text>
-          <ArrowUpRight color="#fff" size={15} weight="bold" />
+          <Text style={[font.bodyBold, { color: '#fff', fontSize: 14.5, flex: 1 }]} numberOfLines={1}>
+            {loading ? `Reading your ${appName.toLowerCase()}…` : `Ask Echo about ${appName}`}
+          </Text>
+          {loading ? <ActivityIndicator color="#fff" size="small" /> : <ArrowUpRight color="#fff" size={15} weight="bold" />}
         </View>
       </AnimatedPressable>
 
@@ -133,6 +154,29 @@ export function EdgeFeaturePanel({
           </View>
         ))}
       </View>
+
+      {/* Coaching result — grounded in the user's real numbers. */}
+      <Modal visible={!!coaching} transparent animationType="fade" onRequestClose={() => setCoaching(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }} onPress={() => setCoaching(null)}>
+          <Pressable style={{ backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, paddingBottom: 40 }} onPress={() => {}}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 18 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 12 }}>
+              <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
+                <Sparkle color={accent} size={18} weight="fill" />
+              </View>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>Echo on your {appName.toLowerCase()}</Text>
+              <Pressable onPress={() => setCoaching(null)} hitSlop={10}><X color={colors.textMuted} size={20} weight="bold" /></Pressable>
+            </View>
+            <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, lineHeight: 22 }]}>{coaching}</Text>
+            <AnimatedPressable onPress={() => { setCoaching(null); openEcho(); }} haptic="light" accessibilityRole="button" accessibilityLabel="Continue in chat">
+              <View style={{ marginTop: 18, borderRadius: 14, paddingVertical: 13, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: accent }}>
+                <ChatCircleText color="#fff" size={16} weight="fill" />
+                <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>Continue in chat</Text>
+              </View>
+            </AnimatedPressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </GlassPanel>
   );
 }

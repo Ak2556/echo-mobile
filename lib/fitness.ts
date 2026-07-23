@@ -148,7 +148,9 @@ export async function loadFitness(): Promise<FitnessDoc> {
     await AsyncStorage.setItem(FITNESS_KEY, JSON.stringify(remote));
   }
   try {
-    return normalizeDoc(JSON.parse((await AsyncStorage.getItem(FITNESS_KEY)) ?? 'null'));
+    const doc = normalizeDoc(JSON.parse((await AsyncStorage.getItem(FITNESS_KEY)) ?? 'null'));
+    pushFitnessStructured(doc); // backfill structured tables for existing users
+    return doc;
   } catch {
     return { ...EMPTY };
   }
