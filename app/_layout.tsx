@@ -25,7 +25,12 @@ import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
+import { enableFreeze } from 'react-native-screens';
 import '../global.css';
+
+// Freeze off-screen screens (inactive tabs + background stack entries) so they
+// stop re-rendering while hidden — keeps the foreground screen smoother.
+enableFreeze(true);
 
 LogBox.ignoreLogs(['[expo-notifications] Error reading persisted server registration info']);
 

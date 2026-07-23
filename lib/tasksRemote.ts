@@ -4,11 +4,16 @@
 
 import { supabase } from './supabase';
 import { isSupabaseRemote } from './remoteConfig';
+import { coalesce } from './coalesce';
 import type { TaskItem } from './tasks';
 
 const csv = (v: string) => `"${v.replace(/"/g, '""')}"`;
 
 export function pushTasksStructured(tasks: TaskItem[]): void {
+  coalesce('tasks', tasks, flushTasks);
+}
+
+function flushTasks(tasks: TaskItem[]): void {
   void (async () => {
     try {
       if (!isSupabaseRemote()) return;
