@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SealCheck } from 'phosphor-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
-import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
 import { showToast } from '../ui/Toast';
 import { User } from '../../types';
@@ -55,21 +54,23 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
   };
 
   return (
-    <AnimatedPressable
+    <Pressable
       onPress={onPress}
-      className="flex-row items-center px-4 py-3"
-      style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border }}
-      scaleValue={0.98}
-      haptic="light"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
+      }}
     >
       {showAvatars && (
-        <AnimatedPressable
+        <Pressable
           onPress={(e) => { e.stopPropagation?.(); openProfile(); }}
           accessibilityRole="button"
           accessibilityLabel={`Open ${user.displayName}'s profile`}
-          className="mr-3"
-          scaleValue={0.9}
-          haptic="light"
+          style={{ marginRight: 12 }}
         >
           <Avatar
             name={user.displayName || user.username}
@@ -78,15 +79,15 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
             size={44}
             zoomable={false}
           />
-        </AnimatedPressable>
+        </Pressable>
       )}
 
-      <View className="flex-1">
-        <View className="flex-row items-center gap-1">
-          <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>{user.displayName}</Text>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }} numberOfLines={1}>{user.displayName}</Text>
           {user.isVerified && <SealCheck color={colors.accent} size={16} weight="fill" />}
         </View>
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{user.username}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }} numberOfLines={1}>@{user.username}</Text>
         {user.bio ? (
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>{user.bio}</Text>
         ) : null}
@@ -94,23 +95,28 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
 
       {showFollowButton && (
         <Animated.View style={btnAnim}>
-          <AnimatedPressable
+          <Pressable
             onPress={(e) => { e.stopPropagation?.(); handleFollow(); }}
-            className="px-4 py-1.5 rounded-full"
+            accessibilityRole="button"
+            accessibilityLabel={following ? `Unfollow ${user.username}` : `Follow ${user.username}`}
             style={{
+              marginLeft: 12,
+              paddingHorizontal: 18,
+              paddingVertical: 8,
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
               backgroundColor: following ? colors.surfaceHover : colors.accent,
-              borderWidth: following ? 1 : 0,
+              borderWidth: following ? StyleSheet.hairlineWidth : 0,
               borderColor: colors.border,
             }}
-            scaleValue={0.92}
-            haptic="medium"
           >
-            <Text style={{ fontSize: fontSizes.small, fontWeight: '600', color: following ? colors.text : '#fff' }}>
+            <Text style={{ fontSize: fontSizes.small, fontWeight: '700', color: following ? colors.text : '#fff' }}>
               {following ? 'Following' : 'Follow'}
             </Text>
-          </AnimatedPressable>
+          </Pressable>
         </Animated.View>
       )}
-    </AnimatedPressable>
+    </Pressable>
   );
 }
