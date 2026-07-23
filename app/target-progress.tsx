@@ -10,8 +10,10 @@ import { useAppStore } from '../store/useAppStore';
 import { getTargetCategory } from '../lib/targetCategories';
 import { getTodayProductivity, type TodayProductivity } from '../lib/localSearch';
 import { buildTargetProgressDigest, type TargetProgressDigest } from '../lib/targetProgress';
+import { fetchCrossAppProgress, type CrossAppProgress } from '../lib/targetProgressRemote';
 import { setPendingPublishContext } from '../lib/publishContext';
 import { IconBadge } from '../components/ui/IconBadge';
+import { CheckCircle, Barbell, Wallet, ListChecks } from 'phosphor-react-native';
 
 export default function TargetProgressScreen() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function TargetProgressScreen() {
   const targetOutcome = useAppStore(s => s.targetOutcome);
   const category = getTargetCategory(targetCategory);
   const [productivity, setProductivity] = useState<TodayProductivity | null>(null);
+  const [cross, setCross] = useState<CrossAppProgress | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -28,6 +31,9 @@ export default function TargetProgressScreen() {
       getTodayProductivity()
         .then(next => { if (mounted) setProductivity(next); })
         .catch(() => { if (mounted) setProductivity(null); });
+      fetchCrossAppProgress()
+        .then(next => { if (mounted) setCross(next); })
+        .catch(() => { if (mounted) setCross(null); });
       return () => { mounted = false; };
     }, []),
   );
@@ -74,6 +80,18 @@ export default function TargetProgressScreen() {
             </Text>
           </View>
         </View>
+
+        {cross ? (
+          <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 12 }]}>Across your tools</Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <CrossStat icon={<CheckCircle color="#7A8B4E" size={16} weight="fill" />} value={`${cross.habitBestStreak}`} label="day streak" />
+              <CrossStat icon={<Barbell color="#4E8B7A" size={16} weight="fill" />} value={`${cross.fitnessWorkoutsWeek}`} label="workouts · wk" />
+              <CrossStat icon={<ListChecks color="#4E7A8B" size={16} weight="fill" />} value={`${cross.tasksOpen}`} label={cross.tasksDueToday ? `open · ${cross.tasksDueToday} due` : 'open tasks'} />
+              <CrossStat icon={<Wallet color="#B08536" size={16} weight="fill" />} value={`${cross.expenseCurrency ?? ''}${Math.round(cross.expenseNetMonth)}`} label="net · mo" />
+            </View>
+          </View>
+        ) : null}
 
         {!digest ? (
           <View style={{ paddingVertical: 60, alignItems: 'center' }}>
@@ -186,6 +204,17 @@ function ActionButton({
         </Text>
       </View>
     </Pressable>
+  );
+}
+
+function CrossStat({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
+  const { colors, font } = useTheme();
+  return (
+    <View style={{ flex: 1, minWidth: 0, borderRadius: 14, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 11 }}>
+      {icon}
+      <Text style={[font.display, { color: colors.text, fontSize: 19, lineHeight: 23, marginTop: 6 }]} numberOfLines={1}>{value}</Text>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: 10.5, marginTop: 1 }]} numberOfLines={1}>{label}</Text>
+    </View>
   );
 }
 
