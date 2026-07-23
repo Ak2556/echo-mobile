@@ -374,12 +374,23 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     </AnimatedPressable>
   );
 
-  // Secondary actions (branch, share) — lighter-weight plain icons so the four
-  // primary social actions read as primary. Everything stays reachable.
+  // Secondary actions (branch, share) — same chip treatment as the primary
+  // actions so the whole row reads as one consistent set; they stay "secondary"
+  // simply by carrying no count. Everything stays reachable.
   const SecondaryAction = ({ icon, onPress, accessibilityLabel }: { icon: React.ReactNode; onPress: (e: any) => void; accessibilityLabel: string }) => (
     <AnimatedPressable
       onPress={onPress}
-      style={{ width: 40, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}
+      style={{
+        width: 42,
+        height: 42,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.surfaceHover,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.glassBorder,
+      }}
+      depth="medium"
       fadeOnPress
       haptic="light"
       performanceMode="hot"
@@ -436,7 +447,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'}
         />
         <SecondaryAction
-          icon={<GitBranch color={colors.textMuted} size={18} weight="bold" />}
+          icon={<GitBranch color={colors.textMuted} size={19} weight="bold" />}
           onPress={(e) => {
             e.stopPropagation?.();
             router.push({
@@ -451,7 +462,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           accessibilityLabel="Add perspective"
         />
         <SecondaryAction
-          icon={<ShareNetwork color={colors.textMuted} size={18} />}
+          icon={<ShareNetwork color={colors.textMuted} size={19} />}
           onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }}
           accessibilityLabel="Share"
         />
