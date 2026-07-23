@@ -9,6 +9,7 @@ import { showToast } from '../ui/Toast';
 import { createNote } from '../../lib/notes';
 import { miniAppSnapshotText } from '../../lib/miniAppIntegration';
 import { askMiniAppCoach, coachAppFor } from '../../lib/miniAppCoach';
+import { CompareSheet } from './CompareSheet';
 
 interface EdgeFeaturePanelProps {
   appId?: string;
@@ -70,8 +71,12 @@ export function EdgeFeaturePanel({
   // from the mini-app-coach edge function and shows it inline; anything else
   // falls back to opening chat.
   const coachApp = coachAppFor(appId ?? appName);
+  const socialApp = coachApp === 'habits' || coachApp === 'fitness' ? coachApp : null;
   const [coaching, setCoaching] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
+
+  const onCompare = () => (socialApp ? setCompareOpen(true) : openTargetProgress());
 
   const onAskEcho = () => {
     if (!coachApp) {
@@ -89,7 +94,7 @@ export function EdgeFeaturePanel({
   const secondary: { label: string; a11y: string; Icon: Icon; onPress: () => void }[] = [
     { label: 'Note', a11y: 'Save a snapshot to Notes', Icon: NotePencil, onPress: saveSnapshot },
     { label: 'Share', a11y: 'Share progress', Icon: ShareNetwork, onPress: shareProgress },
-    { label: 'Compare', a11y: 'Compare consistency', Icon: UsersThree, onPress: openTargetProgress },
+    { label: 'Compare', a11y: 'Compare consistency', Icon: UsersThree, onPress: onCompare },
     { label: 'Post', a11y: 'Post progress as an Echo', Icon: ArrowUpRight, onPress: publish },
   ];
 
@@ -177,6 +182,10 @@ export function EdgeFeaturePanel({
           </Pressable>
         </Pressable>
       </Modal>
+
+      {socialApp ? (
+        <CompareSheet app={socialApp} appName={appName} accent={accent} visible={compareOpen} onClose={() => setCompareOpen(false)} />
+      ) : null}
     </GlassPanel>
   );
 }
