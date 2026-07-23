@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import Animated, {
   FadeIn,
+  FadeOut,
   useSharedValue,
   useAnimatedProps,
   useAnimatedStyle,
@@ -14,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText } from 'phosphor-react-native';
+import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
@@ -44,6 +45,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTutorialTarget } from '../../hooks/useTutorialTarget';
 import { useTutorialStore } from '../../store/tutorialStore';
 import { useI18n, type TranslationKey } from '../../lib/i18n';
+import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/dailyThoughts';
 
 
 const NAV_BAR_HEIGHT = 50;
@@ -89,6 +91,88 @@ function HomeHero({
         {username ? t('home.welcomeBack', { name: username }) : t('home.buildToday')}
       </Text>
     </View>
+  );
+}
+
+/**
+ * A single reflective thought, personalized to the user's interests, shown once
+ * per day. Dismissing it (the ✕) hides it until tomorrow, when a new, never-
+ * repeated thought takes its place. The day's pick is pinned in the store so it
+ * stays stable across re-renders and restarts.
+ */
+function DailyThought() {
+  const { colors, font } = useTheme();
+  const layout = useResponsiveLayout();
+  const interests = useAppStore(s => s.interests);
+  const dailyThought = useAppStore(s => s.dailyThought);
+  const setDailyThought = useAppStore(s => s.setDailyThought);
+  const seenThoughtIds = useAppStore(s => s.seenThoughtIds);
+  const setSeenThoughtIds = useAppStore(s => s.setSeenThoughtIds);
+  const dismissedOn = useAppStore(s => s.dailyThoughtDismissedOn);
+  const dismissDailyThought = useAppStore(s => s.dismissDailyThought);
+  const key = todayKey();
+  const assignedRef = useRef<string | null>(null);
+
+  // Today's pinned pick if we already chose one; otherwise a fresh pick so the
+  // card renders immediately (the effect below persists the choice).
+  const active = useMemo(() => {
+    if (dailyThought?.dayKey === key) {
+      const pinned = thoughtById(dailyThought.id);
+      if (pinned) return pinned;
+    }
+    return pickThought({ interests, seenIds: seenThoughtIds });
+  }, [dailyThought, key, interests, seenThoughtIds]);
+
+  // On a new day, pin the pick and mark it seen (starting a fresh cycle once the
+  // whole pool has been shown). Runs at most once per day.
+  useEffect(() => {
+    if (dailyThought?.dayKey === key || assignedRef.current === key) return;
+    assignedRef.current = key;
+    const nextSeen = seenThoughtIds.includes(active.id) ? seenThoughtIds : [...seenThoughtIds, active.id];
+    setSeenThoughtIds(nextSeen.length >= DAILY_THOUGHTS.length ? [active.id] : nextSeen);
+    setDailyThought({ dayKey: key, id: active.id });
+  }, [key, dailyThought, active, seenThoughtIds, setSeenThoughtIds, setDailyThought]);
+
+  if (dismissedOn === key) return null;
+
+  return (
+    <Animated.View
+      entering={FadeIn.duration(260)}
+      exiting={FadeOut.duration(180)}
+      style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 4 : 2, marginBottom: 12 }}
+    >
+      <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+        <LinearGradient
+          colors={[`${colors.accent}22`, `${colors.accent}0A`, 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <View style={{ padding: 18 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+              <Sparkle color={colors.accent} size={14} weight="fill" />
+              <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase' }]}>
+                Thought for today
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => dismissDailyThought(key)}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss today's thought"
+              style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+            >
+              <X color={colors.textMuted} size={16} weight="bold" />
+            </Pressable>
+          </View>
+          <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 17.5 : 20, lineHeight: layout.isPhone ? 24 : 27 }]}>
+            {active.text}
+          </Text>
+        </View>
+      </View>
+    </Animated.View>
   );
 }
 
@@ -341,6 +425,8 @@ export default function DiscoverScreen() {
         username={username}
         t={t}
       />
+      {/* A single interest-tuned thought, once a day, dismissible with ✕. */}
+      {!focusedHome && <DailyThought />}
       {/* New users get ONE clear next action instead of three competing cards
           (old checklist + first-echo coach + daily card). */}
       {focusedHome && (
