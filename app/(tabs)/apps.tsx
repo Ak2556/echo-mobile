@@ -108,46 +108,6 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
   );
 }
 
-function EssentialSuiteCard({ apps, onOpen }: { apps: MiniApp[]; onOpen: (app: MiniApp) => void }) {
-  const { colors } = useTheme();
-  const lead = apps[0];
-  return (
-    <View style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-      <LinearGradient
-        colors={[`${colors.accent}24`, 'rgba(255,255,255,0.02)', 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      <View style={{ padding: 17, gap: 15 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}1F` }}>
-            <Stack color={colors.accent} size={24} weight="fill" />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ color: colors.text, fontSize: 21, lineHeight: 26, fontFamily: 'Fraunces_600SemiBold' }} numberOfLines={2}>
-              {apps.length} essential apps, one connected system
-            </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={2}>
-              Each tool shares Echo actions, search, targets, recents, and app memory.
-            </Text>
-          </View>
-        </View>
-
-        {lead ? (
-          <Pressable onPress={() => onOpen(lead)} accessibilityRole="button" accessibilityLabel={`Open ${lead.name}`} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
-            <View style={{ minHeight: 50, borderRadius: 16, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, paddingHorizontal: 16 }}>
-              <Sparkle color="#fff" size={18} weight="fill" />
-              <Text style={{ color: '#fff', fontSize: 14.5, fontFamily: 'Inter_700Bold' }}>Start with {lead.name}</Text>
-            </View>
-          </Pressable>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
 /** Compact tool chip for the "Jump back in" recents row. */
 function RecentChip({ app, onOpen }: { app: MiniApp; onOpen: (app: MiniApp) => void }) {
   const { colors } = useTheme();
@@ -425,10 +385,6 @@ export default function AppsScreen() {
               targetLabel={selectedTarget.label}
               onOpen={openTool}
             />
-
-            {lane === 'all' && (
-              <EssentialSuiteCard apps={APPS} onOpen={openTool} />
-            )}
 
             {/* Category lanes */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
