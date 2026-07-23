@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CURRENCY_MAP, type CurrencyCode } from './currency';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
+import { pushExpensesStructured } from './expensesRemote';
 
 export const TX_KEY = 'mini:expenses';
 export const DEFAULT_EXPENSE_CURRENCY: CurrencyCode = 'USD';
@@ -72,6 +73,7 @@ export async function loadExpensesDoc(): Promise<ExpensesDoc> {
 export async function saveExpensesDoc(doc: ExpensesDoc): Promise<void> {
   await AsyncStorage.setItem(TX_KEY, JSON.stringify(doc));
   pushMiniApp('expenses', doc);
+  pushExpensesStructured(doc);
 }
 
 export async function loadTransactions(): Promise<Transaction[]> {
