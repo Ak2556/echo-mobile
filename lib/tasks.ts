@@ -52,10 +52,13 @@ export async function loadTasks(): Promise<TaskItem[]> {
   if (Array.isArray(remote)) {
     const next = normalize(remote);
     await AsyncStorage.setItem(TASKS_KEY, JSON.stringify(next));
+    if (next.length) pushTasksStructured(next); // backfill for existing users
     return next;
   }
   try {
-    return normalize(JSON.parse((await AsyncStorage.getItem(TASKS_KEY)) ?? '[]'));
+    const local = normalize(JSON.parse((await AsyncStorage.getItem(TASKS_KEY)) ?? '[]'));
+    if (local.length) pushTasksStructured(local); // backfill for existing users
+    return local;
   } catch {
     return [];
   }

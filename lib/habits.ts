@@ -143,7 +143,7 @@ export async function loadHabits(): Promise<Habit[]> {
   try {
     const parsed = JSON.parse((await AsyncStorage.getItem(HABITS_KEY)) ?? '[]');
     if (!Array.isArray(parsed)) return [];
-    return parsed.map((habit): Habit => ({
+    const mapped = parsed.map((habit): Habit => ({
       id: String(habit.id ?? Date.now()),
       name: String(habit.name ?? 'Habit'),
       marker: normalizeMarker(habit.marker),
@@ -158,6 +158,10 @@ export async function loadHabits(): Promise<Habit[]> {
       archived: !!habit.archived,
       createdAt: String(habit.createdAt ?? new Date().toISOString()),
     }));
+    // Backfill the structured tables for existing users (coalesced, best-effort)
+    // so server stats/coaching are correct before their next save.
+    if (mapped.length) pushHabitsStructured(mapped);
+    return mapped;
   } catch {
     return [];
   }

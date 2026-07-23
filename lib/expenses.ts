@@ -64,7 +64,9 @@ export async function loadExpensesDoc(): Promise<ExpensesDoc> {
   const remote = await pullMiniAppIfNewer('expenses');
   if (remote) await AsyncStorage.setItem(TX_KEY, JSON.stringify(coerceDoc(remote)));
   try {
-    return coerceDoc(JSON.parse((await AsyncStorage.getItem(TX_KEY)) ?? 'null'));
+    const doc = coerceDoc(JSON.parse((await AsyncStorage.getItem(TX_KEY)) ?? 'null'));
+    if (doc.txs.length) pushExpensesStructured(doc); // backfill for existing users
+    return doc;
   } catch {
     return { txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
   }
