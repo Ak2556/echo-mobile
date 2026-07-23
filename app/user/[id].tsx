@@ -167,12 +167,14 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         </View>
 
         {!isSelf && (
-          <View className="flex-row gap-3">
-            <Animated.View style={followAnim} className="flex-1">
+          <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'stretch', paddingHorizontal: 16 }}>
+            <Animated.View style={[followAnim, { flex: 1 }]}>
               <AnimatedPressable
                 onPress={handleFollow}
-                className="py-2.5 items-center"
                 style={{
+                  paddingVertical: 11,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   borderRadius: radius.lg,
                   backgroundColor: following ? colors.surfaceHover : colors.accent,
                   borderWidth: following ? 1 : 0,
@@ -181,7 +183,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
                 scaleValue={0.96}
                 haptic="medium"
               >
-                <Text style={{ fontWeight: '600', color: colors.text }}>
+                <Text style={{ fontWeight: '700', fontSize: 15, color: following ? colors.text : '#fff' }}>
                   {following ? 'Following' : 'Follow'}
                 </Text>
               </AnimatedPressable>
@@ -189,14 +191,18 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
             <AnimatedPressable
               onPress={onMessage}
               disabled={messageLoading}
-              className="py-2.5 px-4"
-              style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border, opacity: messageLoading ? 0.55 : 1 }}
+              style={{ width: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border, opacity: messageLoading ? 0.55 : 1 }}
               scaleValue={0.92}
               haptic="light"
             >
               <Envelope color={colors.text} size={20} />
             </AnimatedPressable>
-            <AnimatedPressable onPress={onShare} className="py-2.5 px-4" style={{ borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }} scaleValue={0.92} haptic="light">
+            <AnimatedPressable
+              onPress={onShare}
+              style={{ width: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }}
+              scaleValue={0.92}
+              haptic="light"
+            >
               <ShareNetwork color={colors.text} size={20} />
             </AnimatedPressable>
           </View>
@@ -208,19 +214,15 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
       <View style={{ marginHorizontal: 16, marginBottom: 16 }}>
         <ConnectionPanel
           actions={[
-            isSelf ? {
+            // Message lives in the primary action row above (the envelope
+            // button), so it isn't repeated here; self gets Edit profile.
+            ...(isSelf ? [{
               key: 'edit',
               label: 'Edit profile',
               icon: <PencilSimple color={colors.textSecondary} size={18} />,
               onPress: () => router.push('/edit-profile'),
-              emphasis: 'primary',
-            } : {
-              key: 'message',
-              label: messageLoading ? 'Opening...' : 'Message',
-              icon: <Envelope color={colors.textSecondary} size={18} />,
-              onPress: onMessage,
-              emphasis: 'primary',
-            },
+              emphasis: 'primary' as const,
+            }] : []),
             ...(primaryTopic ? [{
               key: 'topic',
               label: `Explore #${primaryTopic}`,
