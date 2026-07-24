@@ -19,7 +19,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_openai_client: AsyncOpenAI | None = None
+
+
+def get_openai_client() -> AsyncOpenAI:
+    """Construct the OpenAI client lazily so the service (and /health) can
+    start without OPENAI_API_KEY set. Only /chat/stream needs it; the error
+    surfaces there instead of crashing the whole process at import."""
+    global _openai_client
+    if _openai_client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY is not configured")
+        _openai_client = AsyncOpenAI(api_key=api_key)
+    return _openai_client
 
 # ── Models ──
 
@@ -60,7 +73,7 @@ class ReportCreate(BaseModel):
 async def chat_stream(request: ChatRequest):
     async def event_generator():
         try:
-            stream = await openai_client.chat.completions.create(
+            stream = await get_openai_client().chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are Echo, a helpful and concise AI assistant. Keep responses focused and informative."},
