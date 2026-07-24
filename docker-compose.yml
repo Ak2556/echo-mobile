@@ -1,0 +1,50 @@
+# Echo local/production stack: FastAPI backend + nginx-served web frontend.
+#
+# The current backend uses Supabase + OpenAI directly, so there is no
+# Redis/Postgres here (the old stack's local Postgres/Redis are gone).
+#
+#   docker compose build          # build both images
+#   docker compose up -d          # run: frontend :3000, backend :8000
+#
+# Frontend build args and backend runtime env are read from the local .env
+# and backend/.env respectively (both gitignored). Only EXPO_PUBLIC_* values
+# are baked into the client bundle; they are public by design.
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USER:-echo}/echo-backend:latest
+    container_name: echo_backend
+    restart: unless-stopped
+    env_file:
+      - path: ./backend/.env
+        required: false
+    ports:
+      - "8000:8000"
+    networks:
+      - echo-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        EXPO_PUBLIC_SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL}
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY}
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL}
+        EXPO_PUBLIC_SENTRY_DSN: ${EXPO_PUBLIC_SENTRY_DSN}
+    image: ${DOCKERHUB_USER:-echo}/echo-frontend:latest
+    container_name: echo_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    networks:
+      - echo-network
+
+networks:
+  echo-network:
+    driver: bridge
