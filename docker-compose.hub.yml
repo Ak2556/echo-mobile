@@ -1,0 +1,41 @@
+# Run the Echo stack straight from Docker Hub — no source checkout or build.
+# Copy this one file onto any machine with Docker (e.g. your PC) and run:
+#
+#   docker login -u ak2556
+#   docker compose -f docker-compose.hub.yml pull
+#   docker compose -f docker-compose.hub.yml up -d
+#
+# The frontend image already has the EXPO_PUBLIC_* values baked in at build
+# time, so it needs no env. The backend reads its secrets at runtime from
+# backend/.env (OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY); it
+# still starts and serves /health without them (only /chat/stream needs the
+# OpenAI key). Drop a backend/.env next to this file, or delete the env_file
+# block below to run credential-free.
+
+services:
+  backend:
+    image: ak2556/echo-backend:latest
+    container_name: echo_backend
+    restart: unless-stopped
+    env_file:
+      - path: ./backend/.env
+        required: false
+    ports:
+      - "8000:8000"
+    networks:
+      - echo-network
+
+  frontend:
+    image: ak2556/echo-frontend:latest
+    container_name: echo_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    networks:
+      - echo-network
+
+networks:
+  echo-network:
+    driver: bridge
