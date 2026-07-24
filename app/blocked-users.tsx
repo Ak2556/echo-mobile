@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { ShieldSlash } from 'phosphor-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -15,7 +14,6 @@ import { useTheme } from '../lib/theme';
 import { User } from '../types';
 
 export default function BlockedUsersScreen() {
-  const router = useRouter();
   const { blockedIds, toggleBlock, getUser } = useAppStore();
   const { colors, radius, fontSizes, animation, showAvatars } = useTheme();
 
