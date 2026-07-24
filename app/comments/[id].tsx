@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { safeBack } from '../../lib/safeBack';
+import { useLocalSearchParams } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
@@ -24,7 +23,6 @@ interface ThreadedRow {
 
 export default function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const remote = isSupabaseRemote();
   const remoteQ = useEchoComments(remote ? id : undefined);
   const addRemote = useAddRemoteComment(remote ? id : undefined);

@@ -9,7 +9,6 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { FeedCard } from '../components/social/FeedCard';
 import { FeedCardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { useFeed } from '../hooks/queries/useFeed';

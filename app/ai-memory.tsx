@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { Check, Database, PencilSimple, Trash, X } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -12,7 +12,6 @@ import { clearMemory, forgetPreference, loadMemory, MemoryItem, updatePreference
 import { useTheme } from '../lib/theme';
 
 export default function AIMemoryScreen() {
-  const router = useRouter();
   const theme = useTheme();
   const { colors, radius, fontSizes, animation } = theme;
   const [items, setItems] = useState<MemoryItem[]>([]);

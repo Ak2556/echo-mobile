@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Alert, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SealCheck, CheckCircle, XCircle } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -103,7 +103,6 @@ function VerificationCard({ item, onDecide }: {
 
 export default function ModVerificationsScreen() {
   const { colors, font, fontSizes } = useTheme();
-  const router = useRouter();
   const [items, setItems] = useState<VerificationQueueItem[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 

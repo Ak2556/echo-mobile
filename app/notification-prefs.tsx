@@ -1,13 +1,11 @@
 import React from 'react';
 import { View, Text, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   HeartStraight, ChatCircle, UserPlus, ArrowsClockwise,
   Quotes, Envelope, SpeakerHigh, Bell,
 } from 'phosphor-react-native';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
@@ -15,7 +13,6 @@ import { showToast } from '../components/ui/Toast';
 import { clearPushToken, registerForPush } from '../lib/push';
 
 export default function NotificationPrefsScreen() {
-  const router = useRouter();
   const { colors, radius, fontSizes, switchTrack, animation } = useTheme();
   const {
     notificationsEnabled, setNotificationsEnabled,
