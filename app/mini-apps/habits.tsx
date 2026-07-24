@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Image, ScrollView,
+  View, Text, TextInput, Pressable, Modal, StyleSheet, Image, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Plus, Minus, CheckCircle, CircleDashed, Fire, Trash, X, Camera, Images, Clock, NotePencil, Bell } from 'phosphor-react-native';
+import { Plus, Minus, CheckCircle, CircleDashed, Fire, X, Camera, Images, Clock, NotePencil, Bell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';

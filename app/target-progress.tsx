@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import { ChatCircleText, ShareNetwork, Target, UsersThree, SquaresFour } from 'phosphor-react-native';
+import { ChatCircleText, ShareNetwork, Target, UsersThree, SquaresFour , CheckCircle, Barbell, Wallet, ListChecks } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { useResponsiveLayout } from '../lib/responsive';
@@ -13,7 +13,6 @@ import { buildTargetProgressDigest, type TargetProgressDigest } from '../lib/tar
 import { fetchCrossAppProgress, type CrossAppProgress } from '../lib/targetProgressRemote';
 import { setPendingPublishContext } from '../lib/publishContext';
 import { IconBadge } from '../components/ui/IconBadge';
-import { CheckCircle, Barbell, Wallet, ListChecks } from 'phosphor-react-native';
 
 export default function TargetProgressScreen() {
   const router = useRouter();

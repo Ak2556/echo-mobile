@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { SpeakerSlash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -15,7 +14,6 @@ import { useTheme } from '../lib/theme';
 import { User } from '../types';
 
 export default function MutedUsersScreen() {
-  const router = useRouter();
   const { mutedIds, toggleMute, getUser } = useAppStore();
   const { colors, radius, fontSizes, animation, showAvatars } = useTheme();
 

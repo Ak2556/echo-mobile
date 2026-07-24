@@ -30,7 +30,7 @@ import { useI18n } from '../lib/i18n';
  */
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { colors, radius, fontSizes, font } = useTheme();
+  const { colors, fontSizes, font } = useTheme();
   const { t } = useI18n();
   const hasCompletedFirstRun = useAppStore(s => s.hasCompletedFirstRun);
   const setHasCompletedFirstRun = useAppStore(s => s.setHasCompletedFirstRun);

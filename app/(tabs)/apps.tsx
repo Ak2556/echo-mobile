@@ -6,7 +6,7 @@ import Animated, { Extrapolation, FadeIn, FadeInDown, interpolate, useAnimatedPr
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Pulse, Target, MagnifyingGlass, CaretRight, X, Sparkle, Stack, CheckCircle } from 'phosphor-react-native';
+import { Pulse, Target, MagnifyingGlass, CaretRight, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { getTodayProductivity, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
 import { formatMoney } from '../../lib/expenses';

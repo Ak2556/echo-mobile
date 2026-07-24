@@ -20,7 +20,7 @@ const DIM = 'rgba(0,0,0,0.72)';
  */
 export function TutorialOverlay() {
   const { colors, font } = useTheme();
-  const { width: screenW, height: screenH } = useWindowDimensions();
+  const { height: screenH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
   const activeTour = useTutorialStore((s) => s.activeTour);

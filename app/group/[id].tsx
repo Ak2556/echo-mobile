@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert, Activi
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import {
-  Users, Sparkle, MagnifyingGlass, X, Crown, SignOut, BellSlash, UserPlus, CheckCircle,
+  Users, Sparkle, MagnifyingGlass, X, Crown, SignOut, BellSlash, UserPlus,
 } from 'phosphor-react-native';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useTheme } from '../../lib/theme';

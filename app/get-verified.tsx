@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera, SealCheck, ShieldCheck, Timer, XCircle } from 'phosphor-react-native';
@@ -17,7 +16,6 @@ type Phase = 'loading' | 'intro' | 'preview' | 'submitting' | 'approved' | 'pend
 
 export default function GetVerifiedScreen() {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { profile } = useAuth();
 
   const [phase, setPhase] = useState<Phase>('loading');

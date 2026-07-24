@@ -40,7 +40,6 @@ import { recordAppOpen } from '../lib/personalNudges';
  */
 
 function DailyQuestionScreenInner() {
-  const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
 
   const [question, setQuestion] = useState<DailyQuestion | null>(null);

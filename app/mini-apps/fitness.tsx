@@ -515,7 +515,6 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
 // ── Fitness settings (profile, goal, targets, units, reminders) ──────────────
 
 function SectionLabel({ children }: { children: string }) {
-  const { colors } = useTheme();
   return <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 }}>{children}</Text>;
 }
 

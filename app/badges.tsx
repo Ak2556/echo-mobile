@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { fetchBadges, type Badge } from '../lib/supabaseEchoApi';
@@ -17,7 +15,6 @@ const TIER_COLOR: Record<Badge['tier'], string> = {
 };
 
 function BadgesScreenInner() {
-  const router = useRouter();
   const { colors } = useTheme();
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
