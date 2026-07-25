@@ -12,6 +12,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
+      // expo-notifications pulls in expo-modules-core / the Expo native runtime,
+      // which can't load under vitest/node. App modules import it at load time,
+      // so stub it; tests never assert on notification scheduling.
+      'expo-notifications': path.resolve(__dirname, 'test/stubs/expo-notifications.ts'),
     },
   },
 });
