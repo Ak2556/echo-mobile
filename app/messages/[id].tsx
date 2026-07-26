@@ -985,6 +985,7 @@ function DMBubble({
         <Pressable onLongPress={onLongPress} delayLongPress={350}>
           <View style={{
             paddingHorizontal: 15, paddingVertical: 10,
+            overflow: 'hidden',
             // Asymmetric corners give a speech-bubble tail toward the sender's
             // side, so even a one-word message reads as a bubble, not a circle.
             borderTopLeftRadius: 20,
@@ -993,6 +994,16 @@ function DMBubble({
             borderBottomRightRadius: isMe ? 7 : 20,
             backgroundColor: isMe ? bubbleBg : colors.surfaceHover,
           }}>
+            {/* Hue-agnostic gloss: a soft top highlight fading to a faint bottom
+                shade gives the bubble depth on any accent instead of a flat slab. */}
+            {isMe && (
+              <LinearGradient
+                pointerEvents="none"
+                colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.10)']}
+                locations={[0, 0.55, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+            )}
             {message.replyToId && (
               <ReplyCard
                 content={message.replyToContent}
@@ -1762,6 +1773,10 @@ export default function DMScreen() {
   const [replyingTo, setReplyingTo] = useState<NormalizedMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<NormalizedMessage | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  // Count partner messages that land while you're scrolled up, so the
+  // jump-to-bottom pill can say how many you'd be catching up on.
+  const [newAwayCount, setNewAwayCount] = useState(0);
+  const lastNewestIdRef = useRef<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [stickerOpen, setStickerOpen] = useState(false);
@@ -1820,6 +1835,12 @@ export default function DMScreen() {
   }, []);
 
   const listRef = useRef<FlatList<any>>(null);
+  // Pin to the newest message on the very next frame instead of after an
+  // arbitrary timeout — the outgoing bubble and the scroll land together, so a
+  // send reads as instant rather than jumping a beat later.
+  const scrollToBottom = useCallback((animated = true) => {
+    requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated }));
+  }, []);
   // Entrance motion: animate a bubble only the first time it renders AND only if
   // it arrived this session — so the initial load and scroll-back never replay.
   const animatedIds = useRef<Set<string>>(new Set());
@@ -1980,6 +2001,19 @@ export default function DMScreen() {
     if (fx) setEffect(fx);
   }, [messages, myId]);
 
+  // Track unread arrivals while scrolled up; clear the moment you reach bottom.
+  useEffect(() => {
+    const newest = messages[messages.length - 1];
+    if (!newest) return;
+    if (lastNewestIdRef.current === null) { lastNewestIdRef.current = newest.id; return; }
+    if (newest.id !== lastNewestIdRef.current) {
+      lastNewestIdRef.current = newest.id;
+      if (!isAtBottom && newest.senderId !== myId) setNewAwayCount(c => c + 1);
+    }
+  }, [messages, isAtBottom, myId]);
+
+  useEffect(() => { if (isAtBottom) setNewAwayCount(0); }, [isAtBottom]);
+
   // Group members power @mention autocomplete.
   useEffect(() => {
     if (remote && isGroupConversation && id) {
@@ -2130,8 +2164,8 @@ export default function DMScreen() {
     } else {
       sendDM(id, content);
     }
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
-  }, [text, id, hapticEnabled, remote, sendRemote, sendDM, editingMessage, editMessage, replyingTo, sendLinkDM, sendLocalLink]);
+    scrollToBottom();
+  }, [text, id, hapticEnabled, remote, sendRemote, sendDM, editingMessage, editMessage, replyingTo, sendLinkDM, sendLocalLink, scrollToBottom]);
 
   const sendSticker = useCallback((sticker: string) => {
     if (!id) return;
@@ -2143,8 +2177,8 @@ export default function DMScreen() {
     } else {
       sendDM(id, sticker);
     }
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
-  }, [id, hapticEnabled, remote, sendRemote, sendDM]);
+    scrollToBottom();
+  }, [id, hapticEnabled, remote, sendRemote, sendDM, scrollToBottom]);
 
   const sendPickedImage = useCallback((asset: ImagePicker.ImagePickerAsset) => {
     setAttachmentMenuOpen(false);
@@ -2162,7 +2196,7 @@ export default function DMScreen() {
           onSettled: () => {
             setImageUploading(false);
             setReplyingTo(null);
-            setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+            scrollToBottom();
           },
           onError: error => Alert.alert(
             'Image failed',
@@ -2173,12 +2207,12 @@ export default function DMScreen() {
         sendLocalImage(id, asset.uri);
         setImageUploading(false);
         setReplyingTo(null);
-        setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+        scrollToBottom();
       }
     } catch {
       setImageUploading(false);
     }
-  }, [sendImageDM, replyingTo, remote, id, sendLocalImage, text]);
+  }, [sendImageDM, replyingTo, remote, id, sendLocalImage, text, scrollToBottom]);
 
   const handlePickImage = useCallback(async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -2228,8 +2262,8 @@ export default function DMScreen() {
     } else {
       shareContactInDM(id, conversation);
     }
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
-  }, [id, conversation, replyingTo, remote, sendContactDM, shareContactInDM]);
+    scrollToBottom();
+  }, [id, conversation, replyingTo, remote, sendContactDM, shareContactInDM, scrollToBottom]);
 
   const handleSendLinkFromComposer = useCallback(() => {
     const link = firstUrl(text.trim());
@@ -2253,8 +2287,8 @@ export default function DMScreen() {
     } else {
       sendLocalLink(id, link, title, userUrl(conversation?.username ?? ''));
     }
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
-  }, [text, id, replyingTo, remote, sendLinkDM, sendLocalLink, conversation?.username]);
+    scrollToBottom();
+  }, [text, id, replyingTo, remote, sendLinkDM, sendLocalLink, conversation?.username, scrollToBottom]);
 
   const handleLongPress = useCallback((message: NormalizedMessage) => {
     if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -2734,12 +2768,15 @@ export default function DMScreen() {
           }}
           onEndReached={() => { if (hasNextPage) void fetchNextPage(); }}
           onEndReachedThreshold={0.25}
+          // Hold the viewport steady when older messages prepend during
+          // pagination, so scrolling back never yanks the content mid-read.
+          maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
           onScroll={e => {
             const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
             const distFromBottom = contentSize.height - contentOffset.y - layoutMeasurement.height;
             setIsAtBottom(distFromBottom < 80);
           }}
-          scrollEventThrottle={100}
+          scrollEventThrottle={16}
           ListFooterComponent={partnerIsTyping ? <TypingDots /> : null}
           ListEmptyComponent={searchTerm ? (
             <View style={{ alignItems: 'center', paddingVertical: 42, paddingHorizontal: 24 }}>
@@ -2815,24 +2852,38 @@ export default function DMScreen() {
           }}
         />
 
-        {/* Jump to bottom FAB */}
+        {/* Jump to bottom pill — grows to show how many new messages landed
+            while you were reading back, and springs in so it reads as an event. */}
         {!isAtBottom && (
           <Animated.View
-            entering={FadeIn.duration(150)}
+            entering={ZoomIn.springify().damping(15).stiffness(200)}
             exiting={FadeOut.duration(120)}
+            layout={LinearTransition.springify().damping(18)}
             style={{ position: 'absolute', bottom: 80, right: 16, zIndex: 10 }}
           >
-            <Pressable
-              onPress={() => listRef.current?.scrollToEnd({ animated: true })}
+            <AnimatedPressable
+              onPress={() => { setNewAwayCount(0); scrollToBottom(); }}
+              scaleValue={0.9}
+              haptic="light"
+              accessibilityRole="button"
+              accessibilityLabel={newAwayCount > 0 ? `${newAwayCount} new messages, jump to latest` : 'Jump to latest'}
               style={{
-                width: 36, height: 36, borderRadius: 18,
+                height: 36, borderRadius: 18,
+                paddingHorizontal: newAwayCount > 0 ? 12 : 0,
+                width: newAwayCount > 0 ? undefined : 36,
+                flexDirection: 'row', gap: 6,
                 backgroundColor: colors.accent,
                 alignItems: 'center', justifyContent: 'center',
                 shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
               }}
             >
               <ArrowFatLinesUp color="#fff" size={16} weight="fill" style={{ transform: [{ rotate: '180deg' }] }} />
-            </Pressable>
+              {newAwayCount > 0 && (
+                <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                  {newAwayCount} new
+                </Text>
+              )}
+            </AnimatedPressable>
           </Animated.View>
         )}
 
@@ -3111,36 +3162,42 @@ export default function DMScreen() {
                 />
               </View>
 
-              {/* Empty composer in a remote thread → mic (voice note); else send */}
+              {/* Empty composer in a remote thread → mic (voice note); else send.
+                  Pop each state in with a spring so the swap feels alive, not a
+                  hard cut, the moment the first character lands. */}
               {!canSend && remote && !editingMessage ? (
-                <AnimatedPressable
-                  onPress={() => void startVoiceRecording()}
-                  scaleValue={0.9}
-                  haptic="medium"
-                  style={{
-                    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: colors.surfaceHover,
-                  }}
-                  accessibilityLabel="Record voice message"
-                >
-                  <Microphone color={colors.textSecondary} size={19} weight="fill" />
-                </AnimatedPressable>
+                <Animated.View key="mic" entering={ZoomIn.springify().damping(14).stiffness(220)}>
+                  <AnimatedPressable
+                    onPress={() => void startVoiceRecording()}
+                    scaleValue={0.9}
+                    haptic="medium"
+                    style={{
+                      width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: colors.surfaceHover,
+                    }}
+                    accessibilityLabel="Record voice message"
+                  >
+                    <Microphone color={colors.textSecondary} size={19} weight="fill" />
+                  </AnimatedPressable>
+                </Animated.View>
               ) : (
-                <AnimatedPressable
-                  onPress={handleSend}
-                  disabled={!canSend}
-                  scaleValue={0.9}
-                  haptic="medium"
-                  style={{
-                    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: canSend ? (editingMessage ? colors.success ?? colors.accent : colors.accent) : colors.surfaceHover,
-                  }}
-                >
-                  {editingMessage
-                    ? <PencilSimple color="#fff" size={18} weight="fill" />
-                    : <PaperPlaneTilt color="#fff" size={18} weight="fill" />
-                  }
-                </AnimatedPressable>
+                <Animated.View key="send" entering={ZoomIn.springify().damping(14).stiffness(220)}>
+                  <AnimatedPressable
+                    onPress={handleSend}
+                    disabled={!canSend}
+                    scaleValue={0.9}
+                    haptic="medium"
+                    style={{
+                      width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: canSend ? (editingMessage ? colors.success ?? colors.accent : colors.accent) : colors.surfaceHover,
+                    }}
+                  >
+                    {editingMessage
+                      ? <PencilSimple color="#fff" size={18} weight="fill" />
+                      : <PaperPlaneTilt color="#fff" size={18} weight="fill" />
+                    }
+                  </AnimatedPressable>
+                </Animated.View>
               )}
             </>
           )}
