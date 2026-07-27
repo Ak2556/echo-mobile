@@ -11,10 +11,22 @@ export interface TaskItem {
   title: string;
   notes?: string;
   due?: string;
+  /** Time of day for the due date, "HH:MM" (24h). Absent = no specific time. */
+  time?: string;
+  /** Scheduled local-notification id for the reminder, so it can be cancelled. */
+  reminderId?: string;
   done: boolean;
   priority: TaskPriority;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Combine a task's due date + time into a Date, or null if not schedulable. */
+export function taskDueAt(task: Pick<TaskItem, 'due' | 'time'>): Date | null {
+  if (!task.due) return null;
+  const iso = task.time ? `${task.due}T${task.time}:00` : `${task.due}T09:00:00`;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 export function todayTaskDate(): string {
