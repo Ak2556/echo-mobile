@@ -406,7 +406,7 @@ function TopicTile({
           {label}
         </Text>
         <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 3 }]}>
-          {count > 0 ? `${count} Echoes` : 'Start exploring'}
+          {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : 'Start exploring'}
         </Text>
       </View>
     </Pressable>
