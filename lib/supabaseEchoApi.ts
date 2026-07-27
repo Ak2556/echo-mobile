@@ -2102,17 +2102,24 @@ export interface DailyAnswerWithAuthor {
 
 /** Fetch today's daily question. Returns null when the seed is exhausted. */
 export async function fetchTodaysDailyQuestion(): Promise<DailyQuestion | null> {
+  // Self-healing: ensure_daily_question materializes today's row from the
+  // question bank if the pre-filled schedule ever runs out, so the ritual can
+  // never go empty. Falls back to a plain read if the RPC is unavailable.
+  const { data, error } = await supabase.rpc('ensure_daily_question');
+  if (!error && data) {
+    const row = (Array.isArray(data) ? data[0] : data) as DailyQuestion | undefined;
+    if (row) return row;
+  }
+  if (error) {
+    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'fetchDailyQuestion' } });
+  }
   const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await supabase
+  const { data: fallback } = await supabase
     .from('daily_questions')
     .select('id, active_date, question')
     .eq('active_date', today)
     .maybeSingle();
-  if (error) {
-    captureException(error, { tags: { module: 'supabaseEchoApi', fn: 'fetchDailyQuestion' } });
-    return null;
-  }
-  return (data as DailyQuestion) ?? null;
+  return (fallback as DailyQuestion) ?? null;
 }
 
 /** Fetch the viewer's answer (if any) to a given daily question. */
