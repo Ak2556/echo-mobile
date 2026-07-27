@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput, Pressable } from 'react-native';
+import { View, Text, TextInput, Pressable, Keyboard } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { CheckCircle, CircleDashed, Flag, Plus, Trash } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
@@ -71,6 +71,9 @@ export default function TasksScreen() {
     }, ...tasks]);
     setTitle('');
     setNotes('');
+    // Drop the keyboard so the freshly-added task is visible in the list below —
+    // otherwise the composer keeps focus and it looks like nothing happened.
+    Keyboard.dismiss();
     showToast('Task added', 'Tasks');
   };
 
