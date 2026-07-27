@@ -14,3 +14,12 @@ appId: com.ak2556.echo
 # Open a real DM thread; confirm message history loads (bubble text is exposed).
 - tapOn: "Kav"
 - assertVisible: "Hi"
+
+# Exercise the composer non-destructively: type, confirm the text shows and the
+# empty-composer mic flips to the Send button, then clear it (never sends).
+- tapOn:
+    point: 45%,93%
+- inputText: "maestro composer check"
+- assertVisible: "maestro composer check"
+- assertVisible: "Send message"
+- eraseText: 40
