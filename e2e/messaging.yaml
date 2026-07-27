@@ -1,0 +1,16 @@
+# Messaging smoke: DM inbox loads and a real thread opens with its history +
+# header. Non-destructive (no message sent). Validates the /messages routes and
+# the recently polished conversation UI renders. Run: maestro test e2e/messaging.yaml
+#
+# Note: the composer is a bare RN TextInput whose placeholder isn't exposed to
+# accessibility, so send/compose can't be asserted here yet — tracked as an
+# a11y-label pass (icon-only send/attach buttons also need labels).
+appId: com.ak2556.echo
+---
+- openLink: echo://messages
+- assertVisible: "Messages"
+- assertVisible: "Recent conversations"
+
+# Open a real DM thread; confirm message history loads (bubble text is exposed).
+- tapOn: "Kav"
+- assertVisible: "Hi"
