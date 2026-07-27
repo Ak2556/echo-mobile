@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, Keyboard } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { CheckCircle, CircleDashed, Flag, Plus, Trash } from 'phosphor-react-native';
+import { Bell, BellSlash, CheckCircle, CircleDashed, Flag, Plus, Trash } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
@@ -12,8 +12,24 @@ import {
   TaskItem, TaskPriority, loadTasks, saveTasks, taskStats,
   todayTaskDate, tomorrowTaskDate,
 } from '../../lib/tasks';
+import { scheduleTaskReminder, cancelTaskReminder } from '../../lib/taskReminders';
 
 type Filter = 'open' | 'today' | 'high' | 'done';
+
+const TIME_OPTIONS = [
+  { label: 'Morning', value: '09:00' },
+  { label: 'Noon', value: '12:00' },
+  { label: 'Evening', value: '18:00' },
+  { label: 'Night', value: '21:00' },
+];
+
+/** "18:00" -> "6:00 PM" for compact display. */
+function formatTaskTime(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number);
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
 
 const PRIORITIES: { id: TaskPriority; label: string; color: string }[] = [
   { id: 'normal', label: 'Normal', color: '#4E7A8B' },
@@ -35,6 +51,8 @@ export default function TasksScreen() {
   const [notes, setNotes] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('normal');
   const [due, setDue] = useState<string | undefined>(todayTaskDate());
+  const [time, setTime] = useState<string | undefined>(undefined);
+  const [remind, setRemind] = useState(false);
   const [filter, setFilter] = useState<Filter>('open');
 
   useFocusEffect(React.useCallback(() => {
@@ -55,33 +73,45 @@ export default function TasksScreen() {
     void saveTasks(next);
   };
 
-  const add = () => {
+  const add = async () => {
     const clean = title.trim();
     if (!clean) return;
     const now = new Date().toISOString();
-    update([{
+    // A reminder needs a date to fire on — default to today if the user asked
+    // to be reminded but didn't pick a due date.
+    const effectiveDue = remind && !due ? todayTaskDate() : due;
+    const base: TaskItem = {
       id: `${Date.now()}`,
       title: clean,
       notes: notes.trim() || undefined,
-      due,
+      due: effectiveDue,
+      time: effectiveDue ? time : undefined,
       done: false,
       priority,
       createdAt: now,
       updatedAt: now,
-    }, ...tasks]);
+    };
+    const reminderId = remind ? (await scheduleTaskReminder(base)) ?? undefined : undefined;
+    update([{ ...base, reminderId }, ...tasks]);
     setTitle('');
     setNotes('');
     // Drop the keyboard so the freshly-added task is visible in the list below —
     // otherwise the composer keeps focus and it looks like nothing happened.
     Keyboard.dismiss();
-    showToast('Task added', 'Tasks');
+    showToast(reminderId ? 'Task added · reminder set' : 'Task added', 'Tasks');
   };
 
   const toggle = (task: TaskItem) => {
-    update(tasks.map(item => item.id === task.id ? { ...item, done: !item.done, updatedAt: new Date().toISOString() } : item));
+    const done = !task.done;
+    // Completing a task cancels its pending reminder.
+    if (done) void cancelTaskReminder(task.reminderId);
+    update(tasks.map(item => item.id === task.id
+      ? { ...item, done, reminderId: done ? undefined : item.reminderId, updatedAt: new Date().toISOString() }
+      : item));
   };
 
   const remove = (task: TaskItem) => {
+    void cancelTaskReminder(task.reminderId);
     update(tasks.filter(item => item.id !== task.id));
   };
 
@@ -131,6 +161,37 @@ export default function TasksScreen() {
             </Pressable>
           ))}
         </View>
+
+        {/* Time + reminder. Picking a time turns the reminder on; a reminder
+            fires a local notification at the task's due date + time. */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+          {TIME_OPTIONS.map(item => {
+            const active = time === item.value;
+            return (
+              <Pressable
+                key={item.value}
+                onPress={() => { const next = active ? undefined : item.value; setTime(next); if (next) setRemind(true); }}
+                accessibilityRole="button"
+                accessibilityLabel={`Set time ${item.label}`}
+              >
+                <View style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: active ? accent : colors.surfaceHover }}>
+                  <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{item.label}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            onPress={() => setRemind(v => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={remind ? 'Turn reminder off' : 'Remind me'}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: remind ? `${accent}` : colors.surfaceHover }}>
+              {remind ? <Bell color="#fff" size={13} weight="fill" /> : <BellSlash color={colors.textSecondary} size={13} />}
+              <Text style={{ color: remind ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{remind ? 'Reminder on' : 'Remind me'}</Text>
+            </View>
+          </Pressable>
+        </View>
+
         <Pressable onPress={add}>
           <View style={{ height: 48, borderRadius: 16, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <Plus color="#fff" size={18} weight="bold" />
@@ -164,10 +225,14 @@ export default function TasksScreen() {
                   <Text style={{ color: task.done ? colors.textMuted : colors.text, fontSize: 15, fontWeight: '800', textDecorationLine: task.done ? 'line-through' : 'none' }} numberOfLines={1}>
                     {task.title}
                   </Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>
-                    {task.due ? new Date(`${task.due}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'No due date'}
-                    {task.notes ? ` · ${task.notes}` : ''}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                    {task.reminderId && !task.done && <Bell color={accent} size={12} weight="fill" />}
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>
+                      {task.due ? new Date(`${task.due}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'No due date'}
+                      {task.time ? ` · ${formatTaskTime(task.time)}` : ''}
+                      {task.notes ? ` · ${task.notes}` : ''}
+                    </Text>
+                  </View>
                 </View>
                 <Flag color={priorityMeta.color} size={17} weight={task.priority === 'low' ? 'regular' : 'fill'} />
                 <Pressable onPress={() => remove(task)} hitSlop={8}>
