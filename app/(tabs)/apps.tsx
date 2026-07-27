@@ -14,7 +14,7 @@ import { MOTION } from '../../lib/motion';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { TARGET_CATEGORIES, getTargetCategory } from '../../lib/targetCategories';
 import { useAppStore } from '../../store/useAppStore';
-import { MINI_APP_CATALOG, type MiniAppCatalogItem } from '../../lib/miniAppCatalog';
+import { MINI_APP_CATALOG, FLAGSHIP_MINI_APPS, isFlagshipMiniApp, type MiniAppCatalogItem } from '../../lib/miniAppCatalog';
 import { resolveMiniAppId } from '../../lib/miniAppIntegration';
 import { getRecentTools, recordToolOpen } from '../../lib/miniAppRecents';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
@@ -53,7 +53,7 @@ function Eyebrow({ children, trailing }: { children: React.ReactNode; trailing?:
   );
 }
 
-function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; width: number; onOpen: (app: MiniApp) => void }) {
+function AppCard({ app, index, width, onOpen, flagship }: { app: MiniApp; index: number; width: number; onOpen: (app: MiniApp) => void; flagship?: boolean }) {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
@@ -72,18 +72,29 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
           borderRadius: 20,
           overflow: 'hidden',
           backgroundColor: colors.surface,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.glassBorder,
+          borderWidth: flagship ? 1 : StyleSheet.hairlineWidth,
+          borderColor: flagship ? `${app.color}88` : colors.glassBorder,
           padding: 15,
           justifyContent: 'flex-start',
         }}>
           <LinearGradient
-            colors={[`${app.color}22`, `${app.color}0A`, 'transparent']}
+            colors={flagship
+              ? [`${app.color}3A`, `${app.color}14`, 'transparent']
+              : [`${app.color}22`, `${app.color}0A`, 'transparent']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0.9, y: 1 }}
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
+          {flagship && (
+            <View style={{
+              position: 'absolute', top: 10, right: 10,
+              borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3,
+              backgroundColor: `${app.color}26`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${app.color}66`,
+            }}>
+              <Text style={{ color: app.color, fontSize: 9.5, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 }}>CORE</Text>
+            </View>
+          )}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
             <MiniAppIcon id={app.id} color={app.color} size={44} />
             <Text style={{ flex: 1, minWidth: 0, color: colors.text, fontSize: 16, fontFamily: 'Inter_700Bold', lineHeight: 20 }} numberOfLines={2}>
@@ -290,11 +301,23 @@ export default function AppsScreen() {
     : [], [q, searching]);
 
   const laneApps = useMemo(() => {
-    if (lane === 'all') return APPS;
+    if (lane === 'all') {
+      // Flagship (core daily-loop) apps pinned + highlighted first, in their
+      // canonical order; everything else follows ordered by this user's own
+      // usage (most-recently-opened first), then catalog order as a fallback.
+      const flagship = FLAGSHIP_MINI_APPS
+        .map(id => appById.get(id))
+        .filter((a): a is MiniApp => Boolean(a));
+      const recencyIndex = new Map(recents.map((id, i) => [id, i]));
+      const rest = APPS
+        .filter(a => !isFlagshipMiniApp(a.id))
+        .sort((a, b) => (recencyIndex.get(a.id) ?? Infinity) - (recencyIndex.get(b.id) ?? Infinity));
+      return [...flagship, ...rest];
+    }
     const def = TOOL_LANES.find(l => l.id === lane);
     if (!def?.apps) return APPS;
     return def.apps.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a));
-  }, [lane, appById]);
+  }, [lane, appById, recents]);
 
   const recentApps = useMemo(
     () => recents.map(id => appById.get(id)).filter((a): a is MiniApp => Boolean(a)).slice(0, 6),
@@ -310,7 +333,7 @@ export default function AppsScreen() {
     for (let i = 0; i < list.length; i += columns) grid.push(list.slice(i, i + columns));
     return grid.map((row, ri) => (
       <View key={ri} style={{ flexDirection: 'row', gap: GAP }}>
-        {row.map((app, ci) => <AppCard key={app.id} app={app} width={cardWidth} index={ri * columns + ci} onOpen={openTool} />)}
+        {row.map((app, ci) => <AppCard key={app.id} app={app} width={cardWidth} index={ri * columns + ci} onOpen={openTool} flagship={isFlagshipMiniApp(app.id)} />)}
         {Array.from({ length: columns - row.length }).map((_, i) => <View key={`sp-${i}`} style={{ width: cardWidth }} />)}
       </View>
     ));
@@ -484,7 +507,7 @@ export default function AppsScreen() {
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }, headerBgStyle]} />
         <View style={{ width: '100%', maxWidth: contentMaxWidth, alignSelf: 'center', paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
           <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>Echo Tools</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>15 connected essentials</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{APPS.length} connected essentials</Text>
         </View>
         <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }, headerBorderStyle]} />
       </View>

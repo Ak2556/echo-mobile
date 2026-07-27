@@ -192,6 +192,16 @@ export const MINI_APP_CATALOG: MiniAppCatalogItem[] = [
   },
 ];
 
+// The core daily-loop mini-apps — pinned first and visually highlighted at the
+// top of Tools for everyone. Order here is the order they're pinned in.
+export const FLAGSHIP_MINI_APPS: TargetMiniAppId[] = [
+  'tasks', 'habits', 'fitness', 'notes', 'pomodoro', 'expenses',
+];
+
+export function isFlagshipMiniApp(id: string): boolean {
+  return (FLAGSHIP_MINI_APPS as string[]).includes(id);
+}
+
 export function miniAppById(id: string): MiniAppCatalogItem | undefined {
   return MINI_APP_CATALOG.find(app => app.id === id);
 }
