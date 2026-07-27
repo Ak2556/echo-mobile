@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 import { pushHabitsStructured } from './habitsRemote';
-import { celebrateHabitMilestones } from './milestones';
 
 export const HABITS_KEY = 'mini:habits';
 
@@ -172,7 +171,10 @@ export async function saveHabits(habits: Habit[]): Promise<void> {
   await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
   pushMiniApp('habits', habits);
   pushHabitsStructured(habits);
-  celebrateHabitMilestones(habits);
+  // Lazy import: milestones imports STREAK_MILESTONES/getHabitStreak from here,
+  // so a static import would form a load-time cycle. Deferring it to call time
+  // breaks the cycle; the celebration is a fire-and-forget notification effect.
+  void import('./milestones').then(m => m.celebrateHabitMilestones(habits));
 }
 
 export async function createHabit(input: {
