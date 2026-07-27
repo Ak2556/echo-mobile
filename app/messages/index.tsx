@@ -406,10 +406,14 @@ function InboxHero({
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ color: colors.text, fontSize: 26, lineHeight: 31, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
-              Stay close, move things forward.
+              {total ? 'Pick up where you left off.' : 'Start a conversation.'}
             </Text>
             <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
-              {total ? `${total} active conversations with Echo tools for replies, media, groups, saves, and catch-up.` : 'Start with one useful conversation, then let Echo help keep it alive.'}
+              {total === 0
+                ? 'Message anyone on Echo, or start a group.'
+                : unread > 0
+                  ? `${unread} unread message${unread === 1 ? '' : 's'} waiting across ${total} chat${total === 1 ? '' : 's'}.`
+                  : `You're all caught up across ${total} conversation${total === 1 ? '' : 's'}.`}
             </Text>
           </View>
         </View>
