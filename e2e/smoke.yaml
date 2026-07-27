@@ -1,0 +1,31 @@
+# Navigation smoke: the app shell loads and every bottom tab renders without
+# crashing. Assumes the dev build is already installed and signed into an
+# account (akashhere12). Run: maestro test e2e/smoke.yaml
+appId: com.ak2556.echo
+---
+- assertVisible: "Home"
+- assertVisible: "Explore"
+
+- tapOn: "Explore"
+- assertVisible: "Explore"
+- takeScreenshot: e2e/shots/explore
+
+- tapOn: "Market"
+- assertVisible: "Market"
+- takeScreenshot: e2e/shots/market
+
+- tapOn: "Chat"
+- assertVisible: "Chat"
+- takeScreenshot: e2e/shots/chat
+
+- tapOn: "You"
+- assertVisible: "You"
+- takeScreenshot: e2e/shots/you
+
+- tapOn: "Tools"
+- assertVisible: "Tools"
+- takeScreenshot: e2e/shots/tools
+
+- tapOn: "Home"
+- assertVisible: "Home"
+- takeScreenshot: e2e/shots/home
