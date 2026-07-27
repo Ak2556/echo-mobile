@@ -2546,7 +2546,7 @@ export default function DMScreen() {
       return (
         <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-            <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
+            <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel="Back to messages">
               <ArrowLeft color={colors.text} size={24} />
             </AnimatedPressable>
           </View>
@@ -2587,7 +2587,7 @@ export default function DMScreen() {
         paddingHorizontal: 16, paddingVertical: 12,
         borderBottomWidth: 1, borderBottomColor: colors.border,
       }}>
-        <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 10 }} scaleValue={0.88} haptic="light">
+        <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 10 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel="Back to messages">
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
 
@@ -3111,6 +3111,8 @@ export default function DMScreen() {
                 onPress={() => void finishVoiceRecording(true)}
                 scaleValue={0.9}
                 haptic="medium"
+                accessibilityRole="button"
+                accessibilityLabel="Send voice message"
                 style={{
                   width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
                   backgroundColor: colors.accent,
@@ -3126,6 +3128,8 @@ export default function DMScreen() {
                 <Pressable
                   onPress={() => setAttachmentMenuOpen(open => !open)}
                   disabled={imageUploading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add attachment"
                   style={{
                     width: 40, height: 40, borderRadius: 20,
                     alignItems: 'center', justifyContent: 'center',
@@ -3150,6 +3154,7 @@ export default function DMScreen() {
               }}>
                 <RNTextInput
                   ref={inputRef}
+                  accessibilityLabel="Message input"
                   style={{ color: colors.text, fontSize: 16, lineHeight: 22, maxHeight: 120 }}
                   placeholder={editingMessage ? 'Edit message…' : 'Message…'}
                   placeholderTextColor={colors.textMuted}
@@ -3187,6 +3192,8 @@ export default function DMScreen() {
                     disabled={!canSend}
                     scaleValue={0.9}
                     haptic="medium"
+                    accessibilityRole="button"
+                    accessibilityLabel={editingMessage ? 'Save edit' : 'Send message'}
                     style={{
                       width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
                       backgroundColor: canSend ? (editingMessage ? colors.success ?? colors.accent : colors.accent) : colors.surfaceHover,
