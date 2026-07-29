@@ -22,6 +22,7 @@ import {
   getHabitStreak, isScheduledOn, dayCountFor, STREAK_MILESTONES,
   loadHabits, saveHabits, setCheckInDetails, thisWeekCount, todayStr,
 } from '../../lib/habits';
+import { localDayKey } from '../../lib/localDate';
 import { HabitDetail } from '../../components/mini-apps/HabitDetail';
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -87,7 +88,7 @@ function Heatmap({ habit, colors }: { habit: Habit; colors: any }) {
   const cols = Array.from({ length: weeks }, (_, w) =>
     Array.from({ length: 7 }, (_, d) => {
       const cell = new Date(start); cell.setDate(start.getDate() + w * 7 + d);
-      return cell.toISOString().slice(0, 10);
+      return localDayKey(cell);
     }),
   );
   const todayIso = todayStr();
@@ -121,7 +122,7 @@ function WeekRow({ habit, colors, onDayPress }: { habit: Habit; colors: any; onD
   const today = new Date();
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today); d.setDate(today.getDate() - 6 + i);
-    return d.toISOString().slice(0, 10);
+    return localDayKey(d);
   });
   return (
     <View style={{ flexDirection: 'row', gap: 4, marginTop: 10 }}>
