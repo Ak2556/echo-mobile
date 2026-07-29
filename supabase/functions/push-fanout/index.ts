@@ -95,24 +95,75 @@ Deno.serve(async (req: Request) => {
   return new Response(JSON.stringify(j), { status: r.ok ? 200 : 502, headers: { 'content-type': 'application/json' } });
 });
 
+// Pick a random variant so the same event never reads the same twice.
+function pick(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Voice: playful, a little cheeky, never corporate — a ping should feel like a
+// friend narrating your day, not a system alert. Content-carrying types (dm,
+// comment, mention, quote) keep the real text as the body; the title gets the
+// personality.
 function titleFor(t: string, actorName: string, preview?: string): string {
   switch (t) {
-    case 'like': return `${actorName} liked your echo`;
-    case 'comment': return `${actorName} commented`;
-    case 'follow': return `${actorName} followed you`;
-    case 'repost': return `${actorName} re-echoed your post`;
-    case 'mention': return `${actorName} mentioned you`;
-    case 'dm': return `${actorName} sent a message`;
+    case 'like': return pick([
+      `${actorName} liked your echo`,
+      `${actorName} smashed the like on your echo`,
+      `${actorName} approves of your echo 🫶`,
+      `Your echo just won ${actorName} over`,
+    ]);
+    case 'comment': return pick([
+      `${actorName} had something to say`,
+      `${actorName} dropped a comment`,
+      `${actorName} replied to your echo`,
+    ]);
+    case 'follow': return pick([
+      `${actorName} followed you. Great taste.`,
+      `New follower: ${actorName}. The fan club grows.`,
+      `${actorName} hit follow — wave hello?`,
+    ]);
+    case 'repost': return pick([
+      `${actorName} re-echoed you. Spreading the word.`,
+      `${actorName} gave your echo a bigger stage`,
+      `${actorName} re-echoed your post`,
+    ]);
+    case 'mention': return pick([
+      `${actorName} name-dropped you`,
+      `${actorName} pulled you into it`,
+      `${actorName} mentioned you`,
+    ]);
+    case 'dm': return pick([
+      `${actorName} messaged you`,
+      `New message from ${actorName}`,
+      `${actorName} slid into your DMs`,
+    ]);
     case 'reaction': {
       const emoji = preview ? REACTION_EMOJI[preview] : '';
-      return emoji ? `${actorName} reacted with ${emoji}` : `${actorName} reacted to your echo`;
+      if (!emoji) return `${actorName} reacted to your echo`;
+      return pick([
+        `${actorName} reacted ${emoji}`,
+        `${emoji} from ${actorName} on your echo`,
+        `${actorName} hit your echo with ${emoji}`,
+      ]);
     }
-    case 'bookmark': return `${actorName} saved your echo`;
-    case 'quote': return `${actorName} quoted your echo`;
+    case 'bookmark': return pick([
+      `${actorName} saved your echo. It's a keeper.`,
+      `${actorName} bookmarked your echo for later. Fancy.`,
+      `${actorName} filed your echo under "worth it"`,
+    ]);
+    case 'quote': return pick([
+      `${actorName} quoted you`,
+      `${actorName} built on your echo`,
+      `${actorName} quoted your echo`,
+    ]);
     case 'daily_react': {
       // preview is "<emoji>  <answer snippet>" — lead the title with the emoji.
       const emoji = preview ? preview.trim().split(/\s+/)[0] : '';
-      return emoji ? `${actorName} reacted ${emoji} to your answer` : `${actorName} reacted to your answer`;
+      if (!emoji) return `${actorName} reacted to your answer`;
+      return pick([
+        `${actorName} reacted ${emoji} to your answer`,
+        `${emoji} ${actorName} felt something about your answer`,
+      ]);
     }
     case 'personal_nudge': return 'Echo';
     default: return 'Echo';
@@ -121,6 +172,7 @@ function titleFor(t: string, actorName: string, preview?: string): string {
 
 function messageFor(t: string, preview?: string): string {
   switch (t) {
+    // Content-carrying: show the real text.
     case 'comment':
     case 'dm':
     case 'mention':
@@ -133,6 +185,12 @@ function messageFor(t: string, preview?: string): string {
     }
     case 'personal_nudge':
       return (preview ?? '').slice(0, 140);
+    // Title-only social pings get a little day-making flavor in the body.
+    case 'like': return pick(['Good echo, apparently.', 'You cooked.', '']);
+    case 'follow': return pick(['Tap to see who.', 'Somebody has taste.', '']);
+    case 'repost': return pick(['Your words, wider reach.', '']);
+    case 'reaction': return pick(['Tap to see the reaction.', '']);
+    case 'bookmark': return pick(['Saved for a rainy day.', '']);
     default:
       return '';
   }
