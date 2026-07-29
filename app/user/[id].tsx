@@ -152,15 +152,15 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         ) : null}
 
         <View className="flex-row gap-8 mb-4">
-          <AnimatedPressable className="items-center" scaleValue={0.92} haptic="light">
+          <AnimatedPressable style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{echoeCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12 }}>Echoes</Text>
           </AnimatedPressable>
-          <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } })} className="items-center" scaleValue={0.92} haptic="light">
+          <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followerCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12 }}>Followers</Text>
           </AnimatedPressable>
-          <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'following' } })} className="items-center" scaleValue={0.92} haptic="light">
+          <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'following' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followingCount}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12 }}>Following</Text>
           </AnimatedPressable>
