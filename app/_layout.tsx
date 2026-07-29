@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
-import type { ErrorBoundaryProps } from 'expo-router';
+import type { ErrorBoundaryProps, Href } from 'expo-router';
 import { Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
@@ -164,7 +164,10 @@ function RootLayout() {
         // carry it in `target_kind`.
         const surface = String(data.surface ?? data.target_kind ?? '');
         track('notification_tapped', { kind, surface });
-        if (surface === 'daily') router.push('/daily-question');
+        // Mini-app usage nudges carry a concrete route — open that app directly.
+        const nudgeRoute = data.route ? String(data.route) : '';
+        if (nudgeRoute.startsWith('/')) router.push(nudgeRoute as Href);
+        else if (surface === 'daily') router.push('/daily-question');
         else if (surface === 'dm') router.push('/(tabs)/chat');
         else if (surface === 'feed') router.push('/(tabs)/home');
         else if (surface === 'marketplace') router.push('/(tabs)/marketplace');
