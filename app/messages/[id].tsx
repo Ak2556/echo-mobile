@@ -64,7 +64,7 @@ import {
   useForwardMessage,
   useRemoteConversations,
 } from '../../hooks/queries/useDMs';
-import { markMessagesRead, fetchGroupMembers, type GroupMember, type RemoteMessageReaction } from '../../lib/supabaseEchoApi';
+import { markMessagesRead, fetchGroupMembers, fetchConversationPrefs, setDMPref, type GroupMember, type RemoteMessageReaction, type ConversationPrefs } from '../../lib/supabaseEchoApi';
 import { usePresenceTracking } from '../../lib/presence';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
@@ -725,10 +725,11 @@ function MessageEffect({ kind, onDone }: { kind: EffectKind; onDone: () => void 
 function DMBubble({
   message, isMe, showReadReceipt, myUserId, grouped, animate, translation, translating, saved,
   selectionMode, selected, onSelectToggle,
-  onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry,
+  onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry, quickReaction = '❤️',
 }: {
   message: NormalizedMessage;
   isMe: boolean;
+  quickReaction?: string;
   showReadReceipt: boolean;
   myUserId: string;
   grouped: boolean;
@@ -785,7 +786,7 @@ function DMBubble({
   // Double-tap a text bubble to toss a ❤️ — the beloved iMessage/IG gesture.
   // Scoped to text so it never fights the single-tap on media/link/echo cards.
   const isTextBubble = !!message.content && !['image', 'voice', 'echo', 'link', 'contact'].includes(message.kind);
-  const hasHeart = message.reactions.some(r => r.value === '❤️' && r.userId === myUserId);
+  const hasHeart = message.reactions.some(r => r.value === quickReaction && r.userId === myUserId);
   const heartPop = useSharedValue(0);
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
@@ -795,7 +796,7 @@ function DMBubble({
       heartPop.value = withSpring(1, { damping: 10, stiffness: 260 }, () => {
         heartPop.value = withTiming(0, { duration: 320 });
       });
-      runOnJS(onReactionToggle)('❤️', hasHeart);
+      runOnJS(onReactionToggle)(quickReaction, hasHeart);
     });
   const bubbleGesture = Gesture.Simultaneous(swipePan, doubleTap);
   const heartPopStyle = useAnimatedStyle(() => ({
@@ -1036,7 +1037,9 @@ function DMBubble({
       <GestureDetector gesture={bubbleGesture}>
         <Animated.View style={[{ maxWidth: '82%' }, swipeStyle]}>
           <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -6, alignSelf: 'center', zIndex: 5 }, heartPopStyle]}>
-            <Heart color="#F0506E" size={38} weight="fill" />
+            {quickReaction === '❤️'
+              ? <Heart color="#F0506E" size={38} weight="fill" />
+              : <Text style={{ fontSize: 34 }}>{quickReaction}</Text>}
           </Animated.View>
           {canSwipe && (
             <Animated.View
@@ -1861,6 +1864,17 @@ export default function DMScreen() {
   const myId = userId ?? 'me';
   usePresenceTracking(remote ? (userId ?? undefined) : undefined);
 
+  // Per-conversation prefs (nickname, quick reaction, mark-unread).
+  const [convPrefs, setConvPrefs] = useState<ConversationPrefs | null>(null);
+  useEffect(() => {
+    if (remote && id) fetchConversationPrefs(id).then(setConvPrefs).catch(() => {});
+  }, [remote, id]);
+  // Opening the thread clears any manual "mark as unread".
+  useEffect(() => {
+    if (remote && id && convPrefs?.markedUnread) void setDMPref(id, { marked_unread: false });
+  }, [remote, id, convPrefs?.markedUnread]);
+  const quickReaction = convPrefs?.quickReaction || '❤️';
+
   useEffect(() => {
     if (!id) return;
     setText(persistGet<string>('chat:draft:' + id, ''));
@@ -2625,7 +2639,7 @@ export default function DMScreen() {
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }} numberOfLines={1}>
-                {conversation.displayName}
+                {(convPrefs && conversation.userId ? convPrefs.nicknames[conversation.userId] : undefined) || conversation.displayName}
               </Text>
               {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
               {streak >= 2 && (
@@ -2831,6 +2845,7 @@ export default function DMScreen() {
               <DMBubble
                 message={msg}
                 isMe={remote ? msg.senderId === myId : msg.senderId === 'me'}
+                quickReaction={quickReaction}
                 animate={firstAppearance && isFresh}
                 translation={translations[msg.id]}
                 translating={translatingId === msg.id}
