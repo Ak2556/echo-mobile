@@ -160,8 +160,8 @@ export default function StoryScreen() {
       </Animated.View>
 
       <View className="absolute inset-0 flex-row" style={{ top: 120 }}>
-        <AnimatedPressable onPress={handlePrev} className="flex-1" scaleValue={1} haptic="none" />
-        <AnimatedPressable onPress={handleNext} className="flex-1" scaleValue={1} haptic="none" />
+        <AnimatedPressable onPress={handlePrev} style={{ flex: 1 }} scaleValue={1} haptic="none" />
+        <AnimatedPressable onPress={handleNext} style={{ flex: 1 }} scaleValue={1} haptic="none" />
       </View>
     </View>
   );
