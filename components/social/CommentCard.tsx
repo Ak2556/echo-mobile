@@ -100,7 +100,7 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
             </Text>
           </AnimatedPressable>
           {!indented && (
-            <AnimatedPressable className="flex-row items-center gap-1" scaleValue={0.85} haptic="light" onPress={() => onReply?.(comment)} accessibilityLabel="Reply to comment" accessibilityRole="button">
+            <AnimatedPressable style={{ flexDirection: "row", alignItems: "center", gap: 4 }} scaleValue={0.85} haptic="light" onPress={() => onReply?.(comment)} accessibilityLabel="Reply to comment" accessibilityRole="button">
               <ChatCircle color={colors.textMuted} size={14} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Reply</Text>
             </AnimatedPressable>
