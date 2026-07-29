@@ -23,6 +23,7 @@ import {
   liftHistory, est1RM, weeklySummaries, monthlySummaries,
   thisWeekWorkoutCount, weeklyStreak, detectPRs,
 } from '../../lib/fitness';
+import { localDayKey } from '../../lib/localDate';
 import { syncFitnessReminders } from '../../lib/fitnessReminders';
 import { WorkoutSession } from '../../components/mini-apps/WorkoutSession';
 import { EXERCISES, EXERCISE_CATALOG, MUSCLE_GROUPS, MuscleGroup, searchExercises } from '../../lib/exerciseLibrary';
@@ -134,7 +135,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
   const [showMore, setShowMore] = useState(false);
   const [online, setOnline] = useState<FoodItem[]>([]);
   const [onlineLoading, setOnlineLoading] = useState(false);
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = localDayKey();
   const [mealDate, setMealDate] = useState(todayIso);
   const [mealTime, setMealTime] = useState(() => {
     const d = new Date();
@@ -143,7 +144,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
   // The last 7 calendar days as quick day-picker chips.
   const dayOptions = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
+    const iso = localDayKey(d);
     const label = i === 0 ? 'Today' : i === 1 ? 'Yesterday' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
     return { iso, label };
   });

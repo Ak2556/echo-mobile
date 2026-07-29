@@ -33,6 +33,7 @@ import {
   remainingSecondsForActive, saveActivePomodoroTimer, savePomodoro,
   sessionsOn, todayStats, topLabels, weekBars,
 } from '../../lib/pomodoro';
+import { localDayKey } from '../../lib/localDate';
 
 type Mode = PomodoroMode;
 
@@ -656,7 +657,7 @@ export default function PomodoroScreen() {
   const bars = weekBars(doc);
   const maxBar = Math.max(1, ...bars.map(b => b.count), doc.settings.dailyGoal);
   const quickLabels = topLabels(doc);
-  const todaySessions = sessionsOn(doc.sessions, new Date().toISOString().slice(0, 10));
+  const todaySessions = sessionsOn(doc.sessions, localDayKey());
   const nextLabel = nextModeLabel(mode, mode === 'focus' ? stats.count + 1 : stats.count, doc.settings);
 
   const update = (next: PomodoroDoc) => { setDoc(next); void savePomodoro(next); };
@@ -727,7 +728,7 @@ export default function PomodoroScreen() {
           ],
         };
         update(next);
-        const doneToday = sessionsOn(next.sessions, new Date().toISOString().slice(0, 10)).length;
+        const doneToday = sessionsOn(next.sessions, localDayKey()).length;
         if (doneToday === next.settings.dailyGoal) showToast(`🎯 Daily goal hit — ${doneToday} sessions`, 'Goal');
         const nextMode: Mode = doneToday % next.settings.longEvery === 0 ? 'long' : 'short';
         const nextSeconds = minutesFor(nextMode, next.settings) * 60;

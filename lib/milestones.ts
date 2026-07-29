@@ -4,6 +4,7 @@
 // milestone fires once (a persisted "celebrated" set de-dupes).
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { localDayKey } from './localDate';
 import * as Notifications from 'expo-notifications';
 import { STREAK_MILESTONES, getHabitStreak, type Habit } from './habits';
 import type { FitnessDoc } from './fitness';
@@ -91,7 +92,7 @@ export function celebrateFitnessMilestones(doc: FitnessDoc): void {
       const start = (() => {
         const m = new Date();
         m.setDate(m.getDate() - ((m.getDay() + 6) % 7));
-        return m.toISOString().slice(0, 10);
+        return localDayKey(m);
       })();
       const count = doc.workouts.filter(w => (w.date || '').slice(0, 10) >= start).length;
       if (count < goal) return;
