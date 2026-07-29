@@ -39,6 +39,7 @@ function getTimeAgo(dateStr: string): string {
 type InboxConversation = Conversation & {
   muted?: boolean;
   archived?: boolean;
+  markedUnread?: boolean;
   isGroup?: boolean;
   memberCount?: number;
 };
@@ -237,7 +238,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
 }) {
   const { colors, fontSizes, showAvatars, animation, isUserOnline } = useTheme();
   const online = !conversation.isGroup && isUserOnline(conversation.userId);
-  const showUnread = conversation.unreadCount > 0 && !conversation.muted;
+  const showUnread = (conversation.unreadCount > 0 || !!conversation.markedUnread) && !conversation.muted;
   const meta = previewMeta(conversation);
   const draft = persistGet<string>('chat:draft:' + conversation.id, '').trim();
   const preview = draft
@@ -297,7 +298,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
                   borderColor: colors.bg,
                 }}
               >
-                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}</Text>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount > 0 ? conversation.unreadCount : ''}</Text>
               </Animated.View>
             )}
           </View>
@@ -644,6 +645,7 @@ export default function MessagesListScreen() {
         unreadCount: rc.unreadCount,
         muted: rc.muted,
         archived: rc.archived,
+        markedUnread: rc.markedUnread,
         isGroup: rc.isGroup,
         memberCount: rc.memberCount,
       }))

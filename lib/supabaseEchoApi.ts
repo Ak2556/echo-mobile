@@ -2669,6 +2669,7 @@ export interface RemoteConversation {
   pinnedMessage: { id: string; content: string | null; kind: string } | null;
   muted: boolean;
   archived: boolean;
+  markedUnread?: boolean;
 }
 
 export interface RemoteMessageReaction {
@@ -3141,19 +3142,24 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
 
   const [{ data, error }, prefsRes] = await Promise.all([
     supabase.rpc('get_dm_conversations', { p_user_id: uid }),
-    supabase.from('dm_prefs').select('conversation_id, muted, archived').eq('user_id', uid),
+    supabase.from('dm_prefs').select('conversation_id, muted, archived, marked_unread, nicknames').eq('user_id', uid),
   ]);
   if (error) throw error;
+  type PrefRow = { conversation_id: string; muted: boolean; archived: boolean; marked_unread?: boolean; nicknames?: Record<string, string> };
   const prefs = new Map(
-    ((prefsRes.data ?? []) as { conversation_id: string; muted: boolean; archived: boolean }[])
-      .map(p => [p.conversation_id, p]),
+    ((prefsRes.data ?? []) as PrefRow[]).map(p => [p.conversation_id, p]),
   );
 
-  return ((data ?? []) as Record<string, unknown>[]).map(r => ({
+  return ((data ?? []) as Record<string, unknown>[]).map(r => {
+    const p = prefs.get(r.id as string);
+    const otherUserId = (r.other_user_id as string | null) ?? null;
+    const baseName = (r.is_group ? (r.group_title as string | null) : (r.other_display_name as string | null)) ?? (r.other_username as string | null) ?? 'User';
+    const nickname = !r.is_group && otherUserId ? p?.nicknames?.[otherUserId] : undefined;
+    return {
     id: r.id as string,
-    otherUserId: (r.other_user_id as string | null) ?? null,
+    otherUserId,
     otherUsername: (r.other_username as string | null) ?? (r.is_group ? 'group' : 'unknown'),
-    otherDisplayName: (r.is_group ? (r.group_title as string | null) : (r.other_display_name as string | null)) ?? (r.other_username as string | null) ?? 'User',
+    otherDisplayName: nickname || baseName,
     otherAvatarColor: (r.is_group ? (r.group_avatar_color as string | null) : (r.other_avatar_color as string | null)) ?? '#C65F3F',
     otherAvatarUrl: r.is_group ? null : ((r.other_avatar_url as string | null) ?? null),
     isGroup: !!r.is_group,
@@ -3165,9 +3171,11 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
     lastMessageKind: (r.last_message_kind as string | null) ?? 'text',
     unreadCount: Number(r.unread_count ?? 0),
     pinnedMessage: null,
-    muted: prefs.get(r.id as string)?.muted ?? false,
-    archived: prefs.get(r.id as string)?.archived ?? false,
-  }));
+    muted: p?.muted ?? false,
+    archived: p?.archived ?? false,
+    markedUnread: p?.marked_unread ?? false,
+    };
+  });
 }
 
 /** Per-conversation preferences for the current user (Chat Details). */
