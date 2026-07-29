@@ -10,7 +10,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
 import {
-  ArrowLeft, PaperPlaneTilt, Quotes, SealCheck,
+  ArrowLeft, PaperPlaneTilt, Quotes, SealCheck, Flag,
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
@@ -1353,7 +1353,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
 
 function MessageActionSheet({
   visible, message, isOwn, myUserId, isPinned,
-  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward, onTranslate, onSmartReply, onSave, isSaved, onSelect,
+  onClose, onCopy, onDelete, onReact, onReply, onEdit, onPin, onForward, onTranslate, onSmartReply, onSave, isSaved, onSelect, onReport,
 }: {
   visible: boolean;
   message: NormalizedMessage | null;
@@ -1373,6 +1373,7 @@ function MessageActionSheet({
   onForward: () => void;
   onTranslate: () => void;
   onSmartReply: () => void;
+  onReport: () => void;
 }) {
   const { colors, reduceAnimations } = useTheme();
   const insets = useSafeAreaInsets();
@@ -1508,6 +1509,13 @@ function MessageActionSheet({
       icon: <PushPin color={isPinned ? colors.accent : colors.text} size={17} weight={isPinned ? 'fill' : 'bold'} />,
       onPress: onPin,
       accent: isPinned,
+    } : null,
+    !isOwn && !isDeleted ? {
+      key: 'report',
+      label: 'Report',
+      icon: <Flag color={colors.danger} size={17} weight="bold" />,
+      onPress: onReport,
+      destructive: true,
     } : null,
     isOwn && !isDeleted ? {
       key: 'delete',
@@ -3278,6 +3286,9 @@ export default function DMScreen() {
         onSave={handleToggleSave}
         isSaved={!!activeMessage && savedIdSet.has(activeMessage.id)}
         onSelect={() => { if (activeMessage) enterSelection(activeMessage.id); }}
+        onReport={() => {
+          if (activeMessage) router.push({ pathname: '/report', params: { targetType: 'message', targetId: activeMessage.id, targetName: 'message' } });
+        }}
       />
 
       {effect && <MessageEffect kind={effect} onDone={() => setEffect(null)} />}
