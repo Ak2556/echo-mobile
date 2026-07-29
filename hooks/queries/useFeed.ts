@@ -13,7 +13,7 @@ import {
   RankedFeedCursor,
 } from '../../lib/supabaseEchoApi';
 import { LOCAL_SEED_FEED, coerceFeedItem } from '../../lib/localFeedSeed';
-import { computeScore, GRAVITY, deduplicateFeed } from '../../lib/feedScoring';
+import { computeScore, GRAVITY } from '../../lib/feedScoring';
 
 const PAGE_SIZE = 20;
 
@@ -192,27 +192,32 @@ export function useInfiniteFeed() {
         list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
+        // Remote pages are returned RAW here; block/mute/not-interested filtering
+        // happens in `select` (below). Filtering in queryFn used to shrink a page
+        // under PAGE_SIZE, which tripped getNextPageParam's length check and made
+        // the feed dead-end early for anyone who'd blocked/muted someone.
+
         // Latest: pure chronological, no ranking, no personalisation (DSA Art. 27 opt-out).
         if (feedScope === 'latest') {
           if (pageParam) return [];
-          const rows = await fetchRemoteFeed({ limit: PAGE_SIZE * 3 });
-          return filterHidden(rows);
+          return fetchRemoteFeed({ limit: PAGE_SIZE * 3 });
         }
 
         const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;
         try {
-          const rows = await fetchRankedFeed({
+          return await fetchRankedFeed({
             limit: PAGE_SIZE,
             gravity,
             cursor: pageParam,
             followingOnly: feedScope === 'following',
           });
-          return filterHidden(rows);
         } catch (rankErr) {
           captureException(rankErr, { tags: { hook: 'useInfiniteFeed', fallback: 'chronological' } });
-          const cursor = typeof pageParam === 'object' && pageParam ? undefined : undefined;
-          const rows = await fetchRemoteFeed({ limit: PAGE_SIZE, cursor });
-          return filterHidden(rows);
+          // On ranked-RPC failure we can't translate the (score,id) cursor to the
+          // chronological feed, so only the first page falls back — subsequent
+          // pages stop rather than repeat page 1.
+          if (pageParam) return [];
+          return fetchRemoteFeed({ limit: PAGE_SIZE });
         }
       }
 
@@ -254,14 +259,18 @@ export function useInfiniteFeed() {
 
       return merged.slice(0, PAGE_SIZE);
     },
-    // Deduplicate across pages without changing the page count so React Query's
-    // internal pageParams array stays consistent with the pages array length.
+    // Hide blocked/muted/not-interested items and dedup across pages — for
+    // display only, so pagination still counts raw server pages. Page count is
+    // preserved so React Query's pageParams array stays consistent.
     select: (data) => {
+      const blockSet = new Set([...blockedIds, ...mutedIds]);
+      const skipSet = new Set(notInterestedIds);
       const seen = new Set<string>();
       return {
         ...data,
         pages: data.pages.map(page =>
           page.filter(item => {
+            if (blockSet.has(item.userId) || skipSet.has(item.id)) return false;
             if (seen.has(item.id)) return false;
             seen.add(item.id);
             return true;
