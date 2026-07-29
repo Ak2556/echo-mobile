@@ -3170,10 +3170,33 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
   }));
 }
 
-/** Set mute/archive preference for a conversation (per current user). */
+/** Per-conversation preferences for the current user (Chat Details). */
+export interface ConversationPrefs {
+  muted: boolean;
+  archived: boolean;
+  mutedUntil: string | null;
+  nicknames: Record<string, string>;
+  theme: string | null;
+  quickReaction: string | null;
+  markedUnread: boolean;
+  disappearingSeconds: number;
+}
+
+export type ConversationPrefPatch = {
+  muted?: boolean;
+  archived?: boolean;
+  muted_until?: string | null;
+  nicknames?: Record<string, string>;
+  theme?: string | null;
+  quick_reaction?: string | null;
+  marked_unread?: boolean;
+  disappearing_seconds?: number;
+};
+
+/** Set preferences for a conversation (per current user). */
 export async function setDMPref(
   conversationId: string,
-  patch: { muted?: boolean; archived?: boolean },
+  patch: ConversationPrefPatch,
 ): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
@@ -3184,6 +3207,34 @@ export async function setDMPref(
       { onConflict: 'conversation_id,user_id' },
     );
   if (error) throw error;
+}
+
+/** Fetch all of the current user's preferences for one conversation. */
+export async function fetchConversationPrefs(conversationId: string): Promise<ConversationPrefs> {
+  const empty: ConversationPrefs = {
+    muted: false, archived: false, mutedUntil: null, nicknames: {},
+    theme: null, quickReaction: null, markedUnread: false, disappearingSeconds: 0,
+  };
+  const uid = await getSessionUserId();
+  if (!uid) return empty;
+  const { data } = await supabase
+    .from('dm_prefs')
+    .select('muted, archived, muted_until, nicknames, theme, quick_reaction, marked_unread, disappearing_seconds')
+    .eq('conversation_id', conversationId)
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (!data) return empty;
+  const r = data as Record<string, unknown>;
+  return {
+    muted: !!r.muted,
+    archived: !!r.archived,
+    mutedUntil: (r.muted_until as string | null) ?? null,
+    nicknames: (r.nicknames as Record<string, string> | null) ?? {},
+    theme: (r.theme as string | null) ?? null,
+    quickReaction: (r.quick_reaction as string | null) ?? null,
+    markedUnread: !!r.marked_unread,
+    disappearingSeconds: (r.disappearing_seconds as number | null) ?? 0,
+  };
 }
 
 /** Fetch a single conversation by UUID (used when local store doesn't have it). */
@@ -3374,6 +3425,40 @@ export async function fetchRemoteMessages(
   }));
 
   return messages;
+}
+
+export interface ConversationMedia {
+  images: { id: string; url: string; createdAt: string }[];
+  links: { id: string; url: string; createdAt: string }[];
+}
+
+/** Shared photos + links in a conversation, newest first (for Chat Details). */
+export async function fetchConversationMedia(conversationId: string): Promise<ConversationMedia> {
+  const { data, error } = await supabase
+    .from('direct_messages')
+    .select('id, text, kind, media_url, created_at')
+    .eq('conversation_id', conversationId)
+    .in('kind', ['image', 'link'])
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error || !data) return { images: [], links: [] };
+
+  const images: ConversationMedia['images'] = [];
+  const links: ConversationMedia['links'] = [];
+  for (const m of data as Record<string, unknown>[]) {
+    const id = m.id as string;
+    const createdAt = m.created_at as string;
+    if (m.kind === 'image') {
+      const url = await signedDmMediaUrl((m.media_url as string | null) ?? null);
+      if (url) images.push({ id, url, createdAt });
+    } else if (m.kind === 'link') {
+      const raw = (m.text as string | null) ?? '';
+      const url = (raw.match(/https?:\/\/[^\s]+/i)?.[0]) ?? raw.trim();
+      if (url) links.push({ id, url, createdAt });
+    }
+  }
+  return { images, links };
 }
 
 // Suggested Users
