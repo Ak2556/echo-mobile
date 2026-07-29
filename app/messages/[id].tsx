@@ -2597,13 +2597,10 @@ export default function DMScreen() {
         </AnimatedPressable>
 
         <Pressable
-          onPress={() => {
-            if (conversation.isGroup) router.push(`/group/${id}`);
-            else if (conversation.userId) router.push(`/user/${conversation.userId}`);
-          }}
+          onPress={() => router.push(`/chat-details/${id}`)}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
           accessibilityRole="button"
-          accessibilityLabel={conversation.isGroup ? 'Group info' : 'View profile'}
+          accessibilityLabel="Chat details"
         >
           <View style={{ marginRight: 10 }}>
             <Avatar
