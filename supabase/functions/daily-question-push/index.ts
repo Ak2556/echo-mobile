@@ -76,11 +76,12 @@ Deno.serve(async (req: Request) => {
 
   if (tokens.size === 0) return json({ skipped: 'no push tokens', today }, 200);
 
-  const title = "Today's question";
+  // The question itself is the hook, so it stays the body; the title carries
+  // the personality. Picked per-message so it varies across people too.
   const body = truncate(question.question, 150);
   const messages: ExpoMessage[] = [...tokens].map((to) => ({
     to,
-    title,
+    title: pick(DAILY_TITLES),
     body,
     sound: 'default',
     data: { kind: 'daily_question', target_id: question.id },
@@ -106,6 +107,23 @@ Deno.serve(async (req: Request) => {
 
   return json({ ok: true, today, question_id: question.id, tokens: tokens.size, sent, errors }, 200);
 });
+
+// Playful title variants for the daily question — one gets picked per push so
+// the ritual never feels like the same alarm going off.
+const DAILY_TITLES = [
+  "Today's question just dropped 👀",
+  'Brain, meet today’s question',
+  'Two minutes, one honest take',
+  'Today’s question is a good one',
+  'Everyone’s answering — where you at?',
+  'Warning: mildly provocative question inside',
+  'Your daily excuse to have an opinion',
+  'Quick — before you overthink it',
+];
+
+function pick(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 function truncate(s: string, n: number): string {
   return s.length <= n ? s : s.slice(0, n - 1).trimEnd() + '…';
