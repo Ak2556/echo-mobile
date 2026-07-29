@@ -204,7 +204,7 @@ export function createSocialSlice(
     likeComment: (echoId, commentId) => {
       const prev = get().commentsByEcho;
       const comments = (prev[echoId] || []).map(c =>
-        c.id === commentId ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 } : c
+        c.id === commentId ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? Math.max(0, c.likes - 1) : c.likes + 1 } : c
       );
       const updated = { ...prev, [echoId]: comments };
       persistSet('commentsByEcho', updated);
