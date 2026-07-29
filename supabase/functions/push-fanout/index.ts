@@ -83,6 +83,9 @@ Deno.serve(async (req: Request) => {
       kind: body.type,
       target_id: body.target_id ?? null,
       target_kind: body.target_kind ?? null,
+      // Actor is the object of some notifications (e.g. follow has no target_id
+      // — the tap should open the follower's profile).
+      actor_id: body.actor_id ?? null,
     },
   }];
 
