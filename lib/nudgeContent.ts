@@ -5,6 +5,7 @@
  */
 
 import { type EngagementModel, type Surface, topSurface } from './engagementModel';
+import { miniAppById } from './miniAppCatalog';
 
 /** Live, best-effort signals gathered at schedule time to pick nudge content. */
 export interface NudgeSignals {
@@ -12,6 +13,9 @@ export interface NudgeSignals {
   streakAtRisk?: { name: string; streak: number } | null;
   unreadDMs?: number;
   newFollowers?: number;
+  /** Mini-app ids the user actually uses, most-used/recent first. Drives the
+   *  throughout-the-day nudges toward the tools they care about. */
+  favoriteMiniApps?: string[];
 }
 
 export interface PlannedNudge {
@@ -19,6 +23,31 @@ export interface PlannedNudge {
   surface: Surface | 'chat';
   title: string;
   body: string;
+  /** Deep-link route to open on tap (e.g. a specific mini-app). */
+  route?: string;
+}
+
+// Action-oriented copy per mini-app, keyed by catalog id. Anything not listed
+// falls back to the app's own name + promise from the catalog.
+const MINI_APP_NUDGES: Record<string, { title: string; body: string }> = {
+  fitness: { title: 'Fitness', body: 'Log today’s workout or meal to keep your numbers honest.' },
+  habits: { title: 'Habits', body: 'Check in on your habits before the day slips away.' },
+  tasks: { title: 'Tasks', body: 'What’s the one task that moves things forward today?' },
+  notes: { title: 'Notes', body: 'Capture that thought before it fades.' },
+  pomodoro: { title: 'Focus', body: 'Got 25 minutes? Start a focus block now.' },
+  expenses: { title: 'Money', body: 'Log today’s spending to stay on top of your budget.' },
+  planner: { title: 'Planner', body: 'Map out your blocks so today has a shape.' },
+  'shopping-list': { title: 'Shopping', body: 'Anything to add to your shopping list before you head out?' },
+  learn: { title: 'Learn', body: 'A few minutes on your learning path adds up — continue it?' },
+  'voice-memo': { title: 'Voice Memo', body: 'Record the idea before it’s gone.' },
+};
+
+function miniAppNudge(id: string): { title: string; body: string; route?: string } {
+  const preset = MINI_APP_NUDGES[id];
+  const app = miniAppById(id);
+  if (preset) return { ...preset, route: app ? String(app.route) : undefined };
+  if (app) return { title: app.name, body: `A minute in ${app.name}? ${app.promise}`, route: String(app.route) };
+  return { title: 'Echo', body: SURFACE_LINES.tools.body };
 }
 
 // Interest-based fallback lines, keyed by the surface the user opens most.
@@ -73,9 +102,19 @@ export function buildPlannedNudges(
     });
   }
 
+  const favorites = signals.favoriteMiniApps ?? [];
+
   return hours.map((hour, i) => {
     const signal = priority[i];
     if (signal) return { ...signal, hour };
+    // Fill remaining slots with nudges toward the mini-apps this user actually
+    // uses (rotating across them), so the day's pings point at real tools they
+    // care about rather than a generic "come back".
+    if (favorites.length > 0) {
+      const id = favorites[i % favorites.length];
+      const n = miniAppNudge(id);
+      return { hour, surface: 'tools', title: n.title, body: n.body, route: n.route };
+    }
     const line = SURFACE_LINES[interest] ?? SURFACE_LINES.chat;
     return { hour, surface: interest, title: line.title, body: line.body };
   });

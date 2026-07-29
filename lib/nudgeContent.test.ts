@@ -38,4 +38,23 @@ describe('buildPlannedNudges', () => {
     const out = buildPlannedNudges(emptyModel(), {}, [12]);
     expect(out[0].surface).toBe('chat');
   });
+
+  it('nudges toward the mini-apps the user actually uses, with a route', () => {
+    const out = buildPlannedNudges(emptyModel(), { favoriteMiniApps: ['habits', 'fitness'] }, [10, 15]);
+    expect(out[0].surface).toBe('tools');
+    expect(out[0].route).toBe('/mini-apps/habits');
+    expect(out[0].title).toBe('Habits');
+    // Rotates across favorites for later slots.
+    expect(out[1].route).toBe('/mini-apps/fitness');
+  });
+
+  it('lets a live signal outrank mini-app nudges in the first slot', () => {
+    const out = buildPlannedNudges(
+      emptyModel(),
+      { dailyUnanswered: true, favoriteMiniApps: ['tasks'] },
+      [9, 18],
+    );
+    expect(out[0].surface).toBe('daily');
+    expect(out[1].route).toBe('/mini-apps/tasks');
+  });
 });

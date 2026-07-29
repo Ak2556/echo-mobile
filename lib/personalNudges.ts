@@ -23,6 +23,7 @@ import {
   topActiveHours, topSurface, DEFAULT_POLICY,
 } from './engagementModel';
 import { type NudgeSignals, buildPlannedNudges } from './nudgeContent';
+import { getRecentTools } from './miniAppRecents';
 
 export type { NudgeSignals } from './nudgeContent';
 
@@ -111,7 +112,9 @@ export async function syncPersonalNudges(
     const hours = plannedNudgeHours(model, policy);
     if (hours.length === 0) return;
 
-    const planned = buildPlannedNudges(model, signals, hours);
+    // Mini-apps the user actually opens drive the throughout-the-day nudges.
+    const favoriteMiniApps = await getRecentTools().catch(() => [] as string[]);
+    const planned = buildPlannedNudges(model, { ...signals, favoriteMiniApps }, hours);
     const ids: string[] = [];
     for (const n of planned) {
       const id = await Notifications.scheduleNotificationAsync({
@@ -119,7 +122,7 @@ export async function syncPersonalNudges(
           title: n.title,
           body: n.body,
           sound: true,
-          data: { kind: 'personal_nudge', surface: n.surface },
+          data: { kind: 'personal_nudge', surface: n.surface, route: n.route ?? null },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
