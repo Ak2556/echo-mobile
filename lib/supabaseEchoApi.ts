@@ -1093,7 +1093,7 @@ export async function setRemoteCommentLike(commentId: string, like: boolean): Pr
 }
 
 export async function submitRemoteReport(params: {
-  targetType: 'echo' | 'user' | 'comment';
+  targetType: 'echo' | 'user' | 'comment' | 'message' | 'group';
   targetId: string;
   reason: string;
   details?: string;

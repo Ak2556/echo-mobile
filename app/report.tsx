@@ -40,7 +40,7 @@ export default function ReportScreen() {
     try {
       if (isSupabaseRemote() && targetId && targetType) {
         await submitRemoteReport({
-          targetType: targetType as 'echo' | 'user' | 'comment',
+          targetType: targetType as 'echo' | 'user' | 'comment' | 'message' | 'group',
           targetId,
           reason: selectedReason,
           details: details.trim() || undefined,
