@@ -1890,7 +1890,12 @@ export default function DMScreen() {
 
   // Remote hooks
   const { data: remoteMessagePages, fetchNextPage, hasNextPage } = useRemoteMessages(remote ? id : undefined);
-  const remoteMessages = (remoteMessagePages?.pages ?? []).flat();
+  // Pages arrive newest-block-first ([newest 40, next-older 40, …]), each block
+  // internally oldest→newest. Reverse the page order before flattening so the
+  // full list reads oldest→newest top-to-bottom; this also puts newly fetched
+  // older pages at the front (prepended above, matching maintainVisibleContent-
+  // Position) and keeps the optimistic append at the very bottom.
+  const remoteMessages = [...(remoteMessagePages?.pages ?? [])].reverse().flat();
   const isGroupConversation = !!conversation?.isGroup;
   const sendRemote = useSendRemoteDM(id, conversation?.userId ?? undefined, isGroupConversation);
   const sendImageDM = useSendImageDM(id, conversation?.userId ?? undefined, isGroupConversation);
