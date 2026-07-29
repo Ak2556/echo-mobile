@@ -248,13 +248,18 @@ function Row({ colors, radius, icon, label, sub, onPress, danger }: {
   radius: ReturnType<typeof useTheme>['radius'];
   icon: React.ReactNode; label: string; sub?: string; onPress: () => void; danger?: boolean;
 }) {
+  // Box/layout styles live on an inner View — NativeWind's cssInterop drops
+  // layout props off a Pressable's own style (worst on touchables), so a bare
+  // Pressable + styled inner View is the reliable pattern.
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}
-      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 8, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1 })}>
-      {icon}
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: danger ? colors.danger : colors.text, fontSize: 15, fontWeight: '700' }}>{label}</Text>
-        {sub ? <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{sub}</Text> : null}
+      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
+      <View style={{ marginHorizontal: 16, marginBottom: 8, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        {icon}
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: danger ? colors.danger : colors.text, fontSize: 15, fontWeight: '700' }}>{label}</Text>
+          {sub ? <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{sub}</Text> : null}
+        </View>
       </View>
     </Pressable>
   );
