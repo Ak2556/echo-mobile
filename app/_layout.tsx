@@ -168,7 +168,7 @@ function RootLayout() {
         const nudgeRoute = data.route ? String(data.route) : '';
         if (nudgeRoute.startsWith('/')) router.push(nudgeRoute as Href);
         else if (surface === 'daily') router.push('/daily-question');
-        else if (surface === 'dm') router.push('/(tabs)/chat');
+        else if (surface === 'dm') router.push('/messages');
         else if (surface === 'feed') router.push('/(tabs)/home');
         else if (surface === 'marketplace') router.push('/(tabs)/marketplace');
         else router.push('/(tabs)/chat');
@@ -176,15 +176,24 @@ function RootLayout() {
       }
       const targetId = String(data.target_id ?? data.echo_id ?? data.user_id ?? '');
       const routeId = safeRouteId(targetId);
+      // Follows carry no target_id — the object of the notification is the
+      // follower, passed as actor_id. Route to their profile.
+      const actorId = safeRouteId(String(data.actor_id ?? ''));
       if (kind === 'daily_question' || kind === 'daily_react') {
         track('notification_tapped', { kind });
         router.push('/daily-question');
         return;
       }
+      if (kind === 'follow') {
+        const id = actorId || routeId;
+        if (!id) return;
+        track('notification_tapped', { kind });
+        router.push({ pathname: '/user/[id]', params: { id } });
+        return;
+      }
       if (!routeId) return;
       track('notification_tapped', { kind });
-      if (kind === 'follow') router.push({ pathname: '/user/[id]', params: { id: routeId } });
-      else if (kind === 'comment' || kind === 'reaction' || kind === 'like' || kind === 'quote' || kind === 'mention' || kind === 'repost' || kind === 'bookmark') {
+      if (kind === 'comment' || kind === 'reaction' || kind === 'like' || kind === 'quote' || kind === 'mention' || kind === 'repost' || kind === 'bookmark') {
         router.push({ pathname: '/thread/[id]', params: { id: routeId } });
       } else if (kind === 'dm') {
         router.push({ pathname: '/messages/[id]', params: { id: routeId } });
