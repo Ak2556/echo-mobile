@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 import { pushHabitsStructured } from './habitsRemote';
+import { localDayKey, shiftDayKey } from './localDate';
 
 export const HABITS_KEY = 'mini:habits';
 
@@ -43,7 +44,7 @@ export const HABIT_COLORS = ['#C65F3F', '#B08536', '#7A8B4E', '#4E8B7A', '#4E7A8
 export const HABIT_MARKERS = ['HY', 'RN', 'RD', 'MD', 'ME', 'SL', 'RX', 'WR', 'GO', 'CL', 'GR', 'ST'];
 
 export function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return localDayKey();
 }
 
 export function getStreak(completedDates: string[]): number {
@@ -55,9 +56,7 @@ export function getStreak(completedDates: string[]): number {
   for (const d of sorted) {
     if (d === check) {
       streak++;
-      const prev = new Date(check);
-      prev.setDate(prev.getDate() - 1);
-      check = prev.toISOString().slice(0, 10);
+      check = shiftDayKey(check, -1);
     } else if (d < check) break;
   }
   return streak;
@@ -85,7 +84,7 @@ export function getHabitStreak(habit: Habit): number {
   let streak = 0;
   const d = new Date(today + 'T12:00:00');
   for (let i = 0; i < 3660; i++) {
-    const ds = d.toISOString().slice(0, 10);
+    const ds = localDayKey(d);
     if (isScheduledOn(habit, ds)) {
       if (done.has(ds)) streak++;
       else if (ds !== today) break;
@@ -106,7 +105,7 @@ export function bestHabitStreak(habit: Habit): number {
   const d = new Date(first + 'T12:00:00');
   const end = new Date(today + 'T12:00:00');
   while (d.getTime() <= end.getTime()) {
-    const ds = d.toISOString().slice(0, 10);
+    const ds = localDayKey(d);
     if (isScheduledOn(habit, ds)) {
       if (done.has(ds)) { run++; best = Math.max(best, run); }
       else if (ds !== today) run = 0;
@@ -124,7 +123,7 @@ export function completionRate(habit: Habit, days = 30): number {
   let completed = 0;
   const d = new Date(today + 'T12:00:00');
   for (let i = 0; i < days; i++) {
-    const ds = d.toISOString().slice(0, 10);
+    const ds = localDayKey(d);
     if (ds >= habit.createdAt.slice(0, 10) && isScheduledOn(habit, ds)) {
       if (done.has(ds)) { scheduled++; completed++; }
       else if (ds !== today) scheduled++;
