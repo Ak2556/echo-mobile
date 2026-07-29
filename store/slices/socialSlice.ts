@@ -81,11 +81,15 @@ export interface SocialSlice {
   // ── Blocked Users ──
   blockedIds: string[];
   toggleBlock: (userId: string) => void;
+  /** Idempotently set the full blocked list (used to apply the server list). */
+  setBlockedIds: (ids: string[]) => void;
   isBlocked: (userId: string) => boolean;
 
   // ── Muted Users / Threads ──
   mutedIds: string[];
   toggleMute: (userId: string) => void;
+  /** Idempotently set the full muted list (used to apply the server list). */
+  setMutedIds: (ids: string[]) => void;
   isMuted: (userId: string) => boolean;
   mutedThreadIds: string[];
   toggleThreadMute: (threadId: string) => void;
@@ -449,6 +453,11 @@ export function createSocialSlice(
       persistSet('blockedIds', ids);
       set({ blockedIds: ids });
     },
+    setBlockedIds: (ids) => {
+      const next = [...new Set(ids)];
+      persistSet('blockedIds', next);
+      set({ blockedIds: next });
+    },
     isBlocked: (userId) => get().blockedIds.includes(userId),
 
     // ── Muted Users / Threads ──
@@ -459,6 +468,11 @@ export function createSocialSlice(
       if (idx >= 0) ids.splice(idx, 1); else ids.push(userId);
       persistSet('mutedIds', ids);
       set({ mutedIds: ids });
+    },
+    setMutedIds: (ids) => {
+      const next = [...new Set(ids)];
+      persistSet('mutedIds', next);
+      set({ mutedIds: next });
     },
     isMuted: (userId) => get().mutedIds.includes(userId),
     mutedThreadIds: persistGet<string[]>('mutedThreadIds', []),

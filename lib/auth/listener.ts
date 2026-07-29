@@ -30,6 +30,10 @@ import { withAuthTimeout } from './timeout';
  * onAuthStateChange. Read auth state via useAuth() from lib/auth.
  */
 
+// Which user's block/mute lists we've already hydrated this session — prevents
+// the cold-start double-hydrate from applying the server lists twice.
+let blocksHydratedFor: string | null = null;
+
 async function fetchProfile(userId: string): Promise<AuthProfile | null> {
   try {
     const { data, error } = await supabase
@@ -79,19 +83,24 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
   }
 
   // Hydrate block/mute lists + cross-device settings in the background — non-fatal.
-  if (isSupabaseRemote()) {
+  // Guarded to run once per user: hydrateFromSession fires twice on cold start
+  // (getSession + the INITIAL_SESSION event), and applying the lists via the
+  // toggle (a flip) used to race and silently UN-block/UN-mute people. Set the
+  // guard before the async work so the concurrent second call skips it.
+  if (isSupabaseRemote() && blocksHydratedFor !== session.user.id) {
+    blocksHydratedFor = session.user.id;
     Promise.all([fetchRemoteBlocks(), fetchRemoteMutes(), fetchAndApplyRemoteSettings()])
       .then(([blockedIds, mutedIds]) => {
         const s = useAppStore.getState();
-        const cb = new Set(s.blockedIds);
-        const cm = new Set(s.mutedIds);
-        blockedIds.forEach(id => { if (!cb.has(id)) s.toggleBlock(id); });
-        mutedIds.forEach(id => { if (!cm.has(id)) s.toggleMute(id); });
+        // Idempotent union — safe under concurrent runs, no flip. (Server-only
+        // removals don't propagate here; a full reconcile is a separate concern.)
+        s.setBlockedIds([...s.blockedIds, ...blockedIds]);
+        s.setMutedIds([...s.mutedIds, ...mutedIds]);
         // Now that remote consent is applied, sync (or clear) the server-side
         // notification profile for personalized fan-out. Gated on consent.
         void syncNotificationProfile(s.personalizedNotifications);
       })
-      .catch(() => {});
+      .catch(() => { blocksHydratedFor = null; });
   }
 }
 
@@ -209,6 +218,7 @@ export function AuthListenerProvider(): null {
         track('signout');
         resetIdentity();
         clearUser();
+        blocksHydratedFor = null;
         useAuthStore.getState().reset();
         // Clear mirrored fields in useAppStore. The components that still
         // read from useAppStore will pick up empty strings and re-route.
