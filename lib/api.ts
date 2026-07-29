@@ -123,7 +123,14 @@ export function parseEchoAISSEPayload(raw: string, onEvent: StreamArgs['onEvent'
 
     if (!data || data === '[DONE]') continue;
 
-    const parsed: EchoAIEvent = JSON.parse(data);
+    // Tolerate a malformed line the way the EventSource path does — skip it
+    // rather than aborting the whole response and losing valid events after it.
+    let parsed: EchoAIEvent;
+    try {
+      parsed = JSON.parse(data);
+    } catch {
+      continue;
+    }
     onEvent(parsed);
     if (parsed.type === 'error') {
       throw createStreamError(normalizeEchoAIError(parsed.message));
@@ -135,7 +142,14 @@ async function openStreamWithFetch(
   jwt: string,
   payload: Record<string, unknown>,
   onEvent: StreamArgs['onEvent'],
+  onAbortHandle?: StreamArgs['onAbortHandle'],
 ): Promise<void> {
+  // Cancelable like the SSE path: stop() aborts the request; an abort is a
+  // clean stop, not an error.
+  const controller = new AbortController();
+  let aborted = false;
+  onAbortHandle?.(() => { aborted = true; controller.abort(); });
+
   let response: Response;
   try {
     response = await fetch(ECHO_AI_URL, {
@@ -148,13 +162,21 @@ async function openStreamWithFetch(
         apikey: SUPABASE_ANON_KEY,
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
   } catch (error) {
+    if (aborted) return;
     const message = error instanceof Error ? error.message : 'Connection error — check your network';
     throw createStreamError(normalizeEchoAIError(message), 0);
   }
 
-  const text = await response.text();
+  let text: string;
+  try {
+    text = await response.text();
+  } catch (error) {
+    if (aborted) return;
+    throw error;
+  }
   if (!response.ok) {
     throw createStreamError(normalizeEchoAIError(parseErrorMessage(text, response.status)), response.status);
   }
@@ -273,7 +295,7 @@ export async function streamEchoAI({
   } catch (err: any) {
     if ((err as StreamError)?.status === 0 && !(err as StreamError)?.receivedEvent) {
       console.warn('[EchoAI] SSE transport failed before first event — retrying with fetch fallback');
-      await openStreamWithFetch(jwt, payload, onEvent);
+      await openStreamWithFetch(jwt, payload, onEvent, onAbortHandle);
       return;
     }
 
@@ -287,7 +309,7 @@ export async function streamEchoAI({
         } catch (retryErr: any) {
           if ((retryErr as StreamError)?.status === 0 && !(retryErr as StreamError)?.receivedEvent) {
             console.warn('[EchoAI] SSE transport failed after token refresh — retrying with fetch fallback');
-            await openStreamWithFetch(refreshed.session.access_token, payload, onEvent);
+            await openStreamWithFetch(refreshed.session.access_token, payload, onEvent, onAbortHandle);
             return;
           }
           throw retryErr;
