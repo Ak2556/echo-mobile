@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 import { pushTasksStructured } from './tasksRemote';
+import { localDayKey } from './localDate';
 
 export const TASKS_KEY = 'mini:tasks';
 
@@ -30,13 +31,13 @@ export function taskDueAt(task: Pick<TaskItem, 'due' | 'time'>): Date | null {
 }
 
 export function todayTaskDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDayKey();
 }
 
 export function tomorrowTaskDate(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  return localDayKey(d);
 }
 
 function normalize(raw: unknown): TaskItem[] {

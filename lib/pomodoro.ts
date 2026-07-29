@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
+import { localDayKey } from './localDate';
 
 export const POMODORO_KEY = 'mini:pomodoro';
 export const POMODORO_ACTIVE_KEY = 'mini:pomodoro:active';
@@ -123,7 +124,7 @@ export function remainingSecondsForActive(timer: ActivePomodoroTimer, now = Date
 }
 
 const dayOf = (iso: string) => iso.slice(0, 10);
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => localDayKey();
 
 export function sessionsOn(sessions: FocusSession[], day: string): FocusSession[] {
   return sessions.filter(s => dayOf(s.at) === day);
@@ -146,7 +147,7 @@ export function goalStreak(doc: PomodoroDoc): number {
   let streak = 0;
   const d = new Date(today + 'T12:00:00');
   for (let i = 0; i < 730; i++) {
-    const ds = d.toISOString().slice(0, 10);
+    const ds = localDayKey(d);
     const count = byDay.get(ds) ?? 0;
     if (count >= doc.settings.dailyGoal) streak++;
     else if (ds !== today) break;
@@ -164,7 +165,7 @@ export function weekBars(doc: PomodoroDoc): { label: string; count: number; isTo
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const ds = d.toISOString().slice(0, 10);
+    const ds = localDayKey(d);
     out.push({
       label: d.toLocaleDateString([], { weekday: 'narrow' }),
       count: byDay.get(ds) ?? 0,

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { localDayKey } from './localDate';
 
 // In-app pull for the proactive companion: a "check-in waiting" dot on the
 // Chat tab, so Echo draws you in even without notification permission. The
@@ -7,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KEY = 'ai:checkinSeenDate';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDayKey();
 
 /** True when the user hasn't opened the AI chat yet today. */
 export async function isCheckinPending(): Promise<boolean> {
