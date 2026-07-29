@@ -32,10 +32,15 @@ export function pushMiniApp(app: MiniApp, data: unknown): void {
       const uid = session?.session?.user?.id;
       if (!uid) return;
       const now = new Date().toISOString();
-      await setLocalStamp(app, now);
-      await supabase
+      const { error } = await supabase
         .from('mini_app_data')
         .upsert({ user_id: uid, app, data, updated_at: now }, { onConflict: 'user_id,app' });
+      // Only advance the local stamp once the write actually landed. Stamping
+      // before the upsert meant a failed push left this device marked "ahead"
+      // of remote, so it would refuse to pull a genuinely-newer copy from
+      // another device. On failure the local copy stays authoritative and the
+      // next successful save re-syncs it.
+      if (!error) await setLocalStamp(app, now);
     } catch {
       // Offline or transient — local copy is authoritative until next save.
     }
