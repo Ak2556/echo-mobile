@@ -539,45 +539,44 @@ function InboxToolbar({
                 onPress={() => onFilterChange(item.key)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
-                style={({ pressed }) => ({
-                  minHeight: 46,
-                  borderRadius: 15,
-                  paddingHorizontal: 4,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  opacity: pressed ? 0.72 : 1,
-                })}
+                style={{ width: '100%' }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  {item.icon}
-                  <Text
-                    style={{
-                      color: active ? '#fff' : colors.text,
-                      fontSize: 12.5,
-                      fontWeight: '800',
-                    }}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.7}
-                  >
-                    {item.label}
-                  </Text>
-                  {showBadge ? (
-                    <View style={{
-                      minWidth: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      paddingHorizontal: 4,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: active ? 'rgba(255,255,255,0.24)' : colors.accent,
-                    }}>
-                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-                        {count}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
+                {({ pressed }) => (
+                  // Render-prop child View (a plain View, cssInterop-safe) owns
+                  // the full-width fill + centering + press feedback. Putting
+                  // these on the touchable's own style drops them and the
+                  // icon + label collapse to the left.
+                  <View style={{ width: '100%', minHeight: 46, borderRadius: 15, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, opacity: pressed ? 0.72 : 1 }}>
+                    {item.icon}
+                    <Text
+                      style={{
+                        color: active ? '#fff' : colors.text,
+                        fontSize: 12.5,
+                        fontWeight: '800',
+                      }}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
+                      {item.label}
+                    </Text>
+                    {showBadge ? (
+                      <View style={{
+                        minWidth: 16,
+                        height: 16,
+                        borderRadius: 8,
+                        paddingHorizontal: 4,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: active ? 'rgba(255,255,255,0.24)' : colors.accent,
+                      }}>
+                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                          {count}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                )}
               </Pressable>
             </View>
           );
