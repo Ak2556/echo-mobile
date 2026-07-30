@@ -469,11 +469,11 @@ function InboxToolbar({
 }) {
   const { colors, fontSizes } = useTheme();
   const filters: { key: InboxFilter; label: string; icon: React.ReactNode }[] = [
-    { key: 'all', label: 'All', icon: <Envelope color={filter === 'all' ? '#fff' : colors.textMuted} size={13} weight="bold" /> },
-    { key: 'unread', label: 'Unread', icon: <Lightning color={filter === 'unread' ? '#fff' : colors.textMuted} size={13} weight="fill" /> },
-    { key: 'people', label: 'People', icon: <ChatCircleText color={filter === 'people' ? '#fff' : colors.textMuted} size={13} weight="bold" /> },
-    { key: 'groups', label: 'Groups', icon: <Users color={filter === 'groups' ? '#fff' : colors.textMuted} size={13} weight="bold" /> },
-    { key: 'pinned', label: 'Pinned', icon: <PushPin color={filter === 'pinned' ? '#fff' : colors.textMuted} size={13} weight="fill" /> },
+    { key: 'all', label: 'All', icon: <Envelope color={filter === 'all' ? '#fff' : colors.textSecondary} size={15} weight="bold" /> },
+    { key: 'unread', label: 'Unread', icon: <Lightning color={filter === 'unread' ? '#fff' : colors.textSecondary} size={15} weight="fill" /> },
+    { key: 'people', label: 'People', icon: <ChatCircleText color={filter === 'people' ? '#fff' : colors.textSecondary} size={15} weight="bold" /> },
+    { key: 'groups', label: 'Groups', icon: <Users color={filter === 'groups' ? '#fff' : colors.textSecondary} size={15} weight="bold" /> },
+    { key: 'pinned', label: 'Pinned', icon: <PushPin color={filter === 'pinned' ? '#fff' : colors.textSecondary} size={15} weight="fill" /> },
   ];
   return (
     <View style={{ paddingHorizontal: 16, gap: 12, marginBottom: 8 }}>
@@ -521,12 +521,12 @@ function InboxToolbar({
               key={item.key}
               style={{
                 flex: 1,
-                minHeight: 46,
-                borderRadius: 15,
+                minHeight: 40,
+                borderRadius: 13,
                 justifyContent: 'center',
                 backgroundColor: active
                   ? colors.accent
-                  : (colors.isDark ? 'rgba(255,255,255,0.075)' : '#fff'),
+                  : (colors.isDark ? 'rgba(255,255,255,0.12)' : '#fff'),
                 borderWidth: 1,
                 borderColor: active ? colors.accent : colors.border,
                 shadowColor: '#000',
@@ -546,12 +546,12 @@ function InboxToolbar({
                   // the full-width fill + centering + press feedback. Putting
                   // these on the touchable's own style drops them and the
                   // icon + label collapse to the left.
-                  <View style={{ width: '100%', minHeight: 46, borderRadius: 15, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, opacity: pressed ? 0.72 : 1 }}>
+                  <View style={{ width: '100%', minHeight: 40, borderRadius: 13, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.72 : 1 }}>
                     {item.icon}
                     <Text
                       style={{
                         color: active ? '#fff' : colors.text,
-                        fontSize: 12.5,
+                        fontSize: 13,
                         fontWeight: '800',
                       }}
                       numberOfLines={1}
