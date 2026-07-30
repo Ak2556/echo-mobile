@@ -9,6 +9,29 @@ import type { FitnessSettings } from './fitness';
 
 const IDS_KEY = 'mini:fitness:reminderIds';
 
+// Voice: a witty friend narrating your day, never a system alert. Each slot
+// picks a variant so the same nag never reads twice.
+const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
+
+const WATER_LINES = [
+  'Hydrate or diedrate. Mostly the first one.',
+  'Your cells are staging a tiny drought protest. One glass ends it.',
+  'Water break — and no, coffee doesn’t count. Sorry.',
+  'Drink some water before your body files a formal complaint.',
+  'A glass now = you, smug and dewy, later.',
+];
+const MEAL_LINES = [
+  'Log what you ate before your memory conveniently forgets the snacks.',
+  'Feed the tracker the truth. All of it. Even that.',
+  'Your macros want a status update. Two taps, zero judgment. (Some judgment.)',
+];
+const WORKOUT_LINES = [
+  'Move your body before the couch claims you as its own.',
+  'Future you is already sweating. Present you should probably join.',
+  '30 minutes now buys a whole evening of insufferable smugness.',
+  'Your weekly streak is giving you a look. You know the one.',
+];
+
 async function cancelExisting(): Promise<void> {
   try {
     const raw = await AsyncStorage.getItem(IDS_KEY);
@@ -40,12 +63,14 @@ export function syncFitnessReminders(settings: FitnessSettings): void {
       };
 
       if (r.water) {
-        await daily(11, 0, '💧 Hydration', 'Time for some water.');
-        await daily(15, 0, '💧 Hydration', 'Another glass of water?');
-        await daily(19, 0, '💧 Hydration', 'Top up your water for the day.');
+        // Distinct lines across the three slots so a single day never repeats.
+        const [w1, w2, w3] = [...WATER_LINES].sort(() => Math.random() - 0.5);
+        await daily(11, 0, '💧 Hydration check', w1);
+        await daily(15, 0, '💧 Hydration check', w2);
+        await daily(19, 0, '💧 Hydration check', w3);
       }
-      if (r.meals) await daily(20, 30, '🍽️ Log your meals', 'Track what you ate today to keep your macros honest.');
-      if (r.workout) await daily(17, 30, '💪 Workout time', 'Have you moved today? Keep your weekly streak going.');
+      if (r.meals) await daily(20, 30, '🍽️ Feed the tracker', pick(MEAL_LINES));
+      if (r.workout) await daily(17, 30, '💪 Move it', pick(WORKOUT_LINES));
 
       await AsyncStorage.setItem(IDS_KEY, JSON.stringify(ids));
     } catch {

@@ -11,6 +11,9 @@ import type { FitnessDoc } from './fitness';
 
 const CELEB_KEY = 'mini:milestonesCelebrated';
 
+// Celebrations should feel like a friend hyping you up, not a receipt.
+const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
+
 async function loadCelebrated(): Promise<Set<string>> {
   try {
     const raw = await AsyncStorage.getItem(CELEB_KEY);
@@ -73,7 +76,11 @@ export function celebrateHabitMilestones(habits: Habit[]): void {
         // Mark this and every lower milestone for this habit as done.
         for (const m of STREAK_MILESTONES) if (m <= milestone) celebrated.add(`habit:${h.id}:${m}`);
         changed = true;
-        await fire('🔥 Streak milestone!', `${milestone} days on ${h.name}. Keep it going.`);
+        await fire('🔥 Streak milestone!', pick([
+          `${milestone} days on ${h.name}. Absolutely unhinged consistency. Keep going.`,
+          `${milestone}-day ${h.name} streak. Who ARE you? (Someone amazing, clearly.)`,
+          `${milestone} days straight on ${h.name}. The discipline is frankly showing off.`,
+        ]));
       }
       if (changed) await saveCelebrated(celebrated);
     } catch {
@@ -101,7 +108,11 @@ export function celebrateFitnessMilestones(doc: FitnessDoc): void {
       if (celebrated.has(key)) return;
       celebrated.add(key);
       await saveCelebrated(celebrated);
-      await fire('💪 Weekly goal hit!', `${count}/${goal} workouts this week. Strong.`);
+      await fire('💪 Weekly goal hit!', pick([
+        `${count}/${goal} workouts this week. Certified beast behavior.`,
+        `${count}/${goal} this week — goal smashed. Go be insufferably proud.`,
+        `${count}/${goal} workouts done. Your future self is doing a little dance.`,
+      ]));
     } catch {
       // ignore
     }
