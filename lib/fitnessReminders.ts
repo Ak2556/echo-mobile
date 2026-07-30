@@ -19,17 +19,27 @@ const WATER_LINES = [
   'Water break — and no, coffee doesn’t count. Sorry.',
   'Drink some water before your body files a formal complaint.',
   'A glass now = you, smug and dewy, later.',
+  'Plants get watered daily and they’re thriving. Just saying.',
+  'Your brain runs on water, not vibes. Top it up.',
+  'Sip sip hooray. Go get some water.',
+  'Dehydration called. Hung up on it with a glass of water.',
 ];
 const MEAL_LINES = [
   'Log what you ate before your memory conveniently forgets the snacks.',
   'Feed the tracker the truth. All of it. Even that.',
   'Your macros want a status update. Two taps, zero judgment. (Some judgment.)',
+  'That “I’ll log it later” energy? It’s later.',
+  'Tell the app what you ate. It won’t tell anyone. Probably.',
+  'Your food diary is emptier than your fridge on a Sunday. Fix one.',
 ];
 const WORKOUT_LINES = [
   'Move your body before the couch claims you as its own.',
   'Future you is already sweating. Present you should probably join.',
   '30 minutes now buys a whole evening of insufferable smugness.',
   'Your weekly streak is giving you a look. You know the one.',
+  'The hardest part is the shoes. Put on the shoes.',
+  'Endorphins are free and legal. Go earn some.',
+  'A short workout beats the imaginary long one. Let’s go.',
 ];
 
 async function cancelExisting(): Promise<void> {

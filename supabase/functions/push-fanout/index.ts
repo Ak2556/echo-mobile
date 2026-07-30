@@ -114,31 +114,47 @@ function titleFor(t: string, actorName: string, preview?: string): string {
       `${actorName} smashed the like on your echo`,
       `${actorName} approves of your echo 🫶`,
       `Your echo just won ${actorName} over`,
+      `${actorName} tapped that little heart for you`,
+      `${actorName} liked your echo. Taste: impeccable.`,
+      `${actorName} caught feelings for your echo`,
     ]);
     case 'comment': return pick([
       `${actorName} had something to say`,
       `${actorName} dropped a comment`,
       `${actorName} replied to your echo`,
+      `${actorName} slid a comment under your echo`,
+      `${actorName} has thoughts. About your echo.`,
+      `${actorName} couldn’t scroll past without commenting`,
     ]);
     case 'follow': return pick([
       `${actorName} followed you. Great taste.`,
       `New follower: ${actorName}. The fan club grows.`,
       `${actorName} hit follow — wave hello?`,
+      `${actorName} signed up for your content. Bold move.`,
+      `${actorName} is officially in your corner now`,
+      `${actorName} followed you. The empire expands.`,
     ]);
     case 'repost': return pick([
       `${actorName} re-echoed you. Spreading the word.`,
       `${actorName} gave your echo a bigger stage`,
       `${actorName} re-echoed your post`,
+      `${actorName} liked your echo enough to steal it (nicely)`,
+      `${actorName} put your echo on their page. Flattery.`,
     ]);
     case 'mention': return pick([
       `${actorName} name-dropped you`,
       `${actorName} pulled you into it`,
       `${actorName} mentioned you`,
+      `${actorName} said your name. Ears burning?`,
+      `${actorName} tagged you into the conversation`,
     ]);
     case 'dm': return pick([
       `${actorName} messaged you`,
       `New message from ${actorName}`,
       `${actorName} slid into your DMs`,
+      `${actorName} wants your attention`,
+      `${actorName} sent a little something`,
+      `Ping! ${actorName} is talking to you`,
     ]);
     case 'reaction': {
       const emoji = preview ? REACTION_EMOJI[preview] : '';
@@ -153,11 +169,15 @@ function titleFor(t: string, actorName: string, preview?: string): string {
       `${actorName} saved your echo. It's a keeper.`,
       `${actorName} bookmarked your echo for later. Fancy.`,
       `${actorName} filed your echo under "worth it"`,
+      `${actorName} is keeping your echo forever. No pressure.`,
+      `${actorName} bookmarked you. Museum-grade content.`,
     ]);
     case 'quote': return pick([
       `${actorName} quoted you`,
       `${actorName} built on your echo`,
       `${actorName} quoted your echo`,
+      `${actorName} took your echo and ran with it`,
+      `${actorName} riffed on your echo`,
     ]);
     case 'daily_react': {
       // preview is "<emoji>  <answer snippet>" — lead the title with the emoji.
@@ -189,11 +209,11 @@ function messageFor(t: string, preview?: string): string {
     case 'personal_nudge':
       return (preview ?? '').slice(0, 140);
     // Title-only social pings get a little day-making flavor in the body.
-    case 'like': return pick(['Good echo, apparently.', 'You cooked.', '']);
-    case 'follow': return pick(['Tap to see who.', 'Somebody has taste.', '']);
-    case 'repost': return pick(['Your words, wider reach.', '']);
-    case 'reaction': return pick(['Tap to see the reaction.', '']);
-    case 'bookmark': return pick(['Saved for a rainy day.', '']);
+    case 'like': return pick(['Good echo, apparently.', 'You cooked.', 'Certified good post.', 'The people have spoken.', '']);
+    case 'follow': return pick(['Tap to see who.', 'Somebody has taste.', 'Go say hi.', 'Your reach is reaching.', '']);
+    case 'repost': return pick(['Your words, wider reach.', 'Going places.', 'Spreading like good gossip.', '']);
+    case 'reaction': return pick(['Tap to see the reaction.', 'Someone felt that.', 'That hit different.', '']);
+    case 'bookmark': return pick(['Saved for a rainy day.', 'Filed under keepers.', 'Someone’s a fan.', '']);
     default:
       return '';
   }

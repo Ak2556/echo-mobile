@@ -80,6 +80,9 @@ export function celebrateHabitMilestones(habits: Habit[]): void {
           `${milestone} days on ${h.name}. Absolutely unhinged consistency. Keep going.`,
           `${milestone}-day ${h.name} streak. Who ARE you? (Someone amazing, clearly.)`,
           `${milestone} days straight on ${h.name}. The discipline is frankly showing off.`,
+          `${milestone} days of ${h.name}. Scientists are baffled. Keep it up.`,
+          `${milestone}-day ${h.name} streak — you’re basically a machine now. A cool one.`,
+          `${milestone} days on ${h.name} without missing. Legend behavior, no notes.`,
         ]));
       }
       if (changed) await saveCelebrated(celebrated);
@@ -112,6 +115,8 @@ export function celebrateFitnessMilestones(doc: FitnessDoc): void {
         `${count}/${goal} workouts this week. Certified beast behavior.`,
         `${count}/${goal} this week — goal smashed. Go be insufferably proud.`,
         `${count}/${goal} workouts done. Your future self is doing a little dance.`,
+        `${count}/${goal} this week. The gym should be paying YOU.`,
+        `${count}/${goal} workouts. Weekly goal? Obliterated. Take a bow.`,
       ]));
     } catch {
       // ignore

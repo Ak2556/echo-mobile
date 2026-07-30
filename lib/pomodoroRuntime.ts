@@ -24,11 +24,15 @@ const FOCUS_DONE = [
   { title: 'Focus done 🎯', body: 'You survived a full block of real work. Go touch grass — break time.' },
   { title: 'Nailed it 🎯', body: 'Brain successfully used. Reward it with a break.' },
   { title: 'Block complete 🎯', body: 'That’s focus, baby. Break earned, no notes.' },
+  { title: 'And… done 🎯', body: 'Work happened. Miracles are real. Take five.' },
+  { title: 'Focus: conquered 🎯', body: 'You out-focused the internet. Break time, champion.' },
 ];
 const BREAK_DONE = [
   { title: 'Break’s over ☕', body: 'The couch was lovely. Back to being brilliant.' },
   { title: 'Time’s up ☕', body: 'Snack acquired, vibes restored. Now: focus.' },
   { title: 'Back to it ☕', body: 'Rest complete. Let’s make the next block count.' },
+  { title: 'Recess over ☕', body: 'Stretch done, mind refreshed — one more block awaits.' },
+  { title: 'Round two ☕', body: 'You rested like a pro. Now focus like one.' },
 ];
 
 let completionPromise: Promise<ActivePomodoroTimer | null> | null = null;
