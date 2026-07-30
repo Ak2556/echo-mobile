@@ -14,6 +14,11 @@ const TASK_TITLES = [
   '⏰ Time to stop avoiding this',
   '✓ It’s go time',
   '⏰ Your task is calling your bluff',
+  '⏰ Remember this? It remembers you.',
+  '✓ Future you needs a favor',
+  '⏰ The task you scheduled is now, awkwardly, now',
+  '✓ Two minutes of glory await',
+  '⏰ Past you set an alarm. Rude, but here we are.',
 ];
 const pickTitle = () => TASK_TITLES[Math.floor(Math.random() * TASK_TITLES.length)];
 
