@@ -469,11 +469,11 @@ function InboxToolbar({
 }) {
   const { colors, fontSizes } = useTheme();
   const filters: { key: InboxFilter; label: string; icon: React.ReactNode }[] = [
-    { key: 'all', label: 'All', icon: <Envelope color={filter === 'all' ? '#fff' : colors.textSecondary} size={15} weight="bold" /> },
-    { key: 'unread', label: 'Unread', icon: <Lightning color={filter === 'unread' ? '#fff' : colors.textSecondary} size={15} weight="fill" /> },
-    { key: 'people', label: 'People', icon: <ChatCircleText color={filter === 'people' ? '#fff' : colors.textSecondary} size={15} weight="bold" /> },
-    { key: 'groups', label: 'Groups', icon: <Users color={filter === 'groups' ? '#fff' : colors.textSecondary} size={15} weight="bold" /> },
-    { key: 'pinned', label: 'Pinned', icon: <PushPin color={filter === 'pinned' ? '#fff' : colors.textSecondary} size={15} weight="fill" /> },
+    { key: 'all', label: 'All', icon: <Envelope color={filter === 'all' ? '#fff' : colors.text} size={15} weight="bold" /> },
+    { key: 'unread', label: 'Unread', icon: <Lightning color={filter === 'unread' ? '#fff' : colors.text} size={15} weight="fill" /> },
+    { key: 'people', label: 'People', icon: <ChatCircleText color={filter === 'people' ? '#fff' : colors.text} size={15} weight="bold" /> },
+    { key: 'groups', label: 'Groups', icon: <Users color={filter === 'groups' ? '#fff' : colors.text} size={15} weight="bold" /> },
+    { key: 'pinned', label: 'Pinned', icon: <PushPin color={filter === 'pinned' ? '#fff' : colors.text} size={15} weight="fill" /> },
   ];
   return (
     <View style={{ paddingHorizontal: 16, gap: 12, marginBottom: 8 }}>
