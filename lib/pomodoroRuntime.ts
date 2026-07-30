@@ -17,6 +17,20 @@ import {
 
 export const POMODORO_CHANNEL_ID = 'pomodoro-timers';
 
+// Witty session-transition copy. `nextMode === 'focus'` fires when a focus
+// block just finished (break next); the other branch when a break ends.
+const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
+const FOCUS_DONE = [
+  { title: 'Focus done 🎯', body: 'You survived a full block of real work. Go touch grass — break time.' },
+  { title: 'Nailed it 🎯', body: 'Brain successfully used. Reward it with a break.' },
+  { title: 'Block complete 🎯', body: 'That’s focus, baby. Break earned, no notes.' },
+];
+const BREAK_DONE = [
+  { title: 'Break’s over ☕', body: 'The couch was lovely. Back to being brilliant.' },
+  { title: 'Time’s up ☕', body: 'Snack acquired, vibes restored. Now: focus.' },
+  { title: 'Back to it ☕', body: 'Rest complete. Let’s make the next block count.' },
+];
+
 let completionPromise: Promise<ActivePomodoroTimer | null> | null = null;
 
 export async function ensurePomodoroTimerNotifications(): Promise<boolean> {
@@ -44,10 +58,11 @@ export async function schedulePomodoroTimerNotification(nextMode: PomodoroMode, 
   try {
     const granted = await ensurePomodoroTimerNotifications();
     if (!granted) return null;
+    const line = pick(nextMode === 'focus' ? FOCUS_DONE : BREAK_DONE);
     return await Notifications.scheduleNotificationAsync({
       content: {
-        title: nextMode === 'focus' ? 'Focus session complete' : 'Break over',
-        body: nextMode === 'focus' ? 'Focus block done. Take your break.' : 'Back to it. Start your next focus session.',
+        title: line.title,
+        body: line.body,
         sound: true,
         interruptionLevel: 'active',
       },
