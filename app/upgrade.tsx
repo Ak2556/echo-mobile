@@ -92,14 +92,15 @@ export default function UpgradeScreen() {
           onPress={handleUpgrade}
           accessibilityRole="button"
           accessibilityLabel="Request tier access"
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? colors.accentMuted : colors.accent,
-            borderRadius: radius.lg,
-            paddingVertical: 16,
-            alignItems: 'center',
-          })}
+          style={{ borderRadius: radius.lg }}
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Request access</Text>
+          {({ pressed }) => (
+            // Wrapper child View owns the accent fill; the Pressable stays bare
+            // so cssInterop can't drop the background and hide the white label.
+            <View style={{ backgroundColor: pressed ? colors.accentMuted : colors.accent, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center' }}>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Request access</Text>
+            </View>
+          )}
         </Pressable>
 
         <Pressable
