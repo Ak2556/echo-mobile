@@ -13,7 +13,7 @@ import { VideoPreview } from '../components/social/VideoPreview';
 import { MentionSuggestions, applyMentionPick } from '../components/social/MentionSuggestions';
 import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 import {
-  PaperPlaneTilt, Lightning, Hash, Image as ImageIcon,
+  PaperPlaneTilt, Hash, Image as ImageIcon,
   VideoCamera, ChartBar, X, Plus, Clock, Camera, Images, CheckCircle, Question,
   Users, MagnifyingGlass, PencilSimple, CaretLeft, CaretRight,
 } from 'phosphor-react-native';
@@ -39,16 +39,6 @@ const MAX_PHOTOS = 6;
 
 type PostType = 'text' | 'photo' | 'video' | 'poll' | 'musing';
 
-const POST_TYPES: { key: PostType; label: string; Icon: React.ComponentType<any> }[] = [
-  // 'Echo' is the brand term for a text post — every other product surface
-  // calls them "echoes" so the tab name shouldn't degenerate to "Text".
-  { key: 'text', label: 'Echo', Icon: Lightning },
-  { key: 'musing', label: 'Musing', Icon: Question },
-  { key: 'photo', label: 'Photo', Icon: ImageIcon },
-  { key: 'video', label: 'Video', Icon: VideoCamera },
-  { key: 'poll', label: 'Poll', Icon: ChartBar },
-];
-
 const POLL_DURATIONS = [
   { label: '1h', hours: 1 },
   { label: '6h', hours: 6 },
@@ -69,7 +59,6 @@ export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
   const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string; firstEcho?: string }>();
-  const isFirstEcho = params.firstEcho === '1';
   const { colors, radius, fontSizes, animation } = useTheme();
   const { username, userId, avatarColor, avatarUrl, profilePhotoVisible, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore();
   const visibleAvatarUrl = profilePhotoVisible ? avatarUrl : '';
@@ -85,7 +74,12 @@ export default function CreatePostScreen() {
     };
   }, [quotedId, publishedEchoes]);
 
-  const [postType, setPostType] = useState<PostType>('text');
+  // Ultra-simple composer: one text box is the whole post. A prompt, tags, and
+  // poll are optional sections revealed from the toolbar; photo/video attach
+  // inline. The post type is derived from what's attached, not a picker.
+  const [showPrompt, setShowPrompt] = useState(Boolean(params.prefillPrompt || params.prefillTitle));
+  const [showTags, setShowTags] = useState(false);
+  const [pollActive, setPollActive] = useState(false);
   const [prompt, setPrompt] = useState(
     typeof params.prefillPrompt === 'string' ? params.prefillPrompt
     : typeof params.prefillTitle === 'string' ? params.prefillTitle
@@ -102,9 +96,6 @@ export default function CreatePostScreen() {
   const [response, setResponse] = useState(typeof params.prefillBody === 'string' ? params.prefillBody : '');
   const [responseCaret, setResponseCaret] = useState(0);
   const [responseFocused, setResponseFocused] = useState(false);
-  const [caption, setCaption] = useState('');
-  const [captionCaret, setCaptionCaret] = useState(0);
-  const [captionFocused, setCaptionFocused] = useState(false);
   const [tagsRaw, setTagsRaw] = useState('');
   const [publishing, setPublishing] = useState(false);
 
@@ -159,15 +150,19 @@ export default function CreatePostScreen() {
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [pollDurationHours, setPollDurationHours] = useState(24);
 
+  // Post type is inferred from what's attached, not chosen from a picker.
+  const postType: PostType = videoUri.length > 0 ? 'video'
+    : imageUris.length > 0 ? 'photo'
+    : pollActive ? 'poll'
+    : 'text';
+
   const canPublish = (() => {
     if (publishing) return false;
     switch (postType) {
       case 'text':
-        if (coAuthor) {
-          return prompt.trim().length > 0 && response.trim().length > 0 && coAuthorResponse.trim().length > 0;
-        }
-        return prompt.trim().length > 0 && response.trim().length > 0;
-      case 'musing': return prompt.trim().length > 0;
+        // The one box (response) is enough; a co-author still needs their take.
+        if (coAuthor) return response.trim().length > 0 && coAuthorResponse.trim().length > 0;
+        return response.trim().length > 0 || prompt.trim().length > 0;
       case 'photo': return imageUris.length > 0;
       case 'video': return videoUri.length > 0;
       case 'poll': return pollQuestion.trim().length > 0 && pollOptions.filter(o => o.trim()).length >= 2;
@@ -322,21 +317,6 @@ export default function CreatePostScreen() {
       let remoteEchoId: string | undefined;
 
       switch (postType) {
-        case 'musing':
-          // A musing is a single in-progress thought. Store it in `prompt`
-          // with an empty response; the feed renders it with italic
-          // "thinking out loud" treatment.
-          echo = coerceFeedItem({ ...base, postType: 'musing', prompt: prompt.trim(), response: '' });
-          if (remoteAuthorId) {
-            const row = await insertRemoteEcho({
-              authorId: remoteAuthorId,
-              prompt: prompt.trim(),
-              response: '',
-              postType: 'musing',
-            });
-            remoteEchoId = row.id;
-          }
-          break;
         case 'text':
           echo = coerceFeedItem({
             ...base,
@@ -371,9 +351,9 @@ export default function CreatePostScreen() {
             remoteMediaUrls = await uploadEchoImages(images);
           }
           const finalUris = remoteMediaUrls ?? imageUris;
-          echo = coerceFeedItem({ ...base, postType: 'photo', prompt: caption.trim() || 'Photo post', response: '', mediaUris: finalUris });
+          echo = coerceFeedItem({ ...base, postType: 'photo', prompt: response.trim() || 'Photo post', response: '', mediaUris: finalUris });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: caption.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls });
+            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls });
             remoteEchoId = row.id;
           }
           break;
@@ -381,9 +361,9 @@ export default function CreatePostScreen() {
         case 'video': {
           const remoteVideoUrl = remoteAuthorId && video ? await uploadEchoVideo(video) : undefined;
           const finalVideoUri = remoteVideoUrl ?? videoUri;
-          echo = coerceFeedItem({ ...base, postType: 'video', prompt: caption.trim() || 'Video post', response: '', videoUri: finalVideoUri });
+          echo = coerceFeedItem({ ...base, postType: 'video', prompt: response.trim() || 'Video post', response: '', videoUri: finalVideoUri });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: caption.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : undefined });
+            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: response.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : undefined });
             remoteEchoId = row.id;
           }
           break;
@@ -585,23 +565,6 @@ export default function CreatePostScreen() {
         }
       />
 
-      {/* Type selector */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ flexGrow: 0, maxHeight: 56 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
-      >
-        {POST_TYPES.map(({ key, label, Icon }) => {
-          const active = postType === key;
-          return (
-            <Pressable key={key} onPress={() => setPostType(key)} style={{ minWidth: 88, height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, gap: 5, borderRadius: radius.full, backgroundColor: active ? colors.accent : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border }}>
-              <Icon color={active ? '#fff' : colors.textMuted} size={13} />
-              <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: fontSizes.caption }}>{label}</Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -629,7 +592,7 @@ export default function CreatePostScreen() {
               <QuotedEchoCard echo={quotedEcho} />
             </View>
           )}
-          {postType === 'musing' && (
+          {false && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               <View
                 style={{
@@ -664,36 +627,24 @@ export default function CreatePostScreen() {
               </View>
             </Animated.View>
           )}
-          {postType === 'text' && (
+          {/* The one box — the whole post. Prompt/tags/co-author/media are all
+              optional and added from the toolbar below. */}
+          {!pollActive && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              {isFirstEcho && (
-                <View
-                  style={{
-                    marginBottom: 14,
-                    padding: 14,
-                    borderRadius: radius.card,
-                    backgroundColor: colors.accent + '14',
-                    borderWidth: 1,
-                    borderColor: colors.accent + '30',
-                  }}
-                >
-                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 11, letterSpacing: 0.6, marginBottom: 4 }}>
-                    YOUR FIRST ECHO
-                  </Text>
-                  <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19 }}>
-                    We picked a question to get you started. Take your time — a one-line take is fine. You can always edit later.
-                  </Text>
-                </View>
+              {showPrompt && (
+                <>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, marginLeft: 4 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Question color={colors.accent} size={12} />
+                      <Text style={[s.label, { marginBottom: 0 }]}>Prompt (optional)</Text>
+                    </View>
+                    <Pressable onPress={() => { setShowPrompt(false); setPrompt(''); }} hitSlop={8}><X color={colors.textMuted} size={16} /></Pressable>
+                  </View>
+                  <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
+                    <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What question or prompt started this?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 44 }} />
+                  </View>
+                </>
               )}
-              <Text style={s.label}>Question</Text>
-              <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What question or prompt started this?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
-                <Text style={{ color: prompt.length > 260 ? colors.danger : prompt.length > 240 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
-                <Lightning color={colors.accent} size={12} />
-                <Text style={[s.label, { marginBottom: 0 }]}>Your Echo</Text>
-              </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput
                   multiline
@@ -702,16 +653,16 @@ export default function CreatePostScreen() {
                   onSelectionChange={e => setResponseCaret(e.nativeEvent.selection.start)}
                   onFocus={() => setResponseFocused(true)}
                   onBlur={() => setResponseFocused(false)}
-                  placeholder="Share the take people should remember."
+                  placeholder="What's on your mind?"
                   placeholderTextColor={colors.textMuted}
                   maxLength={1000}
-                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }}
+                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 130 }}
                 />
                 <Text style={{ color: response.length > 950 ? colors.danger : response.length > 850 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{response.length}/1000</Text>
               </View>
 
-              {/* Co-author */}
-              {coAuthor ? (
+              {/* Co-author take — only when a co-author is added from the toolbar */}
+              {coAuthor && (
                 <View style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
                     <Users color={colors.accent} size={12} />
@@ -741,20 +692,12 @@ export default function CreatePostScreen() {
                     <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{coAuthorResponse.length}/1000</Text>
                   </View>
                 </View>
-              ) : (
-                <Pressable
-                  onPress={() => { setCoAuthorPickerOpen(true); setCoAuthorQuery(''); }}
-                  style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 14, gap: 6, borderStyle: 'dashed' }]}
-                >
-                  <Users color={colors.textMuted} size={14} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, fontWeight: '600' }}>Add a co-author</Text>
-                </Pressable>
               )}
             </Animated.View>
           )}
 
           {/* Photo post */}
-          {postType === 'photo' && (
+          {imageUris.length > 0 && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               {/* Picker buttons */}
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
@@ -843,26 +786,11 @@ export default function CreatePostScreen() {
                 </View>
               )}
 
-              <Text style={s.label}>Caption (optional)</Text>
-              <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput
-                  multiline
-                  value={caption}
-                  onChangeText={setCaption}
-                  onSelectionChange={e => setCaptionCaret(e.nativeEvent.selection.start)}
-                  onFocus={() => setCaptionFocused(true)}
-                  onBlur={() => setCaptionFocused(false)}
-                  placeholder="Add a caption…"
-                  placeholderTextColor={colors.textMuted}
-                  maxLength={300}
-                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }}
-                />
-              </View>
             </Animated.View>
           )}
 
           {/* Video post */}
-          {postType === 'video' && (
+          {videoUri.length > 0 && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               {/* Picker buttons */}
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
@@ -900,26 +828,11 @@ export default function CreatePostScreen() {
                 </View>
               )}
 
-              <Text style={s.label}>Caption (optional)</Text>
-              <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput
-                  multiline
-                  value={caption}
-                  onChangeText={setCaption}
-                  onSelectionChange={e => setCaptionCaret(e.nativeEvent.selection.start)}
-                  onFocus={() => setCaptionFocused(true)}
-                  onBlur={() => setCaptionFocused(false)}
-                  placeholder="Add a caption…"
-                  placeholderTextColor={colors.textMuted}
-                  maxLength={300}
-                  style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }}
-                />
-              </View>
             </Animated.View>
           )}
 
           {/* Poll post */}
-          {postType === 'poll' && (
+          {pollActive && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
               <Text style={s.label}>Question</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 16 }]}>
@@ -959,22 +872,45 @@ export default function CreatePostScreen() {
             </Animated.View>
           )}
 
-          {/* Shared tags */}
-          <Animated.View entering={animation(FadeInDown.delay(60).duration(220))}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-              <Hash color={colors.textMuted} size={13} />
-              <Text style={[s.label, { marginBottom: 0 }]}>Tags</Text>
-            </View>
-            <View style={[s.surface, { padding: 12, marginBottom: 16 }]}>
-              <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder="ai, react, tips (comma-separated)" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ color: colors.text, fontSize: fontSizes.body }} />
-            </View>
-          </Animated.View>
+          {/* Tags — optional, from the toolbar */}
+          {showTags && (
+            <Animated.View entering={animation(FadeIn.duration(80))}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Hash color={colors.textMuted} size={13} />
+                  <Text style={[s.label, { marginBottom: 0 }]}>Tags</Text>
+                </View>
+                <Pressable onPress={() => { setShowTags(false); setTagsRaw(''); }} hitSlop={8}><X color={colors.textMuted} size={16} /></Pressable>
+              </View>
+              <View style={[s.surface, { padding: 12, marginBottom: 16 }]}>
+                <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder="ai, react, tips (comma-separated)" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ color: colors.text, fontSize: fontSizes.body }} />
+              </View>
+            </Animated.View>
+          )}
+
+          {/* Add-on toolbar — everything optional is one tap away */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+            {[
+              { key: 'photo', label: 'Photo', Icon: Images, active: imageUris.length > 0, onPress: pickImages },
+              { key: 'video', label: 'Video', Icon: VideoCamera, active: videoUri.length > 0, onPress: pickVideo },
+              { key: 'prompt', label: 'Prompt', Icon: Question, active: showPrompt, onPress: () => setShowPrompt(v => !v) },
+              { key: 'poll', label: 'Poll', Icon: ChartBar, active: pollActive, onPress: () => setPollActive(v => !v) },
+              { key: 'tags', label: 'Tags', Icon: Hash, active: showTags, onPress: () => setShowTags(v => !v) },
+              { key: 'coauthor', label: 'Co-author', Icon: Users, active: !!coAuthor, onPress: () => { if (coAuthor) { setCoAuthor(null); setCoAuthorResponse(''); } else { setCoAuthorPickerOpen(true); setCoAuthorQuery(''); } } },
+            ].map(({ key, label, Icon, active, onPress }) => (
+              <Pressable key={key} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 9, borderRadius: radius.full, backgroundColor: active ? colors.accentMuted : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.border }}>
+                <Icon color={active ? colors.accent : colors.textMuted} size={16} weight={active ? 'fill' : 'regular'} />
+                <Text style={{ color: active ? colors.accent : colors.textMuted, fontSize: fontSizes.small, fontWeight: '700' }}>{label}</Text>
+              </Pressable>
+            ))}
+          </View>
 
           <View style={{ height: 32 }} />
         </ScrollView>
 
-        {/* @-mentions autocomplete — overlays the active input */}
-        {responseFocused && postType === 'text' && (
+        {/* @-mentions autocomplete — overlays the one text box */}
+        {responseFocused && (
           <MentionSuggestions
             text={response}
             caret={responseCaret}
@@ -982,17 +918,6 @@ export default function CreatePostScreen() {
               const { text: nt } = applyMentionPick(response, responseCaret, u.username);
               setResponse(nt);
               setResponseCaret(nt.length);
-            }}
-          />
-        )}
-        {captionFocused && (postType === 'photo' || postType === 'video') && (
-          <MentionSuggestions
-            text={caption}
-            caret={captionCaret}
-            onPick={(u) => {
-              const { text: nt } = applyMentionPick(caption, captionCaret, u.username);
-              setCaption(nt);
-              setCaptionCaret(nt.length);
             }}
           />
         )}
