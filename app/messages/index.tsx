@@ -521,6 +521,10 @@ function InboxToolbar({
               key={item.key}
               style={{
                 flex: 1,
+                // minWidth:0 lets each segment shrink to an equal share —
+                // without it Yoga keeps a segment at least as wide as its
+                // label, so longer words made the pills unequal.
+                minWidth: 0,
                 minHeight: 40,
                 borderRadius: 13,
                 justifyContent: 'center',
@@ -550,6 +554,8 @@ function InboxToolbar({
                     {item.icon}
                     <Text
                       style={{
+                        flexShrink: 1,
+                        textAlign: 'center',
                         color: active ? '#fff' : colors.text,
                         fontSize: 13,
                         fontWeight: '800',
