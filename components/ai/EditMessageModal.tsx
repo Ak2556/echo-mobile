@@ -125,15 +125,21 @@ export function EditMessageModal({
                 <Pressable
                   onPress={handleSubmit}
                   disabled={!text.trim()}
-                  style={({ pressed }) => ({
-                    paddingHorizontal: 16,
-                    paddingVertical: 9,
-                    borderRadius: 999,
-                    backgroundColor: text.trim() ? colors.accent : colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                    opacity: pressed ? 0.7 : 1,
-                  })}
+                  style={{ borderRadius: 999 }}
                 >
-                  <Text style={{ color: text.trim() ? '#fff' : colors.textMuted, fontWeight: '700' }}>{submitLabel}</Text>
+                  {({ pressed }) => (
+                    // Child View owns the fill so cssInterop can't drop it and
+                    // leave the white label invisible on a light background.
+                    <View style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 9,
+                      borderRadius: 999,
+                      backgroundColor: text.trim() ? colors.accent : colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                      opacity: pressed ? 0.7 : 1,
+                    }}>
+                      <Text style={{ color: text.trim() ? '#fff' : colors.textMuted, fontWeight: '700' }}>{submitLabel}</Text>
+                    </View>
+                  )}
                 </Pressable>
               </View>
             </View>

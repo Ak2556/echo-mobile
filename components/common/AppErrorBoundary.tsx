@@ -57,23 +57,26 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           Echo hit an unexpected hiccup. Tap retry to reload this screen — your data is safe.
         </Text>
 
-        <Pressable
-          onPress={retry}
-          style={({ pressed }) => ({
-            marginTop: 28,
-            paddingHorizontal: 22,
-            paddingVertical: 12,
-            borderRadius: radius.full,
-            backgroundColor: colors.accent,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            opacity: pressed ? 0.85 : 1,
-          })}
-        >
-          <ArrowClockwise color="#fff" size={16} weight="bold" />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Try again</Text>
-        </Pressable>
+        {/* Wrapper View owns the accent fill; the Pressable stays bare.
+            cssInterop drops box/bg props off a touchable's own style, which
+            leaves the white label invisible on a light background. */}
+        <View style={{ marginTop: 28, borderRadius: radius.full, backgroundColor: colors.accent }}>
+          <Pressable
+            onPress={retry}
+            style={({ pressed }) => ({
+              paddingHorizontal: 22,
+              paddingVertical: 12,
+              borderRadius: radius.full,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              opacity: pressed ? 0.85 : 1,
+            })}
+          >
+            <ArrowClockwise color="#fff" size={16} weight="bold" />
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Try again</Text>
+          </Pressable>
+        </View>
 
         <Pressable
           onPress={() => setShowDetails(v => !v)}
