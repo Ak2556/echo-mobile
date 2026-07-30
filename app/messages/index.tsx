@@ -428,45 +428,26 @@ function InboxHero({
           ))}
         </View>
 
+        {/* Wrapper Views own the flex sizing + pill styling; the Pressables
+            stay bare — NativeWind's cssInterop otherwise drops the box/layout
+            off a touchable's own style and the buttons collapse. */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Pressable
-            onPress={onFindPeople}
-            accessibilityRole="button"
-            style={({ pressed }) => ({
-              flex: 1,
-              minHeight: 46,
-              borderRadius: 16,
-              backgroundColor: colors.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 8,
-              opacity: pressed ? 0.72 : 1,
-            })}
-          >
-            <PencilSimple color="#fff" size={17} weight="bold" />
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '900' }}>New chat</Text>
-          </Pressable>
-          <Pressable
-            onPress={onNewGroup}
-            accessibilityRole="button"
-            style={({ pressed }) => ({
-              flex: 1,
-              minHeight: 46,
-              borderRadius: 16,
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 8,
-              opacity: pressed ? 0.72 : 1,
-            })}
-          >
-            <Users color={colors.text} size={17} weight="bold" />
-            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>New group</Text>
-          </Pressable>
+          <View style={{ flex: 1 }}>
+            <Pressable onPress={onFindPeople} accessibilityRole="button" accessibilityLabel="New chat" style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
+              <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+                <PencilSimple color="#fff" size={17} weight="bold" />
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '900' }}>New chat</Text>
+              </View>
+            </Pressable>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Pressable onPress={onNewGroup} accessibilityRole="button" accessibilityLabel="New group" style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
+              <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+                <Users color={colors.text} size={17} weight="bold" />
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>New group</Text>
+              </View>
+            </Pressable>
+          </View>
         </View>
       </View>
     </View>
@@ -531,18 +512,18 @@ function InboxToolbar({
       >
         {filters.map(item => {
           const active = filter === item.key;
+          // Wrapper View owns the pill fill/border/shadow + sizing; the
+          // Pressable stays bare. NativeWind's cssInterop drops box/bg props
+          // off a touchable's own (function-form) style — which dropped the
+          // active chip's green fill and left white-on-cream content that was
+          // invisible in light mode.
           return (
-            <Pressable
+            <View
               key={item.key}
-              onPress={() => onFilterChange(item.key)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              style={({ pressed }) => ({
+              style={{
                 minWidth: 116,
                 minHeight: 54,
                 borderRadius: 19,
-                paddingHorizontal: 12,
-                paddingVertical: 10,
                 justifyContent: 'center',
                 backgroundColor: active
                   ? colors.accent
@@ -553,10 +534,22 @@ function InboxToolbar({
                 shadowOpacity: colors.isDark ? 0.18 : 0.06,
                 shadowRadius: 8,
                 shadowOffset: { width: 0, height: 4 },
-                opacity: pressed ? 0.72 : 1,
-              })}
+              }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Pressable
+                onPress={() => onFilterChange(item.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                style={({ pressed }) => ({
+                  minHeight: 54,
+                  borderRadius: 19,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  justifyContent: 'center',
+                  opacity: pressed ? 0.72 : 1,
+                })}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{
                   width: 28,
                   height: 28,
@@ -598,8 +591,9 @@ function InboxToolbar({
                     {counts[item.key]}
                   </Text>
                 </View>
-              </View>
-            </Pressable>
+                </View>
+              </Pressable>
+            </View>
           );
         })}
       </ScrollView>

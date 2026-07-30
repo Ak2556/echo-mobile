@@ -54,7 +54,9 @@ function Bubble() {
   const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? meta.color ?? colors.accent) : colors.accent;
 
   const startX = x >= 0 ? x : SCREEN_W - BUBBLE - 14;
-  const startY = y >= 0 ? y : SCREEN_H * 0.62;
+  // Default to a clean bottom-right FAB position, clear of headers/hero cards
+  // (the old 0.62*H default sat mid-screen and overlapped content).
+  const startY = y >= 0 ? y : SCREEN_H - BUBBLE - 150;
   const tx = useSharedValue(startX);
   const ty = useSharedValue(startY);
   const offX = useSharedValue(0);

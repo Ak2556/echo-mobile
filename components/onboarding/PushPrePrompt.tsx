@@ -63,26 +63,35 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
               We&apos;ll ping you when someone reacts, comments, or quotes your Echoes — not for anything else.
             </Text>
 
-            <Pressable
-              onPress={() => { track('push_permission_granted', { source: 'pre_prompt' }); onAccept(); }}
-              style={({ pressed }) => ({
+            {/* Wrapper View owns the accent fill; the Pressable stays bare so
+                cssInterop can't drop the background and hide the white label. */}
+            <View
+              style={{
                 marginTop: 24,
                 width: '100%',
-                paddingVertical: 14,
                 borderRadius: radius.lg,
                 backgroundColor: colors.accent,
-                alignItems: 'center',
-                opacity: pressed ? 0.9 : 1,
                 shadowColor: colors.accent,
                 shadowOpacity: 0.25,
                 shadowRadius: 12,
                 shadowOffset: { width: 0, height: 4 },
-              })}
-              accessibilityRole="button"
-              accessibilityLabel="Turn on notifications"
+              }}
             >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Turn on notifications</Text>
-            </Pressable>
+              <Pressable
+                onPress={() => { track('push_permission_granted', { source: 'pre_prompt' }); onAccept(); }}
+                style={({ pressed }) => ({
+                  width: '100%',
+                  paddingVertical: 14,
+                  borderRadius: radius.lg,
+                  alignItems: 'center',
+                  opacity: pressed ? 0.9 : 1,
+                })}
+                accessibilityRole="button"
+                accessibilityLabel="Turn on notifications"
+              >
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Turn on notifications</Text>
+              </Pressable>
+            </View>
 
             <Pressable
               onPress={() => { track('push_permission_denied', { source: 'pre_prompt' }); onDecline(); }}
