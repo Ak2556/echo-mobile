@@ -201,9 +201,21 @@ export default function LoginScreen() {
             <Animated.View entering={FadeInDown.delay(260).duration(360)} style={{ alignItems: 'center', marginTop: 8 }}>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16, letterSpacing: 0.1 }]}>
                 {t('auth.termsPrefix')}{' '}
-                <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>{t('auth.terms')}</Text>
+                <Text
+                  style={[font.bodySemibold, { color: colors.textSecondary, textDecorationLine: 'underline' }]}
+                  onPress={() => router.push('/terms')}
+                  accessibilityRole="link"
+                >
+                  {t('auth.terms')}
+                </Text>
                 {' & '}
-                <Text style={[font.bodySemibold, { color: colors.textSecondary }]}>{t('auth.privacy')}</Text>
+                <Text
+                  style={[font.bodySemibold, { color: colors.textSecondary, textDecorationLine: 'underline' }]}
+                  onPress={() => router.push('/privacy')}
+                  accessibilityRole="link"
+                >
+                  {t('auth.privacy')}
+                </Text>
               </Text>
             </Animated.View>
 

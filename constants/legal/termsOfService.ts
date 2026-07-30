@@ -1,6 +1,19 @@
-# Terms of Service
+/**
+ * Canonical Terms of Service content (rendered by app/terms.tsx and mirrored to
+ * docs/terms-of-service.md). Markdown string so it renders identically in-app
+ * (react-native-markdown-display) and on web.
+ *
+ * TODO before store submission: confirm the operating entity + governing-law
+ * jurisdiction with counsel and replace the "operator identified on Echo's
+ * store listings" phrasing with the registered entity name if desired.
+ */
 
-**Last updated:** July 30, 2026 · **Version 2.0**
+export const TERMS_UPDATED = 'July 30, 2026';
+export const TERMS_VERSION = '2.0';
+
+export const TERMS_OF_SERVICE_MD = `# Terms of Service
+
+**Last updated:** ${TERMS_UPDATED} · **Version ${TERMS_VERSION}**
 
 These Terms of Service ("Terms") are an agreement between you and Echo ("Echo", "we"), operated by the seller identified on Echo's App Store and Google Play listings. By creating an account or using Echo, you agree to these Terms. If you don't agree, please don't use Echo.
 
@@ -99,3 +112,4 @@ We may update these Terms. For material changes, we'll notify you in-app and upd
 ## 14. Contact
 
 Questions about these Terms: **support@echo.app**
+`;
