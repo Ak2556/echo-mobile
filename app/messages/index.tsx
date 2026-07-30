@@ -505,25 +505,24 @@ function InboxToolbar({
         ) : null}
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 9, paddingVertical: 2, paddingRight: 2 }}
-      >
+      {/* Equal-width segments in a non-scrolling row so the filters always
+          fit the screen (the old fixed-width scrolling pills ran off the
+          right edge). Wrapper View owns the fill — cssInterop drops box/bg
+          props off the Pressable's own style. Counts live in the hero stats
+          above, so the chips stay compact: icon + label, with a small count
+          badge only when it carries signal (unread / pinned > 0). */}
+      <View style={{ flexDirection: 'row', gap: 6 }}>
         {filters.map(item => {
           const active = filter === item.key;
-          // Wrapper View owns the pill fill/border/shadow + sizing; the
-          // Pressable stays bare. NativeWind's cssInterop drops box/bg props
-          // off a touchable's own (function-form) style — which dropped the
-          // active chip's green fill and left white-on-cream content that was
-          // invisible in light mode.
+          const count = counts[item.key];
+          const showBadge = count > 0 && (item.key === 'unread' || item.key === 'pinned');
           return (
             <View
               key={item.key}
               style={{
-                minWidth: 116,
-                minHeight: 54,
-                borderRadius: 19,
+                flex: 1,
+                minHeight: 46,
+                borderRadius: 15,
                 justifyContent: 'center',
                 backgroundColor: active
                   ? colors.accent
@@ -531,9 +530,9 @@ function InboxToolbar({
                 borderWidth: 1,
                 borderColor: active ? colors.accent : colors.border,
                 shadowColor: '#000',
-                shadowOpacity: colors.isDark ? 0.18 : 0.06,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: colors.isDark ? 0.16 : 0.05,
+                shadowRadius: 6,
+                shadowOffset: { width: 0, height: 3 },
               }}
             >
               <Pressable
@@ -541,62 +540,49 @@ function InboxToolbar({
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
                 style={({ pressed }) => ({
-                  minHeight: 54,
-                  borderRadius: 19,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
+                  minHeight: 46,
+                  borderRadius: 15,
+                  paddingHorizontal: 4,
                   justifyContent: 'center',
+                  alignItems: 'center',
                   opacity: pressed ? 0.72 : 1,
                 })}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 12,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: active ? 'rgba(255,255,255,0.18)' : colors.surface,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: active ? 'rgba(255,255,255,0.28)' : colors.border,
-                }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   {item.icon}
-                </View>
-                <Text
-                  style={{
-                    flex: 1,
-                    color: active ? '#fff' : colors.text,
-                    fontSize: 13,
-                    lineHeight: 16,
-                    fontWeight: '900',
-                  }}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.82}
-                >
-                  {item.label}
-                </Text>
-                <View style={{
-                  minWidth: 24,
-                  height: 24,
-                  borderRadius: 12,
-                  paddingHorizontal: 7,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: active
-                    ? 'rgba(255,255,255,0.2)'
-                    : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
-                }}>
-                  <Text style={{ color: active ? '#fff' : colors.textMuted, fontSize: 12, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-                    {counts[item.key]}
+                  <Text
+                    style={{
+                      color: active ? '#fff' : colors.text,
+                      fontSize: 12.5,
+                      fontWeight: '800',
+                    }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                  >
+                    {item.label}
                   </Text>
-                </View>
+                  {showBadge ? (
+                    <View style={{
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      paddingHorizontal: 4,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: active ? 'rgba(255,255,255,0.24)' : colors.accent,
+                    }}>
+                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                        {count}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               </Pressable>
             </View>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 }
