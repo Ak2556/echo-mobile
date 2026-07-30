@@ -1,6 +1,20 @@
-# Privacy Policy
+/**
+ * Canonical Privacy Policy content (rendered by app/privacy.tsx and mirrored to
+ * docs/privacy-policy.md for store submission / web hosting). Markdown string so
+ * it renders identically in-app (react-native-markdown-display) and on web.
+ *
+ * TODO before store submission: replace "the operator identified on Echo's
+ * store listings" with the registered operating entity's legal name + address
+ * once finalized, and confirm the sub-processor list still matches production.
+ * Keep retention rows in sync with constants/dataRetention.ts.
+ */
 
-**Last updated:** July 30, 2026 · **Version 2.0**
+export const PRIVACY_UPDATED = 'July 30, 2026';
+export const PRIVACY_VERSION = '2.0';
+
+export const PRIVACY_POLICY_MD = `# Privacy Policy
+
+**Last updated:** ${PRIVACY_UPDATED} · **Version ${PRIVACY_VERSION}**
 
 This Privacy Policy explains what data Echo ("Echo", "we", "us") collects, how we use it, the legal bases we rely on, and the choices and rights you have. Echo is operated by the seller identified on Echo's App Store and Google Play listings, reachable at **support@echo.app**.
 
@@ -138,3 +152,4 @@ We may update this policy. For material changes we'll notify you in-app and upda
 
 Privacy questions: **support@echo.app**
 EU/UK GDPR and California CCPA requests: email us with "Privacy request" in the subject.
+`;

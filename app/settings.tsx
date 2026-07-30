@@ -36,7 +36,6 @@ import { captureException } from '../lib/monitoring';
 import { setPersonaEnabled } from '../lib/persona';
 import { track } from '../lib/analytics';
 import { isSafeExternalUrl } from '../lib/urlSafety';
-import { publicWebUrl } from '../lib/echoUrl';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { FONT_STYLE_OPTIONS, fontStyleLabel } from '../lib/fontPresets';
 import { APP_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguageCode } from '../lib/languages';
@@ -1082,7 +1081,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Globe} label="DSA Contact" subtitle="Contact us for DSA-related matters" onPress={() => openTrustedExternalUrl(`mailto:${DSA_EMAIL}`)} />
             {divider}
-            <SettingsRow theme={theme} icon={ListChecks} label="EU Legal Representative" onPress={() => openTrustedExternalUrl(publicWebUrl('/legal/eu-rep'))} />
+            <SettingsRow theme={theme} icon={ListChecks} label="EU Legal Representative" onPress={() => router.push('/legal/eu-rep')} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1090,9 +1089,9 @@ export default function SettingsScreen() {
         {showGroup('support') && <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>About</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => openTrustedExternalUrl(publicWebUrl('/privacy'))} />
+            <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => router.push('/privacy')} />
             {divider}
-            <SettingsRow theme={theme} icon={FileText} label="Terms of Service" onPress={() => openTrustedExternalUrl(publicWebUrl('/terms'))} />
+            <SettingsRow theme={theme} icon={FileText} label="Terms of Service" onPress={() => router.push('/terms')} />
             {divider}
             <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
             {divider}
