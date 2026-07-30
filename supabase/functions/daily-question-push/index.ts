@@ -119,6 +119,14 @@ const DAILY_TITLES = [
   'Warning: mildly provocative question inside',
   'Your daily excuse to have an opinion',
   'Quick — before you overthink it',
+  'Plot twist: today’s question is about you',
+  'Hot take incubator, now open',
+  'Answer this before your coffee gets cold',
+  'The group chat is arguing. Join in.',
+  'Small question, big feelings',
+  'Say something true. We dare you.',
+  'Today’s question would like a word',
+  'Opinions wanted. Yours specifically.',
 ];
 
 function pick(arr: string[]): string {
