@@ -20,7 +20,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "audit:backend": "node scripts/audit-backend.mjs"
+    "audit:backend": "node scripts/audit-backend.mjs",
+    "loadtest:provision": "node loadtest/scripts/provision-users.mjs",
+    "loadtest:teardown": "node loadtest/scripts/teardown-users.mjs",
+    "loadtest:smoke": "k6 run loadtest/smoke.js",
+    "loadtest:run": "k6 run loadtest/main.js",
+    "loadtest:realtime": "k6 run loadtest/realtime.js"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
