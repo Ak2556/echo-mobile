@@ -1,0 +1,5 @@
+# Provisioned test-user credentials — never commit.
+.users.json
+# k6 result exports
+*.json.summary
+results/
