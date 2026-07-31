@@ -29,6 +29,23 @@ script — but that safety net only exists on the staging project you own.
 - A **staging** Supabase project with the schema pushed.
 - Its **URL**, **anon (publishable) key**, and **service-role key**.
 
+## One command — the whole local suite
+
+For a local Docker run, `loadtest:all` orchestrates everything end-to-end:
+ensure stack up → provision → **smoke → capacity ramp → realtime fan-out** →
+teardown. The AI path stays **off** (it calls the real provider and costs
+tokens).
+
+```bash
+npm run loadtest:all                        # defaults: TARGET=1000, USERS=500
+TARGET=2000 USERS=800 npm run loadtest:all  # bigger run
+STOP_STACK=1 npm run loadtest:all           # also `supabase stop` at the end
+```
+
+Smoke gates the run (a smoke failure aborts before the ramp). A crossed
+threshold in the capacity ramp is reported, not treated as a suite failure.
+Everything below documents the individual steps `loadtest:all` runs for you.
+
 ## 1. Provision test users (once per run)
 
 ```bash
