@@ -25,7 +25,8 @@
     "loadtest:teardown": "node loadtest/scripts/teardown-users.mjs",
     "loadtest:smoke": "k6 run loadtest/smoke.js",
     "loadtest:run": "k6 run loadtest/main.js",
-    "loadtest:realtime": "k6 run loadtest/realtime.js"
+    "loadtest:realtime": "k6 run loadtest/realtime.js",
+    "loadtest:all": "bash loadtest/run-all.sh"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
