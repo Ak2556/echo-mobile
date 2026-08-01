@@ -381,33 +381,6 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     </AnimatedPressable>
   );
 
-  // Secondary actions (branch, share) — same chip treatment as the primary
-  // actions so the whole row reads as one consistent set; they stay "secondary"
-  // simply by carrying no count. Everything stays reachable.
-  const SecondaryAction = ({ icon, onPress, accessibilityLabel }: { icon: React.ReactNode; onPress: (e: any) => void; accessibilityLabel: string }) => (
-    <AnimatedPressable
-      onPress={onPress}
-      style={{
-        width: 42,
-        height: 42,
-        borderRadius: 14,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.surfaceHover,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.glassBorder,
-      }}
-      depth="medium"
-      fadeOnPress
-      haptic="light"
-      performanceMode="hot"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-    >
-      {icon}
-    </AnimatedPressable>
-  );
-
   const ActionsRow = (
     <View style={{ paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder }}>
       <View style={{ marginBottom: 8 }}>
@@ -453,8 +426,9 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           onPress={(e) => { e.stopPropagation?.(); toggleBookmarkPress(); }}
           accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'}
         />
-        <SecondaryAction
-          icon={<GitBranch color={colors.textMuted} size={19} weight="bold" />}
+        <ActionButton
+          label="Remix"
+          icon={<GitBranch color={colors.textMuted} size={20} weight="bold" />}
           onPress={(e) => {
             e.stopPropagation?.();
             router.push({
@@ -468,8 +442,9 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           }}
           accessibilityLabel="Add perspective"
         />
-        <SecondaryAction
-          icon={<ShareNetwork color={colors.textMuted} size={19} />}
+        <ActionButton
+          label="Share"
+          icon={<ShareNetwork color={colors.textMuted} size={20} />}
           onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }}
           accessibilityLabel="Share"
         />
