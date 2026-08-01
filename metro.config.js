@@ -1,8 +1,11 @@
-const { getDefaultConfig } = require("expo/metro-config");
+// getSentryExpoConfig wraps expo/metro-config's getDefaultConfig and adds
+// Sentry's serializer, which injects debug IDs into the bundle so uploaded
+// sourcemaps reliably match production crashes (@sentry/react-native 7.x).
+const { getSentryExpoConfig } = require("@sentry/react-native/metro");
 const { withNativeWind } = require("nativewind/metro");
 const path = require("path");
 
-const config = getDefaultConfig(__dirname);
+const config = getSentryExpoConfig(__dirname);
 
 // Use the compiled Phosphor entrypoint to avoid runtime cycles in the package's TypeScript source.
 const originalResolveRequest = config.resolver.resolveRequest;
