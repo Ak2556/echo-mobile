@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView, Alert, StyleSheet, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, GitBranch, PaperPlaneRight, Sparkle } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -104,7 +104,7 @@ export default function RemixScreen() {
   const parentRemixCount = parent?.remixCount ?? 0;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
+    <ResponsiveScreen background="#0A0A0F">
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }}>
@@ -302,7 +302,7 @@ export default function RemixScreen() {
           </View>
         </>
       ) : null}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
 

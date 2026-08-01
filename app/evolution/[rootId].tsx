@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -50,7 +50,7 @@ export default function EvolutionTreeScreen() {
   }, [rootId]);
 
   return (
-    <SafeAreaView edges={['top']} style={styles.root}>
+    <ResponsiveScreen background="#0A0A0F">
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }}>
           <ArrowLeft color="#fff" size={24} />
@@ -111,7 +111,7 @@ export default function EvolutionTreeScreen() {
           </View>
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
 

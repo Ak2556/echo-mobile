@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-native';
@@ -97,7 +97,7 @@ export default function CommentsScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen edges={['top', 'bottom']}>
       <ScreenHeader
         title="Comments"
         right={<Text style={{ color: colors.textMuted, fontSize: 14, marginRight: 10 }}>{comments.length}</Text>}
@@ -216,6 +216,6 @@ export default function CommentsScreen() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

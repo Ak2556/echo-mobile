@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { CheckCircle, Lightning, Trophy } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -31,7 +31,7 @@ function QuestsScreenInner() {
   const totalCompleted = quests.filter(q => q.completed_at).length;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader
         title="Quests"
         right={<Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700', marginRight: 10 }}>{totalCompleted}/{quests.length} completed</Text>}
@@ -54,7 +54,7 @@ function QuestsScreenInner() {
           )}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
 

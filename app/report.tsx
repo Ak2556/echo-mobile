@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Alert, TextInput as RNTextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Warning } from 'phosphor-react-native';
@@ -56,7 +56,7 @@ export default function ReportScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader title="Report" />
 
       <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
@@ -138,6 +138,6 @@ export default function ReportScreen() {
           </AnimatedPressable>
         </Animated.View>
       </View>
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

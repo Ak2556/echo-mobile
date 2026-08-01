@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import { Sparkle, Check, Crown } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -28,7 +28,7 @@ export default function UpgradeScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
+    <ResponsiveScreen edges={['top', 'bottom']}>
       <ScreenHeader title="Echo Tiers" />
 
       <ScrollView contentContainerStyle={{ padding: 24, gap: 24 }}>
@@ -114,6 +114,6 @@ export default function UpgradeScreen() {
           </Text>
         </Pressable>
       </ScrollView>
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

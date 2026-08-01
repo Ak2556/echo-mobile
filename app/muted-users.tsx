@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { FlashList } from '@shopify/flash-list';
 import { SpeakerSlash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -22,7 +22,7 @@ export default function MutedUsersScreen() {
     .filter(Boolean) as User[];
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader
         title="Muted Users"
         right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginRight: 8 }}>{mutedUsers.length}</Text>}
@@ -72,6 +72,6 @@ export default function MutedUsersScreen() {
           keyExtractor={item => item.id}
         />
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

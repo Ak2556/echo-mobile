@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Check } from 'phosphor-react-native';
@@ -74,7 +74,7 @@ function CreateOfficeHourScreenInner() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader
         title="Schedule"
         right={
@@ -155,7 +155,7 @@ function CreateOfficeHourScreenInner() {
           </View>
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
 

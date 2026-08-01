@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { Users } from 'phosphor-react-native';
@@ -48,7 +48,7 @@ export default function FollowersScreen() {
   const followingCount = remote ? (followingRemote.data?.length ?? 0) : followingLocal.length;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader title="Connections" />
 
       <View className="flex-row" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
@@ -108,6 +108,6 @@ export default function FollowersScreen() {
           keyExtractor={item => item.id}
         />
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

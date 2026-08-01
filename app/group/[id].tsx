@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert, ActivityIndicator, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import {
   Users, Sparkle, MagnifyingGlass, X, Crown, SignOut, BellSlash, UserPlus,
@@ -157,7 +157,7 @@ export default function GroupInfoScreen() {
   const eyebrow = { color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase' as const };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader title="Group info" />
 
       {loading ? (
@@ -295,6 +295,6 @@ export default function GroupInfoScreen() {
           </AnimatedPressable>
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
