@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   HeartStraight, ChatCircle, UserPlus, ArrowsClockwise,
@@ -66,7 +66,7 @@ export default function NotificationPrefsScreen() {
   const divider = <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader title="Notification Preferences" />
 
       <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
@@ -136,6 +136,6 @@ export default function NotificationPrefsScreen() {
 
         <View className="h-8" />
       </ScrollView>
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

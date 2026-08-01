@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Alert, ActivityIndicator, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import { Warning, Trash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -50,7 +50,7 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
+    <ResponsiveScreen width="form" edges={['top', 'bottom']}>
       <ScreenHeader title="Delete account" />
 
       <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }} keyboardShouldPersistTaps="handled">
@@ -149,6 +149,6 @@ export default function DeleteAccountScreen() {
           <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>Cancel</Text>
         </Pressable>
       </ScrollView>
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

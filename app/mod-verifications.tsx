@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Alert, Image, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useFocusEffect } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SealCheck, CheckCircle, XCircle } from 'phosphor-react-native';
@@ -128,7 +128,7 @@ export default function ModVerificationsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
+    <ResponsiveScreen>
       <ScreenHeader
         title="Verification queue"
         right={<SealCheck color={colors.accent} size={20} weight="fill" style={{ marginRight: 8 }} />}
@@ -155,6 +155,6 @@ export default function ModVerificationsScreen() {
           ))}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
@@ -34,7 +34,7 @@ function BadgesScreenInner() {
   const unearned = badges.filter(b => !b.earned);
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader
         title="Badges"
         right={<Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginRight: 10 }}>{earned.length}/{badges.length}</Text>}
@@ -70,7 +70,7 @@ function BadgesScreenInner() {
           )}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
 
