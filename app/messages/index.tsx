@@ -13,6 +13,8 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import { persistGet, persistSet } from '../../store/persist';
 import { EmptyState } from '../../components/common/EmptyState';
+import { useResponsiveLayout } from '../../lib/responsive';
+import { DMView } from './[id]';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
@@ -608,6 +610,15 @@ export default function MessagesListScreen() {
   });
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<InboxFilter>('all');
+  // Master-detail: on iPad/Mac (wide) the inbox and the open thread sit side by
+  // side; on phone, selecting a conversation pushes the /messages/[id] route.
+  const layout = useResponsiveLayout();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const twoPane = layout.width >= 880;
+  const openConversation = (cid: string) => {
+    if (twoPane) setSelectedId(cid);
+    else router.push(`/messages/${cid}`);
+  };
 
   // Deep-link support: /messages?newGroup=1 (chat-tab "New group" button)
   const { newGroup } = useLocalSearchParams<{ newGroup?: string }>();
@@ -740,7 +751,7 @@ export default function MessagesListScreen() {
           conversation={item}
           index={index}
           pinned={isPinned(item.id)}
-          onPress={() => router.push(`/messages/${item.id}`)}
+          onPress={() => openConversation(item.id)}
           onLongPress={() => openActions(item)}
         />
       </View>
@@ -771,7 +782,7 @@ export default function MessagesListScreen() {
     );
   }
 
-  return (
+  const listPane = (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{
         flexDirection: 'row',
@@ -881,4 +892,28 @@ export default function MessagesListScreen() {
       />
     </SafeAreaView>
   );
+
+  if (twoPane) {
+    return (
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
+        <View style={{ width: 360, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: colors.border }}>
+          {listPane}
+        </View>
+        <View style={{ flex: 1 }}>
+          {selectedId ? (
+            <DMView key={selectedId} id={selectedId} />
+          ) : (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+              <EmptyState
+                icon={<ChatCircleText color={colors.textSecondary} size={32} />}
+                title="Your messages"
+                subtitle="Select a conversation to start reading."
+              />
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  }
+  return listPane;
 }

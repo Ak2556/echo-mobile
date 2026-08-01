@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Share, View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
 import { FlashList } from '@shopify/flash-list';
@@ -423,7 +424,7 @@ export default function UserProfileScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <FlashList
         data={userEchoes}
         renderItem={({ item, index }) => (
@@ -465,6 +466,6 @@ export default function UserProfileScreen() {
           </View>
         }
       />
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
