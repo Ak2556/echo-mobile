@@ -1736,14 +1736,37 @@ function MessageActionSheet({
 
 // ─── DMScreen ─────────────────────────────────────────────────────────────────
 
+export interface DMViewProps {
+  id: string;
+  echoId?: string;
+  echoTitle?: string;
+  echoPreview?: string;
+  echoAuthor?: string;
+}
+
+// Default route export: reads the id from the URL and renders the thread.
 export default function DMScreen() {
-  const { id, echoId, echoTitle, echoPreview, echoAuthor } = useLocalSearchParams<{
+  const p = useLocalSearchParams<{
     id: string;
     echoId?: string;
     echoTitle?: string;
     echoPreview?: string;
     echoAuthor?: string;
   }>();
+  return (
+    <DMView
+      id={p.id}
+      echoId={p.echoId}
+      echoTitle={p.echoTitle}
+      echoPreview={p.echoPreview}
+      echoAuthor={p.echoAuthor}
+    />
+  );
+}
+
+// The conversation thread. Rendered as its own route (above) or embedded in the
+// messages split-pane on iPad/Mac (id passed as a prop instead of a URL param).
+export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
