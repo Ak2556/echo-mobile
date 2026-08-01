@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Linking, StyleSheet, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, LinkSimple, Images as ImagesIcon } from 'phosphor-react-native';
@@ -31,7 +31,7 @@ export default function ChatMediaScreen() {
   const size = (width - gap * (cols - 1)) / cols;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
         <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back" style={{ padding: 4, marginRight: 8 }}>
           <ArrowLeft color={colors.text} size={24} />
@@ -75,7 +75,7 @@ export default function ChatMediaScreen() {
           </ScrollView>
         )
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
 

@@ -4,7 +4,7 @@ import {
   Platform, Alert, TouchableOpacity, Pressable,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -147,7 +147,7 @@ export default function EditPostScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader
         title="Edit Echo"
         right={
@@ -313,6 +313,6 @@ export default function EditPostScreen() {
           <View style={{ height: 32 }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

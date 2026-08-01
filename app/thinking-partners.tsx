@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -39,7 +39,7 @@ export default function ThinkingPartnersScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
+    <ResponsiveScreen background="#0A0A0F">
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }} accessibilityRole="button" accessibilityLabel="Go back">
@@ -98,7 +98,7 @@ export default function ThinkingPartnersScreen() {
           )}
         />
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useFocusEffect } from 'expo-router';
 import { Check, Database, PencilSimple, Trash, X } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -88,7 +88,7 @@ export default function AIMemoryScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
+    <ResponsiveScreen>
       <View style={{ flex: 1 }}>
         <ScreenHeader
           title="AI Memory"
@@ -209,7 +209,7 @@ export default function AIMemoryScreen() {
           </Animated.View>
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Clock, Scales, CheckCircle, XCircle, Warning, SealCheck } from 'phosphor-react-native';
@@ -176,7 +176,7 @@ export default function ModAppealsScreen() {
   const overdueCnt = appeals.filter(a => a.daysRemaining === 0).length;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader
         title="Appeals Queue"
         subtitle="DSA Art. 20 · 14-day SLA"
@@ -240,6 +240,6 @@ export default function ModAppealsScreen() {
           ))}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

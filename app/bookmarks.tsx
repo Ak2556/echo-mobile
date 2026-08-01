@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Alert, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import { EditMessageModal } from '../components/ai/EditMessageModal';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { BookmarkSimple, Plus } from 'phosphor-react-native';
@@ -60,7 +60,7 @@ export default function BookmarksScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       <ScreenHeader
         title="Bookmarks"
         right={
@@ -132,6 +132,6 @@ export default function BookmarksScreen() {
         submitLabel="Create"
         maxLength={40}
       />
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }

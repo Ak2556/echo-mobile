@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { QuotedEchoCard } from '../components/social/QuotedEchoCard';
@@ -460,7 +460,7 @@ export default function CreatePostScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ResponsiveScreen>
       {/* Post-publish push pre-prompt (first echo only, status === undetermined). */}
       <PushPrePrompt
         visible={showPushPrePrompt}
@@ -929,6 +929,6 @@ export default function CreatePostScreen() {
         onDone={applyEdit}
         onCancel={() => setEditingIndex(null)}
       />
-    </SafeAreaView>
+    </ResponsiveScreen>
   );
 }
