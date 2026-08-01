@@ -119,8 +119,8 @@
       [
         "@sentry/react-native",
         {
-          "organization": "echo-nb",
-          "project": "react-native"
+          "organization": "echo-37",
+          "project": "android"
         }
       ],
       "expo-asset",
