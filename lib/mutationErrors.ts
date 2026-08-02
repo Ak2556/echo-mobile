@@ -36,6 +36,22 @@ export function isTransientError(err: unknown): boolean {
   return false; // default: treat unknown as permanent (don't retry blindly)
 }
 
+/**
+ * Invalid / expired session — the refresh token is gone or revoked, so the user
+ * must sign in again. Callers should recover by signing out (→ login) rather
+ * than surfacing the raw Supabase AuthApiError.
+ */
+export function isAuthSessionError(err: unknown): boolean {
+  const e = err as MaybeErr & { name?: string };
+  const msg = (e?.message ?? '').toLowerCase();
+  const code = (e?.code ?? '').toString().toLowerCase();
+  if (code === 'refresh_token_not_found' || code === 'session_not_found') return true;
+  if (msg.includes('refresh token') || msg.includes('invalid refresh')) return true;
+  if (msg.includes('session') && (msg.includes('expired') || msg.includes('not found'))) return true;
+  if (e?.name === 'AuthApiError' && (msg.includes('token') || msg.includes('session'))) return true;
+  return false;
+}
+
 /** True for a duplicate/unique-conflict — safe to treat an insert as success. */
 export function isDuplicateError(err: unknown): boolean {
   const e = err as MaybeErr;
@@ -47,6 +63,7 @@ export function isDuplicateError(err: unknown): boolean {
 
 /** A short, honest message to show when a write fails. */
 export function friendlyWriteError(err: unknown): string {
+  if (isAuthSessionError(err)) return 'Your session expired — please sign in again.';
   const kind = classifyError(err);
   if (kind === 'offline') return 'You’re offline — we’ll sync this when you’re back.';
   if (kind === 'timeout') return 'That took too long. Please try again.';
