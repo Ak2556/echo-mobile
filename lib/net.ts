@@ -58,3 +58,28 @@ export function setForcedOffline(v: boolean): void {
 export function isForcedOffline(): boolean {
   return forcedOffline;
 }
+
+export class TimeoutError extends Error {
+  constructor(message = 'Request timed out') {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
+/**
+ * Bound a network write so a *stalled* connection (socket open, no response)
+ * can't hang the UI forever. On timeout the promise rejects with a TimeoutError
+ * so the caller can surface a "failed — retry" state instead of an eternal
+ * spinner. Note: this does not cancel the underlying request (it may still land
+ * server-side), so only auto-retry writes that are idempotent.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms = 20000, label = 'request'): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new TimeoutError(`Timed out after ${Math.round(ms / 1000)}s — ${label}`)),
+      ms,
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer)) as Promise<T>;
+}

@@ -25,7 +25,8 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
-import { prependEchoToFeedCache } from '../lib/queryCache';
+import { prependEchoToFeedCache, removeEchoFromFeedCache } from '../lib/queryCache';
+import * as Crypto from 'expo-crypto';
 import { playSoundEffect } from '../lib/sound';
 import { track } from '../lib/analytics';
 import { getPushPermissionStatus, registerForPush } from '../lib/push';
@@ -298,8 +299,11 @@ export default function CreatePostScreen() {
         setUserId(remoteAuthorId);
       }
 
+      // Client-generated id → the publish insert is idempotent (safe retry) and
+      // the optimistic feed card shares the real row's id.
+      const echoId = remoteAuthorId ? Crypto.randomUUID() : Date.now().toString();
       const base = {
-        id: Date.now().toString(),
+        id: echoId,
         userId: remoteAuthorId ?? userId, username: username || 'anonymous',
         displayName: displayName || username || 'anonymous',
         avatarColor: warmAvatarColor(avatarColor, username ?? displayName ?? 'me'),
@@ -334,15 +338,22 @@ export default function CreatePostScreen() {
             coAuthorResponse: coAuthor ? coAuthorResponse.trim() : undefined,
           });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({
+            remoteEchoId = echoId;
+            // Optimistic: the success ceremony below runs immediately; the
+            // idempotent, timeout-bounded insert lands in the background. On
+            // failure, pull the card back and let the user retry safely.
+            insertRemoteEcho({
+              id: echoId,
               authorId: remoteAuthorId,
               prompt: prompt.trim(),
               response: response.trim(),
               quotedEchoId: quotedId,
               coAuthorId: coAuthor?.id,
               coAuthorResponse: coAuthor ? coAuthorResponse.trim() : undefined,
+            }).catch((err: unknown) => {
+              qc.setQueriesData({ queryKey: ['feed'] }, (old: unknown) => removeEchoFromFeedCache(old, echoId));
+              Alert.alert('Post didn’t go through', (err as Error)?.message ?? 'Please check your connection and try again.');
             });
-            remoteEchoId = row.id;
           }
           break;
         case 'photo': {
@@ -353,7 +364,7 @@ export default function CreatePostScreen() {
           const finalUris = remoteMediaUrls ?? imageUris;
           echo = coerceFeedItem({ ...base, postType: 'photo', prompt: response.trim() || 'Photo post', response: '', mediaUris: finalUris });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls });
+            const row = await insertRemoteEcho({ id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls });
             remoteEchoId = row.id;
           }
           break;
@@ -363,7 +374,7 @@ export default function CreatePostScreen() {
           const finalVideoUri = remoteVideoUrl ?? videoUri;
           echo = coerceFeedItem({ ...base, postType: 'video', prompt: response.trim() || 'Video post', response: '', videoUri: finalVideoUri });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({ authorId: remoteAuthorId, prompt: response.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : undefined });
+            const row = await insertRemoteEcho({ id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : undefined });
             remoteEchoId = row.id;
           }
           break;
@@ -376,6 +387,7 @@ export default function CreatePostScreen() {
           });
           if (remoteAuthorId) {
             const row = await insertRemoteEcho({
+              id: echoId,
               authorId: remoteAuthorId,
               prompt: pollQuestion.trim(),
               response: JSON.stringify({ options: options.map(o => o.text), durationHours: pollDurationHours }),
