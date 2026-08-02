@@ -6,7 +6,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } 
 import { Avatar } from '../ui/Avatar';
 import { showToast } from '../ui/Toast';
 import { User } from '../../types';
-import { useAppStore } from '../../store/useAppStore';
+import { useFollow } from '../../hooks/queries/useFollow';
 import { useTheme } from '../../lib/theme';
 import { track } from '../../lib/analytics';
 
@@ -16,13 +16,26 @@ interface UserRowProps {
   showFollowButton?: boolean;
   /** Override the default follow handler (e.g. to use a remote mutation) */
   onFollowPress?: () => void;
+  /** Controlled follow state (remote lists). Falls back to the local store. */
+  following?: boolean;
+  /** This user follows the viewer — drives "Follow back" + the badge. */
+  followsYou?: boolean;
+  /** Show the "Follows you" badge (suppress where it'd be redundant, e.g. your
+   *  own followers list where everyone follows you). Default true. */
+  showFollowsYouBadge?: boolean;
+  /** Disable the button while a follow mutation is in flight. */
+  followBusy?: boolean;
 }
 
-export function UserRow({ user, onPress, showFollowButton = false, onFollowPress }: UserRowProps) {
+export function UserRow({
+  user, onPress, showFollowButton = false, onFollowPress,
+  following, followsYou = false, showFollowsYouBadge = true, followBusy = false,
+}: UserRowProps) {
   const router = useRouter();
-  const { isFollowing, toggleFollow } = useAppStore();
+  const { isFollowing: hookIsFollowing, toggle, pendingId } = useFollow();
   const { colors, fontSizes, showAvatars, reduceAnimations } = useTheme();
-  const following = isFollowing(user.id);
+  const isFollowingState = following !== undefined ? following : hookIsFollowing(user.id);
+  const busy = followBusy || pendingId === user.id;
   const btnScale = useSharedValue(1);
 
   const btnAnim = useAnimatedStyle(() => ({
@@ -37,12 +50,12 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
         withSpring(1, { damping: 12, stiffness: 300 })
       );
     }
-    if (!following) track('user_followed', { user_id: user.id });
+    if (!isFollowingState) track('user_followed', { user_id: user.id });
     if (onFollowPress) {
       onFollowPress();
     } else {
-      toggleFollow(user.id);
-      showToast(!following ? `Following @${user.username}` : `Unfollowed @${user.username}`, !following ? 'Following' : '');
+      toggle(user.id);
+      showToast(!isFollowingState ? `Following @${user.username}` : `Unfollowed @${user.username}`, !isFollowingState ? 'Following' : '');
     }
   };
   const openProfile = () => {
@@ -88,6 +101,11 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
           {user.isVerified && <SealCheck color={colors.accent} size={16} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }} numberOfLines={1}>@{user.username}</Text>
+        {followsYou && showFollowsYouBadge && (
+          <View style={{ alignSelf: 'flex-start', marginTop: 3, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4, backgroundColor: colors.surfaceHover }}>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption - 1, fontWeight: '600' }}>Follows you</Text>
+          </View>
+        )}
         {user.bio ? (
           <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, marginTop: 2 }} numberOfLines={1}>{user.bio}</Text>
         ) : null}
@@ -97,8 +115,9 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
         <Animated.View style={btnAnim}>
           <Pressable
             onPress={(e) => { e.stopPropagation?.(); handleFollow(); }}
+            disabled={busy}
             accessibilityRole="button"
-            accessibilityLabel={following ? `Unfollow ${user.username}` : `Follow ${user.username}`}
+            accessibilityLabel={isFollowingState ? `Unfollow ${user.username}` : `Follow ${user.username}`}
             style={{
               marginLeft: 12,
               paddingHorizontal: 18,
@@ -106,13 +125,14 @@ export function UserRow({ user, onPress, showFollowButton = false, onFollowPress
               borderRadius: 999,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: following ? colors.surfaceHover : colors.accent,
-              borderWidth: following ? StyleSheet.hairlineWidth : 0,
+              opacity: busy ? 0.6 : 1,
+              backgroundColor: isFollowingState ? colors.surfaceHover : colors.accent,
+              borderWidth: isFollowingState ? StyleSheet.hairlineWidth : 0,
               borderColor: colors.border,
             }}
           >
-            <Text style={{ fontSize: fontSizes.small, fontWeight: '700', color: following ? colors.text : '#fff' }}>
-              {following ? 'Following' : 'Follow'}
+            <Text style={{ fontSize: fontSizes.small, fontWeight: '700', color: isFollowingState ? colors.text : '#fff' }}>
+              {isFollowingState ? 'Following' : followsYou ? 'Follow back' : 'Follow'}
             </Text>
           </Pressable>
         </Animated.View>
