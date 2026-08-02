@@ -199,6 +199,8 @@ function RootLayout() {
         router.push({ pathname: '/messages/[id]', params: { id: routeId } });
       } else if (kind === 'appeal_resolved') {
         router.push('/appeal');
+      } else if (kind === 'content_removed') {
+        router.push({ pathname: '/appeal', params: { decisionId: routeId } });
       }
     };
 
