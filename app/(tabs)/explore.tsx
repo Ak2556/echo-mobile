@@ -17,6 +17,7 @@ import { useTheme } from '../../lib/theme';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { buildSearchBuckets, deriveTopicFeed, groupDiscovery } from '../../lib/echoUX';
 import { useRemoteSearch } from '../../hooks/queries/useSearch';
+import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { track } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
@@ -96,7 +97,10 @@ export default function SearchScreen() {
   }, [normalizedQuery]);
   const topics = useMemo(() => deriveTopicFeed(feed), [feed]);
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
-  const suggestedUsers = users.slice(0, layout.isWide ? 6 : 4);
+  // Real "who to follow" in remote mode (excludes people you already follow);
+  // falls back to local seed users offline.
+  const { data: remoteSuggested } = useSuggestedUsers();
+  const suggestedUsers = (remote ? (remoteSuggested ?? []) : users).slice(0, layout.isWide ? 6 : 4);
   const topTopics = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(item => ({ topic: item.label, count: 0 }));
   const headerHeight = insets.top + (layout.isDesktop ? 86 : 112);
   const trendingColumns = layout.isDesktop ? 3 : 2;

@@ -13,7 +13,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
-import { useRemoteFollowersList } from '../hooks/queries/useRemoteFollowers';
+import { useRemoteFollowersList, type ConnectionUser } from '../hooks/queries/useRemoteFollowers';
 
 export default function FollowersScreen() {
   const router = useRouter();
@@ -98,13 +98,19 @@ export default function FollowersScreen() {
       ) : (
         <FlashList
           data={data}
-          renderItem={({ item }) => (
-            <UserRow
-              user={item}
-              onPress={() => router.push(`/user/${item.id}`)}
-              showFollowButton={!remote}
-            />
-          )}
+          renderItem={({ item }) => {
+            const isSelf = item.id === storeUserId;
+            const conn = remote ? (item as ConnectionUser) : null;
+            return (
+              <UserRow
+                user={item}
+                onPress={() => router.push(`/user/${item.id}`)}
+                showFollowButton={!isSelf}
+                followsYou={conn?.followsYou ?? false}
+                showFollowsYouBadge={!(targetUserId === storeUserId && activeTab === 'followers')}
+              />
+            );
+          }}
           keyExtractor={item => item.id}
         />
       )}

@@ -26,6 +26,7 @@ import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
+import { useFollow } from '../../hooks/queries/useFollow';
 import { usePerformanceProfile } from '../../lib/performance';
 import { useResponsiveLayout } from '../../lib/responsive';
 
@@ -155,6 +156,11 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const { isBookmarked, toggleBookmark, isReposted, toggleRepost, toggleLike,
     compactFeed, showPreviewCards, votePoll,
   } = useAppStore();
+  const currentUserId = useAppStore(s => s.userId);
+  const { isFollowing: amFollowing, toggle: toggleFollowUser, pendingId: followPendingId } = useFollow();
+  // Growth CTA: show "Follow" on a post only when it isn't yours and you don't
+  // already follow the author. It disappears once followed.
+  const showFollowCta = !!currentUserId && item.userId !== currentUserId && !amFollowing(item.userId);
   const bookmarked = remote ? item.isBookmarked : isBookmarked(item.id);
   const reposted = remote ? item.isReposted : isReposted(item.id);
   const [liked, setLiked] = useState(item.isLiked);
@@ -523,6 +529,18 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                   <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11 }}>{getTimeAgo(item.createdAt)}</Text>
                 </View>
               </AnimatedPressable>
+              {showFollowCta && (
+                <AnimatedPressable
+                  onPress={(e) => { e.stopPropagation?.(); toggleFollowUser(item.userId); }}
+                  disabled={followPendingId === item.userId}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Follow ${item.username}`}
+                  depth="soft" haptic="light" performanceMode="hot"
+                  style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.5)', opacity: followPendingId === item.userId ? 0.6 : 1 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Follow</Text>
+                </AnimatedPressable>
+              )}
               <AnimatedPressable
                 onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
                 depth="medium" fadeOnPress haptic="light" performanceMode="hot"
@@ -695,6 +713,18 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           {/* Time is lightweight metadata, not a chip — keeps the header calm. */}
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
           {pinned && <PushPin color={colors.textMuted} size={13} weight="fill" style={{ marginRight: 6 }} />}
+          {showFollowCta && (
+            <AnimatedPressable
+              onPress={(e) => { e.stopPropagation?.(); toggleFollowUser(item.userId); }}
+              disabled={followPendingId === item.userId}
+              accessibilityRole="button"
+              accessibilityLabel={`Follow ${item.username}`}
+              depth="soft" haptic="light" performanceMode="hot"
+              style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, marginRight: 8, backgroundColor: colors.accent, opacity: followPendingId === item.userId ? 0.6 : 1 }}
+            >
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Follow</Text>
+            </AnimatedPressable>
+          )}
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
             depth="medium"
