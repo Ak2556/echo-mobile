@@ -25,6 +25,7 @@ import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
+import { VoiceControl } from '../components/voice/VoiceControl';
 import { enableFreeze } from 'react-native-screens';
 import '../global.css';
 
@@ -302,6 +303,7 @@ function RootLayout() {
           <Stack.Screen name="appeal" options={{ presentation: 'card' }} />
         </Stack>
         <FloatingMiniApp />
+        <VoiceControl />
         <TutorialOverlay />
         <ToastProvider />
         <ConsentBanner />
