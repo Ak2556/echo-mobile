@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { withTimeout } from './net';
 import * as FileSystem from 'expo-file-system/legacy';
 import { FeedItem, Comment, EvolutionGroup, RemixTreeNode, PerspectiveCounts, PerspectiveType } from '../types';
 import {
@@ -534,6 +535,8 @@ export async function fetchRemoteFeed(
 }
 
 export async function insertRemoteEcho(params: {
+  /** Optional client-generated id → makes publish idempotent (safe retry). */
+  id?: string;
   authorId: string;
   prompt: string;
   response: string;
@@ -553,9 +556,10 @@ export async function insertRemoteEcho(params: {
   const title =
     params.title?.trim() ||
     (params.prompt.trim().slice(0, 80) + (params.prompt.length > 80 ? '…' : ''));
-  const { data, error } = await supabase
+  const { data, error } = await withTimeout((async () => await supabase
     .from('public_echoes')
     .insert({
+      ...(params.id ? { id: params.id } : {}),
       author_id: params.authorId,
       title,
       prompt: params.prompt,
@@ -573,9 +577,21 @@ export async function insertRemoteEcho(params: {
       ...(params.coAuthorResponse?.trim() ? { co_author_response: params.coAuthorResponse.trim() } : {}),
     })
     .select(ECHO_SELECT)
-    .single();
-  if (error) throw error;
-  const row = data as SupabaseEchoRow;
+    .single())(), 20000, 'publish');
+  let row: SupabaseEchoRow;
+  if (error) {
+    // Idempotent publish: a duplicate id means a prior attempt already wrote the
+    // row (but the ack was lost). Treat it as success, not a failure/duplicate.
+    if (params.id && (error as { code?: string }).code === '23505') {
+      const existing = await supabase.from('public_echoes').select(ECHO_SELECT).eq('id', params.id).single();
+      if (existing.error || !existing.data) throw error;
+      row = existing.data as SupabaseEchoRow;
+    } else {
+      throw error;
+    }
+  } else {
+    row = data as SupabaseEchoRow;
+  }
   // Fire-and-forget: ask the edge function to generate the embedding and
   // thoughtfulness score. Failure here must not block the publish flow.
   triggerEmbedEcho(row.id).catch(() => undefined);

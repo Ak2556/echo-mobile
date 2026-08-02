@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { fetchRemoteComments, getSessionUserId, insertRemoteComment, setRemoteCommentLike } from '../../lib/supabaseEchoApi';
+import { withTimeout } from '../../lib/net';
 import { Comment } from '../../types';
 import { appendCommentCache } from '../../lib/queryCache';
 
@@ -25,7 +26,7 @@ export function useAddRemoteComment(echoId: string | undefined) {
     mutationFn: async (input: { content: string; parentId?: string } | string) => {
       if (!echoId) throw new Error('No echo');
       const arg = typeof input === 'string' ? { content: input } : input;
-      await insertRemoteComment(echoId, arg.content, arg.parentId);
+      await withTimeout(insertRemoteComment(echoId, arg.content, arg.parentId), 20000, 'comment');
     },
     onMutate: async (input) => {
       if (!echoId) return;
