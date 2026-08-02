@@ -17,7 +17,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
-import { fetchMyAppeals, submitAppeal, type MyAppeal } from '../lib/supabaseEchoApi';
+import { fetchMyAppeals, submitAppeal, submitDecisionAppeal, fetchModerationDecision, type MyAppeal, type ModerationDecision } from '../lib/supabaseEchoApi';
 import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { safeBack } from '../lib/safeBack';
 
@@ -37,13 +37,14 @@ function timeAgo(iso: string): string {
 }
 
 export default function AppealScreen() {
-  const { reportId } = useLocalSearchParams<{ reportId?: string }>();
+  const { reportId, decisionId } = useLocalSearchParams<{ reportId?: string; decisionId?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, fontSizes, radius } = useTheme();
 
-  // Mode: 'new' when coming from a specific dismissed/resolved report
-  const isNew = !!reportId;
+  // 'new' when appealing a specific report (reporter) or moderation decision (author).
+  const isNew = !!reportId || !!decisionId;
 
+  const [decision, setDecision] = useState<ModerationDecision | null>(null);
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -66,15 +67,22 @@ export default function AppealScreen() {
     loadAppeals();
   }, [isNew, loadAppeals]);
 
+  // Author path: load the statement of reasons being appealed.
+  useEffect(() => {
+    if (!decisionId) return;
+    fetchModerationDecision(decisionId).then(setDecision).catch(() => {});
+  }, [decisionId]);
+
   const MIN_CHARS = 20;
   const MAX_CHARS = 2000;
   const canSubmit = reason.trim().length >= MIN_CHARS && !submitting;
 
   const handleSubmit = async () => {
-    if (!canSubmit || !reportId) return;
+    if (!canSubmit || (!reportId && !decisionId)) return;
     setSubmitting(true);
     try {
-      await submitAppeal(reportId, reason);
+      if (decisionId) await submitDecisionAppeal(decisionId, reason);
+      else if (reportId) await submitAppeal(reportId, reason);
       setSubmitted(true);
     } catch (e: any) {
       showToast(e?.message ?? 'Could not submit appeal', 'Error');
@@ -124,6 +132,29 @@ export default function AppealScreen() {
               </Animated.View>
             ) : (
               <>
+                {/* Statement of reasons (DSA Art. 17) — what is being appealed */}
+                {decision && (
+                  <GlassPanel style={{ padding: 16, gap: 8 }}>
+                    <Text style={{ color: colors.danger, fontSize: fontSizes.caption - 1, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3 }}>
+                      STATEMENT OF REASONS
+                    </Text>
+                    <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_600SemiBold' }}>
+                      {decision.decisionType === 'content_removed'
+                        ? 'Your content was removed'
+                        : decision.decisionType === 'content_restricted'
+                          ? 'Your content was restricted'
+                          : 'Your account was suspended'}
+                    </Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', lineHeight: 20 }}>
+                      {decision.reason}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 16 }}>
+                      Basis: {decision.ground}{decision.automated ? ' · automated decision' : ''}
+                      {'\n'}You can appeal until {new Date(decision.appealDeadline).toLocaleDateString()}.
+                    </Text>
+                  </GlassPanel>
+                )}
+
                 {/* Context card */}
                 <GlassPanel style={{ padding: 16, gap: 10 }}>
                   <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_600SemiBold' }}>

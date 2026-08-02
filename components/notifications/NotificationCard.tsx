@@ -20,6 +20,7 @@ const TYPE_COLOR: Record<string, string> = {
   quote: '#8B5E7D',
   report_resolved: '#7A8B4E',
   content_removed: '#A04E4E',
+  appeal_resolved: '#4E7A8B',
 };
 
 const REACTION_LABEL: Record<string, string> = {
@@ -31,7 +32,7 @@ const REACTION_LABEL: Record<string, string> = {
 
 // Notifications with no real actor — they get a standalone type-icon avatar
 // rather than a person's photo.
-const SYSTEM_TYPES = new Set(['report_resolved', 'content_removed']);
+const SYSTEM_TYPES = new Set(['report_resolved', 'content_removed', 'appeal_resolved']);
 
 function actionTextFor(n: Notification): string {
   switch (n.type) {
@@ -49,6 +50,7 @@ function actionTextFor(n: Notification): string {
     case 'quote': return 'quoted your echo';
     case 'report_resolved': return n.targetPreview ?? 'Your report has been reviewed';
     case 'content_removed': return n.targetPreview ?? 'Content was removed';
+    case 'appeal_resolved': return n.targetPreview ?? 'Your appeal has been reviewed';
     default: return 'interacted with you';
   }
 }
@@ -67,6 +69,7 @@ function NotifIcon({ type, size, color }: { type: string; size: number; color: s
     case 'quote':           return <Quotes          {...p} />;
     case 'report_resolved': return <CheckCircle     {...p} />;
     case 'content_removed': return <ShieldWarning   {...p} />;
+    case 'appeal_resolved': return <CheckCircle     {...p} />;
     default:                return <HeartStraight   {...p} />;
   }
 }

@@ -45,15 +45,17 @@ function AppealCard({
   };
 
   const confirmResolve = (resolution: 'upheld' | 'overturned') => {
-    const label = resolution === 'upheld' ? 'Uphold appeal' : 'Overturn (dismiss)';
+    // 'upheld' = the moderation decision is upheld (stands, appeal declined);
+    // 'overturned' = the decision is overturned and removed content is restored.
+    const label = resolution === 'upheld' ? 'Uphold decision' : 'Overturn — restore content';
     Alert.alert(
       label,
       resolution === 'upheld'
-        ? 'Mark this appeal as upheld — original moderation action stands.'
-        : 'Overturn the moderation decision — content will be restored.',
+        ? 'Uphold the original moderation decision. The content stays removed and the appeal is declined.'
+        : 'Overturn the moderation decision. Any removed content will be restored.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: label, style: resolution === 'upheld' ? 'default' : 'destructive', onPress: () => handleResolve(resolution) },
+        { text: resolution === 'upheld' ? 'Uphold' : 'Restore', style: resolution === 'upheld' ? 'destructive' : 'default', onPress: () => handleResolve(resolution) },
       ],
     );
   };
@@ -74,14 +76,16 @@ function AppealCard({
       </View>
 
       <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
-        Submitted {timeAgo(appeal.createdAt)} · {appeal.reportTargetType} report
+        Submitted {timeAgo(appeal.createdAt)} · {appeal.kind === 'decision' ? 'content-removal appeal' : `${appeal.reportTargetType} report`}
       </Text>
 
-      {/* Report reason */}
+      {/* What is being contested */}
       <View style={{ padding: 10, backgroundColor: colors.surfaceHover, borderRadius: 8, gap: 2 }}>
-        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.caption }]}>Original report</Text>
+        <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.caption }]}>
+          {appeal.kind === 'decision' ? 'Moderation decision (statement of reasons)' : 'Original report'}
+        </Text>
         <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.caption, lineHeight: 18 }]}>
-          {appeal.reportReason}
+          {appeal.kind === 'decision' ? (appeal.decisionReason || 'Content removed by a moderator.') : appeal.reportReason}
         </Text>
       </View>
 
