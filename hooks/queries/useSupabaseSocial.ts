@@ -134,6 +134,7 @@ export function useToggleRemoteFollow() {
       qc.invalidateQueries({ queryKey: ['feed'] });
       if (vars?.userId) qc.invalidateQueries({ queryKey: ['profile', vars.userId] });
       qc.invalidateQueries({ queryKey: ['followers'] });
+      qc.invalidateQueries({ queryKey: ['my-following'] });
     },
   });
 }
