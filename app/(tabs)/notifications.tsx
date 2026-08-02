@@ -51,6 +51,7 @@ function labelForType(n: Notification): string {
     case 'quote': return 'quoted your echo';
     case 'report_resolved': return n.targetPreview ?? 'Your report has been reviewed';
     case 'content_removed': return n.targetPreview ?? 'Content was removed by a moderator';
+    case 'appeal_resolved': return n.targetPreview ?? 'Your appeal has been reviewed';
     default: return '';
   }
 }
@@ -231,6 +232,13 @@ export default function NotificationsScreen() {
     }
     if (n.type === 'follow') {
       router.push(`/user/${n.fromUserId}`);
+    } else if (n.type === 'content_removed' && n.targetId) {
+      // DSA Art. 17/20: statement of reasons + appeal the moderation decision.
+      router.push({ pathname: '/appeal', params: { decisionId: n.targetId } });
+    } else if (n.type === 'appeal_resolved') {
+      router.push('/appeal');
+    } else if (n.type === 'report_resolved') {
+      router.push('/my-reports');
     } else if (n.targetId) {
       router.push(`/thread/${n.targetId}`);
     }

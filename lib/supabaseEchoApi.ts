@@ -1150,12 +1150,25 @@ export async function fetchMyReports(): Promise<MyReport[]> {
 
 export interface MyAppeal {
   id: string;
-  reportId: string;
+  reportId: string | null;
+  decisionId: string | null;
   reason: string;
   status: 'pending' | 'upheld' | 'overturned';
   moderatorNote: string | null;
   createdAt: string;
   resolvedAt: string | null;
+}
+
+// Statement of reasons (DSA Art. 17) — the moderation decision an author can appeal.
+export interface ModerationDecision {
+  id: string;
+  echoId: string | null;
+  decisionType: 'content_removed' | 'content_restricted' | 'account_suspended';
+  ground: string;
+  reason: string;
+  automated: boolean;
+  createdAt: string;
+  appealDeadline: string;
 }
 
 export async function submitAppeal(reportId: string, reason: string): Promise<void> {
@@ -1167,19 +1180,52 @@ export async function submitAppeal(reportId: string, reason: string): Promise<vo
   if (error) throw error;
 }
 
+// DSA Art. 20 — an author appeals a moderation decision against their own content.
+export async function submitDecisionAppeal(decisionId: string, reason: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase
+    .from('appeals')
+    .insert({ decision_id: decisionId, appellant_id: uid, reason: reason.trim() });
+  if (error) throw error;
+}
+
+// Fetch the statement of reasons the author is appealing (RLS: subject-only).
+export async function fetchModerationDecision(id: string): Promise<ModerationDecision | null> {
+  const { data, error } = await supabase
+    .from('moderation_decisions')
+    .select('id, echo_id, decision_type, ground, reason, automated, created_at, appeal_deadline')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const d = data as any;
+  return {
+    id: d.id,
+    echoId: d.echo_id ?? null,
+    decisionType: d.decision_type,
+    ground: d.ground,
+    reason: d.reason,
+    automated: d.automated,
+    createdAt: d.created_at,
+    appealDeadline: d.appeal_deadline,
+  };
+}
+
 export async function fetchMyAppeals(): Promise<MyAppeal[]> {
   const uid = await getSessionUserId();
   if (!uid) return [];
   const { data, error } = await supabase
     .from('appeals')
-    .select('id, report_id, reason, status, moderator_note, created_at, resolved_at')
+    .select('id, report_id, decision_id, reason, status, moderator_note, created_at, resolved_at')
     .eq('appellant_id', uid)
     .order('created_at', { ascending: false })
     .limit(50);
   if (error) throw error;
   return (data ?? []).map((a: any) => ({
     id: a.id,
-    reportId: a.report_id,
+    reportId: a.report_id ?? null,
+    decisionId: a.decision_id ?? null,
     reason: a.reason,
     status: a.status as MyAppeal['status'],
     moderatorNote: a.moderator_note ?? null,
@@ -1192,12 +1238,18 @@ export async function fetchMyAppeals(): Promise<MyAppeal[]> {
 
 export interface PendingAppeal {
   id: string;
-  reportId: string;
+  // 'report' = a reporter contesting a dismissed report; 'decision' = an author
+  // contesting a moderation decision against their own content (Art. 20 core).
+  kind: 'report' | 'decision';
+  reportId: string | null;
+  decisionId: string | null;
   appellantUsername: string;
   appellantDisplayName: string;
   appellantId: string;
   reportReason: string;
   reportTargetType: 'echo' | 'user' | 'comment';
+  decisionType: string | null;
+  decisionReason: string; // the statement of reasons the author is contesting
   appealReason: string;
   createdAt: string;
   daysRemaining: number;
@@ -1207,9 +1259,10 @@ export async function fetchPendingAppeals(): Promise<PendingAppeal[]> {
   const { data, error } = await supabase
     .from('appeals')
     .select(`
-      id, appellant_id, reason, created_at,
+      id, report_id, decision_id, appellant_id, reason, created_at,
       profiles!appellant_id (username, display_name),
-      reports!report_id (reason, target_type)
+      reports!report_id (reason, target_type),
+      moderation_decisions!decision_id (decision_type, reason, ground)
     `)
     .eq('status', 'pending')
     .order('created_at', { ascending: true })
@@ -1220,12 +1273,16 @@ export async function fetchPendingAppeals(): Promise<PendingAppeal[]> {
     const age = Math.floor((now - new Date(a.created_at).getTime()) / 86400000);
     return {
       id: a.id,
-      reportId: a.report_id,
+      kind: a.decision_id ? 'decision' : 'report',
+      reportId: a.report_id ?? null,
+      decisionId: a.decision_id ?? null,
       appellantId: a.appellant_id,
       appellantUsername: a.profiles?.username ?? 'unknown',
       appellantDisplayName: a.profiles?.display_name ?? a.profiles?.username ?? 'Unknown',
       reportReason: a.reports?.reason ?? '',
       reportTargetType: a.reports?.target_type ?? 'echo',
+      decisionType: a.moderation_decisions?.decision_type ?? null,
+      decisionReason: a.moderation_decisions?.reason ?? '',
       appealReason: a.reason,
       createdAt: a.created_at,
       daysRemaining: Math.max(0, 14 - age),
@@ -1422,6 +1479,23 @@ export async function fetchRemoteFollowingProfiles(userId: string): Promise<Supa
     .in('id', ids);
   if (e2) throw e2;
   return (profiles || []) as SupabaseProfileRow[];
+}
+
+// The current viewer's follow relationships, for annotating connection lists:
+// `following` = ids the viewer follows; `followers` = ids that follow the viewer.
+export async function fetchMyFollowSets(): Promise<{ following: string[]; followers: string[] }> {
+  const uid = await getSessionUserId();
+  if (!uid) return { following: [], followers: [] };
+  const [fg, fr] = await Promise.all([
+    supabase.from('follows').select('following_id').eq('follower_id', uid),
+    supabase.from('follows').select('follower_id').eq('following_id', uid),
+  ]);
+  if (fg.error) throw fg.error;
+  if (fr.error) throw fr.error;
+  return {
+    following: (fg.data || []).map((r: { following_id: string }) => r.following_id),
+    followers: (fr.data || []).map((r: { follower_id: string }) => r.follower_id),
+  };
 }
 
 export async function updateRemoteProfile(updates: {

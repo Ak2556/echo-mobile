@@ -223,7 +223,7 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'dm' | 'reaction' | 'bookmark' | 'quote' | 'report_resolved' | 'content_removed';
+  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'dm' | 'reaction' | 'bookmark' | 'quote' | 'report_resolved' | 'content_removed' | 'appeal_resolved';
   fromUserId: string;
   fromUsername: string;
   fromDisplayName: string;
