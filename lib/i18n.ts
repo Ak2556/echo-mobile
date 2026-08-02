@@ -202,6 +202,18 @@ const BASE_TRANSLATIONS = {
   'settings.languageChanged': 'Language changed',
   'settings.replayTour': 'Replay app tour',
   'settings.replayTourSubtitle': 'Show the guided walkthrough again',
+
+  'voice.title': 'Voice',
+  'voice.tapToSpeak': 'Tap and speak',
+  'voice.listening': 'Listening…',
+  'voice.tapToStop': 'Tap to stop',
+  'voice.thinking': 'Working on it…',
+  'voice.notUnderstood': "Sorry, I didn't catch that. Please try again.",
+  'voice.micDenied': 'Microphone access is needed for voice.',
+  'voice.failed': 'Something went wrong. Please try again.',
+  'voice.hint': 'Try: “home”, “post a thought”, “today’s question”',
+  'voice.youSaid': 'You said',
+  'voice.openLabel': 'Voice control',
 } as const;
 
 export type TranslationKey = keyof typeof BASE_TRANSLATIONS;
@@ -216,6 +228,7 @@ const COMMON_TRANSLATIONS: Record<Exclude<AppLanguageCode, 'en'>, TranslationMap
     'welcome.eyebrow': 'Echo में स्वागत', 'welcome.startTitle': 'सोच को आवाज़ दें.', 'welcome.startBody': 'दैनिक सवाल का जवाब दें. कोई सेटअप नहीं.', 'welcome.shareTake': 'अपना विचार शेयर करें', 'welcome.skipNow': 'अभी छोड़ें', 'welcome.thatsEcho': 'यही Echo है.', 'welcome.enterEcho': 'Echo में जाएं',
     'mini.echoWorkspace': 'Echo वर्कस्पेस', 'mini.echoActions': 'Echo एक्शन', 'mini.liveContext': 'लाइव संदर्भ', 'mini.tools': 'टूल्स', 'mini.switchApp': 'ऐप बदलें', 'mini.minimize': 'छोटा करें', 'mini.pickerTitle': 'मिनी ऐप्स', 'mini.pickTool': 'फ्लोट करने के लिए टूल चुनें', 'mini.echoAi': 'Echo AI',
     'settings.title': 'सेटिंग्स', 'settings.subtitle': 'प्रोफाइल, प्राइवेसी, फीड और Echo AI को एक जगह से सेट करें.', 'settings.editProfile': 'प्रोफाइल', 'settings.targetTools': 'लक्ष्य', 'settings.aiMemory': 'AI मेमोरी', 'settings.groups.all': 'सब', 'settings.groups.essentials': 'जरूरी', 'settings.groups.privacy': 'प्राइवेसी', 'settings.groups.display': 'डिस्प्ले', 'settings.groups.feed': 'फीड', 'settings.groups.ai': 'AI', 'settings.groups.data': 'डेटा', 'settings.groups.support': 'सहायता', 'settings.sections.languageRegion': 'भाषा और क्षेत्र', 'settings.appLanguage': 'ऐप भाषा', 'settings.appLanguageSubtitle': 'नेविगेशन, मुख्य स्क्रीन और Echo जवाबों की भाषा', 'settings.contentLanguage': 'कंटेंट भाषा', 'settings.chooseAppLanguage': 'ऐप भाषा चुनें', 'settings.chooseContentLanguage': 'कंटेंट भाषा चुनें', 'settings.languageChanged': 'भाषा बदल गई',
+    'voice.title': 'आवाज़', 'voice.tapToSpeak': 'दबाएं और बोलें', 'voice.listening': 'सुन रहा हूँ…', 'voice.tapToStop': 'रोकने के लिए दबाएं', 'voice.thinking': 'समझ रहा हूँ…', 'voice.notUnderstood': 'माफ़ करें, समझ नहीं आया. फिर से बोलें.', 'voice.micDenied': 'आवाज़ के लिए माइक की अनुमति ज़रूरी है.', 'voice.failed': 'कुछ गड़बड़ हुई. फिर कोशिश करें.', 'voice.hint': 'बोलें: “होम”, “एक विचार पोस्ट करो”, “आज का सवाल”', 'voice.youSaid': 'आपने कहा', 'voice.openLabel': 'आवाज़ नियंत्रण',
   },
   bn: { 'nav.home': 'হোম', 'nav.explore': 'খুঁজুন', 'nav.market': 'মার্কেট', 'nav.chat': 'চ্যাট', 'nav.you': 'আপনি', 'nav.alerts': 'অ্যালার্ট', 'nav.tools': 'টুলস', 'common.start': 'শুরু', 'common.done': 'শেষ', 'common.back': 'ফিরুন', 'common.search': 'খুঁজুন', 'home.welcomeBack': 'আবার স্বাগতম, {name}', 'home.trending': 'ট্রেন্ডিং', 'home.following': 'ফলোইং', 'home.latest': 'সর্বশেষ', 'home.todayQuestion': 'আজকের প্রশ্ন', 'chat.messages': 'মেসেজ', 'chat.newMessage': 'নতুন মেসেজ', 'chat.newGroup': 'নতুন গ্রুপ', 'chat.askAnything': 'Echo-কে কিছু জিজ্ঞেস করুন...', 'welcome.startTitle': 'মন খুলে ভাবা শুরু করুন.', 'mini.pickerTitle': 'মিনি অ্যাপস', 'settings.title': 'সেটিংস', 'settings.appLanguage': 'অ্যাপ ভাষা', 'settings.contentLanguage': 'কনটেন্ট ভাষা' },
   te: { 'nav.home': 'హోమ్', 'nav.explore': 'అన్వేషణ', 'nav.market': 'మార్కెట్', 'nav.chat': 'చాట్', 'nav.you': 'మీరు', 'nav.alerts': 'అలర్ట్స్', 'nav.tools': 'టూల్స్', 'common.start': 'ప్రారంభించు', 'common.done': 'పూర్తి', 'common.back': 'వెనక్కి', 'common.search': 'వెతుకు', 'home.welcomeBack': 'మళ్లీ స్వాగతం, {name}', 'home.trending': 'ట్రెండింగ్', 'home.following': 'ఫాలోయింగ్', 'home.latest': 'తాజా', 'home.todayQuestion': 'ఈరోజు ప్రశ్న', 'chat.messages': 'సందేశాలు', 'chat.newMessage': 'కొత్త సందేశం', 'chat.newGroup': 'కొత్త గ్రూప్', 'chat.askAnything': 'Echo ని ఏదైనా అడగండి...', 'welcome.startTitle': 'ఆలోచనను బయట పెట్టి మొదలుపెట్టండి.', 'mini.pickerTitle': 'మినీ యాప్స్', 'settings.title': 'సెట్టింగ్స్', 'settings.appLanguage': 'యాప్ భాష', 'settings.contentLanguage': 'కంటెంట్ భాష' },
