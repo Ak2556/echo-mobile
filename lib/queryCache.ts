@@ -42,6 +42,19 @@ export function prependEchoToFeedCache(old: unknown, echo: FeedItem): unknown {
   return old;
 }
 
+/** Remove an echo from a feed cache (roll back an optimistic publish that failed). */
+export function removeEchoFromFeedCache(old: unknown, echoId: string): unknown {
+  if (old == null) return old;
+  if (Array.isArray(old)) {
+    return (old as FeedItem[]).filter(item => item.id !== echoId);
+  }
+  if (typeof old === 'object' && Array.isArray((old as InfiniteData<FeedItem[]>).pages)) {
+    const data = old as InfiniteData<FeedItem[]>;
+    return { ...data, pages: data.pages.map(page => page.filter(item => item.id !== echoId)) };
+  }
+  return old;
+}
+
 function updateFeedList(
   list: FeedItem[] | undefined,
   echoId: string,

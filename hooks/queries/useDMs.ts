@@ -3,6 +3,7 @@ import {
   useQuery, useMutation, useInfiniteQuery,
   useQueryClient, InfiniteData,
 } from '@tanstack/react-query';
+import { withTimeout } from '../../lib/net';
 import {
   fetchRemoteConversations,
   fetchRemoteMessages,
@@ -177,10 +178,10 @@ export function useSendRemoteDM(
     mutationFn: ({ content, replyToId }: { content: string; replyToId?: string }) => {
       if (isGroup) {
         if (!conversationId) throw new Error('No conversation');
-        return sendRemoteDMToConversation(conversationId, content, replyToId);
+        return withTimeout(sendRemoteDMToConversation(conversationId, content, replyToId), 20000, 'dm');
       }
       if (!recipientId) throw new Error('No recipient');
-      return sendRemoteDM(recipientId, content, replyToId);
+      return withTimeout(sendRemoteDM(recipientId, content, replyToId), 20000, 'dm');
     },
     onMutate: async ({ content, replyToId }) => {
       await qc.cancelQueries({ queryKey: ['messages', conversationId] });
