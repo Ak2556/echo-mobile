@@ -592,13 +592,14 @@ export async function insertRemoteEcho(params: {
   } else {
     row = data as SupabaseEchoRow;
   }
-  // Moderation + embedding are handled server-side: the moderate_new_echo AFTER
-  // INSERT trigger enqueues embed-echo via pg_net, with the resweep cron as a
-  // self-healing safety net (see 20260802130000_server_side_moderation.sql). We
-  // deliberately do NOT call embed-echo from the client too — that fired it twice
-  // per post (double moderation + embedding = wasted AI credits). The server path
-  // is authoritative and fires even if the client goes offline. triggerEmbedEcho
-  // is kept as a manual retry utility only.
+  // Moderation + embedding run server-side: the moderate_new_echo AFTER INSERT
+  // trigger enqueues embed-echo via pg_net (resweep cron as backup). Calling
+  // embed-echo from the client up-front too fired it TWICE per post (double
+  // moderation + embedding = wasted AI credits). Instead, a delayed fallback only
+  // nudges embed-echo if the server path hasn't revealed the post in time — so the
+  // normal case costs one cheap read (no duplicate AI call), while a stuck post
+  // still recovers, keeping visibility UX identical.
+  void moderationFallback(row.id);
   // Insert any @-mentions found in prompt + response. Best-effort; doesn't block.
   const usernames = parseMentions(`${params.prompt} ${params.response}`);
   if (usernames.length) {
@@ -612,6 +613,27 @@ export async function insertRemoteEcho(params: {
   // First-echo badge — award once; idempotent via PK on (user_id, badge_id).
   awardBadge('first_echo').catch(() => undefined);
   return row;
+}
+
+/**
+ * Safety net for server-side moderation without double-moderating. Waits briefly,
+ * then only asks embed-echo to run if the server trigger hasn't revealed the post
+ * yet. Normal case: the trigger has already set check_content=true within seconds,
+ * so this costs a single cheap read and no AI call. Stuck case (trigger's pg_net
+ * failed, or Vault secrets missing): the post is still hidden, so we nudge
+ * embed-echo — preserving the exact publish-visibility UX the client used to
+ * guarantee, at ~half the moderation cost.
+ */
+async function moderationFallback(echoId: string): Promise<void> {
+  await new Promise((r) => setTimeout(r, 10000));
+  try {
+    const { data } = await supabase.from('public_echoes').select('check_content').eq('id', echoId).maybeSingle();
+    // Row visible with check_content=true → server path already handled it; done.
+    if (data && (data as { check_content?: boolean }).check_content === true) return;
+  } catch {
+    // Couldn't confirm — fall through and nudge, to stay fail-safe on visibility.
+  }
+  triggerEmbedEcho(echoId).catch(() => undefined);
 }
 
 /**
