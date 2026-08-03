@@ -9,7 +9,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20·%20Edge-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20·%20Android%20·%20Web-4630EB?logo=expo&logoColor=white)](#)
-[![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)](#-license)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 </div>
 
@@ -120,4 +120,4 @@ Before opening a PR: `npm run lint && npm run typecheck && npm test`.
 
 ## 📄 License
 
-All rights reserved. Maintained by [`Ak2556`](https://github.com/Ak2556).
+Released under the [MIT License](LICENSE). Maintained by [`Ak2556`](https://github.com/Ak2556).
