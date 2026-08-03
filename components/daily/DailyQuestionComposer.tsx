@@ -7,6 +7,7 @@ import { TextInput } from '../ui/TextInput';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { submitDailyAnswer, type DailyQuestion } from '../../lib/supabaseEchoApi';
 import { track } from '../../lib/analytics';
 
@@ -41,10 +42,11 @@ export function DailyQuestionComposer({
   initialAnswer = null,
   persist = true,
   onSubmitted,
-  submitFirstLabel = 'Submit',
-  submitUpdateLabel = 'Update',
+  submitFirstLabel,
+  submitUpdateLabel,
 }: DailyQuestionComposerProps) {
   const { colors, radius, fontSizes } = useTheme();
+  const { t } = useI18n();
   const [draft, setDraft] = useState(initialAnswer ?? '');
   const [submitting, setSubmitting] = useState(false);
   const answered = initialAnswer != null;
@@ -63,10 +65,10 @@ export function DailyQuestionComposer({
         await submitDailyAnswer(question.id, answer);
         track('daily_answer_submitted', { question_id: question.id, is_update: answered, length: answer.length });
       }
-      showToast('Your answer is in.', 'Saved');
+      showToast(t('daily.answerSaved'), '✅');
       onSubmitted?.(answer);
     } catch (e) {
-      Alert.alert('Could not submit', (e as Error).message);
+      Alert.alert(t('daily.submitFailed'), (e as Error).message);
     } finally {
       setSubmitting(false);
     }
@@ -87,13 +89,13 @@ export function DailyQuestionComposer({
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1.2, fontFamily: 'Inter_600SemiBold' }}>
-              TODAY · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              {t('daily.today')} · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </Text>
             {streak > 0 && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
                 <Flame color="#fff" size={13} weight="fill" />
                 <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
-                  {streak} day{streak === 1 ? '' : 's'}
+                  {t(streak === 1 ? 'daily.dayOne' : 'daily.dayMany', { count: streak })}
                 </Text>
               </View>
             )}
@@ -117,12 +119,12 @@ export function DailyQuestionComposer({
         }}
       >
         <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 8, fontWeight: '500' }}>
-          {answered ? 'Your answer (you can edit anytime)' : 'Your answer'}
+          {answered ? t('daily.yourAnswerEdit') : t('daily.yourAnswer')}
         </Text>
         <TextInput
           value={draft}
-          onChangeText={(t) => setDraft(t.slice(0, MAX_ANSWER_LENGTH))}
-          placeholder="Distill your take in a sentence or two…"
+          onChangeText={(text) => setDraft(text.slice(0, MAX_ANSWER_LENGTH))}
+          placeholder={t('daily.placeholder')}
           multiline
           numberOfLines={4}
         />
@@ -151,7 +153,7 @@ export function DailyQuestionComposer({
               <Check color="#fff" size={14} weight="bold" />
             )}
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>
-              {answered ? submitUpdateLabel : submitFirstLabel}
+              {answered ? (submitUpdateLabel ?? t('daily.update')) : (submitFirstLabel ?? t('daily.submit'))}
             </Text>
           </AnimatedPressable>
         </View>
