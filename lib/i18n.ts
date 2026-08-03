@@ -3,6 +3,7 @@ import { TextStyle, ViewStyle } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
 import { DEFAULT_APP_LANGUAGE, languageByCode, normalizeAppLanguage, type AppLanguageCode } from './languages';
 import { ensureTranslation, getRuntime, useI18nRuntime } from './i18nRuntime';
+import { GENERATED } from './i18nGenerated';
 
 const BASE_TRANSLATIONS = {
   'nav.home': 'Home',
@@ -416,6 +417,9 @@ export function translate(key: TranslationKey, language: AppLanguageCode): strin
   // Hand-authored translation wins (highest quality).
   const authored = TRANSLATIONS[language]?.[key];
   if (authored !== undefined) return authored;
+  // Then a build-time generated translation (offline, no cost).
+  const generated = GENERATED[language]?.[key];
+  if (generated !== undefined) return generated;
   // Then a runtime-translated + cached string.
   const runtime = getRuntime(language, key);
   if (runtime !== undefined) return runtime;
