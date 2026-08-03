@@ -7,17 +7,21 @@
 // zero-latency translations for the whole UI. Hand-authored strings still win at
 // runtime (see lib/i18n.ts precedence), so this only fills the rest.
 //
-// Two ways to run:
-//   A) Direct — needs the OpenRouter key locally:
-//        OPENROUTER_API_KEY=sk-... node scripts/generate-i18n.mjs
-//   B) Via the deployed i18n-translate edge function — no local API key, just a
-//      shared secret you set once (supabase secrets set I18N_GEN_SECRET=...):
-//        I18N_GEN_SECRET=... node scripts/generate-i18n.mjs
-//      (override the project URL with SUPABASE_URL=... if needed)
+// Recommended: direct mode — needs the OpenRouter key locally (grab it from the
+// OpenRouter dashboard; same account/credits as the app):
+//     OPENROUTER_API_KEY=sk-... npm run i18n:generate
+//
+// Edge mode (no local key) exists but requires temporarily reopening the
+// i18n-translate function, so it's off by default for security. To use it:
+//   1) supabase secrets set I18N_GEN_SECRET=<random>
+//   2) supabase functions deploy i18n-translate --no-verify-jwt
+//   3) I18N_GEN_SECRET=<same> npm run i18n:generate
+//   4) redeploy WITHOUT --no-verify-jwt + `supabase secrets unset I18N_GEN_SECRET`
 //
 //   Add --only=ta,ar for a subset, --dry to validate extraction without calling.
 //
-// Re-run whenever you add UI strings. Safe to re-run; it regenerates fully.
+// The generator MERGES with lib/i18nGenerated.ts, so partial runs (e.g. resuming
+// after a provider rate limit) accumulate. Re-run whenever you add UI strings.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
