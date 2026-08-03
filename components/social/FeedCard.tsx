@@ -23,6 +23,7 @@ import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from
 import { FeedItem, PerspectiveType, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
@@ -144,6 +145,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const remoteLike = useToggleRemoteLike();
   const remoteRp = useToggleRemoteRepost();
   const { colors, radius, fontSizes, font, reduceAnimations, showAvatars } = useTheme();
+  const { t } = useI18n();
   const performance = usePerformanceProfile('hot');
   const layout = useResponsiveLayout();
   // Hero media height: phones keep the fixed portrait-ish media; tablets scale
@@ -190,22 +192,22 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const toggleBookmarkPress = () => {
     if (remote) {
       remoteBm.mutate({ echoId: item.id, bookmark: !bookmarked });
-      showToast(!bookmarked ? 'Bookmarked' : 'Removed bookmark', !bookmarked ? 'Bookmarked' : '');
+      showToast(!bookmarked ? t('feed.bookmarked') : t('feed.removedBookmark'), !bookmarked ? '🔖' : '');
       return;
     }
     toggleBookmark(item.id);
     qc.invalidateQueries({ queryKey: ['feed'] });
-    showToast(!bookmarked ? 'Bookmarked' : 'Removed bookmark', !bookmarked ? 'Bookmarked' : '');
+    showToast(!bookmarked ? t('feed.bookmarked') : t('feed.removedBookmark'), !bookmarked ? '🔖' : '');
   };
 
   const handleRepost = () => {
     if (remote) {
       remoteRp.mutate({ echoId: item.id, repost: !reposted });
-      showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? 'Re-echoed' : '');
+      showToast(!reposted ? t('feed.reechoed') : t('feed.removedReecho'), !reposted ? '🔁' : '');
       return;
     }
     toggleRepost(item.id);
-    showToast(!reposted ? 'Re-echoed!' : 'Removed re-echo', !reposted ? 'Re-echoed' : '');
+    showToast(!reposted ? t('feed.reechoed') : t('feed.removedReecho'), !reposted ? '🔁' : '');
   };
 
   const handleLikePress = () => {
@@ -261,44 +263,47 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const menuActions: ActionItem[] = [
     {
       key: 'profile',
-      label: 'View Profile',
+      label: t('feed.viewProfile'),
       icon: <UserCircle color={colors.textSecondary} size={20} />,
       onPress: () => router.push(`/user/${item.userId}`),
     },
     {
       key: 'less',
-      label: 'Show less like this',
+      label: t('feed.showLess'),
       icon: <Question color={colors.textSecondary} size={20} />,
       onPress: () => {
         setFeedFeedback({ ...feedFeedback, [item.id]: 'less' });
         tap('success');
-        showToast('Got it — less like this', 'Updated');
+        showToast(t('feed.lessLikeThis'), '👍');
       },
     },
     {
       key: 'notinterested',
-      label: 'Not interested',
+      label: t('feed.notInterested'),
       icon: <Flag color={colors.textSecondary} size={20} />,
       onPress: () => {
         setNotInterestedIds([...notInterestedIds, item.id]);
         tap('success');
-        showToast('Hidden', 'Done');
+        showToast(t('feed.hidden'), '✓');
       },
     },
     {
       key: 'mute',
-      label: isMuted(item.userId) ? `Unmute @${item.username}` : `Mute @${item.username}`,
+      label: isMuted(item.userId) ? t('feed.unmute', { username: item.username }) : t('feed.mute', { username: item.username }),
       icon: <UserMinus color={colors.textSecondary} size={20} />,
       onPress: () => {
         const wasMuted = isMuted(item.userId);
         toggleMute(item.userId);
         tap(wasMuted ? 'light' : 'warning');
-        showToast(wasMuted ? `Unmuted @${item.username}` : `Muted @${item.username}`, wasMuted ? 'Unmuted' : 'Muted');
+        showToast(
+          wasMuted ? t('feed.unmutedToast', { username: item.username }) : t('feed.mutedToast', { username: item.username }),
+          wasMuted ? '🔊' : '🔇',
+        );
       },
     },
     {
       key: 'report',
-      label: 'Report',
+      label: t('feed.report'),
       icon: <Flag color="#F59E0B" size={20} weight="fill" />,
       destructive: true,
       onPress: handleReport,
@@ -538,7 +543,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                   depth="soft" haptic="light" performanceMode="hot"
                   style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.5)', opacity: followPendingId === item.userId ? 0.6 : 1 }}
                 >
-                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Follow</Text>
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('feed.follow')}</Text>
                 </AnimatedPressable>
               )}
               <AnimatedPressable
@@ -722,7 +727,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
               depth="soft" haptic="light" performanceMode="hot"
               style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, marginRight: 8, backgroundColor: colors.accent, opacity: followPendingId === item.userId ? 0.6 : 1 }}
             >
-              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Follow</Text>
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('feed.follow')}</Text>
             </AnimatedPressable>
           )}
           <AnimatedPressable

@@ -14,7 +14,7 @@ Supabase/OpenRouter/Apple console access · `{eng}` engineering task ·
 `{external}` third-party/legal. **Priority:** `P0` launch-blocking · `P1`
 launch-week · `P2` fast-follow.
 
-_Last updated: 2026-07-31._
+_Last updated: 2026-08-03._
 
 ---
 
@@ -29,11 +29,25 @@ _Last updated: 2026-07-31._
       17+ = App Store maturity rating (content). Not a conflict; docs reconcile it.
 - [x] **Load-test harness exists + validated locally** `{eng}` — `loadtest/`;
       reads clean, write rate-limits confirmed, realtime fan-out observable.
+- [x] **Credit/duplication hygiene pass (2026-08-03)** `{eng}` — embed-echo no
+      longer double-fires per post (server trigger + a UX-safe 10s client
+      fallback, ~½ the per-post moderation AI); `resweep` cron 5m→30m (288→48
+      idle runs/day); `i18n-translate` re-secured (no open AI endpoint). Verified
+      no client polling; realtime is scoped (presence=Messages, live feed=Home).
 
 ---
 
 ## A. Infrastructure unknowns `{dashboard}` — determine ceiling & cost
 
+- [ ] `P0` **AI account is free-tier — throttles ALL AI features** `{dashboard}` —
+      discovered 2026-08-03: the shared `OPENROUTER_API_KEY` falls back to Google
+      AI Studio's free quota (**~20 generate requests/day**) with ~no OpenRouter
+      credits. A bulk run 429'd after ~20. Every AI feature shares this key —
+      **echo-ai chat, voice-command, mini-app-coach, i18n runtime + static
+      translation** — so the whole AI layer dies after ~20 requests/day across all
+      users. **Fix: add paid OpenRouter credits** (or a paid Google key) before
+      launch, then `npm run i18n:generate` fills all 25 languages statically. This
+      is the real cap-limiter. See memory `ai_quota_blocker`.
 - [ ] `P0` **Supabase plan + compute tier** — free/Pro? compute add-on? read
       replicas for feed reads? This *is* the capacity ceiling.
 - [ ] `P0` **Connection pooling** — confirm client uses the **Supavisor
@@ -81,6 +95,14 @@ _Last updated: 2026-07-31._
       _(Automated check blocked on purpose: cron `command` embeds the secret.)_
 - [ ] `P0` **Prod secrets set** `{dashboard}` — `OPENROUTER_API_KEY` (AI/mod/embeddings),
       `DAILY_PUSH_SECRET`. Confirm present.
+- [ ] `P1` **Cron list cost review** `{dashboard}` — the retention crons were
+      created via dashboard/SQL, not migrations, so they can't be enumerated in
+      code (and `cron.job.command` embeds secrets, so automated reads are blocked).
+      Eyeball the full list for any redundant or too-frequent job burning the plan:
+      ```sql
+      select jobid, jobname, schedule, active from cron.job order by jobname;
+      ```
+      Migration-defined crons are already lean (resweep 30m; see hygiene pass above).
 - [ ] `P1` **Alerting rules** `{dashboard}` — Sentry crash-free-rate + error-spike;
       PostHog retention funnel (`app_open`, `signup_completed`,
       `daily_answer_submitted`).
@@ -103,6 +125,8 @@ Tracked in full there; the launch-gating subset:
 
 ## The three with real teeth
 
-1. **D — retention cron** may be silently dead (only you can safely check).
+1. **A — AI account is free-tier (~20 req/day)** kills every AI feature under any
+   real traffic; needs paid credits. The single hardest cap-limiter.
 2. **B — domain ownership** hard-blocks two App Store requirements.
 3. **A — pooling + plan tier** decide whether "10k concurrent" is even reachable.
+   (Plus **D — retention cron** may be silently dead — only you can safely check.)

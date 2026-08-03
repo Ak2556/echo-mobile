@@ -24,6 +24,7 @@ import { FeedCard } from '../../components/social/FeedCard';
 import { ThinkingFingerprintCard } from '../../components/social/ThinkingFingerprintCard';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
@@ -95,6 +96,7 @@ type ProfileRadius = ReturnType<typeof useTheme>['radius'];
 type ProfileFont = ReturnType<typeof useTheme>['font'];
 
 export default function ProfileScreen() {
+  const { t } = useI18n();
   const router = useRouter();
   const { colors, radius, font } = useTheme();
   const insets = useSafeAreaInsets();
@@ -367,7 +369,7 @@ export default function ProfileScreen() {
                     icon={<Icon color={mutedIcon ? iconColor : '#fff'} size={18} weight={mutedIcon ? 'regular' : 'bold'} />}
                     iconColor={iconColor}
                     iconMuted={mutedIcon}
-                    label={label}
+                    label={key === 'bookmarks' ? t('you.bookmarks') : key === 'apps' ? t('nav.tools') : key === 'verify' ? t('you.getVerified') : label}
                     colors={colors}
                     radius={radius}
                     font={font}
@@ -546,6 +548,7 @@ function ProfileTabBar({
   radius: ProfileRadius;
   font: ProfileFont;
 }) {
+  const { t } = useI18n();
   return (
     <View style={[styles.tabShell, { borderBottomColor: colors.border }]}>
       {(['posts', 'about'] as const).map(tab => {
@@ -574,7 +577,7 @@ function ProfileTabBar({
               numberOfLines={1}
               maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
             >
-              {tab === 'posts' ? 'Echoes' : 'About'}
+              {tab === 'posts' ? t('explore.echoes') : t('you.about')}
             </Text>
           </Pressable>
         );
