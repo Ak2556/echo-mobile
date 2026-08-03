@@ -11,12 +11,14 @@ All by voice. In **25 languages**.
 
 <br/>
 
-[![Expo](https://img.shields.io/badge/Expo-SDK%2054-000020?logo=expo&logoColor=white)](https://expo.dev)
-[![React Native](https://img.shields.io/badge/React%20Native-0.81-61DAFB?logo=react&logoColor=black)](https://reactnative.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20·%20Edge-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Platform](https://img.shields.io/badge/Platform-iOS%20·%20Android%20·%20Web-4630EB?logo=expo&logoColor=white)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Expo](https://img.shields.io/badge/Expo_SDK_54-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React_Native-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![Gemini](https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](#)
+[![MIT](https://img.shields.io/badge/MIT-green?style=for-the-badge)](LICENSE)
+
+<sub>📱 iOS · 🤖 Android · 🌐 Web — one codebase</sub>
 
 <br/>
 
@@ -46,19 +48,31 @@ Most apps want your attention. **Echo wants your thoughts.**
 
 ---
 
-## One app. Every language.
+## 🎙️ Say it. Done.
 
-The _same_ screen, the moment you switch — English, Hindi, and a full right-to-left layout in Arabic. No reload, no half-translated corners.
+Tap the mic. Speak — Hindi or English. Echo turns your words into actions.
+
+```text
+"होम पर जाओ"            →   jumps to Home
+"एक विचार पोस्ट करो…"    →   opens the composer, pre-filled with your words
+"आज का सवाल"            →   today's question
+"open chat"             →   your AI partner
+```
+
+No menus. No hunting. **The whole app, hands-free.**
+
+---
+
+## 🌍 One app. Every language.
+
+The _same_ screen, the moment you switch — no reload, no half-translated corners. Watch it morph:
 
 <div align="center">
-<table>
-<tr>
-<td align="center"><img src="docs/screenshots/home-en.png" width="220" alt="Home in English"><br><sub><b>English</b></sub></td>
-<td align="center"><img src="docs/screenshots/home-hi.png" width="220" alt="Home in Hindi"><br><sub><b>हिन्दी</b></sub></td>
-<td align="center"><img src="docs/screenshots/home-ar.png" width="220" alt="Home in Arabic (RTL)"><br><sub><b>العربية · RTL</b></sub></td>
-</tr>
-</table>
-<sub>A hand-authored core, on-demand AI translation for the long tail, cached on device.</sub>
+
+<img src="docs/screenshots/lang-morph.gif" width="300" alt="The Echo home screen morphing across English, Hindi, and Arabic (right-to-left)">
+
+<sub><b>English → हिन्दी → العربية (RTL)</b> · hand-authored core, on-demand AI translation for the long tail, cached on device.</sub>
+
 </div>
 
 ---
