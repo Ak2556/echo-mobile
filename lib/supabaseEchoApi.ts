@@ -592,9 +592,13 @@ export async function insertRemoteEcho(params: {
   } else {
     row = data as SupabaseEchoRow;
   }
-  // Fire-and-forget: ask the edge function to generate the embedding and
-  // thoughtfulness score. Failure here must not block the publish flow.
-  triggerEmbedEcho(row.id).catch(() => undefined);
+  // Moderation + embedding are handled server-side: the moderate_new_echo AFTER
+  // INSERT trigger enqueues embed-echo via pg_net, with the resweep cron as a
+  // self-healing safety net (see 20260802130000_server_side_moderation.sql). We
+  // deliberately do NOT call embed-echo from the client too — that fired it twice
+  // per post (double moderation + embedding = wasted AI credits). The server path
+  // is authoritative and fires even if the client goes offline. triggerEmbedEcho
+  // is kept as a manual retry utility only.
   // Insert any @-mentions found in prompt + response. Best-effort; doesn't block.
   const usernames = parseMentions(`${params.prompt} ${params.response}`);
   if (usernames.length) {
