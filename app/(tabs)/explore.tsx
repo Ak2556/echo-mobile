@@ -14,6 +14,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { useFeed } from '../../hooks/queries/useFeed';
 import { buildSearchBuckets, deriveTopicFeed, groupDiscovery } from '../../lib/echoUX';
 import { useRemoteSearch } from '../../hooks/queries/useSearch';
@@ -48,6 +49,7 @@ export default function SearchScreen() {
   const interests = useAppStore(s => s.interests);
   const followingIds = useAppStore(s => s.followingIds);
   const { colors, radius, font } = useTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const { data: feed = [], refetch: refetchFeed, isRefetching: isRefetchingFeed } = useFeed();
   const remote = isSupabaseRemote();
@@ -147,7 +149,7 @@ export default function SearchScreen() {
           <View style={layout.wideContentStyle}>
             {recentSearches.length > 0 && (
               <View style={{ marginBottom: 16 }}>
-                <SectionHeader label="Recent" actionLabel="Clear" onAction={() => setRecentSearches([])} />
+                <SectionHeader label={t('explore.recent')} actionLabel={t('explore.clear')} onAction={() => setRecentSearches([])} />
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -160,7 +162,7 @@ export default function SearchScreen() {
               </View>
             )}
 
-            <SectionHeader label="Browse Topics" />
+            <SectionHeader label={t('explore.browseTopics')} />
             <View style={{ paddingHorizontal: layout.gutter, flexDirection: 'row', flexWrap: 'wrap', gap: tileGap, marginBottom: 18 }}>
               {topTopics.slice(0, 8).map((item, index) => {
                 const fallback = CATEGORY_FALLBACKS[index % CATEGORY_FALLBACKS.length];
@@ -180,7 +182,7 @@ export default function SearchScreen() {
 
             {discovery.conversationStarters.length > 0 && (
               <>
-                <SectionHeader label="Trending Now" actionLabel="Open feed" onAction={() => router.push('/(tabs)/home' as Href)} />
+                <SectionHeader label={t('explore.trendingNow')} actionLabel={t('explore.openFeed')} onAction={() => router.push('/(tabs)/home' as Href)} />
                 <View style={{ paddingHorizontal: layout.gutter, marginBottom: 28, flexDirection: 'row', flexWrap: 'wrap', gap: tileGap }}>
                   {discovery.conversationStarters.slice(0, layout.isDesktop ? 9 : 6).map((item, index) => (
                     <TrendingTile
@@ -199,8 +201,8 @@ export default function SearchScreen() {
               <View style={{ paddingHorizontal: layout.gutter, marginBottom: 30 }}>
                 <ActionRow
                   icon={<Brain color={colors.accent} size={20} weight="regular" />}
-                  title="Thinking partners"
-                  subtitle="Find people who can sharpen your ideas."
+                  title={t('explore.thinkingPartners')}
+                  subtitle={t('explore.thinkingPartnersSub')}
                   onPress={() => router.push('/thinking-partners' as Href)}
                 />
               </View>
@@ -208,7 +210,7 @@ export default function SearchScreen() {
 
             {suggestedUsers.length > 0 && (
               <>
-                <SectionHeader label="People To Start With" />
+                <SectionHeader label={t('explore.peopleToStart')} />
                 <View style={{ paddingHorizontal: layout.gutter, marginBottom: 36 }}>
                   {suggestedUsers.map(user => (
                     <UserRow key={user.id} user={user} onPress={() => router.push(`/user/${user.id}`)} showFollowButton />
@@ -225,9 +227,9 @@ export default function SearchScreen() {
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.78 }]} pointerEvents="none" />
         <View style={[layout.wideContentStyle, { paddingTop: insets.top + (layout.isDesktop ? 14 : 8), paddingHorizontal: layout.gutter, paddingBottom: 10 }]}>
           <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 26 : 30, lineHeight: layout.isPhone ? 31 : 36, marginBottom: 10 }]}>
-            Explore
+            {t('nav.explore')}
           </Text>
-          <SearchBar value={query} onChangeText={setQuery} placeholder="Search people, Echoes, topics, tools" />
+          <SearchBar value={query} onChangeText={setQuery} placeholder={t('explore.searchPlaceholder')} />
         </View>
         <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
       </View>
@@ -268,6 +270,7 @@ function SearchResults({
   router: ReturnType<typeof useRouter>;
   setQuery: (value: string) => void;
 }) {
+  const { t } = useI18n();
   const tabCount: Record<SearchTab, number | undefined> = {
     all: undefined,
     people: userMatches.length,
@@ -304,7 +307,7 @@ function SearchResults({
               }}
             >
               <Text style={{ color: selected ? '#fff' : colors.textSecondary, fontSize: 13, fontFamily: 'Inter_600SemiBold', textTransform: 'capitalize' }}>
-                {tab}{tabCount[tab] !== undefined ? ` ${tabCount[tab]}` : ''}
+                {(tab === 'all' ? t('notif.filterAll') : tab === 'people' ? t('explore.people') : tab === 'echoes' ? t('explore.echoes') : tab === 'topics' ? t('explore.topics') : t('explore.tools'))}{tabCount[tab] !== undefined ? ` ${tabCount[tab]}` : ''}
               </Text>
             </AnimatedPressable>
           );
@@ -313,13 +316,13 @@ function SearchResults({
 
       {!hasAnyResult ? (
         <EmptyCopy
-          title="No matches yet"
-          subtitle={`Try a broader search than "${query.trim()}". People, topics, Echoes, and tools are all searchable here.`}
+          title={t('explore.noMatches')}
+          subtitle={t('explore.noMatchesSub', { query: query.trim() })}
         />
       ) : null}
 
       {(activeTab === 'all' || activeTab === 'people') && userMatches.length > 0 && (
-        <ResultSection label="People">
+        <ResultSection label={t('explore.people')}>
           {userMatches.slice(0, activeTab === 'all' ? 4 : 24).map(user => (
             <UserRow key={user.id} user={user} onPress={() => router.push(`/user/${user.id}`)} showFollowButton />
           ))}
@@ -327,7 +330,7 @@ function SearchResults({
       )}
 
       {(activeTab === 'all' || activeTab === 'topics') && topicMatches.length > 0 && (
-        <ResultSection label="Topics">
+        <ResultSection label={t('explore.topics')}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {topicMatches.slice(0, activeTab === 'all' ? 8 : 24).map(item => (
               <AnimatedPressable
@@ -346,7 +349,7 @@ function SearchResults({
       )}
 
       {(activeTab === 'all' || activeTab === 'tools') && toolMatches.length > 0 && (
-        <ResultSection label="Tools">
+        <ResultSection label={t('explore.tools')}>
           <View style={{ gap: 10 }}>
             {toolMatches.map(tool => (
               <ActionRow
@@ -362,7 +365,7 @@ function SearchResults({
       )}
 
       {(activeTab === 'all' || activeTab === 'echoes') && echoMatches.length > 0 && (
-        <ResultSection label={activeTab === 'echoes' ? 'Echoes' : 'Best Matches'}>
+        <ResultSection label={activeTab === 'echoes' ? t('explore.echoes') : t('explore.bestMatches')}>
           {echoMatches.slice(0, activeTab === 'all' ? 8 : 24).map((item, index) => (
             <FeedCard key={item.id} item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />
           ))}
@@ -370,7 +373,7 @@ function SearchResults({
       )}
 
       {activeTab !== 'all' && tabCount[activeTab] === 0 ? (
-        <EmptyCopy title={`No ${activeTab} found`} subtitle="Switch to All or try a broader term." />
+        <EmptyCopy title={t('explore.noFound')} subtitle={t('explore.broaden')} />
       ) : null}
     </ScrollView>
   );
