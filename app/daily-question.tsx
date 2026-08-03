@@ -10,6 +10,7 @@ import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { LinkifiedText } from '../components/social/LinkifiedText';
 import { DailyQuestionComposer } from '../components/daily/DailyQuestionComposer';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import {
   fetchTodaysDailyQuestion,
@@ -41,6 +42,7 @@ import { recordAppOpen } from '../lib/personalNudges';
 
 function DailyQuestionScreenInner() {
   const { colors, radius, fontSizes } = useTheme();
+  const { t } = useI18n();
 
   const [question, setQuestion] = useState<DailyQuestion | null>(null);
   const [myAnswer, setMyAnswer] = useState<string | null>(null);
@@ -154,11 +156,11 @@ function DailyQuestionScreenInner() {
   if (!question) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <ScreenHeader title="Daily Question" onBack={() => safeBack()} />
+        <ScreenHeader title={t('daily.title')} onBack={() => safeBack()} />
         <View style={{ padding: 24, alignItems: 'center', marginTop: 80 }}>
           <Sparkle color={colors.textMuted} size={40} />
           <Text style={{ color: colors.textMuted, marginTop: 16, textAlign: 'center', lineHeight: 22 }}>
-            No question today. Come back tomorrow — a fresh prompt drops every day at midnight.
+            {t('daily.noQuestion')}
           </Text>
         </View>
       </SafeAreaView>
@@ -167,7 +169,7 @@ function DailyQuestionScreenInner() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScreenHeader title="Daily Question" onBack={() => safeBack()} />
+      <ScreenHeader title={t('daily.title')} onBack={() => safeBack()} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -203,19 +205,22 @@ function DailyQuestionScreenInner() {
             >
               <LockSimple color={colors.textMuted} size={28} />
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
-                Submit your answer to see how the rest of Echo answered today.
+                {t('daily.lockGate')}
               </Text>
             </Animated.View>
           ) : (
             <Animated.View entering={SlideInDown.duration(220)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginHorizontal: 4 }}>
                 <Text style={{ color: colors.text, fontWeight: '700', fontSize: 17 }}>
-                  {view === 'divergent' ? 'Most divergent takes'
-                    : view === 'following' ? 'From people you follow'
-                    : "Everyone's takes"}
+                  {view === 'divergent' ? t('daily.viewDivergentTitle')
+                    : view === 'following' ? t('daily.viewFollowingTitle')
+                    : t('daily.viewRecentTitle')}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-                  {(view === 'divergent' ? divergent.length : view === 'following' ? following.length : answers.length)} answer{(view === 'divergent' ? divergent.length : view === 'following' ? following.length : answers.length) === 1 ? '' : 's'}
+                  {(() => {
+                    const n = view === 'divergent' ? divergent.length : view === 'following' ? following.length : answers.length;
+                    return t(n === 1 ? 'daily.answerOne' : 'daily.answerMany', { count: n });
+                  })()}
                 </Text>
               </View>
 
@@ -225,7 +230,7 @@ function DailyQuestionScreenInner() {
                   active={view === 'recent'}
                   onPress={() => setView('recent')}
                   icon={<Clock size={14} weight="fill" color={view === 'recent' ? '#fff' : colors.textMuted} />}
-                  label="Recent"
+                  label={t('daily.recent')}
                 />
                 <ViewChip
                   active={view === 'following'}
@@ -234,7 +239,7 @@ function DailyQuestionScreenInner() {
                     setView('following');
                   }}
                   icon={<Users size={14} weight="fill" color={view === 'following' ? '#fff' : colors.textMuted} />}
-                  label="Following"
+                  label={t('daily.following')}
                 />
                 <ViewChip
                   active={view === 'divergent'}
@@ -243,13 +248,13 @@ function DailyQuestionScreenInner() {
                     setView('divergent');
                   }}
                   icon={<Lightning size={14} weight="fill" color={view === 'divergent' ? '#fff' : colors.textMuted} />}
-                  label="Divergent"
+                  label={t('daily.divergent')}
                 />
               </View>
 
               {view === 'divergent' && (
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginBottom: 12, marginHorizontal: 4, lineHeight: 18 }}>
-                  Ranked by how far each take sits from the day&apos;s consensus — the boldest outliers first.
+                  {t('daily.divergentDesc')}
                 </Text>
               )}
 
@@ -267,7 +272,7 @@ function DailyQuestionScreenInner() {
                   }}>
                     <Lightning color={colors.accent} size={24} weight="fill" />
                     <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
-                      Divergence ranking warms up as more people answer. Check back later to see today&apos;s boldest takes.
+                      {t('daily.divergentEmpty')}
                     </Text>
                   </View>
                 ) : (
@@ -287,7 +292,7 @@ function DailyQuestionScreenInner() {
                   }}>
                     <Users color={colors.accent} size={24} weight="fill" />
                     <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
-                      No one you follow has answered yet. Follow more people, or check back later.
+                      {t('daily.followingEmpty')}
                     </Text>
                   </View>
                 ) : (
@@ -306,7 +311,7 @@ function DailyQuestionScreenInner() {
                 }}>
                   <Sparkle color={colors.accent} size={24} weight="fill" />
                   <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
-                    You&apos;re the first to answer today. Check back later to see how everyone else thinks about it.
+                    {t('daily.recentEmpty')}
                   </Text>
                 </View>
               ) : (
@@ -391,6 +396,7 @@ function AnswerCard({
 }) {
   const router = useRouter();
   const { colors, radius, fontSizes } = useTheme();
+  const { t } = useI18n();
   const countFor = (emoji: string) => a.reactions.find(r => r.emoji === emoji)?.count ?? 0;
   return (
     <View
@@ -433,7 +439,7 @@ function AnswerCard({
             }}>
               <Lightning size={11} weight="fill" color={colors.accent} />
               <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '800' }}>
-                {divergence}% divergent
+                {t('daily.divergentBadge', { value: divergence })}
               </Text>
             </View>
           )}
