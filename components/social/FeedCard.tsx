@@ -24,6 +24,7 @@ import { FeedItem, PerspectiveType, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { SpeakButton } from '../ui/SpeakButton';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
@@ -146,6 +147,10 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const remoteRp = useToggleRemoteRepost();
   const { colors, radius, fontSizes, font, reduceAnimations, showAvatars } = useTheme();
   const { t } = useI18n();
+  // What "read aloud" speaks: the post's title + body.
+  const readableText = [item.editorialTitle ?? item.prompt, item.authorNote ?? item.response]
+    .filter(Boolean)
+    .join('. ');
   const performance = usePerformanceProfile('hot');
   const layout = useResponsiveLayout();
   // Hero media height: phones keep the fixed portrait-ish media; tablets scale
@@ -546,6 +551,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                   <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('feed.follow')}</Text>
                 </AnimatedPressable>
               )}
+              <SpeakButton text={readableText} id={`echo:${item.id}`} color="rgba(255,255,255,0.92)" size={20} />
               <AnimatedPressable
                 onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
                 depth="medium" fadeOnPress haptic="light" performanceMode="hot"
@@ -730,6 +736,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
               <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('feed.follow')}</Text>
             </AnimatedPressable>
           )}
+          <SpeakButton text={readableText} id={`echo:${item.id}`} size={20} />
           <AnimatedPressable
             onPress={(e) => { e.stopPropagation?.(); setMenuSheetOpen(true); }}
             depth="medium"
