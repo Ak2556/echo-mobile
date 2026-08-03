@@ -31,6 +31,23 @@ Echo is a **social + AI thinking app**. Chat privately with an AI partner, then 
 
 ---
 
+## 📸 Screenshots
+
+<div align="center">
+<table>
+<tr>
+<td align="center"><img src="docs/screenshots/home-en.png" width="190" alt="Home"><br><sub><b>Home</b> · voice-first</sub></td>
+<td align="center"><img src="docs/screenshots/home-hi.png" width="190" alt="Home in Hindi"><br><sub><b>हिन्दी</b></sub></td>
+<td align="center"><img src="docs/screenshots/explore-hi.png" width="190" alt="Explore in Hindi"><br><sub><b>Explore</b> · हिन्दी</sub></td>
+<td align="center"><img src="docs/screenshots/home-ar.png" width="190" alt="Home in Arabic (RTL)"><br><sub><b>العربية</b> · RTL</sub></td>
+</tr>
+</table>
+</div>
+
+<sub>Simulator captures from a development account — the same home screen across languages (note the voice mic, bottom-left) and a full right-to-left layout in Arabic.</sub>
+
+---
+
 ## 🏗️ Architecture
 
 ```mermaid
