@@ -16,6 +16,10 @@ const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const MODEL = Deno.env.get("I18N_TRANSLATE_MODEL") ?? Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+// Optional shared secret for the offline build-time generator (generate-i18n.mjs).
+// When set and matched via the x-gen-secret header, the batch generator can call
+// this without a user session. App calls still go through normal user auth.
+const GEN_SECRET = Deno.env.get("I18N_GEN_SECRET") ?? "";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -61,14 +65,22 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
   if (!OPENROUTER_API_KEY) return json({ error: "Translation is not configured" }, 503);
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) return json({ error: "Missing auth" }, 401);
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-    auth: { persistSession: false },
-  });
-  const { data: userData, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !userData?.user) return json({ error: "Not authenticated" }, 401);
+  // Build-time generator path: a matching x-gen-secret bypasses user auth so the
+  // offline script can populate all languages without a session. App calls still
+  // go through normal user auth below.
+  const genSecret = req.headers.get("x-gen-secret") ?? "";
+  const isGenerator = GEN_SECRET.length > 0 && genSecret === GEN_SECRET;
+
+  if (!isGenerator) {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "Missing auth" }, 401);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userData?.user) return json({ error: "Not authenticated" }, 401);
+  }
 
   let language = "";
   let languageName = "";
