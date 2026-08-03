@@ -1,177 +1,123 @@
+<div align="center">
+
 # Echo
 
-Echo is an Expo React Native social app where AI conversations can become public posts. The mobile client talks to Supabase for auth, data, storage, realtime features, and Edge Functions, with a small FastAPI backend kept for local and secondary API flows.
+### Think out loud — with an AI partner, in your language, by voice.
 
-This repository is organized for a team-based launch. The app behavior should stay stable: changes should be scoped, reviewed by the owning area, and validated before merge.
+[![Expo](https://img.shields.io/badge/Expo-SDK%2054-000020?logo=expo&logoColor=white)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81-61DAFB?logo=react&logoColor=black)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20·%20Edge-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Platform](https://img.shields.io/badge/Platform-iOS%20·%20Android%20·%20Web-4630EB?logo=expo&logoColor=white)](#)
+[![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)](#-license)
 
-## Quick Start
+</div>
 
-Prerequisites:
+Echo is a **social + AI thinking app**. Chat privately with an AI partner, then publish what's worth keeping as a public **echo**. Answer one shared question a day and unlock how everyone else thinks about it. Go deeper with built-in mini-apps and community surfaces — and drive the whole thing **by voice, in 25 languages**.
 
-- Node.js 20+
-- npm
-- Expo CLI through `npx expo`
-- Python 3.11+ for the optional FastAPI backend
-- Supabase CLI for migrations and Edge Functions
+---
 
-Install and run the mobile app:
+## ✨ Highlights
+
+- 🎙️ **Voice-first control (Hindi + English)** — speak to navigate, post, and search; a Gemini audio→intent pipeline turns a spoken command into an in-app action.
+- 🌍 **25-language UI** — a hand-authored core plus on-demand AI translation for everything else, cached on device. **RTL-ready** (Arabic, Urdu).
+- 🤖 **AI thinking partner** — streamed chat with tool use; turn any conversation into a public echo in a tap.
+- 🗣️ **Daily Question ritual** — one shared prompt a day; answer first to reveal the community's takes (recent, from people you follow, and the most divergent).
+- 🔎 **Semantic feed** — vector embeddings rank discovery by what you actually read, not just recency.
+- 🧩 **Mini-apps** — habits, fitness, expenses, tasks, pomodoro, voice memo, world clock — with an AI coach grounded in your real numbers.
+- 🛒 **Community surfaces** — marketplace, salons, office hours, and thinking-partner matching.
+- 🛡️ **DSA-aligned moderation** — pre-publish content checks, statements of reasons, and an author appeals flow.
+- 📈 **Retention engine** — streaks, personalized nudges, and push fan-out via scheduled jobs.
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+  subgraph Client["📱 Expo client · iOS / Android / Web"]
+    UI["Expo Router UI"]
+    State["TanStack Query · Zustand"]
+  end
+
+  subgraph Supabase["🗄️ Supabase"]
+    PG[("Postgres + RLS")]
+    RT["Realtime"]
+    ST["Storage"]
+    EF["Edge Functions ×14"]
+    CRON["pg_cron"]
+  end
+
+  AI["🤖 OpenRouter · Gemini"]
+  Push["🔔 Expo Push"]
+
+  UI --> State
+  State -->|reads / writes| PG
+  State <-->|live| RT
+  State --> ST
+  State --> EF
+  EF --> AI
+  EF --> PG
+  CRON --> EF --> Push
+```
+
+- **Client** — a single Expo Router codebase for iOS, Android, and Web; server state in TanStack Query, app state in Zustand, styling via NativeWind, motion via Reanimated.
+- **Supabase** — Postgres with row-level security, Realtime, Storage, `pg_cron`, and **14 Edge Functions** (`echo-ai`, `embed-echo`, `voice-command`, `i18n-translate`, `mini-app-coach`, moderation/embeddings/retention, and more).
+- **AI** — all model access is server-side through OpenRouter (Gemini); no provider keys ever ship in the app bundle.
+- A small **FastAPI** service (`backend/`) remains for optional/secondary local flows.
+
+Deeper notes: [`docs/architecture/overview.md`](docs/architecture/overview.md).
+
+---
+
+## 🧱 Tech stack
+
+`Expo SDK 54` · `React Native 0.81` · `expo-router` · `TypeScript (strict)` · `Zustand` · `TanStack Query` · `NativeWind` · `Reanimated 4` · `Supabase (Postgres · Realtime · Storage · Edge Functions)` · `Gemini via OpenRouter` · `Sentry` · `PostHog`
+
+---
+
+## 🚀 Quick start
 
 ```bash
 npm ci
-cp .env.example .env
+cp .env.example .env      # fill your EXPO_PUBLIC_* values
 npm start
 ```
 
-Common mobile commands:
+Run on a target:
 
 ```bash
-npm run ios
-npm run android
-npm run web
+npm run ios       # iOS simulator
+npm run android   # Android emulator
+npm run web       # browser
 ```
 
-Run the optional FastAPI backend:
+Full local setup (Supabase CLI, Edge Functions, the optional backend) → [`docs/setup/local-development.md`](docs/setup/local-development.md).
 
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python main.py
-```
+---
 
-Run local validation before opening a PR:
+## 📚 Documentation
 
-```bash
-npm run lint
-npm run typecheck
-npm test
-```
-
-## Repository Map
-
-| Area | Paths | Notes |
-| --- | --- | --- |
-| Frontend | `app/`, `components/`, `hooks/`, `store/`, `constants/`, `assets/` | Expo Router screens, reusable UI, state, and app assets. |
-| Shared TypeScript | `lib/`, `types/` | Client API helpers, Supabase adapters, local utilities, tests, and shared types. |
-| Backend/API | `backend/` | FastAPI service and backend database helpers. |
-| AI/LLM | `lib/api.ts`, `lib/aiMemory.ts`, `lib/aiTitle.ts`, `supabase/functions/echo-ai/`, `backend/main.py` | Streaming AI client, Edge Function routing, memory/title helpers, and legacy backend chat stream. |
-| Database | `supabase/migrations/`, `backend/db/schema.sql` | Supabase migrations plus reference schema. |
-| Infrastructure/DevOps | `.github/workflows/`, `eas.json`, `app.json`, `supabase/config.toml` | CI, EAS, app metadata, Supabase local config, and deployment workflows. |
-| QA/Testing | `*.test.ts`, `vitest.config.ts`, `eslint.config.js`, `tsconfig.json` | Unit tests, lint, and type checks. |
-| Documentation | `docs/`, `CONTRIBUTING.md`, `README.md` | Team workflow, setup, architecture, security, testing, and deployment guidance. |
-
-## Environment
-
-Copy the root example file and fill values that match your own Supabase and backend environments:
-
-```bash
-cp .env.example .env
-```
-
-Frontend variables use the `EXPO_PUBLIC_` prefix because Expo embeds them into the app bundle. Do not put service-role keys, provider secrets, private tokens, or database passwords in any `EXPO_PUBLIC_` variable.
-
-Backend-only secrets belong in `backend/.env`, Supabase secrets, EAS environment variables, or GitHub Actions secrets depending on the runtime.
-
-### EAS Secrets (production/preview builds)
-
-`eas.json` deliberately ships **no** `env` blocks — every value is sourced
-from EAS Secrets at build time. Set them once per project:
-
-```bash
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://<ref>.supabase.co"
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<anon-key>"
-eas secret:create --scope project --name EXPO_PUBLIC_SENTRY_DSN --value "https://<key>@sentry.io/<project>"
-eas secret:create --scope project --name EXPO_PUBLIC_POSTHOG_KEY --value "phc_..."
-eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value "https://<your-fastapi>.up.railway.app"
-```
-
-List and rotate with `eas secret:list` / `eas secret:delete`. Local `.env`
-values are only used by `npm start` / Expo Go.
-
-See [docs/security/environment-and-secrets.md](docs/security/environment-and-secrets.md) for the full policy.
-
-## Architecture
-
-Echo has three main runtime surfaces:
-
-- Expo React Native client for iOS, Android, and web.
-- Supabase for auth, Postgres, storage, realtime data, migrations, and Edge Functions.
-- FastAPI backend for local or secondary API behavior.
-
-The primary app code path should stay in the frontend and Supabase layers unless backend ownership signs off on a backend/API change. AI changes should be reviewed against both client streaming behavior and Supabase Edge Function behavior.
-
-Detailed architecture notes: [docs/architecture/overview.md](docs/architecture/overview.md).
-
-## Team Workflow
-
-Use ownership boundaries to keep PRs easy to review:
-
-- Frontend changes should stay in screens, components, hooks, store, and frontend utilities.
-- Backend/API changes should stay in `backend/` unless a client contract update is required.
-- AI/LLM changes should include streaming, model, prompt, and fallback review.
-- Database changes should be additive migrations unless a breaking migration is explicitly approved.
-- Infrastructure changes should not alter release behavior without a deployment review.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/team-ownership/ownership-map.md](docs/team-ownership/ownership-map.md).
-
-## Testing
-
-Required pre-PR checks:
-
-```bash
-npm run lint
-npm run typecheck
-npm test
-```
-
-Use targeted manual checks for the area you touched. For example, auth changes need sign-in/sign-out coverage, feed changes need remote and fallback feed checks, and AI changes need streaming and abort/retry checks.
-
-Testing guide: [docs/testing/testing-guide.md](docs/testing/testing-guide.md).
-
-## Deployment
-
-Deployment surfaces are split by runtime:
-
-- Expo/EAS for mobile builds and app updates.
-- Supabase CLI for migrations and Edge Functions.
-- GitHub Actions for CI.
-- AWS/ECS workflow is present but requires production values and Docker/task definition assets before it can deploy successfully.
-
-Deployment guide: [docs/deployment/deployment-guide.md](docs/deployment/deployment-guide.md).
-
-## Launch readiness (v1)
-
-Tracking shipped vs. still-blocked work toward App Store submission.
-
-| Area | Status |
+| Topic | Link |
 | --- | --- |
-| App stability — themed error boundary, Sentry-ready capture | shipped |
-| Auth lock, session restore, signup with live username check | shipped |
-| Account deletion (Apple Guideline 5.1.1(v)) | shipped — `app/delete-account.tsx` |
-| AI disclosure inline + in Privacy Policy | shipped |
-| Visual identity unified — restrained indigo accent system | shipped |
-| Tab vocabulary — Home / Explore / Echo / Chat / Activity / You | shipped |
-| Empty/loading states via EmptyState + skeletons | shipped (most surfaces) |
-| First-Echo launch coach + post-publish push pre-prompt | shipped |
-| Deep links — `/e/<id>`, `/u/<id>`, `/c/<id>` | shipped |
-| AnimatedPressable lite-default, lazy worklets | shipped |
-| Engagement analytics — track() wired across like, react, follow, chat, search | shipped (backend collector pending) |
-| Apple-app-site-association spec | shipped (needs hosting at echo.app) |
-| Privacy policy + Terms of Service drafts | shipped in `docs/` (need legal entity name + jurisdiction) |
-| App Store listing copy + reviewer notes | shipped in `docs/app-store-listing.md` |
-| Sentry SDK install + DSN | shipped — set `EXPO_PUBLIC_SENTRY_DSN` in EAS Secrets |
-| Analytics SDK (PostHog) | shipped — set `EXPO_PUBLIC_POSTHOG_KEY` in EAS Secrets, consent-gated |
-| Analytics consent banner (GDPR-friendly) | shipped — `components/ConsentBanner.tsx` |
-| AI rate limiting (Edge Function + Postgres) | shipped — see `supabase/migrations/*_add_ai_rate_limit.sql` |
-| Content moderation before publishing | shipped — see `supabase/functions/echo-ai/moderation.ts` |
-| APNs cert + Expo Push wiring | blocked on user (Apple Developer account) |
-| Production EAS build (Distribution Cert) | blocked on user (Apple Developer creds) |
-| App icon, screenshots, support + privacy URLs hosted | blocked on user |
+| Local development & setup | [`docs/setup/local-development.md`](docs/setup/local-development.md) |
+| Architecture overview | [`docs/architecture/overview.md`](docs/architecture/overview.md) |
+| Environment & secrets policy | [`docs/security/environment-and-secrets.md`](docs/security/environment-and-secrets.md) |
+| Deployment (EAS · Supabase · CI) | [`docs/deployment/deployment-guide.md`](docs/deployment/deployment-guide.md) |
+| Testing guide | [`docs/testing/testing-guide.md`](docs/testing/testing-guide.md) |
+| Contributing & ownership | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| Pre-launch tracker | [`docs/pre-launch-gaps.md`](docs/pre-launch-gaps.md) |
 
-Open the launch plan in conversation history to see per-phase notes. See `docs/app-store-listing.md` for the full submission checklist.
+Before opening a PR: `npm run lint && npm run typecheck && npm test`.
 
-## Maintainers
+---
 
-Repository stewardship is assigned to `Ak2556`. Keep commits, PR descriptions, documentation, and release notes professional and free of unrelated personal metadata.
+## 🗺️ Status
+
+**v1 — pre-launch.** Core app is feature-complete and on prod Supabase; remaining work is billing, store assets, and dashboard checks — tracked in [`docs/pre-launch-gaps.md`](docs/pre-launch-gaps.md), with submission notes in [`docs/app-store-listing.md`](docs/app-store-listing.md).
+
+---
+
+## 📄 License
+
+All rights reserved. Maintained by [`Ak2556`](https://github.com/Ak2556).
