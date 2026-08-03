@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { TextStyle, ViewStyle } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
 import { DEFAULT_APP_LANGUAGE, languageByCode, normalizeAppLanguage, type AppLanguageCode } from './languages';
+import { ensureTranslation, getRuntime, useI18nRuntime } from './i18nRuntime';
 
 const BASE_TRANSLATIONS = {
   'nav.home': 'Home',
@@ -364,7 +365,17 @@ const TRANSLATIONS: Record<AppLanguageCode, TranslationMap> = {
 };
 
 export function translate(key: TranslationKey, language: AppLanguageCode): string {
-  return TRANSLATIONS[language]?.[key] ?? BASE_TRANSLATIONS[key] ?? key;
+  if (language === 'en') return BASE_TRANSLATIONS[key] ?? key;
+  // Hand-authored translation wins (highest quality).
+  const authored = TRANSLATIONS[language]?.[key];
+  if (authored !== undefined) return authored;
+  // Then a runtime-translated + cached string.
+  const runtime = getRuntime(language, key);
+  if (runtime !== undefined) return runtime;
+  // Otherwise show English now and translate it in the background (cached after).
+  const english = BASE_TRANSLATIONS[key] ?? key;
+  ensureTranslation(language, key, english);
+  return english;
 }
 
 export function formatTranslation(
@@ -379,6 +390,9 @@ export function formatTranslation(
 
 export function useI18n() {
   const appLanguage = useAppStore(s => normalizeAppLanguage(s.appLanguage));
+  // Re-render when on-demand translations arrive so strings upgrade from their
+  // English fallback to the translated text in place.
+  const version = useI18nRuntime(s => s.version);
   return useMemo(() => {
     const language = languageByCode(appLanguage);
     const isRTL = Boolean(language.rtl);
@@ -397,7 +411,7 @@ export function useI18n() {
       rowDirection,
       t: (key: TranslationKey, params?: Record<string, string | number>) => formatTranslation(key, appLanguage, params),
     };
-  }, [appLanguage]);
+  }, [appLanguage, version]);
 }
 
 export function tStatic(
