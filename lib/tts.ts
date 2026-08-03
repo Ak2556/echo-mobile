@@ -9,6 +9,7 @@
 // predates it keeps running (TTS simply no-ops until the next native build). Use
 // isTtsAvailable() to hide UI affordances when it isn't present yet.
 
+import { AppState } from 'react-native';
 import { create } from 'zustand';
 import { useAppStore } from '../store/useAppStore';
 import { normalizeAppLanguage, type AppLanguageCode } from './languages';
@@ -44,6 +45,11 @@ export function localeFor(lang: AppLanguageCode): string {
 
 function currentLanguage(): AppLanguageCode {
   return normalizeAppLanguage(useAppStore.getState().appLanguage);
+}
+
+function currentRate(): number {
+  const r = (useAppStore.getState() as { speechRate?: number }).speechRate;
+  return typeof r === 'number' && r >= 0.5 && r <= 1.5 ? r : 1.0;
 }
 
 // Latin-script languages that read fine with their own voice; others fall back
@@ -90,32 +96,116 @@ export interface SpeakOptions {
 }
 
 /**
- * Speak `text` aloud in the given (or current app) language. Interrupts any
- * current utterance — a single-speaker model keeps read-back predictable.
+ * Turn display text into something that sounds natural spoken: drop Markdown,
+ * code, links and image syntax; keep the words of @mentions / #tags. Without
+ * this the engine literally reads "asterisk asterisk" and full URLs aloud.
+ */
+export function cleanForSpeech(input: string): string {
+  let s = input ?? '';
+  s = s.replace(/```[\s\S]*?```/g, '. ');          // fenced code blocks → pause
+  s = s.replace(/`([^`]+)`/g, '$1');               // inline code → its text
+  s = s.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ');      // images → nothing
+  s = s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');    // links → link text
+  s = s.replace(/https?:\/\/\S+/g, ' ');           // bare URLs → nothing
+  s = s.replace(/^\s{0,3}#{1,6}\s+/gm, '');         // heading markers
+  s = s.replace(/[@#](\w+)/g, '$1');               // @mentions / #tags → the word
+  s = s.replace(/[*_~`>|]/g, '');                  // leftover Markdown symbols
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+/**
+ * Split into speakable chunks (~180 chars, on sentence boundaries). expo-speech
+ * can truncate or choke on very long single utterances, especially on iOS;
+ * queueing sentence-sized pieces is reliable and lets stop() cut in cleanly.
+ */
+function chunkText(text: string, max = 180): string[] {
+  const sentences = text.match(/[^.!?。！？]+[.!?。！？]+|\S[^.!?。！？]*$/g) ?? [text];
+  const chunks: string[] = [];
+  let buf = '';
+  for (const raw of sentences) {
+    const sentence = raw.trim();
+    if (!sentence) continue;
+    if ((buf + ' ' + sentence).trim().length > max && buf) { chunks.push(buf.trim()); buf = sentence; }
+    else buf = (buf ? buf + ' ' : '') + sentence;
+  }
+  if (buf.trim()) chunks.push(buf.trim());
+  return chunks;
+}
+
+// Best available voice per locale, resolved once and cached. iOS ships higher
+// quality "Enhanced/Premium" voices that sound far better than the default —
+// prefer those. Populated lazily in the background; the first utterance may use
+// the OS default, every one after uses the best voice.
+const voiceForLocale: Record<string, string | undefined> = {};
+let voicesLoading = false;
+let voicesReady = false;
+
+function loadVoices() {
+  if (voicesLoading || voicesReady || !Speech?.getAvailableVoicesAsync) return;
+  voicesLoading = true;
+  Speech.getAvailableVoicesAsync()
+    .then((voices) => {
+      const rank = (q: unknown) => (q === 'Premium' || q === 3 ? 3 : q === 'Enhanced' || q === 2 ? 2 : 1);
+      const best: Record<string, { id: string; score: number }> = {};
+      for (const v of voices ?? []) {
+        const loc = (v.language ?? '').toLowerCase();
+        if (!loc) continue;
+        const score = rank((v as { quality?: unknown }).quality);
+        if (!best[loc] || score > best[loc].score) best[loc] = { id: v.identifier, score };
+      }
+      for (const [loc, val] of Object.entries(best)) voiceForLocale[loc] = val.id;
+      voicesReady = true;
+    })
+    .catch(() => { /* fall back to default voices */ })
+    .finally(() => { voicesLoading = false; });
+}
+
+function bestVoice(locale: string): string | undefined {
+  const l = locale.toLowerCase();
+  if (voiceForLocale[l]) return voiceForLocale[l];
+  const prefix = l.split('-')[0];
+  const hit = Object.keys(voiceForLocale).find((k) => k.startsWith(prefix));
+  return hit ? voiceForLocale[hit] : undefined;
+}
+
+/**
+ * Speak `text` aloud in the given (or content-detected) language. Cleans the
+ * text, queues it in sentence-sized chunks, and uses the best available voice.
+ * Interrupts any current utterance — a single-speaker model keeps it predictable.
  */
 export function speak(text: string, opts: SpeakOptions = {}) {
-  const body = (text ?? '').trim();
+  const body = cleanForSpeech(text);
   if (!isTtsAvailable() || !body) return;
+  loadVoices();
   const id = opts.id ?? '_';
-  // Cancel whatever's speaking first, then start this one.
   try { Speech!.stop(); } catch { /* ignore */ }
   useTtsStore.setState({ speakingId: id });
   const clear = () => {
-    // Only clear if we're still the active utterance.
     if (useTtsStore.getState().speakingId === id) useTtsStore.setState({ speakingId: null });
   };
-  // Explicit language wins; otherwise pick the voice from the text's script so
-  // content reads in its own language, falling back to the reader's.
+
+  // Explicit language wins; otherwise pick from the text's script so content
+  // reads in its own language, falling back to the reader's.
   const lang = opts.language ?? detectSpeechLang(body, currentLanguage());
+  const locale = localeFor(lang);
+  const voice = bestVoice(locale);
+  const chunks = chunkText(body);
+
   try {
-    Speech!.speak(body, {
-      language: localeFor(lang),
-      rate: opts.rate ?? 1.0,
-      pitch: 1.0,
-      onDone: () => { clear(); opts.onDone?.(); },
-      onStopped: clear,
-      onError: clear,
+    chunks.forEach((chunk, i) => {
+      const last = i === chunks.length - 1;
+      Speech!.speak(chunk, {
+        language: locale,
+        voice,
+        rate: opts.rate ?? currentRate(),
+        pitch: 1.0,
+        onDone: last ? () => { clear(); opts.onDone?.(); } : undefined,
+        onStopped: last ? clear : undefined,
+        onError: clear,
+      });
     });
+    if (chunks.length === 0) clear();
   } catch {
     clear();
   }
@@ -136,4 +226,13 @@ export function toggleSpeak(text: string, opts: SpeakOptions = {}) {
   } else {
     speak(text, opts);
   }
+}
+
+// Never leave speech running in the background — stop when the app is backgrounded.
+try {
+  AppState.addEventListener('change', (state) => {
+    if (state !== 'active') stopSpeaking();
+  });
+} catch {
+  /* AppState unavailable (e.g. tests) — safe to ignore */
 }
