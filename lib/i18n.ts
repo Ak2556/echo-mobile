@@ -288,6 +288,10 @@ const BASE_TRANSLATIONS = {
   'you.getVerified': 'Get verified',
   'you.about': 'About',
 
+  'create.searchMention': 'Search by name or @handle',
+  'create.placeholderWorking': 'What are you working through?',
+  'create.placeholderMind': "What's on your mind?",
+
   'voice.title': 'Voice',
   'voice.tapToSpeak': 'Tap and speak',
   'voice.listening': 'Listening…',
@@ -318,6 +322,7 @@ const COMMON_TRANSLATIONS: Record<Exclude<AppLanguageCode, 'en'>, TranslationMap
     'notif.title': 'गतिविधि', 'notif.readAll': 'सब पढ़ा', 'notif.today': 'आज', 'notif.thisWeek': 'इस हफ्ते', 'notif.earlier': 'पहले', 'notif.filterAll': 'सभी', 'notif.filterUnread': 'अनरीड', 'notif.filterMentions': 'मेंशन', 'notif.filterReplies': 'जवाब', 'notif.filterFollows': 'फॉलो', 'notif.allCaught': 'सब देख लिया!', 'notif.noActivity': 'अभी कोई गतिविधि नहीं', 'notif.noUnread': 'कोई अनरीड नोटिफिकेशन नहीं.', 'notif.emptyBody': 'जब लोग आपके Echoes से जुड़ेंगे, यहाँ दिखेगा.',
     'explore.recent': 'हालिया', 'explore.browseTopics': 'विषय ब्राउज़ करें', 'explore.clear': 'साफ करें', 'explore.trendingNow': 'अभी ट्रेंडिंग', 'explore.openFeed': 'फीड खोलें', 'explore.thinkingPartners': 'सोच के साथी', 'explore.thinkingPartnersSub': 'ऐसे लोग खोजें जो आपके विचार निखारें.', 'explore.peopleToStart': 'शुरुआत के लिए लोग', 'explore.searchPlaceholder': 'लोग, Echoes, विषय, टूल खोजें', 'explore.noMatches': 'अभी कोई मैच नहीं', 'explore.noMatchesSub': 'इससे व्यापक खोजें: "{query}". लोग, विषय, Echoes और टूल सब यहाँ खोज सकते हैं.', 'explore.people': 'लोग', 'explore.topics': 'विषय', 'explore.tools': 'टूल्स', 'explore.echoes': 'Echoes', 'explore.bestMatches': 'बेहतरीन मैच', 'explore.noFound': 'कोई परिणाम नहीं मिला', 'explore.broaden': 'सभी पर जाएं या कोई व्यापक शब्द आज़माएं.', 'explore.startExploring': 'खोजना शुरू करें',
     'you.bookmarks': 'बुकमार्क', 'you.getVerified': 'वेरिफाई कराएं', 'you.about': 'बारे में',
+    'create.searchMention': 'नाम या @हैंडल से खोजें', 'create.placeholderWorking': 'आप किस पर काम कर रहे हैं?', 'create.placeholderMind': 'आपके मन में क्या है?',
     'voice.title': 'आवाज़', 'voice.tapToSpeak': 'दबाएं और बोलें', 'voice.listening': 'सुन रहा हूँ…', 'voice.tapToStop': 'रोकने के लिए दबाएं', 'voice.thinking': 'समझ रहा हूँ…', 'voice.notUnderstood': 'माफ़ करें, समझ नहीं आया. फिर से बोलें.', 'voice.micDenied': 'आवाज़ के लिए माइक की अनुमति ज़रूरी है.', 'voice.failed': 'कुछ गड़बड़ हुई. फिर कोशिश करें.', 'voice.hint': 'बोलें: “होम”, “एक विचार पोस्ट करो”, “आज का सवाल”', 'voice.youSaid': 'आपने कहा', 'voice.openLabel': 'आवाज़ नियंत्रण',
   },
   bn: { 'nav.home': 'হোম', 'nav.explore': 'খুঁজুন', 'nav.market': 'মার্কেট', 'nav.chat': 'চ্যাট', 'nav.you': 'আপনি', 'nav.alerts': 'অ্যালার্ট', 'nav.tools': 'টুলস', 'common.start': 'শুরু', 'common.done': 'শেষ', 'common.back': 'ফিরুন', 'common.search': 'খুঁজুন', 'home.welcomeBack': 'আবার স্বাগতম, {name}', 'home.trending': 'ট্রেন্ডিং', 'home.following': 'ফলোইং', 'home.latest': 'সর্বশেষ', 'home.todayQuestion': 'আজকের প্রশ্ন', 'chat.messages': 'মেসেজ', 'chat.newMessage': 'নতুন মেসেজ', 'chat.newGroup': 'নতুন গ্রুপ', 'chat.askAnything': 'Echo-কে কিছু জিজ্ঞেস করুন...', 'welcome.startTitle': 'মন খুলে ভাবা শুরু করুন.', 'mini.pickerTitle': 'মিনি অ্যাপস', 'settings.title': 'সেটিংস', 'settings.appLanguage': 'অ্যাপ ভাষা', 'settings.contentLanguage': 'কনটেন্ট ভাষা' },
