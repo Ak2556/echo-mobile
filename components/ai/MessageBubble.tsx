@@ -8,6 +8,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
 import { tap } from '../../lib/haptics';
+import { isTtsAvailable, toggleSpeak, useTtsStore } from '../../lib/tts';
 
 async function copyToClipboard(text: string) {
   try {
@@ -79,6 +80,7 @@ export function MessageBubble({ message, isStreaming, onCopy, onEdit, onRegenera
   const { chatBubbleStyle, fontSize, reduceAnimations, accentColor, fontScale } = useAppStore();
   const { colors } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const speaking = useTtsStore((s) => s.speakingId === `msg:${message.id}`);
 
   // Blinking cursor during streaming
   const [cursorOn, setCursorOn] = useState(true);
@@ -127,6 +129,9 @@ export function MessageBubble({ message, isStreaming, onCopy, onEdit, onRegenera
       ? { key: 'edit', label: 'Edit & resend', disabled: !onEdit, onPress: () => onEdit?.(message) }
       : { key: 'regen', label: 'Regenerate', disabled: !onRegenerate, onPress: () => onRegenerate?.(message) },
     { key: 'branch', label: 'Branch from here', disabled: !onBranch, onPress: () => onBranch?.(message) },
+    ...(!isUser && isTtsAvailable()
+      ? [{ key: 'speak', label: speaking ? 'Stop reading' : 'Read aloud', onPress: () => toggleSpeak(message.content, { id: `msg:${message.id}` }) }]
+      : []),
   ];
 
   // Code block copy button — injected via custom Markdown rules

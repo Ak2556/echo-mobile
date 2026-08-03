@@ -8,6 +8,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { SpeakButton } from '../ui/SpeakButton';
 import { submitDailyAnswer, type DailyQuestion } from '../../lib/supabaseEchoApi';
 import { track } from '../../lib/analytics';
 
@@ -91,14 +92,17 @@ export function DailyQuestionComposer({
             <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1.2, fontFamily: 'Inter_600SemiBold' }}>
               {t('daily.today')} · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </Text>
-            {streak > 0 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
-                <Flame color="#fff" size={13} weight="fill" />
-                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
-                  {t(streak === 1 ? 'daily.dayOne' : 'daily.dayMany', { count: streak })}
-                </Text>
-              </View>
-            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <SpeakButton text={question.question} id={`dq:${question.id}`} color="rgba(255,255,255,0.92)" size={18} />
+              {streak > 0 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
+                  <Flame color="#fff" size={13} weight="fill" />
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
+                    {t(streak === 1 ? 'daily.dayOne' : 'daily.dayMany', { count: streak })}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
           <Text style={{ color: '#fff', fontSize: 24, lineHeight: 32, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
             {question.question}
