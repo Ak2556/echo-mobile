@@ -7,9 +7,15 @@
 // zero-latency translations for the whole UI. Hand-authored strings still win at
 // runtime (see lib/i18n.ts precedence), so this only fills the rest.
 //
-// Usage:
-//   OPENROUTER_API_KEY=sk-... node scripts/generate-i18n.mjs
-//   OPENROUTER_API_KEY=sk-... node scripts/generate-i18n.mjs --only=ta,ar   # subset
+// Two ways to run:
+//   A) Direct — needs the OpenRouter key locally:
+//        OPENROUTER_API_KEY=sk-... node scripts/generate-i18n.mjs
+//   B) Via the deployed i18n-translate edge function — no local API key, just a
+//      shared secret you set once (supabase secrets set I18N_GEN_SECRET=...):
+//        I18N_GEN_SECRET=... node scripts/generate-i18n.mjs
+//      (override the project URL with SUPABASE_URL=... if needed)
+//
+//   Add --only=ta,ar for a subset, --dry to validate extraction without calling.
 //
 // Re-run whenever you add UI strings. Safe to re-run; it regenerates fully.
 
@@ -24,12 +30,18 @@ const LANGS = join(ROOT, 'lib', 'languages.ts');
 const OUT = join(ROOT, 'lib', 'i18nGenerated.ts');
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
+const GEN_SECRET = process.env.I18N_GEN_SECRET;
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eyokhisijabitzjiydmz.supabase.co';
+const EDGE_URL = `${SUPABASE_URL.replace(/\/$/, '')}/functions/v1/i18n-translate`;
 const MODEL = process.env.VOICE_COMMAND_MODEL || process.env.ECHO_AI_MODEL || 'google/gemini-2.5-flash';
-const CHUNK = 120;
+const CHUNK = 55;
 const DRY = process.argv.includes('--dry');
+const EDGE = !API_KEY && !!GEN_SECRET; // prefer direct if both are somehow set
 
-if (!API_KEY && !DRY) {
-  console.error('Missing OPENROUTER_API_KEY. Run:  OPENROUTER_API_KEY=sk-... node scripts/generate-i18n.mjs');
+if (!API_KEY && !GEN_SECRET && !DRY) {
+  console.error('Provide one of:');
+  console.error('  OPENROUTER_API_KEY=sk-...   (direct)');
+  console.error('  I18N_GEN_SECRET=...         (via the deployed edge function)');
   process.exit(1);
 }
 
@@ -82,7 +94,22 @@ function parseJson(raw) {
   try { return JSON.parse(s.slice(a, b + 1)); } catch { return null; }
 }
 
-async function translateChunk(name, code, items) {
+async function translate(name, code, items) {
+  return EDGE ? translateChunkEdge(code, name, items) : translateChunkDirect(name, code, items);
+}
+
+async function translateChunkEdge(code, name, items) {
+  const res = await fetch(EDGE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-gen-secret': GEN_SECRET },
+    body: JSON.stringify({ language: code, languageName: name, items }),
+  });
+  if (!res.ok) throw new Error(`edge ${res.status}: ${await res.text()}`);
+  const out = await res.json();
+  return out.translations ?? {};
+}
+
+async function translateChunkDirect(name, code, items) {
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -113,6 +140,19 @@ function chunk(entries, n) {
   return out;
 }
 
+// Parse the current GENERATED object out of the output file so re-runs merge.
+function loadExisting() {
+  try {
+    const src = readFileSync(OUT, 'utf8');
+    const eq = src.indexOf('= {');
+    const end = src.lastIndexOf('};');
+    if (eq === -1 || end === -1) return {};
+    return JSON.parse(src.slice(eq + 2, end + 1));
+  } catch {
+    return {};
+  }
+}
+
 async function main() {
   const base = extractBase();
   const keys = Object.keys(base);
@@ -126,20 +166,31 @@ async function main() {
     console.log(`[dry] sample value: ${base[keys[0]]}`);
     return;
   }
-  console.log(`Translating ${keys.length} strings into ${languages.length} languages (model: ${MODEL})…`);
+  console.log(`Translating ${keys.length} strings into ${languages.length} languages via ${EDGE ? 'edge function' : `OpenRouter (${MODEL})`}…`);
 
-  const generated = {};
+  // Merge with whatever is already generated, so partial / incremental runs
+  // (e.g. --only=ta,ar, or resuming after a quota limit) accumulate instead of
+  // wiping earlier work. Only missing keys are translated → quota-friendly.
+  const generated = loadExisting();
   for (const { code, name } of languages) {
-    const map = {};
-    const chunks = chunk(keys, CHUNK);
+    const map = generated[code] || {};
+    const missing = keys.filter((k) => typeof map[k] !== 'string');
+    if (missing.length === 0) { console.log(`  ${name} (${code}): already complete`); generated[code] = map; continue; }
+    const chunks = chunk(missing, CHUNK);
     for (let i = 0; i < chunks.length; i++) {
       const items = Object.fromEntries(chunks[i].map((k) => [k, base[k]]));
-      try {
-        const part = await translateChunk(name, code, items);
-        for (const k of chunks[i]) if (typeof part[k] === 'string') map[k] = part[k];
-        process.stdout.write(`  ${code} ${Object.keys(map).length}/${keys.length}\r`);
-      } catch (e) {
-        console.error(`\n  ${code} chunk ${i} failed: ${e.message}`);
+      let ok = false;
+      for (let attempt = 0; attempt < 3 && !ok; attempt++) {
+        try {
+          const part = await translate(name, code, items);
+          const got = chunks[i].filter((k) => typeof part[k] === 'string');
+          if (got.length === 0) throw new Error('empty');
+          for (const k of got) map[k] = part[k];
+          ok = true;
+          process.stdout.write(`  ${code} ${Object.keys(map).length}/${keys.length}\r`);
+        } catch (e) {
+          if (attempt === 2) console.error(`\n  ${code} chunk ${i} failed after retries: ${e.message}`);
+        }
       }
     }
     generated[code] = map;
