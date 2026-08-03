@@ -102,6 +102,7 @@ function HomeHero({
  */
 function DailyThought() {
   const { colors, font } = useTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const interests = useAppStore(s => s.interests);
   const dailyThought = useAppStore(s => s.dailyThought);
@@ -154,14 +155,14 @@ function DailyThought() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Sparkle color={colors.accent} size={14} weight="fill" />
               <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase' }]}>
-                Thought for today
+                {t('home.thoughtForToday')}
               </Text>
             </View>
             <Pressable
               onPress={() => dismissDailyThought(key)}
               hitSlop={12}
               accessibilityRole="button"
-              accessibilityLabel="Dismiss today's thought"
+              accessibilityLabel={t('home.dismissThought')}
               style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
             >
               <X color={colors.textMuted} size={16} weight="bold" />
