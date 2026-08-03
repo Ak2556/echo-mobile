@@ -11,6 +11,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { Notification } from '../../types';
 import { usePerformanceProfile } from '../../lib/performance';
 import { useResponsiveLayout } from '../../lib/responsive';
@@ -97,6 +98,7 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { notifications: storeNotifications, markAllNotificationsRead, markNotificationRead: storeMarkRead, unreadNotificationCount, mutedIds } = useAppStore();
   const { colors, animation, font } = useTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const performance = usePerformanceProfile('hot');
   const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'reactions' | 'saves' | 'quotes' | 'follows' | 'reposts'>('all');
@@ -182,7 +184,7 @@ export default function NotificationsScreen() {
         <View style={listContentStyle}>
           <View style={{ paddingHorizontal: 16, paddingTop: 22, paddingBottom: 10 }}>
             <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
-              {item.label}
+              {item.label === 'Today' ? t('notif.today') : item.label === 'This Week' ? t('notif.thisWeek') : t('notif.earlier')}
             </Text>
           </View>
         </View>
@@ -253,13 +255,9 @@ export default function NotificationsScreen() {
         <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1, paddingTop: headerHeight }}>
           <EmptyState
             icon={<Bell color={colors.accent} size={32} />}
-            title={filter === 'unread' ? 'All caught up!' : 'No activity yet'}
-            subtitle={
-              filter === 'unread'
-                ? 'You have no unread notifications.'
-                : "When people interact with your echoes, you'll see it here."
-            }
-            actionLabel={filter === 'all' ? 'Explore' : undefined}
+            title={filter === 'unread' ? t('notif.allCaught') : t('notif.noActivity')}
+            subtitle={filter === 'unread' ? t('notif.noUnread') : t('notif.emptyBody')}
+            actionLabel={filter === 'all' ? t('nav.explore') : undefined}
             onAction={filter === 'all' ? () => router.push('/(tabs)/home') : undefined}
           />
         </Animated.View>
@@ -322,7 +320,7 @@ export default function NotificationsScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 26 }]}>Activity</Text>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 26 }]}>{t('notif.title')}</Text>
             {unreadCount > 0 && (
               <View
                 style={{
@@ -355,7 +353,7 @@ export default function NotificationsScreen() {
               }}
             >
               <Checks color={colors.textSecondary} size={14} />
-              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>Read all</Text>
+              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{t('notif.readAll')}</Text>
             </AnimatedPressable>
           )}
         </View>
@@ -385,7 +383,7 @@ export default function NotificationsScreen() {
                   color: filter === tab ? '#fff' : colors.textSecondary,
                 }}
               >
-                {tab}
+                {tab === 'all' ? t('notif.filterAll') : tab === 'unread' ? t('notif.filterUnread') : tab === 'mentions' ? t('notif.filterMentions') : tab === 'replies' ? t('notif.filterReplies') : t('notif.filterFollows')}
               </Text>
             </AnimatedPressable>
           ))}
