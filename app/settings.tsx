@@ -801,6 +801,12 @@ export default function SettingsScreen() {
   const cornerLabel = { small: 'Small', medium: 'Medium', large: 'Large' }[s.roundedCorners];
   const themeLabel = THEMES[s.theme]?.name ?? 'Midnight';
   const appLanguageLabel = languageLabel(s.appLanguage);
+  const RATE_STEPS = [0.75, 1, 1.25];
+  const rateLabel = (r: number) => (r <= 0.85 ? 'Slow' : r >= 1.15 ? 'Fast' : 'Normal');
+  const cycleSpeechRate = () => {
+    const idx = RATE_STEPS.findIndex((x) => Math.abs(x - s.speechRate) < 0.06);
+    s.setSpeechRate(RATE_STEPS[(idx + 1) % RATE_STEPS.length] ?? 1);
+  };
   const showGroup = (...groups: SettingsGroup[]) => activeGroup === 'all' || groups.includes(activeGroup);
 
   const sectionHeaderStyle = {
@@ -886,6 +892,8 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={Vibrate} label="Haptic Feedback" subtitle="Vibration on interactions" right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
             {divider}
             <SettingsRow theme={theme} icon={SpeakerHigh} label="Sound Effects" subtitle="Play sounds for actions" right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
+            {divider}
+            <SettingsRow theme={theme} icon={SpeakerHigh} label="Read-aloud speed" subtitle="How fast Echo speaks content" onPress={cycleSpeechRate} right={chevronValue(rateLabel(s.speechRate))} />
             {divider}
             <SettingsRow theme={theme} icon={Bell} label="Notification Preferences" subtitle="Customize which notifications you receive" onPress={() => router.push('/notification-prefs')} />
             {divider}

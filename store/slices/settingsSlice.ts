@@ -97,6 +97,8 @@ export interface SettingsSlice {
   // ── Accessibility ──
   fontScale: number;
   setFontScale: (v: number) => void;
+  speechRate: number; // read-aloud speed (0.5 slow – 1.5 fast)
+  setSpeechRate: (v: number) => void;
   // ── First-run hints ──
   hasSeenChatTabHint: boolean;
   setHasSeenChatTabHint: (v: boolean) => void;
@@ -235,6 +237,8 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setPreferredCurrency: (v) => { persistSet('preferredCurrency', v); set({ preferredCurrency: v }); },
     fontScale: persistGet<number>('fontScale', 1),
     setFontScale: (v) => { persistSet('fontScale', v); set({ fontScale: v }); },
+    speechRate: persistGet<number>('speechRate', 1),
+    setSpeechRate: (v) => { const r = Math.max(0.5, Math.min(1.5, v)); persistSet('speechRate', r); set({ speechRate: r }); },
     hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
     hasSeenChatEmptyHint: b('hasSeenChatEmptyHint', false), setHasSeenChatEmptyHint: s(set, 'hasSeenChatEmptyHint'),
     hasSentFirstEcho: b('hasSentFirstEcho', false), setHasSentFirstEcho: s(set, 'hasSentFirstEcho'),
