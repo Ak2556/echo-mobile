@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { TextStyle, ViewStyle } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
 import { DEFAULT_APP_LANGUAGE, languageByCode, normalizeAppLanguage, type AppLanguageCode } from './languages';
+import { ensureTranslation, getRuntime, useI18nRuntime } from './i18nRuntime';
+import { GENERATED } from './i18nGenerated';
 
 const BASE_TRANSLATIONS = {
   'nav.home': 'Home',
@@ -54,6 +56,8 @@ const BASE_TRANSLATIONS = {
   'home.latestDesc': 'Every public echo in time order.',
   'home.todayQuestion': "Today's question",
   'home.tapToAnswer': 'Tap to answer',
+  'home.thoughtForToday': 'Thought for today',
+  'home.dismissThought': "Dismiss today's thought",
   'home.topConversations': 'Top conversations',
   'home.fromCommunity': 'From the community',
   'home.liveNow': 'Live now',
@@ -202,6 +206,104 @@ const BASE_TRANSLATIONS = {
   'settings.languageChanged': 'Language changed',
   'settings.replayTour': 'Replay app tour',
   'settings.replayTourSubtitle': 'Show the guided walkthrough again',
+
+  'daily.title': 'Daily Question',
+  'daily.noQuestion': 'No question today. Come back tomorrow — a fresh prompt drops every day at midnight.',
+  'daily.lockGate': 'Submit your answer to see how the rest of Echo answered today.',
+  'daily.viewRecentTitle': "Everyone's takes",
+  'daily.viewFollowingTitle': 'From people you follow',
+  'daily.viewDivergentTitle': 'Most divergent takes',
+  'daily.answerOne': '{count} answer',
+  'daily.answerMany': '{count} answers',
+  'daily.recent': 'Recent',
+  'daily.following': 'Following',
+  'daily.divergent': 'Divergent',
+  'daily.divergentDesc': "Ranked by how far each take sits from the day's consensus — the boldest outliers first.",
+  'daily.divergentEmpty': "Divergence ranking warms up as more people answer. Check back later to see today's boldest takes.",
+  'daily.followingEmpty': 'No one you follow has answered yet. Follow more people, or check back later.',
+  'daily.recentEmpty': "You're the first to answer today. Check back later to see how everyone else thinks about it.",
+  'daily.divergentBadge': '{value}% divergent',
+  'daily.submit': 'Submit',
+  'daily.update': 'Update',
+  'daily.today': 'TODAY',
+  'daily.dayOne': '{count} day',
+  'daily.dayMany': '{count} days',
+  'daily.yourAnswer': 'Your answer',
+  'daily.yourAnswerEdit': 'Your answer (you can edit anytime)',
+  'daily.placeholder': 'Distill your take in a sentence or two…',
+  'daily.answerSaved': 'Your answer is in.',
+  'daily.submitFailed': 'Could not submit',
+
+  'feed.follow': 'Follow',
+  'feed.viewProfile': 'View Profile',
+  'feed.showLess': 'Show less like this',
+  'feed.notInterested': 'Not interested',
+  'feed.report': 'Report',
+  'feed.mute': 'Mute @{username}',
+  'feed.unmute': 'Unmute @{username}',
+  'feed.bookmarked': 'Bookmarked',
+  'feed.removedBookmark': 'Removed bookmark',
+  'feed.reechoed': 'Re-echoed!',
+  'feed.removedReecho': 'Removed re-echo',
+  'feed.lessLikeThis': 'Got it — less like this',
+  'feed.hidden': 'Hidden',
+  'feed.mutedToast': 'Muted @{username}',
+  'feed.unmutedToast': 'Unmuted @{username}',
+
+  'notif.title': 'Activity',
+  'notif.readAll': 'Read all',
+  'notif.today': 'Today',
+  'notif.thisWeek': 'This Week',
+  'notif.earlier': 'Earlier',
+  'notif.filterAll': 'All',
+  'notif.filterUnread': 'Unread',
+  'notif.filterMentions': 'Mentions',
+  'notif.filterReplies': 'Replies',
+  'notif.filterFollows': 'Follows',
+  'notif.allCaught': 'All caught up!',
+  'notif.noActivity': 'No activity yet',
+  'notif.noUnread': 'You have no unread notifications.',
+  'notif.emptyBody': "When people interact with your echoes, you'll see it here.",
+
+  'explore.recent': 'Recent',
+  'explore.browseTopics': 'Browse Topics',
+  'explore.clear': 'Clear',
+  'explore.trendingNow': 'Trending Now',
+  'explore.openFeed': 'Open feed',
+  'explore.thinkingPartners': 'Thinking partners',
+  'explore.thinkingPartnersSub': 'Find people who can sharpen your ideas.',
+  'explore.peopleToStart': 'People To Start With',
+  'explore.searchPlaceholder': 'Search people, Echoes, topics, tools',
+  'explore.noMatches': 'No matches yet',
+  'explore.noMatchesSub': 'Try a broader search than "{query}". People, topics, Echoes, and tools are all searchable here.',
+  'explore.people': 'People',
+  'explore.topics': 'Topics',
+  'explore.tools': 'Tools',
+  'explore.echoes': 'Echoes',
+  'explore.bestMatches': 'Best Matches',
+  'explore.noFound': 'No results found',
+  'explore.broaden': 'Switch to All or try a broader term.',
+  'explore.startExploring': 'Start exploring',
+
+  'you.bookmarks': 'Bookmarks',
+  'you.getVerified': 'Get verified',
+  'you.about': 'About',
+
+  'create.searchMention': 'Search by name or @handle',
+  'create.placeholderWorking': 'What are you working through?',
+  'create.placeholderMind': "What's on your mind?",
+
+  'voice.title': 'Voice',
+  'voice.tapToSpeak': 'Tap and speak',
+  'voice.listening': 'Listening…',
+  'voice.tapToStop': 'Tap to stop',
+  'voice.thinking': 'Working on it…',
+  'voice.notUnderstood': "Sorry, I didn't catch that. Please try again.",
+  'voice.micDenied': 'Microphone access is needed for voice.',
+  'voice.failed': 'Something went wrong. Please try again.',
+  'voice.hint': 'Try: “home”, “post a thought”, “today’s question”',
+  'voice.youSaid': 'You said',
+  'voice.openLabel': 'Voice control',
 } as const;
 
 export type TranslationKey = keyof typeof BASE_TRANSLATIONS;
@@ -211,11 +313,18 @@ const COMMON_TRANSLATIONS: Record<Exclude<AppLanguageCode, 'en'>, TranslationMap
   hi: {
     'nav.home': 'होम', 'nav.explore': 'खोजें', 'nav.market': 'मार्केट', 'nav.chat': 'चैट', 'nav.you': 'आप', 'nav.alerts': 'अलर्ट', 'nav.tools': 'टूल्स', 'nav.newEcho': 'नया Echo',
     'common.back': 'पीछे', 'common.done': 'हो गया', 'common.start': 'शुरू', 'common.skip': 'छोड़ें', 'common.cancel': 'रद्द', 'common.save': 'सेव', 'common.search': 'खोजें', 'common.retry': 'फिर कोशिश', 'common.open': 'खोलें', 'common.share': 'शेयर', 'common.new': 'नया', 'common.online': 'ऑनलाइन', 'common.group': 'ग्रुप', 'common.unread': 'अनरीड', 'common.total': 'कुल', 'common.live': 'लाइव', 'common.indianLanguage': 'भारतीय भाषा', 'common.globalLanguage': 'वैश्विक भाषा',
-    'home.welcomeBack': 'वापसी पर स्वागत है, {name}', 'home.buildToday': 'आज अपना Echo बनाएं', 'home.deepFocus': 'गहरा फोकस', 'home.tools': 'टूल्स', 'home.progress': 'प्रगति', 'home.forYou': 'आपके लिए', 'home.trending': 'ट्रेंडिंग', 'home.following': 'फॉलोइंग', 'home.latest': 'नवीनतम', 'home.todayQuestion': 'आज का सवाल', 'home.tapToAnswer': 'जवाब दें', 'home.topConversations': 'मुख्य बातचीत', 'home.fromCommunity': 'कम्युनिटी से', 'home.liveNow': 'अभी लाइव', 'home.openChat': 'चैट खोलें',
+    'home.welcomeBack': 'वापसी पर स्वागत है, {name}', 'home.buildToday': 'आज अपना Echo बनाएं', 'home.deepFocus': 'गहरा फोकस', 'home.tools': 'टूल्स', 'home.progress': 'प्रगति', 'home.forYou': 'आपके लिए', 'home.trending': 'ट्रेंडिंग', 'home.following': 'फॉलोइंग', 'home.latest': 'नवीनतम', 'home.todayQuestion': 'आज का सवाल', 'home.tapToAnswer': 'जवाब दें', 'home.thoughtForToday': 'आज का विचार', 'home.dismissThought': 'आज का विचार हटाएं', 'home.topConversations': 'मुख्य बातचीत', 'home.fromCommunity': 'कम्युनिटी से', 'home.liveNow': 'अभी लाइव', 'home.openChat': 'चैट खोलें',
     'chat.title': 'Echo चैट', 'chat.aiChat': 'AI चैट', 'chat.messages': 'मैसेज', 'chat.privateConversations': 'निजी बातचीत', 'chat.newMessage': 'नया मैसेज', 'chat.newGroup': 'नया ग्रुप', 'chat.messagesThatMove': 'काम आने वाले मैसेज', 'chat.recent': 'हालिया', 'chat.viewAll': 'सब देखें', 'chat.allCaughtUp': 'सब ठीक है.', 'chat.quietNow': 'अभी शांत.', 'chat.askAnything': 'Echo से कुछ भी पूछें...', 'chat.emptyTitle': 'Echo आपकी किस चीज़ में मदद करे?', 'chat.avoidPrivate': 'AI prompts में निजी बातें न डालें.', 'chat.moveTarget': 'लक्ष्य बढ़ाएं', 'chat.draftEcho': 'Echo ड्राफ्ट', 'chat.openTools': 'टूल्स खोलें',
     'welcome.eyebrow': 'Echo में स्वागत', 'welcome.startTitle': 'सोच को आवाज़ दें.', 'welcome.startBody': 'दैनिक सवाल का जवाब दें. कोई सेटअप नहीं.', 'welcome.shareTake': 'अपना विचार शेयर करें', 'welcome.skipNow': 'अभी छोड़ें', 'welcome.thatsEcho': 'यही Echo है.', 'welcome.enterEcho': 'Echo में जाएं',
     'mini.echoWorkspace': 'Echo वर्कस्पेस', 'mini.echoActions': 'Echo एक्शन', 'mini.liveContext': 'लाइव संदर्भ', 'mini.tools': 'टूल्स', 'mini.switchApp': 'ऐप बदलें', 'mini.minimize': 'छोटा करें', 'mini.pickerTitle': 'मिनी ऐप्स', 'mini.pickTool': 'फ्लोट करने के लिए टूल चुनें', 'mini.echoAi': 'Echo AI',
     'settings.title': 'सेटिंग्स', 'settings.subtitle': 'प्रोफाइल, प्राइवेसी, फीड और Echo AI को एक जगह से सेट करें.', 'settings.editProfile': 'प्रोफाइल', 'settings.targetTools': 'लक्ष्य', 'settings.aiMemory': 'AI मेमोरी', 'settings.groups.all': 'सब', 'settings.groups.essentials': 'जरूरी', 'settings.groups.privacy': 'प्राइवेसी', 'settings.groups.display': 'डिस्प्ले', 'settings.groups.feed': 'फीड', 'settings.groups.ai': 'AI', 'settings.groups.data': 'डेटा', 'settings.groups.support': 'सहायता', 'settings.sections.languageRegion': 'भाषा और क्षेत्र', 'settings.appLanguage': 'ऐप भाषा', 'settings.appLanguageSubtitle': 'नेविगेशन, मुख्य स्क्रीन और Echo जवाबों की भाषा', 'settings.contentLanguage': 'कंटेंट भाषा', 'settings.chooseAppLanguage': 'ऐप भाषा चुनें', 'settings.chooseContentLanguage': 'कंटेंट भाषा चुनें', 'settings.languageChanged': 'भाषा बदल गई',
+    'daily.title': 'आज का सवाल', 'daily.noQuestion': 'आज कोई सवाल नहीं. कल फिर आएं — हर रोज़ आधी रात को नया सवाल आता है.', 'daily.lockGate': 'अपना जवाब दें, फिर देखें बाकी Echo ने आज क्या जवाब दिया.', 'daily.viewRecentTitle': 'सबके जवाब', 'daily.viewFollowingTitle': 'जिन्हें आप फॉलो करते हैं', 'daily.viewDivergentTitle': 'सबसे अलग विचार', 'daily.answerOne': '{count} जवाब', 'daily.answerMany': '{count} जवाब', 'daily.recent': 'हालिया', 'daily.following': 'फॉलोइंग', 'daily.divergent': 'अलग', 'daily.divergentDesc': 'दिन की आम राय से हर विचार कितना दूर है, उसके हिसाब से — सबसे साहसी सबसे पहले.', 'daily.divergentEmpty': 'जैसे-जैसे ज़्यादा लोग जवाब देंगे, अलग-राय रैंकिंग बनेगी. बाद में देखें आज के सबसे साहसी विचार.', 'daily.followingEmpty': 'आप जिन्हें फॉलो करते हैं, उनमें से किसी ने अभी जवाब नहीं दिया. और लोगों को फॉलो करें, या बाद में देखें.', 'daily.recentEmpty': 'आज पहला जवाब आपका है. बाद में देखें बाकी लोग इस पर क्या सोचते हैं.', 'daily.divergentBadge': '{value}% अलग', 'daily.submit': 'भेजें', 'daily.update': 'अपडेट', 'daily.today': 'आज', 'daily.dayOne': '{count} दिन', 'daily.dayMany': '{count} दिन', 'daily.yourAnswer': 'आपका जवाब', 'daily.yourAnswerEdit': 'आपका जवाब (कभी भी बदल सकते हैं)', 'daily.placeholder': 'अपनी बात एक-दो वाक्य में कहें…', 'daily.answerSaved': 'आपका जवाब दर्ज हो गया.', 'daily.submitFailed': 'भेज नहीं पाए',
+    'feed.follow': 'फॉलो', 'feed.viewProfile': 'प्रोफाइल देखें', 'feed.showLess': 'ऐसा कम दिखाएं', 'feed.notInterested': 'दिलचस्पी नहीं', 'feed.report': 'रिपोर्ट', 'feed.mute': '@{username} को म्यूट करें', 'feed.unmute': '@{username} को अनम्यूट करें', 'feed.bookmarked': 'सेव किया', 'feed.removedBookmark': 'सेव हटाया', 'feed.reechoed': 'री-इको किया!', 'feed.removedReecho': 'री-इको हटाया', 'feed.lessLikeThis': 'ठीक है — ऐसा कम', 'feed.hidden': 'छुपाया', 'feed.mutedToast': '@{username} म्यूट', 'feed.unmutedToast': '@{username} अनम्यूट',
+    'notif.title': 'गतिविधि', 'notif.readAll': 'सब पढ़ा', 'notif.today': 'आज', 'notif.thisWeek': 'इस हफ्ते', 'notif.earlier': 'पहले', 'notif.filterAll': 'सभी', 'notif.filterUnread': 'अनरीड', 'notif.filterMentions': 'मेंशन', 'notif.filterReplies': 'जवाब', 'notif.filterFollows': 'फॉलो', 'notif.allCaught': 'सब देख लिया!', 'notif.noActivity': 'अभी कोई गतिविधि नहीं', 'notif.noUnread': 'कोई अनरीड नोटिफिकेशन नहीं.', 'notif.emptyBody': 'जब लोग आपके Echoes से जुड़ेंगे, यहाँ दिखेगा.',
+    'explore.recent': 'हालिया', 'explore.browseTopics': 'विषय ब्राउज़ करें', 'explore.clear': 'साफ करें', 'explore.trendingNow': 'अभी ट्रेंडिंग', 'explore.openFeed': 'फीड खोलें', 'explore.thinkingPartners': 'सोच के साथी', 'explore.thinkingPartnersSub': 'ऐसे लोग खोजें जो आपके विचार निखारें.', 'explore.peopleToStart': 'शुरुआत के लिए लोग', 'explore.searchPlaceholder': 'लोग, Echoes, विषय, टूल खोजें', 'explore.noMatches': 'अभी कोई मैच नहीं', 'explore.noMatchesSub': 'इससे व्यापक खोजें: "{query}". लोग, विषय, Echoes और टूल सब यहाँ खोज सकते हैं.', 'explore.people': 'लोग', 'explore.topics': 'विषय', 'explore.tools': 'टूल्स', 'explore.echoes': 'Echoes', 'explore.bestMatches': 'बेहतरीन मैच', 'explore.noFound': 'कोई परिणाम नहीं मिला', 'explore.broaden': 'सभी पर जाएं या कोई व्यापक शब्द आज़माएं.', 'explore.startExploring': 'खोजना शुरू करें',
+    'you.bookmarks': 'बुकमार्क', 'you.getVerified': 'वेरिफाई कराएं', 'you.about': 'बारे में',
+    'create.searchMention': 'नाम या @हैंडल से खोजें', 'create.placeholderWorking': 'आप किस पर काम कर रहे हैं?', 'create.placeholderMind': 'आपके मन में क्या है?',
+    'voice.title': 'आवाज़', 'voice.tapToSpeak': 'दबाएं और बोलें', 'voice.listening': 'सुन रहा हूँ…', 'voice.tapToStop': 'रोकने के लिए दबाएं', 'voice.thinking': 'समझ रहा हूँ…', 'voice.notUnderstood': 'माफ़ करें, समझ नहीं आया. फिर से बोलें.', 'voice.micDenied': 'आवाज़ के लिए माइक की अनुमति ज़रूरी है.', 'voice.failed': 'कुछ गड़बड़ हुई. फिर कोशिश करें.', 'voice.hint': 'बोलें: “होम”, “एक विचार पोस्ट करो”, “आज का सवाल”', 'voice.youSaid': 'आपने कहा', 'voice.openLabel': 'आवाज़ नियंत्रण',
   },
   bn: { 'nav.home': 'হোম', 'nav.explore': 'খুঁজুন', 'nav.market': 'মার্কেট', 'nav.chat': 'চ্যাট', 'nav.you': 'আপনি', 'nav.alerts': 'অ্যালার্ট', 'nav.tools': 'টুলস', 'common.start': 'শুরু', 'common.done': 'শেষ', 'common.back': 'ফিরুন', 'common.search': 'খুঁজুন', 'home.welcomeBack': 'আবার স্বাগতম, {name}', 'home.trending': 'ট্রেন্ডিং', 'home.following': 'ফলোইং', 'home.latest': 'সর্বশেষ', 'home.todayQuestion': 'আজকের প্রশ্ন', 'chat.messages': 'মেসেজ', 'chat.newMessage': 'নতুন মেসেজ', 'chat.newGroup': 'নতুন গ্রুপ', 'chat.askAnything': 'Echo-কে কিছু জিজ্ঞেস করুন...', 'welcome.startTitle': 'মন খুলে ভাবা শুরু করুন.', 'mini.pickerTitle': 'মিনি অ্যাপস', 'settings.title': 'সেটিংস', 'settings.appLanguage': 'অ্যাপ ভাষা', 'settings.contentLanguage': 'কনটেন্ট ভাষা' },
   te: { 'nav.home': 'హోమ్', 'nav.explore': 'అన్వేషణ', 'nav.market': 'మార్కెట్', 'nav.chat': 'చాట్', 'nav.you': 'మీరు', 'nav.alerts': 'అలర్ట్స్', 'nav.tools': 'టూల్స్', 'common.start': 'ప్రారంభించు', 'common.done': 'పూర్తి', 'common.back': 'వెనక్కి', 'common.search': 'వెతుకు', 'home.welcomeBack': 'మళ్లీ స్వాగతం, {name}', 'home.trending': 'ట్రెండింగ్', 'home.following': 'ఫాలోయింగ్', 'home.latest': 'తాజా', 'home.todayQuestion': 'ఈరోజు ప్రశ్న', 'chat.messages': 'సందేశాలు', 'chat.newMessage': 'కొత్త సందేశం', 'chat.newGroup': 'కొత్త గ్రూప్', 'chat.askAnything': 'Echo ని ఏదైనా అడగండి...', 'welcome.startTitle': 'ఆలోచనను బయట పెట్టి మొదలుపెట్టండి.', 'mini.pickerTitle': 'మినీ యాప్స్', 'settings.title': 'సెట్టింగ్స్', 'settings.appLanguage': 'యాప్ భాష', 'settings.contentLanguage': 'కంటెంట్ భాష' },
@@ -304,7 +413,20 @@ const TRANSLATIONS: Record<AppLanguageCode, TranslationMap> = {
 };
 
 export function translate(key: TranslationKey, language: AppLanguageCode): string {
-  return TRANSLATIONS[language]?.[key] ?? BASE_TRANSLATIONS[key] ?? key;
+  if (language === 'en') return BASE_TRANSLATIONS[key] ?? key;
+  // Hand-authored translation wins (highest quality).
+  const authored = TRANSLATIONS[language]?.[key];
+  if (authored !== undefined) return authored;
+  // Then a build-time generated translation (offline, no cost).
+  const generated = GENERATED[language]?.[key];
+  if (generated !== undefined) return generated;
+  // Then a runtime-translated + cached string.
+  const runtime = getRuntime(language, key);
+  if (runtime !== undefined) return runtime;
+  // Otherwise show English now and translate it in the background (cached after).
+  const english = BASE_TRANSLATIONS[key] ?? key;
+  ensureTranslation(language, key, english);
+  return english;
 }
 
 export function formatTranslation(
@@ -319,6 +441,9 @@ export function formatTranslation(
 
 export function useI18n() {
   const appLanguage = useAppStore(s => normalizeAppLanguage(s.appLanguage));
+  // Re-render when on-demand translations arrive so strings upgrade from their
+  // English fallback to the translated text in place.
+  const version = useI18nRuntime(s => s.version);
   return useMemo(() => {
     const language = languageByCode(appLanguage);
     const isRTL = Boolean(language.rtl);
@@ -337,7 +462,7 @@ export function useI18n() {
       rowDirection,
       t: (key: TranslationKey, params?: Record<string, string | number>) => formatTranslation(key, appLanguage, params),
     };
-  }, [appLanguage]);
+  }, [appLanguage, version]);
 }
 
 export function tStatic(

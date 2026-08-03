@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
 import { Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -17,14 +17,15 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query';
 import { ToastProvider, showToast } from '../components/ui/Toast';
-import { friendlyWriteError } from '../lib/mutationErrors';
+import { friendlyWriteError, isAuthSessionError } from '../lib/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/commandPalette';
-import { AuthListenerProvider } from '../lib/auth';
+import { AuthListenerProvider, useAuth, signOut } from '../lib/auth';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
+import { VoiceControl } from '../components/voice/VoiceControl';
 import { enableFreeze } from 'react-native-screens';
 import '../global.css';
 
@@ -63,6 +64,9 @@ const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     onError: (error, _vars, _ctx, mutation) => {
       const meta = mutation.options.meta as { bespoke?: boolean; silent?: boolean } | undefined;
+      // Invalid/expired session → recover by signing out; AuthGuard then routes
+      // to login. Runs even for bespoke flows so the broken session is cleared.
+      if (isAuthSessionError(error)) { void signOut(); }
       if (meta?.bespoke || meta?.silent) return;
       showToast(friendlyWriteError(error), '⚠️');
     },
@@ -89,6 +93,21 @@ const queryClient = new QueryClient({
 
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <AppErrorBoundary {...props} />;
+}
+
+// Live auth guard: if the session clears mid-session (e.g. refresh token revoked
+// or expired), route to login instead of stranding the user on a now-broken
+// authenticated screen. index.tsx only guards cold start.
+function AuthGuard() {
+  const { status } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+  useEffect(() => {
+    if (status !== 'signed-out') return;
+    if (pathname === '/' || pathname.startsWith('/auth') || pathname === '/welcome' || pathname === '/onboarding') return;
+    router.replace('/auth/login');
+  }, [status, pathname, router]);
+  return null;
 }
 
 /**
@@ -230,6 +249,7 @@ function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthListenerProvider />
+        <AuthGuard />
         <UniversalLinkRouter />
         <PomodoroRuntimeHost />
         <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
@@ -283,6 +303,7 @@ function RootLayout() {
           <Stack.Screen name="appeal" options={{ presentation: 'card' }} />
         </Stack>
         <FloatingMiniApp />
+        <VoiceControl />
         <TutorialOverlay />
         <ToastProvider />
         <ConsentBanner />
