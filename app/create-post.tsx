@@ -23,6 +23,7 @@ import { Avatar } from '../components/ui/Avatar';
 import { warmAvatarColor } from '../lib/avatarPalette';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { prependEchoToFeedCache, removeEchoFromFeedCache } from '../lib/queryCache';
@@ -61,6 +62,7 @@ export default function CreatePostScreen() {
   const qc = useQueryClient();
   const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string; firstEcho?: string }>();
   const { colors, radius, fontSizes, animation } = useTheme();
+  const { t } = useI18n();
   const { username, userId, avatarColor, avatarUrl, profilePhotoVisible, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore();
   const visibleAvatarUrl = profilePhotoVisible ? avatarUrl : '';
   const quotedId = typeof params.quoted === 'string' ? params.quoted : undefined;
@@ -523,7 +525,7 @@ export default function CreatePostScreen() {
               <TextInput
                 value={coAuthorQuery}
                 onChangeText={setCoAuthorQuery}
-                placeholder="Search by name or @handle"
+                placeholder={t('create.searchMention')}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -565,7 +567,7 @@ export default function CreatePostScreen() {
       </Modal>
 
       <ScreenHeader
-        title="New Echo"
+        title={t('nav.newEcho')}
         right={
           <AnimatedPressable
             onPress={() => { void handlePublish(); }} disabled={!canPublish} scaleValue={0.92} haptic="medium"
@@ -630,7 +632,7 @@ export default function CreatePostScreen() {
                   multiline
                   value={prompt}
                   onChangeText={setPrompt}
-                  placeholder="What are you working through?"
+                  placeholder={t('create.placeholderWorking')}
                   placeholderTextColor={colors.textMuted}
                   maxLength={500}
                   style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 120 }}
@@ -665,7 +667,7 @@ export default function CreatePostScreen() {
                   onSelectionChange={e => setResponseCaret(e.nativeEvent.selection.start)}
                   onFocus={() => setResponseFocused(true)}
                   onBlur={() => setResponseFocused(false)}
-                  placeholder="What's on your mind?"
+                  placeholder={t('create.placeholderMind')}
                   placeholderTextColor={colors.textMuted}
                   maxLength={1000}
                   style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 130 }}
