@@ -19,6 +19,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { dispatchVoiceIntent } from '../lib/voice/dispatch';
+import { speak, stopSpeaking } from '../lib/tts';
 import { VOICE_INTENTS, type VoicePhase, type VoiceResult } from '../lib/voice/types';
 
 // iOS records linear-PCM WAV (universally accepted by the speech model); Android
@@ -61,6 +62,7 @@ export function useVoiceCommand() {
 
   const start = useCallback(async () => {
     if (busyRef.current) return;
+    stopSpeaking(); // don't record our own read-back
     try {
       const { status } = await requestRecordingPermissionsAsync();
       if (status !== 'granted') {
@@ -108,10 +110,13 @@ export function useVoiceCommand() {
 
       const result = normalizeResult(data);
       const outcome = dispatchVoiceIntent(result);
+      const reply = outcome.reply || result.reply;
+      // Close the voice loop: speak the confirmation back in the user's language.
+      if (reply) speak(reply, { language: appLanguage, id: 'voice-reply' });
       setState({
         phase: 'done',
         transcript: result.transcript,
-        reply: outcome.reply || result.reply,
+        reply,
         error: outcome.handled ? null : 'not-understood',
       });
     } catch {
