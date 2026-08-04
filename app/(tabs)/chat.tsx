@@ -16,6 +16,7 @@ import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
 import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
 import { streamEchoAI, isRateLimitError } from '../../lib/api';
+import { speak } from '../../lib/tts';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { generateSessionTitle } from '../../lib/aiTitle';
@@ -1062,6 +1063,10 @@ export default function ChatScreen() {
           const final = useAppStore.getState().messagesBySession[currentSessionId] || [];
           const last = final[final.length - 1];
           if (last) updateSessionLastMessage(currentSessionId, last.content.slice(0, 80), final.length);
+          // Auto-read the AI reply aloud when enabled — hands-free conversation.
+          if (last && last.role === 'assistant' && useAppStore.getState().autoReadAiReplies) {
+            speak(last.content, { id: `msg:${last.id}` });
+          }
         }
       } catch (err: any) {
         if (isRateLimitError(err?.message)) {
