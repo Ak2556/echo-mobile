@@ -8,6 +8,7 @@ import { ArrowLeft, LockSimple, Sparkle, Lightning, Clock, Users } from 'phospho
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { LinkifiedText } from '../components/social/LinkifiedText';
+import { SpeakButton } from '../components/ui/SpeakButton';
 import { DailyQuestionComposer } from '../components/daily/DailyQuestionComposer';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
@@ -427,6 +428,7 @@ function AnswerCard({
               @{a.author.username}
             </Text>
           </View>
+          <SpeakButton text={a.answer} id={`dq-answer:${a.id}`} size={16} />
           {divergence != null && (
             <View style={{
               flexDirection: 'row',
