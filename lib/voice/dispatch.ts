@@ -6,6 +6,7 @@
 import { router } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
 import { APP_LANGUAGES, normalizeAppLanguage, type AppLanguageCode } from '../languages';
+import { readFeedAloud } from './readFeed';
 import type { VoiceResult } from './types';
 
 // Spoken destination → route. Accepts a few synonyms the model might emit.
@@ -56,6 +57,9 @@ export interface DispatchOutcome {
   handled: boolean;
   reply: string;
   navigatedTo?: string;
+  /** True when the intent already produced speech (e.g. read_feed), so the
+   *  caller should not also speak the reply. */
+  spoken?: boolean;
 }
 
 export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
@@ -105,9 +109,13 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
       if (router.canGoBack()) router.back();
       return { handled: true, reply };
 
-    // Reading the screen aloud needs on-device TTS, which ships with the next
-    // native build. For now we acknowledge; the overlay shows the text.
-    case 'read_feed':
+    // Read the current feed aloud, prefaced by the spoken reply. speakSequence
+    // handles the whole run, so the caller shouldn't also speak the reply.
+    case 'read_feed': {
+      const count = readFeedAloud(reply);
+      return { handled: count > 0, reply, spoken: true };
+    }
+
     case 'help':
       return { handled: true, reply };
 

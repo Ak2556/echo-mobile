@@ -211,6 +211,50 @@ export function speak(text: string, opts: SpeakOptions = {}) {
   }
 }
 
+/**
+ * Speak several segments back-to-back as one session, each detected and voiced
+ * in its OWN language — so a mixed-language run (e.g. reading a feed of Hindi and
+ * English posts) reads each post correctly. Powers "read the feed to me".
+ */
+export function speakSequence(segments: string[], opts: { id?: string; language?: AppLanguageCode } = {}) {
+  const cleaned = segments.map(cleanForSpeech).filter(Boolean);
+  if (!isTtsAvailable() || cleaned.length === 0) return;
+  loadVoices();
+  const id = opts.id ?? '_';
+  try { Speech!.stop(); } catch { /* ignore */ }
+  useTtsStore.setState({ speakingId: id });
+  const clear = () => {
+    if (useTtsStore.getState().speakingId === id) useTtsStore.setState({ speakingId: null });
+  };
+  const rate = currentRate();
+
+  // Flatten into per-language, sentence-sized utterances, preserving order.
+  const utterances: { text: string; locale: string; voice?: string }[] = [];
+  for (const seg of cleaned) {
+    const lang = opts.language ?? detectSpeechLang(seg, currentLanguage());
+    const locale = localeFor(lang);
+    const voice = bestVoice(locale);
+    for (const chunk of chunkText(seg)) utterances.push({ text: chunk, locale, voice });
+  }
+
+  try {
+    utterances.forEach((u, i) => {
+      const last = i === utterances.length - 1;
+      Speech!.speak(u.text, {
+        language: u.locale,
+        voice: u.voice,
+        rate,
+        pitch: 1.0,
+        onDone: last ? clear : undefined,
+        onStopped: last ? clear : undefined,
+        onError: clear,
+      });
+    });
+  } catch {
+    clear();
+  }
+}
+
 /** Stop any current speech. */
 export function stopSpeaking() {
   if (!isTtsAvailable()) return;
