@@ -99,6 +99,8 @@ export interface SettingsSlice {
   setFontScale: (v: number) => void;
   speechRate: number; // read-aloud speed (0.5 slow – 1.5 fast)
   setSpeechRate: (v: number) => void;
+  autoReadAiReplies: boolean; // speak each AI answer aloud as it finishes
+  setAutoReadAiReplies: (v: boolean) => void;
   // ── First-run hints ──
   hasSeenChatTabHint: boolean;
   setHasSeenChatTabHint: (v: boolean) => void;
@@ -239,6 +241,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setFontScale: (v) => { persistSet('fontScale', v); set({ fontScale: v }); },
     speechRate: persistGet<number>('speechRate', 1),
     setSpeechRate: (v) => { const r = Math.max(0.5, Math.min(1.5, v)); persistSet('speechRate', r); set({ speechRate: r }); },
+    autoReadAiReplies: b('autoReadAiReplies', false), setAutoReadAiReplies: s(set, 'autoReadAiReplies'),
     hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
     hasSeenChatEmptyHint: b('hasSeenChatEmptyHint', false), setHasSeenChatEmptyHint: s(set, 'hasSeenChatEmptyHint'),
     hasSentFirstEcho: b('hasSentFirstEcho', false), setHasSentFirstEcho: s(set, 'hasSentFirstEcho'),
