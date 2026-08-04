@@ -21,6 +21,7 @@ import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
 import { useInfiniteFeed, useTrendingEvolutions } from '../../hooks/queries/useFeed';
+import { setReadableFeed } from '../../lib/voice/readFeed';
 import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
@@ -414,6 +415,8 @@ export default function DiscoverScreen() {
   }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising, sensitiveContentFilter]);
 
   const popularItems = scopedAll;
+  // Publish visible posts so the voice "read the feed to me" command can read them.
+  useEffect(() => { setReadableFeed(popularItems); }, [popularItems]);
 
   // Tablet/desktop: the feed becomes a two-column masonry inside a wider
   // centred container; the header shares that same width so it aligns.
