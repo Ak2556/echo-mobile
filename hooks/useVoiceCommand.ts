@@ -111,8 +111,9 @@ export function useVoiceCommand() {
       const result = normalizeResult(data);
       const outcome = dispatchVoiceIntent(result);
       const reply = outcome.reply || result.reply;
-      // Close the voice loop: speak the confirmation back in the user's language.
-      if (reply) speak(reply, { language: appLanguage, id: 'voice-reply' });
+      // Close the voice loop: speak the confirmation back in the user's language,
+      // unless the intent already produced speech (e.g. read_feed reads posts).
+      if (reply && !outcome.spoken) speak(reply, { language: appLanguage, id: 'voice-reply' });
       setState({
         phase: 'done',
         transcript: result.transcript,
