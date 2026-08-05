@@ -77,6 +77,23 @@ export function normalizeAppLanguage(value: unknown): AppLanguageCode {
     : DEFAULT_APP_LANGUAGE;
 }
 
+/**
+ * Best-guess app language from the device locale, so a Hindi (or any supported)
+ * device opens the app in that language on first run instead of English. Used as
+ * the persisted-default fallback — an explicit choice always wins. Safe: falls
+ * back to English if the locale can't be read.
+ */
+export function detectDeviceLanguage(): AppLanguageCode {
+  try {
+    const locale = (Intl.DateTimeFormat().resolvedOptions().locale || 'en').toLowerCase();
+    const primary = locale.split('-')[0];
+    const match = APP_LANGUAGES.find(l => l.code === primary);
+    return match ? match.code : DEFAULT_APP_LANGUAGE;
+  } catch {
+    return DEFAULT_APP_LANGUAGE;
+  }
+}
+
 export function languageByCode(code: AppLanguageCode): LanguageOption {
   return APP_LANGUAGES.find(language => language.code === code) ?? APP_LANGUAGES[0];
 }
