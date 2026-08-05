@@ -901,6 +901,8 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={SpeakerHigh} label="Auto-read AI replies" subtitle="Speak each answer aloud when it finishes" right={SwitchEl(s.autoReadAiReplies, s.setAutoReadAiReplies)} />
             {divider}
+            <SettingsRow theme={theme} icon={SpeakerHigh} label="Auto-read messages" subtitle="Read incoming DMs aloud while a chat is open" right={SwitchEl(s.autoReadMessages, s.setAutoReadMessages)} />
+            {divider}
             <SettingsRow theme={theme} icon={Bell} label="Notification Preferences" subtitle="Customize which notifications you receive" onPress={() => router.push('/notification-prefs')} />
             {divider}
             <SettingsRow theme={theme} icon={Lock} iconColor="#B08536" label="Private Account" subtitle="Safer default while you're learning the app" right={SwitchEl(s.privateAccount, handlePrivateAccount)} />

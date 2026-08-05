@@ -1786,6 +1786,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
   } = useAppStore();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const readReceipts = useAppStore(s => s.readReceipts);
+  const autoReadMessages = useAppStore(s => s.autoReadMessages);
   const { colors, radius, isUserOnline, reduceAnimations } = useTheme();
 
   const [text, setText] = useState(() => id ? persistGet<string>('chat:draft:' + id, '') : '');
@@ -1799,6 +1800,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
   const [catchupLoading, setCatchupLoading] = useState(false);
   const [effect, setEffect] = useState<EffectKind | null>(null);
   const lastEffectIdRef = useRef<string | null>(null);
+  const lastReadIdRef = useRef<string | null>(null);
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const [activeMessage, setActiveMessage] = useState<NormalizedMessage | null>(null);
   const [savedMsgs, setSavedMsgs] = useState<SavedMessage[]>(() => {
@@ -2057,6 +2059,19 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
     const fx = detectEffect(newest.content);
     if (fx) setEffect(fx);
   }, [messages, myId]);
+
+  // Auto-read incoming messages aloud while the conversation is open (opt-in) —
+  // hands-free messaging. Only fresh, text messages from the other person.
+  useEffect(() => {
+    if (!autoReadMessages || !isTtsAvailable()) return;
+    const newest = messages[messages.length - 1];
+    if (!newest || newest.senderId === myId || newest.deletedAt || !newest.content) return;
+    if (newest.kind !== 'text') return; // skip image / voice / echo payloads
+    if (lastReadIdRef.current === newest.id) return;
+    lastReadIdRef.current = newest.id;
+    if (new Date(newest.createdAt).getTime() < openedAtRef.current - 2000) return; // not history
+    speak(newest.content, { id: `dm:${newest.id}` });
+  }, [messages, myId, autoReadMessages]);
 
   // Track unread arrivals while scrolled up; clear the moment you reach bottom.
   useEffect(() => {
