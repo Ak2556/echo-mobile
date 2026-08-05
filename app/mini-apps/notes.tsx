@@ -12,6 +12,7 @@ import {
   Tag, TextB, Trash, X,
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
@@ -180,6 +181,7 @@ function NoteEditor({
   onClose: () => void;
 }) {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const isNew = !note;
   const [title, setTitle] = useState(note?.title ?? '');
@@ -238,7 +240,7 @@ function NoteEditor({
             borderBottomColor: colors.glassBorder,
           }}>
             <AnimatedPressable onPress={() => { save(); onClose(); }} scaleValue={0.9} haptic="light">
-              <Text style={{ color, fontSize: 15, fontWeight: '800' }}>Done</Text>
+              <Text style={{ color, fontSize: 15, fontWeight: '800' }}>{tt('Done')}</Text>
             </AnimatedPressable>
             <ScrollView
               horizontal
@@ -278,10 +280,10 @@ function NoteEditor({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                  {isNew ? 'Capture note' : 'Edit note'}
+                  {isNew ? tt('Capture note') : tt('Edit note')}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
-                  {words} words · {body.length} chars{stats.total ? ` · ${stats.done}/${stats.total} done` : ''}
+                  {words} {tt('words')} · {body.length} {tt('chars')}{stats.total ? ` · ${stats.done}/${stats.total} ${tt('done')}` : ''}
                 </Text>
               </View>
             </View>
@@ -304,7 +306,7 @@ function NoteEditor({
                   }}
                 >
                   <Sparkle color={template.color} size={14} weight="fill" />
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{template.label}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt(template.label)}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -312,7 +314,7 @@ function NoteEditor({
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="Note title"
+              placeholder={tt('Note title')}
               placeholderTextColor={colors.textMuted}
               style={{ color: colors.text, fontSize: 28, fontWeight: '900', marginBottom: 16, padding: 0 }}
               multiline
@@ -320,11 +322,11 @@ function NoteEditor({
 
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800', marginBottom: 6 }}>Folder</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800', marginBottom: 6 }}>{tt('Folder')}</Text>
                 <TextInput
                   value={folder}
                   onChangeText={setFolder}
-                  placeholder="Inbox"
+                  placeholder={tt('Inbox')}
                   placeholderTextColor={colors.textMuted}
                   style={{
                     color: colors.text,
@@ -339,7 +341,7 @@ function NoteEditor({
                 />
               </View>
               <View style={{ flex: 1.5 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800', marginBottom: 6 }}>Tags</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800', marginBottom: 6 }}>{tt('Tags')}</Text>
                 <TextInput
                   value={tags}
                   onChangeText={setTags}
@@ -372,7 +374,7 @@ function NoteEditor({
                 <MiniChip
                   key={item.id}
                   accent={color}
-                  label={item.label}
+                  label={tt(item.label)}
                   active={kind === item.id}
                   onPress={() => setKind(item.id as NonNullable<Note['kind']>)}
                   icon={item.icon}
@@ -383,17 +385,17 @@ function NoteEditor({
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
               <AnimatedPressable onPress={() => append('- [ ] ')} haptic="light" style={{ flex: 1 }}>
                 <GlassPanel variant="light" borderRadius={14} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>Add checkbox</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Add checkbox')}</Text>
                 </GlassPanel>
               </AnimatedPressable>
               <AnimatedPressable onPress={() => append('## ')} haptic="light" style={{ flex: 1 }}>
                 <GlassPanel variant="light" borderRadius={14} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>Heading</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Heading')}</Text>
                 </GlassPanel>
               </AnimatedPressable>
               <AnimatedPressable onPress={() => append('- ')} haptic="light" style={{ flex: 1 }}>
                 <GlassPanel variant="light" borderRadius={14} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>Bullet</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Bullet')}</Text>
                 </GlassPanel>
               </AnimatedPressable>
             </View>
@@ -401,7 +403,7 @@ function NoteEditor({
             <TextInput
               value={body}
               onChangeText={setBody}
-              placeholder="Start writing, paste research, plan tasks, or make a checklist..."
+              placeholder={tt('Start writing, paste research, plan tasks, or make a checklist...')}
               placeholderTextColor={colors.textMuted}
               style={{
                 color: colors.text,
@@ -447,6 +449,7 @@ function NoteCard({
   onDelete: () => void;
 }) {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const stats = checklistStats(note.body);
   const words = countWords(note.body);
   const progress = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
@@ -483,7 +486,7 @@ function NoteCard({
               {note.favorite ? <Star color="#B08536" size={15} weight="fill" /> : null}
             </View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }} numberOfLines={1}>
-              {folderName(note)} · {formatDate(note.updatedAt)} · {words} words
+              {folderName(note)} · {formatDate(note.updatedAt)} · {words} {tt('words')}
             </Text>
           </View>
         </View>
@@ -497,7 +500,7 @@ function NoteCard({
         {stats.total > 0 ? (
           <View style={{ marginTop: 14 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800' }}>Checklist</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{tt('Checklist')}</Text>
               <Text style={{ color: note.color, fontSize: 12, fontWeight: '900' }}>{stats.done}/{stats.total} · {progress}%</Text>
             </View>
             <View style={{ height: 7, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
@@ -525,12 +528,12 @@ function NoteCard({
             style={{ flex: 1 }}
           >
             {[
-              { key: 'pin', label: note.pinned ? 'Unpin note' : 'Pin note', icon: <PushPin color={note.pinned ? note.color : colors.textMuted} size={16} weight={note.pinned ? 'fill' : 'regular'} />, onPress: onPin },
-              { key: 'favorite', label: note.favorite ? 'Remove favorite' : 'Add to favorites', icon: <Star color={note.favorite ? '#B08536' : colors.textMuted} size={16} weight={note.favorite ? 'fill' : 'regular'} />, onPress: onFavorite },
-              { key: 'share', label: 'Share note', icon: <ShareNetwork color={colors.textMuted} size={16} />, onPress: onShare },
-              { key: 'copy', label: 'Duplicate note', icon: <Copy color={colors.textMuted} size={16} />, onPress: onDuplicate },
-              { key: 'archive', label: note.archived ? 'Restore note' : 'Archive note', icon: <Archive color={note.archived ? note.color : colors.textMuted} size={16} />, onPress: onArchive },
-              { key: 'delete', label: 'Delete note', icon: <Trash color={colors.textMuted} size={16} />, onPress: onDelete },
+              { key: 'pin', label: note.pinned ? tt('Unpin note') : tt('Pin note'), icon: <PushPin color={note.pinned ? note.color : colors.textMuted} size={16} weight={note.pinned ? 'fill' : 'regular'} />, onPress: onPin },
+              { key: 'favorite', label: note.favorite ? tt('Remove favorite') : tt('Add to favorites'), icon: <Star color={note.favorite ? '#B08536' : colors.textMuted} size={16} weight={note.favorite ? 'fill' : 'regular'} />, onPress: onFavorite },
+              { key: 'share', label: tt('Share note'), icon: <ShareNetwork color={colors.textMuted} size={16} />, onPress: onShare },
+              { key: 'copy', label: tt('Duplicate note'), icon: <Copy color={colors.textMuted} size={16} />, onPress: onDuplicate },
+              { key: 'archive', label: note.archived ? tt('Restore note') : tt('Archive note'), icon: <Archive color={note.archived ? note.color : colors.textMuted} size={16} />, onPress: onArchive },
+              { key: 'delete', label: tt('Delete note'), icon: <Trash color={colors.textMuted} size={16} />, onPress: onDelete },
             ].map(action => (
               <AnimatedPressable
                 key={action.key}
@@ -557,7 +560,7 @@ function NoteCard({
             onPress={onPublish}
             haptic="medium"
             accessibilityRole="button"
-            accessibilityLabel="Publish note as an Echo"
+            accessibilityLabel={tt('Publish note as an Echo')}
             style={{
               paddingHorizontal: 13,
               height: 34,
@@ -579,6 +582,7 @@ function NoteCard({
 
 export default function NotesApp() {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const router = useRouter();
   const accent = '#B08536'; // ochre — warm editorial palette
   const [notes, setNotes] = useState<Note[]>([]);
@@ -664,7 +668,7 @@ export default function NotesApp() {
     const existing = notes.find(x => x.id === n.id);
     const updated = existing ? notes.map(x => x.id === n.id ? n : x) : [n, ...notes];
     persist(updated);
-    showToast(existing ? 'Note updated' : 'Note saved', 'Saved');
+    showToast(existing ? tt('Note updated') : tt('Note saved'), tt('Saved'));
   };
 
   const mutateNote = (id: string, update: (note: Note) => Note, toast?: string) => {
@@ -674,16 +678,16 @@ export default function NotesApp() {
   };
 
   const deleteNote = (id: string) => {
-    Alert.alert('Delete note?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => persist(notes.filter(n => n.id !== id)) },
+    Alert.alert(tt('Delete note?'), tt('This cannot be undone.'), [
+      { text: tt('Cancel'), style: 'cancel' },
+      { text: tt('Delete'), style: 'destructive', onPress: () => persist(notes.filter(n => n.id !== id)) },
     ]);
   };
 
   const duplicateNote = (note: Note) => {
     const now = new Date().toISOString();
-    persist([{ ...note, id: `${Date.now()}`, title: `${note.title} copy`, pinned: false, createdAt: now, updatedAt: now }, ...notes]);
-    showToast('Note duplicated');
+    persist([{ ...note, id: `${Date.now()}`, title: `${note.title} ${tt('copy')}`, pinned: false, createdAt: now, updatedAt: now }, ...notes]);
+    showToast(tt('Note duplicated'));
   };
 
   const shareNote = (n: Note) => {
@@ -702,38 +706,38 @@ export default function NotesApp() {
       style={{ backgroundColor: accent, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', gap: 7 }}
     >
       <Plus color="#fff" size={16} weight="bold" />
-      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>New</Text>
+      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>{tt('New')}</Text>
     </AnimatedPressable>
   );
 
   return (
     <MiniAppShell
-      title="Notes"
-      subtitle={activeNotes.length > 0 ? `${activeNotes.length} active · ${totalWords} words` : 'Capture ideas, tasks, research'}
+      title={tt('Notes')}
+      subtitle={activeNotes.length > 0 ? `${activeNotes.length} ${tt('active')} · ${totalWords} ${tt('words')}` : tt('Capture ideas, tasks, research')}
       headerRight={NewBtn}
       bottomPad={56}
     >
       <MiniCommandDeck
         accent={accent}
-        title="Knowledge capture system"
-        subtitle="Ideas, drafts, recall."
+        title={tt('Knowledge capture system')}
+        subtitle={tt('Ideas, drafts, recall.')}
         metrics={[
-          { label: 'Active', value: `${activeNotes.length}`, detail: 'notes' },
-          { label: 'Words', value: `${totalWords}`, detail: 'saved' },
-          { label: 'Lists', value: `${checklistCount}`, detail: 'checklists' },
+          { label: tt('Active'), value: `${activeNotes.length}`, detail: tt('notes') },
+          { label: tt('Words'), value: `${totalWords}`, detail: tt('saved') },
+          { label: tt('Lists'), value: `${checklistCount}`, detail: tt('checklists') },
         ]}
-        chips={['Templates', 'Folders', 'Echo drafts']}
+        chips={[tt('Templates'), tt('Folders'), tt('Echo drafts')]}
       />
 
       <EdgeFeaturePanel
         appName="Notes"
         accent={accent}
-        headline="Turn notes into outcomes"
-        caption="Use saved ideas as coaching context, progress proof, or public Echo drafts."
+        headline={tt('Turn notes into outcomes')}
+        caption={tt('Use saved ideas as coaching context, progress proof, or public Echo drafts.')}
         metrics={[
-          { label: 'Active', value: `${activeNotes.length}` },
-          { label: 'Words', value: `${totalWords}` },
-          { label: 'Folders', value: `${Math.max(0, folders.length - 1)}` },
+          { label: tt('Active'), value: `${activeNotes.length}` },
+          { label: tt('Words'), value: `${totalWords}` },
+          { label: tt('Folders'), value: `${Math.max(0, folders.length - 1)}` },
         ]}
         prompt="Review my notes and help me choose the next strongest action, idea, or Echo to publish."
         shareText={`Notes progress: ${activeNotes.length} active notes, ${totalWords} words, ${pinnedCount} pinned, ${favoriteCount} favorites.`}
@@ -757,9 +761,9 @@ export default function NotesApp() {
             }}
           >
             <Sparkle color={template.color} size={18} weight={template.id === 'blank' ? 'regular' : 'fill'} />
-            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 9 }}>{template.label}</Text>
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 9 }}>{tt(template.label)}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
-              {template.folder}
+              {tt(template.folder)}
             </Text>
           </AnimatedPressable>
         ))}
@@ -770,7 +774,7 @@ export default function NotesApp() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search notes, tags, folders..."
+          placeholder={tt('Search notes, tags, folders...')}
           placeholderTextColor={colors.textMuted}
           style={{ flex: 1, color: colors.text, fontSize: 15, padding: 0 }}
         />
@@ -788,7 +792,7 @@ export default function NotesApp() {
           { id: 'archive', label: 'Archive', icon: <Archive color={view === 'archive' ? '#fff' : colors.textMuted} size={14} /> },
           { id: 'all', label: 'All', icon: <FunnelSimple color={view === 'all' ? '#fff' : colors.textMuted} size={14} /> },
         ].map(item => (
-          <MiniChip key={item.id} accent={accent} label={item.label} active={view === item.id} onPress={() => setView(item.id as NoteView)} icon={item.icon} />
+          <MiniChip key={item.id} accent={accent} label={tt(item.label)} active={view === item.id} onPress={() => setView(item.id as NoteView)} icon={item.icon} />
         ))}
       </ScrollView>
 
@@ -797,7 +801,7 @@ export default function NotesApp() {
           <MiniChip
             key={folder}
             accent={accent}
-            label={folder}
+            label={tt(folder)}
             active={folderFilter === folder}
             onPress={() => setFolderFilter(folder)}
             icon={<FolderOpen color={folderFilter === folder ? '#fff' : colors.textMuted} size={14} />}
@@ -808,7 +812,7 @@ export default function NotesApp() {
           { id: 'oldest', label: 'Oldest' },
           { id: 'title', label: 'A-Z' },
         ].map(mode => (
-          <MiniChip key={mode.id} accent={accent} label={mode.label} active={sortMode === mode.id} onPress={() => setSortMode(mode.id as SortMode)} />
+          <MiniChip key={mode.id} accent={accent} label={tt(mode.label)} active={sortMode === mode.id} onPress={() => setSortMode(mode.id as SortMode)} />
         ))}
       </ScrollView>
 
@@ -816,9 +820,9 @@ export default function NotesApp() {
         <MiniEmptyState
           accent={accent}
           icon={<NotePencil color={colors.textMuted} size={44} weight="duotone" />}
-          title={search ? 'No matching notes' : view === 'archive' ? 'Archive is empty' : 'No notes yet'}
-          subtitle={search ? 'Try another word, folder, or tag.' : 'Start with a template or capture a blank note.'}
-          actionLabel={search ? undefined : 'Create note'}
+          title={search ? tt('No matching notes') : view === 'archive' ? tt('Archive is empty') : tt('No notes yet')}
+          subtitle={search ? tt('Try another word, folder, or tag.') : tt('Start with a template or capture a blank note.')}
+          actionLabel={search ? undefined : tt('Create note')}
           onAction={search ? undefined : () => openNew()}
         />
       ) : (
@@ -828,9 +832,9 @@ export default function NotesApp() {
               <NoteCard
                 note={note}
                 onOpen={() => openNote(note)}
-                onPin={() => mutateNote(note.id, n => ({ ...n, pinned: !n.pinned }), note.pinned ? 'Unpinned' : 'Pinned')}
-                onFavorite={() => mutateNote(note.id, n => ({ ...n, favorite: !n.favorite }), note.favorite ? 'Removed favorite' : 'Favorited')}
-                onArchive={() => mutateNote(note.id, n => ({ ...n, archived: !n.archived, pinned: n.archived ? n.pinned : false }), note.archived ? 'Restored' : 'Archived')}
+                onPin={() => mutateNote(note.id, n => ({ ...n, pinned: !n.pinned }), note.pinned ? tt('Unpinned') : tt('Pinned'))}
+                onFavorite={() => mutateNote(note.id, n => ({ ...n, favorite: !n.favorite }), note.favorite ? tt('Removed favorite') : tt('Favorited'))}
+                onArchive={() => mutateNote(note.id, n => ({ ...n, archived: !n.archived, pinned: n.archived ? n.pinned : false }), note.archived ? tt('Restored') : tt('Archived'))}
                 onDuplicate={() => duplicateNote(note)}
                 onShare={() => shareNote(note)}
                 onPublish={() => publishAsEcho(note)}

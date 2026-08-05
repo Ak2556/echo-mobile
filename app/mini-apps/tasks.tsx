@@ -7,6 +7,7 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniChip, MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { showToast } from '../../components/ui/Toast';
 import {
   TaskItem, TaskPriority, loadTasks, saveTasks, taskStats,
@@ -45,6 +46,7 @@ const DUE_OPTIONS = [
 
 export default function TasksScreen() {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const accent = '#5E748B'; // dusk — warm editorial palette
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [title, setTitle] = useState('');
@@ -114,7 +116,7 @@ export default function TasksScreen() {
     // Drop the keyboard so the freshly-added task is visible in the list below —
     // otherwise the composer keeps focus and it looks like nothing happened.
     Keyboard.dismiss();
-    showToast(reminderId ? 'Task added · reminder set' : 'Task added', 'Tasks');
+    showToast(reminderId ? tt('Task added · reminder set') : tt('Task added'), tt('Tasks'));
   };
 
   const toggle = (task: TaskItem) => {
@@ -132,23 +134,23 @@ export default function TasksScreen() {
   };
 
   return (
-    <MiniAppShell title="Tasks" subtitle="Action">
+    <MiniAppShell title={tt('Tasks')} subtitle={tt('Action')}>
       <MiniCommandDeck
         accent={accent}
-        title="Your execution queue"
-        subtitle="Priorities, dates, action."
+        title={tt('Your execution queue')}
+        subtitle={tt('Priorities, dates, action.')}
         metrics={[
-          { label: 'Open', value: `${stats.open}`, detail: 'active' },
-          { label: 'Today', value: `${stats.dueToday}`, detail: 'due now' },
-          { label: 'High', value: `${stats.high}`, detail: 'priority' },
+          { label: tt('Open'), value: `${stats.open}`, detail: tt('active') },
+          { label: tt('Today'), value: `${stats.dueToday}`, detail: tt('due now') },
+          { label: tt('High'), value: `${stats.high}`, detail: tt('priority') },
         ]}
-        chips={['Plan next 3', 'Share progress', 'Break blockers']}
+        chips={[tt('Plan next 3'), tt('Share progress'), tt('Break blockers')]}
       />
       <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 12 }} style={{ marginBottom: 16 }}>
         <TextInput
           value={title}
           onChangeText={setTitle}
-          placeholder="Add a task..."
+          placeholder={tt('Add a task...')}
           placeholderTextColor={colors.textMuted}
           style={{ color: colors.text, fontSize: 17, fontWeight: '700', paddingVertical: 8 }}
           returnKeyType="done"
@@ -157,7 +159,7 @@ export default function TasksScreen() {
         <TextInput
           value={notes}
           onChangeText={setNotes}
-          placeholder="Optional note"
+          placeholder={tt('Optional note')}
           placeholderTextColor={colors.textMuted}
           style={{ color: colors.textSecondary, fontSize: 13, paddingVertical: 4 }}
         />
@@ -165,14 +167,14 @@ export default function TasksScreen() {
           {PRIORITIES.map(item => (
             <Pressable key={item.id} onPress={() => setPriority(item.id)}>
               <View style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: priority === item.id ? item.color : colors.surfaceHover }}>
-                <Text style={{ color: priority === item.id ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{item.label}</Text>
+                <Text style={{ color: priority === item.id ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{tt(item.label)}</Text>
               </View>
             </Pressable>
           ))}
           {DUE_OPTIONS.map(item => (
             <Pressable key={item.label} onPress={() => setDue(item.value)}>
               <View style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: due === item.value ? accent : colors.surfaceHover }}>
-                <Text style={{ color: due === item.value ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{item.label}</Text>
+                <Text style={{ color: due === item.value ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{tt(item.label)}</Text>
               </View>
             </Pressable>
           ))}
@@ -188,10 +190,10 @@ export default function TasksScreen() {
                 key={item.value}
                 onPress={() => { const next = active ? undefined : item.value; setTime(next); if (next) setRemind(true); }}
                 accessibilityRole="button"
-                accessibilityLabel={`Set time ${item.label}`}
+                accessibilityLabel={`${tt('Set time')} ${tt(item.label)}`}
               >
                 <View style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: active ? accent : colors.surfaceHover }}>
-                  <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{item.label}</Text>
+                  <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{tt(item.label)}</Text>
                 </View>
               </Pressable>
             );
@@ -199,11 +201,11 @@ export default function TasksScreen() {
           <Pressable
             onPress={() => setRemind(v => !v)}
             accessibilityRole="button"
-            accessibilityLabel={remind ? 'Turn reminder off' : 'Remind me'}
+            accessibilityLabel={remind ? tt('Turn reminder off') : tt('Remind me')}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: remind ? `${accent}` : colors.surfaceHover }}>
               {remind ? <Bell color="#fff" size={13} weight="fill" /> : <BellSlash color={colors.textSecondary} size={13} />}
-              <Text style={{ color: remind ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{remind ? 'Reminder on' : 'Remind me'}</Text>
+              <Text style={{ color: remind ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{remind ? tt('Reminder on') : tt('Remind me')}</Text>
             </View>
           </Pressable>
         </View>
@@ -211,7 +213,7 @@ export default function TasksScreen() {
         <Pressable onPress={add}>
           <View style={{ height: 48, borderRadius: 16, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <Plus color="#fff" size={18} weight="bold" />
-            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>Add task</Text>
+            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>{tt('Add task')}</Text>
           </View>
         </Pressable>
       </GlassPanel>
@@ -221,7 +223,7 @@ export default function TasksScreen() {
           <MiniChip
             key={item}
             accent={accent}
-            label={item.charAt(0).toUpperCase() + item.slice(1)}
+            label={tt(item.charAt(0).toUpperCase() + item.slice(1))}
             active={filter === item}
             onPress={() => setFilter(item)}
           />
@@ -244,7 +246,7 @@ export default function TasksScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
                     {task.reminderId && !task.done && <Bell color={accent} size={12} weight="fill" />}
                     <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>
-                      {task.due ? new Date(`${task.due}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'No due date'}
+                      {task.due ? new Date(`${task.due}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' }) : tt('No due date')}
                       {task.time ? ` · ${formatTaskTime(task.time)}` : ''}
                       {task.notes ? ` · ${task.notes}` : ''}
                     </Text>
@@ -262,8 +264,8 @@ export default function TasksScreen() {
           <MiniEmptyState
             accent={accent}
             icon={<CheckCircle color={colors.textMuted} size={40} weight="duotone" />}
-            title="Nothing here"
-            subtitle="Add the next task that actually moves something forward."
+            title={tt('Nothing here')}
+            subtitle={tt('Add the next task that actually moves something forward.')}
           />
         )}
       </View>
@@ -272,12 +274,12 @@ export default function TasksScreen() {
         appId="tasks"
         appName="Tasks"
         accent={accent}
-        headline="Turn intent into next actions"
-        caption="Keep the next step visible, then share progress or ask Echo to break down blockers."
+        headline={tt('Turn intent into next actions')}
+        caption={tt('Keep the next step visible, then share progress or ask Echo to break down blockers.')}
         metrics={[
-          { label: 'Open', value: `${stats.open}` },
-          { label: 'Due today', value: `${stats.dueToday}` },
-          { label: 'High priority', value: `${stats.high}` },
+          { label: tt('Open'), value: `${stats.open}` },
+          { label: tt('Due today'), value: `${stats.dueToday}` },
+          { label: tt('High priority'), value: `${stats.high}` },
         ]}
         prompt="Review my open tasks and help me pick the next 3 actions for today."
         shareText={`Tasks: ${stats.open} open, ${stats.dueToday} due today, ${stats.high} high priority.`}
