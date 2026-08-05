@@ -102,17 +102,28 @@ export interface SpeakOptions {
  * this the engine literally reads "asterisk asterisk" and full URLs aloud.
  */
 export function cleanForSpeech(input: string): string {
-  let s = input ?? '';
-  s = s.replace(/```[\s\S]*?```/g, '. ');          // fenced code blocks → pause
-  s = s.replace(/`([^`]+)`/g, '$1');               // inline code → its text
-  s = s.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ');      // images → nothing
-  s = s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');    // links → link text
-  s = s.replace(/https?:\/\/\S+/g, ' ');           // bare URLs → nothing
-  s = s.replace(/^\s{0,3}#{1,6}\s+/gm, '');         // heading markers
-  s = s.replace(/[@#](\w+)/g, '$1');               // @mentions / #tags → the word
-  s = s.replace(/[*_~`>|]/g, '');                  // leftover Markdown symbols
-  s = s.replace(/\s+/g, ' ').trim();
-  return s;
+  const raw = input ?? '';
+  try {
+    let s = raw;
+    s = s.replace(/```[\s\S]*?```/g, '. ');          // fenced code blocks → pause
+    s = s.replace(/`([^`]+)`/g, '$1');               // inline code → its text
+    s = s.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ');      // images → nothing
+    s = s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');    // links → link text
+    s = s.replace(/https?:\/\/\S+/g, ' ');           // bare URLs → nothing
+    s = s.replace(/^\s{0,3}#{1,6}\s+/gm, '');         // heading markers
+    s = s.replace(/[@#](\w+)/g, '$1');               // @mentions / #tags → the word
+    s = s.replace(/[*_~`>|]/g, '');                  // leftover Markdown symbols
+    // Emoji & pictographs read as their names ("fire fire fire") — drop them.
+    s = s.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{2B00}-\u{2BFF}]/gu, '');
+    s = s.replace(/[\uFE0F\u200D\u2190-\u21FF]/g, ''); // variation selectors, ZWJ, arrows
+    s = s.replace(/([!?.,])\1{2,}/g, '$1');           // "!!!" → "!"
+    s = s.replace(/\n{2,}/g, '. ');                   // paragraph breaks → a pause
+    s = s.replace(/\s+/g, ' ').trim();
+    return s;
+  } catch {
+    // Any regex-engine hiccup — fall back to a simple collapse.
+    return raw.replace(/\s+/g, ' ').trim();
+  }
 }
 
 /**
@@ -120,7 +131,7 @@ export function cleanForSpeech(input: string): string {
  * can truncate or choke on very long single utterances, especially on iOS;
  * queueing sentence-sized pieces is reliable and lets stop() cut in cleanly.
  */
-function chunkText(text: string, max = 180): string[] {
+export function chunkText(text: string, max = 180): string[] {
   const sentences = text.match(/[^.!?。！？]+[.!?。！？]+|\S[^.!?。！？]*$/g) ?? [text];
   const chunks: string[] = [];
   let buf = '';
