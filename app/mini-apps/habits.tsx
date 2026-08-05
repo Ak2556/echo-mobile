@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Notifications from 'expo-notifications';
@@ -425,11 +425,28 @@ export default function HabitsApp() {
   const { colors, font } = useTheme();
   const accent = '#C65F3F'; // terracotta — warm editorial palette
   const [habits, setHabits] = useState<Habit[]>([]);
-  useEffect(() => { loadHabits().then(setHabits); }, []);
+  const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
+  const didVoiceRef = React.useRef(false);
   useFocusEffect(
     React.useCallback(() => {
-      loadHabits().then(setHabits);
-    }, []),
+      loadHabits().then((loaded) => {
+        // Voice: "add habit meditate" navigates here with ?vAction=add&vValue=…
+        const a = typeof vAction === 'string' ? vAction.toLowerCase() : '';
+        const text = typeof vValue === 'string' ? vValue.trim() : '';
+        if (!didVoiceRef.current && a === 'add' && text) {
+          didVoiceRef.current = true;
+          const habit: Habit = {
+            id: `${Date.now()}`, name: text, marker: HABIT_MARKERS[0], color: HABIT_COLORS[0],
+            completedDates: [], log: [], reminder: null, createdAt: new Date().toISOString(),
+          };
+          const next = [habit, ...loaded];
+          setHabits(next);
+          void saveHabits(next);
+        } else {
+          setHabits(loaded);
+        }
+      });
+    }, [vAction, vValue]),
   );
   const [showAdd, setShowAdd] = useState(false);
   const [proof, setProof] = useState<{ habitId: string; date: string } | null>(null);
