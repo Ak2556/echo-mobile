@@ -40,6 +40,7 @@ import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { FONT_STYLE_OPTIONS, fontStyleLabel } from '../lib/fontPresets';
 import { APP_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguageCode } from '../lib/languages';
 import { useI18n } from '../lib/i18n';
+import { speak } from '../lib/tts';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@echo.app';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@echo.app';
@@ -805,7 +806,10 @@ export default function SettingsScreen() {
   const rateLabel = (r: number) => (r <= 0.85 ? 'Slow' : r >= 1.15 ? 'Fast' : 'Normal');
   const cycleSpeechRate = () => {
     const idx = RATE_STEPS.findIndex((x) => Math.abs(x - s.speechRate) < 0.06);
-    s.setSpeechRate(RATE_STEPS[(idx + 1) % RATE_STEPS.length] ?? 1);
+    const next = RATE_STEPS[(idx + 1) % RATE_STEPS.length] ?? 1;
+    s.setSpeechRate(next);
+    // Immediately preview the new speed so the choice is audible, not abstract.
+    speak(t('voice.sample'), { language: s.appLanguage, rate: next });
   };
   const showGroup = (...groups: SettingsGroup[]) => activeGroup === 'all' || groups.includes(activeGroup);
 
