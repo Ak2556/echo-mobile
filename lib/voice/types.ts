@@ -2,14 +2,18 @@
 // the server prompt in supabase/functions/voice-command/index.ts.
 
 export const VOICE_INTENTS = [
-  'navigate',
-  'create_post',
+  'navigate',          // args.destination
+  'open_mini_app',     // args.app — open a tool (pomodoro, habits, notes…)
+  'create_post',       // args.text
   'open_daily_question',
-  'search',
-  'open_ai_chat',
-  'set_language',
-  'go_back',
+  'search',            // args.query
+  'open_ai_chat',      // args.prompt
+  'set_feed',          // args.scope — for you / trending / following / latest
+  'set_language',      // args.language
+  'set_theme',         // args.theme — dark / light
   'read_feed',
+  'read_notifications',
+  'go_back',
   'help',
   'unknown',
 ] as const;

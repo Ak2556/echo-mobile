@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
@@ -12,6 +12,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { setReadableNotifications } from '../../lib/voice/readNotifications';
 import { Notification } from '../../types';
 import { usePerformanceProfile } from '../../lib/performance';
 import { useResponsiveLayout } from '../../lib/responsive';
@@ -110,6 +111,11 @@ export default function NotificationsScreen() {
 
   // Resolve notification source: real DB data when remote, seed data otherwise
   const notifications = (remote && remoteNotifications) ? remoteNotifications : storeNotifications;
+
+  // Publish readable rows so the voice "read my notifications" command can read them.
+  useEffect(() => {
+    setReadableNotifications(notifications.map(n => `${n.fromDisplayName || n.fromUsername || ''} ${labelForType(n)}`.trim()));
+  }, [notifications]);
 
   // Type filter: each chip narrows by Notification['type'].
   const typeFilter = (n: Notification) => {
