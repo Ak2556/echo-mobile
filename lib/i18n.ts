@@ -326,6 +326,13 @@ const COMMON_TRANSLATIONS: Record<Exclude<AppLanguageCode, 'en'>, TranslationMap
     'you.bookmarks': 'बुकमार्क', 'you.getVerified': 'वेरिफाई कराएं', 'you.about': 'बारे में',
     'create.searchMention': 'नाम या @हैंडल से खोजें', 'create.placeholderWorking': 'आप किस पर काम कर रहे हैं?', 'create.placeholderMind': 'आपके मन में क्या है?',
     'voice.title': 'आवाज़', 'voice.tapToSpeak': 'दबाएं और बोलें', 'voice.listening': 'सुन रहा हूँ…', 'voice.tapToStop': 'रोकने के लिए दबाएं', 'voice.thinking': 'समझ रहा हूँ…', 'voice.notUnderstood': 'माफ़ करें, समझ नहीं आया. फिर से बोलें.', 'voice.micDenied': 'आवाज़ के लिए माइक की अनुमति ज़रूरी है.', 'voice.failed': 'कुछ गड़बड़ हुई. फिर कोशिश करें.', 'voice.hint': 'बोलें: “टाइमर चालू करो”, “डार्क मोड”, “फीड पढ़ो”, “इसे लाइक करो”', 'voice.youSaid': 'आपने कहा', 'voice.openLabel': 'आवाज़ नियंत्रण', 'voice.sample': 'यह पढ़ने की गति है.',
+    // Extended coverage — remaining keyed strings (hand-authored, offline)
+    'home.title': 'Echo', 'home.aboutFeed': 'इस फ़ीड के बारे में', 'home.feedWorks': 'यह फ़ीड कैसे काम करती है', 'home.forYouDesc': 'आपके पढ़ने और रुचियों के अनुसार।', 'home.trendingDesc': 'सहभागिता और नएपन के आधार पर।', 'home.followingDesc': 'सिर्फ़ उन लोगों के echo जिन्हें आप फॉलो करते हैं।', 'home.latestDesc': 'हर सार्वजनिक echo समय के क्रम में।', 'home.communityQuietTitle': 'अभी यहां कुछ नहीं है', 'home.communityQuietBody': 'एक चैट शुरू करें, फिर जो रखना चाहें उसे प्रकाशित करें।', 'home.followingQuiet': 'आपकी फॉलोइंग फ़ीड शांत है', 'home.followingQuietBody': 'इसे भरने के लिए कुछ लोगों को फॉलो करें।', 'home.findPeople': 'फॉलो करने के लिए लोग ढूंढें', 'home.suggestedPeople': 'सुझाए गए लोग', 'home.yourStories': 'आपकी कहानियां', 'home.evolvingNow': 'अभी विकसित हो रहा', 'home.perspectives': 'नज़रिए', 'home.newEchoes': '{count} नए {noun} · रिफ्रेश के लिए टैप करें', 'home.nextStartChat': 'Echo के साथ बातचीत शुरू करें', 'home.nextStartChatBody': 'अपने AI साथी के साथ कुछ सोच-विचार करें।', 'home.nextShareEcho': 'अपना पहला Echo साझा करें', 'home.nextShareEchoBody': 'एक सवाल या राय काफ़ी है।', 'home.nextDaily': 'आज के सवाल का जवाब दें', 'home.nextDailyBody': 'दो मिनट। सोचने की लय बनाएं।',
+    'chat.subtitle': '{model} · {count} संदेश', 'chat.privateChat': 'निजी चैट', 'chat.sharedProgress': 'साझा प्रगति', 'chat.threadsClear': '{count} थ्रेड · साफ़।', 'chat.unreadWaiting': '{count} अपठित।', 'chat.startUseful': 'कुछ उपयोगी शुरू करें।', 'chat.unreadMessagesWaiting': '{count} अपठित {noun} इंतज़ार में।', 'chat.nothingYet': 'अभी यहां कुछ नहीं है।', 'chat.emptyInboxBody': 'जिसकी सोच आपको पसंद हो, उसे ढूंढें और नमस्ते कहें।', 'chat.findPeople': 'लोग ढूंढें', 'chat.emptyBody': '{target}, एक ड्राफ्ट, या किसी फैसले से शुरू करें।', 'chat.miniApps': 'मिनी ऐप्स', 'chat.turnIdea': 'एक विचार को पोस्ट में बदलें', 'chat.promptTarget': 'आज मेरे लक्ष्य पर सार्थक प्रगति करने में मेरी मदद करें। सिर्फ़ ज़रूरी बात पूछें, फिर मुझे अगले 3 काम बताएं।', 'chat.promptDraft': 'इस कच्चे विचार को एक साफ़ Echo में बदलने में मेरी मदद करें जिस पर लोग जवाब देना चाहें: ', 'chat.promptPrefix': 'Echo, इसमें मेरी मदद करें ',
+    'common.dm': 'डीएम', 'common.loading': 'लोड हो रहा है', 'common.private': 'निजी', 'nav.commandPalette': 'कमांड पैलेट',
+    'mini.replaces': '{items} की जगह लेता है', 'mini.floatTool': 'एक टूल फ्लोट करें', 'mini.echoAiPitch': 'पूछें, योजना बनाएं, लिखें, तय करें।',
+    'settings.notificationsOn': 'सूचनाएं चालू', 'settings.notificationsOff': 'सूचनाएं बंद', 'settings.privateAccount': 'निजी खाता', 'settings.publicAccount': 'सार्वजनिक खाता', 'settings.contentLanguageSubtitle': 'इस भाषा में पोस्ट और सुझावों को प्राथमिकता दें', 'settings.replayTour': 'ऐप टूर फिर से देखें', 'settings.replayTourSubtitle': 'गाइडेड वॉकथ्रू फिर से दिखाएं',
+    'welcome.streakStarted': 'दिन {count} की लय शुरू', 'welcome.takeIn': 'बढ़िया — आपकी राय दर्ज हो गई', 'welcome.revealBody': 'रोज़ एक सवाल आपका सहारा है। वहां से, तैयार होने पर और गहराई में जाएं।', 'welcome.seeAnswers': 'देखें दूसरों ने कैसे जवाब दिया', 'welcome.seeAnswersBody': 'लोगों की असली राय, अब जब आपने अपनी साझा कर दी।', 'welcome.goDeeper': 'Echo AI के साथ और गहराई में जाएं', 'welcome.goDeeperBody': 'AI साथी के साथ सोचें, फिर जो रखने लायक हो उसे प्रकाशित करें।', 'welcome.setGoal': 'एक लक्ष्य तय करें', 'welcome.setGoalBody': 'Echo आपके अगले लक्ष्य के अनुसार टूल और प्रॉम्प्ट ढालता है।',
   },
   bn: { 'nav.home': 'হোম', 'nav.explore': 'খুঁজুন', 'nav.market': 'মার্কেট', 'nav.chat': 'চ্যাট', 'nav.you': 'আপনি', 'nav.alerts': 'অ্যালার্ট', 'nav.tools': 'টুলস', 'common.start': 'শুরু', 'common.done': 'শেষ', 'common.back': 'ফিরুন', 'common.search': 'খুঁজুন', 'home.welcomeBack': 'আবার স্বাগতম, {name}', 'home.trending': 'ট্রেন্ডিং', 'home.following': 'ফলোইং', 'home.latest': 'সর্বশেষ', 'home.todayQuestion': 'আজকের প্রশ্ন', 'chat.messages': 'মেসেজ', 'chat.newMessage': 'নতুন মেসেজ', 'chat.newGroup': 'নতুন গ্রুপ', 'chat.askAnything': 'Echo-কে কিছু জিজ্ঞেস করুন...', 'welcome.startTitle': 'মন খুলে ভাবা শুরু করুন.', 'mini.pickerTitle': 'মিনি অ্যাপস', 'settings.title': 'সেটিংস', 'settings.appLanguage': 'অ্যাপ ভাষা', 'settings.contentLanguage': 'কনটেন্ট ভাষা' },
   te: { 'nav.home': 'హోమ్', 'nav.explore': 'అన్వేషణ', 'nav.market': 'మార్కెట్', 'nav.chat': 'చాట్', 'nav.you': 'మీరు', 'nav.alerts': 'అలర్ట్స్', 'nav.tools': 'టూల్స్', 'common.start': 'ప్రారంభించు', 'common.done': 'పూర్తి', 'common.back': 'వెనక్కి', 'common.search': 'వెతుకు', 'home.welcomeBack': 'మళ్లీ స్వాగతం, {name}', 'home.trending': 'ట్రెండింగ్', 'home.following': 'ఫాలోయింగ్', 'home.latest': 'తాజా', 'home.todayQuestion': 'ఈరోజు ప్రశ్న', 'chat.messages': 'సందేశాలు', 'chat.newMessage': 'కొత్త సందేశం', 'chat.newGroup': 'కొత్త గ్రూప్', 'chat.askAnything': 'Echo ని ఏదైనా అడగండి...', 'welcome.startTitle': 'ఆలోచనను బయట పెట్టి మొదలుపెట్టండి.', 'mini.pickerTitle': 'మినీ యాప్స్', 'settings.title': 'సెట్టింగ్స్', 'settings.appLanguage': 'యాప్ భాష', 'settings.contentLanguage': 'కంటెంట్ భాష' },
@@ -430,6 +437,20 @@ export function translate(key: TranslationKey, language: AppLanguageCode): strin
   return english;
 }
 
+/**
+ * Translate an ARBITRARY UI string (not a registered key) via the runtime layer,
+ * keyed by the text itself. Lets any hardcoded string become translatable simply
+ * by wrapping it in `tt('...')` — no key bookkeeping. Uses the runtime cache +
+ * on-demand translation (same infra as keyed strings), so it's Hindi-first too.
+ */
+export function ttRaw(text: string, language: AppLanguageCode): string {
+  if (language === 'en' || !text || !text.trim()) return text;
+  const runtime = getRuntime(language, text);
+  if (runtime !== undefined) return runtime;
+  ensureTranslation(language, text, text);
+  return text;
+}
+
 export function formatTranslation(
   key: TranslationKey,
   language: AppLanguageCode,
@@ -462,6 +483,8 @@ export function useI18n() {
       textDirection,
       rowDirection,
       t: (key: TranslationKey, params?: Record<string, string | number>) => formatTranslation(key, appLanguage, params),
+      // Translate any raw UI string (no key needed) — auto-translated + cached.
+      tt: (text: string) => ttRaw(text, appLanguage),
     };
   }, [appLanguage, version]);
 }
