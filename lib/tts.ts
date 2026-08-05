@@ -82,8 +82,9 @@ export function detectSpeechLang(text: string, fallback: AppLanguageCode): AppLa
 // Reactive speaking state so UI can show which item is being read (or if any).
 interface TtsState {
   speakingId: string | null;
+  paused: boolean;
 }
-export const useTtsStore = create<TtsState>(() => ({ speakingId: null }));
+export const useTtsStore = create<TtsState>(() => ({ speakingId: null, paused: false }));
 
 export interface SpeakOptions {
   /** Voice locale to use. Defaults to the app's current language. */
@@ -180,9 +181,9 @@ export function speak(text: string, opts: SpeakOptions = {}) {
   loadVoices();
   const id = opts.id ?? '_';
   try { Speech!.stop(); } catch { /* ignore */ }
-  useTtsStore.setState({ speakingId: id });
+  useTtsStore.setState({ speakingId: id, paused: false });
   const clear = () => {
-    if (useTtsStore.getState().speakingId === id) useTtsStore.setState({ speakingId: null });
+    if (useTtsStore.getState().speakingId === id) useTtsStore.setState({ speakingId: null, paused: false });
   };
 
   // Explicit language wins; otherwise pick from the text's script so content
@@ -222,9 +223,9 @@ export function speakSequence(segments: string[], opts: { id?: string; language?
   loadVoices();
   const id = opts.id ?? '_';
   try { Speech!.stop(); } catch { /* ignore */ }
-  useTtsStore.setState({ speakingId: id });
+  useTtsStore.setState({ speakingId: id, paused: false });
   const clear = () => {
-    if (useTtsStore.getState().speakingId === id) useTtsStore.setState({ speakingId: null });
+    if (useTtsStore.getState().speakingId === id) useTtsStore.setState({ speakingId: null, paused: false });
   };
   const rate = currentRate();
 
@@ -259,7 +260,19 @@ export function speakSequence(segments: string[], opts: { id?: string; language?
 export function stopSpeaking() {
   if (!isTtsAvailable()) return;
   try { Speech!.stop(); } catch { /* ignore */ }
-  useTtsStore.setState({ speakingId: null });
+  useTtsStore.setState({ speakingId: null, paused: false });
+}
+
+/** Pause the current speech (iOS; no-op where unsupported). */
+export function pauseSpeaking() {
+  if (!isTtsAvailable() || useTtsStore.getState().speakingId == null) return;
+  try { Speech!.pause?.(); useTtsStore.setState({ paused: true }); } catch { /* unsupported */ }
+}
+
+/** Resume paused speech. */
+export function resumeSpeaking() {
+  if (!isTtsAvailable()) return;
+  try { Speech!.resume?.(); useTtsStore.setState({ paused: false }); } catch { /* unsupported */ }
 }
 
 /** Toggle: speak `text`, or stop if this same id is already speaking. */
