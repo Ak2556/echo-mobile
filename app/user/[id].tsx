@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Share, View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
+import { SpeakButton } from '../../components/ui/SpeakButton';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
 import { FlashList } from '@shopify/flash-list';
@@ -133,7 +134,12 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         </View>
         <Text style={{ color: colors.textMuted, fontSize: 14, marginBottom: 8 }}>@{user.username}</Text>
         {online && <Text style={{ color: colors.success, fontSize: 12, marginBottom: 8 }}>Active now</Text>}
-        {user.bio ? <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 14, marginBottom: 16 }}>{user.bio}</Text> : null}
+        {user.bio ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16, paddingHorizontal: 20 }}>
+            <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 14, flexShrink: 1 }}>{user.bio}</Text>
+            <SpeakButton text={user.bio} id={`bio:${user.id}`} size={15} />
+          </View>
+        ) : null}
         {creatorProfile?.topics?.length ? (
           <View className="flex-row flex-wrap justify-center gap-2 mb-4">
             {creatorProfile.topics.map((topic: string) => (
