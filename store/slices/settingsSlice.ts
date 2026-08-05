@@ -3,7 +3,7 @@ import type { EchoAIModel } from '../../lib/api';
 import type { CurrencyCode } from '../../lib/currency';
 import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/targetCategories';
 import type { FontStyleName } from '../../lib/fontPresets';
-import { DEFAULT_APP_LANGUAGE, normalizeAppLanguage, type AppLanguageCode } from '../../lib/languages';
+import { DEFAULT_APP_LANGUAGE, detectDeviceLanguage, normalizeAppLanguage, type AppLanguageCode } from '../../lib/languages';
 
 const DEFAULT_ACCENT_COLOR = '#7A8B4E';
 const LEGACY_DEFAULT_ACCENT_COLOR = '#E06030';
@@ -216,7 +216,9 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     autoplayStories: b('autoplayStories', true), setAutoplayStories: s(set, 'autoplayStories'),
     dataSaver: b('dataSaver', false), setDataSaver: s(set, 'dataSaver'),
     sensitiveContentFilter: b('sensitiveContentFilter', true), setSensitiveContentFilter: s(set, 'sensitiveContentFilter'),
-    appLanguage: normalizeAppLanguage(persistGet<AppLanguageCode>('appLanguage', DEFAULT_APP_LANGUAGE)),
+    // First run with no saved choice → follow the device language (so a Hindi
+    // phone opens in Hindi). An explicit pick persists and always wins.
+    appLanguage: normalizeAppLanguage(persistGet<AppLanguageCode>('appLanguage', detectDeviceLanguage())),
     setAppLanguage: (v) => { persistSet('appLanguage', normalizeAppLanguage(v)); set({ appLanguage: normalizeAppLanguage(v) }); },
     contentLanguage: persistGet('contentLanguage', 'English'),
     setContentLanguage: (v) => { persistSet('contentLanguage', v); set({ contentLanguage: v }); },
