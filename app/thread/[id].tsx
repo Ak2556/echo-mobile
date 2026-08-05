@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { Avatar } from '../../components/ui/Avatar';
+import { SpeakButton } from '../../components/ui/SpeakButton';
 import { IconButton } from '../../components/ui/IconButton';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { fetchRemoteEchoById, setPinnedEcho, deleteRemoteEcho } from '../../lib/supabaseEchoApi';
@@ -292,6 +293,11 @@ export default function ThreadDetailScreen() {
               <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small, fontFamily: 'Inter_600SemiBold' }}>{item.displayName || item.username}</Text>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
             </View>
+            <SpeakButton
+              text={[item.editorialTitle ?? item.prompt, item.authorNote, item.response].filter(Boolean).join('. ')}
+              id={`echo:${item.id}`}
+              size={20}
+            />
           </Pressable>
         </Animated.View>
 
