@@ -101,6 +101,8 @@ export interface SettingsSlice {
   setSpeechRate: (v: number) => void;
   autoReadAiReplies: boolean; // speak each AI answer aloud as it finishes
   setAutoReadAiReplies: (v: boolean) => void;
+  autoReadMessages: boolean; // speak incoming DMs aloud while a conversation is open
+  setAutoReadMessages: (v: boolean) => void;
   // ── First-run hints ──
   hasSeenChatTabHint: boolean;
   setHasSeenChatTabHint: (v: boolean) => void;
@@ -242,6 +244,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     speechRate: persistGet<number>('speechRate', 1),
     setSpeechRate: (v) => { const r = Math.max(0.5, Math.min(1.5, v)); persistSet('speechRate', r); set({ speechRate: r }); },
     autoReadAiReplies: b('autoReadAiReplies', false), setAutoReadAiReplies: s(set, 'autoReadAiReplies'),
+    autoReadMessages: b('autoReadMessages', false), setAutoReadMessages: s(set, 'autoReadMessages'),
     hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
     hasSeenChatEmptyHint: b('hasSeenChatEmptyHint', false), setHasSeenChatEmptyHint: s(set, 'hasSeenChatEmptyHint'),
     hasSentFirstEcho: b('hasSentFirstEcho', false), setHasSentFirstEcho: s(set, 'hasSentFirstEcho'),
