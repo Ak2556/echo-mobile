@@ -6,27 +6,32 @@
 import { router } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
 import { APP_LANGUAGES, normalizeAppLanguage, type AppLanguageCode } from '../languages';
+import { MINI_APP_CATALOG } from '../miniAppCatalog';
 import { readFeedAloud } from './readFeed';
+import { readNotificationsAloud } from './readNotifications';
 import type { VoiceResult } from './types';
 
-// Spoken destination → route. Accepts a few synonyms the model might emit.
+type FeedScope = 'semantic' | 'forYou' | 'following' | 'latest';
+
+// Spoken destination → route. Accepts a wide range of synonyms the model emits.
 const DESTINATIONS: Record<string, string> = {
-  home: '/(tabs)/home',
-  feed: '/(tabs)/home',
-  explore: '/(tabs)/explore',
-  discover: '/(tabs)/explore',
-  market: '/(tabs)/marketplace',
-  marketplace: '/(tabs)/marketplace',
-  chat: '/(tabs)/chat',
-  messages: '/(tabs)/chat',
-  you: '/(tabs)/you',
-  profile: '/(tabs)/you',
-  me: '/(tabs)/you',
-  alerts: '/(tabs)/notifications',
-  notifications: '/(tabs)/notifications',
-  settings: '/settings',
-  create: '/create-post',
-  post: '/create-post',
+  home: '/(tabs)/home', feed: '/(tabs)/home', timeline: '/(tabs)/home',
+  explore: '/(tabs)/explore', discover: '/(tabs)/explore', search: '/(tabs)/explore',
+  market: '/(tabs)/marketplace', marketplace: '/(tabs)/marketplace', shop: '/(tabs)/marketplace', store: '/(tabs)/marketplace',
+  chat: '/(tabs)/chat', ai: '/(tabs)/chat', assistant: '/(tabs)/chat',
+  messages: '/messages', dms: '/messages', inbox: '/messages',
+  you: '/(tabs)/you', profile: '/(tabs)/you', me: '/(tabs)/you', account: '/(tabs)/you',
+  alerts: '/(tabs)/notifications', notifications: '/(tabs)/notifications', activity: '/(tabs)/notifications',
+  settings: '/settings', preferences: '/settings', options: '/settings',
+  create: '/create-post', post: '/create-post', compose: '/create-post', write: '/create-post',
+  story: '/create-story',
+  bookmarks: '/bookmarks', saved: '/bookmarks',
+  followers: '/followers', following: '/followers',
+  tools: '/(tabs)/apps', apps: '/(tabs)/apps',
+  verify: '/get-verified', verification: '/get-verified', verified: '/get-verified',
+  badges: '/badges', quests: '/quests',
+  salons: '/salons',
+  upgrade: '/upgrade', tiers: '/upgrade', premium: '/upgrade',
 };
 
 function str(v: unknown): string {
@@ -53,6 +58,43 @@ function matchLanguage(spoken: string): AppLanguageCode | null {
   return null;
 }
 
+// Spoken tool name → mini-app route (exact, then contains, then synonyms).
+function matchMiniApp(spoken: string): string | null {
+  const q = spoken.trim().toLowerCase();
+  if (!q) return null;
+  for (const a of MINI_APP_CATALOG) {
+    if (a.id.toLowerCase() === q || a.name.toLowerCase() === q) return a.route as string;
+  }
+  for (const a of MINI_APP_CATALOG) {
+    if (q.includes(a.name.toLowerCase()) || a.name.toLowerCase().includes(q)) return a.route as string;
+  }
+  const SYN: Record<string, string> = {
+    timer: 'pomodoro', focus: 'pomodoro', money: 'expenses', expense: 'expenses', budget: 'expenses',
+    workout: 'fitness', gym: 'fitness', exercise: 'fitness', task: 'tasks', todo: 'tasks', note: 'notes',
+    habit: 'habits', shopping: 'shopping-list', calculator: 'calculator', calc: 'calculator',
+  };
+  for (const [k, id] of Object.entries(SYN)) {
+    if (q.includes(k)) { const a = MINI_APP_CATALOG.find((x) => x.id === id); if (a) return a.route as string; }
+  }
+  return null;
+}
+
+function matchFeedScope(spoken: string): FeedScope | null {
+  const q = spoken.trim().toLowerCase();
+  if (/for ?you|personal/.test(q)) return 'semantic';
+  if (/trend/.test(q)) return 'forYou';
+  if (/follow/.test(q)) return 'following';
+  if (/latest|recent|new/.test(q)) return 'latest';
+  return null;
+}
+
+function matchTheme(spoken: string): 'light' | 'midnight' | null {
+  const q = spoken.trim().toLowerCase();
+  if (/dark|night|black|amoled/.test(q)) return 'midnight';
+  if (/light|day|white|bright/.test(q)) return 'light';
+  return null;
+}
+
 export interface DispatchOutcome {
   handled: boolean;
   reply: string;
@@ -72,6 +114,33 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
       if (!route) return { handled: false, reply };
       router.push(route as never);
       return { handled: true, reply, navigatedTo: route };
+    }
+
+    case 'open_mini_app': {
+      const route = matchMiniApp(str(args.app));
+      if (!route) return { handled: false, reply };
+      router.push(route as never);
+      return { handled: true, reply, navigatedTo: route };
+    }
+
+    case 'set_feed': {
+      const scope = matchFeedScope(str(args.scope));
+      if (!scope) return { handled: false, reply };
+      router.push('/(tabs)/home' as never);
+      useAppStore.getState().setFeedScope(scope);
+      return { handled: true, reply };
+    }
+
+    case 'set_theme': {
+      const theme = matchTheme(str(args.theme));
+      if (!theme) return { handled: false, reply };
+      useAppStore.getState().setTheme(theme);
+      return { handled: true, reply };
+    }
+
+    case 'read_notifications': {
+      const count = readNotificationsAloud(reply);
+      return { handled: count > 0, reply, spoken: true };
     }
 
     case 'create_post': {
