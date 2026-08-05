@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore';
 import { DEFAULT_APP_LANGUAGE, languageByCode, normalizeAppLanguage, type AppLanguageCode } from './languages';
 import { ensureTranslation, getRuntime, useI18nRuntime } from './i18nRuntime';
 import { GENERATED } from './i18nGenerated';
+import { TT_PHRASES } from './i18nPhrases';
 
 const BASE_TRANSLATIONS = {
   'nav.home': 'Home',
@@ -445,6 +446,8 @@ export function translate(key: TranslationKey, language: AppLanguageCode): strin
  */
 export function ttRaw(text: string, language: AppLanguageCode): string {
   if (language === 'en' || !text || !text.trim()) return text;
+  const phrase = TT_PHRASES[language]?.[text];
+  if (phrase !== undefined) return phrase;
   const runtime = getRuntime(language, text);
   if (runtime !== undefined) return runtime;
   ensureTranslation(language, text, text);
