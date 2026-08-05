@@ -9,7 +9,41 @@ import { APP_LANGUAGES, normalizeAppLanguage, type AppLanguageCode } from '../la
 import { MINI_APP_CATALOG } from '../miniAppCatalog';
 import { readFeedAloud } from './readFeed';
 import { readNotificationsAloud } from './readNotifications';
+import { getVoiceActions, type PostAction } from './actions';
 import type { VoiceResult } from './types';
+
+// Spoken setting name → its boolean store setter. Covers the toggles users are
+// most likely to voice; the value is parsed on/off (or toggled if unspecified).
+const SETTINGS_MAP: Record<string, string> = {
+  notifications: 'setNotificationsEnabled', push: 'setNotificationsEnabled',
+  haptics: 'setHapticEnabled', vibration: 'setHapticEnabled',
+  sound: 'setSoundEnabled', sounds: 'setSoundEnabled', 'sound effects': 'setSoundEnabled',
+  'read receipts': 'setReadReceipts', 'online status': 'setOnlineStatus', 'activity status': 'setActivityStatus',
+  'compact feed': 'setCompactFeed', compact: 'setCompactFeed',
+  'data saver': 'setDataSaver', 'private account': 'setPrivateAccount', private: 'setPrivateAccount',
+  'reduce animations': 'setReduceAnimations', animations: 'setReduceAnimations',
+  'autoplay stories': 'setAutoplayStories', avatars: 'setShowAvatars', 'preview cards': 'setShowPreviewCards',
+  'pure black': 'setPureBlackBackground', 'auto save chats': 'setAutoSaveChats',
+  'stream responses': 'setStreamResponses', 'typing indicator': 'setShowTypingIndicator',
+  'proactive ai': 'setProactiveAiEnabled',
+  'auto read replies': 'setAutoReadAiReplies', 'auto read ai': 'setAutoReadAiReplies',
+  'auto read messages': 'setAutoReadMessages', 'read aloud messages': 'setAutoReadMessages',
+};
+
+// on / enable / true / yes → true; off / disable / false / no → false; else null (toggle).
+function parseOnOff(spoken: string): boolean | null {
+  const q = spoken.trim().toLowerCase();
+  if (/\b(on|enable|enabled|true|yes|start|turn on)\b/.test(q)) return true;
+  if (/\b(off|disable|disabled|false|no|stop|turn off)\b/.test(q)) return false;
+  return null;
+}
+
+function matchSetting(spoken: string): string | null {
+  const q = spoken.trim().toLowerCase();
+  if (SETTINGS_MAP[q]) return SETTINGS_MAP[q];
+  for (const key of Object.keys(SETTINGS_MAP)) if (q.includes(key)) return SETTINGS_MAP[key];
+  return null;
+}
 
 type FeedScope = 'semantic' | 'forYou' | 'following' | 'latest';
 
@@ -141,6 +175,41 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     case 'read_notifications': {
       const count = readNotificationsAloud(reply);
       return { handled: count > 0, reply, spoken: true };
+    }
+
+    case 'toggle_setting': {
+      const setter = matchSetting(str(args.setting));
+      if (!setter) return { handled: false, reply };
+      const state = useAppStore.getState() as unknown as Record<string, unknown>;
+      const key = setter.charAt(3).toLowerCase() + setter.slice(4); // setFooBar → fooBar
+      const desired = parseOnOff(str(args.value));
+      const value = desired ?? !(state[key] as boolean);
+      const fn = state[setter];
+      if (typeof fn !== 'function') return { handled: false, reply };
+      (fn as (v: boolean) => void)(value);
+      return { handled: true, reply };
+    }
+
+    case 'post_action': {
+      const action = str(args.action).toLowerCase();
+      const valid: PostAction[] = ['like', 'bookmark', 'repost', 'follow', 'open'];
+      const norm = action.includes('save') ? 'bookmark'
+        : action.includes('re-echo') || action.includes('reecho') || action.includes('share') ? 'repost'
+        : (valid.find((a) => action.includes(a)) ?? null);
+      if (!norm) return { handled: false, reply };
+      const did = getVoiceActions().postAction?.(norm as PostAction);
+      return { handled: !!did, reply };
+    }
+
+    case 'scroll': {
+      const dir = /up|top|back|previous/.test(str(args.direction).toLowerCase()) ? 'up' : 'down';
+      getVoiceActions().scroll?.(dir);
+      return { handled: true, reply };
+    }
+
+    case 'refresh': {
+      getVoiceActions().refresh?.();
+      return { handled: true, reply };
     }
 
     case 'create_post': {

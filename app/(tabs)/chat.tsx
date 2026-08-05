@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, usePathname, useFocusEffect, type Href } from 'expo-router';
+import { useRouter, usePathname, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -703,6 +703,8 @@ type ChatItem =
 
 export default function ChatScreen() {
   const router = useRouter();
+  const voiceParams = useLocalSearchParams<{ prompt?: string }>();
+  const sentVoicePromptRef = useRef<string | null>(null);
   const pathname = usePathname();
   const { colors, animation, reduceAnimations } = useTheme();
   const { t } = useI18n();
@@ -1129,6 +1131,16 @@ export default function ChatScreen() {
     },
     [accountUserId, aiModel, addMessage, currentSessionId, pathname, personaLearningEnabled, runStream, updateSessionTitle],
   );
+
+  // Voice: "ask Echo <question>" opens chat with a prompt param — auto-send it so
+  // speaking actually starts an AI conversation (paired with auto-read replies,
+  // it's a fully hands-free chat).
+  useEffect(() => {
+    const p = typeof voiceParams.prompt === 'string' ? voiceParams.prompt.trim() : '';
+    if (!p || sentVoicePromptRef.current === p || !currentSessionId) return;
+    sentVoicePromptRef.current = p;
+    handleSend(p);
+  }, [voiceParams.prompt, currentSessionId, handleSend]);
 
   const handleConfirm = useCallback(
     async (tool: ToolCallItem) => {

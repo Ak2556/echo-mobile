@@ -11,6 +11,10 @@ export const VOICE_INTENTS = [
   'set_feed',          // args.scope — for you / trending / following / latest
   'set_language',      // args.language
   'set_theme',         // args.theme — dark / light
+  'toggle_setting',    // args.setting + args.value (on/off) — any toggle
+  'post_action',       // args.action — like / bookmark / repost / follow / open the post in view
+  'scroll',            // args.direction — up / down
+  'refresh',
   'read_feed',
   'read_notifications',
   'go_back',
