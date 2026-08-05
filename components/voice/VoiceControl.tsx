@@ -139,7 +139,7 @@ export function VoiceControl() {
               </View>
             )}
 
-            {state.phase === 'idle' && (
+            {(state.phase === 'idle' || state.phase === 'listening') && !state.transcript && (
               <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('voice.hint')}</Text>
             )}
           </View>
