@@ -9,9 +9,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
+import { speak, isTtsAvailable } from '../../lib/tts';
 import {
   ArrowLeft, PaperPlaneTilt, Quotes, SealCheck, Flag,
-  Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple,
+  Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple, SpeakerHigh,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
   Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
@@ -1480,6 +1481,12 @@ function MessageActionSheet({
       label: 'Copy',
       icon: <Copy color={colors.text} size={17} weight="bold" />,
       onPress: onCopy,
+    } : null,
+    (isText && isTtsAvailable()) ? {
+      key: 'speak',
+      label: 'Read aloud',
+      icon: <SpeakerHigh color={colors.text} size={17} weight="bold" />,
+      onPress: () => { speak(message.content ?? '', { id: `dm:${message.id}` }); onClose(); },
     } : null,
     !isDeleted && !isPending ? {
       key: 'forward',
