@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import {
   Archive, CheckSquare, Clock, Copy, FileText, FolderOpen, FunnelSimple,
   MagnifyingGlass, NotePencil, Plus, PushPin, ShareNetwork, Sparkle, Star,
@@ -588,13 +588,29 @@ export default function NotesApp() {
   const [view, setView] = useState<NoteView>('active');
   const [folderFilter, setFolderFilter] = useState('All');
   const [sortMode, setSortMode] = useState<SortMode>('recent');
+  const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
+  const didVoiceRef = React.useRef(false);
 
   // useFocusEffect covers the initial focus too, so this is the single load
   // path — it also refreshes when returning from the editor or another tab.
   useFocusEffect(
     React.useCallback(() => {
-      loadNotes().then(setNotes);
-    }, []),
+      loadNotes().then((loaded) => {
+        // Voice: "add note <text>" navigates here with ?vAction=add&vValue=…
+        const a = typeof vAction === 'string' ? vAction.toLowerCase() : '';
+        const text = typeof vValue === 'string' ? vValue.trim() : '';
+        if (!didVoiceRef.current && a === 'add' && text) {
+          didVoiceRef.current = true;
+          const nowIso = new Date().toISOString();
+          const note: Note = { id: `${Date.now()}`, title: '', body: text, color: NOTE_COLORS[0], createdAt: nowIso, updatedAt: nowIso };
+          const next = [note, ...loaded];
+          setNotes(next);
+          void saveNotes(next);
+        } else {
+          setNotes(loaded);
+        }
+      });
+    }, [vAction, vValue]),
   );
 
   const folders = useMemo(() => {

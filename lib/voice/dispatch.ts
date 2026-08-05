@@ -28,13 +28,19 @@ const SETTINGS_MAP: Record<string, string> = {
   'proactive ai': 'setProactiveAiEnabled',
   'auto read replies': 'setAutoReadAiReplies', 'auto read ai': 'setAutoReadAiReplies',
   'auto read messages': 'setAutoReadMessages', 'read aloud messages': 'setAutoReadMessages',
+  // Hindi setting names
+  'नोटिफिकेशन': 'setNotificationsEnabled', 'सूचना': 'setNotificationsEnabled',
+  'साउंड': 'setSoundEnabled', 'आवाज़': 'setSoundEnabled', 'आवाज': 'setSoundEnabled', 'ध्वनि': 'setSoundEnabled',
+  'हैप्टिक': 'setHapticEnabled', 'वाइब्रेशन': 'setHapticEnabled', 'कंपन': 'setHapticEnabled',
+  'प्राइवेट': 'setPrivateAccount', 'निजी': 'setPrivateAccount', 'प्राइवेट अकाउंट': 'setPrivateAccount',
+  'रीड रिसीट': 'setReadReceipts', 'डेटा सेवर': 'setDataSaver', 'कॉम्पैक्ट': 'setCompactFeed',
 };
 
 // on / enable / true / yes → true; off / disable / false / no → false; else null (toggle).
 function parseOnOff(spoken: string): boolean | null {
   const q = spoken.trim().toLowerCase();
-  if (/\b(on|enable|enabled|true|yes|start|turn on)\b/.test(q)) return true;
-  if (/\b(off|disable|disabled|false|no|stop|turn off)\b/.test(q)) return false;
+  if (/\b(on|enable|enabled|true|yes|start|turn on)\b|चालू|ऑन|शुरू|खोलो|चाहिए/.test(q)) return true;
+  if (/\b(off|disable|disabled|false|no|stop|turn off)\b|बंद|ऑफ|रोको|मत/.test(q)) return false;
   return null;
 }
 
@@ -66,7 +72,29 @@ const DESTINATIONS: Record<string, string> = {
   badges: '/badges', quests: '/quests',
   salons: '/salons',
   upgrade: '/upgrade', tiers: '/upgrade', premium: '/upgrade',
+  // Hindi (Devanagari) fallbacks in case the model passes the word through.
+  'होम': '/(tabs)/home', 'घर': '/(tabs)/home', 'फ़ीड': '/(tabs)/home', 'फीड': '/(tabs)/home',
+  'खोज': '/(tabs)/explore', 'खोजें': '/(tabs)/explore', 'एक्सप्लोर': '/(tabs)/explore',
+  'मार्केट': '/(tabs)/marketplace', 'बाज़ार': '/(tabs)/marketplace', 'बाजार': '/(tabs)/marketplace',
+  'चैट': '/(tabs)/chat', 'मैसेज': '/messages', 'संदेश': '/messages', 'मैसेजेस': '/messages',
+  'प्रोफाइल': '/(tabs)/you', 'प्रोफ़ाइल': '/(tabs)/you',
+  'नोटिफिकेशन': '/(tabs)/notifications', 'सूचना': '/(tabs)/notifications', 'सूचनाएं': '/(tabs)/notifications', 'अलर्ट': '/(tabs)/notifications',
+  'सेटिंग': '/settings', 'सेटिंग्स': '/settings',
+  'बुकमार्क': '/bookmarks', 'सेव': '/bookmarks',
+  'फॉलोअर': '/followers', 'फॉलोअर्स': '/followers',
+  'टूल': '/(tabs)/apps', 'टूल्स': '/(tabs)/apps', 'औजार': '/(tabs)/apps',
+  'स्टोरी': '/create-story', 'बैज': '/badges', 'क्वेस्ट': '/quests',
 };
+
+// Exact match first, then "contains" so phrases like "home par jao" or a Hindi
+// word inside a sentence still resolve.
+function matchDestination(spoken: string): string | null {
+  const q = spoken.trim().toLowerCase();
+  if (!q) return null;
+  if (DESTINATIONS[q]) return DESTINATIONS[q];
+  for (const key of Object.keys(DESTINATIONS)) if (q.includes(key)) return DESTINATIONS[key];
+  return null;
+}
 
 function str(v: unknown): string {
   return typeof v === 'string' ? v.trim() : '';
@@ -106,6 +134,10 @@ function matchMiniApp(spoken: string): string | null {
     timer: 'pomodoro', focus: 'pomodoro', money: 'expenses', expense: 'expenses', budget: 'expenses',
     workout: 'fitness', gym: 'fitness', exercise: 'fitness', task: 'tasks', todo: 'tasks', note: 'notes',
     habit: 'habits', shopping: 'shopping-list', calculator: 'calculator', calc: 'calculator',
+    // Hindi
+    'टाइमर': 'pomodoro', 'पोमोडोरो': 'pomodoro', 'टास्क': 'tasks', 'काम': 'tasks', 'नोट': 'notes',
+    'आदत': 'habits', 'पैसा': 'expenses', 'खर्च': 'expenses', 'फिटनेस': 'fitness', 'कसरत': 'fitness',
+    'शॉपिंग': 'shopping-list', 'कैलकुलेटर': 'calculator', 'हिसाब': 'calculator',
   };
   for (const [k, id] of Object.entries(SYN)) {
     if (q.includes(k)) { const a = MINI_APP_CATALOG.find((x) => x.id === id); if (a) return a.route as string; }
@@ -115,17 +147,17 @@ function matchMiniApp(spoken: string): string | null {
 
 function matchFeedScope(spoken: string): FeedScope | null {
   const q = spoken.trim().toLowerCase();
-  if (/for ?you|personal/.test(q)) return 'semantic';
-  if (/trend/.test(q)) return 'forYou';
-  if (/follow/.test(q)) return 'following';
-  if (/latest|recent|new/.test(q)) return 'latest';
+  if (/for ?you|personal|आपके लिए|आपके लिये/.test(q)) return 'semantic';
+  if (/trend|ट्रेंड|ट्रेंडिंग/.test(q)) return 'forYou';
+  if (/follow|फॉलो|फ़ॉलो/.test(q)) return 'following';
+  if (/latest|recent|new|नवीनतम|हालिया|नया|ताज़ा/.test(q)) return 'latest';
   return null;
 }
 
 function matchTheme(spoken: string): 'light' | 'midnight' | null {
   const q = spoken.trim().toLowerCase();
-  if (/dark|night|black|amoled/.test(q)) return 'midnight';
-  if (/light|day|white|bright/.test(q)) return 'light';
+  if (/dark|night|black|amoled|डार्क|काला|रात|अंधेरा/.test(q)) return 'midnight';
+  if (/light|day|white|bright|लाइट|उजाला|सफेद|रोशनी/.test(q)) return 'light';
   return null;
 }
 
@@ -144,7 +176,7 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
 
   switch (intent) {
     case 'navigate': {
-      const route = DESTINATIONS[str(args.destination).toLowerCase()];
+      const route = matchDestination(str(args.destination));
       if (!route) return { handled: false, reply };
       router.push(route as never);
       return { handled: true, reply, navigatedTo: route };
@@ -199,17 +231,20 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
 
     case 'post_action': {
       const action = str(args.action).toLowerCase();
-      const valid: PostAction[] = ['like', 'bookmark', 'repost', 'follow', 'open'];
-      const norm = action.includes('save') ? 'bookmark'
-        : action.includes('re-echo') || action.includes('reecho') || action.includes('share') ? 'repost'
-        : (valid.find((a) => action.includes(a)) ?? null);
+      const norm: PostAction | null =
+        /like|लाइक|पसंद/.test(action) ? 'like'
+        : /bookmark|save|सेव|बुकमार्क/.test(action) ? 'bookmark'
+        : /repost|re-?echo|share|रीपोस्ट|शेयर/.test(action) ? 'repost'
+        : /follow|फॉलो/.test(action) ? 'follow'
+        : /open|खोल/.test(action) ? 'open'
+        : null;
       if (!norm) return { handled: false, reply };
-      const did = getVoiceActions().postAction?.(norm as PostAction);
+      const did = getVoiceActions().postAction?.(norm);
       return { handled: !!did, reply };
     }
 
     case 'scroll': {
-      const dir = /up|top|back|previous/.test(str(args.direction).toLowerCase()) ? 'up' : 'down';
+      const dir = /up|top|back|previous|ऊपर|पीछे|वापस/.test(str(args.direction).toLowerCase()) ? 'up' : 'down';
       getVoiceActions().scroll?.(dir);
       return { handled: true, reply };
     }
