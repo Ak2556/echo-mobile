@@ -4,6 +4,7 @@ import { type AudioPlayer } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
 import { AppState, View, Text, TextInput, Pressable, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { Play, Pause, ArrowCounterClockwise, GearSix, Fire, Minus, Plus, X, Lightning, Flag, Timer, TreeEvergreen, MusicNote, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import Animated, {
   cancelAnimation,
@@ -592,6 +593,8 @@ export default function PomodoroScreen() {
   const [seconds, setSeconds] = useState(DEFAULT_POMODORO_SETTINGS.focusMin * 60);
   const [running, setRunning] = useState(false);
   const [label, setLabel] = useState('');
+  const voiceAction = useLocalSearchParams<{ vAction?: string }>().vAction;
+  const didVoiceRef = useRef(false);
   const [showSettings, setShowSettings] = useState(false);
   const [draftTotalSecs, setDraftTotalSecs] = useState<number | null>(null);
   const [playingBeat, setPlayingBeat] = useState<FocusBeatId | null>(null);
@@ -845,6 +848,16 @@ export default function PomodoroScreen() {
   const startTimer = useCallback(() => {
     void beginActiveTimer(mode, seconds, label, totalSecs);
   }, [beginActiveTimer, label, mode, seconds, totalSecs]);
+
+  // Voice: "start a timer" / "stop timer" navigates here with ?vAction=…; act once.
+  useEffect(() => {
+    if (didVoiceRef.current) return;
+    const a = typeof voiceAction === 'string' ? voiceAction.toLowerCase() : '';
+    if (!a) return;
+    didVoiceRef.current = true;
+    if ((a === 'start' || a === 'begin') && !running) startTimer();
+    else if ((a === 'stop' || a === 'pause') && running) stopActiveTimer();
+  }, [voiceAction, running, startTimer, stopActiveTimer]);
 
   const switchMode = (m: Mode) => {
     stopActiveTimer();

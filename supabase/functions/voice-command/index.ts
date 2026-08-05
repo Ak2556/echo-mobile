@@ -59,7 +59,7 @@ const SYSTEM_PROMPT = `You are the voice controller for "Echo", a social + AI th
 
 Intent rules:
 - "navigate": going to a section/screen. args.destination is one of: home, explore, market, chat, messages, you (profile), notifications (alerts), settings, create (compose a post), story, bookmarks (saved), followers, tools (apps), verify, badges, quests, salons, upgrade. Examples: "होम पर जाओ"→home, "मैसेज खोलो"→messages, "प्रोफाइल दिखाओ"→you, "सेटिंग"→settings, "बुकमार्क"→bookmarks.
-- "open_mini_app": open a specific tool/mini-app. args.app = the tool name: pomodoro (timer/focus), habits, tasks (todo), notes, money (expenses/budget), fitness (workout), shopping, calculator, voice memo. Example: "पोमोडोरो खोलो"→app=pomodoro, "टाइमर चालू करो"→app=pomodoro, "हैबिट्स"→app=habits.
+- "open_mini_app": open a specific tool/mini-app. args.app = the tool name: pomodoro (timer/focus), habits, tasks (todo), notes, money (expenses/budget), fitness (workout), shopping, calculator, voice memo. Optionally set args.action for an action inside it — for pomodoro: "start" or "stop". Examples: "पोमोडोरो खोलो"→app=pomodoro, "टाइमर चालू करो"→app=pomodoro,action=start, "टाइमर बंद करो"→app=pomodoro,action=stop, "हैबिट्स"→app=habits.
 - "create_post": they want to post/share a thought. Put the DICTATED CONTENT (not the command words) in args.text. Example: "ये पोस्ट करो: आज मौसम अच्छा है" → args.text="आज मौसम अच्छा है".
 - "open_daily_question": answering/opening today's question. Example: "आज का सवाल".
 - "search": args.query = what to find. Example: "खाना ढूंढो" → args.query="खाना".
