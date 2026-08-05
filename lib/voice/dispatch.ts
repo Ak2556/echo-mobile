@@ -39,8 +39,8 @@ const SETTINGS_MAP: Record<string, string> = {
 // on / enable / true / yes → true; off / disable / false / no → false; else null (toggle).
 function parseOnOff(spoken: string): boolean | null {
   const q = spoken.trim().toLowerCase();
-  if (/\b(on|enable|enabled|true|yes|start|turn on)\b|चालू|ऑन|शुरू|खोलो|चाहिए/.test(q)) return true;
-  if (/\b(off|disable|disabled|false|no|stop|turn off)\b|बंद|ऑफ|रोको|मत/.test(q)) return false;
+  if (/\b(on|enable|enabled|true|yes|start|turn on|chalu|chaalu|chaloo|shuru)\b|चालू|ऑन|शुरू|खोलो|चाहिए/.test(q)) return true;
+  if (/\b(off|disable|disabled|false|no|stop|turn off|band|bandh)\b|बंद|ऑफ|रोको|मत/.test(q)) return false;
   return null;
 }
 
@@ -84,6 +84,10 @@ const DESTINATIONS: Record<string, string> = {
   'फॉलोअर': '/followers', 'फॉलोअर्स': '/followers',
   'टूल': '/(tabs)/apps', 'टूल्स': '/(tabs)/apps', 'औजार': '/(tabs)/apps',
   'स्टोरी': '/create-story', 'बैज': '/badges', 'क्वेस्ट': '/quests',
+  'बातचीत': '/(tabs)/chat', 'दुकान': '/(tabs)/marketplace', 'खाता': '/(tabs)/you', 'अकाउंट': '/(tabs)/you',
+  // Romanized Hindi
+  ghar: '/(tabs)/home', khoj: '/(tabs)/explore', sandesh: '/messages', dukan: '/(tabs)/marketplace',
+  suchna: '/(tabs)/notifications', khata: '/(tabs)/you',
 };
 
 // Exact match first, then "contains" so phrases like "home par jao" or a Hindi
@@ -134,10 +138,13 @@ function matchMiniApp(spoken: string): string | null {
     timer: 'pomodoro', focus: 'pomodoro', money: 'expenses', expense: 'expenses', budget: 'expenses',
     workout: 'fitness', gym: 'fitness', exercise: 'fitness', task: 'tasks', todo: 'tasks', note: 'notes',
     habit: 'habits', shopping: 'shopping-list', calculator: 'calculator', calc: 'calculator',
-    // Hindi
+    // Hindi (Devanagari)
     'टाइमर': 'pomodoro', 'पोमोडोरो': 'pomodoro', 'टास्क': 'tasks', 'काम': 'tasks', 'नोट': 'notes',
     'आदत': 'habits', 'पैसा': 'expenses', 'खर्च': 'expenses', 'फिटनेस': 'fitness', 'कसरत': 'fitness',
     'शॉपिंग': 'shopping-list', 'कैलकुलेटर': 'calculator', 'हिसाब': 'calculator',
+    // Romanized Hindi
+    samay: 'pomodoro', kaam: 'tasks', aadat: 'habits', paisa: 'expenses', kharch: 'expenses',
+    kasrat: 'fitness', hisab: 'calculator',
   };
   for (const [k, id] of Object.entries(SYN)) {
     if (q.includes(k)) { const a = MINI_APP_CATALOG.find((x) => x.id === id); if (a) return a.route as string; }
@@ -147,17 +154,17 @@ function matchMiniApp(spoken: string): string | null {
 
 function matchFeedScope(spoken: string): FeedScope | null {
   const q = spoken.trim().toLowerCase();
-  if (/for ?you|personal|आपके लिए|आपके लिये/.test(q)) return 'semantic';
+  if (/for ?you|personal|आपके लिए|आपके लिये|aapke|apke/.test(q)) return 'semantic';
   if (/trend|ट्रेंड|ट्रेंडिंग/.test(q)) return 'forYou';
   if (/follow|फॉलो|फ़ॉलो/.test(q)) return 'following';
-  if (/latest|recent|new|नवीनतम|हालिया|नया|ताज़ा/.test(q)) return 'latest';
+  if (/latest|recent|new|नवीनतम|हालिया|नया|ताज़ा|naya|taza/.test(q)) return 'latest';
   return null;
 }
 
 function matchTheme(spoken: string): 'light' | 'midnight' | null {
   const q = spoken.trim().toLowerCase();
-  if (/dark|night|black|amoled|डार्क|काला|रात|अंधेरा/.test(q)) return 'midnight';
-  if (/light|day|white|bright|लाइट|उजाला|सफेद|रोशनी/.test(q)) return 'light';
+  if (/dark|night|black|amoled|डार्क|काला|रात|अंधेरा|kaala|raat/.test(q)) return 'midnight';
+  if (/light|day|white|bright|लाइट|उजाला|सफेद|रोशनी|ujala|safed/.test(q)) return 'light';
   return null;
 }
 
