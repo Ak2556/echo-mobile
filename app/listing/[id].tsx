@@ -18,6 +18,7 @@ import {
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
+import { SpeakButton } from '../../components/ui/SpeakButton';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { PhotoGallery } from '../../components/marketplace/PhotoGallery';
 import { formatPrice } from '../../lib/currency';
@@ -229,9 +230,12 @@ export default function ListingDetailScreen() {
           </View>
 
           {/* Title */}
-          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold', lineHeight: 26 }}>
-            {listing.title}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold', lineHeight: 26, flex: 1 }}>
+              {listing.title}
+            </Text>
+            <SpeakButton text={[listing.title, listing.description].filter(Boolean).join('. ')} id={`listing:${listing.id}`} size={18} />
+          </View>
 
           {/* Category + location */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
