@@ -32,16 +32,20 @@ const json = (body: unknown, status = 200) =>
 // The closed set of things a voice command can do. Keep in sync with the client
 // dispatcher (lib/voice/intents.ts). The model MUST pick one of these.
 const INTENTS = [
-  "navigate",          // args.destination: home|explore|market|chat|you|alerts|settings|create|profile
-  "create_post",       // args.text: the echo to publish
+  "navigate",           // args.destination: a section/screen name
+  "open_mini_app",      // args.app: a tool name (pomodoro, habits, notes, tasks, money, fitness…)
+  "create_post",        // args.text: the echo to publish
   "open_daily_question",
-  "search",            // args.query
-  "open_ai_chat",      // args.prompt (optional): start Echo AI, optionally with a question
-  "set_language",      // args.language: a language name or code the user asked for
+  "search",             // args.query
+  "open_ai_chat",       // args.prompt (optional)
+  "set_feed",           // args.scope: for you | trending | following | latest
+  "set_language",       // args.language
+  "set_theme",          // args.theme: dark | light
+  "read_feed",          // read the current feed aloud
+  "read_notifications", // read notifications aloud
   "go_back",
-  "read_feed",         // read what's on screen aloud (client may defer until TTS ships)
-  "help",              // user asked what they can say
-  "unknown",           // couldn't confidently map — reply asks them to rephrase
+  "help",               // user asked what they can say
+  "unknown",            // couldn't confidently map — reply asks them to rephrase
 ] as const;
 
 const SYSTEM_PROMPT = `You are the voice controller for "Echo", a social + AI thinking app. The user speaks a short command, usually in Hindi (Devanagari or Romanized), sometimes English or mixed. Do THREE things:
@@ -50,14 +54,18 @@ const SYSTEM_PROMPT = `You are the voice controller for "Echo", a social + AI th
 3. Map the command to ONE intent from this list: ${INTENTS.join(", ")}.
 
 Intent rules:
-- "navigate": going to a section. args.destination ∈ [home, explore, market, chat, you, alerts, settings, create, profile]. Examples: "होम पर जाओ"→home, "मैसेज खोलो"→chat, "प्रोफाइल दिखाओ"→you, "सेटिंग"→settings.
+- "navigate": going to a section/screen. args.destination is one of: home, explore, market, chat, messages, you (profile), notifications (alerts), settings, create (compose a post), story, bookmarks (saved), followers, tools (apps), verify, badges, quests, salons, upgrade. Examples: "होम पर जाओ"→home, "मैसेज खोलो"→messages, "प्रोफाइल दिखाओ"→you, "सेटिंग"→settings, "बुकमार्क"→bookmarks.
+- "open_mini_app": open a specific tool/mini-app. args.app = the tool name: pomodoro (timer/focus), habits, tasks (todo), notes, money (expenses/budget), fitness (workout), shopping, calculator, voice memo. Example: "पोमोडोरो खोलो"→app=pomodoro, "टाइमर चालू करो"→app=pomodoro, "हैबिट्स"→app=habits.
 - "create_post": they want to post/share a thought. Put the DICTATED CONTENT (not the command words) in args.text. Example: "ये पोस्ट करो: आज मौसम अच्छा है" → args.text="आज मौसम अच्छा है".
 - "open_daily_question": answering/opening today's question. Example: "आज का सवाल".
 - "search": args.query = what to find. Example: "खाना ढूंढो" → args.query="खाना".
 - "open_ai_chat": talk to Echo AI. args.prompt = their question if any.
+- "set_feed": switch the home feed tab. args.scope ∈ [for you, trending, following, latest]. Example: "ट्रेंडिंग दिखाओ"→scope=trending, "फॉलोइंग फीड"→scope=following.
 - "set_language": switch app language. args.language = the language they named (e.g. "hindi", "english").
+- "set_theme": switch appearance. args.theme ∈ [dark, light]. Example: "डार्क मोड"→theme=dark, "लाइट मोड"→theme=light.
+- "read_feed": read the current feed aloud ("फीड पढ़ो", "read the feed to me").
+- "read_notifications": read notifications aloud ("नोटिफिकेशन पढ़ो", "read my notifications").
 - "go_back": back/previous.
-- "read_feed": read the screen / feed aloud.
 - "help": "मैं क्या बोल सकता हूँ", "help", "what can I say".
 - "unknown": anything you cannot confidently map.
 
