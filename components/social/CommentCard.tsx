@@ -5,6 +5,7 @@ import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, wit
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
+import { SpeakButton } from '../ui/SpeakButton';
 import { Comment } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
@@ -105,6 +106,7 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Reply</Text>
             </AnimatedPressable>
           )}
+          <SpeakButton text={comment.content} id={`comment:${comment.id}`} size={14} />
         </View>
       </View>
     </Animated.View>

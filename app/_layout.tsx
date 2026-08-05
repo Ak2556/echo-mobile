@@ -26,6 +26,7 @@ import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
 import { VoiceControl } from '../components/voice/VoiceControl';
+import { NowReadingBar } from '../components/voice/NowReadingBar';
 import { enableFreeze } from 'react-native-screens';
 import '../global.css';
 
@@ -304,6 +305,7 @@ function RootLayout() {
         </Stack>
         <FloatingMiniApp />
         <VoiceControl />
+        <NowReadingBar />
         <TutorialOverlay />
         <ToastProvider />
         <ConsentBanner />

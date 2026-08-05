@@ -4,6 +4,7 @@ import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope, Boo
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
 import { IconBadge } from '../ui/IconBadge';
+import { SpeakButton } from '../ui/SpeakButton';
 import { Notification } from '../../types';
 import { useTheme } from '../../lib/theme';
 
@@ -172,6 +173,11 @@ export function NotificationCard({ notification, onPress, onLongPress, flush = f
               {getTimeAgo(n.createdAt)}
             </Text>
             {unread && <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: color }} />}
+            <SpeakButton
+              text={`${isSystem ? '' : `${n.fromDisplayName || n.fromUsername} `}${actionTextFor(n)}${n.targetEchoPreview ? `. ${n.targetEchoPreview}` : ''}`}
+              id={`notif:${n.id}`}
+              size={14}
+            />
           </View>
         </View>
 
