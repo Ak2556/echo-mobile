@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, Keyboard } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Bell, BellSlash, CheckCircle, CircleDashed, Flag, Plus, Trash } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -54,10 +54,26 @@ export default function TasksScreen() {
   const [time, setTime] = useState<string | undefined>(undefined);
   const [remind, setRemind] = useState(false);
   const [filter, setFilter] = useState<Filter>('open');
+  const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
+  const didVoiceRef = React.useRef(false);
 
   useFocusEffect(React.useCallback(() => {
-    loadTasks().then(setTasks).catch(() => setTasks([]));
-  }, []));
+    loadTasks().then((loaded) => {
+      // Voice: "add task buy milk" navigates here with ?vAction=add&vValue=…
+      const a = typeof vAction === 'string' ? vAction.toLowerCase() : '';
+      const text = typeof vValue === 'string' ? vValue.trim() : '';
+      if (!didVoiceRef.current && a === 'add' && text) {
+        didVoiceRef.current = true;
+        const now = new Date().toISOString();
+        const base: TaskItem = { id: `${Date.now()}`, title: text, done: false, priority: 'normal', due: todayTaskDate(), createdAt: now, updatedAt: now };
+        const next = [base, ...loaded];
+        setTasks(next);
+        void saveTasks(next);
+      } else {
+        setTasks(loaded);
+      }
+    }).catch(() => setTasks([]));
+  }, [vAction, vValue]));
 
   const stats = taskStats(tasks);
   const visible = useMemo(() => {
