@@ -41,6 +41,10 @@ const INTENTS = [
   "set_feed",           // args.scope: for you | trending | following | latest
   "set_language",       // args.language
   "set_theme",          // args.theme: dark | light
+  "toggle_setting",     // args.setting + args.value: turn a setting on/off
+  "post_action",        // args.action: like | bookmark | repost | follow | open the post in view
+  "scroll",             // args.direction: up | down
+  "refresh",            // reload the feed
   "read_feed",          // read the current feed aloud
   "read_notifications", // read notifications aloud
   "go_back",
@@ -63,6 +67,10 @@ Intent rules:
 - "set_feed": switch the home feed tab. args.scope ∈ [for you, trending, following, latest]. Example: "ट्रेंडिंग दिखाओ"→scope=trending, "फॉलोइंग फीड"→scope=following.
 - "set_language": switch app language. args.language = the language they named (e.g. "hindi", "english").
 - "set_theme": switch appearance. args.theme ∈ [dark, light]. Example: "डार्क मोड"→theme=dark, "लाइट मोड"→theme=light.
+- "toggle_setting": turn a setting on/off. args.setting = the setting name (notifications, haptics, sound, read receipts, private account, compact feed, data saver, autoplay stories, auto read replies, auto read messages, etc.); args.value = "on" or "off" if stated. Examples: "नोटिफिकेशन बंद करो"→setting=notifications,value=off, "haptics on"→setting=haptics,value=on.
+- "post_action": act on the post currently on screen. args.action ∈ [like, bookmark, repost, follow, open]. Examples: "इसे लाइक करो"→action=like, "save this"→action=bookmark, "repost this"→action=repost, "इन्हें फॉलो करो"→action=follow, "open this"→action=open.
+- "scroll": args.direction ∈ [up, down]. Examples: "नीचे स्क्रॉल करो"→down, "ऊपर जाओ"→up.
+- "refresh": reload the feed ("रिफ्रेश करो", "refresh").
 - "read_feed": read the current feed aloud ("फीड पढ़ो", "read the feed to me").
 - "read_notifications": read notifications aloud ("नोटिफिकेशन पढ़ो", "read my notifications").
 - "go_back": back/previous.

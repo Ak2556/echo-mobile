@@ -22,6 +22,12 @@ import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
 import { useInfiniteFeed, useTrendingEvolutions } from '../../hooks/queries/useFeed';
 import { setReadableFeed } from '../../lib/voice/readFeed';
+import { registerVoiceActions, clearVoiceActions } from '../../lib/voice/actions';
+import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
+import { useFollow } from '../../hooks/queries/useFollow';
+
+// Stable viewability config for voice "act on the post in view".
+const VOICE_VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
@@ -309,6 +315,13 @@ export default function DiscoverScreen() {
   } = useInfiniteFeed();
   const feed = useMemo(() => feedData?.pages.flat() ?? [], [feedData]);
   const realtime = useRealtimeNewEchoes();
+  // Voice contextual actions operate on the post currently in view.
+  const remoteLike = useToggleRemoteLike();
+  const remoteBm = useToggleRemoteBookmark();
+  const remoteRp = useToggleRemoteRepost();
+  const follow = useFollow();
+  const listRef = useRef<any>(null);
+  const currentEchoRef = useRef<any>(null);
   const { colors, animation, font, fontSizes, lineHeights } = useTheme();
   const { t } = useI18n();
   const performance = usePerformanceProfile('hot');
@@ -417,6 +430,35 @@ export default function DiscoverScreen() {
   const popularItems = scopedAll;
   // Publish visible posts so the voice "read the feed to me" command can read them.
   useEffect(() => { setReadableFeed(popularItems); }, [popularItems]);
+
+  // Voice contextual actions (like/bookmark/repost/follow/open the post in view,
+  // plus scroll/refresh). Registered once; reads live refs so it stays stable.
+  const popularItemsRef = useRef(popularItems);
+  popularItemsRef.current = popularItems;
+  const onVoiceViewable = useRef(({ viewableItems }: { viewableItems: Array<{ item?: any }> }) => {
+    const first = viewableItems?.find((v) => v?.item?.id)?.item;
+    if (first) currentEchoRef.current = first;
+  }).current;
+  useEffect(() => {
+    registerVoiceActions({
+      postAction: (action) => {
+        const e = currentEchoRef.current ?? popularItemsRef.current[0];
+        if (!e?.id) return false;
+        switch (action) {
+          case 'like': remoteLike.mutate({ echoId: e.id, like: !e.isLiked }); return true;
+          case 'bookmark': remoteBm.mutate({ echoId: e.id, bookmark: !e.isBookmarked }); return true;
+          case 'repost': remoteRp.mutate({ echoId: e.id, repost: !e.isReposted }); return true;
+          case 'follow': if (e.userId) { follow.toggle(e.userId); return true; } return false;
+          case 'open': router.push(`/thread/${e.id}`); return true;
+          default: return false;
+        }
+      },
+      refresh: () => { void refetch(); },
+      scroll: (dir) => { try { listRef.current?.scrollToOffset?.({ offset: dir === 'up' ? 0 : 100000, animated: true }); } catch { /* ignore */ } },
+    });
+    return () => clearVoiceActions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Tablet/desktop: the feed becomes a two-column masonry inside a wider
   // centred container; the header shares that same width so it aligns.
@@ -528,6 +570,9 @@ export default function DiscoverScreen() {
             </Pressable>
           )}
           <FlashList
+            ref={listRef}
+            onViewableItemsChanged={onVoiceViewable}
+            viewabilityConfig={VOICE_VIEWABILITY}
             data={popularItems}
             numColumns={useMasonry ? 2 : 1}
             masonry={useMasonry}
