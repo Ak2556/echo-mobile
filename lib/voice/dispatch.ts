@@ -153,10 +153,14 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     case 'open_mini_app': {
       const route = matchMiniApp(str(args.app));
       if (!route) return { handled: false, reply };
-      // An optional in-app action (e.g. start/stop for pomodoro) rides along as a
-      // route param the target mini-app reads and performs once.
+      // An optional in-app action (start/stop a timer, add a task…) rides along as
+      // route params the target mini-app reads and performs once.
       const vAction = str(args.action).toLowerCase();
-      router.push({ pathname: route, params: vAction ? { vAction } : {} } as never);
+      const vValue = str(args.value) || str(args.text);
+      router.push({
+        pathname: route,
+        params: { ...(vAction ? { vAction } : {}), ...(vValue ? { vValue } : {}) },
+      } as never);
       return { handled: true, reply, navigatedTo: route };
     }
 
