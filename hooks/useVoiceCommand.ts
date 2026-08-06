@@ -111,17 +111,16 @@ export function useVoiceCommand() {
       const result = normalizeResult(data);
       const outcome = dispatchVoiceIntent(result);
       const reply = outcome.reply || result.reply;
-      // Close the voice loop: speak the confirmation back in the user's language,
-      // unless the intent already produced speech (e.g. read_feed reads posts).
-      // Only speak the confirmation when the action actually completed — otherwise
-      // the model's "done!" reply would falsely claim success on an unhandled command.
-      if (outcome.handled && reply && !outcome.spoken) speak(reply, { language: appLanguage, id: 'voice-reply' });
-      setState({
-        phase: 'done',
-        transcript: result.transcript,
-        reply,
-        error: outcome.handled ? null : 'not-understood',
-      });
+      if (outcome.handled) {
+        // Close the voice loop: speak the confirmation back in the user's
+        // language, unless the intent already produced speech (e.g. read_feed).
+        if (reply && !outcome.spoken) speak(reply, { language: appLanguage, id: 'voice-reply' });
+        setState({ phase: 'done', transcript: result.transcript, reply, error: null });
+      } else {
+        // Action did NOT complete — never show/speak the model's "done!" reply.
+        // Surface the not-understood state so the user knows to rephrase.
+        setState({ phase: 'error', transcript: result.transcript, reply: '', error: 'not-understood' });
+      }
     } catch {
       setState({ ...IDLE, phase: 'error', error: 'transcribe-failed' });
     } finally {

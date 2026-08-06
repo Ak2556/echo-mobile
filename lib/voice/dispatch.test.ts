@@ -140,6 +140,25 @@ describe('voice dispatch — toggle_setting (Hindi + on/off)', () => {
   });
 });
 
+describe('voice dispatch — theme phrased as a toggle ("लाइट मोड ऑन करो")', () => {
+  it('light mode on (toggle_setting) → real light-mode change, not a no-op', () => {
+    for (const s of ['light mode', 'लाइट मोड', 'लाइट']) {
+      vi.clearAllMocks();
+      const o = dispatchVoiceIntent(res('toggle_setting', { setting: s, value: 'on' }));
+      expect(o.handled).toBe(true);
+      expect(setDarkMode).toHaveBeenCalledWith(false);
+      expect(setTheme).toHaveBeenCalledWith('light');
+    }
+  });
+  it('dark mode on (toggle_setting) → real dark-mode change', () => {
+    vi.clearAllMocks();
+    const o = dispatchVoiceIntent(res('toggle_setting', { setting: 'डार्क मोड', value: 'on' }));
+    expect(o.handled).toBe(true);
+    expect(setDarkMode).toHaveBeenCalledWith(true);
+    expect(setTheme).toHaveBeenCalledWith('midnight');
+  });
+});
+
 describe('voice dispatch — set_language (Hindi)', () => {
   it.each([['हिंदी', 'hi'], ['hindi', 'hi'], ['english', 'en'], ['अंग्रेजी', 'en']])(
     '%s → %s', (lang, code) => {

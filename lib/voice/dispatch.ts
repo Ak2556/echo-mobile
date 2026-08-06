@@ -249,6 +249,17 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     }
 
     case 'toggle_setting': {
+      // "light mode on / डार्क मोड ऑन करो" — the model often routes appearance to
+      // toggle_setting because of the on/off phrasing. There's no boolean for it,
+      // so treat any theme word here as a real theme change (the master darkMode
+      // switch), not a no-op toggle.
+      const asTheme = matchTheme(str(args.setting));
+      if (asTheme) {
+        const store = useAppStore.getState();
+        store.setDarkMode(asTheme !== 'light');
+        store.setTheme(asTheme);
+        return { handled: true, reply };
+      }
       const setter = matchSetting(str(args.setting));
       if (!setter) return { handled: false, reply };
       const state = useAppStore.getState() as unknown as Record<string, unknown>;
