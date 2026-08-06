@@ -85,7 +85,14 @@ Intent rules:
 - "help": "मैं क्या बोल सकता हूँ", "help", "what can I say".
 - "unknown": anything you cannot confidently map.
 
-CRITICAL: the command works in Hindi (Devanagari or Romanized), English, or mixed. Understand any of them. But the ARG VALUES that are drawn from the fixed lists above — destination, app, action, scope, theme, setting, direction, and the on/off value — MUST be the ENGLISH canonical keyword from those lists, even when the user speaks Hindi (e.g. "होम पर जाओ" → destination="home", "डार्क मोड" → theme="dark", "नोटिफिकेशन बंद करो" → setting="notifications", value="off"). Only FREE TEXT stays in the user's own language: create_post text, search query, and the value for tasks/notes/habits.
+CRITICAL: the command works in Hindi (Devanagari or Romanized), English, or mixed. Understand any of them. But the ARG VALUES that are drawn from the fixed lists above — destination, app, action, scope, theme, setting, direction, and the on/off value — MUST be the ENGLISH canonical keyword from those lists, even when the user speaks Hindi (e.g. "होम पर जाओ" → destination="home", "डार्क मोड" → theme="dark", "नोटिफिकेशन बंद करो" → setting="notifications", value="off"). Only FREE TEXT stays in the user's own language: create_post text, search query, and the item value for add-to-app commands (tasks/notes/habits/shopping-list/planner). For expenses the value is "amount category" (e.g. "500 food"); for fitness it is "weight <number>" or "water".
+
+DISAMBIGUATION — apply these to avoid the common mistakes:
+- "open/खोलो/दिखाओ + a tool" (pomodoro, tasks, notes, habits, money/expenses, fitness, shopping, calculator, learn, planner, world clock, camera, passwords…) → open_mini_app, NOT navigate. Only home/explore/market/chat/messages/profile/notifications/settings/bookmarks/tools are navigate destinations.
+- "add/जोड़ो/लिखो/log + content" → open_mini_app, action=add, content in value; pick the app from context (task→tasks, note→notes, habit→habits, item/grocery/सामान→shopping-list, plan→planner, spend/खर्च + amount→expenses, weight/वज़न or water/पानी→fitness).
+- appearance (light/dark mode, theme) → set_theme; a boolean feature (notifications, haptics, sound, private, etc.) → toggle_setting.
+- "read/पढ़ो feed" → read_feed; "read/पढ़ो notifications" → read_notifications.
+- If the audio is empty/silent or you truly cannot tell, return intent="unknown" with a gentle ask — do NOT guess a random action, and never invent an intent outside the list.
 
 Also write "reply": a SHORT (max ~12 words) friendly confirmation in the SAME language the user spoke — what you're about to do, or (for unknown) a gentle ask to repeat. For Hindi input, reply in natural Hindi.
 
@@ -161,22 +168,21 @@ Deno.serve(async (req) => {
     if (GEMINI_API_KEY) {
       // Google AI Studio (Gemini) direct — free tier, no OpenRouter balance needed.
       const mime = AUDIO_MIME[format] ?? "audio/mp4";
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: [{
-              role: "user",
-              parts: [{ text: userText }, { inlineData: { mimeType: mime, data: audioB64 } }],
-            }],
-            generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
-          }),
-        },
-      );
-      if (!res.ok) return json({ error: "Voice model unavailable", detail: await res.text() }, 502);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+      const geminiBody = JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ role: "user", parts: [{ text: userText }, { inlineData: { mimeType: mime, data: audioB64 } }] }],
+        // Low temp = steadier, more deterministic intent detection.
+        generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
+      });
+      // Retry transient rate-limit / server errors (common on the free tier) with backoff.
+      let res: Response | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
+        if (res.ok || !(res.status === 429 || res.status >= 500)) break;
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      }
+      if (!res || !res.ok) return json({ error: "Voice model unavailable", detail: res ? await res.text() : "no response" }, 502);
       const out = await res.json();
       content = out.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
     } else {
