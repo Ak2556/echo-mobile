@@ -7,6 +7,7 @@ import { Lightning, Sparkle, Star, Check } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
 import type { EchoAIModel } from '../../lib/api';
+import { ttx } from '../../lib/i18n';
 
 interface ModelMeta {
   key: EchoAIModel;
@@ -95,10 +96,10 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
           {/* Header */}
           <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 18, letterSpacing: -0.3 }]}>
-              Pick a model
+              {ttx("Pick a model")}
             </Text>
             <Text style={[font.body, { color: colors.textSecondary, fontSize: 13, marginTop: 4 }]}>
-              All three answer the same prompt with different tradeoffs.
+              {ttx("All three answer the same prompt with different tradeoffs.")}
             </Text>
           </View>
 
@@ -187,9 +188,9 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
             shadowOffset: { width: 0, height: 8 },
           })}
           accessibilityRole="button"
-          accessibilityLabel="Cancel"
+          accessibilityLabel={ttx("Cancel")}
         >
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>Cancel</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{ttx("Cancel")}</Text>
         </Pressable>
       </Animated.View>
     </Modal>

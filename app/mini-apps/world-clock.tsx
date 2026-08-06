@@ -17,6 +17,7 @@ import {
   saveWorldClockCities,
   searchWorldClockLocations,
 } from '../../lib/worldClock';
+import { ttx } from '../../lib/i18n';
 
 function getTimeInZone(timezone: string) {
   const now = new Date();
@@ -120,7 +121,7 @@ export default function WorldClockScreen() {
   };
 
   const AddButton = (
-    <AnimatedPressable onPress={() => setAdding(value => !value)} scaleValue={0.9} haptic="medium" accessibilityLabel="Add location">
+    <AnimatedPressable onPress={() => setAdding(value => !value)} scaleValue={0.9} haptic="medium" accessibilityLabel={ttx("Add location")}>
       <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
         {adding ? <X color="#fff" size={18} weight="bold" /> : <Plus color="#fff" size={18} weight="bold" />}
       </View>
@@ -128,11 +129,11 @@ export default function WorldClockScreen() {
   );
 
   return (
-    <MiniAppShell title="World Clock" subtitle="Meet" headerRight={AddButton}>
+    <MiniAppShell title={ttx("World Clock")} subtitle={ttx("Meet")} headerRight={AddButton}>
       <MiniCommandDeck
         accent={accent}
-        title="Time, weather, and coordination"
-        subtitle="Time, weather, meetings."
+        title={ttx("Time, weather, and coordination")}
+        subtitle={ttx("Time, weather, meetings.")}
         metrics={[
           { label: 'Saved', value: `${cities.length}`, detail: 'locations' },
           { label: 'Local', value: local.time.slice(0, 5), detail: isLocalDay ? 'day' : 'night' },
@@ -147,7 +148,7 @@ export default function WorldClockScreen() {
             {isLocalDay ? <Sun color="#B08536" size={24} weight="fill" /> : <Moon color="#5E748B" size={24} weight="fill" />}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[font.eyebrow, { color: colors.textMuted }]} numberOfLines={1}>My Location</Text>
+            <Text style={[font.eyebrow, { color: colors.textMuted }]} numberOfLines={1}>{ttx("My Location")}</Text>
             <Text style={[font.display, { color: colors.text, fontSize: 42, lineHeight: 48 }]} numberOfLines={1}>{local.time.slice(0, 5)}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12.5 }]} numberOfLines={1}>{local.date} · {localCity.name}</Text>
           </View>
@@ -162,7 +163,7 @@ export default function WorldClockScreen() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Add any city or location..."
+              placeholder={ttx("Add any city or location...")}
               placeholderTextColor={colors.textMuted}
               autoFocus
               style={{ flex: 1, color: colors.text, fontSize: 15, paddingVertical: 10 }}
@@ -179,7 +180,7 @@ export default function WorldClockScreen() {
             ))}
             {results.length === 0 && !searching ? (
               <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 18 }]}>
-                No locations found. Try a city, country, or region name.
+                {ttx("No locations found. Try a city, country, or region name.")}
               </Text>
             ) : null}
           </View>
@@ -201,8 +202,8 @@ export default function WorldClockScreen() {
         appId="world-clock"
         appName="World Clock"
         accent={accent}
-        headline="Plan across time zones"
-        caption="Use live time and weather to coordinate calls, classes, travel, and group work."
+        headline={ttx("Plan across time zones")}
+        caption={ttx("Use live time and weather to coordinate calls, classes, travel, and group work.")}
         metrics={[
           { label: 'Saved', value: `${cities.length}` },
           { label: 'Local', value: local.time.slice(0, 5) },
@@ -295,7 +296,7 @@ function WeatherInline({ snapshot }: { snapshot?: WeatherSnapshot | null }) {
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
         <CloudSun color={colors.textMuted} size={14} />
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]}>Weather unavailable</Text>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]}>{ttx("Weather unavailable")}</Text>
       </View>
     );
   }
@@ -307,7 +308,7 @@ function WeatherInline({ snapshot }: { snapshot?: WeatherSnapshot | null }) {
           {Math.round(snapshot.temperature)}° · {snapshot.label}
         </Text>
       </View>
-      <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]}>{Math.round(snapshot.windSpeed)} km/h</Text>
+      <Text style={[font.body, { color: colors.textMuted, fontSize: 11.5 }]}>{Math.round(snapshot.windSpeed)} {ttx("km/h")}</Text>
     </>
   );
 }

@@ -7,6 +7,7 @@ import { PencilSimpleLine } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
 import { useTutorialTarget } from '../../hooks/useTutorialTarget';
+import { ttx } from '../../lib/i18n';
 
 /**
  * Floating compose button — single canonical creation entry point for v1.
@@ -81,7 +82,7 @@ export function ComposeFAB() {
             router.push('/create-post');
           }}
           accessibilityRole="button"
-          accessibilityLabel="Compose new echo"
+          accessibilityLabel={ttx("Compose new echo")}
           style={{
             width: '100%',
             height: '100%',

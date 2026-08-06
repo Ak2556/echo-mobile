@@ -27,6 +27,7 @@ import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
+import { ttx } from '../../lib/i18n';
 
 const CONDITION_COLOR: Record<string, string> = {
   'New': '#10B981',
@@ -130,10 +131,10 @@ export default function ListingDetailScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center' }}>
-          This listing is no longer available.
+          {ttx("This listing is no longer available.")}
         </Text>
         <AnimatedPressable onPress={() => safeBack('/(tabs)/marketplace')} fadeOnPress style={{ marginTop: 20 }}>
-          <Text style={{ color: colors.accent, fontSize: fontSizes.body }}>Go back</Text>
+          <Text style={{ color: colors.accent, fontSize: fontSizes.body }}>{ttx("Go back")}</Text>
         </AnimatedPressable>
       </View>
     );
@@ -192,7 +193,7 @@ export default function ListingDetailScreen() {
               justifyContent: 'center',
             }}>
               <Tag color={colors.textMuted} size={40} />
-              <Text style={{ color: colors.textMuted, marginTop: 8, fontSize: fontSizes.caption }}>No photos</Text>
+              <Text style={{ color: colors.textMuted, marginTop: 8, fontSize: fontSizes.caption }}>{ttx("No photos")}</Text>
             </View>
           )
         }
@@ -212,7 +213,7 @@ export default function ListingDetailScreen() {
                   paddingHorizontal: 8,
                   paddingVertical: 3,
                 }}>
-                  <Text style={{ color: '#EF4444', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>SOLD</Text>
+                  <Text style={{ color: '#EF4444', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>{ttx("SOLD")}</Text>
                 </View>
               )}
             </View>
@@ -346,7 +347,7 @@ export default function ListingDetailScreen() {
                 }}
               >
                 <Text style={{ color: '#EF4444', fontFamily: 'Inter_600SemiBold', fontSize: fontSizes.body }}>
-                  Remove listing
+                  {ttx("Remove listing")}
                 </Text>
               </AnimatedPressable>
             </View>

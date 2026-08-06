@@ -10,6 +10,7 @@ import { FeedItem } from '../../types';
 import { ShareableEchoCard } from '../social/ShareableEchoCard';
 import { shareEchoAsImage } from '../../lib/shareEchoImage';
 import { track } from '../../lib/analytics';
+import { ttx } from '../../lib/i18n';
 
 interface ShareSheetProps {
   visible: boolean;
@@ -87,7 +88,7 @@ export function ShareSheet({ visible, onClose, echo }: ShareSheetProps) {
       <ActionSheet
         visible={visible}
         onClose={onClose}
-        title="Share this Echo"
+        title={ttx("Share this Echo")}
         subtitle={echo.editorialTitle || echo.prompt?.slice(0, 60)}
         actions={actions}
       />

@@ -10,6 +10,7 @@ import { useTheme } from '../lib/theme';
 import { fetchSalons, setSalonMembership, type Salon } from '../lib/supabaseEchoApi';
 import { showToast } from '../components/ui/Toast';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
+import { ttx } from '../lib/i18n';
 
 /**
  * Salons — topic-based circles. Browse list shows the most popular first,
@@ -39,7 +40,7 @@ function SalonsScreenInner() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Salons"
+        title={ttx("Salons")}
         right={
           <AnimatedPressable
             onPress={() => router.push('/create-salon')}
@@ -47,7 +48,7 @@ function SalonsScreenInner() {
             scaleValue={0.88}
             haptic="medium"
             accessibilityRole="button"
-            accessibilityLabel="Create salon"
+            accessibilityLabel={ttx("Create salon")}
           >
             <Plus color={colors.accent} size={24} weight="bold" />
           </AnimatedPressable>
@@ -62,10 +63,10 @@ function SalonsScreenInner() {
         <View style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center' }}>
           <UsersThree color={colors.textMuted} size={56} />
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
-            No salons yet
+            {ttx("No salons yet")}
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
-            Start the first one — a circle of people thinking about a shared topic.
+            {ttx("Start the first one — a circle of people thinking about a shared topic.")}
           </Text>
           <AnimatedPressable
             onPress={() => router.push('/create-salon')}
@@ -83,7 +84,7 @@ function SalonsScreenInner() {
             haptic="medium"
           >
             <Plus color="#fff" size={16} weight="bold" />
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Start a salon</Text>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Start a salon")}</Text>
           </AnimatedPressable>
         </View>
       ) : (
@@ -161,7 +162,7 @@ function SalonCard({ salon, onToggle }: { salon: Salon; onToggle: (join: boolean
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Hash color={colors.textMuted} size={13} />
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{salon.echo_count} echoes</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{salon.echo_count} {ttx("echoes")}</Text>
         </View>
       </View>
     </AnimatedPressable>

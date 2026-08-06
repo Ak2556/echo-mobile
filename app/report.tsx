@@ -10,6 +10,7 @@ import { showToast } from '../components/ui/Toast';
 import { submitRemoteReport } from '../lib/supabaseEchoApi';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useTheme } from '../lib/theme';
+import { ttx } from '../lib/i18n';
 
 const REASONS = [
   'Spam or misleading',
@@ -57,18 +58,18 @@ export default function ReportScreen() {
 
   return (
     <ResponsiveScreen>
-      <ScreenHeader title="Report" />
+      <ScreenHeader title={ttx("Report")} />
 
       <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
         <Animated.View entering={FadeInDown.delay(50).duration(220)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <Warning color="#F59E0B" size={20} />
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginLeft: 8 }}>
-            Report {targetType === 'user' ? `@${targetName}` : 'this content'}
+            {ttx("Report")} {targetType === 'user' ? `@${targetName}` : 'this content'}
           </Text>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(100).duration(220)}>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginBottom: 24, lineHeight: 20 }}>
-            Select the reason that best describes the issue. Your report is confidential.
+            {ttx("Select the reason that best describes the issue. Your report is confidential.")}
           </Text>
         </Animated.View>
 
@@ -108,7 +109,7 @@ export default function ReportScreen() {
           <Animated.View entering={FadeInDown.duration(220)} style={{ marginTop: 8, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 12 }}>
             <RNTextInput
               style={{ color: colors.text, fontSize: fontSizes.body }}
-              placeholder="Describe the issue..."
+              placeholder={ttx("Describe the issue...")}
               placeholderTextColor={colors.textMuted}
               value={details}
               onChangeText={setDetails}

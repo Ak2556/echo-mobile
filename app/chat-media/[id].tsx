@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, LinkSimple, Images as ImagesIcon } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { fetchConversationMedia, type ConversationMedia } from '../../lib/supabaseEchoApi';
+import { ttx } from '../../lib/i18n';
 
 export default function ChatMediaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,10 +34,10 @@ export default function ChatMediaScreen() {
   return (
     <ResponsiveScreen>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back" style={{ padding: 4, marginRight: 8 }}>
+        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Back")} style={{ padding: 4, marginRight: 8 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>Shared media</Text>
+        <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Shared media")}</Text>
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8, padding: 12 }}>

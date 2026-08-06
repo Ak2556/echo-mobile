@@ -5,6 +5,7 @@ import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
+import { ttx } from '../../lib/i18n';
 
 interface EditMessageModalProps {
   visible: boolean;
@@ -90,7 +91,7 @@ export function EditMessageModal({
                 onChangeText={setText}
                 multiline
                 maxLength={maxLength}
-                placeholder="Type your message…"
+                placeholder={ttx("Type your message…")}
                 placeholderTextColor={colors.textMuted}
                 style={{
                   marginTop: 12,
@@ -120,7 +121,7 @@ export function EditMessageModal({
                     opacity: pressed ? 0.6 : 1,
                   })}
                 >
-                  <Text style={{ color: colors.text, fontWeight: '600' }}>Cancel</Text>
+                  <Text style={{ color: colors.text, fontWeight: '600' }}>{ttx("Cancel")}</Text>
                 </Pressable>
                 <Pressable
                   onPress={handleSubmit}

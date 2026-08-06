@@ -11,6 +11,7 @@ import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { createSalon } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
+import { ttx } from '../lib/i18n';
 
 const COVER_COLORS = ['#7C3AED', '#EF4444', '#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#06B6D4', '#F97316'];
 const NAME_MAX = 40;
@@ -61,7 +62,7 @@ function CreateSalonScreenInner() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="New Salon"
+        title={ttx("New Salon")}
         right={
           <AnimatedPressable
             onPress={() => void handleSubmit()}
@@ -80,7 +81,7 @@ function CreateSalonScreenInner() {
             ) : (
               <Check color="#fff" size={15} weight="bold" />
             )}
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>Create</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>{ttx("Create")}</Text>
           </AnimatedPressable>
         }
       />
@@ -88,33 +89,33 @@ function CreateSalonScreenInner() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         {/* Name */}
         <Animated.View entering={animation(FadeInDown.duration(220))} className="mb-4">
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Name</Text>
-          <TextInput value={name} onChangeText={(t) => setName(t.slice(0, NAME_MAX))} placeholder="e.g. Long-form Thinkers" maxLength={NAME_MAX} />
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Name")}</Text>
+          <TextInput value={name} onChangeText={(t) => setName(t.slice(0, NAME_MAX))} placeholder={ttx("e.g. Long-form Thinkers")} maxLength={NAME_MAX} />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4, marginLeft: 4 }}>{name.length}/{NAME_MAX}</Text>
         </Animated.View>
 
         {/* Slug */}
         <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} className="mb-4">
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>URL slug</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("URL slug")}</Text>
           <TextInput
             value={slug || derivedSlug}
             onChangeText={(t) => setSlug(t.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32))}
-            placeholder="auto-from-name"
+            placeholder={ttx("auto-from-name")}
             autoCapitalize="none"
             maxLength={32}
           />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4, marginLeft: 4 }}>
-            People will find this salon at /salon/{effectiveSlug || '…'}
+            {ttx("People will find this salon at /salon/")}{effectiveSlug || '…'}
           </Text>
         </Animated.View>
 
         {/* Description */}
         <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} className="mb-4">
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Description (optional)</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Description (optional)")}</Text>
           <TextInput
             value={description}
             onChangeText={(t) => setDescription(t.slice(0, DESC_MAX))}
-            placeholder="What kind of thinking happens here?"
+            placeholder={ttx("What kind of thinking happens here?")}
             multiline
           />
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4, marginLeft: 4 }}>{description.length}/{DESC_MAX}</Text>
@@ -122,18 +123,18 @@ function CreateSalonScreenInner() {
 
         {/* Topic tags */}
         <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} className="mb-4">
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Topics (comma-separated)</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Topics (comma-separated)")}</Text>
           <TextInput
             value={topicTags}
             onChangeText={setTopicTags}
-            placeholder="philosophy, productivity, ai"
+            placeholder={ttx("philosophy, productivity, ai")}
             autoCapitalize="none"
           />
         </Animated.View>
 
         {/* Cover color picker */}
         <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} className="mb-6">
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Cover color</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Cover color")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
             {COVER_COLORS.map((c) => {
               const active = coverColor === c;

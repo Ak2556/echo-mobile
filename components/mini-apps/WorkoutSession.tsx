@@ -12,6 +12,7 @@ import {
   Routine, Workout, WorkoutExercise,
   bestLiftFor, detectPRs, lastLiftFor, workoutVolume,
 } from '../../lib/fitness';
+import { ttx } from '../../lib/i18n';
 
 const TEAL = '#14B8A6';
 
@@ -170,7 +171,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
         <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
           <ScrollView contentContainerStyle={{ padding: 28, paddingTop: 48, gap: 18 }}>
             <Text style={{ color: colors.text, fontSize: 34, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
-              Done.
+              {ttx("Done.")}
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 16, lineHeight: 23, fontFamily: 'Fraunces_400Regular_Italic' }}>
               {summary.prs.length
@@ -196,7 +197,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
                 <Trophy color="#B08536" size={20} weight="fill" />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800' }}>{pr.name}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>New best — {pr.weight} kg × {pr.reps}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>{ttx("New best —")} {pr.weight} {ttx("kg ×")} {pr.reps}</Text>
                 </View>
               </View>
             ))}
@@ -206,7 +207,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
               scaleValue={0.96} haptic="medium"
               style={{ backgroundColor: TEAL, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 8 }}
             >
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Save workout</Text>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{ttx("Save workout")}</Text>
             </AnimatedPressable>
           </ScrollView>
         </View>
@@ -223,7 +224,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold' }}>{routine.title}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
-              Exercise {exIndex + 1} of {routine.exercises.length} · {fmtClock(elapsed)}
+              {ttx("Exercise")} {exIndex + 1} {ttx("of")} {routine.exercises.length} · {fmtClock(elapsed)}
             </Text>
           </View>
           <AnimatedPressable onPress={confirmClose} scaleValue={0.9} haptic="light" style={{ padding: 8 }}>
@@ -300,13 +301,13 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
           {/* Rest countdown */}
           {restLeft !== null ? (
             <View style={{ borderRadius: 20, backgroundColor: TEAL + '14', borderWidth: 1, borderColor: TEAL + '33', padding: 18, alignItems: 'center', gap: 6 }}>
-              <Text style={{ color: TEAL, fontSize: 11, fontWeight: '700', letterSpacing: 1.2 }}>REST</Text>
+              <Text style={{ color: TEAL, fontSize: 11, fontWeight: '700', letterSpacing: 1.2 }}>{ttx("REST")}</Text>
               <Text style={{ color: colors.text, fontSize: 44, fontFamily: 'Fraunces_600SemiBold', fontVariant: ['tabular-nums'] }}>
                 {fmtClock(restLeft)}
               </Text>
               <Pressable onPress={stopRest} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 }}>
                 <SkipForward color={colors.textMuted} size={14} weight="fill" />
-                <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '700' }}>Skip rest</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '700' }}>{ttx("Skip rest")}</Text>
               </Pressable>
             </View>
           ) : (
@@ -328,7 +329,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
             <Pressable onPress={nextExercise} hitSlop={6}>
               <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
                 <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.2, textTransform: 'uppercase', flex: 1 }}>
-                  Next up
+                  {ttx("Next up")}
                 </Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>
                   {routine.exercises[exIndex + 1].name} →
@@ -339,7 +340,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
           {isLastExercise && !allSetsDone && (
             <Pressable onPress={finish} hitSlop={6}>
               <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 6 }}>
-                Finish early
+                {ttx("Finish early")}
               </Text>
             </Pressable>
           )}

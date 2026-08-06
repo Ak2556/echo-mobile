@@ -9,6 +9,7 @@ import { getTargetCategory } from '../../lib/targetCategories';
 import { miniAppById } from '../../lib/miniAppCatalog';
 import { MiniAppIcon } from '../mini-apps/MiniAppIcon';
 import { IconBadge } from '../ui/IconBadge';
+import { ttx } from '../../lib/i18n';
 
 export function TargetToolsPanel({ compact = false, dense = false }: { compact?: boolean; dense?: boolean }) {
   const router = useRouter();
@@ -67,7 +68,7 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
         <Pressable
           onPress={() => router.push('/target-progress' as Href)}
           accessibilityRole="button"
-          accessibilityLabel="Open progress"
+          accessibilityLabel={ttx("Open progress")}
           hitSlop={6}
         >
           <IconBadge color={colors.accent} size={32} radius={11} muted>
@@ -105,7 +106,7 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
         <Pressable
           onPress={() => router.push('/target-progress' as Href)}
           accessibilityRole="button"
-          accessibilityLabel="Open progress"
+          accessibilityLabel={ttx("Open progress")}
         >
           <IconBadge color={colors.accent} size={34} radius={12} muted>
             <ChartLineUp color={colors.accent} size={18} weight="bold" />
@@ -159,7 +160,7 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
           }}
         >
           <SquaresFour color="#fff" size={16} weight="bold" />
-          <Text style={[font.bodyBold, { color: '#fff', fontSize: 13 }]}>Tools</Text>
+          <Text style={[font.bodyBold, { color: '#fff', fontSize: 13 }]}>{ttx("Tools")}</Text>
         </Pressable>
         <Pressable
           onPress={() => router.push('/target-progress' as Href)}
@@ -176,7 +177,7 @@ export function TargetToolsPanel({ compact = false, dense = false }: { compact?:
             gap: 8,
           }}
         >
-          <Text style={[font.bodyBold, { color: colors.textSecondary, fontSize: 13 }]}>Share or compare</Text>
+          <Text style={[font.bodyBold, { color: colors.textSecondary, fontSize: 13 }]}>{ttx("Share or compare")}</Text>
           <ArrowRight color={colors.textSecondary} size={15} weight="bold" />
         </Pressable>
       </View>

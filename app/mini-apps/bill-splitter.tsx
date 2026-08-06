@@ -8,6 +8,7 @@ import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
+import { ttx } from '../../lib/i18n';
 
 const TIP_PRESETS = [0, 5, 10, 15, 18, 20, 25];
 type SplitMode = 'even' | 'shares' | 'exact';
@@ -58,8 +59,8 @@ function SplitPulse({
           <Text style={{ color: accent, fontSize: 18, fontWeight: '900' }}>$</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Settlement pulse</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Fair, clear, shareable.</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Settlement pulse")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Fair, clear, shareable.")}</Text>
         </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -137,11 +138,11 @@ export default function BillSplitterScreen() {
   );
 
   return (
-    <MiniAppShell title="Bill Splitter" subtitle="Split" headerRight={ShareBtn}>
+    <MiniAppShell title={ttx("Bill Splitter")} subtitle={ttx("Split")} headerRight={ShareBtn}>
       <MiniCommandDeck
         accent={accent}
-        title="Split the bill without friction"
-        subtitle="Tax, tip, shares, exact orders."
+        title={ttx("Split the bill without friction")}
+        subtitle={ttx("Tax, tip, shares, exact orders.")}
         metrics={[
           { label: 'Total', value: `$${fmt(total)}`, detail: 'with extras' },
           { label: 'People', value: `${people.length}`, detail: 'included' },
@@ -152,7 +153,7 @@ export default function BillSplitterScreen() {
       <SplitPulse accent={accent} total={total} extras={extras} people={people.length} perPerson={total / people.length} mode={mode} fmt={fmt} />
       {/* Bill + tax */}
       <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
-        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>BILL AMOUNT</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("BILL AMOUNT")}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ color: accent, fontSize: 42, fontWeight: '300', marginRight: 4 }}>$</Text>
           <TextInput
@@ -165,7 +166,7 @@ export default function BillSplitterScreen() {
           />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 13 }}>Tax / fees</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("Tax / fees")}</Text>
           <TextInput
             value={tax}
             onChangeText={setTax}
@@ -185,7 +186,7 @@ export default function BillSplitterScreen() {
       {/* Tip */}
       <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>TIP</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("TIP")}</Text>
           <Text style={{ color: accent, fontSize: 20, fontWeight: '700' }}>{effectiveTip}%</Text>
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -208,12 +209,12 @@ export default function BillSplitterScreen() {
           })}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 13 }}>Custom</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("Custom")}</Text>
           <TextInput
             value={customTip}
             onChangeText={setCustomTip}
             keyboardType="decimal-pad"
-            placeholder="e.g. 22"
+            placeholder={ttx("e.g. 22")}
             placeholderTextColor={colors.textMuted}
             style={{
               flex: 1, color: colors.text, fontSize: 16, fontWeight: '600',
@@ -231,7 +232,7 @@ export default function BillSplitterScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
           <Users color={colors.textMuted} size={15} weight="fill" />
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, flex: 1, marginLeft: 6 }}>
-            PEOPLE · {people.length}
+            {ttx("PEOPLE ·")} {people.length}
           </Text>
           <AnimatedPressable onPress={addPerson} scaleValue={0.88} haptic="light" style={{ backgroundColor: accent, borderRadius: 10, padding: 7 }}>
             <Plus color="#fff" size={14} weight="bold" />
@@ -258,7 +259,7 @@ export default function BillSplitterScreen() {
             <TextInput
               value={p.name}
               onChangeText={v => setPerson(p.id, { name: v })}
-              placeholder="Name"
+              placeholder={ttx("Name")}
               placeholderTextColor={colors.textMuted}
               style={{
                 flex: 1, color: colors.text, fontSize: 15, fontWeight: '600',
@@ -314,7 +315,7 @@ export default function BillSplitterScreen() {
         )}
         {mode === 'exact' && (
           <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 6, lineHeight: 17 }}>
-            Enter what each person ordered (pre-tax). Tax and tip are split in proportion.
+            {ttx("Enter what each person ordered (pre-tax). Tax and tip are split in proportion.")}
           </Text>
         )}
       </GlassPanel>
@@ -322,10 +323,10 @@ export default function BillSplitterScreen() {
       {/* Result */}
       {mode === 'even' ? (
         <View style={{ backgroundColor: accent, borderRadius: 28, padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 28, shadowOffset: { width: 0, height: 8 } }}>
-          <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Each person pays</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{ttx("Each person pays")}</Text>
           <Text style={{ color: '#fff', fontSize: 60, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -2, lineHeight: 66 }}>${fmt(total / people.length)}</Text>
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 6 }}>
-            Incl. ${fmt(tipAmount / people.length)} tip{taxNum > 0 ? ` · $${fmt(taxNum / people.length)} tax` : ''}
+            {ttx("Incl. $")}{fmt(tipAmount / people.length)} {ttx("tip")}{taxNum > 0 ? ` · $${fmt(taxNum / people.length)} tax` : ''}
           </Text>
         </View>
       ) : (
@@ -356,14 +357,14 @@ export default function BillSplitterScreen() {
 
       <AnimatedPressable onPress={shareSummary} scaleValue={0.96} haptic="medium" style={{ borderRadius: 16, borderWidth: 1, borderColor: accent + '66', paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
         <ShareNetwork color={accent} size={17} weight="bold" />
-        <Text style={{ color: accent, fontWeight: '800', fontSize: 15 }}>Share the split</Text>
+        <Text style={{ color: accent, fontWeight: '800', fontSize: 15 }}>{ttx("Share the split")}</Text>
       </AnimatedPressable>
 
       <EdgeFeaturePanel
         appName="Bill Splitter"
         accent={accent}
-        headline="Settle without confusion"
-        caption="Turn a bill into a clean shareable split, group accountability, or expense note."
+        headline={ttx("Settle without confusion")}
+        caption={ttx("Turn a bill into a clean shareable split, group accountability, or expense note.")}
         metrics={[
           { label: 'Total', value: `$${fmt(total)}` },
           { label: 'People', value: `${people.length}` },

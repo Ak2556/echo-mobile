@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, BellSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { track } from '../../lib/analytics';
+import { ttx } from '../../lib/i18n';
 
 interface PushPrePromptProps {
   visible: boolean;
@@ -48,7 +49,7 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
               <Bell color={colors.accent} size={28} weight="duotone" />
             </View>
             <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.4, textAlign: 'center' }}>
-              Stay in the loop
+              {ttx("Stay in the loop")}
             </Text>
             <Text
               style={{
@@ -60,7 +61,7 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
                 maxWidth: 320,
               }}
             >
-              We&apos;ll ping you when someone reacts, comments, or quotes your Echoes — not for anything else.
+              {ttx("We&apos;ll ping you when someone reacts, comments, or quotes your Echoes — not for anything else.")}
             </Text>
 
             {/* Wrapper View owns the accent fill; the Pressable stays bare so
@@ -87,9 +88,9 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
                   opacity: pressed ? 0.9 : 1,
                 })}
                 accessibilityRole="button"
-                accessibilityLabel="Turn on notifications"
+                accessibilityLabel={ttx("Turn on notifications")}
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Turn on notifications</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Turn on notifications")}</Text>
               </Pressable>
             </View>
 
@@ -106,10 +107,10 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
                 opacity: pressed ? 0.6 : 1,
               })}
               accessibilityRole="button"
-              accessibilityLabel="Not now"
+              accessibilityLabel={ttx("Not now")}
             >
               <BellSlash color={colors.textMuted} size={16} />
-              <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 15 }}>Not now</Text>
+              <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 15 }}>{ttx("Not now")}</Text>
             </Pressable>
           </View>
         </SafeAreaView>

@@ -26,6 +26,7 @@ import { usePresenceTracking } from '../../lib/presence';
 import { ConversationSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation, searchRemoteUsers, UserSearchHit } from '../../lib/supabaseEchoApi';
 import { safeBack } from '../../lib/safeBack';
+import { ttx } from '../../lib/i18n';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -129,7 +130,7 @@ function CreateGroupModal({
             <X color={colors.text} size={22} />
           </Pressable>
           <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold' }}>
-            New Group
+            {ttx("New Group")}
           </Text>
           <Pressable
             onPress={submit}
@@ -138,17 +139,17 @@ function CreateGroupModal({
           >
             {createGroup.isPending
               ? <ActivityIndicator color={colors.accent} />
-              : <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '800' }}>Create</Text>}
+              : <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '800' }}>{ttx("Create")}</Text>}
           </Pressable>
         </View>
 
         <View style={{ padding: 16, gap: 12 }}>
           <View style={{ padding: 12, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>Group name</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>{ttx("Group name")}</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="Weekend builders, design crew..."
+              placeholder={ttx("Weekend builders, design crew...")}
               placeholderTextColor={colors.textMuted}
               style={{ color: colors.text, fontSize: fontSizes.body, paddingVertical: 4 }}
             />
@@ -159,7 +160,7 @@ function CreateGroupModal({
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search people"
+              placeholder={ttx("Search people")}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -355,7 +356,7 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
             </View>
             {showUnread ? (
               <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: colors.accent }}>
-                <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '800' }}>New</Text>
+                <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '800' }}>{ttx("New")}</Text>
               </View>
             ) : null}
           </View>
@@ -435,18 +436,18 @@ function InboxHero({
             off a touchable's own style and the buttons collapse. */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1 }}>
-            <Pressable onPress={onFindPeople} accessibilityRole="button" accessibilityLabel="New chat" style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
+            <Pressable onPress={onFindPeople} accessibilityRole="button" accessibilityLabel={ttx("New chat")} style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
               <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
                 <PencilSimple color="#fff" size={17} weight="bold" />
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '900' }}>New chat</Text>
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '900' }}>{ttx("New chat")}</Text>
               </View>
             </Pressable>
           </View>
           <View style={{ flex: 1 }}>
-            <Pressable onPress={onNewGroup} accessibilityRole="button" accessibilityLabel="New group" style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
+            <Pressable onPress={onNewGroup} accessibilityRole="button" accessibilityLabel={ttx("New group")} style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}>
               <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
                 <Users color={colors.text} size={17} weight="bold" />
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>New group</Text>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>{ttx("New group")}</Text>
               </View>
             </Pressable>
           </View>
@@ -494,7 +495,7 @@ function InboxToolbar({
         <TextInput
           value={query}
           onChangeText={onQueryChange}
-          placeholder="Search names, messages, groups"
+          placeholder={ttx("Search names, messages, groups")}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
@@ -765,7 +766,7 @@ export default function MessagesListScreen() {
           <AnimatedPressable onPress={() => safeBack('/(tabs)/chat')} className="p-1" scaleValue={0.88} haptic="light">
             <ArrowLeft color={colors.text} size={24} />
           </AnimatedPressable>
-          <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Messages</Text>
+          <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{ttx("Messages")}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <AnimatedPressable onPress={() => setGroupModalOpen(true)} className="p-1" scaleValue={0.88} haptic="light">
               <Users color={colors.accent} size={22} weight="bold" />
@@ -796,7 +797,7 @@ export default function MessagesListScreen() {
           <ArrowLeft color={colors.text} size={22} />
         </AnimatedPressable>
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={{ color: colors.text, fontSize: 24, lineHeight: 29, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Messages</Text>
+          <Text style={{ color: colors.text, fontSize: 24, lineHeight: 29, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{ttx("Messages")}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
             {unreadTotal ? `${unreadTotal} unread · Echo-ready` : 'Private · rich · remembered'}
           </Text>
@@ -837,7 +838,7 @@ export default function MessagesListScreen() {
                 {filter === 'all' ? 'Recent conversations' : `${filter[0].toUpperCase()}${filter.slice(1)} conversations`}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>
-                {filteredActive.length} shown
+                {filteredActive.length} {ttx("shown")}
               </Text>
             </View>
           </View>
@@ -872,7 +873,7 @@ export default function MessagesListScreen() {
                 }}>
                   <Archive color={colors.textMuted} size={17} />
                   <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '600', flex: 1 }}>
-                    Archived · {archived.length}
+                    {ttx("Archived ·")} {archived.length}
                   </Text>
                   {showArchived
                     ? <CaretDown color={colors.textMuted} size={14} />
@@ -906,8 +907,8 @@ export default function MessagesListScreen() {
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
               <EmptyState
                 icon={<ChatCircleText color={colors.textSecondary} size={32} />}
-                title="Your messages"
-                subtitle="Select a conversation to start reading."
+                title={ttx("Your messages")}
+                subtitle={ttx("Select a conversation to start reading.")}
               />
             </View>
           )}

@@ -37,6 +37,7 @@ import {
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 const ACCENT = '#EC4899';
 const COLLAGE_LIMIT = 6;
@@ -327,11 +328,11 @@ export default function ImageEditorApp() {
   };
 
   return (
-    <MiniAppShell title="Image Editor" subtitle="Polish">
+    <MiniAppShell title={ttx("Image Editor")} subtitle={ttx("Polish")}>
       <MiniCommandDeck
         accent={ACCENT}
-        title="Quick edits before you post"
-        subtitle="Photos, collages, and trimmed videos."
+        title={ttx("Quick edits before you post")}
+        subtitle={ttx("Photos, collages, and trimmed videos.")}
         metrics={metrics}
         chips={['Crop', 'Trim', 'Record', 'Export']}
       />
@@ -340,14 +341,14 @@ export default function ImageEditorApp() {
         <MiniEmptyState
           accent={ACCENT}
           icon={<ImageSquare color={ACCENT} size={38} weight="bold" />}
-          title="Pick media"
-          subtitle="Start from a photo, collage, or video. Every action creates a usable media file."
-          actionLabel="Choose image"
+          title={ttx("Pick media")}
+          subtitle={ttx("Start from a photo, collage, or video. Every action creates a usable media file.")}
+          actionLabel={ttx("Choose image")}
           onAction={pickImage}
         />
       ) : image ? (
         <>
-          <MiniSectionHeader label="Canvas" actionLabel={changed ? 'Reset' : undefined} onAction={resetImage} accent={ACCENT} />
+          <MiniSectionHeader label={ttx("Canvas")} actionLabel={changed ? 'Reset' : undefined} onAction={resetImage} accent={ACCENT} />
           <MiniCard accent={ACCENT} elevated padding={0} style={{ marginBottom: 14, overflow: 'hidden' }}>
             <View style={{ aspectRatio: 4 / 5, backgroundColor: colors.bg }}>
               <Image
@@ -377,14 +378,14 @@ export default function ImageEditorApp() {
 
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
             <MiniButton
-              label="Edit"
+              label={ttx("Edit")}
               accent={ACCENT}
               icon={<Sliders color="#fff" size={18} weight="bold" />}
               onPress={() => setEditorOpen(true)}
               style={{ flex: 1 }}
             />
             <MiniButton
-              label="Share"
+              label={ttx("Share")}
               accent={ACCENT}
               variant="secondary"
               icon={<DownloadSimple color={colors.text} size={18} weight="bold" />}
@@ -393,17 +394,17 @@ export default function ImageEditorApp() {
             />
           </View>
 
-          <MiniSectionHeader label="Fast actions" />
+          <MiniSectionHeader label={ttx("Fast actions")} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
-            <QuickAction icon={<Sparkle color={ACCENT} size={18} weight="fill" />} label="Optimize" onPress={optimize} />
-            <QuickAction icon={<FolderOpen color={ACCENT} size={18} weight="bold" />} label="Replace" onPress={pickImage} />
-            <QuickAction icon={<Camera color={ACCENT} size={18} weight="bold" />} label="Camera" onPress={takePhoto} />
-            <QuickAction icon={<Trash color="#EF4444" size={18} weight="bold" />} label="Clear" onPress={clearMedia} danger />
+            <QuickAction icon={<Sparkle color={ACCENT} size={18} weight="fill" />} label={ttx("Optimize")} onPress={optimize} />
+            <QuickAction icon={<FolderOpen color={ACCENT} size={18} weight="bold" />} label={ttx("Replace")} onPress={pickImage} />
+            <QuickAction icon={<Camera color={ACCENT} size={18} weight="bold" />} label={ttx("Camera")} onPress={takePhoto} />
+            <QuickAction icon={<Trash color="#EF4444" size={18} weight="bold" />} label={ttx("Clear")} onPress={clearMedia} danger />
           </View>
         </>
       ) : video ? (
         <>
-          <MiniSectionHeader label="Video" actionLabel="Clear" onAction={clearMedia} accent={ACCENT} />
+          <MiniSectionHeader label={ttx("Video")} actionLabel={ttx("Clear")} onAction={clearMedia} accent={ACCENT} />
           <MiniCard accent={ACCENT} elevated padding={0} style={{ marginBottom: 14, overflow: 'hidden' }}>
             <VideoPreview uri={video.editedUri} height={260} borderRadius={0} />
             <LinearGradient
@@ -425,14 +426,14 @@ export default function ImageEditorApp() {
 
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
             <MiniButton
-              label="Trim"
+              label={ttx("Trim")}
               accent={ACCENT}
               icon={<Scissors color="#fff" size={18} weight="bold" />}
               onPress={() => pickVideo(true)}
               style={{ flex: 1 }}
             />
             <MiniButton
-              label="Share"
+              label={ttx("Share")}
               accent={ACCENT}
               variant="secondary"
               icon={<DownloadSimple color={colors.text} size={18} weight="bold" />}
@@ -441,22 +442,22 @@ export default function ImageEditorApp() {
             />
           </View>
 
-          <MiniSectionHeader label="Fast actions" />
+          <MiniSectionHeader label={ttx("Fast actions")} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
-            <QuickAction icon={<Scissors color={ACCENT} size={18} weight="bold" />} label="Trim import" onPress={() => pickVideo(true)} />
-            <QuickAction icon={<FolderOpen color={ACCENT} size={18} weight="bold" />} label="Replace" onPress={() => pickVideo(false)} />
-            <QuickAction icon={<VideoCamera color={ACCENT} size={18} weight="bold" />} label="Record" onPress={recordVideo} />
-            <QuickAction icon={<Trash color="#EF4444" size={18} weight="bold" />} label="Clear" onPress={clearMedia} danger />
+            <QuickAction icon={<Scissors color={ACCENT} size={18} weight="bold" />} label={ttx("Trim import")} onPress={() => pickVideo(true)} />
+            <QuickAction icon={<FolderOpen color={ACCENT} size={18} weight="bold" />} label={ttx("Replace")} onPress={() => pickVideo(false)} />
+            <QuickAction icon={<VideoCamera color={ACCENT} size={18} weight="bold" />} label={ttx("Record")} onPress={recordVideo} />
+            <QuickAction icon={<Trash color="#EF4444" size={18} weight="bold" />} label={ttx("Clear")} onPress={clearMedia} danger />
           </View>
           <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 12 }}>
-            Trim uses the native video editor and exports a new clip. Filters are intentionally photo-only until a video renderer is added.
+            {ttx("Trim uses the native video editor and exports a new clip. Filters are intentionally photo-only until a video renderer is added.")}
           </Text>
         </>
       ) : null}
 
       {collageUris.length > 0 ? (
         <>
-          <MiniSectionHeader label="Collage maker" actionLabel="Clear" onAction={() => setCollageUris([])} accent={ACCENT} />
+          <MiniSectionHeader label={ttx("Collage maker")} actionLabel={ttx("Clear")} onAction={() => setCollageUris([])} accent={ACCENT} />
           <MiniCard accent={ACCENT} padding={12} style={{ marginBottom: 14 }}>
             <CollageCanvas ref={collageRef} uris={collageUris} layout={collageLayout} />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
@@ -484,14 +485,14 @@ export default function ImageEditorApp() {
         <View style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <MiniButton
-              label="Library"
+              label={ttx("Library")}
               accent={ACCENT}
               icon={<FolderOpen color="#fff" size={18} weight="bold" />}
               onPress={pickImage}
               style={{ flex: 1 }}
             />
             <MiniButton
-              label="Camera"
+              label={ttx("Camera")}
               accent={ACCENT}
               variant="secondary"
               icon={<Camera color={colors.text} size={18} weight="bold" />}
@@ -501,7 +502,7 @@ export default function ImageEditorApp() {
           </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <MiniButton
-              label="Video"
+              label={ttx("Video")}
               accent={ACCENT}
               variant="secondary"
               icon={<VideoCamera color={colors.text} size={18} weight="bold" />}
@@ -509,7 +510,7 @@ export default function ImageEditorApp() {
               style={{ flex: 1 }}
             />
             <MiniButton
-              label="Record"
+              label={ttx("Record")}
               accent={ACCENT}
               variant="secondary"
               icon={<Camera color={colors.text} size={18} weight="bold" />}
@@ -518,7 +519,7 @@ export default function ImageEditorApp() {
             />
           </View>
           <MiniButton
-            label="Make collage"
+            label={ttx("Make collage")}
             accent={ACCENT}
             variant="secondary"
             icon={<ImageSquare color={colors.text} size={18} weight="bold" />}

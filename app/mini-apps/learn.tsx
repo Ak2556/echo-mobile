@@ -75,6 +75,7 @@ import {
   type LearningMode,
   type LearningSettings,
 } from '../../lib/learn';
+import { ttx } from '../../lib/i18n';
 
 const ACCENT = '#4E7A8B'; // steel — warm editorial palette
 const LEVELS: { id: LearningLevel; label: string }[] = [
@@ -466,16 +467,16 @@ export default function LearnScreen() {
 
   return (
     <MiniAppShell
-      title="Learn"
+      title={ttx("Learn")}
       subtitle={activeGoal ? 'Master' : 'Master'}
       headerRight={(
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <AnimatedPressable onPress={() => setTab('settings')} scaleValue={0.9} haptic="light" accessibilityRole="button" accessibilityLabel="Learning settings">
+          <AnimatedPressable onPress={() => setTab('settings')} scaleValue={0.9} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Learning settings")}>
             <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
               <GearSix color={colors.textSecondary} size={18} weight="bold" />
             </View>
           </AnimatedPressable>
-          <AnimatedPressable onPress={() => setShowSetup(true)} scaleValue={0.9} haptic="medium" accessibilityRole="button" accessibilityLabel="Create learning goal">
+          <AnimatedPressable onPress={() => setShowSetup(true)} scaleValue={0.9} haptic="medium" accessibilityRole="button" accessibilityLabel={ttx("Create learning goal")}>
             <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' }}>
               <Plus color="#fff" size={18} weight="bold" />
             </View>
@@ -506,8 +507,8 @@ export default function LearnScreen() {
           <Hero goal={activeGoal} stats={stats} />
           <MiniCommandDeck
             accent={ACCENT}
-            title="Mastery studio"
-            subtitle="Paths, practice, proof."
+            title={ttx("Mastery studio")}
+            subtitle={ttx("Paths, practice, proof.")}
             metrics={[
               { label: 'Progress', value: `${stats.percent}%`, detail: 'path' },
               { label: 'Quiz', value: `${stats.quizScore}%`, detail: 'score' },
@@ -750,8 +751,8 @@ export default function LearnScreen() {
             appId="learn"
             appName="Learn"
             accent={ACCENT}
-            headline="Teach, coach, and study with proof"
-            caption="Learning paths connect lessons, practice, notes, tasks, focus blocks, assignments, resources, and progress sharing."
+            headline={ttx("Teach, coach, and study with proof")}
+            caption={ttx("Learning paths connect lessons, practice, notes, tasks, focus blocks, assignments, resources, and progress sharing.")}
             metrics={[
               { label: 'Progress', value: `${stats.percent}%` },
               { label: 'Learners', value: `${stats.learners}` },
@@ -766,13 +767,13 @@ export default function LearnScreen() {
       ) : !showSetup ? (
         <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 18, alignItems: 'center' }}>
           <GraduationCap color={ACCENT} size={42} weight="duotone" />
-          <Text style={[font.display, { color: colors.text, fontSize: 24, marginTop: 12 }]}>No learning path yet</Text>
+          <Text style={[font.display, { color: colors.text, fontSize: 24, marginTop: 12 }]}>{ttx("No learning path yet")}</Text>
           <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 19, marginTop: 6 }]}>
-            Create one path for a subject, skill, exam, class, or coaching target.
+            {ttx("Create one path for a subject, skill, exam, class, or coaching target.")}
           </Text>
           <Pressable onPress={() => setShowSetup(true)} style={{ marginTop: 16 }}>
             <View style={{ borderRadius: radius.full, backgroundColor: ACCENT, paddingHorizontal: 18, paddingVertical: 12 }}>
-              <Text style={{ color: '#fff', fontWeight: '900' }}>Create path</Text>
+              <Text style={{ color: '#fff', fontWeight: '900' }}>{ttx("Create path")}</Text>
             </View>
           </Pressable>
         </GlassPanel>
@@ -796,12 +797,12 @@ function SetupPanel(props: {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <IconBadge color={ACCENT} size={44} radius={15}><GraduationCap color="#fff" size={22} weight="bold" /></IconBadge>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>Create a learning path</Text>
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>For students, teachers, tutors, and skill coaching.</Text>
+          <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("Create a learning path")}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("For students, teachers, tutors, and skill coaching.")}</Text>
         </View>
       </View>
-      <LearnInput value={props.title} onChangeText={props.setTitle} placeholder="What do you want to learn or teach?" strong />
-      <LearnInput value={props.targetOutcome} onChangeText={props.setTargetOutcome} placeholder="Desired output, exam, class result, or skill target" multiline />
+      <LearnInput value={props.title} onChangeText={props.setTitle} placeholder={ttx("What do you want to learn or teach?")} strong />
+      <LearnInput value={props.targetOutcome} onChangeText={props.setTargetOutcome} placeholder={ttx("Desired output, exam, class result, or skill target")} multiline />
       <Label text="Mode" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {MODES.map(item => <Chip key={item.id} label={item.label} active={props.mode === item.id} onPress={() => props.setMode(item.id)} />)}
@@ -821,7 +822,7 @@ function SetupPanel(props: {
       <Pressable onPress={props.onCreate} disabled={!props.title.trim()}>
         <View style={{ minHeight: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: props.title.trim() ? ACCENT : colors.surfaceHover }}>
           <Sparkle color="#fff" size={18} weight="bold" />
-          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>Build my path</Text>
+          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>{ttx("Build my path")}</Text>
         </View>
       </Pressable>
     </GlassPanel>
@@ -844,16 +845,16 @@ function Hero({ goal, stats }: { goal: LearningGoal; stats: ReturnType<typeof le
         </View>
         <View style={{ alignItems: 'center' }}>
           <Text style={[font.bodyBold, { color: ACCENT, fontSize: 22 }]}>{stats.percent}%</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>done</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>{ttx("done")}</Text>
         </View>
       </View>
       <Text style={[font.body, { color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 14 }]}>
         {goal.targetOutcome || 'Set a clear target outcome to make this roadmap sharper.'}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-        <Stat label="Open steps" value={`${stats.open}`} />
-        <Stat label="Quiz score" value={`${stats.quizScore}%`} />
-        <Stat label="Streak" value={`${goal.streak}d`} />
+        <Stat label={ttx("Open steps")} value={`${stats.open}`} />
+        <Stat label={ttx("Quiz score")} value={`${stats.quizScore}%`} />
+        <Stat label={ttx("Streak")} value={`${goal.streak}d`} />
       </View>
     </GlassPanel>
   );
@@ -872,12 +873,12 @@ function TodayTab({ goal, stats, onToggleTask, onSaveNote, onAddTask, onSchedule
   return (
     <>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-        <ActionButton icon={<NotePencil color="#fff" size={17} weight="bold" />} label="Notes" onPress={onSaveNote} filled />
-        <ActionButton icon={<Target color={ACCENT} size={17} weight="bold" />} label="Task" onPress={onAddTask} />
-        <ActionButton icon={<BookOpen color={ACCENT} size={17} weight="bold" />} label="Plan" onPress={onSchedule} />
-        <ActionButton icon={<Timer color={ACCENT} size={17} weight="bold" />} label="Focus" onPress={onPomodoro} />
+        <ActionButton icon={<NotePencil color="#fff" size={17} weight="bold" />} label={ttx("Notes")} onPress={onSaveNote} filled />
+        <ActionButton icon={<Target color={ACCENT} size={17} weight="bold" />} label={ttx("Task")} onPress={onAddTask} />
+        <ActionButton icon={<BookOpen color={ACCENT} size={17} weight="bold" />} label={ttx("Plan")} onPress={onSchedule} />
+        <ActionButton icon={<Timer color={ACCENT} size={17} weight="bold" />} label={ttx("Focus")} onPress={onPomodoro} />
       </View>
-      <SectionTitle title="Today" subtitle={stats.activeModule?.title ?? 'Next step'} />
+      <SectionTitle title={ttx("Today")} subtitle={stats.activeModule?.title ?? 'Next step'} />
       <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         {(stats.activeModule?.tasks ?? []).map(task => (
           <Pressable key={task.id} onPress={() => onToggleTask(stats.activeModule!.id, task.id)}>
@@ -918,13 +919,13 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <IconBadge color={ACCENT} size={44} radius={15}><Sparkle color="#fff" size={21} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>2026 learning library</Text>
+            <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("2026 learning library")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 2 }]}>
-              30 high-demand topics curated with free online material, Echo proof projects, notes, practice, and code-alongs where useful.
+              {ttx("30 high-demand topics curated with free online material, Echo proof projects, notes, practice, and code-alongs where useful.")}
             </Text>
           </View>
         </View>
-        <LearnInput value={query} onChangeText={setQuery} placeholder="Search AI, cybersecurity, finance, language..." />
+        <LearnInput value={query} onChangeText={setQuery} placeholder={ttx("Search AI, cybersecurity, finance, language...")} />
       </GlassPanel>
 
       <View style={{ gap: 10, marginBottom: 16 }}>
@@ -950,12 +951,12 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
               ))}
             </View>
             <View style={{ borderRadius: 15, backgroundColor: colors.surfaceHover, padding: 11 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }}>Echo proof project</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }}>{ttx("Echo proof project")}</Text>
               <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 3 }]}>{topic.project}</Text>
             </View>
             <Pressable onPress={() => onStartTopic(topic)}>
               <View style={{ minHeight: 42, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>Start curated path</Text>
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{ttx("Start curated path")}</Text>
               </View>
             </Pressable>
           </GlassPanel>
@@ -1010,40 +1011,40 @@ function OneOnOneTab(props: {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <IconBadge color="#B08536" size={48} radius={16}><ChalkboardTeacher color="#fff" size={23} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>Paid 1:1 mastery</Text>
+            <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("Paid 1:1 mastery")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 2 }]}>
-              Sell personal teaching, coaching, diagnostics, code-alongs, homework review, and follow-up from this path.
+              {ttx("Sell personal teaching, coaching, diagnostics, code-alongs, homework review, and follow-up from this path.")}
             </Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <Stat label="Bookings" value={`${props.stats.oneOnOneBookings}`} />
-          <Stat label="Pending" value={`${props.stats.oneOnOnePending}`} />
-          <Stat label="Paid" value={`${props.stats.oneOnOnePaid}`} />
-          <Stat label="Revenue" value={formatPrice(currencyRevenue, props.goal.oneOnOneProfile.baseCurrency)} />
+          <Stat label={ttx("Bookings")} value={`${props.stats.oneOnOneBookings}`} />
+          <Stat label={ttx("Pending")} value={`${props.stats.oneOnOnePending}`} />
+          <Stat label={ttx("Paid")} value={`${props.stats.oneOnOnePaid}`} />
+          <Stat label={ttx("Revenue")} value={formatPrice(currencyRevenue, props.goal.oneOnOneProfile.baseCurrency)} />
         </View>
       </GlassPanel>
 
-      <SectionTitle title="Teacher offer" subtitle="Offer" />
+      <SectionTitle title={ttx("Teacher offer")} subtitle={ttx("Offer")} />
       <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
-        <LearnInput value={props.oneHeadline} onChangeText={props.setOneHeadline} placeholder="Offer headline" strong />
-        <LearnInput value={props.oneBio} onChangeText={props.setOneBio} placeholder="What you help learners achieve" multiline />
-        <LearnInput value={props.oneExpertise} onChangeText={props.setOneExpertise} placeholder="Expertise tags, comma separated" />
-        <LearnInput value={props.oneTeachingStyle} onChangeText={props.setOneTeachingStyle} placeholder="Teaching style, method, or promise" multiline />
+        <LearnInput value={props.oneHeadline} onChangeText={props.setOneHeadline} placeholder={ttx("Offer headline")} strong />
+        <LearnInput value={props.oneBio} onChangeText={props.setOneBio} placeholder={ttx("What you help learners achieve")} multiline />
+        <LearnInput value={props.oneExpertise} onChangeText={props.setOneExpertise} placeholder={ttx("Expertise tags, comma separated")} />
+        <LearnInput value={props.oneTeachingStyle} onChangeText={props.setOneTeachingStyle} placeholder={ttx("Teaching style, method, or promise")} multiline />
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <View style={{ width: 96 }}><LearnInput value={props.oneRate} onChangeText={props.setOneRate} placeholder="Rate" /></View>
+          <View style={{ width: 96 }}><LearnInput value={props.oneRate} onChangeText={props.setOneRate} placeholder={ttx("Rate")} /></View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, flexGrow: 1 }}>
             {CURRENCIES.slice(0, 12).map(item => (
               <Chip key={item.code} label={`${item.symbol} ${item.code}`} active={props.oneCurrency === item.code} onPress={() => props.setOneCurrency(item.code)} />
             ))}
           </ScrollView>
         </View>
-        <LearnInput value={props.oneMeetingLink} onChangeText={props.setOneMeetingLink} placeholder="Default meeting link or location" />
-        <LearnInput value={props.onePolicies} onChangeText={props.setOnePolicies} placeholder="Payment, refund, reschedule, and homework policy" multiline />
-        <InlineButton label="Save 1:1 offer" onPress={props.onSaveProfile} />
+        <LearnInput value={props.oneMeetingLink} onChangeText={props.setOneMeetingLink} placeholder={ttx("Default meeting link or location")} />
+        <LearnInput value={props.onePolicies} onChangeText={props.setOnePolicies} placeholder={ttx("Payment, refund, reschedule, and homework policy")} multiline />
+        <InlineButton label={ttx("Save 1:1 offer")} onPress={props.onSaveProfile} />
       </GlassPanel>
 
-      <SectionTitle title="Paid packages" subtitle={`${activePackages.length} active`} />
+      <SectionTitle title={ttx("Paid packages")} subtitle={`${activePackages.length} active`} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.oneOnOnePackages.map(item => (
           <Pressable key={item.id} onPress={() => props.onTogglePackage(item.id)}>
@@ -1054,7 +1055,7 @@ function OneOnOneTab(props: {
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{item.minutes}m each · {item.active ? 'Active' : 'Paused'}</Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{item.minutes}{ttx("m each ·")} {item.active ? 'Active' : 'Paused'}</Text>
                 </View>
                 <Text style={[font.bodyBold, { color: '#B08536', fontSize: 16 }]}>{formatPrice(item.price, item.currency)}</Text>
               </View>
@@ -1063,18 +1064,18 @@ function OneOnOneTab(props: {
           </Pressable>
         ))}
         <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
-          <LearnInput value={props.packageTitle} onChangeText={props.setPackageTitle} placeholder="Package title" />
-          <LearnInput value={props.packageDescription} onChangeText={props.setPackageDescription} placeholder="What is included?" multiline />
+          <LearnInput value={props.packageTitle} onChangeText={props.setPackageTitle} placeholder={ttx("Package title")} />
+          <LearnInput value={props.packageDescription} onChangeText={props.setPackageDescription} placeholder={ttx("What is included?")} multiline />
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}><LearnInput value={props.packageMinutes} onChangeText={props.setPackageMinutes} placeholder="Minutes" /></View>
-            <View style={{ flex: 1 }}><LearnInput value={props.packageCount} onChangeText={props.setPackageCount} placeholder="Sessions" /></View>
-            <View style={{ flex: 1 }}><LearnInput value={props.packagePrice} onChangeText={props.setPackagePrice} placeholder="Price" /></View>
+            <View style={{ flex: 1 }}><LearnInput value={props.packageMinutes} onChangeText={props.setPackageMinutes} placeholder={ttx("Minutes")} /></View>
+            <View style={{ flex: 1 }}><LearnInput value={props.packageCount} onChangeText={props.setPackageCount} placeholder={ttx("Sessions")} /></View>
+            <View style={{ flex: 1 }}><LearnInput value={props.packagePrice} onChangeText={props.setPackagePrice} placeholder={ttx("Price")} /></View>
           </View>
-          <InlineButton label="Add paid package" onPress={props.onCreatePackage} />
+          <InlineButton label={ttx("Add paid package")} onPress={props.onCreatePackage} />
         </GlassPanel>
       </View>
 
-      <SectionTitle title="Availability" subtitle={`${props.goal.oneOnOneSlots.filter(item => item.available).length} open slots`} />
+      <SectionTitle title={ttx("Availability")} subtitle={`${props.goal.oneOnOneSlots.filter(item => item.available).length} open slots`} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.oneOnOneSlots.map(slot => (
           <Pressable key={slot.id} onPress={() => props.onToggleSlot(slot.id)}>
@@ -1088,36 +1089,36 @@ function OneOnOneTab(props: {
           </Pressable>
         ))}
         <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
-          <LearnInput value={props.slotLabel} onChangeText={props.setSlotLabel} placeholder="e.g. Tue/Thu 7 PM IST or Saturday mornings" />
-          <LearnInput value={props.slotMinutes} onChangeText={props.setSlotMinutes} placeholder="Default minutes" />
-          <InlineButton label="Add availability" onPress={props.onCreateSlot} />
+          <LearnInput value={props.slotLabel} onChangeText={props.setSlotLabel} placeholder={ttx("e.g. Tue/Thu 7 PM IST or Saturday mornings")} />
+          <LearnInput value={props.slotMinutes} onChangeText={props.setSlotMinutes} placeholder={ttx("Default minutes")} />
+          <InlineButton label={ttx("Add availability")} onPress={props.onCreateSlot} />
         </GlassPanel>
       </View>
 
-      <SectionTitle title="Learner booking" subtitle="Book" />
+      <SectionTitle title={ttx("Learner booking")} subtitle={ttx("Book")} />
       <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
-        <LearnInput value={props.bookingLearner} onChangeText={props.setBookingLearner} placeholder="Learner name" />
-        <LearnInput value={props.bookingGoal} onChangeText={props.setBookingGoal} placeholder="What they want to master" multiline />
-        <LearnInput value={props.bookingSchedule} onChangeText={props.setBookingSchedule} placeholder="Proposed date/time" />
-        <LearnInput value={props.bookingMeeting} onChangeText={props.setBookingMeeting} placeholder="Meeting link or location override" />
+        <LearnInput value={props.bookingLearner} onChangeText={props.setBookingLearner} placeholder={ttx("Learner name")} />
+        <LearnInput value={props.bookingGoal} onChangeText={props.setBookingGoal} placeholder={ttx("What they want to master")} multiline />
+        <LearnInput value={props.bookingSchedule} onChangeText={props.setBookingSchedule} placeholder={ttx("Proposed date/time")} />
+        <LearnInput value={props.bookingMeeting} onChangeText={props.setBookingMeeting} placeholder={ttx("Meeting link or location override")} />
         <View style={{ gap: 8 }}>
           {activePackages.length ? activePackages.map(item => (
             <Pressable key={item.id} onPress={() => props.onCreateBooking(item.id)}>
               <View style={{ minHeight: 42, borderRadius: 14, backgroundColor: '#B08536', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>Request {item.title} · {formatPrice(item.price, item.currency)}</Text>
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{ttx("Request")} {item.title} · {formatPrice(item.price, item.currency)}</Text>
               </View>
             </Pressable>
-          )) : <InlineButton label="Request session" onPress={() => props.onCreateBooking()} />}
+          )) : <InlineButton label={ttx("Request session")} onPress={() => props.onCreateBooking()} />}
         </View>
       </GlassPanel>
 
-      <SectionTitle title="Booking pipeline" subtitle="Pipeline" />
+      <SectionTitle title={ttx("Booking pipeline")} subtitle={ttx("Pipeline")} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.oneOnOneBookings.length === 0 ? (
           <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 16 }}>
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>No 1:1 bookings yet</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("No 1:1 bookings yet")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 5 }]}>
-              Add packages and availability, then create learner requests from this path.
+              {ttx("Add packages and availability, then create learner requests from this path.")}
             </Text>
           </GlassPanel>
         ) : props.goal.oneOnOneBookings.map(booking => (
@@ -1141,20 +1142,20 @@ function OneOnOneTab(props: {
                 {[booking.scheduledFor, booking.meetingLink].filter(Boolean).join(' · ')}
               </Text>
             ) : null}
-            {booking.prepNote ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>Prep: {booking.prepNote}</Text> : null}
-            {booking.homework ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>Homework: {booking.homework}</Text> : null}
-            {booking.followUp ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>Follow-up: {booking.followUp}</Text> : null}
+            {booking.prepNote ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{ttx("Prep:")} {booking.prepNote}</Text> : null}
+            {booking.homework ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{ttx("Homework:")} {booking.homework}</Text> : null}
+            {booking.followUp ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{ttx("Follow-up:")} {booking.followUp}</Text> : null}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <SmallAction label="Accept" onPress={() => props.onUpdateBookingStatus(booking.id, 'accepted', 'pending')} />
-              <SmallAction label="Paid" onPress={() => props.onUpdateBookingStatus(booking.id, 'scheduled', 'paid')} />
-              <SmallAction label="Done" onPress={() => props.onUpdateBookingStatus(booking.id, 'completed', 'paid')} />
-              <SmallAction label="Cancel" danger onPress={() => props.onUpdateBookingStatus(booking.id, 'cancelled', booking.paymentStatus)} />
+              <SmallAction label={ttx("Accept")} onPress={() => props.onUpdateBookingStatus(booking.id, 'accepted', 'pending')} />
+              <SmallAction label={ttx("Paid")} onPress={() => props.onUpdateBookingStatus(booking.id, 'scheduled', 'paid')} />
+              <SmallAction label={ttx("Done")} onPress={() => props.onUpdateBookingStatus(booking.id, 'completed', 'paid')} />
+              <SmallAction label={ttx("Cancel")} danger onPress={() => props.onUpdateBookingStatus(booking.id, 'cancelled', booking.paymentStatus)} />
             </View>
             <GlassPanel variant="light" borderRadius={16} contentStyle={{ padding: 12, gap: 8 }}>
-              <LearnInput value={props.bookingPrep} onChangeText={props.setBookingPrep} placeholder="Prep note for this session" multiline />
-              <LearnInput value={props.bookingHomework} onChangeText={props.setBookingHomework} placeholder="Homework / practice assigned" multiline />
-              <LearnInput value={props.bookingFollowUp} onChangeText={props.setBookingFollowUp} placeholder="Follow-up message or next package pitch" multiline />
-              <InlineButton label="Save to this booking" onPress={() => props.onSaveBookingNotes(booking.id)} />
+              <LearnInput value={props.bookingPrep} onChangeText={props.setBookingPrep} placeholder={ttx("Prep note for this session")} multiline />
+              <LearnInput value={props.bookingHomework} onChangeText={props.setBookingHomework} placeholder={ttx("Homework / practice assigned")} multiline />
+              <LearnInput value={props.bookingFollowUp} onChangeText={props.setBookingFollowUp} placeholder={ttx("Follow-up message or next package pitch")} multiline />
+              <InlineButton label={ttx("Save to this booking")} onPress={() => props.onSaveBookingNotes(booking.id)} />
             </GlassPanel>
           </GlassPanel>
         ))}
@@ -1183,12 +1184,12 @@ function StudioTab(props: {
   return (
     <>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        <Stat label="Syllabus" value={`${props.stats.syllabusDone}/${props.goal.syllabus.length}`} />
-        <Stat label="Rubric" value={`${props.stats.rubricPercent}%`} />
-        <Stat label="Evidence" value={`${props.stats.evidence}`} />
+        <Stat label={ttx("Syllabus")} value={`${props.stats.syllabusDone}/${props.goal.syllabus.length}`} />
+        <Stat label={ttx("Rubric")} value={`${props.stats.rubricPercent}%`} />
+        <Stat label={ttx("Evidence")} value={`${props.stats.evidence}`} />
       </View>
 
-      <SectionTitle title="Course studio" subtitle="Syllabus" />
+      <SectionTitle title={ttx("Course studio")} subtitle={ttx("Syllabus")} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.syllabus.map(week => (
           <Pressable key={week.id} onPress={() => props.onToggleWeek(week.id)}>
@@ -1206,7 +1207,7 @@ function StudioTab(props: {
         ))}
       </View>
 
-      <SectionTitle title="Rubric" subtitle={`${props.stats.rubricScore}/${props.stats.rubricMax} scored`} />
+      <SectionTitle title={ttx("Rubric")} subtitle={`${props.stats.rubricScore}/${props.stats.rubricMax} scored`} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.rubric.map(item => (
           <GlassPanel key={item.id} variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
@@ -1226,17 +1227,17 @@ function StudioTab(props: {
           </GlassPanel>
         ))}
         <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
-          <LearnInput value={props.rubricTitle} onChangeText={props.setRubricTitle} placeholder="New rubric criterion" />
-          <LearnInput value={props.rubricDescription} onChangeText={props.setRubricDescription} placeholder="What does good work look like?" multiline />
-          <InlineButton label="Add criterion" onPress={props.onCreateRubric} />
+          <LearnInput value={props.rubricTitle} onChangeText={props.setRubricTitle} placeholder={ttx("New rubric criterion")} />
+          <LearnInput value={props.rubricDescription} onChangeText={props.setRubricDescription} placeholder={ttx("What does good work look like?")} multiline />
+          <InlineButton label={ttx("Add criterion")} onPress={props.onCreateRubric} />
         </GlassPanel>
       </View>
 
-      <SectionTitle title="Evidence locker" subtitle="Proof" />
+      <SectionTitle title={ttx("Evidence locker")} subtitle={ttx("Proof")} />
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
-        <LearnInput value={props.evidenceTitle} onChangeText={props.setEvidenceTitle} placeholder="Evidence title" />
-        <LearnInput value={props.evidenceDetail} onChangeText={props.setEvidenceDetail} placeholder="Paste link, describe submission, or write proof" multiline />
-        <InlineButton label="Save evidence" onPress={props.onCreateEvidence} />
+        <LearnInput value={props.evidenceTitle} onChangeText={props.setEvidenceTitle} placeholder={ttx("Evidence title")} />
+        <LearnInput value={props.evidenceDetail} onChangeText={props.setEvidenceDetail} placeholder={ttx("Paste link, describe submission, or write proof")} multiline />
+        <InlineButton label={ttx("Save evidence")} onPress={props.onCreateEvidence} />
       </GlassPanel>
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.evidence.map(item => (
@@ -1275,29 +1276,29 @@ function PeopleTab(props: {
   return (
     <>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        <Stat label="Learners" value={`${props.goal.learners.length}`} />
-        <Stat label="Average" value={`${average}%`} />
-        <Stat label="Mode" value={MODE_LABELS[props.goal.mode]} />
+        <Stat label={ttx("Learners")} value={`${props.goal.learners.length}`} />
+        <Stat label={ttx("Average")} value={`${average}%`} />
+        <Stat label={ttx("Mode")} value={MODE_LABELS[props.goal.mode]} />
       </View>
 
-      <SectionTitle title="Learner roster" subtitle="People" />
+      <SectionTitle title={ttx("Learner roster")} subtitle={ttx("People")} />
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
-        <LearnInput value={props.learnerName} onChangeText={props.setLearnerName} placeholder="Name" />
-        <LearnInput value={props.learnerTarget} onChangeText={props.setLearnerTarget} placeholder="Personal target or class outcome" />
-        <LearnInput value={props.learnerNotes} onChangeText={props.setLearnerNotes} placeholder="Context, constraints, learning style, notes" multiline />
+        <LearnInput value={props.learnerName} onChangeText={props.setLearnerName} placeholder={ttx("Name")} />
+        <LearnInput value={props.learnerTarget} onChangeText={props.setLearnerTarget} placeholder={ttx("Personal target or class outcome")} />
+        <LearnInput value={props.learnerNotes} onChangeText={props.setLearnerNotes} placeholder={ttx("Context, constraints, learning style, notes")} multiline />
         <Label text="Level" />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {LEVELS.map(item => <Chip key={item.id} label={item.label} active={props.learnerLevel === item.id} onPress={() => props.setLearnerLevel(item.id)} />)}
         </View>
-        <InlineButton label="Add learner" onPress={props.onCreateLearner} />
+        <InlineButton label={ttx("Add learner")} onPress={props.onCreateLearner} />
       </GlassPanel>
 
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.learners.length === 0 ? (
           <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 16 }}>
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>No learners yet</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("No learners yet")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 5 }]}>
-              Add yourself, a student, a coaching client, or a group member to track progress separately.
+              {ttx("Add yourself, a student, a coaching client, or a group member to track progress separately.")}
             </Text>
           </GlassPanel>
         ) : props.goal.learners.map(learner => (
@@ -1379,7 +1380,7 @@ function PracticeTab(props: {
   const { colors, font } = useTheme();
   return (
     <>
-      <SectionTitle title="Flashcards" subtitle={`${props.goal.flashcards.filter(card => card.mastered).length}/${props.goal.flashcards.length} mastered`} />
+      <SectionTitle title={ttx("Flashcards")} subtitle={`${props.goal.flashcards.filter(card => card.mastered).length}/${props.goal.flashcards.length} mastered`} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.flashcards.map(card => (
           <Pressable key={card.id} onPress={() => props.onToggleCard(card.id)}>
@@ -1393,13 +1394,13 @@ function PracticeTab(props: {
           </Pressable>
         ))}
         <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
-          <LearnInput value={props.cardFront} onChangeText={props.setCardFront} placeholder="New flashcard front" />
-          <LearnInput value={props.cardBack} onChangeText={props.setCardBack} placeholder="Back / answer" multiline />
-          <InlineButton label="Add flashcard" onPress={props.onCreateCard} />
+          <LearnInput value={props.cardFront} onChangeText={props.setCardFront} placeholder={ttx("New flashcard front")} />
+          <LearnInput value={props.cardBack} onChangeText={props.setCardBack} placeholder={ttx("Back / answer")} multiline />
+          <InlineButton label={ttx("Add flashcard")} onPress={props.onCreateCard} />
         </GlassPanel>
       </View>
 
-      <SectionTitle title="Quiz" subtitle="Adaptive check" />
+      <SectionTitle title={ttx("Quiz")} subtitle={ttx("Adaptive check")} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.quiz.map(question => (
           <GlassPanel key={question.id} variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 9 }}>
@@ -1421,13 +1422,13 @@ function PracticeTab(props: {
 
       {props.showCodeLabs ? (
         <>
-          <SectionTitle title="Code-along" subtitle={`${props.goal.codeLabs.filter(item => item.done).length}/${props.goal.codeLabs.length} complete`} />
+          <SectionTitle title={ttx("Code-along")} subtitle={`${props.goal.codeLabs.filter(item => item.done).length}/${props.goal.codeLabs.length} complete`} />
           <View style={{ gap: 10, marginBottom: 16 }}>
             {props.goal.codeLabs.length === 0 ? (
               <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14 }}>
-                <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>No code labs yet</Text>
+                <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("No code labs yet")}</Text>
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>
-                  Add one for coding, app building, data work, formulas, or any step-by-step practice.
+                  {ttx("Add one for coding, app building, data work, formulas, or any step-by-step practice.")}
                 </Text>
               </GlassPanel>
             ) : props.goal.codeLabs.map(item => (
@@ -1449,12 +1450,12 @@ function PracticeTab(props: {
               </Pressable>
             ))}
             <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
-              <LearnInput value={props.codeTitle} onChangeText={props.setCodeTitle} placeholder="Code-along title" />
-              <LearnInput value={props.codeLanguage} onChangeText={props.setCodeLanguage} placeholder="Language or tool" />
-              <LearnInput value={props.codePrompt} onChangeText={props.setCodePrompt} placeholder="What should the learner build or change?" multiline />
-              <LearnInput value={props.codeStarter} onChangeText={props.setCodeStarter} placeholder="Starter code, formula, or steps" multiline />
-              <LearnInput value={props.codeNotes} onChangeText={props.setCodeNotes} placeholder="Hints, gotchas, solution notes" multiline />
-              <InlineButton label="Add code lab" onPress={props.onCreateCodeLab} />
+              <LearnInput value={props.codeTitle} onChangeText={props.setCodeTitle} placeholder={ttx("Code-along title")} />
+              <LearnInput value={props.codeLanguage} onChangeText={props.setCodeLanguage} placeholder={ttx("Language or tool")} />
+              <LearnInput value={props.codePrompt} onChangeText={props.setCodePrompt} placeholder={ttx("What should the learner build or change?")} multiline />
+              <LearnInput value={props.codeStarter} onChangeText={props.setCodeStarter} placeholder={ttx("Starter code, formula, or steps")} multiline />
+              <LearnInput value={props.codeNotes} onChangeText={props.setCodeNotes} placeholder={ttx("Hints, gotchas, solution notes")} multiline />
+              <InlineButton label={ttx("Add code lab")} onPress={props.onCreateCodeLab} />
             </GlassPanel>
           </View>
         </>
@@ -1474,7 +1475,7 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
   const { colors, font } = useTheme();
   return (
     <>
-      <SectionTitle title="Coach prompts" subtitle="Coach" />
+      <SectionTitle title={ttx("Coach prompts")} subtitle={ttx("Coach")} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {prompts.map(prompt => (
           <Pressable key={prompt} onPress={onChat}>
@@ -1488,10 +1489,10 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
           </Pressable>
         ))}
       </View>
-      <SectionTitle title="Reflection log" subtitle={`${goal.reflections.length} entries`} />
+      <SectionTitle title={ttx("Reflection log")} subtitle={`${goal.reflections.length} entries`} />
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
-        <LearnInput value={reflection} onChangeText={setReflection} placeholder="What did you understand, miss, or improve today?" multiline />
-        <InlineButton label="Save reflection" onPress={onCreateReflection} />
+        <LearnInput value={reflection} onChangeText={setReflection} placeholder={ttx("What did you understand, miss, or improve today?")} multiline />
+        <InlineButton label={ttx("Save reflection")} onPress={onCreateReflection} />
       </GlassPanel>
       <View style={{ gap: 10, marginBottom: 16 }}>
         {goal.reflections.map(item => (
@@ -1520,7 +1521,7 @@ function ClassroomTab(props: {
   const { colors, font } = useTheme();
   return (
     <>
-      <SectionTitle title="Assignments" subtitle={`${props.goal.assignments.filter(item => !item.done).length} open`} />
+      <SectionTitle title={ttx("Assignments")} subtitle={`${props.goal.assignments.filter(item => !item.done).length} open`} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.assignments.map(item => (
           <Pressable key={item.id} onPress={() => props.onToggleAssignment(item.id)}>
@@ -1536,26 +1537,26 @@ function ClassroomTab(props: {
           </Pressable>
         ))}
         <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
-          <LearnInput value={props.assignmentTitle} onChangeText={props.setAssignmentTitle} placeholder="Assignment title" />
-          <LearnInput value={props.assignmentInstructions} onChangeText={props.setAssignmentInstructions} placeholder="Instructions or rubric" multiline />
-          <InlineButton label="Create assignment" onPress={props.onCreateAssignment} />
+          <LearnInput value={props.assignmentTitle} onChangeText={props.setAssignmentTitle} placeholder={ttx("Assignment title")} />
+          <LearnInput value={props.assignmentInstructions} onChangeText={props.setAssignmentInstructions} placeholder={ttx("Instructions or rubric")} multiline />
+          <InlineButton label={ttx("Create assignment")} onPress={props.onCreateAssignment} />
         </GlassPanel>
       </View>
 
-      <SectionTitle title="Resources" subtitle={`${props.goal.resources.length} saved`} />
+      <SectionTitle title={ttx("Resources")} subtitle={`${props.goal.resources.length} saved`} />
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>Learning note</Text>
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("Learning note")}</Text>
         <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>
-          Write notes while learning and save them into the Notes app while keeping them linked here as a resource.
+          {ttx("Write notes while learning and save them into the Notes app while keeping them linked here as a resource.")}
         </Text>
-        <LearnInput value={props.linkedNoteTitle} onChangeText={props.setLinkedNoteTitle} placeholder="Note title" />
-        <LearnInput value={props.linkedNoteBody} onChangeText={props.setLinkedNoteBody} placeholder="Concepts, mistakes, examples, summary, next action" multiline />
-        <InlineButton label="Save linked note" onPress={props.onCreateLinkedNote} />
+        <LearnInput value={props.linkedNoteTitle} onChangeText={props.setLinkedNoteTitle} placeholder={ttx("Note title")} />
+        <LearnInput value={props.linkedNoteBody} onChangeText={props.setLinkedNoteBody} placeholder={ttx("Concepts, mistakes, examples, summary, next action")} multiline />
+        <InlineButton label={ttx("Save linked note")} onPress={props.onCreateLinkedNote} />
       </GlassPanel>
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
-        <LearnInput value={props.resourceTitle} onChangeText={props.setResourceTitle} placeholder="Resource title" />
-        <LearnInput value={props.resourceDetail} onChangeText={props.setResourceDetail} placeholder="Link, note, book, video, or file detail" />
-        <InlineButton label="Save resource" onPress={props.onCreateResource} />
+        <LearnInput value={props.resourceTitle} onChangeText={props.setResourceTitle} placeholder={ttx("Resource title")} />
+        <LearnInput value={props.resourceDetail} onChangeText={props.setResourceDetail} placeholder={ttx("Link, note, book, video, or file detail")} />
+        <InlineButton label={ttx("Save resource")} onPress={props.onCreateResource} />
       </GlassPanel>
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.resources.map(item => (
@@ -1592,13 +1593,13 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
   return (
     <>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        <Stat label="Roadmap" value={`${stats.percent}%`} />
-        <Stat label="Quiz" value={`${stats.quizScore}%`} />
-        <Stat label="Cards" value={`${stats.masteredCards}/${goal.flashcards.length}`} />
-        <Stat label="Milestones" value={`${stats.milestoneDone}/${goal.milestones.length}`} />
+        <Stat label={ttx("Roadmap")} value={`${stats.percent}%`} />
+        <Stat label={ttx("Quiz")} value={`${stats.quizScore}%`} />
+        <Stat label={ttx("Cards")} value={`${stats.masteredCards}/${goal.flashcards.length}`} />
+        <Stat label={ttx("Milestones")} value={`${stats.milestoneDone}/${goal.milestones.length}`} />
       </View>
 
-      <SectionTitle title="Milestone proof" subtitle="Outcomes" />
+      <SectionTitle title={ttx("Milestone proof")} subtitle={ttx("Outcomes")} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {goal.milestones.map(milestone => (
           <Pressable key={milestone.id} onPress={() => onToggleMilestone(milestone.id)}>
@@ -1615,19 +1616,19 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
         ))}
       </View>
 
-      <SectionTitle title="Session log" subtitle={`${stats.sessions} sessions · ${goal.studyMinutes} minutes`} />
+      <SectionTitle title={ttx("Session log")} subtitle={`${stats.sessions} sessions · ${goal.studyMinutes} minutes`} />
       <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <View style={{ flex: 1 }}>
-            <LearnInput value={sessionTitle} onChangeText={setSessionTitle} placeholder="Session title" />
+            <LearnInput value={sessionTitle} onChangeText={setSessionTitle} placeholder={ttx("Session title")} />
           </View>
           <View style={{ width: 82 }}>
-            <LearnInput value={sessionMinutes} onChangeText={setSessionMinutes} placeholder="Min" />
+            <LearnInput value={sessionMinutes} onChangeText={setSessionMinutes} placeholder={ttx("Min")} />
           </View>
         </View>
-        <LearnInput value={sessionFocus} onChangeText={setSessionFocus} placeholder="Focus area or learner objective" />
-        <LearnInput value={sessionNotes} onChangeText={setSessionNotes} placeholder="What changed, clicked, or needs review?" multiline />
-        <InlineButton label="Log session" onPress={onCreateSession} />
+        <LearnInput value={sessionFocus} onChangeText={setSessionFocus} placeholder={ttx("Focus area or learner objective")} />
+        <LearnInput value={sessionNotes} onChangeText={setSessionNotes} placeholder={ttx("What changed, clicked, or needs review?")} multiline />
+        <InlineButton label={ttx("Log session")} onPress={onCreateSession} />
       </GlassPanel>
 
       {goal.sessions.length > 0 ? (
@@ -1649,7 +1650,7 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
       ) : null}
 
       <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Weak topics</Text>
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("Weak topics")}</Text>
         {(goal.weakTopics.length ? goal.weakTopics : ['No weak topic captured yet']).map(topic => (
           <Text key={topic} style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 20 }]}>- {topic}</Text>
         ))}
@@ -1677,16 +1678,16 @@ function SettingsTab(props: {
   const { colors, font } = useTheme();
   return (
     <>
-      <SectionTitle title="Path settings" subtitle={props.goal.title} />
+      <SectionTitle title={ttx("Path settings")} subtitle={props.goal.title} />
       <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
-        <LearnInput value={props.pathTitle} onChangeText={props.setPathTitle} placeholder="Path title" strong />
-        <LearnInput value={props.pathTarget} onChangeText={props.setPathTarget} placeholder="Outcome or target" multiline />
+        <LearnInput value={props.pathTitle} onChangeText={props.setPathTitle} placeholder={ttx("Path title")} strong />
+        <LearnInput value={props.pathTarget} onChangeText={props.setPathTarget} placeholder={ttx("Outcome or target")} multiline />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <View style={{ flex: 1 }}>
-            <LearnInput value={props.pathDailyMinutes} onChangeText={props.setPathDailyMinutes} placeholder="Daily minutes" />
+            <LearnInput value={props.pathDailyMinutes} onChangeText={props.setPathDailyMinutes} placeholder={ttx("Daily minutes")} />
           </View>
           <View style={{ flex: 1 }}>
-            <LearnInput value={props.pathDeadline} onChangeText={props.setPathDeadline} placeholder="Deadline" />
+            <LearnInput value={props.pathDeadline} onChangeText={props.setPathDeadline} placeholder={ttx("Deadline")} />
           </View>
         </View>
         <Label text="Mode" />
@@ -1701,37 +1702,37 @@ function SettingsTab(props: {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           {LEARNING_CATEGORIES.map(item => <Chip key={item} label={item} active={props.pathCategory === item} onPress={() => props.setPathCategory(item)} />)}
         </ScrollView>
-        <InlineButton label="Apply path settings" onPress={props.onApplyPath} />
+        <InlineButton label={ttx("Apply path settings")} onPress={props.onApplyPath} />
       </GlassPanel>
 
-      <SectionTitle title="Learn defaults" subtitle="Defaults" />
+      <SectionTitle title={ttx("Learn defaults")} subtitle={ttx("Defaults")} />
       <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
-        <LearnInput value={props.defaultCodeLanguage} onChangeText={props.setDefaultCodeLanguage} placeholder="Default code language or tool" />
+        <LearnInput value={props.defaultCodeLanguage} onChangeText={props.setDefaultCodeLanguage} placeholder={ttx("Default code language or tool")} />
         <SettingsToggle
-          title="Show teaching tools"
-          subtitle="Course, class, roster, assignments"
+          title={ttx("Show teaching tools")}
+          subtitle={ttx("Course, class, roster, assignments")}
           value={props.settings.showTeacherTools}
           onValueChange={(showTeacherTools) => props.onUpdateSettings({ ...props.settings, showTeacherTools })}
         />
         <SettingsToggle
-          title="Show code-along labs"
-          subtitle="Code, formulas, builds"
+          title={ttx("Show code-along labs")}
+          subtitle={ttx("Code, formulas, builds")}
           value={props.settings.showCodeLabs}
           onValueChange={(showCodeLabs) => props.onUpdateSettings({ ...props.settings, showCodeLabs })}
         />
         <SettingsToggle
-          title="Auto-link study notes"
-          subtitle="Save Learn notes to Notes"
+          title={ttx("Auto-link study notes")}
+          subtitle={ttx("Save Learn notes to Notes")}
           value={props.settings.autoLinkNotes}
           onValueChange={(autoLinkNotes) => props.onUpdateSettings({ ...props.settings, autoLinkNotes })}
         />
-        <InlineButton label="Save these as defaults" onPress={props.onSaveDefaults} />
+        <InlineButton label={ttx("Save these as defaults")} onPress={props.onSaveDefaults} />
       </GlassPanel>
 
       <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14 }} style={{ marginBottom: 16 }}>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>What settings control</Text>
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("What settings control")}</Text>
         <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 5 }]}>
-          Keep Learn lightweight for solo study, or turn on the larger teaching/coaching surfaces when managing learners, assignments, rubrics, proof, and code-alongs.
+          {ttx("Keep Learn lightweight for solo study, or turn on the larger teaching/coaching surfaces when managing learners, assignments, rubrics, proof, and code-alongs.")}
         </Text>
       </GlassPanel>
     </>

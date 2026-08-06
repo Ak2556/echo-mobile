@@ -454,6 +454,19 @@ export function ttRaw(text: string, language: AppLanguageCode): string {
   return text;
 }
 
+/**
+ * Non-hook global translator for arbitrary UI strings — the target of the
+ * codemod that wrapped display text across the deep/pushed screens. Reads the
+ * current app language from the store at call time. It is correct on first
+ * render (which the device-language default relies on) and on any re-render;
+ * pushed routes re-mount on navigation, so a mid-session language switch is
+ * reflected when you next open the screen. For always-reactive surfaces, use
+ * the `tt`/`t` from useI18n() instead.
+ */
+export function ttx(text: string): string {
+  return ttRaw(text, useAppStore.getState().appLanguage);
+}
+
 export function formatTranslation(
   key: TranslationKey,
   language: AppLanguageCode,

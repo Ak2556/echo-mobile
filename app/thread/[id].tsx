@@ -27,6 +27,7 @@ import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { inferTopics } from '../../lib/echoUX';
+import { ttx } from '../../lib/i18n';
 
 export default function ThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -86,9 +87,9 @@ export default function ThreadDetailScreen() {
           <ActivityIndicator color={colors.textMuted} />
         ) : (
           <>
-            <Text style={{ color: colors.textSecondary }}>Echo not found</Text>
+            <Text style={{ color: colors.textSecondary }}>{ttx("Echo not found")}</Text>
             <Pressable onPress={() => safeBack()} style={{ marginTop: 16 }}>
-              <Text style={{ color: colors.accent }}>Go back</Text>
+              <Text style={{ color: colors.accent }}>{ttx("Go back")}</Text>
             </Pressable>
           </>
         )}
@@ -198,7 +199,7 @@ export default function ThreadDetailScreen() {
         <Pressable onPress={() => safeBack()} style={{ padding: 4 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>Echo Thread</Text>
+        <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{ttx("Echo Thread")}</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           {/* Bookmark stays only in the action row below the post body.
               The header version was duplicate weight for the same action. */}
@@ -207,8 +208,8 @@ export default function ThreadDetailScreen() {
               onPress={() => setShowMenu(value => !value)}
               style={{ padding: 2 }}
               accessibilityRole="button"
-              accessibilityLabel="Post options"
-              accessibilityHint="Opens edit, delete, and report menu"
+              accessibilityLabel={ttx("Post options")}
+              accessibilityHint={ttx("Opens edit, delete, and report menu")}
             >
               <DotsThreeOutline color={colors.textSecondary} size={24} />
             </Pressable>
@@ -342,7 +343,7 @@ export default function ThreadDetailScreen() {
 
         {(item.postType === 'text' || !item.postType) && !!item.response ? (
           <View style={{ marginTop: 4, marginBottom: 22, paddingLeft: 16, borderLeftWidth: 2, borderLeftColor: colors.accent }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Inter_600SemiBold' }}>Takeaway</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Inter_600SemiBold' }}>{ttx("Takeaway")}</Text>
             <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{item.response}</Text>
           </View>
         ) : null}
@@ -366,7 +367,7 @@ export default function ThreadDetailScreen() {
             />
             <IconButton
               icon={ShareNetwork}
-              label="Share"
+              label={ttx("Share")}
               onPress={() => router.push({ pathname: '/share', params: { prompt: item.prompt, response: item.response } })}
               size="md"
               color={colors.textSecondary}
@@ -385,7 +386,7 @@ export default function ThreadDetailScreen() {
         {relatedEchoes.length > 0 ? (
           <View style={{ marginTop: 20 }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 10 }}>
-              Related Echoes
+              {ttx("Related Echoes")}
             </Text>
             {relatedEchoes.map(related => (
               <Pressable
@@ -432,7 +433,7 @@ function ThreadPollView({ poll, echoId, colors, radius, fontSizes }: { poll: any
         );
       })}
       <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 4 }}>
-        {poll.totalVotes} vote{poll.totalVotes !== 1 ? 's' : ''}
+        {poll.totalVotes} {ttx("vote")}{poll.totalVotes !== 1 ? 's' : ''}
         {poll.endsAt && !isExpired ? ` · ${Math.ceil((new Date(poll.endsAt).getTime() - Date.now()) / 3600000)}h left` : ''}
         {isExpired ? ' · Ended' : ''}
       </Text>

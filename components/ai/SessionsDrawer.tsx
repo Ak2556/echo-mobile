@@ -9,6 +9,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
 import { ChatSession } from '../../types';
+import { ttx } from '../../lib/i18n';
 
 interface SessionsDrawerProps {
   visible: boolean;
@@ -59,7 +60,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
           )}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: Platform.OS === 'ios' ? colors.glassFill : colors.bg }]} />
           <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>Conversations</Text>
+            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{ttx("Conversations")}</Text>
             <Pressable onPress={onClose} style={{ padding: 6 }}>
               <X color={colors.textSecondary} size={22} />
             </Pressable>
@@ -82,7 +83,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
               <TextInput
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Search conversations"
+                placeholder={ttx("Search conversations")}
                 placeholderTextColor={colors.textMuted}
                 style={{ flex: 1, color: colors.text, fontSize: 15, padding: 0 }}
               />
@@ -103,7 +104,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
             }}
           >
             <Plus color="#fff" size={18} />
-            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>New conversation</Text>
+            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{ttx("New conversation")}</Text>
           </Pressable>
           <FlashList
             data={sorted}
@@ -151,7 +152,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
                   onPress={() => { tap('warning'); deleteSession(item.id); }}
                   style={{ padding: 8, borderRadius: 8 }}
                   accessibilityRole="button"
-                  accessibilityLabel="Delete conversation"
+                  accessibilityLabel={ttx("Delete conversation")}
                 >
                   <Trash color={colors.textMuted} size={16} />
                 </Pressable>

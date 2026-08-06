@@ -27,6 +27,7 @@ import { IconBadge } from '../ui/IconBadge';
 import { usePerformanceProfile } from '../../lib/performance';
 import { useAppStore } from '../../store/useAppStore';
 import { assistantLanguageInstruction } from '../../lib/languages';
+import { ttx } from '../../lib/i18n';
 
 type Item =
   | { kind: 'text'; id: string; role: 'user' | 'assistant'; content: string }
@@ -309,7 +310,7 @@ export function CommandPalette() {
                     value={input}
                     onChangeText={setInput}
                     onSubmitEditing={send}
-                    placeholder="Ask Echo anything…"
+                    placeholder={ttx("Ask Echo anything…")}
                     placeholderTextColor={colors.textMuted}
                     returnKeyType="send"
                     style={{ flex: 1, color: colors.text, fontSize: 16, paddingVertical: 6 }}

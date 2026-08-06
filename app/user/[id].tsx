@@ -31,6 +31,7 @@ import { useToggleRemoteBlock, useToggleRemoteMute } from '../../hooks/queries/u
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
+import { ttx } from '../../lib/i18n';
 
 function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
@@ -82,7 +83,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
           className="p-1"
           scaleValue={0.88}
           haptic="light"
-          accessibilityLabel="Go back"
+          accessibilityLabel={ttx("Go back")}
         >
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
@@ -91,8 +92,8 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
           className="p-1"
           scaleValue={0.88}
           haptic="light"
-          accessibilityLabel="Profile options"
-          accessibilityHint="Opens block, mute, and report menu"
+          accessibilityLabel={ttx("Profile options")}
+          accessibilityHint={ttx("Opens block, mute, and report menu")}
         >
           <DotsThreeOutline color={colors.text} size={24} />
         </AnimatedPressable>
@@ -133,7 +134,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
           {user.isVerified && <SealCheck color={colors.accent} size={20} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: 14, marginBottom: 8 }}>@{user.username}</Text>
-        {online && <Text style={{ color: colors.success, fontSize: 12, marginBottom: 8 }}>Active now</Text>}
+        {online && <Text style={{ color: colors.success, fontSize: 12, marginBottom: 8 }}>{ttx("Active now")}</Text>}
         {user.bio ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16, paddingHorizontal: 20 }}>
             <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 14, flexShrink: 1 }}>{user.bio}</Text>
@@ -161,15 +162,15 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         <View className="flex-row gap-8 mb-4">
           <AnimatedPressable style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{echoeCount}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Echoes</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Echoes")}</Text>
           </AnimatedPressable>
           <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'followers' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followerCount}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Followers</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Followers")}</Text>
           </AnimatedPressable>
           <AnimatedPressable onPress={() => router.push({ pathname: '/followers', params: { userId: user.id, tab: 'following' } })} style={{ alignItems: "center" }} scaleValue={0.92} haptic="light">
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>{user.followingCount}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Following</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Following")}</Text>
           </AnimatedPressable>
         </View>
 
@@ -254,7 +255,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
 
       <View className="mx-4 mb-2" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', paddingHorizontal: 16, marginBottom: 8 }}>
-        Echoes {'\u00B7'} {echoeCount}
+        {ttx("Echoes")} {'\u00B7'} {echoeCount}
       </Text>
       <ProfilePhotoPreview
         visible={photoPreviewOpen}
@@ -322,11 +323,11 @@ export default function UserProfileScreen() {
           </Text>
           {errMessage ? (
             <AnimatedPressable onPress={() => remoteBundle.refetch()} className="mt-4" scaleValue={0.95} haptic="light">
-              <Text style={{ color: colors.accent }}>Retry</Text>
+              <Text style={{ color: colors.accent }}>{ttx("Retry")}</Text>
             </AnimatedPressable>
           ) : null}
           <AnimatedPressable onPress={() => safeBack()} className="mt-4" scaleValue={0.95} haptic="light">
-            <Text style={{ color: colors.accent }}>Go Back</Text>
+            <Text style={{ color: colors.accent }}>{ttx("Go Back")}</Text>
           </AnimatedPressable>
         </SafeAreaView>
       );
@@ -401,8 +402,8 @@ export default function UserProfileScreen() {
             <View style={{ paddingTop: 56 }}>
               <EmptyState
                 icon={<Images color={colors.accent} size={28} weight="duotone" />}
-                title="No echoes yet"
-                subtitle="When they publish, you’ll see it here."
+                title={ttx("No echoes yet")}
+                subtitle={ttx("When they publish, you’ll see it here.")}
               />
             </View>
           }
@@ -421,9 +422,9 @@ export default function UserProfileScreen() {
   if (!user) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} className="items-center justify-center">
-        <Text style={{ color: colors.textSecondary }}>User not found</Text>
+        <Text style={{ color: colors.textSecondary }}>{ttx("User not found")}</Text>
         <AnimatedPressable onPress={() => safeBack()} className="mt-4" scaleValue={0.95} haptic="light">
-          <Text style={{ color: colors.accent }}>Go Back</Text>
+          <Text style={{ color: colors.accent }}>{ttx("Go Back")}</Text>
         </AnimatedPressable>
       </SafeAreaView>
     );
@@ -466,8 +467,8 @@ export default function UserProfileScreen() {
           <View style={{ paddingTop: 40 }}>
             <EmptyState
               icon={<Images color={colors.accent} size={28} weight="duotone" />}
-              title="No echoes yet"
-              subtitle="When they publish, you’ll see it here."
+              title={ttx("No echoes yet")}
+              subtitle={ttx("When they publish, you’ll see it here.")}
             />
           </View>
         }

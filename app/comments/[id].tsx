@@ -15,6 +15,7 @@ import { Comment } from '../../types';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useEchoComments, useAddRemoteComment } from '../../hooks/queries/useEchoComments';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 interface ThreadedRow {
   comment: Comment;
@@ -99,7 +100,7 @@ export default function CommentsScreen() {
   return (
     <ResponsiveScreen edges={['top', 'bottom']}>
       <ScreenHeader
-        title="Comments"
+        title={ttx("Comments")}
         right={<Text style={{ color: colors.textMuted, fontSize: 14, marginRight: 10 }}>{comments.length}</Text>}
       />
 
@@ -114,8 +115,8 @@ export default function CommentsScreen() {
         ) : threadedRows.length === 0 ? (
           <EmptyState
             icon={<ChatCircle color="#6366F1" size={32} />}
-            title="No comments yet"
-            subtitle="Be the first to share your thoughts on this echo."
+            title={ttx("No comments yet")}
+            subtitle={ttx("Be the first to share your thoughts on this echo.")}
           />
         ) : (
           <FlashList
@@ -169,7 +170,7 @@ export default function CommentsScreen() {
             <ArrowBendUpLeft color={colors.accent} size={16} weight="bold" />
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700' }}>
-                Replying to
+                {ttx("Replying to")}
               </Text>
               <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginTop: 1 }} numberOfLines={1}>
                 @{replyingTo.username}
@@ -183,7 +184,7 @@ export default function CommentsScreen() {
               hitSlop={10}
               style={{ padding: 6, borderRadius: 999, backgroundColor: colors.surface }}
               accessibilityRole="button"
-              accessibilityLabel="Cancel reply"
+              accessibilityLabel={ttx("Cancel reply")}
             >
               <X color={colors.textSecondary} size={14} weight="bold" />
             </Pressable>
@@ -209,7 +210,7 @@ export default function CommentsScreen() {
             onPress={() => { void handleSend(); }}
             disabled={!text.trim() || addRemote.isPending}
             className={`p-2.5 rounded-full ${text.trim() && !addRemote.isPending ? 'bg-blue-600' : 'bg-zinc-800'}`}
-            accessibilityLabel="Send comment"
+            accessibilityLabel={ttx("Send comment")}
             accessibilityRole="button"
           >
             <PaperPlaneTilt color="#fff" size={18} />

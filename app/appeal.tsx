@@ -20,6 +20,7 @@ import { useTheme } from '../lib/theme';
 import { fetchMyAppeals, submitAppeal, submitDecisionAppeal, fetchModerationDecision, type MyAppeal, type ModerationDecision } from '../lib/supabaseEchoApi';
 import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { safeBack } from '../lib/safeBack';
+import { ttx } from '../lib/i18n';
 
 // `tone` resolves to a theme token at render so status color adapts per theme.
 const STATUS_CONFIG: Record<MyAppeal['status'], { label: string; tone: 'warning' | 'danger' | 'success'; Icon: React.ComponentType<any> }> = {
@@ -111,7 +112,7 @@ export default function AppealScreen() {
               <Animated.View entering={FadeInDown.springify()} style={{ alignItems: 'center', paddingTop: 48, gap: 16 }}>
                 <CheckCircle color={colors.success} size={56} weight="fill" />
                 <Text style={{ color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold', textAlign: 'center' }}>
-                  Appeal submitted
+                  {ttx("Appeal submitted")}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 }}>
                   {"We'll review your appeal and notify you of the outcome within 14 days, as required by the Digital Services Act."}
@@ -127,7 +128,7 @@ export default function AppealScreen() {
                     marginTop: 8,
                   }}
                 >
-                  <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: fontSizes.body }}>Done</Text>
+                  <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: fontSizes.body }}>{ttx("Done")}</Text>
                 </AnimatedPressable>
               </Animated.View>
             ) : (
@@ -136,7 +137,7 @@ export default function AppealScreen() {
                 {decision && (
                   <GlassPanel style={{ padding: 16, gap: 8 }}>
                     <Text style={{ color: colors.danger, fontSize: fontSizes.caption - 1, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3 }}>
-                      STATEMENT OF REASONS
+                      {ttx("STATEMENT OF REASONS")}
                     </Text>
                     <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_600SemiBold' }}>
                       {decision.decisionType === 'content_removed'
@@ -149,8 +150,8 @@ export default function AppealScreen() {
                       {decision.reason}
                     </Text>
                     <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 16 }}>
-                      Basis: {decision.ground}{decision.automated ? ' · automated decision' : ''}
-                      {'\n'}You can appeal until {new Date(decision.appealDeadline).toLocaleDateString()}.
+                      {ttx("Basis:")} {decision.ground}{decision.automated ? ' · automated decision' : ''}
+                      {'\n'}{ttx("You can appeal until")} {new Date(decision.appealDeadline).toLocaleDateString()}.
                     </Text>
                   </GlassPanel>
                 )}
@@ -158,10 +159,10 @@ export default function AppealScreen() {
                 {/* Context card */}
                 <GlassPanel style={{ padding: 16, gap: 10 }}>
                   <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_600SemiBold' }}>
-                    Your right to appeal
+                    {ttx("Your right to appeal")}
                   </Text>
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', lineHeight: 20 }}>
-                    Under Article 20 of the EU Digital Services Act, you have the right to challenge any content moderation decision. Appeals are reviewed by a human moderator within 14 days.
+                    {ttx("Under Article 20 of the EU Digital Services Act, you have the right to challenge any content moderation decision. Appeals are reviewed by a human moderator within 14 days.")}
                   </Text>
                 </GlassPanel>
 
@@ -171,7 +172,7 @@ export default function AppealScreen() {
                     color: colors.textMuted, fontSize: fontSizes.caption - 1,
                     fontFamily: 'Inter_500Medium', marginBottom: 8,
                   }}>
-                    Why should this decision be reconsidered? *
+                    {ttx("Why should this decision be reconsidered? *")}
                   </Text>
                   <TextInput
                     style={{
@@ -187,7 +188,7 @@ export default function AppealScreen() {
                       textAlignVertical: 'top',
                     }}
                     multiline
-                    placeholder="Explain why you believe this decision was incorrect — include any relevant context, evidence, or information the moderator may not have had."
+                    placeholder={ttx("Explain why you believe this decision was incorrect — include any relevant context, evidence, or information the moderator may not have had.")}
                     placeholderTextColor={colors.textMuted}
                     value={reason}
                     onChangeText={t => setReason(t.slice(0, MAX_CHARS))}
@@ -216,7 +217,7 @@ export default function AppealScreen() {
                 >
                   {submitting
                     ? <ActivityIndicator size="small" color="#fff" />
-                    : <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: fontSizes.body }}>Submit appeal</Text>
+                    : <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: fontSizes.body }}>{ttx("Submit appeal")}</Text>
                   }
                 </AnimatedPressable>
 
@@ -224,7 +225,7 @@ export default function AppealScreen() {
                   color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_400Regular',
                   textAlign: 'center', lineHeight: 16,
                 }}>
-                  This appeal is subject to our Terms of Service. Frivolous appeals may affect your standing on the platform.
+                  {ttx("This appeal is subject to our Terms of Service. Frivolous appeals may affect your standing on the platform.")}
                 </Text>
               </>
             )}
@@ -249,7 +250,7 @@ export default function AppealScreen() {
               <View style={{ paddingTop: 48, alignItems: 'center', gap: 12 }}>
                 <Scales color={colors.border} size={40} weight="duotone" />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular', textAlign: 'center' }}>
-                  {"You haven't filed any appeals yet."}{'\n'}Appeals appear here when you contest a moderation decision.
+                  {"You haven't filed any appeals yet."}{'\n'}{ttx("Appeals appear here when you contest a moderation decision.")}
                 </Text>
               </View>
             ) : (
@@ -285,7 +286,7 @@ export default function AppealScreen() {
                           borderLeftColor: statusColor,
                         }}>
                           <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
-                            Moderator note
+                            {ttx("Moderator note")}
                           </Text>
                           <Text style={{ color: colors.text, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', lineHeight: 18 }}>
                             {a.moderatorNote}
@@ -296,7 +297,7 @@ export default function AppealScreen() {
                       {/* Resolved date */}
                       {a.resolvedAt && (
                         <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
-                          Resolved {timeAgo(a.resolvedAt)}
+                          {ttx("Resolved")} {timeAgo(a.resolvedAt)}
                         </Text>
                       )}
                     </GlassPanel>

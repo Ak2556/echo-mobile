@@ -8,6 +8,7 @@ import { useTheme } from '../lib/theme';
 import { PLANS } from '../constants/subscriptions';
 import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
+import { ttx } from '../lib/i18n';
 
 /**
  * Echo tier upgrade screen.
@@ -29,13 +30,13 @@ export default function UpgradeScreen() {
 
   return (
     <ResponsiveScreen edges={['top', 'bottom']}>
-      <ScreenHeader title="Echo Tiers" />
+      <ScreenHeader title={ttx("Echo Tiers")} />
 
       <ScrollView contentContainerStyle={{ padding: 24, gap: 24 }}>
         <EmptyState
           icon={<Sparkle color={colors.accent} size={28} weight="fill" />}
-          title="Echo Tiers"
-          subtitle="Every person gets a unique Echo. Higher tiers add more capacity, deeper persona memory, and exclusive access."
+          title={ttx("Echo Tiers")}
+          subtitle={ttx("Every person gets a unique Echo. Higher tiers add more capacity, deeper persona memory, and exclusive access.")}
         />
 
         <View style={{ gap: 12 }}>
@@ -82,23 +83,23 @@ export default function UpgradeScreen() {
 
         <View style={{ alignItems: 'center', gap: 6 }}>
           <Text style={{ color: colors.text, fontSize: 34, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.6 }}>
-            From ${PLANS.plus.price.toFixed(2)}
-            <Text style={{ color: colors.textMuted, fontSize: 16, fontFamily: 'Inter_500Medium' }}>/month</Text>
+            {ttx("From $")}{PLANS.plus.price.toFixed(2)}
+            <Text style={{ color: colors.textMuted, fontSize: 16, fontFamily: 'Inter_500Medium' }}>{ttx("/month")}</Text>
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>Founder access is invite-only.</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Founder access is invite-only.")}</Text>
         </View>
 
         <Pressable
           onPress={handleUpgrade}
           accessibilityRole="button"
-          accessibilityLabel="Request tier access"
+          accessibilityLabel={ttx("Request tier access")}
           style={{ borderRadius: radius.lg }}
         >
           {({ pressed }) => (
             // Wrapper child View owns the accent fill; the Pressable stays bare
             // so cssInterop can't drop the background and hide the white label.
             <View style={{ backgroundColor: pressed ? colors.accentMuted : colors.accent, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center' }}>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Request access</Text>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Request access")}</Text>
             </View>
           )}
         </Pressable>
@@ -106,11 +107,11 @@ export default function UpgradeScreen() {
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Maybe later"
+          accessibilityLabel={ttx("Maybe later")}
           style={{ alignItems: 'center', paddingVertical: 12 }}
         >
           <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>
-            Maybe later
+            {ttx("Maybe later")}
           </Text>
         </Pressable>
       </ScrollView>

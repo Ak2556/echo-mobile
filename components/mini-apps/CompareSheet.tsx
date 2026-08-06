@@ -10,6 +10,7 @@ import {
   type Leaderboard,
   type SocialApp,
 } from '../../lib/miniAppSocial';
+import { ttx } from '../../lib/i18n';
 
 /**
  * Compare a structured mini-app (habits / fitness) with people you follow.
@@ -64,15 +65,15 @@ export function CompareSheet({
             <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
               <Trophy color={accent} size={18} weight="fill" />
             </View>
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>Compare {appName.toLowerCase()}</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>{ttx("Compare")} {appName.toLowerCase()}</Text>
             <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} weight="bold" /></Pressable>
           </View>
 
           {/* Opt-in — nothing of yours is visible to others until this is on. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.glassBorder, marginBottom: 16 }}>
             <View style={{ flex: 1 }}>
-              <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14 }]}>Let your followers see this</Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>Only your streak numbers — never your notes or entries.</Text>
+              <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14 }]}>{ttx("Let your followers see this")}</Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("Only your streak numbers — never your notes or entries.")}</Text>
             </View>
             <Switch value={sharing} onValueChange={toggleShare} trackColor={{ true: accent, false: colors.border }} />
           </View>
@@ -81,9 +82,9 @@ export function CompareSheet({
             <View style={{ paddingVertical: 40, alignItems: 'center' }}><ActivityIndicator color={accent} /></View>
           ) : others.length === 0 ? (
             <View style={{ paddingVertical: 28, alignItems: 'center', gap: 6 }}>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>No one to compare yet</Text>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("No one to compare yet")}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 19 }]}>
-                Follow people who share their {appName.toLowerCase()} and they&apos;ll appear here, ranked with you.
+                {ttx("Follow people who share their")} {appName.toLowerCase()} {ttx("and they&apos;ll appear here, ranked with you.")}
               </Text>
             </View>
           ) : (

@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { videoSourceForUri } from '../../lib/videoMedia';
 import { useAppStore } from '../../store/useAppStore';
+import { ttx } from '../../lib/i18n';
 
 // Safely attempt to load expo-video (unavailable in Expo Go).
 // In Expo Go this stays null and we render the static fallback.
@@ -128,7 +129,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount 
         <LinearGradient colors={['#2A2018', '#0C0B09']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <Play color="#fff" size={24} weight="fill" />
-          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600' }}>Tap to open video</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600' }}>{ttx("Tap to open video")}</Text>
         </LinearGradient>
       )}
 
@@ -156,7 +157,7 @@ function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCo
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
       >
         <WifiSlash color="rgba(255,255,255,0.5)" size={24} />
-        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '500' }}>Video paused — Data Saver on</Text>
+        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '500' }}>{ttx("Video paused — Data Saver on")}</Text>
       </LinearGradient>
       {viewCount !== undefined && (
         <View style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>

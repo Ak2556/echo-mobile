@@ -8,6 +8,7 @@ import {
   Habit, bestHabitStreak, completionRate, formatCheckInTime,
   getHabitStreak, isScheduledOn, todayStr,
 } from '../../lib/habits';
+import { ttx } from '../../lib/i18n';
 
 function monthDays(year: number, month: number): (string | null)[] {
   const first = new Date(year, month, 1);
@@ -80,7 +81,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
               {habit.archived ? ' · Archived' : ''}
             </Text>
           </View>
-          <AnimatedPressable onPress={onEdit} scaleValue={0.9} haptic="light" style={{ padding: 6 }} accessibilityLabel="Edit habit">
+          <AnimatedPressable onPress={onEdit} scaleValue={0.9} haptic="light" style={{ padding: 6 }} accessibilityLabel={ttx("Edit habit")}>
             <PencilSimple color={colors.textSecondary} size={19} />
           </AnimatedPressable>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light" style={{ padding: 6 }}>
@@ -165,7 +166,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
           {recentLog.length > 0 && (
             <View>
               <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8 }}>
-                Notes & proof
+                {ttx("Notes & proof")}
               </Text>
               {recentLog.map(entry => (
                 <Pressable key={entry.date} onPress={() => onDayPress(entry.date)}>
@@ -210,7 +211,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, borderWidth: 1, borderColor: '#EF444455', paddingVertical: 13 }}
             >
               <Trash color="#EF4444" size={16} />
-              <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 14 }}>Delete</Text>
+              <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 14 }}>{ttx("Delete")}</Text>
             </AnimatedPressable>
           </View>
         </ScrollView>

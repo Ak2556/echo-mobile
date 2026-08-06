@@ -6,6 +6,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 interface Unit { label: string; toBase: number }
 interface Category { name: string; marker: string; units: Unit[] }
@@ -70,8 +71,8 @@ function ConversionPulse({ accent, category, from, to, input, result }: { accent
           <ArrowsLeftRight color={accent} size={20} weight="bold" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Conversion cockpit</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Exact answer, reusable context.</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Conversion cockpit")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Exact answer, reusable context.")}</Text>
         </View>
       </View>
       <View style={{ borderRadius: 18, padding: 14, backgroundColor: valid ? `${accent}14` : colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: valid ? `${accent}44` : colors.glassBorder }}>
@@ -108,7 +109,7 @@ export default function ConverterScreen() {
   const result = convert();
 
   return (
-    <MiniAppShell title="Converter" subtitle="Convert" scrollPadding={0}>
+    <MiniAppShell title={ttx("Converter")} subtitle={ttx("Convert")} scrollPadding={0}>
       {/* Category pills */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingBottom: 12, paddingTop: 4 }}>
         {CATEGORIES.map((c, i) => (
@@ -132,8 +133,8 @@ export default function ConverterScreen() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, gap: 14 }} showsVerticalScrollIndicator={false}>
         <MiniCommandDeck
           accent={accent}
-          title="Universal quick converter"
-          subtitle="Units, formula, shareable answer."
+          title={ttx("Universal quick converter")}
+          subtitle={ttx("Units, formula, shareable answer.")}
           metrics={[
             { label: 'Category', value: cat.marker, detail: cat.name },
             { label: 'From', value: cat.units[fromIdx]?.label ?? '-', detail: 'source' },
@@ -151,7 +152,7 @@ export default function ConverterScreen() {
         />
         {/* FROM */}
         <GlassPanel variant="medium" borderRadius={24} style={{ borderColor: accent + '55', borderWidth: 1 }} contentStyle={{ padding: 20 }}>
-          <Text style={{ color: accent, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>FROM</Text>
+          <Text style={{ color: accent, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("FROM")}</Text>
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -193,7 +194,7 @@ export default function ConverterScreen() {
 
         {/* TO */}
         <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>TO</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("TO")}</Text>
           <Text style={{ color: accent, fontSize: 42, fontFamily: 'Fraunces_500Medium', letterSpacing: -1, marginBottom: 14 }} numberOfLines={1} adjustsFontSizeToFit>{result}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -227,8 +228,8 @@ export default function ConverterScreen() {
         <EdgeFeaturePanel
           appName="Converter"
           accent={accent}
-          headline="Conversions you can reuse"
-          caption="Share exact conversions, post quick references, or ask Echo to explain the formula."
+          headline={ttx("Conversions you can reuse")}
+          caption={ttx("Share exact conversions, post quick references, or ask Echo to explain the formula.")}
           metrics={[
             { label: 'Category', value: cat.name },
             { label: 'From', value: cat.units[fromIdx]?.label ?? '-' },

@@ -3,6 +3,7 @@ import { Modal, Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 interface ProfilePhotoPreviewProps {
   visible: boolean;
@@ -20,7 +21,7 @@ export function ProfilePhotoPreview({ visible, imageUrl, displayName, onClose }:
         <Pressable
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Close profile photo"
+          accessibilityLabel={ttx("Close profile photo")}
           style={{
             position: 'absolute',
             top: 54,

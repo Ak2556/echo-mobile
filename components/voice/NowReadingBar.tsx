@@ -6,6 +6,7 @@ import { SpeakerHigh, Pause, Play, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
 import { pauseSpeaking, resumeSpeaking, stopSpeaking, useTtsStore } from '../../lib/tts';
+import { ttx } from '../../lib/i18n';
 
 /**
  * Global "now reading" control — appears whenever anything is being read aloud
@@ -63,7 +64,7 @@ export function NowReadingBar() {
           onPress={() => { tap('light'); stopSpeaking(); }}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel="Stop reading"
+          accessibilityLabel={ttx("Stop reading")}
           style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}
         >
           <X color={colors.textMuted} size={16} weight="bold" />

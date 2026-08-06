@@ -29,6 +29,7 @@ import {
   createListing,
   uploadListingImages,
 } from '../lib/marketplaceApi';
+import { ttx } from '../lib/i18n';
 
 const MAX_PHOTOS = 6;
 
@@ -161,7 +162,7 @@ export default function CreateListingScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader
-        title="Sell something"
+        title={ttx("Sell something")}
         safeTop
         right={
           <AnimatedPressable onPress={handleSubmit} disabled={!canSubmit} fadeOnPress style={{ marginRight: 6 }}>
@@ -173,7 +174,7 @@ export default function CreateListingScreen() {
             }}>
               {saving
                 ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={{ color: canSubmit ? '#fff' : colors.textMuted, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>Post</Text>
+                : <Text style={{ color: canSubmit ? '#fff' : colors.textMuted, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>{ttx("Post")}</Text>
               }
             </View>
           </AnimatedPressable>
@@ -201,9 +202,9 @@ export default function CreateListingScreen() {
                 />
                 <View style={{ alignItems: 'center', paddingVertical: 44, gap: 10 }}>
                   <Camera color={colors.accent} size={30} weight="fill" />
-                  <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Add photos</Text>
+                  <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>{ttx("Add photos")}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 12.5 }}>
-                    Listings with photos sell faster · up to {MAX_PHOTOS}
+                    {ttx("Listings with photos sell faster · up to")} {MAX_PHOTOS}
                   </Text>
                 </View>
               </View>
@@ -211,7 +212,7 @@ export default function CreateListingScreen() {
           ) : (
             <View>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Eyebrow>Photos</Eyebrow>
+                <Eyebrow>{ttx("Photos")}</Eyebrow>
                 <Text style={{ color: colors.textMuted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{photos.length}/{MAX_PHOTOS}</Text>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
@@ -230,7 +231,7 @@ export default function CreateListingScreen() {
                         borderRadius: 7,
                         paddingHorizontal: 7, paddingVertical: 3,
                       }}>
-                        <Text style={{ color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.4 }}>COVER</Text>
+                        <Text style={{ color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.4 }}>{ttx("COVER")}</Text>
                       </View>
                     )}
                     <Pressable
@@ -261,7 +262,7 @@ export default function CreateListingScreen() {
                       backgroundColor: colors.accent + '0A',
                     }}>
                       <Plus color={colors.accent} size={20} weight="bold" />
-                      <Text style={{ color: colors.accent, fontSize: 11.5, fontFamily: 'Inter_600SemiBold' }}>Add more</Text>
+                      <Text style={{ color: colors.accent, fontSize: 11.5, fontFamily: 'Inter_600SemiBold' }}>{ttx("Add more")}</Text>
                     </View>
                   </Pressable>
                 )}
@@ -271,7 +272,7 @@ export default function CreateListingScreen() {
 
           {/* The item */}
           <View style={hairline} />
-          <Eyebrow style={{ marginBottom: 14 }}>The item</Eyebrow>
+          <Eyebrow style={{ marginBottom: 14 }}>{ttx("The item")}</Eyebrow>
 
           <TextInput
             style={{
@@ -281,7 +282,7 @@ export default function CreateListingScreen() {
               letterSpacing: -0.3,
               paddingVertical: 6,
             }}
-            placeholder="What are you selling?"
+            placeholder={ttx("What are you selling?")}
             placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={setTitle}
@@ -299,7 +300,7 @@ export default function CreateListingScreen() {
               paddingVertical: 6,
               marginTop: 4,
             }}
-            placeholder="Describe it — condition, size, what a buyer should know…"
+            placeholder={ttx("Describe it — condition, size, what a buyer should know…")}
             placeholderTextColor={colors.textMuted}
             value={description}
             onChangeText={setDescription}
@@ -309,7 +310,7 @@ export default function CreateListingScreen() {
 
           {/* Price */}
           <View style={hairline} />
-          <Eyebrow style={{ marginBottom: 14 }}>Price</Eyebrow>
+          <Eyebrow style={{ marginBottom: 14 }}>{ttx("Price")}</Eyebrow>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
             <Text style={{ color: colors.accent, fontSize: 32, fontFamily: 'Fraunces_600SemiBold', marginRight: 6, marginBottom: 2 }}>
               {getCurrencySymbol(currency)}
@@ -333,7 +334,7 @@ export default function CreateListingScreen() {
           </View>
           {price > 0 && (
             <Text style={{ color: colors.textMuted, fontSize: 12.5, marginTop: 4 }}>
-              Shows as {formatPrice(price, currency)}
+              {ttx("Shows as")} {formatPrice(price, currency)}
             </Text>
           )}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 14 }}>
@@ -344,14 +345,14 @@ export default function CreateListingScreen() {
 
           {/* Category */}
           <View style={hairline} />
-          <Eyebrow style={{ marginBottom: 12 }}>Category</Eyebrow>
+          <Eyebrow style={{ marginBottom: 12 }}>{ttx("Category")}</Eyebrow>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {(LISTING_CATEGORIES.filter(c => c !== 'All') as ListingCategory[]).map(c => (
               <Chip key={c} label={c} active={(category === 'All' ? 'Other' : category) === c} onPress={() => setCategory(c)} />
             ))}
           </View>
 
-          <Eyebrow style={{ marginTop: 22, marginBottom: 12 }}>Condition</Eyebrow>
+          <Eyebrow style={{ marginTop: 22, marginBottom: 12 }}>{ttx("Condition")}</Eyebrow>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {LISTING_CONDITIONS.map(c => (
               <Chip key={c} label={c} active={condition === c} onPress={() => setCondition(c)} />
@@ -360,11 +361,11 @@ export default function CreateListingScreen() {
 
           {/* Details */}
           <View style={hairline} />
-          <Eyebrow style={{ marginBottom: 14 }}>Details</Eyebrow>
+          <Eyebrow style={{ marginBottom: 14 }}>{ttx("Details")}</Eyebrow>
           <View style={{ gap: 12 }}>
             <TextInput
               style={softField}
-              placeholder="Location — city, area, or 'Ships nationally'"
+              placeholder={ttx("Location — city, area, or 'Ships nationally'")}
               placeholderTextColor={colors.textMuted}
               value={location}
               onChangeText={setLocation}
@@ -373,7 +374,7 @@ export default function CreateListingScreen() {
             />
             <TextInput
               style={softField}
-              placeholder="How to get it — pickup, shipping, local delivery…"
+              placeholder={ttx("How to get it — pickup, shipping, local delivery…")}
               placeholderTextColor={colors.textMuted}
               value={fulfillment}
               onChangeText={setFulfillment}
@@ -382,7 +383,7 @@ export default function CreateListingScreen() {
             />
             <TextInput
               style={softField}
-              placeholder="Tags — vintage, leather, size-M (comma separated)"
+              placeholder={ttx("Tags — vintage, leather, size-M (comma separated)")}
               placeholderTextColor={colors.textMuted}
               value={tagsText}
               onChangeText={setTagsText}

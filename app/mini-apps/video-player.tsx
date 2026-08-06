@@ -16,6 +16,7 @@ import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/Mini
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
+import { ttx } from '../../lib/i18n';
 
 function formatDuration(ms: number) {
   const s = Math.floor(ms / 1000);
@@ -54,8 +55,8 @@ function VideoPulse({ accent, video, position, duration, isMuted }: {
           <VideoCamera color={accent} size={20} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Review cockpit</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Watch, note, publish.</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Review cockpit")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Watch, note, publish.")}</Text>
         </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -161,11 +162,11 @@ export default function VideoPlayerApp() {
   const progressPct = duration > 0 ? (position / duration) * 100 : 0;
 
   return (
-    <MiniAppShell title="Video Player" subtitle="Playback">
+    <MiniAppShell title={ttx("Video Player")} subtitle={ttx("Playback")}>
       <MiniCommandDeck
         accent={accent}
-        title="Video review without leaving Echo"
-        subtitle="Load, play, extract, share."
+        title={ttx("Video review without leaving Echo")}
+        subtitle={ttx("Load, play, extract, share.")}
         metrics={[
           { label: 'Duration', value: video ? formatDuration(duration || video.duration) : '0:00', detail: 'clip' },
           { label: 'Progress', value: `${Math.round(progressPct)}%`, detail: 'watched' },
@@ -183,7 +184,7 @@ export default function VideoPlayerApp() {
         >
           <Pressable onPress={pickVideo} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Images color={accent} size={20} />
-            <Text style={{ color: accent, fontWeight: '700', fontSize: 15 }}>From Library</Text>
+            <Text style={{ color: accent, fontWeight: '700', fontSize: 15 }}>{ttx("From Library")}</Text>
           </Pressable>
         </GlassPanel>
         <GlassPanel
@@ -193,7 +194,7 @@ export default function VideoPlayerApp() {
         >
           <Pressable onPress={recordVideo} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <VideoCamera color={colors.danger} size={20} />
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Record</Text>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{ttx("Record")}</Text>
           </Pressable>
         </GlassPanel>
       </Animated.View>
@@ -263,8 +264,8 @@ export default function VideoPlayerApp() {
           <EdgeFeaturePanel
             appName="Video Player"
             accent={accent}
-            headline="Review clips with purpose"
-            caption="Turn videos into notes, progress updates, feedback loops, or publish-ready summaries."
+            headline={ttx("Review clips with purpose")}
+            caption={ttx("Turn videos into notes, progress updates, feedback loops, or publish-ready summaries.")}
             metrics={[
               { label: 'Duration', value: formatDuration(duration || video.duration) },
               { label: 'Progress', value: `${Math.round(progressPct)}%` },
@@ -280,8 +281,8 @@ export default function VideoPlayerApp() {
         <MiniEmptyState
           accent={accent}
           icon={<VideoCamera color={colors.textMuted} size={44} weight="duotone" />}
-          title="No video loaded"
-          subtitle="Pick or record a video."
+          title={ttx("No video loaded")}
+          subtitle={ttx("Pick or record a video.")}
         />
       )}
     </MiniAppShell>

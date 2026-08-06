@@ -15,6 +15,7 @@ import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { track } from '../lib/analytics';
 import type { ThinkingPartnerMode } from '../lib/supabaseEchoApi';
 import type { User } from '../types';
+import { ttx } from '../lib/i18n';
 
 type Partner = User & { affinity: number };
 
@@ -42,12 +43,12 @@ export default function ThinkingPartnersScreen() {
     <ResponsiveScreen background="#0A0A0F">
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }} accessibilityRole="button" accessibilityLabel="Go back">
+        <Pressable onPress={() => router.back()} hitSlop={12} style={{ padding: 4 }} accessibilityRole="button" accessibilityLabel={ttx("Go back")}>
           <ArrowLeft color="#fff" size={24} />
         </Pressable>
         <View style={styles.headerCenter}>
           <Brain color={ACCENT_COLORS.violet} size={18} weight="fill" />
-          <Text style={styles.headerTitle}>MINDS</Text>
+          <Text style={styles.headerTitle}>{ttx("MINDS")}</Text>
         </View>
         <View style={{ width: 32 }} />
       </View>
@@ -58,13 +59,13 @@ export default function ThinkingPartnersScreen() {
           active={mode === 'similar'}
           onPress={() => switchMode('similar')}
           icon={<UsersThree size={16} color={mode === 'similar' ? '#000' : '#A1A1AA'} weight="fill" />}
-          label="Think like you"
+          label={ttx("Think like you")}
         />
         <ModeChip
           active={mode === 'different'}
           onPress={() => switchMode('different')}
           icon={<Lightning size={16} color={mode === 'different' ? '#000' : '#A1A1AA'} weight="fill" />}
-          label="Think differently"
+          label={ttx("Think differently")}
         />
       </View>
 
@@ -77,15 +78,15 @@ export default function ThinkingPartnersScreen() {
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={ACCENT_COLORS.violet} size="large" />
-          <Text style={styles.muted}>Finding people…</Text>
+          <Text style={styles.muted}>{ttx("Finding people…")}</Text>
         </View>
       ) : isError ? (
         <ErrorState kind={classifyError(error)} onRetry={() => refetch()} />
       ) : partners.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyTitle}>Nothing to match yet</Text>
+          <Text style={styles.emptyTitle}>{ttx("Nothing to match yet")}</Text>
           <Text style={styles.muted}>
-            Publish a few echoes first, then check back.
+            {ttx("Publish a few echoes first, then check back.")}
           </Text>
         </View>
       ) : (
@@ -176,7 +177,7 @@ function PartnerRow({
             {partner.displayName}
           </Text>
           <Text style={styles.handle} numberOfLines={1}>
-            @{partner.username} · {partner.echoCount} echoes
+            @{partner.username} · {partner.echoCount} {ttx("echoes")}
           </Text>
           <View style={styles.matchRow}>
             <View style={[styles.matchDot, { backgroundColor: accent }]} />

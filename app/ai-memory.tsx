@@ -10,6 +10,7 @@ import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
 import { clearMemory, forgetPreference, loadMemory, MemoryItem, updatePreference } from '../lib/aiMemory';
 import { useTheme } from '../lib/theme';
+import { ttx } from '../lib/i18n';
 
 export default function AIMemoryScreen() {
   const theme = useTheme();
@@ -91,8 +92,8 @@ export default function AIMemoryScreen() {
     <ResponsiveScreen>
       <View style={{ flex: 1 }}>
         <ScreenHeader
-          title="AI Memory"
-          subtitle="Preferences Echo can reuse in future local actions."
+          title={ttx("AI Memory")}
+          subtitle={ttx("Preferences Echo can reuse in future local actions.")}
           right={
             <AnimatedPressable
               onPress={removeAll}
@@ -116,10 +117,10 @@ export default function AIMemoryScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }}>
-                    {items.length} remembered {items.length === 1 ? 'preference' : 'preferences'}
+                    {items.length} {ttx("remembered")} {items.length === 1 ? 'preference' : 'preferences'}
                   </Text>
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 2 }}>
-                    Stored only on this device.
+                    {ttx("Stored only on this device.")}
                   </Text>
                 </View>
               </View>
@@ -128,12 +129,12 @@ export default function AIMemoryScreen() {
 
           <Animated.View entering={animation(FadeInDown.delay(120).duration(220))}>
             {loading ? (
-              <Text style={[styles.emptyText, { color: colors.textMuted, fontSize: fontSizes.body }]}>Loading memory...</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted, fontSize: fontSizes.body }]}>{ttx("Loading memory...")}</Text>
             ) : items.length === 0 ? (
               <GlassPanel borderRadius={radius.card} contentStyle={{ padding: 20, alignItems: 'center' }}>
-                <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }}>No memory saved</Text>
+                <Text style={{ color: colors.text, fontSize: fontSizes.body, fontWeight: '700' }}>{ttx("No memory saved")}</Text>
                 <Text style={[styles.emptyText, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
-                  Echo will only remember a preference after you confirm the memory tool card.
+                  {ttx("Echo will only remember a preference after you confirm the memory tool card.")}
                 </Text>
               </GlassPanel>
             ) : (
@@ -147,14 +148,14 @@ export default function AIMemoryScreen() {
                             <TextInput
                               value={editKey}
                               onChangeText={setEditKey}
-                              placeholder="Key"
+                              placeholder={ttx("Key")}
                               placeholderTextColor={colors.textMuted}
                               style={[styles.input, { borderColor: colors.glassBorder, color: colors.text, backgroundColor: colors.inputBg }]}
                             />
                             <TextInput
                               value={editValue}
                               onChangeText={setEditValue}
-                              placeholder="Value"
+                              placeholder={ttx("Value")}
                               placeholderTextColor={colors.textMuted}
                               multiline
                               style={[styles.input, { borderColor: colors.glassBorder, color: colors.text, backgroundColor: colors.inputBg, minHeight: 72, textAlignVertical: 'top' }]}
@@ -167,7 +168,7 @@ export default function AIMemoryScreen() {
                           </>
                         )}
                         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>
-                          Saved {new Date(item.createdAt).toLocaleDateString()}
+                          {ttx("Saved")} {new Date(item.createdAt).toLocaleDateString()}
                         </Text>
                       </View>
                       {editingId === item.id ? (
