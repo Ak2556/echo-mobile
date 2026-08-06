@@ -76,6 +76,10 @@ const DESTINATIONS: Record<string, string> = {
   badges: '/badges', quests: '/quests',
   salons: '/salons',
   upgrade: '/upgrade', tiers: '/upgrade', premium: '/upgrade',
+  // Singular / common variants so "notification", "message", "setting" resolve too.
+  notification: '/(tabs)/notifications', message: '/messages', dm: '/messages',
+  setting: '/settings', bookmark: '/bookmarks', follower: '/followers',
+  homepage: '/(tabs)/home', 'home page': '/(tabs)/home', 'my profile': '/(tabs)/you',
   // Hindi (Devanagari) fallbacks in case the model passes the word through.
   'होम': '/(tabs)/home', 'घर': '/(tabs)/home', 'फ़ीड': '/(tabs)/home', 'फीड': '/(tabs)/home',
   'खोज': '/(tabs)/explore', 'खोजें': '/(tabs)/explore', 'एक्सप्लोर': '/(tabs)/explore',
