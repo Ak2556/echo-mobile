@@ -8,6 +8,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { showToast } from '../../components/ui/Toast';
+import { ttx } from '../../lib/i18n';
 
 type KeyKind = 'number' | 'operator' | 'utility' | 'science' | 'equals';
 type KeySpec = { label: string; kind: KeyKind; wide?: boolean; action?: string };
@@ -318,7 +319,7 @@ export default function CalculatorScreen() {
   const activeScience = expression ? operator : '';
 
   return (
-    <MiniAppShell title="Calculator" subtitle="Solve" headerRight={HeaderActions} scrollable={false}>
+    <MiniAppShell title={ttx("Calculator")} subtitle={ttx("Solve")} headerRight={HeaderActions} scrollable={false}>
       <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 14 }}>
         <View style={{ width: panelWidth, maxWidth: '100%' }}>
           <GlassPanel
@@ -333,7 +334,7 @@ export default function CalculatorScreen() {
                 <FunctionIcon color={accent} size={17} weight="bold" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>Decision math</Text>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>{ttx("Decision math")}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 11.5, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>
                   {history.length ? `${history.length} recent calculations` : 'Tap numbers to start'}
                 </Text>
@@ -421,7 +422,7 @@ export default function CalculatorScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 }}>
             <Equals color={colors.textMuted} size={14} weight="bold" />
             <Text style={{ color: colors.textMuted, fontSize: 11.5, fontWeight: '700' }} numberOfLines={1}>
-              Long calculations stay in recent history.
+              {ttx("Long calculations stay in recent history.")}
             </Text>
           </View>
         </View>

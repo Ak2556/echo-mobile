@@ -8,6 +8,7 @@ import {
   setAnalyticsConsentAsync,
 } from '../lib/consent';
 import { initAnalytics, track } from '../lib/analytics';
+import { ttx } from '../lib/i18n';
 
 /**
  * GDPR-style analytics consent banner shown on first launch.
@@ -65,7 +66,7 @@ export function ConsentBanner() {
           },
         ]}
         accessibilityRole="alert"
-        accessibilityLabel="Analytics consent prompt"
+        accessibilityLabel={ttx("Analytics consent prompt")}
       >
         <Text
           style={[
@@ -73,7 +74,7 @@ export function ConsentBanner() {
             { color: colors.text, fontSize: 15, marginBottom: 6 },
           ]}
         >
-          Help us improve Echo
+          {ttx("Help us improve Echo")}
         </Text>
         <Text
           style={[
@@ -81,16 +82,15 @@ export function ConsentBanner() {
             { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginBottom: 14 },
           ]}
         >
-          We use anonymous analytics to understand what works in Echo. You can
-          change this any time in Settings.
+          {ttx("We use anonymous analytics to understand what works in Echo. You can change this any time in Settings.")}
         </Text>
 
         <View style={styles.row}>
           <Pressable
             onPress={handleDecline}
             accessibilityRole="button"
-            accessibilityLabel="Decline analytics"
-            accessibilityHint="Echo will not collect any usage analytics"
+            accessibilityLabel={ttx("Decline analytics")}
+            accessibilityHint={ttx("Echo will not collect any usage analytics")}
             style={({ pressed }) => [
               styles.btn,
               {
@@ -101,15 +101,15 @@ export function ConsentBanner() {
             ]}
           >
             <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 14 }]}>
-              No thanks
+              {ttx("No thanks")}
             </Text>
           </Pressable>
 
           <Pressable
             onPress={handleAccept}
             accessibilityRole="button"
-            accessibilityLabel="Accept analytics"
-            accessibilityHint="Echo will collect anonymous usage analytics"
+            accessibilityLabel={ttx("Accept analytics")}
+            accessibilityHint={ttx("Echo will collect anonymous usage analytics")}
             style={({ pressed }) => [
               styles.btn,
               {
@@ -118,7 +118,7 @@ export function ConsentBanner() {
             ]}
           >
             <Text style={[font.bodySemibold, { color: '#fff', fontSize: 14 }]}>
-              Accept
+              {ttx("Accept")}
             </Text>
           </Pressable>
         </View>

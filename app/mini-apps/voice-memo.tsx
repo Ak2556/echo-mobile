@@ -29,6 +29,7 @@ import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/miniAppMedia';
 import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/voiceMemos';
+import { ttx } from '../../lib/i18n';
 
 const REC_COLOR = '#EF4444';
 
@@ -202,16 +203,16 @@ export default function VoiceMemoApp() {
 
   const CountBadge = (
     <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>
-      {memos.length} saved
+      {memos.length} {ttx("saved")}
     </Text>
   );
 
   return (
-    <MiniAppShell title="Voice Memo" subtitle="Record" headerRight={CountBadge}>
+    <MiniAppShell title={ttx("Voice Memo")} subtitle={ttx("Record")} headerRight={CountBadge}>
       <MiniCommandDeck
         accent={isRecording ? REC_COLOR : accent}
-        title="Voice-to-action capture"
-        subtitle="Thoughts, meetings, practice, proof."
+        title={ttx("Voice-to-action capture")}
+        subtitle={ttx("Thoughts, meetings, practice, proof.")}
         metrics={[
           { label: 'Memos', value: `${memos.length}`, detail: 'saved' },
           { label: 'Minutes', value: `${Math.round(memos.reduce((sum, memo) => sum + memo.duration, 0) / 60)}`, detail: 'captured' },
@@ -289,8 +290,8 @@ export default function VoiceMemoApp() {
       <EdgeFeaturePanel
         appName="Voice Memo"
         accent={accent}
-        headline="Capture before the idea disappears"
-        caption="Use voice notes as raw material for prompts, posts, decisions, and follow-ups."
+        headline={ttx("Capture before the idea disappears")}
+        caption={ttx("Use voice notes as raw material for prompts, posts, decisions, and follow-ups.")}
         metrics={[
           { label: 'Memos', value: `${memos.length}` },
           { label: 'Minutes', value: `${Math.round(memos.reduce((sum, memo) => sum + memo.duration, 0) / 60)}` },
@@ -307,8 +308,8 @@ export default function VoiceMemoApp() {
         <MiniEmptyState
           accent={colors.accent}
           icon={<MicrophoneStage color={colors.textMuted} size={48} weight="duotone" />}
-          title="No recordings yet"
-          subtitle="Record the first thought, meeting, practice run, or proof worth keeping."
+          title={ttx("No recordings yet")}
+          subtitle={ttx("Record the first thought, meeting, practice run, or proof worth keeping.")}
         />
       ) : (
         memos.map((memo, i) => (

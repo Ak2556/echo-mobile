@@ -13,6 +13,7 @@ import { useTheme } from '../lib/theme';
 import { Story } from '../types';
 import { playSoundEffect } from '../lib/sound';
 import { isSupabaseRemote } from '../lib/remoteConfig';
+import { ttx } from '../lib/i18n';
 
 const STORY_DURATION_HOURS = 24;
 
@@ -33,27 +34,27 @@ export default function CreateStoryScreen() {
           <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
             <ArrowLeft color={colors.text} size={24} />
           </AnimatedPressable>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Create Story</Text>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("Create Story")}</Text>
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <Broadcast color={colors.accent} size={48} />
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>Stories are unavailable</Text>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, marginTop: 16, textAlign: 'center' }}>{ttx("Stories are unavailable")}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 21 }}>
-            Share your thoughts as an Echo instead. Echoes stay available in your feed.
+            {ttx("Share your thoughts as an Echo instead. Echoes stay available in your feed.")}
           </Text>
           <AnimatedPressable
             onPress={() => router.replace('/create-post')}
             style={{ marginTop: 24, backgroundColor: colors.accent, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
             haptic="medium"
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Share an Echo instead</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{ttx("Share an Echo instead")}</Text>
           </AnimatedPressable>
           <AnimatedPressable
             onPress={() => router.back()}
             style={{ marginTop: 12, borderRadius: radius.full, paddingHorizontal: 24, paddingVertical: 12 }}
             haptic="light"
           >
-            <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 14 }}>Go back</Text>
+            <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 14 }}>{ttx("Go back")}</Text>
           </AnimatedPressable>
         </View>
       </SafeAreaView>
@@ -100,7 +101,7 @@ export default function CreateStoryScreen() {
         </AnimatedPressable>
         <View className="flex-row items-center gap-2">
           <Broadcast color={colors.accent} size={16} />
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>New Story</Text>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("New Story")}</Text>
         </View>
         <AnimatedPressable
           onPress={handlePublish}
@@ -133,13 +134,13 @@ export default function CreateStoryScreen() {
               </Text>
               <View className="flex-row items-center gap-1 mt-0.5">
                 <Clock color={colors.textMuted} size={10} />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Expires in 24 hours</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Expires in 24 hours")}</Text>
               </View>
             </View>
           </Animated.View>
 
           <Animated.View entering={animation(FadeInDown.delay(100).duration(220))}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>Asked</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>{ttx("Asked")}</Text>
             <View
               className="p-4 mb-4"
               style={{
@@ -153,7 +154,7 @@ export default function CreateStoryScreen() {
                 multiline
                 value={prompt}
                 onChangeText={setPrompt}
-                placeholder="What question sparked this story?"
+                placeholder={ttx("What question sparked this story?")}
                 placeholderTextColor={colors.textMuted}
                 maxLength={200}
                 style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 50 }}
@@ -167,7 +168,7 @@ export default function CreateStoryScreen() {
           <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
             <View className="flex-row items-center mb-2 ml-1 gap-1.5">
               <Lightning color={colors.accent} size={12} />
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>Echo</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600' }}>{ttx("Echo")}</Text>
             </View>
             <View
               className="p-4 mb-4"
@@ -182,7 +183,7 @@ export default function CreateStoryScreen() {
                 multiline
                 value={response}
                 onChangeText={setResponse}
-                placeholder="The wisdom to share..."
+                placeholder={ttx("The wisdom to share...")}
                 placeholderTextColor={colors.textMuted}
                 maxLength={500}
                 style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 100 }}
@@ -205,7 +206,7 @@ export default function CreateStoryScreen() {
             >
               <Broadcast color={colors.accent} size={14} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, flex: 1 }}>
-                Stories appear in the home feed circles and disappear after 24 hours.
+                {ttx("Stories appear in the home feed circles and disappear after 24 hours.")}
               </Text>
             </View>
           </Animated.View>

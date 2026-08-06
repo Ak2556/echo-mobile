@@ -22,6 +22,7 @@ import { useTheme } from '../lib/theme';
 import { PollOption } from '../types';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { updateRemoteEcho } from '../lib/supabaseEchoApi';
+import { ttx } from '../lib/i18n';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
@@ -149,7 +150,7 @@ export default function EditPostScreen() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Edit Echo"
+        title={ttx("Edit Echo")}
         right={
           <AnimatedPressable onPress={handleSave} disabled={!canSave} scaleValue={0.92} haptic="medium"
             style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, marginRight: 6, borderRadius: radius.full, backgroundColor: canSave ? colors.accent : colors.surfaceHover, opacity: canSave ? 1 : 0.5 }}>
@@ -186,17 +187,17 @@ export default function EditPostScreen() {
 
           {postType === 'text' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <Text style={s.label}>Question</Text>
+              <Text style={s.label}>{ttx("Question")}</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What did you want to know?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
+                <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder={ttx("What did you want to know?")} placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{prompt.length}/280</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
                 <Lightning color={colors.accent} size={12} />
-                <Text style={[s.label, { marginBottom: 0 }]}>Answer / Insight</Text>
+                <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Answer / Insight")}</Text>
               </View>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={response} onChangeText={setResponse} placeholder="The key insight or answer…" placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
+                <TextInput multiline value={response} onChangeText={setResponse} placeholder={ttx("The key insight or answer…")} placeholderTextColor={colors.textMuted} maxLength={1000} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 110 }} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'right', marginTop: 4 }}>{response.length}/1000</Text>
               </View>
             </Animated.View>
@@ -204,10 +205,10 @@ export default function EditPostScreen() {
 
           {postType === 'photo' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <Text style={s.label}>Image URLs (up to 4)</Text>
+              <Text style={s.label}>{ttx("Image URLs (up to 4)")}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
                 <Link color={colors.textMuted} size={12} />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Paste direct image links</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Paste direct image links")}</Text>
               </View>
               {imageUrls.map((url, idx) => (
                 <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 4, marginBottom: 8 }]}>
@@ -227,46 +228,46 @@ export default function EditPostScreen() {
               {imageUrls.length < 4 && (
                 <TouchableOpacity onPress={addImageUrl} style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 14, gap: 6, borderStyle: 'dashed' }]}>
                   <Plus color={colors.textMuted} size={16} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>Add image URL</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{ttx("Add image URL")}</Text>
                 </TouchableOpacity>
               )}
-              <Text style={s.label}>Caption (optional)</Text>
+              <Text style={s.label}>{ttx("Caption (optional)")}</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={caption} onChangeText={setCaption} placeholder="Add a caption…" placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
+                <TextInput multiline value={caption} onChangeText={setCaption} placeholder={ttx("Add a caption…")} placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
               </View>
             </Animated.View>
           )}
 
           {postType === 'video' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <Text style={s.label}>Video URL</Text>
+              <Text style={s.label}>{ttx("Video URL")}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
                 <Link color={colors.textMuted} size={12} />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Paste a direct .mp4 or video link</Text>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Paste a direct .mp4 or video link")}</Text>
               </View>
               <View style={[s.surface, { paddingHorizontal: 14, paddingVertical: 4, marginBottom: 14 }]}>
-                <TextInput value={videoUrl} onChangeText={setVideoUrl} placeholder="https://example.com/video.mp4" placeholderTextColor={colors.textMuted} autoCapitalize="none" autoCorrect={false} style={{ color: colors.text, fontSize: fontSizes.small, paddingVertical: 14 }} />
+                <TextInput value={videoUrl} onChangeText={setVideoUrl} placeholder={ttx("https://example.com/video.mp4")} placeholderTextColor={colors.textMuted} autoCapitalize="none" autoCorrect={false} style={{ color: colors.text, fontSize: fontSizes.small, paddingVertical: 14 }} />
               </View>
               {videoUrl.trim().length > 0 && (
                 <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden', height: 160, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
                   <VideoCamera color={colors.textMuted} size={40} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>Video URL set</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 8 }}>{ttx("Video URL set")}</Text>
                 </View>
               )}
-              <Text style={s.label}>Caption (optional)</Text>
+              <Text style={s.label}>{ttx("Caption (optional)")}</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                <TextInput multiline value={caption} onChangeText={setCaption} placeholder="Add a caption…" placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
+                <TextInput multiline value={caption} onChangeText={setCaption} placeholder={ttx("Add a caption…")} placeholderTextColor={colors.textMuted} maxLength={300} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 56 }} />
               </View>
             </Animated.View>
           )}
 
           {postType === 'poll' && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <Text style={s.label}>Question</Text>
+              <Text style={s.label}>{ttx("Question")}</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 16 }]}>
-                <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder="Ask your community something…" placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />
+                <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder={ttx("Ask your community something…")} placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />
               </View>
-              <Text style={s.label}>Options</Text>
+              <Text style={s.label}>{ttx("Options")}</Text>
               {pollOptions.map((opt, idx) => (
                 <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 2, marginBottom: 8 }]}>
                   <TextInput value={opt} onChangeText={t => updatePollOption(idx, t)} placeholder={`Option ${idx + 1}`} placeholderTextColor={colors.textMuted} maxLength={80} style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 12 }} />
@@ -276,14 +277,14 @@ export default function EditPostScreen() {
               {pollOptions.length < 4 && (
                 <TouchableOpacity onPress={addPollOption} style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 16, gap: 6, borderStyle: 'dashed' }]}>
                   <Plus color={colors.textMuted} size={16} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>Add option</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{ttx("Add option")}</Text>
                 </TouchableOpacity>
               )}
               {!echo.poll?.endsAt && (
                 <>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
                     <Clock color={colors.textMuted} size={13} />
-                    <Text style={[s.label, { marginBottom: 0 }]}>Duration</Text>
+                    <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Duration")}</Text>
                   </View>
                   <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
                     {POLL_DURATIONS.map(d => {
@@ -303,10 +304,10 @@ export default function EditPostScreen() {
           <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
               <Hash color={colors.textMuted} size={13} />
-              <Text style={[s.label, { marginBottom: 0 }]}>Tags</Text>
+              <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Tags")}</Text>
             </View>
             <View style={[s.surface, { padding: 12, marginBottom: 16 }]}>
-              <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder="ai, react, tips" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ color: colors.text, fontSize: fontSizes.body }} />
+              <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder={ttx("ai, react, tips")} placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ color: colors.text, fontSize: fontSizes.body }} />
             </View>
           </Animated.View>
 

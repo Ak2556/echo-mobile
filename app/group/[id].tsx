@@ -18,6 +18,7 @@ import {
   setGroupMemberRole, updateGroupMeta, leaveGroup, setDMPref,
   searchRemoteUsers, type GroupMember, type UserSearchHit, type RemoteConversation,
 } from '../../lib/supabaseEchoApi';
+import { ttx } from '../../lib/i18n';
 
 async function suggestGroupName(memberNames: string[]): Promise<string | null> {
   let acc = '';
@@ -158,13 +159,13 @@ export default function GroupInfoScreen() {
 
   return (
     <ResponsiveScreen>
-      <ScreenHeader title="Group info" />
+      <ScreenHeader title={ttx("Group info")} />
 
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.accent} /></View>
       ) : !conv?.isGroup ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ color: colors.textMuted }}>This isn’t a group conversation.</Text>
+          <Text style={{ color: colors.textMuted }}>{ttx("This isn’t a group conversation.")}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
@@ -178,14 +179,14 @@ export default function GroupInfoScreen() {
                 value={name}
                 onChangeText={setName}
                 onBlur={saveName}
-                placeholder="Group name"
+                placeholder={ttx("Group name")}
                 placeholderTextColor={colors.textMuted}
                 style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center', letterSpacing: -0.5, minWidth: 200, paddingVertical: 2 }}
               />
             ) : (
               <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center', letterSpacing: -0.5 }}>{name}</Text>
             )}
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{members.length} member{members.length === 1 ? '' : 's'}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{members.length} {ttx("member")}{members.length === 1 ? '' : 's'}</Text>
 
             {isAdmin && (
               <AnimatedPressable
@@ -195,7 +196,7 @@ export default function GroupInfoScreen() {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '66', paddingHorizontal: 14, paddingVertical: 8, opacity: suggesting ? 0.6 : 1 }}
               >
                 {suggesting ? <ActivityIndicator size="small" color={colors.accent} /> : <Sparkle color={colors.accent} size={15} weight="fill" />}
-                <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>Ask Echo to name it</Text>
+                <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{ttx("Ask Echo to name it")}</Text>
               </AnimatedPressable>
             )}
           </View>
@@ -203,7 +204,7 @@ export default function GroupInfoScreen() {
           {/* Color (admin) */}
           {isAdmin && (
             <View style={{ marginTop: 18 }}>
-              <Text style={[eyebrow, { marginBottom: 10 }]}>Colour</Text>
+              <Text style={[eyebrow, { marginBottom: 10 }]}>{ttx("Colour")}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
                 {WARM_AVATAR_COLORS.map(c => (
                   <Pressable key={c} onPress={() => pickColor(c)}>
@@ -216,12 +217,12 @@ export default function GroupInfoScreen() {
 
           {/* Members */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 8 }}>
-            <Text style={[eyebrow, { flex: 1 }]}>Members · {members.length}</Text>
+            <Text style={[eyebrow, { flex: 1 }]}>{ttx("Members ·")} {members.length}</Text>
             {isAdmin && (
               <Pressable onPress={() => setAdding(a => !a)} hitSlop={8}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <UserPlus color={colors.accent} size={15} weight="bold" />
-                  <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>Add</Text>
+                  <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{ttx("Add")}</Text>
                 </View>
               </Pressable>
             )}
@@ -232,7 +233,7 @@ export default function GroupInfoScreen() {
             <View style={{ marginBottom: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 12 }}>
                 <MagnifyingGlass color={colors.textMuted} size={16} />
-                <TextInput value={query} onChangeText={runSearch} placeholder="Search people to add" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingVertical: 11 }} />
+                <TextInput value={query} onChangeText={runSearch} placeholder={ttx("Search people to add")} placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingVertical: 11 }} />
                 {query ? <Pressable onPress={() => runSearch('')} hitSlop={8}><X color={colors.textMuted} size={15} /></Pressable> : null}
               </View>
               {hits.map(u => (
@@ -264,7 +265,7 @@ export default function GroupInfoScreen() {
                       {m.role === 'admin' && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: colors.accent + '18', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 }}>
                           <Crown color={colors.accent} size={10} weight="fill" />
-                          <Text style={{ color: colors.accent, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>Admin</Text>
+                          <Text style={{ color: colors.accent, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>{ttx("Admin")}</Text>
                         </View>
                       )}
                     </View>
@@ -281,7 +282,7 @@ export default function GroupInfoScreen() {
           {/* Settings */}
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, marginTop: 8, gap: 12 }}>
             <BellSlash color={colors.textSecondary} size={19} />
-            <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>Mute notifications</Text>
+            <Text style={{ color: colors.text, fontSize: 15, flex: 1 }}>{ttx("Mute notifications")}</Text>
             <Switch value={muted} onValueChange={toggleMute} />
           </View>
 
@@ -291,7 +292,7 @@ export default function GroupInfoScreen() {
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, borderWidth: 1, borderColor: '#EF444455', paddingVertical: 14, marginTop: 8 }}
           >
             <SignOut color="#EF4444" size={17} weight="bold" />
-            <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 15 }}>Leave group</Text>
+            <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 15 }}>{ttx("Leave group")}</Text>
           </AnimatedPressable>
         </ScrollView>
       )}

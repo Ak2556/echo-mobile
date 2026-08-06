@@ -11,6 +11,7 @@ import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { createOfficeHour } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
+import { ttx } from '../lib/i18n';
 
 const DURATIONS = [
   { label: '30 min', value: 30 },
@@ -76,7 +77,7 @@ function CreateOfficeHourScreenInner() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Schedule"
+        title={ttx("Schedule")}
         right={
           <AnimatedPressable
             onPress={() => void handleSubmit()}
@@ -86,24 +87,24 @@ function CreateOfficeHourScreenInner() {
             haptic="medium"
           >
             {submitting ? <ActivityIndicator color="#fff" size="small" /> : <Check color="#fff" size={15} weight="bold" />}
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>Create</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: fontSizes.small }}>{ttx("Create")}</Text>
           </AnimatedPressable>
         }
       />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         <Animated.View entering={animation(FadeInDown.duration(220))} style={{ marginBottom: 16 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Topic</Text>
-          <TextInput value={topic} onChangeText={setTopic} placeholder="What's the conversation about?" maxLength={80} />
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Topic")}</Text>
+          <TextInput value={topic} onChangeText={setTopic} placeholder={ttx("What's the conversation about?")} maxLength={80} />
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={{ marginBottom: 16 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Description (optional)</Text>
-          <TextInput value={description} onChangeText={setDescription} placeholder="Set expectations for what you'll cover" multiline />
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Description (optional)")}</Text>
+          <TextInput value={description} onChangeText={setDescription} placeholder={ttx("Set expectations for what you'll cover")} multiline />
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} style={{ marginBottom: 16 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>When</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("When")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {START_OFFSETS.map((opt) => {
               const active = startOffset.label === opt.label;
@@ -126,12 +127,12 @@ function CreateOfficeHourScreenInner() {
             })}
           </View>
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginTop: 6, marginLeft: 4 }}>
-            Starts: {startAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+            {ttx("Starts:")} {startAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
           </Text>
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} style={{ marginBottom: 24 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>Duration</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, fontWeight: '500', marginBottom: 8, marginLeft: 4 }}>{ttx("Duration")}</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {DURATIONS.map(d => {
               const active = duration === d.value;

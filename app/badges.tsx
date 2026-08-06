@@ -6,6 +6,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { fetchBadges, type Badge } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
+import { ttx } from '../lib/i18n';
 
 const TIER_COLOR: Record<Badge['tier'], string> = {
   bronze: '#B45309',
@@ -36,7 +37,7 @@ function BadgesScreenInner() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Badges"
+        title={ttx("Badges")}
         right={<Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginRight: 10 }}>{earned.length}/{badges.length}</Text>}
       />
 
@@ -48,7 +49,7 @@ function BadgesScreenInner() {
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
           {earned.length > 0 && (
             <>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginLeft: 4 }}>Earned</Text>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginLeft: 4 }}>{ttx("Earned")}</Text>
               {earned.map((b, i) => (
                 <Animated.View key={b.id} entering={FadeInUp.delay(i * 30).duration(220)}>
                   <BadgeCard badge={b} />
@@ -59,7 +60,7 @@ function BadgesScreenInner() {
           {unearned.length > 0 && (
             <>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 10, marginTop: earned.length ? 16 : 0, marginLeft: 4 }}>
-                Locked
+                {ttx("Locked")}
               </Text>
               {unearned.map((b, i) => (
                 <Animated.View key={b.id} entering={FadeInUp.delay((earned.length + i) * 30).duration(220)}>

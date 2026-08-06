@@ -14,6 +14,7 @@ import { useTheme } from '../../lib/theme';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { MOTION } from '../../lib/motion';
+import { ttx } from '../../lib/i18n';
 
 interface Props {
   visible: boolean;
@@ -149,8 +150,8 @@ export function ActionCenter({ visible, onClose, onSelectExample }: Props) {
             <GlassPanel variant="ultra" borderRadius={24} elevated style={{ marginHorizontal: 12, borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
               <View style={{ padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, flexDirection: 'row', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontSize: 19, fontWeight: '800' }}>Echo Actions</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>Runs on this device. Local writes ask before changing data.</Text>
+                  <Text style={{ color: colors.text, fontSize: 19, fontWeight: '800' }}>{ttx("Echo Actions")}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{ttx("Runs on this device. Local writes ask before changing data.")}</Text>
                 </View>
                 <AnimatedPressable onPress={handleClose} scaleValue={0.9} haptic="light" style={{ padding: 6 }}>
                   <X color={colors.textMuted} size={20} />

@@ -13,6 +13,7 @@ import {
   SHOPPING_CATEGORIES, ShoppingItem, loadShoppingList,
   saveShoppingList, shoppingStats,
 } from '../../lib/shoppingList';
+import { ttx } from '../../lib/i18n';
 
 export default function ShoppingListScreen() {
   const { colors } = useTheme();
@@ -68,11 +69,11 @@ export default function ShoppingListScreen() {
   };
 
   return (
-    <MiniAppShell title="Shopping List" subtitle="Buy">
+    <MiniAppShell title={ttx("Shopping List")} subtitle={ttx("Buy")}>
       <MiniCommandDeck
         accent={accent}
-        title="Shop with less waste"
-        subtitle="Essentials, grouped."
+        title={ttx("Shop with less waste")}
+        subtitle={ttx("Essentials, grouped.")}
         metrics={[
           { label: 'Left', value: `${stats.remaining}`, detail: 'to buy' },
           { label: 'Checked', value: `${stats.checked}`, detail: 'done' },
@@ -85,7 +86,7 @@ export default function ShoppingListScreen() {
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Add item..."
+            placeholder={ttx("Add item...")}
             placeholderTextColor={colors.textMuted}
             style={{ flex: 1, color: colors.text, fontSize: 16, fontWeight: '800', paddingVertical: 8 }}
             returnKeyType="done"
@@ -94,7 +95,7 @@ export default function ShoppingListScreen() {
           <TextInput
             value={quantity}
             onChangeText={setQuantity}
-            placeholder="Qty"
+            placeholder={ttx("Qty")}
             placeholderTextColor={colors.textMuted}
             style={{ width: 64, color: colors.text, fontSize: 15, fontWeight: '800', paddingVertical: 8, textAlign: 'center' }}
           />
@@ -107,18 +108,18 @@ export default function ShoppingListScreen() {
         <Pressable onPress={add}>
           <View style={{ height: 48, borderRadius: 16, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <Plus color="#fff" size={18} weight="bold" />
-            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>Add item</Text>
+            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>{ttx("Add item")}</Text>
           </View>
         </Pressable>
       </GlassPanel>
 
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
-        <MiniStatCard value={`${stats.remaining}`} label="Remaining" accent={accent} />
-        <MiniStatCard value={`${stats.checked}`} label="Checked" />
-        <AnimatedPressable onPress={clearChecked} scaleValue={0.95} haptic="light" accessibilityRole="button" accessibilityLabel="Clear checked items" style={{ flex: 1 }}>
+        <MiniStatCard value={`${stats.remaining}`} label={ttx("Remaining")} accent={accent} />
+        <MiniStatCard value={`${stats.checked}`} label={ttx("Checked")} />
+        <AnimatedPressable onPress={clearChecked} scaleValue={0.95} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Clear checked items")} style={{ flex: 1 }}>
           <View style={{ flex: 1, borderRadius: 14, paddingVertical: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
             <Trash color={colors.textMuted} size={18} />
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>Clear</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{ttx("Clear")}</Text>
           </View>
         </AnimatedPressable>
       </View>
@@ -155,8 +156,8 @@ export default function ShoppingListScreen() {
           <MiniEmptyState
             accent={accent}
             icon={<ShoppingCart color={colors.textMuted} size={40} weight="duotone" />}
-            title="No items"
-            subtitle="Add the next essentials before the next store run."
+            title={ttx("No items")}
+            subtitle={ttx("Add the next essentials before the next store run.")}
           />
         )}
       </View>
@@ -165,8 +166,8 @@ export default function ShoppingListScreen() {
         appId="shopping-list"
         appName="Shopping List"
         accent={accent}
-        headline="Buy what matters, forget less"
-        caption="Keep essentials organized by category and turn recurring needs into smarter planning."
+        headline={ttx("Buy what matters, forget less")}
+        caption={ttx("Keep essentials organized by category and turn recurring needs into smarter planning.")}
         metrics={[
           { label: 'Remaining', value: `${stats.remaining}` },
           { label: 'Checked', value: `${stats.checked}` },

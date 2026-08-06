@@ -13,6 +13,7 @@ import { buildTargetProgressDigest, type TargetProgressDigest } from '../lib/tar
 import { fetchCrossAppProgress, type CrossAppProgress } from '../lib/targetProgressRemote';
 import { setPendingPublishContext } from '../lib/publishContext';
 import { IconBadge } from '../components/ui/IconBadge';
+import { ttx } from '../lib/i18n';
 
 export default function TargetProgressScreen() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function TargetProgressScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScreenHeader title="Progress" />
+      <ScreenHeader title={ttx("Progress")} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -82,12 +83,12 @@ export default function TargetProgressScreen() {
 
         {cross ? (
           <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 12 }]}>Across your tools</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 12 }]}>{ttx("Across your tools")}</Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <CrossStat icon={<CheckCircle color="#7A8B4E" size={16} weight="fill" />} value={`${cross.habitBestStreak}`} label="day streak" />
-              <CrossStat icon={<Barbell color="#4E8B7A" size={16} weight="fill" />} value={`${cross.fitnessWorkoutsWeek}`} label="workouts · wk" />
+              <CrossStat icon={<CheckCircle color="#7A8B4E" size={16} weight="fill" />} value={`${cross.habitBestStreak}`} label={ttx("day streak")} />
+              <CrossStat icon={<Barbell color="#4E8B7A" size={16} weight="fill" />} value={`${cross.fitnessWorkoutsWeek}`} label={ttx("workouts · wk")} />
               <CrossStat icon={<ListChecks color="#4E7A8B" size={16} weight="fill" />} value={`${cross.tasksOpen}`} label={cross.tasksDueToday ? `open · ${cross.tasksDueToday} due` : 'open tasks'} />
-              <CrossStat icon={<Wallet color="#B08536" size={16} weight="fill" />} value={`${cross.expenseCurrency ?? ''}${Math.round(cross.expenseNetMonth)}`} label="net · mo" />
+              <CrossStat icon={<Wallet color="#B08536" size={16} weight="fill" />} value={`${cross.expenseCurrency ?? ''}${Math.round(cross.expenseNetMonth)}`} label={ttx("net · mo")} />
             </View>
           </View>
         ) : null}
@@ -99,7 +100,7 @@ export default function TargetProgressScreen() {
         ) : (
           <>
             <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 10 }]}>Today&apos;s proof</Text>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 10 }]}>{ttx("Today&apos;s proof")}</Text>
               {digest.response.split('\n').slice(1, 6).map(line => (
                 <Text key={line} style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 20, marginBottom: 6 }]}>
                   {line}
@@ -110,33 +111,33 @@ export default function TargetProgressScreen() {
             <View style={{ gap: 10 }}>
               <ActionButton
                 icon={<SquaresFour color="#fff" size={18} weight="bold" />}
-                label="Open target tools"
-                caption="Jump straight to the mini apps for this target."
+                label={ttx("Open target tools")}
+                caption={ttx("Jump straight to the mini apps for this target.")}
                 onPress={() => router.push('/(tabs)/apps' as Href)}
                 filled
               />
               <ActionButton
                 icon={<ShareNetwork color={colors.accent} size={18} weight="bold" />}
-                label="Share progress"
-                caption="Create a public Echo from the current progress digest."
+                label={ttx("Share progress")}
+                caption={ttx("Create a public Echo from the current progress digest.")}
                 onPress={shareProgress}
               />
               <ActionButton
                 icon={<ChatCircleText color={colors.accent} size={18} weight="bold" />}
-                label="Do this with someone"
-                caption="Invite a partner from messages and keep each other accountable."
+                label={ttx("Do this with someone")}
+                caption={ttx("Invite a partner from messages and keep each other accountable.")}
                 onPress={() => router.push('/messages' as Href)}
               />
               <ActionButton
                 icon={<UsersThree color={colors.accent} size={18} weight="bold" />}
-                label="Start a group"
-                caption="Use a salon for group tasks, weekly check-ins, and comparison."
+                label={ttx("Start a group")}
+                caption={ttx("Use a salon for group tasks, weekly check-ins, and comparison.")}
                 onPress={() => router.push('/salons' as Href)}
               />
             </View>
 
             <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 12 }]}>Compare progress</Text>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 12 }]}>{ttx("Compare progress")}</Text>
               {digest.comparison.map((row, index) => (
                 <View key={row.label} style={{
                   flexDirection: 'row',
@@ -149,9 +150,9 @@ export default function TargetProgressScreen() {
                   <Text style={[font.bodySemibold, { color: colors.text, fontSize: 13, flex: 1 }]} numberOfLines={1}>
                     {row.label}
                   </Text>
-                  <Metric label="You" value={row.you} />
-                  <Metric label="Partner" value={row.partner} />
-                  <Metric label="Group" value={row.group} />
+                  <Metric label={ttx("You")} value={row.you} />
+                  <Metric label={ttx("Partner")} value={row.partner} />
+                  <Metric label={ttx("Group")} value={row.group} />
                 </View>
               ))}
             </View>

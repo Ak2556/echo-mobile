@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { ArrowsClockwise, GitFork } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
+import { ttx } from '../../lib/i18n';
 
 interface RepostChoiceSheetProps {
   visible: boolean;
@@ -65,10 +66,10 @@ export function RepostChoiceSheet({ visible, onClose, reposted, onRepost, onRemi
           <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.62 }]} pointerEvents="none" />
           <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 18, letterSpacing: -0.3 }]}>
-              Spread this echo
+              {ttx("Spread this echo")}
             </Text>
             <Text style={[font.body, { color: colors.textSecondary, fontSize: 13, marginTop: 4 }]}>
-              Pass it through or build on it with your own take.
+              {ttx("Pass it through or build on it with your own take.")}
             </Text>
           </View>
 
@@ -113,9 +114,9 @@ export function RepostChoiceSheet({ visible, onClose, reposted, onRepost, onRemi
             shadowOffset: { width: 0, height: 8 },
           })}
           accessibilityRole="button"
-          accessibilityLabel="Cancel"
+          accessibilityLabel={ttx("Cancel")}
         >
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>Cancel</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{ttx("Cancel")}</Text>
         </Pressable>
       </Animated.View>
     </Modal>

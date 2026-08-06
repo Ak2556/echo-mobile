@@ -6,6 +6,7 @@ import { Images } from 'phosphor-react-native';
 import { EmptyState } from '../common/EmptyState';
 import { useTheme } from '../../lib/theme';
 import { FeedItem } from '../../types';
+import { ttx } from '../../lib/i18n';
 
 const GRID_GAP = 8;
 const GRID_HORIZONTAL_INSET = 12;
@@ -90,8 +91,8 @@ export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: 
       <View style={{ paddingVertical: 60 }}>
         <EmptyState
           icon={<Images color={colors.accent} size={32} />}
-          title="No posts yet"
-          subtitle="Your echoes will appear here once you publish them."
+          title={ttx("No posts yet")}
+          subtitle={ttx("Your echoes will appear here once you publish them.")}
         />
       </View>
     );

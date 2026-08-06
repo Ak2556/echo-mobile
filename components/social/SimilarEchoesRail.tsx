@@ -7,6 +7,7 @@ import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { feedbackHaptic } from '../../lib/accentDesign';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 interface SimilarEchoesRailProps {
   echoId: string;
@@ -30,7 +31,7 @@ export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps)
 
   return (
     <View style={{ marginTop: 22, marginBottom: 8 }}>
-      <Text style={[styles.headingText, { color: colors.textMuted }]}>Similar conversations</Text>
+      <Text style={[styles.headingText, { color: colors.textMuted }]}>{ttx("Similar conversations")}</Text>
 
       {isLoading ? (
         <View style={styles.loadingWrap}>
@@ -62,7 +63,7 @@ export function SimilarEchoesRail({ echoId, limit = 8 }: SimilarEchoesRailProps)
                 {item.response || item.prompt}
               </Text>
               <View style={styles.statsRow}>
-                <Text style={[styles.stat, { color: colors.textMuted }]}>{item.likes} likes</Text>
+                <Text style={[styles.stat, { color: colors.textMuted }]}>{item.likes} {ttx("likes")}</Text>
                 {(item.remixCount ?? 0) > 0 && (
                   <View style={styles.remixChip}>
                     <GitBranch color={colors.textMuted} size={11} />

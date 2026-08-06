@@ -14,6 +14,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useRemoteFollowersList, type ConnectionUser } from '../hooks/queries/useRemoteFollowers';
+import { ttx } from '../lib/i18n';
 
 export default function FollowersScreen() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function FollowersScreen() {
 
   return (
     <ResponsiveScreen>
-      <ScreenHeader title="Connections" />
+      <ScreenHeader title={ttx("Connections")} />
 
       <View className="flex-row" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
         {(['followers', 'following'] as const).map(tab => (

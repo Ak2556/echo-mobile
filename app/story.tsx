@@ -8,6 +8,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
+import { ttx } from '../lib/i18n';
 
 const STORY_DURATION = 5000;
 const PAUSED_DURATION = 999999;
@@ -75,9 +76,9 @@ export default function StoryScreen() {
   if (!story) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.bgPure }}>
-        <Text style={{ color: colors.textSecondary }}>No stories available</Text>
+        <Text style={{ color: colors.textSecondary }}>{ttx("No stories available")}</Text>
         <AnimatedPressable onPress={() => safeBack()} className="mt-4" scaleValue={0.95} haptic="light">
-          <Text style={{ color: colors.accent }}>Close</Text>
+          <Text style={{ color: colors.accent }}>{ttx("Close")}</Text>
         </AnimatedPressable>
       </View>
     );
@@ -134,7 +135,7 @@ export default function StoryScreen() {
             className="p-4 mb-5"
             style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.lg }}
           >
-            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>ASKED</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>{ttx("ASKED")}</Text>
             <Text style={{ color: colors.text, fontSize: fontSizes.body + 2, fontWeight: '500', lineHeight: (fontSizes.body + 2) * 1.5 }}>{story.prompt}</Text>
           </Animated.View>
 
@@ -148,13 +149,13 @@ export default function StoryScreen() {
               borderColor: colors.accentMuted,
             }}
           >
-            <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>ECHO</Text>
+            <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>{ttx("ECHO")}</Text>
             <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{story.response}</Text>
           </Animated.View>
 
           <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} className="flex-row items-center justify-center mt-6 gap-1.5">
             <Eye color={colors.textMuted} size={14} />
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{story.viewCount} views</Text>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{story.viewCount} {ttx("views")}</Text>
           </Animated.View>
         </View>
       </Animated.View>

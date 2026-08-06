@@ -4,6 +4,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { ArrowsClockwise, CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { videoSourceForUri } from '../../lib/videoMedia';
+import { ttx } from '../../lib/i18n';
 
 export interface QualityOption { label: string; uri: string; }
 
@@ -141,7 +142,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{"Couldn't load video"}</Text>
             <Pressable onPress={retryLoad}
               style={{ paddingHorizontal: 20, paddingVertical: 9, borderRadius: radius.full, backgroundColor: colors.accent }}>
-              <Text style={{ color: '#fff', fontSize: fontSizes.small, fontWeight: '600' }}>Retry</Text>
+              <Text style={{ color: '#fff', fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Retry")}</Text>
             </Pressable>
           </View>
         ) : (
@@ -159,7 +160,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
             {loadState === 'loading' && (
               <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
                 <ActivityIndicator color="#fff" size="large" />
-                <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: fontSizes.caption, marginTop: 10 }}>Loading...</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: fontSizes.caption, marginTop: 10 }}>{ttx("Loading...")}</Text>
               </View>
             )}
 
@@ -233,7 +234,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
               <View style={{ alignItems: 'center', paddingVertical: 14 }}>
                 <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.glassBorder }} />
               </View>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', paddingHorizontal: 20, marginBottom: 4 }}>Video Quality</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', paddingHorizontal: 20, marginBottom: 4 }}>{ttx("Video Quality")}</Text>
               {qualityList.map((q, i) => {
                 const isActive = q.uri === activeUri;
                 return (

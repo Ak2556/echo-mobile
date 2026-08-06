@@ -9,6 +9,7 @@ import { User } from '../../types';
 import { useFollow } from '../../hooks/queries/useFollow';
 import { useTheme } from '../../lib/theme';
 import { track } from '../../lib/analytics';
+import { ttx } from '../../lib/i18n';
 
 interface UserRowProps {
   user: User;
@@ -103,7 +104,7 @@ export function UserRow({
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }} numberOfLines={1}>@{user.username}</Text>
         {followsYou && showFollowsYouBadge && (
           <View style={{ alignSelf: 'flex-start', marginTop: 3, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4, backgroundColor: colors.surfaceHover }}>
-            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption - 1, fontWeight: '600' }}>Follows you</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption - 1, fontWeight: '600' }}>{ttx("Follows you")}</Text>
           </View>
         )}
         {user.bio ? (

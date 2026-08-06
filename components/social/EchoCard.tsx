@@ -19,6 +19,7 @@ import { FeedItem } from '../../types';
 import { ACCENT_COLORS, ACCENT_CHIP, accentShadow } from '../../lib/accentDesign';
 import { videoSourceForUri } from '../../lib/videoMedia';
 import { echoUrl } from '../../lib/echoUrl';
+import { ttx } from '../../lib/i18n';
 
 interface EchoCardProps {
   item: FeedItem;
@@ -230,7 +231,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
             onPress={retryVideo}
             style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: ACCENT_COLORS.cyan }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Retry</Text>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Retry")}</Text>
           </Pressable>
         </View>
       )}
@@ -275,7 +276,7 @@ export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
             style={[ACCENT_CHIP, { backgroundColor: ACCENT_COLORS.cyanDim, marginBottom: 8 }, accentShadow(ACCENT_COLORS.cyan, 'soft')]}
           >
             <GitBranch color={ACCENT_COLORS.cyan} size={12} weight="fill" />
-            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>PERSPECTIVE</Text>
+            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>{ttx("PERSPECTIVE")}</Text>
           </Pressable>
         )}
         {/* Author row */}

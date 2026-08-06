@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { CloudSlash, WarningOctagon, Globe, ArrowsClockwise } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 export type ErrorKind = 'offline' | 'timeout' | 'server' | 'unknown';
 
@@ -64,7 +65,7 @@ export function ErrorState({ kind = 'unknown', title, message, onRetry }: ErrorS
           }}
         >
           <ArrowsClockwise color="#fff" size={14} />
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Try again</Text>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{ttx("Try again")}</Text>
         </Pressable>
       )}
     </View>

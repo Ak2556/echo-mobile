@@ -19,6 +19,7 @@ import {
   type OfficeHour,
   type OfficeHourQuestion,
 } from '../../lib/supabaseEchoApi';
+import { ttx } from '../../lib/i18n';
 
 function OfficeHourDetailScreenInner() {
   const router = useRouter();
@@ -91,7 +92,7 @@ function OfficeHourDetailScreenInner() {
           </AnimatedPressable>
         </View>
         <View style={{ padding: 24, alignItems: 'center', marginTop: 60 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 15 }}>Session not found.</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 15 }}>{ttx("Session not found.")}</Text>
         </View>
       </SafeAreaView>
     );
@@ -106,7 +107,7 @@ function OfficeHourDetailScreenInner() {
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18, flex: 1 }} numberOfLines={1}>
-          Office Hours
+          {ttx("Office Hours")}
         </Text>
       </View>
 
@@ -145,7 +146,7 @@ function OfficeHourDetailScreenInner() {
                       size={28}
                       showHalo={false}
                     />
-                    <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Hosted by @{oh.host.username}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{ttx("Hosted by @")}{oh.host.username}</Text>
                   </>
                 )}
               </View>
@@ -184,14 +185,14 @@ function OfficeHourDetailScreenInner() {
           </Animated.View>
 
           <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16, marginBottom: 8, marginLeft: 4 }}>
-            Questions ({questions.length})
+            {ttx("Questions (")}{questions.length})
           </Text>
 
           {questions.length === 0 ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
               <Microphone color={colors.textMuted} size={28} />
               <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 8, textAlign: 'center' }}>
-                No questions yet. Be first — top-voted Qs get answered first.
+                {ttx("No questions yet. Be first — top-voted Qs get answered first.")}
               </Text>
             </View>
           ) : (
@@ -236,7 +237,7 @@ function OfficeHourDetailScreenInner() {
                   )}
                   {q.answer ? (
                     <View style={{ marginTop: 10, padding: 10, backgroundColor: colors.accent + '10', borderRadius: 8, borderLeftWidth: 2, borderLeftColor: colors.accent }}>
-                      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', marginBottom: 4 }}>HOST</Text>
+                      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', marginBottom: 4 }}>{ttx("HOST")}</Text>
                       <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19 }}>{q.answer}</Text>
                     </View>
                   ) : null}
@@ -262,7 +263,7 @@ function OfficeHourDetailScreenInner() {
             <TextInput
               value={draft}
               onChangeText={setDraft}
-              placeholder="Ask a question…"
+              placeholder={ttx("Ask a question…")}
               multiline
               maxLength={280}
             />

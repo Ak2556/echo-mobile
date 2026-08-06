@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../lib/theme';
 import { features, FeatureFlag } from '../../lib/featureFlags';
+import { ttx } from '../../lib/i18n';
 
 interface V2FeatureGuardProps {
   flag: FeatureFlag;
@@ -30,7 +31,7 @@ export function V2FeatureGuard({ flag, children }: V2FeatureGuardProps) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
         <ActivityIndicator color={colors.accent} />
-        <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 12 }}>Redirecting…</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 12 }}>{ttx("Redirecting…")}</Text>
       </View>
     );
   }

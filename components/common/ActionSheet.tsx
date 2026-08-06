@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
+import { ttx } from '../../lib/i18n';
 
 export interface ActionItem {
   key: string;
@@ -192,9 +193,9 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
             onPress={() => { tap('light'); onClose(); }}
             style={{ paddingVertical: 16, alignItems: 'center' }}
             accessibilityRole="button"
-            accessibilityLabel="Cancel"
+            accessibilityLabel={ttx("Cancel")}
           >
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>Cancel</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{ttx("Cancel")}</Text>
           </Pressable>
         </View>
       </Animated.View>

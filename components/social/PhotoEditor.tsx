@@ -17,6 +17,7 @@ import { Slider } from '../ui/Slider';
 import {
   finalMatrix, hasAdjustments, FILTER_PRESETS, NO_ADJUST, type Adjustments,
 } from '../../lib/photoFilters';
+import { ttx } from '../../lib/i18n';
 
 type OptionalManipulator = {
   manipulateAsync: (uri: string, actions: unknown[], options: { compress?: number; format?: unknown }) => Promise<{ uri: string; width: number; height: number }>;
@@ -124,11 +125,11 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
       <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top', 'bottom']}>
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
-          <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel="Cancel edits">
+          <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel={ttx("Cancel edits")}>
             <X color="#fff" size={24} weight="bold" />
           </Pressable>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Edit photo</Text>
-          <Pressable onPress={handleDone} hitSlop={10} disabled={!cur || busy} accessibilityRole="button" accessibilityLabel="Apply edits">
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{ttx("Edit photo")}</Text>
+          <Pressable onPress={handleDone} hitSlop={10} disabled={!cur || busy} accessibilityRole="button" accessibilityLabel={ttx("Apply edits")}>
             <Check color={dirty ? colors.accent : '#fff'} size={24} weight="bold" />
           </Pressable>
         </View>
@@ -157,10 +158,10 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
           {mode === 'transform' && (
             <>
               <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 12 }}>
-                <ToolBtn icon={<ArrowCounterClockwise color="#fff" size={22} weight="bold" />} label="Rotate" onPress={() => runTransform(() => [{ rotate: -90 }])} />
-                <ToolBtn icon={<ArrowClockwise color="#fff" size={22} weight="bold" />} label="Rotate" onPress={() => runTransform(() => [{ rotate: 90 }])} />
-                <ToolBtn icon={<FlipHorizontal color="#fff" size={22} weight="bold" />} label="Flip" onPress={() => runTransform(m => [{ flip: m.FlipType.Horizontal }])} />
-                <ToolBtn icon={<FlipVertical color="#fff" size={22} weight="bold" />} label="Flip" onPress={() => runTransform(m => [{ flip: m.FlipType.Vertical }])} />
+                <ToolBtn icon={<ArrowCounterClockwise color="#fff" size={22} weight="bold" />} label={ttx("Rotate")} onPress={() => runTransform(() => [{ rotate: -90 }])} />
+                <ToolBtn icon={<ArrowClockwise color="#fff" size={22} weight="bold" />} label={ttx("Rotate")} onPress={() => runTransform(() => [{ rotate: 90 }])} />
+                <ToolBtn icon={<FlipHorizontal color="#fff" size={22} weight="bold" />} label={ttx("Flip")} onPress={() => runTransform(m => [{ flip: m.FlipType.Horizontal }])} />
+                <ToolBtn icon={<FlipVertical color="#fff" size={22} weight="bold" />} label={ttx("Flip")} onPress={() => runTransform(m => [{ flip: m.FlipType.Vertical }])} />
               </View>
               <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 2 }}>
@@ -179,13 +180,13 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
           {mode === 'adjust' && (
             <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
               {!SKIA_OK && (
-                <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 8 }}>Color edits apply once the app is rebuilt with the editor engine.</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 8 }}>{ttx("Color edits apply once the app is rebuilt with the editor engine.")}</Text>
               )}
-              <Slider label="Exposure" value={adjust.exposure} onChange={v => patchAdjust('exposure', v)} accent={colors.accent} />
-              <Slider label="Brightness" value={adjust.brightness} onChange={v => patchAdjust('brightness', v)} accent={colors.accent} />
-              <Slider label="Contrast" value={adjust.contrast} onChange={v => patchAdjust('contrast', v)} accent={colors.accent} />
-              <Slider label="Saturation" value={adjust.saturation} onChange={v => patchAdjust('saturation', v)} accent={colors.accent} />
-              <Slider label="Warmth" value={adjust.warmth} onChange={v => patchAdjust('warmth', v)} accent={colors.accent} />
+              <Slider label={ttx("Exposure")} value={adjust.exposure} onChange={v => patchAdjust('exposure', v)} accent={colors.accent} />
+              <Slider label={ttx("Brightness")} value={adjust.brightness} onChange={v => patchAdjust('brightness', v)} accent={colors.accent} />
+              <Slider label={ttx("Contrast")} value={adjust.contrast} onChange={v => patchAdjust('contrast', v)} accent={colors.accent} />
+              <Slider label={ttx("Saturation")} value={adjust.saturation} onChange={v => patchAdjust('saturation', v)} accent={colors.accent} />
+              <Slider label={ttx("Warmth")} value={adjust.warmth} onChange={v => patchAdjust('warmth', v)} accent={colors.accent} />
             </View>
           )}
 
@@ -206,11 +207,11 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
 
         {/* Mode tabs */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}>
-          <ModeTab icon={<Cube color={mode === 'transform' ? colors.accent : '#fff'} size={20} weight={mode === 'transform' ? 'fill' : 'bold'} />} label="Transform" active={mode === 'transform'} onPress={() => setMode('transform')} accent={colors.accent} />
-          <ModeTab icon={<SlidersHorizontal color={mode === 'adjust' ? colors.accent : '#fff'} size={20} weight={mode === 'adjust' ? 'fill' : 'bold'} />} label="Adjust" active={mode === 'adjust'} onPress={() => setMode('adjust')} accent={colors.accent} />
-          <ModeTab icon={<MagicWand color={mode === 'filter' ? colors.accent : '#fff'} size={20} weight={mode === 'filter' ? 'fill' : 'bold'} />} label="Filters" active={mode === 'filter'} onPress={() => setMode('filter')} accent={colors.accent} />
+          <ModeTab icon={<Cube color={mode === 'transform' ? colors.accent : '#fff'} size={20} weight={mode === 'transform' ? 'fill' : 'bold'} />} label={ttx("Transform")} active={mode === 'transform'} onPress={() => setMode('transform')} accent={colors.accent} />
+          <ModeTab icon={<SlidersHorizontal color={mode === 'adjust' ? colors.accent : '#fff'} size={20} weight={mode === 'adjust' ? 'fill' : 'bold'} />} label={ttx("Adjust")} active={mode === 'adjust'} onPress={() => setMode('adjust')} accent={colors.accent} />
+          <ModeTab icon={<MagicWand color={mode === 'filter' ? colors.accent : '#fff'} size={20} weight={mode === 'filter' ? 'fill' : 'bold'} />} label={ttx("Filters")} active={mode === 'filter'} onPress={() => setMode('filter')} accent={colors.accent} />
           {colorDirty && (
-            <ModeTab icon={<ArrowUUpLeft color="#fff" size={20} weight="bold" />} label="Reset" active={false} onPress={resetColor} accent={colors.accent} />
+            <ModeTab icon={<ArrowUUpLeft color="#fff" size={20} weight="bold" />} label={ttx("Reset")} active={false} onPress={resetColor} accent={colors.accent} />
           )}
         </View>
       </SafeAreaView>

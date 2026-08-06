@@ -10,6 +10,7 @@ import { createNote } from '../../lib/notes';
 import { miniAppSnapshotText } from '../../lib/miniAppIntegration';
 import { askMiniAppCoach, coachAppFor } from '../../lib/miniAppCoach';
 import { CompareSheet } from './CompareSheet';
+import { ttx } from '../../lib/i18n';
 
 interface EdgeFeaturePanelProps {
   appId?: string;
@@ -110,7 +111,7 @@ export function EdgeFeaturePanel({
         onPress={onAskEcho}
         haptic="medium"
         accessibilityRole="button"
-        accessibilityLabel="Ask Echo to coach you"
+        accessibilityLabel={ttx("Ask Echo to coach you")}
         disabled={loading}
       >
         <View style={{
@@ -169,14 +170,14 @@ export function EdgeFeaturePanel({
               <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
                 <Sparkle color={accent} size={18} weight="fill" />
               </View>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>Echo on your {appName.toLowerCase()}</Text>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>{ttx("Echo on your")} {appName.toLowerCase()}</Text>
               <Pressable onPress={() => setCoaching(null)} hitSlop={10}><X color={colors.textMuted} size={20} weight="bold" /></Pressable>
             </View>
             <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, lineHeight: 22 }]}>{coaching}</Text>
-            <AnimatedPressable onPress={() => { setCoaching(null); openEcho(); }} haptic="light" accessibilityRole="button" accessibilityLabel="Continue in chat">
+            <AnimatedPressable onPress={() => { setCoaching(null); openEcho(); }} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Continue in chat")}>
               <View style={{ marginTop: 18, borderRadius: 14, paddingVertical: 13, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: accent }}>
                 <ChatCircleText color="#fff" size={16} weight="fill" />
-                <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>Continue in chat</Text>
+                <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>{ttx("Continue in chat")}</Text>
               </View>
             </AnimatedPressable>
           </Pressable>

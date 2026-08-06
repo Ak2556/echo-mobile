@@ -18,6 +18,7 @@ import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import { CameraCapture, CameraCaptureType, loadCameraCaptures, saveCameraCaptures } from '../../lib/cameraCaptures';
 import { uploadMiniAppMedia } from '../../lib/miniAppMedia';
+import { ttx } from '../../lib/i18n';
 
 type Mode = CameraCaptureType;
 type CaptureIntent = 'proof' | 'progress' | 'listing' | 'document';
@@ -35,7 +36,7 @@ function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; 
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 9 }}>
-        Capture intent
+        {ttx("Capture intent")}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {INTENTS.map(intent => {
@@ -90,8 +91,8 @@ function CaptureReadiness({ accent, mode, intent, captured }: { accent: string; 
           <ImageSquare color={accent} size={21} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Capture cockpit</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Intent, proof, sync.</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Capture cockpit")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Intent, proof, sync.")}</Text>
         </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -209,11 +210,11 @@ export default function CameraApp() {
   );
 
   return (
-    <MiniAppShell title="Camera" subtitle="Prove" headerRight={GalleryBtn}>
+    <MiniAppShell title={ttx("Camera")} subtitle={ttx("Prove")} headerRight={GalleryBtn}>
       <MiniCommandDeck
         accent={ACCENT}
-        title="Proof and progress capture"
-        subtitle="Photos, clips, evidence."
+        title={ttx("Proof and progress capture")}
+        subtitle={ttx("Photos, clips, evidence.")}
         metrics={[
           { label: 'Total', value: `${captured.length}`, detail: 'captures' },
           { label: 'Photos', value: `${captured.filter(item => item.type === 'photo').length}`, detail: 'still' },
@@ -349,8 +350,8 @@ export default function CameraApp() {
       <EdgeFeaturePanel
         appName="Camera"
         accent={ACCENT}
-        headline="Capture with intent"
-        caption="Use photos and clips as proof, progress updates, listing media, or Echo drafts."
+        headline={ttx("Capture with intent")}
+        caption={ttx("Use photos and clips as proof, progress updates, listing media, or Echo drafts.")}
         metrics={[
           { label: 'Captured', value: `${captured.length}` },
           { label: 'Photos', value: `${captured.filter(item => item.type === 'photo').length}` },
@@ -367,10 +368,10 @@ export default function CameraApp() {
         <Animated.View entering={FadeInDown}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, flex: 1 }}>
-              CAPTURED · {captured.length}
+              {ttx("CAPTURED ·")} {captured.length}
             </Text>
             <Pressable onPress={() => { persistCaptured([]); setSelected(null); }}>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Clear all</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Clear all")}</Text>
             </Pressable>
           </View>
 

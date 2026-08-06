@@ -9,6 +9,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/theme';
 import { fetchPendingAppeals, resolveAppeal, type PendingAppeal } from '../lib/supabaseEchoApi';
+import { ttx } from '../lib/i18n';
 
 function slaColor(daysRemaining: number): string {
   if (daysRemaining <= 2) return '#EF4444';
@@ -70,13 +71,13 @@ function AppealCard({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Clock size={12} color={slaColor(appeal.daysRemaining)} weight="bold" />
           <Text style={[font.bodySemibold, { color: slaColor(appeal.daysRemaining), fontSize: 11 }]}>
-            {appeal.daysRemaining}d left (SLA)
+            {appeal.daysRemaining}{ttx("d left (SLA)")}
           </Text>
         </View>
       </View>
 
       <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
-        Submitted {timeAgo(appeal.createdAt)} · {appeal.kind === 'decision' ? 'content-removal appeal' : `${appeal.reportTargetType} report`}
+        {ttx("Submitted")} {timeAgo(appeal.createdAt)} · {appeal.kind === 'decision' ? 'content-removal appeal' : `${appeal.reportTargetType} report`}
       </Text>
 
       {/* What is being contested */}
@@ -101,7 +102,7 @@ function AppealCard({
       <TextInput
         value={note}
         onChangeText={setNote}
-        placeholder="Moderator note (optional, visible to user)"
+        placeholder={ttx("Moderator note (optional, visible to user)")}
         placeholderTextColor={colors.textMuted}
         multiline
         style={{
@@ -129,7 +130,7 @@ function AppealCard({
           }}
         >
           <CheckCircle size={15} color="#10B981" weight="bold" />
-          <Text style={[font.bodySemibold, { color: '#10B981', fontSize: fontSizes.caption }]}>Overturn</Text>
+          <Text style={[font.bodySemibold, { color: '#10B981', fontSize: fontSizes.caption }]}>{ttx("Overturn")}</Text>
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -142,7 +143,7 @@ function AppealCard({
           }}
         >
           <XCircle size={15} color="#EF4444" weight="bold" />
-          <Text style={[font.bodySemibold, { color: '#EF4444', fontSize: fontSizes.caption }]}>Uphold</Text>
+          <Text style={[font.bodySemibold, { color: '#EF4444', fontSize: fontSizes.caption }]}>{ttx("Uphold")}</Text>
         </AnimatedPressable>
       </View>
 
@@ -182,15 +183,15 @@ export default function ModAppealsScreen() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Appeals Queue"
-        subtitle="DSA Art. 20 · 14-day SLA"
+        title={ttx("Appeals Queue")}
+        subtitle={ttx("DSA Art. 20 · 14-day SLA")}
         right={
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginRight: 8 }}>
             <AnimatedPressable
               onPress={() => router.push('/mod-verifications' as any)}
               scaleValue={0.9} haptic="light"
               style={{ padding: 6 }}
-              accessibilityLabel="Verification queue"
+              accessibilityLabel={ttx("Verification queue")}
             >
               <SealCheck color={colors.accent} size={20} weight="fill" />
             </AnimatedPressable>
@@ -201,7 +202,7 @@ export default function ModAppealsScreen() {
                 backgroundColor: appeals.length > 0 ? colors.accentMuted : colors.surfaceHover,
               }}>
                 <Text style={[font.bodySemibold, { color: appeals.length > 0 ? colors.accent : colors.textMuted, fontSize: fontSizes.caption }]}>
-                  {appeals.length} pending
+                  {appeals.length} {ttx("pending")}
                 </Text>
               </View>
             )}
@@ -214,7 +215,7 @@ export default function ModAppealsScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, padding: 12, borderRadius: 10, backgroundColor: '#EF444420' }}>
           <Warning size={16} color="#EF4444" weight="bold" />
           <Text style={[font.bodySemibold, { color: '#EF4444', fontSize: fontSizes.caption }]}>
-            {overdueCnt} appeal{overdueCnt > 1 ? 's' : ''} past the 14-day SLA
+            {overdueCnt} {ttx("appeal")}{overdueCnt > 1 ? 's' : ''} {ttx("past the 14-day SLA")}
           </Text>
         </View>
       )}
@@ -230,9 +231,9 @@ export default function ModAppealsScreen() {
       ) : appeals.length === 0 ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
           <Scales color={colors.border} size={40} weight="duotone" />
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title }]}>All clear</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title }]}>{ttx("All clear")}</Text>
           <Text style={[font.body, { color: colors.textMuted, textAlign: 'center', fontSize: fontSizes.small }]}>
-            No pending appeals. The queue is empty.
+            {ttx("No pending appeals. The queue is empty.")}
           </Text>
         </View>
       ) : (

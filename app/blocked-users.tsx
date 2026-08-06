@@ -12,6 +12,7 @@ import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { User } from '../types';
+import { ttx } from '../lib/i18n';
 
 export default function BlockedUsersScreen() {
   const { blockedIds, toggleBlock, getUser } = useAppStore();
@@ -41,15 +42,15 @@ export default function BlockedUsersScreen() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Blocked Users"
+        title={ttx("Blocked Users")}
         right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginRight: 8 }}>{blockedUsers.length}</Text>}
       />
 
       {blockedUsers.length === 0 ? (
         <EmptyState
           icon={<ShieldSlash color="#6366F1" size={32} />}
-          title="No blocked users"
-          subtitle="Users you block won't be able to see your content or contact you."
+          title={ttx("No blocked users")}
+          subtitle={ttx("Users you block won't be able to see your content or contact you.")}
         />
       ) : (
         <FlashList
@@ -81,7 +82,7 @@ export default function BlockedUsersScreen() {
                   scaleValue={0.93}
                   haptic="medium"
                 >
-                  <Text style={{ color: colors.danger, fontSize: fontSizes.small, fontWeight: '600' }}>Unblock</Text>
+                  <Text style={{ color: colors.danger, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Unblock")}</Text>
                 </AnimatedPressable>
               </View>
             </Animated.View>
