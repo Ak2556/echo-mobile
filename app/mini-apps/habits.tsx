@@ -16,6 +16,7 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { showToast } from '../../components/ui/Toast';
 import {
   HABIT_COLORS, HABIT_MARKERS, Habit, HabitCheckIn, checkInFor, formatCheckInTime,
@@ -163,20 +164,21 @@ function ProofModal({ habit, date, onSaved, onClose }: {
   habit: Habit; date: string; onSaved: (h: Habit) => void; onClose: () => void;
 }) {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const entry: HabitCheckIn | undefined = checkInFor(habit, date);
   const [note, setNote] = useState(entry?.note ?? '');
   const [photoUri, setPhotoUri] = useState(entry?.photoUri ?? '');
   const [photoOk, setPhotoOk] = useState(true);
   const isToday = date === todayStr();
-  const dayLabel = isToday ? 'Today' : new Date(date + 'T12:00:00').toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  const dayLabel = isToday ? tt('Today') : new Date(date + 'T12:00:00').toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
 
   const pick = async (source: 'camera' | 'library') => {
     try {
       const perm = source === 'camera'
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) { showToast('Permission needed to add a photo', 'Photos'); return; }
+      if (!perm.granted) { showToast(tt('Permission needed to add a photo'), tt('Photos')); return; }
       const result = source === 'camera'
         ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
@@ -185,7 +187,7 @@ function ProofModal({ habit, date, onSaved, onClose }: {
       setPhotoUri(stashed);
       setPhotoOk(true);
     } catch {
-      showToast('Could not add the photo', 'Error');
+      showToast(tt('Could not add the photo'), tt('Error'));
     }
   };
 
@@ -196,10 +198,10 @@ function ProofModal({ habit, date, onSaved, onClose }: {
         photoUri: photoUri || undefined,
       });
       onSaved(updated);
-      showToast('Check-in saved', 'Saved');
+      showToast(tt('Check-in saved'), tt('Saved'));
       onClose();
     } catch {
-      showToast('Could not save', 'Error');
+      showToast(tt('Could not save'), tt('Error'));
     }
   };
 
@@ -227,23 +229,23 @@ function ProofModal({ habit, date, onSaved, onClose }: {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Clock color={habit.color} size={16} weight="fill" />
               <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
-                Checked off at <Text style={{ color: colors.text, fontWeight: '700' }}>{formatCheckInTime(entry.at)}</Text>
+                {tt('Checked off at')} <Text style={{ color: colors.text, fontWeight: '700' }}>{formatCheckInTime(entry.at)}</Text>
               </Text>
             </View>
           ) : null}
 
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>NOTE</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('NOTE')}</Text>
             <TextInput
               value={note} onChangeText={setNote} multiline
-              placeholder="How did it go? What did you do?"
+              placeholder={tt('How did it go? What did you do?')}
               placeholderTextColor={colors.textMuted}
               style={{ color: colors.text, fontSize: 15, minHeight: 84, textAlignVertical: 'top', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }}
             />
           </View>
 
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>PHOTO PROOF</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('PHOTO PROOF')}</Text>
             {photoUri && photoOk ? (
               <View>
                 <Image
@@ -258,19 +260,19 @@ function ProofModal({ habit, date, onSaved, onClose }: {
               </View>
             ) : (
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                {pickBtn('Take photo', <Camera color={habit.color} size={22} weight="fill" />, 'camera')}
-                {pickBtn('Choose photo', <Images color={habit.color} size={22} weight="fill" />, 'library')}
+                {pickBtn(tt('Take photo'), <Camera color={habit.color} size={22} weight="fill" />, 'camera')}
+                {pickBtn(tt('Choose photo'), <Images color={habit.color} size={22} weight="fill" />, 'library')}
               </View>
             )}
             {photoUri && !photoOk ? (
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 8 }}>
-                This photo lives on another device.
+                {tt('This photo lives on another device.')}
               </Text>
             ) : null}
           </View>
 
           <AnimatedPressable onPress={save} scaleValue={0.96} haptic="medium" style={{ backgroundColor: habit.color, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: habit.color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Save</Text>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{tt('Save')}</Text>
           </AnimatedPressable>
         </ScrollView>
       </View>
@@ -286,6 +288,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
   onClose: () => void;
 }) {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const accent = '#C65F3F'; // terracotta — warm editorial palette
   const [name, setName] = useState(initial?.name ?? '');
@@ -304,7 +307,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
   };
 
   const submit = () => {
-    if (!name.trim()) { showToast('Enter a habit name', 'Error'); return; }
+    if (!name.trim()) { showToast(tt('Enter a habit name'), tt('Error')); return; }
     onSave({
       id: initial?.id ?? Date.now().toString(),
       name: name.trim(), marker, color,
@@ -325,16 +328,16 @@ function AddHabitModal({ initial, onSave, onClose }: {
     <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{initial ? 'Edit Habit' : 'New Habit'}</Text>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{initial ? tt('Edit Habit') : tt('New Habit')}</Text>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
         </View>
         <ScrollView contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>HABIT NAME</Text>
-            <TextInput value={name} onChangeText={setName} placeholder="e.g. Drink water, Exercise…" placeholderTextColor={colors.textMuted} autoFocus style={{ color: colors.text, fontSize: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('HABIT NAME')}</Text>
+            <TextInput value={name} onChangeText={setName} placeholder={tt('e.g. Drink water, Exercise…')} placeholderTextColor={colors.textMuted} autoFocus style={{ color: colors.text, fontSize: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
           </View>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>ICON</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('ICON')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {HABIT_MARKERS.map(e => (
                 <Pressable key={e} onPress={() => setMarker(e)}>
@@ -346,7 +349,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
             </View>
           </View>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>COLOR</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('COLOR')}</Text>
             <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
               {HABIT_COLORS.map(c => (
                 <Pressable key={c} onPress={() => setColor(c)}>
@@ -356,7 +359,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
             </View>
           </View>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>WHICH DAYS</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('WHICH DAYS')}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {WEEKDAY_LABELS.map((label, d) => {
                 const active = days.includes(d);
@@ -371,14 +374,14 @@ function AddHabitModal({ initial, onSave, onClose }: {
             </View>
           </View>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>TIMES PER DAY</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('TIMES PER DAY')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <AnimatedPressable onPress={() => setTarget(t => Math.max(1, t - 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, padding: 11 }}>
                 <Minus color={colors.text} size={15} weight="bold" />
               </AnimatedPressable>
               <View style={{ minWidth: 70, alignItems: 'center' }}>
                 <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{target}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11 }}>{target === 1 ? 'simple check' : 'taps to complete'}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11 }}>{target === 1 ? tt('simple check') : tt('taps to complete')}</Text>
               </View>
               <AnimatedPressable onPress={() => setTarget(t => Math.min(20, t + 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: color, borderRadius: 12, padding: 11 }}>
                 <Plus color="#fff" size={15} weight="bold" />
@@ -386,26 +389,26 @@ function AddHabitModal({ initial, onSave, onClose }: {
             </View>
           </View>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>TIMES PER WEEK</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('TIMES PER WEEK')}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {GOAL_OPTIONS.map(g => (
                 <Pressable key={g} onPress={() => setGoal(g)} style={{ flex: 1 }}>
                   <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: goal === g ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: goal === g ? 'transparent' : colors.glassBorder }}>
-                    <Text style={{ color: goal === g ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>{g === 7 ? 'Daily' : g}</Text>
+                    <Text style={{ color: goal === g ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>{g === 7 ? tt('Daily') : g}</Text>
                   </View>
                 </Pressable>
               ))}
             </View>
           </View>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>DAILY REMINDER</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('DAILY REMINDER')}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {REMINDER_OPTIONS.map(opt => {
                 const active = (reminder?.hour ?? -1) === (opt.value?.hour ?? -1);
                 return (
                   <Pressable key={opt.label} onPress={() => setReminder(opt.value)} style={{ flex: 1 }}>
                     <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
-                      <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5 }}>{opt.label}</Text>
+                      <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5 }}>{tt(opt.label)}</Text>
                     </View>
                   </Pressable>
                 );
@@ -413,7 +416,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
             </View>
           </View>
           <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: color, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initial ? 'Save Changes' : 'Add Habit'}</Text>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initial ? tt('Save Changes') : tt('Add Habit')}</Text>
           </AnimatedPressable>
         </ScrollView>
       </View>
@@ -423,6 +426,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
 
 export default function HabitsApp() {
   const { colors, font } = useTheme();
+  const { tt } = useI18n();
   const accent = '#C65F3F'; // terracotta — warm editorial palette
   const [habits, setHabits] = useState<Habit[]>([]);
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
@@ -508,7 +512,7 @@ export default function HabitsApp() {
     const updated = exists ? habits.map(x => x.id === h.id ? h : x) : [h, ...habits];
     setHabits(updated); saveHabits(updated);
     void syncReminder(h);
-    showToast(exists ? 'Habit updated' : `${h.name} added`, 'Saved');
+    showToast(exists ? tt('Habit updated') : `${h.name} ${tt('added')}`, tt('Saved'));
   };
 
   const deleteHabit = (id: string) => {
@@ -536,17 +540,17 @@ export default function HabitsApp() {
   );
 
   return (
-    <MiniAppShell title="Habits" subtitle="Streak" headerRight={AddBtn}>
+    <MiniAppShell title={tt('Habits')} subtitle={tt('Streak')} headerRight={AddBtn}>
       <MiniCommandDeck
         accent={accent}
-        title="Consistency engine"
-        subtitle="Streaks, proof, recovery."
+        title={tt('Consistency engine')}
+        subtitle={tt('Streaks, proof, recovery.')}
         metrics={[
-          { label: 'Today', value: `${doneToday}/${dueToday.length}`, detail: 'due' },
-          { label: 'Best', value: `${bestStreak}`, detail: 'streak' },
-          { label: 'Proof', value: `${proofCount}`, detail: 'logs' },
+          { label: tt('Today'), value: `${doneToday}/${dueToday.length}`, detail: tt('due') },
+          { label: tt('Best'), value: `${bestStreak}`, detail: tt('streak') },
+          { label: tt('Proof'), value: `${proofCount}`, detail: tt('logs') },
         ]}
-        chips={['Proof-backed', 'Reminder-ready', 'Compare progress']}
+        chips={[tt('Proof-backed'), tt('Reminder-ready'), tt('Compare progress')]}
       />
       {/* Progress */}
       {dueToday.length > 0 && (
@@ -554,11 +558,11 @@ export default function HabitsApp() {
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900' }}>{pct}%</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{doneToday} of {dueToday.length} due today</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{doneToday} {tt('of')} {dueToday.length} {tt('due today')}</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
               <Fire color={pct === 100 ? '#B08536' : colors.textMuted} size={36} weight={pct === 100 ? 'fill' : 'thin'} />
-              {pct === 100 && <Text style={{ color: '#B08536', fontSize: 11, fontWeight: '700' }}>Perfect!</Text>}
+              {pct === 100 && <Text style={{ color: '#B08536', fontSize: 11, fontWeight: '700' }}>{tt('Perfect!')}</Text>}
             </View>
           </View>
           <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden' }}>
@@ -570,12 +574,12 @@ export default function HabitsApp() {
       <EdgeFeaturePanel
         appName="Habits"
         accent={accent}
-        headline="Make consistency social"
-        caption="Share streaks, compare progress, and turn proof-backed habits into public updates."
+        headline={tt('Make consistency social')}
+        caption={tt('Share streaks, compare progress, and turn proof-backed habits into public updates.')}
         metrics={[
-          { label: 'Today', value: `${doneToday}/${dueToday.length}` },
-          { label: 'Best streak', value: `${bestStreak}` },
-          { label: 'Proofs', value: `${proofCount}` },
+          { label: tt('Today'), value: `${doneToday}/${dueToday.length}` },
+          { label: tt('Best streak'), value: `${bestStreak}` },
+          { label: tt('Proofs'), value: `${proofCount}` },
         ]}
         prompt="Review my habit streaks and help me choose the smallest realistic next action for today."
         shareText={`Habit progress: ${doneToday}/${dueToday.length} habits done today, best streak ${bestStreak} days, ${proofCount} proof notes/photos saved.`}
@@ -587,9 +591,9 @@ export default function HabitsApp() {
         <MiniEmptyState
           accent={accent}
           icon={<Fire color={colors.textMuted} size={48} weight="duotone" />}
-          title="No habits yet"
-          subtitle="Start with one small behavior you can repeat and prove."
-          actionLabel="Add your first habit"
+          title={tt('No habits yet')}
+          subtitle={tt('Start with one small behavior you can repeat and prove.')}
+          actionLabel={tt('Add your first habit')}
           onAction={() => setShowAdd(true)}
         />
       )}
@@ -617,9 +621,9 @@ export default function HabitsApp() {
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
                     <Fire color={streak > 0 ? '#B08536' : colors.textMuted} size={13} weight={streak > 0 ? 'fill' : 'regular'} />
-                    <Text style={{ color: streak > 0 ? '#B08536' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>{streak} day streak</Text>
+                    <Text style={{ color: streak > 0 ? '#B08536' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>{streak} {tt('day streak')}</Text>
                     {restDay ? (
-                      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600' }}>· rest day</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600' }}>· {tt('rest day')}</Text>
                     ) : habit.weeklyGoal ? (
                       <Text style={{ color: thisWeekCount(habit.completedDates) >= habit.weeklyGoal ? '#4E8B7A' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>
                         · {Math.min(thisWeekCount(habit.completedDates), habit.weeklyGoal)}/{habit.weeklyGoal} wk
@@ -657,7 +661,7 @@ export default function HabitsApp() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 9, borderRadius: 10, justifyContent: 'center', backgroundColor: habit.color + '12', borderWidth: StyleSheet.hairlineWidth, borderColor: habit.color + '33' }}>
                     <NotePencil color={habit.color} size={14} weight="fill" />
                     <Text style={{ color: habit.color, fontSize: 12.5, fontWeight: '700' }}>
-                      {todayEntry?.note || todayEntry?.photoUri ? 'View note & proof' : 'Add note or photo proof'}
+                      {todayEntry?.note || todayEntry?.photoUri ? tt('View note & proof') : tt('Add note or photo proof')}
                     </Text>
                   </View>
                 </Pressable>
@@ -673,9 +677,9 @@ export default function HabitsApp() {
           <Pressable onPress={() => setShowArchived(v => !v)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
               <Text style={[font.eyebrow, { color: colors.textMuted, flex: 1 }]}>
-                Archived · {archived.length}
+                {tt('Archived')} · {archived.length}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{showArchived ? 'Hide' : 'Show'}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{showArchived ? tt('Hide') : tt('Show')}</Text>
             </View>
           </Pressable>
           {showArchived && archived.map(habit => (
@@ -685,7 +689,7 @@ export default function HabitsApp() {
                   <Text style={{ color: habit.color, fontSize: 10.5, fontWeight: '800' }}>{habit.marker}</Text>
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: 14.5, fontWeight: '600', flex: 1 }} numberOfLines={1}>{habit.name}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{habit.completedDates.length} total</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{habit.completedDates.length} {tt('total')}</Text>
               </View>
             </Pressable>
           ))}
