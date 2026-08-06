@@ -41,6 +41,7 @@ import { FONT_STYLE_OPTIONS, fontStyleLabel } from '../lib/fontPresets';
 import { APP_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguageCode } from '../lib/languages';
 import { useI18n } from '../lib/i18n';
 import { speak } from '../lib/tts';
+import { ttx } from '../lib/i18n';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@echo.app';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@echo.app';
@@ -391,8 +392,8 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
           )}
           <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
           <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
-          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>Accent Color</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>Choose the accent color used throughout the app</Text>
+          <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>{ttx("Accent Color")}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>{ttx("Choose the accent color used throughout the app")}</Text>
           <View className="flex-row flex-wrap gap-3 justify-center">
             {ACCENT_COLORS.map(c => (
               <AnimatedPressable
@@ -465,8 +466,8 @@ function ThemePicker({ value, onChange, onClose, theme }: {
           )}
           <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
-            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>Choose Theme</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>Pick a color palette that matches your taste</Text>
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>{ttx("Choose Theme")}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>{ttx("Pick a color palette that matches your taste")}</Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
               {themeOrder.map(key => {
@@ -889,66 +890,66 @@ export default function SettingsScreen() {
         <View style={sectionGridStyle}>
         {/* NOTIFICATIONS */}
         {showGroup('essentials') && <Animated.View entering={animation(FadeInDown.delay(50).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>Essentials</Text>
+          <Text style={sectionHeaderStyle}>{ttx("Essentials")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label="Push Notifications" subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, handlePushToggle)} />
+            <SettingsRow theme={theme} icon={Bell} iconColor={colors.accent} label={ttx("Push Notifications")} subtitle={s.notificationsEnabled ? 'On' : 'Off'} right={SwitchEl(s.notificationsEnabled, handlePushToggle)} />
             {divider}
-            <SettingsRow theme={theme} icon={Vibrate} label="Haptic Feedback" subtitle="Vibration on interactions" right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
+            <SettingsRow theme={theme} icon={Vibrate} label={ttx("Haptic Feedback")} subtitle={ttx("Vibration on interactions")} right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
             {divider}
-            <SettingsRow theme={theme} icon={SpeakerHigh} label="Sound Effects" subtitle="Play sounds for actions" right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
+            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Sound Effects")} subtitle={ttx("Play sounds for actions")} right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
             {divider}
-            <SettingsRow theme={theme} icon={SpeakerHigh} label="Read-aloud speed" subtitle="How fast Echo speaks content" onPress={cycleSpeechRate} right={chevronValue(rateLabel(s.speechRate))} />
+            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Read-aloud speed")} subtitle={ttx("How fast Echo speaks content")} onPress={cycleSpeechRate} right={chevronValue(rateLabel(s.speechRate))} />
             {divider}
-            <SettingsRow theme={theme} icon={SpeakerHigh} label="Auto-read AI replies" subtitle="Speak each answer aloud when it finishes" right={SwitchEl(s.autoReadAiReplies, s.setAutoReadAiReplies)} />
+            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Auto-read AI replies")} subtitle={ttx("Speak each answer aloud when it finishes")} right={SwitchEl(s.autoReadAiReplies, s.setAutoReadAiReplies)} />
             {divider}
-            <SettingsRow theme={theme} icon={SpeakerHigh} label="Auto-read messages" subtitle="Read incoming DMs aloud while a chat is open" right={SwitchEl(s.autoReadMessages, s.setAutoReadMessages)} />
+            <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Auto-read messages")} subtitle={ttx("Read incoming DMs aloud while a chat is open")} right={SwitchEl(s.autoReadMessages, s.setAutoReadMessages)} />
             {divider}
-            <SettingsRow theme={theme} icon={Bell} label="Notification Preferences" subtitle="Customize which notifications you receive" onPress={() => router.push('/notification-prefs')} />
+            <SettingsRow theme={theme} icon={Bell} label={ttx("Notification Preferences")} subtitle={ttx("Customize which notifications you receive")} onPress={() => router.push('/notification-prefs')} />
             {divider}
-            <SettingsRow theme={theme} icon={Lock} iconColor="#B08536" label="Private Account" subtitle="Safer default while you're learning the app" right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
+            <SettingsRow theme={theme} icon={Lock} iconColor="#B08536" label={ttx("Private Account")} subtitle={ttx("Safer default while you're learning the app")} right={SwitchEl(s.privateAccount, handlePrivateAccount)} />
             {divider}
-            <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label="Sensitive Content Filter" subtitle="Filter potentially sensitive content" right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
+            <SettingsRow theme={theme} icon={ShieldCheck} iconColor={colors.success} label={ttx("Sensitive Content Filter")} subtitle={ttx("Filter potentially sensitive content")} right={SwitchEl(s.sensitiveContentFilter, handleSensitiveContentFilter)} />
           </GlassPanel>
         </Animated.View>}
 
         {/* PRIVACY & SAFETY */}
         {showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>Privacy & Safety</Text>
+          <Text style={sectionHeaderStyle}>{ttx("Privacy & Safety")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Eye} label="Activity Status" subtitle="Show when you're online" right={SwitchEl(s.activityStatus, handleActivityStatus)} />
+            <SettingsRow theme={theme} icon={Eye} label={ttx("Activity Status")} subtitle={ttx("Show when you're online")} right={SwitchEl(s.activityStatus, handleActivityStatus)} />
             {divider}
-            <SettingsRow theme={theme} icon={EyeSlash} label="Online Status" subtitle="Let others see your online indicator" right={SwitchEl(s.onlineStatus, handleOnlineStatus)} />
+            <SettingsRow theme={theme} icon={EyeSlash} label={ttx("Online Status")} subtitle={ttx("Let others see your online indicator")} right={SwitchEl(s.onlineStatus, handleOnlineStatus)} />
             {divider}
             <SettingsRow
               theme={theme}
               icon={UserCircle}
               iconColor={colors.accent}
-              label="Profile Photo"
+              label={ttx("Profile Photo")}
               subtitle={s.profilePhotoVisible ? 'Visible on profile and feed' : 'Hidden from other users'}
               right={SwitchEl(s.profilePhotoVisible, handleProfilePhotoVisibleToggle)}
             />
             {divider}
-            <SettingsRow theme={theme} icon={ChatCircle} label="Read Receipts" subtitle="Show when you've read messages" right={SwitchEl(s.readReceipts, handleReadReceipts)} />
+            <SettingsRow theme={theme} icon={ChatCircle} label={ttx("Read Receipts")} subtitle={ttx("Show when you've read messages")} right={SwitchEl(s.readReceipts, handleReadReceipts)} />
             {divider}
-            <SettingsRow theme={theme} icon={Sparkle} iconColor={colors.accent} label="Personalized Notifications" subtitle="Let Echo learn your best times and interests to time reminders. Off by default; no profiling until you turn it on." right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
+            <SettingsRow theme={theme} icon={Sparkle} iconColor={colors.accent} label={ttx("Personalized Notifications")} subtitle={ttx("Let Echo learn your best times and interests to time reminders. Off by default; no profiling until you turn it on.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
             {divider}
-            <SettingsRow theme={theme} icon={Envelope} label="Who Can Message You" subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
+            <SettingsRow theme={theme} icon={Envelope} label={ttx("Who Can Message You")} subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Users} label={`Blocked Users (${s.blockedIds.length})`} subtitle="Manage users you've blocked" onPress={() => router.push('/blocked-users')} />
+            <SettingsRow theme={theme} icon={Users} label={`Blocked Users (${s.blockedIds.length})`} subtitle={ttx("Manage users you've blocked")} onPress={() => router.push('/blocked-users')} />
             {divider}
-            <SettingsRow theme={theme} icon={Users} label={`Muted Users (${s.mutedIds.length})`} subtitle="Hide their echoes without notifying them" onPress={() => router.push('/muted-users')} />
+            <SettingsRow theme={theme} icon={Users} label={`Muted Users (${s.mutedIds.length})`} subtitle={ttx("Hide their echoes without notifying them")} onPress={() => router.push('/muted-users')} />
           </GlassPanel>
         </Animated.View>}
 
         {/* APPEARANCE & DISPLAY */}
         {showGroup('display') && <Animated.View entering={animation(FadeInDown.delay(150).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>Accessibility & Display</Text>
+          <Text style={sectionHeaderStyle}>{ttx("Accessibility & Display")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow
               theme={theme}
               icon={SunHorizon}
               iconColor={colors.accent}
-              label="Theme"
+              label={ttx("Theme")}
               subtitle={`${themeLabel} — tap to change`}
               onPress={() => setShowThemePicker(true)}
               right={
@@ -971,16 +972,16 @@ export default function SettingsScreen() {
               }
             />
             {divider}
-            <SettingsRow theme={theme} icon={Moon} iconColor="#8B5E7D" label="Dark Mode" subtitle="Always on for OLED savings" right={SwitchEl(s.darkMode, s.setDarkMode)} />
+            <SettingsRow theme={theme} icon={Moon} iconColor="#8B5E7D" label={ttx("Dark Mode")} subtitle={ttx("Always on for OLED savings")} right={SwitchEl(s.darkMode, s.setDarkMode)} />
             {divider}
-            <SettingsRow theme={theme} icon={DeviceMobile} label="Pure Black Background" subtitle="True black for AMOLED screens" right={SwitchEl(s.pureBlackBackground, s.setPureBlackBackground)} />
+            <SettingsRow theme={theme} icon={DeviceMobile} label={ttx("Pure Black Background")} subtitle={ttx("True black for AMOLED screens")} right={SwitchEl(s.pureBlackBackground, s.setPureBlackBackground)} />
             {divider}
             <SettingsRow
               theme={theme}
               icon={Palette}
               iconColor={s.accentColor}
-              label="Accent Color"
-              subtitle="Customize the app's accent color"
+              label={ttx("Accent Color")}
+              subtitle={ttx("Customize the app's accent color")}
               onPress={() => setShowAccentPicker(true)}
               right={
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -990,59 +991,59 @@ export default function SettingsScreen() {
               }
             />
             {divider}
-            <SettingsRow theme={theme} icon={TextT} label="Font Size" subtitle={fontLabel} onPress={() => setShowFontPicker(true)} right={chevronValue(fontLabel)} />
+            <SettingsRow theme={theme} icon={TextT} label={ttx("Font Size")} subtitle={fontLabel} onPress={() => setShowFontPicker(true)} right={chevronValue(fontLabel)} />
             {divider}
             <SettingsRow
               theme={theme}
               icon={TextT}
               iconColor={colors.accent}
-              label="Font Style"
-              subtitle="Choose the typography personality across Echo"
+              label={ttx("Font Style")}
+              subtitle={ttx("Choose the typography personality across Echo")}
               onPress={() => setShowFontStylePicker(true)}
               right={chevronValue(fontStyleText)}
             />
             {divider}
-            <SettingsRow theme={theme} icon={Rectangle} label="Corner Radius" subtitle={`${cornerLabel} rounded corners`} onPress={() => setShowCornerPicker(true)} right={chevronValue(cornerLabel)} />
+            <SettingsRow theme={theme} icon={Rectangle} label={ttx("Corner Radius")} subtitle={`${cornerLabel} rounded corners`} onPress={() => setShowCornerPicker(true)} right={chevronValue(cornerLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Eye} label="Show Avatars" subtitle="Display user avatar icons" right={SwitchEl(s.showAvatars, s.setShowAvatars)} />
+            <SettingsRow theme={theme} icon={Eye} label={ttx("Show Avatars")} subtitle={ttx("Display user avatar icons")} right={SwitchEl(s.showAvatars, s.setShowAvatars)} />
             {divider}
-            <SettingsRow theme={theme} icon={SquaresFour} label="Show Preview Cards" subtitle="Show response previews in feed" right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
+            <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Show Preview Cards")} subtitle={ttx("Show response previews in feed")} right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
             {divider}
-            <SettingsRow theme={theme} icon={Lightning} label="Reduce Animations" subtitle="Minimize motion effects" right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
+            <SettingsRow theme={theme} icon={Lightning} label={ttx("Reduce Animations")} subtitle={ttx("Minimize motion effects")} right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
           </GlassPanel>
         </Animated.View>}
 
         {/* CONTENT & FEED */}
         {showGroup('feed') && <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>Content & Feed</Text>
+          <Text style={sectionHeaderStyle}>{ttx("Content & Feed")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Globe} iconColor={colors.accent} label={t('settings.appLanguage')} subtitle={t('settings.appLanguageSubtitle')} onPress={() => setShowAppLanguagePicker(true)} right={chevronValue(appLanguageLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={SquaresFour} label="Feed Sort" subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
+            <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Feed Sort")} subtitle={`Show ${feedLabel.toLowerCase()} posts first`} onPress={() => setShowFeedSortPicker(true)} right={chevronValue(feedLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={SquaresFour} label="Compact Feed" subtitle="Show smaller cards in the feed" right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
+            <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Compact Feed")} subtitle={ttx("Show smaller cards in the feed")} right={SwitchEl(s.compactFeed, s.setCompactFeed)} />
             {divider}
-            <SettingsRow theme={theme} icon={Broadcast} label="Autoplay Stories" subtitle="Auto-advance through stories" right={SwitchEl(s.autoplayStories, s.setAutoplayStories)} />
+            <SettingsRow theme={theme} icon={Broadcast} label={ttx("Autoplay Stories")} subtitle={ttx("Auto-advance through stories")} right={SwitchEl(s.autoplayStories, s.setAutoplayStories)} />
             {divider}
             <SettingsRow theme={theme} icon={Translate} label={t('settings.contentLanguage')} subtitle={t('settings.contentLanguageSubtitle')} onPress={() => setShowLanguagePicker(true)} right={chevronValue(s.contentLanguage)} />
             {divider}
-            <SettingsRow theme={theme} icon={WifiSlash} label="Data Saver" subtitle="Reduce data usage on mobile" right={SwitchEl(s.dataSaver, s.setDataSaver)} />
+            <SettingsRow theme={theme} icon={WifiSlash} label={ttx("Data Saver")} subtitle={ttx("Reduce data usage on mobile")} right={SwitchEl(s.dataSaver, s.setDataSaver)} />
           </GlassPanel>
         </Animated.View>}
 
         {/* CHAT & AI */}
         {showGroup('ai') && <Animated.View entering={animation(FadeInDown.delay(250).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>Chat & AI</Text>
+          <Text style={sectionHeaderStyle}>{ttx("Chat & AI")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label="AI Model" subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
+            <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label={ttx("AI Model")} subtitle={modelLabel} onPress={() => setShowModelPicker(true)} right={chevronValue(modelLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Database} iconColor={colors.accent} label="AI Memory" subtitle="View and clear remembered preferences" onPress={() => router.push('/ai-memory')} />
+            <SettingsRow theme={theme} icon={Database} iconColor={colors.accent} label={ttx("AI Memory")} subtitle={ttx("View and clear remembered preferences")} onPress={() => router.push('/ai-memory')} />
             {divider}
             <SettingsRow
               theme={theme}
               icon={Brain}
               iconColor={colors.accent}
-              label="Personal Persona"
+              label={ttx("Personal Persona")}
               subtitle={s.personaLearningEnabled ? 'Learn your voice over the first week' : 'Persona learning is paused'}
               onPress={() => router.push('/persona' as never)}
               right={
@@ -1053,63 +1054,63 @@ export default function SettingsScreen() {
               }
             />
             {divider}
-            <SettingsRow theme={theme} icon={ChatTeardropDots} label="Chat Bubble Style" subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
+            <SettingsRow theme={theme} icon={ChatTeardropDots} label={ttx("Chat Bubble Style")} subtitle={bubbleLabel} onPress={() => setShowBubblePicker(true)} right={chevronValue(bubbleLabel)} />
             {divider}
-            <SettingsRow theme={theme} icon={Star} label="Stream Responses" subtitle="Show AI responses as they're generated" right={SwitchEl(s.streamResponses, handleStreamResponses)} />
+            <SettingsRow theme={theme} icon={Star} label={ttx("Stream Responses")} subtitle={ttx("Show AI responses as they're generated")} right={SwitchEl(s.streamResponses, handleStreamResponses)} />
             {divider}
-            <SettingsRow theme={theme} icon={Lightning} label="Typing Indicator" subtitle="Show dots while AI is thinking" right={SwitchEl(s.showTypingIndicator, s.setShowTypingIndicator)} />
+            <SettingsRow theme={theme} icon={Lightning} label={ttx("Typing Indicator")} subtitle={ttx("Show dots while AI is thinking")} right={SwitchEl(s.showTypingIndicator, s.setShowTypingIndicator)} />
             {divider}
-            <SettingsRow theme={theme} icon={FloppyDisk} label="Auto-save Chats" subtitle="Automatically save conversations" right={SwitchEl(s.autoSaveChats, handleAutoSaveChats)} />
+            <SettingsRow theme={theme} icon={FloppyDisk} label={ttx("Auto-save Chats")} subtitle={ttx("Automatically save conversations")} right={SwitchEl(s.autoSaveChats, handleAutoSaveChats)} />
           </GlassPanel>
         </Animated.View>}
 
         {/* STORAGE & DATA */}
         {showGroup('data') && <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>Advanced Data Controls</Text>
+          <Text style={sectionHeaderStyle}>{ttx("Advanced Data Controls")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Database} label="Storage Used" right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
+            <SettingsRow theme={theme} icon={Database} label={ttx("Storage Used")} right={<Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{s.getCacheSize()}</Text>} />
             {divider}
-            <SettingsRow theme={theme} icon={Eraser} label="Clear Cache" subtitle="Free up storage space" onPress={handleClearCache} />
+            <SettingsRow theme={theme} icon={Eraser} label={ttx("Clear Cache")} subtitle={ttx("Free up storage space")} onPress={handleClearCache} />
             {divider}
-            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`Clear Chat History (${s.sessions.length})`} subtitle="Delete local and server-side AI conversations" onPress={handleClearChats} />
+            <SettingsRow theme={theme} icon={ChatTeardropDots} label={`Clear Chat History (${s.sessions.length})`} subtitle={ttx("Delete local and server-side AI conversations")} onPress={handleClearChats} />
             {divider}
-            <SettingsRow theme={theme} icon={BookmarkSimple} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle="Remove all saved echoes" onPress={handleClearBookmarks} />
+            <SettingsRow theme={theme} icon={BookmarkSimple} label={`Clear Bookmarks (${s.bookmarkedIds.length})`} subtitle={ttx("Remove all saved echoes")} onPress={handleClearBookmarks} />
             {divider}
-            <SettingsRow theme={theme} icon={BellSlash} label="Clear Notifications" subtitle="Remove all notifications" onPress={handleClearNotifications} />
+            <SettingsRow theme={theme} icon={BellSlash} label={ttx("Clear Notifications")} subtitle={ttx("Remove all notifications")} onPress={handleClearNotifications} />
           </GlassPanel>
         </Animated.View>}
 
         {/* MODERATION (moderators only) */}
         {isModerator && showGroup('support') && (
           <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
-            <Text style={sectionHeaderStyle}>Moderation</Text>
+            <Text style={sectionHeaderStyle}>{ttx("Moderation")}</Text>
             <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-              <SettingsRow theme={theme} icon={Gavel} label="Appeals Queue" subtitle="Review DSA Art. 20 pending appeals" onPress={() => router.push('/mod-appeals' as any)} />
+              <SettingsRow theme={theme} icon={Gavel} label={ttx("Appeals Queue")} subtitle={ttx("Review DSA Art. 20 pending appeals")} onPress={() => router.push('/mod-appeals' as any)} />
             </GlassPanel>
           </Animated.View>
         )}
 
         {/* EU DIGITAL SERVICES ACT */}
         {showGroup('support') && <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>EU Digital Services Act</Text>
+          <Text style={sectionHeaderStyle}>{ttx("EU Digital Services Act")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Warning} label="My Reports" subtitle="Track the outcome of content reports you've filed" onPress={() => router.push('/my-reports')} />
+            <SettingsRow theme={theme} icon={Warning} label={ttx("My Reports")} subtitle={ttx("Track the outcome of content reports you've filed")} onPress={() => router.push('/my-reports')} />
             {divider}
-            <SettingsRow theme={theme} icon={Globe} label="DSA Contact" subtitle="Contact us for DSA-related matters" onPress={() => openTrustedExternalUrl(`mailto:${DSA_EMAIL}`)} />
+            <SettingsRow theme={theme} icon={Globe} label={ttx("DSA Contact")} subtitle={ttx("Contact us for DSA-related matters")} onPress={() => openTrustedExternalUrl(`mailto:${DSA_EMAIL}`)} />
             {divider}
-            <SettingsRow theme={theme} icon={ListChecks} label="EU Legal Representative" onPress={() => router.push('/legal/eu-rep')} />
+            <SettingsRow theme={theme} icon={ListChecks} label={ttx("EU Legal Representative")} onPress={() => router.push('/legal/eu-rep')} />
           </GlassPanel>
         </Animated.View>}
 
         {/* ABOUT */}
         {showGroup('support') && <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>About</Text>
+          <Text style={sectionHeaderStyle}>{ttx("About")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={Shield} label="Privacy Policy" onPress={() => router.push('/privacy')} />
+            <SettingsRow theme={theme} icon={Shield} label={ttx("Privacy Policy")} onPress={() => router.push('/privacy')} />
             {divider}
-            <SettingsRow theme={theme} icon={FileText} label="Terms of Service" onPress={() => router.push('/terms')} />
+            <SettingsRow theme={theme} icon={FileText} label={ttx("Terms of Service")} onPress={() => router.push('/terms')} />
             {divider}
-            <SettingsRow theme={theme} icon={Question} label="Help & Support" onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
+            <SettingsRow theme={theme} icon={Question} label={ttx("Help & Support")} onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
             {divider}
             <SettingsRow theme={theme} icon={Sparkle} label={t('settings.replayTour')} subtitle={t('settings.replayTourSubtitle')} onPress={() => { router.push('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
             {divider}
@@ -1117,28 +1118,28 @@ export default function SettingsScreen() {
               <SettingsRow
                 theme={theme}
                 icon={WifiSlash}
-                label="Simulate offline (dev)"
+                label={ttx("Simulate offline (dev)")}
                 subtitle={`Outbox pending: ${outboxPending}`}
                 right={SwitchEl(forceOffline, (v: boolean) => { setForcedOffline(v); setForceOfflineState(v); if (!v) void drainOutbox(); })}
               />
             )}
             {__DEV__ && divider}
-            <SettingsRow theme={theme} icon={Info} label="Version" right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.0.0</Text>} />
+            <SettingsRow theme={theme} icon={Info} label={ttx("Version")} right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>1.0.0</Text>} />
           </GlassPanel>
         </Animated.View>}
 
         {/* DANGER ZONE */}
         {showGroup('support', 'data') && <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
-          <Text style={sectionHeaderStyle}>Danger Zone</Text>
+          <Text style={sectionHeaderStyle}>{ttx("Danger Zone")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
-            <SettingsRow theme={theme} icon={SignOut} label="Sign Out" onPress={handleSignOut} destructive />
+            <SettingsRow theme={theme} icon={SignOut} label={ttx("Sign Out")} onPress={handleSignOut} destructive />
             {divider}
-            <SettingsRow theme={theme} icon={Trash} label="Delete Account" subtitle="Permanently delete all data" onPress={handleDeleteAccount} destructive />
+            <SettingsRow theme={theme} icon={Trash} label={ttx("Delete Account")} subtitle={ttx("Permanently delete all data")} onPress={handleDeleteAccount} destructive />
           </GlassPanel>
         </Animated.View>}
         </View>
 
-        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32 }}>Echo v1.0.0</Text>
+        <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32 }}>{ttx("Echo v1.0.0")}</Text>
       </ScrollView>
 
       {/* PICKERS */}
@@ -1149,7 +1150,7 @@ export default function SettingsScreen() {
       {showFontPicker && (
         <OptionPicker
           theme={theme}
-          title="Font Size"
+          title={ttx("Font Size")}
           options={[
             { label: 'Small', value: 'small' as const, desc: 'Fit more content on screen' },
             { label: 'Medium', value: 'medium' as const, desc: 'Default size (recommended)' },
@@ -1164,7 +1165,7 @@ export default function SettingsScreen() {
       {showFontStylePicker && (
         <OptionPicker
           theme={theme}
-          title="Font Style"
+          title={ttx("Font Style")}
           options={FONT_STYLE_OPTIONS}
           value={fontStyleValue}
           onChange={(v) => { s.setFontStyle(v); showToast(`Font style: ${fontStyleLabel(v)}`, 'Typography'); }}
@@ -1175,7 +1176,7 @@ export default function SettingsScreen() {
       {showModelPicker && (
         <OptionPicker
           theme={theme}
-          title="AI Model"
+          title={ttx("AI Model")}
           options={[
             { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash' as const, desc: 'Fast Google AI Studio model' },
             { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro' as const, desc: 'More capable Google AI Studio model' },
@@ -1190,7 +1191,7 @@ export default function SettingsScreen() {
       {showBubblePicker && (
         <OptionPicker
           theme={theme}
-          title="Chat Bubble Style"
+          title={ttx("Chat Bubble Style")}
           options={[
             { label: 'Modern', value: 'modern' as const, desc: 'Rounded with accent colors' },
             { label: 'Classic', value: 'classic' as const, desc: 'Traditional message style' },
@@ -1205,7 +1206,7 @@ export default function SettingsScreen() {
       {showDmPicker && (
         <OptionPicker
           theme={theme}
-          title="Who Can Message You"
+          title={ttx("Who Can Message You")}
           options={[
             { label: 'Everyone', value: 'everyone' as const, desc: 'Any user can send you a message' },
             { label: 'Followers Only', value: 'followers' as const, desc: 'Only people who follow you' },
@@ -1246,7 +1247,7 @@ export default function SettingsScreen() {
       {showFeedSortPicker && (
         <OptionPicker
           theme={theme}
-          title="Feed Sort Order"
+          title={ttx("Feed Sort Order")}
           options={[
             { label: 'Latest', value: 'latest' as const, desc: 'Most recent posts first' },
             { label: 'Popular', value: 'popular' as const, desc: 'Sort by engagement' },
@@ -1261,7 +1262,7 @@ export default function SettingsScreen() {
       {showCornerPicker && (
         <OptionPicker
           theme={theme}
-          title="Corner Radius"
+          title={ttx("Corner Radius")}
           options={[
             { label: 'Small', value: 'small' as const, desc: 'Subtle rounded corners (8px)' },
             { label: 'Medium', value: 'medium' as const, desc: 'Default rounded corners (16px)' },
