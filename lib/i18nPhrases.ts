@@ -1,4 +1,5 @@
 import type { AppLanguageCode } from './languages';
+import { HI_BULK } from './i18nPhrasesHi';
 
 /**
  * Hand-authored translations for arbitrary UI strings wrapped in `tt('...')`,
@@ -12,7 +13,9 @@ import type { AppLanguageCode } from './languages';
  * reliably with no network, no quota, no build step.
  */
 export const TT_PHRASES: Partial<Record<AppLanguageCode, Record<string, string>>> = {
+  // HI_BULK (codemod deep-screen strings) first; the curated entries below win on overlap.
   hi: {
+    ...HI_BULK,
     // Shared mini-app chrome
     'Action': 'कार्रवाई', 'Open': 'खुले', 'active': 'सक्रिय', 'Today': 'आज', 'High': 'ज़रूरी',
     'priority': 'प्राथमिकता', 'Share progress': 'प्रगति साझा करें', 'Break blockers': 'रुकावटें तोड़ें',
