@@ -187,6 +187,23 @@ describe('voice dispatch — transcript fallback (forgiving of odd phrasing)', (
   });
 });
 
+describe('voice dispatch — fuzzy tolerance for ASR slips', () => {
+  it('navigate: misspelled destinations still resolve', () => {
+    expect(dispatchVoiceIntent(res('navigate', { destination: 'setings' })).navigatedTo).toBe('/settings');
+    expect(dispatchVoiceIntent(res('navigate', { destination: 'notificaton' })).navigatedTo).toBe('/(tabs)/notifications');
+    expect(dispatchVoiceIntent(res('navigate', { destination: 'bookmars' })).navigatedTo).toBe('/bookmarks');
+  });
+  it('open_mini_app: misspelled apps still resolve', () => {
+    expect(dispatchVoiceIntent(res('open_mini_app', { app: 'pomodro' })).navigatedTo).toBe('/mini-apps/pomodoro');
+    expect(dispatchVoiceIntent(res('open_mini_app', { app: 'calculater' })).navigatedTo).toBe('/mini-apps/calculator');
+    expect(dispatchVoiceIntent(res('open_mini_app', { app: 'fitnes' })).navigatedTo).toBe('/mini-apps/fitness');
+  });
+  it('no false positives on unrelated words', () => {
+    expect(dispatchVoiceIntent(res('navigate', { destination: 'banana bread' })).handled).toBe(false);
+    expect(dispatchVoiceIntent(res('open_mini_app', { app: 'banana' })).handled).toBe(false);
+  });
+});
+
 describe('voice dispatch — set_language (Hindi)', () => {
   it.each([['हिंदी', 'hi'], ['hindi', 'hi'], ['english', 'en'], ['अंग्रेजी', 'en']])(
     '%s → %s', (lang, code) => {
