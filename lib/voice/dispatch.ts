@@ -98,13 +98,52 @@ const DESTINATIONS: Record<string, string> = {
   suchna: '/(tabs)/notifications', khata: '/(tabs)/you',
 };
 
+// ---- Fuzzy word matching: tolerate ASR slips / accents ("setings"→settings,
+// "pomodro"→pomodoro). Conservative — only Latin words ≥5 chars, edit distance
+// ≤1 (≤2 for ≥8 chars) — so short words still require an exact match, avoiding
+// false positives.
+function editDistance(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > 2) return 3;
+  const dp = Array.from({ length: m + 1 }, (_, i) => i);
+  for (let j = 1; j <= n; j++) {
+    let prev = dp[0];
+    dp[0] = j;
+    for (let i = 1; i <= m; i++) {
+      const tmp = dp[i];
+      dp[i] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[i], dp[i - 1]);
+      prev = tmp;
+    }
+  }
+  return dp[m];
+}
+
+function wordTokens(s: string): string[] {
+  return s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').split(' ').filter(Boolean);
+}
+
+// The dictionary key a transcript token fuzzily matches (single Latin words only).
+function fuzzyLatinKey(query: string, keys: string[]): string | null {
+  const toks = wordTokens(query).filter((t) => t.length >= 5 && /^[a-z]+$/.test(t));
+  for (const t of toks) {
+    for (const k of keys) {
+      if (k.length < 5 || k.includes(' ') || !/^[a-z]+$/.test(k)) continue;
+      const tol = Math.max(k.length, t.length) >= 8 ? 2 : 1;
+      if (Math.abs(t.length - k.length) <= tol && editDistance(t, k) <= tol) return k;
+    }
+  }
+  return null;
+}
+
 // Exact match first, then "contains" so phrases like "home par jao" or a Hindi
-// word inside a sentence still resolve.
+// word inside a sentence still resolve, then a fuzzy pass for ASR slips.
 function matchDestination(spoken: string): string | null {
   const q = spoken.trim().toLowerCase();
   if (!q) return null;
   if (DESTINATIONS[q]) return DESTINATIONS[q];
   for (const key of Object.keys(DESTINATIONS)) if (q.includes(key)) return DESTINATIONS[key];
+  const fk = fuzzyLatinKey(q, Object.keys(DESTINATIONS));
+  if (fk) return DESTINATIONS[fk];
   return null;
 }
 
@@ -174,6 +213,18 @@ function matchMiniApp(spoken: string): string | null {
   for (const [k, id] of Object.entries(SYN)) {
     if (q.includes(k)) { const a = MINI_APP_CATALOG.find((x) => x.id === id); if (a) return a.route as string; }
   }
+  // Fuzzy fallback over single-word Latin aliases (catalog ids/names + SYN keys)
+  // so "pomodro"/"calculater"/"fitnes" still resolve.
+  const latin: Record<string, string> = {};
+  for (const a of MINI_APP_CATALOG) {
+    if (/^[a-z]+$/.test(a.id)) latin[a.id] = a.route as string;
+    if (/^[a-z]+$/.test(a.name)) latin[a.name.toLowerCase()] = a.route as string;
+  }
+  for (const [k, id] of Object.entries(SYN)) {
+    if (/^[a-z]+$/.test(k)) { const a = MINI_APP_CATALOG.find((x) => x.id === id); if (a) latin[k] = a.route as string; }
+  }
+  const fk = fuzzyLatinKey(q, Object.keys(latin));
+  if (fk) return latin[fk];
   return null;
 }
 
