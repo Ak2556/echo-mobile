@@ -159,6 +159,34 @@ describe('voice dispatch — theme phrased as a toggle ("लाइट मोड 
   });
 });
 
+describe('voice dispatch — transcript fallback (forgiving of odd phrasing)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const full = (intent: string, args: Record<string, unknown>, transcript: string) =>
+    ({ transcript, locale: 'hi', intent, args, reply: 'ok' } as any);
+
+  it('navigate: empty arg → resolves destination from the transcript', () => {
+    expect(dispatchVoiceIntent(full('navigate', {}, 'ले चलो मुझे सेटिंग्स में')).navigatedTo).toBe('/settings');
+    expect(dispatchVoiceIntent(full('navigate', {}, 'take me to my messages please')).navigatedTo).toBe('/messages');
+  });
+  it('open_mini_app: wrong arg → resolves the app from the transcript', () => {
+    expect(dispatchVoiceIntent(full('open_mini_app', { app: 'zzz' }, 'पोमोडोरो टाइमर चालू करो')).navigatedTo).toBe('/mini-apps/pomodoro');
+  });
+  it('set_theme: theme word only in the transcript', () => {
+    vi.clearAllMocks();
+    dispatchVoiceIntent(full('set_theme', {}, 'लाइट मोड'));
+    expect(setDarkMode).toHaveBeenCalledWith(false);
+    expect(setTheme).toHaveBeenCalledWith('light');
+  });
+  it('set_feed: scope only in the transcript', () => {
+    dispatchVoiceIntent(full('set_feed', {}, 'ट्रेंडिंग वाला दिखाओ'));
+    expect(setFeedScope).toHaveBeenCalledWith('forYou');
+  });
+  it('toggle_setting: setting + on/off from the transcript', () => {
+    dispatchVoiceIntent(full('toggle_setting', {}, 'नोटिफिकेशन बंद कर दो'));
+    expect(setNotificationsEnabled).toHaveBeenCalledWith(false);
+  });
+});
+
 describe('voice dispatch — set_language (Hindi)', () => {
   it.each([['हिंदी', 'hi'], ['hindi', 'hi'], ['english', 'en'], ['अंग्रेजी', 'en']])(
     '%s → %s', (lang, code) => {
