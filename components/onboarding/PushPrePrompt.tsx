@@ -61,7 +61,7 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
                 maxWidth: 320,
               }}
             >
-              {ttx("We&apos;ll ping you when someone reacts, comments, or quotes your Echoes — not for anything else.")}
+              {ttx("We'll ping you when someone reacts, comments, or quotes your Echoes — not for anything else.")}
             </Text>
 
             {/* Wrapper View owns the accent fill; the Pressable stays bare so

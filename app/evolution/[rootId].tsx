@@ -69,7 +69,7 @@ export default function EvolutionTreeScreen() {
         </View>
       ) : isError || !root ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyTitle}>{ttx("Couldn&apos;t load this lineage")}</Text>
+          <Text style={styles.emptyTitle}>{ttx("Couldn't load this lineage")}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ paddingBottom: 160 }}>

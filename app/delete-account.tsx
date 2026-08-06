@@ -74,7 +74,7 @@ export default function DeleteAccountScreen() {
               {ttx("This is permanent")}
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
-              {ttx("We&apos;ll delete your profile, echoes, comments, reactions, bookmarks, and chat history. None of it can be recovered.")}
+              {ttx("We'll delete your profile, echoes, comments, reactions, bookmarks, and chat history. None of it can be recovered.")}
             </Text>
           </View>
         </View>

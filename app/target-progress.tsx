@@ -100,7 +100,7 @@ export default function TargetProgressScreen() {
         ) : (
           <>
             <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 16 }}>
-              <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 10 }]}>{ttx("Today&apos;s proof")}</Text>
+              <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 10 }]}>{ttx("Today's proof")}</Text>
               {digest.response.split('\n').slice(1, 6).map(line => (
                 <Text key={line} style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 20, marginBottom: 6 }]}>
                   {line}

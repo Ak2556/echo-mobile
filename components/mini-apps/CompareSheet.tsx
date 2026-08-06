@@ -84,7 +84,7 @@ export function CompareSheet({
             <View style={{ paddingVertical: 28, alignItems: 'center', gap: 6 }}>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("No one to compare yet")}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 19 }]}>
-                {ttx("Follow people who share their")} {appName.toLowerCase()} {ttx("and they&apos;ll appear here, ranked with you.")}
+                {ttx("Follow people who share their")} {appName.toLowerCase()} {ttx("and they'll appear here, ranked with you.")}
               </Text>
             </View>
           ) : (
