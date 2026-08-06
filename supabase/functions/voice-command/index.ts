@@ -74,7 +74,7 @@ Intent rules:
 - "open_ai_chat": talk to Echo AI. args.prompt = their question if any.
 - "set_feed": switch the home feed tab. args.scope ∈ [for you, trending, following, latest]. Example: "ट्रेंडिंग दिखाओ"→scope=trending, "फॉलोइंग फीड"→scope=following.
 - "set_language": switch app language. args.language = the language they named (e.g. "hindi", "english").
-- "set_theme": switch appearance. args.theme ∈ [dark, light]. Example: "डार्क मोड"→theme=dark, "लाइट मोड"→theme=light.
+- "set_theme": switch appearance/theme. args.theme ∈ [dark, light]. ALWAYS use this for light/dark mode, even when phrased as "on/off" — never toggle_setting. Examples: "डार्क मोड"→theme=dark, "लाइट मोड ऑन करो"→theme=light, "turn on light mode"→theme=light, "dark mode off"→theme=light.
 - "toggle_setting": turn a setting on/off. args.setting = the setting name (notifications, haptics, sound, read receipts, private account, compact feed, data saver, autoplay stories, auto read replies, auto read messages, etc.); args.value = "on" or "off" if stated. Examples: "नोटिफिकेशन बंद करो"→setting=notifications,value=off, "haptics on"→setting=haptics,value=on.
 - "post_action": act on the post currently on screen. args.action ∈ [like, bookmark, repost, follow, open]. Examples: "इसे लाइक करो"→action=like, "save this"→action=bookmark, "repost this"→action=repost, "इन्हें फॉलो करो"→action=follow, "open this"→action=open.
 - "scroll": args.direction ∈ [up, down]. Examples: "नीचे स्क्रॉल करो"→down, "ऊपर जाओ"→up.
