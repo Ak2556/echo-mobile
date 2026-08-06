@@ -43,7 +43,7 @@ const SETTINGS_MAP: Record<string, string> = {
 // on / enable / true / yes → true; off / disable / false / no → false; else null (toggle).
 function parseOnOff(spoken: string): boolean | null {
   const q = spoken.trim().toLowerCase();
-  if (/\b(on|enable|enabled|true|yes|start|turn on|chalu|chaalu|chaloo|shuru|haan|haa|kar do|karo)\b|चालू|ऑन|शुरू|खोलो|चाहिए|हाँ|हां|कर दो|करो|ऑन कर/.test(q)) return true;
+  if (/\b(on|enable|enabled|true|yes|start|turn on|chalu|chaalu|chaloo|shuru|haan|haa)\b|चालू|ऑन|शुरू|खोलो|चाहिए|हाँ|हां|ऑन कर/.test(q)) return true;
   if (/\b(off|disable|disabled|false|no|stop|turn off|band|bandh|nahi|nahin|mat karo|hatao)\b|बंद|ऑफ|रोको|मत|नहीं|नही|हटाओ|ऑफ कर/.test(q)) return false;
   return null;
 }
@@ -205,17 +205,22 @@ export interface DispatchOutcome {
 export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
   const { intent, args } = result;
   const reply = result.reply;
+  // Users phrase things every which way and the model doesn't always drop the
+  // right word into the right arg. So for every matchable slot we try the
+  // structured arg first, then fall back to scanning the raw transcript — this
+  // makes recognition far more forgiving of how each person actually speaks.
+  const transcript = typeof result.transcript === 'string' ? result.transcript : '';
 
   switch (intent) {
     case 'navigate': {
-      const route = matchDestination(str(args.destination));
+      const route = matchDestination(str(args.destination)) || matchDestination(transcript);
       if (!route) return { handled: false, reply };
       router.push(route as never);
       return { handled: true, reply, navigatedTo: route };
     }
 
     case 'open_mini_app': {
-      const route = matchMiniApp(str(args.app));
+      const route = matchMiniApp(str(args.app)) || matchMiniApp(transcript);
       if (!route) return { handled: false, reply };
       // An optional in-app action (start/stop a timer, add a task…) rides along as
       // route params the target mini-app reads and performs once.
@@ -229,7 +234,7 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     }
 
     case 'set_feed': {
-      const scope = matchFeedScope(str(args.scope));
+      const scope = matchFeedScope(str(args.scope)) || matchFeedScope(transcript);
       if (!scope) return { handled: false, reply };
       router.push('/(tabs)/home' as never);
       useAppStore.getState().setFeedScope(scope);
@@ -237,7 +242,7 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     }
 
     case 'set_theme': {
-      const theme = matchTheme(str(args.theme));
+      const theme = matchTheme(str(args.theme)) || matchTheme(transcript);
       if (!theme) return { handled: false, reply };
       // darkMode is the master light/dark switch and overrides the palette, so
       // flip it too — otherwise setTheme('light') resolves back to dark.
@@ -257,18 +262,18 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
       // toggle_setting because of the on/off phrasing. There's no boolean for it,
       // so treat any theme word here as a real theme change (the master darkMode
       // switch), not a no-op toggle.
-      const asTheme = matchTheme(str(args.setting));
+      const asTheme = matchTheme(str(args.setting)) || matchTheme(transcript);
       if (asTheme) {
         const store = useAppStore.getState();
         store.setDarkMode(asTheme !== 'light');
         store.setTheme(asTheme);
         return { handled: true, reply };
       }
-      const setter = matchSetting(str(args.setting));
+      const setter = matchSetting(str(args.setting)) || matchSetting(transcript);
       if (!setter) return { handled: false, reply };
       const state = useAppStore.getState() as unknown as Record<string, unknown>;
       const key = setter.charAt(3).toLowerCase() + setter.slice(4); // setFooBar → fooBar
-      const desired = parseOnOff(str(args.value));
+      const desired = parseOnOff(str(args.value)) ?? parseOnOff(transcript);
       const value = desired ?? !(state[key] as boolean);
       const fn = state[setter];
       if (typeof fn !== 'function') return { handled: false, reply };
@@ -277,7 +282,7 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     }
 
     case 'post_action': {
-      const action = str(args.action).toLowerCase();
+      const action = `${str(args.action)} ${transcript}`.toLowerCase();
       const norm: PostAction | null =
         /like|लाइक|पसंद/.test(action) ? 'like'
         : /bookmark|save|सेव|बुकमार्क/.test(action) ? 'bookmark'
@@ -291,7 +296,7 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     }
 
     case 'scroll': {
-      const dir = /up|top|back|previous|ऊपर|पीछे|वापस/.test(str(args.direction).toLowerCase()) ? 'up' : 'down';
+      const dir = /up|top|back|previous|ऊपर|पीछे|वापस/.test(`${str(args.direction)} ${transcript}`.toLowerCase()) ? 'up' : 'down';
       getVoiceActions().scroll?.(dir);
       return { handled: true, reply };
     }
@@ -326,7 +331,7 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     }
 
     case 'set_language': {
-      const code = matchLanguage(str(args.language));
+      const code = matchLanguage(str(args.language)) || matchLanguage(transcript);
       if (!code) return { handled: false, reply };
       useAppStore.getState().setAppLanguage(normalizeAppLanguage(code));
       return { handled: true, reply };
