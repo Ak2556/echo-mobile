@@ -34,13 +34,17 @@ const SETTINGS_MAP: Record<string, string> = {
   'हैप्टिक': 'setHapticEnabled', 'वाइब्रेशन': 'setHapticEnabled', 'कंपन': 'setHapticEnabled',
   'प्राइवेट': 'setPrivateAccount', 'निजी': 'setPrivateAccount', 'प्राइवेट अकाउंट': 'setPrivateAccount',
   'रीड रिसीट': 'setReadReceipts', 'डेटा सेवर': 'setDataSaver', 'कॉम्पैक्ट': 'setCompactFeed',
+  'एनिमेशन': 'setReduceAnimations', 'एनीमेशन': 'setReduceAnimations', 'ऑटोप्ले': 'setAutoplayStories',
+  'अवतार': 'setShowAvatars', 'ऑनलाइन': 'setOnlineStatus', 'ऑनलाइन स्टेटस': 'setOnlineStatus',
+  'टाइपिंग': 'setShowTypingIndicator', 'प्योर ब्लैक': 'setPureBlackBackground', 'काली स्क्रीन': 'setPureBlackBackground',
+  'ऑटो रीड': 'setAutoReadAiReplies', 'संदेश पढ़ो': 'setAutoReadMessages',
 };
 
 // on / enable / true / yes → true; off / disable / false / no → false; else null (toggle).
 function parseOnOff(spoken: string): boolean | null {
   const q = spoken.trim().toLowerCase();
-  if (/\b(on|enable|enabled|true|yes|start|turn on|chalu|chaalu|chaloo|shuru)\b|चालू|ऑन|शुरू|खोलो|चाहिए/.test(q)) return true;
-  if (/\b(off|disable|disabled|false|no|stop|turn off|band|bandh)\b|बंद|ऑफ|रोको|मत/.test(q)) return false;
+  if (/\b(on|enable|enabled|true|yes|start|turn on|chalu|chaalu|chaloo|shuru|haan|haa|kar do|karo)\b|चालू|ऑन|शुरू|खोलो|चाहिए|हाँ|हां|कर दो|करो|ऑन कर/.test(q)) return true;
+  if (/\b(off|disable|disabled|false|no|stop|turn off|band|bandh|nahi|nahin|mat karo|hatao)\b|बंद|ऑफ|रोको|मत|नहीं|नही|हटाओ|ऑफ कर/.test(q)) return false;
   return null;
 }
 
@@ -135,16 +139,33 @@ function matchMiniApp(spoken: string): string | null {
     if (q.includes(a.name.toLowerCase()) || a.name.toLowerCase().includes(q)) return a.route as string;
   }
   const SYN: Record<string, string> = {
+    // English synonyms
     timer: 'pomodoro', focus: 'pomodoro', money: 'expenses', expense: 'expenses', budget: 'expenses',
     workout: 'fitness', gym: 'fitness', exercise: 'fitness', task: 'tasks', todo: 'tasks', note: 'notes',
-    habit: 'habits', shopping: 'shopping-list', calculator: 'calculator', calc: 'calculator',
+    habit: 'habits', shopping: 'shopping-list', grocery: 'shopping-list', calculator: 'calculator', calc: 'calculator',
+    study: 'learn', course: 'learn', planner: 'planner', schedule: 'planner',
+    memo: 'voice-memo', 'voice memo': 'voice-memo', recording: 'voice-memo',
+    photo: 'camera', 'image editor': 'image-editor', 'photo editor': 'image-editor',
+    clock: 'world-clock', 'world clock': 'world-clock', timezone: 'world-clock',
+    write: 'markdown', writing: 'markdown', password: 'password-gen', passwords: 'password-gen',
     // Hindi (Devanagari)
-    'टाइमर': 'pomodoro', 'पोमोडोरो': 'pomodoro', 'टास्क': 'tasks', 'काम': 'tasks', 'नोट': 'notes',
-    'आदत': 'habits', 'पैसा': 'expenses', 'खर्च': 'expenses', 'फिटनेस': 'fitness', 'कसरत': 'fitness',
-    'शॉपिंग': 'shopping-list', 'कैलकुलेटर': 'calculator', 'हिसाब': 'calculator',
+    'टाइमर': 'pomodoro', 'पोमोडोरो': 'pomodoro', 'टास्क': 'tasks', 'काम': 'tasks', 'नोट': 'notes', 'नोट्स': 'notes',
+    'आदत': 'habits', 'आदतें': 'habits', 'पैसा': 'expenses', 'खर्च': 'expenses', 'बजट': 'expenses',
+    'फिटनेस': 'fitness', 'कसरत': 'fitness', 'व्यायाम': 'fitness',
+    'शॉपिंग': 'shopping-list', 'खरीदारी': 'shopping-list', 'सामान': 'shopping-list',
+    'कैलकुलेटर': 'calculator', 'हिसाब': 'calculator', 'गणना': 'calculator',
+    'सीखो': 'learn', 'सीखें': 'learn', 'पढ़ाई': 'learn', 'लर्न': 'learn', 'कोर्स': 'learn',
+    'प्लानर': 'planner', 'योजना': 'planner',
+    'वॉइस मेमो': 'voice-memo', 'आवाज़ नोट': 'voice-memo', 'रिकॉर्ड': 'voice-memo', 'रिकॉर्डिंग': 'voice-memo',
+    'कैमरा': 'camera', 'फोटो': 'camera', 'तस्वीर': 'camera',
+    'फोटो एडिटर': 'image-editor', 'इमेज एडिटर': 'image-editor',
+    'घड़ी': 'world-clock', 'वर्ल्ड क्लॉक': 'world-clock', 'समय क्षेत्र': 'world-clock',
+    'लिखो': 'markdown', 'लेखन': 'markdown', 'पासवर्ड': 'password-gen',
     // Romanized Hindi
     samay: 'pomodoro', kaam: 'tasks', aadat: 'habits', paisa: 'expenses', kharch: 'expenses',
-    kasrat: 'fitness', hisab: 'calculator',
+    kasrat: 'fitness', vyayam: 'fitness', hisab: 'calculator', ganna: 'calculator',
+    padhai: 'learn', seekho: 'learn', yojana: 'planner', ghadi: 'world-clock',
+    likho: 'markdown', kharidari: 'shopping-list', saman: 'shopping-list',
   };
   for (const [k, id] of Object.entries(SYN)) {
     if (q.includes(k)) { const a = MINI_APP_CATALOG.find((x) => x.id === id); if (a) return a.route as string; }
