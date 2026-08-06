@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt } from 'phosphor-react-native';
@@ -287,10 +287,40 @@ export default function ExpensesApp() {
   const { tt } = useI18n();
   const accent = '#8B6F4E'; // caramel — warm editorial palette
   const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
+  const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
+  const didVoiceRef = React.useRef(false);
   useFocusEffect(
     React.useCallback(() => {
-      loadExpensesDoc().then(setDoc);
-    }, []),
+      loadExpensesDoc().then((loaded) => {
+        // Voice: "add expense 500 food" / "खर्च जोड़ो 500 खाना" → ?vAction=add&vValue=…
+        const a = typeof vAction === 'string' ? vAction.toLowerCase() : '';
+        const text = typeof vValue === 'string' ? vValue.trim() : '';
+        const numMatch = text.match(/\d[\d,.]*/);
+        const amount = numMatch ? parseFloat(numMatch[0].replace(/,/g, '')) : 0;
+        if (!didVoiceRef.current && a === 'add' && amount > 0) {
+          didVoiceRef.current = true;
+          const lower = text.toLowerCase();
+          const isIncome = /\bincome|salary|freelance|gift\b|आय|वेतन|सैलरी|कमाई/.test(lower);
+          const cats = isIncome ? INCOME_CATS : EXPENSE_CATS;
+          const category = cats.find(c => lower.includes(c.label.toLowerCase()))?.label ?? 'Other';
+          const note = text
+            .replace(numMatch![0], '')
+            .replace(new RegExp(category, 'i'), '')
+            .replace(/\b(rupees?|rs|rupaye|dollars?)\b|रुपये|रुपए|रुपया/gi, '')
+            .trim();
+          const tx: Transaction = {
+            id: Date.now().toString(), type: isIncome ? 'income' : 'expense',
+            amount, category, note, date: new Date().toISOString(),
+          };
+          const next: ExpensesDoc = { ...loaded, txs: [tx, ...loaded.txs] };
+          setDoc(next);
+          void saveExpensesDoc(next);
+          showToast(`${isIncome ? 'Income' : 'Expense'} added`, 'Saved');
+        } else {
+          setDoc(loaded);
+        }
+      });
+    }, [vAction, vValue]),
   );
   const [showAdd, setShowAdd] = useState(false);
   const [showBudget, setShowBudget] = useState(false);

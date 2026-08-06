@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -23,10 +23,28 @@ export default function ShoppingListScreen() {
   const [quantity, setQuantity] = useState('1');
   const [category, setCategory] = useState('Produce');
   const [filter, setFilter] = useState('All');
+  const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
+  const didVoiceRef = React.useRef(false);
 
   useFocusEffect(React.useCallback(() => {
-    loadShoppingList().then(setItems).catch(() => setItems([]));
-  }, []));
+    loadShoppingList().then((loaded) => {
+      // Voice: "add milk to shopping list" navigates here with ?vAction=add&vValue=…
+      const a = typeof vAction === 'string' ? vAction.toLowerCase() : '';
+      const text = typeof vValue === 'string' ? vValue.trim() : '';
+      if (!didVoiceRef.current && a === 'add' && text) {
+        didVoiceRef.current = true;
+        const next: ShoppingItem[] = [{
+          id: `${Date.now()}`, name: text, quantity: '1', category: 'Produce',
+          checked: false, createdAt: new Date().toISOString(),
+        }, ...loaded];
+        setItems(next);
+        void saveShoppingList(next);
+        showToast('Item added', 'Shopping');
+      } else {
+        setItems(loaded);
+      }
+    }).catch(() => setItems([]));
+  }, [vAction, vValue]));
 
   const stats = shoppingStats(items);
   const categories = useMemo(() => ['All', ...SHOPPING_CATEGORIES], []);

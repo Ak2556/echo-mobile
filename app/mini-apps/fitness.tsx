@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 import { Plus, Barbell, ForkKnife, TrendUp, Trash, X, CaretDown, CaretUp, PencilSimple, MagnifyingGlass, Drop, Minus, Play, Fire, FloppyDisk, GearSix, Star, ClockCounterClockwise, Globe } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -871,8 +871,32 @@ export default function FitnessApp() {
   const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
   const [libQuery, setLibQuery] = useState('');
   const [libGroup, setLibGroup] = useState<MuscleGroup | 'All'>('All');
+  const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
+  const didVoiceRef = React.useRef(false);
 
-  useFocusEffect(useCallback(() => { loadFitness().then(setDoc); }, []));
+  useFocusEffect(useCallback(() => {
+    loadFitness().then((loaded) => {
+      // Voice: "log weight 70" / "add water" / "पानी" → ?vAction=add&vValue=…
+      const a = typeof vAction === 'string' ? vAction.toLowerCase() : '';
+      const text = typeof vValue === 'string' ? vValue.trim().toLowerCase() : '';
+      const now = new Date().toISOString();
+      if (!didVoiceRef.current && a === 'add' && text) {
+        if (/water|पानी|paani/.test(text)) {
+          didVoiceRef.current = true;
+          const next = { ...loaded, water: [{ id: Date.now().toString(), ml: 250, date: now }, ...loaded.water] };
+          setDoc(next); saveFitness(next); showToast('Water added', 'Fitness'); return;
+        }
+        const m = text.match(/\d[\d.]*/);
+        const kg = m ? parseFloat(m[0]) : 0;
+        if (kg > 0 && kg <= 400) {
+          didVoiceRef.current = true;
+          const next = { ...loaded, weights: [{ id: Date.now().toString(), kg, date: now }, ...loaded.weights] };
+          setDoc(next); saveFitness(next); showToast(`${kg.toFixed(1)} kg logged`, 'Saved'); return;
+        }
+      }
+      setDoc(loaded);
+    });
+  }, [vAction, vValue]));
 
   const update = (next: FitnessDoc) => { setDoc(next); saveFitness(next); };
 

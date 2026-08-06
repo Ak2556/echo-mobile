@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CaretLeft, CaretRight, CheckCircle, CircleDashed, Plus, Trash } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -21,10 +21,28 @@ export default function PlannerScreen() {
   const [date, setDate] = useState(plannerToday());
   const [title, setTitle] = useState('');
   const [slot, setSlot] = useState<PlannerSlot>('morning');
+  const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
+  const didVoiceRef = React.useRef(false);
 
   useFocusEffect(React.useCallback(() => {
-    loadPlanner().then(setItems).catch(() => setItems([]));
-  }, []));
+    loadPlanner().then((loaded) => {
+      // Voice: "add plan call the bank" navigates here with ?vAction=add&vValue=…
+      const a = typeof vAction === 'string' ? vAction.toLowerCase() : '';
+      const text = typeof vValue === 'string' ? vValue.trim() : '';
+      if (!didVoiceRef.current && a === 'add' && text) {
+        didVoiceRef.current = true;
+        const next: PlannerItem[] = [{
+          id: `${Date.now()}`, title: text, date: plannerToday(), slot: 'morning',
+          done: false, createdAt: new Date().toISOString(),
+        }, ...loaded];
+        setItems(next);
+        void savePlanner(next);
+        showToast('Plan added', 'Planner');
+      } else {
+        setItems(loaded);
+      }
+    }).catch(() => setItems([]));
+  }, [vAction, vValue]));
 
   const dayItems = useMemo(() => items.filter(item => item.date === date), [date, items]);
   const stats = plannerStats(items, date);
