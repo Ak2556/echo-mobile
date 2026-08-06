@@ -19,6 +19,7 @@ import { resolveMiniAppId } from '../../lib/miniAppIntegration';
 import { getRecentTools, recordToolOpen } from '../../lib/miniAppRecents';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { useI18n } from '../../lib/i18n';
+import { ttx } from '../../lib/i18n';
 
 const PAD = 20;
 const GAP = 12;
@@ -92,7 +93,7 @@ function AppCard({ app, index, width, onOpen, flagship }: { app: MiniApp; index:
               borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3,
               backgroundColor: `${app.color}26`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${app.color}66`,
             }}>
-              <Text style={{ color: app.color, fontSize: 9.5, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 }}>CORE</Text>
+              <Text style={{ color: app.color, fontSize: 9.5, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 }}>{ttx("CORE")}</Text>
             </View>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
@@ -178,7 +179,7 @@ function SmartStartCard({ primary, targetApps, targetLabel, onOpen }: {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ color: colors.textMuted, fontSize: 11.5, fontFamily: 'Inter_700Bold', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-              Smart start
+              {ttx("Smart start")}
             </Text>
             <Text style={{ color: colors.text, fontSize: 20, lineHeight: 25, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }} numberOfLines={1}>
               {primary ? `Continue ${primary.name}` : `Tools for ${targetLabel}`}
@@ -359,7 +360,7 @@ export default function AppsScreen() {
           <TextInput
             value={query}
             onChangeText={runSearch}
-            placeholder="Search tools, notes, habits…"
+            placeholder={ttx("Search tools, notes, habits…")}
             placeholderTextColor={colors.textMuted}
             style={{ flex: 1, color: colors.text, fontSize: 15, paddingVertical: 13 }}
             returnKeyType="search"
@@ -374,13 +375,13 @@ export default function AppsScreen() {
           <Animated.View entering={FadeIn.duration(160)} style={{ gap: 18 }}>
             {toolMatches.length > 0 && (
               <View style={{ gap: GAP }}>
-                <Eyebrow>Tools</Eyebrow>
+                <Eyebrow>{ttx("Tools")}</Eyebrow>
                 {renderGrid(toolMatches)}
               </View>
             )}
             {results.length > 0 && (
               <View>
-                <Eyebrow>In your content</Eyebrow>
+                <Eyebrow>{ttx("In your content")}</Eyebrow>
                 {results.map((r, i) => (
                   <Pressable key={`${r.app}-${r.id}`} onPress={() => router.push(r.route as Href)}>
                     <View style={{ paddingVertical: 11, borderBottomWidth: i < results.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.border }}>
@@ -394,8 +395,8 @@ export default function AppsScreen() {
             {toolMatches.length === 0 && results.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 40, gap: 8 }}>
                 <MagnifyingGlass color={colors.glassBorder} size={34} weight="duotone" />
-                <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>No matches</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>Try a tool name, or a note, habit, or expense term.</Text>
+                <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>{ttx("No matches")}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>{ttx("Try a tool name, or a note, habit, or expense term.")}</Text>
               </View>
             )}
           </Animated.View>
@@ -430,7 +431,7 @@ export default function AppsScreen() {
             {/* Jump back in */}
             {lane === 'all' && recentApps.length > 0 && (
               <View>
-                <Eyebrow>Jump back in</Eyebrow>
+                <Eyebrow>{ttx("Jump back in")}</Eyebrow>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
                   {recentApps.map(app => <RecentChip key={app.id} app={app} onOpen={openTool} />)}
                 </ScrollView>
@@ -446,19 +447,19 @@ export default function AppsScreen() {
             {/* Today — condensed live strip */}
             {dashboard && (
               <View>
-                <Eyebrow>Today</Eyebrow>
+                <Eyebrow>{ttx("Today")}</Eyebrow>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: GAP }} style={{ marginHorizontal: -PAD, paddingHorizontal: PAD }}>
-                  <StatChip color="#4F7DF3" value={`${dashboard.tasks.open}`} label="Open tasks" sub={`${dashboard.tasks.dueToday} due today`} onPress={() => router.push('/mini-apps/tasks' as Href)} />
-                  <StatChip color="#7C6CE8" value={`${dashboard.planner.open}`} label="Plan open" sub={`${dashboard.planner.done}/${dashboard.planner.total} done`} onPress={() => router.push('/mini-apps/planner' as Href)} />
-                  <StatChip color="#12A878" value={`${dashboard.shopping.remaining}`} label="Shopping" sub={`${dashboard.shopping.checked} checked`} onPress={() => router.push('/mini-apps/shopping-list' as Href)} />
-                  <StatChip color="#8B5E7D" value={`$${formatMoney(Math.abs(dashboard.expenses.balance))}`} label="Weekly balance" sub={`$${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
+                  <StatChip color="#4F7DF3" value={`${dashboard.tasks.open}`} label={ttx("Open tasks")} sub={`${dashboard.tasks.dueToday} due today`} onPress={() => router.push('/mini-apps/tasks' as Href)} />
+                  <StatChip color="#7C6CE8" value={`${dashboard.planner.open}`} label={ttx("Plan open")} sub={`${dashboard.planner.done}/${dashboard.planner.total} done`} onPress={() => router.push('/mini-apps/planner' as Href)} />
+                  <StatChip color="#12A878" value={`${dashboard.shopping.remaining}`} label={ttx("Shopping")} sub={`${dashboard.shopping.checked} checked`} onPress={() => router.push('/mini-apps/shopping-list' as Href)} />
+                  <StatChip color="#8B5E7D" value={`$${formatMoney(Math.abs(dashboard.expenses.balance))}`} label={ttx("Weekly balance")} sub={`$${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
                 </ScrollView>
               </View>
             )}
 
             {/* Target — demoted to a single tappable card */}
             <View>
-              <Eyebrow>Your target</Eyebrow>
+              <Eyebrow>{ttx("Your target")}</Eyebrow>
               <Pressable onPress={() => router.push('/target-progress' as Href)} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
                 <View style={{ borderRadius: 18, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
                   <LinearGradient colors={[`${colors.accent}1F`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
@@ -487,7 +488,7 @@ export default function AppsScreen() {
               <TextInput
                 value={targetOutcome}
                 onChangeText={setTargetOutcome}
-                placeholder="Name the output you want…"
+                placeholder={ttx("Name the output you want…")}
                 placeholderTextColor={colors.textMuted}
                 style={{ color: colors.text, borderRadius: 14, paddingHorizontal: 15, paddingVertical: 12, backgroundColor: colors.surfaceHover, fontSize: 14.5, marginTop: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}
               />
@@ -495,7 +496,7 @@ export default function AppsScreen() {
 
             <View style={{ alignItems: 'center', paddingVertical: 12, gap: 6 }}>
               <Pulse color={colors.textMuted} size={22} weight="bold" />
-              <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '500' }}>Private · Ready</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '500' }}>{ttx("Private · Ready")}</Text>
             </View>
           </>
         )}
@@ -506,8 +507,8 @@ export default function AppsScreen() {
         {useBlur && <AnimatedBlurView animatedProps={blurAnimatedProps} tint={tint} style={StyleSheet.absoluteFill} />}
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }, headerBgStyle]} />
         <View style={{ width: '100%', maxWidth: contentMaxWidth, alignSelf: 'center', paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
-          <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>Echo Tools</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{APPS.length} connected essentials</Text>
+          <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>{ttx("Echo Tools")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{APPS.length} {ttx("connected essentials")}</Text>
         </View>
         <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }, headerBorderStyle]} />
       </View>

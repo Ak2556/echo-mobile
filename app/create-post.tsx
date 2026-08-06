@@ -36,6 +36,7 @@ import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import { PhotoEditor } from '../components/social/PhotoEditor';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
+import { ttx } from '../lib/i18n';
 
 const MAX_PHOTOS = 6;
 
@@ -501,7 +502,7 @@ export default function CreatePostScreen() {
               <CheckCircle color="#10B981" size={38} weight="fill" />
             </View>
             <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: 0, marginBottom: 10, textAlign: 'center' }}>
-              Echo sent.
+              {ttx("Echo sent.")}
             </Text>
             <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 15, textAlign: 'center', lineHeight: 22 }} numberOfLines={2}>
               {publishedEchoPreview?.title}
@@ -515,7 +516,7 @@ export default function CreatePostScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: colors.bg, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32, maxHeight: '80%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>Pick co-author</Text>
+              <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.title }}>{ttx("Pick co-author")}</Text>
               <Pressable onPress={() => setCoAuthorPickerOpen(false)} hitSlop={8}>
                 <X color={colors.textMuted} size={20} />
               </Pressable>
@@ -602,7 +603,7 @@ export default function CreatePostScreen() {
           {/* Text post */}
           {quotedEcho && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>QUOTING</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 6 }}>{ttx("QUOTING")}</Text>
               <QuotedEchoCard echo={quotedEcho} />
             </View>
           )}
@@ -623,10 +624,10 @@ export default function CreatePostScreen() {
               >
                 <Question color={colors.accent} size={20} weight="duotone" />
                 <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19, flex: 1 }}>
-                  A musing is a thought you&apos;re still working through — no need for a tidy answer. Think out loud.
+                  {ttx("A musing is a thought you're still working through — no need for a tidy answer. Think out loud.")}
                 </Text>
               </View>
-              <Text style={s.label}>What&apos;s on your mind?</Text>
+              <Text style={s.label}>{ttx("What's on your mind?")}</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
                 <TextInput
                   multiline
@@ -650,12 +651,12 @@ export default function CreatePostScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, marginLeft: 4 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Question color={colors.accent} size={12} />
-                      <Text style={[s.label, { marginBottom: 0 }]}>Prompt (optional)</Text>
+                      <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Prompt (optional)")}</Text>
                     </View>
                     <Pressable onPress={() => { setShowPrompt(false); setPrompt(''); }} hitSlop={8}><X color={colors.textMuted} size={16} /></Pressable>
                   </View>
                   <View style={[s.surface, { padding: 14, marginBottom: 14 }]}>
-                    <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder="What question or prompt started this?" placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 44 }} />
+                    <TextInput multiline value={prompt} onChangeText={setPrompt} placeholder={ttx("What question or prompt started this?")} placeholderTextColor={colors.textMuted} maxLength={280} style={{ color: colors.text, fontSize: fontSizes.body, minHeight: 44 }} />
                   </View>
                 </>
               )}
@@ -680,7 +681,7 @@ export default function CreatePostScreen() {
                 <View style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4, gap: 6 }}>
                     <Users color={colors.accent} size={12} />
-                    <Text style={[s.label, { marginBottom: 0 }]}>Co-author</Text>
+                    <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Co-author")}</Text>
                   </View>
                   <View style={[s.surface, { padding: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
                     <Avatar name={coAuthor.display_name || coAuthor.username} color={coAuthor.avatar_color} url={coAuthor.avatar_url} size={32} />
@@ -721,7 +722,7 @@ export default function CreatePostScreen() {
                   style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= MAX_PHOTOS ? 0.4 : 1 }]}
                 >
                   <Images color={colors.accent} size={20} />
-                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>Library</Text>
+                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>{ttx("Library")}</Text>
                 </Pressable>
                 <Pressable
                   onPress={takePhoto}
@@ -729,13 +730,13 @@ export default function CreatePostScreen() {
                   style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8, opacity: imageUris.length >= MAX_PHOTOS ? 0.4 : 1 }]}
                 >
                   <Camera color={colors.text} size={20} />
-                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>Camera</Text>
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{ttx("Camera")}</Text>
                 </Pressable>
               </View>
 
               {/* Count */}
               <Text style={[s.label, { color: imageUris.length >= MAX_PHOTOS ? colors.accent : colors.textMuted }]}>
-                {imageUris.length}/{MAX_PHOTOS} selected{imageUris.length > 1 ? ' · tap ✎ to edit, arrows to reorder' : ''}
+                {imageUris.length}/{MAX_PHOTOS} {ttx("selected")}{imageUris.length > 1 ? ' · tap ✎ to edit, arrows to reorder' : ''}
               </Text>
 
               {/* Thumbnail grid */}
@@ -755,7 +756,7 @@ export default function CreatePostScreen() {
                       <Pressable
                         onPress={() => removeImage(idx)}
                         accessibilityRole="button"
-                        accessibilityLabel="Remove photo"
+                        accessibilityLabel={ttx("Remove photo")}
                         style={{ position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4 }}
                       >
                         <X color="#fff" size={14} />
@@ -763,7 +764,7 @@ export default function CreatePostScreen() {
                       <Pressable
                         onPress={() => setEditingIndex(idx)}
                         accessibilityRole="button"
-                        accessibilityLabel="Edit photo"
+                        accessibilityLabel={ttx("Edit photo")}
                         style={{ position: 'absolute', top: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4 }}
                       >
                         <PencilSimple color="#fff" size={14} weight="bold" />
@@ -774,7 +775,7 @@ export default function CreatePostScreen() {
                             onPress={() => moveImage(idx, -1)}
                             disabled={idx === 0}
                             accessibilityRole="button"
-                            accessibilityLabel="Move photo left"
+                            accessibilityLabel={ttx("Move photo left")}
                             style={{ backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4, opacity: idx === 0 ? 0.35 : 1 }}
                           >
                             <CaretLeft color="#fff" size={14} weight="bold" />
@@ -783,7 +784,7 @@ export default function CreatePostScreen() {
                             onPress={() => moveImage(idx, 1)}
                             disabled={idx === imageUris.length - 1}
                             accessibilityRole="button"
-                            accessibilityLabel="Move photo right"
+                            accessibilityLabel={ttx("Move photo right")}
                             style={{ backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 12, padding: 4, opacity: idx === imageUris.length - 1 ? 0.35 : 1 }}
                           >
                             <CaretRight color="#fff" size={14} weight="bold" />
@@ -796,7 +797,7 @@ export default function CreatePostScreen() {
               ) : (
                 <View style={[s.surface, { height: 140, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
                   <ImageIcon color={colors.border} size={40} weight="duotone" />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>No photos selected</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{ttx("No photos selected")}</Text>
                 </View>
               )}
 
@@ -813,14 +814,14 @@ export default function CreatePostScreen() {
                   style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 }]}
                 >
                   <Images color={colors.accent} size={20} />
-                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>Library</Text>
+                  <Text style={{ color: colors.accent, fontWeight: '700', fontSize: fontSizes.body }}>{ttx("Library")}</Text>
                 </Pressable>
                 <Pressable
                   onPress={recordVideo}
                   style={[s.surface, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 }]}
                 >
                   <VideoCamera color="#EF4444" size={20} />
-                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>Record</Text>
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body }}>{ttx("Record")}</Text>
                 </Pressable>
               </View>
 
@@ -838,7 +839,7 @@ export default function CreatePostScreen() {
               ) : (
                 <View style={[s.surface, { height: 160, alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 10 }]}>
                   <VideoCamera color={colors.border} size={44} weight="duotone" />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>No video selected</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>{ttx("No video selected")}</Text>
                 </View>
               )}
 
@@ -848,11 +849,11 @@ export default function CreatePostScreen() {
           {/* Poll post */}
           {pollActive && (
             <Animated.View entering={animation(FadeIn.duration(80))}>
-              <Text style={s.label}>Question</Text>
+              <Text style={s.label}>{ttx("Question")}</Text>
               <View style={[s.surface, { padding: 14, marginBottom: 16 }]}>
-                <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder="Ask your community something…" placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />
+                <TextInput value={pollQuestion} onChangeText={setPollQuestion} placeholder={ttx("Ask your community something…")} placeholderTextColor={colors.textMuted} maxLength={140} style={{ color: colors.text, fontSize: fontSizes.body }} />
               </View>
-              <Text style={s.label}>Options</Text>
+              <Text style={s.label}>{ttx("Options")}</Text>
               {pollOptions.map((opt, idx) => (
                 <View key={idx} style={[s.surface, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 2, marginBottom: 8 }]}>
                   <TextInput value={opt} onChangeText={t => updatePollOption(idx, t)} placeholder={`Option ${idx + 1}`} placeholderTextColor={colors.textMuted} maxLength={80} style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 12 }} />
@@ -866,12 +867,12 @@ export default function CreatePostScreen() {
               {pollOptions.length < 4 && (
                 <TouchableOpacity onPress={addPollOption} style={[s.surface, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 16, gap: 6, borderStyle: 'dashed' }]}>
                   <Plus color={colors.textMuted} size={16} />
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>Add option</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{ttx("Add option")}</Text>
                 </TouchableOpacity>
               )}
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
                 <Clock color={colors.textMuted} size={13} />
-                <Text style={[s.label, { marginBottom: 0 }]}>Poll Duration</Text>
+                <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Poll Duration")}</Text>
               </View>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
                 {POLL_DURATIONS.map(d => {
@@ -892,12 +893,12 @@ export default function CreatePostScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Hash color={colors.textMuted} size={13} />
-                  <Text style={[s.label, { marginBottom: 0 }]}>Tags</Text>
+                  <Text style={[s.label, { marginBottom: 0 }]}>{ttx("Tags")}</Text>
                 </View>
                 <Pressable onPress={() => { setShowTags(false); setTagsRaw(''); }} hitSlop={8}><X color={colors.textMuted} size={16} /></Pressable>
               </View>
               <View style={[s.surface, { padding: 12, marginBottom: 16 }]}>
-                <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder="ai, react, tips (comma-separated)" placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ color: colors.text, fontSize: fontSizes.body }} />
+                <TextInput value={tagsRaw} onChangeText={setTagsRaw} placeholder={ttx("ai, react, tips (comma-separated)")} placeholderTextColor={colors.textMuted} autoCapitalize="none" style={{ color: colors.text, fontSize: fontSizes.body }} />
               </View>
             </Animated.View>
           )}
