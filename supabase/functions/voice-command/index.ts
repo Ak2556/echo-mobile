@@ -16,6 +16,14 @@ const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const VOICE_MODEL = Deno.env.get("VOICE_COMMAND_MODEL") ?? Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+// Optional: call Google AI Studio (Gemini) directly. Its free tier accepts audio
+// input, so voice works without an OpenRouter balance. When set, this is preferred.
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
+const GEMINI_MODEL = Deno.env.get("GEMINI_VOICE_MODEL") ?? "gemini-2.5-flash";
+const AUDIO_MIME: Record<string, string> = {
+  wav: "audio/wav", mp3: "audio/mp3", m4a: "audio/mp4", aac: "audio/aac",
+  caf: "audio/x-caf", ogg: "audio/ogg", flac: "audio/flac", webm: "audio/webm",
+};
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -115,7 +123,7 @@ function safeParse(raw: string): VoiceResult | null {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
-  if (!OPENROUTER_API_KEY) return json({ error: "Voice is not configured" }, 503);
+  if (!GEMINI_API_KEY && !OPENROUTER_API_KEY) return json({ error: "Voice is not configured" }, 503);
 
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) return json({ error: "Missing auth" }, 401);
@@ -149,34 +157,58 @@ Deno.serve(async (req) => {
     : "Here is the voice command:";
 
   try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-        "X-Title": "Echo Voice",
-      },
-      body: JSON.stringify({
-        model: VOICE_MODEL,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: userText },
-              { type: "input_audio", input_audio: { data: audioB64, format } },
-            ],
-          },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.2,
-        stream: false,
-      }),
-    });
-    if (!res.ok) return json({ error: "Voice model unavailable", detail: await res.text() }, 502);
-    const out = await res.json();
-    const content: string = out.choices?.[0]?.message?.content ?? "";
+    let content = "";
+    if (GEMINI_API_KEY) {
+      // Google AI Studio (Gemini) direct — free tier, no OpenRouter balance needed.
+      const mime = AUDIO_MIME[format] ?? "audio/mp4";
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: [{
+              role: "user",
+              parts: [{ text: userText }, { inlineData: { mimeType: mime, data: audioB64 } }],
+            }],
+            generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
+          }),
+        },
+      );
+      if (!res.ok) return json({ error: "Voice model unavailable", detail: await res.text() }, 502);
+      const out = await res.json();
+      content = out.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
+    } else {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
+          "X-Title": "Echo Voice",
+        },
+        body: JSON.stringify({
+          model: VOICE_MODEL,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: userText },
+                { type: "input_audio", input_audio: { data: audioB64, format } },
+              ],
+            },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.2,
+          stream: false,
+        }),
+      });
+      if (!res.ok) return json({ error: "Voice model unavailable", detail: await res.text() }, 502);
+      const out = await res.json();
+      content = out.choices?.[0]?.message?.content ?? "";
+    }
     const parsed = safeParse(content);
     if (!parsed) {
       return json({ transcript: "", locale: hintLocale, intent: "unknown", args: {}, reply: "" }, 200);

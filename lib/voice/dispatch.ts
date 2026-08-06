@@ -214,7 +214,11 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     case 'set_theme': {
       const theme = matchTheme(str(args.theme));
       if (!theme) return { handled: false, reply };
-      useAppStore.getState().setTheme(theme);
+      // darkMode is the master light/dark switch and overrides the palette, so
+      // flip it too — otherwise setTheme('light') resolves back to dark.
+      const store = useAppStore.getState();
+      store.setDarkMode(theme !== 'light');
+      store.setTheme(theme);
       return { handled: true, reply };
     }
 
