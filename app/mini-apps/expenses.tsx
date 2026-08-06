@@ -14,6 +14,7 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { showToast } from '../../components/ui/Toast';
 import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '../../lib/currency';
 import {
@@ -24,6 +25,7 @@ import {
 
 function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd: (tx: Transaction) => void; onClose: () => void }) {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const [type, setType] = useState<TxType>('expense');
   const [amount, setAmount] = useState('');
@@ -34,8 +36,8 @@ function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd:
 
   const submit = () => {
     const num = parseFloat(amount.replace(/,/g, ''));
-    if (!num || num <= 0) { showToast('Enter a valid amount', 'Error'); return; }
-    if (!category) { showToast('Pick a category', 'Required'); return; }
+    if (!num || num <= 0) { showToast(tt('Enter a valid amount'), tt('Error')); return; }
+    if (!category) { showToast(tt('Pick a category'), tt('Required')); return; }
     onAdd({ id: Date.now().toString(), type, amount: num, category, note: note.trim(), date: new Date().toISOString() });
     onClose();
   };
@@ -44,7 +46,7 @@ function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd:
     <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>Add Transaction</Text>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{tt('Add Transaction')}</Text>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
         </View>
 
@@ -53,14 +55,14 @@ function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd:
           <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }}>
             {(['expense', 'income'] as TxType[]).map(t => (
               <Pressable key={t} onPress={() => { setType(t); setCategory(''); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' ? colors.danger : colors.success) : 'transparent' }}>
-                <Text style={{ color: type === t ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>{t}</Text>
+                <Text style={{ color: type === t ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>{tt(t)}</Text>
               </Pressable>
             ))}
           </GlassPanel>
 
           {/* Amount */}
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>AMOUNT</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('AMOUNT')}</Text>
             <GlassPanel variant="medium" borderRadius={14} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }} style={{ borderColor: ACCENT + '44' }}>
               <Text style={{ color: ACCENT, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
               <TextInput value={amount} onChangeText={setAmount} placeholder="0.00" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
@@ -78,13 +80,13 @@ function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd:
 
           {/* Category */}
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>CATEGORY</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('CATEGORY')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {cats.map(c => (
                 <Pressable key={c.label} onPress={() => setCategory(c.label)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: category === c.label ? ACCENT + '22' : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: category === c.label ? 1.5 : StyleSheet.hairlineWidth, borderColor: category === c.label ? ACCENT : colors.glassBorder }}>
                     <Text style={{ color: category === c.label ? ACCENT : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{c.marker}</Text>
-                    <Text style={{ color: category === c.label ? ACCENT : colors.text, fontWeight: '600', fontSize: 13 }}>{c.label}</Text>
+                    <Text style={{ color: category === c.label ? ACCENT : colors.text, fontWeight: '600', fontSize: 13 }}>{tt(c.label)}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -93,12 +95,12 @@ function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd:
 
           {/* Note */}
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>NOTE (optional)</Text>
-            <TextInput value={note} onChangeText={setNote} placeholder="What was this for?" placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('NOTE (optional)')}</Text>
+            <TextInput value={note} onChangeText={setNote} placeholder={tt('What was this for?')} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
           </View>
 
           <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: ACCENT, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: ACCENT, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Add {type === 'expense' ? 'Expense' : 'Income'}</Text>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{tt('Add')} {type === 'expense' ? tt('Expense') : tt('Income')}</Text>
           </AnimatedPressable>
         </View>
       </View>
@@ -134,6 +136,7 @@ function MoneyPulsePanel({
   money: (amount: number) => string;
 }) {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const elapsed = elapsedDaysForMonth(month);
   const totalDays = daysInMonthKey(month);
   const daysLeft = Math.max(0, totalDays - elapsed);
@@ -141,13 +144,13 @@ function MoneyPulsePanel({
   const remainingBudget = budget != null ? Math.max(0, budget - expense) : null;
   const dailyRoom = remainingBudget != null ? remainingBudget / Math.max(daysLeft || 1, 1) : null;
   const saveRate = income > 0 ? Math.round((balance / income) * 100) : 0;
-  const pressure = !budget ? 'No budget' : projectedSpend <= budget ? 'On track' : 'Over pace';
+  const pressure = !budget ? tt('No budget') : projectedSpend <= budget ? tt('On track') : tt('Over pace');
   const pressureColor = !budget ? accent : projectedSpend <= budget ? colors.success : colors.danger;
   const tiles = [
-    { label: 'Pressure', value: pressure, detail: budget ? `${Math.min(999, Math.round((projectedSpend / budget) * 100))}% pace` : 'set budget', icon: Gauge, color: pressureColor },
-    { label: 'Daily room', value: dailyRoom == null ? 'Set' : money(dailyRoom), detail: `${daysLeft} days left`, icon: CalendarCheck, color: accent },
-    { label: 'Projected', value: money(projectedSpend), detail: 'month end', icon: TrendUp, color: projectedSpend <= (budget ?? Number.POSITIVE_INFINITY) ? colors.success : colors.danger },
-    { label: 'Save rate', value: income > 0 ? `${saveRate}%` : 'None', detail: balance >= 0 ? 'positive' : 'negative', icon: balance >= 0 ? Target : TrendDown, color: balance >= 0 ? colors.success : colors.danger },
+    { label: tt('Pressure'), value: pressure, detail: budget ? `${Math.min(999, Math.round((projectedSpend / budget) * 100))}% ${tt('pace')}` : tt('set budget'), icon: Gauge, color: pressureColor },
+    { label: tt('Daily room'), value: dailyRoom == null ? tt('Set') : money(dailyRoom), detail: `${daysLeft} ${tt('days left')}`, icon: CalendarCheck, color: accent },
+    { label: tt('Projected'), value: money(projectedSpend), detail: tt('month end'), icon: TrendUp, color: projectedSpend <= (budget ?? Number.POSITIVE_INFINITY) ? colors.success : colors.danger },
+    { label: tt('Save rate'), value: income > 0 ? `${saveRate}%` : tt('None'), detail: balance >= 0 ? tt('positive') : tt('negative'), icon: balance >= 0 ? Target : TrendDown, color: balance >= 0 ? colors.success : colors.danger },
   ];
   return (
     <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${pressureColor}38` }}>
@@ -156,9 +159,9 @@ function MoneyPulsePanel({
           <Receipt color={pressureColor} size={20} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Money pulse</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{tt('Money pulse')}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>
-            Pace, room, forecast.
+            {tt('Pace, room, forecast.')}
           </Text>
         </View>
       </View>
@@ -183,6 +186,7 @@ function MoneyPulsePanel({
 
 function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | null; currency: CurrencyCode; onSave: (b: number | null) => void; onClose: () => void }) {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const [value, setValue] = useState(budget ? String(budget) : '');
   const submit = () => {
@@ -194,19 +198,19 @@ function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | n
     <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>Monthly Budget</Text>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{tt('Monthly Budget')}</Text>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
         </View>
         <View style={{ padding: 20, gap: 20 }}>
           <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 20 }}>
-            How much do you plan to spend per month? Leave empty to remove the budget.
+            {tt('How much do you plan to spend per month? Leave empty to remove the budget.')}
           </Text>
           <GlassPanel variant="medium" borderRadius={14} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
             <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
             <TextInput value={value} onChangeText={setValue} placeholder="1500" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
           </GlassPanel>
           <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Save Budget</Text>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{tt('Save Budget')}</Text>
           </AnimatedPressable>
         </View>
       </View>
@@ -216,6 +220,7 @@ function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | n
 
 function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSelect: (currency: CurrencyCode) => void; onClose: () => void }) {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
@@ -224,7 +229,7 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
     <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>Currency</Text>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{tt('Currency')}</Text>
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
         </View>
         <View style={{ padding: 20, gap: 14, flex: 1 }}>
@@ -233,7 +238,7 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search USD, INR, Euro, Yen..."
+              placeholder={tt('Search USD, INR, Euro, Yen...')}
               placeholderTextColor={colors.textMuted}
               style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingHorizontal: 10, paddingVertical: 12 }}
             />
@@ -279,6 +284,7 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
 
 export default function ExpensesApp() {
   const { colors } = useTheme();
+  const { tt } = useI18n();
   const accent = '#8B6F4E'; // caramel — warm editorial palette
   const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
   useFocusEffect(
@@ -319,24 +325,24 @@ export default function ExpensesApp() {
   const addTx = (tx: Transaction) => {
     update({ ...doc, txs: [tx, ...txs] });
     setMonth(monthKey(tx.date));
-    showToast(`${tx.type === 'expense' ? 'Expense' : 'Income'} added`, 'Saved');
+    showToast(`${tx.type === 'expense' ? tt('Expense') : tt('Income')} ${tt('added')}`, tt('Saved'));
   };
 
   const deleteTx = (id: string) => {
-    Alert.alert('Delete?', 'Remove this transaction?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => update({ ...doc, txs: txs.filter(t => t.id !== id) }) },
+    Alert.alert(tt('Delete?'), tt('Remove this transaction?'), [
+      { text: tt('Cancel'), style: 'cancel' },
+      { text: tt('Delete'), style: 'destructive', onPress: () => update({ ...doc, txs: txs.filter(t => t.id !== id) }) },
     ]);
   };
 
   const exportCsv = async () => {
-    if (txs.length === 0) { showToast('Nothing to export yet', 'Export'); return; }
+    if (txs.length === 0) { showToast(tt('Nothing to export yet'), tt('Export')); return; }
     const csv = transactionsToCsv(txs);
     try {
       const path = `${FS.cacheDirectory}echo-expenses.csv`;
       await FS.writeAsStringAsync(path, csv);
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: 'Export expenses' });
+        await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export expenses') });
         return;
       }
       throw new Error('sharing unavailable');
@@ -360,17 +366,17 @@ export default function ExpensesApp() {
   );
 
   return (
-    <MiniAppShell title="Expenses" subtitle="Control" headerRight={HeaderBtns}>
+    <MiniAppShell title={tt('Expenses')} subtitle={tt('Control')} headerRight={HeaderBtns}>
       <MiniCommandDeck
         accent={balance >= 0 ? colors.success : colors.danger}
-        title="Money decision board"
-        subtitle="Income, spend, budget."
+        title={tt('Money decision board')}
+        subtitle={tt('Income, spend, budget.')}
         metrics={[
-          { label: 'Balance', value: money(Math.abs(balance)), detail: balance >= 0 ? 'positive' : 'negative' },
-          { label: 'Spent', value: money(expense), detail: monthLabel(month) },
-          { label: 'Budget', value: doc.budget ? `${budgetPct}%` : 'Set', detail: doc.currency },
+          { label: tt('Balance'), value: money(Math.abs(balance)), detail: balance >= 0 ? tt('positive') : tt('negative') },
+          { label: tt('Spent'), value: money(expense), detail: monthLabel(month) },
+          { label: tt('Budget'), value: doc.budget ? `${budgetPct}%` : tt('Set'), detail: doc.currency },
         ]}
-        chips={['Multi-currency', 'Budget pressure', 'CSV export']}
+        chips={[tt('Multi-currency'), tt('Budget pressure'), tt('CSV export')]}
       />
       <MoneyPulsePanel
         accent={accent}
@@ -401,7 +407,7 @@ export default function ExpensesApp() {
       {/* Balance card */}
       <GlassPanel variant="medium" borderRadius={28} contentStyle={{ padding: 24 }} style={{ marginBottom: 14, shadowColor: balance >= 0 ? colors.success : colors.danger, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 4 } }} elevated>
         <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>
-          {searching ? 'Matching balance' : `Balance · ${doc.currency}`}
+          {searching ? tt('Matching balance') : `${tt('Balance')} · ${doc.currency}`}
         </Text>
         <Text style={{ color: balance >= 0 ? colors.success : colors.danger, fontSize: 40, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
           {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
@@ -410,14 +416,14 @@ export default function ExpensesApp() {
           <View style={{ flex: 1, backgroundColor: colors.success + '18', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.success + '33' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <ArrowDown color={colors.success} size={14} weight="bold" />
-              <Text style={{ color: colors.success, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>INCOME</Text>
+              <Text style={{ color: colors.success, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{tt('INCOME')}</Text>
             </View>
             <Text style={{ color: colors.success, fontSize: 20, fontWeight: '800' }}>{money(income)}</Text>
           </View>
           <View style={{ flex: 1, backgroundColor: colors.danger + '18', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.danger + '33' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <ArrowUp color={colors.danger} size={14} weight="bold" />
-              <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>EXPENSES</Text>
+              <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{tt('EXPENSES')}</Text>
             </View>
             <Text style={{ color: colors.danger, fontSize: 20, fontWeight: '800' }}>{money(expense)}</Text>
           </View>
@@ -429,7 +435,7 @@ export default function ExpensesApp() {
             <View style={{ marginTop: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 0.8 }}>
-                  {doc.budget ? `BUDGET · ${money(expense)} of ${money(doc.budget)}` : 'SET A MONTHLY BUDGET'}
+                  {doc.budget ? `${tt('BUDGET')} · ${money(expense)} ${tt('of')} ${money(doc.budget)}` : tt('SET A MONTHLY BUDGET')}
                 </Text>
                 <PencilSimple color={colors.textMuted} size={14} />
               </View>
@@ -440,7 +446,7 @@ export default function ExpensesApp() {
               ) : null}
               {overBudget ? (
                 <Text style={{ color: colors.danger, fontSize: 12, fontWeight: '700', marginTop: 6 }}>
-                  {money(expense - (doc.budget ?? 0))} over budget
+                  {money(expense - (doc.budget ?? 0))} {tt('over budget')}
                 </Text>
               ) : null}
             </View>
@@ -451,12 +457,12 @@ export default function ExpensesApp() {
       <EdgeFeaturePanel
         appName="Expenses"
         accent={accent}
-        headline="Money decisions, not just logs"
-        caption="Turn spending data into budget coaching, accountability, and weekly finance updates."
+        headline={tt('Money decisions, not just logs')}
+        caption={tt('Turn spending data into budget coaching, accountability, and weekly finance updates.')}
         metrics={[
-          { label: 'Balance', value: `${balance < 0 ? '-' : ''}${money(Math.abs(balance))}` },
-          { label: 'Spent', value: money(expense) },
-          { label: 'Budget', value: doc.budget ? `${budgetPct}%` : 'Off' },
+          { label: tt('Balance'), value: `${balance < 0 ? '-' : ''}${money(Math.abs(balance))}` },
+          { label: tt('Spent'), value: money(expense) },
+          { label: tt('Budget'), value: doc.budget ? `${budgetPct}%` : tt('Off') },
         ]}
         prompt="Review my expense pattern and tell me where to adjust this week without making the plan unrealistic."
         shareText={`Expenses progress: income ${money(income)}, expenses ${money(expense)}, balance ${balance < 0 ? '-' : ''}${money(Math.abs(balance))}${doc.budget ? `, budget used ${budgetPct}%` : ''}.`}
@@ -467,11 +473,11 @@ export default function ExpensesApp() {
       {/* Category breakdown */}
       {!searching && topCats.length > 0 && (
         <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 12 }}>Where it went</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 12 }}>{tt('Where it went')}</Text>
           {topCats.map(([cat, amt]) => (
             <View key={cat} style={{ marginBottom: 10 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '600' }}>{cat}</Text>
+                <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '600' }}>{tt(cat)}</Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 13, fontVariant: ['tabular-nums'] }}>{money(amt)}</Text>
               </View>
               <View style={{ height: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderRadius: 3, overflow: 'hidden' }}>
@@ -487,7 +493,7 @@ export default function ExpensesApp() {
         <MagnifyingGlass color={colors.textMuted} size={16} />
         <TextInput
           value={query} onChangeText={setQuery}
-          placeholder="Search category or note (all months)"
+          placeholder={tt('Search category or note (all months)')}
           placeholderTextColor={colors.textMuted}
           style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingHorizontal: 10, paddingVertical: 12 }}
         />
@@ -501,7 +507,7 @@ export default function ExpensesApp() {
         {(['all', 'income', 'expense'] as const).map(f => (
           <Pressable key={f} onPress={() => setFilter(f)} style={{ flex: 1 }}>
             <View style={{ paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: filter === f ? (f === 'income' ? colors.success : f === 'expense' ? colors.danger : accent) : 'transparent' }}>
-              <Text style={{ color: filter === f ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>{f}</Text>
+              <Text style={{ color: filter === f ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>{tt(f)}</Text>
             </View>
           </Pressable>
         ))}
@@ -512,8 +518,8 @@ export default function ExpensesApp() {
         <MiniEmptyState
           accent={accent}
           icon={<Wallet color={colors.textMuted} size={48} weight="duotone" />}
-          title={searching ? 'No matches' : `Nothing in ${monthLabel(month)}`}
-          subtitle={searching ? 'Try a different search or category.' : 'Add the first money move to see this month clearly.'}
+          title={searching ? tt('No matches') : `${tt('Nothing in')} ${monthLabel(month)}`}
+          subtitle={searching ? tt('Try a different search or category.') : tt('Add the first money move to see this month clearly.')}
         />
       )}
 
@@ -524,7 +530,7 @@ export default function ExpensesApp() {
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{categoryMarker(tx.category)}</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{tx.category}</Text>
+              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{tt(tx.category)}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
                 {tx.note ? `${tx.note} · ${formatDate(tx.date)}` : formatDate(tx.date)}
               </Text>
