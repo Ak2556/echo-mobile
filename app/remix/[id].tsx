@@ -126,7 +126,7 @@ export default function RemixScreen() {
       ) : hasError ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', textAlign: 'center' }}>
-            {ttx("Couldn&apos;t load this Echo.")}
+            {ttx("Couldn't load this Echo.")}
           </Text>
           <Pressable
             onPress={() => router.back()}
@@ -152,10 +152,10 @@ export default function RemixScreen() {
                   </View>
                   <Text style={styles.heroEyebrow}>{ttx("WATCH THIS THOUGHT EVOLVE")}</Text>
                   <Text style={styles.heroTitle} numberOfLines={2}>
-                    {ttx("Add perspective to @")}{parentAuthor}{ttx("&apos;s Echo")}
+                    {ttx("Add perspective to @")}{parentAuthor}{ttx("'s Echo")}
                   </Text>
                   <Text style={styles.heroSub}>
-                    {ttx("Choose how you&apos;re responding, then continue the thought. Your Echo becomes part of the Evolution.")}
+                    {ttx("Choose how you're responding, then continue the thought. Your Echo becomes part of the Evolution.")}
                   </Text>
                   {parentRemixCount > 0 && (
                     <View style={styles.heroChip}>

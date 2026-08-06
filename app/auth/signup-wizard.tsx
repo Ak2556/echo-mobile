@@ -454,7 +454,7 @@ export default function SignupWizard() {
                   {ttx("Welcome to Echo")}
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 32 }}>
-                  {ttx("The social network for thinking out loud. Let&apos;s set up your account.")}
+                  {ttx("The social network for thinking out loud. Let's set up your account.")}
                 </Text>
 
                 <Text style={{
