@@ -12,6 +12,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { PERSPECTIVE_LABELS, PERSPECTIVE_TYPES } from '../../lib/perspectives';
 import { track } from '../../lib/analytics';
 import type { PerspectiveType, RemixTreeNode } from '../../types';
+import { ttx } from '../../lib/i18n';
 
 /**
  * Evolution tree viewer — full lineage of a single remix root. Renders the
@@ -57,7 +58,7 @@ export default function EvolutionTreeScreen() {
         </Pressable>
         <View style={styles.headerCenter}>
           <GitBranch color={ACCENT_COLORS.magenta} size={18} weight="fill" />
-          <Text style={styles.headerTitle}>EVOLUTION</Text>
+          <Text style={styles.headerTitle}>{ttx("EVOLUTION")}</Text>
         </View>
         <View style={{ width: 32 }} />
       </View>
@@ -68,7 +69,7 @@ export default function EvolutionTreeScreen() {
         </View>
       ) : isError || !root ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyTitle}>Couldn&apos;t load this lineage</Text>
+          <Text style={styles.emptyTitle}>{ttx("Couldn&apos;t load this lineage")}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ paddingBottom: 160 }}>
@@ -96,8 +97,8 @@ export default function EvolutionTreeScreen() {
               </>
             ) : (
             <View style={styles.emptyWrap}>
-              <Text style={styles.emptyTitle}>No perspectives yet</Text>
-              <Text style={styles.emptySub}>Be the first to add another angle to this thought.</Text>
+              <Text style={styles.emptyTitle}>{ttx("No perspectives yet")}</Text>
+              <Text style={styles.emptySub}>{ttx("Be the first to add another angle to this thought.")}</Text>
               <View style={{ marginTop: 18, alignItems: 'center' }}>
                 <RemixButton
                   echoId={root.id}
@@ -135,7 +136,7 @@ function RootCard({
         >
           <View style={styles.rootEyebrowRow}>
             <View style={styles.seedBadge}>
-              <Text style={styles.seedBadgeText}>SEED</Text>
+              <Text style={styles.seedBadgeText}>{ttx("SEED")}</Text>
             </View>
             <Text style={styles.rootAuthor}>@{node.username}</Text>
           </View>
@@ -146,9 +147,9 @@ function RootCard({
             {node.response}
           </Text>
           <View style={styles.rootStatsRow}>
-            <Stat label="perspectives" value={totalRemixes} />
-            <Stat label="likes" value={node.likesCount} />
-            <Stat label="comments" value={node.commentCount} />
+            <Stat label={ttx("perspectives")} value={totalRemixes} />
+            <Stat label={ttx("likes")} value={node.likesCount} />
+            <Stat label={ttx("comments")} value={node.commentCount} />
           </View>
           <View style={{ marginTop: 14, alignSelf: 'flex-start' }}>
             <RemixButton
@@ -160,7 +161,7 @@ function RootCard({
           </View>
         </LinearGradient>
       </Pressable>
-      <Text style={styles.lineageLabel}>HOW THIS THOUGHT EVOLVED</Text>
+      <Text style={styles.lineageLabel}>{ttx("HOW THIS THOUGHT EVOLVED")}</Text>
     </View>
   );
 }

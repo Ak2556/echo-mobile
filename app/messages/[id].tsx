@@ -69,6 +69,7 @@ import { markMessagesRead, fetchGroupMembers, fetchConversationPrefs, setDMPref,
 import { usePresenceTracking } from '../../lib/presence';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
+import { ttx } from '../../lib/i18n';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -263,7 +264,7 @@ function EchoShareCard({ title, preview, author }: { title: string; preview: str
         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>{title}</Text>
       </View>
       <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }} numberOfLines={3}>{preview}</Text>
-      {author ? <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 6 }}>From {author}</Text> : null}
+      {author ? <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 6 }}>{ttx("From")} {author}</Text> : null}
     </View>
   );
 }
@@ -474,7 +475,7 @@ function PinnedMessageBanner({
     >
       <PushPin color={colors.accent} size={13} weight="fill" />
       <Text style={{ flex: 1, color: colors.textSecondary, fontSize: 12 }} numberOfLines={1}>
-        <Text style={{ fontWeight: '700', color: colors.text }}>Pinned: </Text>{label}
+        <Text style={{ fontWeight: '700', color: colors.text }}>{ttx("Pinned:")} </Text>{label}
       </Text>
       <Pressable onPress={onUnpin} hitSlop={10}>
         <X color={colors.textMuted} size={14} />
@@ -590,7 +591,7 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
           </Text>
         </View>
         {playing || speed !== 1 ? (
-          <Pressable onPress={cycleSpeed} hitSlop={6} accessibilityLabel="Playback speed" style={{ paddingHorizontal: 6, paddingVertical: 3, borderRadius: 9, backgroundColor: isMe ? 'rgba(255,255,255,0.22)' : colors.accent + '22' }}>
+          <Pressable onPress={cycleSpeed} hitSlop={6} accessibilityLabel={ttx("Playback speed")} style={{ paddingHorizontal: 6, paddingVertical: 3, borderRadius: 9, backgroundColor: isMe ? 'rgba(255,255,255,0.22)' : colors.accent + '22' }}>
             <Text style={{ color: isMe ? '#fff' : colors.accent, fontSize: 11, fontWeight: '800' }}>{speed}×</Text>
           </Pressable>
         ) : (
@@ -817,7 +818,7 @@ function DMBubble({
           borderWidth: 1, borderColor: colors.border,
         }}>
           <Text style={{ color: colors.textMuted, fontSize: textSize * 0.88, fontStyle: 'italic' }}>
-            This message was deleted
+            {ttx("This message was deleted")}
           </Text>
         </View>
       );
@@ -851,10 +852,10 @@ function DMBubble({
                 <Images color={colors.textMuted} size={23} weight="bold" />
               </View>
               <Text style={{ color: isMe ? colors.accent : colors.text, fontSize: 14, fontWeight: '900', textAlign: 'center' }}>
-                Image unavailable
+                {ttx("Image unavailable")}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 17, textAlign: 'center', marginTop: 4 }}>
-                The preview could not be loaded.
+                {ttx("The preview could not be loaded.")}
               </Text>
               {caption ? (
                 <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18, textAlign: 'center', marginTop: 8 }} numberOfLines={2}>
@@ -1067,7 +1068,7 @@ function DMBubble({
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 }}>
                 <Translate color={colors.accent} size={12} weight="bold" />
-                <Text style={{ color: colors.accent, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6 }}>TRANSLATION</Text>
+                <Text style={{ color: colors.accent, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6 }}>{ttx("TRANSLATION")}</Text>
               </View>
               <Text style={{ color: colors.textSecondary, fontSize: textSize - 1, lineHeight: (textSize - 1) * 1.35 }}>
                 {translation || 'Translating…'}
@@ -1089,7 +1090,7 @@ function DMBubble({
         <Pressable onPress={onRetry} hitSlop={8}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3, marginHorizontal: 2 }}>
             <WarningCircle color={colors.danger} size={12} weight="fill" />
-            <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700' }}>Failed to send — tap to retry</Text>
+            <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700' }}>{ttx("Failed to send — tap to retry")}</Text>
           </View>
         </Pressable>
       ) : !grouped && (
@@ -1097,7 +1098,7 @@ function DMBubble({
           {saved && <BookmarkSimple color={colors.accent} size={11} weight="fill" />}
           <Text style={{ color: colors.textMuted, fontSize: 10 }}>{formatTime(message.createdAt)}</Text>
           {message.editedAt && !isDeleted && (
-            <Text style={{ color: colors.textMuted, fontSize: 10, fontStyle: 'italic' }}>Edited</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10, fontStyle: 'italic' }}>{ttx("Edited")}</Text>
           )}
           {/* Delivery ticks: sending → delivered (grey ✓✓) → read (accent ✓✓). */}
           {isMe && !isDeleted && (
@@ -1126,7 +1127,7 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
     <View style={{ paddingHorizontal: 16, paddingVertical: 10, gap: 9 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
-        <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>NEW MESSAGES</Text>
+        <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("NEW MESSAGES")}</Text>
         <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
       </View>
       {onCatchUp && (count ?? 0) >= 3 && (
@@ -1137,7 +1138,7 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
             haptic="light"
             scaleValue={0.96}
             accessibilityRole="button"
-            accessibilityLabel="Catch me up on unread messages"
+            accessibilityLabel={ttx("Catch me up on unread messages")}
             style={{
               flexDirection: 'row', alignItems: 'center', gap: 6,
               paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
@@ -1147,7 +1148,7 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
           >
             {loading ? <ActivityIndicator size="small" color={colors.accent} /> : <Sparkle color={colors.accent} size={13} weight="fill" />}
             <Text style={{ color: colors.accent, fontSize: 12.5, fontWeight: '800' }}>
-              Catch me up on {count} message{count === 1 ? '' : 's'}
+              {ttx("Catch me up on")} {count} {ttx("message")}{count === 1 ? '' : 's'}
             </Text>
           </AnimatedPressable>
         </View>
@@ -1210,7 +1211,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
         <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
             <Sparkle color={colors.accent} size={16} weight="fill" />
-            <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>Emoji & Stickers</Text>
+            <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Emoji & Stickers")}</Text>
             <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
           </View>
 
@@ -1219,7 +1220,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
             <RNTextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search emoji"
+              placeholder={ttx("Search emoji")}
               placeholderTextColor={colors.textMuted}
               style={{ flex: 1, color: colors.text, fontSize: 15 }}
               autoCapitalize="none"
@@ -1308,11 +1309,11 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
         </View>
         <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', paddingHorizontal: 20, paddingBottom: 10 }}>
-          Forward to…
+          {ttx("Forward to…")}
         </Text>
         {targets.length === 0 ? (
           <Text style={{ color: colors.textMuted, fontSize: 14, paddingHorizontal: 20, paddingVertical: 18 }}>
-            No other conversations yet.
+            {ttx("No other conversations yet.")}
           </Text>
         ) : (
           <FlatList
@@ -1604,7 +1605,7 @@ function MessageActionSheet({
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>
-                  Message actions
+                  {ttx("Message actions")}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 2 }} numberOfLines={1}>
                   {previewLabel}
@@ -1613,7 +1614,7 @@ function MessageActionSheet({
               <Pressable
                 onPress={onClose}
                 accessibilityRole="button"
-                accessibilityLabel="Close message actions"
+                accessibilityLabel={ttx("Close message actions")}
                 hitSlop={8}
                 style={({ pressed }) => ({
                   width: 36,
@@ -1673,7 +1674,7 @@ function MessageActionSheet({
                   <Pressable
                     onPress={() => runAndClose(onSmartReply)}
                     accessibilityRole="button"
-                    accessibilityLabel="Reply with Echo"
+                    accessibilityLabel={ttx("Reply with Echo")}
                     style={({ pressed }) => ({
                       flex: 1,
                       minHeight: 54,
@@ -1690,15 +1691,15 @@ function MessageActionSheet({
                   >
                     <Sparkle color={colors.accent} size={18} weight="fill" />
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={{ color: colors.accent, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>Echo reply</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>Draft in context</Text>
+                      <Text style={{ color: colors.accent, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>{ttx("Echo reply")}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{ttx("Draft in context")}</Text>
                     </View>
                   </Pressable>
                 ) : null}
                 <Pressable
                   onPress={() => runAndClose(onTranslate)}
                   accessibilityRole="button"
-                  accessibilityLabel="Translate message"
+                  accessibilityLabel={ttx("Translate message")}
                   style={({ pressed }) => ({
                     flex: 1,
                     minHeight: 54,
@@ -1715,8 +1716,8 @@ function MessageActionSheet({
                 >
                   <Translate color={colors.accent} size={18} weight="bold" />
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>Translate</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>Inline helper</Text>
+                    <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>{ttx("Translate")}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{ttx("Inline helper")}</Text>
                   </View>
                 </Pressable>
               </View>
@@ -2618,7 +2619,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
       return (
         <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-            <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel="Back to messages">
+            <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Back to messages")}>
               <ArrowLeft color={colors.text} size={24} />
             </AnimatedPressable>
           </View>
@@ -2628,9 +2629,9 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
     }
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>Conversation not found</Text>
+        <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>{ttx("Conversation not found")}</Text>
         <Pressable onPress={() => safeBack('/messages')}>
-          <Text style={{ color: colors.accent, fontWeight: '600' }}>Go back</Text>
+          <Text style={{ color: colors.accent, fontWeight: '600' }}>{ttx("Go back")}</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -2659,7 +2660,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         paddingHorizontal: 16, paddingVertical: 12,
         borderBottomWidth: 1, borderBottomColor: colors.border,
       }}>
-        <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 10 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel="Back to messages">
+        <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 10 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Back to messages")}>
           <ArrowLeft color={colors.text} size={24} />
         </AnimatedPressable>
 
@@ -2667,7 +2668,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           onPress={() => router.push(`/chat-details/${id}`)}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
           accessibilityRole="button"
-          accessibilityLabel="Chat details"
+          accessibilityLabel={ttx("Chat details")}
         >
           <View style={{ marginRight: 10 }}>
             <Avatar
@@ -2721,7 +2722,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           {conversationSaved.length > 0 && !searchOpen ? (
             <IconButton
               icon={BookmarkSimple}
-              label="Saved messages"
+              label={ttx("Saved messages")}
               onPress={() => setShowSaved(true)}
               size="sm"
               role="active"
@@ -2734,7 +2735,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           {!searchOpen ? (
             <IconButton
               icon={PaintBrush}
-              label="Chat wallpaper"
+              label={ttx("Chat wallpaper")}
               onPress={() => setShowWallpaper(true)}
               size="sm"
               role="resting"
@@ -2774,7 +2775,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
               ref={searchInputRef}
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search this conversation"
+              placeholder={ttx("Search this conversation")}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -2811,7 +2812,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         >
           <Sparkle color={colors.accent} size={14} weight="fill" />
           <Text style={{ color: colors.textSecondary, fontSize: 13, flex: 1 }} numberOfLines={1}>
-            <Text style={{ fontWeight: '700', color: colors.text }}>Echo: </Text>
+            <Text style={{ fontWeight: '700', color: colors.text }}>{ttx("Echo:")} </Text>
             {echoTitle}
           </Text>
         </Animated.View>
@@ -2851,10 +2852,10 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
             <View style={{ alignItems: 'center', paddingVertical: 42, paddingHorizontal: 24 }}>
               <MagnifyingGlass color={colors.textMuted} size={28} />
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 }}>
-                No messages found
+                {ttx("No messages found")}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 5 }}>
-                Try a different word, link, contact, or photo search.
+                {ttx("Try a different word, link, contact, or photo search.")}
               </Text>
             </View>
           ) : conversation ? (
@@ -2950,7 +2951,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
               <ArrowFatLinesUp color="#fff" size={16} weight="fill" style={{ transform: [{ rotate: '180deg' }] }} />
               {newAwayCount > 0 && (
                 <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-                  {newAwayCount} new
+                  {newAwayCount} {ttx("new")}
                 </Text>
               )}
             </AnimatedPressable>
@@ -2996,7 +2997,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                     <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{mem.displayName}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>@{mem.username}</Text>
                   </View>
-                  {mem.role === 'admin' && <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800' }}>ADMIN</Text>}
+                  {mem.role === 'admin' && <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800' }}>{ttx("ADMIN")}</Text>}
                 </Pressable>
               ))}
             </ScrollView>
@@ -3150,7 +3151,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
               <Pressable
                 onPress={() => void finishVoiceRecording(false)}
                 accessibilityRole="button"
-                accessibilityLabel="Cancel recording"
+                accessibilityLabel={ttx("Cancel recording")}
                 style={{
                   width: 40, height: 40, borderRadius: 20,
                   alignItems: 'center', justifyContent: 'center',
@@ -3174,7 +3175,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                   {Math.floor(recordSec / 60)}:{String(recordSec % 60).padStart(2, '0')}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: 13, flex: 1 }} numberOfLines={1}>
-                  Recording voice message…
+                  {ttx("Recording voice message…")}
                 </Text>
               </View>
               <AnimatedPressable
@@ -3182,7 +3183,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                 scaleValue={0.9}
                 haptic="medium"
                 accessibilityRole="button"
-                accessibilityLabel="Send voice message"
+                accessibilityLabel={ttx("Send voice message")}
                 style={{
                   width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
                   backgroundColor: colors.accent,
@@ -3199,7 +3200,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                   onPress={() => setAttachmentMenuOpen(open => !open)}
                   disabled={imageUploading}
                   accessibilityRole="button"
-                  accessibilityLabel="Add attachment"
+                  accessibilityLabel={ttx("Add attachment")}
                   style={{
                     width: 40, height: 40, borderRadius: 20,
                     alignItems: 'center', justifyContent: 'center',
@@ -3224,7 +3225,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
               }}>
                 <RNTextInput
                   ref={inputRef}
-                  accessibilityLabel="Message input"
+                  accessibilityLabel={ttx("Message input")}
                   style={{ color: colors.text, fontSize: 16, lineHeight: 22, maxHeight: 120 }}
                   placeholder={editingMessage ? 'Edit message…' : 'Message…'}
                   placeholderTextColor={colors.textMuted}
@@ -3250,7 +3251,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                       width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
                       backgroundColor: colors.surfaceHover,
                     }}
-                    accessibilityLabel="Record voice message"
+                    accessibilityLabel={ttx("Record voice message")}
                   >
                     <Microphone color={colors.textSecondary} size={19} weight="fill" />
                   </AnimatedPressable>
@@ -3300,7 +3301,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
               <Pressable
                 onPress={() => setImagePreviewUrl(null)}
                 accessibilityRole="button"
-                accessibilityLabel="Close image preview"
+                accessibilityLabel={ttx("Close image preview")}
                 style={({ pressed }) => ({
                   width: 42,
                   height: 42,
@@ -3360,14 +3361,14 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30 }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18, paddingHorizontal: 18, paddingTop: 14, paddingBottom: insets.bottom + 14, backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
-            <Pressable onPress={exitSelection} hitSlop={8} accessibilityLabel="Cancel selection"><X color={colors.text} size={22} /></Pressable>
+            <Pressable onPress={exitSelection} hitSlop={8} accessibilityLabel={ttx("Cancel selection")}><X color={colors.text} size={22} /></Pressable>
             <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', flex: 1 }}>
-              {selectedIds.length} selected
+              {selectedIds.length} {ttx("selected")}
             </Text>
-            <Pressable onPress={bulkCopy} disabled={!selectedIds.length} hitSlop={8} accessibilityLabel="Copy selected">
+            <Pressable onPress={bulkCopy} disabled={!selectedIds.length} hitSlop={8} accessibilityLabel={ttx("Copy selected")}>
               <Copy color={selectedIds.length ? colors.accent : colors.textMuted} size={22} />
             </Pressable>
-            <Pressable onPress={bulkDelete} disabled={!selectedIds.length} hitSlop={8} accessibilityLabel="Delete selected">
+            <Pressable onPress={bulkDelete} disabled={!selectedIds.length} hitSlop={8} accessibilityLabel={ttx("Delete selected")}>
               <Trash color={selectedIds.length ? colors.danger : colors.textMuted} size={22} />
             </Pressable>
           </View>
@@ -3389,7 +3390,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 14, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 14 }}>
               <PaintBrush color={colors.accent} size={16} weight="bold" />
-              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>Chat wallpaper</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Chat wallpaper")}</Text>
               <Pressable onPress={() => setShowWallpaper(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 }}>
@@ -3432,7 +3433,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, maxHeight: '70%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
               <BookmarkSimple color={colors.accent} size={16} weight="fill" />
-              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>Saved messages</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Saved messages")}</Text>
               <Pressable onPress={() => setShowSaved(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             <FlatList
@@ -3473,14 +3474,14 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           <View style={{ borderRadius: 22, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.accent}44`, padding: 20 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <Sparkle color={colors.accent} size={18} weight="fill" />
-              <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold' }}>Caught up</Text>
+              <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Caught up")}</Text>
               <View style={{ flex: 1 }} />
               <Pressable onPress={() => setCatchup(null)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             {catchupLoading && !catchup ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
                 <ActivityIndicator size="small" color={colors.accent} />
-                <Text style={{ color: colors.textMuted, fontSize: 14 }}>Reading your unread messages…</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 14 }}>{ttx("Reading your unread messages…")}</Text>
               </View>
             ) : (
               <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 23 }}>{catchup}</Text>

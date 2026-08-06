@@ -7,6 +7,7 @@ import { useTutorialStore } from '../../store/tutorialStore';
 import { useAppStore } from '../../store/useAppStore';
 import { TOURS } from '../../lib/tutorialSteps';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 const DIM = 'rgba(0,0,0,0.72)';
 
@@ -129,8 +130,8 @@ export function TutorialOverlay() {
           </Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
-            <Pressable onPress={complete} hitSlop={8} accessibilityRole="button" accessibilityLabel="Skip tour">
-              <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>Skip</Text>
+            <Pressable onPress={complete} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Skip tour")}>
+              <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>{ttx("Skip")}</Text>
             </Pressable>
 
             <View style={{ flexDirection: 'row', gap: 6 }}>

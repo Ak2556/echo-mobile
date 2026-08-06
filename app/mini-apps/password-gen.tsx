@@ -7,6 +7,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 const CHARS = {
   upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -104,9 +105,9 @@ function SecurityCoach({ strength, crackTime, hasSymbols, noAmbiguous, colors, a
           <ShieldCheck color={strength ? colors[strength.tone] : accent} size={20} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Security cockpit</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Security cockpit")}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>
-            Generate. Copy. Rotate.
+            {ttx("Generate. Copy. Rotate.")}
           </Text>
         </View>
       </View>
@@ -192,11 +193,11 @@ export default function PasswordGenScreen() {
   const crackTime = crackTimeLabel(password);
 
   return (
-    <MiniAppShell title="Passwords" subtitle="Secure">
+    <MiniAppShell title={ttx("Passwords")} subtitle={ttx("Secure")}>
       <MiniCommandDeck
         accent={sw?.color ?? accent}
-        title="Security without app switching"
-        subtitle="Generate, audit, copy."
+        title={ttx("Security without app switching")}
+        subtitle={ttx("Generate, audit, copy.")}
         metrics={[
           { label: 'Length', value: `${length}`, detail: 'chars' },
           { label: 'Strength', value: sw?.label ?? 'None', detail: 'current' },
@@ -252,7 +253,7 @@ export default function PasswordGenScreen() {
         ) : (
           <View style={{ alignItems: 'center', paddingVertical: 16 }}>
             <LockKey color={colors.textMuted} size={32} weight="duotone" />
-            <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8 }}>Tap Generate to create a secret</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8 }}>{ttx("Tap Generate to create a secret")}</Text>
           </View>
         )}
       </GlassPanel>
@@ -264,7 +265,7 @@ export default function PasswordGenScreen() {
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 18, backgroundColor: accent, shadowColor: accent, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 4 } }}
         >
           <ArrowClockwise color="#fff" size={20} weight="bold" />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Generate</Text>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Generate")}</Text>
         </Pressable>
         {password && (
           <Pressable
@@ -286,7 +287,7 @@ export default function PasswordGenScreen() {
       {/* Length */}
       <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>LENGTH</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("LENGTH")}</Text>
           <Text style={{ color: accent, fontSize: 16, fontWeight: '800' }}>
             {mode === 'passphrase' ? `${length >= 24 ? 5 : 4} words` : `${mode === 'pin' ? Math.min(length, 12) : length} chars`}
           </Text>
@@ -311,20 +312,20 @@ export default function PasswordGenScreen() {
 
       {/* Options */}
       <GlassPanel variant="medium" borderRadius={24} contentStyle={{ paddingHorizontal: 20, paddingTop: 16 }} style={{ marginBottom: 14 }}>
-        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>CHARACTER TYPES</Text>
-        <Toggle label="Uppercase" sub="A B C … Z" value={useUpper} onChange={setUseUpper} colors={colors} />
-        <Toggle label="Lowercase" sub="a b c … z" value={useLower} onChange={setUseLower} colors={colors} />
-        <Toggle label="Numbers" sub="0 1 2 … 9" value={useDigits} onChange={setUseDigits} colors={colors} />
-        <Toggle label="Symbols" sub="! @ # $ % …" value={useSymbols} onChange={setUseSymbols} colors={colors} />
-        <Toggle label="Avoid confusing chars" sub="Removes O, 0, I, l, 1, |" value={avoidAmbiguous} onChange={setAvoidAmbiguous} colors={colors} />
+        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>{ttx("CHARACTER TYPES")}</Text>
+        <Toggle label={ttx("Uppercase")} sub="A B C … Z" value={useUpper} onChange={setUseUpper} colors={colors} />
+        <Toggle label={ttx("Lowercase")} sub="a b c … z" value={useLower} onChange={setUseLower} colors={colors} />
+        <Toggle label={ttx("Numbers")} sub="0 1 2 … 9" value={useDigits} onChange={setUseDigits} colors={colors} />
+        <Toggle label={ttx("Symbols")} sub="! @ # $ % …" value={useSymbols} onChange={setUseSymbols} colors={colors} />
+        <Toggle label={ttx("Avoid confusing chars")} sub="Removes O, 0, I, l, 1, |" value={avoidAmbiguous} onChange={setAvoidAmbiguous} colors={colors} />
         <View style={{ height: 4 }} />
       </GlassPanel>
 
       <EdgeFeaturePanel
         appName="Passwords"
         accent={sw?.color ?? accent}
-        headline="Generate, audit, then replace"
-        caption="Use strength checks to plan account upgrades without sharing the secret itself."
+        headline={ttx("Generate, audit, then replace")}
+        caption={ttx("Use strength checks to plan account upgrades without sharing the secret itself.")}
         metrics={[
           { label: 'Length', value: `${length}` },
           { label: 'Strength', value: sw?.label ?? 'None' },
@@ -340,7 +341,7 @@ export default function PasswordGenScreen() {
       {history.length > 0 && (
         <GlassPanel variant="light" borderRadius={24} contentStyle={{ overflow: 'hidden' }}>
           <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>RECENT</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("RECENT")}</Text>
           </View>
           {history.map((h, i) => (
             <Pressable

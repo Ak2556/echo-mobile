@@ -17,6 +17,7 @@ import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteProfile, updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
 import { supabase } from '../lib/supabase';
 import { useResponsiveLayout } from '../lib/responsive';
+import { ttx } from '../lib/i18n';
 
 const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
@@ -152,7 +153,7 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader
-        title="Edit Profile"
+        title={ttx("Edit Profile")}
         right={
           <AnimatedPressable
             onPress={() => { void handleSave(); }}
@@ -171,7 +172,7 @@ export default function EditProfileScreen() {
             ) : (
               <Check color="#fff" size={16} />
             )}
-            <Text style={{ color: '#fff', fontWeight: '600', fontSize: fontSizes.small }}>Save</Text>
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: fontSizes.small }}>{ttx("Save")}</Text>
           </AnimatedPressable>
         }
       />
@@ -255,7 +256,7 @@ export default function EditProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(130).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 12 }}>
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>Profile color</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("Profile color")}</Text>
           <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
             {AVATAR_COLORS.map(color => (
               <AnimatedPressable
@@ -279,7 +280,7 @@ export default function EditProfileScreen() {
         <Animated.View entering={animation(FadeInDown.delay(180).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <UserCircle color={colors.accent} size={20} weight="bold" />
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Identity</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("Identity")}</Text>
           </View>
 
           <View>
@@ -292,12 +293,12 @@ export default function EditProfileScreen() {
               marginLeft: 4,
             }}
           >
-            Display Name
+            {ttx("Display Name")}
           </Text>
           <TextInput
             value={newDisplayName}
             onChangeText={setNewDisplayName}
-            placeholder="Your display name"
+            placeholder={ttx("Your display name")}
             maxLength={30}
           />
           </View>
@@ -312,12 +313,12 @@ export default function EditProfileScreen() {
               marginLeft: 4,
             }}
           >
-            Username
+            {ttx("Username")}
           </Text>
           <TextInput
             value={newUsername}
             onChangeText={setNewUsername}
-            placeholder="username"
+            placeholder={ttx("username")}
             autoCapitalize="none"
             maxLength={20}
           />
@@ -345,12 +346,12 @@ export default function EditProfileScreen() {
               marginLeft: 4,
             }}
           >
-            Pronouns
+            {ttx("Pronouns")}
           </Text>
           <TextInput
             value={newPronouns}
             onChangeText={setNewPronouns}
-            placeholder="e.g. they/them"
+            placeholder={ttx("e.g. they/them")}
             maxLength={32}
             autoCapitalize="none"
           />
@@ -383,7 +384,7 @@ export default function EditProfileScreen() {
         <Animated.View entering={animation(FadeInDown.delay(240).duration(220))} style={{ borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, padding: 14, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <TextAlignLeft color={colors.accent} size={20} weight="bold" />
-            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Story</Text>
+            <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("Story")}</Text>
           </View>
 
           <View>
@@ -396,12 +397,12 @@ export default function EditProfileScreen() {
               marginLeft: 4,
             }}
           >
-            Bio
+            {ttx("Bio")}
           </Text>
           <TextInput
             value={newBio}
             onChangeText={setNewBio}
-            placeholder="Tell people about yourself..."
+            placeholder={ttx("Tell people about yourself...")}
             maxLength={BIO_MAX}
             multiline
           />
@@ -438,7 +439,7 @@ export default function EditProfileScreen() {
               marginLeft: 4,
             }}
           >
-            Mood · 24h status
+            {ttx("Mood · 24h status")}
           </Text>
           <Text
             style={{
@@ -453,7 +454,7 @@ export default function EditProfileScreen() {
           <TextInput
             value={newMood}
             onChangeText={(v) => setNewMood(v.slice(0, MOOD_MAX))}
-            placeholder="deep-reading mode"
+            placeholder={ttx("deep-reading mode")}
             maxLength={MOOD_MAX}
           />
           <Text

@@ -12,6 +12,7 @@ import { showToast } from '../components/ui/Toast';
 import {
   VerificationQueueItem, decideVerification, listVerificationQueue,
 } from '../lib/verificationApi';
+import { ttx } from '../lib/i18n';
 
 function VerificationCard({ item, onDecide }: {
   item: VerificationQueueItem;
@@ -55,28 +56,28 @@ function VerificationCard({ item, onDecide }: {
             <Image source={{ uri: item.profiles.avatar_url }} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 14, backgroundColor: colors.surfaceHover }} resizeMode="cover" />
           ) : (
             <View style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>No photo</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("No photo")}</Text>
             </View>
           )}
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 11 }]}>Profile photo</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 11 }]}>{ttx("Profile photo")}</Text>
         </View>
         <View style={{ flex: 1, alignItems: 'center', gap: 6 }}>
           {item.selfie_url ? (
             <Image source={{ uri: item.selfie_url }} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 14, backgroundColor: colors.surfaceHover }} resizeMode="cover" />
           ) : (
             <View style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Selfie missing</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Selfie missing")}</Text>
             </View>
           )}
-          <Text style={[font.body, { color: colors.textMuted, fontSize: 11 }]}>Selfie · {item.pose.toLowerCase()}</Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 11 }]}>{ttx("Selfie ·")} {item.pose.toLowerCase()}</Text>
         </View>
       </View>
 
       {v ? (
         <View style={{ padding: 10, backgroundColor: colors.surfaceHover, borderRadius: 8 }}>
           <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.caption, lineHeight: 18 }]}>
-            AI: {v.same_person ? 'same person' : 'match unclear'} · {v.live_selfie ? 'live selfie' : 'liveness unclear'} ·
-            {' '}confidence {Math.round((v.confidence ?? 0) * 100)}%{v.reason ? ` — ${v.reason}` : ''}
+            {ttx("AI:")} {v.same_person ? 'same person' : 'match unclear'} · {v.live_selfie ? 'live selfie' : 'liveness unclear'} ·
+            {' '}{ttx("confidence")} {Math.round((v.confidence ?? 0) * 100)}%{v.reason ? ` — ${v.reason}` : ''}
           </Text>
         </View>
       ) : null}
@@ -87,14 +88,14 @@ function VerificationCard({ item, onDecide }: {
           style={{ flex: 1, borderRadius: 12, borderWidth: 1, borderColor: '#EF444455', paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
         >
           <XCircle color="#EF4444" size={16} weight="fill" />
-          <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 14 }}>Reject</Text>
+          <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 14 }}>{ttx("Reject")}</Text>
         </AnimatedPressable>
         <AnimatedPressable
           onPress={() => confirm(true)} disabled={busy} scaleValue={0.96} haptic="medium"
           style={{ flex: 1, borderRadius: 12, backgroundColor: '#10B981', paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, opacity: busy ? 0.5 : 1 }}
         >
           <CheckCircle color="#fff" size={16} weight="fill" />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Approve</Text>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{ttx("Approve")}</Text>
         </AnimatedPressable>
       </View>
     </GlassPanel>
@@ -130,7 +131,7 @@ export default function ModVerificationsScreen() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Verification queue"
+        title={ttx("Verification queue")}
         right={<SealCheck color={colors.accent} size={20} weight="fill" style={{ marginRight: 8 }} />}
       />
 
@@ -146,7 +147,7 @@ export default function ModVerificationsScreen() {
           {items.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: 60, gap: 10 }}>
               <SealCheck color={colors.glassBorder} size={44} weight="duotone" />
-              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.body }]}>No pending verifications</Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.body }]}>{ttx("No pending verifications")}</Text>
             </View>
           ) : items.map((item, i) => (
             <Animated.View key={item.id} entering={FadeInDown.delay(Math.min(i, 6) * 40).duration(220)}>

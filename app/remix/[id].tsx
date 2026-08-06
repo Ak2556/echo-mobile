@@ -13,6 +13,7 @@ import { GRADIENTS, ACCENT_COLORS, DISPLAY_TYPE, accentShadow, feedbackHaptic } 
 import { track } from '../../lib/analytics';
 import { PERSPECTIVE_DESCRIPTIONS, PERSPECTIVE_LABELS, PERSPECTIVE_TYPES, isValidSourceUrl } from '../../lib/perspectives';
 import type { ChatMessage, PerspectiveType } from '../../types';
+import { ttx } from '../../lib/i18n';
 
 /**
  * Add Perspective entry screen.
@@ -112,7 +113,7 @@ export default function RemixScreen() {
         </Pressable>
         <View style={styles.headerCenter}>
           <GitBranch color={ACCENT_COLORS.cyan} size={18} weight="fill" />
-          <Text style={styles.headerTitle}>ADD PERSPECTIVE</Text>
+          <Text style={styles.headerTitle}>{ttx("ADD PERSPECTIVE")}</Text>
         </View>
         <View style={{ width: 32 }} />
       </View>
@@ -120,18 +121,18 @@ export default function RemixScreen() {
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={ACCENT_COLORS.cyan} size="large" />
-          <Text style={{ color: '#A1A1AA', marginTop: 16, fontSize: 14 }}>Loading conversation…</Text>
+          <Text style={{ color: '#A1A1AA', marginTop: 16, fontSize: 14 }}>{ttx("Loading conversation…")}</Text>
         </View>
       ) : hasError ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', textAlign: 'center' }}>
-            Couldn&apos;t load this Echo.
+            {ttx("Couldn&apos;t load this Echo.")}
           </Text>
           <Pressable
             onPress={() => router.back()}
             style={{ marginTop: 20, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A' }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Go back</Text>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Go back")}</Text>
           </Pressable>
         </View>
       ) : parent ? (
@@ -149,18 +150,18 @@ export default function RemixScreen() {
                   <View style={styles.heroIconWrap}>
                     <Sparkle color="#000" size={26} weight="fill" />
                   </View>
-                  <Text style={styles.heroEyebrow}>WATCH THIS THOUGHT EVOLVE</Text>
+                  <Text style={styles.heroEyebrow}>{ttx("WATCH THIS THOUGHT EVOLVE")}</Text>
                   <Text style={styles.heroTitle} numberOfLines={2}>
-                    Add perspective to @{parentAuthor}&apos;s Echo
+                    {ttx("Add perspective to @")}{parentAuthor}{ttx("&apos;s Echo")}
                   </Text>
                   <Text style={styles.heroSub}>
-                    Choose how you&apos;re responding, then continue the thought. Your Echo becomes part of the Evolution.
+                    {ttx("Choose how you&apos;re responding, then continue the thought. Your Echo becomes part of the Evolution.")}
                   </Text>
                   {parentRemixCount > 0 && (
                     <View style={styles.heroChip}>
                       <GitBranch color="#000" size={12} weight="fill" />
                       <Text style={styles.heroChipText}>
-                        {parentRemixCount} {parentRemixCount === 1 ? 'perspective' : 'perspectives'} already
+                        {parentRemixCount} {parentRemixCount === 1 ? 'perspective' : 'perspectives'} {ttx("already")}
                       </Text>
                     </View>
                   )}
@@ -168,7 +169,7 @@ export default function RemixScreen() {
               </LinearGradient>
             </Animated.View>
 
-            <Text style={styles.sectionLabel}>What kind of perspective are you adding?</Text>
+            <Text style={styles.sectionLabel}>{ttx("What kind of perspective are you adding?")}</Text>
             <View style={styles.typeGrid}>
               {PERSPECTIVE_TYPES.map(type => {
                 const active = perspectiveType === type;
@@ -191,11 +192,11 @@ export default function RemixScreen() {
 
             {perspectiveType === 'evidence' && (
               <View style={styles.sourceWrap}>
-                <Text style={styles.sourceLabel}>Source link optional</Text>
+                <Text style={styles.sourceLabel}>{ttx("Source link optional")}</Text>
                 <TextInput
                   value={sourceUrl}
                   onChangeText={setSourceUrl}
-                  placeholder="https://..."
+                  placeholder={ttx("https://...")}
                   placeholderTextColor="#71717A"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -206,11 +207,10 @@ export default function RemixScreen() {
             )}
 
             {/* Conversation preview */}
-            <Text style={styles.sectionLabel}>The original conversation</Text>
+            <Text style={styles.sectionLabel}>{ttx("The original conversation")}</Text>
             {snapshot.length > 1 && (
               <Text style={styles.forkHint}>
-                Tap any message to branch from that point — everything after it is
-                trimmed from your perspective.
+                {ttx("Tap any message to branch from that point — everything after it is trimmed from your perspective.")}
               </Text>
             )}
 
@@ -257,7 +257,7 @@ export default function RemixScreen() {
                       <View style={styles.forkLine} />
                       <View style={styles.forkBadge}>
                         <GitBranch color="#000" size={12} weight="fill" />
-                        <Text style={styles.forkBadgeText}>YOUR BRANCH STARTS HERE</Text>
+                        <Text style={styles.forkBadgeText}>{ttx("YOUR BRANCH STARTS HERE")}</Text>
                       </View>
                       <View style={styles.forkLine} />
                     </View>
@@ -269,7 +269,7 @@ export default function RemixScreen() {
             {snapshot.length === 0 && (
               <View style={styles.emptyState}>
                 <Text style={{ color: '#A1A1AA', lineHeight: 20 }}>
-                  This Echo was published before conversation history was saved. You can still ask a fresh follow-up about it.
+                  {ttx("This Echo was published before conversation history was saved. You can still ask a fresh follow-up about it.")}
                 </Text>
               </View>
             )}

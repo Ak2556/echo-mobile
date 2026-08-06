@@ -12,6 +12,7 @@ import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/loc
 import { useAppStore } from '../../store/useAppStore';
 import type { ChatMessage } from '../../types';
 import { assistantLanguageInstruction } from '../../lib/languages';
+import { ttx } from '../../lib/i18n';
 
 function makeId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -414,15 +415,15 @@ export default function FloatingEchoAgent() {
               <Sparkle color="#fff" size={21} weight="fill" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[font.display, { color: colors.text, fontSize: 22 }]}>Echo AI</Text>
+              <Text style={[font.display, { color: colors.text, fontSize: 22 }]}>{ttx("Echo AI")}</Text>
               <Text style={[font.body, { color: colors.textMuted, marginTop: 2 }]} numberOfLines={2}>
-                {screen} ready - fast actions
+                {screen} {ttx("ready - fast actions")}
               </Text>
             </View>
             <Pressable
               onPress={openFullChat}
               accessibilityRole="button"
-              accessibilityLabel="Open full Echo chat"
+              accessibilityLabel={ttx("Open full Echo chat")}
               style={({ pressed }) => ({
                 width: 42,
                 height: 42,
@@ -467,10 +468,10 @@ export default function FloatingEchoAgent() {
         {messages.length === 0 ? (
           <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 36 }}>
             <Text style={[font.bodySemibold, { color: colors.textSecondary, textAlign: 'center' }]}>
-              Echo can work inside the app now.
+              {ttx("Echo can work inside the app now.")}
             </Text>
             <Text style={[font.body, { color: colors.textMuted, textAlign: 'center', marginTop: 6, maxWidth: 280 }]}>
-              Ask it to create notes, update habits, log expenses, search local progress, navigate, or draft an Echo.
+              {ttx("Ask it to create notes, update habits, log expenses, search local progress, navigate, or draft an Echo.")}
             </Text>
           </View>
         ) : (
@@ -517,7 +518,7 @@ export default function FloatingEchoAgent() {
               })}
             >
               <Compass color={colors.accent} size={14} weight="bold" />
-              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>This screen</Text>
+              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{ttx("This screen")}</Text>
             </Pressable>
             <Pressable
               onPress={() => send('Create a useful note from this context.')}
@@ -536,7 +537,7 @@ export default function FloatingEchoAgent() {
               })}
             >
               <NotePencil color={colors.accent} size={14} weight="bold" />
-              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>Save note</Text>
+              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{ttx("Save note")}</Text>
             </Pressable>
           </View>
         ) : null}

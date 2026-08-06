@@ -6,6 +6,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 type ViewMode = 'formatted' | 'minified';
 
@@ -70,7 +71,7 @@ function JsonPulse({ accent, status, stats, inspection }: {
           {status === 'Invalid' ? <Warning color={accent} size={20} weight="fill" /> : <CheckCircle color={accent} size={20} weight="fill" />}
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Data cockpit</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Data cockpit")}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{status}. {stats ? `${stats.keys} keys, ${stats.size}.` : 'Paste JSON to inspect.'}</Text>
         </View>
       </View>
@@ -130,12 +131,12 @@ export default function JsonFormatterScreen() {
   ) : undefined;
 
   return (
-    <MiniAppShell title="JSON Tools" subtitle="Clean" headerRight={HeaderActions}>
+    <MiniAppShell title={ttx("JSON Tools")} subtitle={ttx("Clean")} headerRight={HeaderActions}>
       <View>
         <MiniCommandDeck
           accent={statusAccent}
-          title="Format data into clarity"
-          subtitle="Validate, inspect, copy."
+          title={ttx("Format data into clarity")}
+          subtitle={ttx("Validate, inspect, copy.")}
           metrics={[
             { label: 'Status', value: status, detail: 'parser' },
             { label: 'Keys', value: stats ? `${stats.keys}` : '0', detail: 'fields' },
@@ -147,10 +148,10 @@ export default function JsonFormatterScreen() {
         {/* Input */}
         <View style={{ marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>PASTE JSON</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("PASTE JSON")}</Text>
             <Pressable onPress={() => { setInput(''); setError(''); setParsed(null); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Trash color={colors.textMuted} size={14} weight="bold" />
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Clear</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Clear")}</Text>
             </Pressable>
           </View>
           <TextInput
@@ -174,8 +175,8 @@ export default function JsonFormatterScreen() {
           ) : parsed ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
               <CheckCircle color={colors.success} size={16} weight="fill" />
-              <Text style={{ color: colors.success, fontSize: 13, fontWeight: '600' }}>Valid JSON</Text>
-              {stats && <Text style={{ color: colors.textMuted, fontSize: 13 }}>· {stats.keys} keys · {stats.size}</Text>}
+              <Text style={{ color: colors.success, fontSize: 13, fontWeight: '600' }}>{ttx("Valid JSON")}</Text>
+              {stats && <Text style={{ color: colors.textMuted, fontSize: 13 }}>· {stats.keys} {ttx("keys ·")} {stats.size}</Text>}
             </View>
           ) : null}
         </View>
@@ -183,7 +184,7 @@ export default function JsonFormatterScreen() {
         {/* Output */}
         {output ? (
           <View style={{ marginBottom: 14 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>OUTPUT</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("OUTPUT")}</Text>
             <GlassPanel variant="medium" borderRadius={18}>
               <ScrollView style={{ maxHeight: 360, backgroundColor: '#0D1117', borderRadius: 18 }} contentContainerStyle={{ padding: 16 }} nestedScrollEnabled>
                 <Text style={{ fontFamily: 'monospace', fontSize: 13, lineHeight: 22 }}>
@@ -196,8 +197,8 @@ export default function JsonFormatterScreen() {
         <EdgeFeaturePanel
           appName="JSON Tools"
           accent={error ? colors.danger : parsed ? colors.success : accent}
-          headline="Debug data faster"
-          caption="Validate, summarize, and turn JSON structures into implementation notes."
+          headline={ttx("Debug data faster")}
+          caption={ttx("Validate, summarize, and turn JSON structures into implementation notes.")}
           metrics={[
             { label: 'Status', value: error ? 'Invalid' : parsed ? 'Valid' : 'Empty' },
             { label: 'Keys', value: stats ? `${stats.keys}` : '0' },

@@ -5,6 +5,7 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 const SAMPLE = `# Hello, Markdown!
 
@@ -129,13 +130,13 @@ export default function MarkdownScreen() {
   );
 
   return (
-    <MiniAppShell title="Markdown" subtitle="Write" headerRight={ClearBtn} scrollable={false}>
+    <MiniAppShell title={ttx("Markdown")} subtitle={ttx("Write")} headerRight={ClearBtn} scrollable={false}>
       <View style={{ flex: 1, paddingTop: 4 }}>
         <MiniCommandDeck
           compact
           accent={colors.accent}
-          title="Publish-ready writing"
-          subtitle="Draft, preview, publish."
+          title={ttx("Publish-ready writing")}
+          subtitle={ttx("Draft, preview, publish.")}
           metrics={[
             { label: 'Words', value: `${words}` },
             { label: 'Chars', value: `${chars}` },

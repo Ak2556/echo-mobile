@@ -11,6 +11,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { showToast } from '../components/ui/Toast';
 import { clearPushToken, registerForPush } from '../lib/push';
+import { ttx } from '../lib/i18n';
 
 export default function NotificationPrefsScreen() {
   const { colors, radius, fontSizes, switchTrack, animation } = useTheme();
@@ -67,11 +68,11 @@ export default function NotificationPrefsScreen() {
 
   return (
     <ResponsiveScreen>
-      <ScreenHeader title="Notification Preferences" />
+      <ScreenHeader title={ttx("Notification Preferences")} />
 
       <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
         <Animated.View entering={animation(FadeInDown.delay(50).duration(220))}>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>General</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>{ttx("General")}</Text>
           <View
             className="px-4 mb-5"
             style={{
@@ -84,8 +85,8 @@ export default function NotificationPrefsScreen() {
             <ToggleRow
               icon={Bell}
               iconColor={colors.accent}
-              label="Push Notifications"
-              subtitle="Master toggle for all notifications"
+              label={ttx("Push Notifications")}
+              subtitle={ttx("Master toggle for all notifications")}
               value={notificationsEnabled}
               onValueChange={handlePushToggle}
             />
@@ -93,7 +94,7 @@ export default function NotificationPrefsScreen() {
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={{ opacity: notificationsEnabled ? 1 : 0.4 }} pointerEvents={notificationsEnabled ? 'auto' : 'none'}>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>Activity Types</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>{ttx("Activity Types")}</Text>
           <View
             className="px-4 mb-5"
             style={{
@@ -103,22 +104,22 @@ export default function NotificationPrefsScreen() {
               borderColor: colors.border,
             }}
           >
-            <ToggleRow icon={HeartStraight} iconColor={colors.danger} label="Likes" subtitle="When someone likes your echo" value={notifyLikes} onValueChange={setNotifyLikes} />
+            <ToggleRow icon={HeartStraight} iconColor={colors.danger} label={ttx("Likes")} subtitle={ttx("When someone likes your echo")} value={notifyLikes} onValueChange={setNotifyLikes} />
             {divider}
-            <ToggleRow icon={ChatCircle} iconColor={colors.accent} label="Comments" subtitle="When someone comments on your echo" value={notifyComments} onValueChange={setNotifyComments} />
+            <ToggleRow icon={ChatCircle} iconColor={colors.accent} label={ttx("Comments")} subtitle={ttx("When someone comments on your echo")} value={notifyComments} onValueChange={setNotifyComments} />
             {divider}
-            <ToggleRow icon={UserPlus} iconColor={colors.success} label="New Followers" subtitle="When someone follows you" value={notifyFollows} onValueChange={setNotifyFollows} />
+            <ToggleRow icon={UserPlus} iconColor={colors.success} label={ttx("New Followers")} subtitle={ttx("When someone follows you")} value={notifyFollows} onValueChange={setNotifyFollows} />
             {divider}
-            <ToggleRow icon={Envelope} iconColor={colors.accent} label="Direct Messages" subtitle="When you receive a new message" value={notifyDMs} onValueChange={setNotifyDMs} />
+            <ToggleRow icon={Envelope} iconColor={colors.accent} label={ttx("Direct Messages")} subtitle={ttx("When you receive a new message")} value={notifyDMs} onValueChange={setNotifyDMs} />
             {divider}
-            <ToggleRow icon={ArrowsClockwise} iconColor={colors.accent} label="Re-echoes" subtitle="When someone re-echoes your post" value={notifyReposts} onValueChange={setNotifyReposts} />
+            <ToggleRow icon={ArrowsClockwise} iconColor={colors.accent} label={ttx("Re-echoes")} subtitle={ttx("When someone re-echoes your post")} value={notifyReposts} onValueChange={setNotifyReposts} />
             {divider}
-            <ToggleRow icon={Quotes} iconColor={colors.accent} label="Mentions" subtitle="When someone mentions you" value={notifyMentions} onValueChange={setNotifyMentions} />
+            <ToggleRow icon={Quotes} iconColor={colors.accent} label={ttx("Mentions")} subtitle={ttx("When someone mentions you")} value={notifyMentions} onValueChange={setNotifyMentions} />
           </View>
         </Animated.View>
 
         <Animated.View entering={animation(FadeInDown.delay(150).duration(220))}>
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>Feedback</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontWeight: '600', marginBottom: 8, marginLeft: 4 }}>{ttx("Feedback")}</Text>
           <View
             className="px-4 mb-5"
             style={{
@@ -128,9 +129,9 @@ export default function NotificationPrefsScreen() {
               borderColor: colors.border,
             }}
           >
-            <ToggleRow icon={SpeakerHigh} iconColor={colors.textSecondary} label="Sound Effects" subtitle="Play sounds for notifications and actions" value={soundEnabled} onValueChange={setSoundEnabled} />
+            <ToggleRow icon={SpeakerHigh} iconColor={colors.textSecondary} label={ttx("Sound Effects")} subtitle={ttx("Play sounds for notifications and actions")} value={soundEnabled} onValueChange={setSoundEnabled} />
             {divider}
-            <ToggleRow icon={Bell} iconColor={colors.textSecondary} label="Haptic Feedback" subtitle="Vibration feedback on interactions" value={hapticEnabled} onValueChange={setHapticEnabled} />
+            <ToggleRow icon={Bell} iconColor={colors.textSecondary} label={ttx("Haptic Feedback")} subtitle={ttx("Vibration feedback on interactions")} value={hapticEnabled} onValueChange={setHapticEnabled} />
           </View>
         </Animated.View>
 

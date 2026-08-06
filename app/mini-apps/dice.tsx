@@ -11,6 +11,7 @@ import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 // Warm editorial palette (lib/avatarPalette.ts) — one hue per die.
 const DICE = [
@@ -68,8 +69,8 @@ function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: stri
           <DiceSix color={accent} size={22} weight="duotone" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Chance board</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Rolls, odds, record.</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Chance board")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Rolls, odds, record.")}</Text>
         </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -135,11 +136,11 @@ export default function DiceApp() {
   );
 
   return (
-    <MiniAppShell title="Dice & Coin" subtitle="Chance" headerRight={ClearBtn}>
+    <MiniAppShell title={ttx("Dice & Coin")} subtitle={ttx("Chance")} headerRight={ClearBtn}>
       <MiniCommandDeck
         accent={selectedDie.color}
-        title="Fair random decisions"
-        subtitle="Roll, flip, explain, share."
+        title={ttx("Fair random decisions")}
+        subtitle={ttx("Roll, flip, explain, share.")}
         metrics={[
           { label: 'Die', value: selectedDie.label, detail: `${selectedDie.sides} sides` },
           { label: 'Count', value: `${diceCount}`, detail: 'dice' },
@@ -150,7 +151,7 @@ export default function DiceApp() {
       <ChancePulse accent={selectedDie.color} selectedDie={selectedDie} diceCount={diceCount} history={history} />
       {/* Die selector */}
       <GlassPanel variant="medium" borderRadius={20} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
-        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>SELECT DIE</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SELECT DIE")}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {DICE.map(d => (
             <Pressable key={d.label} onPress={() => { setSelectedDie(d); setResult(null); }}>
@@ -169,7 +170,7 @@ export default function DiceApp() {
 
       {/* Dice count */}
       <GlassPanel variant="medium" borderRadius={20} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
-        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>NUMBER OF DICE</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("NUMBER OF DICE")}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {[1, 2, 3, 4, 5, 6].map(n => (
             <Pressable key={n} onPress={() => { setDiceCount(n); setResult(null); }}>
@@ -204,7 +205,7 @@ export default function DiceApp() {
         {result !== null && (
           <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
             <Text style={{ color: selectedDie.color, fontSize: 52, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1.5 }}>{result}</Text>
-            {diceCount > 1 && <Text style={{ color: colors.textMuted, fontSize: 14 }}>{diceCount}× {selectedDie.label} · total</Text>}
+            {diceCount > 1 && <Text style={{ color: colors.textMuted, fontSize: 14 }}>{diceCount}× {selectedDie.label} {ttx("· total")}</Text>}
           </Animated.View>
         )}
 
@@ -218,7 +219,7 @@ export default function DiceApp() {
       {/* Divider */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
-        <Text style={{ color: colors.textMuted, fontSize: 13 }}>Coin Flip</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("Coin Flip")}</Text>
         <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
       </View>
 
@@ -237,14 +238,14 @@ export default function DiceApp() {
           </Animated.View>
         )}
         <AnimatedPressable onPress={flipCoin} scaleValue={0.95} haptic="heavy" style={{ backgroundColor: '#B08536', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 40, shadowColor: '#B08536', shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Flip Coin</Text>
+          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{ttx("Flip Coin")}</Text>
         </AnimatedPressable>
       </View>
 
       {/* History */}
       {history.length > 0 && (
         <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 16 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>RECENT ROLLS</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("RECENT ROLLS")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {history.map((h, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: h.color + '15', borderWidth: 1, borderColor: h.color + '33' }}>
@@ -259,8 +260,8 @@ export default function DiceApp() {
       <EdgeFeaturePanel
         appName="Dice & Coin"
         accent={selectedDie.color}
-        headline="Random decisions with a record"
-        caption="Use rolls for games, quick choices, transparent draws, or shareable decision logs."
+        headline={ttx("Random decisions with a record")}
+        caption={ttx("Use rolls for games, quick choices, transparent draws, or shareable decision logs.")}
         metrics={[
           { label: 'Die', value: selectedDie.label },
           { label: 'Count', value: `${diceCount}` },

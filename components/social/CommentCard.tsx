@@ -11,6 +11,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteCommentLike } from '../../hooks/queries/useEchoComments';
+import { ttx } from '../../lib/i18n';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -101,9 +102,9 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
             </Text>
           </AnimatedPressable>
           {!indented && (
-            <AnimatedPressable style={{ flexDirection: "row", alignItems: "center", gap: 4 }} scaleValue={0.85} haptic="light" onPress={() => onReply?.(comment)} accessibilityLabel="Reply to comment" accessibilityRole="button">
+            <AnimatedPressable style={{ flexDirection: "row", alignItems: "center", gap: 4 }} scaleValue={0.85} haptic="light" onPress={() => onReply?.(comment)} accessibilityLabel={ttx("Reply to comment")} accessibilityRole="button">
               <ChatCircle color={colors.textMuted} size={14} />
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>Reply</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Reply")}</Text>
             </AnimatedPressable>
           )}
           <SpeakButton text={comment.content} id={`comment:${comment.id}`} size={14} />

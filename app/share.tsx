@@ -29,6 +29,7 @@ import {
 import { rewriteEditorial, EditorialAction } from '../lib/editorial';
 import { getPerspectiveLabel } from '../lib/perspectives';
 import { track } from '../lib/analytics';
+import { ttx } from '../lib/i18n';
 
 const SHARE_DRAFT_KEY = 'echo/share-draft';
 
@@ -243,7 +244,7 @@ export default function ShareScreen() {
         />
       )}
       <ScreenHeader
-        title="Share Echo"
+        title={ttx("Share Echo")}
         right={
           <Pressable
             onPress={() => { void handlePublish(); }}
@@ -262,23 +263,23 @@ export default function ShareScreen() {
             <GitBranch color={colors.accent} size={20} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>
-                Adding {perspectiveLabel.toLowerCase()} perspective to @{pendingCtx?.parentAuthorUsername ?? 'their'} Echo
+                {ttx("Adding")} {perspectiveLabel.toLowerCase()} {ttx("perspective to @")}{pendingCtx?.parentAuthorUsername ?? 'their'} {ttx("Echo")}
               </Text>
               {pendingCtx?.parentTitle && (
                 <Text style={{ color: colors.textSecondary, marginTop: 2, fontSize: 12 }} numberOfLines={1}>
-                  Source: {pendingCtx.parentTitle}
+                  {ttx("Source:")} {pendingCtx.parentTitle}
                 </Text>
               )}
               {pendingCtx?.sourceUrl && (
                 <Text style={{ color: colors.textMuted, marginTop: 2, fontSize: 12 }} numberOfLines={1}>
-                  Evidence: {pendingCtx.sourceUrl}
+                  {ttx("Evidence:")} {pendingCtx.sourceUrl}
                 </Text>
               )}
             </View>
           </View>
         )}
         <View style={{ padding: 16, marginBottom: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 10 }}>Original prompt</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 10 }}>{ttx("Original prompt")}</Text>
           <View style={{ padding: 12, borderRadius: radius.lg, backgroundColor: colors.surfaceHover }}>
             <Text style={{ color: colors.text, lineHeight: 22 }}>{prompt}</Text>
           </View>
@@ -289,22 +290,22 @@ export default function ShareScreen() {
             onPress={() => setPreviewMode(false)}
             style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full, backgroundColor: !previewMode ? colors.accent : colors.surface, borderWidth: 1, borderColor: !previewMode ? colors.accent : colors.border }}
           >
-            <Text style={{ color: !previewMode ? '#fff' : colors.text, fontWeight: '700' }}>Edit</Text>
+            <Text style={{ color: !previewMode ? '#fff' : colors.text, fontWeight: '700' }}>{ttx("Edit")}</Text>
           </Pressable>
           <Pressable
             onPress={() => setPreviewMode(true)}
             style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full, backgroundColor: previewMode ? colors.accent : colors.surface, borderWidth: 1, borderColor: previewMode ? colors.accent : colors.border }}
           >
-            <Text style={{ color: previewMode ? '#fff' : colors.text, fontWeight: '700' }}>Preview</Text>
+            <Text style={{ color: previewMode ? '#fff' : colors.text, fontWeight: '700' }}>{ttx("Preview")}</Text>
           </Pressable>
         </View>
 
         {!previewMode ? (
           <>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 8 }}>Title</Text>
-            <TextInput placeholder="Give this Echo a headline" value={title} onChangeText={setTitle} maxLength={90} />
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 8 }}>{ttx("Title")}</Text>
+            <TextInput placeholder={ttx("Give this Echo a headline")} value={title} onChangeText={setTitle} maxLength={90} />
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Editorial tools</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>{ttx("Editorial tools")}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
               {EDITORIAL_ACTIONS.map(action => {
                 const running = editorialRunning === action.key;
@@ -325,9 +326,9 @@ export default function ShareScreen() {
               })}
             </View>
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 8 }}>The part worth sharing<Text style={{ color: colors.accent }}> *</Text></Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 8 }}>{ttx("The part worth sharing")}<Text style={{ color: colors.accent }}> *</Text></Text>
             <TextInput
-              placeholder="Trim the answer down to the strongest takeaway"
+              placeholder={ttx("Trim the answer down to the strongest takeaway")}
               value={editedResponse}
               onChangeText={setEditedResponse}
               multiline
@@ -335,28 +336,28 @@ export default function ShareScreen() {
             />
             {!editedResponse.trim() && (
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 6 }}>
-                Required — write the takeaway you want to publish.
+                {ttx("Required — write the takeaway you want to publish.")}
               </Text>
             )}
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Add your framing</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>{ttx("Add your framing")}</Text>
             <TextInput
-              placeholder="Why is this worth posting? Add context, opinion, or a takeaway."
+              placeholder={ttx("Why is this worth posting? Add context, opinion, or a takeaway.")}
               value={authorNote}
               onChangeText={setAuthorNote}
               multiline
               maxLength={220}
             />
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Topics</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>{ttx("Topics")}</Text>
             <TextInput
-              placeholder="AI, product, react-native"
+              placeholder={ttx("AI, product, react-native")}
               value={tagsRaw}
               onChangeText={setTagsRaw}
               autoCapitalize="none"
             />
 
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>Who can see this</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 18, marginBottom: 8 }}>{ttx("Who can see this")}</Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Pressable
                 onPress={() => setVisibility('public')}
@@ -364,9 +365,9 @@ export default function ShareScreen() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Globe color={visibility === 'public' ? colors.accent : colors.textSecondary} size={18} />
-                  <Text style={{ color: colors.text, fontWeight: '700' }}>Public</Text>
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>{ttx("Public")}</Text>
                 </View>
-                <Text style={{ color: colors.textSecondary, marginTop: 6, fontSize: 13 }}>Visible in Discover and profiles.</Text>
+                <Text style={{ color: colors.textSecondary, marginTop: 6, fontSize: 13 }}>{ttx("Visible in Discover and profiles.")}</Text>
               </Pressable>
               <Pressable
                 onPress={() => setVisibility('followers')}
@@ -374,9 +375,9 @@ export default function ShareScreen() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Lock color={visibility === 'followers' ? colors.accent : colors.textSecondary} size={18} />
-                  <Text style={{ color: colors.text, fontWeight: '700' }}>Followers</Text>
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>{ttx("Followers")}</Text>
                 </View>
-                <Text style={{ color: colors.textSecondary, marginTop: 6, fontSize: 13 }}>A softer first publish option.</Text>
+                <Text style={{ color: colors.textSecondary, marginTop: 6, fontSize: 13 }}>{ttx("A softer first publish option.")}</Text>
               </Pressable>
             </View>
           </>
@@ -394,9 +395,9 @@ export default function ShareScreen() {
                 <Text style={{ color: colors.text, lineHeight: 22 }}>{authorNote.trim()}</Text>
               </View>
             ) : null}
-            <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginBottom: 6 }}>Prompt</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginBottom: 6 }}>{ttx("Prompt")}</Text>
             <Text style={{ color: colors.text, lineHeight: 22, marginBottom: 14 }}>{prompt}</Text>
-            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '700', marginBottom: 6 }}>Echo</Text>
+            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '700', marginBottom: 6 }}>{ttx("Echo")}</Text>
             <Text style={{ color: colors.textSecondary, lineHeight: 24 }}>{editedResponse.trim() || 'No response yet.'}</Text>
           </View>
         )}
@@ -404,7 +405,7 @@ export default function ShareScreen() {
         <View style={{ padding: 16, marginTop: 18, marginBottom: 14, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <ShieldCheck color={colors.accent} size={18} />
-            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>Before you post</Text>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>{ttx("Before you post")}</Text>
           </View>
           {checklistItems.map(item => (
             <View key={item.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -420,7 +421,7 @@ export default function ShareScreen() {
             style={{ flex: 1, paddingVertical: 13, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
             <FloppyDisk color={colors.textSecondary} size={18} />
-            <Text style={{ color: colors.text, fontWeight: '700' }}>Save draft</Text>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>{ttx("Save draft")}</Text>
           </Pressable>
           <Pressable
             onPress={() => { void handlePublish(); }}

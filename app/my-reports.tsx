@@ -9,6 +9,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { useTheme } from '../lib/theme';
 import { fetchMyReports, type MyReport } from '../lib/supabaseEchoApi';
+import { ttx } from '../lib/i18n';
 
 // `tone` resolves to a theme token at render so status color adapts per theme.
 const STATUS_CONFIG = {
@@ -45,7 +46,7 @@ export default function MyReportsScreen() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="My Reports"
+        title={ttx("My Reports")}
         right={
           <AnimatedPressable
             onPress={() => router.push('/appeal')}
@@ -54,7 +55,7 @@ export default function MyReportsScreen() {
             style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, borderRadius: 999, backgroundColor: colors.accentMuted }}
           >
             <Scales color={colors.accent} size={14} weight="bold" />
-            <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>My appeals</Text>
+            <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12 }]}>{ttx("My appeals")}</Text>
           </AnimatedPressable>
         }
       />
@@ -70,15 +71,15 @@ export default function MyReportsScreen() {
       ) : reports.length === 0 ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Warning color={colors.textMuted} size={40} />
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title, marginTop: 16, marginBottom: 8 }]}>No reports yet</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: fontSizes.title, marginTop: 16, marginBottom: 8 }]}>{ttx("No reports yet")}</Text>
           <Text style={[font.body, { color: colors.textMuted, textAlign: 'center', fontSize: fontSizes.small }]}>
-            Reports you submit will appear here along with their review status.
+            {ttx("Reports you submit will appear here along with their review status.")}
           </Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
           <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption, marginBottom: 4 }]}>
-            Under the EU Digital Services Act, you have the right to know the outcome of every report you submit.
+            {ttx("Under the EU Digital Services Act, you have the right to know the outcome of every report you submit.")}
           </Text>
           {reports.map((report, i) => {
             const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.open;
@@ -99,19 +100,19 @@ export default function MyReportsScreen() {
                     {report.reason}
                   </Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
-                    {report.targetType.charAt(0).toUpperCase() + report.targetType.slice(1)} report
+                    {report.targetType.charAt(0).toUpperCase() + report.targetType.slice(1)} {ttx("report")}
                   </Text>
 
                   {report.actionTaken && (
                     <View style={{ marginTop: 10, padding: 10, backgroundColor: colors.surfaceHover, borderRadius: 8 }}>
-                      <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.caption, marginBottom: 2 }]}>Outcome</Text>
+                      <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: fontSizes.caption, marginBottom: 2 }]}>{ttx("Outcome")}</Text>
                       <Text style={[font.body, { color: colors.textSecondary, fontSize: fontSizes.caption, lineHeight: 18 }]}>{report.actionTaken}</Text>
                     </View>
                   )}
 
                   {report.reviewedAt && (
                     <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 8 }]}>
-                      Reviewed {timeAgo(report.reviewedAt)}
+                      {ttx("Reviewed")} {timeAgo(report.reviewedAt)}
                     </Text>
                   )}
 
@@ -134,7 +135,7 @@ export default function MyReportsScreen() {
                     >
                       <Scales color={colors.textMuted} size={13} />
                       <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: fontSizes.caption }]}>
-                        Appeal this decision
+                        {ttx("Appeal this decision")}
                       </Text>
                     </AnimatedPressable>
                   )}

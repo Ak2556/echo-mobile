@@ -6,6 +6,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { useTheme } from '../../lib/theme';
+import { ttx } from '../../lib/i18n';
 
 function hexToRgb(hex: string) {
   const c = hex.replace('#', '');
@@ -72,8 +73,8 @@ function ColorIntelligencePanel({ hex, saved }: { hex: string; saved: string[] }
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: hex, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Palette intelligence</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>Contrast, tone, scale.</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Palette intelligence")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Contrast, tone, scale.")}</Text>
         </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -118,11 +119,11 @@ export default function ColorToolsScreen() {
   const save = () => { if (!saved.includes(hex)) setSaved(s=>[hex,...s].slice(0,20)); };
 
   return (
-    <MiniAppShell title="Color Tools" subtitle="Color">
+    <MiniAppShell title={ttx("Color Tools")} subtitle={ttx("Color")}>
       <MiniCommandDeck
         accent={hex}
-        title="Design color that can ship"
-        subtitle="Pick, test, copy, reuse."
+        title={ttx("Design color that can ship")}
+        subtitle={ttx("Pick, test, copy, reuse.")}
         metrics={[
           { label: 'HEX', value: hex.toUpperCase(), detail: 'current' },
           { label: 'Contrast', value: rgb ? contrast(hex).split(' ')[0] : '-', detail: 'vs white' },
@@ -142,11 +143,11 @@ export default function ColorToolsScreen() {
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Pressable onPress={randomize} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
             <Shuffle color={textColor} size={15} weight="bold" />
-            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>Random</Text>
+            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>{ttx("Random")}</Text>
           </Pressable>
           <Pressable onPress={save} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
             <FloppyDisk color={textColor} size={15} weight="bold" />
-            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>Save</Text>
+            <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>{ttx("Save")}</Text>
           </Pressable>
         </View>
       </View>
@@ -154,7 +155,7 @@ export default function ColorToolsScreen() {
       {/* Conversions */}
       {rgb && hsl && (
         <GlassPanel variant="medium" borderRadius={24} contentStyle={{ paddingHorizontal: 20, paddingTop: 16 }} style={{ marginBottom: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>FORMATS — tap to copy</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>{ttx("FORMATS — tap to copy")}</Text>
           {[
             { label: 'HEX', value: hex.toUpperCase() },
             { label: 'RGB', value: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` },
@@ -178,8 +179,8 @@ export default function ColorToolsScreen() {
       <EdgeFeaturePanel
         appName="Color Tools"
         accent={colors.accent}
-        headline="Make palettes usable"
-        caption="Share accessible color specs, post a palette decision, or ask Echo for UI usage guidance."
+        headline={ttx("Make palettes usable")}
+        caption={ttx("Share accessible color specs, post a palette decision, or ask Echo for UI usage guidance.")}
         metrics={[
           { label: 'HEX', value: hex.toUpperCase() },
           { label: 'RGB', value: rgb ? `${rgb.r},${rgb.g},${rgb.b}` : '-' },
@@ -194,7 +195,7 @@ export default function ColorToolsScreen() {
       {/* Saved */}
       {saved.length > 0 && (
         <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>SAVED</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SAVED")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {saved.map(c => (
               <Pressable

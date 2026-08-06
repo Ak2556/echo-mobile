@@ -15,6 +15,7 @@ import {
   fetchConversationPrefs, setDMPref, setRemoteBlock,
   type ConversationPrefs,
 } from '../../lib/supabaseEchoApi';
+import { ttx } from '../../lib/i18n';
 
 // Reuse the thread's wallpaper palette so a theme choice shows instantly there.
 const THEMES: { id: string; tint: string | null; label: string }[] = [
@@ -120,10 +121,10 @@ export default function ChatDetailsScreen() {
   return (
     <ResponsiveScreen>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back" style={{ padding: 4, marginRight: 8 }}>
+        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Back")} style={{ padding: 4, marginRight: 8 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>Details</Text>
+        <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Details")}</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -136,15 +137,15 @@ export default function ChatDetailsScreen() {
           {!isGroup && conv?.otherUsername ? (
             <Text style={{ color: colors.textMuted, fontSize: 13 }}>@{conv.otherUsername}</Text>
           ) : isGroup ? (
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{conv?.memberCount ?? 0} members</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{conv?.memberCount ?? 0} {ttx("members")}</Text>
           ) : null}
         </View>
 
         {/* Customization */}
-        <SectionLabel colors={colors}>Customization</SectionLabel>
+        <SectionLabel colors={colors}>{ttx("Customization")}</SectionLabel>
         {!isGroup && (
           <View style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 14 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', marginBottom: 6 }}>Nickname</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', marginBottom: 6 }}>{ttx("Nickname")}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <TextInput
                 value={nickname}
@@ -153,18 +154,18 @@ export default function ChatDetailsScreen() {
                 onSubmitEditing={saveNickname}
                 placeholder={`Set a nickname for ${name}`}
                 placeholderTextColor={colors.textMuted}
-                accessibilityLabel="Nickname"
+                accessibilityLabel={ttx("Nickname")}
                 style={{ flex: 1, color: colors.text, fontSize: 15 }}
                 returnKeyType="done"
               />
-              <Pressable onPress={saveNickname} hitSlop={8} accessibilityRole="button" accessibilityLabel="Save nickname">
+              <Pressable onPress={saveNickname} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Save nickname")}>
                 <Check color={colors.accent} size={20} weight="bold" />
               </Pressable>
             </View>
           </View>
         )}
 
-        <RowLabel colors={colors}>Theme</RowLabel>
+        <RowLabel colors={colors}>{ttx("Theme")}</RowLabel>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10, paddingBottom: 12 }}>
           {THEMES.map(t => {
             const active = (prefs.theme ?? 'default') === t.id;
@@ -179,7 +180,7 @@ export default function ChatDetailsScreen() {
           })}
         </ScrollView>
 
-        <RowLabel colors={colors}>Quick reaction</RowLabel>
+        <RowLabel colors={colors}>{ttx("Quick reaction")}</RowLabel>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 14 }}>
           {QUICK_REACTIONS.map(e => {
             const active = prefs.quickReaction === e || (!prefs.quickReaction && e === '❤️');
@@ -192,28 +193,28 @@ export default function ChatDetailsScreen() {
         </View>
 
         {/* Notifications */}
-        <SectionLabel colors={colors}>Notifications</SectionLabel>
+        <SectionLabel colors={colors}>{ttx("Notifications")}</SectionLabel>
         <Row colors={colors} radius={radius} icon={mutedNow ? <BellSlash color={colors.accent} size={20} weight="fill" /> : <Bell color={colors.text} size={20} />}
           label={mutedNow ? 'Muted' : 'Mute notifications'}
           sub={mutedNow ? (prefs.mutedUntil ? `Until ${new Date(prefs.mutedUntil).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : 'Until you turn it back on') : 'Silence this conversation'}
           onPress={() => (mutedNow ? unmute() : setMuteOpen(true))} />
 
         {/* Media */}
-        <SectionLabel colors={colors}>Media & links</SectionLabel>
-        <Row colors={colors} radius={radius} icon={<Images color={colors.text} size={20} />} label="Shared media" sub="Photos and links in this chat" onPress={() => router.push(`/chat-media/${id}`)} />
+        <SectionLabel colors={colors}>{ttx("Media & links")}</SectionLabel>
+        <Row colors={colors} radius={radius} icon={<Images color={colors.text} size={20} />} label={ttx("Shared media")} sub="Photos and links in this chat" onPress={() => router.push(`/chat-media/${id}`)} />
 
         {/* Privacy & safety */}
-        <SectionLabel colors={colors}>Privacy & safety</SectionLabel>
-        <Row colors={colors} radius={radius} icon={<EnvelopeSimple color={colors.text} size={20} />} label="Mark as unread" onPress={markUnread} />
+        <SectionLabel colors={colors}>{ttx("Privacy & safety")}</SectionLabel>
+        <Row colors={colors} radius={radius} icon={<EnvelopeSimple color={colors.text} size={20} />} label={ttx("Mark as unread")} onPress={markUnread} />
         {isGroup ? (
-          <Row colors={colors} radius={radius} icon={<Users color={colors.text} size={20} />} label="Members & group settings" onPress={() => router.push(`/group/${id}`)} />
+          <Row colors={colors} radius={radius} icon={<Users color={colors.text} size={20} />} label={ttx("Members & group settings")} onPress={() => router.push(`/group/${id}`)} />
         ) : otherId ? (
-          <Row colors={colors} radius={radius} icon={<UserCircle color={colors.text} size={20} />} label="View profile" onPress={() => router.push(`/user/${otherId}`)} />
+          <Row colors={colors} radius={radius} icon={<UserCircle color={colors.text} size={20} />} label={ttx("View profile")} onPress={() => router.push(`/user/${otherId}`)} />
         ) : null}
         {!isGroup && otherId && (
           <Row colors={colors} radius={radius} danger icon={<Prohibit color={colors.danger} size={20} />} label={blocked ? 'Unblock' : 'Block'} onPress={doBlock} />
         )}
-        <Row colors={colors} radius={radius} danger icon={<Flag color={colors.danger} size={20} />} label="Report" onPress={() => router.push({ pathname: '/report', params: { targetType: isGroup ? 'group' : 'user', targetId: otherId ?? id, targetName: name } })} />
+        <Row colors={colors} radius={radius} danger icon={<Flag color={colors.danger} size={20} />} label={ttx("Report")} onPress={() => router.push({ pathname: '/report', params: { targetType: isGroup ? 'group' : 'user', targetId: otherId ?? id, targetName: name } })} />
       </ScrollView>
 
       {/* Mute duration picker */}
@@ -221,7 +222,7 @@ export default function ChatDetailsScreen() {
         <Pressable onPress={() => setMuteOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 18, paddingBottom: 34 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>Mute for…</Text>
+              <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Mute for…")}</Text>
               <Pressable onPress={() => setMuteOpen(false)} hitSlop={8}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             {MUTE_OPTIONS.map(o => (

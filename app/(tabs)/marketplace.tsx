@@ -49,6 +49,7 @@ import { useResponsiveLayout } from '../../lib/responsive';
 import { useAppStore } from '../../store/useAppStore';
 import { getTargetCategory } from '../../lib/targetCategories';
 import { clearRecentListings, getRecentListings, recordListingView, type RecentListing } from '../../lib/marketplaceRecents';
+import { ttx } from '../../lib/i18n';
 
 const CARD_GAP = 12;
 const CARD_H_PADDING = 16;
@@ -303,7 +304,7 @@ function SpotlightRail({ items, width }: { items: ListingWithSeller[]; width: nu
   if (!items.length) return null;
   return (
     <View style={{ marginBottom: 18 }}>
-      <SectionHeader title="Spotlight" caption="Useful listings worth checking first" />
+      <SectionHeader title={ttx("Spotlight")} caption={ttx("Useful listings worth checking first")} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
         {items.map(item => (
           <ListingCard key={`spotlight-${item.id}`} item={item} width={width} featured />
@@ -349,7 +350,7 @@ function RecentlyViewedRail({ items, onClear }: { items: RecentListing[]; onClea
   if (!items.length) return null;
   return (
     <View style={{ marginBottom: 18 }}>
-      <SectionHeader title="Recently viewed" actionLabel="Clear" onAction={onClear} />
+      <SectionHeader title={ttx("Recently viewed")} actionLabel={ttx("Clear")} onAction={onClear} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
         {items.map(item => <RecentListingChip key={`recent-${item.id}`} item={item} />)}
       </ScrollView>
@@ -478,7 +479,7 @@ export default function MarketplaceScreen() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search gear, services, books, creators..."
+          placeholder={ttx("Search gear, services, books, creators...")}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
@@ -493,7 +494,7 @@ export default function MarketplaceScreen() {
         {/* The sliders icon was a dead affordance — it now opens the Filters
             sheet holding deal-type / sort / condition (previously three stacked
             rails). Category stays inline as the primary dimension. */}
-        <Pressable onPress={() => setFiltersOpen(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Filters">
+        <Pressable onPress={() => setFiltersOpen(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Filters")}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <SlidersHorizontal color={activeFilterCount > 0 ? colors.accent : colors.textMuted} size={18} weight="bold" />
             {activeFilterCount > 0 && (
@@ -523,9 +524,9 @@ export default function MarketplaceScreen() {
       {targetMatches.length > 0 ? (
         <View style={{ marginBottom: 18 }}>
           <SectionHeader
-            title="For Your Target"
+            title={ttx("For Your Target")}
             caption={targetOutcome.trim() || targetCategory.outcome}
-            actionLabel="Progress"
+            actionLabel={ttx("Progress")}
             onAction={() => router.push('/target-progress' as Href)}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
@@ -536,7 +537,7 @@ export default function MarketplaceScreen() {
         </View>
       ) : null}
 
-      <SectionHeader title="Latest Listings" caption={`${sortedListings.length} result${sortedListings.length === 1 ? '' : 's'}`} />
+      <SectionHeader title={ttx("Latest Listings")} caption={`${sortedListings.length} result${sortedListings.length === 1 ? '' : 's'}`} />
     </View>
   );
 
@@ -556,10 +557,10 @@ export default function MarketplaceScreen() {
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[font.displayBlack, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>
-                Market
+                {ttx("Market")}
               </Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]} numberOfLines={1}>
-                Everyone can buy. Anyone can sell.
+                {ttx("Everyone can buy. Anyone can sell.")}
               </Text>
             </View>
           </View>
@@ -579,7 +580,7 @@ export default function MarketplaceScreen() {
             }}
           >
             <Plus color="#fff" size={15} weight="bold" />
-            <Text style={[font.bodyBold, { color: '#fff', fontSize: 13 }]}>Sell</Text>
+            <Text style={[font.bodyBold, { color: '#fff', fontSize: 13 }]}>{ttx("Sell")}</Text>
           </AnimatedPressable>
         </View>
       </View>
@@ -621,15 +622,15 @@ export default function MarketplaceScreen() {
                 <Package color={colors.accent} size={30} weight="bold" />
               </View>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, textAlign: 'center' }]}>
-                No listings found
+                {ttx("No listings found")}
               </Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center' }]}>
-                Try another lane or seed the market with the first useful listing.
+                {ttx("Try another lane or seed the market with the first useful listing.")}
               </Text>
               <Pressable
                 onPress={() => router.push('/create-listing' as Href)}
                 accessibilityRole="button"
-                accessibilityLabel="Post a listing"
+                accessibilityLabel={ttx("Post a listing")}
                 style={{
                   width: '100%',
                   maxWidth: 260,
@@ -648,7 +649,7 @@ export default function MarketplaceScreen() {
                 }}
               >
                 <Plus color="#fff" size={16} weight="bold" />
-                <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>Post a listing</Text>
+                <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>{ttx("Post a listing")}</Text>
               </Pressable>
             </View>
           }
@@ -669,29 +670,29 @@ export default function MarketplaceScreen() {
           >
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 20 }]}>Filters</Text>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: 20 }]}>{ttx("Filters")}</Text>
               {activeFilterCount > 0 ? (
-                <Pressable onPress={() => { setMode('all'); setSort('newest'); setCondition('All'); }} hitSlop={8} accessibilityRole="button" accessibilityLabel="Reset filters">
-                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 14 }]}>Reset</Text>
+                <Pressable onPress={() => { setMode('all'); setSort('newest'); setCondition('All'); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Reset filters")}>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 14 }]}>{ttx("Reset")}</Text>
                 </Pressable>
               ) : null}
             </View>
 
-            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>Deal type</Text>
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Deal type")}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
               {([['all', 'All deals'], ['services', 'Services'], ['local', 'Local pickup'], ['digital', 'Remote/digital']] as const).map(([value, label]) => (
                 <FilterChip key={value} label={label} active={mode === value} onPress={() => setMode(value)} />
               ))}
             </View>
 
-            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>Sort</Text>
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Sort")}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-              <FilterChip label="Newest" active={sort === 'newest'} onPress={() => setSort('newest')} />
-              <FilterChip label="Lowest price" active={sort === 'price-low'} onPress={() => setSort('price-low')} />
-              <FilterChip label="Highest price" active={sort === 'price-high'} onPress={() => setSort('price-high')} />
+              <FilterChip label={ttx("Newest")} active={sort === 'newest'} onPress={() => setSort('newest')} />
+              <FilterChip label={ttx("Lowest price")} active={sort === 'price-low'} onPress={() => setSort('price-low')} />
+              <FilterChip label={ttx("Highest price")} active={sort === 'price-high'} onPress={() => setSort('price-high')} />
             </View>
 
-            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>Condition</Text>
+            <Text style={[font.bodySemibold, { color: colors.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }]}>{ttx("Condition")}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
               {(['All', ...LISTING_CONDITIONS] as ConditionFilter[]).map(item => (
                 <FilterChip key={item} label={item === 'All' ? 'Any condition' : item} active={condition === item} onPress={() => setCondition(item)} />
@@ -705,7 +706,7 @@ export default function MarketplaceScreen() {
               scaleValue={0.97}
             >
               <Text style={[font.bodyBold, { color: '#fff', fontSize: 15 }]}>
-                Show {sortedListings.length} result{sortedListings.length === 1 ? '' : 's'}
+                {ttx("Show")} {sortedListings.length} {ttx("result")}{sortedListings.length === 1 ? '' : 's'}
               </Text>
             </AnimatedPressable>
           </Pressable>

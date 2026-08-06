@@ -5,6 +5,7 @@ import { Warning, ArrowClockwise, CaretDown, CaretUp } from 'phosphor-react-nati
 import type { ErrorBoundaryProps } from 'expo-router';
 import { useTheme } from '../../lib/theme';
 import { captureException } from '../../lib/monitoring';
+import { ttx } from '../../lib/i18n';
 
 /**
  * Production error boundary used by Expo Router as the root fallback.
@@ -42,7 +43,7 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
         </View>
 
         <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700', textAlign: 'center', letterSpacing: -0.3 }}>
-          Something went wrong
+          {ttx("Something went wrong")}
         </Text>
         <Text
           style={{
@@ -54,7 +55,7 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
             maxWidth: 320,
           }}
         >
-          Echo hit an unexpected hiccup. Tap retry to reload this screen — your data is safe.
+          {ttx("Echo hit an unexpected hiccup. Tap retry to reload this screen — your data is safe.")}
         </Text>
 
         {/* Wrapper View owns the accent fill; the Pressable stays bare.
@@ -74,7 +75,7 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
             })}
           >
             <ArrowClockwise color="#fff" size={16} weight="bold" />
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Try again</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{ttx("Try again")}</Text>
           </Pressable>
         </View>
 
@@ -82,7 +83,7 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           onPress={() => setShowDetails(v => !v)}
           style={{ marginTop: 22, flexDirection: 'row', alignItems: 'center', gap: 4 }}
         >
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>Show details</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Show details")}</Text>
           {showDetails ? <CaretUp color={colors.textMuted} size={12} /> : <CaretDown color={colors.textMuted} size={12} />}
         </Pressable>
 

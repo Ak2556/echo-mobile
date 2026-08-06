@@ -14,6 +14,7 @@ import { useTheme } from '../lib/theme';
 import { useFeed } from '../hooks/queries/useFeed';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
+import { ttx } from '../lib/i18n';
 
 export default function BookmarksScreen() {
   const router = useRouter();
@@ -62,9 +63,9 @@ export default function BookmarksScreen() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Bookmarks"
+        title={ttx("Bookmarks")}
         right={
-          <Pressable onPress={handleNewCollection} hitSlop={10} style={{ marginRight: 10 }} accessibilityRole="button" accessibilityLabel="New collection">
+          <Pressable onPress={handleNewCollection} hitSlop={10} style={{ marginRight: 10 }} accessibilityRole="button" accessibilityLabel={ttx("New collection")}>
             <Plus color={colors.textSecondary} size={20} />
           </Pressable>
         }
@@ -100,9 +101,9 @@ export default function BookmarksScreen() {
       ) : bookmarked.length === 0 ? (
         <EmptyState
           icon={<BookmarkSimple color="#6366F1" size={32} />}
-          title="No bookmarks yet"
-          subtitle="Save echoes you want to revisit later by tapping the bookmark icon."
-          actionLabel="Explore"
+          title={ttx("No bookmarks yet")}
+          subtitle={ttx("Save echoes you want to revisit later by tapping the bookmark icon.")}
+          actionLabel={ttx("Explore")}
           onAction={() => router.push('/(tabs)/home')}
         />
       ) : (
@@ -127,8 +128,8 @@ export default function BookmarksScreen() {
         initialValue=""
         onCancel={() => setNamingOpen(false)}
         onSubmit={handleNamingSubmit}
-        title="New collection"
-        subtitle="Group bookmarks by topic, project, or theme."
+        title={ttx("New collection")}
+        subtitle={ttx("Group bookmarks by topic, project, or theme.")}
         submitLabel="Create"
         maxLength={40}
       />

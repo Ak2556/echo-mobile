@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { showToast } from '../components/ui/Toast';
 import { track } from '../lib/analytics';
+import { ttx } from '../lib/i18n';
 
 /**
  * In-app account deletion — required by Apple App Store guideline 5.1.1(v).
@@ -51,7 +52,7 @@ export default function DeleteAccountScreen() {
 
   return (
     <ResponsiveScreen width="form" edges={['top', 'bottom']}>
-      <ScreenHeader title="Delete account" />
+      <ScreenHeader title={ttx("Delete account")} />
 
       <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }} keyboardShouldPersistTaps="handled">
         {/* Warning hero */}
@@ -70,11 +71,10 @@ export default function DeleteAccountScreen() {
           <Warning color={colors.danger} size={22} weight="duotone" style={{ marginTop: 1 }} />
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, marginBottom: 4 }}>
-              This is permanent
+              {ttx("This is permanent")}
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
-              We&apos;ll delete your profile, echoes, comments, reactions, bookmarks, and
-              chat history. None of it can be recovered.
+              {ttx("We&apos;ll delete your profile, echoes, comments, reactions, bookmarks, and chat history. None of it can be recovered.")}
             </Text>
           </View>
         </View>
@@ -82,7 +82,7 @@ export default function DeleteAccountScreen() {
         {/* What gets deleted */}
         <View style={{ gap: 6 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>
-            What we delete
+            {ttx("What we delete")}
           </Text>
           {[
             'Your profile and avatar',
@@ -101,12 +101,12 @@ export default function DeleteAccountScreen() {
         {/* Confirmation field */}
         <View style={{ marginTop: 12, gap: 8 }}>
           <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-            Type <Text style={{ color: colors.danger, fontWeight: '800' }}>DELETE</Text> to confirm
+            {ttx("Type")} <Text style={{ color: colors.danger, fontWeight: '800' }}>{ttx("DELETE")}</Text> {ttx("to confirm")}
           </Text>
           <TextInput
             value={confirmText}
             onChangeText={setConfirmText}
-            placeholder="DELETE"
+            placeholder={ttx("DELETE")}
             autoCapitalize="characters"
             autoCorrect={false}
           />
@@ -131,13 +131,13 @@ export default function DeleteAccountScreen() {
               gap: 8,
             }}
             accessibilityRole="button"
-            accessibilityLabel="Delete my account"
+            accessibilityLabel={ttx("Delete my account")}
           >
             {deleting
               ? <ActivityIndicator color="#fff" />
               : <>
                 <Trash color="#fff" size={16} weight="bold" />
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Delete my account</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{ttx("Delete my account")}</Text>
               </>}
           </Pressable>
         </View>
@@ -146,7 +146,7 @@ export default function DeleteAccountScreen() {
           onPress={() => router.back()}
           style={{ marginTop: 4, alignItems: 'center', paddingVertical: 12 }}
         >
-          <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>Cancel</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>{ttx("Cancel")}</Text>
         </Pressable>
       </ScrollView>
     </ResponsiveScreen>

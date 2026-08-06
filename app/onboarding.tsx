@@ -19,6 +19,7 @@ import { useResponsiveLayout } from '../lib/responsive';
 import { useTheme } from '../lib/theme';
 import { useAppStore } from '../store/useAppStore';
 import { TextInput } from '../components/ui/TextInput';
+import { ttx } from '../lib/i18n';
 
 /**
  * Optional "set a goal" screen.
@@ -99,7 +100,7 @@ export default function SetGoalScreen() {
         >
           <View style={[layout.formStyle, { flex: 1, justifyContent: 'center' }]}>
             <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 14 }]}>
-              Set a goal · optional
+              {ttx("Set a goal · optional")}
             </Text>
             <Text style={[font.display, {
               color: colors.text,
@@ -108,10 +109,10 @@ export default function SetGoalScreen() {
               letterSpacing: -0.3,
               marginBottom: 10,
             }]}>
-              Point Echo at what you want next.
+              {ttx("Point Echo at what you want next.")}
             </Text>
             <Text style={[font.body, { color: colors.textSecondary, fontSize: 16, lineHeight: 23, marginBottom: 24, maxWidth: 560 }]}>
-              Pick a target and Echo tailors mini-apps, habits, notes and prompts around the outcome you want. You can change or skip this anytime.
+              {ttx("Pick a target and Echo tailors mini-apps, habits, notes and prompts around the outcome you want. You can change or skip this anytime.")}
             </Text>
 
             <View style={{ gap: 16 }}>
@@ -127,13 +128,13 @@ export default function SetGoalScreen() {
               </View>
               <View>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginBottom: 8 }]}>
-                  Desired output
+                  {ttx("Desired output")}
                 </Text>
                 <TextInput
                   value={targetOutcome}
                   onChangeText={setTargetOutcome}
                   maxLength={140}
-                  placeholder="Example: lose 8 kg, pass an exam, post 3 times a week..."
+                  placeholder={ttx("Example: lose 8 kg, pass an exam, post 3 times a week...")}
                   style={{ minHeight: 58 }}
                 />
               </View>
@@ -155,8 +156,8 @@ export default function SetGoalScreen() {
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                <PrimaryButton label="Save goal" icon={<Target color="#fff" size={18} weight="bold" />} onPress={saveGoal} />
-                <SecondaryButton label="Maybe later" onPress={skip} />
+                <PrimaryButton label={ttx("Save goal")} icon={<Target color="#fff" size={18} weight="bold" />} onPress={saveGoal} />
+                <SecondaryButton label={ttx("Maybe later")} onPress={skip} />
               </View>
             </View>
           </View>

@@ -9,6 +9,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import { loadFitness, saveFitness } from '../../lib/fitness';
+import { ttx } from '../../lib/i18n';
 
 type Unit = 'metric' | 'imperial';
 type Sex = 'male' | 'female';
@@ -79,8 +80,8 @@ function HealthPulse({ accent, bmi, category, idealRange, calories, unit }: {
           <Barbell color={accent} size={20} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>Health baseline</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>BMI, range, calories.</Text>
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Health baseline")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("BMI, range, calories.")}</Text>
         </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -188,11 +189,11 @@ export default function BmiScreen() {
   };
 
   return (
-    <MiniAppShell title="BMI Calculator" subtitle="Body mass index">
+    <MiniAppShell title={ttx("BMI Calculator")} subtitle={ttx("Body mass index")}>
       <MiniCommandDeck
         accent={healthAccent}
-        title="Body metrics into targets"
-        subtitle="BMI, energy, macros, Fitness sync."
+        title={ttx("Body metrics into targets")}
+        subtitle={ttx("BMI, energy, macros, Fitness sync.")}
         metrics={[
           { label: 'BMI', value: bmi ? bmi.toFixed(1) : 'Set', detail: 'baseline' },
           { label: 'Class', value: cat?.marker ?? '-', detail: cat?.label ?? 'pending' },
@@ -228,17 +229,17 @@ export default function BmiScreen() {
           unit={unit === 'metric' ? 'kg' : 'lbs'}
         />
         {unit === 'metric' ? (
-          <InputField label="HEIGHT (cm)" value={height} onChange={setHeight} placeholder="175" unit="cm" />
+          <InputField label={ttx("HEIGHT (cm)")} value={height} onChange={setHeight} placeholder="175" unit="cm" />
         ) : (
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <InputField label="FEET" value={heightFt} onChange={setHeightFt} placeholder="5" unit="ft" />
-            <InputField label="INCHES" value={heightIn} onChange={setHeightIn} placeholder="9" unit="in" />
+            <InputField label={ttx("FEET")} value={heightFt} onChange={setHeightFt} placeholder="5" unit="ft" />
+            <InputField label={ttx("INCHES")} value={heightIn} onChange={setHeightIn} placeholder="9" unit="in" />
           </View>
         )}
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          <InputField label="AGE" value={age} onChange={setAge} placeholder="28" unit="yrs" />
+          <InputField label={ttx("AGE")} value={age} onChange={setAge} placeholder="28" unit="yrs" />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>SEX</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{ttx("SEX")}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {(['male', 'female'] as Sex[]).map(s => (
                 <Pressable key={s} onPress={() => setSex(s)} style={{ flex: 1 }}>
@@ -259,12 +260,12 @@ export default function BmiScreen() {
             <Text style={{ color: cat.color, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>{cat.marker}</Text>
             <Text style={{ color: cat.color, fontSize: 76, fontFamily: 'Fraunces_500Medium', letterSpacing: -2, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
             <Text style={{ color: cat.color, fontSize: 22, fontWeight: '800', marginBottom: 4 }}>{cat.label}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>BMI range: {cat.range}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("BMI range:")} {cat.range}</Text>
           </View>
 
           {/* Scale */}
           <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 14 }}>BMI SCALE</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 14 }}>{ttx("BMI SCALE")}</Text>
             <View style={{ height: 14, borderRadius: 7, overflow: 'hidden', flexDirection: 'row', marginBottom: 8 }}>
               {CATS.slice(0, 5).map((c, i) => (
                 <View key={i} style={{ flex: 1, backgroundColor: c.color }} />
@@ -287,14 +288,14 @@ export default function BmiScreen() {
               return (
                 <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
                   <Text style={{ color: colors.textMuted, fontSize: 13.5, lineHeight: 20 }}>
-                    Add your age to unlock daily energy needs (BMR & TDEE) and a macro plan.
+                    {ttx("Add your age to unlock daily energy needs (BMR & TDEE) and a macro plan.")}
                   </Text>
                 </GlassPanel>
               );
             }
             return (
               <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>DAILY ENERGY</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("DAILY ENERGY")}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
                   {ACTIVITY_LEVELS.map((a, i) => (
                     <Pressable key={a.label} onPress={() => setActivityIdx(i)} style={{ flex: 1 }}>
@@ -308,14 +309,14 @@ export default function BmiScreen() {
 
                 <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                   <View style={{ flex: 1, backgroundColor: accent + '14', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: accent + '2A' }}>
-                    <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>BMR (AT REST)</Text>
+                    <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("BMR (AT REST)")}</Text>
                     <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }}>{e.bmr}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>kcal / day</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ttx("kcal / day")}</Text>
                   </View>
                   <View style={{ flex: 1, backgroundColor: accent + '14', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: accent + '2A' }}>
-                    <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>TDEE (MAINTAIN)</Text>
+                    <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("TDEE (MAINTAIN)")}</Text>
                     <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }}>{e.tdee}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>kcal / day</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ttx("kcal / day")}</Text>
                   </View>
                 </View>
 
@@ -340,11 +341,11 @@ export default function BmiScreen() {
                 >
                   <Barbell color="#fff" size={16} weight="fill" />
                   <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14.5 }}>
-                    Set as my Fitness targets
+                    {ttx("Set as my Fitness targets")}
                   </Text>
                 </AnimatedPressable>
                 <Text style={{ color: colors.textMuted, fontSize: 11.5, marginTop: 8, textAlign: 'center' }}>
-                  Writes calories & macros to the Fitness app and logs today’s weight.
+                  {ttx("Writes calories & macros to the Fitness app and logs today’s weight.")}
                 </Text>
               </GlassPanel>
             );
@@ -369,8 +370,8 @@ export default function BmiScreen() {
           <EdgeFeaturePanel
             appName="BMI Calculator"
             accent={cat.color}
-            headline="Turn body metrics into a plan"
-            caption="Share non-sensitive targets, compare progress, or move calories/macros into Fitness."
+            headline={ttx("Turn body metrics into a plan")}
+            caption={ttx("Share non-sensitive targets, compare progress, or move calories/macros into Fitness.")}
             metrics={[
               { label: 'BMI', value: bmi.toFixed(1) },
               { label: 'Category', value: cat.marker },
@@ -385,7 +386,7 @@ export default function BmiScreen() {
           {/* Legend */}
           <GlassPanel variant="light" borderRadius={24} contentStyle={{ overflow: 'hidden' }}>
             <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>ALL CATEGORIES</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("ALL CATEGORIES")}</Text>
             </View>
             {CATS.map((c, i) => (
               <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 11, borderBottomWidth: i < CATS.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder, backgroundColor: cat.label === c.label ? c.color + '12' : 'transparent' }}>

@@ -11,6 +11,7 @@ import { showToast } from '../components/ui/Toast';
 import { useTheme } from '../lib/theme';
 import { fetchUpcomingOfficeHours, setOfficeHourRSVP, type OfficeHour } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
+import { ttx } from '../lib/i18n';
 
 /**
  * Office Hours — scheduled AMA sessions on a creator's profile.
@@ -50,7 +51,7 @@ function OfficeHoursScreenInner() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Office Hours"
+        title={ttx("Office Hours")}
         right={
           <AnimatedPressable
             onPress={() => router.push('/create-office-hour')}
@@ -58,7 +59,7 @@ function OfficeHoursScreenInner() {
             scaleValue={0.88}
             haptic="medium"
             accessibilityRole="button"
-            accessibilityLabel="Schedule office hour"
+            accessibilityLabel={ttx("Schedule office hour")}
           >
             <Plus color={colors.accent} size={24} weight="bold" />
           </AnimatedPressable>
@@ -73,7 +74,7 @@ function OfficeHoursScreenInner() {
         <View style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center' }}>
           <Microphone color={colors.textMuted} size={48} />
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
-            No upcoming Office Hours
+            {ttx("No upcoming Office Hours")}
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
             {"Schedule a session — invite Q's on a topic you know cold."}
@@ -85,7 +86,7 @@ function OfficeHoursScreenInner() {
             haptic="medium"
           >
             <Plus color="#fff" size={16} weight="bold" />
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Schedule</Text>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Schedule")}</Text>
           </AnimatedPressable>
         </View>
       ) : (

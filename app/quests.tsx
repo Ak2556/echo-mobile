@@ -7,6 +7,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../lib/theme';
 import { fetchActiveQuests, type Quest } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
+import { ttx } from '../lib/i18n';
 
 function QuestsScreenInner() {
   const { colors } = useTheme();
@@ -33,8 +34,8 @@ function QuestsScreenInner() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Quests"
-        right={<Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700', marginRight: 10 }}>{totalCompleted}/{quests.length} completed</Text>}
+        title={ttx("Quests")}
+        right={<Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700', marginRight: 10 }}>{totalCompleted}/{quests.length} {ttx("completed")}</Text>}
       />
 
       {loading ? (
@@ -44,13 +45,13 @@ function QuestsScreenInner() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
           {dailyQuests.length > 0 && (
-            <Section title="Today" icon={<Lightning color={colors.accent} size={16} weight="fill" />} quests={dailyQuests} />
+            <Section title={ttx("Today")} icon={<Lightning color={colors.accent} size={16} weight="fill" />} quests={dailyQuests} />
           )}
           {weeklyQuests.length > 0 && (
-            <Section title="This Week" icon={<Trophy color="#EAB308" size={16} weight="fill" />} quests={weeklyQuests} />
+            <Section title={ttx("This Week")} icon={<Trophy color="#EAB308" size={16} weight="fill" />} quests={weeklyQuests} />
           )}
           {otherQuests.length > 0 && (
-            <Section title="Other" icon={<Trophy color={colors.textMuted} size={16} />} quests={otherQuests} />
+            <Section title={ttx("Other")} icon={<Trophy color={colors.textMuted} size={16} />} quests={otherQuests} />
           )}
         </ScrollView>
       )}
@@ -102,7 +103,7 @@ function QuestRow({ quest }: { quest: Quest }) {
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>{quest.title}</Text>
-            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>+{quest.reward_xp} XP</Text>
+            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>+{quest.reward_xp} {ttx("XP")}</Text>
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18, marginBottom: 8 }}>
             {quest.description}

@@ -6,6 +6,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { useTheme } from '../../lib/theme';
 import { MOTION } from '../../lib/motion';
+import { ttx } from '../../lib/i18n';
 
 export type ToolCallStatus = 'pending_confirm' | 'running' | 'ok' | 'error' | 'rejected';
 
@@ -140,7 +141,7 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
                 }}
                 haptic="light"
               >
-                <Text style={{ color: colors.text, fontWeight: '600' }}>Reject</Text>
+                <Text style={{ color: colors.text, fontWeight: '600' }}>{ttx("Reject")}</Text>
               </AnimatedPressable>
               <AnimatedPressable
                 onPress={() => onConfirm?.(item)}
@@ -155,7 +156,7 @@ export function ToolCallCard({ item, onConfirm, onReject }: Props) {
                 }}
                 haptic="medium"
               >
-                <Text style={{ color: '#fff', fontWeight: '700' }}>Confirm</Text>
+                <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Confirm")}</Text>
               </AnimatedPressable>
             </View>
           )}
@@ -201,9 +202,9 @@ function PollPreview({ args, accentColor }: { args: any; accentColor: string }) 
         <View style={{ width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: `${accentColor}22` }}>
           <ChartBar color={accentColor} size={12} weight="fill" />
         </View>
-        <Text style={{ color: accentColor, fontSize: 11, fontWeight: '800', letterSpacing: 0.6 }}>POLL</Text>
+        <Text style={{ color: accentColor, fontSize: 11, fontWeight: '800', letterSpacing: 0.6 }}>{ttx("POLL")}</Text>
         <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: colors.textMuted, opacity: 0.5 }} />
-        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>{duration} window</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>{duration} {ttx("window")}</Text>
       </View>
 
       <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', lineHeight: 21 }} numberOfLines={3}>
@@ -228,7 +229,7 @@ function PollPreview({ args, accentColor }: { args: any; accentColor: string }) 
           </View>
         )) : (
           <View style={{ paddingVertical: 10, alignItems: 'center' }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontStyle: 'italic' }}>Waiting for options…</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontStyle: 'italic' }}>{ttx("Waiting for options…")}</Text>
           </View>
         )}
       </View>

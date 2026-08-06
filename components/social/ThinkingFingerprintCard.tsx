@@ -5,6 +5,7 @@ import { Fingerprint, Quotes } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useThinkingFingerprint } from '../../hooks/queries/useThinkingFingerprint';
 import { track } from '../../lib/analytics';
+import { ttx } from '../../lib/i18n';
 
 /**
  * Thinking Fingerprint — an AI-synthesised portrait of how a user thinks,
@@ -44,7 +45,7 @@ export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; is
     return (
       <View style={{ marginHorizontal: 16, marginBottom: 16, padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <ActivityIndicator color={colors.accent} size="small" />
-        <Text style={{ color: colors.textMuted, fontSize: 13 }}>Reading their thinking fingerprint…</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("Reading their thinking fingerprint…")}</Text>
       </View>
     );
   }
@@ -68,7 +69,7 @@ export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; is
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <Fingerprint color={colors.accent} size={18} weight="fill" />
         <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>
-          THINKING FINGERPRINT
+          {ttx("THINKING FINGERPRINT")}
         </Text>
       </View>
 
@@ -98,8 +99,8 @@ export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; is
       {/* Range gauge: focused ↔ wide-ranging */}
       <View style={{ marginBottom: data.reasoningStyle || data.signatureQuestion ? 14 : 0 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>FOCUSED</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>WIDE-RANGING</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>{ttx("FOCUSED")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>{ttx("WIDE-RANGING")}</Text>
         </View>
         <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.surfaceHover, overflow: 'hidden' }}>
           <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.accent, width: `${Math.max(4, Math.min(100, data.range))}%` }} />
@@ -110,7 +111,7 @@ export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; is
       {data.reasoningStyle ? (
         <View style={{ marginBottom: data.signatureQuestion ? 12 : 0 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.5, marginBottom: 3 }}>
-            HOW {isSelf ? 'YOU' : 'THEY'} REASON
+            {ttx("HOW")} {isSelf ? 'YOU' : 'THEY'} {ttx("REASON")}
           </Text>
           <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20 }}>
             {data.reasoningStyle}

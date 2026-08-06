@@ -12,6 +12,7 @@ import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
 import { User } from '../types';
+import { ttx } from '../lib/i18n';
 
 export default function MutedUsersScreen() {
   const { mutedIds, toggleMute, getUser } = useAppStore();
@@ -24,15 +25,15 @@ export default function MutedUsersScreen() {
   return (
     <ResponsiveScreen>
       <ScreenHeader
-        title="Muted Users"
+        title={ttx("Muted Users")}
         right={<Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginRight: 8 }}>{mutedUsers.length}</Text>}
       />
 
       {mutedUsers.length === 0 ? (
         <EmptyState
           icon={<SpeakerSlash color="#6366F1" size={32} />}
-          title="No muted users"
-          subtitle="Muting hides their echoes from your feed but doesn't notify them."
+          title={ttx("No muted users")}
+          subtitle={ttx("Muting hides their echoes from your feed but doesn't notify them.")}
         />
       ) : (
         <FlashList
@@ -64,7 +65,7 @@ export default function MutedUsersScreen() {
                   scaleValue={0.93}
                   haptic="medium"
                 >
-                  <Text style={{ color: colors.text, fontSize: fontSizes.small, fontWeight: '600' }}>Unmute</Text>
+                  <Text style={{ color: colors.text, fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Unmute")}</Text>
                 </AnimatedPressable>
               </View>
             </Animated.View>
