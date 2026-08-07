@@ -150,6 +150,9 @@ export interface SettingsSlice {
   clearNotifications: () => void;
   clearAllData: () => void;
   getCacheSize: () => string;
+  /** Re-read persisted settings into the store (used after async-storage
+   *  hydration when MMKV isn't available, so saved settings aren't lost). */
+  rehydrate: () => void;
 }
 
 function b(key: string, def: boolean) { return persistGet(key, def); }
@@ -168,6 +171,15 @@ function getAiModel(): EchoAIModel {
 
 export function createSettingsSlice(set: (partial: object) => void, _get: () => unknown): SettingsSlice {
   return {
+    // Re-read every persisted setting by re-running this initializer against the
+    // (now-hydrated) storage cache, then apply just the values (not the setters).
+    // Keeps a single source of truth for defaults/keys — no duplicated list.
+    rehydrate: () => {
+      const fresh = createSettingsSlice(() => {}, _get) as unknown as Record<string, unknown>;
+      const patch: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(fresh)) if (typeof v !== 'function') patch[k] = v;
+      set(patch);
+    },
     hapticEnabled: b('hapticEnabled', true), setHapticEnabled: s(set, 'hapticEnabled'),
     notificationsEnabled: b('notificationsEnabled', true), setNotificationsEnabled: s(set, 'notificationsEnabled'),
     privateAccount: b('privateAccount', false), setPrivateAccount: s(set, 'privateAccount'),
