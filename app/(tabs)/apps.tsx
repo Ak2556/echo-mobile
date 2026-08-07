@@ -6,7 +6,7 @@ import Animated, { Extrapolation, FadeIn, FadeInDown, interpolate, useAnimatedPr
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Pulse, Target, MagnifyingGlass, CaretRight, X, ArrowsLeftRight } from 'phosphor-react-native';
+import { Pulse, Target, MagnifyingGlass, CaretRight, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { getTodayProductivity, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
 import { formatMoney } from '../../lib/expenses';
@@ -54,77 +54,30 @@ function Eyebrow({ children, trailing }: { children: React.ReactNode; trailing?:
   );
 }
 
-function AppCard({ app, index, width, onOpen, flagship }: { app: MiniApp; index: number; width: number; onOpen: (app: MiniApp) => void; flagship?: boolean }) {
+function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; width: number; onOpen: (app: MiniApp) => void }) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  // Clean app-grid tile: one big icon + its name. Uniform by construction (every
+  // tile is icon + a single-line label), so the grid stays perfectly even.
+  const iconSize = Math.min(68, Math.max(50, Math.round(width * 0.58)));
   return (
     <Animated.View
-      entering={FadeInDown.delay(Math.min(index, 10) * 22).duration(240).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
+      entering={FadeInDown.delay(Math.min(index, 10) * 20).duration(220).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
       style={{ width }}
     >
       <Pressable
         onPress={() => onOpen(app)}
         accessibilityRole="button"
         accessibilityLabel={`${t('common.open')} ${app.name}`}
-        style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.965 : 1 }] })}
+        style={({ pressed }) => ({ alignItems: 'center', gap: 8, paddingVertical: 8, transform: [{ scale: pressed ? 0.92 : 1 }] })}
       >
-        <View style={{
-          minHeight: 148,
-          borderRadius: 20,
-          overflow: 'hidden',
-          backgroundColor: colors.surface,
-          borderWidth: flagship ? 1 : StyleSheet.hairlineWidth,
-          borderColor: flagship ? `${app.color}88` : colors.glassBorder,
-          padding: 15,
-          justifyContent: 'flex-start',
-        }}>
-          <LinearGradient
-            colors={flagship
-              ? [`${app.color}3A`, `${app.color}14`, 'transparent']
-              : [`${app.color}22`, `${app.color}0A`, 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0.9, y: 1 }}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-          {flagship && (
-            <View style={{
-              position: 'absolute', top: 10, right: 10,
-              borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3,
-              backgroundColor: `${app.color}26`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${app.color}66`,
-            }}>
-              <Text style={{ color: app.color, fontSize: 9.5, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 }}>{ttx("CORE")}</Text>
-            </View>
-          )}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
-            <MiniAppIcon id={app.id} color={app.color} size={44} />
-            <Text style={{ flex: 1, minWidth: 0, color: colors.text, fontSize: 16, fontFamily: 'Inter_700Bold', lineHeight: 20 }} numberOfLines={2}>
-              {app.name}
-            </Text>
-          </View>
-          <View style={{ marginTop: 12 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: 'Inter_500Medium', lineHeight: 18 }} numberOfLines={2}>
-              {app.promise}
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
-            {app.highlights.slice(0, 2).map(item => (
-              <View key={item} style={{ borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 10.8, fontFamily: 'Inter_600SemiBold' }} numberOfLines={1}>{item}</Text>
-              </View>
-            ))}
-          </View>
-          {/* "Replaces …" — the reason this beats downloading a separate app:
-              one built-in tool subsumes the standalone thing you'd otherwise get. */}
-          {app.replaces && app.replaces.length > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 11 }}>
-              <ArrowsLeftRight color={colors.textMuted} size={11} weight="bold" />
-              <Text style={{ flex: 1, color: colors.textMuted, fontSize: 10.6, fontFamily: 'Inter_500Medium' }} numberOfLines={1}>
-                {ttx('Replaces')} {app.replaces.slice(0, 2).join(' · ')}
-              </Text>
-            </View>
-          )}
-        </View>
+        <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
+        <Text
+          style={{ color: colors.text, fontSize: 12.5, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 16 }}
+          numberOfLines={1}
+        >
+          {app.name}
+        </Text>
       </Pressable>
     </Animated.View>
   );
@@ -246,7 +199,7 @@ export default function AppsScreen() {
 
   const HEADER_HEIGHT = insets.top + 70;
   const contentMaxWidth = Math.min(windowWidth, layout.isDesktop ? 980 : layout.wideMaxWidth);
-  const columns = layout.isDesktop ? 4 : layout.isTablet ? 3 : 2;
+  const columns = layout.isDesktop ? 6 : layout.isTablet ? 4 : 3;
   const cardWidth = Math.floor((contentMaxWidth - PAD * 2 - GAP * (columns - 1)) / columns);
 
   const scrollY = useSharedValue(0);
@@ -344,7 +297,7 @@ export default function AppsScreen() {
     for (let i = 0; i < list.length; i += columns) grid.push(list.slice(i, i + columns));
     return grid.map((row, ri) => (
       <View key={ri} style={{ flexDirection: 'row', gap: GAP }}>
-        {row.map((app, ci) => <AppCard key={app.id} app={app} width={cardWidth} index={ri * columns + ci} onOpen={openTool} flagship={isFlagshipMiniApp(app.id)} />)}
+        {row.map((app, ci) => <AppCard key={app.id} app={app} width={cardWidth} index={ri * columns + ci} onOpen={openTool} />)}
         {Array.from({ length: columns - row.length }).map((_, i) => <View key={`sp-${i}`} style={{ width: cardWidth }} />)}
       </View>
     ));

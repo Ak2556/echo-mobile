@@ -521,9 +521,9 @@ export default function TabLayout() {
       <Tabs.Screen name="explore" options={{ title: t('nav.explore') }} />
       <Tabs.Screen name="marketplace" options={{ title: t('nav.market') }} />
       <Tabs.Screen name="chat" options={{ title: t('nav.chat') }} />
-      <Tabs.Screen name="you" options={{ title: t('nav.you') }} />
-      <Tabs.Screen name="notifications" options={{ title: t('nav.alerts'), href: null }} />
       <Tabs.Screen name="apps" options={{ title: t('nav.tools') }} />
+      <Tabs.Screen name="notifications" options={{ title: t('nav.alerts'), href: null }} />
+      <Tabs.Screen name="you" options={{ title: t('nav.you') }} />
     </Tabs>
   );
 }
