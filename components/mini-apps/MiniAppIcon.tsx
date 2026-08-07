@@ -1,5 +1,4 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowsLeftRight,
@@ -82,54 +81,25 @@ export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppG
 export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = true }: MiniAppIconProps) {
   if (!plate) return <MiniAppGlyph id={id} color={color} size={size} weight={weight} />;
 
-  const radius = Math.round(size * 0.28);
+  const radius = Math.round(size * 0.235); // iOS-squircle-ish
+  // A restrained diagonal gradient — subtle depth, no glossy sheen and no
+  // decorative ring (that gloss is exactly what reads cheap/"AI-made"). Flat,
+  // confident, generous glyph padding — the modern app-icon look.
   return (
-    <View style={{ width: size, height: size }}>
-      {/* Three-stop diagonal gradient (lighter top-left → base → deeper
-          bottom-right) gives the plate real depth — an App-Store-grade icon,
-          not a flat swatch. */}
-      <LinearGradient
-        colors={[shade(color, -0.16), color, shade(color, 0.34)]}
-        locations={[0, 0.55, 1]}
-        start={{ x: 0.15, y: 0 }}
-        end={{ x: 0.85, y: 1 }}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: radius,
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Glossy top sheen for a premium, lit-from-above feel. */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: Math.max(6, size * 0.42),
-            backgroundColor: 'rgba(255,255,255,0.20)',
-            borderBottomLeftRadius: size,
-            borderBottomRightRadius: size,
-          }}
-        />
-        <MiniAppGlyph id={id} color="#fff" size={Math.round(size * 0.54)} weight={weight} />
-      </LinearGradient>
-      {/* Crisp inner hairline ring — separates the icon cleanly from any
-          background and sharpens the edge at every size. */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          borderRadius: radius,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: 'rgba(255,255,255,0.28)',
-        }}
-      />
-    </View>
+    <LinearGradient
+      colors={[shade(color, -0.1), color, shade(color, 0.18)]}
+      locations={[0, 0.5, 1]}
+      start={{ x: 0.15, y: 0 }}
+      end={{ x: 0.85, y: 1 }}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: radius,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <MiniAppGlyph id={id} color="#fff" size={Math.round(size * 0.46)} weight={weight} />
+    </LinearGradient>
   );
 }
