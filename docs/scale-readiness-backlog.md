@@ -78,7 +78,7 @@ Mostly **infra + DB**, not app code. This is where the biggest unknowns live.
   send/read, realtime subscribe. Ramp to 10K virtual users against a staging
   Supabase project. **Everything below is a hypothesis until this runs** — it
   tells you the actual ceiling and which fix matters.
-- **[M ✅] Unfiltered global realtime fan-out.** `useRealtimeNewEchoes`
+- **[M ~ partial] Unfiltered global realtime fan-out.** MITIGATED 2026-08-07 (foreground-gate + burst batching); full rework pending load test. `useRealtimeNewEchoes`
   (`lib/realtime.ts`) subscribes *every* online client to *all* INSERTs on
   `public_echoes` with no filter. At 10K concurrent + active posting this is
   N×M message fan-out — a likely first bottleneck. Fix: throttle/batch, gate to

@@ -2,6 +2,7 @@
 // function. No-ops gracefully if SUPABASE_URL isn't configured.
 
 import { useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { supabase } from './supabase';
 
 /** Generate a unique-per-mount channel suffix. supabase-realtime keeps a
@@ -20,14 +21,42 @@ export function useRealtimeNewEchoes(): { count: number; reset: () => void } {
 
   useEffect(() => {
     if (!process.env.EXPO_PUBLIC_SUPABASE_URL) return;
-    const ch = supabase
-      .channel(uniqueChannelName('public_echoes_inserts'))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'public_echoes' }, () => {
-        ref.current += 1;
-        setCount(ref.current);
-      })
-      .subscribe();
-    return () => { void supabase.removeChannel(ch); };
+    // Scale P0 (realtime fan-out): this is a global, unfiltered subscription, so
+    // every online client would otherwise receive every new-echo INSERT. Two
+    // bounded mitigations that cost nothing in UX:
+    //  1) Only hold the live subscription while the app is FOREGROUND — a
+    //     backgrounded client can't see the "new echoes" pill, so dropping it
+    //     cuts fan-out to actively-watching users.
+    //  2) BATCH bursts of inserts into one count update (fewer re-renders).
+    // (The deeper batch/poll rework is deliberately deferred to after the cloud
+    //  load test quantifies the real ceiling — see docs/scale-readiness-backlog.)
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    let pending = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const flush = () => {
+      timer = null;
+      if (pending > 0) { ref.current += pending; pending = 0; setCount(ref.current); }
+    };
+    const subscribe = () => {
+      if (ch) return;
+      ch = supabase
+        .channel(uniqueChannelName('public_echoes_inserts'))
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'public_echoes' }, () => {
+          pending += 1;
+          if (!timer) timer = setTimeout(flush, 800);
+        })
+        .subscribe();
+    };
+    const unsubscribe = () => {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (ch) { void supabase.removeChannel(ch); ch = null; }
+    };
+
+    if (AppState.currentState === 'active') subscribe();
+    const appSub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') subscribe(); else unsubscribe();
+    });
+    return () => { appSub.remove(); unsubscribe(); };
   }, []);
 
   const reset = () => { ref.current = 0; setCount(0); };

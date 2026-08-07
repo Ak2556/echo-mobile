@@ -129,8 +129,12 @@ Tracked in full there; the launch-gating subset:
 
 - [ ] `P0` **Load test on cloud staging** — real ceiling (local run only proved
       the harness). Needs a prod-like staging project.
-- [ ] `P0` **Realtime fan-out fix** (backlog #2) — unfiltered `public_echoes`
-      subscription; quantify + bound after the cloud load test.
+- [~] `P0` **Realtime fan-out fix** (backlog #2) — unfiltered `public_echoes`
+      subscription. **Mitigated (2026-08-07):** `useRealtimeNewEchoes` now
+      foreground-gates the subscription (dropped while backgrounded) and batches
+      insert bursts into one count update — cuts fan-out to actively-watching
+      users at zero UX cost. Full batch/poll rework still deferred until the
+      cloud load test quantifies the real ceiling.
 - [ ] `P1` **Index audit under load**, **network-status banner + offline outbox
       coverage**, **empty/error/loading sweep**, **accessibility pass**.
 
