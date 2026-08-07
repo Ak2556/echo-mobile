@@ -69,7 +69,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
         onPress={() => onOpen(app)}
         accessibilityRole="button"
         accessibilityLabel={`${t('common.open')} ${app.name}`}
-        style={({ pressed }) => ({ alignItems: 'center', gap: 8, paddingVertical: 8, transform: [{ scale: pressed ? 0.92 : 1 }] })}
+        style={({ pressed }) => ({ width: '100%', alignItems: 'center', gap: 8, paddingVertical: 8, transform: [{ scale: pressed ? 0.92 : 1 }] })}
       >
         <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
         <Text
