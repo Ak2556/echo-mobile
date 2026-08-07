@@ -14,11 +14,24 @@ Supabase/OpenRouter/Apple console access · `{eng}` engineering task ·
 `{external}` third-party/legal. **Priority:** `P0` launch-blocking · `P1`
 launch-week · `P2` fast-follow.
 
-_Last updated: 2026-08-03._
+_Last updated: 2026-08-07._
 
 ---
 
 ## ✅ Resolved / verified this session
+
+- [x] **Backend drift re-verified (2026-08-07)** `{eng}` — `npm run audit:backend`
+      green: AI model IDs, all 4 storage buckets, all enum↔check-constraint pairs.
+- [x] **Connection pooling — N/A client-side** `P0` `{eng}` — no direct Postgres
+      connections anywhere (`postgres://`/`:5432`/`pg.Pool` = 0 hits); the app and
+      edge functions are 100% supabase-js/PostgREST over HTTPS, so client-side
+      connection exhaustion is not a risk. (Server pool sizing still a dashboard note.)
+- [x] **Prod AI + push secrets present** `{dashboard}` — `OPENROUTER_API_KEY`,
+      `GEMINI_API_KEY`, and `DAILY_PUSH_SECRET` all set in Supabase secrets.
+- [x] **Voice AI live on Google Gemini direct** `{eng}` — voice-command now calls
+      Google AI Studio directly (free tier accepts audio); `GEMINI_VOICE_MODEL=
+      gemini-flash-latest`. NOTE: still a FREE tier → the ~daily-quota cap in A-P0
+      applies (heavy testing exhausts it; enable Google billing to lift).
 
 - [x] **Backend drift audit clean** `{eng}` — `npm run audit:backend` vs prod: AI
       model IDs, all 4 storage buckets, and every app enum↔check-constraint pass.
@@ -50,9 +63,8 @@ _Last updated: 2026-08-03._
       is the real cap-limiter. See memory `ai_quota_blocker`.
 - [ ] `P0` **Supabase plan + compute tier** — free/Pro? compute add-on? read
       replicas for feed reads? This *is* the capacity ceiling.
-- [ ] `P0` **Connection pooling** — confirm client uses the **Supavisor
-      transaction pooler (6543)**, not direct connections. Unpooled = Postgres
-      connection exhaustion at scale.
+- [x] `P0` **Connection pooling** — VERIFIED N/A: no direct Postgres connections;
+      all traffic is supabase-js/PostgREST over HTTPS (see resolved list above).
 - [ ] `P0` **Point-in-time recovery / backups enabled** — the rollback plan
       assumes it. Verify before any further prod migration.
 - [ ] `P1` **Realtime quota** — plan's concurrent-connection + message-rate
@@ -93,8 +105,9 @@ _Last updated: 2026-08-03._
         from cron.job_run_details order by start_time desc limit 5;         -- expect recent 'succeeded'
       ```
       _(Automated check blocked on purpose: cron `command` embeds the secret.)_
-- [ ] `P0` **Prod secrets set** `{dashboard}` — `OPENROUTER_API_KEY` (AI/mod/embeddings),
-      `DAILY_PUSH_SECRET`. Confirm present.
+- [x] `P0` **Prod secrets set** `{dashboard}` — `OPENROUTER_API_KEY`, `GEMINI_API_KEY`,
+      `DAILY_PUSH_SECRET` all confirmed present (2026-08-07). _Cron still needs the
+      active-job + recent-run verification below._
 - [ ] `P1` **Cron list cost review** `{dashboard}` — the retention crons were
       created via dashboard/SQL, not migrations, so they can't be enumerated in
       code (and `cron.job.command` embeds secrets, so automated reads are blocked).
