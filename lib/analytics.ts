@@ -48,6 +48,7 @@ export type AnalyticsEvent =
   | 'product_onboarding_chat_sent'
   | 'product_onboarding_draft_created'
   | 'product_onboarding_completed'
+  | 'onboarding_follows'
   | 'persona_learning_started'
   | 'persona_learning_disabled'
   | 'persona_snapshot_reset'

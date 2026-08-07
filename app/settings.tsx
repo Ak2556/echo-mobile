@@ -14,7 +14,7 @@ import {
   BellSlash, Rectangle, FileText,
   Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
   Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
-  Sparkle,
+  Sparkle, Microphone,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -903,6 +903,8 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Auto-read AI replies")} subtitle={ttx("Speak each answer aloud when it finishes")} right={SwitchEl(s.autoReadAiReplies, s.setAutoReadAiReplies)} />
             {divider}
             <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Auto-read messages")} subtitle={ttx("Read incoming DMs aloud while a chat is open")} right={SwitchEl(s.autoReadMessages, s.setAutoReadMessages)} />
+            {divider}
+            <SettingsRow theme={theme} icon={Microphone} label={ttx("Voice captions")} subtitle={ttx("Show what you said on screen after speaking")} right={SwitchEl(s.voiceCaptions, s.setVoiceCaptions)} />
             {divider}
             <SettingsRow theme={theme} icon={Bell} label={ttx("Notification Preferences")} subtitle={ttx("Customize which notifications you receive")} onPress={() => router.push('/notification-prefs')} />
             {divider}

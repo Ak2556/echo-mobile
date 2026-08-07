@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, TextInput, ScrollView, Platform, useWindowDimensions,
-  KeyboardAvoidingView, ActivityIndicator,
+  KeyboardAvoidingView, ActivityIndicator, Image, Alert,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
   withRepeat, withSequence, withDecay,
 } from 'react-native-reanimated';
-import { ArrowLeft, Check, At, Brain } from 'phosphor-react-native';
+import { ArrowLeft, Check, At, Brain, UsersThree, Plus, Camera } from 'phosphor-react-native';
 import { ARCHETYPE_QUESTIONS, ARCHETYPES, ThinkingArchetype, scoreArchetype } from '../../lib/thinkingArchetype';
 import { supabase } from '../../lib/supabase';
+import { setRemoteFollow, uploadAvatar } from '../../lib/supabaseEchoApi';
+import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { refreshAuthSession, useAuth } from '../../lib/auth';
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -19,10 +23,18 @@ import { showToast } from '../../components/ui/Toast';
 import { track, identify } from '../../lib/analytics';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { WARM_AVATAR_COLORS } from '../../lib/avatarPalette';
+import { APP_LANGUAGES } from '../../lib/languages';
 import { ttx } from '../../lib/i18n';
 
 const ACCENT = '#E06030';
 const SPRING = { damping: 24, stiffness: 300 };
+
+// Named panel indices — the wizard is an animated horizontal "tape" of panels.
+// Deriving the tape width / progress / counter from these constants (instead of
+// magic numbers) keeps the flow correct as steps are added or reordered.
+const STEP = { NAME: 0, AVATAR: 1, BIO: 2, INTERESTS: 3, ARCHETYPE: 4, FOLLOW: 5, CONFIRM: 6 } as const;
+const PANEL_COUNT = 7;
+const NUMBERED_STEPS = 6; // input steps 0..5; CONFIRM is the celebratory outro (no counter)
 
 // Warm editorial identity palette — single source: lib/avatarPalette.ts.
 const AVATAR_COLORS = [...WARM_AVATAR_COLORS];
@@ -133,6 +145,53 @@ function InterestChip({ label, selected, onPress }: {
   );
 }
 
+function SuggestedFollowRow({ user, selected, onToggle }: {
+  user: { id: string; username: string; displayName: string; avatarColor: string; bio?: string; followerCount?: number };
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  const initial = (user.displayName || user.username || '?').charAt(0).toUpperCase();
+  return (
+    <AnimatedPressable
+      onPress={onToggle}
+      scaleValue={0.98}
+      haptic="light"
+      style={{
+        flexDirection: 'row', alignItems: 'center', gap: 12,
+        paddingVertical: 10, paddingHorizontal: 12, marginBottom: 8,
+        borderRadius: 14, borderWidth: 1,
+        borderColor: selected ? ACCENT : '#27272A',
+        backgroundColor: selected ? `${ACCENT}1A` : '#18181B',
+      }}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: selected }}
+      accessibilityLabel={`${ttx("Follow")} ${user.displayName}`}
+    >
+      <View style={{
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: user.avatarColor || '#6366F1',
+        alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{initial}</Text>
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{user.displayName}</Text>
+        <Text numberOfLines={1} style={{ color: '#52525B', fontSize: 13 }}>
+          @{user.username}{user.followerCount ? ` · ${user.followerCount} ${ttx("followers")}` : ''}
+        </Text>
+      </View>
+      <View style={{
+        width: 30, height: 30, borderRadius: 15,
+        alignItems: 'center', justifyContent: 'center',
+        backgroundColor: selected ? ACCENT : 'transparent',
+        borderWidth: selected ? 0 : 1.5, borderColor: '#3F3F46',
+      }}>
+        {selected ? <Check color="#fff" size={17} weight="bold" /> : <Plus color="#A1A1AA" size={17} weight="bold" />}
+      </View>
+    </AnimatedPressable>
+  );
+}
+
 function ConfettiPiece({ startX, color, velocity, xDrift, rotDeg, w, h }: {
   startX: number; color: string; velocity: number;
   xDrift: number; rotDeg: number; w: number; h: number;
@@ -202,6 +261,9 @@ export default function SignupWizard() {
     setHasCompletedProductOnboarding,
     setOnboardingDraftCreated,
     reduceAnimations,
+    appLanguage,
+    setAppLanguage,
+    setAvatarUrl,
   } = useAppStore();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -210,9 +272,54 @@ export default function SignupWizard() {
 
   useEffect(() => { track('signup_started'); }, []);
   const [avatarColor, setAvatarColorLocal] = useState(ACCENT);
+  const [avatarUrl, setAvatarUrlLocal] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [bioText, setBioText] = useState('');
+
+  // Optional profile photo. Mirrors edit-profile: pick → (remote) upload to
+  // Supabase storage → keep the public URL; offline just previews the local URI.
+  const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(ttx('Permission needed'), ttx('Photo library access is required to add a profile picture.'));
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.72, base64: true,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    if (!isSupabaseRemote()) {
+      setAvatarUrlLocal(asset.uri);
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const publicUrl = await uploadAvatar({
+        uri: asset.uri, base64: asset.base64, mimeType: asset.mimeType, fileName: asset.fileName,
+      });
+      setAvatarUrlLocal(publicUrl);
+    } catch (e) {
+      Alert.alert(ttx('Upload failed'), (e as Error).message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [archetypeAnswers, setArchetypeAnswers] = useState<Record<string, ThinkingArchetype>>({});
+  const { data: suggested = [], isLoading: suggestedLoading } = useSuggestedUsers();
+  const [followIds, setFollowIds] = useState<string[]>([]);
+  // Pre-select all suggestions once they load so a brand-new user's feed is
+  // populated by default; they can deselect any before continuing.
+  const followInit = useRef(false);
+  useEffect(() => {
+    if (!followInit.current && suggested.length > 0) {
+      followInit.current = true;
+      setFollowIds(suggested.map(u => u.id));
+    }
+  }, [suggested]);
+  const toggleFollow = (id: string) =>
+    setFollowIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
   const [saving, setSaving] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
 
@@ -293,11 +400,11 @@ export default function SignupWizard() {
   }));
 
   useEffect(() => {
-    progressBarWidth.value = withSpring((currentStep / 5) * screenWidth, SPRING);
+    progressBarWidth.value = withSpring((currentStep / (PANEL_COUNT - 1)) * screenWidth, SPRING);
   }, [currentStep, progressBarWidth, screenWidth]);
 
   useEffect(() => {
-    if (currentStep === 5) {
+    if (currentStep === STEP.CONFIRM) {
       ctaRingOpacity.value = withRepeat(
         withSequence(
           withTiming(0.7, { duration: 1000 }),
@@ -328,9 +435,10 @@ export default function SignupWizard() {
 
   const goToStep = useCallback((n: number, instant = false) => {
     setCurrentStep(n);
-    const hidden = n === 0 || n === 4;
-    backOpacity.value = withTiming(hidden ? 0 : 1, { duration: 200 });
-    counterOpacity.value = withTiming(n === 4 ? 0 : 1, { duration: 200 });
+    const backHiddenStep = n === STEP.NAME || n === STEP.CONFIRM;
+    backOpacity.value = withTiming(backHiddenStep ? 0 : 1, { duration: 200 });
+    // Hide the "Step X of N" counter on the long archetype quiz and the outro.
+    counterOpacity.value = withTiming(n === STEP.ARCHETYPE || n === STEP.CONFIRM ? 0 : 1, { duration: 200 });
     if (instant || reduceAnimations) {
       tapeOffset.value = -n * stepWidth;
     } else {
@@ -362,6 +470,7 @@ export default function SignupWizard() {
       username: usernameClean,
       display_name: displayName.trim(),
       avatar_color: avatarColor,
+      avatar_url: avatarUrl || null,
       bio: bioText.trim() || null,
       updated_at: new Date().toISOString(),
     });
@@ -383,6 +492,7 @@ export default function SignupWizard() {
     storeSetDisplayName(displayName.trim());
     setUsername(usernameClean);
     storeSetAvatarColor(avatarColor);
+    if (avatarUrl) setAvatarUrl(avatarUrl);
     storeSetBio(bioText.trim());
     setInterests(selectedInterests);
     if (Object.keys(archetypeAnswers).length > 0) {
@@ -392,6 +502,14 @@ export default function SignupWizard() {
     setHasCompletedProductOnboarding(false);
     setOnboardingDraftCreated(false);
 
+    // Seed the feed: follow the people the user kept selected. Done here (after
+    // the profile upsert) so the follows.follower_id FK is satisfied. Best-effort
+    // — a failed follow never blocks finishing onboarding.
+    if (followIds.length > 0) {
+      await Promise.allSettled(followIds.map(id => setRemoteFollow(id, true)));
+      track('onboarding_follows', { count: followIds.length });
+    }
+
     identify(session.user.id, { username: usernameClean });
     track('signup_completed', { interests_count: selectedInterests.length });
 
@@ -400,7 +518,7 @@ export default function SignupWizard() {
     router.replace('/welcome' as never);
   };
 
-  const backHidden = currentStep === 0 || currentStep === 5;
+  const backHidden = currentStep === STEP.NAME || currentStep === STEP.CONFIRM;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
@@ -431,7 +549,7 @@ export default function SignupWizard() {
           <Animated.Text style={[{
             color: '#52525B', fontSize: 13, fontWeight: '600',
           }, counterOpacityStyle]}>
-            {ttx("Step")} {currentStep + 1} {ttx("of 5")}
+            {ttx("Step")} {currentStep + 1} {ttx("of")} {NUMBERED_STEPS}
           </Animated.Text>
 
           <View style={{ width: 30 }} />
@@ -441,7 +559,7 @@ export default function SignupWizard() {
           <Animated.View style={[{
             position: 'absolute',
             top: 0, bottom: 0, left: 0,
-            width: stepWidth * 6,
+            width: stepWidth * PANEL_COUNT,
             flexDirection: 'row',
           }, tapeStyle]}>
 
@@ -453,9 +571,54 @@ export default function SignupWizard() {
                 }}>
                   {ttx("Welcome to Echo")}
                 </Text>
-                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 32 }}>
+                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 20 }}>
                   {ttx("The social network for thinking out loud. Let's set up your account.")}
                 </Text>
+
+                {/* Pick a language up front — the whole flow switches instantly
+                    (the wizard subscribes to the store, so ttx() re-renders). */}
+                <Text style={{
+                  color: '#A1A1AA', fontSize: 12, fontWeight: '700',
+                  letterSpacing: 0.8, marginBottom: 8,
+                }}>
+                  {ttx("LANGUAGE")}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={{ gap: 8, paddingRight: 8 }}
+                  style={{ marginBottom: 22, flexGrow: 0 }}
+                >
+                  {APP_LANGUAGES.map(lang => {
+                    const selected = appLanguage === lang.code;
+                    return (
+                      <AnimatedPressable
+                        key={lang.code}
+                        onPress={() => setAppLanguage(lang.code)}
+                        scaleValue={0.96}
+                        haptic="light"
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={lang.englishName}
+                      >
+                        {/* Box on an inner View (not the touchable) so it sizes to
+                            its label inside the horizontal ScrollView. */}
+                        <View style={{
+                          paddingHorizontal: 14, paddingVertical: 9,
+                          borderRadius: 20,
+                          backgroundColor: selected ? ACCENT : '#18181B',
+                          borderWidth: 1,
+                          borderColor: selected ? ACCENT : '#3F3F46',
+                        }}>
+                          <Text style={{ color: selected ? '#fff' : '#A1A1AA', fontWeight: '600', fontSize: 14 }}>
+                            {lang.nativeName}
+                          </Text>
+                        </View>
+                      </AnimatedPressable>
+                    );
+                  })}
+                </ScrollView>
 
                 <Text style={{
                   color: '#A1A1AA', fontSize: 12, fontWeight: '700',
@@ -575,11 +738,19 @@ export default function SignupWizard() {
                   {ttx("Make it yours")}
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 28 }}>
-                  {ttx("Pick a color that represents you.")}
+                  {ttx("Add a photo, or pick a color that represents you.")}
                 </Text>
 
-                <View style={{ alignItems: 'center', marginBottom: 28 }}>
-                  <View style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ alignItems: 'center', marginBottom: 18 }}>
+                  <AnimatedPressable
+                    onPress={handlePickAvatar}
+                    scaleValue={0.96}
+                    haptic="light"
+                    disabled={uploadingAvatar}
+                    accessibilityRole="button"
+                    accessibilityLabel={avatarUrl ? ttx('Change photo') : ttx('Add photo')}
+                    style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}
+                  >
                     <Animated.View style={[{
                       position: 'absolute',
                       top: -8, left: -8, right: -8, bottom: -8,
@@ -590,12 +761,39 @@ export default function SignupWizard() {
                       width: 100, height: 100, borderRadius: 50,
                       backgroundColor: avatarColor,
                       alignItems: 'center', justifyContent: 'center',
+                      overflow: 'hidden',
                     }}>
-                      <Text style={{ color: '#fff', fontSize: 40, fontWeight: '800' }}>
-                        {displayName ? displayName[0].toUpperCase() : '?'}
-                      </Text>
+                      {uploadingAvatar ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : avatarUrl ? (
+                        <Image source={{ uri: avatarUrl }} style={{ width: 100, height: 100 }} />
+                      ) : (
+                        <Text style={{ color: '#fff', fontSize: 40, fontWeight: '800' }}>
+                          {displayName ? displayName[0].toUpperCase() : '?'}
+                        </Text>
+                      )}
                     </View>
-                  </View>
+                    {/* Camera badge */}
+                    <View style={{
+                      position: 'absolute', right: 6, bottom: 6,
+                      width: 34, height: 34, borderRadius: 17,
+                      backgroundColor: '#18181B', borderWidth: 2, borderColor: '#000',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Camera color="#fff" size={17} weight="fill" />
+                    </View>
+                  </AnimatedPressable>
+                  <AnimatedPressable
+                    onPress={handlePickAvatar}
+                    scaleValue={0.97}
+                    haptic="light"
+                    disabled={uploadingAvatar}
+                    style={{ marginTop: 10, paddingVertical: 4 }}
+                  >
+                    <Text style={{ color: ACCENT, fontSize: 14, fontWeight: '700' }}>
+                      {avatarUrl ? ttx('Change photo') : ttx('Add a photo')}
+                    </Text>
+                  </AnimatedPressable>
                 </View>
 
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -829,7 +1027,7 @@ export default function SignupWizard() {
               </ScrollView>
               <View style={{ paddingHorizontal: 24, paddingBottom: 16, gap: 12 }}>
                 <AnimatedPressable
-                  onPress={() => goToStep(5)}
+                  onPress={() => goToStep(STEP.FOLLOW)}
                   scaleValue={0.97}
                   haptic="medium"
                   style={{
@@ -847,7 +1045,7 @@ export default function SignupWizard() {
                   </Text>
                 </AnimatedPressable>
                 <AnimatedPressable
-                  onPress={() => goToStep(5)}
+                  onPress={() => goToStep(STEP.FOLLOW)}
                   scaleValue={0.97}
                   haptic="light"
                   style={{ alignItems: 'center', paddingVertical: 8 }}
@@ -857,7 +1055,76 @@ export default function SignupWizard() {
               </View>
             </View>
 
-            {/* Step 5: Confirmation */}
+            {/* Step 5: Follow a few people (seed the feed) */}
+            <View style={{ width: stepWidth, height: '100%' }}>
+              <View style={{ paddingHorizontal: 24, paddingTop: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <UsersThree color={ACCENT} size={22} weight="fill" />
+                  <Text style={{ color: ACCENT, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>{ttx("FILL YOUR FEED")}</Text>
+                </View>
+                <Text style={{ color: '#fff', fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 6 }}>
+                  {ttx("Follow a few people")}
+                </Text>
+                <Text style={{ color: '#52525B', fontSize: 14, marginBottom: 16, lineHeight: 20 }}>
+                  {ttx("We picked a few voices to get your feed started. Tap to remove any you don't want.")}
+                </Text>
+              </View>
+
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}
+                showsVerticalScrollIndicator={false}
+              >
+                {suggestedLoading ? (
+                  <View style={{ paddingTop: 32, alignItems: 'center' }}>
+                    <ActivityIndicator color={ACCENT} />
+                  </View>
+                ) : suggested.length === 0 ? (
+                  <View style={{ paddingTop: 24, paddingHorizontal: 4 }}>
+                    <Text style={{ color: '#52525B', fontSize: 14, lineHeight: 20 }}>
+                      {ttx("No suggestions yet — you can find people to follow from Explore once you're in.")}
+                    </Text>
+                  </View>
+                ) : (
+                  suggested.map(user => (
+                    <SuggestedFollowRow
+                      key={user.id}
+                      user={user}
+                      selected={followIds.includes(user.id)}
+                      onToggle={() => toggleFollow(user.id)}
+                    />
+                  ))
+                )}
+              </ScrollView>
+
+              <View style={{ paddingHorizontal: 24, paddingBottom: 16, gap: 12 }}>
+                <AnimatedPressable
+                  onPress={() => goToStep(STEP.CONFIRM)}
+                  scaleValue={0.97}
+                  haptic="medium"
+                  style={{
+                    backgroundColor: ACCENT, borderRadius: 14, paddingVertical: 16,
+                    alignItems: 'center', justifyContent: 'center',
+                    shadowColor: ACCENT, shadowOpacity: 0.4,
+                    shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                    {followIds.length > 0 ? `${ttx("Follow")} ${followIds.length} & ${ttx("continue")}` : ttx("Continue")}
+                  </Text>
+                </AnimatedPressable>
+                <AnimatedPressable
+                  onPress={() => { setFollowIds([]); goToStep(STEP.CONFIRM); }}
+                  scaleValue={0.97}
+                  haptic="light"
+                  style={{ alignItems: 'center', paddingVertical: 8 }}
+                >
+                  <Text style={{ color: '#52525B', fontSize: 14, fontWeight: '600' }}>{ttx("Skip for now")}</Text>
+                </AnimatedPressable>
+              </View>
+            </View>
+
+            {/* Step 6: Confirmation */}
             <View style={{
               width: stepWidth, height: '100%',
               paddingHorizontal: 24, alignItems: 'center',
@@ -868,12 +1135,17 @@ export default function SignupWizard() {
                   backgroundColor: avatarColor,
                   alignItems: 'center', justifyContent: 'center',
                   marginBottom: 24,
+                  overflow: 'hidden',
                   shadowColor: avatarColor, shadowOpacity: 0.6,
                   shadowRadius: 24, shadowOffset: { width: 0, height: 8 },
                 }}>
-                  <Text style={{ color: '#fff', fontSize: 48, fontWeight: '800' }}>
-                    {displayName ? displayName[0].toUpperCase() : '?'}
-                  </Text>
+                  {avatarUrl ? (
+                    <Image source={{ uri: avatarUrl }} style={{ width: 120, height: 120 }} />
+                  ) : (
+                    <Text style={{ color: '#fff', fontSize: 48, fontWeight: '800' }}>
+                      {displayName ? displayName[0].toUpperCase() : '?'}
+                    </Text>
+                  )}
                 </View>
 
                 <Text style={{
@@ -922,7 +1194,7 @@ export default function SignupWizard() {
           </Animated.View>
         </View>
 
-        {!reduceAnimations && currentStep === 5 && (
+        {!reduceAnimations && currentStep === STEP.CONFIRM && (
           <View
             pointerEvents="none"
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}

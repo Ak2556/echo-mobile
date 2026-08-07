@@ -103,6 +103,8 @@ export interface SettingsSlice {
   setAutoReadAiReplies: (v: boolean) => void;
   autoReadMessages: boolean; // speak incoming DMs aloud while a conversation is open
   setAutoReadMessages: (v: boolean) => void;
+  voiceCaptions: boolean; // show the spoken transcript on-screen during voice sessions
+  setVoiceCaptions: (v: boolean) => void;
   // ── First-run hints ──
   hasSeenChatTabHint: boolean;
   setHasSeenChatTabHint: (v: boolean) => void;
@@ -259,6 +261,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setSpeechRate: (v) => { const r = Math.max(0.5, Math.min(1.5, v)); persistSet('speechRate', r); set({ speechRate: r }); },
     autoReadAiReplies: b('autoReadAiReplies', false), setAutoReadAiReplies: s(set, 'autoReadAiReplies'),
     autoReadMessages: b('autoReadMessages', false), setAutoReadMessages: s(set, 'autoReadMessages'),
+    voiceCaptions: b('voiceCaptions', true), setVoiceCaptions: s(set, 'voiceCaptions'),
     hasSeenChatTabHint: b('hasSeenChatTabHint', false), setHasSeenChatTabHint: s(set, 'hasSeenChatTabHint'),
     hasSeenChatEmptyHint: b('hasSeenChatEmptyHint', false), setHasSeenChatEmptyHint: s(set, 'hasSeenChatEmptyHint'),
     hasSentFirstEcho: b('hasSentFirstEcho', false), setHasSentFirstEcho: s(set, 'hasSentFirstEcho'),
