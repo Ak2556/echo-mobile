@@ -96,9 +96,15 @@ _Last updated: 2026-08-07._
 
 ## D. Operational readiness
 
-- [ ] `P0` **Retention cron actually live** `{dashboard}` — **highest-teeth item.**
-      Without the Vault `daily_push_secret` row, the daily-question push silently
-      never fires. Verify in the SQL editor (reads only non-secret columns):
+- [x] `P0` **Retention cron actually live** — **VERIFIED healthy (2026-08-07)** via
+      `supabase db query --linked` (Management API, non-secret columns only).
+      `cron.job`: `daily-question-push` jobid 2, `30 13 * * *`, **active**. Run
+      history (jobid 2): **6/6 recent daily runs `succeeded`** (Aug 1–6, all at
+      13:30:00 UTC). Also active: `personalized-fanout` (hourly), `resweep-
+      unmoderated-echoes` (`*/30`). Not silently dead. _(Note: "succeeded" = the
+      cron job executed cleanly; end-to-end push delivery still worth one live
+      spot-check, but the pipeline fires daily and `DAILY_PUSH_SECRET` is set.)_
+      Original verify query (non-secret columns):
       ```sql
       select jobid, jobname, schedule, active from cron.job;               -- expect 30 13 * * *, active
       select jobid, status, start_time, end_time
