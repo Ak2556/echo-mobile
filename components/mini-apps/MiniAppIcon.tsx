@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowsLeftRight,
@@ -78,10 +79,26 @@ export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppG
   }
 }
 
+// Designed icon art, keyed by mini-app id. Drop 1024×1024 full-bleed PNGs into
+// assets/mini-app-icons/<id>.png and add a line here — that id then renders the
+// real designed icon; any id without an asset falls back to the generated plate
+// below, so this can be filled in incrementally.
+const ICON_ASSETS: Record<string, number> = {
+  // tasks: require('../../assets/mini-app-icons/tasks.png'),
+  // habits: require('../../assets/mini-app-icons/habits.png'),
+  // …
+};
+
 export function MiniAppIcon({ id, color, size = 44, weight = 'fill', plate = true }: MiniAppIconProps) {
   if (!plate) return <MiniAppGlyph id={id} color={color} size={size} weight={weight} />;
 
   const radius = Math.round(size * 0.235); // iOS-squircle-ish
+
+  // Designed asset wins when present — the real path to system-grade icons.
+  const asset = ICON_ASSETS[id];
+  if (asset) {
+    return <Image source={asset} style={{ width: size, height: size, borderRadius: radius }} resizeMode="cover" />;
+  }
   // A restrained diagonal gradient — subtle depth, no glossy sheen and no
   // decorative ring (that gloss is exactly what reads cheap/"AI-made"). Flat,
   // confident, generous glyph padding — the modern app-icon look.
