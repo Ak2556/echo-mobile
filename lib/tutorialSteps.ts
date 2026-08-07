@@ -30,6 +30,11 @@ export const HOME_TOUR: TutorialStep[] = [
     body: 'Real takes from real people. Tap any echo to read the thread or reply.',
   },
   {
+    targetId: 'floating-bubble',
+    title: 'Tools & voice, anywhere',
+    body: 'Tap this bubble for mini-apps and Echo AI. Press and hold it to talk — speak in English or Hindi and Echo acts.',
+  },
+  {
     targetId: 'compose-fab',
     title: 'Post your own Echo',
     body: 'A question or a take is enough. Share whenever something’s on your mind.',
