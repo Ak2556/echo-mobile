@@ -11,12 +11,20 @@
 import { type EngagementModel, type Surface, topSurface } from './engagementModel';
 import { miniAppById } from './miniAppCatalog';
 
-/** Live, best-effort signals gathered at schedule time to pick nudge content. */
+/** Live, best-effort signals gathered at schedule time to pick nudge content.
+ *  These are the per-user "reasons" a nudge fires — the more specific, the more
+ *  it feels like Echo actually noticed the person, not a broadcast. */
 export interface NudgeSignals {
   dailyUnanswered?: boolean;
   streakAtRisk?: { name: string; streak: number } | null;
   unreadDMs?: number;
   newFollowers?: number;
+  /** Habits scheduled today but not yet checked off — a concrete "still open" count. */
+  habitsRemaining?: number;
+  /** Focus-session progress vs today's goal — drives a momentum nudge when partway. */
+  focusGoal?: { done: number; goal: number } | null;
+  /** The user's strongest active streak — an occasional "look what you built" note. */
+  bestStreak?: { name: string; streak: number } | null;
   /** Mini-app ids the user actually uses, most-used/recent first. Drives the
    *  throughout-the-day nudges toward the tools they care about. */
   favoriteMiniApps?: string[];
@@ -184,7 +192,7 @@ function miniAppNudge(id: string): { title: string; body: string; route?: string
 // counts) are always present so the nudge stays specific.
 function streakLine(name: string, streak: number): Line {
   return {
-    title: 'Daily Question',
+    title: 'Streak',
     body: pick([
       `Your ${name} streak (${streak} days) is one lazy night from tragedy. Save it?`,
       `${streak} days of ${name} and you’d fumble it before bed? Bold. Don’t.`,
@@ -231,6 +239,42 @@ function dmLine(n: number): Line {
   };
 }
 
+function habitsRemainingLine(n: number): Line {
+  return {
+    title: 'Habits',
+    body: pick([
+      `${n} habit${n === 1 ? '' : 's'} still open today. Future-you is quietly keeping score.`,
+      `${n} left on today's habits. Close the loop before midnight files a complaint.`,
+      `You've got ${n} habit${n === 1 ? '' : 's'} unchecked. One tap each, disproportionate smugness.`,
+      `${n} habit${n === 1 ? '' : 's'} between you and a clean day. Go collect them.`,
+    ]),
+  };
+}
+
+function focusGoalLine(done: number, goal: number): Line {
+  const left = Math.max(1, goal - done);
+  return {
+    title: 'Focus',
+    body: pick([
+      `${done}/${goal} focus blocks in. ${left} more and today officially counts.`,
+      `You're ${left} session${left === 1 ? '' : 's'} from your focus goal. 25 minutes — go.`,
+      `${done} down, ${left} to hit ${goal}. The momentum's already yours; spend it.`,
+      `So close: ${done} of ${goal} focus blocks. One more won't hurt (much).`,
+    ]),
+  };
+}
+
+function bestStreakLine(name: string, streak: number): Line {
+  return {
+    title: 'Habits',
+    body: pick([
+      `${streak} days on ${name} and climbing. Quietly iconic. Keep it alive?`,
+      `${name}: a ${streak}-day streak. That's not luck anymore — that's you. Add today.`,
+      `Your ${name} streak hit ${streak} days. Don't make me watch it end. Tap in.`,
+    ]),
+  };
+}
+
 function followersLine(n: number): Line {
   if (n === 1) {
     return { title: 'Echo', body: pick([
@@ -260,13 +304,28 @@ export function buildPlannedNudges(
 ): PlannedNudge[] {
   const interest = topSurface(model) ?? 'chat';
 
+  const habitsRoute = String(miniAppById('habits')?.route ?? '') || undefined;
+  const focusRoute = String(miniAppById('pomodoro')?.route ?? '') || undefined;
+
+  // Ordered by compulsion / time-sensitivity — the most "you, specifically, right
+  // now" reasons lead the day's limited slots. Each pushes one candidate; the
+  // scheduler uses the first N (N = learned nudge hours).
   const priority: PlannedNudge[] = [];
   if (signals.streakAtRisk) {
     const l = streakLine(signals.streakAtRisk.name, signals.streakAtRisk.streak);
-    priority.push({ hour: 0, surface: 'daily', title: l.title, body: l.body });
-  } else if (signals.dailyUnanswered) {
+    priority.push({ hour: 0, surface: 'tools', title: l.title, body: l.body, route: habitsRoute });
+  }
+  if (signals.dailyUnanswered) {
     const l = dailyLine();
     priority.push({ hour: 0, surface: 'daily', title: l.title, body: l.body });
+  }
+  if (!signals.streakAtRisk && typeof signals.habitsRemaining === 'number' && signals.habitsRemaining > 0) {
+    const l = habitsRemainingLine(signals.habitsRemaining);
+    priority.push({ hour: 0, surface: 'tools', title: l.title, body: l.body, route: habitsRoute });
+  }
+  if (signals.focusGoal && signals.focusGoal.done > 0 && signals.focusGoal.done < signals.focusGoal.goal) {
+    const l = focusGoalLine(signals.focusGoal.done, signals.focusGoal.goal);
+    priority.push({ hour: 0, surface: 'tools', title: l.title, body: l.body, route: focusRoute });
   }
   if (signals.unreadDMs && signals.unreadDMs > 0) {
     const l = dmLine(signals.unreadDMs);
@@ -275,6 +334,10 @@ export function buildPlannedNudges(
   if (signals.newFollowers && signals.newFollowers > 0) {
     const l = followersLine(signals.newFollowers);
     priority.push({ hour: 0, surface: 'profile', title: l.title, body: l.body });
+  }
+  if (!signals.streakAtRisk && signals.bestStreak && signals.bestStreak.streak >= 5) {
+    const l = bestStreakLine(signals.bestStreak.name, signals.bestStreak.streak);
+    priority.push({ hour: 0, surface: 'tools', title: l.title, body: l.body, route: habitsRoute });
   }
 
   const favorites = signals.favoriteMiniApps ?? [];

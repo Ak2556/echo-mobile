@@ -5,12 +5,50 @@ import { emptyModel, recordOpen } from './engagementModel';
 const at = (h: string) => new Date(`2026-07-18T${h}:00:00`);
 
 describe('buildPlannedNudges', () => {
-  it('leads with the streak-at-risk signal', () => {
+  it('leads with the streak-at-risk signal (routes to habits)', () => {
     const out = buildPlannedNudges(emptyModel(), { streakAtRisk: { name: 'Reading', streak: 6 } }, [14, 20]);
-    expect(out[0].surface).toBe('daily');
+    expect(out[0].surface).toBe('tools');
+    expect(out[0].route).toBe('/mini-apps/habits');
     expect(out[0].body).toContain('Reading');
     expect(out[0].body).toContain('6');
     expect(out[0].hour).toBe(14);
+  });
+
+  it('surfaces habits still open today, with the count + a route', () => {
+    const out = buildPlannedNudges(emptyModel(), { habitsRemaining: 3 }, [10]);
+    expect(out[0].surface).toBe('tools');
+    expect(out[0].route).toBe('/mini-apps/habits');
+    expect(out[0].body).toContain('3');
+  });
+
+  it('nudges toward the focus goal when partway (count + goal baked in)', () => {
+    const out = buildPlannedNudges(emptyModel(), { focusGoal: { done: 3, goal: 8 } }, [15]);
+    expect(out[0].surface).toBe('tools');
+    expect(out[0].route).toBe('/mini-apps/pomodoro');
+    expect(out[0].body).toContain('3');
+    expect(out[0].body).toContain('8');
+  });
+
+  it('does not fire a focus nudge when untouched or already met', () => {
+    expect(buildPlannedNudges(emptyModel(), { focusGoal: { done: 0, goal: 8 } }, [15])[0].surface).toBe('chat');
+    expect(buildPlannedNudges(emptyModel(), { focusGoal: { done: 8, goal: 8 } }, [15])[0].surface).toBe('chat');
+  });
+
+  it('celebrates a strong best-streak (>=5) when nothing is at risk', () => {
+    const out = buildPlannedNudges(emptyModel(), { bestStreak: { name: 'Meditation', streak: 12 } }, [11]);
+    expect(out[0].surface).toBe('tools');
+    expect(out[0].body).toContain('Meditation');
+    expect(out[0].body).toContain('12');
+  });
+
+  it('streak-at-risk outranks the softer reasoned signals', () => {
+    const out = buildPlannedNudges(
+      emptyModel(),
+      { streakAtRisk: { name: 'Reading', streak: 6 }, habitsRemaining: 3, focusGoal: { done: 2, goal: 8 } },
+      [9, 14, 19],
+    );
+    expect(out[0].body).toContain('Reading');
+    expect(out[1].body).toContain('8'); // focus-goal fills the next slot
   });
 
   it('prefers unanswered daily question when no streak at risk', () => {
