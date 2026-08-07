@@ -1158,4 +1158,5 @@ export const HI_BULK: Record<string, string> = {
   'Your target': 'आपका लक्ष्य',
   'ai, react, tips (comma-separated)': 'ai, react, tips (अल्पविराम से अलग)',
   'connected essentials': 'जुड़ी ज़रूरी चीज़ें',
+  'Replaces': 'इनकी जगह:',
 };

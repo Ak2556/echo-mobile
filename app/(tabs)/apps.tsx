@@ -6,7 +6,7 @@ import Animated, { Extrapolation, FadeIn, FadeInDown, interpolate, useAnimatedPr
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Pulse, Target, MagnifyingGlass, CaretRight, X } from 'phosphor-react-native';
+import { Pulse, Target, MagnifyingGlass, CaretRight, X, ArrowsLeftRight } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { getTodayProductivity, LocalSearchResult, searchLocalProductivity, TodayProductivity } from '../../lib/localSearch';
 import { formatMoney } from '../../lib/expenses';
@@ -114,6 +114,16 @@ function AppCard({ app, index, width, onOpen, flagship }: { app: MiniApp; index:
               </View>
             ))}
           </View>
+          {/* "Replaces …" — the reason this beats downloading a separate app:
+              one built-in tool subsumes the standalone thing you'd otherwise get. */}
+          {app.replaces && app.replaces.length > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 11 }}>
+              <ArrowsLeftRight color={colors.textMuted} size={11} weight="bold" />
+              <Text style={{ flex: 1, color: colors.textMuted, fontSize: 10.6, fontFamily: 'Inter_500Medium' }} numberOfLines={1}>
+                {ttx('Replaces')} {app.replaces.slice(0, 2).join(' · ')}
+              </Text>
+            </View>
+          )}
         </View>
       </Pressable>
     </Animated.View>
