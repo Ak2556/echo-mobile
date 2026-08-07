@@ -257,7 +257,7 @@ function focusGoalLine(done: number, goal: number): Line {
     title: 'Focus',
     body: pick([
       `${done}/${goal} focus blocks in. ${left} more and today officially counts.`,
-      `You're ${left} session${left === 1 ? '' : 's'} from your focus goal. 25 minutes — go.`,
+      `${done} of ${goal} done — ${left} more focus block${left === 1 ? '' : 's'} and you're there.`,
       `${done} down, ${left} to hit ${goal}. The momentum's already yours; spend it.`,
       `So close: ${done} of ${goal} focus blocks. One more won't hurt (much).`,
     ]),
