@@ -769,9 +769,16 @@ export default function ChatScreen() {
         .then(ctx => {
           if (cancelled) return;
           setOpener(pickProactiveOpener(ctx));
-          // Personalized reach-back nudges: learned timing + interest, with the
-          // live streak-at-risk signal leading when the chain is on the line.
-          void syncPersonalNudges(proactiveAiEnabled, { streakAtRisk: ctx.streakAtRisk });
+          // Personalized reach-back nudges: learned timing + interest, now fed the
+          // same reasoned per-user signals the chat opener uses — streak on the
+          // line, habits still open today, and focus-goal momentum — so the pings
+          // reference the person's actual day, not a generic "come back".
+          void syncPersonalNudges(proactiveAiEnabled, {
+            streakAtRisk: ctx.streakAtRisk,
+            habitsRemaining: Math.max(0, ctx.habitsDueToday - ctx.habitsDoneToday),
+            focusGoal: { done: ctx.focusToday, goal: ctx.focusGoal },
+            bestStreak: ctx.bestStreak,
+          });
         })
         .catch(() => {});
       return () => { cancelled = true; };
