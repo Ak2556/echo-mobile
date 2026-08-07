@@ -63,7 +63,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
   return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index, 10) * 20).duration(220).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
-      style={{ width }}
+      style={{ width, alignItems: 'center' }}
     >
       <Pressable
         onPress={() => onOpen(app)}
@@ -73,7 +73,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
       >
         <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
         <Text
-          style={{ color: colors.text, fontSize: 12.5, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 16 }}
+          style={{ alignSelf: 'stretch', color: colors.text, fontSize: 12.5, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 16 }}
           numberOfLines={1}
         >
           {app.name}
