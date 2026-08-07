@@ -1,33 +1,26 @@
 import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  cancelAnimation,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Microphone, Stop, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
-import { tap } from '../../lib/haptics';
 import { useAuth } from '../../lib/auth';
 import { useVoiceCommand } from '../../hooks/useVoiceCommand';
+import { useVoiceControl } from '../../store/voiceControl';
+import { useAppStore } from '../../store/useAppStore';
 
 /**
  * Global voice controller — the flagship hands-free entry point.
  *
- * A large, always-reachable mic button (bottom-left, clear of the compose FAB).
- * Tap to speak, tap again to stop; the app transcribes (Hindi/English) and acts.
+ * There is no dedicated mic button any more: the user long-presses the floating
+ * mini-app bubble to start a session (see FloatingMiniApp). This component owns
+ * the recorder/hook and renders only the status panel — it registers `start`
+ * and mirrors the live phase into the voice-control store so the bubble can
+ * trigger and reflect a session.
+ *
  * Built to run on the current dev client: recording only, transcription happens
  * server-side. Spoken read-back arrives with the next native build.
- *
- * Render pattern mirrors ComposeFAB: outer View owns visuals, inner Pressable
- * owns press handling (avoids the Release-build Pressable layout-drop quirk).
  */
 export function VoiceControl() {
   const { status } = useAuth();
@@ -35,20 +28,20 @@ export function VoiceControl() {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { state, start, stopAndRun, cancel, reset } = useVoiceCommand();
+  const registerVoice = useVoiceControl(s => s.register);
+  const setVoicePhase = useVoiceControl(s => s.setPhase);
+  const captions = useAppStore(s => s.voiceCaptions);
 
-  const pulse = useSharedValue(1);
-  const listening = state.phase === 'listening';
+  // Expose `start` to any surface (the floating bubble) and mirror the phase so
+  // the bubble can tint itself while listening.
+  useEffect(() => {
+    registerVoice(start);
+    return () => registerVoice(null);
+  }, [registerVoice, start]);
 
   useEffect(() => {
-    if (listening) {
-      pulse.value = withRepeat(withSequence(withTiming(1.18, { duration: 620 }), withTiming(1, { duration: 620 })), -1, false);
-    } else {
-      cancelAnimation(pulse);
-      pulse.value = withTiming(1, { duration: 200 });
-    }
-  }, [listening, pulse]);
-
-  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+    setVoicePhase(state.phase);
+  }, [setVoicePhase, state.phase]);
 
   // Auto-dismiss a finished/errored result after a short read.
   useEffect(() => {
@@ -74,12 +67,6 @@ export function VoiceControl() {
       default: return '';
     }
   })();
-
-  const onMicPress = () => {
-    tap('medium');
-    if (state.phase === 'listening') stopAndRun();
-    else if (state.phase === 'idle') start();
-  };
 
   return (
     <>
@@ -121,10 +108,19 @@ export function VoiceControl() {
               </Pressable>
             </View>
 
-            {!!state.transcript && (
-              <View style={{ gap: 2 }}>
+            {captions && !!state.transcript && (
+              <View
+                style={{
+                  gap: 3,
+                  padding: 12,
+                  borderRadius: 14,
+                  backgroundColor: colors.surfaceHover,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.border,
+                }}
+              >
                 <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600' }}>{t('voice.youSaid')}</Text>
-                <Text style={{ color: colors.text, fontSize: 15 }}>{state.transcript}</Text>
+                <Text style={{ color: colors.text, fontSize: 17, lineHeight: 23, fontWeight: '600' }}>{state.transcript}</Text>
               </View>
             )}
 
@@ -145,44 +141,6 @@ export function VoiceControl() {
           </View>
         </Animated.View>
       )}
-
-      {/* The persistent mic button */}
-      <Animated.View
-        entering={FadeIn.duration(180)}
-        pointerEvents="box-none"
-        style={{ position: 'absolute', left: 22, bottom: insets.bottom + 88, zIndex: 61 }}
-      >
-        <Animated.View style={pulseStyle}>
-          <View
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              backgroundColor: listening ? colors.danger : colors.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOpacity: colors.isDark ? 0.24 : 0.16,
-              shadowRadius: 12,
-              shadowOffset: { width: 0, height: 6 },
-              elevation: 5,
-            }}
-          >
-            <Pressable
-              onPress={onMicPress}
-              accessibilityRole="button"
-              accessibilityLabel={listening ? t('voice.tapToStop') : t('voice.openLabel')}
-              accessibilityState={{ busy: state.phase === 'thinking' }}
-              disabled={state.phase === 'thinking'}
-              style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', borderRadius: 28 }}
-            >
-              {listening
-                ? <Stop color="#fff" size={24} weight="fill" />
-                : <Microphone color="#fff" size={26} weight="fill" />}
-            </Pressable>
-          </View>
-        </Animated.View>
-      </Animated.View>
     </>
   );
 }

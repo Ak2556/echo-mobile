@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { View, Text, useWindowDimensions, ActivityIndicator, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,10 +6,13 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { Sparkle, ArrowsInSimple, GridFour } from 'phosphor-react-native';
+import { Sparkle, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useAuthStore } from '../../lib/auth/store';
 import { useFloatingApp } from '../../store/floatingApp';
+import { useVoiceControl } from '../../store/voiceControl';
+import { tap as haptic } from '../../lib/haptics';
+import { useTutorialStore } from '../../store/tutorialStore';
 import { FLOATING_APPS, floatingAppMeta } from '../../lib/miniAppRegistry';
 import { MiniAppEmbedContext } from '../../lib/miniAppEmbed';
 import { MiniAppIcon, MiniAppGlyph } from './MiniAppIcon';
@@ -49,9 +52,18 @@ function Bubble() {
   const { t } = useI18n();
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const { x, y, appId, openApp, openPicker, setPosition } = useFloatingApp();
+  const startVoice = useVoiceControl(s => s.startVoice);
+  const voicePhase = useVoiceControl(s => s.phase);
+  const listening = voicePhase === 'listening';
+  const registerTutorialTarget = useTutorialStore(s => s.registerTarget);
+  const activeTour = useTutorialStore(s => s.activeTour);
   const meta = floatingAppMeta(appId);
   // Minimized bubble carries the active app's own colour (like its Tools tile).
-  const brand = meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? meta.color ?? colors.accent) : colors.accent;
+  // While a voice session is listening it glows in the danger tint instead, so
+  // the same bubble doubles as the live mic indicator.
+  const brand = listening
+    ? colors.danger
+    : meta ? (CATALOG_BY_ID.get(meta.id)?.color ?? meta.color ?? colors.accent) : colors.accent;
 
   const startX = x >= 0 ? x : SCREEN_W - BUBBLE - 14;
   // Default to a clean bottom-right FAB position, clear of headers/hero cards
@@ -61,6 +73,14 @@ function Bubble() {
   const ty = useSharedValue(startY);
   const offX = useSharedValue(0);
   const offY = useSharedValue(0);
+
+  // Publish the bubble's resting rect to the coach-mark tour. We register the
+  // known position directly (not measureInWindow) because the bubble is placed
+  // by a Reanimated transform, which the shadow-tree measure ignores.
+  useEffect(() => {
+    if (!activeTour) return;
+    registerTutorialTarget('floating-bubble', { x: startX, y: startY, width: BUBBLE, height: BUBBLE });
+  }, [activeTour, startX, startY, registerTutorialTarget]);
 
   const open = () => (meta ? openApp(meta.id) : openPicker());
 
@@ -76,8 +96,16 @@ function Bubble() {
       tx.value = withSpring(snapX, { damping: 18, stiffness: 200 });
       runOnJS(setPosition)(snapX, ty.value);
     });
+  // Long-press starts a hands-free voice session (the mic lives here now, not
+  // as a separate button). Tap still opens the app/picker; drag still moves.
+  const triggerVoice = () => {
+    if (!startVoice) return;
+    haptic('medium');
+    startVoice();
+  };
+  const longPress = Gesture.LongPress().minDuration(260).maxDistance(12).onStart(() => runOnJS(triggerVoice)());
   const tap = Gesture.Tap().maxDistance(8).onEnd(() => runOnJS(open)());
-  const gesture = Gesture.Exclusive(pan, tap);
+  const gesture = Gesture.Exclusive(pan, longPress, tap);
 
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value }] }));
 
@@ -93,9 +121,12 @@ function Bubble() {
           borderWidth: 2, borderColor: colors.bg,
         }, style]}
         accessibilityRole="button"
-        accessibilityLabel={meta ? `${t('common.open')} ${meta.name}` : `${t('common.open')} ${t('mini.pickerTitle')}`}
+        accessibilityLabel={listening ? t('voice.listening') : meta ? `${t('common.open')} ${meta.name}` : `${t('common.open')} ${t('mini.pickerTitle')}`}
+        accessibilityHint={t('voice.holdToTalk')}
       >
-        {meta ? <MiniAppGlyph id={meta.id} color="#fff" size={24} /> : <Sparkle color="#fff" size={24} weight="fill" />}
+        {listening
+          ? <Microphone color="#fff" size={24} weight="fill" />
+          : meta ? <MiniAppGlyph id={meta.id} color="#fff" size={24} /> : <Sparkle color="#fff" size={24} weight="fill" />}
       </Animated.View>
     </GestureDetector>
   );
