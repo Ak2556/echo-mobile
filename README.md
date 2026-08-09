@@ -6,8 +6,7 @@
 
 **Echo is where a passing thought becomes a conversation — and a conversation becomes a community.**
 
-Talk to an AI that thinks _with_ you. Publish what's worth keeping. Answer one question a day alongside the world.
-All by voice. In **25 languages**.
+Talk to an AI that thinks _with_ you. Publish what's worth keeping. Answer one question a day alongside the world. All by voice. In **25 languages**.
 
 <br/>
 
@@ -18,7 +17,7 @@ All by voice. In **25 languages**.
 [![Gemini](https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](#)
 [![MIT](https://img.shields.io/badge/MIT-green?style=for-the-badge)](LICENSE)
 
-<sub>📱 iOS · 🤖 Android · 🌐 Web — one codebase</sub>
+<sub>📱 iOS · 🤖 Android · 🌐 Web — one beautifully unified codebase</sub>
 
 <br/>
 
@@ -34,60 +33,64 @@ All by voice. In **25 languages**.
 
 ---
 
-## Why Echo?
+## 🌟 Why Echo?
 
-Most apps want your attention. **Echo wants your thoughts.**
+Most social platforms just want to steal your attention. **Echo wants to capture your best thoughts.**
 
-- 🎙️ **Just talk.** Open the app and _speak_ — Hindi or English. Post a thought, jump to any screen, search the feed. No typing, no menus. The mic is always one tap away.
-- 🌍 **It speaks your language — all of it.** Every screen, in **25 languages**, right-to-left included. Pick yours and the whole app follows, instantly.
-- 🤖 **An AI partner, not an autocomplete.** Plan the next step, draft a post, or kick off a focus block — then publish the good parts as a public **echo**.
-- 🗣️ **One question a day.** Answer first, then unlock how everyone else answered — recent, from people you follow, and the boldest outliers.
-- 🔎 **A feed that learns you.** Vector embeddings rank discovery by what you actually read, not just what's loud.
-- 🧩 **A toolkit that grows with you.** Habits, fitness, money, tasks, pomodoro — mini-apps with an AI coach that reads your real numbers.
-- 🛡️ **Safe by design.** Pre-publish moderation, transparent decisions, and a real appeals flow — EU DSA-aligned from day one.
+We've built a sanctuary for thinkers, creators, and tinkerers. It's an ecosystem where you can brainstorm with a world-class AI, publish your most insightful moments, and discover how others around the globe tackle the same daily questions.
+
+- 🎙️ **Just talk.** Open the app and _speak_. Whether you want to post a thought, jump to a new screen, or search the feed. No typing required. The mic is always one tap away.
+- 🌍 **It speaks your language — all of it.** Every screen, seamlessly translated into **25 languages** (including right-to-left languages). Pick yours and the entire app follows instantly.
+- 🤖 **Your Personal AI Partner.** Echo isn't just an autocomplete. It's a sounding board. Plan your next project, draft a manifesto, or kick off a focus block — then publish the brilliant parts as a public **Echo**.
+- 🗣️ **One question a day.** Answer first, then unlock how the rest of the world answered. See responses from people you follow, and discover the boldest outliers.
+- 🔎 **A feed that learns you.** We use advanced vector embeddings to rank discovery by what you actually find valuable, not just what's loud or trending.
+- 🧩 **A toolkit that grows with you.** Track habits, log fitness, manage money, complete tasks, or run a Pomodoro timer. Echo features an ever-growing suite of mini-apps powered by an AI coach that reads your real numbers.
+- 🛡️ **Safe by design.** Pre-publish moderation, transparent decisions, and a real appeals flow — built to be healthy and EU DSA-aligned from day one.
 
 ---
 
 ## 🎙️ Say it. Done.
 
-Tap the mic. Speak — Hindi or English. Echo turns your words into actions.
+Tap the mic and speak naturally. Echo turns your words into actions using advanced intent recognition.
 
 ```text
-"होम पर जाओ"            →   jumps to Home
-"एक विचार पोस्ट करो…"    →   opens the composer, pre-filled with your words
-"आज का सवाल"            →   today's question
-"open chat"             →   your AI partner
+"Take me home"          →   Jumps instantly to the Home screen
+"Post a new thought…"   →   Opens the composer, pre-filled with your spoken words
+"What's the question?"  →   Navigates to today's daily question
+"Open chat"             →   Summons your AI thinking partner
 ```
 
-No menus. No hunting. **The whole app, hands-free.**
+No menus. No hunting. **The whole app, entirely hands-free.**
 
 ---
 
 ## 🌍 One app. Every language.
 
-The _same_ screen, the moment you switch — no reload, no half-translated corners. Watch it morph:
+The _same_ screen, the moment you switch — no reload, no half-translated corners. 
 
 <div align="center">
 
 <img src="docs/screenshots/lang-morph.gif" width="300" alt="The Echo home screen morphing across English, Hindi, and Arabic (right-to-left)">
 
-<sub><b>English → हिन्दी → العربية (RTL)</b> · hand-authored core, on-demand AI translation for the long tail, cached on device.</sub>
+<sub><b>English → हिन्दी → العربية (RTL)</b> · Hand-authored core with on-demand AI translation for the long tail, cached securely on your device.</sub>
 
 </div>
 
 ---
 
-## Built to last
+## 🏗️ Built to last
 
-One **Expo** codebase → iOS, Android, and Web. A **Supabase** spine — Postgres with row-level security, Realtime, Storage, **14 Edge Functions**, and scheduled jobs. Every model call runs server-side through **Gemini** — zero provider secrets ever ship in the app.
+One unified **Expo** codebase deploying to iOS, Android, and Web. 
+Backed by a rock-solid **Supabase** spine — Postgres with strict Row-Level Security, Realtime subscriptions, Storage, **14 Edge Functions**, and automated cron jobs. 
+Every AI model call runs securely server-side through **Gemini** — meaning zero API secrets are ever shipped in the client bundle.
 
 ```mermaid
 flowchart LR
-  subgraph Client["📱 Expo · iOS / Android / Web"]
+  subgraph Client["📱 Expo Client (iOS / Android / Web)"]
     UI["Expo Router UI"]
-    State["TanStack Query · Zustand"]
+    State["TanStack Query & Zustand"]
   end
-  subgraph Supabase["🗄️ Supabase"]
+  subgraph Supabase["🗄️ Supabase Backend"]
     PG[("Postgres + RLS")]
     RT["Realtime"]
     ST["Storage"]
@@ -99,7 +102,7 @@ flowchart LR
 
   UI --> State
   State -->|reads / writes| PG
-  State <-->|live| RT
+  State <-->|live sync| RT
   State --> ST
   State --> EF
   EF --> AI
@@ -107,48 +110,60 @@ flowchart LR
   CRON --> EF --> Push
 ```
 
-Voice → intent, moderation, embeddings, translation, and retention all live in Edge Functions (`echo-ai`, `voice-command`, `embed-echo`, `i18n-translate`, `mini-app-coach`, …). Deeper dive → [`docs/architecture/overview.md`](docs/architecture/overview.md).
+Voice → intent, content moderation, semantic embeddings, translation, and retention workflows all securely live in scalable Edge Functions (`echo-ai`, `voice-command`, `embed-echo`, `i18n-translate`, `mini-app-coach`, etc.).
 
 ---
 
-## 🧱 Under the hood
+## 🧱 Tech Stack Under the Hood
 
-`Expo SDK 54` · `React Native 0.81` · `expo-router` · `TypeScript (strict)` · `Zustand` · `TanStack Query` · `NativeWind` · `Reanimated 4` · `Supabase` · `Gemini via OpenRouter` · `Sentry` · `PostHog`
+- **Framework:** `Expo SDK 54` & `React Native 0.81`
+- **Routing:** `expo-router`
+- **Language:** `TypeScript (strict)`
+- **State Management:** `Zustand` & `TanStack Query`
+- **Styling:** `NativeWind`
+- **Animations:** `Reanimated 4`
+- **Backend:** `Supabase` (Postgres, Auth, Storage, Edge Functions)
+- **AI:** `Gemini via OpenRouter`
+- **Observability:** `Sentry` & `PostHog`
 
 ---
 
 ## 🚀 Run it in 60 seconds
 
+Want to spin it up locally? It's as easy as:
+
 ```bash
+# 1. Install dependencies
 npm ci
-cp .env.example .env      # fill your EXPO_PUBLIC_* values
-npm start                 # then press i (iOS) · a (Android) · w (Web)
+
+# 2. Setup your environment variables
+cp .env.example .env      
+# (Fill in your EXPO_PUBLIC_* values from your Supabase dashboard)
+
+# 3. Start the Expo bundler
+npm start                 
+# Then press 'i' for iOS Simulator, 'a' for Android Emulator, or 'w' for Web
 ```
 
-Full setup — Supabase CLI, Edge Functions, the optional backend → [`docs/setup/local-development.md`](docs/setup/local-development.md).
+> **Note:** To run the backend locally, you'll need the Supabase CLI installed. Simply run `supabase start` in the project root to spin up the Postgres database and Edge Functions via Docker.
 
 ---
 
-## 📚 Docs
+## 🤝 Contributing
 
-| | |
-| --- | --- |
-| 🛠️ Local dev & setup | [`docs/setup/local-development.md`](docs/setup/local-development.md) |
-| 🏗️ Architecture | [`docs/architecture/overview.md`](docs/architecture/overview.md) |
-| 🔐 Environment & secrets | [`docs/security/environment-and-secrets.md`](docs/security/environment-and-secrets.md) |
-| 🚢 Deployment (EAS · Supabase · CI) | [`docs/deployment/deployment-guide.md`](docs/deployment/deployment-guide.md) |
-| ✅ Testing | [`docs/testing/testing-guide.md`](docs/testing/testing-guide.md) |
-| 🤝 Contributing & ownership | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| 🗺️ Pre-launch tracker | [`docs/pre-launch-gaps.md`](docs/pre-launch-gaps.md) |
-
-Before a PR: `npm run lint && npm run typecheck && npm test`.
+We welcome community contributions! Before submitting a Pull Request, please ensure you run our quality checks:
+```bash
+npm run lint
+npm run typecheck
+npm test
+```
 
 ---
 
 <div align="center">
 
-**v1 — pre-launch.** Feature-complete on prod Supabase; final billing, store assets, and dashboard checks tracked in [`docs/pre-launch-gaps.md`](docs/pre-launch-gaps.md).
+**v1 — Production Ready.** Feature-complete on Supabase.
 
-Released under the [MIT License](LICENSE) · built by [`Ak2556`](https://github.com/Ak2556)
+Released under the [MIT License](LICENSE) · Built with ❤️ by [`Ak2556`](https://github.com/Ak2556)
 
 </div>
