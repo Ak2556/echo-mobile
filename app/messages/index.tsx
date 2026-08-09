@@ -595,7 +595,7 @@ function InboxToolbar({
   );
 }
 
-function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
+export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
   const { colors } = useTheme();
   return (
     <Pressable onPress={onPress} style={{ alignItems: 'center', marginHorizontal: 8, marginTop: 16, position: 'relative' }}>
@@ -633,7 +633,7 @@ function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
   );
 }
 
-function AurasRow() {
+export function AurasRow() {
   const { colors, radius, fontSizes } = useTheme();
   const [modalOpen, setModalOpen] = useState(false);
   const [auraText, setAuraText] = useState('');
