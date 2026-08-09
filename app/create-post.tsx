@@ -35,6 +35,8 @@ import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import { PhotoEditor } from '../components/social/PhotoEditor';
+import { isAppOnline } from '../lib/net';
+import { outbox } from '../store/outbox';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
 
 
@@ -340,41 +342,58 @@ export default function CreatePostScreen() {
           });
           if (remoteAuthorId) {
             remoteEchoId = echoId;
-            // Optimistic: the success ceremony below runs immediately; the
-            // idempotent, timeout-bounded insert lands in the background. On
-            // failure, pull the card back and let the user retry safely.
-            insertRemoteEcho({
+            const publishPayload = {
               id: echoId,
               authorId: remoteAuthorId,
               prompt: prompt.trim(),
               response: response.trim(),
               quotedEchoId: quotedId,
-            }).catch((err: unknown) => {
-              qc.setQueriesData({ queryKey: ['feed'] }, (old: unknown) => removeEchoFromFeedCache(old, echoId));
-              Alert.alert('Post didn’t go through', (err as Error)?.message ?? 'Please check your connection and try again.');
-            });
+            };
+            if (!isAppOnline()) {
+              echo.isPending = true;
+              outbox.enqueue('publish', publishPayload);
+            } else {
+              insertRemoteEcho(publishPayload).catch((err: unknown) => {
+                qc.setQueriesData({ queryKey: ['feed'] }, (old: unknown) => removeEchoFromFeedCache(old, echoId));
+                Alert.alert('Post didn’t go through', (err as Error)?.message ?? 'Please check your connection and try again.');
+              });
+            }
           }
           break;
         case 'photo': {
           // Upload images to Storage first if remote
-          if (remoteAuthorId && imageUris.length > 0) {
+          if (remoteAuthorId && imageUris.length > 0 && isAppOnline()) {
             remoteMediaUrls = await uploadEchoImages(images);
           }
           const finalUris = remoteMediaUrls ?? imageUris;
           echo = coerceFeedItem({ ...base, postType: 'photo', prompt: response.trim() || 'Photo post', response: '', mediaUris: finalUris });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({ id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls });
-            remoteEchoId = row.id;
+            const publishPayload = { id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls || imageUris, postType: 'photo' };
+            if (!isAppOnline()) {
+              echo.isPending = true;
+              outbox.enqueue('publish', publishPayload);
+              remoteEchoId = echoId;
+            } else {
+              const row = await insertRemoteEcho(publishPayload);
+              remoteEchoId = row.id;
+            }
           }
           break;
         }
         case 'video': {
-          const remoteVideoUrl = remoteAuthorId && video ? await uploadEchoVideo(video) : undefined;
+          const remoteVideoUrl = remoteAuthorId && video && isAppOnline() ? await uploadEchoVideo(video) : undefined;
           const finalVideoUri = remoteVideoUrl ?? videoUri;
           echo = coerceFeedItem({ ...base, postType: 'video', prompt: response.trim() || 'Video post', response: '', videoUri: finalVideoUri });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({ id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : undefined });
-            remoteEchoId = row.id;
+            const publishPayload = { id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : [videoUri], postType: 'video' };
+            if (!isAppOnline()) {
+              echo.isPending = true;
+              outbox.enqueue('publish', publishPayload);
+              remoteEchoId = echoId;
+            } else {
+              const row = await insertRemoteEcho(publishPayload);
+              remoteEchoId = row.id;
+            }
           }
           break;
         }
@@ -385,13 +404,21 @@ export default function CreatePostScreen() {
             poll: { question: pollQuestion.trim(), options, totalVotes: 0, endsAt: new Date(Date.now() + pollDurationHours * 3600000).toISOString() },
           });
           if (remoteAuthorId) {
-            const row = await insertRemoteEcho({
+            const publishPayload = {
               id: echoId,
               authorId: remoteAuthorId,
               prompt: pollQuestion.trim(),
               response: JSON.stringify({ options: options.map(o => o.text), durationHours: pollDurationHours }),
-            });
-            remoteEchoId = row.id;
+              postType: 'poll'
+            };
+            if (!isAppOnline()) {
+              echo.isPending = true;
+              outbox.enqueue('publish', publishPayload);
+              remoteEchoId = echoId;
+            } else {
+              const row = await insertRemoteEcho(publishPayload);
+              remoteEchoId = row.id;
+            }
           }
           break;
         }
