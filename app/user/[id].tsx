@@ -412,12 +412,26 @@ export default function UserProfileScreen() {
     );
   }
 
-  const user = id ? getUser(id) : undefined;
-  const following = id ? isFollowing(id) : false;
-  const blocked = id ? isBlocked(id) : false;
-  const muted = id ? isMuted(id) : false;
+  const { username, displayName, avatarColor, avatarUrl, bio } = useAppStore();
+  let user = id === 'me' ? {
+    id: 'me',
+    username,
+    displayName,
+    avatarColor,
+    avatarUrl,
+    bio,
+    followerCount: 0,
+    followingCount: 0,
+    echoCount: 0,
+    isVerified: false,
+    createdAt: new Date().toISOString()
+  } : (id ? getUser(id) : undefined);
+
+  const following = id && id !== 'me' ? isFollowing(id) : false;
+  const blocked = id && id !== 'me' ? isBlocked(id) : false;
+  const muted = id && id !== 'me' ? isMuted(id) : false;
   const userEchoes = (feed || []).filter(item => item.username === user?.username);
-  const creatorProfile = user ? buildCreatorProfile(user, userEchoes) : null;
+  const creatorProfile = user ? buildCreatorProfile(user as any, userEchoes) : null;
 
   if (!user) {
     return (

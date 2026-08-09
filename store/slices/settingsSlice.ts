@@ -4,6 +4,7 @@ import type { CurrencyCode } from '../../lib/currency';
 import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/targetCategories';
 import type { FontStyleName } from '../../lib/fontPresets';
 import { DEFAULT_APP_LANGUAGE, detectDeviceLanguage, normalizeAppLanguage, type AppLanguageCode } from '../../lib/languages';
+import type { ThemeName } from '../../lib/theme';
 
 const DEFAULT_ACCENT_COLOR = '#7A8B4E';
 const LEGACY_DEFAULT_ACCENT_COLOR = '#E06030';
@@ -49,8 +50,8 @@ export interface SettingsSlice {
   setDmPrivacy: (v: 'everyone' | 'followers' | 'nobody') => void;
   activityStatus: boolean; setActivityStatus: (v: boolean) => void;
   // ── Appearance ──
-  theme: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic';
-  setTheme: (v: 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic') => void;
+  theme: ThemeName;
+  setTheme: (v: ThemeName) => void;
   fontStyle: FontStyleName; setFontStyle: (v: FontStyleName) => void;
   fontSize: 'small' | 'medium' | 'large'; setFontSize: (v: 'small' | 'medium' | 'large') => void;
   compactFeed: boolean; setCompactFeed: (v: boolean) => void;
@@ -200,7 +201,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     dmPrivacy: persistGet<'everyone' | 'followers' | 'nobody'>('dmPrivacy', 'everyone'),
     setDmPrivacy: (v) => { persistSet('dmPrivacy', v); set({ dmPrivacy: v }); },
     activityStatus: b('activityStatus', true), setActivityStatus: s(set, 'activityStatus'),
-    theme: persistGet<'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic'>('theme', 'midnight'),
+    theme: persistGet<ThemeName>('theme', 'midnight'),
     setTheme: (v) => { persistSet('theme', v); set({ theme: v }); },
     fontStyle: persistGet<FontStyleName>('fontStyle', 'editorial'),
     setFontStyle: (v) => { persistSet('fontStyle', v); set({ fontStyle: v }); },

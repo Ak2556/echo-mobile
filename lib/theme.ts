@@ -2,8 +2,8 @@ import { useAppStore } from '../store/useAppStore';
 import { usePresenceStore } from './presence';
 import { buildFontPreset } from './fontPresets';
 
-// Global animation speed constants. Import ANIM in components instead of
-// hardcoding durations or spring configs.
+
+
 export const ANIM = {
   duration: 80,
   durationFast: 60,
@@ -12,8 +12,8 @@ export const ANIM = {
   springBadge:  { damping: 22, stiffness: 600 },
 } as const;
 
-// Theme Definitions
-export type ThemeName = 'midnight' | 'amoled' | 'ocean' | 'sunset' | 'forest' | 'lavender' | 'light' | 'sepia' | 'arctic';
+
+export type ThemeName = 'midnight' | 'amoled' | 'tokyonight' | 'rosepine' | 'nord' | 'light' | 'tokyonight_day' | 'rosepine_dawn' | 'nord_light';
 
 export interface ThemeColors {
   name: string;
@@ -41,254 +41,265 @@ export interface ThemeColors {
   glassHighlight: string;
   glassHeavyFill: string;
   glassLightFill: string;
-  /** Two-stop ambient gradient [accentTint, bg] for screen backgrounds */
-  ambientGradient: readonly [string, string];
+    ambientGradient: readonly [string, string];
 }
-
-const DARK_GLASS = {
-  glassFill:      'rgba(255,255,255,0.04)',
-  glassBorder:    'rgba(255,255,255,0.18)',
-  glassHighlight: 'rgba(255,255,255,0.14)',
-  glassHeavyFill: 'rgba(255,255,255,0.08)',
-  glassLightFill: 'rgba(255,255,255,0.02)',
-} as const;
 
 const THEMES: Record<ThemeName, ThemeColors> = {
   midnight: {
     name: 'Midnight',
     isDark: true,
-    // Warm ink, not blue-grey: the dark equivalent of paper.
-    bg: '#0C0B09',
+    bg: '#09090B',
     bgPure: '#000000',
-    surface: '#161411',
-    surfaceHover: '#1E1B17',
-    border: '#282319',
-    text: '#F4F1EA',
-    textSecondary: '#B3ACA0',
-    textMuted: '#7D766A',
-    accent: '#E06030',
-    accentMuted: 'rgba(224,96,48,0.14)',
+    surface: '#18181B',
+    surfaceHover: '#27272A',
+    border: '#3F3F46',
+    text: '#FAFAFA',
+    textSecondary: '#A1A1AA',
+    textMuted: '#71717A',
+    accent: '#FAFAFA',
+    accentMuted: 'rgba(250,250,250,0.14)',
     danger: '#EF4444',
     dangerMuted: 'rgba(239,68,68,0.15)',
     success: '#22C55E',
     warning: '#F59E0B',
-    tabBar: '#0C0B09',
-    tabBorder: '#282319',
-    inputBg: '#161411',
-    inputBorder: '#282319',
-    ambientGradient: ['rgba(224,96,48,0.06)', '#0C0B09'] as const,
-    ...DARK_GLASS,
+    tabBar: '#09090B',
+    tabBorder: '#27272A',
+    inputBg: '#18181B',
+    inputBorder: '#3F3F46',
+    ambientGradient: ['rgba(250,250,250,0.08)', '#09090B'] as const,
+    glassFill: 'rgba(255,255,255,0.03)',
+    glassBorder: 'rgba(255,255,255,0.12)',
+    glassHighlight: 'rgba(255,255,255,0.10)',
+    glassHeavyFill: 'rgba(255,255,255,0.08)',
+    glassLightFill: 'rgba(255,255,255,0.01)',
   },
   amoled: {
     name: 'AMOLED',
     isDark: true,
     bg: '#000000',
     bgPure: '#000000',
-    surface: '#0A0A0A',
-    surfaceHover: '#141414',
-    border: '#1A1A1A',
+    surface: '#09090B',
+    surfaceHover: '#18181B',
+    border: '#27272A',
     text: '#FFFFFF',
-    textSecondary: '#999999',
-    textMuted: '#666666',
-    accent: '#E06030',
-    accentMuted: 'rgba(224,96,48,0.12)',
+    textSecondary: '#A1A1AA',
+    textMuted: '#71717A',
+    accent: '#FFFFFF',
+    accentMuted: 'rgba(255,255,255,0.12)',
     danger: '#EF4444',
     dangerMuted: 'rgba(239,68,68,0.12)',
     success: '#22C55E',
     warning: '#F59E0B',
     tabBar: '#000000',
-    tabBorder: '#111111',
-    inputBg: '#0A0A0A',
-    inputBorder: '#1A1A1A',
-    ambientGradient: ['rgba(224,96,48,0.10)', '#000000'] as const,
-    ...DARK_GLASS,
+    tabBorder: '#27272A',
+    inputBg: '#09090B',
+    inputBorder: '#27272A',
+    ambientGradient: ['rgba(255,255,255,0.05)', '#000000'] as const,
+    glassFill: 'rgba(255,255,255,0.02)',
+    glassBorder: 'rgba(255,255,255,0.10)',
+    glassHighlight: 'rgba(255,255,255,0.08)',
+    glassHeavyFill: 'rgba(255,255,255,0.06)',
+    glassLightFill: 'rgba(255,255,255,0.01)',
   },
-  ocean: {
-    name: 'Ocean',
+  nord: {
+    name: 'Nord',
     isDark: true,
-    bg: '#0B1120',
+    bg: '#242933',
     bgPure: '#000000',
-    surface: '#111B2E',
-    surfaceHover: '#182742',
-    border: '#1E3050',
-    text: '#E8EDF5',
-    textSecondary: '#8BA3C7',
-    textMuted: '#5A7BA5',
-    accent: '#38BDF8',
-    accentMuted: 'rgba(56,189,248,0.15)',
-    danger: '#F87171',
-    dangerMuted: 'rgba(248,113,113,0.15)',
-    success: '#34D399',
-    warning: '#FBBF24',
-    tabBar: '#070D18',
-    tabBorder: '#152035',
-    inputBg: '#111B2E',
-    inputBorder: '#1E3050',
-    ambientGradient: ['rgba(56,189,248,0.30)', '#0B1120'] as const,
-    ...DARK_GLASS,
+    surface: '#2E3440',
+    surfaceHover: '#3B4252',
+    border: '#434C5E',
+    text: '#D8DEE9',
+    textSecondary: '#E5E9F0',
+    textMuted: '#4C566A',
+    accent: '#88C0D0',
+    accentMuted: 'rgba(136,192,208,0.12)',
+    danger: '#BF616A',
+    dangerMuted: 'rgba(191,97,106,0.12)',
+    success: '#A3BE8C',
+    warning: '#EBCB8B',
+    tabBar: '#1F242D',
+    tabBorder: '#2E3440',
+    inputBg: '#2E3440',
+    inputBorder: '#434C5E',
+    ambientGradient: ['rgba(136,192,208,0.15)', '#242933'] as const,
+    glassFill: 'rgba(136,192,208,0.04)',
+    glassBorder: 'rgba(136,192,208,0.15)',
+    glassHighlight: 'rgba(136,192,208,0.10)',
+    glassHeavyFill: 'rgba(136,192,208,0.08)',
+    glassLightFill: 'rgba(136,192,208,0.02)',
   },
-  sunset: {
-    name: 'Sunset',
+  tokyonight: {
+    name: 'Tokyo Night',
     isDark: true,
-    bg: '#1A0E0A',
+    bg: '#16161E',
     bgPure: '#000000',
-    surface: '#261510',
-    surfaceHover: '#331C14',
-    border: '#3D2318',
-    text: '#FFF0E8',
-    textSecondary: '#C4A08A',
-    textMuted: '#8A6B55',
-    accent: '#F97316',
-    accentMuted: 'rgba(249,115,22,0.15)',
-    danger: '#EF4444',
-    dangerMuted: 'rgba(239,68,68,0.15)',
-    success: '#22C55E',
-    warning: '#F59E0B',
-    tabBar: '#120A07',
-    tabBorder: '#2D1A12',
-    inputBg: '#261510',
-    inputBorder: '#3D2318',
-    ambientGradient: ['rgba(249,115,22,0.32)', '#1A0E0A'] as const,
-    ...DARK_GLASS,
+    surface: '#1A1B26',
+    surfaceHover: '#24283B',
+    border: '#292E42',
+    text: '#C0CAF5',
+    textSecondary: '#9AA5CE',
+    textMuted: '#565F89',
+    accent: '#7AA2F7',
+    accentMuted: 'rgba(122,162,247,0.12)',
+    danger: '#F7768E',
+    dangerMuted: 'rgba(247,118,142,0.12)',
+    success: '#9ECE6A',
+    warning: '#E0AF68',
+    tabBar: '#13131A',
+    tabBorder: '#1A1B26',
+    inputBg: '#1A1B26',
+    inputBorder: '#292E42',
+    ambientGradient: ['rgba(122,162,247,0.15)', '#16161E'] as const,
+    glassFill: 'rgba(122,162,247,0.04)',
+    glassBorder: 'rgba(122,162,247,0.15)',
+    glassHighlight: 'rgba(122,162,247,0.10)',
+    glassHeavyFill: 'rgba(122,162,247,0.08)',
+    glassLightFill: 'rgba(122,162,247,0.02)',
   },
-  forest: {
-    name: 'Forest',
+  rosepine: {
+    name: 'Rosé Pine',
     isDark: true,
-    bg: '#0A1410',
+    bg: '#15131C',
     bgPure: '#000000',
-    surface: '#101F18',
-    surfaceHover: '#162A20',
-    border: '#1C3528',
-    text: '#E8F5EF',
-    textSecondary: '#8AC4A0',
-    textMuted: '#5A8A6E',
-    accent: '#10B981',
-    accentMuted: 'rgba(16,185,129,0.15)',
-    danger: '#F87171',
-    dangerMuted: 'rgba(248,113,113,0.15)',
-    success: '#34D399',
-    warning: '#FBBF24',
-    tabBar: '#071009',
-    tabBorder: '#142B1E',
-    inputBg: '#101F18',
-    inputBorder: '#1C3528',
-    ambientGradient: ['rgba(16,185,129,0.30)', '#0A1410'] as const,
-    ...DARK_GLASS,
+    surface: '#191724',
+    surfaceHover: '#1F1D2E',
+    border: '#211F2D',
+    text: '#E0DEF4',
+    textSecondary: '#908CAA',
+    textMuted: '#6E6A86',
+    accent: '#EBBCBA',
+    accentMuted: 'rgba(235,188,186,0.12)',
+    danger: '#EB6F92',
+    dangerMuted: 'rgba(235,111,146,0.12)',
+    success: '#9CCFD8',
+    warning: '#F6C177',
+    tabBar: '#110F17',
+    tabBorder: '#191724',
+    inputBg: '#191724',
+    inputBorder: '#211F2D',
+    ambientGradient: ['rgba(235,188,186,0.15)', '#15131C'] as const,
+    glassFill: 'rgba(235,188,186,0.04)',
+    glassBorder: 'rgba(235,188,186,0.15)',
+    glassHighlight: 'rgba(235,188,186,0.10)',
+    glassHeavyFill: 'rgba(235,188,186,0.08)',
+    glassLightFill: 'rgba(235,188,186,0.02)',
   },
-  lavender: {
-    name: 'Lavender',
-    isDark: true,
-    bg: '#100E1A',
-    bgPure: '#000000',
-    surface: '#1A1726',
-    surfaceHover: '#232033',
-    border: '#2D2842',
-    text: '#F0EBF8',
-    textSecondary: '#A89EC4',
-    textMuted: '#756B8A',
-    accent: '#A78BFA',
-    accentMuted: 'rgba(167,139,250,0.15)',
-    danger: '#F87171',
-    dangerMuted: 'rgba(248,113,113,0.15)',
-    success: '#34D399',
-    warning: '#FBBF24',
-    tabBar: '#0A0812',
-    tabBorder: '#211E32',
-    inputBg: '#1A1726',
-    inputBorder: '#2D2842',
-    ambientGradient: ['rgba(167,139,250,0.32)', '#100E1A'] as const,
-    ...DARK_GLASS,
-  },
-
-  // Light themes
   light: {
     name: 'Light',
     isDark: false,
-    // Warm paper, brand accent — the light twin of midnight.
-    bg: '#FAF7F1',
+    bg: '#FAFAFA',
     bgPure: '#FFFFFF',
     surface: '#FFFFFF',
-    surfaceHover: '#F1EDE4',
-    border: '#E5DFD2',
-    text: '#1C1914',
-    textSecondary: '#5C564B',
-    textMuted: '#8D8578',
-    accent: '#C4501F',
-    accentMuted: 'rgba(196,80,31,0.10)',
+    surfaceHover: '#F4F4F5',
+    border: '#E4E4E7',
+    text: '#09090B',
+    textSecondary: '#52525B',
+    textMuted: '#A1A1AA',
+    accent: '#09090B',
+    accentMuted: 'rgba(9,9,11,0.08)',
     danger: '#DC2626',
     dangerMuted: 'rgba(220,38,38,0.10)',
-    success: '#15803D',
-    warning: '#B45309',
-    tabBar: '#FAF7F1',
-    tabBorder: '#E5DFD2',
-    inputBg: '#FFFFFF',
-    inputBorder: '#E5DFD2',
-    glassFill:      'rgba(255,255,255,0.30)',
-    glassBorder:    'rgba(0,0,0,0.10)',
-    glassHighlight: 'rgba(255,255,255,1.0)',
-    glassHeavyFill: 'rgba(255,255,255,0.44)',
-    glassLightFill: 'rgba(255,255,255,0.18)',
-    ambientGradient: ['rgba(63,125,246,0.16)', '#F6F7FA'] as const,
-  },
-  sepia: {
-    name: 'Sepia',
-    isDark: false,
-    bg: '#F5ECD7',
-    bgPure: '#FEF9EE',
-    surface: '#FEF9EE',
-    surfaceHover: '#EDE0C8',
-    border: '#D9C8AA',
-    text: '#2C1810',
-    textSecondary: '#7A5C40',
-    textMuted: '#A68B6B',
-    accent: '#B45309',
-    accentMuted: 'rgba(180,83,9,0.12)',
-    danger: '#DC2626',
-    dangerMuted: 'rgba(220,38,38,0.12)',
-    success: '#15803D',
-    warning: '#B45309',
-    tabBar: '#FEF9EE',
-    tabBorder: '#D9C8AA',
-    inputBg: '#FEF9EE',
-    inputBorder: '#D9C8AA',
-    glassFill:      'rgba(254,249,238,0.30)',
-    glassBorder:    'rgba(44,24,16,0.12)',
-    glassHighlight: 'rgba(255,255,255,0.95)',
-    glassHeavyFill: 'rgba(254,249,238,0.44)',
-    glassLightFill: 'rgba(254,249,238,0.18)',
-    ambientGradient: ['rgba(180,83,9,0.22)', '#F5ECD7'] as const,
-  },
-  arctic: {
-    name: 'Arctic',
-    isDark: false,
-    bg: '#EFF6FF',
-    bgPure: '#FFFFFF',
-    surface: '#FFFFFF',
-    surfaceHover: '#DBEAFE',
-    border: '#BFDBFE',
-    text: '#0C1B2E',
-    textSecondary: '#3B6080',
-    textMuted: '#6B92B8',
-    accent: '#0284C7',
-    accentMuted: 'rgba(2,132,199,0.12)',
-    danger: '#DC2626',
-    dangerMuted: 'rgba(220,38,38,0.12)',
-    success: '#15803D',
-    warning: '#B45309',
+    success: '#16A34A',
+    warning: '#D97706',
     tabBar: '#FFFFFF',
-    tabBorder: '#BFDBFE',
-    inputBg: '#FFFFFF',
-    inputBorder: '#BFDBFE',
-    glassFill:      'rgba(255,255,255,0.30)',
-    glassBorder:    'rgba(12,27,46,0.10)',
+    tabBorder: '#E4E4E7',
+    inputBg: '#F4F4F5',
+    inputBorder: '#E4E4E7',
+    glassFill: 'rgba(255,255,255,0.50)',
+    glassBorder: 'rgba(0,0,0,0.08)',
     glassHighlight: 'rgba(255,255,255,1.0)',
-    glassHeavyFill: 'rgba(255,255,255,0.44)',
-    glassLightFill: 'rgba(255,255,255,0.18)',
-    ambientGradient: ['rgba(2,132,199,0.22)', '#EFF6FF'] as const,
+    glassHeavyFill: 'rgba(255,255,255,0.75)',
+    glassLightFill: 'rgba(255,255,255,0.25)',
+    ambientGradient: ['rgba(0,0,0,0.02)', '#FAFAFA'] as const,
+  },
+  nord_light: {
+    name: 'Nord Light',
+    isDark: false,
+    bg: '#ECEFF4',
+    bgPure: '#FFFFFF',
+    surface: '#E5E9F0',
+    surfaceHover: '#D8DEE9',
+    border: '#D8DEE9',
+    text: '#2E3440',
+    textSecondary: '#3B4252',
+    textMuted: '#4C566A',
+    accent: '#5E81AC',
+    accentMuted: 'rgba(94,129,172,0.12)',
+    danger: '#BF616A',
+    dangerMuted: 'rgba(191,97,106,0.12)',
+    success: '#A3BE8C',
+    warning: '#EBCB8B',
+    tabBar: '#ECEFF4',
+    tabBorder: '#D8DEE9',
+    inputBg: '#E5E9F0',
+    inputBorder: '#D8DEE9',
+    glassFill: 'rgba(236,239,244,0.30)',
+    glassBorder: 'rgba(46,52,64,0.10)',
+    glassHighlight: 'rgba(255,255,255,0.95)',
+    glassHeavyFill: 'rgba(236,239,244,0.44)',
+    glassLightFill: 'rgba(236,239,244,0.18)',
+    ambientGradient: ['rgba(94,129,172,0.15)', '#ECEFF4'] as const,
+  },
+  tokyonight_day: {
+    name: 'Tokyo Night Day',
+    isDark: false,
+    bg: '#E1E2E7',
+    bgPure: '#FFFFFF',
+    surface: '#D5D6DB',
+    surfaceHover: '#C6C7CD',
+    border: '#C6C7CD',
+    text: '#3760BF',
+    textSecondary: '#5A78CA',
+    textMuted: '#8C9FD7',
+    accent: '#2E7DE9',
+    accentMuted: 'rgba(46,125,233,0.12)',
+    danger: '#F52A65',
+    dangerMuted: 'rgba(245,42,101,0.12)',
+    success: '#587539',
+    warning: '#8C6C3E',
+    tabBar: '#E1E2E7',
+    tabBorder: '#C6C7CD',
+    inputBg: '#D5D6DB',
+    inputBorder: '#C6C7CD',
+    glassFill: 'rgba(225,226,231,0.30)',
+    glassBorder: 'rgba(55,96,191,0.10)',
+    glassHighlight: 'rgba(255,255,255,0.95)',
+    glassHeavyFill: 'rgba(225,226,231,0.44)',
+    glassLightFill: 'rgba(225,226,231,0.18)',
+    ambientGradient: ['rgba(46,125,233,0.15)', '#E1E2E7'] as const,
+  },
+  rosepine_dawn: {
+    name: 'Rosé Pine Dawn',
+    isDark: false,
+    bg: '#FAF4ED',
+    bgPure: '#FFFFFF',
+    surface: '#FFFDF9',
+    surfaceHover: '#F2E9E1',
+    border: '#DFDAD9',
+    text: '#575279',
+    textSecondary: '#797593',
+    textMuted: '#9893A5',
+    accent: '#907AA9',
+    accentMuted: 'rgba(144,122,169,0.12)',
+    danger: '#B4637A',
+    dangerMuted: 'rgba(180,99,122,0.12)',
+    success: '#286983',
+    warning: '#EA9D34',
+    tabBar: '#FAF4ED',
+    tabBorder: '#DFDAD9',
+    inputBg: '#FFFDF9',
+    inputBorder: '#DFDAD9',
+    glassFill: 'rgba(250,244,237,0.30)',
+    glassBorder: 'rgba(87,82,121,0.10)',
+    glassHighlight: 'rgba(255,255,255,0.95)',
+    glassHeavyFill: 'rgba(250,244,237,0.44)',
+    glassLightFill: 'rgba(250,244,237,0.18)',
+    ambientGradient: ['rgba(144,122,169,0.15)', '#FAF4ED'] as const,
   },
 };
 
-// Font Size Maps
+
 const FONT_SIZE_MAP = {
   small:  { caption: 10, small: 12, body: 14, title: 18, heading: 24 },
   medium: { caption: 11, small: 13, body: 16, title: 20, heading: 28 },
@@ -303,18 +314,37 @@ const LINE_HEIGHT_MULTIPLIERS = {
   heading: 1.22,
 } as const;
 
-// Border Radius Maps
+
 const RADIUS_MAP = {
   small:  { sm: 4, md: 8, lg: 10, xl: 12, card: 10, full: 9999 },
   medium: { sm: 6, md: 10, lg: 14, xl: 18, card: 14, full: 9999 },
   large:  { sm: 8, md: 12, lg: 16, xl: 20, card: 18, full: 9999 },
 } as const;
 
-// Demo-mode online users (mock ids from the local seed feed). Real accounts
-// come from Realtime presence — see lib/presence.ts.
+
+
 const MOCK_ONLINE_USER_IDS = new Set(['u1', 'u4', 'u5', 'u7']);
 
-// useTheme Hook
+
+export const getPairedTheme = (themeName: ThemeName, wantDark: boolean): ThemeColors => {
+  const base = THEMES[themeName] || THEMES.midnight;
+  if (base.isDark === wantDark) return base;
+    const map: Record<string, ThemeName> = {
+      'midnight': 'light',
+      'amoled': 'light',
+      'nord': 'nord_light',
+      'tokyonight': 'tokyonight_day',
+      'rosepine': 'rosepine_dawn',
+      'light': 'midnight',
+      'nord_light': 'nord',
+      'tokyonight_day': 'tokyonight',
+      'rosepine_dawn': 'rosepine',
+    };
+  
+  const pairedKey = map[themeName];
+  return pairedKey && THEMES[pairedKey] ? THEMES[pairedKey] : (wantDark ? THEMES.midnight : THEMES.light);
+};
+
 export function useTheme() {
   const themeName = useAppStore(s => s.theme);
   const darkMode = useAppStore(s => s.darkMode);
@@ -329,13 +359,9 @@ export function useTheme() {
   const onlineStatus = useAppStore(s => s.onlineStatus);
   const presenceIds = usePresenceStore(s => s.onlineIds);
 
-  const selectedBase = THEMES[themeName] || THEMES.midnight;
-  // dark mode toggle overrides theme picker in both directions
-  const base = darkMode
-    ? (selectedBase.isDark ? selectedBase : THEMES.midnight)
-    : (selectedBase.isDark ? THEMES.light : selectedBase);
+  const base = getPairedTheme(themeName, darkMode);
 
-  // Build accent muted from accentColor
+  
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -367,8 +393,8 @@ export function useTheme() {
     return reduceAnimations ? undefined : anim;
   };
 
-  // Fast animation presets — use these instead of inline values.
-  // All durations ≤80ms; springs settle in <120ms.
+  
+  
 
   const switchTrack = { false: colors.surfaceHover, true: colors.accent };
 
