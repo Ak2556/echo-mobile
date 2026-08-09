@@ -62,7 +62,7 @@ export default function SearchScreen() {
       setActiveTab(params.q.startsWith('#') ? 'topics' : 'all');
     }
     
-  }, [params.q]);
+  }, [params.q, query]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 300);
@@ -78,8 +78,7 @@ export default function SearchScreen() {
       track('search_executed', { length: q.length, has_hashtag: q.startsWith('#') });
     }, 800);
     return () => clearTimeout(t);
-    
-  }, [query]);
+  }, [query, recentSearches, setRecentSearches]);
 
   const { data: remoteResults } = useRemoteSearch(debouncedQuery);
   const isSearching = query.trim().length > 0;
@@ -99,6 +98,7 @@ export default function SearchScreen() {
     ).slice(0, 8);
   }, [normalizedQuery]);
   const topics = useMemo(() => deriveTopicFeed(feed), [feed]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
   const { data: remoteSuggested } = useSuggestedUsers();
   const suggestedUsers = (remote ? (remoteSuggested ?? []) : users).slice(0, layout.isWide ? 6 : 4);

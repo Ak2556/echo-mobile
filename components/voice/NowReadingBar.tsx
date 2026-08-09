@@ -52,7 +52,7 @@ export function NowReadingBar() {
           {paused ? 'Paused' : 'Reading aloud…'}
         </Text>
         <Pressable
-          onPress={() => { tap('light'); paused ? resumeSpeaking() : pauseSpeaking(); }}
+          onPress={() => { tap('light'); if (paused) { resumeSpeaking(); } else { pauseSpeaking(); } }}
           hitSlop={10}
           accessibilityRole="button"
           accessibilityLabel={paused ? 'Resume reading' : 'Pause reading'}

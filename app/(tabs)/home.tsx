@@ -23,11 +23,8 @@ import { Avatar } from '../../components/ui/Avatar';
 import { useInfiniteFeed, useTrendingEvolutions } from '../../hooks/queries/useFeed';
 import { setReadableFeed } from '../../lib/voice/readFeed';
 import { registerVoiceActions, clearVoiceActions } from '../../lib/voice/actions';
-import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
+import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { useFollow } from '../../hooks/queries/useFollow';
-
-// Stable viewability config for voice "act on the post in view".
-const VOICE_VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../lib/theme';
 import { useAppStore } from '../../store/useAppStore';
@@ -39,7 +36,6 @@ import { ComposeFAB } from '../../components/ui/ComposeFAB';
 import { UserRow } from '../../components/social/UserRow';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
-import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { feedbackHaptic } from '../../lib/accentDesign';
 import { pingDailyActivity } from '../../lib/retention';
@@ -58,6 +54,9 @@ import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/da
 const NAV_BAR_HEIGHT = 50;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 const SENSITIVE_TAGS = new Set(['nsfw', 'adult', 'explicit', 'mature', '18+', '18plus', 'gore', 'graphic', 'disturbing']);
+
+// Stable viewability config for voice "act on the post in view".
+const VOICE_VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 
 function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: React.ReactNode }) {
   const { colors, font } = useTheme();
@@ -325,7 +324,7 @@ export default function DiscoverScreen() {
   const { colors, animation, font, fontSizes, lineHeights } = useTheme();
   const { t } = useI18n();
   const performance = usePerformanceProfile('hot');
-  const { username, avatarColor, avatarUrl, interests, followingIds, userId } = useAppStore();
+  const { username, avatarColor, avatarUrl, interests, followingIds } = useAppStore();
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
   const hasCompletedFirstRun = useAppStore(s => s.hasCompletedFirstRun);
   const messagesBySession = useAppStore(s => s.messagesBySession);
@@ -435,7 +434,7 @@ export default function DiscoverScreen() {
   // plus scroll/refresh). Registered once; reads live refs so it stays stable.
   const popularItemsRef = useRef(popularItems);
   popularItemsRef.current = popularItems;
-  const onVoiceViewable = useRef(({ viewableItems }: { viewableItems: Array<{ item?: any }> }) => {
+  const onVoiceViewable = useRef(({ viewableItems }: { viewableItems: { item?: any }[] }) => {
     const first = viewableItems?.find((v) => v?.item?.id)?.item;
     if (first) currentEchoRef.current = first;
   }).current;
@@ -728,7 +727,7 @@ export default function DiscoverScreen() {
             </View>
           </Pressable>
 
-          <Pressable onPress={() => router.push(`/user/${userId}`)} accessibilityLabel="Open your profile">
+          <Pressable onPress={() => router.push('/user/me')} accessibilityLabel="Open your profile">
             <View style={{ borderRadius: 17, borderWidth: 2, borderColor: colors.glassBorder }}>
               <Avatar name={username || '?'} color={avatarColor} url={avatarUrl} size={30} />
             </View>

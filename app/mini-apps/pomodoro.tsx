@@ -767,7 +767,7 @@ export default function PomodoroScreen() {
     } finally {
       finishingRef.current = false;
     }
-  }, [beginActiveTimer, cancelTimerNotification, label, minutesFor, mode]);
+  }, [beginActiveTimer, cancelTimerNotification, label, minutesFor, mode, tt]);
 
   const restoreActiveTimer = useCallback(async () => {
     const active = await loadActivePomodoroTimer();

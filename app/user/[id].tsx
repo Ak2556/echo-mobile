@@ -280,6 +280,7 @@ export default function UserProfileScreen() {
 
   const {
     getUser, isFollowing, toggleFollow, isBlocked, toggleBlock, isMuted, toggleMute, getOrCreateConversation,
+    username, displayName, avatarColor, avatarUrl, bio,
   } = useAppStore();
   const { data: feed } = useFeed();
   const [showMenu, setShowMenu] = useState(false);
@@ -412,7 +413,7 @@ export default function UserProfileScreen() {
     );
   }
 
-  const { username, displayName, avatarColor, avatarUrl, bio } = useAppStore();
+
   let user = id === 'me' ? {
     id: 'me',
     username,
