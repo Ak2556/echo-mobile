@@ -44,6 +44,7 @@ import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
 import { assistantLanguageInstruction } from '../../lib/languages';
 import { useI18n } from '../../lib/i18n';
+import { AurasRow } from '../messages';
 
 // ─── DM colour token (teal, distinct from AI accent) ────────────────────────
 // One accent per app: the DM surfaces use the same warm brand accent as
@@ -400,6 +401,7 @@ function DMInboxView({ topPad }: { topPad: number }) {
           gap: 12,
         }}
       >
+        <AurasRow />
         <DMInboxHeader
           count={sorted.length}
           unread={unreadCount}
