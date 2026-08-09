@@ -504,7 +504,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           fadeOnPress
           haptic="light"
           performanceMode="hot"
-          style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}
+          style={{ borderRadius: 28, overflow: 'hidden', backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, shadowColor: colors.isDark ? '#000' : '#888', shadowOpacity: colors.isDark ? 0.35 : 0.15, shadowRadius: 24, shadowOffset: { width: 0, height: 12 } }}
         >
           <View style={{ height: heroHeight }}>
             {item.postType === 'photo' && (
@@ -563,7 +563,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                     <Text style={[font.bodySemibold, { fontSize: 14, color: '#fff' }]} numberOfLines={1}>{item.displayName || item.username}</Text>
                     {item.isVerified && <SealCheck color="#fff" size={13} weight="fill" />}
                   </View>
-                  <Text style={{ color: item.isPending ? '#60A5FA' : 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: item.isPending ? '600' : '400' }}>{item.isPending ? 'Pending' : getTimeAgo(item.createdAt)}</Text>
+                  <Text style={{ color: item.isPending ? '#60A5FA' : 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: item.isPending ? '600' : '500', letterSpacing: -0.2 }}>{item.isPending ? 'Pending' : getTimeAgo(item.createdAt)}</Text>
                 </View>
               </AnimatedPressable>
               {showFollowCta && (
@@ -592,7 +592,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                 author note + hashtags moved below the media (see strip). */}
             {!!(item.editorialTitle ?? item.prompt) && (
               <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}>
-                <Text style={[font.display, { fontSize: 22, color: '#fff', lineHeight: 29 }]} numberOfLines={2}>
+                <Text style={[font.display, { fontSize: 22, color: '#fff', lineHeight: 29, letterSpacing: -0.5, textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: {width: 0, height: 2}, textShadowRadius: 4 }]} numberOfLines={2}>
                   {item.editorialTitle ?? item.prompt}
                 </Text>
               </View>
@@ -636,15 +636,15 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
       } : {
-        borderRadius: 22,
+        borderRadius: 28,
         overflow: 'hidden',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: colors.glassBorder,
-        shadowColor: '#000',
-        shadowOpacity: colors.isDark ? 0.22 : 0.08,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
+        shadowColor: colors.isDark ? '#000' : '#888',
+        shadowOpacity: colors.isDark ? 0.35 : 0.15,
+        shadowRadius: 24,
+        shadowOffset: { width: 0, height: 12 },
       }}>
       {!compactFeed && (
         <LinearGradient
@@ -743,13 +743,13 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             style={{ minWidth: 0 }}
           >
             <View className="flex-row items-center gap-1" style={{ minWidth: 0 }}>
-              <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: 0, flexShrink: 1 }]} numberOfLines={1}>{item.displayName || item.username}</Text>
+              <Text style={[font.bodySemibold, { fontSize: textSize, color: colors.text, letterSpacing: -0.3, flexShrink: 1 }]} numberOfLines={1}>{item.displayName || item.username}</Text>
               {item.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
             </View>
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
           {/* Time is lightweight metadata, not a chip — keeps the header calm. */}
-          <Text style={{ color: item.isPending ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8, marginRight: 8, fontWeight: item.isPending ? '600' : '400' }}>
+          <Text style={{ color: item.isPending ? colors.accent : colors.textSecondary, fontSize: fontSizes.caption, marginLeft: 8, marginRight: 8, fontWeight: item.isPending ? '600' : '500', letterSpacing: -0.2 }}>
             {item.isPending ? 'Pending' : getTimeAgo(item.createdAt)}
           </Text>
           {pinned && <PushPin color={colors.textMuted} size={13} weight="fill" style={{ marginRight: 6 }} />}

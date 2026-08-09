@@ -139,7 +139,10 @@ function LitePressable({
         accessibilityRole={accessibilityRole ?? 'button'}
         accessibilityLabel={inferredLabel}
         accessibilityState={disabled ? { disabled: true } : undefined}
-        style={({ pressed }) => ({ ...outer, opacity: pressOpacity(pressed) })}
+        style={({ pressed }) => {
+          const t = outer.transform ? [...outer.transform, { scale: pressed ? 0.97 : 1 }] : [{ scale: pressed ? 0.97 : 1 }];
+          return { ...outer, opacity: pressOpacity(pressed), transform: t };
+        }}
         {...rest}
       >
         <View style={[inner, styles.fill]}>{children}</View>
@@ -157,7 +160,11 @@ function LitePressable({
       // Flatten to a single object: function styles returning ARRAYS have
       // dropped layout props (flexDirection/width/gap) in Release builds —
       // see the ActionSheet regression note. A flat merged object survives.
-      style={({ pressed }) => StyleSheet.flatten([resolved, { opacity: pressOpacity(pressed) }])}
+      style={({ pressed }) => {
+        const flat = StyleSheet.flatten(resolved) || {};
+        const t = (flat as any).transform ? [...(flat as any).transform, { scale: pressed ? 0.97 : 1 }] : [{ scale: pressed ? 0.97 : 1 }];
+        return { ...flat, opacity: pressOpacity(pressed), transform: t };
+      }}
       {...rest}
     >
       {children}
