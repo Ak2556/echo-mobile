@@ -778,6 +778,12 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
           </AnimatedPressable>
         </View>
 
+        {item.musicTitle && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginBottom: 10, alignSelf: 'flex-start' }}>
+            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>🎵 {item.musicTitle} - {item.musicArtist}</Text>
+          </View>
+        )}
+
         {item.postType === 'musing' && !!item.prompt && (
           <Text
             style={[
