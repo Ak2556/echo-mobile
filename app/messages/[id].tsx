@@ -2192,9 +2192,26 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
   }, [searchOpen]);
 
   // Handlers
+  const [gatekeeperBypassed, setGatekeeperBypassed] = useState(false);
   const handleSend = useCallback(() => {
     const content = text.trim();
     if (!content || !id) return;
+
+    // AI Gatekeeper Mock
+    const isRecipientBusy = conversation?.displayName === 'Akash' || conversation?.displayName === 'Elena'; // Mock busy users
+    if (isRecipientBusy && !gatekeeperBypassed && !editingMessage) {
+      Alert.alert(
+        `${conversation?.displayName || 'They'} might be busy`,
+        `${conversation?.displayName || 'They'} recently set their Aura to "Deep work". Is this urgent?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Send Anyway', onPress: () => { setGatekeeperBypassed(true); setTimeout(handleSend, 50); } }
+        ]
+      );
+      return;
+    }
+    setGatekeeperBypassed(false);
+
     if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setText('');
     setQuickAction(null);
