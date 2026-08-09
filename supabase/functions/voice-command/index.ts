@@ -12,14 +12,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-// Prefer a fast multimodal model. gemini-2.5-flash handles Hindi audio well.
-const VOICE_MODEL = Deno.env.get("VOICE_COMMAND_MODEL") ?? Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
+// Prefer a fast multimodal model. gemini-2.5-flash-lite handles Hindi audio well.
+const VOICE_MODEL = Deno.env.get("VOICE_COMMAND_MODEL") ?? Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash-lite";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 // Optional: call Google AI Studio (Gemini) directly. Its free tier accepts audio
 // input, so voice works without an OpenRouter balance. When set, this is preferred.
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
-const GEMINI_MODEL = Deno.env.get("GEMINI_VOICE_MODEL") ?? "gemini-2.5-flash";
+const GEMINI_MODEL = Deno.env.get("GEMINI_VOICE_MODEL") ?? "gemini-2.5-flash-lite";
 const AUDIO_MIME: Record<string, string> = {
   wav: "audio/wav", mp3: "audio/mp3", m4a: "audio/mp4", aac: "audio/aac",
   caf: "audio/x-caf", ogg: "audio/ogg", flac: "audio/flac", webm: "audio/webm",
