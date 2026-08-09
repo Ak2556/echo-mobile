@@ -23,7 +23,7 @@ import { Avatar } from '../components/ui/Avatar';
 import { warmAvatarColor } from '../lib/avatarPalette';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../lib/theme';
-import { useI18n } from '../lib/i18n';
+import { useI18n, ttx } from '../lib/i18n';
 import { FeedItem, PollOption } from '../types';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { prependEchoToFeedCache, removeEchoFromFeedCache } from '../lib/queryCache';
@@ -36,7 +36,7 @@ import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
 import { PhotoEditor } from '../components/social/PhotoEditor';
 import type { LocalImageUpload, LocalVideoUpload, UserSearchHit } from '../lib/supabaseEchoApi';
-import { ttx } from '../lib/i18n';
+
 
 const MAX_PHOTOS = 6;
 

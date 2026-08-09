@@ -18,8 +18,7 @@ import { MINI_APP_CATALOG, FLAGSHIP_MINI_APPS, isFlagshipMiniApp, type MiniAppCa
 import { resolveMiniAppId } from '../../lib/miniAppIntegration';
 import { getRecentTools, recordToolOpen } from '../../lib/miniAppRecents';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
-import { useI18n } from '../../lib/i18n';
-import { ttx } from '../../lib/i18n';
+import { useI18n, ttx } from '../../lib/i18n';
 
 const PAD = 20;
 const GAP = 12;
