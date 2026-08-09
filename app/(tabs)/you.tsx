@@ -193,7 +193,7 @@ export default function ProfileScreen() {
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{
           paddingTop: insets.top + (layout.isDesktop ? 28 : 10),
-          paddingBottom: insets.bottom + layout.bottomChromePadding,
+          paddingBottom: layout.bottomChromePadding,
         }}
       >
         <View style={layout.contentStyle}>
