@@ -30,9 +30,9 @@ Talk to an AI that thinks _with_ you. Publish what's worth keeping. Answer one q
 
 ## 📖 The Story Behind Echo
 
-*It started with a simple realization by Core Developer **Akash (Ak2556)**: We type too slowly to capture our best ideas, and we scroll too mindlessly to connect with others in a meaningful way.* 
+*It started with a simple realization by Core Developer **Akash Thakur (Ak2556)**: We type too slowly to capture our best ideas, and we scroll too mindlessly to connect with others in a meaningful way.* 
 
-Akash set out to build a platform that acts as a true thinking partner—a place where your raw voice is instantly organized, translated, and broadcasted to a global audience. No more algorithmic silos. No more language barriers. Just pure, unfiltered human intelligence augmented by AI, engineered from the ground up by a solo visionary to prove that the next era of social media doesn\'t require thousands of engineers to launch—just the right architecture and an unrelenting focus on the user.
+Akash Thakur set out to build a platform that acts as a true thinking partner—a place where your raw voice is instantly organized, translated, and broadcasted to a global audience. No more algorithmic silos. No more language barriers. Just pure, unfiltered human intelligence augmented by AI, engineered from the ground up by a solo visionary to prove that the next era of social media doesn\'t require thousands of engineers to launch—just the right architecture and an unrelenting focus on the user.
 
 ---
 
@@ -157,9 +157,9 @@ npm start
 Released under the [MIT License](LICENSE)
 
 <br/>
-<img src="https://avatars.githubusercontent.com/u/79953258?v=4" width="60" style="border-radius:50%; margin-bottom:10px" alt="Akash"/>
+<img src="https://avatars.githubusercontent.com/u/79953258?v=4" width="60" style="border-radius:50%; margin-bottom:10px" alt="Akash Thakur"/>
 <br/>
-<b>Engineered & Architected by <a href="https://github.com/Ak2556">Akash (Ak2556)</a></b><br/>
+<b>Engineered & Architected by <a href="https://github.com/Ak2556">Akash Thakur (Ak2556)</a></b><br/>
 <i>Core Developer & Creator of Echo</i>
 
 </div>
