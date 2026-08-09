@@ -31,7 +31,8 @@ async function getAccessToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error(`Spotify Auth Error: ${response.status} ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Spotify Auth Error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -54,19 +55,20 @@ export interface SpotifyTrack {
  * Searches the Spotify API for tracks matching the query.
  * Filters out tracks that do not have a 30-second preview_url.
  */
-export async function searchSpotify(query: string, limit = 20): Promise<SpotifyTrack[]> {
+export async function searchSpotify(query: string): Promise<SpotifyTrack[]> {
   if (!query.trim()) return [];
   
   const token = await getAccessToken();
   const encodedQuery = encodeURIComponent(query);
-  const response = await fetch(`https://api.spotify.com/v1/search?q=${encodedQuery}&type=track&limit=${limit}`, {
+  const response = await fetch(`https://api.spotify.com/v1/search?q=${encodedQuery}&type=track`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }
   });
 
   if (!response.ok) {
-    throw new Error(`Spotify Search Error: ${response.status} ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Spotify Search Error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
