@@ -169,3 +169,17 @@ export function usePublishRemoteEcho() {
     },
   });
 }
+
+export function useDeleteRemoteEcho() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (echoId: string) => {
+      const { deleteRemoteEcho } = await import('../../lib/supabaseEchoApi');
+      await deleteRemoteEcho(echoId);
+    },
+    onSuccess: (_, echoId) => {
+      qc.invalidateQueries({ queryKey: ['feed'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    }
+  });
+}

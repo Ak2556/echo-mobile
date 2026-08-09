@@ -46,7 +46,13 @@ export function useRemoteProfileBundle(userId: string | undefined) {
       pinnedEcho: FeedItem | null;
     } | null> => {
       if (!userId) return null;
-      const profile = await fetchRemoteProfile(userId);
+      let targetId = userId;
+      if (userId === 'me') {
+        const uid = await getSessionUserId();
+        if (!uid) return null;
+        targetId = uid;
+      }
+      const profile = await fetchRemoteProfile(targetId);
       if (!profile) return null;
       const profileId = profile.id;
       const [echoes, followerCount, followingCount, sessionUid] = await Promise.all([

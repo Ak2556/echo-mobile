@@ -25,7 +25,7 @@ import { useTutorialStore } from '../store/tutorialStore';
 import { useOutbox } from '../store/outbox';
 import { setForcedOffline, isForcedOffline } from '../lib/net';
 import { drainOutbox } from '../lib/outboxProcessor';
-import { useTheme, THEMES, ThemeName } from '../lib/theme';
+import { useTheme, THEMES, ThemeName, getPairedTheme } from '../lib/theme';
 import { signOut } from '../lib/auth';
 import { deleteRemoteAIConversations, updateRemoteProfile, fetchCurrentUserProfile } from '../lib/supabaseEchoApi';
 import { syncNotificationProfile } from '../lib/personalNudges';
@@ -39,9 +39,8 @@ import { isSafeExternalUrl } from '../lib/urlSafety';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { FONT_STYLE_OPTIONS, fontStyleLabel } from '../lib/fontPresets';
 import { APP_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguageCode } from '../lib/languages';
-import { useI18n } from '../lib/i18n';
+import { useI18n , ttx } from '../lib/i18n';
 import { speak } from '../lib/tts';
-import { ttx } from '../lib/i18n';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@echo.app';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@echo.app';
@@ -154,8 +153,7 @@ function SettingsHero({
           </View>
         </View>
 
-        {/* Status badges removed — they restated the Push Notifications /
-            Private Account / AI model settings shown in the rows just below. */}
+        {}
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {quickActions.map(action => {
@@ -338,8 +336,8 @@ function OptionPicker<T extends string>({ title, options, value, onChange, onClo
   );
 }
 
-// Accent Color Picker
-// Warm editorial palette (lib/avatarPalette.ts) — one voice across the app.
+
+
 const ACCENT_COLORS = [
   { color: '#C65F3F', name: 'Terracotta' },
   { color: '#B08536', name: 'Ochre' },
@@ -424,13 +422,13 @@ function AccentColorPicker({ value, onChange, onClose, theme }: {
   );
 }
 
-// Theme Picker
+
 function ThemePicker({ value, onChange, onClose, theme }: {
   value: ThemeName; onChange: (v: ThemeName) => void; onClose: () => void;
   theme: ReturnType<typeof useTheme>;
 }) {
   const { colors, radius, fontSizes, animation } = theme;
-  const themeOrder: ThemeName[] = ['midnight', 'amoled', 'ocean', 'sunset', 'forest', 'lavender', 'light', 'sepia', 'arctic'];
+  const themeOrder: ThemeName[] = ['midnight', 'amoled', 'tokyonight', 'rosepine', 'nord'];
 
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
@@ -464,34 +462,37 @@ function ThemePicker({ value, onChange, onClose, theme }: {
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
           )}
-          <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16 }}>
+          <View style={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 16, maxHeight: '82%' }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', backgroundColor: colors.glassBorder, marginBottom: 16 }} />
             <Text style={{ color: colors.text, fontSize: fontSizes.title, fontWeight: '700', marginBottom: 8, marginLeft: 4 }}>{ttx("Choose Theme")}</Text>
             <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginBottom: 16, marginLeft: 4 }}>{ttx("Pick a color palette that matches your taste")}</Text>
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
               {themeOrder.map(key => {
-                const t = THEMES[key];
+                const t = getPairedTheme(key, theme.colors.isDark);
                 const active = value === key;
                 return (
                   <AnimatedPressable
                     key={key}
-                    onPress={() => { onChange(key); onClose(); showToast(`Theme: ${t.name}`, 'Theme'); }}
+                    onPress={() => { onChange(key); onClose(); showToast(`Theme: ${THEMES[key].name}`, 'Theme'); }}
                     scaleValue={0.95}
                     haptic="medium"
                     style={{
                       width: '48%',
                       marginBottom: 12,
+                    }}
+                  >
+                    <View style={{ 
+                      backgroundColor: t.bg, 
+                      padding: 12,
                       borderRadius: radius.card,
                       overflow: 'hidden',
                       borderWidth: 2,
                       borderColor: active ? t.accent : 'transparent',
-                    }}
-                  >
-                    <View style={{ backgroundColor: t.bg, padding: 12 }}>
+                    }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                         <View style={{ backgroundColor: t.accent, width: 24, height: 24, borderRadius: 999, marginRight: 8 }} />
-                        <Text style={{ color: t.text, fontWeight: '700', fontSize: fontSizes.body, flex: 1 }}>{t.name}</Text>
+                        <Text style={{ color: t.text, fontWeight: '700', fontSize: fontSizes.body, flex: 1 }}>{THEMES[key].name}</Text>
                         {active && <Check color={t.accent} size={18} />}
                       </View>
 
@@ -509,7 +510,7 @@ function ThemePicker({ value, onChange, onClose, theme }: {
                   </AnimatedPressable>
                 );
               })}
-            </View>
+            </ScrollView>
           </View>
         </Animated.View>
       </AnimatedPressable>
@@ -517,13 +518,13 @@ function ThemePicker({ value, onChange, onClose, theme }: {
   );
 }
 
-// Main Screen
+
 export default function SettingsScreen() {
   const router = useRouter();
   const s = useAppStore();
   const theme = useTheme();
   const { t } = useI18n();
-  // Dev-only: exercise the offline outbox (queue writes, then replay on reconnect).
+  
   const [forceOffline, setForceOfflineState] = useState(isForcedOffline());
   const outboxPending = useOutbox(o => o.ops.filter(op => op.status === 'pending').length);
   const { colors, radius, fontSizes, switchTrack, animation } = theme;
@@ -534,8 +535,8 @@ export default function SettingsScreen() {
   useEffect(() => {
     if (!isSupabaseRemote()) return;
     let cancelled = false;
-    // Capability probe: a transient failure would otherwise hide the moderator
-    // section forever. Retry once, then report so it isn't silently lost.
+    
+    
     const probe = (attempt: number) => {
       fetchCurrentUserProfile()
         .then(p => { if (!cancelled && p?.is_moderator) setIsModerator(true); })
@@ -569,15 +570,15 @@ export default function SettingsScreen() {
         text: 'Sign Out', style: 'destructive',
         onPress: async () => {
           await signOut();
-          // onAuthStateChange in _layout.tsx handles redirect to /auth/login
+          
         },
       },
     ]);
   };
 
   const handleDeleteAccount = () => {
-    // Route to the dedicated delete-account screen — Apple wants a
-    // multi-step confirmation flow, not a one-tap alert.
+    
+    
     router.push('/delete-account');
   };
 
@@ -717,7 +718,7 @@ export default function SettingsScreen() {
     if (!isSupabaseRemote()) return;
     try {
       await updateRemoteProfile({ personalized_notifications: enabled });
-      // Upload the derived profile now, or clear it immediately on opt-out.
+      
       void syncNotificationProfile(enabled);
     } catch (e) {
       s.setPersonalizedNotifications(prev);
@@ -809,7 +810,7 @@ export default function SettingsScreen() {
     const idx = RATE_STEPS.findIndex((x) => Math.abs(x - s.speechRate) < 0.06);
     const next = RATE_STEPS[(idx + 1) % RATE_STEPS.length] ?? 1;
     s.setSpeechRate(next);
-    // Immediately preview the new speed so the choice is audible, not abstract.
+    
     speak(t('voice.sample'), { language: s.appLanguage, rate: next });
   };
   const showGroup = (...groups: SettingsGroup[]) => activeGroup === 'all' || groups.includes(activeGroup);
@@ -888,7 +889,7 @@ export default function SettingsScreen() {
         />
         <SettingsCategoryRail active={activeGroup} onChange={setActiveGroup} theme={theme} />
         <View style={sectionGridStyle}>
-        {/* NOTIFICATIONS */}
+        {}
         {showGroup('essentials') && <Animated.View entering={animation(FadeInDown.delay(50).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Essentials")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -914,7 +915,7 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>}
 
-        {/* PRIVACY & SAFETY */}
+        {}
         {showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Privacy & Safety")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -943,7 +944,7 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>}
 
-        {/* APPEARANCE & DISPLAY */}
+        {}
         {showGroup('display') && <Animated.View entering={animation(FadeInDown.delay(150).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Accessibility & Display")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -1015,7 +1016,7 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>}
 
-        {/* CONTENT & FEED */}
+        {}
         {showGroup('feed') && <Animated.View entering={animation(FadeInDown.delay(200).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Content & Feed")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -1033,7 +1034,7 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>}
 
-        {/* CHAT & AI */}
+        {}
         {showGroup('ai') && <Animated.View entering={animation(FadeInDown.delay(250).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Chat & AI")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -1066,7 +1067,7 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>}
 
-        {/* STORAGE & DATA */}
+        {}
         {showGroup('data') && <Animated.View entering={animation(FadeInDown.delay(300).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Advanced Data Controls")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -1082,7 +1083,7 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>}
 
-        {/* MODERATION (moderators only) */}
+        {}
         {isModerator && showGroup('support') && (
           <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
             <Text style={sectionHeaderStyle}>{ttx("Moderation")}</Text>
@@ -1092,7 +1093,7 @@ export default function SettingsScreen() {
           </Animated.View>
         )}
 
-        {/* EU DIGITAL SERVICES ACT */}
+        {}
         {showGroup('support') && <Animated.View entering={animation(FadeInDown.delay(350).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("EU Digital Services Act")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -1104,7 +1105,7 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>}
 
-        {/* ABOUT */}
+        {}
         {showGroup('support') && <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("About")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -1130,7 +1131,7 @@ export default function SettingsScreen() {
           </GlassPanel>
         </Animated.View>}
 
-        {/* DANGER ZONE */}
+        {}
         {showGroup('support', 'data') && <Animated.View entering={animation(FadeInDown.delay(400).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Danger Zone")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
@@ -1144,7 +1145,7 @@ export default function SettingsScreen() {
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, textAlign: 'center', marginBottom: 32 }}>{ttx("Echo v1.0.0")}</Text>
       </ScrollView>
 
-      {/* PICKERS */}
+      {}
       {showThemePicker && (
         <ThemePicker value={s.theme} onChange={s.setTheme} onClose={() => setShowThemePicker(false)} theme={theme} />
       )}

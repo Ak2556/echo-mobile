@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { ShareSheet } from '../common/ShareSheet';
 import { ActionSheet, ActionItem } from '../common/ActionSheet';
 import { RepostChoiceSheet } from './RepostChoiceSheet';
@@ -18,16 +18,16 @@ import { Avatar } from '../ui/Avatar';
 import { ZoomableImageViewer } from '../ui/ZoomableImageViewer';
 import { showToast } from '../ui/Toast';
 import { warmAvatarColor } from '../../lib/avatarPalette';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, GitBranch } from 'phosphor-react-native';
+import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, GitBranch, Trash } from 'phosphor-react-native';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, PerspectiveType, Poll } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
+import { useI18n, ttx } from '../../lib/i18n';
 import { SpeakButton } from '../ui/SpeakButton';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { recordRemoteEchoView } from '../../lib/supabaseEchoApi';
-import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost } from '../../hooks/queries/useSupabaseSocial';
+import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useDeleteRemoteEcho } from '../../hooks/queries/useSupabaseSocial';
 import { useFollow } from '../../hooks/queries/useFollow';
 import { usePerformanceProfile } from '../../lib/performance';
 import { useResponsiveLayout } from '../../lib/responsive';
@@ -161,7 +161,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     ? Math.round(Math.min((layout.width - 24) * 0.78, layout.height * 0.62))
     : 430;
   const { isBookmarked, toggleBookmark, isReposted, toggleRepost, toggleLike,
-    compactFeed, showPreviewCards, votePoll,
+    compactFeed, showPreviewCards, votePoll, deleteEcho,
   } = useAppStore();
   const currentUserId = useAppStore(s => s.userId);
   const { isFollowing: amFollowing, toggle: toggleFollowUser, pendingId: followPendingId } = useFollow();
@@ -183,6 +183,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const setNotInterestedIds = useAppStore(s => s.setNotInterestedIds);
   const feedFeedback = useAppStore(s => s.feedFeedback);
   const setFeedFeedback = useAppStore(s => s.setFeedFeedback);
+  const deleteRemoteEchoMut = useDeleteRemoteEcho();
 
   useEffect(() => {
     setLiked(item.isLiked);
@@ -266,6 +267,32 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
     (item.postType === 'video' && !!item.videoUri);
 
   const menuActions: ActionItem[] = [
+    ...(item.userId === currentUserId ? [{
+      key: 'delete',
+      label: ttx('Delete'),
+      icon: <Trash color={colors.danger} size={20} />,
+      destructive: true,
+      onPress: () => {
+        Alert.alert(
+          ttx('Delete post'),
+          ttx('Are you sure you want to delete this post? This cannot be undone.'),
+          [
+            { text: ttx('Cancel'), style: 'cancel' },
+            { 
+              text: ttx('Delete'), 
+              style: 'destructive',
+              onPress: () => {
+                // Optimistically remove from local state for immediate feedback
+                deleteEcho(item.id);
+                if (remote) {
+                  deleteRemoteEchoMut.mutate(item.id);
+                }
+              }
+            }
+          ]
+        );
+      },
+    }] : []),
     {
       key: 'profile',
       label: t('feed.viewProfile'),

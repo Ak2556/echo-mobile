@@ -325,7 +325,7 @@ export default function DiscoverScreen() {
   const { colors, animation, font, fontSizes, lineHeights } = useTheme();
   const { t } = useI18n();
   const performance = usePerformanceProfile('hot');
-  const { username, avatarColor, avatarUrl, interests, followingIds } = useAppStore();
+  const { username, avatarColor, avatarUrl, interests, followingIds, userId } = useAppStore();
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
   const hasCompletedFirstRun = useAppStore(s => s.hasCompletedFirstRun);
   const messagesBySession = useAppStore(s => s.messagesBySession);
@@ -728,7 +728,7 @@ export default function DiscoverScreen() {
             </View>
           </Pressable>
 
-          <Pressable onPress={() => router.push('/(tabs)/you')} accessibilityLabel="Open your profile">
+          <Pressable onPress={() => router.push(`/user/${userId}`)} accessibilityLabel="Open your profile">
             <View style={{ borderRadius: 17, borderWidth: 2, borderColor: colors.glassBorder }}>
               <Avatar name={username || '?'} color={avatarColor} url={avatarUrl} size={30} />
             </View>
