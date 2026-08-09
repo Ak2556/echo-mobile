@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Microphone, Stop, X } from 'phosphor-react-native';
@@ -27,7 +27,7 @@ export function VoiceControl() {
   const { colors } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
-  const { state, start, stopAndRun, cancel, reset } = useVoiceCommand();
+  const { state, start, stopAndRun, cancel, reset, runTextCommand } = useVoiceCommand();
   const registerVoice = useVoiceControl(s => s.register);
   const setVoicePhase = useVoiceControl(s => s.setPhase);
   const captions = useAppStore(s => s.voiceCaptions);
@@ -126,6 +126,17 @@ export function VoiceControl() {
 
             {!!state.reply && state.phase === 'done' && (
               <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{state.reply}</Text>
+            )}
+
+            {state.phase === 'error' && (
+              <TextInput
+                autoFocus
+                placeholder="Type your command (Offline Fallback)"
+                placeholderTextColor={colors.textMuted}
+                style={{ color: colors.text, fontSize: 16, padding: 12, backgroundColor: colors.surfaceHover, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
+                onSubmitEditing={(e) => runTextCommand(e.nativeEvent.text)}
+                returnKeyType="send"
+              />
             )}
 
             {state.phase === 'listening' && (

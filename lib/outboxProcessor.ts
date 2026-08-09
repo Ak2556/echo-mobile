@@ -8,6 +8,9 @@ import {
   setRemoteBookmark,
   setRemoteRepost,
   setRemoteFollow,
+  insertRemoteEcho,
+  uploadEchoImages,
+  uploadEchoVideo,
 } from './supabaseEchoApi';
 
 /**
@@ -24,6 +27,15 @@ const REGISTRY: Record<string, Handler> = {
   bookmark: (p) => setRemoteBookmark(p.echoId, p.bookmark),
   repost: (p) => setRemoteRepost(p.echoId, p.repost),
   follow: (p) => setRemoteFollow(p.userId, p.follow),
+  publish: async (p) => {
+    if (p.postType === 'photo' && p.mediaUrls && p.mediaUrls.length > 0 && p.mediaUrls[0].startsWith('file://')) {
+      p.mediaUrls = await uploadEchoImages(p.mediaUrls);
+    }
+    if (p.postType === 'video' && p.mediaUrls && p.mediaUrls.length > 0 && p.mediaUrls[0].startsWith('file://')) {
+      p.mediaUrls = [(await uploadEchoVideo(p.mediaUrls[0]))];
+    }
+    return insertRemoteEcho(p);
+  },
 };
 
 const MAX_ATTEMPTS = 8;

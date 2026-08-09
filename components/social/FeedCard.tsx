@@ -563,7 +563,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
                     <Text style={[font.bodySemibold, { fontSize: 14, color: '#fff' }]} numberOfLines={1}>{item.displayName || item.username}</Text>
                     {item.isVerified && <SealCheck color="#fff" size={13} weight="fill" />}
                   </View>
-                  <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11 }}>{getTimeAgo(item.createdAt)}</Text>
+                  <Text style={{ color: item.isPending ? '#60A5FA' : 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: item.isPending ? '600' : '400' }}>{item.isPending ? 'Pending' : getTimeAgo(item.createdAt)}</Text>
                 </View>
               </AnimatedPressable>
               {showFollowCta && (
@@ -749,7 +749,9 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             {!compactFeed && <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>}
           </AnimatedPressable>
           {/* Time is lightweight metadata, not a chip — keeps the header calm. */}
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8, marginRight: 8 }}>{getTimeAgo(item.createdAt)}</Text>
+          <Text style={{ color: item.isPending ? colors.accent : colors.textMuted, fontSize: fontSizes.caption, marginLeft: 8, marginRight: 8, fontWeight: item.isPending ? '600' : '400' }}>
+            {item.isPending ? 'Pending' : getTimeAgo(item.createdAt)}
+          </Text>
           {pinned && <PushPin color={colors.textMuted} size={13} weight="fill" style={{ marginRight: 6 }} />}
           {showFollowCta && (
             <AnimatedPressable
