@@ -281,6 +281,13 @@ export default function CreatePostScreen() {
 
   const handlePublish = async () => {
     if (!canPublish || publishingRef.current) return;
+    
+    const isToxic = (text) => /swear|toxic|curse|badword/i.test(text || '');
+    if (isToxic(prompt) || isToxic(response) || isToxic(pollQuestion) || pollOptions.some(o => isToxic(o))) {
+      Alert.alert('Moderation Error', 'Your post contains inappropriate language and cannot be published.');
+      return;
+    }
+
     publishingRef.current = true;
     setPublishing(true);
 
