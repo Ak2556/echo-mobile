@@ -9,6 +9,43 @@ import {
 } from './mapSupabaseEcho';
 import { captureException } from './monitoring';
 import { computeDayStreak } from './dailyStreak';
+import { useAppStore } from '../store/useAppStore';
+import { APP_LANGUAGES } from './languages';
+
+async function translateFeedItems(items: FeedItem[]): Promise<FeedItem[]> {
+  const contentLanguage = useAppStore.getState().contentLanguage;
+  if (!contentLanguage || contentLanguage === 'English') return items;
+
+  const langMatch = APP_LANGUAGES.find(l => l.englishName === contentLanguage);
+  if (!langMatch || langMatch.code === 'en') return items;
+
+  const toTranslate: Record<string, string> = {};
+  items.forEach(item => {
+    if (item.prompt?.trim()) toTranslate[`${item.id}_prompt`] = item.prompt;
+    if (item.response?.trim()) toTranslate[`${item.id}_response`] = item.response;
+    if (item.coAuthorResponse?.trim()) toTranslate[`${item.id}_coAuthorResponse`] = item.coAuthorResponse;
+  });
+
+  if (Object.keys(toTranslate).length === 0) return items;
+
+  try {
+    const { data, error } = await supabase.functions.invoke('i18n-translate', {
+      body: { language: langMatch.code, languageName: langMatch.englishName, items: toTranslate },
+    });
+    if (error || !data?.translations) return items;
+
+    const translations = data.translations as Record<string, string>;
+    
+    return items.map(item => ({
+      ...item,
+      prompt: translations[`${item.id}_prompt`] ?? item.prompt,
+      response: translations[`${item.id}_response`] ?? item.response,
+      coAuthorResponse: translations[`${item.id}_coAuthorResponse`] ?? item.coAuthorResponse,
+    }));
+  } catch (e) {
+    return items;
+  }
+}
 
 // Escape PostgREST filter special characters before interpolating into .or() strings.
 // Prevents filter injection where a crafted query like "x%,id.neq.y" alters the filter shape.
@@ -390,9 +427,9 @@ export async function fetchRemoteBookmarkedFeed(): Promise<FeedItem[]> {
   const bookmarked = new Set(ids);
   const reposted = new Set((repostRows || []).map((r: { echo_id: string }) => r.echo_id));
 
-  return rows.map(echo =>
+  return await translateFeedItems(rows.map(echo =>
     mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted)
-  );
+  ));
 }
 
 // Ranked feed (server-scored)
@@ -455,13 +492,13 @@ export async function fetchRankedFeed(options: {
     reposted = new Set((repostRows ?? []).map((r: { echo_id: string }) => r.echo_id));
   }
 
-  return rows.map(row =>
+  return await translateFeedItems(rows.map(row =>
     mapEchoRowToFeedItem(
       { ...row, rank_score: row.rank_score } as SupabaseEchoRow,
       profileById.get(row.author_id),
       liked, bookmarked, reposted
     )
-  );
+  ));
 }
 
 export async function fetchRemoteFeed(
@@ -523,15 +560,15 @@ export async function fetchRemoteFeed(
         reactionMap.set(r.echo_id, list);
       }
     }
-    return rows.map(echo =>
+    return await translateFeedItems(rows.map(echo =>
       mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted, reactionMap.get(echo.id), echo.co_author_id ? profileById.get(echo.co_author_id) : undefined),
-    );
+    ));
   }
 
   const emptyReposted = new Set<string>();
-  return rows.map(echo =>
+  return await translateFeedItems(rows.map(echo =>
     mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, emptyReposted, undefined, echo.co_author_id ? profileById.get(echo.co_author_id) : undefined)
-  );
+  ));
 }
 
 export async function insertRemoteEcho(params: {
@@ -696,7 +733,7 @@ export async function fetchRemoteEchoById(echoId: string): Promise<FeedItem | nu
     if (bmRow) bookmarked = new Set([row.id]);
     if (rpRow) reposted = new Set([row.id]);
   }
-  return mapEchoRowToFeedItem(row, profile as SupabaseProfileRow | undefined, liked, bookmarked, reposted);
+  return (await translateFeedItems([mapEchoRowToFeedItem(row, profile as SupabaseProfileRow | undefined, liked, bookmarked, reposted)]))[0] ?? null;
 }
 
 /**
@@ -761,9 +798,9 @@ export async function fetchSemanticFeed(limit = 30): Promise<FeedItem[]> {
   const bookmarked = new Set((bmRows ?? []).map((r: { echo_id: string }) => r.echo_id));
   const reposted = new Set((rpRows ?? []).map((r: { echo_id: string }) => r.echo_id));
 
-  return rows.map(row =>
+  return await translateFeedItems(rows.map(row =>
     mapEchoRowToFeedItem(row as SupabaseEchoRow, profileById.get(row.author_id), liked, bookmarked, reposted)
-  );
+  ));
 }
 
 export async function fetchSimilarEchoes(echoId: string, limit = 6): Promise<FeedItem[]> {
@@ -775,7 +812,7 @@ export async function fetchSimilarEchoes(echoId: string, limit = 6): Promise<Fee
   const rows = (data ?? []) as (SupabaseEchoRow & SupabaseProfileRow & { distance: number })[];
   if (rows.length === 0) return [];
   const empty = new Set<string>();
-  return rows.map(row => {
+  return await translateFeedItems(rows.map(row => {
     const profile: SupabaseProfileRow = {
       id: row.author_id,
       username: row.username,
@@ -787,7 +824,7 @@ export async function fetchSimilarEchoes(echoId: string, limit = 6): Promise<Fee
       created_at: '',
     };
     return mapEchoRowToFeedItem(row as SupabaseEchoRow, profile, empty, empty, empty);
-  });
+  }));
 }
 
 // Evolutions (trending remix lineages)
