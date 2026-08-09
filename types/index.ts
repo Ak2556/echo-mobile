@@ -154,6 +154,11 @@ export interface FeedItem {
     isVerified?: boolean;
   };
   coAuthorResponse?: string;
+
+  // Music Features
+  musicTitle?: string;
+  musicArtist?: string;
+  musicUrl?: string;
 }
 
 export interface ConversationSnapshotMessage {

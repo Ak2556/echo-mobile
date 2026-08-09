@@ -27,6 +27,7 @@ import { ConversationSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation, searchRemoteUsers, UserSearchHit } from '../../lib/supabaseEchoApi';
 import { safeBack } from '../../lib/safeBack';
 import { ttx } from '../../lib/i18n';
+import { MusicPickerModal, Song } from '../../components/ui/MusicPicker';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -638,6 +639,8 @@ export function AurasRow() {
   const [modalOpen, setModalOpen] = useState(false);
   const [auraText, setAuraText] = useState('');
   const [myAura, setMyAura] = useState<any>(null);
+  const [musicPickerOpen, setMusicPickerOpen] = useState(false);
+  const [selectedMusic, setSelectedMusic] = useState<Song | null>(null);
 
   const mockAuras = [
     { id: '1', name: 'Akash', color: '#FF5733', aura: { text_content: 'Deep work 🎧' } },
@@ -667,15 +670,27 @@ export function AurasRow() {
               onChangeText={setAuraText}
               placeholder="What's your vibe? (e.g. Deep work)"
               placeholderTextColor={colors.textMuted}
-              style={{ color: colors.text, fontSize: fontSizes.body, backgroundColor: colors.inputBg, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.inputBorder, marginBottom: 20 }}
+              style={{ color: colors.text, fontSize: fontSizes.body, backgroundColor: colors.inputBg, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.inputBorder, marginBottom: 12 }}
             />
+            {selectedMusic ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, padding: 10, borderRadius: 8, marginBottom: 12 }}>
+                <Text style={{ color: colors.text, fontSize: 13, flex: 1 }} numberOfLines={1}>🎵 {selectedMusic.title} - {selectedMusic.artist}</Text>
+                <Pressable onPress={() => setSelectedMusic(null)} hitSlop={10}><Text style={{ color: colors.danger, fontWeight: '700' }}>X</Text></Pressable>
+              </View>
+            ) : (
+              <Pressable onPress={() => setMusicPickerOpen(true)} style={{ alignSelf: 'flex-start', marginBottom: 16 }}>
+                <Text style={{ color: colors.accent, fontWeight: '600' }}>+ Add Music</Text>
+              </Pressable>
+            )}
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.surfaceHover }} onPress={() => setModalOpen(false)}>
                 <Text style={{ color: colors.text, fontWeight: '700' }}>Cancel</Text>
               </Pressable>
               <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.accent }} onPress={() => {
-                setMyAura(auraText ? { text_content: auraText } : null);
+                setMyAura(auraText || selectedMusic ? { text_content: auraText, music_title: selectedMusic?.title, music_artist: selectedMusic?.artist, music_url: selectedMusic?.url } : null);
                 setModalOpen(false);
+                setAuraText('');
+                setSelectedMusic(null);
               }}>
                 <Text style={{ color: '#fff', fontWeight: '700' }}>Publish</Text>
               </Pressable>
@@ -683,6 +698,7 @@ export function AurasRow() {
           </View>
         </View>
       </Modal>
+      <MusicPickerModal visible={musicPickerOpen} onClose={() => setMusicPickerOpen(false)} onSelect={(song) => { setSelectedMusic(song); setMusicPickerOpen(false); }} />
     </View>
   );
 }

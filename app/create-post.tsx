@@ -11,6 +11,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { QuotedEchoCard } from '../components/social/QuotedEchoCard';
 import { VideoPreview } from '../components/social/VideoPreview';
 import { MentionSuggestions, applyMentionPick } from '../components/social/MentionSuggestions';
+import { MusicPickerModal, Song } from '../components/ui/MusicPicker';
+import { MusicNotes } from 'phosphor-react-native';
 import Animated, { FadeInDown, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 import {
   PaperPlaneTilt, Hash, Image as ImageIcon,
@@ -109,6 +111,10 @@ export default function CreatePostScreen() {
   const [images, setImages] = useState<LocalImageUpload[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const imageUris = images.map(image => image.uri);
+
+  // Music state
+  const [musicPickerOpen, setMusicPickerOpen] = useState(false);
+  const [selectedMusic, setSelectedMusic] = useState<Song | null>(null);
 
   // Video state — single device URI
   const [video, setVideo] = useState<LocalVideoUpload | null>(null);
@@ -326,6 +332,9 @@ export default function CreatePostScreen() {
         hashtags, createdAt: new Date().toISOString(),
         quotedEchoId: quotedId,
         quotedEcho,
+        musicTitle: selectedMusic?.title,
+        musicArtist: selectedMusic?.artist,
+        musicUrl: selectedMusic?.url,
       };
 
       let echo: FeedItem;
@@ -348,6 +357,9 @@ export default function CreatePostScreen() {
               prompt: prompt.trim(),
               response: response.trim(),
               quotedEchoId: quotedId,
+              musicTitle: selectedMusic?.title,
+              musicArtist: selectedMusic?.artist,
+              musicUrl: selectedMusic?.url,
             };
             if (!isAppOnline()) {
               echo.isPending = true;
@@ -368,7 +380,7 @@ export default function CreatePostScreen() {
           const finalUris = remoteMediaUrls ?? imageUris;
           echo = coerceFeedItem({ ...base, postType: 'photo', prompt: response.trim() || 'Photo post', response: '', mediaUris: finalUris });
           if (remoteAuthorId) {
-            const publishPayload = { id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls || imageUris, postType: 'photo' };
+            const publishPayload = { id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Photo post', response: '', mediaUrls: remoteMediaUrls || imageUris, postType: 'photo', musicTitle: selectedMusic?.title, musicArtist: selectedMusic?.artist, musicUrl: selectedMusic?.url };
             if (!isAppOnline()) {
               echo.isPending = true;
               outbox.enqueue('publish', publishPayload);
@@ -385,7 +397,7 @@ export default function CreatePostScreen() {
           const finalVideoUri = remoteVideoUrl ?? videoUri;
           echo = coerceFeedItem({ ...base, postType: 'video', prompt: response.trim() || 'Video post', response: '', videoUri: finalVideoUri });
           if (remoteAuthorId) {
-            const publishPayload = { id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : [videoUri], postType: 'video' };
+            const publishPayload = { id: echoId, authorId: remoteAuthorId, prompt: response.trim() || 'Video post', response: '', mediaUrls: remoteVideoUrl ? [remoteVideoUrl] : [videoUri], postType: 'video', musicTitle: selectedMusic?.title, musicArtist: selectedMusic?.artist, musicUrl: selectedMusic?.url };
             if (!isAppOnline()) {
               echo.isPending = true;
               outbox.enqueue('publish', publishPayload);
@@ -931,6 +943,7 @@ export default function CreatePostScreen() {
             {[
               { key: 'photo', label: 'Photo', Icon: Images, active: imageUris.length > 0, onPress: pickImages },
               { key: 'video', label: 'Video', Icon: VideoCamera, active: videoUri.length > 0, onPress: pickVideo },
+              { key: 'music', label: 'Music', Icon: MusicNotes, active: !!selectedMusic, onPress: () => { if (selectedMusic) setSelectedMusic(null); else setMusicPickerOpen(true); } },
               { key: 'prompt', label: 'Prompt', Icon: Question, active: showPrompt, onPress: () => setShowPrompt(v => !v) },
               { key: 'poll', label: 'Poll', Icon: ChartBar, active: pollActive, onPress: () => setPollActive(v => !v) },
               { key: 'tags', label: 'Tags', Icon: Hash, active: showTags, onPress: () => setShowTags(v => !v) },
@@ -966,6 +979,15 @@ export default function CreatePostScreen() {
         uri={editingIndex !== null ? imageUris[editingIndex] : null}
         onDone={applyEdit}
         onCancel={() => setEditingIndex(null)}
+      />
+
+      <MusicPickerModal
+        visible={musicPickerOpen}
+        onClose={() => setMusicPickerOpen(false)}
+        onSelect={(song) => {
+          setSelectedMusic(song);
+          setMusicPickerOpen(false);
+        }}
       />
     </ResponsiveScreen>
   );
