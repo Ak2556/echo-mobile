@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Platform, useWindowDimensions, ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PHONE_GUTTER = 16;
 const TABLET_GUTTER = 28;
@@ -24,6 +25,7 @@ function getWebPlatform() {
 
 export function useResponsiveLayout() {
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   return useMemo(() => {
     const shortest = Math.min(width, height);
@@ -47,7 +49,7 @@ export function useResponsiveLayout() {
     const cardGap = isDesktop ? 18 : isTablet ? 16 : 12;
     const chromeRadius = isDesktop ? 16 : isTablet ? 18 : 20;
     const topChromePadding = isDesktop ? 20 : 0;
-    const bottomChromePadding = isDesktop ? 32 : 110;
+    const bottomChromePadding = isDesktop ? 32 : 110 + (insets.bottom || 0);
     const navigationKind: NavigationKind = isDesktop
       ? 'desktop-sidebar'
       : isTablet
@@ -97,5 +99,5 @@ export function useResponsiveLayout() {
       wideContentStyle,
       formStyle,
     };
-  }, [height, width]);
+  }, [height, width, insets.bottom]);
 }

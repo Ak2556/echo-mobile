@@ -277,7 +277,7 @@ export default function NotificationsScreen() {
           }}
           getItemType={(item: ListItem) => item.type}
           renderItem={renderItem}
-          contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 110 }}
+          contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
