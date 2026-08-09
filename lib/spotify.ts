@@ -78,9 +78,7 @@ export async function searchSpotify(query: string): Promise<SpotifyTrack[]> {
       id: track.id,
       title: track.name,
       artist: track.artists.map((a: any) => a.name).join(', '),
-      url: track.preview_url, // This is the 30-second mp3 preview
+      url: track.preview_url || track.external_urls?.spotify || '',
       coverArt: track.album.images[0]?.url || '',
-    }))
-    // We strictly filter for tracks that actually have a preview_url (some don't due to label restrictions)
-    .filter((track: SpotifyTrack) => !!track.url);
+    }));
 }
