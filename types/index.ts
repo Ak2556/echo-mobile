@@ -129,6 +129,7 @@ export interface FeedItem {
     response: string;
     isVerified?: boolean;
   };
+  isPending?: boolean;
   // Server-computed ranking score — present on remote items, absent on local/seed items.
   rankScore?: number;
   // Remix lineage

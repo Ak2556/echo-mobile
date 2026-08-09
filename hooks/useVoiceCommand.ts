@@ -60,6 +60,35 @@ export function useVoiceCommand() {
 
   const reset = useCallback(() => setState(IDLE), []);
 
+  const runTextCommand = useCallback((text: string) => {
+    setState({ ...IDLE, phase: 'thinking' });
+    setTimeout(() => {
+      const t = text.toLowerCase();
+      let intent: VoiceResult['intent'] = 'unknown';
+      let args: Record<string, unknown> = {};
+
+      if (t.includes('home') || t.includes('होम')) { intent = 'navigate'; args = { destination: 'home' }; }
+      else if (t.includes('explore') || t.includes('search')) { intent = 'navigate'; args = { destination: 'explore' }; }
+      else if (t.includes('create') || t.includes('post') || t.includes('echo')) { intent = 'navigate'; args = { destination: 'create' }; }
+      else if (t.includes('settings')) { intent = 'navigate'; args = { destination: 'settings' }; }
+      else if (t.includes('profile')) { intent = 'navigate'; args = { destination: 'you' }; }
+      else if (t.includes('dark') || t.includes('light')) { intent = 'set_theme'; args = { theme: t.includes('dark') ? 'dark' : 'light' }; }
+      else if (t.includes('refresh') || t.includes('रीफ्रेश')) { intent = 'refresh'; }
+      else if (t.includes('back')) { intent = 'go_back'; }
+
+      const result: VoiceResult = {
+        transcript: text,
+        locale: appLanguage,
+        intent,
+        args,
+        reply: intent !== 'unknown' ? 'Done (offline mode)' : "I didn't catch that (offline mode)",
+      };
+
+      const outcome = dispatchVoiceIntent(result);
+      setState({ phase: outcome.handled ? 'done' : 'error', transcript: text, reply: outcome.reply || result.reply, error: outcome.handled ? null : 'not-understood' });
+    }, 150);
+  }, [appLanguage]);
+
   const start = useCallback(async () => {
     if (busyRef.current) return;
     stopSpeaking(); // don't record our own read-back
@@ -140,7 +169,7 @@ export function useVoiceCommand() {
     }
   }, [recorder, state.phase]);
 
-  return { state, start, stopAndRun, cancel, reset };
+  return { state, start, stopAndRun, cancel, reset, runTextCommand };
 }
 
 // Coerce the edge function's response into a well-formed VoiceResult.
