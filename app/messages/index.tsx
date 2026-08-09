@@ -595,6 +595,98 @@ function InboxToolbar({
   );
 }
 
+function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
+  const { colors } = useTheme();
+  return (
+    <Pressable onPress={onPress} style={{ alignItems: 'center', marginHorizontal: 8, marginTop: 16, position: 'relative' }}>
+      {aura ? (
+        <Animated.View entering={FadeIn} style={{
+          position: 'absolute', top: -28, zIndex: 10,
+          backgroundColor: colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.85)',
+          paddingHorizontal: 10, paddingVertical: 5,
+          borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10,
+        }}>
+          <Text style={{ fontSize: 11, color: colors.text, fontWeight: '700' }} numberOfLines={1}>{aura.text_content || 'Voice Note'}</Text>
+        </Animated.View>
+      ) : null}
+      <View style={{
+        padding: 3, borderRadius: 999,
+        borderWidth: 2, borderColor: aura ? colors.accent : 'transparent',
+      }}>
+        <Avatar name={name} color={color} url={url} size={64} />
+        {isMe && !aura ? (
+          <View style={{
+            position: 'absolute', bottom: 0, right: 0,
+            backgroundColor: colors.accent, borderRadius: 14, width: 28, height: 28,
+            alignItems: 'center', justifyContent: 'center',
+            borderWidth: 2, borderColor: colors.bg,
+          }}>
+            <Text style={{ color: '#fff', fontSize: 18, lineHeight: 20, fontWeight: 'bold' }}>+</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 6, fontWeight: '600' }}>
+        {isMe ? 'Your Aura' : name.split(' ')[0]}
+      </Text>
+    </Pressable>
+  );
+}
+
+function AurasRow() {
+  const { colors, radius, fontSizes } = useTheme();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [auraText, setAuraText] = useState('');
+  const [myAura, setMyAura] = useState<any>(null);
+
+  const mockAuras = [
+    { id: '1', name: 'Akash', color: '#FF5733', aura: { text_content: 'Deep work 🎧' } },
+    { id: '2', name: 'Elena', color: '#33FF57', aura: { text_content: 'At the gym 💪' } },
+    { id: '3', name: 'Sarah', color: '#3357FF', aura: { text_content: 'Need coffee ☕' } },
+  ];
+
+  return (
+    <View style={{ paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.surface }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 16, paddingBottom: 8 }}>
+        <StatusAvatar
+          name="Me" color={colors.accent} isMe
+          aura={myAura}
+          onPress={() => setModalOpen(true)}
+        />
+        {mockAuras.map((a: any) => (
+          <StatusAvatar key={a.id} name={a.name} color={a.color} aura={a.aura} />
+        ))}
+      </ScrollView>
+
+      <Modal visible={modalOpen} animationType="fade" transparent onRequestClose={() => setModalOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: radius.card, padding: 20, borderWidth: 1, borderColor: colors.border }}>
+            <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', marginBottom: 16 }}>Set your Aura</Text>
+            <TextInput
+              value={auraText}
+              onChangeText={setAuraText}
+              placeholder="What's your vibe? (e.g. Deep work)"
+              placeholderTextColor={colors.textMuted}
+              style={{ color: colors.text, fontSize: fontSizes.body, backgroundColor: colors.inputBg, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.inputBorder, marginBottom: 20 }}
+            />
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.surfaceHover }} onPress={() => setModalOpen(false)}>
+                <Text style={{ color: colors.text, fontWeight: '700' }}>Cancel</Text>
+              </Pressable>
+              <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.accent }} onPress={() => {
+                setMyAura(auraText ? { text_content: auraText } : null);
+                setModalOpen(false);
+              }}>
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Publish</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
 export default function MessagesListScreen() {
   usePresenceTracking(useAppStore(s => s.userId) ?? undefined);
   const router = useRouter();
@@ -818,6 +910,7 @@ export default function MessagesListScreen() {
         keyExtractor={item => item.id}
         ListHeaderComponent={(
           <View>
+            <AurasRow />
             <InboxHero
               total={active.length}
               unread={unreadTotal}
