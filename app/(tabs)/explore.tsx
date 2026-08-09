@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { Brain, CaretRight, ChartLineUp, Cpu, Hash, PaintBrush, RocketLaunch, UsersThree } from 'phosphor-react-native';
@@ -10,6 +10,7 @@ import { SearchBar } from '../../components/social/SearchBar';
 import { Avatar } from '../../components/ui/Avatar';
 import { UserRow } from '../../components/social/UserRow';
 import { FeedCard } from '../../components/social/FeedCard';
+import { VideoPreview } from '../../components/social/VideoPreview';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
@@ -27,7 +28,7 @@ import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 
 type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';
 
-// Warm editorial palette (lib/avatarPalette.ts).
+
 const CATEGORY_FALLBACKS = [
   { label: 'AI', color: '#4E7A8B', Icon: Cpu },
   { label: 'Design', color: '#C65F3F', Icon: PaintBrush },
@@ -60,7 +61,7 @@ export default function SearchScreen() {
       setQuery(params.q);
       setActiveTab(params.q.startsWith('#') ? 'topics' : 'all');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [params.q]);
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export default function SearchScreen() {
       track('search_executed', { length: q.length, has_hashtag: q.startsWith('#') });
     }, 800);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [query]);
 
   const { data: remoteResults } = useRemoteSearch(debouncedQuery);
@@ -99,8 +100,6 @@ export default function SearchScreen() {
   }, [normalizedQuery]);
   const topics = useMemo(() => deriveTopicFeed(feed), [feed]);
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
-  // Real "who to follow" in remote mode (excludes people you already follow);
-  // falls back to local seed users offline.
   const { data: remoteSuggested } = useSuggestedUsers();
   const suggestedUsers = (remote ? (remoteSuggested ?? []) : users).slice(0, layout.isWide ? 6 : 4);
   const topTopics = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(item => ({ topic: item.label, count: 0 }));
@@ -112,6 +111,23 @@ export default function SearchScreen() {
     searchBuckets.echoMatches.length > 0 ||
     searchBuckets.topicMatches.length > 0 ||
     toolMatches.length > 0;
+
+  const { width: windowWidth } = useWindowDimensions();
+  const gridGap = 6;
+  const gridColumns = layout.isDesktop ? 4 : 2;
+  const gridContainerWidth = layout.isWide ? layout.wideContentWidth - (layout.gutter * 2) : windowWidth - (layout.gutter * 2);
+  const gridTileWidth = (gridContainerWidth - (gridGap * (gridColumns - 1))) / gridColumns;
+
+  const masonryColumns = useMemo(() => {
+    const cols: any[][] = Array.from({ length: gridColumns }, () => []);
+    [...feed]
+      .sort((a, b) => (b.likes + b.repostCount + b.commentCount) - (a.likes + a.repostCount + a.commentCount))
+      .slice(0, 30)
+      .forEach((item, index) => {
+        cols[index % gridColumns].push(item);
+      });
+    return cols;
+  }, [feed, gridColumns]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -180,23 +196,6 @@ export default function SearchScreen() {
               })}
             </View>
 
-            {discovery.conversationStarters.length > 0 && (
-              <>
-                <SectionHeader label={t('explore.trendingNow')} actionLabel={t('explore.openFeed')} onAction={() => router.push('/(tabs)/home' as Href)} />
-                <View style={{ paddingHorizontal: layout.gutter, marginBottom: 28, flexDirection: 'row', flexWrap: 'wrap', gap: tileGap }}>
-                  {discovery.conversationStarters.slice(0, layout.isDesktop ? 9 : 6).map((item, index) => (
-                    <TrendingTile
-                      key={item.id}
-                      item={item}
-                      width={tileWidth}
-                      tall={!layout.isDesktop && index % 3 === 0}
-                      onPress={() => router.push(`/thread/${item.id}`)}
-                    />
-                  ))}
-                </View>
-              </>
-            )}
-
             {remote && (
               <View style={{ paddingHorizontal: layout.gutter, marginBottom: 30 }}>
                 <ActionRow
@@ -217,6 +216,26 @@ export default function SearchScreen() {
                   ))}
                 </View>
               </>
+            )}
+
+            {feed.length > 0 && (
+              <View style={{ marginTop: 12 }}>
+                <SectionHeader label="Explore Posts" />
+                <View style={{ 
+                  flexDirection: 'row', 
+                  gap: gridGap, 
+                  paddingHorizontal: layout.gutter, 
+                  paddingBottom: 20 
+                }}>
+                  {masonryColumns.map((col, colIndex) => (
+                    <View key={`col-${colIndex}`} style={{ flex: 1, gap: gridGap }}>
+                      {col.map(item => (
+                        <ExploreGridTile key={item.id} item={item} width={gridTileWidth} onPress={() => router.push(`/thread/${item.id}`)} />
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              </View>
             )}
           </View>
         </ScrollView>
@@ -420,45 +439,6 @@ function TopicTile({
   );
 }
 
-function TrendingTile({ item, width, tall, onPress }: { item: any; width: number; tall: boolean; onPress: () => void }) {
-  const { colors, font } = useTheme();
-  const mediaUri = item.mediaUris?.[0];
-  const tint = item.avatarColor || colors.accent;
-  return (
-    <Pressable onPress={onPress} style={{ width }}>
-      <View style={{ height: tall ? 246 : 188, borderRadius: 18, overflow: 'hidden', backgroundColor: colors.surface }}>
-        {mediaUri ? (
-          <>
-            <ExpoImage source={{ uri: mediaUri }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
-            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.76)']} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 118 }} pointerEvents="none" />
-          </>
-        ) : (
-          <LinearGradient colors={[`${tint}50`, `${tint}14`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-        )}
-        <View style={{ flex: 1, justifyContent: mediaUri ? 'flex-end' : 'space-between', padding: 13 }}>
-          {!mediaUri && (
-            <Text style={[font.display, { color: colors.text, fontSize: 16, lineHeight: 21 }]} numberOfLines={tall ? 6 : 4}>
-              {item.editorialTitle || item.prompt}
-            </Text>
-          )}
-          <View>
-            {mediaUri && (
-              <Text style={[font.display, { color: '#fff', fontSize: 16, lineHeight: 21, marginBottom: 6 }]} numberOfLines={2}>
-                {item.editorialTitle || item.prompt}
-              </Text>
-            )}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Avatar name={item.displayName || item.username} color={item.avatarColor} url={item.avatarUrl} size={20} />
-              <Text style={{ color: mediaUri ? 'rgba(255,255,255,0.86)' : colors.textMuted, fontSize: 11, fontWeight: '700' }} numberOfLines={1}>
-                {item.username}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
-    </Pressable>
-  );
-}
 
 function SectionHeader({ label, actionLabel, onAction }: { label: string; actionLabel?: string; onAction?: () => void }) {
   const { colors, font } = useTheme();
@@ -515,6 +495,64 @@ function PillButton({ label, onPress }: { label: string; onPress: () => void }) 
       <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]} numberOfLines={1}>
         {label}
       </Text>
+    </AnimatedPressable>
+  );
+}
+
+function ExploreGridTile({ item, width, onPress }: { item: any; width: number; onPress: () => void }) {
+  const { colors, font, radius } = useTheme();
+  
+  const isVideo = item.postType === 'video' && !!item.videoUri;
+  const isPhoto = !!item.mediaUris?.[0];
+  const hasMedia = isVideo || isPhoto;
+  
+  const mediaUri = item.mediaUris?.[0];
+  const tint = item.avatarColor || colors.accent;
+  
+  
+  const isTall = item.id.length % 2 === 0;
+  const height = hasMedia ? (isTall ? width * 1.5 : width * 1.2) : (isTall ? width * 1.25 : width);
+
+  return (
+    <AnimatedPressable onPress={onPress} style={{ width, height, marginBottom: 20 }}>
+      <View style={{ width, height, backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' }}>
+        {hasMedia ? (
+          <>
+            {isVideo ? (
+              <VideoPreview uri={item.videoUri} height={height} borderRadius={0} />
+            ) : (
+              <ExpoImage source={{ uri: mediaUri }} style={{ width, height }} contentFit="cover" cachePolicy="memory-disk" />
+            )}
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: height * 0.5 }} pointerEvents="none" />
+          </>
+        ) : (
+          <>
+            <LinearGradient colors={[`${tint}50`, `${tint}14`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 12 }}>
+              <Text style={[font.display, { color: colors.text, fontSize: 14, lineHeight: 19, textAlign: 'center', marginBottom: 4 }]} numberOfLines={isTall ? 3 : 2}>
+                {item.editorialTitle || item.prompt}
+              </Text>
+              {!!item.response && (
+                <Text style={[font.body, { color: colors.textSecondary, fontSize: 11, lineHeight: 16, textAlign: 'center' }]} numberOfLines={isTall ? 3 : 2}>
+                  {item.response}
+                </Text>
+              )}
+            </View>
+          </>
+        )}
+
+        <View style={{ position: 'absolute', bottom: 8, left: 8, right: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+            <Avatar name={item.username} url={item.avatarUrl} color={item.avatarColor} size={18} />
+            <Text style={[font.bodySemibold, { color: hasMedia ? '#fff' : colors.text, fontSize: 11 }]} numberOfLines={1}>
+              {item.username}
+            </Text>
+          </View>
+          <Text style={[font.bodyBold, { color: mediaUri ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontSize: 11 }]}>
+            {item.likes}
+          </Text>
+        </View>
+      </View>
     </AnimatedPressable>
   );
 }
