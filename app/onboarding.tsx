@@ -196,6 +196,7 @@ export default function SetGoalScreen() {
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
+  );
 }
 
 function TargetChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
