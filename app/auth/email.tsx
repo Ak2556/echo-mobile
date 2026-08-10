@@ -4,7 +4,7 @@ import {
   Pressable, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, EnvelopeSimple, ArrowClockwise } from 'phosphor-react-native';
 import { refreshAuthSession, sendEmailOtp, verifyEmailOtp } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
@@ -16,6 +16,7 @@ const RESEND_COOLDOWN_S = 30;
 
 export default function EmailAuthScreen() {
   const router = useRouter();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
   const { colors, radius, font } = useTheme();
   const layout = useResponsiveLayout();
   const { t, textDirection } = useI18n();
@@ -158,7 +159,7 @@ export default function EmailAuthScreen() {
             <View style={[layout.formStyle, { flex: 1, paddingHorizontal: layout.isWide ? 0 : 28, paddingTop: 24 }]}>
 
               <Text style={[font.display, textDirection, { color: colors.text, fontSize: 30, letterSpacing: -0.7, marginBottom: 10 }]}>
-                {t('auth.emailTitle')}
+                {mode === 'signup' ? 'Sign up with email' : t('auth.emailTitle')}
               </Text>
               <Text style={[font.body, textDirection, { color: colors.textSecondary, fontSize: 15, lineHeight: 22, marginBottom: 36 }]}>
                 {t('auth.emailBody')}
