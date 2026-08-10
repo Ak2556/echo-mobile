@@ -11,7 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Target } from 'phosphor-react-native';
+import { Target, ArrowRight } from 'phosphor-react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, FadeInDown, FadeIn } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../lib/auth';
 import { track } from '../lib/analytics';
 import { TARGET_CATEGORIES, getTargetCategory } from '../lib/targetCategories';
@@ -86,109 +89,150 @@ export default function SetGoalScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingHorizontal: layout.gutter,
-            paddingTop: layout.isDesktop ? 56 : 28,
-            paddingBottom: 28,
-          }}
-        >
-          <View style={[layout.formStyle, { flex: 1, justifyContent: 'center' }]}>
-            <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 14 }]}>
-              {ttx("Set a goal · optional")}
-            </Text>
-            <Text style={[font.display, {
-              color: colors.text,
-              fontSize: layout.isPhone ? 30 : 40,
-              lineHeight: layout.isPhone ? 35 : 46,
-              letterSpacing: -0.3,
-              marginBottom: 10,
-            }]}>
-              {ttx("Point Echo at what you want next.")}
-            </Text>
-            <Text style={[font.body, { color: colors.textSecondary, fontSize: 16, lineHeight: 23, marginBottom: 24, maxWidth: 560 }]}>
-              {ttx("Pick a target and Echo tailors mini-apps, habits, notes and prompts around the outcome you want. You can change or skip this anytime.")}
-            </Text>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
+        <LinearGradient
+          colors={colors.isDark
+            ? ['rgba(224,96,48,0.08)', 'transparent', 'rgba(0,0,0,0.0)']
+            : ['rgba(224,96,48,0.06)', 'transparent']}
+          locations={colors.isDark ? [0, 0.45, 1] : [0, 1]}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+      </View>
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              flexGrow: 1,
+              paddingHorizontal: layout.gutter,
+              paddingTop: layout.isDesktop ? 64 : 32,
+              paddingBottom: 32,
+            }}
+          >
+            <View style={[layout.formStyle, { flex: 1, justifyContent: 'center' }]}>
+              <Animated.View entering={FadeInDown.duration(400).springify().mass(0.6).damping(16)}>
+                <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 14, letterSpacing: 1.5 }]}>
+                  {ttx("SET A GOAL · OPTIONAL").toUpperCase()}
+                </Text>
+                <Text style={[font.display, {
+                  color: colors.text,
+                  fontSize: layout.isPhone ? 32 : 44,
+                  lineHeight: layout.isPhone ? 38 : 50,
+                  letterSpacing: -0.5,
+                  marginBottom: 12,
+                }]}>
+                  {ttx("Point Echo at what you want next.")}
+                </Text>
+                <Text style={[font.body, { color: colors.textSecondary, fontSize: 17, lineHeight: 26, marginBottom: 32, maxWidth: 560 }]}>
+                  {ttx("Pick a target and Echo tailors mini-apps, habits, notes and prompts around the outcome you want. You can change or skip this anytime.")}
+                </Text>
+              </Animated.View>
 
-            <View style={{ gap: 16 }}>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>
-                {TARGET_CATEGORIES.map(category => (
-                  <TargetChip
-                    key={category.id}
-                    label={category.label}
-                    active={category.id === selectedTarget.id}
-                    onPress={() => setSelectedTargetId(category.id)}
+              <View style={{ gap: 20 }}>
+                <Animated.View entering={FadeInDown.delay(100).duration(400).springify().mass(0.7)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                  {TARGET_CATEGORIES.map(category => (
+                    <TargetChip
+                      key={category.id}
+                      label={category.label}
+                      active={category.id === selectedTarget.id}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedTargetId(category.id);
+                      }}
+                    />
+                  ))}
+                </Animated.View>
+
+                <Animated.View entering={FadeInDown.delay(150).duration(400).springify().mass(0.7)}>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginBottom: 10 }]}>
+                    {ttx("Desired output")}
+                  </Text>
+                  <TextInput
+                    value={targetOutcome}
+                    onChangeText={setTargetOutcome}
+                    maxLength={140}
+                    placeholder={ttx("Example: lose 8 kg, pass an exam, post 3 times a week...")}
+                    style={{ minHeight: 64, fontSize: 16, backgroundColor: colors.isDark ? '#1C1C1E' : '#F2F2F7', borderWidth: 0 }}
                   />
-                ))}
-              </View>
-              <View>
-                <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, marginBottom: 8 }]}>
-                  {ttx("Desired output")}
-                </Text>
-                <TextInput
-                  value={targetOutcome}
-                  onChangeText={setTargetOutcome}
-                  maxLength={140}
-                  placeholder={ttx("Example: lose 8 kg, pass an exam, post 3 times a week...")}
-                  style={{ minHeight: 58 }}
-                />
-              </View>
-              <View style={{
-                borderRadius: radius.card,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-                padding: 15,
-              }}>
-                <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, marginBottom: 4 }]}>
-                  {selectedTarget.label}: {selectedTarget.outcome}
-                </Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19 }]}>
-                  {selectedTarget.starter}
-                </Text>
-                <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 12, marginTop: 10, textTransform: 'capitalize' }]}>
-                  {recommendedAppNames}
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                <PrimaryButton label={ttx("Save goal")} icon={<Target color="#fff" size={18} weight="bold" />} onPress={saveGoal} />
-                <SecondaryButton label={ttx("Maybe later")} onPress={skip} />
+                </Animated.View>
+
+                <Animated.View entering={FadeInDown.delay(200).duration(400).springify().mass(0.7)} style={{
+                  borderRadius: radius.card,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.05)',
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                  padding: 20,
+                  shadowColor: '#000',
+                  shadowOpacity: 0.1,
+                  shadowRadius: 10,
+                  shadowOffset: { width: 0, height: 4 },
+                }}>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, marginBottom: 6 }]}>
+                    {selectedTarget.label}: {selectedTarget.outcome}
+                  </Text>
+                  <Text style={[font.body, { color: colors.textMuted, fontSize: 14, lineHeight: 22 }]}>
+                    {selectedTarget.starter}
+                  </Text>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 13, marginTop: 14, textTransform: 'capitalize', letterSpacing: 0.2 }]}>
+                    {recommendedAppNames}
+                  </Text>
+                </Animated.View>
+
+                <Animated.View entering={FadeInDown.delay(250).duration(400).springify().mass(0.7)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 10 }}>
+                  <PrimaryButton label={ttx("Save goal")} icon={<Target color="#fff" size={20} weight="fill" />} onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    saveGoal();
+                  }} />
+                  <SecondaryButton label={ttx("Maybe later")} onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    skip();
+                  }} />
+                </Animated.View>
               </View>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
 }
 
 function TargetChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { colors, radius, font } = useTheme();
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
-      style={{
-        minHeight: 38,
-        borderRadius: radius.lg,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: active ? colors.accent : colors.border,
-        backgroundColor: active ? `${colors.accent}22` : colors.surface,
-        paddingHorizontal: 13,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Text style={[font.bodySemibold, { color: active ? colors.accent : colors.textSecondary, fontSize: 13 }]}>
-        {label}
-      </Text>
-    </Pressable>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withTiming(0.94, { duration: 100 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+        accessibilityRole="button"
+        accessibilityState={{ selected: active }}
+        style={{
+          minHeight: 44,
+          borderRadius: 22,
+          borderWidth: 1,
+          borderColor: active ? colors.accent : colors.isDark ? '#3F3F46' : '#E5E5EA',
+          backgroundColor: active ? colors.accent : colors.isDark ? '#18181B' : '#FFFFFF',
+          paddingHorizontal: 18,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: active ? colors.accent : '#000',
+          shadowOpacity: active ? 0.3 : 0.05,
+          shadowRadius: active ? 8 : 4,
+          shadowOffset: { width: 0, height: 2 },
+        }}
+      >
+        <Text style={[font.bodyBold, { color: active ? '#fff' : colors.textSecondary, fontSize: 14 }]}>
+          {label}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -204,47 +248,73 @@ function PrimaryButton({
   disabled?: boolean;
 }) {
   const { colors, radius, font } = useTheme();
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      style={{
-        minHeight: 50,
-        borderRadius: radius.lg,
-        backgroundColor: colors.accent,
-        opacity: disabled ? 0.55 : 1,
-        paddingHorizontal: 18,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 9,
-      }}
-    >
-      {icon}
-      <Text style={[font.bodyBold, { color: '#fff', fontSize: 15 }]}>{label}</Text>
-    </Pressable>
+    <Animated.View style={[animatedStyle, { flex: 1, minWidth: 140 }]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withTiming(0.96, { duration: 100 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+        disabled={disabled}
+        accessibilityRole="button"
+        style={{
+          minHeight: 56,
+          borderRadius: radius.full,
+          backgroundColor: colors.accent,
+          opacity: disabled ? 0.55 : 1,
+          paddingHorizontal: 20,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          shadowColor: colors.accent,
+          shadowOpacity: 0.4,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 8 },
+        }}
+      >
+        {icon}
+        <Text style={[font.bodyBold, { color: '#fff', fontSize: 16 }]}>{label}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 function SecondaryButton({ label, onPress }: { label: string; onPress: () => void }) {
   const { colors, radius, font } = useTheme();
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={{
-        minHeight: 50,
-        borderRadius: radius.lg,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
-        backgroundColor: colors.surface,
-        paddingHorizontal: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Text style={[font.bodyBold, { color: colors.textSecondary, fontSize: 15 }]}>{label}</Text>
-    </Pressable>
+    <Animated.View style={[animatedStyle, { flex: 1, minWidth: 140 }]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withTiming(0.96, { duration: 100 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+        accessibilityRole="button"
+        style={{
+          minHeight: 56,
+          borderRadius: radius.full,
+          borderWidth: 1,
+          borderColor: colors.isDark ? '#3F3F46' : '#E5E5EA',
+          backgroundColor: colors.isDark ? '#18181B' : '#FFFFFF',
+          paddingHorizontal: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#000',
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 },
+        }}
+      >
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{label}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
