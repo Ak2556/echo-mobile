@@ -41,6 +41,7 @@ export default function LoginScreen() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [promptIdx, setPromptIdx] = useState(0);
+  const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
 
   const handleGoogle = async () => {
     if (googleLoading) return;
@@ -164,7 +165,7 @@ export default function LoginScreen() {
                 icon={googleLoading
                   ? null
                   : <GoogleLogo color={isDark ? '#0C0B09' : '#fff'} size={22} weight="fill" />}
-                label={googleLoading ? t('auth.signingIn') : t('auth.continueGoogle')}
+                label={googleLoading ? t('auth.signingIn') : (authMode === 'signup' ? 'Sign up with Google' : 'Log in with Google')}
                 onPress={handleGoogle}
                 bg={isDark ? '#FFFFFF' : '#0C0B09'}
                 fg={isDark ? '#0C0B09' : '#fff'}
@@ -177,10 +178,10 @@ export default function LoginScreen() {
             <Animated.View entering={FadeInDown.delay(160).duration(400).springify().mass(0.7)}>
               <PrimaryButton
                 icon={<EnvelopeSimple color="#fff" size={22} weight="fill" />}
-                label={t('auth.continueEmail')}
+                label={authMode === 'signup' ? 'Sign up with Email' : 'Log in with Email'}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/auth/email');
+                  router.push(`/auth/email?mode=${authMode}`);
                 }}
                 bg={colors.accent}
                 fg="#fff"
@@ -189,23 +190,26 @@ export default function LoginScreen() {
               />
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(220).duration(400)} style={{ alignItems: 'center', marginTop: 4 }}>
+            <Animated.View entering={FadeInDown.delay(220).duration(400)} style={{ alignItems: 'center', marginTop: 12 }}>
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/auth/phone');
+                  setAuthMode(authMode === 'signup' ? 'login' : 'signup');
                 }}
                 hitSlop={12}
                 accessibilityRole="button"
-                accessibilityLabel={t('auth.continuePhone')}
                 style={{ paddingVertical: 10, paddingHorizontal: 16 }}
               >
-                <Text style={[font.bodyMedium, { color: colors.textSecondary, fontSize: 14 }]}>
-                  {t('auth.orSignInWith')}{'  '}
-                  <Text style={[font.bodyBold, { color: colors.text }]}>{t('auth.phone')}</Text>
+                <Text style={[font.bodyMedium, { color: colors.textSecondary, fontSize: 15 }]}>
+                  {authMode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
+                  <Text style={[font.bodyBold, { color: colors.text }]}>
+                    {authMode === 'signup' ? 'Log in' : 'Sign up'}
+                  </Text>
                 </Text>
               </Pressable>
             </Animated.View>
+
+
 
             <Animated.View entering={FadeInDown.delay(260).duration(400)} style={{ alignItems: 'center', marginTop: 8 }}>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16, letterSpacing: 0.1 }]}>
