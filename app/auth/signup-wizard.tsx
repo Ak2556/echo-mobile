@@ -16,7 +16,7 @@ import { supabase } from '../../lib/supabase';
 import { setRemoteFollow, uploadAvatar } from '../../lib/supabaseEchoApi';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
-import { refreshAuthSession, useAuth } from '../../lib/auth';
+import { refreshAuthSession, useAuth, sendEmailOtp, verifyEmailOtp } from '../../lib/auth';
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
@@ -32,9 +32,9 @@ const SPRING = { damping: 24, stiffness: 300 };
 // Named panel indices — the wizard is an animated horizontal "tape" of panels.
 // Deriving the tape width / progress / counter from these constants (instead of
 // magic numbers) keeps the flow correct as steps are added or reordered.
-const STEP = { NAME: 0, AVATAR: 1, BIO: 2, INTERESTS: 3, ARCHETYPE: 4, FOLLOW: 5, CONFIRM: 6 } as const;
-const PANEL_COUNT = 7;
-const NUMBERED_STEPS = 6; // input steps 0..5; CONFIRM is the celebratory outro (no counter)
+const STEP = { EMAIL: 0, OTP: 1, NAME: 2, AVATAR: 3, BIO: 4, INTERESTS: 5, ARCHETYPE: 6, FOLLOW: 7, CONFIRM: 8 } as const;
+const PANEL_COUNT = 9;
+const NUMBERED_STEPS = 8; // input steps 0..7; CONFIRM is the celebratory outro
 
 // Warm editorial identity palette — single source: lib/avatarPalette.ts.
 const AVATAR_COLORS = [...WARM_AVATAR_COLORS];
@@ -266,9 +266,53 @@ export default function SignupWizard() {
     setAvatarUrl,
   } = useAppStore();
 
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(session ? STEP.NAME : STEP.EMAIL);
   const [displayName, setDisplayNameLocal] = useState('');
   const [usernameRaw, setUsernameRaw] = useState('');
+
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authCooldown, setAuthCooldown] = useState(0);
+
+  useEffect(() => {
+    if (authCooldown <= 0) return;
+    const t = setInterval(() => setAuthCooldown(c => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [authCooldown]);
+
+  const trimmedEmail = email.trim().toLowerCase();
+  const canSendOtp = trimmedEmail.length > 3 && /\S+@\S+\.\S+/.test(trimmedEmail) && !authLoading && authCooldown === 0;
+  const canVerifyOtp = otp.length === 6 && !authLoading;
+
+  const handleSendOtp = async () => {
+    if (!canSendOtp) return;
+    setAuthLoading(true);
+    try {
+      const { error } = await sendEmailOtp(trimmedEmail);
+      setAuthLoading(false);
+      if (error) { showToast(error, ttx('Error')); return; }
+      setAuthCooldown(30);
+      goToStep(STEP.OTP);
+    } catch (e) {
+      setAuthLoading(false);
+      showToast(e instanceof Error ? e.message : 'Failed to send', ttx('Error'));
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!canVerifyOtp) return;
+    setAuthLoading(true);
+    try {
+      const { error } = await verifyEmailOtp(trimmedEmail, otp);
+      setAuthLoading(false);
+      if (error) { showToast(error, ttx('Error')); return; }
+      goToStep(STEP.NAME);
+    } catch (e) {
+      setAuthLoading(false);
+      showToast(e instanceof Error ? e.message : 'Failed to verify', ttx('Error'));
+    }
+  };
 
   useEffect(() => { track('signup_started'); }, []);
   const [avatarColor, setAvatarColorLocal] = useState(ACCENT);
@@ -417,7 +461,7 @@ export default function SignupWizard() {
   }, [currentStep, ctaRingOpacity]);
 
   useEffect(() => {
-    if (currentStep === 0) {
+    if (currentStep === STEP.NAME) {
       const t = setTimeout(() => nameInputRef.current?.focus(), 300);
       return () => clearTimeout(t);
     }
@@ -480,7 +524,7 @@ export default function SignupWizard() {
       if (error.code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
         showToast('Username taken — pick another', 'Error');
         setUsernameRaw('');
-        goToStep(0, true);
+        goToStep(STEP.NAME, true);
         setSaving(false);
         return;
       }
@@ -518,7 +562,7 @@ export default function SignupWizard() {
     router.replace('/welcome' as never);
   };
 
-  const backHidden = currentStep === STEP.NAME || currentStep === STEP.CONFIRM;
+  const backHidden = currentStep === STEP.EMAIL || currentStep === STEP.NAME || currentStep === STEP.CONFIRM;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
@@ -563,6 +607,73 @@ export default function SignupWizard() {
             flexDirection: 'row',
           }, tapeStyle]}>
 
+            {/* STEP 0: EMAIL */}
+            <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
+              <View style={{ flex: 1, paddingTop: 8 }}>
+                <Text style={{ color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 6 }}>
+                  {ttx("What's your email?")}
+                </Text>
+                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 28 }}>
+                  {ttx("We'll send you a secure code.")}
+                </Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@example.com"
+                  placeholderTextColor="#3F3F46"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  returnKeyType="send"
+                  onSubmitEditing={handleSendOtp}
+                  style={{ fontSize: 20, color: '#fff', backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1, borderColor: email ? '#3F3F46' : '#27272A', paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20 }}
+                />
+              </View>
+              <View style={{ paddingBottom: 16 }}>
+                <AnimatedPressable
+                  onPress={handleSendOtp}
+                  disabled={!canSendOtp}
+                  scaleValue={0.97} haptic="medium"
+                  style={{ backgroundColor: canSendOtp ? ACCENT : '#27272A', opacity: canSendOtp ? 1 : 0.5, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
+                >
+                  {authLoading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{authCooldown > 0 ? ttx("Wait") + " " + authCooldown + "s" : ttx("Send Code")}</Text>}
+                </AnimatedPressable>
+              </View>
+            </View>
+
+            {/* STEP 1: OTP */}
+            <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
+              <View style={{ flex: 1, paddingTop: 8 }}>
+                <Text style={{ color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 6 }}>
+                  {ttx("Enter the code")}
+                </Text>
+                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 28 }}>
+                  {ttx("Sent to")} {trimmedEmail}
+                </Text>
+                <TextInput
+                  value={otp}
+                  onChangeText={(t) => setOtp(t.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  placeholderTextColor="#3F3F46"
+                  keyboardType="number-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={handleVerifyOtp}
+                  style={{ fontSize: 32, letterSpacing: 12, textAlign: 'center', color: '#fff', backgroundColor: '#18181B', borderRadius: 14, borderWidth: 1, borderColor: otp.length === 6 ? ACCENT : '#27272A', paddingVertical: 20, marginBottom: 20 }}
+                  maxLength={6}
+                />
+              </View>
+              <View style={{ paddingBottom: 16 }}>
+                <AnimatedPressable
+                  onPress={handleVerifyOtp}
+                  disabled={!canVerifyOtp}
+                  scaleValue={0.97} haptic="medium"
+                  style={{ backgroundColor: canVerifyOtp ? ACCENT : '#27272A', opacity: canVerifyOtp ? 1 : 0.5, borderRadius: 14, paddingVertical: 16, alignItems: 'center' }}
+                >
+                  {authLoading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Verify")}</Text>}
+                </AnimatedPressable>
+              </View>
+            </View>
+
+            {/* STEP 2: NAME */}
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
@@ -710,7 +821,7 @@ export default function SignupWizard() {
 
               <View style={{ paddingBottom: 16 }}>
                 <AnimatedPressable
-                  onPress={() => canStep0 && goToStep(1)}
+                  onPress={() => canStep0 && goToStep(STEP.AVATAR)}
                   disabled={!canStep0}
                   scaleValue={0.97}
                   haptic="medium"
