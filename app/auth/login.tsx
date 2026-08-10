@@ -12,7 +12,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { EnvelopeSimple, GoogleLogo, AppleLogo } from 'phosphor-react-native';
+import { EnvelopeSimple, GoogleLogo } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
 import * as Haptics from 'expo-haptics';
@@ -73,10 +73,6 @@ export default function LoginScreen() {
     else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
   };
 
-  const handleApple = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    showToast('Apple Sign-In is coming very soon!', 'Hang tight');
-  };
   useEffect(() => {
     const timer = setInterval(() => setPromptIdx(i => (i + 1) % ROTATING_PROMPT_KEYS.length), 4_000);
     return () => clearInterval(timer);
@@ -165,9 +161,11 @@ export default function LoginScreen() {
           <View style={{ gap: 14 }}>
             <Animated.View entering={FadeInDown.delay(100).duration(400).springify().mass(0.7)}>
               <PrimaryButton
-                icon={<AppleLogo color={isDark ? '#0C0B09' : '#fff'} size={22} weight="fill" />}
-                label={t('auth.continueApple') || 'Continue with Apple'}
-                onPress={handleApple}
+                icon={googleLoading
+                  ? null
+                  : <GoogleLogo color={isDark ? '#0C0B09' : '#fff'} size={22} weight="fill" />}
+                label={googleLoading ? t('auth.signingIn') : t('auth.continueGoogle')}
+                onPress={handleGoogle}
                 bg={isDark ? '#FFFFFF' : '#0C0B09'}
                 fg={isDark ? '#0C0B09' : '#fff'}
                 radius={radius.full}
@@ -176,22 +174,7 @@ export default function LoginScreen() {
               />
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(140).duration(400).springify().mass(0.7)}>
-              <PrimaryButton
-                icon={googleLoading
-                  ? null
-                  : <GoogleLogo color={isDark ? '#fff' : '#0C0B09'} size={22} weight="fill" />}
-                label={googleLoading ? t('auth.signingIn') : t('auth.continueGoogle')}
-                onPress={handleGoogle}
-                bg={isDark ? '#1C1C1E' : '#F2F2F7'}
-                fg={isDark ? '#fff' : '#0C0B09'}
-                radius={radius.full}
-                font={font.bodyBold}
-                glow={false}
-              />
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(180).duration(400).springify().mass(0.7)}>
+            <Animated.View entering={FadeInDown.delay(160).duration(400).springify().mass(0.7)}>
               <PrimaryButton
                 icon={<EnvelopeSimple color="#fff" size={22} weight="fill" />}
                 label={t('auth.continueEmail')}
