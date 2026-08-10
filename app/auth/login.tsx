@@ -12,9 +12,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { EnvelopeSimple, GoogleLogo } from 'phosphor-react-native';
+import { EnvelopeSimple, GoogleLogo, AppleLogo } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
+import * as Haptics from 'expo-haptics';
 import { CANCELLED, refreshAuthSession, signInAsDemo, signInWithGoogle } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
 import { useI18n, type TranslationKey } from '../../lib/i18n';
@@ -43,6 +44,7 @@ export default function LoginScreen() {
 
   const handleGoogle = async () => {
     if (googleLoading) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setGoogleLoading(true);
     const { error } = await signInWithGoogle();
     if (error) {
@@ -69,6 +71,11 @@ export default function LoginScreen() {
     setDemoLoading(false);
     if (status === 'ready') router.replace('/(tabs)/home');
     else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
+  };
+
+  const handleApple = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    showToast('Apple Sign-In is coming very soon!', 'Hang tight');
   };
   useEffect(() => {
     const timer = setInterval(() => setPromptIdx(i => (i + 1) % ROTATING_PROMPT_KEYS.length), 4_000);
@@ -118,8 +125,8 @@ export default function LoginScreen() {
         >
 
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Animated.View entering={FadeInDown.duration(380).springify().mass(0.7).damping(14)} style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 92, lineHeight: 100 }]}>
+            <Animated.View entering={FadeInDown.duration(400).springify().mass(0.6).damping(16)} style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: 104, lineHeight: 110, letterSpacing: -2 }]}>
                 echo
               </Text>
               <Animated.View style={[{ marginLeft: 2, marginBottom: 14 }, dotStyle]}>
@@ -137,14 +144,14 @@ export default function LoginScreen() {
             <View style={{ height: 88, marginTop: 32, justifyContent: 'flex-start', alignItems: 'center', paddingHorizontal: 4 }}>
               <Animated.Text
                 key={promptIdx}
-                entering={FadeIn.duration(420)}
+                entering={FadeIn.duration(600)}
                 style={[font.quote, {
                   color: colors.textSecondary,
-                  fontSize: 18,
+                  fontSize: 19,
                   textAlign: 'center',
                   writingDirection: textDirection.writingDirection,
-                  lineHeight: 26,
-                  letterSpacing: 0,
+                  lineHeight: 28,
+                  letterSpacing: 0.2,
                 }]}
               >
                 {`"${t(ROTATING_PROMPT_KEYS[promptIdx])}"`}
@@ -156,36 +163,55 @@ export default function LoginScreen() {
           </View>
 
           <View style={{ gap: 14 }}>
-            <Animated.View entering={FadeInDown.delay(100).duration(360).springify().mass(0.7)}>
+            <Animated.View entering={FadeInDown.delay(100).duration(400).springify().mass(0.7)}>
+              <PrimaryButton
+                icon={<AppleLogo color={isDark ? '#0C0B09' : '#fff'} size={22} weight="fill" />}
+                label={t('auth.continueApple') || 'Continue with Apple'}
+                onPress={handleApple}
+                bg={isDark ? '#FFFFFF' : '#0C0B09'}
+                fg={isDark ? '#0C0B09' : '#fff'}
+                radius={radius.full}
+                font={font.bodyBold}
+                glow={true}
+              />
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(140).duration(400).springify().mass(0.7)}>
               <PrimaryButton
                 icon={googleLoading
                   ? null
-                  : <GoogleLogo color={isDark ? '#0C0B09' : '#fff'} size={20} weight="bold" />}
+                  : <GoogleLogo color={isDark ? '#fff' : '#0C0B09'} size={22} weight="fill" />}
                 label={googleLoading ? t('auth.signingIn') : t('auth.continueGoogle')}
                 onPress={handleGoogle}
-                bg={isDark ? '#FFFFFF' : '#0C0B09'}
-                fg={isDark ? '#0C0B09' : '#fff'}
-                radius={radius.lg}
+                bg={isDark ? '#1C1C1E' : '#F2F2F7'}
+                fg={isDark ? '#fff' : '#0C0B09'}
+                radius={radius.full}
                 font={font.bodyBold}
                 glow={false}
               />
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(160).duration(360).springify().mass(0.7)}>
+            <Animated.View entering={FadeInDown.delay(180).duration(400).springify().mass(0.7)}>
               <PrimaryButton
-                icon={<EnvelopeSimple color="#fff" size={20} weight="bold" />}
+                icon={<EnvelopeSimple color="#fff" size={22} weight="fill" />}
                 label={t('auth.continueEmail')}
-                onPress={() => router.push('/auth/email')}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/auth/email');
+                }}
                 bg={colors.accent}
                 fg="#fff"
-                radius={radius.lg}
+                radius={radius.full}
                 font={font.bodyBold}
               />
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(200).duration(360)} style={{ alignItems: 'center' }}>
+            <Animated.View entering={FadeInDown.delay(220).duration(400)} style={{ alignItems: 'center', marginTop: 4 }}>
               <Pressable
-                onPress={() => router.push('/auth/phone')}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/auth/phone');
+                }}
                 hitSlop={12}
                 accessibilityRole="button"
                 accessibilityLabel={t('auth.continuePhone')}
@@ -198,7 +224,7 @@ export default function LoginScreen() {
               </Pressable>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(260).duration(360)} style={{ alignItems: 'center', marginTop: 8 }}>
+            <Animated.View entering={FadeInDown.delay(260).duration(400)} style={{ alignItems: 'center', marginTop: 8 }}>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16, letterSpacing: 0.1 }]}>
                 {t('auth.termsPrefix')}{' '}
                 <Text
@@ -246,32 +272,47 @@ function PrimaryButton({
   icon: React.ReactNode; label: string; onPress: () => void;
   bg: string; fg: string; radius: number; font: object; glow?: boolean;
 }) {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <View style={{
-      backgroundColor: bg,
-      borderRadius: radius,
-      shadowColor: bg,
-      shadowOpacity: glow ? 0.55 : 0.18,
-      shadowRadius: glow ? 24 : 10,
-      shadowOffset: { width: 0, height: glow ? 12 : 4 },
-    }}>
+    <Animated.View style={[
+      animatedStyle,
+      {
+        backgroundColor: bg,
+        borderRadius: radius,
+        shadowColor: bg,
+        shadowOpacity: glow ? 0.35 : 0.1,
+        shadowRadius: glow ? 20 : 6,
+        shadowOffset: { width: 0, height: glow ? 10 : 2 },
+        borderWidth: 1,
+        borderColor: glow ? 'rgba(255,255,255,0.1)' : 'transparent',
+      }
+    ]}>
       <Pressable
         onPress={onPress}
+        onPressIn={() => {
+          scale.value = withTiming(0.96, { duration: 100 });
+        }}
+        onPressOut={() => {
+          scale.value = withTiming(1, { duration: 150 });
+        }}
         accessibilityRole="button"
         accessibilityLabel={label}
-        android_ripple={{ color: 'rgba(255,255,255,0.15)' }}
         style={{
-          paddingVertical: 19,
+          paddingVertical: 18,
           paddingHorizontal: 20,
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'row',
-          gap: 10,
+          gap: 12,
         }}
       >
         {icon}
-        <Text style={[font, { color: fg, fontSize: 16, letterSpacing: 0 }]}>{label}</Text>
+        <Text style={[font, { color: fg, fontSize: 17, letterSpacing: -0.2 }]}>{label}</Text>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
