@@ -181,7 +181,11 @@ export default function LoginScreen() {
                 label={authMode === 'signup' ? 'Sign up with Email' : 'Log in with Email'}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push(`/auth/email?mode=${authMode}`);
+                  if (authMode === 'signup') {
+                    router.push('/auth/signup-wizard');
+                  } else {
+                    router.push(`/auth/email?mode=${authMode}`);
+                  }
                 }}
                 bg={colors.accent}
                 fg="#fff"
