@@ -9,7 +9,7 @@ import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins } from 'phosphor-react-native';
+import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
@@ -280,7 +280,7 @@ export default function ExpensesApp() {
   const { tt } = useI18n();
   const accent = '#8B6F4E'; // caramel — warm editorial palette
   const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'parties'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'parties' | 'table'>('dashboard');
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
   const didVoiceRef = React.useRef(false);
   useFocusEffect(
@@ -575,19 +575,86 @@ export default function ExpensesApp() {
 
       </Animated.View>
       )}
+
+      {activeTab === 'table' && (
+        <Animated.View entering={FadeInUp.duration(300)}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingHorizontal: 4 }}>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{tt('Daybook (Live Table)')}</Text>
+          </View>
+          
+          <GlassPanel variant="light" borderRadius={24} contentStyle={{ paddingVertical: 16 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ paddingHorizontal: 20 }}>
+                {/* Header */}
+                <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.glassBorder, paddingBottom: 12, marginBottom: 8, width: 620 }}>
+                   <Text style={{ width: 100, color: colors.textMuted, fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>{tt('DATE')}</Text>
+                   <Text style={{ width: 180, color: colors.textMuted, fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>{tt('PARTICULARS')}</Text>
+                   <Text style={{ width: 100, color: colors.textMuted, fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>{tt('VCH TYPE')}</Text>
+                   <Text style={{ width: 120, color: colors.textMuted, fontSize: 12, fontWeight: '800', textAlign: 'right', letterSpacing: 0.5 }}>{tt('IN (+)')}</Text>
+                   <Text style={{ width: 120, color: colors.textMuted, fontSize: 12, fontWeight: '800', textAlign: 'right', letterSpacing: 0.5 }}>{tt('OUT (-)')}</Text>
+                </View>
+
+                {txs.length === 0 ? (
+                  <View style={{ paddingVertical: 40, width: 620, alignItems: 'center' }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 14 }}>{tt('No entries to display')}</Text>
+                  </View>
+                ) : null}
+
+                {/* Rows */}
+                {txs.map((tx, idx) => {
+                  const isOut = tx.type === 'expense' || tx.type === 'purchase' || tx.type === 'payment';
+                  const p = parties.find(party => party.id === tx.partyId);
+                  const particulars = p ? p.name : tx.category;
+                  
+                  // Use formatDate, handling potential issues cleanly
+                  let dateStr = tx.date;
+                  try {
+                    dateStr = formatDate(tx.date).split(',')[0];
+                  } catch { /* ignore */ }
+
+                  return (
+                    <View key={tx.id} style={{ flexDirection: 'row', paddingVertical: 14, borderBottomWidth: idx === txs.length - 1 ? 0 : StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, width: 620, alignItems: 'center' }}>
+                      <Text style={{ width: 100, color: colors.text, fontSize: 13, fontWeight: '600' }}>{dateStr}</Text>
+                      <View style={{ width: 180 }}>
+                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{particulars}</Text>
+                        {tx.note || tx.invoiceNo ? (
+                          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+                            {tx.invoiceNo ? `#${tx.invoiceNo} ` : ''}{tx.note}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <View style={{ width: 100 }}>
+                        <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }}>
+                          <Text style={{ color: colors.text, fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>{tx.type}</Text>
+                        </View>
+                      </View>
+                      <Text style={{ width: 120, color: !isOut ? colors.success : colors.textMuted, fontSize: 14, fontWeight: !isOut ? '800' : '500', textAlign: 'right' }}>{!isOut ? money(tx.amount) : '-'}</Text>
+                      <Text style={{ width: 120, color: isOut ? colors.danger : colors.textMuted, fontSize: 14, fontWeight: isOut ? '800' : '500', textAlign: 'right' }}>{isOut ? money(tx.amount) : '-'}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </GlassPanel>
+        </Animated.View>
+      )}
       </ScrollView>
 
       {/* Floating Bottom Navigation & FAB */}
       <View style={{ position: 'absolute', bottom: 32, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
         <View style={{ flex: 1, alignItems: 'center', pointerEvents: 'box-none' }}>
           <View style={{ flexDirection: 'row', backgroundColor: colors.isDark ? 'rgba(40,40,40,0.85)' : 'rgba(255,255,255,0.9)', borderRadius: 100, padding: 6, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
-            <Pressable onPress={() => setActiveTab('dashboard')} style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: activeTab === 'dashboard' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <ChartPieSlice color={activeTab === 'dashboard' ? colors.text : colors.textMuted} size={20} weight={activeTab === 'dashboard' ? 'fill' : 'regular'} />
-              {activeTab === 'dashboard' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14 }}>{tt('Dashboard')}</Text>}
+            <Pressable onPress={() => setActiveTab('dashboard')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, backgroundColor: activeTab === 'dashboard' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <ChartPieSlice color={activeTab === 'dashboard' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'dashboard' ? 'fill' : 'regular'} />
+              {activeTab === 'dashboard' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt('Dashboard')}</Text>}
             </Pressable>
-            <Pressable onPress={() => setActiveTab('parties')} style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: activeTab === 'parties' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Users color={activeTab === 'parties' ? colors.text : colors.textMuted} size={20} weight={activeTab === 'parties' ? 'fill' : 'regular'} />
-              {activeTab === 'parties' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14 }}>{tt('Parties')}</Text>}
+            <Pressable onPress={() => setActiveTab('table')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, backgroundColor: activeTab === 'table' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <TableIcon color={activeTab === 'table' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'table' ? 'fill' : 'regular'} />
+              {activeTab === 'table' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt('Table')}</Text>}
+            </Pressable>
+            <Pressable onPress={() => setActiveTab('parties')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, backgroundColor: activeTab === 'parties' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Users color={activeTab === 'parties' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'parties' ? 'fill' : 'regular'} />
+              {activeTab === 'parties' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt('Parties')}</Text>}
             </Pressable>
           </View>
         </View>
