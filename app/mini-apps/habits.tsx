@@ -298,6 +298,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
   const [reminder, setReminder] = useState<{ hour: number; minute: number } | null>(initial?.reminder ?? null);
   const [days, setDays] = useState<number[]>(initial?.scheduledDays ?? [0, 1, 2, 3, 4, 5, 6]);
   const [target, setTarget] = useState(initial?.dailyTarget ?? 1);
+  const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening' | 'any'>(initial?.timeOfDay ?? 'any');
 
   const toggleDay = (d: number) => {
     setDays(prev => {
@@ -320,6 +321,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
       scheduledDays: days.length === 7 ? undefined : days,
       dailyTarget: target > 1 ? target : undefined,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
+      timeOfDay,
     });
     onClose();
   };
@@ -400,6 +402,21 @@ function AddHabitModal({ initial, onSave, onClose }: {
               ))}
             </View>
           </View>
+                    <View>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('TIME OF DAY')}</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {['any', 'morning', 'afternoon', 'evening'].map(tod => {
+                const active = timeOfDay === tod;
+                return (
+                  <Pressable key={tod} onPress={() => setTimeOfDay(tod as any)} style={{ flex: 1 }}>
+                    <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: 1, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5, textTransform: 'capitalize' }}>{tt(tod)}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('DAILY REMINDER')}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -459,6 +476,10 @@ export default function HabitsApp() {
   const active = habits.filter(h => !h.archived);
   const archived = habits.filter(h => h.archived);
   const dueToday = active.filter(h => isScheduledOn(h, today));
+  const habitsMorning = dueToday.filter(h => h.timeOfDay === 'morning');
+  const habitsAfternoon = dueToday.filter(h => h.timeOfDay === 'afternoon');
+  const habitsEvening = dueToday.filter(h => h.timeOfDay === 'evening');
+  const habitsAny = dueToday.filter(h => h.timeOfDay === 'any' || !h.timeOfDay);
   const doneToday = dueToday.filter(h => h.completedDates.includes(today)).length;
   const pct = dueToday.length > 0 ? Math.round((doneToday / dueToday.length) * 100) : 0;
   const bestStreak = active.reduce((max, habit) => Math.max(max, getHabitStreak(habit)), 0);
@@ -598,7 +619,12 @@ export default function HabitsApp() {
         />
       )}
 
-      {active.map((habit, i) => {
+      {[{title: 'Morning', data: habitsMorning}, {title: 'Afternoon', data: habitsAfternoon}, {title: 'Evening', data: habitsEvening}, {title: 'Any Time', data: habitsAny}].map(({title, data}) => {
+        if (data.length === 0) return null;
+        return (
+          <View key={title}>
+            <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '800', marginTop: 16, marginBottom: 8, marginLeft: 4 }}>{tt(title)}</Text>
+            {data.map((habit, i) => {
         const done = habit.completedDates.includes(today);
         const streak = getHabitStreak(habit);
         const todayEntry = checkInFor(habit, today);
@@ -668,6 +694,9 @@ export default function HabitsApp() {
               )}
             </GlassPanel>
           </Animated.View>
+        );
+      })}
+          </View>
         );
       })}
 

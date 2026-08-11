@@ -36,6 +36,7 @@ export interface Habit {
   dayCounts?: Record<string, number>;
   archived?: boolean;
   createdAt: string;
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'any';
 }
 
 // Warm editorial palette (same family as lib/avatarPalette) — legacy stored
@@ -156,6 +157,7 @@ export async function loadHabits(): Promise<Habit[]> {
       dayCounts: habit.dayCounts && typeof habit.dayCounts === 'object' ? habit.dayCounts : undefined,
       archived: !!habit.archived,
       createdAt: String(habit.createdAt ?? new Date().toISOString()),
+      timeOfDay: ['morning', 'afternoon', 'evening', 'any'].includes(habit.timeOfDay) ? habit.timeOfDay : 'any',
     }));
     // Backfill the structured tables for existing users (coalesced, best-effort)
     // so server stats/coaching are correct before their next save.
