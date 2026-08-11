@@ -266,7 +266,7 @@ export default function SignupWizard() {
     setAvatarUrl,
   } = useAppStore();
 
-  const [currentStep, setCurrentStep] = useState(session ? STEP.NAME : STEP.EMAIL);
+  const [currentStep, setCurrentStep] = useState<number>(session ? STEP.NAME : STEP.EMAIL);
   const [displayName, setDisplayNameLocal] = useState('');
   const [usernameRaw, setUsernameRaw] = useState('');
 
