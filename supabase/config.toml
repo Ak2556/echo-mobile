@@ -180,6 +180,11 @@ minimum_password_length = 6
 # are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
 password_requirements = ""
 
+# Security hardening: Prevent use of leaked passwords and enforce MFA policies
+auth_leaked_password_protection = true
+auth_insufficient_mfa_options = "reject"
+
+
 # Configure passkey sign-ins.
 # [auth.passkey]
 # enabled = false
