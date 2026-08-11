@@ -9,7 +9,7 @@ import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon } from 'phosphor-react-native';
+import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins, Table as TableIcon, Bell } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
@@ -507,6 +507,13 @@ export default function ExpensesApp() {
 
   const HeaderBtns = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
+      <AnimatedPressable onPress={() => {
+        const next = !doc.reminders;
+        update({ ...doc, reminders: next });
+        showToast(next ? 'Daily Khata reminder ON' : 'Daily Khata reminder OFF');
+      }} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: doc.reminders ? colors.accent + '22' : colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
+        <Bell color={doc.reminders ? colors.accent : colors.text} size={18} weight={doc.reminders ? 'fill' : 'bold'} />
+      </AnimatedPressable>
       <AnimatedPressable onPress={() => setShowProfile(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
         <UserCircle color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
