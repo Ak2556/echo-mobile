@@ -3,7 +3,7 @@ import { View, Pressable, Keyboard, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { PencilSimpleLine } from 'phosphor-react-native';
+import { Plus } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { tap } from '../../lib/haptics';
 import { useTutorialTarget } from '../../hooks/useTutorialTarget';
@@ -91,7 +91,7 @@ export function ComposeFAB() {
             borderRadius: 24,
           }}
         >
-          <PencilSimpleLine color={colors.accent} size={22} weight="bold" />
+          <Plus color={colors.accent} size={22} weight="bold" />
         </Pressable>
       </View>
     </Animated.View>

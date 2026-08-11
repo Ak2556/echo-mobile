@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, AppState } from 'react-native';
 import { Tabs, useRouter, type Href } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront } from 'phosphor-react-native';
+import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Plus, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
@@ -166,7 +166,7 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
           marginBottom: 18,
         }}
       >
-        <PencilSimple color="#fff" size={18} weight="bold" />
+        <Plus color="#fff" size={18} weight="bold" />
           <Text style={[font.bodyBold, { color: '#fff', fontSize: 14, lineHeight: lineHeights.small }]}>{t('nav.newEcho')}</Text>
       </Pressable>
 
@@ -339,7 +339,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
             },
           }] : []),
           { key: 'tools', label: 'Open Tools', icon: <SquaresFour color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/apps' as Href) },
-          { key: 'compose', label: 'New Echo', icon: <PencilSimple color={colors.accent} size={18} />, onPress: () => router.push('/create-post') },
+          { key: 'compose', label: 'New Echo', icon: <Plus color={colors.accent} size={18} />, onPress: () => router.push('/create-post') },
         ];
       case 'apps':
         return [
@@ -367,7 +367,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
         ];
       case 'explore':
         return [
-          { key: 'compose', label: 'New Echo',           icon: <PencilSimple color={colors.accent} size={18} />, onPress: () => router.push('/create-post') },
+          { key: 'compose', label: 'New Echo',           icon: <Plus color={colors.accent} size={18} />, onPress: () => router.push('/create-post') },
           { key: 'search',  label: 'Search',             icon: <MagnifyingGlass color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/explore') },
         ];
       case 'marketplace':

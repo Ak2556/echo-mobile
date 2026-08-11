@@ -55,7 +55,7 @@ const BASE_TRANSLATIONS = {
   'home.trendingDesc': 'Ranked by engagement and recency.',
   'home.followingDesc': 'Only echoes from people you follow.',
   'home.latestDesc': 'Every public echo in time order.',
-  'home.todayQuestion': "Today's questio",
+  'home.todayQuestion': "Daily Spark",
   'home.tapToAnswer': 'Tap to answer',
   'home.thoughtForToday': 'Thought for today',
   'home.dismissThought': "Dismiss today's though",
