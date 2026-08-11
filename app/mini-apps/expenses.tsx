@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Share, ScrollView, ActionSheetIOS, Platform
+  View, Text, TextInput, Pressable, Modal, StyleSheet, Share, ScrollView, Platform, Alert
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
@@ -217,10 +217,13 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
   const { colors } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
+  
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <View style={[StyleSheet.absoluteFill, { zIndex: 99999, elevation: 99999 }]}>
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Pressable style={{ width: '100%', maxWidth: 340, backgroundColor: colors.isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 24, overflow: 'hidden' }}>
+        <Pressable style={{ width: '100%', maxWidth: 340, backgroundColor: colors.isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 20, elevation: 20 }}>
           <View style={{ padding: 20, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{tt('Export Khata')}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>{tt('Choose export format')}</Text>
@@ -236,7 +239,7 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
           </AnimatedPressable>
         </Pressable>
       </Pressable>
-    </Modal>
+    </View>
   );
 }
 
