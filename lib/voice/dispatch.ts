@@ -38,6 +38,13 @@ const SETTINGS_MAP: Record<string, string> = {
   'अवतार': 'setShowAvatars', 'ऑनलाइन': 'setOnlineStatus', 'ऑनलाइन स्टेटस': 'setOnlineStatus',
   'टाइपिंग': 'setShowTypingIndicator', 'प्योर ब्लैक': 'setPureBlackBackground', 'काली स्क्रीन': 'setPureBlackBackground',
   'ऑटो रीड': 'setAutoReadAiReplies', 'संदेश पढ़ो': 'setAutoReadMessages',
+  // Punjabi setting names
+  'ਨੋਟੀਫਿਕੇਸ਼ਨ': 'setNotificationsEnabled', 'ਸੂਚਨਾ': 'setNotificationsEnabled',
+  'ਸਾਊਂਡ': 'setSoundEnabled', 'ਆਵਾਜ਼': 'setSoundEnabled',
+  'ਵਾਈਬ੍ਰੇਸ਼ਨ': 'setHapticEnabled', 'ਕੰਬਣੀ': 'setHapticEnabled',
+  'ਪ੍ਰਾਈਵੇਟ': 'setPrivateAccount', 'ਨਿੱਜੀ': 'setPrivateAccount',
+  'ਡਾਟਾ ਸੇਵਰ': 'setDataSaver', 'ਐਨੀਮੇਸ਼ਨ': 'setReduceAnimations',
+  'ਆਨਲਾਈਨ': 'setOnlineStatus', 'ਟਾਈਪਿੰਗ': 'setShowTypingIndicator',
 };
 
 // on / enable / true / yes → true; off / disable / false / no → false; else null (toggle).
@@ -96,6 +103,14 @@ const DESTINATIONS: Record<string, string> = {
   // Romanized Hindi
   ghar: '/(tabs)/home', khoj: '/(tabs)/explore', sandesh: '/messages', dukan: '/(tabs)/marketplace',
   suchna: '/(tabs)/notifications', khata: '/(tabs)/you',
+  // Punjabi (Gurmukhi)
+  'ਹੋਮ': '/(tabs)/home', 'ਘਰ': '/(tabs)/home', 'ਫੀਡ': '/(tabs)/home',
+  'ਖੋਜ': '/(tabs)/explore', 'ਐਕਸਪਲੋਰ': '/(tabs)/explore',
+  'ਮਾਰਕੀਟ': '/(tabs)/marketplace', 'ਬਾਜ਼ਾਰ': '/(tabs)/marketplace',
+  'ਚੈਟ': '/(tabs)/chat', 'ਮੈਸੇਜ': '/messages', 'ਸੁਨੇਹਾ': '/messages',
+  'ਪ੍ਰੋਫਾਈਲ': '/(tabs)/you', 'ਖਾਤਾ': '/(tabs)/you',
+  'ਨੋਟੀਫਿਕੇਸ਼ਨ': '/(tabs)/notifications', 'ਸੈਟਿੰਗ': '/settings',
+  'ਟੂਲ': '/(tabs)/apps', 'ਔਜ਼ਾਰ': '/(tabs)/apps', 'ਗੱਲਬਾਤ': '/(tabs)/chat',
 };
 
 // ---- Fuzzy word matching: tolerate ASR slips / accents ("setings"→settings,
@@ -166,6 +181,7 @@ function matchLanguage(spoken: string): AppLanguageCode | null {
   // Common Hindi words for the two most likely languages.
   const HINTS: Array<[string, AppLanguageCode]> = [
     ['हिंदी', 'hi'], ['हिन्दी', 'hi'], ['अंग्रेज़ी', 'en'], ['अंग्रेजी', 'en'], ['english', 'en'], ['hindi', 'hi'],
+    ['ਪੰਜਾਬੀ', 'pa'], ['punjabi', 'pa'],
   ];
   for (const [k, code] of HINTS) if (q.includes(k.toLowerCase())) return code;
   return null;
@@ -209,6 +225,10 @@ function matchMiniApp(spoken: string): string | null {
     kasrat: 'fitness', vyayam: 'fitness', hisab: 'calculator', ganna: 'calculator',
     padhai: 'learn', seekho: 'learn', yojana: 'planner', ghadi: 'world-clock',
     likho: 'markdown', kharidari: 'shopping-list', saman: 'shopping-list',
+    // Punjabi
+    'ਟਾਈਮਰ': 'pomodoro', 'ਕੰਮ': 'tasks', 'ਨੋਟਸ': 'notes', 'ਆਦਤ': 'habits',
+    'ਪੈਸਾ': 'expenses', 'ਖਰਚਾ': 'expenses', 'ਕਸਰਤ': 'fitness', 'ਹਿਸਾਬ': 'calculator',
+    'ਖਰੀਦਦਾਰੀ': 'shopping-list', 'ਪੜ੍ਹਾਈ': 'learn', 'ਯੋਜਨਾ': 'planner',
   };
   for (const [k, id] of Object.entries(SYN)) {
     if (q.includes(k)) { const a = MINI_APP_CATALOG.find((x) => x.id === id); if (a) return a.route as string; }
@@ -230,17 +250,17 @@ function matchMiniApp(spoken: string): string | null {
 
 function matchFeedScope(spoken: string): FeedScope | null {
   const q = spoken.trim().toLowerCase();
-  if (/for ?you|personal|आपके लिए|आपके लिये|aapke|apke/.test(q)) return 'semantic';
-  if (/trend|ट्रेंड|ट्रेंडिंग/.test(q)) return 'forYou';
-  if (/follow|फॉलो|फ़ॉलो/.test(q)) return 'following';
-  if (/latest|recent|new|नवीनतम|हालिया|नया|ताज़ा|naya|taza/.test(q)) return 'latest';
+  if (/for ?you|personal|आपके लिए|आपके लिये|aapke|apke|ਤੁਹਾਡੇ ਲਈ/.test(q)) return 'semantic';
+  if (/trend|ट्रेंड|ट्रेंडिंग|ਟ੍ਰੈਂਡ/.test(q)) return 'forYou';
+  if (/follow|फॉलो|फ़ॉलो|ਫਾਲੋ/.test(q)) return 'following';
+  if (/latest|recent|new|नवीनतम|हालिया|नया|ताज़ा|naya|taza|ਤਾਜ਼ਾ/.test(q)) return 'latest';
   return null;
 }
 
 function matchTheme(spoken: string): 'light' | 'midnight' | null {
   const q = spoken.trim().toLowerCase();
-  if (/dark|night|black|amoled|डार्क|काला|रात|अंधेरा|kaala|raat/.test(q)) return 'midnight';
-  if (/light|day|white|bright|लाइट|उजाला|सफेद|रोशनी|ujala|safed/.test(q)) return 'light';
+  if (/dark|night|black|amoled|डार्क|काला|रात|अंधेरा|kaala|raat|ਡਾਰਕ|ਹਨੇਰਾ/.test(q)) return 'midnight';
+  if (/light|day|white|bright|लाइट|उजाला|सफेद|रोशनी|ujala|safed|ਲਾਈਟ|ਚਾਨਣ/.test(q)) return 'light';
   return null;
 }
 
@@ -335,11 +355,11 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
     case 'post_action': {
       const action = `${str(args.action)} ${transcript}`.toLowerCase();
       const norm: PostAction | null =
-        /like|लाइक|पसंद/.test(action) ? 'like'
-        : /bookmark|save|सेव|बुकमार्क/.test(action) ? 'bookmark'
-        : /repost|re-?echo|share|रीपोस्ट|शेयर/.test(action) ? 'repost'
-        : /follow|फॉलो/.test(action) ? 'follow'
-        : /open|खोल/.test(action) ? 'open'
+        /like|लाइक|पसंद|ਲਾਈਕ/.test(action) ? 'like'
+        : /bookmark|save|सेव|बुकमार्क|ਸੇਵ/.test(action) ? 'bookmark'
+        : /repost|re-?echo|share|रीपोस्ट|शेयर|ਸ਼ੇਅਰ/.test(action) ? 'repost'
+        : /follow|फॉलो|ਫਾਲੋ/.test(action) ? 'follow'
+        : /open|खोल|ਖੋਲ੍ਹੋ/.test(action) ? 'open'
         : null;
       if (!norm) return { handled: false, reply };
       const did = getVoiceActions().postAction?.(norm);
