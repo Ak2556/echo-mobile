@@ -25,6 +25,7 @@ import {
 } from '../../lib/habits';
 import { localDayKey } from '../../lib/localDate';
 import { HabitDetail } from '../../components/mini-apps/HabitDetail';
+import { TimePicker } from '../../components/ui/TimePicker';
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const GOAL_OPTIONS = [3, 4, 5, 6, 7];
@@ -68,12 +69,47 @@ async function syncReminder(habit: Habit): Promise<void> {
   }
 }
 
+async function syncAlarm(habit: Habit): Promise<void> {
+  try {
+    const alarmKey = `mini:habits:alarm:${habit.id}`;
+    const existing = await AsyncStorage.getItem(alarmKey);
+    if (existing) {
+      await Notifications.cancelScheduledNotificationAsync(existing).catch(() => {});
+      await AsyncStorage.removeItem(alarmKey);
+    }
+    if (!habit.alarmTime) return;
+    const perm = await Notifications.requestPermissionsAsync();
+    if (!perm.granted) return;
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: habit.name,
+        body: 'Custom alarm',
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: habit.alarmTime.hour,
+        minute: habit.alarmTime.minute,
+      },
+    });
+    await AsyncStorage.setItem(alarmKey, id);
+  } catch {
+  }
+}
+
 async function cancelReminder(habitId: string): Promise<void> {
   try {
     const existing = await AsyncStorage.getItem(notifKey(habitId));
     if (existing) {
       await Notifications.cancelScheduledNotificationAsync(existing).catch(() => {});
       await AsyncStorage.removeItem(notifKey(habitId));
+    }
+    
+    const alarmKey = `mini:habits:alarm:${habitId}`;
+    const existingAlarm = await AsyncStorage.getItem(alarmKey);
+    if (existingAlarm) {
+      await Notifications.cancelScheduledNotificationAsync(existingAlarm).catch(() => {});
+      await AsyncStorage.removeItem(alarmKey);
     }
   } catch {}
 }
@@ -296,6 +332,8 @@ function AddHabitModal({ initial, onSave, onClose }: {
   const [color, setColor] = useState(initial?.color ?? accent);
   const [goal, setGoal] = useState(initial?.weeklyGoal ?? 7);
   const [reminder, setReminder] = useState<{ hour: number; minute: number } | null>(initial?.reminder ?? null);
+  const [alarmTime, setAlarmTime] = useState<{ hour: number; minute: number } | null>(initial?.alarmTime ?? null);
+  const [showAlarmPicker, setShowAlarmPicker] = useState(false);
   const [days, setDays] = useState<number[]>(initial?.scheduledDays ?? [0, 1, 2, 3, 4, 5, 6]);
   const [target, setTarget] = useState(initial?.dailyTarget ?? 1);
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening' | 'any'>(initial?.timeOfDay ?? 'any');
@@ -318,6 +356,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
       archived: initial?.archived,
       weeklyGoal: goal === 7 ? undefined : goal,
       reminder,
+      alarmTime,
       scheduledDays: days.length === 7 ? undefined : days,
       dailyTarget: target > 1 ? target : undefined,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
@@ -432,6 +471,39 @@ function AddHabitModal({ initial, onSave, onClose }: {
               })}
             </View>
           </View>
+          
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('CUSTOM ALARM')}</Text>
+            <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Bell color={alarmTime ? color : colors.textMuted} size={18} weight={alarmTime ? "fill" : "regular"} />
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>Apple Alarm Style Picker</Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {alarmTime && (
+                    <Pressable onPress={() => { setAlarmTime(null); setShowAlarmPicker(false); }} style={{ padding: 6, backgroundColor: colors.surface, borderRadius: 8 }}>
+                      <X color={colors.textMuted} size={16} />
+                    </Pressable>
+                  )}
+                  <Pressable onPress={() => {
+                    if (!alarmTime) setAlarmTime({ hour: 9, minute: 0 });
+                    setShowAlarmPicker(!showAlarmPicker);
+                  }} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: alarmTime ? color : colors.surface, borderRadius: 8 }}>
+                    <Text style={{ color: alarmTime ? '#fff' : colors.text, fontWeight: '700' }}>
+                      {alarmTime ? `${alarmTime.hour % 12 === 0 ? 12 : alarmTime.hour % 12}:${alarmTime.minute.toString().padStart(2, '0')} ${alarmTime.hour >= 12 ? 'PM' : 'AM'}` : 'Set'}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+              {showAlarmPicker && alarmTime && (
+                <View style={{ marginTop: 16 }}>
+                  <TimePicker value={alarmTime} onChange={setAlarmTime} />
+                </View>
+              )}
+            </View>
+          </View>
+          
           <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: color, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
             <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initial ? tt('Save Changes') : tt('Add Habit')}</Text>
           </AnimatedPressable>
@@ -533,6 +605,7 @@ export default function HabitsApp() {
     const updated = exists ? habits.map(x => x.id === h.id ? h : x) : [h, ...habits];
     setHabits(updated); saveHabits(updated);
     void syncReminder(h);
+    void syncAlarm(h);
     showToast(exists ? tt('Habit updated') : `${h.name} ${tt('added')}`, tt('Saved'));
   };
 

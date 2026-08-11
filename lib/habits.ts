@@ -28,6 +28,8 @@ export interface Habit {
   weeklyGoal?: number;
   /** daily reminder time; scheduled notification ids live per-device */
   reminder?: { hour: number; minute: number } | null;
+  /** specific alarm time for this habit */
+  alarmTime?: { hour: number; minute: number } | null;
   /** weekdays this habit applies to, 0–6 Sun–Sat; absent/empty = every day */
   scheduledDays?: number[];
   /** times per day (e.g. 8 glasses); absent or 1 = a simple check */
@@ -152,6 +154,7 @@ export async function loadHabits(): Promise<Habit[]> {
       log: Array.isArray(habit.log) ? habit.log : [],
       weeklyGoal: Number(habit.weeklyGoal) >= 1 && Number(habit.weeklyGoal) <= 7 ? Number(habit.weeklyGoal) : undefined,
       reminder: habit.reminder && Number.isFinite(habit.reminder.hour) ? { hour: Number(habit.reminder.hour), minute: Number(habit.reminder.minute) || 0 } : undefined,
+      alarmTime: habit.alarmTime && Number.isFinite(habit.alarmTime.hour) ? { hour: Number(habit.alarmTime.hour), minute: Number(habit.alarmTime.minute) || 0 } : undefined,
       scheduledDays: Array.isArray(habit.scheduledDays) ? habit.scheduledDays.filter((n: unknown) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 6) : undefined,
       dailyTarget: Number(habit.dailyTarget) > 1 ? Math.min(99, Math.round(Number(habit.dailyTarget))) : undefined,
       dayCounts: habit.dayCounts && typeof habit.dayCounts === 'object' ? habit.dayCounts : undefined,
