@@ -193,9 +193,9 @@ export function currentMonthKey(): string {
 }
 
 export function transactionsToCsv(txs: Transaction[]): string {
-  const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+  const esc = (s: string) => `"${String(s || '').replace(/"/g, '""')}"`;
   const rows = txs.map(tx =>
-    [tx.date.slice(0, 10), tx.type, esc(tx.category), tx.amount.toFixed(2), esc(tx.note)].join(','),
+    [(tx.date || '').slice(0, 10), tx.type || '', esc(tx.category), (tx.amount || 0).toFixed(2), esc(tx.note)].join(','),
   );
   return ['date,type,category,amount,note', ...rows].join('\n');
 }
@@ -211,7 +211,7 @@ export function pnlToCsv(txs: Transaction[]): string {
     catTotals.set(key, (catTotals.get(key) ?? 0) + t.amount);
   }
   
-  const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+  const esc = (s: string) => `"${String(s || '').replace(/"/g, '""')}"`;
   const lines = ['Profit & Loss Statement', ''];
   lines.push(`Total Income,${income.toFixed(2)}`);
   lines.push(`Total Expenses,${expense.toFixed(2)}`);
