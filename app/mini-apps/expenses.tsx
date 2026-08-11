@@ -3,11 +3,13 @@ import {
   View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Share, ScrollView, ActionSheetIOS
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText } from 'phosphor-react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Plus, Wallet, ArrowUp, ArrowDown, Trash, X, CaretLeft, CaretRight, Export, PencilSimple, MagnifyingGlass, Gauge, Target, CalendarCheck, TrendUp, TrendDown, Receipt, Users, FileText, ChartPieSlice, UserCircle, HandCoins } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
@@ -75,16 +77,19 @@ function AddModal({ currency, parties, onAdd, onClose }: { currency: CurrencyCod
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 20, gap: 22, paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-          {/* Tally Type toggle */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {(['expense', 'income', 'sale', 'receipt', 'purchase', 'payment'] as TxType[]).map(t => (
-              <Pressable key={t} onPress={() => { setType(t); setCategory(''); setPartyId(''); setNewPartyName(''); }} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' || t === 'purchase' || t === 'payment' ? colors.danger : colors.success) : colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>
-                <Text style={{ color: type === t ? '#fff' : colors.textMuted, fontWeight: '800', fontSize: 13, textTransform: 'capitalize' }}>
-                  {t === 'expense' ? tt('Expense') : t === 'income' ? tt('Income') : t === 'sale' ? tt('Sale Invoice') : t === 'receipt' ? tt('Payment In') : t === 'purchase' ? tt('Purchase Bill') : tt('Payment Out')}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          {/* Tally Type toggle (2x3 Grid) */}
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('ENTRY TYPE')}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {(['expense', 'income', 'sale', 'receipt', 'purchase', 'payment'] as TxType[]).map(t => (
+                <Pressable key={t} onPress={() => { setType(t); setCategory(''); setPartyId(''); setNewPartyName(''); }} style={{ width: '48%', paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' || t === 'purchase' || t === 'payment' ? colors.danger : colors.success) : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderWidth: type === t ? 0 : StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                  <Text style={{ color: type === t ? '#fff' : colors.text, fontWeight: '800', fontSize: 14, textTransform: 'capitalize' }}>
+                    {t === 'expense' ? tt('Expense') : t === 'income' ? tt('Income') : t === 'sale' ? tt('Sale Invoice') : t === 'receipt' ? tt('Payment In') : t === 'purchase' ? tt('Purchase Bill') : tt('Payment Out')}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
 
           {/* Amount */}
           <View>
@@ -170,71 +175,7 @@ function elapsedDaysForMonth(key: string): number {
   return new Date().getDate();
 }
 
-function MoneyPulsePanel({
-  accent,
-  income,
-  expense,
-  balance,
-  budget,
-  month,
-  money,
-}: {
-  accent: string;
-  income: number;
-  expense: number;
-  balance: number;
-  budget: number | null;
-  month: string;
-  money: (amount: number) => string;
-}) {
-  const { colors } = useTheme();
-  const { tt } = useI18n();
-  const elapsed = elapsedDaysForMonth(month);
-  const totalDays = daysInMonthKey(month);
-  const daysLeft = Math.max(0, totalDays - elapsed);
-  const projectedSpend = elapsed > 0 ? Math.round((expense / elapsed) * totalDays) : expense;
-  const remainingBudget = budget != null ? Math.max(0, budget - expense) : null;
-  const dailyRoom = remainingBudget != null ? remainingBudget / Math.max(daysLeft || 1, 1) : null;
-  const saveRate = income > 0 ? Math.round((balance / income) * 100) : 0;
-  const pressure = !budget ? tt('No budget') : projectedSpend <= budget ? tt('On track') : tt('Over pace');
-  const pressureColor = !budget ? accent : projectedSpend <= budget ? colors.success : colors.danger;
-  const tiles = [
-    { label: tt('Pressure'), value: pressure, detail: budget ? `${Math.min(999, Math.round((projectedSpend / budget) * 100))}% ${tt('pace')}` : tt('set budget'), icon: Gauge, color: pressureColor },
-    { label: tt('Daily room'), value: dailyRoom == null ? tt('Set') : money(dailyRoom), detail: `${daysLeft} ${tt('days left')}`, icon: CalendarCheck, color: accent },
-    { label: tt('Projected'), value: money(projectedSpend), detail: tt('month end'), icon: TrendUp, color: projectedSpend <= (budget ?? Number.POSITIVE_INFINITY) ? colors.success : colors.danger },
-    { label: tt('Save rate'), value: income > 0 ? `${saveRate}%` : tt('None'), detail: balance >= 0 ? tt('positive') : tt('negative'), icon: balance >= 0 ? Target : TrendDown, color: balance >= 0 ? colors.success : colors.danger },
-  ];
-  return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${pressureColor}38` }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${pressureColor}20`, alignItems: 'center', justifyContent: 'center' }}>
-          <Receipt color={pressureColor} size={20} weight="fill" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{tt('Money pulse')}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>
-            {tt('Pace, room, forecast.')}
-          </Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {tiles.map(tile => {
-          const Icon = tile.icon;
-          return (
-            <View key={tile.label} style={{ width: '48.5%', minHeight: 68, borderRadius: 17, padding: 11, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Icon color={tile.color} size={14} weight="bold" />
-                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>{tile.label}</Text>
-              </View>
-              <Text style={{ color: tile.color, fontSize: tile.value.length > 8 ? 14 : 17, fontWeight: '900', marginTop: 7 }} numberOfLines={1}>{tile.value}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }} numberOfLines={1}>{tile.detail}</Text>
-            </View>
-          );
-        })}
-      </View>
-    </GlassPanel>
-  );
-}
+// Removed MoneyPulsePanel for a cleaner, larger-scale layout
 
 function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | null; currency: CurrencyCode; onSave: (b: number | null) => void; onClose: () => void }) {
   const { colors } = useTheme();
@@ -456,14 +397,13 @@ export default function ExpensesApp() {
       <AnimatedPressable onPress={handleExport} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
         <Export color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
-      <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: accent, borderRadius: 12 }}>
-        <Plus color="#fff" size={18} weight="bold" />
-      </AnimatedPressable>
     </View>
   );
 
   return (
-    <MiniAppShell title={tt('Khata')} subtitle={tt('Accounting')} headerRight={HeaderBtns}>
+    <MiniAppShell title={tt('Khata')} subtitle={tt('Accounting')} scrollable={false} headerRight={HeaderBtns}>
+      <View style={{ flex: 1 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
       {/* Top Tab Bar */}
       <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
         <Pressable onPress={() => setActiveTab('dashboard')} style={{ flex: 1 }}>
@@ -526,141 +466,62 @@ export default function ExpensesApp() {
       )}
 
       {activeTab === 'dashboard' && (
-        <>
-          <MiniCommandDeck
-            accent={balance >= 0 ? colors.success : colors.danger}
-            title={tt('Accounting Dashboard')}
-            subtitle={tt('Income, spend, budget.')}
-        metrics={[
-          { label: tt('Net P&L'), value: money(Math.abs(balance)), detail: balance >= 0 ? tt('PROFIT') : tt('LOSS') },
-          { label: tt('You Gave'), value: money(expense), detail: monthLabel(month) },
-          { label: tt('Budget'), value: doc.budget ? `${budgetPct}%` : tt('Set'), detail: doc.currency },
-        ]}
-        chips={[tt('Multi-currency'), tt('Budget pressure'), tt('CSV export')]}
-      />
-      <MoneyPulsePanel
-        accent={accent}
-        income={income}
-        expense={expense}
-        balance={balance}
-        budget={doc.budget}
-        month={month}
-        money={money}
-      />
-      {/* Month switcher */}
-      {!searching && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <AnimatedPressable onPress={() => setMonth(shiftMonth(month, -1))} scaleValue={0.85} haptic="light" style={{ padding: 8 }}>
-            <CaretLeft color={colors.text} size={18} weight="bold" />
-          </AnimatedPressable>
-          <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }}>{monthLabel(month)}</Text>
-          <AnimatedPressable
-            onPress={() => setMonth(shiftMonth(month, 1))}
-            scaleValue={0.85} haptic="light" style={{ padding: 8, opacity: month >= currentMonthKey() ? 0.25 : 1 }}
-            disabled={month >= currentMonthKey()}
-          >
-            <CaretRight color={colors.text} size={18} weight="bold" />
-          </AnimatedPressable>
-        </View>
-      )}
-
-      {/* Balance card */}
-      <GlassPanel variant="medium" borderRadius={28} contentStyle={{ padding: 24 }} style={{ marginBottom: 14, shadowColor: balance >= 0 ? colors.success : colors.danger, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 4 } }} elevated>
-        <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>
-          {searching ? tt('Matching P&L') : `${balance >= 0 ? tt('Net Profit') : tt('Net Loss')} · ${doc.currency}`}
-        </Text>
-        <Text style={{ color: balance >= 0 ? colors.success : colors.danger, fontSize: 40, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
-          {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
-        </Text>
-        <View style={{ flexDirection: 'row', marginTop: 20, gap: 12 }}>
-          <View style={{ flex: 1, backgroundColor: colors.success + '18', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.success + '33' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <ArrowDown color={colors.success} size={14} weight="bold" />
-              <Text style={{ color: colors.success, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{tt('YOU GOT (INCOME)')}</Text>
-            </View>
-            <Text style={{ color: colors.success, fontSize: 20, fontWeight: '800' }}>{money(income)}</Text>
-          </View>
-          <View style={{ flex: 1, backgroundColor: colors.danger + '18', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.danger + '33' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <ArrowUp color={colors.danger} size={14} weight="bold" />
-              <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{tt('YOU GAVE (EXPENSE)')}</Text>
-            </View>
-            <Text style={{ color: colors.danger, fontSize: 20, fontWeight: '800' }}>{money(expense)}</Text>
-          </View>
-        </View>
-
-        {/* Budget */}
-        {!searching && (
-          <Pressable onPress={() => setShowBudget(true)}>
-            <View style={{ marginTop: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 0.8 }}>
-                  {doc.budget ? `${tt('BUDGET')} · ${money(expense)} ${tt('of')} ${money(doc.budget)}` : tt('SET A MONTHLY BUDGET')}
-                </Text>
-                <PencilSimple color={colors.textMuted} size={14} />
-              </View>
-              {doc.budget ? (
-                <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-                  <View style={{ height: '100%', width: `${budgetPct}%`, backgroundColor: overBudget ? colors.danger : budgetPct > 80 ? colors.warning : colors.success, borderRadius: 4 }} />
+        <Animated.View entering={FadeInUp.duration(300)}>
+          {/* Main Fintech Balance Card */}
+          <View style={{ marginBottom: 24, marginHorizontal: 2 }}>
+            <LinearGradient
+              colors={balance >= 0 ? ['#054F31', '#022C1A'] : ['#7F1D1D', '#450a0a']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={{ borderRadius: 28, padding: 24, paddingBottom: 28, shadowColor: balance >= 0 ? colors.success : colors.danger, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}
+            >
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>
+                {searching ? tt('Matching P&L') : `${tt('Net')} ${balance >= 0 ? tt('Profit') : tt('Loss')} · ${doc.currency}`}
+              </Text>
+              <Text style={{ color: '#fff', fontSize: 48, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1.5 }}>
+                {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
+              </Text>
+              
+              <View style={{ flexDirection: 'row', marginTop: 32, gap: 16 }}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <ArrowDown color="rgba(255,255,255,0.9)" size={14} weight="bold" />
+                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>{tt('TOTAL INCOME')}</Text>
+                  </View>
+                  <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>{money(income)}</Text>
                 </View>
-              ) : null}
-              {overBudget ? (
-                <Text style={{ color: colors.danger, fontSize: 12, fontWeight: '700', marginTop: 6 }}>
-                  {money(expense - (doc.budget ?? 0))} {tt('over budget')}
-                </Text>
-              ) : null}
-            </View>
-          </Pressable>
-        )}
-      </GlassPanel>
-
-      <EdgeFeaturePanel
-        appName="Expenses"
-        accent={accent}
-        headline={tt('Money decisions, not just logs')}
-        caption={tt('Turn spending data into budget coaching, accountability, and weekly finance updates.')}
-        metrics={[
-          { label: tt('Net P&L'), value: `${balance < 0 ? '-' : ''}${money(Math.abs(balance))}` },
-          { label: tt('You Gave'), value: money(expense) },
-          { label: tt('Budget'), value: doc.budget ? `${budgetPct}%` : tt('Off') },
-        ]}
-        prompt="Review my expense pattern and tell me where to adjust this week without making the plan unrealistic."
-        shareText={`Expenses progress: income ${money(income)}, expenses ${money(expense)}, balance ${balance < 0 ? '-' : ''}${money(Math.abs(balance))}${doc.budget ? `, budget used ${budgetPct}%` : ''}.`}
-        publishTitle="Budget progress"
-        publishBody={`This period I logged ${money(income)} income, ${money(expense)} expenses, and a ${balance >= 0 ? 'positive' : 'negative'} balance of ${balance < 0 ? '-' : ''}${money(Math.abs(balance))}.`}
-      />
-
-      {/* Category breakdown */}
-      {!searching && topCats.length > 0 && (
-        <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 12 }}>{tt('Where it went')}</Text>
-          {topCats.map(([cat, amt]) => (
-            <View key={cat} style={{ marginBottom: 10 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '600' }}>{tt(cat)}</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontVariant: ['tabular-nums'] }}>{money(amt)}</Text>
+                <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <ArrowUp color="rgba(255,255,255,0.9)" size={14} weight="bold" />
+                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>{tt('TOTAL SPEND')}</Text>
+                  </View>
+                  <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>{money(expense)}</Text>
+                </View>
               </View>
-              <View style={{ height: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderRadius: 3, overflow: 'hidden' }}>
-                <View style={{ height: '100%', width: `${Math.max(4, Math.round((amt / maxCat) * 100))}%`, backgroundColor: colors.danger + 'AA', borderRadius: 3 }} />
-              </View>
-            </View>
-          ))}
-        </GlassPanel>
-      )}
+            </LinearGradient>
+          </View>
 
-      {/* Search */}
-      <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 }} style={{ marginBottom: 12 }}>
-        <MagnifyingGlass color={colors.textMuted} size={16} />
-        <TextInput
-          value={query} onChangeText={setQuery}
-          placeholder={tt('Search category or note (all months)')}
-          placeholderTextColor={colors.textMuted}
-          style={{ flex: 1, color: colors.text, fontSize: 14.5, paddingHorizontal: 10, paddingVertical: 12 }}
-        />
-        {searching ? (
-          <Pressable onPress={() => setQuery('')} hitSlop={8}><X color={colors.textMuted} size={15} /></Pressable>
-        ) : null}
-      </GlassPanel>
+          {/* Search */}
+          <GlassPanel variant="light" borderRadius={20} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }} style={{ marginBottom: 18 }}>
+            <MagnifyingGlass color={colors.textMuted} size={18} />
+            <TextInput
+              value={query} onChangeText={setQuery}
+              placeholder={tt('Search entries...')}
+              placeholderTextColor={colors.textMuted}
+              style={{ flex: 1, color: colors.text, fontSize: 16, paddingHorizontal: 12, paddingVertical: 16, fontWeight: '500' }}
+            />
+            {searching ? (
+              <Pressable onPress={() => setQuery('')} hitSlop={8}><X color={colors.textMuted} size={18} /></Pressable>
+            ) : null}
+          </GlassPanel>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, paddingHorizontal: 4 }}>
+            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', letterSpacing: -0.2 }}>{tt('Recent Activity')}</Text>
+          </View>
+
+
+
+
 
       {/* Filter tabs */}
       <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
@@ -712,8 +573,29 @@ export default function ExpensesApp() {
         );
       })}
 
-      </>
+      </Animated.View>
       )}
+      </ScrollView>
+
+      {/* Floating Bottom Navigation & FAB */}
+      <View style={{ position: 'absolute', bottom: 32, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
+        <View style={{ flex: 1, alignItems: 'center', pointerEvents: 'box-none' }}>
+          <View style={{ flexDirection: 'row', backgroundColor: colors.isDark ? 'rgba(40,40,40,0.85)' : 'rgba(255,255,255,0.9)', borderRadius: 100, padding: 6, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
+            <Pressable onPress={() => setActiveTab('dashboard')} style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: activeTab === 'dashboard' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <ChartPieSlice color={activeTab === 'dashboard' ? colors.text : colors.textMuted} size={20} weight={activeTab === 'dashboard' ? 'fill' : 'regular'} />
+              {activeTab === 'dashboard' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14 }}>{tt('Dashboard')}</Text>}
+            </Pressable>
+            <Pressable onPress={() => setActiveTab('parties')} style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: activeTab === 'parties' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Users color={activeTab === 'parties' ? colors.text : colors.textMuted} size={20} weight={activeTab === 'parties' ? 'fill' : 'regular'} />
+              {activeTab === 'parties' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14 }}>{tt('Parties')}</Text>}
+            </Pressable>
+          </View>
+        </View>
+        <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.9} haptic="medium" style={{ position: 'absolute', right: 0, width: 64, height: 64, borderRadius: 32, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
+          <Plus color="#fff" size={28} weight="bold" />
+        </AnimatedPressable>
+      </View>
+      </View>
 
       {showAdd && <AddModal currency={doc.currency} parties={parties} onAdd={addTx} onClose={() => setShowAdd(false)} />}
       {showBudget && <BudgetModal budget={doc.budget} currency={doc.currency} onSave={b => update({ ...doc, budget: b })} onClose={() => setShowBudget(false)} />}
