@@ -7,6 +7,7 @@ export const TX_KEY = 'mini:expenses';
 export const DEFAULT_EXPENSE_CURRENCY: CurrencyCode = 'USD';
 export type TxType = 'income' | 'expense' | 'sale' | 'purchase' | 'receipt' | 'payment';
 export type PartyType = 'customer' | 'supplier';
+export type KhataProfile = 'personal' | 'business' | 'farmer';
 
 export interface Party {
   id: string;
@@ -52,6 +53,8 @@ export interface ExpensesDoc {
   budget: number | null;
   /** display currency for this money log */
   currency: CurrencyCode;
+  /** user persona mode (determines UI labels and active fields) */
+  profile?: KhataProfile;
 }
 
 function normalizeCurrency(value: unknown): CurrencyCode {
@@ -61,7 +64,7 @@ function normalizeCurrency(value: unknown): CurrencyCode {
 }
 
 function coerceDoc(raw: unknown): ExpensesDoc {
-  if (Array.isArray(raw)) return { txs: raw as Transaction[], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
+  if (Array.isArray(raw)) return { txs: raw as Transaction[], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business' };
   if (raw && typeof raw === 'object') {
     const doc = raw as Partial<ExpensesDoc>;
     return {
@@ -69,9 +72,10 @@ function coerceDoc(raw: unknown): ExpensesDoc {
       parties: Array.isArray(doc.parties) ? doc.parties : [],
       budget: typeof doc.budget === 'number' && doc.budget > 0 ? doc.budget : null,
       currency: normalizeCurrency(doc.currency),
+      profile: doc.profile || 'business',
     };
   }
-  return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
+  return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business' };
 }
 
 export async function loadExpensesDoc(): Promise<ExpensesDoc> {
@@ -82,7 +86,7 @@ export async function loadExpensesDoc(): Promise<ExpensesDoc> {
     if (doc.txs.length) pushExpensesStructured(doc); // backfill for existing users
     return doc;
   } catch {
-    return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
+    return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business' };
   }
 }
 
