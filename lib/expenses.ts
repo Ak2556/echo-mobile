@@ -176,6 +176,32 @@ export function transactionsToCsv(txs: Transaction[]): string {
   return ['date,type,category,amount,note', ...rows].join('\n');
 }
 
+export function pnlToCsv(txs: Transaction[]): string {
+  const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const pnl = income - expense;
+  
+  const catTotals = new Map<string, number>();
+  for (const t of txs) {
+    const key = `${t.type}:${t.category}`;
+    catTotals.set(key, (catTotals.get(key) ?? 0) + t.amount);
+  }
+  
+  const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+  const lines = ['Profit & Loss Statement', ''];
+  lines.push(`Total Income,${income.toFixed(2)}`);
+  lines.push(`Total Expenses,${expense.toFixed(2)}`);
+  lines.push(`Net Profit/Loss,${pnl.toFixed(2)}`);
+  lines.push('');
+  lines.push('Category Breakdown');
+  lines.push('Category,Type,Amount');
+  for (const [key, amt] of catTotals.entries()) {
+    const [type, cat] = key.split(':');
+    lines.push(`${esc(cat)},${type},${amt.toFixed(2)}`);
+  }
+  return lines.join('\n');
+}
+
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
