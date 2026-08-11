@@ -273,7 +273,7 @@ export default function ShoppingListScreen() {
       {/* List Selector Modal */}
       <Modal visible={showListSelector} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: colors.background, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 60, minHeight: 400 }}>
+          <View style={{ backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 60, minHeight: 400 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text }}>Your Lists</Text>
               <Pressable onPress={() => setShowListSelector(false)} style={{ padding: 8, backgroundColor: colors.surface, borderRadius: 20 }}>
@@ -309,8 +309,8 @@ export default function ShoppingListScreen() {
             </ScrollView>
             
             <AnimatedPressable onPress={createNewList} style={{ height: 56, borderRadius: 20, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 16 }}>
-              <Plus color={colors.background} size={20} weight="bold" />
-              <Text style={{ color: colors.background, fontSize: 17, fontWeight: '900' }}>Create New List</Text>
+              <Plus color={colors.bg} size={20} weight="bold" />
+              <Text style={{ color: colors.bg, fontSize: 17, fontWeight: '900' }}>Create New List</Text>
             </AnimatedPressable>
           </View>
         </View>
@@ -318,7 +318,7 @@ export default function ShoppingListScreen() {
 
       {/* Scanner / Frequent Items Modal */}
       <Modal visible={showScanner} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
             <Pressable onPress={() => setShowScanner(false)} style={{ padding: 12, backgroundColor: colors.surface, borderRadius: 20, marginRight: 16 }}>
               <ArrowLeft color={colors.text} size={24} weight="bold" />

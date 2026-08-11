@@ -5,7 +5,7 @@ import { loadNotes } from './notes';
 import { loadMemos, formatMemoTime } from './voiceMemos';
 import { loadTasks } from './tasks';
 import { loadPlanner } from './planner';
-import { loadShoppingList } from './shoppingList';
+import { loadShoppingData } from './shoppingList';
 import { learningStats, loadLearningGoals } from './learn';
 import { loadFitness, thisWeekWorkoutCount, todayMealTotals, todayWaterMl, weeklyStreak } from './fitness';
 import { loadWorldClockCities } from './worldClock';
@@ -92,7 +92,7 @@ export async function searchLocalProductivity(query: string, limit = 12): Promis
     loadMemos(),
     loadTasks(),
     loadPlanner(),
-    loadShoppingList(),
+    loadShoppingData(),
     loadLearningGoals(),
     loadFitness(),
     loadWorldClockCities(),
@@ -275,7 +275,7 @@ export async function getTodayProductivity(): Promise<TodayProductivity> {
     loadMemos(),
     loadTasks(),
     loadPlanner(),
-    loadShoppingList(),
+    loadShoppingData(),
     loadLearningGoals(),
     loadFitness(),
     loadWorldClockCities(),
