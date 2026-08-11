@@ -55,6 +55,8 @@ export interface ExpensesDoc {
   currency: CurrencyCode;
   /** user persona mode (determines UI labels and active fields) */
   profile?: KhataProfile;
+  /** daily reminder toggle */
+  reminders?: boolean;
 }
 
 function normalizeCurrency(value: unknown): CurrencyCode {
@@ -64,7 +66,7 @@ function normalizeCurrency(value: unknown): CurrencyCode {
 }
 
 function coerceDoc(raw: unknown): ExpensesDoc {
-  if (Array.isArray(raw)) return { txs: raw as Transaction[], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business' };
+  if (Array.isArray(raw)) return { txs: raw as Transaction[], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business', reminders: false };
   if (raw && typeof raw === 'object') {
     const doc = raw as Partial<ExpensesDoc>;
     return {
@@ -73,9 +75,10 @@ function coerceDoc(raw: unknown): ExpensesDoc {
       budget: typeof doc.budget === 'number' && doc.budget > 0 ? doc.budget : null,
       currency: normalizeCurrency(doc.currency),
       profile: doc.profile || 'business',
+      reminders: doc.reminders || false,
     };
   }
-  return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business' };
+  return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business', reminders: false };
 }
 
 export async function loadExpensesDoc(): Promise<ExpensesDoc> {
@@ -86,14 +89,17 @@ export async function loadExpensesDoc(): Promise<ExpensesDoc> {
     if (doc.txs.length) pushExpensesStructured(doc); // backfill for existing users
     return doc;
   } catch {
-    return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business' };
+    return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY, profile: 'business', reminders: false };
   }
 }
+
+import { syncExpenseReminders } from './expensesReminders';
 
 export async function saveExpensesDoc(doc: ExpensesDoc): Promise<void> {
   await AsyncStorage.setItem(TX_KEY, JSON.stringify(doc));
   pushMiniApp('expenses', doc);
   pushExpensesStructured(doc);
+  syncExpenseReminders(doc.reminders ?? false, doc.profile || 'business');
 }
 
 export async function loadTransactions(): Promise<Transaction[]> {
