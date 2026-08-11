@@ -16,6 +16,7 @@ import {
 import { scheduleTaskReminder, cancelTaskReminder } from '../../lib/taskReminders';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
+import { TimePicker } from '../../components/ui/TimePicker';
 
 type Filter = 'any' | 'today' | 'upcoming' | 'someday';
 
@@ -66,6 +67,8 @@ export default function TasksScreen() {
   const [detailNotes, setDetailNotes] = useState('');
   const [detailTags, setDetailTags] = useState('');
   const [detailSubtask, setDetailSubtask] = useState('');
+  const [detailAlarm, setDetailAlarm] = useState<{ hour: number, minute: number } | null>(null);
+  const [showAlarmPicker, setShowAlarmPicker] = useState(false);
 
   useFocusEffect(React.useCallback(() => {
     loadTasks().then((loaded) => {
@@ -146,14 +149,29 @@ export default function TasksScreen() {
     setDetailTask(task);
     setDetailNotes(task.notes || '');
     setDetailTags((task.tags || []).join(', '));
+    setDetailAlarm(task.alarmTime || null);
+    setShowAlarmPicker(false);
   };
 
-  const closeDetail = () => {
+  const closeDetail = async () => {
     if (detailTask) {
-      updateTask(detailTask.id, {
+      const partial: Partial<TaskItem> = {
         notes: detailNotes.trim() || undefined,
-        tags: detailTags.split(',').map(t => t.trim()).filter(t => t.length > 0)
-      });
+        tags: detailTags.split(',').map(t => t.trim()).filter(t => t.length > 0),
+        alarmTime: detailAlarm
+      };
+      
+      const updated = { ...detailTask, ...partial };
+      
+      if (detailAlarm && (!detailTask.alarmTime || detailTask.alarmTime.hour !== detailAlarm.hour || detailTask.alarmTime.minute !== detailAlarm.minute)) {
+         updated.reminderId = await scheduleTaskReminder(updated as TaskItem) ?? undefined;
+         partial.reminderId = updated.reminderId;
+      } else if (!detailAlarm && detailTask.alarmTime) {
+         void cancelTaskReminder(detailTask.reminderId);
+         partial.reminderId = undefined;
+      }
+      
+      updateTask(detailTask.id, partial);
     }
     setDetailTask(null);
   };
@@ -392,8 +410,8 @@ export default function TasksScreen() {
                 
                 {/* Due Date & Reminders */}
                 <View>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Schedule</Text>
-                  <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 }}>Schedule & Alarm</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
                     {DUE_OPTIONS.map(d => (
                       <Pressable key={d.label} onPress={() => updateTask(detailTask.id, { due: d.value })}>
                         <View style={{ backgroundColor: detailTask.due === d.value ? accent : colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 }}>
@@ -401,6 +419,35 @@ export default function TasksScreen() {
                         </View>
                       </Pressable>
                     ))}
+                  </View>
+                  
+                  <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 16, padding: 16 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Bell color={detailAlarm ? accent : colors.textMuted} size={18} weight={detailAlarm ? "fill" : "regular"} />
+                        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>Custom Alarm</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        {detailAlarm && (
+                          <Pressable onPress={() => { setDetailAlarm(null); setShowAlarmPicker(false); }} style={{ padding: 6, backgroundColor: colors.surface, borderRadius: 8 }}>
+                            <Trash color={colors.textMuted} size={16} />
+                          </Pressable>
+                        )}
+                        <Pressable onPress={() => {
+                          if (!detailAlarm) setDetailAlarm({ hour: 9, minute: 0 });
+                          setShowAlarmPicker(!showAlarmPicker);
+                        }} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: detailAlarm ? accent : colors.surface, borderRadius: 8 }}>
+                          <Text style={{ color: detailAlarm ? '#fff' : colors.text, fontWeight: '700' }}>
+                            {detailAlarm ? `${detailAlarm.hour % 12 === 0 ? 12 : detailAlarm.hour % 12}:${detailAlarm.minute.toString().padStart(2, '0')} ${detailAlarm.hour >= 12 ? 'PM' : 'AM'}` : 'Set'}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                    {showAlarmPicker && detailAlarm && (
+                      <View style={{ marginTop: 16 }}>
+                        <TimePicker value={detailAlarm} onChange={setDetailAlarm} />
+                      </View>
+                    )}
                   </View>
                 </View>
 

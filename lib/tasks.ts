@@ -22,6 +22,8 @@ export interface TaskItem {
   time?: string;
   /** Scheduled local-notification id for the reminder, so it can be cancelled. */
   reminderId?: string;
+  /** Specific time to trigger an alarm/notification */
+  alarmTime?: { hour: number; minute: number } | null;
   done: boolean;
   priority: TaskPriority;
   subtasks?: SubTask[];
@@ -30,9 +32,14 @@ export interface TaskItem {
   updatedAt: string;
 }
 
-/** Combine a task's due date + time into a Date, or null if not schedulable. */
-export function taskDueAt(task: Pick<TaskItem, 'due' | 'time'>): Date | null {
+export function taskDueAt(task: Pick<TaskItem, 'due' | 'time' | 'alarmTime'>): Date | null {
   if (!task.due) return null;
+  if (task.alarmTime) {
+    const hh = String(task.alarmTime.hour).padStart(2, '0');
+    const mm = String(task.alarmTime.minute).padStart(2, '0');
+    const d = new Date(`${task.due}T${hh}:${mm}:00`);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
   const iso = task.time ? `${task.due}T${task.time}:00` : `${task.due}T09:00:00`;
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -74,6 +81,8 @@ function normalize(raw: unknown): TaskItem[] {
         title: typeof item.title === 'string' ? item.title : '',
         notes: typeof item.notes === 'string' ? item.notes : undefined,
         due: typeof item.due === 'string' ? item.due : undefined,
+        time: typeof item.time === 'string' ? item.time : undefined,
+        alarmTime: item.alarmTime && typeof item.alarmTime === 'object' && 'hour' in item.alarmTime ? item.alarmTime as { hour: number; minute: number } : undefined,
         done: item.done === true,
         priority,
         subtasks,
