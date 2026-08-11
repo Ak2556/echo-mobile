@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, Pressable, Modal, StyleSheet, Share, ScrollView, Platform, Alert
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FS from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -22,7 +22,7 @@ import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '.
 import {
   DEFAULT_EXPENSE_CURRENCY, EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, categoryMarker, Party, PartyType, KhataProfile,
   currentMonthKey, formatDate, loadExpensesDoc, monthKey, monthLabel,
-  saveExpensesDoc, shiftMonth, transactionsToCsv, pnlToCsv,
+  saveExpensesDoc, shiftMonth, transactionsToCsv, pnlToCsv, daybookToCsv, gstReportToCsv, generatePdfHtml
 } from '../../lib/expenses';
 
 const PROFILE_TERM: Record<KhataProfile, any> = {
@@ -221,25 +221,52 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
   if (!visible) return null;
 
   return (
-    <View style={[StyleSheet.absoluteFill, { zIndex: 99999, elevation: 99999 }]}>
-      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Pressable style={{ width: '100%', maxWidth: 340, backgroundColor: colors.isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 20, elevation: 20 }}>
-          <View style={{ padding: 20, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{tt('Export Khata')}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>{tt('Choose export format')}</Text>
-          </View>
-          <AnimatedPressable onPress={() => { onExport(1); onClose(); }} haptic="light" style={{ padding: 18, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, alignItems: 'center' }}>
-            <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '600' }}>{tt('Export P&L Summary')}</Text>
-          </AnimatedPressable>
-          <AnimatedPressable onPress={() => { onExport(2); onClose(); }} haptic="light" style={{ padding: 18, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, alignItems: 'center' }}>
-            <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '600' }}>{tt('Export All Transactions (CSV)')}</Text>
-          </AnimatedPressable>
-          <AnimatedPressable onPress={onClose} haptic="light" style={{ padding: 18, alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }}>
-            <Text style={{ color: '#FF3B30', fontSize: 17, fontWeight: '700' }}>{tt('Cancel')}</Text>
-          </AnimatedPressable>
+    <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={[StyleSheet.absoluteFill, { zIndex: 99999, elevation: 99999 }]}>
+      <BlurView intensity={colors.isDark ? 40 : 20} tint={colors.isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Pressable style={{ width: '100%', maxWidth: 360 }}>
+          <Animated.View entering={FadeInDown.springify().damping(18).stiffness(150)}>
+            <GlassPanel variant="medium" borderRadius={28} contentStyle={{ overflow: 'hidden' }}>
+              <View style={{ padding: 24, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent + '22', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                  <Export color={colors.accent} size={24} weight="bold" />
+                </View>
+                <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{tt('Reporting Engine')}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center' }}>{tt('Generate professional accounting reports')}</Text>
+              </View>
+
+              <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+                {[
+                  { id: 1, title: 'P&L Summary', desc: 'Category-wise profit & loss', icon: ChartPieSlice },
+                  { id: 2, title: 'All Transactions', desc: 'Raw CSV data dump', icon: FileText },
+                  { id: 3, title: 'Day Book', desc: 'Daily ledger entries', icon: CalendarCheck },
+                  { id: 4, title: 'GST Report', desc: 'Tax calculation & invoices', icon: Receipt },
+                  { id: 5, title: 'PDF Statement', desc: 'Professional printable report', icon: FileText },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <AnimatedPressable key={item.id} onPress={() => { onExport(item.id); onClose(); }} haptic="medium" style={{ padding: 18, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                      <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon color={colors.text} size={20} weight="duotone" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{tt(item.title)}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{tt(item.desc)}</Text>
+                      </View>
+                      <CaretRight color={colors.textMuted} size={16} weight="bold" />
+                    </AnimatedPressable>
+                  );
+                })}
+              </ScrollView>
+
+              <AnimatedPressable onPress={onClose} haptic="light" style={{ padding: 20, alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }}>
+                <Text style={{ color: '#FF3B30', fontSize: 17, fontWeight: '800' }}>{tt('Close')}</Text>
+              </AnimatedPressable>
+            </GlassPanel>
+          </Animated.View>
         </Pressable>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -510,14 +537,34 @@ export default function ExpensesApp() {
   };
 
   const doExport = async (buttonIndex: number) => {
-    const csv = buttonIndex === 1 ? pnlToCsv(txs) : transactionsToCsv(txs);
-    const filename = buttonIndex === 1 ? 'echo-pnl-summary.csv' : 'echo-expenses-raw.csv';
+    let content = '';
+    let filename = '';
+    let mimeType = 'text/csv';
+
+    if (buttonIndex === 1) {
+      content = pnlToCsv(txs);
+      filename = 'echo-pnl-summary.csv';
+    } else if (buttonIndex === 2) {
+      content = transactionsToCsv(txs);
+      filename = 'echo-expenses-raw.csv';
+    } else if (buttonIndex === 3) {
+      content = daybookToCsv(txs, parties);
+      filename = 'echo-daybook.csv';
+    } else if (buttonIndex === 4) {
+      content = gstReportToCsv(txs, parties);
+      filename = 'echo-gst-report.csv';
+    } else if (buttonIndex === 5) {
+      content = generatePdfHtml(txs, parties, doc.currency);
+      filename = 'echo-statement.html';
+      mimeType = 'text/html';
+    }
+
     try {
       if (!FS.cacheDirectory) throw new Error('No cache directory');
       const path = `${FS.cacheDirectory}${filename}`;
-      await FS.writeAsStringAsync(path, csv);
+      await FS.writeAsStringAsync(path, content);
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export Khata') });
+        await Sharing.shareAsync(path, { mimeType, dialogTitle: tt('Export Khata') });
       } else {
         showToast(tt('Sharing is not available on this device'), tt('Error'));
       }

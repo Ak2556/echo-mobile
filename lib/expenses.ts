@@ -230,6 +230,102 @@ export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+export function daybookToCsv(txs: Transaction[], parties: Party[]): string {
+  const esc = (s: string) => `"${String(s || '').replace(/"/g, '""')}"`;
+  const rows = txs.map(tx => {
+    const p = parties.find(party => party.id === tx.partyId);
+    const particulars = p ? p.name : tx.category;
+    const isOut = tx.type === 'expense' || tx.type === 'purchase' || tx.type === 'payment';
+    const inAmt = !isOut ? (tx.amount || 0).toFixed(2) : '';
+    const outAmt = isOut ? (tx.amount || 0).toFixed(2) : '';
+    return [(tx.date || '').slice(0, 10), esc(particulars), tx.type || '', tx.invoiceNo || '', inAmt, outAmt, esc(tx.note)].join(',');
+  });
+  return ['Date,Particulars,Voucher Type,Invoice No,In (+),Out (-),Note', ...rows].join('\n');
+}
+
+export function gstReportToCsv(txs: Transaction[], parties: Party[]): string {
+  const esc = (s: string) => `"${String(s || '').replace(/"/g, '""')}"`;
+  const gstTxs = txs.filter(tx => tx.taxAmount && tx.taxAmount > 0);
+  const rows = gstTxs.map(tx => {
+    const p = parties.find(party => party.id === tx.partyId);
+    const gstNo = p?.gst || '';
+    return [(tx.date || '').slice(0, 10), esc(tx.invoiceNo || ''), esc(p?.name || ''), esc(gstNo), tx.type, (tx.amount || 0).toFixed(2), (tx.taxAmount || 0).toFixed(2)].join(',');
+  });
+  return ['Date,Invoice No,Party Name,Party GSTIN,Type,Base Amount,Tax Amount', ...rows].join('\n');
+}
+
+export function generatePdfHtml(txs: Transaction[], parties: Party[], currency: string): string {
+  const income = txs.filter(t => t.type === 'income' || t.type === 'sale' || t.type === 'receipt').reduce((s, t) => s + (t.amount || 0), 0);
+  const expense = txs.filter(t => t.type === 'expense' || t.type === 'purchase' || t.type === 'payment').reduce((s, t) => s + (t.amount || 0), 0);
+  const balance = income - expense;
+  
+  const rowsHtml = txs.map(tx => {
+    const p = parties.find(party => party.id === tx.partyId);
+    const particulars = p ? p.name : tx.category;
+    const isOut = tx.type === 'expense' || tx.type === 'purchase' || tx.type === 'payment';
+    return `
+      <tr>
+        <td>${(tx.date || '').slice(0, 10)}</td>
+        <td>${particulars}</td>
+        <td>${tx.type}</td>
+        <td style="text-align: right; color: #166534;">${!isOut ? tx.amount.toFixed(2) : ''}</td>
+        <td style="text-align: right; color: #991b1b;">${isOut ? tx.amount.toFixed(2) : ''}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
+          h1 { color: #111; border-bottom: 2px solid #eaeaea; padding-bottom: 12px; margin-bottom: 30px; }
+          .summary { display: flex; gap: 40px; margin-bottom: 40px; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; }
+          .summary-item { display: flex; flex-direction: column; }
+          .label { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 4px; }
+          .value { font-size: 28px; font-weight: 700; color: #111827; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+          th { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; background: #f9fafb; }
+          tr:last-child td { border-bottom: none; }
+        </style>
+      </head>
+      <body>
+        <h1>Account Statement</h1>
+        <div class="summary">
+          <div class="summary-item">
+            <span class="label">Net Balance (${currency})</span>
+            <span class="value">${balance.toFixed(2)}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Total In</span>
+            <span class="value" style="color: #166534;">${income.toFixed(2)}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Total Out</span>
+            <span class="value" style="color: #991b1b;">${expense.toFixed(2)}</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Particulars</th>
+              <th>Type</th>
+              <th style="text-align: right;">In (+)</th>
+              <th style="text-align: right;">Out (-)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `;
+}
+
 export function categoryMarker(cat: string) {
   return [...EXPENSE_CATS, ...INCOME_CATS].find(c => c.label === cat)?.marker ?? 'OT';
 }
