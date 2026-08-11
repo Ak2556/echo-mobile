@@ -20,12 +20,48 @@ import { useI18n } from '../../lib/i18n';
 import { showToast } from '../../components/ui/Toast';
 import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '../../lib/currency';
 import {
-  DEFAULT_EXPENSE_CURRENCY, EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, categoryMarker, Party, PartyType,
+  DEFAULT_EXPENSE_CURRENCY, EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, categoryMarker, Party, PartyType, KhataProfile,
   currentMonthKey, formatDate, loadExpensesDoc, monthKey, monthLabel,
   saveExpensesDoc, shiftMonth, transactionsToCsv, pnlToCsv,
 } from '../../lib/expenses';
 
-function AddModal({ currency, parties, onAdd, onClose }: { currency: CurrencyCode; parties: Party[]; onAdd: (tx: Transaction, newParty?: Party) => void; onClose: () => void }) {
+const PROFILE_TERM: Record<KhataProfile, any> = {
+  personal: {
+    partiesTab: 'Friends & Family',
+    addParty: 'Add a friend or relative to track lent/borrowed money.',
+    customer: 'Friend (Lent)',
+    supplier: 'Friend (Borrowed)',
+    receivable: 'You Lent',
+    payable: 'You Borrowed',
+    types: { expense: 'Expense', income: 'Income', sale: 'Lent Money', receipt: 'Repayment In', purchase: 'Borrowed', payment: 'Repayment Out' },
+    showGST: false,
+    showInvoice: false,
+  },
+  business: {
+    partiesTab: 'Parties & Ledgers',
+    addParty: 'Add a transaction and create a customer or supplier to see their ledger.',
+    customer: 'Customer',
+    supplier: 'Supplier',
+    receivable: 'You will get',
+    payable: 'You will give',
+    types: { expense: 'Expense', income: 'Income', sale: 'Sale Invoice', receipt: 'Payment In', purchase: 'Purchase Bill', payment: 'Payment Out' },
+    showGST: true,
+    showInvoice: true,
+  },
+  farmer: {
+    partiesTab: 'Mandi & Labor',
+    addParty: 'Add a buyer, supplier, or laborer to track agricultural dues.',
+    customer: 'Buyer / Mandi',
+    supplier: 'Supplier / Labor',
+    receivable: 'Mandi Dues',
+    payable: 'Labor / Seed Dues',
+    types: { expense: 'Expense', income: 'Income', sale: 'Crop Sale', receipt: 'Payment In', purchase: 'Agri Purchase', payment: 'Payment Out' },
+    showGST: false,
+    showInvoice: true,
+  },
+};
+
+function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: KhataProfile; currency: CurrencyCode; parties: Party[]; onAdd: (tx: Transaction, newParty?: Party) => void; onClose: () => void }) {
   const { colors } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
@@ -84,7 +120,7 @@ function AddModal({ currency, parties, onAdd, onClose }: { currency: CurrencyCod
               {(['expense', 'income', 'sale', 'receipt', 'purchase', 'payment'] as TxType[]).map(t => (
                 <Pressable key={t} onPress={() => { setType(t); setCategory(''); setPartyId(''); setNewPartyName(''); }} style={{ width: '48%', paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' || t === 'purchase' || t === 'payment' ? colors.danger : colors.success) : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderWidth: type === t ? 0 : StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                   <Text style={{ color: type === t ? '#fff' : colors.text, fontWeight: '800', fontSize: 14, textTransform: 'capitalize' }}>
-                    {t === 'expense' ? tt('Expense') : t === 'income' ? tt('Income') : t === 'sale' ? tt('Sale Invoice') : t === 'receipt' ? tt('Payment In') : t === 'purchase' ? tt('Purchase Bill') : tt('Payment Out')}
+                    {tt(PROFILE_TERM[profile].types[t])}
                   </Text>
                 </Pressable>
               ))}
@@ -120,16 +156,18 @@ function AddModal({ currency, parties, onAdd, onClose }: { currency: CurrencyCod
           )}
 
           {/* Invoice & Tax */}
-          {(type === 'sale' || type === 'purchase') && (
+          {(type === 'sale' || type === 'purchase') && PROFILE_TERM[profile].showInvoice && (
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('INVOICE NO')}</Text>
-                <TextInput value={invoiceNo} onChangeText={setInvoiceNo} placeholder="INV-001" placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt(profile === 'farmer' ? 'RECEIPT/SLIP NO' : 'INVOICE NO')}</Text>
+                <TextInput value={invoiceNo} onChangeText={setInvoiceNo} placeholder={profile === 'farmer' ? "SLP-01" : "INV-001"} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('GST / TAX')}</Text>
-                <TextInput value={taxAmount} onChangeText={setTaxAmount} placeholder="0.00" keyboardType="decimal-pad" placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
-              </View>
+              {PROFILE_TERM[profile].showGST && (
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('GST / TAX')}</Text>
+                  <TextInput value={taxAmount} onChangeText={setTaxAmount} placeholder="0.00" keyboardType="decimal-pad" placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+                </View>
+              )}
             </View>
           )}
 
@@ -275,6 +313,50 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
   );
 }
 
+function ProfileModal({ value, onSelect, onClose }: { value: KhataProfile; onSelect: (p: KhataProfile) => void; onClose: () => void }) {
+  const { colors } = useTheme();
+  const { tt } = useI18n();
+  const insets = useSafeAreaInsets();
+  
+  const profiles: { id: KhataProfile; title: string; desc: string; icon: any }[] = [
+    { id: 'business', title: 'Business & Shop', desc: 'Manage sales, purchases, customers, suppliers and invoices.', icon: Wallet },
+    { id: 'personal', title: 'Personal & Student', desc: 'Track daily expenses, salary, and money lent to friends.', icon: UserCircle },
+    { id: 'farmer', title: 'Farmer & Agriculture', desc: 'Manage mandi sales, labor payments, and farm supplies.', icon: Target },
+  ];
+
+  return (
+    <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{tt('App Mode')}</Text>
+          <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
+        </View>
+        <View style={{ padding: 20, gap: 14 }}>
+          {profiles.map(p => {
+            const active = p.id === value;
+            const Icon = p.icon;
+            return (
+              <Pressable key={p.id} onPress={() => { onSelect(p.id); onClose(); }}>
+                <View style={{
+                  padding: 16, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 14,
+                  backgroundColor: active ? colors.accent + '22' : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  borderWidth: active ? 1.5 : StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.glassBorder,
+                }}>
+                  <Icon color={active ? colors.accent : colors.textMuted} size={28} weight={active ? 'fill' : 'duotone'} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: active ? colors.accent : colors.text, fontSize: 16, fontWeight: '800' }}>{tt(p.title)}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 4 }}>{tt(p.desc)}</Text>
+                  </View>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function ExpensesApp() {
   const { colors } = useTheme();
   const { tt } = useI18n();
@@ -289,27 +371,60 @@ export default function ExpensesApp() {
         // Voice: "add expense 500 food" / "खर्च जोड़ो 500 खाना" → ?vAction=add&vValue=…
         const a = typeof vAction === 'string' ? vAction.toLowerCase() : '';
         const text = typeof vValue === 'string' ? vValue.trim() : '';
-        const numMatch = text.match(/\d[\d,.]*/);
-        const amount = numMatch ? parseFloat(numMatch[0].replace(/,/g, '')) : 0;
-        if (!didVoiceRef.current && a === 'add' && amount > 0) {
+        const loadedParties = loaded.parties || [];
+        
+        if (!didVoiceRef.current && a === 'add' && text) {
           didVoiceRef.current = true;
-          const lower = text.toLowerCase();
-          const isIncome = /\bincome|salary|freelance|gift\b|आय|वेतन|सैलरी|कमाई/.test(lower);
-          const cats = isIncome ? INCOME_CATS : EXPENSE_CATS;
-          const category = cats.find(c => lower.includes(c.label.toLowerCase()))?.label ?? 'Other';
-          const note = text
-            .replace(numMatch![0], '')
-            .replace(new RegExp(category, 'i'), '')
-            .replace(/\b(rupees?|rs|rupaye|dollars?)\b|रुपये|रुपए|रुपया/gi, '')
-            .trim();
-          const tx: Transaction = {
-            id: Date.now().toString(), type: isIncome ? 'income' : 'expense',
-            amount, category, note, date: new Date().toISOString(),
-          };
-          const next: ExpensesDoc = { ...loaded, txs: [tx, ...loaded.txs] };
-          setDoc(next);
-          void saveExpensesDoc(next);
-          showToast(`${isIncome ? 'Income' : 'Expense'} added`, 'Saved');
+          let newTx: Transaction | null = null;
+          let newParty: Party | undefined;
+
+          try {
+            // New strict JSON structure from voice-command edge function
+            const data = JSON.parse(text);
+            if (data.amount && data.type) {
+              let partyId: string | undefined;
+              if (data.partyName) {
+                const existing = loadedParties.find(p => p.name.toLowerCase() === data.partyName.toLowerCase());
+                if (existing) {
+                  partyId = existing.id;
+                } else {
+                  partyId = 'party-' + Date.now().toString();
+                  newParty = { id: partyId, name: data.partyName, type: ['sale', 'receipt'].includes(data.type) ? 'customer' : 'supplier' };
+                }
+              }
+              newTx = {
+                id: Date.now().toString(),
+                type: data.type,
+                amount: parseFloat(data.amount) || 0,
+                category: data.category || 'Other',
+                note: data.note || '',
+                date: new Date().toISOString(),
+                partyId,
+              };
+            }
+          } catch (e) {
+            // Fallback for older free-text voice inputs
+            const numMatch = text.match(/\d[\d,.]*/);
+            const amount = numMatch ? parseFloat(numMatch[0].replace(/,/g, '')) : 0;
+            if (amount > 0) {
+              const lower = text.toLowerCase();
+              const isIncome = /\bincome|salary|freelance|gift\b|आय|वेतन|सैलरी|कमाई/.test(lower);
+              const cats = isIncome ? INCOME_CATS : EXPENSE_CATS;
+              const category = cats.find(c => lower.includes(c.label.toLowerCase()))?.label ?? 'Other';
+              const note = text.replace(numMatch![0], '').replace(new RegExp(category, 'i'), '').replace(/\b(rupees?|rs|rupaye|dollars?)\b|रुपये|रुपए|रुपया/gi, '').trim();
+              newTx = { id: Date.now().toString(), type: isIncome ? 'income' : 'expense', amount, category, note, date: new Date().toISOString() };
+            }
+          }
+
+          if (newTx && newTx.amount > 0) {
+            const nextParties = newParty ? [...loadedParties, newParty] : loadedParties;
+            const next: ExpensesDoc = { ...loaded, txs: [newTx, ...loaded.txs], parties: nextParties };
+            setDoc(next);
+            void saveExpensesDoc(next);
+            showToast(`${newTx.type} logged via Voice`, 'Saved');
+          } else {
+            setDoc(loaded);
+          }
         } else {
           setDoc(loaded);
         }
@@ -319,6 +434,7 @@ export default function ExpensesApp() {
   const [showAdd, setShowAdd] = useState(false);
   const [showBudget, setShowBudget] = useState(false);
   const [showCurrency, setShowCurrency] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [filter, setFilter] = useState<'all' | TxType>('all');
   const [month, setMonth] = useState(currentMonthKey());
   const [query, setQuery] = useState('');
@@ -391,6 +507,9 @@ export default function ExpensesApp() {
 
   const HeaderBtns = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
+      <AnimatedPressable onPress={() => setShowProfile(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
+        <UserCircle color={colors.text} size={18} weight="bold" />
+      </AnimatedPressable>
       <AnimatedPressable onPress={() => setShowCurrency(true)} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, paddingHorizontal: 11, paddingVertical: 10 }}>
         <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{doc.currency}</Text>
       </AnimatedPressable>
@@ -399,6 +518,9 @@ export default function ExpensesApp() {
       </AnimatedPressable>
     </View>
   );
+
+  const profile = doc.profile || 'business';
+  const terms = PROFILE_TERM[profile];
 
   return (
     <MiniAppShell title={tt('Khata')} subtitle={tt('Accounting')} scrollable={false} headerRight={HeaderBtns}>
@@ -413,7 +535,7 @@ export default function ExpensesApp() {
         </Pressable>
         <Pressable onPress={() => setActiveTab('parties')} style={{ flex: 1 }}>
           <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: activeTab === 'parties' ? colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' : 'transparent' }}>
-            <Text style={{ color: activeTab === 'parties' ? colors.text : colors.textMuted, fontWeight: '800', fontSize: 13 }}>{tt('Parties & Ledgers')}</Text>
+            <Text style={{ color: activeTab === 'parties' ? colors.text : colors.textMuted, fontWeight: '800', fontSize: 13 }}>{tt(terms.partiesTab)}</Text>
           </View>
         </Pressable>
       </GlassPanel>
@@ -424,7 +546,7 @@ export default function ExpensesApp() {
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{tt('Directory')}</Text>
           </View>
           {parties.length === 0 ? (
-            <MiniEmptyState accent={accent} icon={<Users color={colors.textMuted} size={48} weight="duotone" />} title={tt('No Parties yet')} subtitle={tt('Add a transaction and create a customer or supplier to see their ledger.')} />
+            <MiniEmptyState accent={accent} icon={<Users color={colors.textMuted} size={48} weight="duotone" />} title={tt('No People yet')} subtitle={tt(terms.addParty)} />
           ) : (
             parties.map(party => {
               // Calculate party balance: (Sales + Receipts) vs (Purchases + Payments)
@@ -448,14 +570,14 @@ export default function ExpensesApp() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{party.name}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{party.type === 'customer' ? tt('Customer') : tt('Supplier')} · {partyTxs.length} {tt('entries')}</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{tt(party.type === 'customer' ? terms.customer : terms.supplier)} · {partyTxs.length} {tt('entries')}</Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text style={{ color: isSettled ? colors.textMuted : isReceivable ? colors.success : colors.danger, fontSize: 16, fontWeight: '900' }}>
                       {money(Math.abs(balance))}
                     </Text>
                     <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
-                      {isSettled ? tt('Settled') : isReceivable ? tt('You will get') : tt('You will give')}
+                      {isSettled ? tt('Settled') : isReceivable ? tt(terms.receivable) : tt(terms.payable)}
                     </Text>
                   </View>
                 </GlassPanel>
@@ -654,7 +776,7 @@ export default function ExpensesApp() {
             </Pressable>
             <Pressable onPress={() => setActiveTab('parties')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, backgroundColor: activeTab === 'parties' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Users color={activeTab === 'parties' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'parties' ? 'fill' : 'regular'} />
-              {activeTab === 'parties' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt('Parties')}</Text>}
+              {activeTab === 'parties' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt(profile === 'personal' ? 'Friends' : 'Parties')}</Text>}
             </Pressable>
           </View>
         </View>
@@ -664,9 +786,10 @@ export default function ExpensesApp() {
       </View>
       </View>
 
-      {showAdd && <AddModal currency={doc.currency} parties={parties} onAdd={addTx} onClose={() => setShowAdd(false)} />}
+      {showAdd && <AddModal profile={profile} currency={doc.currency} parties={parties} onAdd={addTx} onClose={() => setShowAdd(false)} />}
       {showBudget && <BudgetModal budget={doc.budget} currency={doc.currency} onSave={b => update({ ...doc, budget: b })} onClose={() => setShowBudget(false)} />}
       {showCurrency && <CurrencyModal value={doc.currency} onSelect={currency => update({ ...doc, currency })} onClose={() => setShowCurrency(false)} />}
+      {showProfile && <ProfileModal value={profile} onSelect={p => update({ ...doc, profile: p })} onClose={() => setShowProfile(false)} />}
     </MiniAppShell>
   );
 }
