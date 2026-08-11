@@ -229,7 +229,7 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'dm' | 'reaction' | 'bookmark' | 'quote' | 'report_resolved' | 'content_removed' | 'appeal_resolved';
+  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'dm' | 'reaction' | 'bookmark' | 'quote' | 'report_resolved' | 'content_removed' | 'appeal_resolved' | 'friend_post' | 'social_task_update';
   fromUserId: string;
   fromUsername: string;
   fromDisplayName: string;

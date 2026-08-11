@@ -54,6 +54,8 @@ function labelForType(n: Notification): string {
     case 'report_resolved': return n.targetPreview ?? 'Your report has been reviewed';
     case 'content_removed': return n.targetPreview ?? 'Content was removed by a moderator';
     case 'appeal_resolved': return n.targetPreview ?? 'Your appeal has been reviewed';
+    case 'friend_post': return 'published a new echo';
+    case 'social_task_update': return n.preview ? `completed a task: ${n.preview}` : 'completed a task';
     default: return '';
   }
 }
