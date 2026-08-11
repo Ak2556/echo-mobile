@@ -5,7 +5,16 @@ import { pushExpensesStructured } from './expensesRemote';
 
 export const TX_KEY = 'mini:expenses';
 export const DEFAULT_EXPENSE_CURRENCY: CurrencyCode = 'USD';
-export type TxType = 'income' | 'expense';
+export type TxType = 'income' | 'expense' | 'sale' | 'purchase' | 'receipt' | 'payment';
+export type PartyType = 'customer' | 'supplier';
+
+export interface Party {
+  id: string;
+  name: string;
+  type: PartyType;
+  phone?: string;
+  gst?: string;
+}
 
 export interface Transaction {
   id: string;
@@ -14,6 +23,9 @@ export interface Transaction {
   category: string;
   note: string;
   date: string;
+  partyId?: string;
+  invoiceNo?: string;
+  taxAmount?: number;
 }
 
 export const EXPENSE_CATS = [
@@ -35,6 +47,7 @@ export const INCOME_CATS = [
  */
 export interface ExpensesDoc {
   txs: Transaction[];
+  parties?: Party[];
   /** monthly spending budget; null = not set */
   budget: number | null;
   /** display currency for this money log */
@@ -48,16 +61,17 @@ function normalizeCurrency(value: unknown): CurrencyCode {
 }
 
 function coerceDoc(raw: unknown): ExpensesDoc {
-  if (Array.isArray(raw)) return { txs: raw as Transaction[], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
+  if (Array.isArray(raw)) return { txs: raw as Transaction[], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
   if (raw && typeof raw === 'object') {
     const doc = raw as Partial<ExpensesDoc>;
     return {
       txs: Array.isArray(doc.txs) ? doc.txs : [],
+      parties: Array.isArray(doc.parties) ? doc.parties : [],
       budget: typeof doc.budget === 'number' && doc.budget > 0 ? doc.budget : null,
       currency: normalizeCurrency(doc.currency),
     };
   }
-  return { txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
+  return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
 }
 
 export async function loadExpensesDoc(): Promise<ExpensesDoc> {
@@ -68,7 +82,7 @@ export async function loadExpensesDoc(): Promise<ExpensesDoc> {
     if (doc.txs.length) pushExpensesStructured(doc); // backfill for existing users
     return doc;
   } catch {
-    return { txs: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
+    return { txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY };
   }
 }
 
