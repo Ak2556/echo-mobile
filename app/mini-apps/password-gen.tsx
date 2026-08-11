@@ -121,7 +121,7 @@ function BiometricScanner({ onUnlock, colors, accent }: { onUnlock: () => void; 
       <BlurView intensity={80} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       <Animated.View entering={FadeIn.duration(400)} style={{ alignItems: 'center' }}>
         <View style={{ width: 100, height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
-          <Faceid color={accent} size={64} weight="duotone" />
+          <Fingerprint color={accent} size={64} weight="duotone" />
           <Animated.View style={[{ position: 'absolute', top: 10, width: 80, height: 2, backgroundColor: accent, shadowColor: accent, shadowRadius: 10, shadowOpacity: 0.8, elevation: 10 }, scanLineStyle]} />
         </View>
         <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', marginBottom: 8 }}>{ttx("Unlocking Vault...")}</Text>

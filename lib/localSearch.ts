@@ -165,7 +165,7 @@ export async function searchLocalProductivity(query: string, limit = 12): Promis
       });
     }
   }
-  for (const item of shopping) {
+  for (const item of shopping.items) {
     if (matches(q, item.name, item.quantity, item.category)) {
       results.push({
         app: 'shopping-list',
@@ -284,7 +284,7 @@ export async function getTodayProductivity(): Promise<TodayProductivity> {
   const done = habits.filter(habit => habit.completedDates.includes(today));
   const openTasks = tasks.filter(task => !task.done);
   const todayPlans = planner.filter(item => item.date === today);
-  const shoppingOpen = shopping.filter(item => !item.checked);
+  const shoppingOpen = shopping.items.filter(item => !item.checked);
   const mealTotals = todayMealTotals(fitness.meals);
   return {
     tasks: {
@@ -299,7 +299,7 @@ export async function getTodayProductivity(): Promise<TodayProductivity> {
     },
     shopping: {
       remaining: shoppingOpen.length,
-      checked: shopping.length - shoppingOpen.length,
+      checked: shopping.items.length - shoppingOpen.length,
     },
     learn: {
       goals: learningGoals.length,
