@@ -213,6 +213,33 @@ function elapsedDaysForMonth(key: string): number {
   return new Date().getDate();
 }
 
+function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose: () => void; onExport: (idx: number) => void }) {
+  const { colors } = useTheme();
+  const { tt } = useI18n();
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Pressable style={{ width: '100%', maxWidth: 340, backgroundColor: colors.isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 24, overflow: 'hidden' }}>
+          <View style={{ padding: 20, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{tt('Export Khata')}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>{tt('Choose export format')}</Text>
+          </View>
+          <AnimatedPressable onPress={() => { onExport(1); onClose(); }} haptic="light" style={{ padding: 18, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, alignItems: 'center' }}>
+            <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '600' }}>{tt('Export P&L Summary')}</Text>
+          </AnimatedPressable>
+          <AnimatedPressable onPress={() => { onExport(2); onClose(); }} haptic="light" style={{ padding: 18, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, alignItems: 'center' }}>
+            <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '600' }}>{tt('Export All Transactions (CSV)')}</Text>
+          </AnimatedPressable>
+          <AnimatedPressable onPress={onClose} haptic="light" style={{ padding: 18, alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }}>
+            <Text style={{ color: '#FF3B30', fontSize: 17, fontWeight: '700' }}>{tt('Cancel')}</Text>
+          </AnimatedPressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 // Removed MoneyPulsePanel for a cleaner, larger-scale layout
 
 function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | null; currency: CurrencyCode; onSave: (b: number | null) => void; onClose: () => void }) {
@@ -363,6 +390,7 @@ export default function ExpensesApp() {
   const accent = '#8B6F4E'; // caramel — warm editorial palette
   const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'parties' | 'table'>('dashboard');
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
   const didVoiceRef = React.useRef(false);
   useFocusEffect(
@@ -478,48 +506,26 @@ export default function ExpensesApp() {
     ]);
   };
 
+  const doExport = async (buttonIndex: number) => {
+    const csv = buttonIndex === 1 ? pnlToCsv(txs) : transactionsToCsv(txs);
+    const filename = buttonIndex === 1 ? 'echo-pnl-summary.csv' : 'echo-expenses-raw.csv';
+    try {
+      if (!FS.cacheDirectory) throw new Error('No cache directory');
+      const path = `${FS.cacheDirectory}${filename}`;
+      await FS.writeAsStringAsync(path, csv);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export Khata') });
+      } else {
+        showToast(tt('Sharing is not available on this device'), tt('Error'));
+      }
+    } catch (err) {
+      showToast(tt('Failed to export Khata'), tt('Error'));
+    }
+  };
+
   const handleExport = () => {
     if (txs.length === 0) { showToast(tt('Nothing to export yet'), tt('Export')); return; }
-
-    const doExport = async (buttonIndex: number) => {
-      const csv = buttonIndex === 1 ? pnlToCsv(txs) : transactionsToCsv(txs);
-      const filename = buttonIndex === 1 ? 'echo-pnl-summary.csv' : 'echo-expenses-raw.csv';
-      try {
-        if (!FS.cacheDirectory) throw new Error('No cache directory');
-        const path = `${FS.cacheDirectory}${filename}`;
-        await FS.writeAsStringAsync(path, csv);
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export Khata') });
-        } else {
-          showToast(tt('Sharing is not available on this device'), tt('Error'));
-        }
-      } catch (err) {
-        showToast(tt('Failed to export Khata'), tt('Error'));
-      }
-    };
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: [tt('Cancel'), tt('Export P&L Summary'), tt('Export All Transactions (CSV)')],
-          cancelButtonIndex: 0,
-        },
-        async (buttonIndex) => {
-          if (buttonIndex === 1 || buttonIndex === 2) await doExport(buttonIndex);
-        }
-      );
-    } else {
-      Alert.alert(
-        tt('Export Khata'),
-        tt('Choose export format'),
-        [
-          { text: tt('Export P&L Summary'), onPress: () => doExport(1) },
-          { text: tt('Export All Transactions (CSV)'), onPress: () => doExport(2) },
-          { text: tt('Cancel'), style: 'cancel' }
-        ],
-        { cancelable: true }
-      );
-    }
+    setShowExportMenu(true);
   };
 
   const HeaderBtns = (
@@ -814,6 +820,7 @@ export default function ExpensesApp() {
       {showBudget && <BudgetModal budget={doc.budget} currency={doc.currency} onSave={b => update({ ...doc, budget: b })} onClose={() => setShowBudget(false)} />}
       {showCurrency && <CurrencyModal value={doc.currency} onSelect={currency => update({ ...doc, currency })} onClose={() => setShowCurrency(false)} />}
       {showProfile && <ProfileModal value={profile} onSelect={p => update({ ...doc, profile: p })} onClose={() => setShowProfile(false)} />}
+      <ExportModal visible={showExportMenu} onClose={() => setShowExportMenu(false)} onExport={doExport} />
     </MiniAppShell>
   );
 }
