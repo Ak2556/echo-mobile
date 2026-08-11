@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Share, ScrollView,
+  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Share, ScrollView, ActionSheetIOS
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -20,7 +20,7 @@ import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '.
 import {
   DEFAULT_EXPENSE_CURRENCY, EXPENSE_CATS, INCOME_CATS, ExpensesDoc, Transaction, TxType, categoryMarker,
   currentMonthKey, formatDate, loadExpensesDoc, monthKey, monthLabel,
-  saveExpensesDoc, shiftMonth, transactionsToCsv,
+  saveExpensesDoc, shiftMonth, transactionsToCsv, pnlToCsv,
 } from '../../lib/expenses';
 
 function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd: (tx: Transaction) => void; onClose: () => void }) {
@@ -55,7 +55,7 @@ function AddModal({ currency, onAdd, onClose }: { currency: CurrencyCode; onAdd:
           <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }}>
             {(['expense', 'income'] as TxType[]).map(t => (
               <Pressable key={t} onPress={() => { setType(t); setCategory(''); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' ? colors.danger : colors.success) : 'transparent' }}>
-                <Text style={{ color: type === t ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>{tt(t)}</Text>
+                <Text style={{ color: type === t ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>{t === 'expense' ? tt('You Gave (Expense)') : tt('You Got (Income)')}</Text>
               </Pressable>
             ))}
           </GlassPanel>
@@ -365,20 +365,31 @@ export default function ExpensesApp() {
     ]);
   };
 
-  const exportCsv = async () => {
+  const handleExport = () => {
     if (txs.length === 0) { showToast(tt('Nothing to export yet'), tt('Export')); return; }
-    const csv = transactionsToCsv(txs);
-    try {
-      const path = `${FS.cacheDirectory}echo-expenses.csv`;
-      await FS.writeAsStringAsync(path, csv);
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export expenses') });
-        return;
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [tt('Cancel'), tt('Export P&L Summary'), tt('Export All Transactions (CSV)')],
+        cancelButtonIndex: 0,
+      },
+      async (buttonIndex) => {
+        if (buttonIndex === 1 || buttonIndex === 2) {
+          const csv = buttonIndex === 1 ? pnlToCsv(txs) : transactionsToCsv(txs);
+          const filename = buttonIndex === 1 ? 'echo-pnl-summary.csv' : 'echo-expenses-raw.csv';
+          try {
+            const path = `${FS.cacheDirectory}${filename}`;
+            await FS.writeAsStringAsync(path, csv);
+            if (await Sharing.isAvailableAsync()) {
+              await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export Khata') });
+              return;
+            }
+            throw new Error('sharing unavailable');
+          } catch {
+            Share.share({ message: csv }).catch(() => {});
+          }
+        }
       }
-      throw new Error('sharing unavailable');
-    } catch {
-      Share.share({ message: csv }).catch(() => {});
-    }
+    );
   };
 
   const HeaderBtns = (
@@ -386,7 +397,7 @@ export default function ExpensesApp() {
       <AnimatedPressable onPress={() => setShowCurrency(true)} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, paddingHorizontal: 11, paddingVertical: 10 }}>
         <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{doc.currency}</Text>
       </AnimatedPressable>
-      <AnimatedPressable onPress={exportCsv} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
+      <AnimatedPressable onPress={handleExport} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
         <Export color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
       <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: accent, borderRadius: 12 }}>
@@ -402,8 +413,8 @@ export default function ExpensesApp() {
         title={tt('Money decision board')}
         subtitle={tt('Income, spend, budget.')}
         metrics={[
-          { label: tt('Balance'), value: money(Math.abs(balance)), detail: balance >= 0 ? tt('positive') : tt('negative') },
-          { label: tt('Spent'), value: money(expense), detail: monthLabel(month) },
+          { label: tt('Net P&L'), value: money(Math.abs(balance)), detail: balance >= 0 ? tt('PROFIT') : tt('LOSS') },
+          { label: tt('You Gave'), value: money(expense), detail: monthLabel(month) },
           { label: tt('Budget'), value: doc.budget ? `${budgetPct}%` : tt('Set'), detail: doc.currency },
         ]}
         chips={[tt('Multi-currency'), tt('Budget pressure'), tt('CSV export')]}
@@ -437,7 +448,7 @@ export default function ExpensesApp() {
       {/* Balance card */}
       <GlassPanel variant="medium" borderRadius={28} contentStyle={{ padding: 24 }} style={{ marginBottom: 14, shadowColor: balance >= 0 ? colors.success : colors.danger, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 4 } }} elevated>
         <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>
-          {searching ? tt('Matching balance') : `${tt('Balance')} · ${doc.currency}`}
+          {searching ? tt('Matching P&L') : `${balance >= 0 ? tt('Net Profit') : tt('Net Loss')} · ${doc.currency}`}
         </Text>
         <Text style={{ color: balance >= 0 ? colors.success : colors.danger, fontSize: 40, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
           {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
@@ -446,14 +457,14 @@ export default function ExpensesApp() {
           <View style={{ flex: 1, backgroundColor: colors.success + '18', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.success + '33' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <ArrowDown color={colors.success} size={14} weight="bold" />
-              <Text style={{ color: colors.success, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{tt('INCOME')}</Text>
+              <Text style={{ color: colors.success, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{tt('YOU GOT (INCOME)')}</Text>
             </View>
             <Text style={{ color: colors.success, fontSize: 20, fontWeight: '800' }}>{money(income)}</Text>
           </View>
           <View style={{ flex: 1, backgroundColor: colors.danger + '18', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.danger + '33' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <ArrowUp color={colors.danger} size={14} weight="bold" />
-              <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{tt('EXPENSES')}</Text>
+              <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{tt('YOU GAVE (EXPENSE)')}</Text>
             </View>
             <Text style={{ color: colors.danger, fontSize: 20, fontWeight: '800' }}>{money(expense)}</Text>
           </View>
@@ -490,8 +501,8 @@ export default function ExpensesApp() {
         headline={tt('Money decisions, not just logs')}
         caption={tt('Turn spending data into budget coaching, accountability, and weekly finance updates.')}
         metrics={[
-          { label: tt('Balance'), value: `${balance < 0 ? '-' : ''}${money(Math.abs(balance))}` },
-          { label: tt('Spent'), value: money(expense) },
+          { label: tt('Net P&L'), value: `${balance < 0 ? '-' : ''}${money(Math.abs(balance))}` },
+          { label: tt('You Gave'), value: money(expense) },
           { label: tt('Budget'), value: doc.budget ? `${budgetPct}%` : tt('Off') },
         ]}
         prompt="Review my expense pattern and tell me where to adjust this week without making the plan unrealistic."
@@ -537,7 +548,9 @@ export default function ExpensesApp() {
         {(['all', 'income', 'expense'] as const).map(f => (
           <Pressable key={f} onPress={() => setFilter(f)} style={{ flex: 1 }}>
             <View style={{ paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: filter === f ? (f === 'income' ? colors.success : f === 'expense' ? colors.danger : accent) : 'transparent' }}>
-              <Text style={{ color: filter === f ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>{tt(f)}</Text>
+              <Text style={{ color: filter === f ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>
+                {f === 'income' ? tt('Got') : f === 'expense' ? tt('Gave') : tt('All')}
+              </Text>
             </View>
           </Pressable>
         ))}
