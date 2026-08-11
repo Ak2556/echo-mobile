@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Share, ScrollView, ActionSheetIOS
+  View, Text, TextInput, Pressable, Alert, Modal, StyleSheet, Share, ScrollView, ActionSheetIOS, Platform
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
@@ -480,29 +480,45 @@ export default function ExpensesApp() {
 
   const handleExport = () => {
     if (txs.length === 0) { showToast(tt('Nothing to export yet'), tt('Export')); return; }
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: [tt('Cancel'), tt('Export P&L Summary'), tt('Export All Transactions (CSV)')],
-        cancelButtonIndex: 0,
-      },
-      async (buttonIndex) => {
-        if (buttonIndex === 1 || buttonIndex === 2) {
-          const csv = buttonIndex === 1 ? pnlToCsv(txs) : transactionsToCsv(txs);
-          const filename = buttonIndex === 1 ? 'echo-pnl-summary.csv' : 'echo-expenses-raw.csv';
-          try {
-            const path = `${FS.cacheDirectory}${filename}`;
-            await FS.writeAsStringAsync(path, csv);
-            if (await Sharing.isAvailableAsync()) {
-              await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export Khata') });
-              return;
-            }
-            throw new Error('sharing unavailable');
-          } catch {
-            Share.share({ message: csv }).catch(() => {});
-          }
+
+    const doExport = async (buttonIndex: number) => {
+      const csv = buttonIndex === 1 ? pnlToCsv(txs) : transactionsToCsv(txs);
+      const filename = buttonIndex === 1 ? 'echo-pnl-summary.csv' : 'echo-expenses-raw.csv';
+      try {
+        const path = `${FS.cacheDirectory}${filename}`;
+        await FS.writeAsStringAsync(path, csv);
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export Khata') });
+          return;
         }
+        throw new Error('sharing unavailable');
+      } catch {
+        Share.share({ message: csv }).catch(() => {});
       }
-    );
+    };
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [tt('Cancel'), tt('Export P&L Summary'), tt('Export All Transactions (CSV)')],
+          cancelButtonIndex: 0,
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 1 || buttonIndex === 2) await doExport(buttonIndex);
+        }
+      );
+    } else {
+      Alert.alert(
+        tt('Export Khata'),
+        tt('Choose export format'),
+        [
+          { text: tt('Export P&L Summary'), onPress: () => doExport(1) },
+          { text: tt('Export All Transactions (CSV)'), onPress: () => doExport(2) },
+          { text: tt('Cancel'), style: 'cancel' }
+        ],
+        { cancelable: true }
+      );
+    }
   };
 
   const HeaderBtns = (
