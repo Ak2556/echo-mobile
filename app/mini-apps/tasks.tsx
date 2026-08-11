@@ -347,7 +347,7 @@ export default function TasksScreen() {
         {detailTask && (
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
             <Pressable style={{ flex: 1 }} onPress={closeDetail} />
-            <Animated.View entering={SlideInDown} exiting={SlideOutDown} style={{ backgroundColor: colors.background, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: Platform.OS === 'ios' ? 48 : 24, maxHeight: '90%' }}>
+            <Animated.View entering={SlideInDown} exiting={SlideOutDown} style={{ backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: Platform.OS === 'ios' ? 48 : 24, maxHeight: '90%' }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                 <View style={{ flex: 1, marginRight: 16 }}>
                   <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text }}>{detailTask.title}</Text>

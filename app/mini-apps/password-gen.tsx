@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Clipboard, TextInput } f
 import Animated, { 
   FadeIn, FadeOut, SlideInDown, SlideOutDown, 
   useSharedValue, useAnimatedStyle, withSpring, withTiming, 
-  withRepeat, Easing, withSequence, delay
+  withRepeat, Easing, withSequence
 } from 'react-native-reanimated';
 import * as Crypto from 'expo-crypto';
 import * as Haptics from 'expo-haptics';
@@ -11,7 +11,7 @@ import { BlurView } from 'expo-blur';
 import { 
   ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning, 
   Key, DiceSix, Fingerprint, EyeSlash, Vault, Timer, CreditCard, FileText, 
-  IdentificationCard, Plus, Globe, Eye, Scan, Faceid, Wrench, Wallet
+  IdentificationCard, Plus, Globe, Eye, Scan, FaceId, Wrench, Wallet
 } from 'phosphor-react-native';
 
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -353,7 +353,7 @@ export default function PasswordGenScreen() {
                 title={ttx("Vault Status")}
                 subtitle={ttx("End-to-end encrypted locally.")}
                 metrics={[
-                  { label: 'Total', value: \`\${VAULT_ITEMS.length}\`, detail: 'items' },
+                  { label: 'Total', value: `${VAULT_ITEMS.length}`, detail: 'items' },
                   { label: 'Weak', value: '1', detail: 'found' },
                 ]}
                 chips={['Analyze Security', 'Sync']}
@@ -409,7 +409,7 @@ export default function PasswordGenScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       {StrengthIcon && <StrengthIcon color={sw!.color} size={18} weight="fill" />}
                       <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-                        <Animated.View style={{ width: \`\${(sw!.score / 7) * 100}%\`, height: '100%', borderRadius: 3, backgroundColor: sw!.color }} />
+                        <Animated.View style={{ width: `${(sw!.score / 7) * 100}%`, height: '100%', borderRadius: 3, backgroundColor: sw!.color }} />
                       </View>
                       <Text style={{ color: sw!.color, fontSize: 13, fontWeight: '800', minWidth: 52 }}>{sw!.label}</Text>
                     </View>
@@ -453,7 +453,7 @@ export default function PasswordGenScreen() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
                   <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("LENGTH")}</Text>
                   <Text style={{ color: accent, fontSize: 16, fontWeight: '800' }}>
-                    {mode === 'passphrase' ? \`\${length >= 24 ? 5 : 4} words\` : \`\${mode === 'pin' ? Math.min(length, 12) : length} chars\`}
+                    {mode === 'passphrase' ? `${length >= 24 ? 5 : 4} words` : `${mode === 'pin' ? Math.min(length, 12) : length} chars`}
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
