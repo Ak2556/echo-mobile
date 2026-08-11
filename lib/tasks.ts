@@ -5,7 +5,13 @@ import { localDayKey } from './localDate';
 
 export const TASKS_KEY = 'mini:tasks';
 
-export type TaskPriority = 'low' | 'normal' | 'high';
+export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface SubTask {
+  id: string;
+  title: string;
+  done: boolean;
+}
 
 export interface TaskItem {
   id: string;
@@ -18,6 +24,8 @@ export interface TaskItem {
   reminderId?: string;
   done: boolean;
   priority: TaskPriority;
+  subtasks?: SubTask[];
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -45,7 +53,22 @@ function normalize(raw: unknown): TaskItem[] {
   return raw
     .filter((item): item is Partial<TaskItem> => !!item && typeof item === 'object')
     .map(item => {
-      const priority: TaskPriority = item.priority === 'low' || item.priority === 'high' ? item.priority : 'normal';
+      const priority: TaskPriority = ['low', 'high', 'urgent'].includes(item.priority as string) ? item.priority as TaskPriority : 'normal';
+      
+      let subtasks: SubTask[] | undefined;
+      if (Array.isArray(item.subtasks)) {
+        subtasks = item.subtasks.map(st => ({
+          id: typeof st?.id === 'string' ? st.id : `${Date.now()}-${Math.random()}`,
+          title: typeof st?.title === 'string' ? st.title : '',
+          done: st?.done === true
+        })).filter(st => st.title.trim());
+      }
+
+      let tags: string[] | undefined;
+      if (Array.isArray(item.tags)) {
+        tags = item.tags.filter((t): t is string => typeof t === 'string' && t.trim().length > 0);
+      }
+
       return {
         id: typeof item.id === 'string' ? item.id : `${Date.now()}`,
         title: typeof item.title === 'string' ? item.title : '',
@@ -53,6 +76,8 @@ function normalize(raw: unknown): TaskItem[] {
         due: typeof item.due === 'string' ? item.due : undefined,
         done: item.done === true,
         priority,
+        subtasks,
+        tags,
         createdAt: typeof item.createdAt === 'string' ? item.createdAt : new Date().toISOString(),
         updatedAt: typeof item.updatedAt === 'string' ? item.updatedAt : new Date().toISOString(),
       };
@@ -89,7 +114,7 @@ export async function saveTasks(tasks: TaskItem[]): Promise<void> {
 }
 
 export function priorityWeight(priority: TaskPriority): number {
-  return priority === 'high' ? 3 : priority === 'normal' ? 2 : 1;
+  return priority === 'urgent' ? 4 : priority === 'high' ? 3 : priority === 'normal' ? 2 : 1;
 }
 
 export function taskStats(tasks: TaskItem[]) {
