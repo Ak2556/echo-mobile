@@ -485,15 +485,16 @@ export default function ExpensesApp() {
       const csv = buttonIndex === 1 ? pnlToCsv(txs) : transactionsToCsv(txs);
       const filename = buttonIndex === 1 ? 'echo-pnl-summary.csv' : 'echo-expenses-raw.csv';
       try {
+        if (!FS.cacheDirectory) throw new Error('No cache directory');
         const path = `${FS.cacheDirectory}${filename}`;
         await FS.writeAsStringAsync(path, csv);
         if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: tt('Export Khata') });
-          return;
+        } else {
+          showToast(tt('Sharing is not available on this device'), tt('Error'));
         }
-        throw new Error('sharing unavailable');
-      } catch {
-        Share.share({ message: csv }).catch(() => {});
+      } catch (err) {
+        showToast(tt('Failed to export Khata'), tt('Error'));
       }
     };
 
