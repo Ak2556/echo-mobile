@@ -74,7 +74,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
       >
         <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
         <Text
-          style={{ alignSelf: 'stretch', color: colors.text, fontSize: 14.5, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 18 }}
+          style={{ alignSelf: 'stretch', color: colors.text, fontSize: 17, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 20 }}
           numberOfLines={1}
         >
           {app.name}
