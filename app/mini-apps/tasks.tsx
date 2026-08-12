@@ -395,17 +395,7 @@ export default function TasksScreen() {
                         </Pressable>
                       </View>
                     </View>
-                    {showAlarmPicker && detailAlarm && (
-                      <View style={{ marginTop: 16 }}>
-                        <DateTimePicker 
-                          value={{ date: detailTask.due || todayTaskDate(), hour: detailAlarm.hour, minute: detailAlarm.minute }} 
-                          onChange={(val) => {
-                            updateTask(detailTask.id, { due: val.date });
-                            setDetailAlarm({ hour: val.hour, minute: val.minute });
-                          }} 
-                        />
-                      </View>
-                    )}
+                    </View>
                   </View>
                 </View>
 
@@ -464,6 +454,50 @@ export default function TasksScreen() {
             </Animated.View>
           </View>
         )}
+      </Modal>
+
+      {/* Premium Alarm Picker Modal */}
+      <Modal visible={showAlarmPicker} animationType="fade" transparent={true} onRequestClose={() => setShowAlarmPicker(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+          <Pressable style={{ flex: 1 }} onPress={() => setShowAlarmPicker(false)} />
+          <Animated.View entering={SlideInDown.duration(300).springify()} exiting={SlideOutDown.duration(200)} style={{ backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: Platform.OS === 'ios' ? 48 : 24 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text }}>Set Alarm</Text>
+              <Pressable onPress={() => setShowAlarmPicker(false)} style={{ backgroundColor: colors.surfaceHover, padding: 8, borderRadius: 16 }}>
+                <X color={colors.text} size={20} weight="bold" />
+              </Pressable>
+            </View>
+            
+            <View style={{ backgroundColor: colors.surface, borderRadius: 28, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.glassBorder, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
+              {detailAlarm && detailTask && (
+                <DateTimePicker 
+                  value={{ date: detailTask.due || todayTaskDate(), hour: detailAlarm.hour, minute: detailAlarm.minute }} 
+                  onChange={(val) => {
+                    updateTask(detailTask.id, { due: val.date });
+                    setDetailAlarm({ hour: val.hour, minute: val.minute });
+                  }} 
+                />
+              )}
+            </View>
+            
+            <Pressable 
+              onPress={() => setShowAlarmPicker(false)}
+              style={({ pressed }) => ({ 
+                backgroundColor: accent, 
+                paddingVertical: 18, 
+                borderRadius: 20, 
+                alignItems: 'center',
+                opacity: pressed ? 0.8 : 1,
+                shadowColor: accent,
+                shadowOpacity: 0.3,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 6 }
+              })}
+            >
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>Save Alarm</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
       </Modal>
 
     </MiniAppShell>
