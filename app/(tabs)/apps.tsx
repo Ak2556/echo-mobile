@@ -60,7 +60,7 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
   const { t } = useI18n();
   // Clean app-grid tile: one big icon + its name. Uniform by construction (every
   // tile is icon + a single-line label), so the grid stays perfectly even.
-  const iconSize = Math.min(68, Math.max(50, Math.round(width * 0.58)));
+  const iconSize = Math.min(100, Math.max(50, Math.round(width * 0.58)));
   return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index, 10) * 20).duration(220).damping(MOTION.cardEntrance.damping).stiffness(MOTION.cardEntrance.stiffness).mass(MOTION.cardEntrance.mass)}
@@ -70,11 +70,11 @@ function AppCard({ app, index, width, onOpen }: { app: MiniApp; index: number; w
         onPress={() => onOpen(app)}
         accessibilityRole="button"
         accessibilityLabel={`${t('common.open')} ${app.name}`}
-        style={({ pressed }) => ({ width: '100%', alignItems: 'center', gap: 8, paddingVertical: 8, transform: [{ scale: pressed ? 0.92 : 1 }] })}
+        style={({ pressed }) => ({ width: '100%', alignItems: 'center', gap: 10, paddingVertical: 12, transform: [{ scale: pressed ? 0.92 : 1 }] })}
       >
         <MiniAppIcon id={app.id} color={app.color} size={iconSize} />
         <Text
-          style={{ alignSelf: 'stretch', color: colors.text, fontSize: 12.5, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 16 }}
+          style={{ alignSelf: 'stretch', color: colors.text, fontSize: 14.5, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 18 }}
           numberOfLines={1}
         >
           {app.name}
@@ -200,7 +200,7 @@ export default function AppsScreen() {
 
   const HEADER_HEIGHT = insets.top + 70;
   const contentMaxWidth = Math.min(windowWidth, layout.isDesktop ? 980 : layout.wideMaxWidth);
-  const columns = layout.isDesktop ? 6 : layout.isTablet ? 4 : 3;
+  const columns = layout.isDesktop ? 6 : layout.isTablet ? 4 : 2;
   const cardWidth = Math.floor((contentMaxWidth - PAD * 2 - GAP * (columns - 1)) / columns);
 
   const scrollY = useSharedValue(0);
