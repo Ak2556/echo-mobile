@@ -397,7 +397,6 @@ export default function TasksScreen() {
                     </View>
                     </View>
                   </View>
-                </View>
 
                 {/* Subtasks */}
                 <View>
