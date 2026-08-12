@@ -39,7 +39,7 @@ const TOOL_LANES: { id: ToolLane; label: string; apps?: string[] }[] = [
 
 type MiniApp = MiniAppCatalogItem;
 const APPS: MiniApp[] = MINI_APP_CATALOG.filter(a => 
-  ['tasks', 'habits', 'notes', 'expenses', 'planner', 'shopping-list', 'pomodoro', 'password-gen', 'learn'].includes(a.id)
+  ['tasks', 'habits', 'notes', 'expenses', 'planner', 'shopping-list', 'pomodoro', 'password-gen', 'learn', 'fitness'].includes(a.id)
 );
 
 /** Eyebrow section label — quiet, letterspaced, the app's editorial voice. */
