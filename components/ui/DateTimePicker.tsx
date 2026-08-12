@@ -46,7 +46,7 @@ function DrumPickerItem({
       (index + 2) * ITEM_HEIGHT
     ];
     const scale = interpolate(scrollY.value, input, [0.7, 0.85, 1.1, 0.85, 0.7], Extrapolation.CLAMP);
-    const opacity = interpolate(scrollY.value, input, [0.2, 0.4, 1, 0.4, 0.2], Extrapolation.CLAMP);
+    const opacity = interpolate(scrollY.value, input, [0.1, 0.3, 1, 0.3, 0.1], Extrapolation.CLAMP);
     const rotateX = interpolate(scrollY.value, input, [45, 20, 0, -20, -45], Extrapolation.CLAMP);
 
     return {
@@ -62,10 +62,9 @@ function DrumPickerItem({
   return (
     <Animated.View style={[{ height: ITEM_HEIGHT, justifyContent: 'center', alignItems: align }, style]}>
       <Text style={{
-        fontSize: 21,
-        fontWeight: '600',
+        fontSize: 22,
+        fontWeight: '700',
         color: colors.text,
-        letterSpacing: -0.5,
       }} numberOfLines={1}>
         {item.label}
       </Text>
@@ -205,11 +204,11 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: ITEM_HEIGHT * VISIBLE_ITEMS, backgroundColor: colors.surface, borderRadius: 24, overflow: 'hidden', paddingHorizontal: 12 }}>
       {/* Highlight bar */}
-      <View style={{ position: 'absolute', top: ITEM_HEIGHT * 2, left: 8, right: 8, height: ITEM_HEIGHT, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, zIndex: -1 }} />
+      <View style={{ position: 'absolute', top: ITEM_HEIGHT * 2, left: 8, right: 8, height: ITEM_HEIGHT, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)', borderRadius: 12, zIndex: -1 }} />
       
       <DrumPicker flex={2.5} items={dates} value={value.date} onChange={handleDate} align="flex-start" />
       <DrumPicker flex={0.8} items={hours} value={hour12} onChange={handleHour} align="flex-end" />
-      <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text, marginHorizontal: 2, marginBottom: 2 }}>:</Text>
+      <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginHorizontal: 2, marginBottom: 4, opacity: 0.8 }}>:</Text>
       <DrumPicker flex={0.8} items={minutes} value={value.minute} onChange={handleMinute} align="flex-start" />
       <DrumPicker flex={1.2} items={ampm} value={isPM ? 'PM' : 'AM'} onChange={handleAmPm} align="flex-end" />
     </View>
