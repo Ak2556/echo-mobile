@@ -62,9 +62,10 @@ function DrumPickerItem({
   return (
     <Animated.View style={[{ height: ITEM_HEIGHT, justifyContent: 'center', alignItems: align }, style]}>
       <Text style={{
-        fontSize: 18,
-        fontWeight: '700',
+        fontSize: 21,
+        fontWeight: '600',
         color: colors.text,
+        letterSpacing: -0.5,
       }} numberOfLines={1}>
         {item.label}
       </Text>
@@ -202,19 +203,15 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
   };
 
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: ITEM_HEIGHT * VISIBLE_ITEMS, backgroundColor: colors.surfaceHover, borderRadius: 24, overflow: 'hidden', paddingHorizontal: 12, borderWidth: 1, borderColor: colors.border }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: ITEM_HEIGHT * VISIBLE_ITEMS, backgroundColor: colors.surface, borderRadius: 24, overflow: 'hidden', paddingHorizontal: 12 }}>
       {/* Highlight bar */}
-      <View style={{ position: 'absolute', top: ITEM_HEIGHT * 2, left: 8, right: 8, height: ITEM_HEIGHT, backgroundColor: colors.surface, borderRadius: 12, zIndex: -1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }} />
+      <View style={{ position: 'absolute', top: ITEM_HEIGHT * 2, left: 8, right: 8, height: ITEM_HEIGHT, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, zIndex: -1 }} />
       
       <DrumPicker flex={2.5} items={dates} value={value.date} onChange={handleDate} align="flex-start" />
       <DrumPicker flex={0.8} items={hours} value={hour12} onChange={handleHour} align="flex-end" />
-      <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text, marginHorizontal: 2, marginBottom: 2 }}>:</Text>
+      <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text, marginHorizontal: 2, marginBottom: 2 }}>:</Text>
       <DrumPicker flex={0.8} items={minutes} value={value.minute} onChange={handleMinute} align="flex-start" />
       <DrumPicker flex={1.2} items={ampm} value={isPM ? 'PM' : 'AM'} onChange={handleAmPm} align="flex-end" />
-      
-      {/* Gradient Overlay for aesthetic fade (Top/Bottom) */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: ITEM_HEIGHT * 1.5, backgroundColor: colors.surfaceHover, opacity: 0.6, pointerEvents: 'none' }} />
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: ITEM_HEIGHT * 1.5, backgroundColor: colors.surfaceHover, opacity: 0.6, pointerEvents: 'none' }} />
     </View>
   );
 }
