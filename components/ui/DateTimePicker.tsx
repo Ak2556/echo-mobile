@@ -1,41 +1,121 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { View, Text, NativeSyntheticEvent, NativeScrollEvent, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import Animated, { 
+  useAnimatedScrollHandler, 
+  useSharedValue, 
+  useAnimatedStyle, 
+  interpolate, 
+  Extrapolation,
+  runOnJS,
+  SharedValue
+} from 'react-native-reanimated';
 import { useTheme } from '../../lib/theme';
 import { localDayKey } from '../../lib/localDate';
 
-const ITEM_HEIGHT = 50;
+const ITEM_HEIGHT = 44;
+const VISIBLE_ITEMS = 5;
 
 interface DrumPickerProps {
   items: { label: string; value: number | string }[];
   value: number | string;
   onChange: (val: number | string) => void;
   flex?: number;
+  align?: 'center' | 'flex-start' | 'flex-end';
 }
 
-function DrumPicker({ items, value, onChange, flex = 1 }: DrumPickerProps) {
-  const { colors } = useTheme();
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [selectedIndex, setSelectedIndex] = useState(() => {
-    const idx = items.findIndex((i) => i.value === value);
-    return Math.max(0, idx);
+function DrumPickerItem({ 
+  item, 
+  index, 
+  scrollY, 
+  colors,
+  align 
+}: { 
+  item: { label: string; value: number | string }; 
+  index: number; 
+  scrollY: SharedValue<number>; 
+  colors: any;
+  align: 'center' | 'flex-start' | 'flex-end';
+}) {
+  const style = useAnimatedStyle(() => {
+    const input = [
+      (index - 2) * ITEM_HEIGHT,
+      (index - 1) * ITEM_HEIGHT,
+      index * ITEM_HEIGHT,
+      (index + 1) * ITEM_HEIGHT,
+      (index + 2) * ITEM_HEIGHT
+    ];
+    const scale = interpolate(scrollY.value, input, [0.7, 0.85, 1.1, 0.85, 0.7], Extrapolation.CLAMP);
+    const opacity = interpolate(scrollY.value, input, [0.2, 0.4, 1, 0.4, 0.2], Extrapolation.CLAMP);
+    const rotateX = interpolate(scrollY.value, input, [45, 20, 0, -20, -45], Extrapolation.CLAMP);
+
+    return {
+      transform: [
+        { scale },
+        { perspective: 500 },
+        { rotateX: `${rotateX}deg` }
+      ],
+      opacity,
+    };
   });
+
+  return (
+    <Animated.View style={[{ height: ITEM_HEIGHT, justifyContent: 'center', alignItems: align }, style]}>
+      <Text style={{
+        fontSize: 18,
+        fontWeight: '700',
+        color: colors.text,
+      }} numberOfLines={1}>
+        {item.label}
+      </Text>
+    </Animated.View>
+  );
+}
+
+function DrumPicker({ items, value, onChange, flex = 1, align = 'center' }: DrumPickerProps) {
+  const { colors } = useTheme();
+  const scrollViewRef = useRef<Animated.ScrollView>(null);
+  
+  const initialIdx = useMemo(() => Math.max(0, items.findIndex(i => i.value === value)), []);
+  const [selectedIndex, setSelectedIndex] = useState(initialIdx);
+  const scrollY = useSharedValue(initialIdx * ITEM_HEIGHT);
 
   useEffect(() => {
     const idx = items.findIndex((i) => i.value === value);
     if (idx >= 0 && idx !== selectedIndex) {
       setSelectedIndex(idx);
-      scrollViewRef.current?.scrollTo({ y: idx * ITEM_HEIGHT, animated: false });
+      scrollY.value = idx * ITEM_HEIGHT;
+      scrollViewRef.current?.scrollTo({ y: idx * ITEM_HEIGHT, animated: true });
     }
   }, [value]);
 
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const y = e.nativeEvent.contentOffset.y;
-    let idx = Math.round(y / ITEM_HEIGHT);
-    idx = Math.max(0, Math.min(idx, items.length - 1));
-    if (idx !== selectedIndex) {
+  const triggerHaptic = (newIdx: number) => {
+    if (newIdx !== selectedIndex && newIdx >= 0 && newIdx < items.length) {
       Haptics.selectionAsync();
-      setSelectedIndex(idx);
+      setSelectedIndex(newIdx);
+    }
+  };
+
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.value = e.contentOffset.y;
+      const exactIdx = e.contentOffset.y / ITEM_HEIGHT;
+      const roundedIdx = Math.round(exactIdx);
+      if (Math.abs(exactIdx - roundedIdx) < 0.1) {
+        runOnJS(triggerHaptic)(roundedIdx);
+      }
+    },
+    onMomentumEnd: (e) => {
+      const idx = Math.round(e.contentOffset.y / ITEM_HEIGHT);
+      if (idx >= 0 && idx < items.length) {
+        runOnJS(onChange)(items[idx].value);
+      }
+    },
+  });
+
+  const handleScrollEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    if (idx >= 0 && idx < items.length) {
       onChange(items[idx].value);
     }
   };
@@ -49,60 +129,36 @@ function DrumPicker({ items, value, onChange, flex = 1 }: DrumPickerProps) {
   ];
 
   return (
-    <View style={{ height: ITEM_HEIGHT * 5, overflow: 'hidden', flex }}>
-      <ScrollView
+    <View style={{ height: ITEM_HEIGHT * VISIBLE_ITEMS, flex }}>
+      <Animated.ScrollView
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_HEIGHT}
         decelerationRate="fast"
-        onMomentumScrollEnd={handleScroll}
-        onScrollEndDrag={handleScroll}
+        onScroll={handleScroll}
+        onScrollEndDrag={handleScrollEndDrag}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingVertical: 0 }}
+        contentOffset={{ x: 0, y: initialIdx * ITEM_HEIGHT }}
       >
-        {paddedItems.map((item, idx) => {
-          const isSelected = idx - 2 === selectedIndex;
-          return (
-            <View key={`${item.value}-${idx}`} style={{ height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{
-                fontSize: isSelected ? 20 : 16,
-                fontWeight: isSelected ? '800' : '500',
-                color: isSelected ? colors.text : colors.textMuted,
-                opacity: item.label === '' ? 0 : 1
-              }} numberOfLines={1}>
-                {item.label}
-              </Text>
-            </View>
-          );
-        })}
-      </ScrollView>
+        {paddedItems.map((item, idx) => (
+          <DrumPickerItem 
+            key={`${item.value}-${idx}`} 
+            item={item} 
+            index={idx - 2} 
+            scrollY={scrollY} 
+            colors={colors}
+            align={align}
+          />
+        ))}
+      </Animated.ScrollView>
     </View>
   );
 }
 
 export interface DateTimePickerProps {
-  value: { date: string; hour: number; minute: number }; // YYYY-MM-DD date, 24-hour hour
+  value: { date: string; hour: number; minute: number };
   onChange: (val: { date: string; hour: number; minute: number }) => void;
-}
-
-function generateDates() {
-  const dates = [];
-  const today = new Date();
-  for (let i = 0; i < 60; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    const dateStr = localDayKey(d);
-    let label = '';
-    if (i === 0) {
-      label = 'Today';
-    } else if (i === 1) {
-      label = 'Tomorrow';
-    } else {
-      label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    }
-    dates.push({ label, value: dateStr });
-  }
-  return dates;
 }
 
 export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
@@ -111,45 +167,54 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
   const isPM = value.hour >= 12;
   const hour12 = value.hour % 12 === 0 ? 12 : value.hour % 12;
 
-  const dates = generateDates();
-  const hours = Array.from({ length: 12 }).map((_, i) => ({ label: `${i + 1}`, value: i + 1 }));
-  const minutes = Array.from({ length: 60 }).map((_, i) => ({ label: i.toString().padStart(2, '0'), value: i }));
-  const ampm = [
-    { label: 'AM', value: 'AM' },
-    { label: 'PM', value: 'PM' }
-  ];
+  const dates = useMemo(() => {
+    const arr = [];
+    const today = new Date();
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dateStr = localDayKey(d);
+      let label = '';
+      if (i === 0) label = 'Today';
+      else if (i === 1) label = 'Tomorrow';
+      else label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      arr.push({ label, value: dateStr });
+    }
+    return arr;
+  }, []);
 
-  const handleDate = (d: number | string) => {
-    onChange({ ...value, date: d as string });
-  };
+  const hours = useMemo(() => Array.from({ length: 12 }).map((_, i) => ({ label: `${i + 1}`, value: i + 1 })), []);
+  const minutes = useMemo(() => Array.from({ length: 60 }).map((_, i) => ({ label: i.toString().padStart(2, '0'), value: i })), []);
+  const ampm = useMemo(() => [{ label: 'AM', value: 'AM' }, { label: 'PM', value: 'PM' }], []);
 
+  const handleDate = (d: number | string) => onChange({ ...value, date: d as string });
   const handleHour = (h: number | string) => {
     let newH = typeof h === 'number' ? h : parseInt(h);
     if (isPM && newH < 12) newH += 12;
     if (!isPM && newH === 12) newH = 0;
     onChange({ ...value, hour: newH });
   };
-
-  const handleMinute = (m: number | string) => {
-    onChange({ ...value, minute: typeof m === 'number' ? m : parseInt(m) });
-  };
-
+  const handleMinute = (m: number | string) => onChange({ ...value, minute: typeof m === 'number' ? m : parseInt(m) });
   const handleAmPm = (ap: number | string) => {
     const isNowPM = ap === 'PM';
-    if (isNowPM && !isPM) {
-      onChange({ ...value, hour: (value.hour + 12) % 24 });
-    } else if (!isNowPM && isPM) {
-      onChange({ ...value, hour: (value.hour - 12 + 24) % 24 });
-    }
+    if (isNowPM && !isPM) onChange({ ...value, hour: (value.hour + 12) % 24 });
+    else if (!isNowPM && isPM) onChange({ ...value, hour: (value.hour - 12 + 24) % 24 });
   };
 
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: ITEM_HEIGHT * 5, backgroundColor: colors.surfaceHover, borderRadius: 20, overflow: 'hidden', paddingHorizontal: 4 }}>
-      <View style={{ position: 'absolute', top: ITEM_HEIGHT * 2, left: 8, right: 8, height: ITEM_HEIGHT, backgroundColor: colors.surface, borderRadius: 12, zIndex: -1 }} />
-      <DrumPicker flex={2.5} items={dates} value={value.date} onChange={handleDate} />
-      <DrumPicker flex={1} items={hours} value={hour12} onChange={handleHour} />
-      <DrumPicker flex={1} items={minutes} value={value.minute} onChange={handleMinute} />
-      <DrumPicker flex={1} items={ampm} value={isPM ? 'PM' : 'AM'} onChange={handleAmPm} />
+    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: ITEM_HEIGHT * VISIBLE_ITEMS, backgroundColor: colors.surfaceHover, borderRadius: 24, overflow: 'hidden', paddingHorizontal: 12, borderWidth: 1, borderColor: colors.border }}>
+      {/* Highlight bar */}
+      <View style={{ position: 'absolute', top: ITEM_HEIGHT * 2, left: 8, right: 8, height: ITEM_HEIGHT, backgroundColor: colors.surface, borderRadius: 12, zIndex: -1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }} />
+      
+      <DrumPicker flex={2.5} items={dates} value={value.date} onChange={handleDate} align="flex-start" />
+      <DrumPicker flex={0.8} items={hours} value={hour12} onChange={handleHour} align="flex-end" />
+      <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text, marginHorizontal: 2, marginBottom: 2 }}>:</Text>
+      <DrumPicker flex={0.8} items={minutes} value={value.minute} onChange={handleMinute} align="flex-start" />
+      <DrumPicker flex={1.2} items={ampm} value={isPM ? 'PM' : 'AM'} onChange={handleAmPm} align="flex-end" />
+      
+      {/* Gradient Overlay for aesthetic fade (Top/Bottom) */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: ITEM_HEIGHT * 1.5, backgroundColor: colors.surfaceHover, opacity: 0.6, pointerEvents: 'none' }} />
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: ITEM_HEIGHT * 1.5, backgroundColor: colors.surfaceHover, opacity: 0.6, pointerEvents: 'none' }} />
     </View>
   );
 }
