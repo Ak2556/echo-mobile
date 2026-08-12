@@ -321,7 +321,26 @@ const RADIUS_MAP = {
   large:  { sm: 8, md: 12, lg: 16, xl: 20, card: 18, full: 9999 },
 } as const;
 
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+} as const;
 
+export type SpacingTokens = typeof SPACING;
+
+export const GLASS_INTENSITY = {
+  light: 18,
+  medium: 30,
+  heavy: 45,
+  ultra: 70,
+} as const;
+
+export type GlassIntensityTokens = typeof GLASS_INTENSITY;
 
 const MOCK_ONLINE_USER_IDS = new Set(['u1', 'u4', 'u5', 'u7']);
 
@@ -409,6 +428,8 @@ export function useTheme() {
     fontSizes,
     lineHeights,
     radius,
+    spacing: SPACING,
+    glass: GLASS_INTENSITY,
     animation,
     switchTrack,
     reduceAnimations,
@@ -420,3 +441,4 @@ export function useTheme() {
 
 export { THEMES };
 export type { ThemeName as ThemeNameType };
+

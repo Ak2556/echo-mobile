@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
+import { useTheme, GLASS_INTENSITY } from '../../lib/theme';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { miniAppByRoute } from '../../lib/miniAppCatalog';
 import { useMiniAppEmbedded } from '../../lib/miniAppEmbed';
@@ -36,7 +36,7 @@ export function MiniAppShell({
   headerRight,
   bottomPad = 32,
 }: MiniAppShellProps) {
-  const { colors, reduceAnimations } = useTheme();
+  const { colors, radius, glass, reduceAnimations } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -114,7 +114,7 @@ export function MiniAppShell({
         }}
       >
         {useBlur && (
-          <BlurView intensity={80} tint={tint} style={StyleSheet.absoluteFill} />
+          <BlurView intensity={glass?.heavy ?? GLASS_INTENSITY.heavy} tint={tint} style={StyleSheet.absoluteFill} />
         )}
         <View
           style={[
@@ -143,11 +143,11 @@ export function MiniAppShell({
             style={{
               minWidth: 36,
               height: 36,
-              borderRadius: 18,
+              borderRadius: radius.xl,
               paddingHorizontal: 10,
-              backgroundColor: colors.isDark
-                ? 'rgba(255,255,255,0.08)'
-                : 'rgba(0,0,0,0.06)',
+              backgroundColor: colors.surfaceHover,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
               alignItems: 'center',
               justifyContent: 'center',
               flexDirection: 'row',

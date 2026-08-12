@@ -77,7 +77,6 @@ import {
 } from '../../lib/learn';
 import { ttx } from '../../lib/i18n';
 
-const ACCENT = '#4E7A8B'; // steel — warm editorial palette
 const LEVELS: { id: LearningLevel; label: string }[] = [
   { id: 'beginner', label: 'Beginner' },
   { id: 'some', label: 'Some knowledge' },
@@ -93,18 +92,18 @@ const MINUTES = [10, 20, 30, 45, 60];
 type LearnTab = 'today' | 'library' | 'oneOnOne' | 'studio' | 'people' | 'roadmap' | 'practice' | 'coach' | 'classroom' | 'progress' | 'settings';
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <AnimatedPressable onPress={onPress} scaleValue={0.94} haptic="light" accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }}>
       <View style={{
-        borderRadius: 999,
+        borderRadius: radius.full,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        backgroundColor: active ? ACCENT : colors.surfaceHover,
+        backgroundColor: active ? colors.accent : colors.surfaceHover,
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: active ? ACCENT : colors.border,
+        borderColor: active ? colors.accent : colors.border,
       }}>
-        <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{label}</Text>
+        <Text style={{ color: active ? colors.bgPure : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{label}</Text>
       </View>
     </AnimatedPressable>
   );
@@ -113,19 +112,19 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 // Matches MiniStatCard's suite look (Fraunces accent value + eyebrow label);
 // keeps minWidth so the 4-up stat rows in deeper tabs still wrap gracefully.
 function Stat({ label, value }: { label: string; value: string }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <View style={{
       flex: 1,
       minWidth: 92,
-      borderRadius: 14,
+      borderRadius: radius.card,
       paddingVertical: 12,
       paddingHorizontal: 12,
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.glassBorder,
     }}>
-      <Text style={[font.display, { color: ACCENT, fontSize: 22 }]} numberOfLines={1}>{value}</Text>
+      <Text style={[font.display, { color: colors.accent, fontSize: 22 }]} numberOfLines={1}>{value}</Text>
       <Text style={[font.eyebrow, { color: colors.textMuted, fontSize: 10.5, marginTop: 3 }]} numberOfLines={1}>{label}</Text>
     </View>
   );
@@ -472,13 +471,13 @@ export default function LearnScreen() {
       headerRight={(
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <AnimatedPressable onPress={() => setTab('settings')} scaleValue={0.9} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Learning settings")}>
-            <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+            <View style={{ width: 38, height: 38, borderRadius: radius.card, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
               <GearSix color={colors.textSecondary} size={18} weight="bold" />
             </View>
           </AnimatedPressable>
           <AnimatedPressable onPress={() => setShowSetup(true)} scaleValue={0.9} haptic="medium" accessibilityRole="button" accessibilityLabel={ttx("Create learning goal")}>
-            <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' }}>
-              <Plus color="#fff" size={18} weight="bold" />
+            <View style={{ width: 38, height: 38, borderRadius: radius.card, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Plus color={colors.bgPure} size={18} weight="bold" />
             </View>
           </AnimatedPressable>
         </View>
@@ -506,7 +505,7 @@ export default function LearnScreen() {
         <>
           <Hero goal={activeGoal} stats={stats} />
           <MiniCommandDeck
-            accent={ACCENT}
+            accent={colors.accent}
             title={ttx("Mastery studio")}
             subtitle={ttx("Paths, practice, proof.")}
             metrics={[
@@ -750,7 +749,7 @@ export default function LearnScreen() {
           <EdgeFeaturePanel
             appId="learn"
             appName="Learn"
-            accent={ACCENT}
+            accent={colors.accent}
             headline={ttx("Teach, coach, and study with proof")}
             caption={ttx("Learning paths connect lessons, practice, notes, tasks, focus blocks, assignments, resources, and progress sharing.")}
             metrics={[
@@ -765,15 +764,15 @@ export default function LearnScreen() {
           />
         </>
       ) : !showSetup ? (
-        <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 18, alignItems: 'center' }}>
-          <GraduationCap color={ACCENT} size={42} weight="duotone" />
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 18, alignItems: 'center' }}>
+          <GraduationCap color={colors.accent} size={42} weight="duotone" />
           <Text style={[font.display, { color: colors.text, fontSize: 24, marginTop: 12 }]}>{ttx("No learning path yet")}</Text>
           <Text style={[font.body, { color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 19, marginTop: 6 }]}>
             {ttx("Create one path for a subject, skill, exam, class, or coaching target.")}
           </Text>
           <Pressable onPress={() => setShowSetup(true)} style={{ marginTop: 16 }}>
-            <View style={{ borderRadius: radius.full, backgroundColor: ACCENT, paddingHorizontal: 18, paddingVertical: 12 }}>
-              <Text style={{ color: '#fff', fontWeight: '900' }}>{ttx("Create path")}</Text>
+            <View style={{ borderRadius: radius.full, backgroundColor: colors.accent, paddingHorizontal: 18, paddingVertical: 12 }}>
+              <Text style={{ color: colors.bgPure, fontWeight: '900' }}>{ttx("Create path")}</Text>
             </View>
           </Pressable>
         </GlassPanel>
@@ -791,11 +790,11 @@ function SetupPanel(props: {
   dailyMinutes: number; setDailyMinutes: (v: number) => void;
   onCreate: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
-    <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 16 }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <IconBadge color={ACCENT} size={44} radius={15}><GraduationCap color="#fff" size={22} weight="bold" /></IconBadge>
+        <IconBadge color={colors.accent} size={44} radius={15}><GraduationCap color={colors.bgPure} size={22} weight="bold" /></IconBadge>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("Create a learning path")}</Text>
           <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("For students, teachers, tutors, and skill coaching.")}</Text>
@@ -820,9 +819,9 @@ function SetupPanel(props: {
         {MINUTES.map(item => <Chip key={item} label={`${item}m`} active={props.dailyMinutes === item} onPress={() => props.setDailyMinutes(item)} />)}
       </View>
       <Pressable onPress={props.onCreate} disabled={!props.title.trim()}>
-        <View style={{ minHeight: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: props.title.trim() ? ACCENT : colors.surfaceHover }}>
-          <Sparkle color="#fff" size={18} weight="bold" />
-          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>{ttx("Build my path")}</Text>
+        <View style={{ minHeight: 50, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: props.title.trim() ? colors.accent : colors.surfaceHover }}>
+          <Sparkle color={colors.bgPure} size={18} weight="bold" />
+          <Text style={{ color: colors.bgPure, fontSize: 15, fontWeight: '900' }}>{ttx("Build my path")}</Text>
         </View>
       </Pressable>
     </GlassPanel>
@@ -830,12 +829,12 @@ function SetupPanel(props: {
 }
 
 function Hero({ goal, stats }: { goal: LearningGoal; stats: ReturnType<typeof learningStats> }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
-    <GlassPanel variant="light" borderRadius={26} contentStyle={{ padding: 16 }} style={{ marginBottom: 16 }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <IconBadge color={ACCENT} size={54} radius={18}>
-          {goal.mode === 'teacher' ? <ChalkboardTeacher color="#fff" size={26} weight="bold" /> : <GraduationCap color="#fff" size={27} weight="bold" />}
+        <IconBadge color={colors.accent} size={54} radius={18}>
+          {goal.mode === 'teacher' ? <ChalkboardTeacher color={colors.bgPure} size={26} weight="bold" /> : <GraduationCap color={colors.bgPure} size={27} weight="bold" />}
         </IconBadge>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.display, { color: colors.text, fontSize: 28, lineHeight: 33 }]} numberOfLines={1}>{goal.title}</Text>
@@ -844,7 +843,7 @@ function Hero({ goal, stats }: { goal: LearningGoal; stats: ReturnType<typeof le
           </Text>
         </View>
         <View style={{ alignItems: 'center' }}>
-          <Text style={[font.bodyBold, { color: ACCENT, fontSize: 22 }]}>{stats.percent}%</Text>
+          <Text style={[font.bodyBold, { color: colors.accent, fontSize: 22 }]}>{stats.percent}%</Text>
           <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>{ttx("done")}</Text>
         </View>
       </View>
@@ -869,21 +868,21 @@ function TodayTab({ goal, stats, onToggleTask, onSaveNote, onAddTask, onSchedule
   onSchedule: () => void;
   onPomodoro: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-        <ActionButton icon={<NotePencil color="#fff" size={17} weight="bold" />} label={ttx("Notes")} onPress={onSaveNote} filled />
-        <ActionButton icon={<Target color={ACCENT} size={17} weight="bold" />} label={ttx("Task")} onPress={onAddTask} />
-        <ActionButton icon={<BookOpen color={ACCENT} size={17} weight="bold" />} label={ttx("Plan")} onPress={onSchedule} />
-        <ActionButton icon={<Timer color={ACCENT} size={17} weight="bold" />} label={ttx("Focus")} onPress={onPomodoro} />
+        <ActionButton icon={<NotePencil color={colors.bgPure} size={17} weight="bold" />} label={ttx("Notes")} onPress={onSaveNote} filled />
+        <ActionButton icon={<Target color={colors.accent} size={17} weight="bold" />} label={ttx("Task")} onPress={onAddTask} />
+        <ActionButton icon={<BookOpen color={colors.accent} size={17} weight="bold" />} label={ttx("Plan")} onPress={onSchedule} />
+        <ActionButton icon={<Timer color={colors.accent} size={17} weight="bold" />} label={ttx("Focus")} onPress={onPomodoro} />
       </View>
       <SectionTitle title={ttx("Today")} subtitle={stats.activeModule?.title ?? 'Next step'} />
-      <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         {(stats.activeModule?.tasks ?? []).map(task => (
           <Pressable key={task.id} onPress={() => onToggleTask(stats.activeModule!.id, task.id)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 7 }}>
-              {task.done ? <CheckCircle color={ACCENT} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
+              {task.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodySemibold, { color: task.done ? colors.textMuted : colors.text, fontSize: 14, textDecorationLine: task.done ? 'line-through' : 'none' }]} numberOfLines={1}>{task.title}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2, textTransform: 'uppercase', fontWeight: '800' }}>{task.type}</Text>
@@ -902,7 +901,7 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
   setQuery: (v: string) => void;
   onStartTopic: (topic: CuratedLearningTopic) => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const q = query.trim().toLowerCase();
   const topics = CURATED_LEARNING_TOPICS.filter(topic => !q || [
     topic.title,
@@ -915,9 +914,9 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
   ].some(value => value.toLowerCase().includes(q)));
   return (
     <>
-      <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 16, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 10 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <IconBadge color={ACCENT} size={44} radius={15}><Sparkle color="#fff" size={21} weight="bold" /></IconBadge>
+          <IconBadge color={colors.accent} size={44} radius={15}><Sparkle color={colors.bgPure} size={21} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("2026 learning library")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 2 }]}>
@@ -930,10 +929,10 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
 
       <View style={{ gap: 10, marginBottom: 16 }}>
         {topics.map(topic => (
-          <GlassPanel key={topic.id} variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 11 }}>
+          <GlassPanel key={topic.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 11 }}>
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: `${ACCENT}22` }}>
-                <GraduationCap color={ACCENT} size={20} weight="bold" />
+              <View style={{ width: 40, height: 40, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}22` }}>
+                <GraduationCap color={colors.accent} size={20} weight="bold" />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 15, lineHeight: 20 }]}>{topic.title}</Text>
@@ -945,18 +944,18 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
               {[topic.category, `${topic.dailyMinutes}m/day`, `${topic.materials.length} free links`, ...topic.tags.slice(0, 2)].map(label => (
-                <View key={label} style={{ borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+                <View key={label} style={{ borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
                   <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800' }}>{label}</Text>
                 </View>
               ))}
             </View>
-            <View style={{ borderRadius: 15, backgroundColor: colors.surfaceHover, padding: 11 }}>
+            <View style={{ borderRadius: radius.card, backgroundColor: colors.surfaceHover, padding: 11 }}>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }}>{ttx("Echo proof project")}</Text>
               <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 3 }]}>{topic.project}</Text>
             </View>
             <Pressable onPress={() => onStartTopic(topic)}>
-              <View style={{ minHeight: 42, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{ttx("Start curated path")}</Text>
+              <View style={{ minHeight: 42, borderRadius: radius.card, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: colors.bgPure, fontSize: 13, fontWeight: '900' }}>{ttx("Start curated path")}</Text>
               </View>
             </Pressable>
           </GlassPanel>
@@ -1000,16 +999,16 @@ function OneOnOneTab(props: {
   onSaveBookingNotes: (bookingId: string) => void;
   onUpdateBookingStatus: (id: string, status: 'requested' | 'accepted' | 'scheduled' | 'completed' | 'cancelled', paymentStatus?: 'unpaid' | 'pending' | 'paid' | 'refunded') => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const activePackages = props.goal.oneOnOnePackages.filter(item => item.active);
   const currencyRevenue = props.goal.oneOnOneBookings
     .filter(item => item.paymentStatus === 'paid' && item.currency === props.goal.oneOnOneProfile.baseCurrency)
     .reduce((sum, item) => sum + item.price, 0);
   return (
     <>
-      <GlassPanel variant="light" borderRadius={26} contentStyle={{ padding: 16, gap: 12 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 12 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <IconBadge color="#B08536" size={48} radius={16}><ChalkboardTeacher color="#fff" size={23} weight="bold" /></IconBadge>
+          <IconBadge color={colors.warning} size={48} radius={radius.card}><ChalkboardTeacher color={colors.bgPure} size={23} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("Paid 1:1 mastery")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 2 }]}>
@@ -1026,7 +1025,7 @@ function OneOnOneTab(props: {
       </GlassPanel>
 
       <SectionTitle title={ttx("Teacher offer")} subtitle={ttx("Offer")} />
-      <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.oneHeadline} onChangeText={props.setOneHeadline} placeholder={ttx("Offer headline")} strong />
         <LearnInput value={props.oneBio} onChangeText={props.setOneBio} placeholder={ttx("What you help learners achieve")} multiline />
         <LearnInput value={props.oneExpertise} onChangeText={props.setOneExpertise} placeholder={ttx("Expertise tags, comma separated")} />
@@ -1048,22 +1047,22 @@ function OneOnOneTab(props: {
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.oneOnOnePackages.map(item => (
           <Pressable key={item.id} onPress={() => props.onTogglePackage(item.id)}>
-            <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 8 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: item.active ? '#B0853622' : colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ color: item.active ? '#B08536' : colors.textMuted, fontWeight: '900' }}>{item.sessionCount}x</Text>
+                <View style={{ width: 38, height: 38, borderRadius: radius.card, backgroundColor: item.active ? colors.accentMuted : colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: item.active ? colors.warning : colors.textMuted, fontWeight: '900' }}>{item.sessionCount}x</Text>
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{item.minutes}{ttx("m each ·")} {item.active ? 'Active' : 'Paused'}</Text>
                 </View>
-                <Text style={[font.bodyBold, { color: '#B08536', fontSize: 16 }]}>{formatPrice(item.price, item.currency)}</Text>
+                <Text style={[font.bodyBold, { color: colors.warning, fontSize: 16 }]}>{formatPrice(item.price, item.currency)}</Text>
               </View>
               <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, lineHeight: 18 }]}>{item.description}</Text>
             </GlassPanel>
           </Pressable>
         ))}
-        <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
           <LearnInput value={props.packageTitle} onChangeText={props.setPackageTitle} placeholder={ttx("Package title")} />
           <LearnInput value={props.packageDescription} onChangeText={props.setPackageDescription} placeholder={ttx("What is included?")} multiline />
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -1079,7 +1078,7 @@ function OneOnOneTab(props: {
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.oneOnOneSlots.map(slot => (
           <Pressable key={slot.id} onPress={() => props.onToggleSlot(slot.id)}>
-            <GlassPanel variant="light" borderRadius={16} contentStyle={{ padding: 12 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 {slot.available ? <CheckCircle color={colors.success} size={21} weight="fill" /> : <CircleDashed color={colors.textMuted} size={21} />}
                 <Text style={[font.bodyBold, { color: colors.text, flex: 1, fontSize: 13 }]}>{slot.label}</Text>
@@ -1088,7 +1087,7 @@ function OneOnOneTab(props: {
             </GlassPanel>
           </Pressable>
         ))}
-        <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
           <LearnInput value={props.slotLabel} onChangeText={props.setSlotLabel} placeholder={ttx("e.g. Tue/Thu 7 PM IST or Saturday mornings")} />
           <LearnInput value={props.slotMinutes} onChangeText={props.setSlotMinutes} placeholder={ttx("Default minutes")} />
           <InlineButton label={ttx("Add availability")} onPress={props.onCreateSlot} />
@@ -1096,7 +1095,7 @@ function OneOnOneTab(props: {
       </View>
 
       <SectionTitle title={ttx("Learner booking")} subtitle={ttx("Book")} />
-      <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.bookingLearner} onChangeText={props.setBookingLearner} placeholder={ttx("Learner name")} />
         <LearnInput value={props.bookingGoal} onChangeText={props.setBookingGoal} placeholder={ttx("What they want to master")} multiline />
         <LearnInput value={props.bookingSchedule} onChangeText={props.setBookingSchedule} placeholder={ttx("Proposed date/time")} />
@@ -1104,8 +1103,8 @@ function OneOnOneTab(props: {
         <View style={{ gap: 8 }}>
           {activePackages.length ? activePackages.map(item => (
             <Pressable key={item.id} onPress={() => props.onCreateBooking(item.id)}>
-              <View style={{ minHeight: 42, borderRadius: 14, backgroundColor: '#B08536', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{ttx("Request")} {item.title} · {formatPrice(item.price, item.currency)}</Text>
+              <View style={{ minHeight: 42, borderRadius: radius.card, backgroundColor: colors.warning, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: colors.bgPure, fontSize: 13, fontWeight: '900' }}>{ttx("Request")} {item.title} · {formatPrice(item.price, item.currency)}</Text>
               </View>
             </Pressable>
           )) : <InlineButton label={ttx("Request session")} onPress={() => props.onCreateBooking()} />}
@@ -1115,24 +1114,24 @@ function OneOnOneTab(props: {
       <SectionTitle title={ttx("Booking pipeline")} subtitle={ttx("Pipeline")} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.oneOnOneBookings.length === 0 ? (
-          <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 16 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("No 1:1 bookings yet")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 5 }]}>
               {ttx("Add packages and availability, then create learner requests from this path.")}
             </Text>
           </GlassPanel>
         ) : props.goal.oneOnOneBookings.map(booking => (
-          <GlassPanel key={booking.id} variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+          <GlassPanel key={booking.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-              <View style={{ width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#B0853622' }}>
-                <Text style={{ color: '#B08536', fontWeight: '900' }}>{booking.learnerName.slice(0, 1).toUpperCase()}</Text>
+              <View style={{ width: 42, height: 42, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentMuted }}>
+                <Text style={{ color: colors.warning, fontWeight: '900' }}>{booking.learnerName.slice(0, 1).toUpperCase()}</Text>
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{booking.learnerName}</Text>
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{booking.packageTitle} · {formatPrice(booking.price, booking.currency)}</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ color: booking.paymentStatus === 'paid' ? colors.success : '#B08536', fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }}>{booking.paymentStatus}</Text>
+                <Text style={{ color: booking.paymentStatus === 'paid' ? colors.success : colors.warning, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }}>{booking.paymentStatus}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginTop: 2 }}>{booking.status}</Text>
               </View>
             </View>
@@ -1151,7 +1150,7 @@ function OneOnOneTab(props: {
               <SmallAction label={ttx("Done")} onPress={() => props.onUpdateBookingStatus(booking.id, 'completed', 'paid')} />
               <SmallAction label={ttx("Cancel")} danger onPress={() => props.onUpdateBookingStatus(booking.id, 'cancelled', booking.paymentStatus)} />
             </View>
-            <GlassPanel variant="light" borderRadius={16} contentStyle={{ padding: 12, gap: 8 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 12, gap: 8 }}>
               <LearnInput value={props.bookingPrep} onChangeText={props.setBookingPrep} placeholder={ttx("Prep note for this session")} multiline />
               <LearnInput value={props.bookingHomework} onChangeText={props.setBookingHomework} placeholder={ttx("Homework / practice assigned")} multiline />
               <LearnInput value={props.bookingFollowUp} onChangeText={props.setBookingFollowUp} placeholder={ttx("Follow-up message or next package pitch")} multiline />
@@ -1180,7 +1179,7 @@ function StudioTab(props: {
   setEvidenceDetail: (v: string) => void;
   onCreateEvidence: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
@@ -1193,13 +1192,13 @@ function StudioTab(props: {
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.syllabus.map(week => (
           <Pressable key={week.id} onPress={() => props.onToggleWeek(week.id)}>
-            <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
               <View style={{ flexDirection: 'row', gap: 11 }}>
-                {week.done ? <CheckCircle color={ACCENT} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
+                {week.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{week.title}</Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>{week.objective}</Text>
-                  <Text style={[font.bodySemibold, { color: ACCENT, fontSize: 11, lineHeight: 16, marginTop: 7 }]}>{week.deliverable}</Text>
+                  <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, lineHeight: 16, marginTop: 7 }]}>{week.deliverable}</Text>
                 </View>
               </View>
             </GlassPanel>
@@ -1210,7 +1209,7 @@ function StudioTab(props: {
       <SectionTitle title={ttx("Rubric")} subtitle={`${props.stats.rubricScore}/${props.stats.rubricMax} scored`} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.rubric.map(item => (
-          <GlassPanel key={item.id} variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+          <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
             <View>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 }]}>{item.description}</Text>
@@ -1218,15 +1217,15 @@ function StudioTab(props: {
             <View style={{ flexDirection: 'row', gap: 7 }}>
               {Array.from({ length: item.maxScore + 1 }).map((_, score) => (
                 <Pressable key={score} onPress={() => props.onScoreRubric(item.id, score)} style={{ flex: 1 }}>
-                  <View style={{ minHeight: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: item.score === score ? ACCENT : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: item.score === score ? ACCENT : colors.border }}>
-                    <Text style={{ color: item.score === score ? '#fff' : colors.textSecondary, fontWeight: '900', fontSize: 12 }}>{score}</Text>
+                  <View style={{ minHeight: 34, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: item.score === score ? colors.accent : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: item.score === score ? colors.accent : colors.border }}>
+                    <Text style={{ color: item.score === score ? colors.bgPure : colors.textSecondary, fontWeight: '900', fontSize: 12 }}>{score}</Text>
                   </View>
                 </Pressable>
               ))}
             </View>
           </GlassPanel>
         ))}
-        <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
           <LearnInput value={props.rubricTitle} onChangeText={props.setRubricTitle} placeholder={ttx("New rubric criterion")} />
           <LearnInput value={props.rubricDescription} onChangeText={props.setRubricDescription} placeholder={ttx("What does good work look like?")} multiline />
           <InlineButton label={ttx("Add criterion")} onPress={props.onCreateRubric} />
@@ -1234,16 +1233,16 @@ function StudioTab(props: {
       </View>
 
       <SectionTitle title={ttx("Evidence locker")} subtitle={ttx("Proof")} />
-      <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
         <LearnInput value={props.evidenceTitle} onChangeText={props.setEvidenceTitle} placeholder={ttx("Evidence title")} />
         <LearnInput value={props.evidenceDetail} onChangeText={props.setEvidenceDetail} placeholder={ttx("Paste link, describe submission, or write proof")} multiline />
         <InlineButton label={ttx("Save evidence")} onPress={props.onCreateEvidence} />
       </GlassPanel>
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.evidence.map(item => (
-          <GlassPanel key={item.id} variant="light" borderRadius={16} contentStyle={{ padding: 12 }}>
+          <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <LinkSimple color={ACCENT} size={17} weight="bold" />
+              <LinkSimple color={colors.accent} size={17} weight="bold" />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{item.title}</Text>
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={2}>{item.detail || item.kind}</Text>
@@ -1269,7 +1268,7 @@ function PeopleTab(props: {
   onCreateLearner: () => void;
   onUpdateProgress: (id: string, progress: number) => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const average = props.goal.learners.length
     ? Math.round(props.goal.learners.reduce((sum, learner) => sum + learner.progress, 0) / props.goal.learners.length)
     : 0;
@@ -1282,7 +1281,7 @@ function PeopleTab(props: {
       </View>
 
       <SectionTitle title={ttx("Learner roster")} subtitle={ttx("People")} />
-      <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.learnerName} onChangeText={props.setLearnerName} placeholder={ttx("Name")} />
         <LearnInput value={props.learnerTarget} onChangeText={props.setLearnerTarget} placeholder={ttx("Personal target or class outcome")} />
         <LearnInput value={props.learnerNotes} onChangeText={props.setLearnerNotes} placeholder={ttx("Context, constraints, learning style, notes")} multiline />
@@ -1295,32 +1294,32 @@ function PeopleTab(props: {
 
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.learners.length === 0 ? (
-          <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 16 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("No learners yet")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 5 }]}>
               {ttx("Add yourself, a student, a coaching client, or a group member to track progress separately.")}
             </Text>
           </GlassPanel>
         ) : props.goal.learners.map(learner => (
-          <GlassPanel key={learner.id} variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+          <GlassPanel key={learner.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: `${ACCENT}22` }}>
-                <Text style={{ color: ACCENT, fontWeight: '900', fontSize: 16 }}>{learner.name.slice(0, 1).toUpperCase()}</Text>
+              <View style={{ width: 42, height: 42, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}22` }}>
+                <Text style={{ color: colors.accent, fontWeight: '900', fontSize: 16 }}>{learner.name.slice(0, 1).toUpperCase()}</Text>
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>{learner.name}</Text>
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{learner.target}</Text>
               </View>
-              <Text style={[font.bodyBold, { color: ACCENT, fontSize: 18 }]}>{learner.progress}%</Text>
+              <Text style={[font.bodyBold, { color: colors.accent, fontSize: 18 }]}>{learner.progress}%</Text>
             </View>
-            <View style={{ height: 8, borderRadius: 999, backgroundColor: colors.surfaceHover, overflow: 'hidden' }}>
-              <View style={{ width: `${learner.progress}%`, height: '100%', backgroundColor: ACCENT }} />
+            <View style={{ height: 8, borderRadius: radius.full, backgroundColor: colors.surfaceHover, overflow: 'hidden' }}>
+              <View style={{ width: `${learner.progress}%`, height: '100%', backgroundColor: colors.accent }} />
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[25, 50, 75, 100].map(score => (
                 <Pressable key={score} onPress={() => props.onUpdateProgress(learner.id, score)} style={{ flex: 1 }}>
-                  <View style={{ minHeight: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: learner.progress === score ? ACCENT : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: learner.progress === score ? ACCENT : colors.border }}>
-                    <Text style={{ color: learner.progress === score ? '#fff' : colors.textSecondary, fontSize: 11, fontWeight: '900' }}>{score}%</Text>
+                  <View style={{ minHeight: 34, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: learner.progress === score ? colors.accent : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: learner.progress === score ? colors.accent : colors.border }}>
+                    <Text style={{ color: learner.progress === score ? colors.bgPure : colors.textSecondary, fontSize: 11, fontWeight: '900' }}>{score}%</Text>
                   </View>
                 </Pressable>
               ))}
@@ -1334,22 +1333,22 @@ function PeopleTab(props: {
 }
 
 function RoadmapTab({ goal }: { goal: LearningGoal }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <View style={{ gap: 10, marginBottom: 16 }}>
       {goal.modules.map((module, index) => {
         const complete = module.status === 'completed';
         const active = module.status === 'active';
         return (
-          <GlassPanel key={module.id} variant="light" borderRadius={20} contentStyle={{ padding: 14 }}>
+          <GlassPanel key={module.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: complete ? ACCENT : active ? `${ACCENT}22` : colors.surfaceHover }}>
-                <Text style={{ color: complete ? '#fff' : active ? ACCENT : colors.textMuted, fontWeight: '900' }}>{index + 1}</Text>
+              <View style={{ width: 34, height: 34, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: complete ? colors.accent : active ? `${colors.accent}22` : colors.surfaceHover }}>
+                <Text style={{ color: complete ? colors.bgPure : active ? colors.accent : colors.textMuted, fontWeight: '900' }}>{index + 1}</Text>
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{module.title}</Text>
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 }]}>{module.description}</Text>
-                <Text style={{ color: active ? ACCENT : colors.textMuted, fontSize: 11, fontWeight: '900', marginTop: 8, textTransform: 'uppercase' }}>
+                <Text style={{ color: active ? colors.accent : colors.textMuted, fontSize: 11, fontWeight: '900', marginTop: 8, textTransform: 'uppercase' }}>
                   {complete ? 'Completed' : active ? 'Active now' : 'Locked'}
                 </Text>
               </View>
@@ -1377,23 +1376,23 @@ function PracticeTab(props: {
   onToggleCodeLab: (id: string) => void;
   showCodeLabs: boolean;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <>
       <SectionTitle title={ttx("Flashcards")} subtitle={`${props.goal.flashcards.filter(card => card.mastered).length}/${props.goal.flashcards.length} mastered`} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.flashcards.map(card => (
           <Pressable key={card.id} onPress={() => props.onToggleCard(card.id)}>
-            <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{card.front}</Text>
               <Text style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 6 }]}>{card.back}</Text>
-              <Text style={{ color: card.mastered ? ACCENT : colors.textMuted, fontSize: 11, fontWeight: '900', marginTop: 9 }}>
+              <Text style={{ color: card.mastered ? colors.accent : colors.textMuted, fontSize: 11, fontWeight: '900', marginTop: 9 }}>
                 {card.mastered ? 'MASTERED' : 'TAP TO MARK MASTERED'}
               </Text>
             </GlassPanel>
           </Pressable>
         ))}
-        <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
           <LearnInput value={props.cardFront} onChangeText={props.setCardFront} placeholder={ttx("New flashcard front")} />
           <LearnInput value={props.cardBack} onChangeText={props.setCardBack} placeholder={ttx("Back / answer")} multiline />
           <InlineButton label={ttx("Add flashcard")} onPress={props.onCreateCard} />
@@ -1403,14 +1402,14 @@ function PracticeTab(props: {
       <SectionTitle title={ttx("Quiz")} subtitle={ttx("Adaptive check")} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.quiz.map(question => (
-          <GlassPanel key={question.id} variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 9 }}>
+          <GlassPanel key={question.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 9 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 14, lineHeight: 20 }]}>{question.question}</Text>
             {question.options.map(option => {
               const selected = question.selected === option;
               return (
                 <Pressable key={option} onPress={() => props.onAnswer(question.id, option)}>
-                  <View style={{ borderRadius: 13, padding: 10, backgroundColor: selected ? (question.correct ? `${ACCENT}2A` : colors.dangerMuted) : colors.surfaceHover }}>
-                    <Text style={[font.bodySemibold, { color: selected ? (question.correct ? ACCENT : colors.danger) : colors.textSecondary, fontSize: 12 }]}>{option}</Text>
+                  <View style={{ borderRadius: radius.md, padding: 10, backgroundColor: selected ? (question.correct ? `${colors.accent}2A` : colors.dangerMuted) : colors.surfaceHover }}>
+                    <Text style={[font.bodySemibold, { color: selected ? (question.correct ? colors.accent : colors.danger) : colors.textSecondary, fontSize: 12 }]}>{option}</Text>
                   </View>
                 </Pressable>
               );
@@ -1425,7 +1424,7 @@ function PracticeTab(props: {
           <SectionTitle title={ttx("Code-along")} subtitle={`${props.goal.codeLabs.filter(item => item.done).length}/${props.goal.codeLabs.length} complete`} />
           <View style={{ gap: 10, marginBottom: 16 }}>
             {props.goal.codeLabs.length === 0 ? (
-              <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14 }}>
+              <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("No code labs yet")}</Text>
                 <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>
                   {ttx("Add one for coding, app building, data work, formulas, or any step-by-step practice.")}
@@ -1433,23 +1432,23 @@ function PracticeTab(props: {
               </GlassPanel>
             ) : props.goal.codeLabs.map(item => (
               <Pressable key={item.id} onPress={() => props.onToggleCodeLab(item.id)}>
-                <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 9 }}>
+                <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 9 }}>
                   <View style={{ flexDirection: 'row', gap: 10 }}>
-                    {item.done ? <CheckCircle color={ACCENT} size={22} weight="fill" /> : <ClipboardText color={colors.textMuted} size={22} />}
+                    {item.done ? <CheckCircle color={colors.accent} size={22} weight="fill" /> : <ClipboardText color={colors.textMuted} size={22} />}
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
-                      <Text style={[font.bodySemibold, { color: ACCENT, fontSize: 11, marginTop: 2 }]}>{item.language}</Text>
+                      <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, marginTop: 2 }]}>{item.language}</Text>
                     </View>
                   </View>
                   <Text style={[font.body, { color: colors.textSecondary, fontSize: 12, lineHeight: 18 }]}>{item.prompt}</Text>
-                  <View style={{ borderRadius: 14, backgroundColor: '#0D1117', padding: 12 }}>
-                    <Text style={{ color: '#E2E8F0', fontSize: 12, lineHeight: 18, fontFamily: 'monospace' }} numberOfLines={6}>{item.starterCode}</Text>
+                  <View style={{ borderRadius: radius.card, backgroundColor: colors.inputBg, padding: 12 }}>
+                    <Text style={{ color: colors.text, fontSize: 12, lineHeight: 18, fontFamily: 'monospace' }} numberOfLines={6}>{item.starterCode}</Text>
                   </View>
                   {item.notes ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>{item.notes}</Text> : null}
                 </GlassPanel>
               </Pressable>
             ))}
-            <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
               <LearnInput value={props.codeTitle} onChangeText={props.setCodeTitle} placeholder={ttx("Code-along title")} />
               <LearnInput value={props.codeLanguage} onChangeText={props.setCodeLanguage} placeholder={ttx("Language or tool")} />
               <LearnInput value={props.codePrompt} onChangeText={props.setCodePrompt} placeholder={ttx("What should the learner build or change?")} multiline />
@@ -1472,16 +1471,16 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
   onCreateReflection: () => void;
   onChat: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <>
       <SectionTitle title={ttx("Coach prompts")} subtitle={ttx("Coach")} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {prompts.map(prompt => (
           <Pressable key={prompt} onPress={onChat}>
-            <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 13 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 13 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Question color={ACCENT} size={18} weight="bold" />
+                <Question color={colors.accent} size={18} weight="bold" />
                 <Text style={[font.bodySemibold, { color: colors.textSecondary, flex: 1, fontSize: 13, lineHeight: 18 }]}>{prompt}</Text>
                 <Play color={colors.textMuted} size={16} weight="bold" />
               </View>
@@ -1490,13 +1489,13 @@ function CoachTab({ goal, prompts, reflection, setReflection, onCreateReflection
         ))}
       </View>
       <SectionTitle title={ttx("Reflection log")} subtitle={`${goal.reflections.length} entries`} />
-      <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={reflection} onChangeText={setReflection} placeholder={ttx("What did you understand, miss, or improve today?")} multiline />
         <InlineButton label={ttx("Save reflection")} onPress={onCreateReflection} />
       </GlassPanel>
       <View style={{ gap: 10, marginBottom: 16 }}>
         {goal.reflections.map(item => (
-          <GlassPanel key={item.id} variant="light" borderRadius={16} contentStyle={{ padding: 12 }}>
+          <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 12 }}>
             <Text style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 19 }]}>{item.text}</Text>
           </GlassPanel>
         ))}
@@ -1518,16 +1517,16 @@ function ClassroomTab(props: {
   linkedNoteBody: string; setLinkedNoteBody: (v: string) => void;
   onCreateLinkedNote: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <>
       <SectionTitle title={ttx("Assignments")} subtitle={`${props.goal.assignments.filter(item => !item.done).length} open`} />
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.assignments.map(item => (
           <Pressable key={item.id} onPress={() => props.onToggleAssignment(item.id)}>
-            <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                {item.done ? <CheckCircle color={ACCENT} size={22} weight="fill" /> : <ClipboardText color={colors.textMuted} size={22} />}
+                {item.done ? <CheckCircle color={colors.accent} size={22} weight="fill" /> : <ClipboardText color={colors.textMuted} size={22} />}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{item.title}</Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>{item.instructions}</Text>
@@ -1536,7 +1535,7 @@ function ClassroomTab(props: {
             </GlassPanel>
           </Pressable>
         ))}
-        <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }}>
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }}>
           <LearnInput value={props.assignmentTitle} onChangeText={props.setAssignmentTitle} placeholder={ttx("Assignment title")} />
           <LearnInput value={props.assignmentInstructions} onChangeText={props.setAssignmentInstructions} placeholder={ttx("Instructions or rubric")} multiline />
           <InlineButton label={ttx("Create assignment")} onPress={props.onCreateAssignment} />
@@ -1544,7 +1543,7 @@ function ClassroomTab(props: {
       </View>
 
       <SectionTitle title={ttx("Resources")} subtitle={`${props.goal.resources.length} saved`} />
-      <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("Learning note")}</Text>
         <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18 }]}>
           {ttx("Write notes while learning and save them into the Notes app while keeping them linked here as a resource.")}
@@ -1553,16 +1552,16 @@ function ClassroomTab(props: {
         <LearnInput value={props.linkedNoteBody} onChangeText={props.setLinkedNoteBody} placeholder={ttx("Concepts, mistakes, examples, summary, next action")} multiline />
         <InlineButton label={ttx("Save linked note")} onPress={props.onCreateLinkedNote} />
       </GlassPanel>
-      <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 12 }}>
         <LearnInput value={props.resourceTitle} onChangeText={props.setResourceTitle} placeholder={ttx("Resource title")} />
         <LearnInput value={props.resourceDetail} onChangeText={props.setResourceDetail} placeholder={ttx("Link, note, book, video, or file detail")} />
         <InlineButton label={ttx("Save resource")} onPress={props.onCreateResource} />
       </GlassPanel>
       <View style={{ gap: 10, marginBottom: 16 }}>
         {props.goal.resources.map(item => (
-          <GlassPanel key={item.id} variant="light" borderRadius={16} contentStyle={{ padding: 12 }}>
+          <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <LinkSimple color={ACCENT} size={17} weight="bold" />
+              <LinkSimple color={colors.accent} size={17} weight="bold" />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{item.title}</Text>
                 {item.detail ? <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={2}>{item.detail}</Text> : null}
@@ -1589,7 +1588,7 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
   setSessionMinutes: (v: string) => void;
   onCreateSession: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
@@ -1603,9 +1602,9 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
       <View style={{ gap: 10, marginBottom: 16 }}>
         {goal.milestones.map(milestone => (
           <Pressable key={milestone.id} onPress={() => onToggleMilestone(milestone.id)}>
-            <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }}>
               <View style={{ flexDirection: 'row', gap: 11 }}>
-                {milestone.done ? <CheckCircle color={ACCENT} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
+                {milestone.done ? <CheckCircle color={colors.accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{milestone.title}</Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 }]}>{milestone.proof}</Text>
@@ -1617,7 +1616,7 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
       </View>
 
       <SectionTitle title={ttx("Session log")} subtitle={`${stats.sessions} sessions · ${goal.studyMinutes} minutes`} />
-      <GlassPanel variant="light" borderRadius={18} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <LearnInput value={sessionTitle} onChangeText={setSessionTitle} placeholder={ttx("Session title")} />
@@ -1634,9 +1633,9 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
       {goal.sessions.length > 0 ? (
         <View style={{ gap: 10, marginBottom: 16 }}>
           {goal.sessions.slice(0, 5).map(session => (
-            <GlassPanel key={session.id} variant="light" borderRadius={16} contentStyle={{ padding: 13 }}>
+            <GlassPanel key={session.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 13 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Timer color={ACCENT} size={18} weight="bold" />
+                <Timer color={colors.accent} size={18} weight="bold" />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]} numberOfLines={1}>{session.title}</Text>
                   <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={2}>
@@ -1649,7 +1648,7 @@ function ProgressTab({ goal, stats, onToggleMilestone, sessionTitle, setSessionT
         </View>
       ) : null}
 
-      <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>{ttx("Weak topics")}</Text>
         {(goal.weakTopics.length ? goal.weakTopics : ['No weak topic captured yet']).map(topic => (
           <Text key={topic} style={[font.body, { color: colors.textSecondary, fontSize: 13, lineHeight: 20 }]}>- {topic}</Text>
@@ -1675,11 +1674,11 @@ function SettingsTab(props: {
   onSaveDefaults: () => void;
   onUpdateSettings: (settings: LearningSettings) => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <>
       <SectionTitle title={ttx("Path settings")} subtitle={props.goal.title} />
-      <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.pathTitle} onChangeText={props.setPathTitle} placeholder={ttx("Path title")} strong />
         <LearnInput value={props.pathTarget} onChangeText={props.setPathTarget} placeholder={ttx("Outcome or target")} multiline />
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -1706,7 +1705,7 @@ function SettingsTab(props: {
       </GlassPanel>
 
       <SectionTitle title={ttx("Learn defaults")} subtitle={ttx("Defaults")} />
-      <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 10 }} style={{ marginBottom: 16 }}>
         <LearnInput value={props.defaultCodeLanguage} onChangeText={props.setDefaultCodeLanguage} placeholder={ttx("Default code language or tool")} />
         <SettingsToggle
           title={ttx("Show teaching tools")}
@@ -1729,7 +1728,7 @@ function SettingsTab(props: {
         <InlineButton label={ttx("Save these as defaults")} onPress={props.onSaveDefaults} />
       </GlassPanel>
 
-      <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 14 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 14 }} style={{ marginBottom: 16 }}>
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>{ttx("What settings control")}</Text>
         <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 5 }]}>
           {ttx("Keep Learn lightweight for solo study, or turn on the larger teaching/coaching surfaces when managing learners, assignments, rubrics, proof, and code-alongs.")}
@@ -1745,7 +1744,7 @@ function SettingsToggle({ title, subtitle, value, onValueChange }: {
   value: boolean;
   onValueChange: (value: boolean) => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
@@ -1755,19 +1754,19 @@ function SettingsToggle({ title, subtitle, value, onValueChange }: {
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: colors.surfaceHover, true: `${ACCENT}88` }}
-        thumbColor={value ? ACCENT : colors.textMuted}
+        trackColor={{ false: colors.surfaceHover, true: `${colors.accent}88` }}
+        thumbColor={value ? colors.accent : colors.textMuted}
       />
     </View>
   );
 }
 
 function LearningSystemCard({ goal }: { goal: LearningGoal }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Sparkle color={ACCENT} size={19} weight="bold" />
+        <Sparkle color={colors.accent} size={19} weight="bold" />
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>
           {goal.mode === 'teacher' ? 'Teacher workflow' : goal.mode === 'coach' ? 'Coaching loop' : 'Study system'}
         </Text>
@@ -1784,7 +1783,7 @@ function LearningSystemCard({ goal }: { goal: LearningGoal }) {
 }
 
 function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <View style={{ marginBottom: 9, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
       <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{title}</Text>
@@ -1794,7 +1793,7 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle?: string })
 }
 
 function Label({ text }: { text: string }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>{text}</Text>;
 }
 
@@ -1805,7 +1804,7 @@ function LearnInput({ value, onChangeText, placeholder, multiline = false, stron
   multiline?: boolean;
   strong?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <TextInput
       value={value}
@@ -1815,7 +1814,7 @@ function LearnInput({ value, onChangeText, placeholder, multiline = false, stron
       multiline={multiline}
       style={{
         minHeight: multiline ? 72 : 46,
-        borderRadius: 16,
+        borderRadius: radius.card,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: colors.border,
         backgroundColor: colors.inputBg,
@@ -1831,29 +1830,30 @@ function LearnInput({ value, onChangeText, placeholder, multiline = false, stron
 }
 
 function InlineButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const { colors, radius } = useTheme();
   return (
     <AnimatedPressable onPress={onPress} scaleValue={0.96} haptic="medium" accessibilityRole="button" accessibilityLabel={label}>
-      <View style={{ minHeight: 42, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{label}</Text>
+      <View style={{ minHeight: 42, borderRadius: radius.card, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: colors.bgPure, fontSize: 13, fontWeight: '900' }}>{label}</Text>
       </View>
     </AnimatedPressable>
   );
 }
 
 function SmallAction({ label, onPress, danger = false }: { label: string; onPress: () => void; danger?: boolean }) {
-  const { colors } = useTheme();
-  const color = danger ? colors.danger : ACCENT;
+  const { colors, radius } = useTheme();
+  const color = danger ? colors.danger : colors.accent;
   return (
     <AnimatedPressable onPress={onPress} scaleValue={0.93} haptic="light" accessibilityRole="button" accessibilityLabel={label}>
       <View style={{
-        borderRadius: 999,
+        borderRadius: radius.full,
         minHeight: 34,
         paddingHorizontal: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: danger ? colors.dangerMuted : `${ACCENT}22`,
+        backgroundColor: danger ? colors.dangerMuted : `${colors.accent}22`,
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: danger ? colors.danger : `${ACCENT}55`,
+        borderColor: danger ? colors.danger : `${colors.accent}55`,
       }}>
         <Text style={{ color, fontSize: 11, fontWeight: '900' }}>{label}</Text>
       </View>
@@ -1867,7 +1867,7 @@ function ActionButton({ icon, label, onPress, filled = false }: {
   onPress: () => void;
   filled?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   // flex lives on the plain wrapper View — a flex prop on AnimatedPressable
   // would drop and collapse the cell to content width.
   return (
@@ -1875,16 +1875,16 @@ function ActionButton({ icon, label, onPress, filled = false }: {
       <AnimatedPressable onPress={onPress} scaleValue={0.95} haptic="light" accessibilityRole="button" accessibilityLabel={label}>
         <View style={{
           minHeight: 50,
-          borderRadius: 16,
+          borderRadius: radius.card,
           alignItems: 'center',
           justifyContent: 'center',
           gap: 4,
-          backgroundColor: filled ? ACCENT : colors.surface,
+          backgroundColor: filled ? colors.accent : colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: filled ? ACCENT : colors.border,
+          borderColor: filled ? colors.accent : colors.border,
         }}>
           {icon}
-          <Text style={{ color: filled ? '#fff' : colors.textSecondary, fontSize: 11, fontWeight: '900' }}>{label}</Text>
+          <Text style={{ color: filled ? colors.bgPure : colors.textSecondary, fontSize: 11, fontWeight: '900' }}>{label}</Text>
         </View>
       </AnimatedPressable>
     </View>

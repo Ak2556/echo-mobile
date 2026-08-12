@@ -11,12 +11,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
 import { speak, isTtsAvailable } from '../../lib/tts';
 import {
-  ArrowLeft, PaperPlaneTilt, Quotes, SealCheck, Flag,
+  CaretLeft, PaperPlaneTilt, Quotes, SealCheck, Flag,
   Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple, SpeakerHigh,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
   Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
-  ChatCircleText,
+  ChatCircleText, Phone, VideoCamera, Smiley,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -225,8 +225,8 @@ function conversationStreak(messages: NormalizedMessage[], myId: string): number
   return streak;
 }
 
-function isGroupedWithPrev(msg: NormalizedMessage, prev: NormalizedMessage | undefined): boolean {
-  if (!prev || msg.senderId !== prev.senderId) return false;
+function isGroupedWithPrev(msg: NormalizedMessage | undefined, prev: NormalizedMessage | undefined): boolean {
+  if (!msg || !prev || msg.senderId !== prev.senderId) return false;
   if (prev.deletedAt || msg.deletedAt) return false;
   const gap = new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime();
   return gap < 3 * 60 * 1000;
@@ -725,7 +725,7 @@ function MessageEffect({ kind, onDone }: { kind: EffectKind; onDone: () => void 
 // ─── DMBubble ────────────────────────────────────────────────────────────────
 
 function DMBubble({
-  message, isMe, showReadReceipt, myUserId, grouped, animate, translation, translating, saved,
+  message, isMe, showReadReceipt, myUserId, groupedWithPrev, groupedWithNext, animate, translation, translating, saved,
   selectionMode, selected, onSelectToggle,
   onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry, quickReaction = '❤️',
 }: {
@@ -734,7 +734,8 @@ function DMBubble({
   quickReaction?: string;
   showReadReceipt: boolean;
   myUserId: string;
-  grouped: boolean;
+  groupedWithPrev: boolean;
+  groupedWithNext: boolean;
   animate?: boolean;
   translation?: string;
   translating?: boolean;
@@ -806,8 +807,8 @@ function DMBubble({
     transform: [{ scale: 0.6 + heartPop.value * 0.9 }],
   }));
 
-  const bubbleBg = isMe ? colors.accent : colors.surface;
-  const textColor = isMe ? '#fff' : colors.text;
+  const bubbleBg = isMe ? (colors.isDark ? '#38383D' : '#E5E5EA') : (colors.isDark ? '#2A2A2D' : colors.surfaceHover);
+  const textColor = colors.text;
 
   const renderContent = () => {
     if (isDeleted) {
@@ -991,22 +992,13 @@ function DMBubble({
             overflow: 'hidden',
             // Asymmetric corners give a speech-bubble tail toward the sender's
             // side, so even a one-word message reads as a bubble, not a circle.
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            borderBottomLeftRadius: isMe ? 20 : 7,
-            borderBottomRightRadius: isMe ? 7 : 20,
-            backgroundColor: isMe ? bubbleBg : colors.surfaceHover,
+            borderTopLeftRadius: isMe ? 20 : (groupedWithPrev ? 4 : 20),
+            borderTopRightRadius: isMe ? (groupedWithPrev ? 4 : 20) : 20,
+            borderBottomLeftRadius: isMe ? 20 : (groupedWithNext ? 4 : 7),
+            borderBottomRightRadius: isMe ? (groupedWithNext ? 4 : 7) : 20,
+            backgroundColor: bubbleBg,
           }}>
-            {/* Hue-agnostic gloss: a soft top highlight fading to a faint bottom
-                shade gives the bubble depth on any accent instead of a flat slab. */}
-            {isMe && (
-              <LinearGradient
-                pointerEvents="none"
-                colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.10)']}
-                locations={[0, 0.55, 1]}
-                style={StyleSheet.absoluteFill}
-              />
-            )}
+
             {message.replyToId && (
               <ReplyCard
                 content={message.replyToContent}
@@ -1027,7 +1019,7 @@ function DMBubble({
   return (
     <Animated.View
       entering={animate ? FadeInUp.springify().damping(19).stiffness(190).mass(0.55) : undefined}
-      style={{ paddingVertical: grouped ? 1 : 4, backgroundColor: selected ? colors.accentMuted : 'transparent' }}
+      style={{ paddingVertical: groupedWithPrev ? 1 : 4, backgroundColor: selected ? colors.accentMuted : 'transparent' }}
     >
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
       {selectionMode && (
@@ -1093,7 +1085,7 @@ function DMBubble({
             <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700' }}>{ttx("Failed to send — tap to retry")}</Text>
           </View>
         </Pressable>
-      ) : !grouped && (
+      ) : !groupedWithNext && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3, marginHorizontal: 2 }}>
           {saved && <BookmarkSimple color={colors.accent} size={11} weight="fill" />}
           <Text style={{ color: colors.textMuted, fontSize: 10 }}>{formatTime(message.createdAt)}</Text>
@@ -2614,20 +2606,26 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
 
   // Build list data with date separators + the unread divider
   type ListRow =
-    | { type: 'message'; msg: NormalizedMessage; grouped: boolean }
+    | { type: 'message'; msg: NormalizedMessage; groupedWithPrev: boolean; groupedWithNext: boolean }
     | { type: 'date'; label: string }
     | { type: 'unread' };
 
   const listData: ListRow[] = [];
   visibleMessages.forEach((msg, i) => {
     const prev = visibleMessages[i - 1];
+    const next = visibleMessages[i + 1];
     if (!prev || !isSameDay(msg.createdAt, prev.createdAt)) {
       listData.push({ type: 'date', label: getDateLabel(msg.createdAt) });
     }
     if (!searchTerm && msg.id === firstUnreadIdRef.current) {
       listData.push({ type: 'unread' });
     }
-    listData.push({ type: 'message', msg, grouped: isGroupedWithPrev(msg, prev) });
+    listData.push({ 
+      type: 'message', 
+      msg, 
+      groupedWithPrev: isGroupedWithPrev(msg, prev),
+      groupedWithNext: isGroupedWithPrev(next, msg)
+    });
   });
 
   // Loading / not found
@@ -2637,7 +2635,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Back to messages")}>
-              <ArrowLeft color={colors.text} size={24} />
+              <CaretLeft color={colors.text} size={24} />
             </AnimatedPressable>
           </View>
           <FeedCardSkeleton /><FeedCardSkeleton /><FeedCardSkeleton />
@@ -2678,7 +2676,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         borderBottomWidth: 1, borderBottomColor: colors.border,
       }}>
         <AnimatedPressable onPress={() => safeBack('/messages')} style={{ padding: 4, marginRight: 10 }} scaleValue={0.88} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Back to messages")}>
-          <ArrowLeft color={colors.text} size={24} />
+          <CaretLeft color={colors.text} size={24} />
         </AnimatedPressable>
 
         <Pressable
@@ -2726,41 +2724,25 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
           <IconButton
-            icon={searchOpen ? X : MagnifyingGlass}
-            label={searchOpen ? 'Close message search' : 'Search messages'}
-            onPress={() => setSearchOpen(open => { const next = !open; if (!next) setSearchQuery(''); return next; })}
+            icon={Phone}
+            label={ttx("Audio call")}
+            onPress={() => {}}
             size="sm"
-            role={searchOpen ? 'active' : 'resting'}
-            color={searchOpen ? colors.accent : colors.textSecondary}
-            variant={searchOpen ? 'tinted' : 'surface'}
+            role="active"
+            color={colors.accent}
+            variant="surface"
             hitSize={38}
           />
-
-          {conversationSaved.length > 0 && !searchOpen ? (
-            <IconButton
-              icon={BookmarkSimple}
-              label={ttx("Saved messages")}
-              onPress={() => setShowSaved(true)}
-              size="sm"
-              role="active"
-              color={colors.accent}
-              variant="surface"
-              hitSize={38}
-            />
-          ) : null}
-
-          {!searchOpen ? (
-            <IconButton
-              icon={PaintBrush}
-              label={ttx("Chat wallpaper")}
-              onPress={() => setShowWallpaper(true)}
-              size="sm"
-              role="resting"
-              color={colors.textSecondary}
-              variant="surface"
-              hitSize={38}
-            />
-          ) : null}
+          <IconButton
+            icon={VideoCamera}
+            label={ttx("Video call")}
+            onPress={() => {}}
+            size="sm"
+            role="active"
+            color={colors.accent}
+            variant="surface"
+            hitSize={38}
+          />
         </View>
       </View>
 
@@ -2900,7 +2882,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           renderItem={({ item }) => {
             if (item.type === 'date') return <DateSeparator label={item.label} />;
             if (item.type === 'unread') return <UnreadDivider count={unreadPartnerMsgs.length} loading={catchupLoading} onCatchUp={handleCatchUp} />;
-            const { msg, grouped } = item;
+            const { msg, groupedWithPrev, groupedWithNext } = item;
             const firstAppearance = !animatedIds.current.has(msg.id);
             if (firstAppearance) animatedIds.current.add(msg.id);
             const isFresh = new Date(msg.createdAt).getTime() > openedAtRef.current - 2000;
@@ -2918,7 +2900,8 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                 onSelectToggle={() => toggleSelect(msg.id)}
                 showReadReceipt={readReceipts}
                 myUserId={myId}
-                grouped={grouped}
+                groupedWithPrev={groupedWithPrev}
+                groupedWithNext={groupedWithNext}
                 onLongPress={() => handleLongPress(msg)}
                 onReactionToggle={(val, hasReacted) => {
                   if (!remote) return;
@@ -3155,12 +3138,12 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
 
         {/* Input bar */}
         <View style={{
-          flexDirection: 'row', alignItems: 'flex-end',
-          paddingHorizontal: 12,
+          flexDirection: 'row', alignItems: 'center',
+          paddingHorizontal: 16,
           paddingTop: 8,
-          paddingBottom: Math.max(8, Platform.OS === 'ios' ? 8 : insets.bottom + 8),
-          borderTopWidth: 1, borderTopColor: colors.border,
-          gap: 8,
+          paddingBottom: Math.max(12, Platform.OS === 'ios' ? 12 : insets.bottom + 12),
+          backgroundColor: colors.bg,
+          gap: 12,
         }}>
           {isRecording ? (
             <>
@@ -3211,40 +3194,37 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
             </>
           ) : (
             <>
-              {/* Image picker */}
+              {/* Image picker (Plus button) */}
               {!editingMessage && (
                 <Pressable
                   onPress={() => setAttachmentMenuOpen(open => !open)}
                   disabled={imageUploading}
                   accessibilityRole="button"
-                  accessibilityLabel={ttx("Add attachment")}
                   style={{
-                    width: 40, height: 40, borderRadius: 20,
+                    width: 36, height: 36, borderRadius: 18,
+                    backgroundColor: colors.accent,
                     alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: colors.surface,
-                    borderWidth: 1, borderColor: colors.border,
                   }}
                 >
                   {imageUploading
-                    ? <ActivityIndicator size="small" color={colors.accent} />
-                    : <Plus color={colors.textSecondary} size={19} weight={attachmentMenuOpen ? 'fill' : 'regular'} />
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <Plus color="#fff" size={18} weight={attachmentMenuOpen ? 'fill' : 'bold'} />
                   }
                 </Pressable>
               )}
 
+              {/* Text Input Pill */}
               <View style={{
-                flex: 1, minHeight: 44,
-                justifyContent: 'center',
-                paddingHorizontal: 14, paddingVertical: 8,
-                backgroundColor: colors.inputBg,
-                borderWidth: 1, borderColor: editingMessage ? colors.accent : colors.inputBorder,
-                borderRadius: radius.card,
+                flex: 1, minHeight: 40,
+                flexDirection: 'row', alignItems: 'center',
+                paddingHorizontal: 16, paddingVertical: 8,
+                backgroundColor: colors.isDark ? '#2A2A2D' : colors.inputBg,
+                borderRadius: 20,
               }}>
                 <RNTextInput
                   ref={inputRef}
-                  accessibilityLabel={ttx("Message input")}
-                  style={{ color: colors.text, fontSize: 16, lineHeight: 22, maxHeight: 120 }}
-                  placeholder={editingMessage ? 'Edit message…' : 'Message…'}
+                  style={{ flex: 1, color: colors.text, fontSize: 15, maxHeight: 120, paddingTop: 0, paddingBottom: 0 }}
+                  placeholder={editingMessage ? 'Edit message…' : 'Aa'}
                   placeholderTextColor={colors.textMuted}
                   value={text}
                   onChangeText={handleTextChange}
@@ -3253,26 +3233,27 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                   multiline
                   maxLength={2000}
                 />
+                <Smiley color={colors.textMuted} size={22} weight="regular" style={{ marginLeft: 8 }} />
               </View>
 
-              {/* Empty composer in a remote thread → mic (voice note); else send.
-                  Pop each state in with a spring so the swap feels alive, not a
-                  hard cut, the moment the first character lands. */}
+              {/* Empty composer in a remote thread → Camera & Mic; else send. */}
               {!canSend && remote && !editingMessage ? (
-                <Animated.View key="mic" entering={ZoomIn.springify().damping(14).stiffness(220)}>
-                  <AnimatedPressable
-                    onPress={() => void startVoiceRecording()}
-                    scaleValue={0.9}
-                    haptic="medium"
-                    style={{
-                      width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-                      backgroundColor: colors.surfaceHover,
-                    }}
-                    accessibilityLabel={ttx("Record voice message")}
-                  >
-                    <Microphone color={colors.textSecondary} size={19} weight="fill" />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginLeft: 4 }}>
+                  <AnimatedPressable onPress={() => void handleTakePhoto()} scaleValue={0.9} style={{ alignItems: 'center', justifyContent: 'center' }}>
+                    <Camera color={colors.textSecondary} size={24} weight="regular" />
                   </AnimatedPressable>
-                </Animated.View>
+                  <Animated.View key="mic" entering={ZoomIn.springify().damping(14).stiffness(220)}>
+                    <AnimatedPressable
+                      onPress={() => void startVoiceRecording()}
+                      scaleValue={0.9}
+                      haptic="medium"
+                      style={{ alignItems: 'center', justifyContent: 'center' }}
+                      accessibilityLabel={ttx("Record voice message")}
+                    >
+                      <Microphone color={colors.textSecondary} size={24} weight="regular" />
+                    </AnimatedPressable>
+                  </Animated.View>
+                </View>
               ) : (
                 <Animated.View key="send" entering={ZoomIn.springify().damping(14).stiffness(220)}>
                   <AnimatedPressable
@@ -3283,13 +3264,13 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                     accessibilityRole="button"
                     accessibilityLabel={editingMessage ? 'Save edit' : 'Send message'}
                     style={{
-                      width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+                      width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
                       backgroundColor: canSend ? (editingMessage ? colors.success ?? colors.accent : colors.accent) : colors.surfaceHover,
                     }}
                   >
                     {editingMessage
-                      ? <PencilSimple color="#fff" size={18} weight="fill" />
-                      : <PaperPlaneTilt color="#fff" size={18} weight="fill" />
+                      ? <PencilSimple color="#fff" size={16} weight="fill" />
+                      : <PaperPlaneTilt color="#fff" size={16} weight="fill" />
                     }
                   </AnimatedPressable>
                 </Animated.View>
@@ -3307,16 +3288,17 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         onRequestClose={() => setImagePreviewUrl(null)}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.94)' }}>
-          <SafeAreaView style={{ flex: 1 }}>
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              paddingHorizontal: 16,
-              paddingVertical: 10,
-            }}>
-              <Pressable
-                onPress={() => setImagePreviewUrl(null)}
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            paddingHorizontal: 16,
+            paddingTop: Math.max(insets.top, 40) + 10,
+            paddingBottom: 10,
+            zIndex: 10,
+          }}>
+            <Pressable
+              onPress={() => setImagePreviewUrl(null)}
                 accessibilityRole="button"
                 accessibilityLabel={ttx("Close image preview")}
                 style={({ pressed }) => ({
@@ -3340,7 +3322,6 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
                 transition={120}
               />
             ) : null}
-          </SafeAreaView>
         </View>
       </Modal>
 

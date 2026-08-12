@@ -1,23 +1,12 @@
 import React from 'react';
 import { View, Platform, StyleSheet, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useTheme } from '../../lib/theme';
+import { useTheme, GLASS_INTENSITY } from '../../lib/theme';
 import { PerformanceMode, usePerformanceProfile } from '../../lib/performance';
 
-type GlassVariant = 'light' | 'medium' | 'heavy' | 'ultra';
+type GlassVariant = keyof typeof GLASS_INTENSITY;
 
-// Variant intensities are deliberately conservative. iOS BlurView is one of
-// the most expensive components per-pixel — every 10-point bump in intensity
-// roughly doubles GPU cost. The previous values (55/75/90/100) read as
-// "smoked glass" but ate 60fps on lower-end devices. The new set keeps the
-// visual depth on hero surfaces (HeroCard, tab bar) while dropping the
-// per-pixel cost on the dozens of card-level GlassPanels by ~60%.
-const VARIANT_INTENSITY: Record<GlassVariant, number> = {
-  light:  0,
-  medium: 18,
-  heavy:  30,
-  ultra:  42,
-};
+const VARIANT_INTENSITY = GLASS_INTENSITY;
 
 interface GlassPanelProps {
   children: React.ReactNode;
@@ -42,19 +31,22 @@ export function GlassPanel({
   style,
   variant,
   intensity,
-  borderRadius = 16,
+  borderRadius: customBorderRadius,
   contentStyle,
   tintOverride,
   bottomHighlight = false,
   elevated = false,
   performanceMode = 'default',
 }: GlassPanelProps) {
-  const { colors } = useTheme();
+  const { colors, radius, glass } = useTheme();
   const performance = usePerformanceProfile(performanceMode);
 
+  const borderRadius = customBorderRadius ?? radius.card;
+  const intensityMap = glass ?? VARIANT_INTENSITY;
+
   const baseIntensity = variant
-    ? VARIANT_INTENSITY[variant]
-    : (intensity ?? VARIANT_INTENSITY.medium);
+    ? intensityMap[variant]
+    : (intensity ?? intensityMap.medium);
   const blurIntensity = Math.min(baseIntensity, performance.maxBlurIntensity);
 
   const fill = tintOverride ?? (colors.glassFill ?? 'rgba(255,255,255,0.07)');

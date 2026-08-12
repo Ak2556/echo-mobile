@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { Platform } from 'react-native';
 import { withTimeout } from './net';
 import * as FileSystem from 'expo-file-system/legacy';
 import { FeedItem, Comment, EvolutionGroup, RemixTreeNode, PerspectiveCounts, PerspectiveType } from '../types';
@@ -160,8 +161,9 @@ async function signedDmMediaUrl(value: string | null | undefined): Promise<strin
   const path = dmMediaPathFromStoredValue(value);
   if (!path) return null;
 
-  const { data } = supabase.storage.from(DM_MEDIA_BUCKET).getPublicUrl(path);
-  return data.publicUrl || value || null;
+  const { data, error } = await supabase.storage.from(DM_MEDIA_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 7); // 7 days
+  if (error || !data?.signedUrl) return value || null;
+  return data.signedUrl;
 }
 
 function normalizeImageContentType(input: string | null | undefined): string {
@@ -191,10 +193,11 @@ async function imageUploadBody(image: UploadableImage): Promise<Blob | ArrayBuff
 async function uploadLocalFileWithSignedUrl(
   uri: string,
   path: string,
-  contentType: string
+  contentType: string,
+  bucket: string = 'echo-media'
 ): Promise<void> {
   const { data: signed, error: signedError } = await supabase.storage
-    .from('echo-media')
+    .from(bucket)
     .createSignedUploadUrl(path);
   if (signedError) throw signedError;
 
@@ -3176,12 +3179,20 @@ export async function sendDMImageToConversation(
   const ext = imageExtFromContentType(contentType);
   const path = `${uid}/${conversationId}/${Date.now()}.${ext}`;
 
-  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-  const bytes = base64ToArrayBuffer(base64);
-  const { error: upErr } = await supabase.storage
-    .from(DM_MEDIA_BUCKET)
-    .upload(path, bytes, { contentType, cacheControl: '31536000' });
-  if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
+  if (Platform.OS === 'web') {
+    const response = await fetch(uri);
+    const body = await response.blob();
+    const { error: upErr } = await supabase.storage
+      .from(DM_MEDIA_BUCKET)
+      .upload(path, body, { contentType, cacheControl: '31536000' });
+    if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
+  } else {
+    try {
+      await uploadLocalFileWithSignedUrl(uri, path, contentType, DM_MEDIA_BUCKET);
+    } catch (upErr: any) {
+      throw new Error(`Image upload failed: ${upErr.message}`);
+    }
+  }
 
   const trimmedCaption = caption?.trim();
   try {
@@ -3219,12 +3230,20 @@ export async function sendDMVoiceToConversation(
   if (!uid) throw new Error('Not signed in');
 
   const path = `${uid}/${conversationId}/${Date.now()}.m4a`;
-  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-  const bytes = base64ToArrayBuffer(base64);
-  const { error: upErr } = await supabase.storage
-    .from(DM_MEDIA_BUCKET)
-    .upload(path, bytes, { contentType: 'audio/mp4', cacheControl: '31536000' });
-  if (upErr) throw new Error(`Voice upload failed: ${upErr.message}`);
+  if (Platform.OS === 'web') {
+    const response = await fetch(uri);
+    const body = await response.blob();
+    const { error: upErr } = await supabase.storage
+      .from(DM_MEDIA_BUCKET)
+      .upload(path, body, { contentType: 'audio/mp4', cacheControl: '31536000' });
+    if (upErr) throw new Error(`Voice upload failed: ${upErr.message}`);
+  } else {
+    try {
+      await uploadLocalFileWithSignedUrl(uri, path, 'audio/mp4', DM_MEDIA_BUCKET);
+    } catch (upErr: any) {
+      throw new Error(`Voice upload failed: ${upErr.message}`);
+    }
+  }
 
   try {
     return await insertRemoteDMInConversation(conversationId, {
@@ -3489,7 +3508,7 @@ export async function markMessagesRead(conversationId: string): Promise<void> {
     .eq('conversation_id', conversationId)
     .neq('sender_id', uid)
     .is('read_at', null);
-  // Fire-and-forget from the thread view — log instead of throwing.
+  
   if (error) captureException(error, { tags: { fn: 'markMessagesRead' } });
 }
 

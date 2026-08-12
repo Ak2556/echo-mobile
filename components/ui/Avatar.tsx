@@ -21,6 +21,7 @@ export function Avatar({
   size = 44,
   online = false,
   zoomable = true,
+  squircle = false,
   children,
 }: {
   name: string;
@@ -31,6 +32,8 @@ export function Avatar({
   online?: boolean;
   /** tap the photo to inspect it fullscreen */
   zoomable?: boolean;
+  /** use a rounded square instead of a circle */
+  squircle?: boolean;
   /** optional glyph instead of the initial (e.g. group icon) */
   children?: React.ReactNode;
 }) {
@@ -39,12 +42,13 @@ export function Avatar({
   const [viewerOpen, setViewerOpen] = useState(false);
   const bg = warmAvatarColor(color, name);
   const showPhoto = showAvatars && !!url && !imgError;
+  const r = squircle ? size * 0.33 : size / 2;
   const content = (
     <>
       {showPhoto ? (
         <Image
           source={{ uri: url! }}
-          style={{ width: size, height: size, borderRadius: size / 2 }}
+          style={{ width: size, height: size, borderRadius: r }}
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={150}
@@ -52,7 +56,7 @@ export function Avatar({
         />
       ) : (
         <View style={{
-          width: size, height: size, borderRadius: size / 2,
+          width: size, height: size, borderRadius: r,
           backgroundColor: bg,
           alignItems: 'center', justifyContent: 'center',
         }}>

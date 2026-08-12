@@ -49,11 +49,11 @@ export function MiniCommandDeck({
   chips?: string[];
   compact?: boolean;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <GlassPanel
       variant="medium"
-      borderRadius={compact ? 18 : 22}
+      borderRadius={compact ? radius.xl : radius.card + 8}
       elevated={!compact}
       style={{ marginBottom: compact ? 10 : 16, borderColor: `${accent}38` }}
       contentStyle={{ padding: compact ? 11 : 16 }}
@@ -66,7 +66,7 @@ export function MiniCommandDeck({
         pointerEvents="none"
       />
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: compact ? 9 : 12 }}>
-        <View style={{ width: compact ? 5 : 6, alignSelf: 'stretch', minHeight: compact ? 38 : 62, borderRadius: 99, backgroundColor: accent }} />
+        <View style={{ width: compact ? 5 : 6, alignSelf: 'stretch', minHeight: compact ? 38 : 62, borderRadius: radius.full, backgroundColor: accent }} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.display, { color: colors.text, fontSize: compact ? 16 : 21, lineHeight: compact ? 20 : 26 }]} numberOfLines={compact ? 1 : 2}>
             {title}
@@ -84,7 +84,7 @@ export function MiniCommandDeck({
             style={{
               flex: 1,
               minHeight: compact ? 48 : 70,
-              borderRadius: compact ? 12 : 15,
+              borderRadius: compact ? radius.md : radius.card,
               padding: compact ? 8 : 11,
               backgroundColor: colors.surfaceHover,
               borderWidth: StyleSheet.hairlineWidth,
@@ -124,18 +124,18 @@ export function MiniHero({
   subtitle?: string;
   stats?: MiniStat[];
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <GlassPanel
       variant="medium"
-      borderRadius={24}
+      borderRadius={radius.card + 10}
       elevated
       style={{ marginBottom: 14, borderColor: `${accent}33` }}
       contentStyle={{ padding: 18 }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {icon ? (
-          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 46, height: 46, borderRadius: radius.card, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
             {icon}
           </View>
         ) : null}
@@ -157,11 +157,11 @@ export function MiniHero({
 
 /** One stat cell — Fraunces value over an eyebrow label. Fills its flex parent. */
 export function MiniStatCard({ value, label, accent }: { value: string; label: string; accent?: string }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <View style={{
       flex: 1,
-      borderRadius: 14,
+      borderRadius: radius.card,
       paddingVertical: 12,
       paddingHorizontal: 12,
       backgroundColor: colors.surface,
@@ -189,7 +189,7 @@ export function MiniChip({
   /** optional glyph before the label — receives no color, so pass a colored icon */
   icon?: React.ReactNode;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -203,7 +203,7 @@ export function MiniChip({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        borderRadius: 999,
+        borderRadius: radius.full,
         paddingHorizontal: 13,
         paddingVertical: 8,
         backgroundColor: active ? accent : colors.surfaceHover,
@@ -231,11 +231,11 @@ export function MiniCard({
   padding?: number;
   style?: ViewStyle;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <GlassPanel
       variant="medium"
-      borderRadius={20}
+      borderRadius={radius.card + 6}
       elevated={elevated}
       style={{ borderColor: accent ? `${accent}2E` : colors.glassBorder, ...(style ?? {}) }}
       contentStyle={{ padding }}
@@ -316,7 +316,7 @@ export function MiniButton({
   icon?: React.ReactNode;
   style?: ViewStyle;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const filled = variant === 'primary';
   return (
     <AnimatedPressable
@@ -333,7 +333,7 @@ export function MiniButton({
         justifyContent: 'center',
         gap: 8,
         minHeight: 48,
-        borderRadius: 16,
+        borderRadius: radius.xl,
         paddingHorizontal: 20,
         overflow: 'hidden',
         backgroundColor: filled ? accent : colors.surface,
@@ -394,7 +394,7 @@ export function MiniInput({
   autoFocus?: boolean;
   style?: StyleProp<TextStyle>;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <TextInput
       value={value}
@@ -406,10 +406,10 @@ export function MiniInput({
       autoFocus={autoFocus}
       style={[{
         minHeight: multiline ? 80 : 48,
-        borderRadius: 14,
+        borderRadius: radius.card,
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: value ? `${accent ?? colors.accent}66` : colors.glassBorder,
-        backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+        borderColor: value ? `${accent ?? colors.accent}66` : colors.inputBorder,
+        backgroundColor: colors.inputBg,
         color: colors.text,
         paddingHorizontal: 14,
         paddingVertical: multiline ? 12 : 10,
