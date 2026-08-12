@@ -249,6 +249,8 @@ export default function NotificationsScreen() {
       router.push('/appeal');
     } else if (n.type === 'report_resolved') {
       router.push('/my-reports');
+    } else if (n.type === 'dm' && n.targetId) {
+      router.push(`/messages/${n.targetId}`);
     } else if (n.targetId) {
       router.push(`/thread/${n.targetId}`);
     }
