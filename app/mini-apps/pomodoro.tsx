@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import * as Haptics from 'expo-haptics';
+import { tap } from '../../lib/haptics';
 import { type AudioPlayer } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
 import { AppState, View, Text, TextInput, Pressable, StyleSheet, Modal, ScrollView, Switch } from 'react-native';
@@ -39,23 +39,29 @@ import { localDayKey } from '../../lib/localDate';
 
 type Mode = PomodoroMode;
 
-const MODE_META: Record<Mode, { label: string; marker: string; color: string }> = {
-  focus: { label: 'Focus', marker: 'FO', color: '#C65F3F' },
-  short: { label: 'Short Break', marker: 'SB', color: '#4E8B7A' },
-  long: { label: 'Long Break', marker: 'LB', color: '#4E7A8B' },
+const MODE_META: Record<Mode, { label: string; marker: string }> = {
+  focus: { label: 'Focus', marker: 'FO' },
+  short: { label: 'Short Break', marker: 'SB' },
+  long: { label: 'Long Break', marker: 'LB' },
 };
 
-function timerColor(mode: Mode, remainingRatio: number): string {
+function modeColor(mode: Mode, colors: any): string {
+  if (mode === 'short') return colors.success;
+  if (mode === 'long') return colors.accent;
+  return colors.warning;
+}
+
+function timerColor(mode: Mode, remainingRatio: number, colors: any): string {
   const clamped = Math.max(0, Math.min(1, remainingRatio));
   if (mode !== 'focus') {
-    if (clamped > 0.66) return '#4E8B7A';
-    if (clamped > 0.33) return '#4E7A8B';
-    return '#5E748B';
+    if (clamped > 0.66) return colors.success;
+    if (clamped > 0.33) return colors.accent;
+    return colors.textMuted;
   }
-  if (clamped > 0.66) return '#4E8B7A';
-  if (clamped > 0.33) return '#C6A34A';
-  if (clamped > 0.15) return '#D97745';
-  return '#E84848';
+  if (clamped > 0.66) return colors.success;
+  if (clamped > 0.33) return colors.warning;
+  if (clamped > 0.15) return colors.warning;
+  return colors.danger;
 }
 
 function timerPhase(mode: Mode, remainingRatio: number): string {
@@ -89,19 +95,19 @@ function Stepper({ label, value, unit, min, max, step = 1, onChange, accent }: {
   label: string; value: number; unit: string; min: number; max: number; step?: number;
   onChange: (v: number) => void; accent: string;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
       <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '600', flex: 1 }}>{tt(label)}</Text>
-      <AnimatedPressable onPress={() => onChange(Math.max(min, value - step))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 10, padding: 8 }}>
+      <AnimatedPressable onPress={() => onChange(Math.max(min, value - step))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md, padding: 8 }}>
         <Minus color={colors.text} size={13} weight="bold" />
       </AnimatedPressable>
       <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', minWidth: 64, textAlign: 'center', fontVariant: ['tabular-nums'] }}>
         {value} {tt(unit)}
       </Text>
-      <AnimatedPressable onPress={() => onChange(Math.min(max, value + step))} scaleValue={0.85} haptic="light" style={{ backgroundColor: accent, borderRadius: 10, padding: 8 }}>
-        <Plus color="#fff" size={13} weight="bold" />
+      <AnimatedPressable onPress={() => onChange(Math.min(max, value + step))} scaleValue={0.85} haptic="light" style={{ backgroundColor: accent, borderRadius: radius.md, padding: 8 }}>
+        <Plus color={colors.bgPure} size={13} weight="bold" />
       </AnimatedPressable>
     </View>
   );
@@ -112,11 +118,11 @@ function SettingsSheet({ settings, onSave, onClose }: {
   onSave: (s: PomodoroSettings) => void;
   onClose: () => void;
 }) {
-  const { colors, switchTrack } = useTheme();
+  const { colors, switchTrack, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const [s, setS] = useState(settings);
-  const accent = MODE_META.focus.color;
+  const accent = modeColor("focus", colors);
 
   return (
     <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
@@ -141,9 +147,9 @@ function SettingsSheet({ settings, onSave, onClose }: {
           <AnimatedPressable
             onPress={() => { onSave(s); onClose(); }}
             scaleValue={0.96} haptic="medium"
-            style={{ backgroundColor: accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 12 }}
+            style={{ backgroundColor: accent, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center', marginTop: 12 }}
           >
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{tt('Save Settings')}</Text>
+            <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{tt('Save Settings')}</Text>
           </AnimatedPressable>
         </ScrollView>
       </View>
@@ -152,7 +158,7 @@ function SettingsSheet({ settings, onSave, onClose }: {
 }
 
 function StageRail({ mode, elapsedRatio, accent }: { mode: Mode; elapsedRatio: number; accent: string }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const stages = mode === 'focus'
     ? ['Settle', 'Build', 'Push', 'Ship']
@@ -170,7 +176,7 @@ function StageRail({ mode, elapsedRatio, accent }: { mode: Mode; elapsedRatio: n
             style={{
               flex: 1,
               minHeight: 34,
-              borderRadius: 13,
+              borderRadius: radius.md,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: active ? `${accent}22` : colors.surface,
@@ -207,7 +213,7 @@ function TimerInsightStrip({
   dailyGoal: number;
   accent: string;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const chips = [
     { key: 'finish', icon: <Flag color={accent} size={14} weight="fill" />, label: running ? `${tt('Ends')} ${endAt}` : tt('Ready') },
@@ -223,7 +229,7 @@ function TimerInsightStrip({
             style={{
               flex: 1,
               minHeight: 38,
-              borderRadius: 14,
+              borderRadius: radius.card,
               paddingHorizontal: 8,
               alignItems: 'center',
               justifyContent: 'center',
@@ -242,7 +248,7 @@ function TimerInsightStrip({
         ))}
       </View>
       {label.trim() ? (
-        <View style={{ borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: `${accent}14`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${accent}44` }}>
+        <View style={{ borderRadius: radius.card, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: `${accent}14`, borderWidth: StyleSheet.hairlineWidth, borderColor: `${accent}44` }}>
           <Text style={{ color: accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.7, textTransform: 'uppercase', marginBottom: 2 }}>
             {mode === 'focus' ? tt('Current focus') : tt('Break context')}
           </Text>
@@ -266,7 +272,7 @@ function FocusPresetRail({
   accent: string;
   onSelect: (minutes: number) => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   return (
     <View style={{ marginBottom: 18 }}>
@@ -291,7 +297,7 @@ function FocusPresetRail({
               style={{
                 flex: 1,
                 minHeight: 58,
-                borderRadius: 17,
+                borderRadius: radius.card,
                 paddingHorizontal: 10,
                 justifyContent: 'center',
                 backgroundColor: selected ? accent : (colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)'),
@@ -300,7 +306,7 @@ function FocusPresetRail({
                 opacity: running && !selected ? 0.45 : 1,
               }}
             >
-              <Text style={{ color: selected ? '#fff' : colors.text, fontSize: 15, fontWeight: '900', textAlign: 'center' }}>{minutes}m</Text>
+              <Text style={{ color: selected ? colors.bgPure : colors.text, fontSize: 15, fontWeight: '900', textAlign: 'center' }}>{minutes}m</Text>
               <Text style={{ color: selected ? 'rgba(255,255,255,0.76)' : colors.textMuted, fontSize: 11, fontWeight: '800', textAlign: 'center', marginTop: 2 }}>
                 {tt(presetName(minutes))}
               </Text>
@@ -327,7 +333,7 @@ function FocusIntelligencePanel({
   nextLabel: string;
   strongestLabel?: string;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const goalRatio = Math.min(1, stats.count / Math.max(stats.goal, 1));
   const tiles = [
@@ -336,9 +342,9 @@ function FocusIntelligencePanel({
     { label: tt('Streak'), value: `${streak}d`, detail: tt('proof') },
   ];
   return (
-    <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 14 }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 42, height: 42, borderRadius: radius.card, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
           <Lightning color={accent} size={20} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
@@ -348,12 +354,12 @@ function FocusIntelligencePanel({
           </Text>
         </View>
       </View>
-      <View style={{ height: 8, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-        <View style={{ width: `${goalRatio * 100}%`, height: '100%', borderRadius: 999, backgroundColor: accent }} />
+      <View style={{ height: 8, borderRadius: radius.full, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+        <View style={{ width: `${goalRatio * 100}%`, height: '100%', borderRadius: radius.full, backgroundColor: accent }} />
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {tiles.map(tile => (
-          <View key={tile.label} style={{ flex: 1, minHeight: 58, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View key={tile.label} style={{ flex: 1, minHeight: 58, borderRadius: radius.card, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.6 }}>{tile.label}</Text>
             <Text style={{ color: colors.text, fontSize: tile.value.length > 6 ? 13 : 16, fontWeight: '900', marginTop: 5 }} numberOfLines={1}>{tile.value}</Text>
             <Text style={{ color: accent, fontSize: 10.5, fontWeight: '800', marginTop: 1 }}>{tile.detail}</Text>
@@ -377,7 +383,7 @@ function FocusGarden({
   elapsedRatio: number;
   running: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const growth = Math.min(1, (stats.count + (running ? elapsedRatio : 0)) / Math.max(stats.goal, 1));
   const leafCount = Math.min(10, Math.max(2, Math.floor(growth * 8) + Math.min(2, streak)));
@@ -392,7 +398,7 @@ function FocusGarden({
   const leaves = Array.from({ length: 10 }, (_, index) => index);
 
   return (
-    <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
         <View style={{ width: 112, height: 112, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{
@@ -417,7 +423,7 @@ function FocusGarden({
                   top: 56 + Math.sin(angle) * distance - 5,
                   width: active ? 10 : 6,
                   height: active ? 10 : 6,
-                  borderRadius: 999,
+                  borderRadius: radius.full,
                   backgroundColor: active ? accent : colors.glassBorder,
                   opacity: active ? 0.95 : 0.38,
                 }}
@@ -445,8 +451,8 @@ function FocusGarden({
           <Text style={{ color: colors.textMuted, fontSize: 12.5, lineHeight: 17, fontWeight: '600' }}>
             {tt('Seed to forest. One focus block at a time.')}
           </Text>
-          <View style={{ height: 9, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden', marginTop: 14 }}>
-            <View style={{ width: `${growth * 100}%`, height: '100%', borderRadius: 999, backgroundColor: accent }} />
+          <View style={{ height: 9, borderRadius: radius.full, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden', marginTop: 14 }}>
+            <View style={{ width: `${growth * 100}%`, height: '100%', borderRadius: radius.full, backgroundColor: accent }} />
           </View>
           <View style={{ flexDirection: 'row', gap: 5, marginTop: 10 }}>
             {milestones.map(milestone => {
@@ -457,7 +463,7 @@ function FocusGarden({
                   style={{
                     flex: 1,
                     minHeight: 24,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: active ? `${accent}24` : colors.surface,
@@ -473,11 +479,11 @@ function FocusGarden({
             })}
           </View>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-            <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: colors.surface }}>
+            <View style={{ flex: 1, borderRadius: radius.card, padding: 10, backgroundColor: colors.surface }}>
               <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900' }}>{stats.count}/{stats.goal}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '800' }}>{tt('today')}</Text>
             </View>
-            <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: colors.surface }}>
+            <View style={{ flex: 1, borderRadius: radius.card, padding: 10, backgroundColor: colors.surface }}>
               <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900' }}>{streak}d</Text>
               <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '800' }}>{tt('streak')}</Text>
             </View>
@@ -497,12 +503,12 @@ function FocusBeatsPanel({
   playingBeat: FocusBeatId | null;
   onToggle: (beat: FocusBeatId) => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14 }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 40, height: 40, borderRadius: radius.card, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
           {playingBeat ? <SpeakerHigh color={accent} size={19} weight="fill" /> : <MusicNote color={accent} size={19} weight="bold" />}
         </View>
         <View style={{ flex: 1 }}>
@@ -526,7 +532,7 @@ function FocusBeatsPanel({
               style={{
                 width: '48.5%',
                 minHeight: 62,
-                borderRadius: 17,
+                borderRadius: radius.card,
                 paddingHorizontal: 13,
                 justifyContent: 'center',
                 backgroundColor: selected ? accent : colors.surface,
@@ -534,7 +540,7 @@ function FocusBeatsPanel({
                 borderColor: selected ? `${accent}AA` : colors.glassBorder,
               }}
             >
-              <Text style={{ color: selected ? '#fff' : colors.text, fontSize: 14.5, fontWeight: '900' }}>{item.name}</Text>
+              <Text style={{ color: selected ? colors.bgPure : colors.text, fontSize: 14.5, fontWeight: '900' }}>{item.name}</Text>
               <Text style={{ color: selected ? 'rgba(255,255,255,0.76)' : colors.textMuted, fontSize: 11.5, fontWeight: '700', marginTop: 3 }}>{item.detail}</Text>
             </AnimatedPressable>
           );
@@ -559,7 +565,7 @@ function FocusMomentumStrip({
   elapsedMinutes: number;
   running: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const liveMinutes = stats.minutes + elapsedMinutes;
   const rank = liveMinutes >= 180 ? 'Elite' : liveMinutes >= 120 ? 'Deep' : liveMinutes >= 60 ? 'Sharp' : liveMinutes >= 25 ? 'Warm' : 'Start';
@@ -577,7 +583,7 @@ function FocusMomentumStrip({
           style={{
             flex: 1,
             minHeight: 58,
-            borderRadius: 17,
+            borderRadius: radius.card,
             paddingHorizontal: 10,
             paddingVertical: 9,
             backgroundColor: colors.isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.035)',
@@ -595,7 +601,7 @@ function FocusMomentumStrip({
 }
 
 export default function PomodoroScreen() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const layout = useResponsiveLayout();
 
@@ -625,7 +631,7 @@ export default function PomodoroScreen() {
   const totalSecs = activeTotalSecs ?? (mode === 'focus' && draftTotalSecs ? draftTotalSecs : configuredTotalSecs);
   const remainingRatio = seconds / Math.max(totalSecs, 1);
   const elapsedRatio = totalSecs > 0 ? Math.max(0, Math.min(1, (totalSecs - seconds) / totalSecs)) : 0;
-  const accent = timerColor(mode, remainingRatio);
+  const accent = timerColor(mode, remainingRatio, colors);
   const endAtLabel = useMemo(() => {
     const activeEnd = activeRef.current?.endAt;
     if (running && activeEnd) return formatClockTime(new Date(activeEnd));
@@ -730,7 +736,7 @@ export default function PomodoroScreen() {
       setDraftTotalSecs(null);
       cancelTimerNotification(notificationId);
       await clearActivePomodoroTimer();
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      tap('success');
       if (completedMode === 'focus') {
         const d = docRef.current;
         const completedMinutes = Math.max(1, Math.round(completedTotalSeconds / 60));
@@ -929,16 +935,16 @@ export default function PomodoroScreen() {
   const elapsedFocusMinutes = mode === 'focus' ? Math.max(0, Math.floor((totalSecs - seconds) / 60)) : 0;
   const ring = Math.max(220, Math.min(layout.contentWidth - layout.gutter * 2, 260));
   const stroke = 12;
-  const radius = (ring - stroke * 2) / 2;
-  const circumference = 2 * Math.PI * radius;
+  const circleRadius = (ring - stroke * 2) / 2;
+  const circumference = 2 * Math.PI * circleRadius;
   const animatedCircleProps = useAnimatedProps(() => ({
     strokeDashoffset: circumference * progress.value,
     stroke: interpolateColor(
       progress.value,
       mode === 'focus' ? [0, 0.15, 0.33, 0.66, 1] : [0, 0.33, 0.66, 1],
       mode === 'focus'
-        ? ['#E84848', '#E84848', '#D97745', '#C6A34A', '#4E8B7A']
-        : ['#5E748B', '#5E748B', '#4E7A8B', '#4E8B7A'],
+        ? [colors.danger, colors.danger, colors.warning, colors.warning, colors.success]
+        : [colors.textMuted, colors.textMuted, colors.accent, colors.success],
     ),
   }));
   const pulseStyle = useAnimatedStyle(() => ({
@@ -958,10 +964,10 @@ export default function PomodoroScreen() {
 
   const HeaderRight = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <View style={{ backgroundColor: accent + '22', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: accent + '44' }}>
+      <View style={{ backgroundColor: accent + '22', borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: accent + '44' }}>
         <Text style={{ color: accent, fontWeight: '800', fontSize: 15, lineHeight: 18 }}>{stats.count}/{stats.goal}</Text>
       </View>
-      <AnimatedPressable onPress={() => setShowSettings(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }} accessibilityLabel={tt('Timer settings')}>
+      <AnimatedPressable onPress={() => setShowSettings(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }} accessibilityLabel={tt('Timer settings')}>
         <GearSix color={colors.textSecondary} size={17} weight="fill" />
       </AnimatedPressable>
     </View>
@@ -992,16 +998,16 @@ export default function PomodoroScreen() {
       />
       <StageRail mode={mode} elapsedRatio={elapsedRatio} accent={accent} />
       {/* Mode tabs */}
-      <GlassPanel variant="light" borderRadius={16} style={{ marginBottom: 18 }} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} style={{ marginBottom: 18 }} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }}>
         {(Object.keys(MODE_META) as Mode[]).map(m => (
           <Pressable
             key={m}
             onPress={() => switchMode(m)}
             style={{ flex: 1 }}
           >
-            <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: mode === m ? MODE_META[m].color : 'transparent' }}>
-              <Text style={{ color: mode === m ? '#fff' : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{MODE_META[m].marker}</Text>
-              <Text style={{ color: mode === m ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 11, marginTop: 2 }}>
+            <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: mode === m ? modeColor(m, colors) : 'transparent' }}>
+              <Text style={{ color: mode === m ? colors.bgPure : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{MODE_META[m].marker}</Text>
+              <Text style={{ color: mode === m ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: 11, marginTop: 2 }}>
                 {tt(MODE_META[m].label.split(' ')[0])} · {minutesFor(m)}m
               </Text>
             </View>
@@ -1025,7 +1031,7 @@ export default function PomodoroScreen() {
           style={{
             color: colors.text, fontSize: 15, textAlign: 'center',
             backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-            borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
+            borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
             paddingHorizontal: 16, paddingVertical: 12,
           }}
         />
@@ -1033,7 +1039,7 @@ export default function PomodoroScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
             {quickLabels.map(l => (
               <Pressable key={l} onPress={() => setLabel(l)}>
-                <View style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: accent + '14', borderWidth: 1, borderColor: accent + '33' }}>
+                <View style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.full, backgroundColor: accent + '14', borderWidth: 1, borderColor: accent + '33' }}>
                   <Text style={{ color: accent, fontSize: 12.5, fontWeight: '700' }}>{l}</Text>
                 </View>
               </Pressable>
@@ -1057,7 +1063,7 @@ export default function PomodoroScreen() {
                 top: ring / 2 + Math.sin(angle) * distance - 5,
                 width: active ? 10 : 7,
                 height: active ? 10 : 7,
-                borderRadius: 999,
+                borderRadius: radius.full,
                 backgroundColor: active ? accent : colors.glassBorder,
                 opacity: index === 0 || active ? 0.95 : 0.48,
                 zIndex: 2,
@@ -1072,7 +1078,7 @@ export default function PomodoroScreen() {
               position: 'absolute',
               width: ring - 18,
               height: ring - 18,
-              borderRadius: (ring - 18) / 2,
+              borderRadius: radius.full,
               shadowColor: accent,
               shadowOpacity: 0.4,
               shadowRadius: 28,
@@ -1086,7 +1092,7 @@ export default function PomodoroScreen() {
             <Circle
               cx={ring / 2}
               cy={ring / 2}
-              r={radius}
+              r={circleRadius}
               stroke={accent + '18'}
               strokeWidth={stroke + 8}
               fill="transparent"
@@ -1094,7 +1100,7 @@ export default function PomodoroScreen() {
             <Circle
               cx={ring / 2}
               cy={ring / 2}
-              r={radius}
+              r={circleRadius}
               stroke={colors.isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'}
               strokeWidth={stroke}
               fill="transparent"
@@ -1102,7 +1108,7 @@ export default function PomodoroScreen() {
             <AnimatedCircle
               cx={ring / 2}
               cy={ring / 2}
-              r={radius}
+              r={circleRadius}
               strokeWidth={stroke}
               strokeLinecap="round"
               strokeDasharray={`${circumference} ${circumference}`}
@@ -1149,11 +1155,11 @@ export default function PomodoroScreen() {
           onPress={running ? stopActiveTimer : startTimer}
           style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 6 } }}
         >
-          {running ? <Pause color="#fff" size={34} weight="fill" /> : <Play color="#fff" size={34} weight="fill" />}
+          {running ? <Pause color={colors.bgPure} size={34} weight="fill" /> : <Play color={colors.bgPure} size={34} weight="fill" />}
         </Pressable>
-        <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: streak > 0 ? '#B0853618' : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'), borderWidth: StyleSheet.hairlineWidth, borderColor: streak > 0 ? '#B0853644' : colors.glassBorder }}>
-          <Fire color={streak > 0 ? '#B08536' : colors.textMuted} size={18} weight={streak > 0 ? 'fill' : 'regular'} />
-          <Text style={{ color: streak > 0 ? '#B08536' : colors.textMuted, fontSize: 10, fontWeight: '800' }}>{streak}d</Text>
+        <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: streak > 0 ? colors.accentMuted : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'), borderWidth: StyleSheet.hairlineWidth, borderColor: streak > 0 ? colors.accentMuted : colors.glassBorder }}>
+          <Fire color={streak > 0 ? colors.warning : colors.textMuted} size={18} weight={streak > 0 ? 'fill' : 'regular'} />
+          <Text style={{ color: streak > 0 ? colors.warning : colors.textMuted, fontSize: 10, fontWeight: '800' }}>{streak}d</Text>
         </View>
       </View>
 
@@ -1181,7 +1187,7 @@ export default function PomodoroScreen() {
       />
 
       {/* Week chart */}
-      <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{tt('LAST 7 DAYS')}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 11 }}>{stats.minutes} {tt('focus min today')}</Text>
@@ -1219,7 +1225,7 @@ export default function PomodoroScreen() {
 
       {/* Today's log */}
       {todaySessions.length > 0 && (
-        <GlassPanel variant="light" borderRadius={20} contentStyle={{ overflow: 'hidden' }} style={{ marginTop: 14 }}>
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ overflow: 'hidden' }} style={{ marginTop: 14 }}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{tt('TODAY')}</Text>
           </View>

@@ -180,7 +180,7 @@ function NoteEditor({
   onSave: (n: Note) => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const isNew = !note;
@@ -259,10 +259,10 @@ function NoteEditor({
                   <View style={{
                     width: 22,
                     height: 22,
-                    borderRadius: 11,
+                    borderRadius: radius.md,
                     backgroundColor: c,
                     borderWidth: color === c ? 3 : 0,
-                    borderColor: '#fff',
+                    borderColor: colors.bgPure,
                     transform: [{ scale: color === c ? 1.15 : 1 }],
                   }} />
                 </Pressable>
@@ -275,7 +275,7 @@ function NoteEditor({
 
           <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <View style={{ width: 42, height: 42, borderRadius: 16, backgroundColor: `${color}22`, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 42, height: 42, borderRadius: radius.card, backgroundColor: `${color}22`, alignItems: 'center', justifyContent: 'center' }}>
                 {kind === 'checklist' ? <CheckSquare color={color} size={22} weight="bold" /> : <NotePencil color={color} size={22} weight="bold" />}
               </View>
               <View style={{ flex: 1 }}>
@@ -299,7 +299,7 @@ function NoteEditor({
                     gap: 6,
                     paddingHorizontal: 12,
                     paddingVertical: 9,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: colors.surface,
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: colors.glassBorder,
@@ -333,7 +333,7 @@ function NoteEditor({
                     fontSize: 14,
                     paddingHorizontal: 13,
                     paddingVertical: 11,
-                    borderRadius: 14,
+                    borderRadius: radius.card,
                     backgroundColor: colors.surface,
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: colors.glassBorder,
@@ -353,7 +353,7 @@ function NoteEditor({
                     fontSize: 14,
                     paddingHorizontal: 13,
                     paddingVertical: 11,
-                    borderRadius: 14,
+                    borderRadius: radius.card,
                     backgroundColor: colors.surface,
                     borderWidth: StyleSheet.hairlineWidth,
                     borderColor: colors.glassBorder,
@@ -364,12 +364,12 @@ function NoteEditor({
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
               {[
-                { id: 'note', label: 'Note', icon: <FileText color={kind === 'note' ? '#fff' : colors.textMuted} size={14} /> },
-                { id: 'checklist', label: 'Checklist', icon: <CheckSquare color={kind === 'checklist' ? '#fff' : colors.textMuted} size={14} /> },
-                { id: 'meeting', label: 'Meeting', icon: <Clock color={kind === 'meeting' ? '#fff' : colors.textMuted} size={14} /> },
-                { id: 'idea', label: 'Idea', icon: <Sparkle color={kind === 'idea' ? '#fff' : colors.textMuted} size={14} /> },
-                { id: 'journal', label: 'Journal', icon: <TextB color={kind === 'journal' ? '#fff' : colors.textMuted} size={14} /> },
-                { id: 'research', label: 'Research', icon: <FolderOpen color={kind === 'research' ? '#fff' : colors.textMuted} size={14} /> },
+                { id: 'note', label: 'Note', icon: <FileText color={kind === 'note' ? colors.bgPure : colors.textMuted} size={14} /> },
+                { id: 'checklist', label: 'Checklist', icon: <CheckSquare color={kind === 'checklist' ? colors.bgPure : colors.textMuted} size={14} /> },
+                { id: 'meeting', label: 'Meeting', icon: <Clock color={kind === 'meeting' ? colors.bgPure : colors.textMuted} size={14} /> },
+                { id: 'idea', label: 'Idea', icon: <Sparkle color={kind === 'idea' ? colors.bgPure : colors.textMuted} size={14} /> },
+                { id: 'journal', label: 'Journal', icon: <TextB color={kind === 'journal' ? colors.bgPure : colors.textMuted} size={14} /> },
+                { id: 'research', label: 'Research', icon: <FolderOpen color={kind === 'research' ? colors.bgPure : colors.textMuted} size={14} /> },
               ].map(item => (
                 <MiniChip
                   key={item.id}
@@ -384,17 +384,17 @@ function NoteEditor({
 
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
               <AnimatedPressable onPress={() => append('- [ ] ')} haptic="light" style={{ flex: 1 }}>
-                <GlassPanel variant="light" borderRadius={14} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
+                <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
                   <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Add checkbox')}</Text>
                 </GlassPanel>
               </AnimatedPressable>
               <AnimatedPressable onPress={() => append('## ')} haptic="light" style={{ flex: 1 }}>
-                <GlassPanel variant="light" borderRadius={14} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
+                <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
                   <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Heading')}</Text>
                 </GlassPanel>
               </AnimatedPressable>
               <AnimatedPressable onPress={() => append('- ')} haptic="light" style={{ flex: 1 }}>
-                <GlassPanel variant="light" borderRadius={14} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
+                <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingVertical: 11, alignItems: 'center' }}>
                   <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt('Bullet')}</Text>
                 </GlassPanel>
               </AnimatedPressable>
@@ -411,7 +411,7 @@ function NoteEditor({
                 lineHeight: 26,
                 padding: 16,
                 minHeight: 330,
-                borderRadius: 20,
+                borderRadius: radius.card,
                 backgroundColor: colors.surface,
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: colors.glassBorder,
@@ -448,7 +448,7 @@ function NoteCard({
   onPublish: () => void;
   onDelete: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const stats = checklistStats(note.body);
   const words = countWords(note.body);
@@ -460,21 +460,21 @@ function NoteCard({
     <Pressable
       onPress={onOpen}
       style={({ pressed }) => ({
-        borderRadius: 22,
+        borderRadius: radius.card,
         overflow: 'hidden',
         transform: [{ scale: pressed ? 0.985 : 1 }],
       })}
     >
       <GlassPanel
         variant="medium"
-        borderRadius={22}
+        borderRadius={radius.card}
         elevated
         tintOverride={colors.isDark ? 'rgba(20,18,14,0.86)' : 'rgba(255,255,255,0.88)'}
         style={{ borderColor: `${note.color}55` }}
         contentStyle={{ padding: 16 }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-          <View style={{ width: 42, height: 42, borderRadius: 16, backgroundColor: `${note.color}22`, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 42, height: 42, borderRadius: radius.card, backgroundColor: `${note.color}22`, alignItems: 'center', justifyContent: 'center' }}>
             {kind === 'checklist' ? <CheckSquare color={note.color} size={22} weight="bold" /> : <NotePencil color={note.color} size={22} weight="bold" />}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -483,7 +483,7 @@ function NoteCard({
                 {note.title}
               </Text>
               {note.pinned ? <PushPin color={note.color} size={15} weight="fill" /> : null}
-              {note.favorite ? <Star color="#B08536" size={15} weight="fill" /> : null}
+              {note.favorite ? <Star color={colors.warning} size={15} weight="fill" /> : null}
             </View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }} numberOfLines={1}>
               {folderName(note)} · {formatDate(note.updatedAt)} · {words} {tt('words')}
@@ -503,8 +503,8 @@ function NoteCard({
               <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{tt('Checklist')}</Text>
               <Text style={{ color: note.color, fontSize: 12, fontWeight: '900' }}>{stats.done}/{stats.total} · {progress}%</Text>
             </View>
-            <View style={{ height: 7, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-              <View style={{ width: `${progress}%`, height: '100%', backgroundColor: note.color, borderRadius: 999 }} />
+            <View style={{ height: 7, borderRadius: radius.full, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+              <View style={{ width: `${progress}%`, height: '100%', backgroundColor: note.color, borderRadius: radius.full }} />
             </View>
           </View>
         ) : null}
@@ -512,7 +512,7 @@ function NoteCard({
         {tags.length > 0 ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 13 }}>
             {tags.slice(0, 4).map(tag => (
-              <View key={tag} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.surface }}>
+              <View key={tag} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 5, borderRadius: radius.full, backgroundColor: colors.surface }}>
                 <Tag color={colors.textMuted} size={11} />
                 <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{tag}</Text>
               </View>
@@ -529,7 +529,7 @@ function NoteCard({
           >
             {[
               { key: 'pin', label: note.pinned ? tt('Unpin note') : tt('Pin note'), icon: <PushPin color={note.pinned ? note.color : colors.textMuted} size={16} weight={note.pinned ? 'fill' : 'regular'} />, onPress: onPin },
-              { key: 'favorite', label: note.favorite ? tt('Remove favorite') : tt('Add to favorites'), icon: <Star color={note.favorite ? '#B08536' : colors.textMuted} size={16} weight={note.favorite ? 'fill' : 'regular'} />, onPress: onFavorite },
+              { key: 'favorite', label: note.favorite ? tt('Remove favorite') : tt('Add to favorites'), icon: <Star color={note.favorite ? colors.warning : colors.textMuted} size={16} weight={note.favorite ? 'fill' : 'regular'} />, onPress: onFavorite },
               { key: 'share', label: tt('Share note'), icon: <ShareNetwork color={colors.textMuted} size={16} />, onPress: onShare },
               { key: 'copy', label: tt('Duplicate note'), icon: <Copy color={colors.textMuted} size={16} />, onPress: onDuplicate },
               { key: 'archive', label: note.archived ? tt('Restore note') : tt('Archive note'), icon: <Archive color={note.archived ? note.color : colors.textMuted} size={16} />, onPress: onArchive },
@@ -544,7 +544,7 @@ function NoteCard({
                 style={{
                   width: 34,
                   height: 34,
-                  borderRadius: 17,
+                  borderRadius: radius.card,
                   backgroundColor: colors.surface,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -564,7 +564,7 @@ function NoteCard({
             style={{
               paddingHorizontal: 13,
               height: 34,
-              borderRadius: 17,
+              borderRadius: radius.card,
               backgroundColor: `${note.color}22`,
               alignItems: 'center',
               justifyContent: 'center',
@@ -581,11 +581,10 @@ function NoteCard({
 }
 
 export default function NotesApp() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const router = useRouter();
-  const accent = '#B08536'; // ochre — warm editorial palette
-  const [notes, setNotes] = useState<Note[]>([]);
+    const [notes, setNotes] = useState<Note[]>([]);
   const [editing, setEditing] = useState<Note | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [search, setSearch] = useState('');
@@ -703,10 +702,10 @@ export default function NotesApp() {
       onPress={() => openNew()}
       scaleValue={0.88}
       haptic="medium"
-      style={{ backgroundColor: accent, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', gap: 7 }}
+      style={{ backgroundColor: colors.accent, borderRadius: radius.card, paddingHorizontal: 14, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', gap: 7 }}
     >
-      <Plus color="#fff" size={16} weight="bold" />
-      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>{tt('New')}</Text>
+      <Plus color={colors.bgPure} size={16} weight="bold" />
+      <Text style={{ color: colors.bgPure, fontWeight: '900', fontSize: 14 }}>{tt('New')}</Text>
     </AnimatedPressable>
   );
 
@@ -718,7 +717,7 @@ export default function NotesApp() {
       bottomPad={56}
     >
       <MiniCommandDeck
-        accent={accent}
+        accent={colors.accent}
         title={tt('Knowledge capture system')}
         subtitle={tt('Ideas, drafts, recall.')}
         metrics={[
@@ -731,7 +730,7 @@ export default function NotesApp() {
 
       <EdgeFeaturePanel
         appName="Notes"
-        accent={accent}
+        accent={colors.accent}
         headline={tt('Turn notes into outcomes')}
         caption={tt('Use saved ideas as coaching context, progress proof, or public Echo drafts.')}
         metrics={[
@@ -753,7 +752,7 @@ export default function NotesApp() {
             haptic="medium"
             style={{
               minWidth: 122,
-              borderRadius: 20,
+              borderRadius: radius.card,
               padding: 14,
               backgroundColor: template.id === 'blank' ? colors.surface : `${template.color}18`,
               borderWidth: StyleSheet.hairlineWidth,
@@ -769,7 +768,7 @@ export default function NotesApp() {
         ))}
       </ScrollView>
 
-      <GlassPanel variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11, gap: 10 }} style={{ marginBottom: 12 }}>
+      <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11, gap: 10 }} style={{ marginBottom: 12 }}>
         <MagnifyingGlass color={colors.textMuted} size={18} />
         <TextInput
           value={search}
@@ -785,14 +784,14 @@ export default function NotesApp() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
         {[
-          { id: 'active', label: 'Active', icon: <FileText color={view === 'active' ? '#fff' : colors.textMuted} size={14} /> },
-          { id: 'pinned', label: 'Pinned', icon: <PushPin color={view === 'pinned' ? '#fff' : colors.textMuted} size={14} /> },
-          { id: 'favorites', label: 'Favorites', icon: <Star color={view === 'favorites' ? '#fff' : colors.textMuted} size={14} /> },
-          { id: 'checklists', label: 'Checklists', icon: <CheckSquare color={view === 'checklists' ? '#fff' : colors.textMuted} size={14} /> },
-          { id: 'archive', label: 'Archive', icon: <Archive color={view === 'archive' ? '#fff' : colors.textMuted} size={14} /> },
-          { id: 'all', label: 'All', icon: <FunnelSimple color={view === 'all' ? '#fff' : colors.textMuted} size={14} /> },
+          { id: 'active', label: 'Active', icon: <FileText color={view === 'active' ? colors.bgPure : colors.textMuted} size={14} /> },
+          { id: 'pinned', label: 'Pinned', icon: <PushPin color={view === 'pinned' ? colors.bgPure : colors.textMuted} size={14} /> },
+          { id: 'favorites', label: 'Favorites', icon: <Star color={view === 'favorites' ? colors.bgPure : colors.textMuted} size={14} /> },
+          { id: 'checklists', label: 'Checklists', icon: <CheckSquare color={view === 'checklists' ? colors.bgPure : colors.textMuted} size={14} /> },
+          { id: 'archive', label: 'Archive', icon: <Archive color={view === 'archive' ? colors.bgPure : colors.textMuted} size={14} /> },
+          { id: 'all', label: 'All', icon: <FunnelSimple color={view === 'all' ? colors.bgPure : colors.textMuted} size={14} /> },
         ].map(item => (
-          <MiniChip key={item.id} accent={accent} label={tt(item.label)} active={view === item.id} onPress={() => setView(item.id as NoteView)} icon={item.icon} />
+          <MiniChip key={item.id} accent={colors.accent} label={tt(item.label)} active={view === item.id} onPress={() => setView(item.id as NoteView)} icon={item.icon} />
         ))}
       </ScrollView>
 
@@ -800,11 +799,11 @@ export default function NotesApp() {
         {folders.map(folder => (
           <MiniChip
             key={folder}
-            accent={accent}
+            accent={colors.accent}
             label={tt(folder)}
             active={folderFilter === folder}
             onPress={() => setFolderFilter(folder)}
-            icon={<FolderOpen color={folderFilter === folder ? '#fff' : colors.textMuted} size={14} />}
+            icon={<FolderOpen color={folderFilter === folder ? colors.bgPure : colors.textMuted} size={14} />}
           />
         ))}
         {[
@@ -812,13 +811,13 @@ export default function NotesApp() {
           { id: 'oldest', label: 'Oldest' },
           { id: 'title', label: 'A-Z' },
         ].map(mode => (
-          <MiniChip key={mode.id} accent={accent} label={tt(mode.label)} active={sortMode === mode.id} onPress={() => setSortMode(mode.id as SortMode)} />
+          <MiniChip key={mode.id} accent={colors.accent} label={tt(mode.label)} active={sortMode === mode.id} onPress={() => setSortMode(mode.id as SortMode)} />
         ))}
       </ScrollView>
 
       {filtered.length === 0 ? (
         <MiniEmptyState
-          accent={accent}
+          accent={colors.accent}
           icon={<NotePencil color={colors.textMuted} size={44} weight="duotone" />}
           title={search ? tt('No matching notes') : view === 'archive' ? tt('Archive is empty') : tt('No notes yet')}
           subtitle={search ? tt('Try another word, folder, or tag.') : tt('Start with a template or capture a blank note.')}

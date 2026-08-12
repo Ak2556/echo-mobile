@@ -62,7 +62,7 @@ const PROFILE_TERM: Record<KhataProfile, any> = {
 };
 
 function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: KhataProfile; currency: CurrencyCode; parties: Party[]; onAdd: (tx: Transaction, newParty?: Party) => void; onClose: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const [type, setType] = useState<TxType>('expense');
@@ -76,7 +76,7 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
   
   const isKhata = type === 'sale' || type === 'purchase' || type === 'receipt' || type === 'payment';
   const cats = (type === 'expense' || type === 'purchase' || type === 'payment') ? EXPENSE_CATS : INCOME_CATS;
-  const ACCENT = (type === 'expense' || type === 'purchase' || type === 'payment') ? colors.danger : colors.success;
+  const accentColor = (type === 'expense' || type === 'purchase' || type === 'payment') ? colors.danger : colors.success;
 
   const submit = () => {
     const num = parseFloat(amount.replace(/,/g, ''));
@@ -118,8 +118,8 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('ENTRY TYPE')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {(['expense', 'income', 'sale', 'receipt', 'purchase', 'payment'] as TxType[]).map(t => (
-                <Pressable key={t} onPress={() => { setType(t); setCategory(''); setPartyId(''); setNewPartyName(''); }} style={{ width: '48%', paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' || t === 'purchase' || t === 'payment' ? colors.danger : colors.success) : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderWidth: type === t ? 0 : StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                  <Text style={{ color: type === t ? '#fff' : colors.text, fontWeight: '800', fontSize: 14, textTransform: 'capitalize' }}>
+                <Pressable key={t} onPress={() => { setType(t); setCategory(''); setPartyId(''); setNewPartyName(''); }} style={{ width: '48%', paddingVertical: 14, borderRadius: radius.card, alignItems: 'center', backgroundColor: type === t ? (t === 'expense' || t === 'purchase' || t === 'payment' ? colors.danger : colors.success) : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderWidth: type === t ? 0 : StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                  <Text style={{ color: type === t ? colors.bgPure : colors.text, fontWeight: '800', fontSize: 14, textTransform: 'capitalize' }}>
                     {tt(PROFILE_TERM[profile].types[t])}
                   </Text>
                 </Pressable>
@@ -130,8 +130,8 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
           {/* Amount */}
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('AMOUNT')}</Text>
-            <GlassPanel variant="medium" borderRadius={14} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }} style={{ borderColor: ACCENT + '44' }}>
-              <Text style={{ color: ACCENT, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
+            <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }} style={{ borderColor: colors.accent + '44' }}>
+              <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
               <TextInput value={amount} onChangeText={setAmount} placeholder="0.00" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
             </GlassPanel>
           </View>
@@ -143,14 +143,14 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 12 }}>
                 {parties.filter(p => (type === 'sale' || type === 'receipt') ? p.type === 'customer' : p.type === 'supplier').map(p => (
                   <Pressable key={p.id} onPress={() => { setPartyId(p.id); setNewPartyName(''); }}>
-                    <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: partyId === p.id ? ACCENT + '22' : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: partyId === p.id ? 1.5 : StyleSheet.hairlineWidth, borderColor: partyId === p.id ? ACCENT : colors.glassBorder }}>
-                      <Text style={{ color: partyId === p.id ? ACCENT : colors.text, fontWeight: '700', fontSize: 13 }}>{p.name}</Text>
+                    <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.md, backgroundColor: partyId === p.id ? colors.accent + '22' : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: partyId === p.id ? 1.5 : StyleSheet.hairlineWidth, borderColor: partyId === p.id ? colors.accent : colors.glassBorder }}>
+                      <Text style={{ color: partyId === p.id ? colors.accent : colors.text, fontWeight: '700', fontSize: 13 }}>{p.name}</Text>
                     </View>
                   </Pressable>
                 ))}
               </ScrollView>
               {!partyId && (
-                <TextInput value={newPartyName} onChangeText={setNewPartyName} placeholder={tt('Or enter new party name')} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+                <TextInput value={newPartyName} onChangeText={setNewPartyName} placeholder={tt('Or enter new party name')} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
               )}
             </View>
           )}
@@ -160,12 +160,12 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt(profile === 'farmer' ? 'RECEIPT/SLIP NO' : 'INVOICE NO')}</Text>
-                <TextInput value={invoiceNo} onChangeText={setInvoiceNo} placeholder={profile === 'farmer' ? "SLP-01" : "INV-001"} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+                <TextInput value={invoiceNo} onChangeText={setInvoiceNo} placeholder={profile === 'farmer' ? "SLP-01" : "INV-001"} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
               </View>
               {PROFILE_TERM[profile].showGST && (
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('GST / TAX')}</Text>
-                  <TextInput value={taxAmount} onChangeText={setTaxAmount} placeholder="0.00" keyboardType="decimal-pad" placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+                  <TextInput value={taxAmount} onChangeText={setTaxAmount} placeholder="0.00" keyboardType="decimal-pad" placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
                 </View>
               )}
             </View>
@@ -178,9 +178,9 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {cats.map(c => (
                   <Pressable key={c.label} onPress={() => setCategory(c.label)}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: category === c.label ? ACCENT + '22' : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: category === c.label ? 1.5 : StyleSheet.hairlineWidth, borderColor: category === c.label ? ACCENT : colors.glassBorder }}>
-                      <Text style={{ color: category === c.label ? ACCENT : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{c.marker}</Text>
-                      <Text style={{ color: category === c.label ? ACCENT : colors.text, fontWeight: '600', fontSize: 13 }}>{tt(c.label)}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.md, backgroundColor: category === c.label ? colors.accent + '22' : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: category === c.label ? 1.5 : StyleSheet.hairlineWidth, borderColor: category === c.label ? colors.accent : colors.glassBorder }}>
+                      <Text style={{ color: category === c.label ? colors.accent : colors.textMuted, fontSize: 11, fontWeight: '800' }}>{c.marker}</Text>
+                      <Text style={{ color: category === c.label ? colors.accent : colors.text, fontWeight: '600', fontSize: 13 }}>{tt(c.label)}</Text>
                     </View>
                   </Pressable>
                 ))}
@@ -191,11 +191,11 @@ function AddModal({ profile, currency, parties, onAdd, onClose }: { profile: Kha
           {/* Note */}
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{tt('NOTE (optional)')}</Text>
-            <TextInput value={note} onChangeText={setNote} placeholder={tt('What was this for?')} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+            <TextInput value={note} onChangeText={setNote} placeholder={tt('What was this for?')} placeholderTextColor={colors.textMuted} style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
           </View>
 
-          <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: ACCENT, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: ACCENT, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{tt('Save Entry')}</Text>
+          <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center', shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+            <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{tt('Save Entry')}</Text>
           </AnimatedPressable>
         </ScrollView>
       </View>
@@ -214,7 +214,7 @@ function elapsedDaysForMonth(key: string): number {
 }
 
 function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose: () => void; onExport: (idx: number) => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   
@@ -226,9 +226,9 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
         <Pressable style={{ width: '100%', maxWidth: 360 }}>
           <Animated.View entering={FadeInDown.springify().damping(18).stiffness(150)}>
-            <GlassPanel variant="medium" borderRadius={28} contentStyle={{ overflow: 'hidden' }}>
+            <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ overflow: 'hidden' }}>
               <View style={{ padding: 24, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent + '22', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <View style={{ width: 48, height: 48, borderRadius: radius.full, backgroundColor: colors.accent + '22', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                   <Export color={colors.accent} size={24} weight="bold" />
                 </View>
                 <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{tt('Reporting Engine')}</Text>
@@ -246,7 +246,7 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
                   const Icon = item.icon;
                   return (
                     <AnimatedPressable key={item.id} onPress={() => { onExport(item.id); onClose(); }} haptic="medium" style={{ padding: 18, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                      <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', alignItems: 'center', justifyContent: 'center' }}>
                         <Icon color={colors.text} size={20} weight="duotone" />
                       </View>
                       <View style={{ flex: 1 }}>
@@ -260,7 +260,7 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
               </ScrollView>
 
               <AnimatedPressable onPress={onClose} haptic="light" style={{ padding: 20, alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }}>
-                <Text style={{ color: '#FF3B30', fontSize: 17, fontWeight: '800' }}>{tt('Close')}</Text>
+                <Text style={{ color: colors.danger, fontSize: 17, fontWeight: '800' }}>{tt('Close')}</Text>
               </AnimatedPressable>
             </GlassPanel>
           </Animated.View>
@@ -273,7 +273,7 @@ function ExportModal({ visible, onClose, onExport }: { visible: boolean; onClose
 // Removed MoneyPulsePanel for a cleaner, larger-scale layout
 
 function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | null; currency: CurrencyCode; onSave: (b: number | null) => void; onClose: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const [value, setValue] = useState(budget ? String(budget) : '');
@@ -293,12 +293,12 @@ function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | n
           <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 20 }}>
             {tt('How much do you plan to spend per month? Leave empty to remove the budget.')}
           </Text>
-          <GlassPanel variant="medium" borderRadius={14} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
+          <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
             <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '900', marginRight: 8 }}>{getCurrencySymbol(currency)}</Text>
             <TextInput value={value} onChangeText={setValue} placeholder="1500" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" autoFocus style={{ flex: 1, color: colors.text, fontSize: 28, fontWeight: '800', paddingVertical: 14 }} />
           </GlassPanel>
-          <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{tt('Save Budget')}</Text>
+          <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center' }}>
+            <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{tt('Save Budget')}</Text>
           </AnimatedPressable>
         </View>
       </View>
@@ -307,7 +307,7 @@ function BudgetModal({ budget, currency, onSave, onClose }: { budget: number | n
 }
 
 function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSelect: (currency: CurrencyCode) => void; onClose: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
@@ -321,7 +321,7 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
           <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
         </View>
         <View style={{ padding: 20, gap: 14, flex: 1 }}>
-          <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 }}>
             <MagnifyingGlass color={colors.textMuted} size={16} />
             <TextInput
               value={query}
@@ -344,7 +344,7 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
                 >
                   <View style={{
                     minHeight: 58,
-                    borderRadius: 16,
+                    borderRadius: radius.card,
                     paddingHorizontal: 14,
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -371,7 +371,7 @@ function CurrencyModal({ value, onSelect, onClose }: { value: CurrencyCode; onSe
 }
 
 function ProfileModal({ value, onSelect, onClose }: { value: KhataProfile; onSelect: (p: KhataProfile) => void; onClose: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   
@@ -395,7 +395,7 @@ function ProfileModal({ value, onSelect, onClose }: { value: KhataProfile; onSel
             return (
               <Pressable key={p.id} onPress={() => { onSelect(p.id); onClose(); }}>
                 <View style={{
-                  padding: 16, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 14,
+                  padding: 16, borderRadius: radius.card, flexDirection: 'row', alignItems: 'center', gap: 14,
                   backgroundColor: active ? colors.accent + '22' : colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                   borderWidth: active ? 1.5 : StyleSheet.hairlineWidth, borderColor: active ? colors.accent : colors.glassBorder,
                 }}>
@@ -415,10 +415,9 @@ function ProfileModal({ value, onSelect, onClose }: { value: KhataProfile; onSel
 }
 
 export default function ExpensesApp() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
-  const accent = '#8B6F4E'; // caramel — warm editorial palette
-  const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
+    const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'parties' | 'table'>('dashboard');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
@@ -584,16 +583,16 @@ export default function ExpensesApp() {
         const next = !doc.reminders;
         update({ ...doc, reminders: next });
         showToast(next ? 'Daily Khata reminder ON' : 'Daily Khata reminder OFF');
-      }} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: doc.reminders ? colors.accent + '22' : colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
+      }} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: doc.reminders ? colors.accent + '22' : colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
         <Bell color={doc.reminders ? colors.accent : colors.text} size={18} weight={doc.reminders ? 'fill' : 'bold'} />
       </AnimatedPressable>
-      <AnimatedPressable onPress={() => setShowProfile(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
+      <AnimatedPressable onPress={() => setShowProfile(true)} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
         <UserCircle color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
-      <AnimatedPressable onPress={() => setShowCurrency(true)} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, paddingHorizontal: 11, paddingVertical: 10 }}>
+      <AnimatedPressable onPress={() => setShowCurrency(true)} scaleValue={0.88} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md, paddingHorizontal: 11, paddingVertical: 10 }}>
         <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{doc.currency}</Text>
       </AnimatedPressable>
-      <AnimatedPressable onPress={handleExport} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
+      <AnimatedPressable onPress={handleExport} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md }}>
         <Export color={colors.text} size={18} weight="bold" />
       </AnimatedPressable>
     </View>
@@ -607,14 +606,14 @@ export default function ExpensesApp() {
       <View style={{ flex: 1 }}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
       {/* Top Tab Bar */}
-      <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
         <Pressable onPress={() => setActiveTab('dashboard')} style={{ flex: 1 }}>
-          <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: activeTab === 'dashboard' ? colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' : 'transparent' }}>
+          <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: activeTab === 'dashboard' ? colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' : 'transparent' }}>
             <Text style={{ color: activeTab === 'dashboard' ? colors.text : colors.textMuted, fontWeight: '800', fontSize: 13 }}>{tt('Dashboard')}</Text>
           </View>
         </Pressable>
         <Pressable onPress={() => setActiveTab('parties')} style={{ flex: 1 }}>
-          <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: activeTab === 'parties' ? colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' : 'transparent' }}>
+          <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: activeTab === 'parties' ? colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' : 'transparent' }}>
             <Text style={{ color: activeTab === 'parties' ? colors.text : colors.textMuted, fontWeight: '800', fontSize: 13 }}>{tt(terms.partiesTab)}</Text>
           </View>
         </Pressable>
@@ -626,7 +625,7 @@ export default function ExpensesApp() {
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{tt('Directory')}</Text>
           </View>
           {parties.length === 0 ? (
-            <MiniEmptyState accent={accent} icon={<Users color={colors.textMuted} size={48} weight="duotone" />} title={tt('No People yet')} subtitle={tt(terms.addParty)} />
+            <MiniEmptyState accent={colors.accent} icon={<Users color={colors.textMuted} size={48} weight="duotone" />} title={tt('No People yet')} subtitle={tt(terms.addParty)} />
           ) : (
             parties.map(party => {
               // Calculate party balance: (Sales + Receipts) vs (Purchases + Payments)
@@ -644,8 +643,8 @@ export default function ExpensesApp() {
               const isSettled = balance === 0;
               
               return (
-                <GlassPanel key={party.id} variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }} style={{ marginBottom: 10 }}>
-                  <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: party.type === 'customer' ? colors.success + '22' : colors.warning + '22', alignItems: 'center', justifyContent: 'center' }}>
+                <GlassPanel key={party.id} variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }} style={{ marginBottom: 10 }}>
+                  <View style={{ width: 48, height: 48, borderRadius: radius.full, backgroundColor: party.type === 'customer' ? colors.success + '22' : colors.warning + '22', alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: party.type === 'customer' ? colors.success : colors.warning, fontSize: 16, fontWeight: '900' }}>{party.name.charAt(0).toUpperCase()}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
@@ -672,14 +671,14 @@ export default function ExpensesApp() {
           {/* Main Fintech Balance Card */}
           <View style={{ marginBottom: 24, marginHorizontal: 2 }}>
             <LinearGradient
-              colors={balance >= 0 ? ['#054F31', '#022C1A'] : ['#7F1D1D', '#450a0a']}
+              colors={balance >= 0 ? [colors.success, colors.surface] : [colors.danger, colors.surface]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={{ borderRadius: 28, padding: 24, paddingBottom: 28, shadowColor: balance >= 0 ? colors.success : colors.danger, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}
             >
               <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>
                 {searching ? tt('Matching P&L') : `${tt('Net')} ${balance >= 0 ? tt('Profit') : tt('Loss')} · ${doc.currency}`}
               </Text>
-              <Text style={{ color: '#fff', fontSize: 48, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1.5 }}>
+              <Text style={{ color: colors.bgPure, fontSize: 48, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1.5 }}>
                 {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
               </Text>
               
@@ -689,7 +688,7 @@ export default function ExpensesApp() {
                     <ArrowDown color="rgba(255,255,255,0.9)" size={14} weight="bold" />
                     <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>{tt('TOTAL INCOME')}</Text>
                   </View>
-                  <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>{money(income)}</Text>
+                  <Text style={{ color: colors.bgPure, fontSize: 22, fontWeight: '800' }}>{money(income)}</Text>
                 </View>
                 <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.2)' }} />
                 <View style={{ flex: 1 }}>
@@ -697,14 +696,14 @@ export default function ExpensesApp() {
                     <ArrowUp color="rgba(255,255,255,0.9)" size={14} weight="bold" />
                     <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>{tt('TOTAL SPEND')}</Text>
                   </View>
-                  <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>{money(expense)}</Text>
+                  <Text style={{ color: colors.bgPure, fontSize: 22, fontWeight: '800' }}>{money(expense)}</Text>
                 </View>
               </View>
             </LinearGradient>
           </View>
 
           {/* Search */}
-          <GlassPanel variant="light" borderRadius={20} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }} style={{ marginBottom: 18 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }} style={{ marginBottom: 18 }}>
             <MagnifyingGlass color={colors.textMuted} size={18} />
             <TextInput
               value={query} onChangeText={setQuery}
@@ -726,11 +725,11 @@ export default function ExpensesApp() {
 
 
       {/* Filter tabs */}
-      <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
         {(['all', 'income', 'expense'] as const).map(f => (
           <Pressable key={f} onPress={() => setFilter(f)} style={{ flex: 1 }}>
-            <View style={{ paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: filter === f ? (f === 'income' ? colors.success : f === 'expense' ? colors.danger : accent) : 'transparent' }}>
-              <Text style={{ color: filter === f ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>
+            <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: filter === f ? (f === 'income' ? colors.success : f === 'expense' ? colors.danger : colors.accent) : 'transparent' }}>
+              <Text style={{ color: filter === f ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>
                 {f === 'income' ? tt('Got') : f === 'expense' ? tt('Gave') : tt('All')}
               </Text>
             </View>
@@ -741,7 +740,7 @@ export default function ExpensesApp() {
       {/* Transactions */}
       {filtered.length === 0 && (
         <MiniEmptyState
-          accent={accent}
+          accent={colors.accent}
           icon={<Wallet color={colors.textMuted} size={48} weight="duotone" />}
           title={searching ? tt('No matches') : `${tt('Nothing in')} ${monthLabel(month)}`}
           subtitle={searching ? tt('Try a different search or category.') : tt('Add the first money move to see this month clearly.')}
@@ -754,8 +753,8 @@ export default function ExpensesApp() {
         const iconColor = (tx.type === 'income' || tx.type === 'sale' || tx.type === 'receipt') ? colors.success : colors.danger;
         return (
           <Animated.View key={tx.id} entering={FadeInDown.delay(Math.min(i, 8) * 40).duration(220)} style={{ marginBottom: 10 }}>
-            <GlassPanel variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}>
-              <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: iconColor + '18', borderWidth: 1, borderColor: iconColor + '33', alignItems: 'center', justifyContent: 'center' }}>
+            <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}>
+              <View style={{ width: 48, height: 48, borderRadius: radius.card, backgroundColor: iconColor + '18', borderWidth: 1, borderColor: iconColor + '33', alignItems: 'center', justifyContent: 'center' }}>
                 {tx.invoiceNo ? <FileText color={iconColor} size={20} weight="fill" /> : <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>{categoryMarker(tx.category)}</Text>}
               </View>
               <View style={{ flex: 1 }}>
@@ -784,7 +783,7 @@ export default function ExpensesApp() {
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{tt('Daybook (Live Table)')}</Text>
           </View>
           
-          <GlassPanel variant="light" borderRadius={24} contentStyle={{ paddingVertical: 16 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingVertical: 16 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={{ paddingHorizontal: 20 }}>
                 {/* Header */}
@@ -845,23 +844,23 @@ export default function ExpensesApp() {
       {/* Floating Bottom Navigation & FAB */}
       <View style={{ position: 'absolute', bottom: 32, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
         <View style={{ flex: 1, alignItems: 'center', pointerEvents: 'box-none' }}>
-          <View style={{ flexDirection: 'row', backgroundColor: colors.isDark ? 'rgba(40,40,40,0.85)' : 'rgba(255,255,255,0.9)', borderRadius: 100, padding: 6, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
-            <Pressable onPress={() => setActiveTab('dashboard')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, backgroundColor: activeTab === 'dashboard' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ flexDirection: 'row', backgroundColor: colors.isDark ? 'rgba(40,40,40,0.85)' : 'rgba(255,255,255,0.9)', borderRadius: radius.full, padding: 6, shadowColor: colors.bgPure, shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
+            <Pressable onPress={() => setActiveTab('dashboard')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.full, backgroundColor: activeTab === 'dashboard' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <ChartPieSlice color={activeTab === 'dashboard' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'dashboard' ? 'fill' : 'regular'} />
               {activeTab === 'dashboard' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt('Dashboard')}</Text>}
             </Pressable>
-            <Pressable onPress={() => setActiveTab('table')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, backgroundColor: activeTab === 'table' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Pressable onPress={() => setActiveTab('table')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.full, backgroundColor: activeTab === 'table' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <TableIcon color={activeTab === 'table' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'table' ? 'fill' : 'regular'} />
               {activeTab === 'table' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt('Table')}</Text>}
             </Pressable>
-            <Pressable onPress={() => setActiveTab('parties')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, backgroundColor: activeTab === 'parties' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Pressable onPress={() => setActiveTab('parties')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.full, backgroundColor: activeTab === 'parties' ? (colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)') : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Users color={activeTab === 'parties' ? colors.text : colors.textMuted} size={18} weight={activeTab === 'parties' ? 'fill' : 'regular'} />
               {activeTab === 'parties' && <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{tt(profile === 'personal' ? 'Friends' : 'Parties')}</Text>}
             </Pressable>
           </View>
         </View>
-        <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.9} haptic="medium" style={{ position: 'absolute', right: 0, width: 64, height: 64, borderRadius: 32, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
-          <Plus color="#fff" size={28} weight="bold" />
+        <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.9} haptic="medium" style={{ position: 'absolute', right: 0, width: 64, height: 64, borderRadius: radius.full, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
+          <Plus color={colors.bgPure} size={28} weight="bold" />
         </AnimatedPressable>
       </View>
       </View>

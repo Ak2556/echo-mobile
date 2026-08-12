@@ -44,402 +44,7 @@ import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
 import { assistantLanguageInstruction } from '../../lib/languages';
 import { useI18n } from '../../lib/i18n';
-import { AurasRow } from '../messages';
 
-// ─── DM colour token (teal, distinct from AI accent) ────────────────────────
-// One accent per app: the DM surfaces use the same warm brand accent as
-// everything else — a second (blue) accent made the hub read off-brand.
-const DM_COLOR = '#E06030';
-
-type DMPreviewConversation = Conversation & {
-  isGroup?: boolean;
-  memberCount?: number;
-};
-
-// ─── DMConversationCard ───────────────────────────────────────────────────────
-function DMConversationCard({
-  conv,
-  onPress,
-  embedded = false,
-  isLast = false,
-}: {
-  conv: DMPreviewConversation;
-  onPress: () => void;
-  embedded?: boolean;
-  isLast?: boolean;
-}) {
-  const { colors, font, isUserOnline } = useTheme();
-  const { t } = useI18n();
-  function ago(dateStr: string) {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const m = Math.floor(diff / 60000);
-    if (m < 1) return 'now';
-    if (m < 60) return `${m}m`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h`;
-    return `${Math.floor(h / 24)}d`;
-  }
-  const hasUnread = conv.unreadCount > 0;
-  const online = !conv.isGroup && isUserOnline(conv.userId);
-  const draft = persistGet<string>('chat:draft:' + conv.id, '').trim();
-  const subtitle = draft
-    ? `Draft · ${draft}`
-    : conv.isGroup
-    ? `${conv.memberCount ?? 1} ${t('common.group')}${conv.lastMessage ? ` · ${conv.lastMessage}` : ''}`
-    : conv.lastMessage || `@${conv.username}`;
-
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}>
-      <View style={{
-        flexDirection: 'row', alignItems: 'center',
-        minHeight: 74,
-        paddingHorizontal: 13,
-        paddingVertical: 12,
-        marginBottom: isLast ? 0 : 9,
-        borderRadius: 22,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: hasUnread ? `${colors.accent}66` : colors.border,
-        backgroundColor: hasUnread ? colors.accentMuted : colors.surface,
-      }}>
-        <View style={{ marginRight: 13 }}>
-          <Avatar
-            name={conv.displayName}
-            color={conv.avatarColor}
-            url={conv.isGroup ? undefined : conv.avatarUrl}
-            size={46}
-            online={online}
-          >
-            {conv.isGroup ? <Users color="#fff" size={19} weight="fill" /> : undefined}
-          </Avatar>
-        </View>
-
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Text style={{
-              flexShrink: 1,
-              color: colors.text,
-              fontFamily: hasUnread ? 'Inter_700Bold' : 'Inter_600SemiBold',
-              fontSize: 15.5,
-              lineHeight: 21,
-            }} numberOfLines={1}>
-              {conv.displayName}
-            </Text>
-            {conv.isVerified && <SealCheck color={colors.accent} size={13} weight="fill" />}
-          </View>
-          <Text style={{
-            color: draft ? colors.accent : hasUnread ? colors.textSecondary : colors.textMuted,
-            fontSize: 13,
-            lineHeight: 18,
-            marginTop: 2,
-            fontFamily: draft || hasUnread ? 'Inter_600SemiBold' : 'Inter_400Regular',
-          }} numberOfLines={1}>
-            {subtitle}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 7 }}>
-            <View style={{
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              borderRadius: 999,
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-            }}>
-              {conv.isGroup ? <Users color={colors.textMuted} size={11} weight="bold" /> : <ChatCircleText color={colors.textMuted} size={11} weight="bold" />}
-              <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '800' }}>{conv.isGroup ? t('common.group') : online ? t('common.online') : t('common.dm')}</Text>
-            </View>
-            {hasUnread ? (
-              <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: colors.accent }}>
-                <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '900' }}>{t('common.new')}</Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
-
-        <View style={{ marginLeft: 12, alignItems: 'flex-end', gap: 6 }}>
-          <Text style={[font.body, {
-            color: hasUnread ? colors.accent : colors.textMuted,
-            fontSize: 12,
-            fontWeight: hasUnread ? '700' : '400',
-          }]}>
-            {ago(conv.lastMessageAt)}
-          </Text>
-          {hasUnread && (
-            <View style={{
-              minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5,
-              backgroundColor: colors.accent,
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '700' }}>
-                {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
-              </Text>
-            </View>
-          )}
-          {!hasUnread ? <CaretRight color={colors.textMuted} size={14} /> : null}
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
-function DMInboxHeader({
-  count,
-  unread,
-  groups,
-  onInbox,
-  onNewGroup,
-}: {
-  count: number;
-  unread: number;
-  groups: number;
-  onInbox: () => void;
-  onNewGroup: () => void;
-}) {
-  const { colors, font } = useTheme();
-  const { t } = useI18n();
-
-  const actions = [
-    { key: 'message', label: t('chat.newMessage'), caption: t('chat.privateChat'), Icon: PencilSimple, onPress: onInbox, accent: DM_COLOR },
-    { key: 'group', label: t('chat.newGroup'), caption: t('chat.sharedProgress'), Icon: Users, onPress: onNewGroup, accent: '#38BDF8' },
-  ];
-  const stats = [
-    { label: t('common.unread'), value: unread },
-    { label: t('common.group'), value: groups },
-    { label: t('common.total'), value: count },
-  ];
-
-  return (
-    <View style={{ marginBottom: 10, gap: 12 }}>
-      <View style={{
-        borderRadius: 28,
-        overflow: 'hidden',
-        backgroundColor: colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
-      }}>
-        <LinearGradient
-          colors={[`${DM_COLOR}44`, `${DM_COLOR}12`, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-        <View style={{ padding: 17, gap: 14 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
-            <View style={{
-              width: 50,
-              height: 50,
-              borderRadius: 19,
-              backgroundColor: DM_COLOR,
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: DM_COLOR,
-              shadowOpacity: 0.22,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 8 },
-            }}>
-              <Envelope color="#fff" size={24} weight="fill" />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[font.display, { color: colors.text, fontSize: 24, lineHeight: 30 }]}>{t('chat.messagesThatMove')}</Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 4 }]}>
-                {unread ? t('chat.unreadWaiting', { count: unread }) : count ? t('chat.threadsClear', { count }) : t('chat.startUseful')}
-              </Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {stats.map(stat => (
-              <View
-                key={stat.label}
-                style={{
-                  flex: 1,
-                  borderRadius: 16,
-                  padding: 10,
-                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)',
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.glassBorder,
-                }}
-              >
-                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{stat.value}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{stat.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        {actions.map(action => (
-          <Pressable
-            key={action.key}
-            onPress={action.onPress}
-            accessibilityRole="button"
-            accessibilityLabel={action.label}
-            style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.68 : 1 })}
-          >
-            <View style={{
-              minHeight: 74,
-              borderRadius: 21,
-              overflow: 'hidden',
-              paddingHorizontal: 13,
-              paddingVertical: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-              backgroundColor: colors.surface,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: `${action.accent}55`,
-            }}>
-              <LinearGradient
-                colors={[`${action.accent}22`, `${action.accent}08`, 'transparent']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-              />
-              <View style={{ width: 40, height: 40, borderRadius: 15, backgroundColor: `${action.accent}24`, alignItems: 'center', justifyContent: 'center' }}>
-                <action.Icon color={action.accent} size={19} weight="bold" />
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[font.bodyBold, { color: colors.text, fontSize: 14.5 }]} numberOfLines={1}>{action.label}</Text>
-                <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{action.caption}</Text>
-              </View>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 24 }}>
-        <Text style={{
-          color: colors.textMuted,
-          fontSize: 12,
-          fontFamily: 'Inter_600SemiBold',
-          letterSpacing: 1.4,
-          textTransform: 'uppercase',
-        }}>
-          {t('chat.recent')}
-        </Text>
-        {count > 0 && (
-          <Pressable onPress={onInbox} hitSlop={10}>
-            <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 13 }]}>{t('chat.viewAll')}</Text>
-          </Pressable>
-        )}
-      </View>
-      <Text style={[font.quote, { color: colors.textSecondary, fontSize: 15, marginTop: 6 }]}>
-        {unread
-          ? t('chat.unreadMessagesWaiting', { count: unread, noun: unread === 1 ? 'message' : 'messages' })
-          : count > 0 ? t('chat.allCaughtUp') : t('chat.quietNow')}
-      </Text>
-    </View>
-  );
-}
-
-// ─── DMInboxView ─────────────────────────────────────────────────────────────
-function DMInboxView({ topPad }: { topPad: number }) {
-  const router = useRouter();
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const layout = useResponsiveLayout();
-  const remote = isSupabaseRemote();
-  const localConversations = useAppStore(s => s.conversations);
-  const { data: remoteConvs = [], isLoading } = useRemoteConversations();
-
-  const conversations: DMPreviewConversation[] = remote
-    ? remoteConvs.map((rc: RemoteConversation) => ({
-        id: rc.id,
-        userId: rc.otherUserId ?? rc.id,
-        username: rc.isGroup ? 'group' : rc.otherUsername,
-        displayName: rc.otherDisplayName,
-        avatarColor: rc.otherAvatarColor,
-        avatarUrl: rc.otherAvatarUrl ?? undefined,
-        isVerified: false,
-        lastMessage: rc.lastMessage ?? '',
-        lastMessageAt: rc.lastMessageAt ?? new Date().toISOString(),
-        unreadCount: rc.unreadCount,
-        isGroup: rc.isGroup,
-        memberCount: rc.memberCount,
-      }))
-    : localConversations;
-
-  const sorted = [...conversations].sort(
-    (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
-  );
-  const unreadCount = sorted.reduce((sum, c) => sum + c.unreadCount, 0);
-  const groupCount = sorted.filter(c => c.isGroup).length;
-  const previewConversations = sorted.slice(0, 6);
-
-  if (remote && isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          paddingTop: topPad + 12,
-          paddingHorizontal: layout.gutter,
-          width: '100%',
-          maxWidth: layout.contentMaxWidth,
-          alignSelf: 'center',
-        }}
-      >
-        <FeedCardSkeleton />
-        <FeedCardSkeleton />
-        <FeedCardSkeleton />
-      </View>
-    );
-  }
-
-  return (
-    <View style={{ flex: 1 }}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingTop: topPad + 12,
-          paddingBottom: layout.bottomChromePadding + 16,
-          paddingHorizontal: layout.gutter,
-          width: '100%',
-          maxWidth: layout.contentMaxWidth,
-          alignSelf: 'center',
-          gap: 12,
-        }}
-      >
-        <AurasRow />
-        <DMInboxHeader
-          count={sorted.length}
-          unread={unreadCount}
-          groups={groupCount}
-          onInbox={() => router.push('/messages' as Href)}
-          onNewGroup={() => router.push('/messages?newGroup=1' as Href)}
-        />
-
-        {previewConversations.length > 0 ? (
-          <View>
-            {previewConversations.map((item, index) => (
-              <DMConversationCard
-                key={item.id}
-                conv={item}
-                isLast={index === previewConversations.length - 1}
-                onPress={() => router.push(`/messages/${item.id}` as Href)}
-              />
-            ))}
-          </View>
-        ) : (
-          <View style={{ paddingTop: 22, paddingBottom: 12, gap: 9 }}>
-            <Text style={{ color: colors.text, fontSize: 21, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
-              {t('chat.nothingYet')}
-            </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21 }}>
-              {t('chat.emptyInboxBody')}
-            </Text>
-            <Pressable onPress={() => router.push('/(tabs)/explore' as Href)} hitSlop={8}>
-              <Text style={{ color: colors.accent, fontSize: 14, fontFamily: 'Inter_600SemiBold', marginTop: 4 }}>
-                {t('chat.findPeople')} →
-              </Text>
-            </Pressable>
-          </View>
-        )}
-      </ScrollView>
-    </View>
-  );
-}
 
 function modelLabel(model: string): string {
   if (model.includes('pro')) return 'Pro';
@@ -472,63 +77,7 @@ function HeaderIconButton({ icon, onPress, label, accent = false }: { icon: Reac
   );
 }
 
-function ModeSwitch({ mode, onChange }: { mode: 'ai' | 'dm'; onChange: (mode: 'ai' | 'dm') => void }) {
-  const { colors, font } = useTheme();
-  const { t } = useI18n();
-  return (
-    <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      minHeight: 42,
-      backgroundColor: colors.surface,
-      borderRadius: 999,
-      padding: 4,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-    }}>
-      {([
-        { key: 'ai' as const, label: t('chat.aiChat'), Icon: Sparkle, color: colors.accent },
-        { key: 'dm' as const, label: t('chat.messages'), Icon: ChatCircleText, color: DM_COLOR },
-      ]).map(item => {
-        const active = mode === item.key;
-        return (
-          <Pressable
-            key={item.key}
-            onPress={() => onChange(item.key)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-            style={{
-              flex: 1,
-              minHeight: 34,
-              borderRadius: 999,
-              paddingHorizontal: 8,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 7,
-              backgroundColor: active ? item.color : 'transparent',
-            }}
-          >
-            <View style={{
-              width: 22,
-              height: 22,
-              borderRadius: 11,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: active ? 'rgba(255,255,255,0.18)' : `${item.color}18`,
-            }}>
-              <item.Icon color={active ? '#fff' : item.color} size={13} weight={active ? 'fill' : 'bold'} />
-            </View>
-            <Text style={[font.bodyBold, { color: active ? '#fff' : colors.textSecondary, fontSize: 13 }]} numberOfLines={1}>
-              {item.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
+
 
 function ChatEmptyLaunchpad({
   targetLabel,
@@ -747,9 +296,6 @@ export default function ChatScreen() {
   const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
-  // Mode: AI chat vs DM inbox
-  const [chatMode, setChatMode] = useState<'ai' | 'dm'>('ai');
-
   // Proactive opener: Echo greets first with a message tied to the user's real
   // day (streak at risk, habits due, target, time). Recomputed each time the
   // Chat tab regains focus so the greeting stays current.
@@ -790,8 +336,8 @@ export default function ChatScreen() {
   // Viewing the AI chat clears the "check-in waiting" dot for the day.
   useFocusEffect(
     useCallback(() => {
-      if (chatMode === 'ai') { void markCheckinSeen(); setCheckinPending(false); }
-    }, [chatMode, setCheckinPending]),
+      void markCheckinSeen(); setCheckinPending(false);
+    }, [setCheckinPending]),
   );
 
   // Ephemeral live items: persisted text messages + transient tool cards.
@@ -1288,15 +834,8 @@ export default function ChatScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-
-      {/* DM Inbox (shown when chatMode === 'dm') */}
-      {chatMode === 'dm' && (
-        <DMInboxView topPad={headerHeight} />
-      )}
-
-      {/* AI Chat (shown when chatMode === 'ai') */}
       <KeyboardAvoidingView
-        style={{ flex: 1, display: chatMode === 'ai' ? 'flex' : 'none' }}
+        style={{ flex: 1, display: 'flex' }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
@@ -1404,28 +943,20 @@ export default function ChatScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', lineHeight: 26 }} numberOfLines={1}>
-                {chatMode === 'ai' ? t('chat.title') : t('chat.messages')}
+                {t('chat.title')}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              {chatMode === 'ai' ? (
-                <>
-                  <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
-                  <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={t('nav.newEcho')} onPress={handleNewChat} />
-                  <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
-                  <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label={t('common.share')} onPress={handleShare} accent />
-                </>
-              ) : (
-                <HeaderIconButton icon={<PencilSimple color="#fff" size={18} />} label={t('chat.messages')} onPress={() => router.push('/messages' as Href)} accent />
-              )}
+              <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
+              <HeaderIconButton icon={<ChatCircleText color={colors.textSecondary} size={18} />} label={t('chat.messages')} onPress={() => router.push('/messages' as Href)} />
+              <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={t('nav.newEcho')} onPress={handleNewChat} />
+              <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
+              <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label={t('common.share')} onPress={handleShare} accent />
             </View>
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ flex: 1 }}>
-              <ModeSwitch mode={chatMode} onChange={setChatMode} />
-            </View>
-            {chatMode === 'ai' ? (
+            <View style={{ flex: 1 }} />
               <Pressable
                 onPress={() => setModelSheetOpen(true)}
                 style={{
@@ -1447,7 +978,6 @@ export default function ChatScreen() {
                   <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{modelLabel(aiModel)}</Text>
                 ) : null}
               </Pressable>
-            ) : null}
           </View>
         </Animated.View>
 

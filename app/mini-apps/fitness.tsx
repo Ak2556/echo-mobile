@@ -31,7 +31,6 @@ import { FoodItem, FOOD_GROUPS, FoodGroupId, foodsForGroup, searchFoods, foodByI
 import { searchOnlineFoods } from '../../lib/foodApi';
 import { ttx } from '../../lib/i18n';
 
-const TEAL = '#4E8B7A'; // sage — warm editorial palette
 type Tab = 'meals' | 'workouts' | 'progress' | 'library';
 
 const TABS: { key: Tab; label: string }[] = [
@@ -47,7 +46,7 @@ function num(v: string): number {
 }
 
 function SheetHeader({ title, onClose }: { title: string; onClose: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const insets = useSafeAreaInsets();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
@@ -61,23 +60,24 @@ function Field({ label, value, onChange, placeholder, keyboard = 'default', flex
   label: string; value: string; onChange: (v: string) => void; placeholder?: string;
   keyboard?: 'default' | 'decimal-pad'; flex?: number; autoFocus?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <View style={{ flex }}>
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{label}</Text>
       <TextInput
         value={value} onChangeText={onChange} placeholder={placeholder} autoFocus={autoFocus}
         placeholderTextColor={colors.textMuted} keyboardType={keyboard}
-        style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12 }}
+        style={{ color: colors.text, fontSize: 15, backgroundColor: colors.surfaceHover, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12 }}
       />
     </View>
   );
 }
 
 function SubmitBtn({ label, onPress }: { label: string; onPress: () => void }) {
+  const { colors, radius } = useTheme();
   return (
-    <AnimatedPressable onPress={onPress} scaleValue={0.96} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: TEAL, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{label}</Text>
+    <AnimatedPressable onPress={onPress} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center', shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+      <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{label}</Text>
     </AnimatedPressable>
   );
 }
@@ -85,7 +85,7 @@ function SubmitBtn({ label, onPress }: { label: string; onPress: () => void }) {
 // ── Add meal ─────────────────────────────────────────────────────────────────
 
 function FoodRow({ food, fav, onTap, onStar }: { food: FoodItem; fav: boolean; onTap: () => void; onStar: () => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
       <Pressable onPress={onTap} style={{ flex: 1, minWidth: 0 }} accessibilityRole="button" accessibilityLabel={`Add ${food.name}`}>
@@ -100,9 +100,9 @@ function FoodRow({ food, fav, onTap, onStar }: { food: FoodItem; fav: boolean; o
           </Text>
         ) : null}
       </Pressable>
-      <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800', marginRight: 12 }}>{food.calories} {ttx("kcal")}</Text>
+      <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '800', marginRight: 12 }}>{food.calories} {ttx("kcal")}</Text>
       <Pressable onPress={onStar} hitSlop={8} accessibilityRole="button" accessibilityLabel={fav ? `Unfavorite ${food.name}` : `Favorite ${food.name}`}>
-        <Star color={fav ? '#E8A93E' : colors.textMuted} size={18} weight={fav ? 'fill' : 'regular'} />
+        <Star color={fav ? colors.warning : colors.textMuted} size={18} weight={fav ? 'fill' : 'regular'} />
       </Pressable>
     </View>
   );
@@ -117,7 +117,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
   onSaveFood: (f: CustomFood) => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const [name, setName] = useState('');
   const [kind, setKind] = useState<MealKind>('breakfast');
   const [calories, setCalories] = useState('');
@@ -255,7 +255,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
           {/* Food database search */}
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{ttx("FOOD DATABASE")}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 12 }}>
               <MagnifyingGlass color={colors.textMuted} size={16} />
               <TextInput
                 value={search}
@@ -283,12 +283,12 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                     <View style={{
                       paddingVertical: 8,
                       paddingHorizontal: 12,
-                      borderRadius: 999,
-                      backgroundColor: active ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                      borderRadius: radius.full,
+                      backgroundColor: active ? colors.accent : (colors.surfaceHover),
                       borderWidth: StyleSheet.hairlineWidth,
                       borderColor: active ? 'transparent' : colors.glassBorder,
                     }}>
-                      <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>
+                      <Text style={{ color: active ? colors.bgPure : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>
                         {group.label}
                       </Text>
                     </View>
@@ -300,7 +300,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
             {showQuickExtras && favoriteFoods.length > 0 && (
               <View style={{ marginTop: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <Star color="#E8A93E" size={13} weight="fill" />
+                  <Star color={colors.warning} size={13} weight="fill" />
                   <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("FAVORITES")}</Text>
                 </View>
                 {favoriteFoods.slice(0, 6).map(food => (
@@ -321,7 +321,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                         <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{m.name}</Text>
                         <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>P {m.protein}{ttx("g · C")} {m.carbs}{ttx("g · F")} {m.fat}g</Text>
                       </View>
-                      <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800' }}>{Math.round(m.calories)} {ttx("kcal")}</Text>
+                      <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '800' }}>{Math.round(m.calories)} {ttx("kcal")}</Text>
                     </View>
                   </Pressable>
                 ))}
@@ -332,7 +332,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
               <Text style={{ color: colors.textMuted, fontSize: 12 }}>
                 {q ? `${results.length} ${results.length === 1 ? 'match' : 'matches'}` : `${FOOD_GROUPS.find(g => g.id === activeFoodGroup)?.label ?? 'Quick'} picks`}
               </Text>
-              {onlineLoading ? <ActivityIndicator size="small" color={TEAL} /> : null}
+              {onlineLoading ? <ActivityIndicator size="small" color={colors.accent} /> : null}
             </View>
             {results.map(food => (
               <FoodRow
@@ -360,12 +360,12 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
               </View>
             )}
             {picked && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: TEAL + '12', borderRadius: 14, borderWidth: 1, borderColor: TEAL + '33', padding: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: colors.accent + '12', borderRadius: radius.card, borderWidth: 1, borderColor: colors.accent + '33', padding: 12 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '700' }}>{picked.name}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>{ttx("Amount:")} {qty} × {picked.serving}</Text>
                 </View>
-                <AnimatedPressable onPress={() => applyFood(picked, Math.max(0.25, Math.round((qty - 0.5) * 100) / 100))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)', borderRadius: 10, padding: 8 }}>
+                <AnimatedPressable onPress={() => applyFood(picked, Math.max(0.25, Math.round((qty - 0.5) * 100) / 100))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)', borderRadius: radius.md, padding: 8 }}>
                   <Minus color={colors.text} size={14} weight="bold" />
                 </AnimatedPressable>
                 {/* Custom quantity — type any exact multiplier; keyed to qty so
@@ -383,8 +383,8 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                   accessibilityLabel={ttx("Quantity")}
                   style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginHorizontal: 6, minWidth: 44, textAlign: 'center', fontVariant: ['tabular-nums'], paddingVertical: 4 }}
                 />
-                <AnimatedPressable onPress={() => applyFood(picked, Math.round((qty + 0.5) * 100) / 100)} scaleValue={0.85} haptic="light" style={{ backgroundColor: TEAL, borderRadius: 10, padding: 8 }}>
-                  <Plus color="#fff" size={14} weight="bold" />
+                <AnimatedPressable onPress={() => applyFood(picked, Math.round((qty + 0.5) * 100) / 100)} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.accent, borderRadius: radius.md, padding: 8 }}>
+                  <Plus color={colors.bgPure} size={14} weight="bold" />
                 </AnimatedPressable>
               </View>
             )}
@@ -395,8 +395,8 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                   const label = p === 0.25 ? '¼' : p === 0.5 ? '½' : p === 1.5 ? '1½' : `${p}×`;
                   return (
                     <Pressable key={p} onPress={() => applyFood(picked, p)} style={{ flex: 1, minWidth: 44 }} accessibilityRole="button" accessibilityLabel={`Portion ${label}`}>
-                      <View style={{ paddingVertical: 8, borderRadius: 10, alignItems: 'center', backgroundColor: active ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
-                        <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{label}</Text>
+                      <View style={{ paddingVertical: 8, borderRadius: radius.md, alignItems: 'center', backgroundColor: active ? colors.accent : (colors.surfaceHover), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                        <Text style={{ color: active ? colors.bgPure : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{label}</Text>
                       </View>
                     </Pressable>
                   );
@@ -413,8 +413,8 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                 const active = mealDate === d.iso;
                 return (
                   <Pressable key={d.iso} onPress={() => setMealDate(d.iso)} accessibilityRole="button" accessibilityLabel={d.label}>
-                    <View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: active ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
-                      <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{d.label}</Text>
+                    <View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: radius.full, backgroundColor: active ? colors.accent : (colors.surfaceHover), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: active ? colors.bgPure : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{d.label}</Text>
                     </View>
                   </Pressable>
                 );
@@ -422,7 +422,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
             </ScrollView>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginTop: 14, marginBottom: 8 }}>{ttx("TIME")}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <View style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 10 }}>
+              <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 10 }}>
                 <TextInput
                   value={mealTime}
                   onChangeText={setMealTime}
@@ -444,8 +444,8 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                   }}
                   accessibilityRole="button" accessibilityLabel={label}
                 >
-                  <View style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: mealTime === val ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: mealTime === val ? 'transparent' : colors.glassBorder }}>
-                    <Text style={{ color: mealTime === val ? '#fff' : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{label}</Text>
+                  <View style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: mealTime === val ? colors.accent : (colors.surfaceHover), borderWidth: StyleSheet.hairlineWidth, borderColor: mealTime === val ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: mealTime === val ? colors.bgPure : colors.textSecondary, fontSize: 12.5, fontWeight: '700' }}>{label}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -458,8 +458,8 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {MEAL_KINDS.map(k => (
                 <Pressable key={k.kind} onPress={() => setKind(k.kind)} style={{ flex: 1 }}>
-                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: kind === k.kind ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: kind === k.kind ? 'transparent' : colors.glassBorder }}>
-                    <Text style={{ color: kind === k.kind ? '#fff' : colors.text, fontWeight: '700', fontSize: 12 }}>{k.label}</Text>
+                  <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: kind === k.kind ? colors.accent : (colors.surfaceHover), borderWidth: StyleSheet.hairlineWidth, borderColor: kind === k.kind ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: kind === k.kind ? colors.bgPure : colors.text, fontWeight: '700', fontSize: 12 }}>{k.label}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -475,8 +475,8 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
           {/* More detail — optional fiber / sugar / note. */}
           <Pressable onPress={() => setShowMore(v => !v)} accessibilityRole="button">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {showMore ? <CaretUp color={TEAL} size={14} weight="bold" /> : <CaretDown color={TEAL} size={14} weight="bold" />}
-              <Text style={{ color: TEAL, fontSize: 12.5, fontWeight: '700' }}>{showMore ? 'Hide extra detail' : 'Add fiber, sugar, or a note'}</Text>
+              {showMore ? <CaretUp color={colors.accent} size={14} weight="bold" /> : <CaretDown color={colors.accent} size={14} weight="bold" />}
+              <Text style={{ color: colors.accent, fontSize: 12.5, fontWeight: '700' }}>{showMore ? 'Hide extra detail' : 'Add fiber, sugar, or a note'}</Text>
             </View>
           </Pressable>
           {showMore && (
@@ -496,10 +496,10 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
                 <View style={{
                   width: 22, height: 22, borderRadius: 7,
                   alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: saveToFoods ? TEAL : 'transparent',
+                  backgroundColor: saveToFoods ? colors.accent : 'transparent',
                   borderWidth: saveToFoods ? 0 : 1.5, borderColor: colors.glassBorder,
                 }}>
-                  {saveToFoods && <FloppyDisk color="#fff" size={13} weight="fill" />}
+                  {saveToFoods && <FloppyDisk color={colors.bgPure} size={13} weight="fill" />}
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
                   {ttx("Save to my foods for next time")}
@@ -517,11 +517,12 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
 // ── Fitness settings (profile, goal, targets, units, reminders) ──────────────
 
 function SectionLabel({ children }: { children: string }) {
-  return <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 }}>{children}</Text>;
+  const { colors } = useTheme();
+  return <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 4 }}>{children}</Text>;
 }
 
 function Seg<T extends string | number>({ label, value, options, onChange }: { label?: string; value: T; options: { v: T; label: string; hint?: string }[]; onChange: (v: T) => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <View>
       {label ? <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }}>{label}</Text> : null}
@@ -530,8 +531,8 @@ function Seg<T extends string | number>({ label, value, options, onChange }: { l
           const active = o.v === value;
           return (
             <Pressable key={String(o.v)} onPress={() => onChange(o.v)} style={{ flex: 1, minWidth: 64 }}>
-              <View style={{ paddingVertical: 10, paddingHorizontal: 6, borderRadius: 12, alignItems: 'center', backgroundColor: active ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
-                <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{o.label}</Text>
+              <View style={{ paddingVertical: 10, paddingHorizontal: 6, borderRadius: radius.md, alignItems: 'center', backgroundColor: active ? colors.accent : (colors.surfaceHover), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                <Text style={{ color: active ? colors.bgPure : colors.text, fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{o.label}</Text>
                 {o.hint ? <Text style={{ color: active ? 'rgba(255,255,255,0.8)' : colors.textMuted, fontSize: 9.5, marginTop: 1 }} numberOfLines={1}>{o.hint}</Text> : null}
               </View>
             </Pressable>
@@ -543,14 +544,14 @@ function Seg<T extends string | number>({ label, value, options, onChange }: { l
 }
 
 function ToggleRow({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 }}>
       <View style={{ flex: 1 }}>
         <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>{label}</Text>
         {hint ? <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{hint}</Text> : null}
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: TEAL, false: colors.border }} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.accent, false: colors.border }} />
     </View>
   );
 }
@@ -561,7 +562,7 @@ function SettingsModal({ doc, weightKg, onSave, onClose }: {
   onSave: (settings: FitnessSettings, goals: FitnessGoals) => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const s0 = doc.settings;
   const [sex, setSex] = useState<Sex>(s0.sex);
   const [age, setAge] = useState(String(s0.age));
@@ -623,8 +624,8 @@ function SettingsModal({ doc, weightKg, onSave, onClose }: {
           {auto ? (
             <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
               {[['Calories', `${preview.calories}`], ['Protein', `${preview.protein}g`], ['Carbs', `${preview.carbs}g`], ['Fat', `${preview.fat}g`], ['Water', `${preview.waterMl}ml`]].map(([l, v]) => (
-                <View key={l} style={{ flexGrow: 1, minWidth: 90, borderRadius: 12, padding: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-                  <Text style={{ color: TEAL, fontSize: 18, fontWeight: '800' }}>{v}</Text>
+                <View key={l} style={{ flexGrow: 1, minWidth: 90, borderRadius: radius.md, padding: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                  <Text style={{ color: colors.accent, fontSize: 18, fontWeight: '800' }}>{v}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 1 }}>{l}</Text>
                 </View>
               ))}
@@ -673,7 +674,7 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
   onSaveRoutine?: (r: Routine) => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [rows, setRows] = useState<DraftExercise[]>(() =>
     initial?.exercises.length
@@ -712,7 +713,7 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
             placeholder={ttx("e.g. Push day, Legs")} autoFocus={!initial}
           />
           {rows.map((row, i) => (
-            <GlassPanel key={i} variant="light" borderRadius={16} contentStyle={{ padding: 14, gap: 12 }}>
+            <GlassPanel key={i} variant="light" borderRadius={radius.card} contentStyle={{ padding: 14, gap: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{`EXERCISE ${i + 1}`}</Text>
@@ -722,7 +723,7 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
                     onFocus={() => setSuggestFor(i)}
                     placeholder={ttx("Search 100+ exercises…")}
                     placeholderTextColor={colors.textMuted}
-                    style={{ color: colors.text, fontSize: 15, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12 }}
+                    style={{ color: colors.text, fontSize: 15, backgroundColor: colors.surfaceHover, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12 }}
                   />
                 </View>
                 {rows.length > 1 && (
@@ -751,9 +752,9 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
             </GlassPanel>
           ))}
           <Pressable onPress={() => setRows([...rows, emptyDraft()])}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: TEAL + '55', borderStyle: 'dashed' }}>
-              <Plus color={TEAL} size={15} weight="bold" />
-              <Text style={{ color: TEAL, fontWeight: '700', fontSize: 14 }}>{ttx("Add exercise")}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: colors.accentMuted, borderStyle: 'dashed' }}>
+              <Plus color={colors.accent} size={15} weight="bold" />
+              <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 14 }}>{ttx("Add exercise")}</Text>
             </View>
           </Pressable>
           {mode === 'routine' && (
@@ -762,8 +763,8 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {REST_OPTIONS.map(sec => (
                   <Pressable key={sec} onPress={() => setRestSec(sec)} style={{ flex: 1 }}>
-                    <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: restSec === sec ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: restSec === sec ? 'transparent' : colors.glassBorder }}>
-                      <Text style={{ color: restSec === sec ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>{sec}s</Text>
+                    <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: restSec === sec ? colors.accent : (colors.surfaceHover), borderWidth: StyleSheet.hairlineWidth, borderColor: restSec === sec ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: restSec === sec ? colors.bgPure : colors.text, fontWeight: '700', fontSize: 13 }}>{sec}s</Text>
                     </View>
                   </Pressable>
                 ))}
@@ -782,7 +783,7 @@ function AddWorkoutModal({ mode = 'log', initial, onAdd, onSaveRoutine, onClose 
 function MeasurementModal({ latest, onAdd, onClose }: {
   latest: MeasurementEntry | undefined; onAdd: (m: MeasurementEntry) => void; onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(MEASUREMENT_FIELDS.map(f => [f.key, latest?.[f.key] ? String(latest[f.key]) : ''])),
   );
@@ -842,9 +843,9 @@ function WeightChart({ entries, colors }: { entries: WeightEntry[]; colors: any 
   return (
     <View>
       <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
-        <Polyline points={points} fill="none" stroke={TEAL} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+        <Polyline points={points} fill="none" stroke={colors.accent} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
         {pts.map((p, i) => (
-          <Circle key={p.id} cx={x(i)} cy={y(p.kg)} r={i === pts.length - 1 ? 4.5 : 2.5} fill={i === pts.length - 1 ? TEAL : colors.textMuted} />
+          <Circle key={p.id} cx={x(i)} cy={y(p.kg)} r={i === pts.length - 1 ? 4.5 : 2.5} fill={i === pts.length - 1 ? colors.accent : colors.textMuted} />
         ))}
       </Svg>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -858,7 +859,7 @@ function WeightChart({ entries, colors }: { entries: WeightEntry[]; colors: any 
 // ── Screen ───────────────────────────────────────────────────────────────────
 
 export default function FitnessApp() {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const [doc, setDoc] = useState<FitnessDoc | null>(null);
   const [tab, setTab] = useState<Tab>('meals');
   const [showAddMeal, setShowAddMeal] = useState(false);
@@ -910,10 +911,10 @@ export default function FitnessApp() {
   const AddBtn = (tab === 'meals' || tab === 'workouts') ? (
     <AnimatedPressable
       onPress={() => (tab === 'meals' ? setShowAddMeal(true) : setShowAddWorkout(true))}
-      scaleValue={0.88} haptic="medium" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: TEAL, borderRadius: 12 }}
+      scaleValue={0.88} haptic="medium" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.md }}
       accessibilityRole="button" accessibilityLabel={tab === 'meals' ? 'Add meal' : 'Add workout'}
     >
-      <Plus color="#fff" size={18} weight="bold" />
+      <Plus color={colors.bgPure} size={18} weight="bold" />
     </AnimatedPressable>
   ) : null;
 
@@ -924,7 +925,7 @@ export default function FitnessApp() {
       <AnimatedPressable
         onPress={() => setShowGoals(true)}
         scaleValue={0.88} haptic="light"
-        style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}
+        style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover, borderRadius: radius.md }}
         accessibilityRole="button" accessibilityLabel={ttx("Fitness settings")}
       >
         <GearSix color={colors.textSecondary} size={19} weight="fill" />
@@ -984,7 +985,7 @@ export default function FitnessApp() {
   return (
     <MiniAppShell title={ttx("Fitness")} subtitle={ttx("Fit")} headerRight={HeaderActions}>
       <MiniCommandDeck
-        accent={TEAL}
+        accent={colors.accent}
         title={ttx("Health operating system")}
         subtitle={ttx("Meals, workouts, metrics.")}
         metrics={[
@@ -995,7 +996,7 @@ export default function FitnessApp() {
         chips={['Meals + macros', 'Workout flow', 'Progress trends']}
       />
       {/* Tabs */}
-      <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
         {TABS.map(t => (
           <Pressable
             key={t.key}
@@ -1005,8 +1006,8 @@ export default function FitnessApp() {
             accessibilityLabel={t.label}
             accessibilityState={{ selected: tab === t.key }}
           >
-            <View style={{ paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: tab === t.key ? TEAL : 'transparent' }}>
-              <Text style={{ color: tab === t.key ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{t.label}</Text>
+            <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: tab === t.key ? colors.accent : 'transparent' }}>
+              <Text style={{ color: tab === t.key ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{t.label}</Text>
             </View>
           </Pressable>
         ))}
@@ -1014,7 +1015,7 @@ export default function FitnessApp() {
 
       <EdgeFeaturePanel
         appName="Fitness"
-        accent={TEAL}
+        accent={colors.accent}
         headline={ttx("Fitness that turns into momentum")}
         caption={ttx("Share progress, compare consistency, and convert training data into better next steps.")}
         metrics={[
@@ -1031,7 +1032,7 @@ export default function FitnessApp() {
       {/* ── Meals ── */}
       {tab === 'meals' && (
         <>
-          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
+          <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("Today")}</Text>
@@ -1040,12 +1041,12 @@ export default function FitnessApp() {
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> / {doc.goals.calories} {ttx("kcal")}</Text>
                 </Text>
               </View>
-              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" hitSlop={10} style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }} accessibilityRole="button" accessibilityLabel={ttx("Fitness settings")}>
+              <AnimatedPressable onPress={() => setShowGoals(true)} scaleValue={0.9} haptic="light" hitSlop={10} style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.surfaceHover }} accessibilityRole="button" accessibilityLabel={ttx("Fitness settings")}>
                 <PencilSimple color={colors.textSecondary} size={17} />
               </AnimatedPressable>
             </View>
-            <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden', marginTop: 12 }}>
-              <View style={{ height: '100%', width: `${calPct}%`, backgroundColor: totals.calories > doc.goals.calories ? colors.danger : TEAL, borderRadius: 4 }} />
+            <View style={{ height: 8, backgroundColor: colors.surfaceHover, borderRadius: 4, overflow: 'hidden', marginTop: 12 }}>
+              <View style={{ height: '100%', width: `${calPct}%`, backgroundColor: totals.calories > doc.goals.calories ? colors.danger : colors.accent, borderRadius: 4 }} />
             </View>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
               {[
@@ -1053,8 +1054,8 @@ export default function FitnessApp() {
                 { label: 'Carbs', value: `${Math.round(totals.carbs)}g`, sub: `of ${doc.goals.carbs}g` },
                 { label: 'Fat', value: `${Math.round(totals.fat)}g`, sub: `of ${doc.goals.fat}g` },
               ].map(m => (
-                <View key={m.label} style={{ flex: 1, backgroundColor: TEAL + '14', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: TEAL + '2A' }}>
-                  <Text style={{ color: TEAL, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{m.label.toUpperCase()}</Text>
+                <View key={m.label} style={{ flex: 1, backgroundColor: colors.accentMuted, borderRadius: radius.card, padding: 12, borderWidth: 1, borderColor: colors.accentMuted }}>
+                  <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>{m.label.toUpperCase()}</Text>
                   <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 3 }}>{m.value}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 11 }}>{m.sub}</Text>
                 </View>
@@ -1063,30 +1064,30 @@ export default function FitnessApp() {
           </GlassPanel>
 
           {/* Water */}
-          <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
+          <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Drop color="#4E7A8B" size={26} weight="fill" />
+              <Drop color={colors.accent} size={26} weight="fill" />
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
                   {waterToday >= 1000 ? `${(waterToday / 1000).toFixed(1)} L` : `${waterToday} ml`}
                   <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>  {ttx("of")} {(doc.goals.waterMl / 1000).toFixed(1)} L</Text>
                 </Text>
-                <View style={{ height: 6, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden', marginTop: 7 }}>
-                  <View style={{ height: '100%', width: `${Math.min(100, Math.round((waterToday / doc.goals.waterMl) * 100))}%`, backgroundColor: '#4E7A8B', borderRadius: 3 }} />
+                <View style={{ height: 6, backgroundColor: colors.surfaceHover, borderRadius: 3, overflow: 'hidden', marginTop: 7 }}>
+                  <View style={{ height: '100%', width: `${Math.min(100, Math.round((waterToday / doc.goals.waterMl) * 100))}%`, backgroundColor: colors.accent, borderRadius: 3 }} />
                 </View>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
               {[{ label: '+250 ml', ml: 250 }, { label: '+500 ml', ml: 500 }, { label: '+1 L', ml: 1000 }].map(opt => (
                 <AnimatedPressable key={opt.ml} onPress={() => addWater(opt.ml)} scaleValue={0.94} haptic="light" style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={`Add ${opt.label} of water`}>
-                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: '#4E7A8B18', borderWidth: 1, borderColor: '#4E7A8B33' }}>
-                    <Text style={{ color: '#4E7A8B', fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{opt.label}</Text>
+                  <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: colors.accentMuted, borderWidth: 1, borderColor: colors.accentMuted }}>
+                    <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 12.5 }} numberOfLines={1}>{opt.label}</Text>
                   </View>
                 </AnimatedPressable>
               ))}
               {waterToday > 0 && (
                 <AnimatedPressable onPress={undoWater} scaleValue={0.94} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Undo last water entry")}>
-                  <View style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                  <View style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: radius.md, alignItems: 'center', backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                     <Text style={{ color: colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{ttx("Undo")}</Text>
                   </View>
                 </AnimatedPressable>
@@ -1096,7 +1097,7 @@ export default function FitnessApp() {
 
           {totals.meals.length === 0 && (
             <MiniEmptyState
-              accent={TEAL}
+              accent={colors.accent}
               icon={<ForkKnife color={colors.textMuted} size={44} weight="duotone" />}
               title={ttx("Nothing logged today")}
               subtitle={ttx("Log the first meal to see calories, protein, and daily direction.")}
@@ -1113,14 +1114,14 @@ export default function FitnessApp() {
                 <Text style={[font.eyebrow, { color: colors.textMuted, marginBottom: 8 }]}>{k.label}</Text>
                 {meals.map((m, i) => (
                   <Animated.View key={m.id} entering={FadeInDown.delay(i * 40).duration(220)} style={{ marginBottom: 8 }}>
-                    <GlassPanel variant="medium" borderRadius={16} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
+                    <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
                       <View style={{ flex: 1 }}>
                         <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{m.name}</Text>
                         <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
                           P {Math.round(m.protein)}{ttx("g · C")} {Math.round(m.carbs)}{ttx("g · F")} {Math.round(m.fat)}g
                         </Text>
                       </View>
-                      <Text style={{ color: TEAL, fontSize: 16, fontWeight: '800' }}>{Math.round(m.calories)} {ttx("kcal")}</Text>
+                      <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '800' }}>{Math.round(m.calories)} {ttx("kcal")}</Text>
                       <AnimatedPressable onPress={() => removeItem('meal', () => ({ ...doc, meals: doc.meals.filter(x => x.id !== m.id) }))} scaleValue={0.85} haptic="light" accessibilityRole="button" accessibilityLabel={`Delete ${m.name}`}>
                         <Trash color={colors.textMuted} size={16} />
                       </AnimatedPressable>
@@ -1137,7 +1138,7 @@ export default function FitnessApp() {
       {tab === 'workouts' && (
         <>
           {/* Weekly goal + streak */}
-          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
+          <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("This week")}</Text>
@@ -1146,19 +1147,19 @@ export default function FitnessApp() {
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> {ttx("of")} {doc.goals.workoutsPerWeek} {ttx("workouts")}</Text>
                 </Text>
               </View>
-              <Barbell color={TEAL} size={40} weight="fill" />
+              <Barbell color={colors.accent} size={40} weight="fill" />
             </View>
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 12 }}>
               {Array.from({ length: doc.goals.workoutsPerWeek }).map((_, i) => (
                 <View key={i} style={{
                   flex: 1, height: 8, borderRadius: 4,
-                  backgroundColor: i < weekCount ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+                  backgroundColor: i < weekCount ? colors.accent : (colors.surfaceHover),
                 }} />
               ))}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
-              <Fire color={streak > 0 ? '#B08536' : colors.textMuted} size={14} weight={streak > 0 ? 'fill' : 'regular'} />
-              <Text style={{ color: streak > 0 ? '#B08536' : colors.textMuted, fontSize: 13, fontWeight: '700', flex: 1 }}>
+              <Fire color={streak > 0 ? colors.warning : colors.textMuted} size={14} weight={streak > 0 ? 'fill' : 'regular'} />
+              <Text style={{ color: streak > 0 ? colors.warning : colors.textMuted, fontSize: 13, fontWeight: '700', flex: 1 }}>
                 {streak > 0 ? `${streak}-week streak` : 'Hit your goal to start a streak'}
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 12 }}>
@@ -1173,7 +1174,7 @@ export default function FitnessApp() {
               {ttx("Routines")}
             </Text>
             <Pressable onPress={() => setRoutineEditor('new')} hitSlop={10}>
-              <Text style={{ color: TEAL, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{ttx("+ New routine")}</Text>
+              <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{ttx("+ New routine")}</Text>
             </Pressable>
           </View>
           {doc.routines.length === 0 ? (
@@ -1183,7 +1184,7 @@ export default function FitnessApp() {
           ) : (
             <View style={{ marginBottom: 16, gap: 10 }}>
               {doc.routines.map(r => (
-                <GlassPanel key={r.id} variant="medium" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
+                <GlassPanel key={r.id} variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
                   <Pressable
                     onPress={() => setRoutineEditor(r)}
                     onLongPress={() => removeItem('routine', () => ({ ...doc, routines: doc.routines.filter(x => x.id !== r.id) }))}
@@ -1201,10 +1202,10 @@ export default function FitnessApp() {
                     onPress={() => setActiveRoutine(r)}
                     scaleValue={0.9} haptic="medium"
                     accessibilityRole="button" accessibilityLabel={`Start routine ${r.title}`}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: TEAL, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.accent, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10 }}
                   >
-                    <Play color="#fff" size={13} weight="fill" />
-                    <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>{ttx("Start")}</Text>
+                    <Play color={colors.bgPure} size={13} weight="fill" />
+                    <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 13 }}>{ttx("Start")}</Text>
                   </AnimatedPressable>
                 </GlassPanel>
               ))}
@@ -1219,7 +1220,7 @@ export default function FitnessApp() {
 
           {doc.workouts.length === 0 && (
             <MiniEmptyState
-              accent={TEAL}
+              accent={colors.accent}
               icon={<Barbell color={colors.textMuted} size={44} weight="duotone" />}
               title={ttx("No workouts logged")}
               subtitle={ttx("Log a session to track volume, streaks, PRs, and consistency.")}
@@ -1230,7 +1231,7 @@ export default function FitnessApp() {
 
           {doc.workouts.map((w, i) => (
             <Animated.View key={w.id} entering={FadeInDown.delay(Math.min(i, 6) * 40).duration(220)} style={{ marginBottom: 10 }}>
-              <GlassPanel variant="medium" borderRadius={18} contentStyle={{ padding: 16 }}>
+              <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{w.title}</Text>
@@ -1239,7 +1240,7 @@ export default function FitnessApp() {
                       {isSameDay(w.date) ? ' · Today' : ''}
                     </Text>
                   </View>
-                  <Text style={{ color: TEAL, fontSize: 14, fontWeight: '800' }}>{Math.round(workoutVolume(w)).toLocaleString()} {ttx("kg")}</Text>
+                  <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '800' }}>{Math.round(workoutVolume(w)).toLocaleString()} {ttx("kg")}</Text>
                   <AnimatedPressable onPress={() => removeItem('workout', () => ({ ...doc, workouts: doc.workouts.filter(x => x.id !== w.id) }))} scaleValue={0.85} haptic="light" style={{ marginLeft: 12 }} accessibilityRole="button" accessibilityLabel={`Delete workout ${w.title}`}>
                     <Trash color={colors.textMuted} size={16} />
                   </AnimatedPressable>
@@ -1261,7 +1262,7 @@ export default function FitnessApp() {
       {/* ── Progress ── */}
       {tab === 'progress' && (
         <>
-          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
+          <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }} elevated>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("Body weight")}</Text>
@@ -1275,7 +1276,7 @@ export default function FitnessApp() {
                   </Text>
                 )}
               </View>
-              <TrendUp color={TEAL} size={36} weight="fill" />
+              <TrendUp color={colors.accent} size={36} weight="fill" />
             </View>
             {sortedWeights.length > 1 && (
               <View style={{ marginTop: 16 }}>
@@ -1284,14 +1285,14 @@ export default function FitnessApp() {
             )}
           </GlassPanel>
 
-          <GlassPanel variant="light" borderRadius={18} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }} style={{ marginBottom: 16 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }} style={{ marginBottom: 16 }}>
             <TextInput
               value={weightInput} onChangeText={setWeightInput} placeholder={ttx("Today's weight (kg)")}
               placeholderTextColor={colors.textMuted} keyboardType="decimal-pad"
               style={{ flex: 1, color: colors.text, fontSize: 15, paddingHorizontal: 8, paddingVertical: 8 }}
             />
-            <AnimatedPressable onPress={logWeight} scaleValue={0.92} haptic="medium" style={{ backgroundColor: TEAL, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>{ttx("Log")}</Text>
+            <AnimatedPressable onPress={logWeight} scaleValue={0.92} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: radius.md, paddingHorizontal: 18, paddingVertical: 10 }}>
+              <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 14 }}>{ttx("Log")}</Text>
             </AnimatedPressable>
           </GlassPanel>
 
@@ -1315,12 +1316,12 @@ export default function FitnessApp() {
           {/* Body measurements */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 10 }}>
             <Text style={[font.eyebrow, { color: colors.textMuted, flex: 1 }]}>{ttx("Measurements")}</Text>
-            <AnimatedPressable onPress={() => setShowMeasure(true)} scaleValue={0.9} haptic="light" style={{ backgroundColor: TEAL + '18', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 }}>
-              <Text style={{ color: TEAL, fontWeight: '700', fontSize: 12.5 }}>{ttx("+ Log")}</Text>
+            <AnimatedPressable onPress={() => setShowMeasure(true)} scaleValue={0.9} haptic="light" style={{ backgroundColor: colors.accentMuted, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 7 }}>
+              <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 12.5 }}>{ttx("+ Log")}</Text>
             </AnimatedPressable>
           </View>
           {latestMeasure ? (
-            <GlassPanel variant="light" borderRadius={18} contentStyle={{ flexDirection: 'row', flexWrap: 'wrap', padding: 14 }} style={{ marginBottom: 8 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', flexWrap: 'wrap', padding: 14 }} style={{ marginBottom: 8 }}>
               {MEASUREMENT_FIELDS.map(f => {
                 const cur = latestMeasure[f.key];
                 if (!cur) return null;
@@ -1347,7 +1348,7 @@ export default function FitnessApp() {
           {lifts.length > 0 && (
             <>
               <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 24, marginBottom: 10 }]}>{ttx("Lifts")}</Text>
-              <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
+              <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
                 {lifts.map(({ name, points }, i) => {
                   const [latest, prev] = points;
                   const cur1rm = est1RM(latest.weight, latest.reps);
@@ -1374,7 +1375,7 @@ export default function FitnessApp() {
 
           {/* Weekly + monthly logs */}
           <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 24, marginBottom: 10 }]}>{ttx("Weekly log")}</Text>
-          <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }} style={{ marginBottom: 8 }}>
             {weekly.map((wk, i) => (
               <View key={wk.label} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < weekly.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', flex: 1 }}>{wk.label}</Text>
@@ -1388,7 +1389,7 @@ export default function FitnessApp() {
           </GlassPanel>
 
           <Text style={[font.eyebrow, { color: colors.textMuted, marginTop: 20, marginBottom: 10 }]}>{ttx("Monthly log")}</Text>
-          <GlassPanel variant="light" borderRadius={18} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }}>
             {monthly.map((mo, i) => (
               <View key={mo.label} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: i < monthly.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
                 <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', flex: 1 }}>{mo.label}</Text>
@@ -1409,7 +1410,7 @@ export default function FitnessApp() {
             {EXERCISE_CATALOG.length} {ttx("exercises. Tap one for form cues — featured moves animate.")}
           </Text>
 
-          <GlassPanel variant="light" borderRadius={14} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }} style={{ marginBottom: 10 }}>
+          <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }} style={{ marginBottom: 10 }}>
             <MagnifyingGlass color={colors.textMuted} size={16} />
             <TextInput
               value={libQuery} onChangeText={setLibQuery}
@@ -1423,8 +1424,8 @@ export default function FitnessApp() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
             {(['All', ...MUSCLE_GROUPS] as const).map(g => (
               <Pressable key={g} onPress={() => setLibGroup(g)}>
-                <View style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: libGroup === g ? TEAL : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'), borderWidth: StyleSheet.hairlineWidth, borderColor: libGroup === g ? 'transparent' : colors.glassBorder }}>
-                  <Text style={{ color: libGroup === g ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5 }}>{g}</Text>
+                <View style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.full, backgroundColor: libGroup === g ? colors.accent : (colors.surfaceHover), borderWidth: StyleSheet.hairlineWidth, borderColor: libGroup === g ? 'transparent' : colors.glassBorder }}>
+                  <Text style={{ color: libGroup === g ? colors.bgPure : colors.text, fontWeight: '700', fontSize: 12.5 }}>{g}</Text>
                 </View>
               </Pressable>
             ))}
@@ -1437,7 +1438,7 @@ export default function FitnessApp() {
             const latest = history?.points[0];
             return (
               <View key={item.id} style={{ marginBottom: 8 }}>
-                <GlassPanel variant="medium" borderRadius={16} contentStyle={{ padding: 14 }} style={open ? { borderColor: TEAL + '55' } : undefined}>
+                <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 14 }} style={open ? { borderColor: colors.accentMuted } : undefined}>
                   <Pressable onPress={() => setExpanded(open ? null : item.id)}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <View style={{ flex: 1 }}>
@@ -1447,21 +1448,21 @@ export default function FitnessApp() {
                           {latest ? ` · last ${latest.weight} kg × ${latest.reps}` : ''}
                         </Text>
                       </View>
-                      {demo ? <Text style={{ color: TEAL, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.6, marginRight: 8 }}>{ttx("DEMO")}</Text> : null}
-                      {open ? <CaretUp color={TEAL} size={16} weight="bold" /> : <CaretDown color={colors.textMuted} size={16} />}
+                      {demo ? <Text style={{ color: colors.accent, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.6, marginRight: 8 }}>{ttx("DEMO")}</Text> : null}
+                      {open ? <CaretUp color={colors.accent} size={16} weight="bold" /> : <CaretDown color={colors.textMuted} size={16} />}
                     </View>
                   </Pressable>
                   {open && (
                     <View style={{ marginTop: 12 }}>
                       {demo ? (
                         <>
-                          <View style={{ alignItems: 'center', backgroundColor: TEAL + '0E', borderRadius: 16, paddingVertical: 8 }}>
-                            <ExerciseDemo exercise={demo} color={TEAL} muted={colors.textMuted} />
+                          <View style={{ alignItems: 'center', backgroundColor: colors.accentMuted, borderRadius: radius.card, paddingVertical: 8 }}>
+                            <ExerciseDemo exercise={demo} color={colors.accent} muted={colors.textMuted} />
                           </View>
                           <View style={{ marginTop: 12, gap: 7 }}>
                             {demo.cues.map((cue, j) => (
                               <View key={j} style={{ flexDirection: 'row', gap: 8 }}>
-                                <Text style={{ color: TEAL, fontSize: 13, fontWeight: '800' }}>{j + 1}</Text>
+                                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '800' }}>{j + 1}</Text>
                                 <Text style={{ color: colors.text, fontSize: 13.5, lineHeight: 19, flex: 1 }}>{cue}</Text>
                               </View>
                             ))}

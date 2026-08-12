@@ -1,8 +1,17 @@
+/**
+ * @deprecated Legacy color constants. Prefer using `useTheme()` from `@/lib/theme`
+ * or `THEMES` for dynamic theme support.
+ */
+import { THEMES } from '../lib/theme';
+
 export const Colors = {
-  background: '#000000',
-  surface: '#121214',
-  primary: '#3B82F6',
-  text: '#FFFFFF',
-  textMuted: '#A1A1AA',
-  border: '#27272A',
-};
+  background: THEMES.midnight.bg,
+  surface: THEMES.midnight.surface,
+  primary: THEMES.midnight.accent,
+  text: THEMES.midnight.text,
+  textMuted: THEMES.midnight.textMuted,
+  border: THEMES.midnight.border,
+} as const;
+
+export default Colors;
+

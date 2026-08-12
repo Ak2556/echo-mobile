@@ -177,7 +177,7 @@ function WeekRow({ habit, colors, onDayPress }: { habit: Habit; colors: any; onD
                 {DAYS[new Date(dateStr + 'T12:00:00').getDay()]}
               </Text>
               <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: done ? habit.color : 'transparent', borderWidth: 1.5, borderColor: done ? habit.color : isToday ? habit.color + '55' : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-                {done && <CheckCircle color="#fff" size={14} weight="fill" />}
+                {done && <CheckCircle color={colors.bgPure} size={14} weight="fill" />}
               </View>
               <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: hasProof ? habit.color : 'transparent' }} />
             </View>
@@ -200,7 +200,7 @@ async function stashProofPhoto(habitId: string, date: string, srcUri: string): P
 function ProofModal({ habit, date, onSaved, onClose }: {
   habit: Habit; date: string; onSaved: (h: Habit) => void; onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
   const entry: HabitCheckIn | undefined = checkInFor(habit, date);
@@ -244,7 +244,7 @@ function ProofModal({ habit, date, onSaved, onClose }: {
 
   const pickBtn = (label: string, icon: React.ReactNode, source: 'camera' | 'library') => (
     <Pressable onPress={() => pick(source)} style={{ flex: 1 }}>
-      <View style={{ alignItems: 'center', gap: 6, paddingVertical: 18, borderRadius: 14, borderWidth: 1, borderColor: habit.color + '55', borderStyle: 'dashed', backgroundColor: habit.color + '0C' }}>
+      <View style={{ alignItems: 'center', gap: 6, paddingVertical: 18, borderRadius: radius.card, borderWidth: 1, borderColor: habit.color + '55', borderStyle: 'dashed', backgroundColor: habit.color + '0C' }}>
         {icon}
         <Text style={{ color: habit.color, fontWeight: '700', fontSize: 13 }}>{label}</Text>
       </View>
@@ -277,7 +277,7 @@ function ProofModal({ habit, date, onSaved, onClose }: {
               value={note} onChangeText={setNote} multiline
               placeholder={tt('How did it go? What did you do?')}
               placeholderTextColor={colors.textMuted}
-              style={{ color: colors.text, fontSize: 15, minHeight: 84, textAlignVertical: 'top', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }}
+              style={{ color: colors.text, fontSize: 15, minHeight: 84, textAlignVertical: 'top', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }}
             />
           </View>
 
@@ -288,11 +288,11 @@ function ProofModal({ habit, date, onSaved, onClose }: {
                 <Image
                   source={{ uri: photoUri }}
                   onError={() => setPhotoOk(false)}
-                  style={{ width: '100%', height: 220, borderRadius: 16, backgroundColor: colors.surface }}
+                  style={{ width: '100%', height: 220, borderRadius: radius.card, backgroundColor: colors.surface }}
                   resizeMode="cover"
                 />
-                <AnimatedPressable onPress={() => setPhotoUri('')} scaleValue={0.9} haptic="light" style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 14, padding: 7 }}>
-                  <X color="#fff" size={15} weight="bold" />
+                <AnimatedPressable onPress={() => setPhotoUri('')} scaleValue={0.9} haptic="light" style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: radius.card, padding: 7 }}>
+                  <X color={colors.bgPure} size={15} weight="bold" />
                 </AnimatedPressable>
               </View>
             ) : (
@@ -308,8 +308,8 @@ function ProofModal({ habit, date, onSaved, onClose }: {
             ) : null}
           </View>
 
-          <AnimatedPressable onPress={save} scaleValue={0.96} haptic="medium" style={{ backgroundColor: habit.color, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: habit.color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{tt('Save')}</Text>
+          <AnimatedPressable onPress={save} scaleValue={0.96} haptic="medium" style={{ backgroundColor: habit.color, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center', shadowColor: habit.color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+            <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{tt('Save')}</Text>
           </AnimatedPressable>
         </ScrollView>
       </View>
@@ -324,13 +324,12 @@ function AddHabitModal({ initial, onSave, onClose }: {
   onSave: (h: Habit) => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { tt } = useI18n();
   const insets = useSafeAreaInsets();
-  const accent = '#C65F3F'; // terracotta — warm editorial palette
-  const [name, setName] = useState(initial?.name ?? '');
+    const [name, setName] = useState(initial?.name ?? '');
   const [marker, setMarker] = useState(initial?.marker ?? HABIT_MARKERS[0]);
-  const [color, setColor] = useState(initial?.color ?? accent);
+  const [color, setColor] = useState(initial?.color ?? colors.accent);
   const [goal, setGoal] = useState(initial?.weeklyGoal ?? 7);
   const [reminder, setReminder] = useState<{ date: string; hour: number; minute: number } | null>(
     initial?.reminder ? { date: todayStr(), hour: initial.reminder.hour, minute: initial.reminder.minute } : null
@@ -377,25 +376,25 @@ function AddHabitModal({ initial, onSave, onClose }: {
       <Animated.View 
         entering={SlideInDown.springify().damping(20).stiffness(90)} 
         exiting={SlideOutDown} 
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '90%', backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -10 } }}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '90%', backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, shadowColor: colors.bgPure, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -10 } }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
           <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', flex: 1 }}>{initial ? tt('Edit Habit') : tt('New Habit')}</Text>
-          <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center' }}>
+          <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light" style={{ width: 36, height: 36, borderRadius: radius.card, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center' }}>
             <X color={colors.textMuted} size={20} weight="bold" />
           </AnimatedPressable>
         </View>
         <ScrollView contentContainerStyle={{ padding: 24, gap: 28, paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled">
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('HABIT NAME')}</Text>
-            <TextInput value={name} onChangeText={setName} placeholder={tt('e.g. Drink water, Exercise…')} placeholderTextColor={colors.textMuted} autoFocus style={{ color: colors.text, fontSize: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
+            <TextInput value={name} onChangeText={setName} placeholder={tt('e.g. Drink water, Exercise…')} placeholderTextColor={colors.textMuted} autoFocus style={{ color: colors.text, fontSize: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
           </View>
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('ICON')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {HABIT_MARKERS.map(e => (
                 <Pressable key={e} onPress={() => setMarker(e)}>
-                  <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: marker === e ? color + '22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: marker === e ? 2 : StyleSheet.hairlineWidth, borderColor: marker === e ? color : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 48, height: 48, borderRadius: radius.card, backgroundColor: marker === e ? color + '22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: marker === e ? 2 : StyleSheet.hairlineWidth, borderColor: marker === e ? color : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: marker === e ? color : colors.textMuted, fontSize: 12, fontWeight: '800' }}>{e}</Text>
                   </View>
                 </Pressable>
@@ -407,7 +406,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
             <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
               {HABIT_COLORS.map(c => (
                 <Pressable key={c} onPress={() => setColor(c)}>
-                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c, borderWidth: color === c ? 3 : 0, borderColor: '#fff', transform: [{ scale: color === c ? 1.15 : 1 }] }} />
+                  <View style={{ width: 36, height: 36, borderRadius: radius.card, backgroundColor: c, borderWidth: color === c ? 3 : 0, borderColor: colors.bgPure, transform: [{ scale: color === c ? 1.15 : 1 }] }} />
                 </Pressable>
               ))}
             </View>
@@ -419,8 +418,8 @@ function AddHabitModal({ initial, onSave, onClose }: {
                 const active = days.includes(d);
                 return (
                   <Pressable key={d} onPress={() => toggleDay(d)} style={{ flex: 1 }}>
-                    <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
-                      <Text style={{ color: active ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{label}</Text>
+                    <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: active ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: 12.5 }}>{label}</Text>
                     </View>
                   </Pressable>
                 );
@@ -430,15 +429,15 @@ function AddHabitModal({ initial, onSave, onClose }: {
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('TIMES PER DAY')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <AnimatedPressable onPress={() => setTarget(t => Math.max(1, t - 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, padding: 11 }}>
+              <AnimatedPressable onPress={() => setTarget(t => Math.max(1, t - 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: radius.md, padding: 11 }}>
                 <Minus color={colors.text} size={15} weight="bold" />
               </AnimatedPressable>
               <View style={{ minWidth: 70, alignItems: 'center' }}>
                 <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{target}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 11 }}>{target === 1 ? tt('simple check') : tt('taps to complete')}</Text>
               </View>
-              <AnimatedPressable onPress={() => setTarget(t => Math.min(20, t + 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: color, borderRadius: 12, padding: 11 }}>
-                <Plus color="#fff" size={15} weight="bold" />
+              <AnimatedPressable onPress={() => setTarget(t => Math.min(20, t + 1))} scaleValue={0.85} haptic="light" style={{ backgroundColor: color, borderRadius: radius.md, padding: 11 }}>
+                <Plus color={colors.bgPure} size={15} weight="bold" />
               </AnimatedPressable>
             </View>
           </View>
@@ -447,8 +446,8 @@ function AddHabitModal({ initial, onSave, onClose }: {
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {GOAL_OPTIONS.map(g => (
                 <Pressable key={g} onPress={() => setGoal(g)} style={{ flex: 1 }}>
-                  <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: goal === g ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: goal === g ? 'transparent' : colors.glassBorder }}>
-                    <Text style={{ color: goal === g ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>{g === 7 ? tt('Daily') : g}</Text>
+                  <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: goal === g ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: goal === g ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: goal === g ? colors.bgPure : colors.text, fontWeight: '700', fontSize: 13 }}>{g === 7 ? tt('Daily') : g}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -461,8 +460,8 @@ function AddHabitModal({ initial, onSave, onClose }: {
                 const active = timeOfDay === tod;
                 return (
                   <Pressable key={tod} onPress={() => setTimeOfDay(tod as any)} style={{ flex: 1 }}>
-                    <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: 1, borderColor: active ? 'transparent' : colors.glassBorder }}>
-                      <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5, textTransform: 'capitalize' }}>{tt(tod)}</Text>
+                    <View style={{ paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: 1, borderColor: active ? 'transparent' : colors.glassBorder }}>
+                      <Text style={{ color: active ? colors.bgPure : colors.text, fontWeight: '700', fontSize: 12.5, textTransform: 'capitalize' }}>{tt(tod)}</Text>
                     </View>
                   </Pressable>
                 );
@@ -471,7 +470,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
           </View>
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('DAILY REMINDER')}</Text>
-            <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
+            <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Bell color={reminder ? color : colors.textMuted} size={18} weight={reminder ? "fill" : "regular"} />
@@ -487,7 +486,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
                     if (!reminder) setReminder({ date: todayStr(), hour: 9, minute: 0 });
                     setShowReminderPicker(!showReminderPicker);
                   }} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: reminder ? color : colors.surface, borderRadius: 8 }}>
-                    <Text style={{ color: reminder ? '#fff' : colors.text, fontWeight: '700' }}>
+                    <Text style={{ color: reminder ? colors.bgPure : colors.text, fontWeight: '700' }}>
                       {reminder ? `${reminder.hour % 12 === 0 ? 12 : reminder.hour % 12}:${reminder.minute.toString().padStart(2, '0')} ${reminder.hour >= 12 ? 'PM' : 'AM'}` : 'Set'}
                     </Text>
                   </Pressable>
@@ -503,7 +502,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
           
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('CUSTOM ALARM')}</Text>
-            <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
+            <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Bell color={alarmTime ? color : colors.textMuted} size={18} weight={alarmTime ? "fill" : "regular"} />
@@ -519,7 +518,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
                     if (!alarmTime) setAlarmTime({ hour: 9, minute: 0 });
                     setShowAlarmPicker(!showAlarmPicker);
                   }} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: alarmTime ? color : colors.surface, borderRadius: 8 }}>
-                    <Text style={{ color: alarmTime ? '#fff' : colors.text, fontWeight: '700' }}>
+                    <Text style={{ color: alarmTime ? colors.bgPure : colors.text, fontWeight: '700' }}>
                       {alarmTime ? `${alarmTime.hour % 12 === 0 ? 12 : alarmTime.hour % 12}:${alarmTime.minute.toString().padStart(2, '0')} ${alarmTime.hour >= 12 ? 'PM' : 'AM'}` : 'Set'}
                     </Text>
                   </Pressable>
@@ -533,8 +532,8 @@ function AddHabitModal({ initial, onSave, onClose }: {
             </View>
           </View>
           
-          <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: color, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initial ? tt('Save Changes') : tt('Add Habit')}</Text>
+          <AnimatedPressable onPress={submit} scaleValue={0.96} haptic="medium" style={{ backgroundColor: color, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center', shadowColor: color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+            <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{initial ? tt('Save Changes') : tt('Add Habit')}</Text>
           </AnimatedPressable>
         </ScrollView>
       </Animated.View>
@@ -543,10 +542,9 @@ function AddHabitModal({ initial, onSave, onClose }: {
 }
 
 export default function HabitsApp() {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const { tt } = useI18n();
-  const accent = '#C65F3F'; // terracotta — warm editorial palette
-  const [habits, setHabits] = useState<Habit[]>([]);
+    const [habits, setHabits] = useState<Habit[]>([]);
   const { vAction, vValue } = useLocalSearchParams<{ vAction?: string; vValue?: string }>();
   const didVoiceRef = React.useRef(false);
   useFocusEffect(
@@ -660,7 +658,7 @@ export default function HabitsApp() {
     <View style={{ flex: 1 }}>
       <MiniAppShell title={tt('Habits')} subtitle={tt('Streak')}>
       <MiniCommandDeck
-        accent={accent}
+        accent={colors.accent}
         title={tt('Consistency engine')}
         subtitle={tt('Streaks, proof, recovery.')}
         metrics={[
@@ -672,26 +670,26 @@ export default function HabitsApp() {
       />
       {/* Progress */}
       {dueToday.length > 0 && (
-        <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+        <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900' }}>{pct}%</Text>
               <Text style={{ color: colors.textMuted, fontSize: 13 }}>{doneToday} {tt('of')} {dueToday.length} {tt('due today')}</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Fire color={pct === 100 ? '#B08536' : colors.textMuted} size={36} weight={pct === 100 ? 'fill' : 'thin'} />
-              {pct === 100 && <Text style={{ color: '#B08536', fontSize: 11, fontWeight: '700' }}>{tt('Perfect!')}</Text>}
+              <Fire color={pct === 100 ? colors.warning : colors.textMuted} size={36} weight={pct === 100 ? 'fill' : 'thin'} />
+              {pct === 100 && <Text style={{ color: colors.warning, fontSize: 11, fontWeight: '700' }}>{tt('Perfect!')}</Text>}
             </View>
           </View>
           <View style={{ height: 8, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-            <View style={{ height: '100%', width: `${pct}%`, backgroundColor: accent, borderRadius: 4 }} />
+            <View style={{ height: '100%', width: `${pct}%`, backgroundColor: colors.accent, borderRadius: 4 }} />
           </View>
         </GlassPanel>
       )}
 
       <EdgeFeaturePanel
         appName="Habits"
-        accent={accent}
+        accent={colors.accent}
         headline={tt('Make consistency social')}
         caption={tt('Share streaks, compare progress, and turn proof-backed habits into public updates.')}
         metrics={[
@@ -707,7 +705,7 @@ export default function HabitsApp() {
 
       {active.length === 0 && archived.length === 0 && (
         <MiniEmptyState
-          accent={accent}
+          accent={colors.accent}
           icon={<Fire color={colors.textMuted} size={48} weight="duotone" />}
           title={tt('No habits yet')}
           subtitle={tt('Start with one small behavior you can repeat and prove.')}
@@ -730,10 +728,10 @@ export default function HabitsApp() {
         const count = dayCountFor(habit, today);
         return (
           <Animated.View key={habit.id} entering={FadeInDown.delay(Math.min(i, 6) * 50).duration(220)} style={{ marginBottom: 12, opacity: restDay ? 0.55 : 1 }}>
-            <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 18 }} style={{ borderColor: done ? habit.color + '55' : colors.glassBorder }}>
+            <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 18 }} style={{ borderColor: done ? habit.color + '55' : colors.glassBorder }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Pressable onPress={() => setHeatmapFor(heatmapFor === habit.id ? null : habit.id)}>
-                  <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+                  <View style={{ width: 52, height: 52, borderRadius: radius.card, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
                     <Text style={{ color: habit.color, fontSize: 13, fontWeight: '800' }}>{habit.marker}</Text>
                   </View>
                 </Pressable>
@@ -743,12 +741,12 @@ export default function HabitsApp() {
                     {habit.reminder ? <Bell color={colors.textMuted} size={12} weight="fill" /> : null}
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                    <Fire color={streak > 0 ? '#B08536' : colors.textMuted} size={13} weight={streak > 0 ? 'fill' : 'regular'} />
-                    <Text style={{ color: streak > 0 ? '#B08536' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>{streak} {tt('day streak')}</Text>
+                    <Fire color={streak > 0 ? colors.warning : colors.textMuted} size={13} weight={streak > 0 ? 'fill' : 'regular'} />
+                    <Text style={{ color: streak > 0 ? colors.warning : colors.textMuted, fontSize: 12, fontWeight: '600' }}>{streak} {tt('day streak')}</Text>
                     {restDay ? (
                       <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600' }}>· {tt('rest day')}</Text>
                     ) : habit.weeklyGoal ? (
-                      <Text style={{ color: thisWeekCount(habit.completedDates) >= habit.weeklyGoal ? '#4E8B7A' : colors.textMuted, fontSize: 12, fontWeight: '600' }}>
+                      <Text style={{ color: thisWeekCount(habit.completedDates) >= habit.weeklyGoal ? colors.success : colors.textMuted, fontSize: 12, fontWeight: '600' }}>
                         · {Math.min(thisWeekCount(habit.completedDates), habit.weeklyGoal)}/{habit.weeklyGoal} wk
                       </Text>
                     ) : null}
@@ -760,13 +758,13 @@ export default function HabitsApp() {
                 <AnimatedPressable onPress={() => bumpHabit(habit.id)} disabled={restDay} scaleValue={0.85} haptic="medium" style={{ marginLeft: 8 }}>
                   {target > 1 ? (
                     <View style={{
-                      minWidth: 44, height: 36, borderRadius: 18, paddingHorizontal: 10,
+                      minWidth: 44, height: 36, borderRadius: radius.card, paddingHorizontal: 10,
                       alignItems: 'center', justifyContent: 'center',
                       backgroundColor: done ? habit.color : habit.color + '14',
                       borderWidth: done ? 0 : 1.5,
                       borderColor: count > 0 ? habit.color + '88' : colors.glassBorder,
                     }}>
-                      <Text style={{ color: done ? '#fff' : habit.color, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                      <Text style={{ color: done ? colors.bgPure : habit.color, fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
                         {count}/{target}
                       </Text>
                     </View>
@@ -781,7 +779,7 @@ export default function HabitsApp() {
               {heatmapFor === habit.id && <Heatmap habit={habit} colors={colors} />}
               {done && (
                 <Pressable onPress={() => setProof({ habitId: habit.id, date: today })}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 9, borderRadius: 10, justifyContent: 'center', backgroundColor: habit.color + '12', borderWidth: StyleSheet.hairlineWidth, borderColor: habit.color + '33' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 9, borderRadius: radius.md, justifyContent: 'center', backgroundColor: habit.color + '12', borderWidth: StyleSheet.hairlineWidth, borderColor: habit.color + '33' }}>
                     <NotePencil color={habit.color} size={14} weight="fill" />
                     <Text style={{ color: habit.color, fontSize: 12.5, fontWeight: '700' }}>
                       {todayEntry?.note || todayEntry?.photoUri ? tt('View note & proof') : tt('Add note or photo proof')}
@@ -811,7 +809,7 @@ export default function HabitsApp() {
           {showArchived && archived.map(habit => (
             <Pressable key={habit.id} onPress={() => setDetailId(habit.id)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-                <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: habit.color + '14', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 34, height: 34, borderRadius: radius.md, backgroundColor: habit.color + '14', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ color: habit.color, fontSize: 10.5, fontWeight: '800' }}>{habit.marker}</Text>
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: 14.5, fontWeight: '600', flex: 1 }} numberOfLines={1}>{habit.name}</Text>
@@ -852,18 +850,18 @@ export default function HabitsApp() {
           right: 20,
         width: 60,
         height: 60,
-        borderRadius: 30,
-        backgroundColor: accent,
+        borderRadius: radius.full,
+        backgroundColor: colors.accent,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: accent,
+        shadowColor: colors.accent,
         shadowOpacity: 0.5,
         shadowRadius: 15,
         shadowOffset: { width: 0, height: 6 },
         elevation: 8,
       }}
     >
-      <Plus color="#fff" size={28} weight="bold" />
+      <Plus color={colors.bgPure} size={28} weight="bold" />
     </AnimatedPressable>
     </View>
   );

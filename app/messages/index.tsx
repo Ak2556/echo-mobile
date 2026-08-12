@@ -260,51 +260,26 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
           flexDirection: 'row',
           alignItems: 'center',
           marginHorizontal: 16,
-          marginVertical: 5,
-          padding: 13,
-          borderRadius: 24,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: showUnread ? `${colors.accent}66` : colors.border,
-          backgroundColor: showUnread ? colors.accentMuted : colors.surface,
-          shadowColor: showUnread ? colors.accent : '#000',
-          shadowOpacity: showUnread ? 0.14 : 0.05,
-          shadowRadius: showUnread ? 14 : 8,
-          shadowOffset: { width: 0, height: 6 },
+          marginVertical: 4,
+          padding: 14,
+          borderRadius: 20,
+          backgroundColor: colors.isDark ? '#1C1C1E' : colors.surface,
         }}
         scaleValue={0.98}
         haptic="light"
       >
         {showAvatars && (
-          <View style={{ position: 'relative', marginRight: 12 }}>
+          <View style={{ marginRight: 14 }}>
             <Avatar
               name={conversation.displayName}
               color={conversation.avatarColor}
               url={conversation.isGroup ? undefined : conversation.avatarUrl}
-              size={48}
+              size={50}
               online={online}
+              squircle
             >
               {conversation.isGroup ? <Users color="#fff" size={19} weight="fill" /> : undefined}
             </Avatar>
-            {showUnread && (
-              <Animated.View
-                entering={animation(FadeIn.duration(120))}
-                style={{
-                  position: 'absolute',
-                  top: -2,
-                  right: -2,
-                  width: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colors.accent,
-                  borderWidth: 2,
-                  borderColor: colors.bg,
-                }}
-              >
-                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount > 0 ? conversation.unreadCount : ''}</Text>
-              </Animated.View>
-            )}
           </View>
         )}
 
@@ -338,28 +313,16 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
               flexDirection: 'row',
               alignItems: 'center',
               gap: 4,
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              borderRadius: 999,
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
             }}>
               {conversation.lastMessage.toLowerCase().includes('photo')
-                ? <Camera color={colors.textMuted} size={11} weight="bold" />
+                ? <Camera color={colors.textMuted} size={14} weight="bold" />
                 : conversation.lastMessage.toLowerCase().includes('voice')
-                  ? <Microphone color={colors.textMuted} size={11} weight="bold" />
+                  ? <Microphone color={colors.textMuted} size={14} weight="bold" />
                   : conversation.lastMessage.toLowerCase().includes('link')
-                    ? <LinkSimple color={colors.textMuted} size={11} weight="bold" />
-                    : <ChatCircleText color={colors.textMuted} size={11} weight="bold" />
+                    ? <LinkSimple color={colors.textMuted} size={14} weight="bold" />
+                    : null
               }
-              <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700' }} numberOfLines={1}>
-                {conversation.isGroup ? 'Group' : online ? 'Online' : 'DM'}
-              </Text>
             </View>
-            {showUnread ? (
-              <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: colors.accent }}>
-                <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '800' }}>{ttx("New")}</Text>
-              </View>
-            ) : null}
           </View>
         </View>
 
@@ -367,7 +330,11 @@ function ConversationCard({ conversation, index, pinned, onPress, onLongPress }:
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
             {getTimeAgo(conversation.lastMessageAt)}
           </Text>
-          <CaretRight color={colors.textMuted} size={16} />
+          {showUnread && (
+            <View style={{ minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }}>
+              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{conversation.unreadCount > 9 ? '9+' : conversation.unreadCount > 0 ? conversation.unreadCount : ''}</Text>
+            </View>
+          )}
         </View>
       </AnimatedPressable>
     </Animated.View>
@@ -472,35 +439,32 @@ function InboxToolbar({
   counts: Record<InboxFilter, number>;
 }) {
   const { colors, fontSizes } = useTheme();
-  const filters: { key: InboxFilter; label: string; icon: React.ReactNode }[] = [
-    { key: 'all', label: 'All', icon: <Envelope color={filter === 'all' ? '#fff' : colors.text} size={15} weight="bold" /> },
-    { key: 'unread', label: 'Unread', icon: <Lightning color={filter === 'unread' ? '#fff' : colors.text} size={15} weight="fill" /> },
-    { key: 'people', label: 'People', icon: <ChatCircleText color={filter === 'people' ? '#fff' : colors.text} size={15} weight="bold" /> },
-    { key: 'groups', label: 'Groups', icon: <Users color={filter === 'groups' ? '#fff' : colors.text} size={15} weight="bold" /> },
-    { key: 'pinned', label: 'Pinned', icon: <PushPin color={filter === 'pinned' ? '#fff' : colors.text} size={15} weight="fill" /> },
+  const filters: { key: InboxFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'people', label: 'Personal' },
+    { key: 'groups', label: 'Group' },
   ];
   return (
-    <View style={{ paddingHorizontal: 16, gap: 12, marginBottom: 8 }}>
+    <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 16 }}>
+      {/* Search Bar - Pill Shaped */}
       <View style={{
-        minHeight: 48,
-        borderRadius: 18,
+        height: 40,
+        borderRadius: 20,
         paddingHorizontal: 14,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        backgroundColor: colors.inputBg,
-        borderWidth: 1,
-        borderColor: colors.inputBorder,
+        backgroundColor: colors.isDark ? '#222224' : colors.inputBg,
       }}>
-        <MagnifyingGlass color={colors.textMuted} size={17} />
+        <MagnifyingGlass color={colors.textMuted} size={18} weight="bold" />
         <TextInput
           value={query}
           onChangeText={onQueryChange}
-          placeholder={ttx("Search names, messages, groups")}
+          placeholder="Search"
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
-          style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 10 }}
+          style={{ flex: 1, color: colors.text, fontSize: fontSizes.body, paddingVertical: 0 }}
         />
         {query.trim() ? (
           <Pressable onPress={() => onQueryChange('')} hitSlop={8}>
@@ -509,86 +473,36 @@ function InboxToolbar({
         ) : null}
       </View>
 
-      {/* Equal-width segments in a non-scrolling row so the filters always
-          fit the screen (the old fixed-width scrolling pills ran off the
-          right edge). Wrapper View owns the fill — cssInterop drops box/bg
-          props off the Pressable's own style. Counts live in the hero stats
-          above, so the chips stay compact: icon + label, with a small count
-          badge only when it carries signal (unread / pinned > 0). */}
-      <View style={{ flexDirection: 'row', gap: 6 }}>
+      {/* Filter Chips */}
+      <View style={{ flexDirection: 'row', gap: 10 }}>
         {filters.map(item => {
           const active = filter === item.key;
-          const count = counts[item.key];
-          const showBadge = count > 0 && (item.key === 'unread' || item.key === 'pinned');
           return (
-            <View
+            <Pressable
               key={item.key}
-              style={{
-                flex: 1,
-                // minWidth:0 lets each segment shrink to an equal share —
-                // without it Yoga keeps a segment at least as wide as its
-                // label, so longer words made the pills unequal.
-                minWidth: 0,
-                minHeight: 40,
-                borderRadius: 13,
-                justifyContent: 'center',
-                backgroundColor: active
-                  ? colors.accent
-                  : (colors.isDark ? 'rgba(255,255,255,0.12)' : '#fff'),
-                borderWidth: 1,
-                borderColor: active ? colors.accent : colors.border,
-                shadowColor: '#000',
-                shadowOpacity: colors.isDark ? 0.16 : 0.05,
-                shadowRadius: 6,
-                shadowOffset: { width: 0, height: 3 },
-              }}
+              onPress={() => onFilterChange(item.key)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              style={({ pressed }) => ({
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 18,
+                backgroundColor: active ? colors.accent : 'transparent',
+                borderWidth: active ? 0 : 1,
+                borderColor: active ? 'transparent' : colors.textMuted,
+                opacity: pressed ? 0.7 : 1,
+              })}
             >
-              <Pressable
-                onPress={() => onFilterChange(item.key)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                style={{ width: '100%' }}
+              <Text
+                style={{
+                  color: active ? '#fff' : colors.textMuted,
+                  fontSize: 14,
+                  fontWeight: '600',
+                }}
               >
-                {({ pressed }) => (
-                  // Render-prop child View (a plain View, cssInterop-safe) owns
-                  // the full-width fill + centering + press feedback. Putting
-                  // these on the touchable's own style drops them and the
-                  // icon + label collapse to the left.
-                  <View style={{ width: '100%', minHeight: 40, borderRadius: 13, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.72 : 1 }}>
-                    {item.icon}
-                    <Text
-                      style={{
-                        flexShrink: 1,
-                        textAlign: 'center',
-                        color: active ? '#fff' : colors.text,
-                        fontSize: 13,
-                        fontWeight: '800',
-                      }}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.7}
-                    >
-                      {item.label}
-                    </Text>
-                    {showBadge ? (
-                      <View style={{
-                        minWidth: 16,
-                        height: 16,
-                        borderRadius: 8,
-                        paddingHorizontal: 4,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: active ? 'rgba(255,255,255,0.24)' : colors.accent,
-                      }}>
-                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-                          {count}
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
-                )}
-              </Pressable>
-            </View>
+                {item.label}
+              </Text>
+            </Pressable>
           );
         })}
       </View>
@@ -639,6 +553,7 @@ export function AurasRow() {
   const [modalOpen, setModalOpen] = useState(false);
   const [auraText, setAuraText] = useState('');
   const [myAura, setMyAura] = useState<any>(null);
+  const [viewingAura, setViewingAura] = useState<any>(null);
   const [musicPickerOpen, setMusicPickerOpen] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState<Song | null>(null);
 
@@ -657,9 +572,24 @@ export function AurasRow() {
           onPress={() => setModalOpen(true)}
         />
         {mockAuras.map((a: any) => (
-          <StatusAvatar key={a.id} name={a.name} color={a.color} aura={a.aura} />
+          <StatusAvatar key={a.id} name={a.name} color={a.color} aura={a.aura} onPress={() => setViewingAura(a)} />
         ))}
       </ScrollView>
+
+      {/* Viewer Modal */}
+      <Modal visible={!!viewingAura} animationType="fade" transparent onRequestClose={() => setViewingAura(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setViewingAura(null)}>
+          <View style={{ alignItems: 'center', gap: 16 }}>
+            <Avatar name={viewingAura?.name ?? '?'} color={viewingAura?.color} size={100} />
+            <Text style={{ color: '#fff', fontSize: 24, fontWeight: 'bold' }}>{viewingAura?.name}</Text>
+            {viewingAura?.aura?.text_content ? (
+              <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 24 }}>
+                <Text style={{ color: '#fff', fontSize: 20 }}>{viewingAura.aura.text_content}</Text>
+              </View>
+            ) : null}
+          </View>
+        </Pressable>
+      </Modal>
 
       <Modal visible={modalOpen} animationType="fade" transparent onRequestClose={() => setModalOpen(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
@@ -927,14 +857,6 @@ export default function MessagesListScreen() {
         ListHeaderComponent={(
           <View>
             <AurasRow />
-            <InboxHero
-              total={active.length}
-              unread={unreadTotal}
-              groups={counts.groups}
-              pinned={counts.pinned}
-              onNewGroup={() => setGroupModalOpen(true)}
-              onFindPeople={() => router.push('/(tabs)/explore')}
-            />
             <InboxToolbar
               query={query}
               onQueryChange={setQuery}
