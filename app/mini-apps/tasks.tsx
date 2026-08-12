@@ -76,6 +76,7 @@ export default function TasksScreen() {
   const [detailSubtask, setDetailSubtask] = useState('');
   const [detailAlarm, setDetailAlarm] = useState<{ hour: number, minute: number } | null>(null);
   const [showAlarmPicker, setShowAlarmPicker] = useState(false);
+  const [showAddSheet, setShowAddSheet] = useState(false);
 
   useFocusEffect(React.useCallback(() => {
     loadTasks().then((loaded) => {
@@ -136,6 +137,7 @@ export default function TasksScreen() {
     setDue(todayTaskDate());
     setAlarmTime(null);
     setShowAddPicker(false);
+    setShowAddSheet(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Keyboard.dismiss();
     showToast(reminderId ? tt('Task added · reminder set') : tt('Task added'), tt('Tasks'));
@@ -215,6 +217,7 @@ export default function TasksScreen() {
   };
 
   return (
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
     <MiniAppShell title={tt('Tasks')} subtitle={tt('Action')}>
       <MiniCommandDeck
         accent={accent}
@@ -227,69 +230,7 @@ export default function TasksScreen() {
         ]}
         chips={[tt('Plan next 3'), tt('Share progress'), tt('Break blockers')]}
       />
-      <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 12 }} style={{ marginBottom: 16 }}>
-        <TextInput
-          value={title}
-          onChangeText={setTitle}
-          placeholder={tt('Add a task...')}
-          placeholderTextColor={colors.textMuted}
-          style={{ color: colors.text, fontSize: 17, fontWeight: '700', paddingVertical: 8 }}
-          returnKeyType="done"
-          onSubmitEditing={add}
-        />
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {PRIORITIES.map(item => (
-            <Pressable key={item.id} onPress={() => setPriority(item.id)}>
-              <View style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: priority === item.id ? item.color : colors.surfaceHover }}>
-                <Text style={{ color: priority === item.id ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>{tt(item.label)}</Text>
-              </View>
-            </Pressable>
-          ))}
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable onPress={() => {
-              if (!showAddPicker && !alarmTime) {
-                setAlarmTime({ hour: 9, minute: 0 });
-                setDue(todayTaskDate());
-              }
-              setShowAddPicker(!showAddPicker);
-            }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: alarmTime ? accent : colors.surfaceHover }}>
-                <Bell color={alarmTime ? '#fff' : colors.textSecondary} size={13} weight={alarmTime ? "fill" : "regular"} />
-                <Text style={{ color: alarmTime ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>
-                  {alarmTime ? `Scheduled: ${formatAlarmTime(alarmTime)}` : tt('Schedule...')}
-                </Text>
-              </View>
-            </Pressable>
-            {alarmTime && (
-              <Pressable onPress={() => { setAlarmTime(null); setShowAddPicker(false); }}>
-                <View style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: colors.surfaceHover }}>
-                  <X color={colors.textSecondary} size={13} />
-                </View>
-              </Pressable>
-            )}
-          </View>
-        </View>
-
-        {showAddPicker && alarmTime && due && (
-          <View style={{ marginVertical: 8 }}>
-            <DateTimePicker 
-              value={{ date: due, hour: alarmTime.hour, minute: alarmTime.minute }} 
-              onChange={(val) => {
-                setDue(val.date);
-                setAlarmTime({ hour: val.hour, minute: val.minute });
-              }} 
-            />
-          </View>
-        )}
-
-        <Pressable onPress={add}>
-          <View style={{ height: 48, borderRadius: 16, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-            <Plus color="#fff" size={18} weight="bold" />
-            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>{tt('Add task')}</Text>
-          </View>
-        </Pressable>
-      </GlassPanel>
-
+      
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 14, paddingHorizontal: 4 }}>
         {(['today', 'upcoming', 'someday', 'any'] as Filter[]).map(item => (
           <MiniChip
@@ -524,6 +465,94 @@ export default function TasksScreen() {
           </View>
         )}
       </Modal>
+
     </MiniAppShell>
+    
+    {/* FAB */}
+    <Pressable 
+      onPress={() => setShowAddSheet(true)}
+      style={{ position: 'absolute', bottom: 40, right: 24, width: 64, height: 64, borderRadius: 32, backgroundColor: accent, justifyContent: 'center', alignItems: 'center', shadowColor: accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 10 }}
+    >
+      <Plus color="#fff" size={28} weight="bold" />
+    </Pressable>
+
+    {/* Bottom Sheet */}
+    {showAddSheet && (
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setShowAddSheet(false)} />
+        <Animated.View entering={SlideInDown.springify().damping(18).stiffness(200)} exiting={SlideOutDown} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 64, shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.2, shadowRadius: 20 }}>
+          
+          <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 20 }} />
+          
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            placeholder={tt('What needs to be done?')}
+            placeholderTextColor={colors.textMuted}
+            style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginBottom: 24 }}
+            returnKeyType="done"
+            onSubmitEditing={() => { add(); setShowAddSheet(false); }}
+            autoFocus
+          />
+          
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Priority')}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+            {PRIORITIES.map(item => (
+              <Pressable key={item.id} onPress={() => setPriority(item.id)}>
+                <View style={{ borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: priority === item.id ? item.color : colors.surfaceHover, borderWidth: priority === item.id ? 0 : 1, borderColor: colors.border }}>
+                  <Text style={{ color: priority === item.id ? '#fff' : colors.textSecondary, fontSize: 14, fontWeight: '800' }}>{tt(item.label)}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+          
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{tt('Schedule & Alarm')}</Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: showAddPicker ? 16 : 32 }}>
+            <Pressable onPress={() => {
+              if (!showAddPicker && !alarmTime) {
+                setAlarmTime({ hour: 9, minute: 0 });
+                setDue(todayTaskDate());
+              }
+              setShowAddPicker(!showAddPicker);
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: alarmTime ? accent : colors.surfaceHover, borderWidth: alarmTime ? 0 : 1, borderColor: colors.border }}>
+                <Bell color={alarmTime ? '#fff' : colors.textSecondary} size={16} weight={alarmTime ? "fill" : "regular"} />
+                <Text style={{ color: alarmTime ? '#fff' : colors.textSecondary, fontSize: 14, fontWeight: '800' }}>
+                  {alarmTime ? `Scheduled: ${formatAlarmTime(alarmTime)}` : tt('Set Schedule...')}
+                </Text>
+              </View>
+            </Pressable>
+            {alarmTime && (
+              <Pressable onPress={() => { setAlarmTime(null); setShowAddPicker(false); }}>
+                <View style={{ borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.border }}>
+                  <X color={colors.textSecondary} size={16} weight="bold" />
+                </View>
+              </Pressable>
+            )}
+          </View>
+
+          {showAddPicker && alarmTime && due && (
+            <View style={{ marginVertical: 8, marginBottom: 32 }}>
+              <DateTimePicker 
+                value={{ date: due, hour: alarmTime.hour, minute: alarmTime.minute }} 
+                onChange={(val) => {
+                  setDue(val.date);
+                  setAlarmTime({ hour: val.hour, minute: val.minute });
+                }} 
+              />
+            </View>
+          )}
+
+          <Pressable onPress={() => { add(); setShowAddSheet(false); }}>
+            <View style={{ height: 56, borderRadius: 20, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, shadowColor: accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 }}>
+              <Plus color="#fff" size={20} weight="bold" />
+              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '900' }}>{tt('Create Task')}</Text>
+            </View>
+          </Pressable>
+          
+        </Animated.View>
+      </View>
+    )}
+    </View>
   );
 }
