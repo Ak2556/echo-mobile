@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash, ListDashes, MagnifyingGlass, Tag, Scan, CaretDown, CurrencyDollar, ArrowLeft } from 'phosphor-react-native';
-import Animated, { FadeInDown, FadeOutUp, Layout, Easing, withTiming, useAnimatedStyle, useSharedValue, interpolateColor } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOutUp, SlideInDown, SlideOutDown, Layout, Easing, withTiming, useAnimatedStyle, useSharedValue, interpolateColor } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -186,42 +186,7 @@ export default function ShoppingListScreen() {
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text }}>Items</Text>
-        <AnimatedPressable onPress={() => setIsAdding(!isAdding)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Plus color={accent} size={20} weight="bold" />
-          <Text style={{ color: accent, fontSize: 16, fontWeight: '800' }}>Add Item</Text>
-        </AnimatedPressable>
       </View>
-
-      {isAdding && (
-        <Animated.View entering={FadeInDown.duration(300).easing(Easing.out(Easing.cubic))} exiting={FadeOutUp.duration(200)}>
-          <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 16, gap: 12 }} style={{ marginBottom: 16 }}>
-            <TextInput
-              value={name} onChangeText={setName}
-              placeholder={ttx("What do you need?")} placeholderTextColor={colors.textMuted}
-              style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}
-              autoFocus
-            />
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-                <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600' }}>Qty: </Text>
-                <TextInput value={quantity} onChangeText={setQuantity} style={{ flex: 1, color: colors.text, fontSize: 16, fontWeight: '700', paddingVertical: 10 }} keyboardType="numbers-and-punctuation" />
-              </View>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-                <CurrencyDollar color={colors.textMuted} size={18} />
-                <TextInput value={price} onChangeText={setPrice} placeholder="0.00" placeholderTextColor={colors.textMuted} style={{ flex: 1, color: colors.text, fontSize: 16, fontWeight: '700', paddingVertical: 10 }} keyboardType="decimal-pad" />
-              </View>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 8 }}>
-              {SHOPPING_CATEGORIES.map(item => (
-                <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => { Haptics.selectionAsync(); setCategory(item); }} />
-              ))}
-            </ScrollView>
-            <AnimatedPressable onPress={add} style={{ height: 52, borderRadius: 16, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '900' }}>{ttx("Save Item")}</Text>
-            </AnimatedPressable>
-          </GlassPanel>
-        </Animated.View>
-      )}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16, marginBottom: 8 }}>
         {categories.map(item => (
@@ -269,6 +234,52 @@ export default function ShoppingListScreen() {
           </View>
         )}
       </View>
+
+      {/* Floating Action Button */}
+      <View style={{ position: 'absolute', bottom: 30, right: 20, zIndex: 10 }}>
+        <AnimatedPressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setIsAdding(true); }} style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}>
+          <Plus color="#fff" size={32} weight="bold" />
+        </AnimatedPressable>
+      </View>
+
+      {/* Slide-Up Bottom Sheet for Adding Item */}
+      {isAdding && (
+        <>
+          <Pressable style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 11 }} onPress={() => setIsAdding(false)} />
+          <Animated.View entering={SlideInDown.duration(300).springify()} exiting={SlideOutDown.duration(200)} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 12, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 50, shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 20 }}>
+            <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: colors.glassBorder, alignSelf: 'center', marginBottom: 20 }} />
+            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.text, marginBottom: 16 }}>{ttx("Add New Item")}</Text>
+            
+            <TextInput
+              value={name} onChangeText={setName}
+              placeholder={ttx("What do you need?")} placeholderTextColor={colors.textMuted}
+              style={{ color: colors.text, fontSize: 20, fontWeight: '700', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.glassBorder, marginBottom: 16 }}
+              autoFocus
+            />
+            <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
+                <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600' }}>Qty: </Text>
+                <TextInput value={quantity} onChangeText={setQuantity} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="numbers-and-punctuation" />
+              </View>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
+                <CurrencyDollar color={colors.textMuted} size={20} />
+                <TextInput value={price} onChangeText={setPrice} placeholder="0.00" placeholderTextColor={colors.textMuted} style={{ flex: 1, color: colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 12 }} keyboardType="decimal-pad" />
+              </View>
+            </View>
+            
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>Category</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8, marginBottom: 16 }}>
+              {SHOPPING_CATEGORIES.map(item => (
+                <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => { Haptics.selectionAsync(); setCategory(item); }} />
+              ))}
+            </ScrollView>
+            
+            <AnimatedPressable onPress={add} style={{ height: 56, borderRadius: 16, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900' }}>{ttx("Save Item")}</Text>
+            </AnimatedPressable>
+          </Animated.View>
+        </>
+      )}
 
       {/* List Selector Modal */}
       <Modal visible={showListSelector} transparent animationType="slide">
