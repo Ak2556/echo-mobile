@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, Pressable, Modal, StyleSheet, Image, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, SlideInDown, SlideOutDown, FadeIn, FadeOut } from 'react-native-reanimated';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -26,6 +26,7 @@ import {
 import { localDayKey } from '../../lib/localDate';
 import { HabitDetail } from '../../components/mini-apps/HabitDetail';
 import { TimePicker } from '../../components/ui/TimePicker';
+import { DateTimePicker } from '../../components/ui/DateTimePicker';
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const GOAL_OPTIONS = [3, 4, 5, 6, 7];
@@ -331,9 +332,12 @@ function AddHabitModal({ initial, onSave, onClose }: {
   const [marker, setMarker] = useState(initial?.marker ?? HABIT_MARKERS[0]);
   const [color, setColor] = useState(initial?.color ?? accent);
   const [goal, setGoal] = useState(initial?.weeklyGoal ?? 7);
-  const [reminder, setReminder] = useState<{ hour: number; minute: number } | null>(initial?.reminder ?? null);
+  const [reminder, setReminder] = useState<{ date: string; hour: number; minute: number } | null>(
+    initial?.reminder ? { date: todayStr(), hour: initial.reminder.hour, minute: initial.reminder.minute } : null
+  );
   const [alarmTime, setAlarmTime] = useState<{ hour: number; minute: number } | null>(initial?.alarmTime ?? null);
   const [showAlarmPicker, setShowAlarmPicker] = useState(false);
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
   const [days, setDays] = useState<number[]>(initial?.scheduledDays ?? [0, 1, 2, 3, 4, 5, 6]);
   const [target, setTarget] = useState(initial?.dailyTarget ?? 1);
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening' | 'any'>(initial?.timeOfDay ?? 'any');
@@ -355,7 +359,7 @@ function AddHabitModal({ initial, onSave, onClose }: {
       dayCounts: initial?.dayCounts,
       archived: initial?.archived,
       weeklyGoal: goal === 7 ? undefined : goal,
-      reminder,
+      reminder: reminder ? { hour: reminder.hour, minute: reminder.minute } : null,
       alarmTime,
       scheduledDays: days.length === 7 ? undefined : days,
       dailyTarget: target > 1 ? target : undefined,
@@ -366,13 +370,24 @@ function AddHabitModal({ initial, onSave, onClose }: {
   };
 
   return (
-    <Modal animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 }}>{initial ? tt('Edit Habit') : tt('New Habit')}</Text>
-          <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light"><X color={colors.textMuted} size={22} /></AnimatedPressable>
+    <View style={[StyleSheet.absoluteFill, { zIndex: 100, elevation: 100 }]}>
+      <AnimatedPressable 
+        entering={FadeIn} exiting={FadeOut} 
+        onPress={onClose} 
+        style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} 
+      />
+      <Animated.View 
+        entering={SlideInDown.springify().damping(20).stiffness(90)} 
+        exiting={SlideOutDown} 
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '90%', backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -10 } }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+          <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', flex: 1 }}>{initial ? tt('Edit Habit') : tt('New Habit')}</Text>
+          <AnimatedPressable onPress={onClose} scaleValue={0.9} haptic="light" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center' }}>
+            <X color={colors.textMuted} size={20} weight="bold" />
+          </AnimatedPressable>
         </View>
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ padding: 24, gap: 28, paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled">
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('HABIT NAME')}</Text>
             <TextInput value={name} onChangeText={setName} placeholder={tt('e.g. Drink water, Exercise…')} placeholderTextColor={colors.textMuted} autoFocus style={{ color: colors.text, fontSize: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, paddingHorizontal: 16, paddingVertical: 14 }} />
@@ -458,17 +473,33 @@ function AddHabitModal({ initial, onSave, onClose }: {
           </View>
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>{tt('DAILY REMINDER')}</Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {REMINDER_OPTIONS.map(opt => {
-                const active = (reminder?.hour ?? -1) === (opt.value?.hour ?? -1);
-                return (
-                  <Pressable key={opt.label} onPress={() => setReminder(opt.value)} style={{ flex: 1 }}>
-                    <View style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: active ? color : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: active ? 'transparent' : colors.glassBorder }}>
-                      <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 12.5 }}>{tt(opt.label)}</Text>
-                    </View>
+            <View style={{ backgroundColor: colors.surfaceHover, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Bell color={reminder ? color : colors.textMuted} size={18} weight={reminder ? "fill" : "regular"} />
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>Daily Reminder Time</Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {reminder && (
+                    <Pressable onPress={() => { setReminder(null); setShowReminderPicker(false); }} style={{ padding: 6, backgroundColor: colors.surface, borderRadius: 8 }}>
+                      <X color={colors.textMuted} size={16} />
+                    </Pressable>
+                  )}
+                  <Pressable onPress={() => {
+                    if (!reminder) setReminder({ date: todayStr(), hour: 9, minute: 0 });
+                    setShowReminderPicker(!showReminderPicker);
+                  }} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: reminder ? color : colors.surface, borderRadius: 8 }}>
+                    <Text style={{ color: reminder ? '#fff' : colors.text, fontWeight: '700' }}>
+                      {reminder ? `${reminder.hour % 12 === 0 ? 12 : reminder.hour % 12}:${reminder.minute.toString().padStart(2, '0')} ${reminder.hour >= 12 ? 'PM' : 'AM'}` : 'Set'}
+                    </Text>
                   </Pressable>
-                );
-              })}
+                </View>
+              </View>
+              {showReminderPicker && reminder && (
+                <View style={{ marginTop: 16 }}>
+                  <DateTimePicker value={reminder} onChange={setReminder} />
+                </View>
+              )}
             </View>
           </View>
           
@@ -508,8 +539,8 @@ function AddHabitModal({ initial, onSave, onClose }: {
             <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{initial ? tt('Save Changes') : tt('Add Habit')}</Text>
           </AnimatedPressable>
         </ScrollView>
-      </View>
-    </Modal>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -627,14 +658,9 @@ export default function HabitsApp() {
   const [showArchived, setShowArchived] = useState(false);
   const detailHabit = detailId ? habits.find(h => h.id === detailId) ?? null : null;
 
-  const AddBtn = (
-    <AnimatedPressable onPress={() => setShowAdd(true)} scaleValue={0.88} haptic="medium" style={{ width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: accent }}>
-      <Plus color="#fff" size={18} weight="bold" />
-    </AnimatedPressable>
-  );
-
   return (
-    <MiniAppShell title={tt('Habits')} subtitle={tt('Streak')} headerRight={AddBtn}>
+    <View style={{ flex: 1 }}>
+      <MiniAppShell title={tt('Habits')} subtitle={tt('Streak')}>
       <MiniCommandDeck
         accent={accent}
         title={tt('Consistency engine')}
@@ -798,8 +824,6 @@ export default function HabitsApp() {
         </View>
       )}
 
-      {showAdd && <AddHabitModal onSave={saveHabit} onClose={() => setShowAdd(false)} />}
-      {editHabit && <AddHabitModal initial={editHabit} onSave={saveHabit} onClose={() => setEditHabit(null)} />}
       {detailHabit && !editHabit && (
         <HabitDetail
           habit={detailHabit}
@@ -816,5 +840,33 @@ export default function HabitsApp() {
         return <ProofModal habit={habit} date={proof.date} onSaved={onProofSaved} onClose={() => setProof(null)} />;
       })()}
     </MiniAppShell>
+
+    {showAdd && <AddHabitModal onSave={saveHabit} onClose={() => setShowAdd(false)} />}
+    {editHabit && <AddHabitModal initial={editHabit} onSave={saveHabit} onClose={() => setEditHabit(null)} />}
+
+    <AnimatedPressable
+      onPress={() => setShowAdd(true)}
+      scaleValue={0.9}
+      haptic="medium"
+      style={{
+        position: 'absolute',
+        bottom: insets.bottom > 0 ? insets.bottom + 20 : 30,
+        right: 20,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: accent,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: accent,
+        shadowOpacity: 0.5,
+        shadowRadius: 15,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 8,
+      }}
+    >
+      <Plus color="#fff" size={28} weight="bold" />
+    </AnimatedPressable>
+    </View>
   );
 }
