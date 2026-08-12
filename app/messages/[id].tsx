@@ -2129,12 +2129,20 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
     if (id) markConversationRead(id);
   }, [id, markConversationRead]);
 
-  const markedReadRef = useRef(false);
+  const markingReadRef = useRef(false);
   useEffect(() => {
-    if (!remote || !id || markedReadRef.current) return;
-    markedReadRef.current = true;
-    void markMessagesRead(id).then(() => doMarkRead(id));
-  }, [remote, id]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!remote || !id || markingReadRef.current) return;
+    const hasUnread = visibleMessages.some(m => m.senderId !== myId && !m.readAt);
+    if (hasUnread) {
+      markingReadRef.current = true;
+      void markMessagesRead(id).then(() => {
+        doMarkRead(id);
+        setTimeout(() => { markingReadRef.current = false; }, 1000);
+      }).catch(() => {
+        markingReadRef.current = false;
+      });
+    }
+  }, [remote, id, visibleMessages, myId, doMarkRead]);
 
   // Echo sharing
   useEffect(() => {
