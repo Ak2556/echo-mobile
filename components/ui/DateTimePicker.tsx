@@ -206,11 +206,11 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
       {/* Highlight bar */}
       <View style={{ position: 'absolute', top: ITEM_HEIGHT * 2, left: 8, right: 8, height: ITEM_HEIGHT, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)', borderRadius: 12, zIndex: -1 }} />
       
-      <DrumPicker flex={2.5} items={dates} value={value.date} onChange={handleDate} align="flex-start" />
-      <DrumPicker flex={0.8} items={hours} value={hour12} onChange={handleHour} align="flex-end" />
-      <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginHorizontal: 2, marginBottom: 4, opacity: 0.8 }}>:</Text>
-      <DrumPicker flex={0.8} items={minutes} value={value.minute} onChange={handleMinute} align="flex-start" />
-      <DrumPicker flex={1.2} items={ampm} value={isPM ? 'PM' : 'AM'} onChange={handleAmPm} align="flex-end" />
+      <DrumPicker flex={1.5} items={dates} value={value.date} onChange={handleDate} align="center" />
+      <DrumPicker flex={0.8} items={hours} value={hour12} onChange={handleHour} align="center" />
+      <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginHorizontal: 0, marginBottom: 4, opacity: 0.8 }}>:</Text>
+      <DrumPicker flex={0.8} items={minutes} value={value.minute} onChange={handleMinute} align="center" />
+      <DrumPicker flex={1} items={ampm} value={isPM ? 'PM' : 'AM'} onChange={handleAmPm} align="center" />
     </View>
   );
 }
