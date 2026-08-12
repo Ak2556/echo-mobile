@@ -11,7 +11,7 @@ import { BlurView } from 'expo-blur';
 import { 
   ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning, 
   Key, DiceSix, Fingerprint, EyeSlash, Vault, Timer, CreditCard, FileText, 
-  IdentificationCard, Plus, Globe, Eye, Scan, Wrench, Wallet
+  IdentificationCard, Plus, Globe, Eye, Scan, Wrench, Wallet, Backspace, X
 } from 'phosphor-react-native';
 
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -87,46 +87,71 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // --- UI COMPONENTS ---
 
-function BiometricScanner({ onUnlock, colors, accent }: { onUnlock: () => void; colors: any; accent: string }) {
-  const scanLineY = useSharedValue(0);
-  const opacity = useSharedValue(1);
+function PinPadOverlay({ onUnlock, colors, accent }: { onUnlock: () => void; colors: any; accent: string }) {
+  const [pin, setPin] = useState('');
+  const shakeOffset = useSharedValue(0);
 
-  useEffect(() => {
-    scanLineY.value = withRepeat(
-      withSequence(
-        withTiming(80, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
-    setTimeout(() => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      opacity.value = withTiming(0, { duration: 400 });
-      setTimeout(onUnlock, 400);
-    }, 2000);
-  }, []);
-
-  const scanLineStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: scanLineY.value }],
+  const shakeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shakeOffset.value }]
   }));
 
-  const containerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  const handlePress = (digit: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (pin.length < 4) {
+      const newPin = pin + digit;
+      setPin(newPin);
+      if (newPin.length === 4) {
+        if (newPin === '0000') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setTimeout(onUnlock, 300);
+        } else {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          shakeOffset.value = withSequence(
+            withTiming(10, { duration: 50 }),
+            withTiming(-10, { duration: 50 }),
+            withTiming(10, { duration: 50 }),
+            withTiming(0, { duration: 50 })
+          );
+          setTimeout(() => setPin(''), 400);
+        }
+      }
+    }
+  };
+
+  const handleBackspace = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setPin(prev => prev.slice(0, -1));
+  };
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, zIndex: 100, justifyContent: 'center', alignItems: 'center' }, containerStyle]}>
-      <BlurView intensity={80} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-      <Animated.View entering={FadeIn.duration(400)} style={{ alignItems: 'center' }}>
-        <View style={{ width: 100, height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
-          <Fingerprint color={accent} size={64} weight="duotone" />
-          <Animated.View style={[{ position: 'absolute', top: 10, width: 80, height: 2, backgroundColor: accent, shadowColor: accent, shadowRadius: 10, shadowOpacity: 0.8, elevation: 10 }, scanLineStyle]} />
-        </View>
-        <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', marginBottom: 8 }}>{ttx("Unlocking Vault...")}</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>{ttx("Face ID Verification")}</Text>
-      </Animated.View>
+    <Animated.View exiting={FadeOut.duration(300)} style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, zIndex: 100, justifyContent: 'center', alignItems: 'center' }]}>
+      <BlurView intensity={100} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      <View style={{ alignItems: 'center', marginBottom: 50 }}>
+        <LockKey color={accent} size={42} weight="duotone" style={{ marginBottom: 20 }} />
+        <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', marginBottom: 30 }}>{ttx("Enter PIN")}</Text>
+        <Animated.View style={[{ flexDirection: 'row', gap: 20 }, shakeStyle]}>
+          {[0,1,2,3].map(i => (
+            <View key={i} style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: i < pin.length ? accent : (colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'), shadowColor: i < pin.length ? accent : 'transparent', shadowOpacity: 0.8, shadowRadius: 10, shadowOffset: { width: 0, height: 0 }, borderWidth: i < pin.length ? 0 : 1, borderColor: colors.glassBorder }} />
+          ))}
+        </Animated.View>
+        <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 20 }}>Default PIN is 0000</Text>
+      </View>
+      
+      <View style={{ width: 280, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 20 }}>
+        {['1','2','3','4','5','6','7','8','9','','0','back'].map((key, idx) => {
+          if (key === '') return <View key={idx} style={{ width: 75, height: 75 }} />;
+          if (key === 'back') return (
+            <Pressable key={idx} onPress={handleBackspace} style={{ width: 75, height: 75, borderRadius: 37.5, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+               <Backspace color={colors.text} size={28} weight="duotone" /> 
+            </Pressable>
+          );
+          return (
+            <Pressable key={idx} onPress={() => handlePress(key)} style={{ width: 75, height: 75, borderRadius: 37.5, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+              <Text style={{ color: colors.text, fontSize: 28, fontWeight: '600' }}>{key}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
     </Animated.View>
   );
 }
@@ -264,7 +289,7 @@ export default function PasswordGenScreen() {
   const accent = colors.accent;
   
   const [unlocked, setUnlocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<'vault' | 'generator'>('vault');
+  const [showGenerator, setShowGenerator] = useState(false);
 
   // Generator State
   const [length, setLength] = useState(16);
@@ -313,62 +338,66 @@ export default function PasswordGenScreen() {
 
   return (
     <MiniAppShell title={ttx("Vault")} subtitle={ttx("Secure")}>
-      {!unlocked && <BiometricScanner onUnlock={() => setUnlocked(true)} colors={colors} accent={accent} />}
+      {!unlocked && <PinPadOverlay onUnlock={() => setUnlocked(true)} colors={colors} accent={accent} />}
       
       <View style={{ flex: 1, opacity: unlocked ? 1 : 0 }}>
-        {/* TAB BAR */}
-        <View style={{ flexDirection: 'row', padding: 4, backgroundColor: colors.surface, borderRadius: 20, marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-          <Pressable 
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('vault'); }}
-            style={{ flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 16, backgroundColor: activeTab === 'vault' ? accent : 'transparent' }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Wallet color={activeTab === 'vault' ? '#fff' : colors.textMuted} size={18} weight="bold" />
-              <Text style={{ color: activeTab === 'vault' ? '#fff' : colors.textMuted, fontWeight: '800', fontSize: 13 }}>{ttx("My Vault")}</Text>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+          <Animated.View entering={FadeIn}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>{ttx("Vault")}</Text>
             </View>
+
+            <MiniCommandDeck
+              accent={accent}
+              title={ttx("Vault Status")}
+              subtitle={ttx("End-to-end encrypted locally.")}
+              metrics={[
+                { label: 'Total', value: `${VAULT_ITEMS.length}`, detail: 'items' },
+                { label: 'Weak', value: '1', detail: 'found' },
+              ]}
+              chips={['Analyze Security', 'Sync']}
+            />
+
+            <View style={{ height: 16 }} />
+
+            {VAULT_ITEMS.map((item, i) => (
+              <VaultItem key={item.id} item={item} colors={colors} accent={accent} />
+            ))}
+          </Animated.View>
+        </ScrollView>
+        
+        {/* FAB */}
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setShowGenerator(true);
+          }}
+          style={{ position: 'absolute', bottom: 30, right: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: accent, justifyContent: 'center', alignItems: 'center', shadowColor: accent, shadowOpacity: 0.5, shadowRadius: 15, shadowOffset: { width: 0, height: 5 }, elevation: 10 }}
+        >
+          <Plus color="#fff" size={28} weight="bold" />
+        </Pressable>
+      </View>
+      
+      {showGenerator && (
+        <Animated.View
+          entering={SlideInDown.duration(400).springify()}
+          exiting={SlideOutDown.duration(300)}
+          style={[StyleSheet.absoluteFill, { zIndex: 200, justifyContent: 'flex-end' }]}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowGenerator(false)}>
+            <BlurView intensity={30} style={StyleSheet.absoluteFill} tint={colors.isDark ? 'dark' : 'light'} />
           </Pressable>
-          <Pressable 
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('generator'); }}
-            style={{ flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 16, backgroundColor: activeTab === 'generator' ? accent : 'transparent' }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Wrench color={activeTab === 'generator' ? '#fff' : colors.textMuted} size={18} weight="bold" />
-              <Text style={{ color: activeTab === 'generator' ? '#fff' : colors.textMuted, fontWeight: '800', fontSize: 13 }}>{ttx("Tools")}</Text>
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 20, paddingBottom: 40, maxHeight: '90%', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -5 }, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: colors.glassBorder, alignSelf: 'center', marginBottom: 20 }} />
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{ttx("Generate Password")}</Text>
+              <Pressable onPress={() => setShowGenerator(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                <X color={colors.text} size={16} weight="bold" />
+              </Pressable>
             </View>
-          </Pressable>
-        </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-          {activeTab === 'vault' && (
-            <Animated.View entering={FadeIn}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>{ttx("Items")}</Text>
-                <Pressable style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: accent, justifyContent: 'center', alignItems: 'center' }}>
-                  <Plus color="#fff" size={20} weight="bold" />
-                </Pressable>
-              </View>
-
-              <MiniCommandDeck
-                accent={accent}
-                title={ttx("Vault Status")}
-                subtitle={ttx("End-to-end encrypted locally.")}
-                metrics={[
-                  { label: 'Total', value: `${VAULT_ITEMS.length}`, detail: 'items' },
-                  { label: 'Weak', value: '1', detail: 'found' },
-                ]}
-                chips={['Analyze Security', 'Sync']}
-              />
-
-              <View style={{ height: 16 }} />
-
-              {VAULT_ITEMS.map((item, i) => (
-                <VaultItem key={item.id} item={item} colors={colors} accent={accent} />
-              ))}
-            </Animated.View>
-          )}
-
-          {activeTab === 'generator' && (
-            <Animated.View entering={FadeIn}>
+            <ScrollView showsVerticalScrollIndicator={false}>
               <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }} style={{ marginBottom: 14 }}>
                 {([
                   { key: 'password', label: 'Strong', icon: LockKey },
@@ -487,10 +516,10 @@ export default function PasswordGenScreen() {
                 <Toggle label={ttx("Avoid confusing chars")} sub="Removes O, 0, I, l, 1, |" value={avoidAmbiguous} onChange={setAvoidAmbiguous} colors={colors} />
                 <View style={{ height: 4 }} />
               </GlassPanel>
-            </Animated.View>
-          )}
-        </ScrollView>
-      </View>
+            </ScrollView>
+          </View>
+        </Animated.View>
+      )}
     </MiniAppShell>
   );
 }
