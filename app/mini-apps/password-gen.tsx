@@ -11,7 +11,7 @@ import { BlurView } from 'expo-blur';
 import { 
   ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning, 
   Key, DiceSix, Fingerprint, EyeSlash, Vault, Timer, CreditCard, FileText, 
-  IdentificationCard, Plus, Globe, Eye, Scan, FaceId, Wrench, Wallet
+  IdentificationCard, Plus, Globe, Eye, Scan, Wrench, Wallet
 } from 'phosphor-react-native';
 
 import { GlassPanel } from '../../components/ui/GlassPanel';
