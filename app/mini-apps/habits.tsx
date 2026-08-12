@@ -371,11 +371,9 @@ function AddHabitModal({ initial, onSave, onClose }: {
 
   return (
     <View style={[StyleSheet.absoluteFill, { zIndex: 100, elevation: 100 }]}>
-      <AnimatedPressable 
-        entering={FadeIn} exiting={FadeOut} 
-        onPress={onClose} 
-        style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} 
-      />
+      <Animated.View entering={FadeIn} exiting={FadeOut} style={StyleSheet.absoluteFill}>
+        <Pressable onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} />
+      </Animated.View>
       <Animated.View 
         entering={SlideInDown.springify().damping(20).stiffness(90)} 
         exiting={SlideOutDown} 
@@ -844,14 +842,14 @@ export default function HabitsApp() {
     {showAdd && <AddHabitModal onSave={saveHabit} onClose={() => setShowAdd(false)} />}
     {editHabit && <AddHabitModal initial={editHabit} onSave={saveHabit} onClose={() => setEditHabit(null)} />}
 
-    <AnimatedPressable
-      onPress={() => setShowAdd(true)}
-      scaleValue={0.9}
-      haptic="medium"
-      style={{
-        position: 'absolute',
-        bottom: insets.bottom > 0 ? insets.bottom + 20 : 30,
-        right: 20,
+      <AnimatedPressable
+        onPress={() => setShowAdd(true)}
+        scaleValue={0.9}
+        haptic="medium"
+        style={{
+          position: 'absolute',
+          bottom: 40,
+          right: 20,
         width: 60,
         height: 60,
         borderRadius: 30,
