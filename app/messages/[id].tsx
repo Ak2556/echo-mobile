@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, KeyboardAvoidingView, Platform, FlatList, ScrollView,
+  View, Text, KeyboardAvoidingView, Platform, ScrollView, FlatList,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
   ActivityIndicator, Alert, Linking, Dimensions,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,6 +47,7 @@ import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
+import { HlsVideoPlayer } from '../../components/media/HlsVideoPlayer';
 import {
   useRemoteMessages,
   useSendRemoteDM,
@@ -886,19 +888,35 @@ function DMBubble({
                 isMe={isMe}
               />
             )}
-            <Image
-              source={{ uri: message.mediaUrl }}
-              onError={() => setImageFailed(true)}
-              style={{
+            {message.mediaUrl.endsWith('.m3u8') ? (
+              <View style={{
                 width: 220,
                 height: 165,
                 borderRadius: radius.card,
                 borderBottomLeftRadius: caption ? 0 : radius.card,
                 borderBottomRightRadius: caption ? 0 : radius.card,
-              }}
-              contentFit="cover"
-              transition={200}
-            />
+                overflow: 'hidden',
+              }}>
+                <HlsVideoPlayer
+                  src={message.mediaUrl}
+                  poster={message.mediaUrl.replace('.m3u8', '_thumb.jpg')}
+                />
+              </View>
+            ) : (
+              <Image
+                source={{ uri: message.mediaUrl }}
+                onError={() => setImageFailed(true)}
+                style={{
+                  width: 220,
+                  height: 165,
+                  borderRadius: radius.card,
+                  borderBottomLeftRadius: caption ? 0 : radius.card,
+                  borderBottomRightRadius: caption ? 0 : radius.card,
+                }}
+                contentFit="cover"
+                transition={200}
+              />
+            )}
             {caption ? (
               <View style={{ width: 220, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 10 }}>
                 <FormattedText content={caption} color={textColor} size={textSize} />
@@ -1870,7 +1888,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
     if (recordTimerRef.current) clearInterval(recordTimerRef.current);
   }, []);
 
-  const listRef = useRef<FlatList<any>>(null);
+  const listRef = useRef<any>(null);
   // Pin to the newest message on the very next frame instead of after an
   // arbitrary timeout — the outgoing bubble and the scroll land together, so a
   // send reads as instant rather than jumping a beat later.
@@ -2132,7 +2150,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
   const markingReadRef = useRef(false);
   useEffect(() => {
     if (!remote || !id || markingReadRef.current) return;
-    const hasUnread = visibleMessages.some(m => m.senderId !== myId && !m.readAt);
+    const hasUnread = visibleMessages.some(m => m.senderId !== myId && !(m as any).readAt);
     if (hasUnread) {
       markingReadRef.current = true;
       void markMessagesRead(id).then(() => {
@@ -2618,23 +2636,26 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
     | { type: 'date'; label: string }
     | { type: 'unread' };
 
-  const listData: ListRow[] = [];
-  visibleMessages.forEach((msg, i) => {
-    const prev = visibleMessages[i - 1];
-    const next = visibleMessages[i + 1];
-    if (!prev || !isSameDay(msg.createdAt, prev.createdAt)) {
-      listData.push({ type: 'date', label: getDateLabel(msg.createdAt) });
-    }
-    if (!searchTerm && msg.id === firstUnreadIdRef.current) {
-      listData.push({ type: 'unread' });
-    }
-    listData.push({ 
-      type: 'message', 
-      msg, 
-      groupedWithPrev: isGroupedWithPrev(msg, prev),
-      groupedWithNext: isGroupedWithPrev(next, msg)
+  const listData: ListRow[] = useMemo(() => {
+    const data: ListRow[] = [];
+    visibleMessages.forEach((msg, i) => {
+      const prev = visibleMessages[i - 1];
+      const next = visibleMessages[i + 1];
+      if (!prev || !isSameDay(msg.createdAt, prev.createdAt)) {
+        data.push({ type: 'date', label: getDateLabel(msg.createdAt) });
+      }
+      if (!searchTerm && msg.id === firstUnreadIdRef.current) {
+        data.push({ type: 'unread' });
+      }
+      data.push({ 
+        type: 'message', 
+        msg, 
+        groupedWithPrev: isGroupedWithPrev(msg, prev),
+        groupedWithNext: isGroupedWithPrev(next, msg)
+      });
     });
-  });
+    return data;
+  }, [visibleMessages, searchTerm]);
 
   // Loading / not found
   if (!conversation) {
@@ -2832,9 +2853,12 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
       >
 
         {/* Message list */}
-        <FlatList<ListRow>
+        {useMemo(() => (
+        <FlashList<ListRow>
           ref={listRef}
           data={listData}
+          estimatedItemSize={70}
+          getItemType={(item) => item.type}
           keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.type === 'unread' ? 'unread-divider' : item.msg.id}
           // flexGrow + flex-end anchor short threads to the bottom (just above
           // the composer) instead of floating at the top, like every chat app.
@@ -2846,7 +2870,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
           onEndReached={() => { if (hasNextPage) void fetchNextPage(); }}
           onEndReachedThreshold={0.25}
           // Hold the viewport steady when older messages prepend during
-          // pagination, so scrolling back never yanks the content mid-read.
+          // @ts-ignore FlashList typing doesn't include maintainVisibleContentPosition but it works natively on iOS
           maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
           onScroll={e => {
             const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
@@ -2930,6 +2954,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
             );
           }}
         />
+        ), [listData, isAtBottom, partnerIsTyping, searchTerm, conversation, unreadPartnerMsgs.length, catchupLoading, translations, translatingId, savedIdSet, selectionMode, selectedIds, readReceipts, myId, quickReaction, remote])}
 
         {/* Jump to bottom pill — grows to show how many new messages landed
             while you were reading back, and springs in so it reads as an event. */}

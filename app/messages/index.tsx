@@ -28,6 +28,7 @@ import { RemoteConversation, searchRemoteUsers, UserSearchHit } from '../../lib/
 import { safeBack } from '../../lib/safeBack';
 import { ttx } from '../../lib/i18n';
 import { MusicPickerModal, Song } from '../../components/ui/MusicPicker';
+import { ChatDetailsSidebar } from '../../components/chat/ChatDetailsSidebar';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -654,6 +655,7 @@ export default function MessagesListScreen() {
   const layout = useResponsiveLayout();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const twoPane = layout.width >= 880;
+  const threePane = layout.width >= 1100;
   const openConversation = (cid: string) => {
     if (twoPane) setSelectedId(cid);
     else router.push(`/messages/${cid}`);
@@ -944,6 +946,16 @@ export default function MessagesListScreen() {
             </View>
           )}
         </View>
+        {threePane && selectedId && (
+          <ChatDetailsSidebar
+            recipient={{
+              name: selectedId, 
+              handle: selectedId.toLowerCase().replace(' ', ''),
+              avatar: 'https://i.pravatar.cc/150' // Mocks for now, this would normally be fetched
+            }}
+            colors={colors}
+          />
+        )}
       </View>
     );
   }
