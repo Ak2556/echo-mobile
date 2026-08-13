@@ -37,7 +37,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
   const { colors, radius, fontSizes } = useTheme();
   const videoRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
-  const player = useVideoPlayer(videoSourceForUri(activeUri), p => { p.muted = true; p.loop = false; });
+  const player = useVideoPlayer(activeUri, p => { p.muted = true; p.loop = false; });
 
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const [playing, setPlaying] = useState(false);
@@ -92,7 +92,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
 
   const retryLoad = () => {
     setLoadState('loading');
-    player.replace(videoSourceForUri(activeUri));
+    player.replace(activeUri);
   };
 
   const togglePlay = () => { if (loadState !== 'ready') return; try { if (playing) { player.pause(); } else { player.play(); } } catch {} };
