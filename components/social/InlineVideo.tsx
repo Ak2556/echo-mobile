@@ -33,7 +33,11 @@ function fmt(s: number): string {
   return `${Math.floor(t / 60)}:${(t % 60).toString().padStart(2, '0')}`;
 }
 
-export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVideoProps) {
+interface InlineVideoInnerProps extends InlineVideoProps {
+  onRetry: () => void;
+}
+
+function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: InlineVideoInnerProps) {
   const { colors, radius, fontSizes } = useTheme();
   const videoRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
@@ -92,7 +96,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
 
   const retryLoad = () => {
     setLoadState('loading');
-    player.replace(activeUri);
+    onRetry();
   };
 
   const togglePlay = () => { if (loadState !== 'ready') return; try { if (playing) { player.pause(); } else { player.play(); } } catch {} };
@@ -251,4 +255,9 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
       )}
     </View>
   );
+}
+
+export function InlineVideo(props: InlineVideoProps) {
+  const [retryKey, setRetryKey] = useState(0);
+  return <InlineVideoInner key={retryKey} {...props} onRetry={() => setRetryKey(k => k + 1)} />;
 }
