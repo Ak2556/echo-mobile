@@ -21,13 +21,13 @@ const ACTIVITY_LEVELS = [
   { label: 'Active', caption: '6–7 workouts a week', factor: 1.725 },
 ];
 
-const CATS = [
-  { label: 'Underweight', range: '< 18.5', color: '#4E7A8B', min: 0, max: 18.5, marker: 'Low', advice: 'Consider consulting a nutritionist to reach a healthy weight.' },
-  { label: 'Normal', range: '18.5–24.9', color: '#7A8B4E', min: 18.5, max: 25, marker: 'OK', advice: "You're in the healthy range. Keep it up!" },
-  { label: 'Overweight', range: '25–29.9', color: '#B08536', min: 25, max: 30, marker: 'High', advice: 'Light diet changes and regular exercise can help.' },
-  { label: 'Obese I', range: '30–34.9', color: '#C65F3F', min: 30, max: 35, marker: 'I', advice: 'Consult a doctor and consider a structured program.' },
-  { label: 'Obese II', range: '35–39.9', color: '#A04E4E', min: 35, max: 40, marker: 'II', advice: 'Medical supervision is strongly recommended.' },
-  { label: 'Obese III', range: '≥ 40', color: '#7D3A3A', min: 40, max: 99, marker: 'III', advice: 'Please seek professional medical advice immediately.' },
+const CATS: { label: string; range: string; tone: 'textSecondary' | 'success' | 'warning' | 'danger'; min: number; max: number; marker: string; advice: string }[] = [
+  { label: 'Underweight', range: '< 18.5', tone: 'textSecondary', min: 0, max: 18.5, marker: 'Low', advice: 'Consider consulting a nutritionist to reach a healthy weight.' },
+  { label: 'Normal', range: '18.5–24.9', tone: 'success', min: 18.5, max: 25, marker: 'OK', advice: "You're in the healthy range. Keep it up!" },
+  { label: 'Overweight', range: '25–29.9', tone: 'warning', min: 25, max: 30, marker: 'High', advice: 'Light diet changes and regular exercise can help.' },
+  { label: 'Obese I', range: '30–34.9', tone: 'danger', min: 30, max: 35, marker: 'I', advice: 'Consult a doctor and consider a structured program.' },
+  { label: 'Obese II', range: '35–39.9', tone: 'danger', min: 35, max: 40, marker: 'II', advice: 'Medical supervision is strongly recommended.' },
+  { label: 'Obese III', range: '≥ 40', tone: 'danger', min: 40, max: 99, marker: 'III', advice: 'Please seek professional medical advice immediately.' },
 ];
 
 function getCat(bmi: number) {
@@ -35,15 +35,15 @@ function getCat(bmi: number) {
 }
 
 function InputField({ label, value, onChange, placeholder, unit }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; unit?: string }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <View style={{ flex: 1 }}>
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 6 }}>{label}</Text>
       <View style={{
         flexDirection: 'row', alignItems: 'flex-end',
-        backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-        borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10,
-        borderWidth: 1, borderColor: value ? colors.accent + '66' : colors.glassBorder,
+        backgroundColor: colors.inputBg,
+        borderRadius: radius.card, paddingHorizontal: 14, paddingVertical: 10,
+        borderWidth: 1, borderColor: value ? colors.accent : colors.glassBorder,
       }}>
         <TextInput
           value={value}
@@ -67,16 +67,16 @@ function HealthPulse({ accent, bmi, category, idealRange, calories, unit }: {
   calories?: number;
   unit: Unit;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const tiles = [
     { label: 'BMI', value: bmi ? bmi.toFixed(1) : 'Set', detail: category?.label ?? 'input' },
     { label: 'Ideal', value: idealRange, detail: unit === 'metric' ? 'kg range' : 'lb range' },
     { label: 'Energy', value: calories ? `${calories}` : 'Age', detail: calories ? 'kcal/day' : 'needed' },
   ];
   return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+    <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: colors.glassBorder }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 42, height: 42, borderRadius: radius.card, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
           <Barbell color={accent} size={20} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
@@ -86,7 +86,7 @@ function HealthPulse({ accent, bmi, category, idealRange, calories, unit }: {
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {tiles.map(tile => (
-          <View key={tile.label} style={{ flex: 1, minHeight: 64, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View key={tile.label} style={{ flex: 1, minHeight: 64, borderRadius: radius.card, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <Text style={{ color: accent, fontSize: tile.value.length > 8 ? 13 : 17, fontWeight: '900' }} numberOfLines={1}>{tile.value}</Text>
             <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{tile.label}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{tile.detail}</Text>
@@ -98,7 +98,7 @@ function HealthPulse({ accent, bmi, category, idealRange, calories, unit }: {
 }
 
 export default function BmiScreen() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const accent = colors.accent;
 
   const [unit, setUnit] = useState<Unit>('metric');
@@ -175,9 +175,10 @@ export default function BmiScreen() {
 
   const bmi = calcBmi();
   const cat = bmi ? getCat(bmi) : null;
+  const catColor = cat ? colors[cat.tone] : accent;
   const pct = bmi ? Math.min(100, Math.max(0, ((bmi - 10) / 35) * 100)) : 0;
   const eNow = energy();
-  const healthAccent = cat?.color ?? accent;
+  const healthAccent = catColor;
 
   const getIdealRange = (): string => {
     let hM: number;
@@ -203,17 +204,17 @@ export default function BmiScreen() {
       />
       <HealthPulse accent={healthAccent} bmi={bmi} category={cat} idealRange={getIdealRange()} calories={eNow?.tdee} unit={unit} />
       {/* Unit toggle */}
-      <GlassPanel variant="light" borderRadius={18} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 16 }}>
         {(['metric', 'imperial'] as Unit[]).map(u => (
           <Pressable
             key={u}
             onPress={() => setUnit(u)}
-            style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: unit === u ? accent : 'transparent', alignItems: 'center', shadowColor: unit === u ? accent : 'transparent', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}
+            style={{ flex: 1, paddingVertical: 11, borderRadius: radius.card, backgroundColor: unit === u ? accent : 'transparent', alignItems: 'center' }}
           >
-            <Text style={{ color: unit === u ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 14 }}>
+            <Text style={{ color: unit === u ? colors.bg : colors.textMuted, fontWeight: '700', fontSize: 14 }}>
               {u === 'metric' ? 'Metric' : 'Imperial'}
             </Text>
-            <Text style={{ color: unit === u ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontSize: 11, marginTop: 2 }}>
+            <Text style={{ color: unit === u ? colors.bg : colors.textMuted, fontSize: 11, marginTop: 2 }}>
               {u === 'metric' ? 'kg · cm' : 'lbs · ft'}
             </Text>
           </Pressable>
@@ -221,7 +222,7 @@ export default function BmiScreen() {
       </GlassPanel>
 
       {/* Inputs */}
-      <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20, gap: 16 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="medium" borderRadius={radius.xl} contentStyle={{ padding: 20, gap: 16 }} style={{ marginBottom: 14 }}>
         <InputField
           label={`WEIGHT (${unit === 'metric' ? 'kg' : 'lbs'})`}
           value={weight} onChange={setWeight}
@@ -243,8 +244,8 @@ export default function BmiScreen() {
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {(['male', 'female'] as Sex[]).map(s => (
                 <Pressable key={s} onPress={() => setSex(s)} style={{ flex: 1 }}>
-                  <View style={{ paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: sex === s ? accent : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: sex === s ? 'transparent' : colors.glassBorder }}>
-                    <Text style={{ color: sex === s ? '#fff' : colors.text, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>{s}</Text>
+                  <View style={{ paddingVertical: 14, borderRadius: radius.card, alignItems: 'center', backgroundColor: sex === s ? accent : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: sex === s ? 'transparent' : colors.glassBorder }}>
+                    <Text style={{ color: sex === s ? colors.bg : colors.text, fontWeight: '700', fontSize: 13, textTransform: 'capitalize' }}>{s}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -256,23 +257,23 @@ export default function BmiScreen() {
       {bmi && cat && (
         <>
           {/* BMI result */}
-          <View style={{ backgroundColor: cat.color + '18', borderRadius: 28, borderWidth: 1.5, borderColor: cat.color + '44', padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: cat.color, shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 6 } }}>
-            <Text style={{ color: cat.color, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>{cat.marker}</Text>
-            <Text style={{ color: cat.color, fontSize: 76, fontFamily: 'Fraunces_500Medium', letterSpacing: -2, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
-            <Text style={{ color: cat.color, fontSize: 22, fontWeight: '800', marginBottom: 4 }}>{cat.label}</Text>
+          <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.xl, borderWidth: 1.5, borderColor: catColor, padding: 28, alignItems: 'center', marginBottom: 14 }}>
+            <Text style={{ color: catColor, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>{cat.marker}</Text>
+            <Text style={{ color: catColor, fontSize: 76, fontFamily: 'Fraunces_500Medium', letterSpacing: -2, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
+            <Text style={{ color: catColor, fontSize: 22, fontWeight: '800', marginBottom: 4 }}>{cat.label}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("BMI range:")} {cat.range}</Text>
           </View>
 
           {/* Scale */}
-          <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+          <GlassPanel variant="medium" borderRadius={radius.xl} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 14 }}>{ttx("BMI SCALE")}</Text>
-            <View style={{ height: 14, borderRadius: 7, overflow: 'hidden', flexDirection: 'row', marginBottom: 8 }}>
+            <View style={{ height: 14, borderRadius: radius.sm, overflow: 'hidden', flexDirection: 'row', marginBottom: 8 }}>
               {CATS.slice(0, 5).map((c, i) => (
-                <View key={i} style={{ flex: 1, backgroundColor: c.color }} />
+                <View key={i} style={{ flex: 1, backgroundColor: colors[c.tone] }} />
               ))}
             </View>
             <View style={{ position: 'relative', height: 20 }}>
-              <View style={{ position: 'absolute', left: `${pct}%`, top: 0, width: 3, height: 20, backgroundColor: colors.text, borderRadius: 2, marginLeft: -1.5 }} />
+              <View style={{ position: 'absolute', left: `${pct}%`, top: 0, width: 3, height: 20, backgroundColor: colors.text, borderRadius: radius.sm, marginLeft: -1.5 }} />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
               {['10', '18.5', '25', '30', '40'].map(v => (
@@ -286,7 +287,7 @@ export default function BmiScreen() {
             const e = energy();
             if (!e) {
               return (
-                <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
+                <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ padding: 18 }} style={{ marginBottom: 14 }}>
                   <Text style={{ color: colors.textMuted, fontSize: 13.5, lineHeight: 20 }}>
                     {ttx("Add your age to unlock daily energy needs (BMR & TDEE) and a macro plan.")}
                   </Text>
@@ -294,13 +295,13 @@ export default function BmiScreen() {
               );
             }
             return (
-              <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+              <GlassPanel variant="medium" borderRadius={radius.xl} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("DAILY ENERGY")}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
                   {ACTIVITY_LEVELS.map((a, i) => (
                     <Pressable key={a.label} onPress={() => setActivityIdx(i)} style={{ flex: 1 }}>
-                      <View style={{ paddingVertical: 9, borderRadius: 12, alignItems: 'center', backgroundColor: activityIdx === i ? accent : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: StyleSheet.hairlineWidth, borderColor: activityIdx === i ? 'transparent' : colors.glassBorder }}>
-                        <Text style={{ color: activityIdx === i ? '#fff' : colors.text, fontWeight: '700', fontSize: 11.5 }}>{a.label}</Text>
+                      <View style={{ paddingVertical: 9, borderRadius: radius.md, alignItems: 'center', backgroundColor: activityIdx === i ? accent : colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: activityIdx === i ? 'transparent' : colors.glassBorder }}>
+                        <Text style={{ color: activityIdx === i ? colors.bg : colors.text, fontWeight: '700', fontSize: 11.5 }}>{a.label}</Text>
                       </View>
                     </Pressable>
                   ))}
@@ -308,12 +309,12 @@ export default function BmiScreen() {
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 14 }}>{ACTIVITY_LEVELS[activityIdx].caption}</Text>
 
                 <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-                  <View style={{ flex: 1, backgroundColor: accent + '14', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: accent + '2A' }}>
+                  <View style={{ flex: 1, backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 14, borderWidth: 1, borderColor: colors.glassBorder }}>
                     <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("BMR (AT REST)")}</Text>
                     <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }}>{e.bmr}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ttx("kcal / day")}</Text>
                   </View>
-                  <View style={{ flex: 1, backgroundColor: accent + '14', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: accent + '2A' }}>
+                  <View style={{ flex: 1, backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 14, borderWidth: 1, borderColor: colors.glassBorder }}>
                     <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("TDEE (MAINTAIN)")}</Text>
                     <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }}>{e.tdee}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ttx("kcal / day")}</Text>
@@ -326,7 +327,7 @@ export default function BmiScreen() {
                     { label: 'CARBS', value: `${e.carbs}g` },
                     { label: 'FAT', value: `${e.fat}g` },
                   ].map(m => (
-                    <View key={m.label} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}>
+                    <View key={m.label} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.md, backgroundColor: colors.surfaceHover }}>
                       <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '700', letterSpacing: 0.6 }}>{m.label}</Text>
                       <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 2 }}>{m.value}</Text>
                     </View>
@@ -337,10 +338,10 @@ export default function BmiScreen() {
                   onPress={() => void applyToFitness()}
                   disabled={applying}
                   scaleValue={0.96} haptic="medium"
-                  style={{ backgroundColor: '#4E8B7A', borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: applying ? 0.6 : 1 }}
+                  style={{ backgroundColor: colors.success, borderRadius: radius.card, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: applying ? 0.6 : 1 }}
                 >
-                  <Barbell color="#fff" size={16} weight="fill" />
-                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14.5 }}>
+                  <Barbell color={colors.bg} size={16} weight="fill" />
+                  <Text style={{ color: colors.bg, fontWeight: '800', fontSize: 14.5 }}>
                     {ttx("Set as my Fitness targets")}
                   </Text>
                 </AnimatedPressable>
@@ -352,24 +353,24 @@ export default function BmiScreen() {
           })()}
 
           {/* Stats */}
-          <GlassPanel variant="light" borderRadius={24} contentStyle={{ overflow: 'hidden' }} style={{ marginBottom: 14 }}>
+          <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ overflow: 'hidden' }} style={{ marginBottom: 14 }}>
             {[
               { label: 'Ideal weight range', value: getIdealRange() },
               { label: 'Category', value: `${cat.label} (${cat.range})` },
-            ].map((row, i) => (
+            ].map((row) => (
               <View key={row.label} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
                 <Text style={{ color: colors.textMuted, fontSize: 14 }}>{row.label}</Text>
                 <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{row.value}</Text>
               </View>
             ))}
-            <View style={{ paddingHorizontal: 20, paddingVertical: 14, backgroundColor: cat.color + '12' }}>
-              <Text style={{ color: cat.color, fontSize: 14, fontWeight: '600', lineHeight: 20 }}>{cat.advice}</Text>
+            <View style={{ paddingHorizontal: 20, paddingVertical: 14, backgroundColor: colors.surfaceHover }}>
+              <Text style={{ color: catColor, fontSize: 14, fontWeight: '600', lineHeight: 20 }}>{cat.advice}</Text>
             </View>
           </GlassPanel>
 
           <EdgeFeaturePanel
             appName="BMI Calculator"
-            accent={cat.color}
+            accent={catColor}
             headline={ttx("Turn body metrics into a plan")}
             caption={ttx("Share non-sensitive targets, compare progress, or move calories/macros into Fitness.")}
             metrics={[
@@ -384,17 +385,21 @@ export default function BmiScreen() {
           />
 
           {/* Legend */}
-          <GlassPanel variant="light" borderRadius={24} contentStyle={{ overflow: 'hidden' }}>
+          <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ overflow: 'hidden' }}>
             <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("ALL CATEGORIES")}</Text>
             </View>
-            {CATS.map((c, i) => (
-              <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 11, borderBottomWidth: i < CATS.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder, backgroundColor: cat.label === c.label ? c.color + '12' : 'transparent' }}>
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.color, marginRight: 12 }} />
-                <Text style={{ color: cat.label === c.label ? c.color : colors.text, flex: 1, fontSize: 14, fontWeight: cat.label === c.label ? '700' : '400' }}>{c.label}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{c.range}</Text>
-              </View>
-            ))}
+            {CATS.map((c, i) => {
+              const cColor = colors[c.tone];
+              const isCurrent = cat.label === c.label;
+              return (
+                <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 11, borderBottomWidth: i < CATS.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder, backgroundColor: isCurrent ? colors.surfaceHover : 'transparent' }}>
+                  <View style={{ width: 10, height: 10, borderRadius: radius.sm, backgroundColor: cColor, marginRight: 12 }} />
+                  <Text style={{ color: isCurrent ? cColor : colors.text, flex: 1, fontSize: 14, fontWeight: isCurrent ? '700' : '400' }}>{c.label}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>{c.range}</Text>
+                </View>
+              );
+            })}
           </GlassPanel>
         </>
       )}

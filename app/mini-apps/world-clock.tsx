@@ -48,7 +48,7 @@ function timeOfDay(hour: number) {
 }
 
 export default function WorldClockScreen() {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const accent = colors.accent;
   const [cities, setCities] = useState<WorldClockCity[]>([]);
   const [weather, setWeather] = useState<Record<string, WeatherSnapshot | null>>({});
@@ -122,8 +122,8 @@ export default function WorldClockScreen() {
 
   const AddButton = (
     <AnimatedPressable onPress={() => setAdding(value => !value)} scaleValue={0.9} haptic="medium" accessibilityLabel={ttx("Add location")}>
-      <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-        {adding ? <X color="#fff" size={18} weight="bold" /> : <Plus color="#fff" size={18} weight="bold" />}
+      <View style={{ width: 38, height: 38, borderRadius: radius.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
+        {adding ? <X color={colors.bgPure} size={18} weight="bold" /> : <Plus color={colors.bgPure} size={18} weight="bold" />}
       </View>
     </AnimatedPressable>
   );
@@ -142,10 +142,10 @@ export default function WorldClockScreen() {
         chips={['Custom places', 'Weather now', 'Meeting planning']}
       />
 
-      <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 18 }} style={{ marginBottom: 14, borderColor: `${isLocalDay ? '#B08536' : '#5E748B'}44` }}>
+      <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 18 }} style={{ marginBottom: 14, borderColor: `${isLocalDay ? colors.warning : colors.textMuted}44` }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: `${isLocalDay ? '#B08536' : '#5E748B'}22` }}>
-            {isLocalDay ? <Sun color="#B08536" size={24} weight="fill" /> : <Moon color="#5E748B" size={24} weight="fill" />}
+          <View style={{ width: 48, height: 48, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: `${isLocalDay ? colors.warning : colors.textMuted}22` }}>
+            {isLocalDay ? <Sun color={colors.warning} size={24} weight="fill" /> : <Moon color={colors.textMuted} size={24} weight="fill" />}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.eyebrow, { color: colors.textMuted }]} numberOfLines={1}>{ttx("My Location")}</Text>
@@ -157,8 +157,8 @@ export default function WorldClockScreen() {
       </GlassPanel>
 
       {adding ? (
-        <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 14 }} style={{ marginBottom: 14, borderColor: `${accent}3A` }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, borderRadius: 15, paddingHorizontal: 12, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+        <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 14 }} style={{ marginBottom: 14, borderColor: `${accent}3A` }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, borderRadius: radius.md, paddingHorizontal: 12, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <MagnifyingGlass color={colors.textMuted} size={18} />
             <TextInput
               value={query}
@@ -219,11 +219,11 @@ export default function WorldClockScreen() {
 }
 
 function WeatherBadge({ snapshot, fallback }: { snapshot?: WeatherSnapshot | null; fallback: string }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const accent = snapshot ? colors.accent : colors.textMuted;
   return (
     <View style={{ minWidth: 76, alignItems: 'flex-end' }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 6, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: radius.full, paddingHorizontal: 9, paddingVertical: 6, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
         {snapshot ? weatherIcon(snapshot.code, accent, 16) : <CloudSun color={accent} size={16} />}
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 12.5 }]} numberOfLines={1}>
           {snapshot ? `${Math.round(snapshot.temperature)}°` : '--'}
@@ -237,11 +237,11 @@ function WeatherBadge({ snapshot, fallback }: { snapshot?: WeatherSnapshot | nul
 }
 
 function LocationResult({ city, onAdd }: { city: WorldClockCity; onAdd: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const clock = getTimeInZone(city.timezone);
   return (
     <Pressable onPress={onAdd} accessibilityRole="button" accessibilityLabel={`Add ${city.name}`}>
-      <View style={{ minHeight: 56, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+      <View style={{ minHeight: 56, borderRadius: radius.lg, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.surfaceHover, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
         <Text style={{ fontSize: 24 }}>{city.flag}</Text>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[font.bodyBold, { color: colors.text, fontSize: 14.5 }]} numberOfLines={1}>{city.name}</Text>
@@ -254,20 +254,20 @@ function LocationResult({ city, onAdd }: { city: WorldClockCity; onAdd: () => vo
 }
 
 function CityCard({ city, weather, onRemove }: { city: WorldClockCity; weather?: WeatherSnapshot | null; onRemove: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const clock = getTimeInZone(city.timezone);
   const day = clock.hour >= 6 && clock.hour < 20;
-  const tone = day ? '#B08536' : '#5E748B';
+  const tone = day ? colors.warning : colors.textMuted;
   return (
-    <GlassPanel variant="medium" borderRadius={22} contentStyle={{ padding: 15 }} style={{ borderColor: `${tone}2F` }}>
+    <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 15 }} style={{ borderColor: `${tone}2F` }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 48, height: 48, borderRadius: 17, backgroundColor: `${tone}1F`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 48, height: 48, borderRadius: radius.lg, backgroundColor: `${tone}1F`, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ fontSize: 25 }}>{city.flag}</Text>
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flexShrink: 1 }]} numberOfLines={1}>{city.name}</Text>
-            <View style={{ borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, backgroundColor: `${tone}18` }}>
+            <View style={{ borderRadius: radius.full, paddingHorizontal: 7, paddingVertical: 3, backgroundColor: `${tone}18` }}>
               <Text style={{ color: tone, fontSize: 10.2, fontFamily: 'Inter_700Bold' }}>{timeOfDay(clock.hour)}</Text>
             </View>
           </View>
@@ -281,7 +281,7 @@ function CityCard({ city, weather, onRemove }: { city: WorldClockCity; weather?:
           <Text style={[font.body, { color: colors.textMuted, fontSize: 10.5 }]}>{clock.time.slice(6)}</Text>
         </View>
         <Pressable onPress={onRemove} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${city.name}`}>
-          <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View style={{ width: 28, height: 28, borderRadius: radius.md, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <X color={colors.textMuted} size={13} weight="bold" />
           </View>
         </Pressable>

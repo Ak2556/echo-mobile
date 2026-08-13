@@ -1,4 +1,4 @@
-# BRIEFING — 2026-08-12T12:43:20Z
+# BRIEFING — 2026-08-12T15:35:15Z
 
 ## Mission
 Comprehensive UI/UX standardization pass across Echo iOS codebase (all core navigation tabs and 20+ mini-apps).
@@ -22,13 +22,13 @@ Comprehensive UI/UX standardization pass across Echo iOS codebase (all core navi
   1. Survey & Codebase Mapping [done]
   2. Plan & Decompose Milestones [done]
   3. Milestone M1: Foundational Component Overhaul (R1) [done - GATE PASS]
-  4. Milestone M2A: Tier 1 Mini-Apps Style Eradication (R2) [in-progress: verification stage]
-  5. Milestone M2B: Tier 2 Mini-Apps Style Eradication (R2) [pending]
-  6. Milestone M2C: Tier 3 Mini-Apps & Helpers Style Eradication (R2) [pending]
-  7. Milestone M3: Core Tabs Layout Unification & UI Audit Infrastructure (R3, AC1-3) [pending]
-  8. Final Acceptance Verification [pending]
-- **Current phase**: 2 (Iteration Loop)
-- **Current focus**: Milestone M2A Gate Verification (2 Reviewers, 2 Challengers, 1 Auditor active)
+  4. Milestone M2A: Tier 1 Mini-Apps Style Eradication (R2) [done - GATE PASS]
+  5. Milestone M2B: Tier 2 Mini-Apps Style Eradication (R2) [in-progress]
+  6. Milestone M2C: Tier 3 Mini-Apps & Helpers Style Eradication (R2) [planned]
+  7. Milestone M3: Core Tabs Layout Unification & UI Audit Infrastructure (R3, AC1-3) [planned]
+  8. Final Acceptance Verification [planned]
+- **Current phase**: 2 (Executing M2B)
+- **Current focus**: Executing Milestone M2B: Tier 2 Medium Mini-Apps Hardcoded Style Eradication.
 
 ## 🔒 Key Constraints
 - NEVER write, modify, or create source code files directly.
@@ -39,39 +39,50 @@ Comprehensive UI/UX standardization pass across Echo iOS codebase (all core navi
 
 ## Current Parent
 - Conversation ID: b4083d10-e382-488e-a597-72e968896cc4
-- Updated: 2026-08-12T12:43:20Z
+- Updated: 2026-08-12T15:36:00Z
 
 ## Key Decisions Made
-- `worker_m2a` completed implementation across 6 Tier 1 mini-apps with 0 type/export errors.
-- Dispatched 5 verification subagents for M2A gate evaluation.
+- Milestone M2A passed Gate evaluation (All 5 replacement verifiers approved/clean).
+- Reached spawn threshold (20/20). Spawned successor orchestrator gen2 (`52607ff6-4272-4b95-8ec7-e9e92fe72b57`).
+- Gen2 initialized state, reset spawn counter to 0/20, started heartbeat cron `task-21`, starting Milestone M2B dispatch.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
-| explorer_1_survey | teamwork_preview_explorer | R1 Foundational & Tokens Survey | completed | 72345193-9dd2-4fe4-932a-dd5ed95e692c |
-| explorer_2_survey | teamwork_preview_explorer | R2 Mini-Apps Hardcoded Styles Survey | completed | b17958e1-173b-40d6-a04e-359964d9107f |
-| explorer_3_survey | teamwork_preview_explorer | R3 Main Tabs & Infra Survey | completed | 6ccdde92-c7ed-4f37-a312-fe94c21f0b0f |
-| worker_m1 | teamwork_preview_worker | Milestone M1 Implementation | completed | b24d7cc7-194a-4379-a878-8a341269f249 |
-| worker_m2a | teamwork_preview_worker | Milestone M2A Implementation | completed | b9c10b03-4a24-4209-88fe-e9450356d158 |
-| reviewer_1_m2a | teamwork_preview_reviewer | M2A Code Review 1 | in-progress | eed18b73-cf80-4164-b25f-1e9e4c42a9bf |
-| reviewer_2_m2a | teamwork_preview_reviewer | M2A Code Review 2 | in-progress | 0bd29a8d-d887-4cc0-97cd-27c7642b1000 |
-| challenger_1_m2a | teamwork_preview_challenger | M2A Empirical Challenge 1 | in-progress | d58b663c-0970-4721-a19b-6c322708d4b1 |
-| challenger_2_m2a | teamwork_preview_challenger | M2A Empirical Challenge 2 | in-progress | 4fc7ee25-2340-4955-8226-4e97bde7cbba |
-| auditor_1_m2a | teamwork_preview_auditor | M2A Forensic Audit 1 | in-progress | bf2bc6ed-6856-4d42-afbd-f4b4e4f84881 |
+| gen1_agents | - | M1 & M2A execution & verification | completed (20 spawns) | - |
+| worker_m2b | teamwork_preview_worker | Milestone M2B Implementation | completed | dce3c3a7-2d48-4be7-aba9-a57f30dd40c0 |
+| reviewer_1_m2b | teamwork_preview_reviewer | M2B Code Review 1 | in-progress | 45a55922-806e-4852-a233-9f3e210bd308 |
+| reviewer_2_m2b | teamwork_preview_reviewer | M2B Code Review 2 | in-progress | eb80fcad-91c2-4605-b5b9-4657b4817187 |
+| challenger_1_m2b | teamwork_preview_challenger | M2B Empirical Challenge 1 | in-progress | 9bc5d74b-f4c4-428b-846d-c647937c29b6 |
+| challenger_2_m2b | teamwork_preview_challenger | M2B Empirical Challenge 2 | in-progress | 254d7c77-4cfc-4161-a4a3-ec0616247e0f |
+| auditor_1_m2b | teamwork_preview_auditor | M2B Forensic Audit | in-progress | 585d76da-8c33-4937-a456-c1e8476bfdc0 |
+| worker_m2c | teamwork_preview_worker | Milestone M2C Implementation | in-progress | e6179530-4ebb-4abd-b507-520dbd275477 |
+| reviewer_1_m2c | teamwork_preview_reviewer | M2C Code Review 1 | in-progress | 6e97838c-69d6-4480-b130-4f9083366746 |
+| reviewer_2_m2c | teamwork_preview_reviewer | M2C Code Review 2 | in-progress | cbed0b05-3ee1-451f-b207-2f3fc0676401 |
+| challenger_1_m2c | teamwork_preview_challenger | M2C Empirical Challenge 1 | in-progress | 96714162-e1a4-4120-8fa9-bb5cb3e98fd2 |
+| challenger_2_m2c | teamwork_preview_challenger | M2C Empirical Challenge 2 | in-progress | 718caa59-6659-4750-80ca-8f19cdebd908 |
+| auditor_1_m2c | teamwork_preview_auditor | M2C Forensic Audit | completed (CLEAN) | 4931273e-da62-4018-96b9-de132a1ce564 |
+| worker_m2c_fix | teamwork_preview_worker | Milestone M2C Remediation | completed | 8dac44e0-c0c8-4464-a097-57d788de6009 |
+| reviewer_1_m2c_r2 | teamwork_preview_reviewer | M2C Code Review 1 (R2) | in-progress | 446b95b4-1593-427f-9629-d105b41d7b7f |
+| reviewer_2_m2c_r2 | teamwork_preview_reviewer | M2C Code Review 2 (R2) | in-progress | 153c288b-9b1d-40a8-a522-28b381ce6c6b |
+| challenger_1_m2c_r2 | teamwork_preview_challenger | M2C Empirical Challenge 1 (R2) | in-progress | 784edd16-a3c1-4707-889d-b2862446dfbe |
+| challenger_2_m2c_r2 | teamwork_preview_challenger | M2C Empirical Challenge 2 (R2) | in-progress | c64349d8-bbe7-4880-9ce7-0fe59436a2f1 |
+| auditor_1_m2c_r2 | teamwork_preview_auditor | M2C Forensic Audit (R2) | in-progress | 99d0875e-cc2d-4a6f-ad0e-357e2460bfa6 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 15 / 20
-- Pending subagents: eed18b73-cf80-4164-b25f-1e9e4c42a9bf, 0bd29a8d-d887-4cc0-97cd-27c7642b1000, d58b663c-0970-4721-a19b-6c322708d4b1, 4fc7ee25-2340-4955-8226-4e97bde7cbba, bf2bc6ed-6856-4d42-afbd-f4b4e4f84881
-- Predecessor: none
+- Spawn count: 18 / 20
+- Pending subagents: 446b95b4-1593-427f-9629-d105b41d7b7f, 153c288b-9b1d-40a8-a522-28b381ce6c6b, 784edd16-a3c1-4707-889d-b2862446dfbe, c64349d8-bbe7-4880-9ce7-0fe59436a2f1, 99d0875e-cc2d-4a6f-ad0e-357e2460bfa6
+- Predecessor: gen1 (8c114451-67f9-4991-a9fb-312f560fa12c)
 - Successor: not yet spawned
 
 ## Active Timers
-- Heartbeat cron: 8c114451-67f9-4991-a9fb-312f560fa12c/task-15
+- Heartbeat cron: task-21
 - Safety timer: none
 
 ## Artifact Index
 - /Users/aena/Developer/echo-ios/ORIGINAL_REQUEST.md — Original User Request
 - /Users/aena/Developer/echo-ios/.agents/orchestrator_1/DISPATCH.md — Dispatch log
 - /Users/aena/Developer/echo-ios/.agents/orchestrator_1/PROJECT.md — Project specification & milestone matrix
-- /Users/aena/Developer/echo-ios/.agents/worker_m2a/handoff.md — Worker M2A Handoff Report
+- /Users/aena/Developer/echo-ios/.agents/orchestrator_1/GATE_STATUS.md — Gate verdicts
+- /Users/aena/Developer/echo-ios/.agents/orchestrator_1/handoff.md — Soft handoff report for gen2 successor

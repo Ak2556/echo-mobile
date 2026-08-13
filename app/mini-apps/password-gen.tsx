@@ -1,17 +1,17 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Clipboard, TextInput } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Clipboard } from 'react-native';
 import Animated, { 
   FadeIn, FadeOut, SlideInDown, SlideOutDown, 
   useSharedValue, useAnimatedStyle, withSpring, withTiming, 
-  withRepeat, Easing, withSequence
+  withSequence
 } from 'react-native-reanimated';
 import * as Crypto from 'expo-crypto';
-import * as Haptics from 'expo-haptics';
+import { tap } from '../../lib/haptics';
 import { BlurView } from 'expo-blur';
 import { 
   ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning, 
-  Key, DiceSix, Fingerprint, EyeSlash, Vault, Timer, CreditCard, FileText, 
-  IdentificationCard, Plus, Globe, Eye, Scan, Wrench, Wallet, Backspace, X
+  DiceSix, Fingerprint, CreditCard, FileText, 
+  IdentificationCard, Plus, Globe, Backspace, X
 } from 'phosphor-react-native';
 
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -88,6 +88,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 // --- UI COMPONENTS ---
 
 function PinPadOverlay({ onUnlock, colors, accent }: { onUnlock: () => void; colors: any; accent: string }) {
+  const { radius } = useTheme();
   const [pin, setPin] = useState('');
   const shakeOffset = useSharedValue(0);
 
@@ -96,16 +97,16 @@ function PinPadOverlay({ onUnlock, colors, accent }: { onUnlock: () => void; col
   }));
 
   const handlePress = (digit: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tap('light');
     if (pin.length < 4) {
       const newPin = pin + digit;
       setPin(newPin);
       if (newPin.length === 4) {
         if (newPin === '0000') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          tap('success');
           setTimeout(onUnlock, 300);
         } else {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          tap('error');
           shakeOffset.value = withSequence(
             withTiming(10, { duration: 50 }),
             withTiming(-10, { duration: 50 }),
@@ -119,19 +120,19 @@ function PinPadOverlay({ onUnlock, colors, accent }: { onUnlock: () => void; col
   };
 
   const handleBackspace = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tap('light');
     setPin(prev => prev.slice(0, -1));
   };
 
   return (
-    <Animated.View exiting={FadeOut.duration(300)} style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, zIndex: 100, justifyContent: 'center', alignItems: 'center' }]}>
+    <Animated.View exiting={FadeOut.duration(300)} style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, zIndex: 100, justifyContent: 'center', alignItems: 'center' }]}>
       <BlurView intensity={100} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       <View style={{ alignItems: 'center', marginBottom: 50 }}>
         <LockKey color={accent} size={42} weight="duotone" style={{ marginBottom: 20 }} />
         <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', marginBottom: 30 }}>{ttx("Enter PIN")}</Text>
         <Animated.View style={[{ flexDirection: 'row', gap: 20 }, shakeStyle]}>
           {[0,1,2,3].map(i => (
-            <View key={i} style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: i < pin.length ? accent : (colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'), shadowColor: i < pin.length ? accent : 'transparent', shadowOpacity: 0.8, shadowRadius: 10, shadowOffset: { width: 0, height: 0 }, borderWidth: i < pin.length ? 0 : 1, borderColor: colors.glassBorder }} />
+            <View key={i} style={{ width: 16, height: 16, borderRadius: radius.sm, backgroundColor: i < pin.length ? accent : colors.surfaceHover, borderWidth: i < pin.length ? 0 : 1, borderColor: colors.glassBorder }} />
           ))}
         </Animated.View>
         <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 20 }}>Default PIN is 0000</Text>
@@ -141,12 +142,12 @@ function PinPadOverlay({ onUnlock, colors, accent }: { onUnlock: () => void; col
         {['1','2','3','4','5','6','7','8','9','','0','back'].map((key, idx) => {
           if (key === '') return <View key={idx} style={{ width: 75, height: 75 }} />;
           if (key === 'back') return (
-            <Pressable key={idx} onPress={handleBackspace} style={{ width: 75, height: 75, borderRadius: 37.5, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+            <Pressable key={idx} onPress={handleBackspace} style={{ width: 75, height: 75, borderRadius: radius.full, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceHover }}>
                <Backspace color={colors.text} size={28} weight="duotone" /> 
             </Pressable>
           );
           return (
-            <Pressable key={idx} onPress={() => handlePress(key)} style={{ width: 75, height: 75, borderRadius: 37.5, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+            <Pressable key={idx} onPress={() => handlePress(key)} style={{ width: 75, height: 75, borderRadius: radius.full, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceHover }}>
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '600' }}>{key}</Text>
             </Pressable>
           )
@@ -157,6 +158,7 @@ function PinPadOverlay({ onUnlock, colors, accent }: { onUnlock: () => void; col
 }
 
 function TotpWidget({ colors, accent }: { colors: any; accent: string }) {
+  const { radius } = useTheme();
   const [code, setCode] = useState('000 000');
   const [progress, setProgress] = useState(1);
 
@@ -181,12 +183,12 @@ function TotpWidget({ colors, accent }: { colors: any; accent: string }) {
   }, []);
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.surface, padding: 12, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, marginTop: 12 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.surface, padding: 12, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, marginTop: 12 }}>
       <View>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', marginBottom: 4, letterSpacing: 0.5 }}>{ttx("ONE-TIME PASSWORD")}</Text>
         <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'monospace', fontWeight: '900', letterSpacing: 2 }}>{code}</Text>
       </View>
-      <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 3, borderColor: progress < 0.2 ? colors.danger : accent, justifyContent: 'center', alignItems: 'center', opacity: 0.8 }}>
+      <View style={{ width: 36, height: 36, borderRadius: radius.full, borderWidth: 3, borderColor: progress < 0.2 ? colors.danger : accent, justifyContent: 'center', alignItems: 'center', opacity: 0.8 }}>
         <Text style={{ color: progress < 0.2 ? colors.danger : accent, fontSize: 10, fontWeight: '900' }}>{Math.ceil(progress * 30)}s</Text>
       </View>
     </View>
@@ -194,6 +196,7 @@ function TotpWidget({ colors, accent }: { colors: any; accent: string }) {
 }
 
 function VaultItem({ item, colors, accent }: { item: typeof VAULT_ITEMS[0], colors: any, accent: string }) {
+  const { radius } = useTheme();
   const [expanded, setExpanded] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const Icon = item.icon;
@@ -202,13 +205,13 @@ function VaultItem({ item, colors, accent }: { item: typeof VAULT_ITEMS[0], colo
   const handlePressIn = () => { scale.value = withSpring(0.98); };
   const handlePressOut = () => { scale.value = withSpring(1); };
   const toggleExpand = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tap('light');
     setExpanded(!expanded);
     if (expanded) setRevealed(false);
   };
 
   const copy = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    tap('success');
     Clipboard.setString(item.secret);
   };
 
@@ -219,16 +222,16 @@ function VaultItem({ item, colors, accent }: { item: typeof VAULT_ITEMS[0], colo
       onPress={toggleExpand}
       style={[{ marginBottom: 10 }, useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))]}
     >
-      <GlassPanel variant="light" borderRadius={16} contentStyle={{ padding: 16 }} elevated={expanded}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }} elevated={expanded}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surfaceHover, justifyContent: 'center', alignItems: 'center' }}>
             <Icon color={accent} size={24} weight="duotone" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{item.title}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{item.subtitle}</Text>
           </View>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors[item.strength] || colors.textMuted }} />
+          <View style={{ width: 8, height: 8, borderRadius: radius.sm, backgroundColor: colors[item.strength as keyof typeof colors] as string || colors.textMuted }} />
         </View>
 
         {expanded && (
@@ -237,10 +240,10 @@ function VaultItem({ item, colors, accent }: { item: typeof VAULT_ITEMS[0], colo
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Pressable 
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  tap('light');
                   setRevealed(!revealed);
                 }} 
-                style={{ flex: 1, height: 44, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', borderRadius: 10, justifyContent: 'center', paddingHorizontal: 12, overflow: 'hidden' }}
+                style={{ flex: 1, height: 44, backgroundColor: colors.surfaceHover, borderRadius: radius.md, justifyContent: 'center', paddingHorizontal: 12, overflow: 'hidden' }}
               >
                 {!revealed && (
                   <BlurView intensity={30} tint={colors.isDark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, { zIndex: 10 }]} />
@@ -249,8 +252,8 @@ function VaultItem({ item, colors, accent }: { item: typeof VAULT_ITEMS[0], colo
                   {item.secret}
                 </Text>
               </Pressable>
-              <Pressable onPress={copy} style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: accent, justifyContent: 'center', alignItems: 'center' }}>
-                <Copy color="#fff" size={20} weight="bold" />
+              <Pressable onPress={copy} style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: accent, justifyContent: 'center', alignItems: 'center' }}>
+                <Copy color={colors.bg} size={20} weight="bold" />
               </Pressable>
             </View>
 
@@ -263,6 +266,7 @@ function VaultItem({ item, colors, accent }: { item: typeof VAULT_ITEMS[0], colo
 }
 
 function Toggle({ label, sub, value, onChange, colors }: { label: string; sub: string; value: boolean; onChange: (v: boolean) => void; colors: any }) {
+  const { radius } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
       <View style={{ flex: 1 }}>
@@ -271,12 +275,12 @@ function Toggle({ label, sub, value, onChange, colors }: { label: string; sub: s
       </View>
       <Pressable
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          tap('light');
           onChange(!value);
         }}
-        style={{ width: 50, height: 30, borderRadius: 15, backgroundColor: value ? colors.accent : (colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'), justifyContent: 'center', paddingHorizontal: 2 }}
+        style={{ width: 50, height: 30, borderRadius: radius.full, backgroundColor: value ? colors.accent : colors.surfaceHover, justifyContent: 'center', paddingHorizontal: 2 }}
       >
-        <Animated.View style={[{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 2, elevation: 2 }, { transform: [{ translateX: value ? 20 : 0 }] }]} />
+        <Animated.View style={[{ width: 26, height: 26, borderRadius: radius.full, backgroundColor: colors.text, elevation: 2 }, { transform: [{ translateX: value ? 20 : 0 }] }]} />
       </Pressable>
     </View>
   );
@@ -285,7 +289,7 @@ function Toggle({ label, sub, value, onChange, colors }: { label: string; sub: s
 // --- MAIN SCREENS ---
 
 export default function PasswordGenScreen() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const accent = colors.accent;
   
   const [unlocked, setUnlocked] = useState(false);
@@ -303,7 +307,7 @@ export default function PasswordGenScreen() {
   const [copied, setCopied] = useState(false);
 
   const generate = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    tap('medium');
     let pwd = '';
     if (mode === 'pin') {
       pwd = generateFromPool(Math.min(length, 12), [CHARS.digits]);
@@ -323,7 +327,7 @@ export default function PasswordGenScreen() {
   }, [avoidAmbiguous, length, mode, useUpper, useLower, useDigits, useSymbols]);
 
   const copyToClipboard = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    tap('success');
     Clipboard.setString(password);
     setCopied(true);
     setTimeout(() => {
@@ -360,7 +364,7 @@ export default function PasswordGenScreen() {
 
             <View style={{ height: 16 }} />
 
-            {VAULT_ITEMS.map((item, i) => (
+            {VAULT_ITEMS.map((item) => (
               <VaultItem key={item.id} item={item} colors={colors} accent={accent} />
             ))}
           </Animated.View>
@@ -369,12 +373,12 @@ export default function PasswordGenScreen() {
         {/* FAB */}
         <Pressable
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            tap('medium');
             setShowGenerator(true);
           }}
-          style={{ position: 'absolute', bottom: 30, right: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: accent, justifyContent: 'center', alignItems: 'center', shadowColor: accent, shadowOpacity: 0.5, shadowRadius: 15, shadowOffset: { width: 0, height: 5 }, elevation: 10 }}
+          style={{ position: 'absolute', bottom: 30, right: 20, width: 60, height: 60, borderRadius: radius.full, backgroundColor: accent, justifyContent: 'center', alignItems: 'center', elevation: 10 }}
         >
-          <Plus color="#fff" size={28} weight="bold" />
+          <Plus color={colors.bg} size={28} weight="bold" />
         </Pressable>
       </View>
       
@@ -387,18 +391,18 @@ export default function PasswordGenScreen() {
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowGenerator(false)}>
             <BlurView intensity={30} style={StyleSheet.absoluteFill} tint={colors.isDark ? 'dark' : 'light'} />
           </Pressable>
-          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 20, paddingBottom: 40, maxHeight: '90%', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -5 }, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
-            <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: colors.glassBorder, alignSelf: 'center', marginBottom: 20 }} />
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 20, paddingBottom: 40, maxHeight: '90%', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+            <View style={{ width: 40, height: 5, borderRadius: radius.sm, backgroundColor: colors.glassBorder, alignSelf: 'center', marginBottom: 20 }} />
             
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{ttx("Generate Password")}</Text>
-              <Pressable onPress={() => setShowGenerator(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', justifyContent: 'center', alignItems: 'center' }}>
+              <Pressable onPress={() => setShowGenerator(false)} style={{ width: 32, height: 32, borderRadius: radius.full, backgroundColor: colors.surfaceHover, justifyContent: 'center', alignItems: 'center' }}>
                 <X color={colors.text} size={16} weight="bold" />
               </Pressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }} style={{ marginBottom: 14 }}>
+              <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4, gap: 4 }} style={{ marginBottom: 14 }}>
                 {([
                   { key: 'password', label: 'Strong', icon: LockKey },
                   { key: 'passphrase', label: 'Phrase', icon: DiceSix },
@@ -410,14 +414,14 @@ export default function PasswordGenScreen() {
                     <Pressable 
                       key={item.key} 
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        tap('light');
                         setMode(item.key);
                       }} 
                       style={{ flex: 1 }}
                     >
-                      <View style={{ minHeight: 46, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, backgroundColor: active ? accent : 'transparent' }}>
-                        <Icon color={active ? '#fff' : colors.textMuted} size={15} weight="bold" />
-                        <Text style={{ color: active ? '#fff' : colors.textMuted, fontSize: 12.5, fontWeight: '900' }}>{item.label}</Text>
+                      <View style={{ minHeight: 46, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, backgroundColor: active ? accent : 'transparent' }}>
+                        <Icon color={active ? colors.bg : colors.textMuted} size={15} weight="bold" />
+                        <Text style={{ color: active ? colors.bg : colors.textMuted, fontSize: 12.5, fontWeight: '900' }}>{item.label}</Text>
                       </View>
                     </Pressable>
                   );
@@ -427,9 +431,9 @@ export default function PasswordGenScreen() {
               {/* Password display */}
               <GlassPanel
                 variant="medium"
-                borderRadius={24}
+                borderRadius={radius.xl}
                 contentStyle={{ padding: 20 }}
-                style={{ marginBottom: 14, borderColor: sw ? sw.color + '55' : colors.glassBorder }}
+                style={{ marginBottom: 14, borderColor: sw ? sw.color : colors.glassBorder }}
                 elevated={!!sw}
               >
                 {password ? (
@@ -437,8 +441,8 @@ export default function PasswordGenScreen() {
                     <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'monospace', letterSpacing: 1.5, lineHeight: 28, marginBottom: 16 }} selectable numberOfLines={2}>{password}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       {StrengthIcon && <StrengthIcon color={sw!.color} size={18} weight="fill" />}
-                      <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-                        <Animated.View style={{ width: `${(sw!.score / 7) * 100}%`, height: '100%', borderRadius: 3, backgroundColor: sw!.color }} />
+                      <View style={{ flex: 1, height: 6, borderRadius: radius.sm, backgroundColor: colors.surfaceHover, overflow: 'hidden' }}>
+                        <Animated.View style={{ width: `${(sw!.score / 7) * 100}%`, height: '100%', borderRadius: radius.sm, backgroundColor: sw!.color }} />
                       </View>
                       <Text style={{ color: sw!.color, fontSize: 13, fontWeight: '800', minWidth: 52 }}>{sw!.label}</Text>
                     </View>
@@ -455,30 +459,30 @@ export default function PasswordGenScreen() {
               <View style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
                 <Pressable
                   onPress={generate}
-                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 18, backgroundColor: accent, shadowColor: accent, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 4 } }}
+                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: radius.xl, backgroundColor: accent }}
                 >
-                  <ArrowClockwise color="#fff" size={20} weight="bold" />
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Generate")}</Text>
+                  <ArrowClockwise color={colors.bg} size={20} weight="bold" />
+                  <Text style={{ color: colors.bg, fontWeight: '700', fontSize: 16 }}>{ttx("Generate")}</Text>
                 </Pressable>
                 {password ? (
                   <Pressable
                     onPress={copyToClipboard}
                     style={{
                       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      paddingHorizontal: 22, paddingVertical: 16, borderRadius: 18,
-                      backgroundColor: copied ? colors.success : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+                      paddingHorizontal: 22, paddingVertical: 16, borderRadius: radius.xl,
+                      backgroundColor: copied ? colors.success : colors.surfaceHover,
                       borderWidth: StyleSheet.hairlineWidth,
                       borderColor: copied ? colors.success : colors.glassBorder,
                     }}
                   >
-                    {copied ? <Check color="#fff" size={20} weight="bold" /> : <Copy color={colors.text} size={20} weight="bold" />}
-                    <Text style={{ color: copied ? '#fff' : colors.text, fontWeight: '700', fontSize: 16 }}>{copied ? 'Done!' : 'Copy'}</Text>
+                    {copied ? <Check color={colors.bg} size={20} weight="bold" /> : <Copy color={colors.text} size={20} weight="bold" />}
+                    <Text style={{ color: copied ? colors.bg : colors.text, fontWeight: '700', fontSize: 16 }}>{copied ? 'Done!' : 'Copy'}</Text>
                   </Pressable>
                 ) : null}
               </View>
 
               {/* Length */}
-              <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+              <GlassPanel variant="medium" borderRadius={radius.xl} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
                   <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("LENGTH")}</Text>
                   <Text style={{ color: accent, fontSize: 16, fontWeight: '800' }}>
@@ -490,24 +494,24 @@ export default function PasswordGenScreen() {
                     <Pressable
                       key={l}
                       onPress={() => {
-                        Haptics.selectionAsync();
+                        tap('selection');
                         setLength(l);
                       }}
                       style={{
-                        paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14,
-                        backgroundColor: l === length ? accent : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+                        paddingHorizontal: 18, paddingVertical: 10, borderRadius: radius.card,
+                        backgroundColor: l === length ? accent : colors.surfaceHover,
                         borderWidth: StyleSheet.hairlineWidth,
                         borderColor: l === length ? 'transparent' : colors.glassBorder,
                       }}
                     >
-                      <Text style={{ color: l === length ? '#fff' : colors.text, fontWeight: '700', fontSize: 15 }}>{l}</Text>
+                      <Text style={{ color: l === length ? colors.bg : colors.text, fontWeight: '700', fontSize: 15 }}>{l}</Text>
                     </Pressable>
                   ))}
                 </View>
               </GlassPanel>
 
               {/* Options */}
-              <GlassPanel variant="medium" borderRadius={24} contentStyle={{ paddingHorizontal: 20, paddingTop: 16 }} style={{ marginBottom: 14 }}>
+              <GlassPanel variant="medium" borderRadius={radius.xl} contentStyle={{ paddingHorizontal: 20, paddingTop: 16 }} style={{ marginBottom: 14 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>{ttx("CHARACTER TYPES")}</Text>
                 <Toggle label={ttx("Uppercase")} sub="A B C … Z" value={useUpper} onChange={setUseUpper} colors={colors} />
                 <Toggle label={ttx("Lowercase")} sub="a b c … z" value={useLower} onChange={setUseLower} colors={colors} />

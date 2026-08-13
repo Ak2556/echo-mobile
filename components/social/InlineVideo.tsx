@@ -92,7 +92,7 @@ export function InlineVideo({ uri, caption, height = 260, qualities }: InlineVid
 
   const retryLoad = () => {
     setLoadState('loading');
-    void player.replaceAsync(videoSourceForUri(activeUri));
+    player.replace(videoSourceForUri(activeUri));
   };
 
   const togglePlay = () => { if (loadState !== 'ready') return; try { if (playing) { player.pause(); } else { player.play(); } } catch {} };

@@ -60,7 +60,7 @@ function mix(hex: string, amount: number, target = 255) {
 }
 
 function ColorIntelligencePanel({ hex, saved }: { hex: string; saved: string[] }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const rgb = hexToRgb(hex);
   const hsl = rgb ? rgbToHsl(rgb.r, rgb.g, rgb.b) : null;
   const whiteContrast = rgb ? (1.05 / (lum(rgb.r, rgb.g, rgb.b) + 0.05)) : 0;
@@ -69,9 +69,9 @@ function ColorIntelligencePanel({ hex, saved }: { hex: string; saved: string[] }
   const system = hsl ? (hsl.s < 18 ? 'Neutral' : hsl.l < 30 ? 'Deep' : hsl.l > 72 ? 'Soft' : 'Vivid') : 'Draft';
   const shades = [mix(hex, 0.66), mix(hex, 0.34), hex.toUpperCase(), mix(hex, 0.22, 0), mix(hex, 0.44, 0)];
   return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${hex}55` }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${hex}55` }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: hex, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
+        <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: hex, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900' }}>{ttx("Palette intelligence")}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 2 }}>{ttx("Contrast, tone, scale.")}</Text>
@@ -83,7 +83,7 @@ function ColorIntelligencePanel({ hex, saved }: { hex: string; saved: string[] }
           { label: 'Tone', value: system },
           { label: 'Saved', value: `${saved.length}` },
         ].map(item => (
-          <View key={item.label} style={{ flex: 1, minHeight: 58, borderRadius: 15, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View key={item.label} style={{ flex: 1, minHeight: 58, borderRadius: radius.lg, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <Text style={{ color: hex, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>{item.value}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase', marginTop: 5 }}>{item.label}</Text>
           </View>
@@ -91,7 +91,7 @@ function ColorIntelligencePanel({ hex, saved }: { hex: string; saved: string[] }
       </View>
       <View style={{ flexDirection: 'row', gap: 6, height: 42 }}>
         {shades.map(shade => (
-          <View key={shade} style={{ flex: 1, borderRadius: 12, backgroundColor: shade, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
+          <View key={shade} style={{ flex: 1, borderRadius: radius.md, backgroundColor: shade, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }} />
         ))}
       </View>
     </GlassPanel>
@@ -99,7 +99,7 @@ function ColorIntelligencePanel({ hex, saved }: { hex: string; saved: string[] }
 }
 
 export default function ColorToolsScreen() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const [hex, setHex] = useState('#C65F3F');
   const [inputHex, setInputHex] = useState('#C65F3F');
   const [copied, setCopied] = useState('');
@@ -107,7 +107,7 @@ export default function ColorToolsScreen() {
 
   const rgb = hexToRgb(hex);
   const hsl = rgb ? rgbToHsl(rgb.r,rgb.g,rgb.b) : null;
-  const textColor = rgb && lum(rgb.r,rgb.g,rgb.b) > 0.179 ? '#000' : '#fff';
+  const textColor = rgb && lum(rgb.r,rgb.g,rgb.b) > 0.179 ? colors.text : colors.bgPure;
 
   const applyHex = (h: string) => {
     const c = h.startsWith('#') ? h : `#${h}`;
@@ -133,7 +133,7 @@ export default function ColorToolsScreen() {
       />
       <ColorIntelligencePanel hex={hex} saved={saved} />
       {/* Hero swatch */}
-      <View style={{ height: 160, borderRadius: 28, backgroundColor: hex, alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, shadowColor: hex, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 } }}>
+      <View style={{ height: 160, borderRadius: radius.card, backgroundColor: hex, alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, shadowColor: hex, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 } }}>
         <TextInput
           value={inputHex}
           onChangeText={applyHex}
@@ -141,11 +141,11 @@ export default function ColorToolsScreen() {
           style={{ color: textColor, fontSize: 32, fontWeight: '700', fontFamily: 'monospace', textAlign: 'center' }}
         />
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Pressable onPress={randomize} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
+          <Pressable onPress={randomize} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.25)' }}>
             <Shuffle color={textColor} size={15} weight="bold" />
             <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>{ttx("Random")}</Text>
           </Pressable>
-          <Pressable onPress={save} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)' }}>
+          <Pressable onPress={save} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.full, backgroundColor: 'rgba(0,0,0,0.25)' }}>
             <FloppyDisk color={textColor} size={15} weight="bold" />
             <Text style={{ color: textColor, fontSize: 13, fontWeight: '600' }}>{ttx("Save")}</Text>
           </Pressable>
@@ -154,7 +154,7 @@ export default function ColorToolsScreen() {
 
       {/* Conversions */}
       {rgb && hsl && (
-        <GlassPanel variant="medium" borderRadius={24} contentStyle={{ paddingHorizontal: 20, paddingTop: 16 }} style={{ marginBottom: 14 }}>
+        <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ paddingHorizontal: 20, paddingTop: 16 }} style={{ marginBottom: 14 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>{ttx("FORMATS — tap to copy")}</Text>
           {[
             { label: 'HEX', value: hex.toUpperCase() },
@@ -194,14 +194,14 @@ export default function ColorToolsScreen() {
 
       {/* Saved */}
       {saved.length > 0 && (
-        <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+        <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SAVED")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {saved.map(c => (
               <Pressable
                 key={c}
                 onPress={() => { setHex(c); setInputHex(c); }}
-                style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c, borderWidth: hex===c ? 3 : 0, borderColor: '#fff', shadowColor: c, shadowOpacity: hex===c ? 0.5 : 0, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}
+                style={{ width: 44, height: 44, borderRadius: radius.lg, backgroundColor: c, borderWidth: hex===c ? 3 : 0, borderColor: colors.text, shadowColor: c, shadowOpacity: hex===c ? 0.5 : 0, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}
               />
             ))}
           </View>
@@ -210,14 +210,14 @@ export default function ColorToolsScreen() {
 
       {/* Palettes */}
       {PALETTES.map(pal => (
-        <GlassPanel key={pal.name} variant="light" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 10 }}>
+        <GlassPanel key={pal.name} variant="light" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 10 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{pal.name.toUpperCase()}</Text>
           <View style={{ flexDirection: 'row', gap: 6, height: 48 }}>
             {pal.colors.map(c => (
               <Pressable
                 key={c}
                 onPress={() => { setHex(c); setInputHex(c); }}
-                style={{ flex: 1, borderRadius: 12, backgroundColor: c, borderWidth: hex===c ? 3 : 0, borderColor: '#fff' }}
+                style={{ flex: 1, borderRadius: radius.md, backgroundColor: c, borderWidth: hex===c ? 3 : 0, borderColor: colors.text }}
               />
             ))}
           </View>

@@ -15,8 +15,8 @@ import {
 import { ttx } from '../../lib/i18n';
 
 export default function PlannerScreen() {
-  const { colors, font } = useTheme();
-  const accent = '#8B5E7D'; // plum — warm editorial palette
+  const { colors, font, radius } = useTheme();
+  const accent = colors.accent;
   const [items, setItems] = useState<PlannerItem[]>([]);
   const [date, setDate] = useState(plannerToday());
   const [title, setTitle] = useState('');
@@ -91,7 +91,7 @@ export default function PlannerScreen() {
         ]}
         chips={['Rebalance day', 'Protect focus', 'End-of-day recap']}
       />
-      <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 16 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 14 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Pressable onPress={() => setDate(shiftPlannerDate(date, -1))} hitSlop={8}>
             <CaretLeft color={colors.text} size={22} weight="bold" />
@@ -121,7 +121,7 @@ export default function PlannerScreen() {
             <MiniChip key={item.id} accent={accent} label={item.label} active={slot === item.id} onPress={() => setSlot(item.id)} />
           ))}
         </View>
-        <MiniButton label={ttx("Add to day")} accent={accent} onPress={add} icon={<Plus color="#fff" size={18} weight="bold" />} />
+        <MiniButton label={ttx("Add to day")} accent={accent} onPress={add} icon={<Plus color={colors.bgPure} size={18} weight="bold" />} />
       </GlassPanel>
 
       <View style={{ gap: 14 }}>
@@ -134,7 +134,7 @@ export default function PlannerScreen() {
               </Text>
               <View style={{ gap: 8 }}>
                 {rows.map(item => (
-                  <GlassPanel key={item.id} variant="light" borderRadius={17} contentStyle={{ padding: 13 }}>
+                  <GlassPanel key={item.id} variant="light" borderRadius={radius.card} contentStyle={{ padding: 13 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
                       <Pressable onPress={() => toggle(item)} hitSlop={8}>
                         {item.done ? <CheckCircle color={accent} size={23} weight="fill" /> : <CircleDashed color={colors.textMuted} size={23} />}
@@ -149,7 +149,7 @@ export default function PlannerScreen() {
                   </GlassPanel>
                 ))}
                 {rows.length === 0 && (
-                  <View style={{ height: 44, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ height: 44, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("No")} {section.label.toLowerCase()} {ttx("plans")}</Text>
                   </View>
                 )}

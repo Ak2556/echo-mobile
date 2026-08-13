@@ -27,9 +27,9 @@ import {
 import { PhotoEditor } from '../../components/social/PhotoEditor';
 import { VideoPreview } from '../../components/social/VideoPreview';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
+import { GlassPanel } from '../../components/ui/GlassPanel';
 import {
   MiniButton,
-  MiniCard,
   MiniCommandDeck,
   MiniEmptyState,
   MiniSectionHeader,
@@ -39,7 +39,6 @@ import { showToast } from '../../components/ui/Toast';
 import { useTheme } from '../../lib/theme';
 import { ttx } from '../../lib/i18n';
 
-const ACCENT = '#EC4899';
 const COLLAGE_LIMIT = 6;
 const VIDEO_MAX_DURATION_SECONDS = 180;
 
@@ -101,7 +100,8 @@ function videoExportPreset() {
 }
 
 export default function ImageEditorApp() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
+  const accent = colors.accent;
   const [image, setImage] = useState<ImageState | null>(null);
   const [video, setVideo] = useState<VideoState | null>(null);
   const [collageUris, setCollageUris] = useState<string[]>([]);
@@ -330,7 +330,7 @@ export default function ImageEditorApp() {
   return (
     <MiniAppShell title={ttx("Image Editor")} subtitle={ttx("Polish")}>
       <MiniCommandDeck
-        accent={ACCENT}
+        accent={accent}
         title={ttx("Quick edits before you post")}
         subtitle={ttx("Photos, collages, and trimmed videos.")}
         metrics={metrics}
@@ -339,8 +339,8 @@ export default function ImageEditorApp() {
 
       {activeKind === 'empty' ? (
         <MiniEmptyState
-          accent={ACCENT}
-          icon={<ImageSquare color={ACCENT} size={38} weight="bold" />}
+          accent={accent}
+          icon={<ImageSquare color={accent} size={38} weight="bold" />}
           title={ttx("Pick media")}
           subtitle={ttx("Start from a photo, collage, or video. Every action creates a usable media file.")}
           actionLabel={ttx("Choose image")}
@@ -348,8 +348,8 @@ export default function ImageEditorApp() {
         />
       ) : image ? (
         <>
-          <MiniSectionHeader label={ttx("Canvas")} actionLabel={changed ? 'Reset' : undefined} onAction={resetImage} accent={ACCENT} />
-          <MiniCard accent={ACCENT} elevated padding={0} style={{ marginBottom: 14, overflow: 'hidden' }}>
+          <MiniSectionHeader label={ttx("Canvas")} actionLabel={changed ? 'Reset' : undefined} onAction={resetImage} accent={accent} />
+          <GlassPanel variant="medium" borderRadius={radius.card} elevated contentStyle={{ padding: 0 }} style={{ marginBottom: 14 }}>
             <View style={{ aspectRatio: 4 / 5, backgroundColor: colors.bg }}>
               <Image
                 source={{ uri: image.editedUri }}
@@ -358,35 +358,35 @@ export default function ImageEditorApp() {
                 transition={140}
               />
               <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.55)']}
+                colors={['transparent', colors.bgPure]}
                 style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 96 }}
                 pointerEvents="none"
               />
               <View style={{ position: 'absolute', left: 12, right: 12, bottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_800ExtraBold' }} numberOfLines={1}>
+                  <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_800ExtraBold' }} numberOfLines={1}>
                     {image.fileName || 'Edited image'}
                   </Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
                     {shortSize(image.width, image.height)} {changed ? 'edited' : 'original'}
                   </Text>
                 </View>
-                {busy ? <ActivityIndicator color="#fff" /> : null}
+                {busy ? <ActivityIndicator color={colors.text} /> : null}
               </View>
             </View>
-          </MiniCard>
+          </GlassPanel>
 
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
             <MiniButton
               label={ttx("Edit")}
-              accent={ACCENT}
-              icon={<Sliders color="#fff" size={18} weight="bold" />}
+              accent={accent}
+              icon={<Sliders color={colors.bg} size={18} weight="bold" />}
               onPress={() => setEditorOpen(true)}
               style={{ flex: 1 }}
             />
             <MiniButton
               label={ttx("Share")}
-              accent={ACCENT}
+              accent={accent}
               variant="secondary"
               icon={<DownloadSimple color={colors.text} size={18} weight="bold" />}
               onPress={shareImage}
@@ -396,45 +396,45 @@ export default function ImageEditorApp() {
 
           <MiniSectionHeader label={ttx("Fast actions")} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
-            <QuickAction icon={<Sparkle color={ACCENT} size={18} weight="fill" />} label={ttx("Optimize")} onPress={optimize} />
-            <QuickAction icon={<FolderOpen color={ACCENT} size={18} weight="bold" />} label={ttx("Replace")} onPress={pickImage} />
-            <QuickAction icon={<Camera color={ACCENT} size={18} weight="bold" />} label={ttx("Camera")} onPress={takePhoto} />
-            <QuickAction icon={<Trash color="#EF4444" size={18} weight="bold" />} label={ttx("Clear")} onPress={clearMedia} danger />
+            <QuickAction icon={<Sparkle color={accent} size={18} weight="fill" />} label={ttx("Optimize")} onPress={optimize} />
+            <QuickAction icon={<FolderOpen color={accent} size={18} weight="bold" />} label={ttx("Replace")} onPress={pickImage} />
+            <QuickAction icon={<Camera color={accent} size={18} weight="bold" />} label={ttx("Camera")} onPress={takePhoto} />
+            <QuickAction icon={<Trash color={colors.danger} size={18} weight="bold" />} label={ttx("Clear")} onPress={clearMedia} danger />
           </View>
         </>
       ) : video ? (
         <>
-          <MiniSectionHeader label={ttx("Video")} actionLabel={ttx("Clear")} onAction={clearMedia} accent={ACCENT} />
-          <MiniCard accent={ACCENT} elevated padding={0} style={{ marginBottom: 14, overflow: 'hidden' }}>
+          <MiniSectionHeader label={ttx("Video")} actionLabel={ttx("Clear")} onAction={clearMedia} accent={accent} />
+          <GlassPanel variant="medium" borderRadius={radius.card} elevated contentStyle={{ padding: 0 }} style={{ marginBottom: 14 }}>
             <VideoPreview uri={video.editedUri} height={260} borderRadius={0} />
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.65)']}
+              colors={['transparent', colors.bgPure]}
               style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 110 }}
               pointerEvents="none"
             />
             <View style={{ position: 'absolute', left: 14, right: 14, bottom: 13, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_800ExtraBold' }} numberOfLines={1}>
+                <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_800ExtraBold' }} numberOfLines={1}>
                   {video.fileName || 'Edited video'}
                 </Text>
-                <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
                   {shortSize(video.width, video.height)} · {formatDuration(video.durationMs)}
                 </Text>
               </View>
             </View>
-          </MiniCard>
+          </GlassPanel>
 
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
             <MiniButton
               label={ttx("Trim")}
-              accent={ACCENT}
-              icon={<Scissors color="#fff" size={18} weight="bold" />}
+              accent={accent}
+              icon={<Scissors color={colors.bg} size={18} weight="bold" />}
               onPress={() => pickVideo(true)}
               style={{ flex: 1 }}
             />
             <MiniButton
               label={ttx("Share")}
-              accent={ACCENT}
+              accent={accent}
               variant="secondary"
               icon={<DownloadSimple color={colors.text} size={18} weight="bold" />}
               onPress={shareVideo}
@@ -444,10 +444,10 @@ export default function ImageEditorApp() {
 
           <MiniSectionHeader label={ttx("Fast actions")} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
-            <QuickAction icon={<Scissors color={ACCENT} size={18} weight="bold" />} label={ttx("Trim import")} onPress={() => pickVideo(true)} />
-            <QuickAction icon={<FolderOpen color={ACCENT} size={18} weight="bold" />} label={ttx("Replace")} onPress={() => pickVideo(false)} />
-            <QuickAction icon={<VideoCamera color={ACCENT} size={18} weight="bold" />} label={ttx("Record")} onPress={recordVideo} />
-            <QuickAction icon={<Trash color="#EF4444" size={18} weight="bold" />} label={ttx("Clear")} onPress={clearMedia} danger />
+            <QuickAction icon={<Scissors color={accent} size={18} weight="bold" />} label={ttx("Trim import")} onPress={() => pickVideo(true)} />
+            <QuickAction icon={<FolderOpen color={accent} size={18} weight="bold" />} label={ttx("Replace")} onPress={() => pickVideo(false)} />
+            <QuickAction icon={<VideoCamera color={accent} size={18} weight="bold" />} label={ttx("Record")} onPress={recordVideo} />
+            <QuickAction icon={<Trash color={colors.danger} size={18} weight="bold" />} label={ttx("Clear")} onPress={clearMedia} danger />
           </View>
           <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 12 }}>
             {ttx("Trim uses the native video editor and exports a new clip. Filters are intentionally photo-only until a video renderer is added.")}
@@ -457,8 +457,8 @@ export default function ImageEditorApp() {
 
       {collageUris.length > 0 ? (
         <>
-          <MiniSectionHeader label={ttx("Collage maker")} actionLabel={ttx("Clear")} onAction={() => setCollageUris([])} accent={ACCENT} />
-          <MiniCard accent={ACCENT} padding={12} style={{ marginBottom: 14 }}>
+          <MiniSectionHeader label={ttx("Collage maker")} actionLabel={ttx("Clear")} onAction={() => setCollageUris([])} accent={accent} />
+          <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 12 }} style={{ marginBottom: 14 }}>
             <CollageCanvas ref={collageRef} uris={collageUris} layout={collageLayout} />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               {(['grid', 'poster', 'strip'] as CollageLayout[]).map(layout => (
@@ -472,12 +472,12 @@ export default function ImageEditorApp() {
             </View>
             <MiniButton
               label={busy ? 'Creating...' : 'Create collage'}
-              accent={ACCENT}
-              icon={<ImageSquare color="#fff" size={18} weight="bold" />}
+              accent={accent}
+              icon={<ImageSquare color={colors.bg} size={18} weight="bold" />}
               onPress={createCollage}
               style={{ marginTop: 12 }}
             />
-          </MiniCard>
+          </GlassPanel>
         </>
       ) : null}
 
@@ -486,14 +486,14 @@ export default function ImageEditorApp() {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <MiniButton
               label={ttx("Library")}
-              accent={ACCENT}
-              icon={<FolderOpen color="#fff" size={18} weight="bold" />}
+              accent={accent}
+              icon={<FolderOpen color={colors.bg} size={18} weight="bold" />}
               onPress={pickImage}
               style={{ flex: 1 }}
             />
             <MiniButton
               label={ttx("Camera")}
-              accent={ACCENT}
+              accent={accent}
               variant="secondary"
               icon={<Camera color={colors.text} size={18} weight="bold" />}
               onPress={takePhoto}
@@ -503,7 +503,7 @@ export default function ImageEditorApp() {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <MiniButton
               label={ttx("Video")}
-              accent={ACCENT}
+              accent={accent}
               variant="secondary"
               icon={<VideoCamera color={colors.text} size={18} weight="bold" />}
               onPress={() => pickVideo(true)}
@@ -511,7 +511,7 @@ export default function ImageEditorApp() {
             />
             <MiniButton
               label={ttx("Record")}
-              accent={ACCENT}
+              accent={accent}
               variant="secondary"
               icon={<Camera color={colors.text} size={18} weight="bold" />}
               onPress={recordVideo}
@@ -520,7 +520,7 @@ export default function ImageEditorApp() {
           </View>
           <MiniButton
             label={ttx("Make collage")}
-            accent={ACCENT}
+            accent={accent}
             variant="secondary"
             icon={<ImageSquare color={colors.text} size={18} weight="bold" />}
             onPress={pickCollage}
@@ -540,7 +540,7 @@ export default function ImageEditorApp() {
 
 const CollageCanvas = React.forwardRef<View, { uris: string[]; layout: CollageLayout }>(
   function CollageCanvas({ uris, layout }, ref) {
-    const { colors } = useTheme();
+    const { colors, radius } = useTheme();
     const shown = uris.slice(0, COLLAGE_LIMIT);
 
     return (
@@ -550,7 +550,7 @@ const CollageCanvas = React.forwardRef<View, { uris: string[]; layout: CollageLa
         style={{
           width: '100%',
           aspectRatio: 1,
-          borderRadius: 18,
+          borderRadius: radius.xl,
           overflow: 'hidden',
           backgroundColor: colors.bg,
           borderWidth: StyleSheet.hairlineWidth,
@@ -566,15 +566,14 @@ const CollageCanvas = React.forwardRef<View, { uris: string[]; layout: CollageLa
 );
 
 function GridCollage({ uris }: { uris: string[] }) {
-  const rows = uris.length <= 2
-    ? [uris]
-    : uris.length <= 4
-      ? [uris.slice(0, 2), uris.slice(2)]
-      : [uris.slice(0, 2), uris.slice(2, 4), uris.slice(4)];
-
   return (
     <View style={{ flex: 1, gap: 4, padding: 4 }}>
-      {rows.map((row, index) => (
+      {(uris.length <= 2
+        ? [uris]
+        : uris.length <= 4
+          ? [uris.slice(0, 2), uris.slice(2)]
+          : [uris.slice(0, 2), uris.slice(2, 4), uris.slice(4)]
+      ).map((row, index) => (
         <View key={`row-${index}`} style={{ flex: 1, flexDirection: 'row', gap: 4 }}>
           {row.map(uri => <CollageImage key={uri} uri={uri} />)}
         </View>
@@ -606,15 +605,16 @@ function StripCollage({ uris }: { uris: string[] }) {
 }
 
 function CollageImage({ uri }: { uri: string }) {
+  const { colors, radius } = useTheme();
   return (
-    <View style={{ flex: 1, minWidth: 0, minHeight: 0, borderRadius: 13, overflow: 'hidden', backgroundColor: '#111' }}>
+    <View style={{ flex: 1, minWidth: 0, minHeight: 0, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface }}>
       <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={80} />
     </View>
   );
 }
 
 function LayoutButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors, font } = useTheme();
+  const { colors, radius, font } = useTheme();
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -625,15 +625,15 @@ function LayoutButton({ label, active, onPress }: { label: string; active: boole
       style={{
         flex: 1,
         minHeight: 38,
-        borderRadius: 13,
+        borderRadius: radius.md,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: active ? ACCENT : colors.surfaceHover,
+        backgroundColor: active ? colors.accent : colors.surfaceHover,
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: active ? ACCENT : colors.glassBorder,
+        borderColor: active ? colors.accent : colors.glassBorder,
       }}
     >
-      <Text style={[font.bodyBold, { color: active ? '#fff' : colors.textSecondary, fontSize: 12, textTransform: 'capitalize' }]}>
+      <Text style={[font.bodyBold, { color: active ? colors.bg : colors.textSecondary, fontSize: 12, textTransform: 'capitalize' }]}>
         {label}
       </Text>
     </AnimatedPressable>
@@ -651,7 +651,7 @@ function QuickAction({
   onPress: () => void;
   danger?: boolean;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, radius, font } = useTheme();
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -662,20 +662,21 @@ function QuickAction({
       style={{
         width: '48%',
         minHeight: 58,
-        borderRadius: 17,
+        borderRadius: radius.xl,
         backgroundColor: colors.surface,
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: danger ? '#EF444455' : colors.glassBorder,
+        borderColor: danger ? colors.dangerMuted : colors.glassBorder,
         paddingHorizontal: 13,
         justifyContent: 'center',
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
         {icon}
-        <Text style={[font.bodyBold, { color: danger ? '#EF4444' : colors.text, fontSize: 13.5 }]} numberOfLines={1}>
+        <Text style={[font.bodyBold, { color: danger ? colors.danger : colors.text, fontSize: 13.5 }]} numberOfLines={1}>
           {label}
         </Text>
       </View>
     </AnimatedPressable>
   );
 }
+

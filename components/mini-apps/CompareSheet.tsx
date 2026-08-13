@@ -30,7 +30,7 @@ export function CompareSheet({
   visible: boolean;
   onClose: () => void;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const [board, setBoard] = useState<Leaderboard | null>(null);
   const [loading, setLoading] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -57,12 +57,12 @@ export function CompareSheet({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }} onPress={onClose}>
         <Pressable
-          style={{ backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, paddingBottom: 40, maxHeight: '82%' }}
+          style={{ backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 22, paddingBottom: 40, maxHeight: '82%' }}
           onPress={() => {}}
         >
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 18 }} />
+          <View style={{ width: 36, height: 4, borderRadius: radius.sm, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 18 }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 16 }}>
-            <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 34, height: 34, borderRadius: radius.md, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
               <Trophy color={accent} size={18} weight="fill" />
             </View>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>{ttx("Compare")} {appName.toLowerCase()}</Text>
@@ -70,7 +70,7 @@ export function CompareSheet({
           </View>
 
           {/* Opt-in — nothing of yours is visible to others until this is on. */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.glassBorder, marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.glassBorder, marginBottom: 16 }}>
             <View style={{ flex: 1 }}>
               <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14 }]}>{ttx("Let your followers see this")}</Text>
               <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("Only your streak numbers — never your notes or entries.")}</Text>
@@ -94,7 +94,7 @@ export function CompareSheet({
                   key={r.userId}
                   style={{
                     flexDirection: 'row', alignItems: 'center', gap: 12,
-                    padding: 12, borderRadius: 14,
+                    padding: 12, borderRadius: radius.lg,
                     backgroundColor: r.isSelf ? `${accent}14` : colors.surface,
                     borderWidth: 1, borderColor: r.isSelf ? `${accent}44` : colors.glassBorder,
                   }}

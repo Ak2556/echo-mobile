@@ -14,18 +14,23 @@ import { useTheme } from '../../lib/theme';
 import { ttx } from '../../lib/i18n';
 
 // Warm editorial palette (lib/avatarPalette.ts) — one hue per die.
-const DICE = [
-  { sides: 4,  label: 'D4',  color: '#A04E4E' },
-  { sides: 6,  label: 'D6',  color: '#B08536' },
-  { sides: 8,  label: 'D8',  color: '#7A8B4E' },
-  { sides: 10, label: 'D10', color: '#4E8B7A' },
-  { sides: 12, label: 'D12', color: '#8B5E7D' },
-  { sides: 20, label: 'D20', color: '#5E748B' },
-];
+function getDice(colors: { danger: string; warning: string; success: string; accent: string; textSecondary: string; textMuted: string }) {
+  return [
+    { sides: 4,  label: 'D4',  color: colors.danger },
+    { sides: 6,  label: 'D6',  color: colors.warning },
+    { sides: 8,  label: 'D8',  color: colors.success },
+    { sides: 10, label: 'D10', color: colors.accent },
+    { sides: 12, label: 'D12', color: colors.textSecondary },
+    { sides: 20, label: 'D20', color: colors.textMuted },
+  ];
+}
+
+type DieItem = ReturnType<typeof getDice>[number];
 
 interface HistoryEntry { die: string; result: number; color: string; ts: number }
 
 function DieFace({ value, sides, color }: { value: number; sides: number; color: string }) {
+  const { radius } = useTheme();
   const layouts: Record<number, [number, number][]> = {
     1: [[50, 50]],
     2: [[25, 50], [75, 50]],
@@ -38,22 +43,22 @@ function DieFace({ value, sides, color }: { value: number; sides: number; color:
 
   if (sides === 6 && value <= 6) {
     return (
-      <View style={{ width: 100, height: 100, borderRadius: 22, backgroundColor: color + '18', borderWidth: 2.5, borderColor: color + '55', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <View style={{ width: 100, height: 100, borderRadius: radius.card, backgroundColor: color + '18', borderWidth: 2.5, borderColor: color + '55', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
         {dots.map(([x, y], i) => (
-          <View key={i} style={{ position: 'absolute', left: `${x}%` as any, top: `${y}%` as any, width: 14, height: 14, borderRadius: 7, backgroundColor: color, marginLeft: -7, marginTop: -7 }} />
+          <View key={i} style={{ position: 'absolute', left: `${x}%` as any, top: `${y}%` as any, width: 14, height: 14, borderRadius: radius.full, backgroundColor: color, marginLeft: -7, marginTop: -7 }} />
         ))}
       </View>
     );
   }
   return (
-    <View style={{ width: 100, height: 100, borderRadius: 22, backgroundColor: color + '18', borderWidth: 2.5, borderColor: color + '55', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 100, height: 100, borderRadius: radius.card, backgroundColor: color + '18', borderWidth: 2.5, borderColor: color + '55', alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ color, fontSize: 36, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>{value}</Text>
     </View>
   );
 }
 
-function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: string; selectedDie: typeof DICE[number]; diceCount: number; history: HistoryEntry[] }) {
-  const { colors } = useTheme();
+function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: string; selectedDie: DieItem; diceCount: number; history: HistoryEntry[] }) {
+  const { colors, radius } = useTheme();
   const max = selectedDie.sides * diceCount;
   const average = ((selectedDie.sides + 1) / 2) * diceCount;
   const coinFlips = history.filter(item => item.die === 'Coin').length;
@@ -63,9 +68,9 @@ function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: stri
     { label: 'Coin', value: `${coinFlips}`, detail: 'flips' },
   ];
   return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
           <DiceSix color={accent} size={22} weight="duotone" />
         </View>
         <View style={{ flex: 1 }}>
@@ -75,7 +80,7 @@ function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: stri
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {stats.map(stat => (
-          <View key={stat.label} style={{ flex: 1, minHeight: 62, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View key={stat.label} style={{ flex: 1, minHeight: 62, borderRadius: radius.lg, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <Text style={{ color: accent, fontSize: 17, fontWeight: '900' }} numberOfLines={1}>{stat.value}</Text>
             <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{stat.label}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }}>{stat.detail}</Text>
@@ -87,8 +92,12 @@ function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: stri
 }
 
 export default function DiceApp() {
-  const { colors } = useTheme();
-  const [selectedDie, setSelectedDie] = useState(DICE[1]);
+  const { colors, radius } = useTheme();
+  const dice = getDice(colors);
+  const headsColor = colors.warning;
+  const tailsColor = colors.textMuted;
+  const [selectedDieIndex, setSelectedDieIndex] = useState(1);
+  const selectedDie = dice[selectedDieIndex] ?? dice[1];
   const [result, setResult] = useState<number | null>(null);
   const [rolling, setRolling] = useState(false);
   const [coinFace, setCoinFace] = useState<'heads' | 'tails' | null>(null);
@@ -125,7 +134,7 @@ export default function DiceApp() {
     setTimeout(() => {
       const face = Math.random() > 0.5 ? 'heads' : 'tails';
       setCoinFace(face);
-      setHistory(prev => [{ die: 'Coin', result: face === 'heads' ? 1 : 0, color: '#B08536', ts: Date.now() }, ...prev.slice(0, 19)]);
+      setHistory(prev => [{ die: 'Coin', result: face === 'heads' ? 1 : 0, color: headsColor, ts: Date.now() }, ...prev.slice(0, 19)]);
     }, 200);
   };
 
@@ -150,18 +159,18 @@ export default function DiceApp() {
       />
       <ChancePulse accent={selectedDie.color} selectedDie={selectedDie} diceCount={diceCount} history={history} />
       {/* Die selector */}
-      <GlassPanel variant="medium" borderRadius={20} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("SELECT DIE")}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          {DICE.map(d => (
-            <Pressable key={d.label} onPress={() => { setSelectedDie(d); setResult(null); }}>
+          {dice.map((d, index) => (
+            <Pressable key={d.label} onPress={() => { setSelectedDieIndex(index); setResult(null); }}>
               <View style={{
-                paddingHorizontal: 18, paddingVertical: 12, borderRadius: 14,
-                backgroundColor: selectedDie.label === d.label ? d.color + '22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
-                borderWidth: selectedDie.label === d.label ? 2 : StyleSheet.hairlineWidth,
-                borderColor: selectedDie.label === d.label ? d.color : colors.glassBorder,
+                paddingHorizontal: 18, paddingVertical: 12, borderRadius: radius.md,
+                backgroundColor: selectedDieIndex === index ? d.color + '22' : colors.inputBg,
+                borderWidth: selectedDieIndex === index ? 2 : StyleSheet.hairlineWidth,
+                borderColor: selectedDieIndex === index ? d.color : colors.glassBorder,
               }}>
-                <Text style={{ color: selectedDie.label === d.label ? d.color : colors.textMuted, fontWeight: '800', fontSize: 15 }}>{d.label}</Text>
+                <Text style={{ color: selectedDieIndex === index ? d.color : colors.textMuted, fontWeight: '800', fontSize: 15 }}>{d.label}</Text>
               </View>
             </Pressable>
           ))}
@@ -169,14 +178,14 @@ export default function DiceApp() {
       </GlassPanel>
 
       {/* Dice count */}
-      <GlassPanel variant="medium" borderRadius={20} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 16 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("NUMBER OF DICE")}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {[1, 2, 3, 4, 5, 6].map(n => (
             <Pressable key={n} onPress={() => { setDiceCount(n); setResult(null); }}>
               <View style={{
-                width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
-                backgroundColor: diceCount === n ? selectedDie.color + '22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center',
+                backgroundColor: diceCount === n ? selectedDie.color + '22' : colors.inputBg,
                 borderWidth: diceCount === n ? 2 : StyleSheet.hairlineWidth,
                 borderColor: diceCount === n ? selectedDie.color : colors.glassBorder,
               }}>
@@ -194,7 +203,7 @@ export default function DiceApp() {
             {result !== null && diceCount === 1
               ? <DieFace value={result} sides={selectedDie.sides} color={selectedDie.color} />
               : (
-                <View style={{ width: 100, height: 100, borderRadius: 22, backgroundColor: selectedDie.color + '18', borderWidth: 2.5, borderColor: selectedDie.color + '55', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                <View style={{ width: 100, height: 100, borderRadius: radius.card, backgroundColor: selectedDie.color + '18', borderWidth: 2.5, borderColor: selectedDie.color + '55', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                   <DiceSix color={selectedDie.color} size={44} weight="duotone" />
                   {result !== null && diceCount > 1 && <Text style={{ color: selectedDie.color, fontSize: 18, fontWeight: '900' }}>{result}</Text>}
                 </View>
@@ -209,8 +218,8 @@ export default function DiceApp() {
           </Animated.View>
         )}
 
-        <AnimatedPressable onPress={rollDie} disabled={rolling} scaleValue={0.95} haptic="heavy" style={{ backgroundColor: selectedDie.color, borderRadius: 18, paddingVertical: 18, paddingHorizontal: 48, shadowColor: selectedDie.color, shadowOpacity: 0.45, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, opacity: rolling ? 0.7 : 1 }}>
-          <Text style={{ color: '#fff', fontWeight: '900', fontSize: 18, letterSpacing: 0.5 }}>
+        <AnimatedPressable onPress={rollDie} disabled={rolling} scaleValue={0.95} haptic="heavy" style={{ backgroundColor: selectedDie.color, borderRadius: radius.xl, paddingVertical: 18, paddingHorizontal: 48, shadowColor: selectedDie.color, shadowOpacity: 0.45, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, opacity: rolling ? 0.7 : 1 }}>
+          <Text style={{ color: colors.bgPure, fontWeight: '900', fontSize: 18, letterSpacing: 0.5 }}>
             {rolling ? 'Rolling…' : `Roll ${diceCount > 1 ? diceCount + '× ' : ''}${selectedDie.label}`}
           </Text>
         </AnimatedPressable>
@@ -227,28 +236,28 @@ export default function DiceApp() {
       <View style={{ alignItems: 'center', gap: 16, marginBottom: 14 }}>
         <Animated.View style={coinStyle}>
           <Pressable onPress={flipCoin}>
-            <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: coinFace === 'heads' ? '#B0853622' : coinFace === 'tails' ? '#5E748B22' : (colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderWidth: 3, borderColor: coinFace ? (coinFace === 'heads' ? '#B08536' : '#5E748B') : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: coinFace === 'heads' ? '#B08536' : coinFace === 'tails' ? '#5E748B' : colors.textMuted, fontSize: 18, fontWeight: '900' }}>{coinFace === 'heads' ? 'H' : coinFace === 'tails' ? 'T' : '?'}</Text>
+            <View style={{ width: 88, height: 88, borderRadius: radius.full, backgroundColor: coinFace === 'heads' ? `${headsColor}22` : coinFace === 'tails' ? `${tailsColor}22` : colors.inputBg, borderWidth: 3, borderColor: coinFace ? (coinFace === 'heads' ? headsColor : tailsColor) : colors.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: coinFace === 'heads' ? headsColor : coinFace === 'tails' ? tailsColor : colors.textMuted, fontSize: 18, fontWeight: '900' }}>{coinFace === 'heads' ? 'H' : coinFace === 'tails' ? 'T' : '?'}</Text>
             </View>
           </Pressable>
         </Animated.View>
         {coinFace && (
           <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
-            <Text style={{ color: coinFace === 'heads' ? '#B08536' : '#5E748B', fontSize: 28, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 }}>{coinFace}</Text>
+            <Text style={{ color: coinFace === 'heads' ? headsColor : tailsColor, fontSize: 28, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 }}>{coinFace}</Text>
           </Animated.View>
         )}
-        <AnimatedPressable onPress={flipCoin} scaleValue={0.95} haptic="heavy" style={{ backgroundColor: '#B08536', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 40, shadowColor: '#B08536', shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{ttx("Flip Coin")}</Text>
+        <AnimatedPressable onPress={flipCoin} scaleValue={0.95} haptic="heavy" style={{ backgroundColor: headsColor, borderRadius: radius.lg, paddingVertical: 14, paddingHorizontal: 40, shadowColor: headsColor, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+          <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{ttx("Flip Coin")}</Text>
         </AnimatedPressable>
       </View>
 
       {/* History */}
       {history.length > 0 && (
-        <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 16 }}>
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("RECENT ROLLS")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {history.map((h, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: h.color + '15', borderWidth: 1, borderColor: h.color + '33' }}>
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.md, backgroundColor: h.color + '15', borderWidth: 1, borderColor: h.color + '33' }}>
                 <Text style={{ color: h.color, fontSize: 12, fontWeight: '700' }}>{h.die}</Text>
                 <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>{h.die === 'Coin' ? (h.result === 1 ? 'H' : 'T') : h.result}</Text>
               </View>

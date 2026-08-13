@@ -6,7 +6,7 @@ Manage UI/UX standardization pass for Echo iOS codebase by dispatching and monit
 ## 🔒 My Identity
 - Archetype: sentinel
 - Working directory: /Users/aena/Developer/echo-ios/.agents/sentinel_1
-- Orchestrator: 8c114451-67f9-4991-a9fb-312f560fa12c
+- Orchestrator: 52607ff6-4272-4b95-8ec7-e9e92fe72b57 (gen2)
 - Victory Auditor: to be spawned on victory claim
 
 ## 🔒 Key Constraints

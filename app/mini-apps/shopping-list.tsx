@@ -2,8 +2,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash, ListDashes, MagnifyingGlass, Tag, Scan, CaretDown, CurrencyDollar, ArrowLeft } from 'phosphor-react-native';
-import Animated, { FadeInDown, FadeOutUp, SlideInDown, SlideOutDown, Layout, Easing, withTiming, useAnimatedStyle, useSharedValue, interpolateColor } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeOutUp, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
+import { tap } from '../../lib/haptics';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniChip, MiniStatCard } from '../../components/mini-apps/MiniKit';
@@ -17,8 +17,8 @@ import {
 import { ttx } from '../../lib/i18n';
 
 export default function ShoppingListScreen() {
-  const { colors } = useTheme();
-  const accent = '#6366f1'; // Premium indigo
+  const { colors, radius } = useTheme();
+  const accent = colors.accent;
   
   const [lists, setLists] = useState<ShoppingListInfo[]>([]);
   const [items, setItems] = useState<ShoppingItem[]>([]);
@@ -81,7 +81,7 @@ export default function ShoppingListScreen() {
   const add = () => {
     const clean = name.trim();
     if (!clean) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    tap('medium');
     const parsedPrice = parseFloat(price) || 0;
     
     updateItems([{
@@ -102,7 +102,7 @@ export default function ShoppingListScreen() {
   };
   
   const addFrequent = (freqItem: any) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    tap('success');
     updateItems([{
       id: `${Date.now()}`,
       listId: currentListId,
@@ -118,17 +118,17 @@ export default function ShoppingListScreen() {
   };
 
   const toggle = (item: ShoppingItem) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tap('light');
     updateItems(items.map(row => row.id === item.id ? { ...row, checked: !row.checked } : row));
   };
 
   const remove = (item: ShoppingItem) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    tap('medium');
     updateItems(items.filter(row => row.id !== item.id));
   };
 
   const clearChecked = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    tap('success');
     updateItems(items.filter(item => item.listId !== currentListId || !item.checked));
   };
   
@@ -150,18 +150,18 @@ export default function ShoppingListScreen() {
       
       {/* Header with List Selector */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <AnimatedPressable onPress={() => { Haptics.selectionAsync(); setShowListSelector(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <AnimatedPressable onPress={() => { tap('selection'); setShowListSelector(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Text style={{ fontSize: 28, fontWeight: '900', color: colors.text }}>
             {currentList?.name || 'My List'}
           </Text>
           <CaretDown color={colors.textMuted} size={24} weight="bold" />
         </AnimatedPressable>
-        <AnimatedPressable onPress={() => { Haptics.selectionAsync(); setShowScanner(true); }} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${accent}15`, alignItems: 'center', justifyContent: 'center' }}>
+        <AnimatedPressable onPress={() => { tap('selection'); setShowScanner(true); }} style={{ width: 44, height: 44, borderRadius: radius.full, backgroundColor: `${accent}15`, alignItems: 'center', justifyContent: 'center' }}>
           <Scan color={accent} size={22} weight="duotone" />
         </AnimatedPressable>
       </View>
 
-      <GlassPanel variant="light" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 24 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 24 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <View>
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Est. Total</Text>
@@ -174,9 +174,9 @@ export default function ShoppingListScreen() {
         </View>
         
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <MiniStatCard value={`${stats.checked}`} label={ttx("Checked")} accent="#10b981" />
+          <MiniStatCard value={`${stats.checked}`} label={ttx("Checked")} accent={colors.success} />
           <AnimatedPressable onPress={clearChecked} scaleValue={0.95} haptic="medium" style={{ flex: 1 }}>
-            <View style={{ flex: 1, borderRadius: 16, paddingVertical: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <View style={{ flex: 1, borderRadius: radius.lg, paddingVertical: 12, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <Trash color={colors.textMuted} size={20} />
               <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '800' }}>{ttx("Clear")}</Text>
             </View>
@@ -190,17 +190,17 @@ export default function ShoppingListScreen() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16, marginBottom: 8 }}>
         {categories.map(item => (
-          <MiniChip key={item} accent={accent} label={item} active={filter === item} onPress={() => { Haptics.selectionAsync(); setFilter(item); }} />
+          <MiniChip key={item} accent={accent} label={item} active={filter === item} onPress={() => { tap('selection'); setFilter(item); }} />
         ))}
       </ScrollView>
 
       <View style={{ gap: 12, paddingBottom: 100 }}>
         {visible.map(item => (
           <Animated.View key={item.id} layout={Layout.springify().mass(0.5)} entering={FadeInDown} exiting={FadeOutUp}>
-            <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 16 }}>
+            <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <Pressable onPress={() => toggle(item)} hitSlop={12}>
-                  {item.checked ? <CheckCircle color="#10b981" size={28} weight="fill" /> : <CircleDashed color={colors.textMuted} size={28} />}
+                  {item.checked ? <CheckCircle color={colors.success} size={28} weight="fill" /> : <CircleDashed color={colors.textMuted} size={28} />}
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: item.checked ? colors.textMuted : colors.text, fontSize: 17, fontWeight: '800', textDecorationLine: item.checked ? 'line-through' : 'none' }}>
@@ -219,7 +219,7 @@ export default function ShoppingListScreen() {
                       ${(item.price * (parseFloat(item.quantity) || 1)).toFixed(2)}
                     </Text>
                   )}
-                  <Pressable onPress={() => remove(item)} hitSlop={12} style={{ padding: 4, backgroundColor: `${colors.text}08`, borderRadius: 12 }}>
+                  <Pressable onPress={() => remove(item)} hitSlop={12} style={{ padding: 4, backgroundColor: colors.inputBg, borderRadius: radius.md }}>
                     <Trash color={colors.textMuted} size={16} />
                   </Pressable>
                 </View>
@@ -237,8 +237,8 @@ export default function ShoppingListScreen() {
 
       {/* Floating Action Button */}
       <View style={{ position: 'absolute', bottom: 30, right: 20, zIndex: 10 }}>
-        <AnimatedPressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setIsAdding(true); }} style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}>
-          <Plus color="#fff" size={32} weight="bold" />
+        <AnimatedPressable onPress={() => { tap('medium'); setIsAdding(true); }} style={{ width: 64, height: 64, borderRadius: radius.full, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}>
+          <Plus color={colors.bgPure} size={32} weight="bold" />
         </AnimatedPressable>
       </View>
 
@@ -246,8 +246,8 @@ export default function ShoppingListScreen() {
       {isAdding && (
         <>
           <Pressable style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 11 }} onPress={() => setIsAdding(false)} />
-          <Animated.View entering={SlideInDown.duration(300).springify()} exiting={SlideOutDown.duration(200)} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 12, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 50, shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 20 }}>
-            <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: colors.glassBorder, alignSelf: 'center', marginBottom: 20 }} />
+          <Animated.View entering={SlideInDown.duration(300).springify()} exiting={SlideOutDown.duration(200)} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 12, backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 24, paddingBottom: 50, shadowColor: colors.text, shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 20 }}>
+            <View style={{ width: 40, height: 5, borderRadius: radius.sm, backgroundColor: colors.glassBorder, alignSelf: 'center', marginBottom: 20 }} />
             <Text style={{ fontSize: 22, fontWeight: '900', color: colors.text, marginBottom: 16 }}>{ttx("Add New Item")}</Text>
             
             <TextInput
@@ -270,12 +270,12 @@ export default function ShoppingListScreen() {
             <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>Category</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8, marginBottom: 16 }}>
               {SHOPPING_CATEGORIES.map(item => (
-                <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => { Haptics.selectionAsync(); setCategory(item); }} />
+                <MiniChip key={item} accent={accent} label={item} active={category === item} onPress={() => { tap('selection'); setCategory(item); }} />
               ))}
             </ScrollView>
             
-            <AnimatedPressable onPress={add} style={{ height: 56, borderRadius: 16, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900' }}>{ttx("Save Item")}</Text>
+            <AnimatedPressable onPress={add} style={{ height: 56, borderRadius: radius.lg, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: colors.bgPure, fontSize: 18, fontWeight: '900' }}>{ttx("Save Item")}</Text>
             </AnimatedPressable>
           </Animated.View>
         </>
@@ -284,10 +284,10 @@ export default function ShoppingListScreen() {
       {/* List Selector Modal */}
       <Modal visible={showListSelector} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 60, minHeight: 400 }}>
+          <View style={{ backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 24, paddingBottom: 60, minHeight: 400 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text }}>Your Lists</Text>
-              <Pressable onPress={() => setShowListSelector(false)} style={{ padding: 8, backgroundColor: colors.surface, borderRadius: 20 }}>
+              <Pressable onPress={() => setShowListSelector(false)} style={{ padding: 8, backgroundColor: colors.surface, borderRadius: radius.lg }}>
                 <Text style={{ color: colors.text, fontWeight: '800' }}>Done</Text>
               </Pressable>
             </View>
@@ -299,12 +299,12 @@ export default function ShoppingListScreen() {
                   <AnimatedPressable
                     key={list.id}
                     onPress={() => {
-                      Haptics.selectionAsync();
+                      tap('selection');
                       setCurrentListId(list.id);
                       setShowListSelector(false);
                     }}
                     style={{
-                      flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 20,
+                      flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: radius.lg,
                       backgroundColor: isActive ? `${accent}15` : colors.surface,
                       borderWidth: 2, borderColor: isActive ? accent : 'transparent'
                     }}
@@ -319,7 +319,7 @@ export default function ShoppingListScreen() {
               })}
             </ScrollView>
             
-            <AnimatedPressable onPress={createNewList} style={{ height: 56, borderRadius: 20, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 16 }}>
+            <AnimatedPressable onPress={createNewList} style={{ height: 56, borderRadius: radius.lg, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 16 }}>
               <Plus color={colors.bg} size={20} weight="bold" />
               <Text style={{ color: colors.bg, fontSize: 17, fontWeight: '900' }}>Create New List</Text>
             </AnimatedPressable>
@@ -331,7 +331,7 @@ export default function ShoppingListScreen() {
       <Modal visible={showScanner} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: colors.bg }}>
           <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-            <Pressable onPress={() => setShowScanner(false)} style={{ padding: 12, backgroundColor: colors.surface, borderRadius: 20, marginRight: 16 }}>
+            <Pressable onPress={() => setShowScanner(false)} style={{ padding: 12, backgroundColor: colors.surface, borderRadius: radius.lg, marginRight: 16 }}>
               <ArrowLeft color={colors.text} size={24} weight="bold" />
             </Pressable>
             <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text, flex: 1 }}>Add Items</Text>
@@ -340,10 +340,10 @@ export default function ShoppingListScreen() {
           <ScrollView contentContainerStyle={{ padding: 20, gap: 24 }}>
             <View>
               <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 12 }}>Barcode Scanner</Text>
-              <View style={{ height: 160, borderRadius: 24, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                <Scan color="rgba(255,255,255,0.2)" size={80} />
-                <View style={{ position: 'absolute', width: '100%', height: 2, backgroundColor: '#10b981', opacity: 0.8 }} />
-                <Text style={{ color: 'rgba(255,255,255,0.7)', position: 'absolute', bottom: 16, fontWeight: '600' }}>Point at a barcode</Text>
+              <View style={{ height: 160, borderRadius: radius.card, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                <Scan color={colors.textMuted} size={80} />
+                <View style={{ position: 'absolute', width: '100%', height: 2, backgroundColor: colors.success, opacity: 0.8 }} />
+                <Text style={{ color: colors.textMuted, position: 'absolute', bottom: 16, fontWeight: '600' }}>Point at a barcode</Text>
               </View>
             </View>
             
@@ -351,13 +351,13 @@ export default function ShoppingListScreen() {
               <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 12 }}>Frequent Items</Text>
               <View style={{ gap: 12 }}>
                 {FREQUENT_ITEMS.map((item, idx) => (
-                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 20, backgroundColor: colors.surface }}>
+                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>{item.name}</Text>
                       <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted, marginTop: 4 }}>{item.category} • ${item.price.toFixed(2)}</Text>
                     </View>
-                    <AnimatedPressable onPress={() => addFrequent(item)} style={{ paddingVertical: 10, paddingHorizontal: 16, backgroundColor: accent, borderRadius: 16 }}>
-                      <Text style={{ color: '#fff', fontWeight: '800' }}>Add</Text>
+                    <AnimatedPressable onPress={() => addFrequent(item)} style={{ paddingVertical: 10, paddingHorizontal: 16, backgroundColor: accent, borderRadius: radius.lg }}>
+                      <Text style={{ color: colors.bgPure, fontWeight: '800' }}>Add</Text>
                     </AnimatedPressable>
                   </View>
                 ))}

@@ -44,13 +44,13 @@ function applyInline(text: string, colors: any): React.ReactNode {
   return parts.map((p, i) => {
     if (p.startsWith('**') && p.endsWith('**')) return <Text key={i} style={{ fontWeight: '800', color: colors.text }}>{p.slice(2,-2)}</Text>;
     if (p.startsWith('*') && p.endsWith('*')) return <Text key={i} style={{ fontStyle: 'italic', color: colors.text }}>{p.slice(1,-1)}</Text>;
-    if (p.startsWith('`') && p.endsWith('`')) return <Text key={i} style={{ fontFamily: 'monospace', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: colors.accent, fontSize: 13 }}>{p.slice(1,-1)}</Text>;
+    if (p.startsWith('`') && p.endsWith('`')) return <Text key={i} style={{ fontFamily: 'monospace', backgroundColor: colors.inputBg, color: colors.accent, fontSize: 13 }}>{p.slice(1,-1)}</Text>;
     if (p.startsWith('~~') && p.endsWith('~~')) return <Text key={i} style={{ textDecorationLine: 'line-through', color: colors.textMuted }}>{p.slice(2,-2)}</Text>;
     return p;
   });
 }
 
-function renderMarkdown(md: string, colors: any) {
+function renderMarkdown(md: string, colors: any, radius?: any) {
   const lines = md.split('\n');
   const elements: React.ReactNode[] = [];
   let inCode = false, codeLines: string[] = [], codeKey = 0;
@@ -60,8 +60,8 @@ function renderMarkdown(md: string, colors: any) {
     if (line.startsWith('```')) {
       if (inCode) {
         elements.push(
-          <View key={`code-${codeKey}`} style={{ backgroundColor: '#0D1117', borderRadius: 12, padding: 14, marginVertical: 6, borderWidth: 1, borderColor: '#30363D' }}>
-            <Text style={{ color: '#E2E8F0', fontFamily: 'monospace', fontSize: 13, lineHeight: 20 }}>{codeLines.join('\n')}</Text>
+          <View key={`code-${codeKey}`} style={{ backgroundColor: colors.inputBg, borderRadius: radius?.md ?? 10, padding: 14, marginVertical: 6, borderWidth: 1, borderColor: colors.glassBorder }}>
+            <Text style={{ color: colors.text, fontFamily: 'monospace', fontSize: 13, lineHeight: 20 }}>{codeLines.join('\n')}</Text>
           </View>
         );
         codeLines = []; codeKey++; inCode = false;
@@ -108,7 +108,7 @@ function renderMarkdown(md: string, colors: any) {
 }
 
 export default function MarkdownScreen() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const [text, setText] = useState(SAMPLE);
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
 
@@ -119,8 +119,8 @@ export default function MarkdownScreen() {
     <Pressable
       onPress={() => setText('')}
       style={{
-        width: 34, height: 34, borderRadius: 17,
-        backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        width: 34, height: 34, borderRadius: radius.full,
+        backgroundColor: colors.inputBg,
         alignItems: 'center', justifyContent: 'center',
         borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
       }}
@@ -143,14 +143,14 @@ export default function MarkdownScreen() {
             { label: 'View', value: tab === 'edit' ? 'Edit' : 'Preview' },
           ]}
         />
-        <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 12 }}>
+        <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 12 }}>
           {[{ id: 'edit', label: 'Editor' }, { id: 'preview', label: 'Preview' }].map(t => (
             <Pressable
               key={t.id}
               onPress={() => setTab(t.id as any)}
               style={{
-                flex: 1, paddingVertical: 10, borderRadius: 12,
-                backgroundColor: tab === t.id ? colors.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)' : 'transparent',
+                flex: 1, paddingVertical: 10, borderRadius: radius.md,
+                backgroundColor: tab === t.id ? colors.surfaceHover : 'transparent',
                 alignItems: 'center',
               }}
             >
@@ -166,16 +166,16 @@ export default function MarkdownScreen() {
             multiline
             style={{
               flex: 1,
-              backgroundColor: '#0D1117', borderRadius: 20,
+              backgroundColor: colors.inputBg, borderRadius: radius.card,
               borderWidth: 1, borderColor: colors.glassBorder,
-              padding: 16, color: '#E2E8F0', fontSize: 14, fontFamily: 'monospace',
+              padding: 16, color: colors.text, fontSize: 14, fontFamily: 'monospace',
               lineHeight: 22, textAlignVertical: 'top',
             }}
           />
         ) : (
-          <GlassPanel variant="medium" borderRadius={20} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
+          <GlassPanel variant="medium" borderRadius={radius.card} style={{ flex: 1 }} contentStyle={{ flex: 1 }}>
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
-              {renderMarkdown(text, colors)}
+              {renderMarkdown(text, colors, radius)}
               <View style={{ height: 8 }} />
             </ScrollView>
           </GlassPanel>

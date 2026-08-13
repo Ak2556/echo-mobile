@@ -34,8 +34,8 @@
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
 | M1 | Foundational Component & Token Overhaul | Refactor `lib/theme.ts`, `lib/haptics.ts`, `GlassPanel.tsx`, `MiniAppShell.tsx`, `MiniKit.tsx`, `constants/Colors.ts` | none | DONE |
-| M2A | Mini-App Style Sweep: Tier 1 Monoliths | Refactor 6 Tier 1 mini-apps (`learn`, `fitness`, `pomodoro`, `expenses`, `habits`, `notes`) | M1 | PLANNED |
-| M2B | Mini-App Style Sweep: Tier 2 Medium Apps | Refactor 6 Tier 2 mini-apps (`image-editor`, `tasks`, `password-gen`, `camera`, `calculator`, `bmi`) | M1 | PLANNED |
+| M2A | Mini-App Style Sweep: Tier 1 Monoliths | Refactor 6 Tier 1 mini-apps (`learn`, `fitness`, `pomodoro`, `expenses`, `habits`, `notes`) | M1 | DONE |
+| M2B | Mini-App Style Sweep: Tier 2 Medium Apps | Refactor 6 Tier 2 mini-apps (`image-editor`, `tasks`, `password-gen`, `camera`, `calculator`, `bmi`) | M1 | DONE |
 | M2C | Mini-App Style Sweep: Tier 3 Utilities & Helpers | Refactor 11 Tier 3 mini-apps & 10 helper components in `components/mini-apps/` | M1 | PLANNED |
 | M3 | Core Layout Unification & UI Audit Infrastructure | Refactor 8 tab screens in `app/(tabs)/`, create `verify_ui.sh`, pass AC1, AC2, AC3 | M1, M2A, M2B, M2C | PLANNED |
 
