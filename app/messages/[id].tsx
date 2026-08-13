@@ -2657,6 +2657,106 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
     return data;
   }, [visibleMessages, searchTerm]);
 
+  const memoizedFlashList = useMemo(() => {
+    if (!conversation) return null;
+    return (
+      <FlashList<ListRow>
+        ref={listRef}
+        data={listData}
+        estimatedItemSize={70}
+        getItemType={(item) => item.type}
+        keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.type === 'unread' ? 'unread-divider' : item.msg.id}
+        contentContainerStyle={{ paddingVertical: 10, flexGrow: 1, justifyContent: 'flex-end' }}
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => {
+          if (isAtBottom) listRef.current?.scrollToEnd({ animated: false });
+        }}
+        onEndReached={() => { if (hasNextPage) void fetchNextPage(); }}
+        onEndReachedThreshold={0.25}
+        // @ts-ignore FlashList typing doesn't include maintainVisibleContentPosition but it works natively on iOS
+        maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
+        onScroll={e => {
+          const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+          const distFromBottom = contentSize.height - contentOffset.y - layoutMeasurement.height;
+          setIsAtBottom(distFromBottom < 80);
+        }}
+        scrollEventThrottle={16}
+        ListFooterComponent={partnerIsTyping ? <TypingDots /> : null}
+        ListEmptyComponent={searchTerm ? (
+          <View style={{ alignItems: 'center', paddingVertical: 42, paddingHorizontal: 24 }}>
+            <MagnifyingGlass color={colors.textMuted} size={28} />
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 }}>
+              {ttx("No messages found")}
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 5 }}>
+              {ttx("Try a different word, link, contact, or photo search.")}
+            </Text>
+          </View>
+        ) : conversation ? (
+          <Animated.View entering={FadeIn.duration(300)} style={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 14 }}>
+            <Avatar
+              name={conversation.displayName}
+              color={conversation.avatarColor}
+              url={conversation.isGroup ? undefined : conversation.avatarUrl}
+              size={78}
+            >
+              {conversation.isGroup ? <Users color="#fff" size={30} weight="fill" /> : undefined}
+            </Avatar>
+            <Text style={{ color: colors.text, fontFamily: 'Fraunces_600SemiBold', fontSize: 23, textAlign: 'center', letterSpacing: -0.3 }}>
+              {conversation.isGroup ? conversation.displayName : `Say hi to ${conversation.displayName}`}
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 300 }}>
+              {conversation.isGroup
+                ? 'This is the start of the group. Send something to get it going.'
+                : 'The start of your conversation. Send the first message — Echo can help you find the words.'}
+            </Text>
+          </Animated.View>
+        ) : null}
+        renderItem={({ item }) => {
+          if (item.type === 'date') return <DateSeparator label={item.label} />;
+          if (item.type === 'unread') return <UnreadDivider count={unreadPartnerMsgs.length} loading={catchupLoading} onCatchUp={handleCatchUp} />;
+          const { msg, groupedWithPrev, groupedWithNext } = item;
+          const firstAppearance = !animatedIds.current.has(msg.id);
+          if (firstAppearance) animatedIds.current.add(msg.id);
+          const isFresh = new Date(msg.createdAt).getTime() > openedAtRef.current - 2000;
+          return (
+            <DMBubble
+              message={msg}
+              isMe={remote ? msg.senderId === myId : msg.senderId === 'me'}
+              quickReaction={quickReaction}
+              animate={firstAppearance && isFresh}
+              translation={translations[msg.id]}
+              translating={translatingId === msg.id}
+              saved={savedIdSet.has(msg.id)}
+              selectionMode={selectionMode}
+              selected={selectedIds.includes(msg.id)}
+              onSelectToggle={() => toggleSelect(msg.id)}
+              showReadReceipt={readReceipts}
+              myUserId={myId}
+              groupedWithPrev={groupedWithPrev}
+              groupedWithNext={groupedWithNext}
+              onLongPress={() => handleLongPress(msg)}
+              onReactionToggle={(val, hasReacted) => {
+                if (!remote) return;
+                toggleReaction.mutate({ messageId: msg.id, reactionValue: val, hasReacted });
+              }}
+              onReplyPress={replyId => {
+                const idx = listData.findIndex(r => r.type === 'message' && r.msg.id === replyId);
+                if (idx >= 0) listRef.current?.scrollToIndex({ index: idx, animated: true });
+              }}
+              onImagePress={setImagePreviewUrl}
+              onSwipeReply={remote ? () => { setEditingMessage(null); setReplyingTo(msg); } : undefined}
+              onRetry={remote && msg.id.startsWith('failed-') && msg.kind === 'text' && msg.content ? () => {
+                discardLocal(msg.id);
+                sendRemote.mutate({ content: msg.content!, replyToId: msg.replyToId ?? undefined });
+              } : undefined}
+            />
+          );
+        }}
+      />
+    );
+  }, [listData, isAtBottom, partnerIsTyping, searchTerm, conversation, unreadPartnerMsgs.length, catchupLoading, translations, translatingId, savedIdSet, selectionMode, selectedIds, readReceipts, myId, quickReaction, remote, hasNextPage, fetchNextPage]);
+
   // Loading / not found
   if (!conversation) {
     if (remote && convLoading) {
@@ -2853,108 +2953,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
       >
 
         {/* Message list */}
-        {useMemo(() => (
-        <FlashList<ListRow>
-          ref={listRef}
-          data={listData}
-          estimatedItemSize={70}
-          getItemType={(item) => item.type}
-          keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.type === 'unread' ? 'unread-divider' : item.msg.id}
-          // flexGrow + flex-end anchor short threads to the bottom (just above
-          // the composer) instead of floating at the top, like every chat app.
-          contentContainerStyle={{ paddingVertical: 10, flexGrow: 1, justifyContent: 'flex-end' }}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => {
-            if (isAtBottom) listRef.current?.scrollToEnd({ animated: false });
-          }}
-          onEndReached={() => { if (hasNextPage) void fetchNextPage(); }}
-          onEndReachedThreshold={0.25}
-          // Hold the viewport steady when older messages prepend during
-          // @ts-ignore FlashList typing doesn't include maintainVisibleContentPosition but it works natively on iOS
-          maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
-          onScroll={e => {
-            const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-            const distFromBottom = contentSize.height - contentOffset.y - layoutMeasurement.height;
-            setIsAtBottom(distFromBottom < 80);
-          }}
-          scrollEventThrottle={16}
-          ListFooterComponent={partnerIsTyping ? <TypingDots /> : null}
-          ListEmptyComponent={searchTerm ? (
-            <View style={{ alignItems: 'center', paddingVertical: 42, paddingHorizontal: 24 }}>
-              <MagnifyingGlass color={colors.textMuted} size={28} />
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 }}>
-                {ttx("No messages found")}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 5 }}>
-                {ttx("Try a different word, link, contact, or photo search.")}
-              </Text>
-            </View>
-          ) : conversation ? (
-            // First impression: a warm start-of-conversation moment instead of a
-            // black void — with an Echo-flavored nudge toward the AI quick-replies.
-            <Animated.View entering={FadeIn.duration(300)} style={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 14 }}>
-              <Avatar
-                name={conversation.displayName}
-                color={conversation.avatarColor}
-                url={conversation.isGroup ? undefined : conversation.avatarUrl}
-                size={78}
-              >
-                {conversation.isGroup ? <Users color="#fff" size={30} weight="fill" /> : undefined}
-              </Avatar>
-              <Text style={{ color: colors.text, fontFamily: 'Fraunces_600SemiBold', fontSize: 23, textAlign: 'center', letterSpacing: -0.3 }}>
-                {conversation.isGroup ? conversation.displayName : `Say hi to ${conversation.displayName}`}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 300 }}>
-                {conversation.isGroup
-                  ? 'This is the start of the group. Send something to get it going.'
-                  : 'The start of your conversation. Send the first message — Echo can help you find the words.'}
-              </Text>
-            </Animated.View>
-          ) : null}
-          renderItem={({ item }) => {
-            if (item.type === 'date') return <DateSeparator label={item.label} />;
-            if (item.type === 'unread') return <UnreadDivider count={unreadPartnerMsgs.length} loading={catchupLoading} onCatchUp={handleCatchUp} />;
-            const { msg, groupedWithPrev, groupedWithNext } = item;
-            const firstAppearance = !animatedIds.current.has(msg.id);
-            if (firstAppearance) animatedIds.current.add(msg.id);
-            const isFresh = new Date(msg.createdAt).getTime() > openedAtRef.current - 2000;
-            return (
-              <DMBubble
-                message={msg}
-                isMe={remote ? msg.senderId === myId : msg.senderId === 'me'}
-                quickReaction={quickReaction}
-                animate={firstAppearance && isFresh}
-                translation={translations[msg.id]}
-                translating={translatingId === msg.id}
-                saved={savedIdSet.has(msg.id)}
-                selectionMode={selectionMode}
-                selected={selectedIds.includes(msg.id)}
-                onSelectToggle={() => toggleSelect(msg.id)}
-                showReadReceipt={readReceipts}
-                myUserId={myId}
-                groupedWithPrev={groupedWithPrev}
-                groupedWithNext={groupedWithNext}
-                onLongPress={() => handleLongPress(msg)}
-                onReactionToggle={(val, hasReacted) => {
-                  if (!remote) return;
-                  toggleReaction.mutate({ messageId: msg.id, reactionValue: val, hasReacted });
-                }}
-                onReplyPress={replyId => {
-                  // Scroll to the replied message
-                  const idx = listData.findIndex(r => r.type === 'message' && r.msg.id === replyId);
-                  if (idx >= 0) listRef.current?.scrollToIndex({ index: idx, animated: true });
-                }}
-                onImagePress={setImagePreviewUrl}
-                onSwipeReply={remote ? () => { setEditingMessage(null); setReplyingTo(msg); } : undefined}
-                onRetry={remote && msg.id.startsWith('failed-') && msg.kind === 'text' && msg.content ? () => {
-                  discardLocal(msg.id);
-                  sendRemote.mutate({ content: msg.content!, replyToId: msg.replyToId ?? undefined });
-                } : undefined}
-              />
-            );
-          }}
-        />
-        ), [listData, isAtBottom, partnerIsTyping, searchTerm, conversation, unreadPartnerMsgs.length, catchupLoading, translations, translatingId, savedIdSet, selectionMode, selectedIds, readReceipts, myId, quickReaction, remote])}
+        {memoizedFlashList}
 
         {/* Jump to bottom pill — grows to show how many new messages landed
             while you were reading back, and springs in so it reads as an event. */}
