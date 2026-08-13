@@ -40,7 +40,7 @@ function VideoPulse({ accent, video, position, duration, isMuted }: {
   duration: number;
   isMuted: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const progress = duration > 0 ? Math.round((position / duration) * 100) : 0;
   const aspect = video?.width && video.height ? `${video.width}x${video.height}` : 'None';
   const tiles = [
@@ -49,9 +49,9 @@ function VideoPulse({ accent, video, position, duration, isMuted }: {
     { label: 'Sound', value: isMuted ? 'Muted' : 'On', detail: aspect },
   ];
   return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
           <VideoCamera color={accent} size={20} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
@@ -61,7 +61,7 @@ function VideoPulse({ accent, video, position, duration, isMuted }: {
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {tiles.map(tile => (
-          <View key={tile.label} style={{ flex: 1, minHeight: 62, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View key={tile.label} style={{ flex: 1, minHeight: 62, borderRadius: radius.lg, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <Text style={{ color: accent, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>{tile.value}</Text>
             <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{tile.label}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{tile.detail}</Text>
@@ -73,7 +73,7 @@ function VideoPulse({ accent, video, position, duration, isMuted }: {
 }
 
 export default function VideoPlayerApp() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const accent = colors.accent;
   const videoRef = useRef<VideoView>(null);
   const [video, setVideo] = useState<VideoMeta | null>(null);
@@ -179,7 +179,7 @@ export default function VideoPlayerApp() {
       <Animated.View entering={FadeInDown.duration(220)} style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
         <GlassPanel
           variant="medium"
-          borderRadius={18}
+          borderRadius={radius.lg}
           contentStyle={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 }}
         >
           <Pressable onPress={pickVideo} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -189,7 +189,7 @@ export default function VideoPlayerApp() {
         </GlassPanel>
         <GlassPanel
           variant="medium"
-          borderRadius={18}
+          borderRadius={radius.lg}
           contentStyle={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 }}
         >
           <Pressable onPress={recordVideo} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -202,7 +202,7 @@ export default function VideoPlayerApp() {
       {video ? (
         <Animated.View entering={FadeInDown.delay(60).duration(220)}>
           {/* Video player */}
-          <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: '#000', marginBottom: 14 }}>
+          <View style={{ borderRadius: radius.card, overflow: 'hidden', backgroundColor: colors.bgPure, marginBottom: 14 }}>
             <VideoView
               ref={videoRef}
               player={player}
@@ -214,14 +214,14 @@ export default function VideoPlayerApp() {
           </View>
 
           {/* Controls */}
-          <GlassPanel variant="medium" borderRadius={20} contentStyle={{ padding: 20 }} style={{ gap: 16 }}>
+          <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ gap: 16 }}>
             {/* File name */}
             <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>{video.name}</Text>
 
             {/* Progress bar */}
             <View>
-              <View style={{ height: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', borderRadius: 2, overflow: 'hidden' }}>
-                <View style={{ height: '100%', width: `${progressPct}%`, backgroundColor: accent, borderRadius: 2 }} />
+              <View style={{ height: 4, backgroundColor: colors.inputBg, borderRadius: radius.sm, overflow: 'hidden' }}>
+                <View style={{ height: '100%', width: `${progressPct}%`, backgroundColor: accent, borderRadius: radius.sm }} />
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 11 }}>{formatDuration(position)}</Text>
@@ -232,7 +232,7 @@ export default function VideoPlayerApp() {
             {/* Buttons row */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
               <AnimatedPressable onPress={toggleMute} scaleValue={0.85} haptic="light">
-                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.glassBorder }}>
+                <View style={{ width: 44, height: 44, borderRadius: radius.full, backgroundColor: colors.inputBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.glassBorder }}>
                   {isMuted
                     ? <SpeakerSlash color={colors.textMuted} size={18} />
                     : <SpeakerHigh color={colors.text} size={18} />}
@@ -240,15 +240,15 @@ export default function VideoPlayerApp() {
               </AnimatedPressable>
 
               <AnimatedPressable onPress={togglePlay} scaleValue={0.9} haptic="medium">
-                <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+                <View style={{ width: 64, height: 64, borderRadius: radius.full, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
                   {isPlaying
-                    ? <Pause color="#fff" size={26} weight="fill" />
-                    : <Play color="#fff" size={26} weight="fill" />}
+                    ? <Pause color={colors.bgPure} size={26} weight="fill" />
+                    : <Play color={colors.bgPure} size={26} weight="fill" />}
                 </View>
               </AnimatedPressable>
 
               <AnimatedPressable onPress={() => showToast('Use pinch to zoom', 'Zoom')} scaleValue={0.85} haptic="light">
-                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.glassBorder }}>
+                <View style={{ width: 44, height: 44, borderRadius: radius.full, backgroundColor: colors.inputBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.glassBorder }}>
                   <CornersOut color={colors.text} size={18} />
                 </View>
               </AnimatedPressable>

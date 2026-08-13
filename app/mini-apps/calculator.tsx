@@ -105,6 +105,7 @@ function CalcKey({
   gap: number;
   onPress: () => void;
 }) {
+  const { radius } = useTheme();
   const isOperator = item.kind === 'operator';
   const isEquals = item.kind === 'equals';
   const isUtility = item.kind === 'utility';
@@ -112,11 +113,11 @@ function CalcKey({
   const fill = isEquals
     ? accent
     : isOperator
-      ? `${accent}E6`
+      ? accent
       : isUtility
-        ? colors.isDark ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.08)'
-        : colors.isDark ? 'rgba(255,255,255,0.075)' : 'rgba(255,255,255,0.62)';
-  const textColor = isOperator || isEquals ? '#fff' : colors.text;
+        ? colors.glassHeavyFill
+        : colors.glassLightFill;
+  const textColor = isOperator || isEquals ? colors.bg : colors.text;
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -128,17 +129,13 @@ function CalcKey({
       <View
         style={{
           flex: 1,
-          borderRadius: 20,
+          borderRadius: radius.xl,
           alignItems: item.wide ? 'flex-start' : 'center',
           justifyContent: 'center',
           paddingLeft: item.wide ? 24 : 0,
           backgroundColor: fill,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: isOperator || isEquals ? 'transparent' : colors.glassBorder,
-          shadowColor: isOperator || isEquals ? accent : '#000',
-          shadowOpacity: isOperator || isEquals ? 0.28 : colors.isDark ? 0.10 : 0.06,
-          shadowRadius: isOperator || isEquals ? 14 : 8,
-          shadowOffset: { width: 0, height: 4 },
         }}
       >
         {item.action === 'backspace' ? (
@@ -154,17 +151,18 @@ function CalcKey({
 }
 
 function ScienceKey({ item, active, accent, colors, onPress }: { item: KeySpec; active: boolean; accent: string; colors: any; onPress: () => void }) {
+  const { radius } = useTheme();
   return (
     <AnimatedPressable onPress={onPress} scaleValue={0.94} haptic="light" style={{ flex: 1, minWidth: 42 }}>
       <View
         style={{
           height: 40,
-          borderRadius: 14,
+          borderRadius: radius.card,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: active ? `${accent}24` : colors.surface,
+          backgroundColor: active ? colors.accentMuted : colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: active ? `${accent}70` : colors.glassBorder,
+          borderColor: active ? accent : colors.glassBorder,
         }}
       >
         <Text style={{ color: active ? accent : colors.textSecondary, fontSize: 12.5, fontWeight: '900' }}>{item.label}</Text>
@@ -174,7 +172,7 @@ function ScienceKey({ item, active, accent, colors, onPress }: { item: KeySpec; 
 }
 
 export default function CalculatorScreen() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const layout = useResponsiveLayout();
   const insets = useSafeAreaInsets();
   const accent = colors.accent;
@@ -297,11 +295,11 @@ export default function CalculatorScreen() {
 
   const HeaderActions = (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <AnimatedPressable onPress={copyResult} haptic="light" style={{ width: 38, height: 38, borderRadius: 13, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+      <AnimatedPressable onPress={copyResult} haptic="light" style={{ width: 38, height: 38, borderRadius: radius.md, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
         <Copy color={colors.textSecondary} size={17} weight="bold" />
       </AnimatedPressable>
-      <AnimatedPressable onPress={shareCalculation} haptic="light" style={{ width: 38, height: 38, borderRadius: 13, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
-        <ShareNetwork color="#fff" size={17} weight="bold" />
+      <AnimatedPressable onPress={shareCalculation} haptic="light" style={{ width: 38, height: 38, borderRadius: radius.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
+        <ShareNetwork color={colors.bg} size={17} weight="bold" />
       </AnimatedPressable>
     </View>
   );
@@ -324,13 +322,13 @@ export default function CalculatorScreen() {
         <View style={{ width: panelWidth, maxWidth: '100%' }}>
           <GlassPanel
             variant="medium"
-            borderRadius={24}
+            borderRadius={radius.xl}
             elevated
             contentStyle={{ padding: 16, justifyContent: 'space-between' }}
-            style={{ marginBottom: 12, borderColor: `${accent}3D`, minHeight: displayHeight }}
+            style={{ marginBottom: 12, borderColor: colors.glassBorder, minHeight: displayHeight }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 34, height: 34, borderRadius: radius.md, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
                 <FunctionIcon color={accent} size={17} weight="bold" />
               </View>
               <View style={{ flex: 1 }}>
@@ -339,7 +337,7 @@ export default function CalculatorScreen() {
                   {history.length ? `${history.length} recent calculations` : 'Tap numbers to start'}
                 </Text>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5, backgroundColor: colors.surface }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: radius.full, paddingHorizontal: 9, paddingVertical: 5, backgroundColor: colors.surface }}>
                 <ClockCounterClockwise color={colors.textMuted} size={13} weight="bold" />
                 <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900' }}>{history.length}</Text>
               </View>
@@ -377,7 +375,7 @@ export default function CalculatorScreen() {
                     }}
                     haptic="light"
                   >
-                    <View style={{ maxWidth: 154, borderRadius: 13, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+                    <View style={{ maxWidth: 154, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
                       <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700' }} numberOfLines={1}>{item.expression}</Text>
                       <Text style={{ color: accent, fontSize: 13, fontWeight: '900', marginTop: 2 }} numberOfLines={1}>{item.result}</Text>
                     </View>

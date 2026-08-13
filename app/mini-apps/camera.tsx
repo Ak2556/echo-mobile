@@ -23,7 +23,6 @@ import { ttx } from '../../lib/i18n';
 type Mode = CameraCaptureType;
 type CaptureIntent = 'proof' | 'progress' | 'listing' | 'document';
 
-const VIDEO_COLOR = '#EF4444';
 const INTENTS: { key: CaptureIntent; label: string; detail: string; icon: any }[] = [
   { key: 'proof', label: 'Proof', detail: 'Evidence', icon: SealCheck },
   { key: 'progress', label: 'Progress', detail: 'Before/after', icon: Stack },
@@ -32,7 +31,7 @@ const INTENTS: { key: CaptureIntent; label: string; detail: string; icon: any }[
 ];
 
 function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; accent: string; onChange: (v: CaptureIntent) => void }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 9 }}>
@@ -51,19 +50,19 @@ function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; 
               style={{
                 width: '48.5%',
                 minHeight: 62,
-                borderRadius: 17,
+                borderRadius: radius.xl,
                 paddingHorizontal: 12,
                 justifyContent: 'center',
                 backgroundColor: active ? accent : colors.surface,
                 borderWidth: 1,
-                borderColor: active ? `${accent}AA` : colors.glassBorder,
+                borderColor: active ? accent : colors.glassBorder,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Icon color={active ? '#fff' : accent} size={17} weight="bold" />
+                <Icon color={active ? colors.bg : accent} size={17} weight="bold" />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ color: active ? '#fff' : colors.text, fontSize: 14, fontWeight: '900' }}>{intent.label}</Text>
-                  <Text style={{ color: active ? 'rgba(255,255,255,0.76)' : colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{intent.detail}</Text>
+                  <Text style={{ color: active ? colors.bg : colors.text, fontSize: 14, fontWeight: '900' }}>{intent.label}</Text>
+                  <Text style={{ color: active ? colors.bg : colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{intent.detail}</Text>
                 </View>
               </View>
             </AnimatedPressable>
@@ -75,7 +74,7 @@ function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; 
 }
 
 function CaptureReadiness({ accent, mode, intent, captured }: { accent: string; mode: Mode; intent: CaptureIntent; captured: CameraCapture[] }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const synced = captured.filter(c => c.storagePath).length;
   const currentIntent = captured.filter(c => c.intent === intent).length;
   const chips = [
@@ -85,9 +84,9 @@ function CaptureReadiness({ accent, mode, intent, captured }: { accent: string; 
     { label: 'Set', value: `${currentIntent}` },
   ];
   return (
-    <GlassPanel variant="light" borderRadius={20} contentStyle={{ padding: 15, gap: 12 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+    <GlassPanel variant="light" borderRadius={radius.xl} contentStyle={{ padding: 15, gap: 12 }} style={{ marginBottom: 14, borderColor: colors.glassBorder }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 42, height: 42, borderRadius: radius.card, backgroundColor: colors.surfaceHover, alignItems: 'center', justifyContent: 'center' }}>
           <ImageSquare color={accent} size={21} weight="fill" />
         </View>
         <View style={{ flex: 1 }}>
@@ -97,7 +96,7 @@ function CaptureReadiness({ accent, mode, intent, captured }: { accent: string; 
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {chips.map(chip => (
-          <View key={chip.label} style={{ flex: 1, minHeight: 52, borderRadius: 15, padding: 9, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View key={chip.label} style={{ flex: 1, minHeight: 52, borderRadius: radius.card, padding: 9, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '900', textTransform: 'uppercase' }}>{chip.label}</Text>
             <Text style={{ color: chip.label === 'Intent' ? accent : colors.text, fontSize: 13.5, fontWeight: '900', marginTop: 6 }} numberOfLines={1}>{chip.value}</Text>
           </View>
@@ -108,8 +107,9 @@ function CaptureReadiness({ accent, mode, intent, captured }: { accent: string; 
 }
 
 export default function CameraApp() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const accent = colors.accent;
+  const videoColor = colors.danger;
   const [mode, setMode] = useState<Mode>('photo');
   const [intent, setIntent] = useState<CaptureIntent>('proof');
   const [captured, setCaptured] = useState<CameraCapture[]>([]);
@@ -119,7 +119,7 @@ export default function CameraApp() {
 
   const captureStyle = useAnimatedStyle(() => ({ transform: [{ scale: captureScale.value }] }));
 
-  const ACCENT = mode === 'photo' ? accent : VIDEO_COLOR;
+  const ACCENT = mode === 'photo' ? accent : videoColor;
 
   useEffect(() => {
     loadCameraCaptures().then(setCaptured).catch(() => setCaptured([]));
@@ -204,7 +204,7 @@ export default function CameraApp() {
 
   const GalleryBtn = (
     <AnimatedPressable onPress={launchGallery} scaleValue={0.9} haptic="light"
-      style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 10 }}>
+      style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover, borderRadius: radius.md }}>
       <CameraPlus color={colors.textMuted} size={20} />
     </AnimatedPressable>
   );
@@ -228,12 +228,12 @@ export default function CameraApp() {
       <Animated.View
         entering={FadeInDown.duration(220)}
         style={{
-          borderRadius: 28,
+          borderRadius: radius.xl,
           overflow: 'hidden',
           aspectRatio: 3 / 4,
-          backgroundColor: colors.isDark ? '#0D0D0D' : '#1A1A1A',
+          backgroundColor: colors.bg,
           borderWidth: 1.5,
-          borderColor: ACCENT + '44',
+          borderColor: colors.glassBorder,
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: 14,
@@ -251,28 +251,28 @@ export default function CameraApp() {
             borderLeftWidth: h === 'left' ? 2.5 : 0,
             borderRightWidth: h === 'right' ? 2.5 : 0,
             borderColor: ACCENT,
-            borderTopLeftRadius: v === 'top' && h === 'left' ? 6 : 0,
-            borderTopRightRadius: v === 'top' && h === 'right' ? 6 : 0,
-            borderBottomLeftRadius: v === 'bottom' && h === 'left' ? 6 : 0,
-            borderBottomRightRadius: v === 'bottom' && h === 'right' ? 6 : 0,
+            borderTopLeftRadius: v === 'top' && h === 'left' ? radius.sm : 0,
+            borderTopRightRadius: v === 'top' && h === 'right' ? radius.sm : 0,
+            borderBottomLeftRadius: v === 'bottom' && h === 'left' ? radius.sm : 0,
+            borderBottomRightRadius: v === 'bottom' && h === 'right' ? radius.sm : 0,
           }} />
         ))}
 
         {/* Grid lines */}
-        <View style={{ position: 'absolute', left: '33%', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(255,255,255,0.04)' }} />
-        <View style={{ position: 'absolute', left: '66%', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(255,255,255,0.04)' }} />
-        <View style={{ position: 'absolute', top: '33%', left: 0, right: 0, height: 1, backgroundColor: 'rgba(255,255,255,0.04)' }} />
-        <View style={{ position: 'absolute', top: '66%', left: 0, right: 0, height: 1, backgroundColor: 'rgba(255,255,255,0.04)' }} />
+        <View style={{ position: 'absolute', left: '33%', top: 0, bottom: 0, width: 1, backgroundColor: colors.glassBorder }} />
+        <View style={{ position: 'absolute', left: '66%', top: 0, bottom: 0, width: 1, backgroundColor: colors.glassBorder }} />
+        <View style={{ position: 'absolute', top: '33%', left: 0, right: 0, height: 1, backgroundColor: colors.glassBorder }} />
+        <View style={{ position: 'absolute', top: '66%', left: 0, right: 0, height: 1, backgroundColor: colors.glassBorder }} />
 
         {/* Center icon */}
         <View style={{ alignItems: 'center', gap: 16 }}>
           {mode === 'photo'
             ? <Camera color={ACCENT} size={72} weight="duotone" />
             : <VideoCamera color={ACCENT} size={72} weight="duotone" />}
-          <Text style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 40 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 40 }}>
             {mode === 'photo' ? 'Tap the capture button to\ntake a photo' : 'Tap the capture button to\nstart recording'}
           </Text>
-          <View style={{ marginTop: 2, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: ACCENT + '22', borderWidth: 1, borderColor: ACCENT + '44' }}>
+          <View style={{ marginTop: 2, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.surfaceHover, borderWidth: 1, borderColor: colors.glassBorder }}>
             <Text style={{ color: ACCENT, fontSize: 11, fontWeight: '900' }}>{INTENTS.find(i => i.key === intent)?.label}</Text>
           </View>
         </View>
@@ -281,38 +281,38 @@ export default function CameraApp() {
         <View style={{
           position: 'absolute', top: 16, left: 16,
           flexDirection: 'row', alignItems: 'center', gap: 6,
-          backgroundColor: ACCENT + '22',
-          borderRadius: 8, borderWidth: 1, borderColor: ACCENT + '44',
+          backgroundColor: colors.surfaceHover,
+          borderRadius: radius.sm, borderWidth: 1, borderColor: colors.glassBorder,
           paddingHorizontal: 10, paddingVertical: 4,
         }}>
-          {mode === 'video' && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: VIDEO_COLOR }} />}
+          {mode === 'video' && <View style={{ width: 8, height: 8, borderRadius: radius.sm, backgroundColor: videoColor }} />}
           <Text style={{ color: ACCENT, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>
             {mode === 'photo' ? 'PHOTO' : 'VIDEO'}
           </Text>
         </View>
 
         <View style={{ position: 'absolute', top: 16, right: 16 }}>
-          <CameraRotate color="rgba(255,255,255,0.25)" size={20} />
+          <CameraRotate color={colors.textMuted} size={20} />
         </View>
       </Animated.View>
 
       {/* Mode switcher */}
-      <GlassPanel variant="light" borderRadius={16} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', padding: 4 }} style={{ marginBottom: 14 }}>
         {(['photo', 'video'] as Mode[]).map(m => (
           <Pressable
             key={m}
             onPress={() => setMode(m)}
             style={{
-              flex: 1, paddingVertical: 12, borderRadius: 12,
+              flex: 1, paddingVertical: 12, borderRadius: radius.md,
               alignItems: 'center', justifyContent: 'center',
               flexDirection: 'row', gap: 8,
-              backgroundColor: mode === m ? (m === 'photo' ? accent : VIDEO_COLOR) : 'transparent',
+              backgroundColor: mode === m ? (m === 'photo' ? accent : videoColor) : 'transparent',
             }}
           >
             {m === 'photo'
-              ? <Camera color={mode === m ? '#fff' : colors.textMuted} size={16} weight="fill" />
-              : <VideoCamera color={mode === m ? '#fff' : colors.textMuted} size={16} weight="fill" />}
-            <Text style={{ color: mode === m ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>
+              ? <Camera color={mode === m ? colors.bg : colors.textMuted} size={16} weight="fill" />
+              : <VideoCamera color={mode === m ? colors.bg : colors.textMuted} size={16} weight="fill" />}
+            <Text style={{ color: mode === m ? colors.bg : colors.textMuted, fontWeight: '700', fontSize: 14, textTransform: 'capitalize' }}>
               {m}
             </Text>
           </Pressable>
@@ -328,20 +328,18 @@ export default function CameraApp() {
           haptic="heavy"
           style={{
             backgroundColor: ACCENT,
-            borderRadius: 20, paddingVertical: 20,
+            borderRadius: radius.xl, paddingVertical: 20,
             alignItems: 'center', justifyContent: 'center',
             flexDirection: 'row', gap: 10,
-            shadowColor: ACCENT, shadowOpacity: 0.45,
-            shadowRadius: 16, shadowOffset: { width: 0, height: 6 },
             opacity: loading ? 0.7 : 1,
           }}
         >
           {loading
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={colors.bg} />
             : mode === 'photo'
-              ? <Camera color="#fff" size={22} weight="fill" />
-              : <VideoCamera color="#fff" size={22} weight="fill" />}
-          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 17 }}>
+              ? <Camera color={colors.bg} size={22} weight="fill" />
+              : <VideoCamera color={colors.bg} size={22} weight="fill" />}
+          <Text style={{ color: colors.bg, fontWeight: '800', fontSize: 17 }}>
             {loading ? 'Opening camera…' : mode === 'photo' ? 'Capture Photo' : 'Record Video'}
           </Text>
         </AnimatedPressable>
@@ -377,32 +375,32 @@ export default function CameraApp() {
 
           {/* Full preview of selected */}
           {selected && (
-            <Animated.View entering={ZoomIn.duration(220)} style={{ marginBottom: 14, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
-              <Image source={{ uri: selected.uri }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 20 }} resizeMode="cover" />
+            <Animated.View entering={ZoomIn.duration(220)} style={{ marginBottom: 14, borderRadius: radius.xl, overflow: 'hidden', position: 'relative' }}>
+              <Image source={{ uri: selected.uri }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: radius.xl }} resizeMode="cover" />
               <View style={{ position: 'absolute', left: 12, bottom: 12, right: 12, flexDirection: 'row', gap: 8 }}>
-                <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(0,0,0,0.58)' }}>
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>{selected.intent ? selected.intent[0].toUpperCase() + selected.intent.slice(1) : 'Capture'}</Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: '700', marginTop: 2 }}>
+                <View style={{ flex: 1, borderRadius: radius.card, padding: 10, backgroundColor: colors.surfaceHover }}>
+                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900' }}>{selected.intent ? selected.intent[0].toUpperCase() + selected.intent.slice(1) : 'Capture'}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
                     {selected.width && selected.height ? `${selected.width} x ${selected.height}` : selected.type}
                   </Text>
                 </View>
-                <View style={{ borderRadius: 14, paddingHorizontal: 12, justifyContent: 'center', backgroundColor: selected.storagePath ? 'rgba(34,197,94,0.26)' : 'rgba(255,255,255,0.14)' }}>
-                  <Text style={{ color: selected.storagePath ? '#86EFAC' : '#fff', fontSize: 11, fontWeight: '900' }}>{selected.storagePath ? 'SYNCED' : 'LOCAL'}</Text>
+                <View style={{ borderRadius: radius.card, paddingHorizontal: 12, justifyContent: 'center', backgroundColor: selected.storagePath ? colors.accentMuted : colors.surfaceHover }}>
+                  <Text style={{ color: selected.storagePath ? colors.success : colors.text, fontSize: 11, fontWeight: '900' }}>{selected.storagePath ? 'SYNCED' : 'LOCAL'}</Text>
                 </View>
               </View>
               {selected.type === 'video' && (
                 <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
-                  <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 40, padding: 16 }}>
-                    <VideoCamera color="#fff" size={32} weight="fill" />
+                  <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.full, padding: 16 }}>
+                    <VideoCamera color={colors.text} size={32} weight="fill" />
                   </View>
                 </View>
               )}
               <AnimatedPressable
                 onPress={() => setSelected(null)}
                 scaleValue={0.9} haptic="light"
-                style={{ position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 20, padding: 8 }}
+                style={{ position: 'absolute', top: 12, right: 12, backgroundColor: colors.surfaceHover, borderRadius: radius.xl, padding: 8 }}
               >
-                <X color="#fff" size={16} />
+                <X color={colors.text} size={16} />
               </AnimatedPressable>
             </Animated.View>
           )}
@@ -413,23 +411,23 @@ export default function CameraApp() {
                 <Pressable
                   onPress={() => setSelected(selected?.uri === item.uri ? null : item)}
                   style={{
-                    width: 80, height: 80, borderRadius: 14, overflow: 'hidden',
+                    width: 80, height: 80, borderRadius: radius.card, overflow: 'hidden',
                     borderWidth: 2.5,
-                    borderColor: selected?.uri === item.uri ? ACCENT : (item.type === 'photo' ? accent + '33' : VIDEO_COLOR + '33'),
+                    borderColor: selected?.uri === item.uri ? ACCENT : colors.glassBorder,
                   }}
                 >
                   <Image source={{ uri: item.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                   {item.type === 'video' && (
-                    <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' }}>
-                      <VideoCamera color="#fff" size={18} weight="fill" />
+                    <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHover }}>
+                      <VideoCamera color={colors.text} size={18} weight="fill" />
                     </View>
                   )}
                   <AnimatedPressable
                     onPress={() => deleteItem(i)}
                     scaleValue={0.85} haptic="light"
-                    style={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 10, padding: 3 }}
+                    style={{ position: 'absolute', top: 4, right: 4, backgroundColor: colors.surfaceHover, borderRadius: radius.md, padding: 3 }}
                   >
-                    <Trash color="#EF4444" size={12} weight="fill" />
+                    <Trash color={colors.danger} size={12} weight="fill" />
                   </AnimatedPressable>
                 </Pressable>
               </Animated.View>
@@ -440,3 +438,4 @@ export default function CameraApp() {
     </MiniAppShell>
   );
 }
+

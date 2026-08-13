@@ -37,7 +37,7 @@ export function EdgeFeaturePanel({
   publishTitle,
   publishBody,
 }: EdgeFeaturePanelProps) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const router = useRouter();
   const snapshot = miniAppSnapshotText({ appName, headline, caption, metrics, shareText });
 
@@ -102,7 +102,7 @@ export function EdgeFeaturePanel({
   return (
     <GlassPanel
       variant="medium"
-      borderRadius={18}
+      borderRadius={radius.card}
       style={{ borderColor: `${accent}30`, marginBottom: 14 }}
       contentStyle={{ padding: 10, gap: 8 }}
     >
@@ -118,16 +118,16 @@ export function EdgeFeaturePanel({
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,
-          borderRadius: 14,
+          borderRadius: radius.lg,
           paddingHorizontal: 14,
           paddingVertical: 13,
           backgroundColor: accent,
         }}>
-          <ChatCircleText color="#fff" size={17} weight="fill" />
-          <Text style={[font.bodyBold, { color: '#fff', fontSize: 14.5, flex: 1 }]} numberOfLines={1}>
+          <ChatCircleText color={colors.bgPure} size={17} weight="fill" />
+          <Text style={[font.bodyBold, { color: colors.bgPure, fontSize: 14.5, flex: 1 }]} numberOfLines={1}>
             {loading ? `Reading your ${appName.toLowerCase()}…` : `Ask Echo about ${appName}`}
           </Text>
-          {loading ? <ActivityIndicator color="#fff" size="small" /> : <ArrowUpRight color="#fff" size={15} weight="bold" />}
+          {loading ? <ActivityIndicator color={colors.bgPure} size="small" /> : <ArrowUpRight color={colors.bgPure} size={15} weight="bold" />}
         </View>
       </AnimatedPressable>
 
@@ -148,7 +148,7 @@ export function EdgeFeaturePanel({
                 alignItems: 'center',
                 gap: 6,
                 paddingVertical: 10,
-                borderRadius: 12,
+                borderRadius: radius.md,
                 backgroundColor: colors.surface,
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: colors.glassBorder,
@@ -164,10 +164,10 @@ export function EdgeFeaturePanel({
       {/* Coaching result — grounded in the user's real numbers. */}
       <Modal visible={!!coaching} transparent animationType="fade" onRequestClose={() => setCoaching(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }} onPress={() => setCoaching(null)}>
-          <Pressable style={{ backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, paddingBottom: 40 }} onPress={() => {}}>
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 18 }} />
+          <Pressable style={{ backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 22, paddingBottom: 40 }} onPress={() => {}}>
+            <View style={{ width: 36, height: 4, borderRadius: radius.sm, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 18 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 12 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 34, height: 34, borderRadius: radius.md, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
                 <Sparkle color={accent} size={18} weight="fill" />
               </View>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>{ttx("Echo on your")} {appName.toLowerCase()}</Text>
@@ -175,9 +175,9 @@ export function EdgeFeaturePanel({
             </View>
             <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, lineHeight: 22 }]}>{coaching}</Text>
             <AnimatedPressable onPress={() => { setCoaching(null); openEcho(); }} haptic="light" accessibilityRole="button" accessibilityLabel={ttx("Continue in chat")}>
-              <View style={{ marginTop: 18, borderRadius: 14, paddingVertical: 13, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: accent }}>
-                <ChatCircleText color="#fff" size={16} weight="fill" />
-                <Text style={[font.bodyBold, { color: '#fff', fontSize: 14 }]}>{ttx("Continue in chat")}</Text>
+              <View style={{ marginTop: 18, borderRadius: radius.lg, paddingVertical: 13, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: accent }}>
+                <ChatCircleText color={colors.bgPure} size={16} weight="fill" />
+                <Text style={[font.bodyBold, { color: colors.bgPure, fontSize: 14 }]}>{ttx("Continue in chat")}</Text>
               </View>
             </AnimatedPressable>
           </Pressable>

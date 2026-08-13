@@ -125,15 +125,15 @@ function Bubble() {
         accessibilityHint={t('voice.holdToTalk')}
       >
         {listening
-          ? <Microphone color="#fff" size={24} weight="fill" />
-          : meta ? <MiniAppGlyph id={meta.id} color="#fff" size={24} /> : <Sparkle color="#fff" size={24} weight="fill" />}
+          ? <Microphone color={colors.bgPure} size={24} weight="fill" />
+          : meta ? <MiniAppGlyph id={meta.id} color={colors.bgPure} size={24} /> : <Sparkle color={colors.bgPure} size={24} weight="fill" />}
       </Animated.View>
     </GestureDetector>
   );
 }
 
 function Panel() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
@@ -164,7 +164,7 @@ function Panel() {
       style={[{
         position: 'absolute', left: sideInset, right: sideInset, bottom: 0, height: panelHeight,
         backgroundColor: colors.bg,
-        borderTopLeftRadius: 24, borderTopRightRadius: 24,
+        borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
         borderWidth: 1, borderColor: colors.glassBorder, borderBottomWidth: 0,
         shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -6 }, elevation: 16,
         overflow: 'hidden',
@@ -181,7 +181,7 @@ function Panel() {
       {/* Header — drag the grip to minimize; switch apps / close on the right. */}
       <GestureDetector gesture={pan}>
         <View style={{ paddingTop: 8, paddingHorizontal: 14, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}>
-          <View style={{ alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: colors.textMuted, opacity: 0.5, marginBottom: 8 }} />
+          <View style={{ alignSelf: 'center', width: 38, height: 4, borderRadius: radius.sm, backgroundColor: colors.textMuted, opacity: 0.5, marginBottom: 8 }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
             {meta
               ? <MiniAppIcon id={meta.id} color={brand} size={28} />
@@ -214,7 +214,7 @@ function Panel() {
 }
 
 function Picker({ onPick }: { onPick: (id: string) => void }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const { t } = useI18n();
   const [agent, ...tools] = FLOATING_APPS;
   const agentColor = CATALOG_BY_ID.get(agent.id)?.color ?? agent.color ?? colors.accent;
@@ -225,7 +225,7 @@ function Picker({ onPick }: { onPick: (id: string) => void }) {
         accessibilityRole="button"
         accessibilityLabel={`${t('common.open')} ${t('mini.echoAi')}`}
         style={({ pressed }) => ({
-          borderRadius: 24,
+          borderRadius: radius.card,
           padding: 14,
           marginBottom: 16,
           borderWidth: 1,
@@ -244,7 +244,7 @@ function Picker({ onPick }: { onPick: (id: string) => void }) {
           colors={[agentColor + '2A', agentColor + '08', 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 24 }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius.card }}
           pointerEvents="none"
         />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -261,13 +261,13 @@ function Picker({ onPick }: { onPick: (id: string) => void }) {
             style={{
               paddingHorizontal: 14,
               height: 38,
-              borderRadius: 19,
+              borderRadius: radius.full,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: agentColor,
             }}
           >
-            <Text style={[font.bodySemibold, { color: '#fff', fontSize: 13 }]}>{t('common.start')}</Text>
+            <Text style={[font.bodySemibold, { color: colors.bgPure, fontSize: 13 }]}>{t('common.start')}</Text>
           </View>
         </View>
       </Pressable>

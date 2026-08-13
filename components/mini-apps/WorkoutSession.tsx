@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import { Check, SkipForward, Trophy, X } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
+import { tap } from '../../lib/haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { ExerciseDemo } from './ExerciseDemo';
 import { EXERCISES, EXERCISE_CATALOG } from '../../lib/exerciseLibrary';
@@ -13,8 +13,6 @@ import {
   bestLiftFor, detectPRs, lastLiftFor, workoutVolume,
 } from '../../lib/fitness';
 import { ttx } from '../../lib/i18n';
-
-const TEAL = '#14B8A6';
 
 interface ExerciseState {
   weight: string;
@@ -40,7 +38,8 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
   onFinish: (workout: Workout, prs: { name: string; weight: number; reps: number }[]) => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
+  const TEAL = colors.accent;
   const insets = useSafeAreaInsets();
 
   const [exIndex, setExIndex] = useState(0);
@@ -98,7 +97,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
       setRestLeft(prev => {
         if (prev === null || prev <= 1) {
           stopRest();
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          tap('success');
           return null;
         }
         return prev - 1;
@@ -113,7 +112,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
 
   const completeSet = () => {
     if (allSetsDone) return;
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    tap('medium');
     const nextDone = state.setsDone + 1;
     setStates(prev => prev.map((s, i) => (i === exIndex ? { ...s, setsDone: nextDone } : s)));
     const lastSetOfLastExercise = isLastExercise && nextDone >= exercise.sets;
@@ -149,7 +148,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
       date: new Date().toISOString(),
     };
     const prs = detectPRs(history, workout);
-    if (prs.length) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (prs.length) tap('success');
     setSummary({ workout, prs });
   };
 
@@ -185,7 +184,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
                 { label: 'SETS', value: String(totalSets) },
                 { label: 'VOLUME', value: `${vol.toLocaleString()} kg` },
               ].map(stat => (
-                <View key={stat.label} style={{ flex: 1, backgroundColor: TEAL + '14', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: TEAL + '2A' }}>
+                <View key={stat.label} style={{ flex: 1, backgroundColor: TEAL + '14', borderRadius: radius.lg, padding: 12, borderWidth: 1, borderColor: TEAL + '2A' }}>
                   <Text style={{ color: TEAL, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.8 }}>{stat.label}</Text>
                   <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 3 }}>{stat.value}</Text>
                 </View>
@@ -193,8 +192,8 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
             </View>
 
             {summary.prs.map(pr => (
-              <View key={pr.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#B0853618', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#B0853640' }}>
-                <Trophy color="#B08536" size={20} weight="fill" />
+              <View key={pr.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.accentMuted, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.accent + '40' }}>
+                <Trophy color={colors.accent} size={20} weight="fill" />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800' }}>{pr.name}</Text>
                   <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>{ttx("New best —")} {pr.weight} {ttx("kg ×")} {pr.reps}</Text>
@@ -205,9 +204,9 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
             <AnimatedPressable
               onPress={() => onFinish(summary.workout, summary.prs)}
               scaleValue={0.96} haptic="medium"
-              style={{ backgroundColor: TEAL, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 8 }}
+              style={{ backgroundColor: TEAL, borderRadius: radius.card, paddingVertical: 16, alignItems: 'center', marginTop: 8 }}
             >
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{ttx("Save workout")}</Text>
+              <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 16 }}>{ttx("Save workout")}</Text>
             </AnimatedPressable>
           </ScrollView>
         </View>
@@ -234,7 +233,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
 
         <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: insets.bottom + 28, gap: 16 }} keyboardShouldPersistTaps="handled">
           {/* Current exercise */}
-          <View style={{ borderRadius: 24, backgroundColor: colors.surface, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: TEAL + '44' }}>
+          <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: TEAL + '44' }}>
             <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>
               {exercise.name}
             </Text>
@@ -245,7 +244,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
             ) : null}
 
             {demo ? (
-              <View style={{ alignItems: 'center', backgroundColor: TEAL + '0E', borderRadius: 16, paddingVertical: 6, marginTop: 12 }}>
+              <View style={{ alignItems: 'center', backgroundColor: TEAL + '0E', borderRadius: radius.lg, paddingVertical: 6, marginTop: 12 }}>
                 <ExerciseDemo exercise={demo} color={TEAL} muted={colors.textMuted} size={120} />
               </View>
             ) : null}
@@ -269,8 +268,8 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
                     keyboardType="decimal-pad"
                     style={{
                       color: colors.text, fontSize: 22, fontWeight: '800', textAlign: 'center',
-                      backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                      borderRadius: 14, paddingVertical: 12,
+                      backgroundColor: colors.inputBg,
+                      borderRadius: radius.lg, paddingVertical: 12,
                       borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
                     }}
                   />
@@ -284,13 +283,13 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
                 const done = i < state.setsDone;
                 return (
                   <View key={i} style={{
-                    width: 40, height: 40, borderRadius: 20,
+                    width: 40, height: 40, borderRadius: radius.full,
                     alignItems: 'center', justifyContent: 'center',
                     backgroundColor: done ? TEAL : 'transparent',
                     borderWidth: 2, borderColor: done ? TEAL : colors.glassBorder,
                   }}>
                     {done
-                      ? <Check color="#fff" size={17} weight="bold" />
+                      ? <Check color={colors.bgPure} size={17} weight="bold" />
                       : <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '700' }}>{i + 1}</Text>}
                   </View>
                 );
@@ -300,7 +299,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
 
           {/* Rest countdown */}
           {restLeft !== null ? (
-            <View style={{ borderRadius: 20, backgroundColor: TEAL + '14', borderWidth: 1, borderColor: TEAL + '33', padding: 18, alignItems: 'center', gap: 6 }}>
+            <View style={{ borderRadius: radius.card, backgroundColor: TEAL + '14', borderWidth: 1, borderColor: TEAL + '33', padding: 18, alignItems: 'center', gap: 6 }}>
               <Text style={{ color: TEAL, fontSize: 11, fontWeight: '700', letterSpacing: 1.2 }}>{ttx("REST")}</Text>
               <Text style={{ color: colors.text, fontSize: 44, fontFamily: 'Fraunces_600SemiBold', fontVariant: ['tabular-nums'] }}>
                 {fmtClock(restLeft)}
@@ -314,9 +313,9 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
             <AnimatedPressable
               onPress={allSetsDone ? (isLastExercise ? finish : nextExercise) : completeSet}
               scaleValue={0.96} haptic="medium"
-              style={{ backgroundColor: TEAL, borderRadius: 18, paddingVertical: 18, alignItems: 'center' }}
+              style={{ backgroundColor: TEAL, borderRadius: radius.card, paddingVertical: 18, alignItems: 'center' }}
             >
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 17 }}>
+              <Text style={{ color: colors.bgPure, fontWeight: '800', fontSize: 17 }}>
                 {allSetsDone
                   ? (isLastExercise ? 'Finish workout' : 'Next exercise')
                   : `Complete set ${state.setsDone + 1}`}

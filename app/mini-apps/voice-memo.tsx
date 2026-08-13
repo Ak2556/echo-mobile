@@ -31,8 +31,6 @@ import { getMiniAppMediaUrl, uploadMiniAppMedia } from '../../lib/miniAppMedia';
 import { Memo, formatMemoDate, formatMemoTime, loadMemos, saveMemos } from '../../lib/voiceMemos';
 import { ttx } from '../../lib/i18n';
 
-const REC_COLOR = '#EF4444';
-
 async function playbackCandidates(memo: Memo): Promise<string[]> {
   const candidates: string[] = [];
   if (/^https?:\/\//i.test(memo.uri)) {
@@ -49,8 +47,9 @@ async function playbackCandidates(memo: Memo): Promise<string[]> {
 }
 
 export default function VoiceMemoApp() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const accent = colors.accent;
+  const REC_COLOR = colors.danger;
   const [memos, setMemos] = useState<Memo[]>([]);
   useEffect(() => { loadMemos().then(setMemos); }, []);
   useFocusEffect(
@@ -223,7 +222,7 @@ export default function VoiceMemoApp() {
       {/* Recording widget */}
       <GlassPanel
         variant="medium"
-        borderRadius={28}
+        borderRadius={radius.card}
         contentStyle={{ padding: 28, alignItems: 'center', gap: 20 }}
         style={{
           marginBottom: 20,
@@ -243,7 +242,7 @@ export default function VoiceMemoApp() {
                 <View style={{
                   width: 3,
                   height: isRecording ? heights[i % heights.length] : 8,
-                  borderRadius: 2,
+                  borderRadius: radius.sm,
                   backgroundColor: isRecording
                     ? (i % 3 === 0 ? REC_COLOR : i % 3 === 1 ? REC_COLOR + '99' : REC_COLOR + '55')
                     : colors.glassBorder,
@@ -268,7 +267,7 @@ export default function VoiceMemoApp() {
             scaleValue={0.92}
             haptic="heavy"
             style={{
-              width: 80, height: 80, borderRadius: 40,
+              width: 80, height: 80, borderRadius: radius.full,
               backgroundColor: isRecording ? REC_COLOR : accent,
               alignItems: 'center', justifyContent: 'center',
               shadowColor: isRecording ? REC_COLOR : accent,
@@ -277,8 +276,8 @@ export default function VoiceMemoApp() {
             }}
           >
             {isRecording
-              ? <Stop color="#fff" size={28} weight="fill" />
-              : <Microphone color="#fff" size={32} weight="fill" />}
+              ? <Stop color={colors.bgPure} size={28} weight="fill" />
+              : <Microphone color={colors.bgPure} size={32} weight="fill" />}
           </AnimatedPressable>
         </Animated.View>
 
@@ -316,7 +315,7 @@ export default function VoiceMemoApp() {
           <Animated.View key={memo.id} entering={FadeInDown.delay(i * 40).duration(220)} style={{ marginBottom: 10 }}>
             <GlassPanel
               variant="medium"
-              borderRadius={18}
+              borderRadius={radius.card}
               contentStyle={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 }}
               style={{ borderColor: playingId === memo.id ? accent + '44' : colors.glassBorder }}
             >
@@ -326,15 +325,15 @@ export default function VoiceMemoApp() {
                 scaleValue={0.88}
                 haptic="medium"
                 style={{
-                  width: 48, height: 48, borderRadius: 24,
-                  backgroundColor: playingId === memo.id ? accent : (colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                  width: 48, height: 48, borderRadius: radius.full,
+                  backgroundColor: playingId === memo.id ? accent : colors.inputBg,
                   alignItems: 'center', justifyContent: 'center',
                   borderWidth: 1.5,
                   borderColor: playingId === memo.id ? accent : colors.glassBorder,
                 }}
               >
                 {playingId === memo.id
-                  ? <Pause color="#fff" size={20} weight="fill" />
+                  ? <Pause color={colors.bgPure} size={20} weight="fill" />
                   : <Play color={accent} size={20} weight="fill" />}
               </AnimatedPressable>
 

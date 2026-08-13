@@ -53,7 +53,7 @@ function summarizeResult(name: string, result: any): string {
 }
 
 export default function FloatingEchoAgent() {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
   const currentSessionId = useAppStore(s => s.currentSessionId);
@@ -393,7 +393,7 @@ export default function FloatingEchoAgent() {
       >
         <View
           style={{
-            borderRadius: 22,
+            borderRadius: radius.card,
             borderWidth: 1,
             borderColor: colors.glassBorder,
             backgroundColor: colors.surface,
@@ -406,13 +406,13 @@ export default function FloatingEchoAgent() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 16,
+                borderRadius: radius.lg,
                 backgroundColor: colors.accent,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Sparkle color="#fff" size={21} weight="fill" />
+              <Sparkle color={colors.bgPure} size={21} weight="fill" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[font.display, { color: colors.text, fontSize: 22 }]}>{ttx("Echo AI")}</Text>
@@ -427,7 +427,7 @@ export default function FloatingEchoAgent() {
               style={({ pressed }) => ({
                 width: 42,
                 height: 42,
-                borderRadius: 21,
+                borderRadius: radius.full,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: colors.surfaceHover,
@@ -451,7 +451,7 @@ export default function FloatingEchoAgent() {
                   style={({ pressed }) => ({
                     paddingHorizontal: 12,
                     paddingVertical: 9,
-                    borderRadius: 999,
+                    borderRadius: radius.full,
                     backgroundColor: colors.accent + '18',
                     borderWidth: 1,
                     borderColor: colors.accent + '55',
@@ -510,7 +510,7 @@ export default function FloatingEchoAgent() {
                 gap: 6,
                 paddingHorizontal: 11,
                 paddingVertical: 8,
-                borderRadius: 999,
+                borderRadius: radius.full,
                 backgroundColor: colors.surface,
                 borderWidth: 1,
                 borderColor: colors.glassBorder,
@@ -529,7 +529,7 @@ export default function FloatingEchoAgent() {
                 gap: 6,
                 paddingHorizontal: 11,
                 paddingVertical: 8,
-                borderRadius: 999,
+                borderRadius: radius.full,
                 backgroundColor: colors.surface,
                 borderWidth: 1,
                 borderColor: colors.glassBorder,

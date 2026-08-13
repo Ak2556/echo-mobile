@@ -58,16 +58,16 @@ function JsonPulse({ accent, status, stats, inspection }: {
   stats: { keys: number; size: string } | null;
   inspection: { root: string; arrays: number; objects: number } | null;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const rows = [
     { label: 'Root', value: inspection?.root ?? '-' },
     { label: 'Objects', value: `${inspection?.objects ?? 0}` },
     { label: 'Arrays', value: `${inspection?.arrays ?? 0}` },
   ];
   return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: `${accent}20`, alignItems: 'center', justifyContent: 'center' }}>
           {status === 'Invalid' ? <Warning color={accent} size={20} weight="fill" /> : <CheckCircle color={accent} size={20} weight="fill" />}
         </View>
         <View style={{ flex: 1 }}>
@@ -77,7 +77,7 @@ function JsonPulse({ accent, status, stats, inspection }: {
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {rows.map(row => (
-          <View key={row.label} style={{ flex: 1, minHeight: 58, borderRadius: 15, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View key={row.label} style={{ flex: 1, minHeight: 58, borderRadius: radius.lg, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <Text style={{ color: accent, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>{row.value}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '900', textTransform: 'uppercase', marginTop: 5 }}>{row.label}</Text>
           </View>
@@ -88,7 +88,7 @@ function JsonPulse({ accent, status, stats, inspection }: {
 }
 
 export default function JsonFormatterScreen() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const accent = colors.accent;
 
   const [input, setInput] = useState('');
@@ -115,17 +115,17 @@ export default function JsonFormatterScreen() {
     <View style={{ flexDirection: 'row', gap: 8 }}>
       <Pressable
         onPress={() => setViewMode(v => v === 'formatted' ? 'minified' : 'formatted')}
-        style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, flexDirection: 'row', alignItems: 'center', gap: 5 }}
+        style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.md, backgroundColor: colors.inputBg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, flexDirection: 'row', alignItems: 'center', gap: 5 }}
       >
         {viewMode === 'formatted' ? <CornersIn color={colors.textMuted} size={15} weight="bold" /> : <CornersOut color={colors.textMuted} size={15} weight="bold" />}
         <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>{viewMode === 'formatted' ? 'Minify' : 'Format'}</Text>
       </Pressable>
       <Pressable
         onPress={copy}
-        style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: copied ? colors.success : accent, flexDirection: 'row', alignItems: 'center', gap: 5 }}
+        style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.md, backgroundColor: copied ? colors.success : accent, flexDirection: 'row', alignItems: 'center', gap: 5 }}
       >
-        {copied ? <Check color="#fff" size={15} weight="bold" /> : <Copy color="#fff" size={15} weight="bold" />}
-        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{copied ? 'Done!' : 'Copy'}</Text>
+        {copied ? <Check color={colors.bgPure} size={15} weight="bold" /> : <Copy color={colors.bgPure} size={15} weight="bold" />}
+        <Text style={{ color: colors.bgPure, fontSize: 12, fontWeight: '600' }}>{copied ? 'Done!' : 'Copy'}</Text>
       </Pressable>
     </View>
   ) : undefined;
@@ -161,14 +161,14 @@ export default function JsonFormatterScreen() {
             placeholder={'{\n  "key": "value"\n}'}
             placeholderTextColor={colors.textMuted}
             style={{
-              backgroundColor: '#0D1117', borderRadius: 18, borderWidth: 1.5,
+              backgroundColor: colors.inputBg, borderRadius: radius.card, borderWidth: 1.5,
               borderColor: error ? colors.danger : parsed ? colors.success : colors.glassBorder,
-              padding: 16, color: '#E2E8F0', fontSize: 13, fontFamily: 'monospace',
+              padding: 16, color: colors.text, fontSize: 13, fontFamily: 'monospace',
               height: 160, textAlignVertical: 'top', lineHeight: 20,
             }}
           />
           {error ? (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, padding: 12, backgroundColor: colors.danger + '18', borderRadius: 12, borderWidth: 1, borderColor: colors.danger + '33' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, padding: 12, backgroundColor: colors.danger + '18', borderRadius: radius.md, borderWidth: 1, borderColor: colors.danger + '33' }}>
               <Warning color={colors.danger} size={16} weight="fill" />
               <Text style={{ color: colors.danger, fontSize: 13, flex: 1, fontFamily: 'monospace' }}>{error}</Text>
             </View>
@@ -185,8 +185,8 @@ export default function JsonFormatterScreen() {
         {output ? (
           <View style={{ marginBottom: 14 }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("OUTPUT")}</Text>
-            <GlassPanel variant="medium" borderRadius={18}>
-              <ScrollView style={{ maxHeight: 360, backgroundColor: '#0D1117', borderRadius: 18 }} contentContainerStyle={{ padding: 16 }} nestedScrollEnabled>
+            <GlassPanel variant="medium" borderRadius={radius.card}>
+              <ScrollView style={{ maxHeight: 360, backgroundColor: colors.inputBg, borderRadius: radius.card }} contentContainerStyle={{ padding: 16 }} nestedScrollEnabled>
                 <Text style={{ fontFamily: 'monospace', fontSize: 13, lineHeight: 22 }}>
                   {tokens.map((t, i) => <Text key={i} style={{ color: t.color }}>{t.text}</Text>)}
                 </Text>

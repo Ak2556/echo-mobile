@@ -45,7 +45,7 @@ function SplitPulse({
   mode: SplitMode;
   fmt: (n: number) => string;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const serviceLoad = total > 0 ? Math.round((extras / total) * 100) : 0;
   const rows = [
     { label: 'Each', value: `$${fmt(perPerson)}`, detail: mode === 'even' ? 'even split' : mode },
@@ -53,9 +53,9 @@ function SplitPulse({
     { label: 'Group', value: `${people}`, detail: people === 1 ? 'person' : 'people' },
   ];
   return (
-    <GlassPanel variant="light" borderRadius={22} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
+    <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 15, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: accent, fontSize: 18, fontWeight: '900' }}>$</Text>
         </View>
         <View style={{ flex: 1 }}>
@@ -65,7 +65,7 @@ function SplitPulse({
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {rows.map(row => (
-          <View key={row.label} style={{ flex: 1, minHeight: 64, borderRadius: 16, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+          <View key={row.label} style={{ flex: 1, minHeight: 64, borderRadius: radius.lg, padding: 10, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
             <Text style={{ color: accent, fontSize: row.value.length > 7 ? 14 : 17, fontWeight: '900' }} numberOfLines={1}>{row.value}</Text>
             <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '900', marginTop: 4 }}>{row.label}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{row.detail}</Text>
@@ -77,7 +77,7 @@ function SplitPulse({
 }
 
 export default function BillSplitterScreen() {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const accent = colors.accent;
 
   const [bill, setBill] = useState('');
@@ -132,7 +132,7 @@ export default function BillSplitterScreen() {
   };
 
   const ShareBtn = (
-    <AnimatedPressable onPress={shareSummary} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12 }}>
+    <AnimatedPressable onPress={shareSummary} scaleValue={0.88} haptic="light" style={{ width: 38, height: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.inputBg, borderRadius: radius.md }}>
       <ShareNetwork color={colors.text} size={18} weight="bold" />
     </AnimatedPressable>
   );
@@ -152,7 +152,7 @@ export default function BillSplitterScreen() {
       />
       <SplitPulse accent={accent} total={total} extras={extras} people={people.length} perPerson={total / people.length} mode={mode} fmt={fmt} />
       {/* Bill + tax */}
-      <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>{ttx("BILL AMOUNT")}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ color: accent, fontSize: 42, fontWeight: '300', marginRight: 4 }}>$</Text>
@@ -175,8 +175,8 @@ export default function BillSplitterScreen() {
             placeholderTextColor={colors.textMuted}
             style={{
               flex: 1, color: colors.text, fontSize: 16, fontWeight: '600',
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-              borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+              backgroundColor: colors.inputBg,
+              borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10,
               borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
             }}
           />
@@ -184,7 +184,7 @@ export default function BillSplitterScreen() {
       </GlassPanel>
 
       {/* Tip */}
-      <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{ttx("TIP")}</Text>
           <Text style={{ color: accent, fontSize: 20, fontWeight: '700' }}>{effectiveTip}%</Text>
@@ -195,12 +195,12 @@ export default function BillSplitterScreen() {
             return (
               <Pressable key={t} onPress={() => { setTipPct(t); setCustomTip(''); }}>
                 <View style={{
-                  paddingHorizontal: 16, paddingVertical: 9, borderRadius: 12,
-                  backgroundColor: active ? accent : (colors.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+                  paddingHorizontal: 16, paddingVertical: 9, borderRadius: radius.md,
+                  backgroundColor: active ? accent : colors.inputBg,
                   borderWidth: StyleSheet.hairlineWidth,
                   borderColor: active ? 'transparent' : colors.glassBorder,
                 }}>
-                  <Text style={{ color: active ? '#fff' : colors.text, fontWeight: '700', fontSize: 14 }}>
+                  <Text style={{ color: active ? colors.bgPure : colors.text, fontWeight: '700', fontSize: 14 }}>
                     {t === 0 ? 'None' : `${t}%`}
                   </Text>
                 </View>
@@ -218,8 +218,8 @@ export default function BillSplitterScreen() {
             placeholderTextColor={colors.textMuted}
             style={{
               flex: 1, color: colors.text, fontSize: 16, fontWeight: '600',
-              backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-              borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+              backgroundColor: colors.inputBg,
+              borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10,
               borderWidth: 1, borderColor: customTip !== '' ? accent : colors.glassBorder,
             }}
           />
@@ -228,27 +228,27 @@ export default function BillSplitterScreen() {
       </GlassPanel>
 
       {/* People + mode */}
-      <GlassPanel variant="medium" borderRadius={24} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }} style={{ marginBottom: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
           <Users color={colors.textMuted} size={15} weight="fill" />
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, flex: 1, marginLeft: 6 }}>
             {ttx("PEOPLE ·")} {people.length}
           </Text>
-          <AnimatedPressable onPress={addPerson} scaleValue={0.88} haptic="light" style={{ backgroundColor: accent, borderRadius: 10, padding: 7 }}>
-            <Plus color="#fff" size={14} weight="bold" />
+          <AnimatedPressable onPress={addPerson} scaleValue={0.88} haptic="light" style={{ backgroundColor: accent, borderRadius: radius.md, padding: 7 }}>
+            <Plus color={colors.bgPure} size={14} weight="bold" />
           </AnimatedPressable>
         </View>
 
         {/* Mode toggle */}
-        <View style={{ flexDirection: 'row', backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 12, padding: 3, marginBottom: 14 }}>
+        <View style={{ flexDirection: 'row', backgroundColor: colors.inputBg, borderRadius: radius.md, padding: 3, marginBottom: 14 }}>
           {([
             { key: 'even', label: 'Even' },
             { key: 'shares', label: 'Shares' },
             { key: 'exact', label: 'Exact' },
           ] as const).map(m => (
             <Pressable key={m.key} onPress={() => setMode(m.key)} style={{ flex: 1 }}>
-              <View style={{ paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: mode === m.key ? accent : 'transparent' }}>
-                <Text style={{ color: mode === m.key ? '#fff' : colors.textMuted, fontWeight: '700', fontSize: 13 }}>{m.label}</Text>
+              <View style={{ paddingVertical: 9, borderRadius: radius.sm, alignItems: 'center', backgroundColor: mode === m.key ? accent : 'transparent' }}>
+                <Text style={{ color: mode === m.key ? colors.bgPure : colors.textMuted, fontWeight: '700', fontSize: 13 }}>{m.label}</Text>
               </View>
             </Pressable>
           ))}
@@ -263,19 +263,19 @@ export default function BillSplitterScreen() {
               placeholderTextColor={colors.textMuted}
               style={{
                 flex: 1, color: colors.text, fontSize: 15, fontWeight: '600',
-                backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+                backgroundColor: colors.inputBg,
+                borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10,
                 borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
               }}
             />
             {mode === 'shares' && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <AnimatedPressable onPress={() => setPerson(p.id, { shares: Math.max(1, p.shares - 1) })} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 9, padding: 7 }}>
+                <AnimatedPressable onPress={() => setPerson(p.id, { shares: Math.max(1, p.shares - 1) })} scaleValue={0.85} haptic="light" style={{ backgroundColor: colors.inputBg, borderRadius: radius.sm, padding: 7 }}>
                   <Minus color={colors.text} size={13} weight="bold" />
                 </AnimatedPressable>
                 <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', width: 20, textAlign: 'center', fontVariant: ['tabular-nums'] }}>{p.shares}</Text>
-                <AnimatedPressable onPress={() => setPerson(p.id, { shares: p.shares + 1 })} scaleValue={0.85} haptic="light" style={{ backgroundColor: accent, borderRadius: 9, padding: 7 }}>
-                  <Plus color="#fff" size={13} weight="bold" />
+                <AnimatedPressable onPress={() => setPerson(p.id, { shares: p.shares + 1 })} scaleValue={0.85} haptic="light" style={{ backgroundColor: accent, borderRadius: radius.sm, padding: 7 }}>
+                  <Plus color={colors.bgPure} size={13} weight="bold" />
                 </AnimatedPressable>
               </View>
             )}
@@ -290,8 +290,8 @@ export default function BillSplitterScreen() {
                   placeholderTextColor={colors.textMuted}
                   style={{
                     width: 74, color: colors.text, fontSize: 15, fontWeight: '700',
-                    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 10,
+                    backgroundColor: colors.inputBg,
+                    borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 10,
                     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder,
                     textAlign: 'right',
                   }}
@@ -322,15 +322,15 @@ export default function BillSplitterScreen() {
 
       {/* Result */}
       {mode === 'even' ? (
-        <View style={{ backgroundColor: accent, borderRadius: 28, padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 28, shadowOffset: { width: 0, height: 8 } }}>
-          <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{ttx("Each person pays")}</Text>
-          <Text style={{ color: '#fff', fontSize: 60, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -2, lineHeight: 66 }}>${fmt(total / people.length)}</Text>
-          <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 6 }}>
+        <View style={{ backgroundColor: accent, borderRadius: radius.xl, padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 28, shadowOffset: { width: 0, height: 8 } }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{ttx("Each person pays")}</Text>
+          <Text style={{ color: colors.text, fontSize: 60, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -2, lineHeight: 66 }}>${fmt(total / people.length)}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 6 }}>
             {ttx("Incl. $")}{fmt(tipAmount / people.length)} {ttx("tip")}{taxNum > 0 ? ` · $${fmt(taxNum / people.length)} tax` : ''}
           </Text>
         </View>
       ) : (
-        <GlassPanel variant="medium" borderRadius={24} contentStyle={{ overflow: 'hidden' }} style={{ marginBottom: 14, borderColor: accent + '44' }}>
+        <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ overflow: 'hidden' }} style={{ marginBottom: 14, borderColor: accent + '44' }}>
           {people.map((p, i) => (
             <View key={p.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: i < people.length - 1 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.glassBorder }}>
               <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>{p.name || `Person ${i + 1}`}</Text>
@@ -341,7 +341,7 @@ export default function BillSplitterScreen() {
       )}
 
       {/* Breakdown */}
-      <GlassPanel variant="light" borderRadius={24} contentStyle={{ overflow: 'hidden' }} style={{ marginBottom: 14 }}>
+      <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ overflow: 'hidden' }} style={{ marginBottom: 14 }}>
         {[
           { label: 'Subtotal', value: fmt(billNum), muted: true },
           ...(taxNum > 0 ? [{ label: 'Tax / fees', value: fmt(taxNum), muted: true }] : []),
@@ -355,7 +355,7 @@ export default function BillSplitterScreen() {
         ))}
       </GlassPanel>
 
-      <AnimatedPressable onPress={shareSummary} scaleValue={0.96} haptic="medium" style={{ borderRadius: 16, borderWidth: 1, borderColor: accent + '66', paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+      <AnimatedPressable onPress={shareSummary} scaleValue={0.96} haptic="medium" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: accent + '66', paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
         <ShareNetwork color={accent} size={17} weight="bold" />
         <Text style={{ color: accent, fontWeight: '800', fontSize: 15 }}>{ttx("Share the split")}</Text>
       </AnimatedPressable>

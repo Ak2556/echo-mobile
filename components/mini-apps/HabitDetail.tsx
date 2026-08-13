@@ -33,7 +33,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
   onDayPress: (date: string) => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const insets = useSafeAreaInsets();
   const now = new Date();
   const [view, setView] = useState({ year: now.getFullYear(), month: now.getMonth() });
@@ -68,7 +68,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: insets.top + 8, paddingBottom: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
-          <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 42, height: 42, borderRadius: radius.lg, backgroundColor: habit.color + '18', borderWidth: 1, borderColor: habit.color + '33', alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: habit.color, fontSize: 12, fontWeight: '800' }}>{habit.marker}</Text>
           </View>
           <View style={{ flex: 1 }}>
@@ -93,7 +93,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
           {/* Stats */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {stats.map(s => (
-              <View key={s.label} style={{ flex: 1, backgroundColor: habit.color + '12', borderRadius: 14, padding: 11, borderWidth: 1, borderColor: habit.color + '26' }}>
+              <View key={s.label} style={{ flex: 1, backgroundColor: habit.color + '12', borderRadius: radius.lg, padding: 11, borderWidth: 1, borderColor: habit.color + '26' }}>
                 <Text style={{ color: habit.color, fontSize: 9.5, fontWeight: '700', letterSpacing: 0.7 }}>{s.label}</Text>
                 <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 2 }}>{s.value}</Text>
               </View>
@@ -141,7 +141,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
                     style={{ width: `${100 / 7}%`, aspectRatio: 1.15, alignItems: 'center', justifyContent: 'center' }}
                   >
                     <View style={{
-                      width: 32, height: 32, borderRadius: 10,
+                      width: 32, height: 32, borderRadius: radius.md,
                       alignItems: 'center', justifyContent: 'center',
                       backgroundColor: isDone ? habit.color : 'transparent',
                       borderWidth: isToday ? 1.5 : 0,
@@ -149,7 +149,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
                       opacity: !scheduled || future ? 0.28 : 1,
                     }}>
                       <Text style={{
-                        color: isDone ? '#fff' : colors.textSecondary,
+                        color: isDone ? colors.bgPure : colors.textSecondary,
                         fontSize: 12.5,
                         fontWeight: isDone || isToday ? '700' : '400',
                       }}>
@@ -172,9 +172,9 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
                 <Pressable key={entry.date} onPress={() => onDayPress(entry.date)}>
                   <View style={{ flexDirection: 'row', gap: 12, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
                     {entry.photoUri ? (
-                      <Image source={{ uri: entry.photoUri }} style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: colors.surface }} />
+                      <Image source={{ uri: entry.photoUri }} style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surface }} />
                     ) : (
-                      <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: habit.color + '14', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: habit.color + '14', alignItems: 'center', justifyContent: 'center' }}>
                         <Clock color={habit.color} size={17} weight="fill" />
                       </View>
                     )}
@@ -198,7 +198,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
             <AnimatedPressable
               onPress={onToggleArchive}
               scaleValue={0.96} haptic="light"
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, borderWidth: 1, borderColor: colors.border, paddingVertical: 13 }}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, paddingVertical: 13 }}
             >
               <Archive color={colors.textSecondary} size={16} />
               <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 14 }}>
@@ -208,10 +208,10 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
             <AnimatedPressable
               onPress={confirmDelete}
               scaleValue={0.96} haptic="light"
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, borderWidth: 1, borderColor: '#EF444455', paddingVertical: 13 }}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: radius.lg, borderWidth: 1, borderColor: `${colors.danger}55`, paddingVertical: 13 }}
             >
-              <Trash color="#EF4444" size={16} />
-              <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 14 }}>{ttx("Delete")}</Text>
+              <Trash color={colors.danger} size={16} />
+              <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 14 }}>{ttx("Delete")}</Text>
             </AnimatedPressable>
           </View>
         </ScrollView>

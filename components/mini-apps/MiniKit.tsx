@@ -286,11 +286,11 @@ export function MiniEmptyState({
   onAction?: () => void;
   accent: string;
 }) {
-  const { colors, font } = useTheme();
+  const { colors, font, radius } = useTheme();
   return (
     <Animated.View entering={FadeIn.duration(220)} style={{ alignItems: 'center', paddingHorizontal: 24, paddingVertical: 48 }}>
       {icon ? <View style={{ marginBottom: 16, opacity: 0.65 }}>{icon}</View> : null}
-      <View style={{ width: 24, height: 2, backgroundColor: accent, borderRadius: 1, marginBottom: 14 }} />
+      <View style={{ width: 24, height: 2, backgroundColor: accent, borderRadius: radius.sm, marginBottom: 14 }} />
       <Text style={[font.display, { color: colors.text, fontSize: 21, textAlign: 'center', marginBottom: 8, maxWidth: 300 }]}>{title}</Text>
       <Text style={[font.body, { color: colors.textMuted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 320 }]}>{subtitle}</Text>
       {actionLabel && onAction ? (
