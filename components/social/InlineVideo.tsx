@@ -41,7 +41,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
   const { colors, radius, fontSizes } = useTheme();
   const videoRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
-  const player = useVideoPlayer(activeUri, p => { p.muted = true; p.loop = false; });
+  const player = useVideoPlayer(activeUri);
 
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const [playing, setPlaying] = useState(false);
@@ -142,8 +142,10 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
 
       <View style={{ height, borderRadius: radius.card, overflow: 'hidden', backgroundColor: '#000' }}>
         {loadState === 'error' ? (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.surfaceHover }}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body }}>{"Couldn't load video"}</Text>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.surfaceHover, paddingHorizontal: 20 }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center' }}>
+              {player.error?.message ? `Video Error: ${player.error.message}` : "Couldn't load video"}
+            </Text>
             <Pressable onPress={retryLoad}
               style={{ paddingHorizontal: 20, paddingVertical: 9, borderRadius: radius.full, backgroundColor: colors.accent }}>
               <Text style={{ color: '#fff', fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Retry")}</Text>
