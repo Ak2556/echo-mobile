@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActionSheetIOS, ActivityIndicator, Modal, Platform, Pressable, Text, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { ArrowsClockwise, CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
@@ -146,15 +147,12 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
 
       <View style={{ height, borderRadius: radius.card, overflow: 'hidden', backgroundColor: '#000' }}>
         {loadState === 'error' ? (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.surfaceHover, paddingHorizontal: 20 }}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center' }}>
-              {videoError ? `Video Error: ${videoError}` : "Couldn't load video"}
-            </Text>
-            <Pressable onPress={retryLoad}
-              style={{ paddingHorizontal: 20, paddingVertical: 9, borderRadius: radius.full, backgroundColor: colors.accent }}>
-              <Text style={{ color: '#fff', fontSize: fontSizes.small, fontWeight: '600' }}>{ttx("Retry")}</Text>
-            </Pressable>
-          </View>
+          <WebView
+            source={{ uri: activeUri }}
+            style={{ flex: 1, backgroundColor: '#000' }}
+            allowsInlineMediaPlayback={true}
+            mediaPlaybackRequiresUserAction={false}
+          />
         ) : (
           <>
             <VideoView
@@ -162,9 +160,8 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
               player={player}
               style={{ flex: 1 }}
               contentFit="cover"
-              nativeControls={false}
+              nativeControls={true}
               fullscreenOptions={{ enable: true }}
-              onFirstFrameRender={() => setLoadState('ready')}
             />
 
             {loadState === 'loading' && (
