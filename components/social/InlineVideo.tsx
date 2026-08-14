@@ -44,6 +44,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
   const player = useVideoPlayer(activeUri);
 
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
+  const [videoError, setVideoError] = useState<string>('');
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [loop, setLoop] = useState(false);
@@ -64,13 +65,16 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
   useEffect(() => { try { player.playbackRate = speed; } catch {} }, [speed, player]);
 
   useEffect(() => {
-    const s1 = player.addListener('statusChange', ({ status }) => {
+    const s1 = player.addListener('statusChange', ({ status, error }) => {
       const nextState = loadStateFromStatus(status);
       if (nextState === 'ready') {
         setLoadState('ready');
         if (player.duration > 0) setDuration(player.duration);
       }
-      if (nextState === 'error') setLoadState('error');
+      if (nextState === 'error') {
+        setLoadState('error');
+        if (error) setVideoError(error.message);
+      }
       if (nextState === 'loading') setLoadState('loading');
     });
     const s2 = player.addListener('playingChange', ({ isPlaying }) => setPlaying(isPlaying));
@@ -144,7 +148,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
         {loadState === 'error' ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.surfaceHover, paddingHorizontal: 20 }}>
             <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center' }}>
-              {player.error?.message ? `Video Error: ${player.error.message}` : "Couldn't load video"}
+              {videoError ? `Video Error: ${videoError}` : "Couldn't load video"}
             </Text>
             <Pressable onPress={retryLoad}
               style={{ paddingHorizontal: 20, paddingVertical: 9, borderRadius: radius.full, backgroundColor: colors.accent }}>
