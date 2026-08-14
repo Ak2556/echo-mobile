@@ -5,6 +5,7 @@ import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { videoSourceForUri } from '../../lib/videoMedia';
 import { useAppStore } from '../../store/useAppStore';
 import { ttx } from '../../lib/i18n';
+import { WebView } from 'react-native-webview';
 
 // Safely attempt to load expo-video (unavailable in Expo Go).
 // In Expo Go this stays null and we render the static fallback.
@@ -126,11 +127,33 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount 
       )}
 
       {loadState === 'error' && (
-        <LinearGradient colors={['#2A2018', '#0C0B09']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <Play color="#fff" size={24} weight="fill" />
-          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600' }}>{ttx("Tap to open video")}</Text>
-        </LinearGradient>
+        <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}>
+          <WebView
+            source={{
+              html: `
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                    <style>
+                      body { margin: 0; padding: 0; background-color: #09090B; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+                      video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+                    </style>
+                  </head>
+                  <body>
+                    <video src="${uri}" autoplay loop muted playsinline webkit-playsinline></video>
+                  </body>
+                </html>
+              `
+            }}
+            style={{ flex: 1, backgroundColor: '#09090B' }}
+            scrollEnabled={false}
+            allowsInlineMediaPlayback={true}
+            mediaPlaybackRequiresUserAction={false}
+          />
+          {/* Invisible overlay to catch taps instead of the webview */}
+          <View style={{ position: 'absolute', inset: 0 }} />
+        </View>
       )}
 
       {/* Bottom scrim only — the video autoplays, so no persistent play chip
