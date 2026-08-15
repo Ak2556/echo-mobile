@@ -313,7 +313,20 @@ export function useInfiniteVideoFeed() {
         list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
-        return fetchRemoteFeed({ limit: PAGE_SIZE, cursor: pageParam, postType: 'video' });
+        const remoteFeed = await fetchRemoteFeed({ limit: PAGE_SIZE, cursor: pageParam, postType: 'video' });
+        
+        if (!pageParam) {
+          const localVideos = publishedEchoes
+            .map(coerceFeedItem)
+            .filter(i => i.postType === 'video' && i.videoUri);
+            
+          const remoteIds = new Set(remoteFeed.map(r => r.id));
+          const newLocals = localVideos.filter(l => !remoteIds.has(l.id));
+          
+          return filterHidden([...newLocals, ...remoteFeed]);
+        }
+        
+        return filterHidden(remoteFeed);
       }
 
       // Local fallback

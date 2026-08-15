@@ -52,7 +52,7 @@ import { useI18n, type TranslationKey } from '../../lib/i18n';
 import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/dailyThoughts';
 
 
-const NAV_BAR_HEIGHT = 50;
+const NAV_BAR_HEIGHT = 56;
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 const SENSITIVE_TAGS = new Set(['nsfw', 'adult', 'explicit', 'mature', '18+', '18plus', 'gore', 'graphic', 'disturbing']);
 
@@ -702,57 +702,58 @@ export default function DiscoverScreen() {
             height: headerHeight,
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'space-between',
             paddingHorizontal: layout.gutter,
             paddingBottom: 6,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', flex: 1 }}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 30 }]}>
-              Echo
-            </Text>
+          <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>
+            Echo
+          </Text>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Pressable
+              onPress={() => router.push('/messages')}
+              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
+              accessibilityRole="button"
+              accessibilityLabel="Messages"
+            >
+              <Envelope color={colors.text} size={24} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => router.push('/(tabs)/notifications')}
+              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
+              accessibilityRole="button"
+              accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
+            >
+              <View>
+                <Bell color={colors.text} size={24} />
+                {unreadNotifs > 0 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -3,
+                      right: -3,
+                      minWidth: 16,
+                      height: 16,
+                      paddingHorizontal: 4,
+                      borderRadius: 8,
+                      backgroundColor: colors.danger,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1.5,
+                      borderColor: colors.bg,
+                    }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                      {unreadNotifs > 99 ? '99+' : unreadNotifs}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
           </View>
-
-          <Pressable
-            onPress={() => router.push('/messages')}
-            style={{ padding: 6, marginRight: 4 }}
-            accessibilityRole="button"
-            accessibilityLabel="Messages"
-          >
-            <Envelope color={colors.textSecondary} size={22} />
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/(tabs)/notifications')}
-            style={{ padding: 6, marginRight: 4 }}
-            accessibilityRole="button"
-            accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
-          >
-            <View>
-              <Bell color={colors.textSecondary} size={22} />
-              {unreadNotifs > 0 && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -6,
-                    minWidth: 16,
-                    height: 16,
-                    paddingHorizontal: 4,
-                    borderRadius: 999,
-                    backgroundColor: colors.danger,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 1.5,
-                    borderColor: colors.bg,
-                  }}
-                >
-                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                    {unreadNotifs > 99 ? '99+' : unreadNotifs}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </Pressable>
 
 
         </View>
