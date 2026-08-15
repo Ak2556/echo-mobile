@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { videoSourceForUri } from '../../lib/videoMedia';
+import { useAppStore } from '../../store/useAppStore';
 import { ttx } from '../../lib/i18n';
 import { WebView } from 'react-native-webview';
 
