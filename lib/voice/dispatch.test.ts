@@ -71,7 +71,7 @@ describe('voice dispatch — open_mini_app (all 16, Hindi)', () => {
     ['calculator', '/mini-apps/calculator'], ['हिसाब', '/mini-apps/calculator'],
     ['shopping-list', '/mini-apps/shopping-list'], ['खरीदारी', '/mini-apps/shopping-list'],
     ['voice-memo', '/mini-apps/voice-memo'], ['रिकॉर्ड', '/mini-apps/voice-memo'],
-    ['camera', '/mini-apps/camera'], ['कैमरा', '/mini-apps/camera'],
+    ['camera', '/mini-apps/studio'], ['कैमरा', '/mini-apps/studio'],
     ['password-gen', '/mini-apps/password-gen'], ['पासवर्ड', '/mini-apps/password-gen'],
   ];
   it.each(cases)('%s → %s', (app, route) => {
