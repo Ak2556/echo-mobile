@@ -6,6 +6,7 @@ import {
   Modal, View, Text, Pressable, ActivityIndicator, Image as RNImage, ScrollView, LayoutChangeEvent, TextInput,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 import {
   X, Check, ArrowClockwise, ArrowCounterClockwise, FlipHorizontal, FlipVertical, Crop,
@@ -146,7 +147,8 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
       {/* RN Modals are a separate window, so the app's safe-area context doesn't
           reach them — nest a provider so the header clears the status bar. */}
       <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top', 'bottom']}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top', 'bottom']}>
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
           <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel={ttx("Cancel edits")}>
@@ -344,6 +346,7 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
           )}
         </View>
       </SafeAreaView>
+        </GestureHandlerRootView>
       </SafeAreaProvider>
     </Modal>
   );
