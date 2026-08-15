@@ -4,8 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { videoSourceForUri } from '../../lib/videoMedia';
 import { useAppStore } from '../../store/useAppStore';
+import { useActiveVideoStore } from '../../store/useActiveVideoStore';
 import { ttx } from '../../lib/i18n';
 import { WebView } from 'react-native-webview';
+import { useIsFocused } from '@react-navigation/native';
 
 // Safely attempt to load expo-video (unavailable in Expo Go).
 // In Expo Go this stays null and we render the static fallback.
@@ -24,6 +26,7 @@ interface VideoPreviewProps {
   borderRadius?: number;
   onPress?: () => void;
   viewCount?: number;
+  echoId?: string;
 }
 
 const VIDEO_PREVIEW_TIMEOUT_MS = 45_000;
@@ -44,7 +47,7 @@ function formatViewCount(n: number): string {
 }
 
 // Static fallback (Expo Go / no native module)
-function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
+function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, echoId }: VideoPreviewProps) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden' }}>
       <LinearGradient
@@ -78,31 +81,44 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount }: 
 }
 
 // Full video player (dev client / production build)
-function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
+function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId }: VideoPreviewProps) {
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
-  const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = false; p.loop = true; });
+  const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
+
+  const activeEchoId = useActiveVideoStore(s => s.activeEchoId);
+  const isGlobalMuted = useAppStore(s => s.isMuted);
+  const isFocused = useIsFocused();
+  const isActive = isFocused && (!echoId || activeEchoId === echoId);
 
   useEffect(() => { setLoadState('loading'); }, [uri]);
+
+  useEffect(() => {
+    player.muted = isGlobalMuted || !isActive;
+    if (loadState === 'ready') {
+      if (isActive) player.play();
+      else player.pause();
+    }
+  }, [isActive, isGlobalMuted, loadState, player]);
 
   useEffect(() => {
     const initialState = loadStateFromStatus(player.status);
     if (initialState) {
       setLoadState(initialState);
-      if (initialState === 'ready') player.play();
+      if (initialState === 'ready' && isActive) player.play();
     }
 
     const sub = player.addListener('statusChange', ({ status, error }: { status: string; error?: { message?: string } }) => {
       const nextState = loadStateFromStatus(status);
       if (!nextState) return;
-      if (nextState === 'ready') player.play();
+      if (nextState === 'ready' && isActive) player.play();
       if (nextState === 'error' && __DEV__) {
         console.warn('[video-preview] load failed', error?.message ?? uri);
       }
       setLoadState(nextState);
     });
     return () => sub.remove();
-  }, [player, uri]);
+  }, [player, uri, isActive]);
 
   useEffect(() => {
     if (loadState !== 'loading') return;
