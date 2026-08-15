@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, RefreshControl, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -183,7 +183,9 @@ export default function NotificationsScreen() {
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
   // Header: title row + filter tabs
-  const HEADER_CONTENT_HEIGHT = 96;
+  const NAV_BAR_HEIGHT = 56;
+  const FILTER_BAR_HEIGHT = 44;
+  const HEADER_CONTENT_HEIGHT = layout.isDesktop ? 108 : NAV_BAR_HEIGHT + FILTER_BAR_HEIGHT;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
 
   const renderItem = ({ item }: { item: ListItem }) => {
@@ -318,19 +320,20 @@ export default function NotificationsScreen() {
           ]}
         />
 
-        <View style={[layout.contentStyle, { paddingTop: insets.top + 2 }]}>
+        <View style={[layout.contentStyle, { paddingTop: insets.top + (layout.isDesktop ? 10 : 0) }]}>
         {/* Title row */}
         <View
           style={{
-            paddingHorizontal: 16,
-            paddingBottom: 8,
+            paddingHorizontal: layout.gutter,
+            paddingBottom: 6,
+            height: layout.isDesktop ? 64 : NAV_BAR_HEIGHT,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]}>{t('notif.title')}</Text>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>{t('notif.title')}</Text>
             {unreadCount > 0 && (
               <View
                 style={{
@@ -369,33 +372,34 @@ export default function NotificationsScreen() {
         </View>
 
         {/* Filter tabs */}
-        <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 16, gap: 8 }}>
+        <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: layout.gutter, gap: 8, paddingBottom: 10, paddingTop: 4 }}>
           {(['all', 'unread', 'mentions', 'replies', 'follows'] as const).map(tab => (
-            <AnimatedPressable
+            <Pressable
               key={tab}
               onPress={() => setFilter(tab)}
-              performanceMode="hot"
-              haptic="light"
-              style={{
+              style={({ pressed }) => ({
                 paddingHorizontal: 14,
                 paddingVertical: 6,
                 borderRadius: 99,
                 backgroundColor: filter === tab ? colors.accent : 'transparent',
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: filter === tab ? 'transparent' : colors.border,
-              }}
+                opacity: pressed ? 0.7 : 1,
+              })}
             >
               <Text
-                style={{
-                  ...font.bodySemibold,
-                  fontSize: 13,
-                  textTransform: 'capitalize',
-                  color: filter === tab ? '#fff' : colors.textSecondary,
-                }}
+                style={[
+                  font.bodySemibold,
+                  {
+                    fontSize: 13,
+                    textTransform: 'capitalize',
+                    color: filter === tab ? '#fff' : colors.textSecondary,
+                  }
+                ]}
               >
                 {tab === 'all' ? t('notif.filterAll') : tab === 'unread' ? t('notif.filterUnread') : tab === 'mentions' ? t('notif.filterMentions') : tab === 'replies' ? t('notif.filterReplies') : t('notif.filterFollows')}
               </Text>
-            </AnimatedPressable>
+            </Pressable>
           ))}
         </Animated.ScrollView>
         </View>

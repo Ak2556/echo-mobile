@@ -3,8 +3,7 @@ import { View, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { FeedCard } from '../../components/social/FeedCard';
-import { FeedCardSkeleton } from '../../components/ui/Skeleton';
+import { FlowCard } from '../../components/social/FlowCard';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
 import { useInfiniteVideoFeed } from '../../hooks/queries/useFeed';
 import { useResponsiveLayout } from '../../lib/responsive';
@@ -56,21 +55,11 @@ export default function WatchScreen() {
     alignSelf: 'center' as const,
   };
 
-  const ListHeader = (
-    <View style={feedContainerStyle}>
-      <View style={{ height: insets.top + 16 }} />
-    </View>
-  );
+  const ListHeader = null;
 
   if (isLoading && feed.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        {ListHeader}
-        <View style={feedContainerStyle}>
-          <FeedCardSkeleton />
-          <FeedCardSkeleton />
-        </View>
-      </View>
+      <View style={{ flex: 1, backgroundColor: colors.bg }} />
     );
   }
 
@@ -81,20 +70,20 @@ export default function WatchScreen() {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
         data={feed}
-        style={feedContainerStyle}
+        style={{ width: '100%', height: '100%' }}
+        pagingEnabled
+        estimatedItemSize={layout.height}
+        snapToInterval={layout.height}
+        snapToAlignment="start"
+        decelerationRate="fast"
         renderItem={({ item, index }) => (
-          <FeedCard
+          <FlowCard
             item={item}
             index={index}
-            onPress={() => router.push(`/thread/${item.id}`)}
           />
         )}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={ListHeader}
-        ListFooterComponent={
-          <View style={{ height: layout.bottomChromePadding + 40, justifyContent: 'center', alignItems: 'center' }} />
-        }
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) {
             void fetchNextPage();
@@ -111,10 +100,6 @@ export default function WatchScreen() {
           />
         }
       />
-      
-      <View style={{ position: 'absolute', top: insets.top + 6, left: 16, zIndex: 10 }}>
-        {/* Placeholder for future header element if needed */}
-      </View>
     </View>
   );
 }

@@ -75,28 +75,27 @@ function NotifIcon({ type, size, color }: { type: string; size: number; color: s
   }
 }
 
-/** Person's avatar (real photo when available) with a small type-icon badge. */
-function AvatarWithBadge({ n, color }: { n: Notification; color: string }) {
+function AvatarWithBadge({ n, color, unread }: { n: Notification; color: string; unread: boolean }) {
   const { colors } = useTheme();
   const isSystem = SYSTEM_TYPES.has(n.type);
 
   return (
-    <View style={{ width: 46, height: 46 }}>
+    <View style={{ width: 44, height: 44 }}>
       {isSystem ? (
-        <IconBadge color={color} size={46} radius={16}>
-          <NotifIcon type={n.type} size={21} color="#fff" />
-        </IconBadge>
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: color + '15', alignItems: 'center', justifyContent: 'center' }}>
+          <NotifIcon type={n.type} size={20} color={color} />
+        </View>
       ) : (
         <>
-          <Avatar name={n.fromDisplayName || n.fromUsername} color={n.fromAvatarColor} url={n.fromAvatarUrl} size={46} />
+          <Avatar name={n.fromDisplayName || n.fromUsername} color={n.fromAvatarColor} url={n.fromAvatarUrl} size={44} />
           <View style={{
-            position: 'absolute', bottom: -3, right: -3,
+            position: 'absolute', bottom: -2, right: -4,
             width: 22, height: 22, borderRadius: 11,
             alignItems: 'center', justifyContent: 'center',
-            backgroundColor: color,
-            borderWidth: 2.5, borderColor: colors.bg,
+            backgroundColor: colors.bg,
+            borderWidth: 2, borderColor: colors.bg,
           }}>
-            <NotifIcon type={n.type} size={11} color="#fff" />
+            <NotifIcon type={n.type} size={11} color={color} />
           </View>
         </>
       )}
@@ -139,72 +138,55 @@ export function NotificationCard({ notification, onPress, onLongPress, flush = f
       onLongPress={onLongPress}
       fadeOnPress
       haptic="light"
-      // Box styles are safe directly on AnimatedPressable — it partitions the
-      // box onto a plain inner View so Release builds can't drop it.
       style={{
-        marginHorizontal: flush ? 0 : 16,
-        marginBottom: 9,
-        borderRadius: 18,
-        overflow: 'hidden',
-        // Unread cards carry a whisper of the type's hue + a matching hairline;
-        // read cards are the plain surface — same language as feed/tool cards.
-        backgroundColor: unread ? color + (colors.isDark ? '1A' : '10') : colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: unread ? color + '55' : colors.glassBorder,
+        marginHorizontal: 0,
+        backgroundColor: unread ? color + (colors.isDark ? '12' : '0A') : 'transparent',
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.glassBorder,
         flexDirection: 'row',
         alignItems: 'flex-start',
-        paddingVertical: 13,
-        paddingHorizontal: 13,
-        gap: 12,
+        paddingVertical: 18,
+        paddingHorizontal: flush ? 0 : 20,
+        gap: 16,
       }}
     >
-      <AvatarWithBadge n={n} color={color} />
+      <AvatarWithBadge n={n} color={color} unread={unread} />
 
       <View style={{ flex: 1, minWidth: 0 }}>
-        {/* Name line + timestamp, so the time is always attached to the row. */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-          <Text style={{ color: colors.text, fontSize: fontSizes.small, lineHeight: 19, flex: 1 }} numberOfLines={2}>
+        {/* Name line + timestamp */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Text style={{ color: colors.text, fontSize: 15, lineHeight: 21, flex: 1, paddingRight: 12 }} numberOfLines={2}>
             {!isSystem && <Text style={{ fontFamily: 'Inter_700Bold' }}>{n.fromDisplayName || n.fromUsername}</Text>}
             {!isSystem ? ' ' : ''}
             <Text style={{ color: colors.textSecondary }}>{actionTextFor(n)}</Text>
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingTop: 1 }}>
-            <Text style={{ color: unread ? color : colors.textMuted, fontSize: fontSizes.caption, fontWeight: unread ? '700' : '400' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 2 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>
               {getTimeAgo(n.createdAt)}
             </Text>
-            {unread && <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: color }} />}
-            <SpeakButton
-              text={`${isSystem ? '' : `${n.fromDisplayName || n.fromUsername} `}${actionTextFor(n)}${n.targetEchoPreview ? `. ${n.targetEchoPreview}` : ''}`}
-              id={`notif:${n.id}`}
-              size={14}
-            />
+            {unread && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />}
           </View>
         </View>
 
-        {/* Which echo it was about — a quoted snippet with a type-colour rule,
-            so the card carries context instead of empty space. */}
+        {/* Spacious, simple quote block */}
         {n.targetEchoPreview && (
-          <View style={{ marginTop: 7, borderLeftWidth: 2, borderLeftColor: color + '99', paddingLeft: 9 }}>
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: 17, fontStyle: 'italic' }} numberOfLines={2}>
-              {n.targetEchoPreview}
-            </Text>
-          </View>
+          <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, marginTop: 4, paddingRight: 20 }} numberOfLines={2}>
+            "{n.targetEchoPreview}"
+          </Text>
         )}
 
-        {/* Non-echo context (e.g. a comment's own text) when there's no echo snippet. */}
+        {/* Non-echo context */}
         {!n.targetEchoPreview && n.targetPreview && n.type !== 'reaction' && !isSystem && !grouped && (
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: 16, marginTop: 3 }} numberOfLines={2}>
+          <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, marginTop: 4 }} numberOfLines={2}>
             {n.targetPreview}
           </Text>
         )}
 
         {grouped && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 7 }}>
-            <View style={{ backgroundColor: color + '26', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
-              <Text style={{ color, fontSize: 10.5, fontFamily: 'Inter_700Bold', fontVariant: ['tabular-nums'], letterSpacing: 0.2 }}>
-                +{(n.groupCount ?? 1) - 1} more
-              </Text>
-            </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: 'Inter_500Medium' }}>
+              and {(n.groupCount ?? 1) - 1} others
+            </Text>
           </View>
         )}
       </View>

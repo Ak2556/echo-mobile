@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { videoSourceForUri } from '../../lib/videoMedia';
@@ -89,7 +89,17 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   const activeEchoId = useActiveVideoStore(s => s.activeEchoId);
   const isGlobalMuted = useAppStore(s => s.isMuted);
   const isFocused = useIsFocused();
-  const isActive = isFocused && (!echoId || activeEchoId === echoId);
+
+  const appState = useRef(AppState.currentState);
+  const [isAppActive, setIsAppActive] = useState(appState.current === 'active');
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextAppState) => {
+      setIsAppActive(nextAppState === 'active');
+    });
+    return () => sub.remove();
+  }, []);
+
+  const isActive = isFocused && isAppActive && (!echoId || activeEchoId === echoId);
 
   useEffect(() => { setLoadState('loading'); }, [uri]);
 
@@ -111,7 +121,10 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
     const sub = player.addListener('statusChange', ({ status, error }: { status: string; error?: { message?: string } }) => {
       const nextState = loadStateFromStatus(status);
       if (!nextState) return;
-      if (nextState === 'ready' && isActive) player.play();
+      if (nextState === 'ready') {
+        if (isActive) player.play();
+        else player.pause();
+      }
       if (nextState === 'error' && __DEV__) {
         console.warn('[video-preview] load failed', error?.message ?? uri);
       }
@@ -144,29 +157,31 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
 
       {loadState === 'error' && (
         <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}>
-          <WebView
-            source={{
-              html: `
-                <!DOCTYPE html>
-                <html>
-                  <head>
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                    <style>
-                      body { margin: 0; padding: 0; background-color: #09090B; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-                      video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-                    </style>
-                  </head>
-                  <body>
-                    <video src="${uri}" autoplay loop playsinline webkit-playsinline></video>
-                  </body>
-                </html>
-              `
-            }}
-            style={{ flex: 1, backgroundColor: '#09090B' }}
-            scrollEnabled={false}
-            allowsInlineMediaPlayback={true}
-            mediaPlaybackRequiresUserAction={false}
-          />
+          {isActive && (
+            <WebView
+              source={{
+                html: `
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                      <style>
+                        body { margin: 0; padding: 0; background-color: #09090B; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+                        video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+                      </style>
+                    </head>
+                    <body>
+                      <video src="${uri}" autoplay loop playsinline webkit-playsinline></video>
+                    </body>
+                  </html>
+                `
+              }}
+              style={{ flex: 1, backgroundColor: '#09090B' }}
+              scrollEnabled={false}
+              allowsInlineMediaPlayback={true}
+              mediaPlaybackRequiresUserAction={false}
+            />
+          )}
           {/* Invisible overlay to catch taps instead of the webview */}
           <View style={{ position: 'absolute', inset: 0 }} />
         </View>
