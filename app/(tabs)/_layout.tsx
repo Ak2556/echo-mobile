@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, AppState } from 'react-native';
 import { Tabs, useRouter, type Href } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Plus, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront } from 'phosphor-react-native';
+import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Plus, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront, PlayCircle } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../lib/theme';
@@ -22,12 +22,12 @@ import { rememberPrimaryTab } from '../../lib/navigationMemory';
 import { useI18n, type TranslationKey } from '../../lib/i18n';
 
 const HIDDEN_ROUTES = new Set(['notifications']);
-const DESKTOP_ROUTES = new Set(['home', 'explore', 'marketplace', 'chat', 'you', 'notifications', 'apps']);
+const DESKTOP_ROUTES = new Set(['home', 'explore', 'watch', 'chat', 'you', 'notifications', 'apps']);
 
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
   home: House,
   explore: MagnifyingGlass,
-  marketplace: Storefront,
+  watch: PlayCircle,
   chat: ChatTeardropDots,
   you: User,
   notifications: Bell,
@@ -89,7 +89,7 @@ function DotIcon({ children }: { children: React.ReactNode }) {
 const ROUTE_LABEL_KEYS: Record<string, TranslationKey> = {
   home: 'nav.home',
   explore: 'nav.explore',
-  marketplace: 'nav.market',
+  watch: 'nav.watch',
   chat: 'nav.chat',
   you: 'nav.you',
   notifications: 'nav.alerts',
@@ -379,7 +379,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
         ];
       case 'marketplace':
         return [
-          { key: 'open', label: 'Open Market', icon: <Storefront color={colors.accent} size={18} />, onPress: () => router.push('/(tabs)/marketplace') },
+          { key: 'open', label: 'Open Market', icon: <Storefront color={colors.accent} size={18} />, onPress: () => router.push('/mini-apps/marketplace') },
           { key: 'messages', label: 'Seller messages', icon: <Envelope color={colors.accent} size={18} />, onPress: () => router.push('/messages') },
         ];
       case 'you':
@@ -532,7 +532,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="home" options={{ title: t('nav.home') }} />
       <Tabs.Screen name="explore" options={{ title: t('nav.explore') }} />
-      <Tabs.Screen name="marketplace" options={{ title: t('nav.market') }} />
+      <Tabs.Screen name="watch" options={{ title: t('nav.watch') }} />
       <Tabs.Screen name="chat" options={{ title: t('nav.chat') }} />
       <Tabs.Screen name="apps" options={{ title: t('nav.tools') }} />
       <Tabs.Screen name="notifications" options={{ title: t('nav.alerts'), href: null }} />

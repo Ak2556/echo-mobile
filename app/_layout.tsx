@@ -190,7 +190,7 @@ function RootLayout() {
         else if (surface === 'daily') router.push('/daily-question');
         else if (surface === 'dm') router.push('/messages');
         else if (surface === 'feed') router.push('/(tabs)/home');
-        else if (surface === 'marketplace') router.push('/(tabs)/marketplace');
+        else if (surface === 'marketplace') router.push('/mini-apps/marketplace');
         else router.push('/(tabs)/chat');
         return;
       }

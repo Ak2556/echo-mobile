@@ -280,3 +280,70 @@ export function useInfiniteFeed() {
     },
   });
 }
+
+// Watch / Shorts feed (video only)
+export function useInfiniteVideoFeed() {
+  const publishedEchoes  = useAppStore(s => s.publishedEchoes);
+  const blockedIds       = useAppStore(s => s.blockedIds);
+  const mutedIds         = useAppStore(s => s.mutedIds);
+  const notInterestedIds = useAppStore(s => s.notInterestedIds);
+  const remote           = isSupabaseRemote();
+
+  return useInfiniteQuery<
+    FeedItem[],
+    Error,
+    { pages: FeedItem[][] },
+    unknown[],
+    string | undefined
+  >({
+    queryKey: remote
+      ? ['feed', 'videos', blockedIds, mutedIds, notInterestedIds]
+      : ['feed', 'videos', 'local', publishedEchoes, blockedIds, mutedIds, notInterestedIds],
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage: FeedItem[]) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      return lastPage[lastPage.length - 1].createdAt;
+    },
+    staleTime: remote ? 30_000 : Infinity,
+    queryFn: async ({ pageParam }): Promise<FeedItem[]> => {
+      const blockSet  = new Set([...blockedIds, ...mutedIds]);
+      const skipSet   = new Set(notInterestedIds);
+
+      const filterHidden = (list: FeedItem[]) =>
+        list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
+
+      if (remote) {
+        return fetchRemoteFeed({ limit: PAGE_SIZE, cursor: pageParam, postType: 'video' });
+      }
+
+      // Local fallback
+      let merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED]
+        .filter(i => i.postType === 'video' && i.videoUri);
+
+      merged = filterHidden(merged);
+      merged.sort((a, b) => a.createdAt > b.createdAt ? -1 : 1);
+      
+      // Cursor pagination locally
+      if (pageParam) {
+        merged = merged.filter(i => i.createdAt < pageParam);
+      }
+      return merged.slice(0, PAGE_SIZE);
+    },
+    select: (data) => {
+      const blockSet = new Set([...blockedIds, ...mutedIds]);
+      const skipSet = new Set(notInterestedIds);
+      const seen = new Set<string>();
+      return {
+        ...data,
+        pages: data.pages.map(page =>
+          page.filter(item => {
+            if (blockSet.has(item.userId) || skipSet.has(item.id)) return false;
+            if (seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+          })
+        ),
+      };
+    },
+  });
+}

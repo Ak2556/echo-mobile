@@ -19,7 +19,8 @@ export type TargetMiniAppId =
   | 'voice-memo'
   | 'notes'
   | 'habits'
-  | 'expenses';
+  | 'expenses'
+  | 'marketplace';
 
 export interface TargetCategory {
   id: string;

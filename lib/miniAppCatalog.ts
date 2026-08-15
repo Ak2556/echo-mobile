@@ -190,6 +190,17 @@ export const MINI_APP_CATALOG: MiniAppCatalogItem[] = [
     color: '#10B981',
     route: '/mini-apps/password-gen',
   },
+  {
+    id: 'marketplace',
+    name: 'Marketplace',
+    description: 'Trade & Sell',
+    suite: 'Utility',
+    promise: 'Buy and sell locally.',
+    highlights: ['Listings', 'Search', 'Local'],
+    replaces: ['Classifieds', 'Local market'],
+    color: '#E06030',
+    route: '/mini-apps/marketplace',
+  }
 ];
 
 // The core daily-loop mini-apps — pinned first and visually highlighted at the
