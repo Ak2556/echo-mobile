@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, runOnJS, FadeIn, FadeInDown, SlideInDown, SlideOutDown,
 } from 'react-native-reanimated';
+import { usePathname } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Sparkle, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
@@ -32,8 +33,11 @@ const BUBBLE = 54;
 export function FloatingMiniApp() {
   const mode = useFloatingApp(s => s.mode);
   const authed = useAuthStore(s => s.status === 'ready');
+  const pathname = usePathname();
+
   // Only overlay the signed-in app — never the auth/onboarding flow.
-  if (!authed || mode === 'closed') return null;
+  // Hide on chat screens to reduce clutter.
+  if (!authed || mode === 'closed' || pathname.startsWith('/messages/') || pathname.startsWith('/thread/')) return null;
   // box-none: this full-screen layer ignores touches except on its children,
   // so the app underneath stays scrollable "alongside" the floating tool.
   // High zIndex/elevation keeps it above screen content (Toast sits at 9999).
