@@ -320,7 +320,7 @@ export default function ProfileScreen() {
               <Text
                 style={[font.body, { color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22 }]}
               >
-                When you re-echo someone else's post, it will appear here.
+                When you re-echo someone else&apos;s post, it will appear here.
               </Text>
             </View>
           )}
