@@ -49,7 +49,7 @@ export function MiniAppShell({
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
   // Embedded in the floating panel: the panel owns the header + top inset.
-  const HEADER_H = embedded ? 0 : insets.top + 60;
+  const HEADER_H = embedded ? 0 : insets.top + 70;
   const goBack = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/apps');
@@ -145,9 +145,9 @@ export function MiniAppShell({
               height: 36,
               borderRadius: radius.xl,
               paddingHorizontal: 10,
-              backgroundColor: colors.surfaceHover,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.border,
+              backgroundColor: 'transparent',
+              borderWidth: 0,
+              borderColor: 'transparent',
               alignItems: 'center',
               justifyContent: 'center',
               flexDirection: 'row',
@@ -165,15 +165,15 @@ export function MiniAppShell({
 
           <View style={{ flex: 1, minWidth: 0 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
-              {appMeta ? <MiniAppIcon id={appMeta.id} color={appMeta.color} size={34} /> : null}
+              {appMeta ? <MiniAppIcon id={appMeta.id} color={appMeta.color} size={42} /> : null}
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text
                   style={{
                     color: colors.text,
-                    fontFamily: 'Fraunces_600SemiBold',
-                    fontSize: 20,
-                    letterSpacing: -0.4,
-                    lineHeight: 25,
+                    fontFamily: 'Fraunces_900Black',
+                    fontSize: 28,
+                    letterSpacing: -0.5,
+                    lineHeight: 33,
                   }}
                   numberOfLines={1}
                 >
@@ -208,7 +208,7 @@ export function MiniAppShell({
             left: 0,
             right: 0,
             height: StyleSheet.hairlineWidth,
-            backgroundColor: colors.glassBorder,
+            backgroundColor: 'transparent',
           }}
         />
       </View>

@@ -56,8 +56,8 @@ export function GlassPanel({
   const outerStyle: ViewStyle = {
     borderRadius,
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: border,
+    borderWidth: 0,
+    borderColor: 'transparent',
     ...(elevated && {
       shadowColor: '#000',
       shadowOpacity: colors.isDark ? 0.28 : 0.10,
@@ -107,15 +107,14 @@ export function GlassPanel({
     );
   }
 
-  // Android / performance mode: opaque surface with clear border
+  // Android / performance mode: borderless, soft transparent background
   return (
     <View
       style={[
         outerStyle,
         {
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: border,
+          backgroundColor: colors.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+          borderWidth: 0,
         },
       ]}
     >

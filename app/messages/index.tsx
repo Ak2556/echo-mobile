@@ -806,7 +806,16 @@ export default function MessagesListScreen() {
           <AnimatedPressable onPress={() => safeBack('/(tabs)/chat')} className="p-1" scaleValue={0.88} haptic="light">
             <ArrowLeft color={colors.text} size={24} />
           </AnimatedPressable>
-          <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{ttx("Messages")}</Text>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
+              <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Echo</Text>
+              </Pressable>
+              <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Messages</Text>
+              </View>
+            </View>
+          </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <AnimatedPressable onPress={() => setGroupModalOpen(true)} className="p-1" scaleValue={0.88} haptic="light">
               <Users color={colors.accent} size={22} weight="bold" />
@@ -836,11 +845,15 @@ export default function MessagesListScreen() {
         <AnimatedPressable onPress={() => safeBack('/(tabs)/chat')} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface }} scaleValue={0.88} haptic="light">
           <ArrowLeft color={colors.text} size={22} />
         </AnimatedPressable>
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={{ color: colors.text, fontSize: 24, lineHeight: 29, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{ttx("Messages")}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
-            {unreadTotal ? `${unreadTotal} unread · Echo-ready` : 'Private · rich · remembered'}
-          </Text>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
+            <Pressable onPress={() => safeBack('/(tabs)/chat')} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Echo</Text>
+            </Pressable>
+            <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Messages</Text>
+            </View>
+          </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
           <AnimatedPressable onPress={() => setGroupModalOpen(true)} style={{ width: 40, height: 40, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }} scaleValue={0.88} haptic="light">

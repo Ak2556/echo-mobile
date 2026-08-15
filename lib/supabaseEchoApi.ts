@@ -2814,6 +2814,7 @@ export interface RemoteConversation {
   otherDisplayName: string;
   otherAvatarColor: string;
   otherAvatarUrl: string | null;
+  otherLastSeenAt: string | null;
   isGroup: boolean;
   groupTitle: string | null;
   groupAvatarColor: string | null;
@@ -3334,6 +3335,7 @@ export async function fetchRemoteConversations(): Promise<RemoteConversation[]> 
     otherDisplayName: nickname || baseName,
     otherAvatarColor: (r.is_group ? (r.group_avatar_color as string | null) : (r.other_avatar_color as string | null)) ?? '#C65F3F',
     otherAvatarUrl: r.is_group ? null : ((r.other_avatar_url as string | null) ?? null),
+    otherLastSeenAt: (r.other_last_seen_at as string | null) ?? null,
     isGroup: !!r.is_group,
     groupTitle: (r.group_title as string | null) ?? null,
     groupAvatarColor: (r.group_avatar_color as string | null) ?? null,
@@ -3450,6 +3452,7 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
       otherDisplayName: (conv.title as string | null) ?? 'Group chat',
       otherAvatarColor: (conv.avatar_color as string | null) ?? '#C65F3F',
       otherAvatarUrl: null,
+      otherLastSeenAt: null,
       isGroup: true,
       groupTitle: (conv.title as string | null) ?? 'Group chat',
       groupAvatarColor: (conv.avatar_color as string | null) ?? '#C65F3F',
@@ -3469,7 +3472,7 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
   const otherId: string = (conv.user_a as string) === uid ? (conv.user_b as string) : (conv.user_a as string);
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, display_name, avatar_color, avatar_url')
+    .select('id, username, display_name, avatar_color, avatar_url, last_seen_at')
     .eq('id', otherId)
     .single();
 
@@ -3482,6 +3485,7 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
     otherDisplayName: (profile?.display_name as string | null) ?? (profile?.username as string | null) ?? 'User',
     otherAvatarColor: (profile?.avatar_color as string | null) ?? '#C65F3F',
     otherAvatarUrl: (profile?.avatar_url as string | null) ?? null,
+    otherLastSeenAt: (profile?.last_seen_at as string | null) ?? null,
     isGroup: false,
     groupTitle: null,
     groupAvatarColor: null,
@@ -3502,12 +3506,7 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
 export async function markMessagesRead(conversationId: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) return;
-  const { error } = await supabase
-    .from('direct_messages')
-    .update({ read_at: new Date().toISOString() })
-    .eq('conversation_id', conversationId)
-    .neq('sender_id', uid)
-    .is('read_at', null);
+  const { error } = await supabase.rpc('mark_messages_read', { p_conversation_id: conversationId });
   
   if (error) captureException(error, { tags: { fn: 'markMessagesRead' } });
 }

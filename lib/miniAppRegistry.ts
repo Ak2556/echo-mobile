@@ -2,7 +2,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import {
   Calculator, NotePencil, ArrowsLeftRight, DiceFive, Globe, ListChecks,
   ShoppingCart, TextAa, Code, Palette, Key, Receipt, Wallet, CalendarBlank,
-  Scales, Repeat, ImageSquare, Sparkle, GraduationCap, Microphone, Camera, Heartbeat, type Icon,
+  Scales, Repeat, ImageSquare, Sparkle, GraduationCap, Microphone, Camera, Heartbeat, Aperture, SlidersHorizontal, type Icon,
 } from 'phosphor-react-native';
 
 /**
@@ -51,10 +51,10 @@ export const FLOATING_APPS: FloatingAppMeta[] = [
   { id: 'planner', name: 'Planner', Icon: CalendarBlank, Component: lazy(() => import('../app/mini-apps/planner')) },
   { id: 'bmi', name: 'BMI', Icon: Scales, color: '#4E8B7A', Component: lazy(() => import('../app/mini-apps/bmi')) },
   { id: 'habits', name: 'Habits', Icon: Repeat, Component: lazy(() => import('../app/mini-apps/habits')) },
-  { id: 'image-editor', name: 'Image Editor', Icon: ImageSquare, Component: lazy(() => import('../app/mini-apps/image-editor')) },
+  { id: 'studio', name: 'Studio', Icon: Aperture, Component: lazy(() => import('../app/mini-apps/studio')) },
+  { id: 'editor', name: 'Editor', Icon: SlidersHorizontal, color: '#E06030', Component: lazy(() => import('../app/mini-apps/editor')) },
   { id: 'learn', name: 'Learn', Icon: GraduationCap, Component: lazy(() => import('../app/mini-apps/learn')) },
   { id: 'voice-memo', name: 'Voice Memo', Icon: Microphone, Component: lazy(() => import('../app/mini-apps/voice-memo')) },
-  { id: 'camera', name: 'Camera', Icon: Camera, Component: lazy(() => import('../app/mini-apps/camera')) },
   { id: 'fitness', name: 'Fitness', Icon: Heartbeat, Component: lazy(() => import('../app/mini-apps/fitness')) },
 ];
 

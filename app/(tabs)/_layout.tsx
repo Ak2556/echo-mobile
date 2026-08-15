@@ -32,6 +32,7 @@ const TAB_ICONS: Record<string, React.ComponentType<any>> = {
   you: User,
   notifications: Bell,
   apps: SquaresFour,
+  messages_tab: Envelope,
 };
 
 function BadgeIcon({ children, count }: { children: React.ReactNode; count: number }) {
@@ -191,7 +192,13 @@ function DesktopSidebar({ state, descriptors, navigation }: BottomTabBarProps) {
                   canPreventDefault: true,
                 });
                 if (!isFocused && !event.defaultPrevented) {
-                  navigation.navigate(route.name);
+                  const options = descriptors[route.key]?.options as any;
+                  const href = options?.href;
+                  if (typeof href === 'string') {
+                    router.push(href as Href);
+                  } else {
+                    navigation.navigate(route.name);
+                  }
                 }
               }}
               accessibilityRole="button"
@@ -435,7 +442,13 @@ function FloatingTabBar(props: BottomTabBarProps) {
                     canPreventDefault: true,
                   });
                   if (!isFocused && !event.defaultPrevented) {
-                    navigation.navigate(route.name);
+                    const options = descriptors[route.key]?.options as any;
+                    const href = options?.href;
+                    if (typeof href === 'string') {
+                      router.push(href as Href);
+                    } else {
+                      navigation.navigate(route.name);
+                    }
                   }
                 }}
                 onLongPress={() => {
@@ -523,6 +536,7 @@ export default function TabLayout() {
       <Tabs.Screen name="chat" options={{ title: t('nav.chat') }} />
       <Tabs.Screen name="apps" options={{ title: t('nav.tools') }} />
       <Tabs.Screen name="notifications" options={{ title: t('nav.alerts'), href: null }} />
+      <Tabs.Screen name="messages_tab" options={{ title: 'Messages', href: '/messages' }} />
       <Tabs.Screen name="you" options={{ title: t('nav.you') }} />
     </Tabs>
   );

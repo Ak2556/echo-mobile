@@ -245,12 +245,12 @@ export default function SearchScreen() {
         <BlurView intensity={58} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.78 }]} pointerEvents="none" />
         <View style={[layout.wideContentStyle, { paddingTop: insets.top + (layout.isDesktop ? 14 : 8), paddingHorizontal: layout.gutter, paddingBottom: 10 }]}>
-          <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 26 : 30, lineHeight: layout.isPhone ? 31 : 36, marginBottom: 10 }]}>
+          <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5, marginBottom: 16 }]}>
             {t('nav.explore')}
           </Text>
           <SearchBar value={query} onChangeText={setQuery} placeholder={t('explore.searchPlaceholder')} />
         </View>
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'transparent' }} />
       </View>
     </View>
   );
@@ -416,22 +416,21 @@ function TopicTile({
   const { colors, font } = useTheme();
   return (
     <Pressable onPress={onPress} style={{ width }}>
-      <View style={{ minHeight: 92, borderRadius: 18, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 13, overflow: 'hidden' }}>
+      <View style={{ minHeight: 96, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
         <LinearGradient
-          colors={[`${color}2B`, `${color}08`, 'transparent']}
+          colors={[`${color}22`, 'transparent']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 1 }}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <Icon color={color} size={18} weight="bold" />
-          <Hash color={colors.textMuted} size={13} weight="bold" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Icon color={color} size={20} weight="bold" />
         </View>
-        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]} numberOfLines={1}>
+        <Text style={[font.display, { color: colors.text, fontSize: 16 }]} numberOfLines={1}>
           {label}
         </Text>
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 11, marginTop: 3 }]}>
+        <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 4 }]}>
           {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : 'Start exploring'}
         </Text>
       </View>

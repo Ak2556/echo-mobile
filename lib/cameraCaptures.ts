@@ -45,7 +45,7 @@ async function hydrateSignedUrls(captures: CameraCapture[]): Promise<CameraCaptu
 }
 
 export async function loadCameraCaptures(): Promise<CameraCapture[]> {
-  const remote = await pullMiniAppIfNewer('camera');
+  const remote = await pullMiniAppIfNewer('studio');
   if (Array.isArray(remote)) {
     const captures = normalizeCaptures(remote);
     await AsyncStorage.setItem(CAMERA_CAPTURES_KEY, JSON.stringify(captures));
@@ -61,5 +61,5 @@ export async function loadCameraCaptures(): Promise<CameraCapture[]> {
 export async function saveCameraCaptures(captures: CameraCapture[]): Promise<void> {
   const next = normalizeCaptures(captures);
   await AsyncStorage.setItem(CAMERA_CAPTURES_KEY, JSON.stringify(next));
-  pushMiniApp('camera', next);
+  pushMiniApp('studio', next);
 }

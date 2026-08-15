@@ -128,30 +128,30 @@ function ChatEmptyLaunchpad({
 
   return (
     <View style={[layout.contentStyle, { paddingHorizontal: layout.gutter, paddingTop: layout.isPhone ? 12 : 18, paddingBottom: 28, gap: 14 }]}>
-      <View style={{ borderRadius: 28, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+      <View style={{ position: 'relative', overflow: 'visible', marginHorizontal: 4 }}>
         <LinearGradient
-          colors={[`${colors.accent}4A`, `${colors.accent}18`, 'transparent']}
+          colors={[`${colors.accent}20`, 'transparent']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
+          end={{ x: 0, y: 1 }}
+          style={{ position: 'absolute', top: -30, left: -20, right: -20, bottom: -50 }}
           pointerEvents="none"
         />
-        <View style={{ padding: layout.isPhone ? 18 : 22, gap: 16 }}>
+        <View style={{ paddingTop: 12, gap: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
-            <View style={{ width: 50, height: 50, borderRadius: 18, backgroundColor: `${colors.accent}22`, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+            <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: `${colors.accent}15`, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
               <Sparkle color={colors.accent} size={28} weight="fill" />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               {opener ? (
-                <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 21 : 25, lineHeight: layout.isPhone ? 28 : 33 }]}>
+                <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 28 : 34, lineHeight: layout.isPhone ? 34 : 40, letterSpacing: -0.5 }]}>
                   {opener.message}
                 </Text>
               ) : (
                 <>
-                  <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 28 : 34, lineHeight: layout.isPhone ? 33 : 40 }]}>
+                  <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]}>
                     {t('chat.emptyTitle')}
                   </Text>
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }]} numberOfLines={2}>
+                  <Text style={[font.body, { color: colors.textSecondary, fontSize: 14, lineHeight: 22, marginTop: 8 }]} numberOfLines={2}>
                     {targetOutcome || t('chat.emptyBody', { target: targetLabel.toLowerCase() })}
                   </Text>
                 </>
@@ -941,14 +941,16 @@ export default function ChatScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', lineHeight: 26 }} numberOfLines={1}>
-                {t('chat.title')}
-              </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
+              <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Echo</Text>
+              </View>
+              <Pressable onPress={() => router.push('/messages' as Href)} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Messages</Text>
+              </Pressable>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
-              <HeaderIconButton icon={<ChatCircleText color={colors.textSecondary} size={18} />} label={t('chat.messages')} onPress={() => router.push('/messages' as Href)} />
               <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={t('nav.newEcho')} onPress={handleNewChat} />
               <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
               <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label={t('common.share')} onPress={handleShare} accent />

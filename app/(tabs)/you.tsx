@@ -2,7 +2,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
+  ArrowsLeftRight,
   BookmarkSimple,
   CalendarBlank,
   CaretRight,
@@ -112,7 +114,7 @@ export default function ProfileScreen() {
     setUserId,
   } = useAppStore();
   const [profileUserId, setProfileUserId] = useState(userId);
-  const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'reechoes'>('posts');
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
@@ -197,244 +199,131 @@ export default function ProfileScreen() {
         }}
       >
         <View style={layout.contentStyle}>
-        <View style={styles.screenHeader}>
-          <View style={styles.headerCopy}>
-            <Text
-              style={[font.bodySemibold, styles.headerEyebrow, { color: colors.textMuted }]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-            >
-              @{handle}
-            </Text>
-            <Text
-              style={[font.displayBlack, styles.headerTitle, { color: colors.text }]}
-              numberOfLines={1}
-              maxFontSizeMultiplier={TITLE_TEXT_SCALE}
-            >
-              Profile
-            </Text>
-          </View>
-          <View style={styles.headerActions}>
-            <IconButton
-              icon={<Gear color={colors.textSecondary} size={18} />}
-              label="Settings"
-              colors={colors}
-              radius={radius}
-              onPress={() => router.push('/settings')}
-            />
-            <Pressable
-              onPress={() => router.push('/edit-profile')}
-              accessibilityRole="button"
-              accessibilityLabel="Edit profile"
-            >
-              <View
-                style={[
-                  styles.editButton,
-                  { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.full },
-                ]}
-              >
-              <PencilSimple color={colors.accent} size={15} weight="bold" />
-              <Text
-                style={[font.bodySemibold, styles.editButtonText, { color: colors.text }]}
-                numberOfLines={1}
-                maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-              >
-                Edit
-              </Text>
-              </View>
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.heroCard}>
-          <View style={styles.identityRow}>
-            <Pressable
-              onPress={() => visibleAvatarUrl ? setPhotoPreviewOpen(true) : undefined}
-              disabled={!visibleAvatarUrl}
-              accessibilityRole={visibleAvatarUrl ? 'button' : undefined}
-              accessibilityLabel={visibleAvatarUrl ? 'Open profile photo' : undefined}
-              style={({ pressed }) => [
-                styles.avatarPressable,
-                { opacity: pressed ? 0.82 : 1 },
-              ]}
-            >
-              <ProfileAvatar
-                displayName={displayLabel}
-                avatarColor={profileAccent}
-                avatarUrl={visibleAvatarUrl}
-                size={72}
+          <View style={{ paddingTop: 32, paddingBottom: 40, alignItems: 'center' }}>
+            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
+              <LinearGradient
+                colors={[`${profileAccent}22`, 'transparent']}
+                style={{ width: '100%', height: 350, position: 'absolute', top: 0 }}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
               />
-            </Pressable>
-            <View style={styles.identityCopy}>
+            </View>
+            <View style={{ position: 'relative' }}>
+              <Pressable
+                onPress={() => visibleAvatarUrl ? setPhotoPreviewOpen(true) : undefined}
+                disabled={!visibleAvatarUrl}
+                accessibilityRole={visibleAvatarUrl ? 'button' : undefined}
+                accessibilityLabel={visibleAvatarUrl ? 'Open profile photo' : undefined}
+              >
+                <ProfileAvatar
+                  displayName={displayLabel}
+                  avatarColor={profileAccent}
+                  avatarUrl={visibleAvatarUrl}
+                  size={104}
+                />
+              </Pressable>
+            </View>
+            
+            <View style={{ marginTop: 24, alignItems: 'center', paddingHorizontal: 16 }}>
               <Text
-                style={[font.displayBlack, styles.displayName, { color: colors.text }]}
+                style={[font.displayBlack, { color: colors.text, fontSize: 32, textAlign: 'center', lineHeight: 36, letterSpacing: -0.5 }]}
                 numberOfLines={2}
                 maxFontSizeMultiplier={TITLE_TEXT_SCALE}
               >
                 {displayLabel}
               </Text>
               <Text
-                style={[font.bodySemibold, styles.username, { color: colors.textMuted }]}
+                style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 16, marginTop: 4, letterSpacing: 0.2 }]}
                 numberOfLines={1}
                 maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
               >
                 @{handle}
               </Text>
-              {!profilePhotoVisible && (
-                <Text
-                  style={[font.bodySemibold, styles.photoHiddenText, { color: colors.textMuted }]}
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-                >
-                  Photo hidden
-                </Text>
-              )}
             </View>
-          </View>
-
-          <View style={[styles.heroDivider, { backgroundColor: colors.border }]} />
-
-          <View style={styles.statsRow}>
-            <StatButton value={profileEchoes.length} label="Echoes" colors={colors} font={font} />
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <StatButton value={followerCount} label="Followers" colors={colors} font={font} onPress={() => openFollowers('followers')} />
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <StatButton value={followingCount} label="Following" colors={colors} font={font} onPress={() => openFollowers('following')} />
-          </View>
-
-          {/* Missing bio is handled by the completion banner below — a second
-              "Add a bio" affordance here just doubled the same action. */}
-          {bio ? (
-            <Text
-              style={[font.body, styles.bioText, { color: colors.textSecondary }]}
-              maxFontSizeMultiplier={BODY_TEXT_SCALE}
-            >
-              {bio}
-            </Text>
-          ) : null}
-        </View>
-
-        {showCompletionBanner && (
-          <ProfileCompletionBanner
-            steps={completionSteps}
-            onDismiss={() => setBannerDismissed(true)}
-            onPress={() => router.push('/edit-profile')}
-          />
-        )}
-
-        <StreakXPBadge />
-
-        {creatorProfile.topics.length > 0 && (
-          <View style={styles.sectionBlock}>
-            <SectionLabel label="Expertise" colors={colors} font={font} />
-            <View style={[styles.topicWrap, { columnGap: 12, rowGap: 4 }]}>
-              {creatorProfile.topics.slice(0, 8).map(topic => (
-                <Text
-                  key={topic}
-                  style={[font.body, styles.topicText, { color: colors.accent, fontWeight: '500' }]}
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-                >
-                  #{topic}
-                </Text>
-              ))}
-              {creatorProfile.topics.length > 8 && (
-                <Text
-                  style={[font.body, styles.topicText, { color: colors.textMuted }]}
-                  maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
-                >
-                  +{creatorProfile.topics.length - 8} more
-                </Text>
-              )}
-            </View>
-          </View>
-        )}
-
-        {creatorProfile.pinned.length > 0 ? (
-          <View style={styles.sectionBlock}>
-            <SectionLabel label="Signature Echo" colors={colors} font={font} icon={<Compass color={colors.accent} size={15} />} />
-            <FeedCard item={creatorProfile.pinned[0]} index={0} onPress={() => handlePressEcho(creatorProfile.pinned[0])} />
-          </View>
-        ) : null}
-
-        <View style={styles.accountArea}>
-          <SectionLabel label="Account" colors={colors} font={font} />
-          <View style={styles.menuPanel}>
-            {SETTINGS_ROWS.map(({ key, Icon, label, route }, index) => {
-              const iconColor = key === 'apps' ? '#4F83F1' : key === 'verify' ? colors.accent : colors.textSecondary;
-              const mutedIcon = key === 'bookmarks';
-              return (
-                <React.Fragment key={key}>
-                  <ProfileListRow
-                    icon={<Icon color={mutedIcon ? iconColor : '#fff'} size={18} weight={mutedIcon ? 'regular' : 'bold'} />}
-                    iconColor={iconColor}
-                    iconMuted={mutedIcon}
-                    label={key === 'bookmarks' ? t('you.bookmarks') : key === 'apps' ? t('nav.tools') : key === 'verify' ? t('you.getVerified') : label}
-                    colors={colors}
-                    radius={radius}
-                    font={font}
-                    onPress={() => route ? router.push(route) : openFollowers('followers')}
-                  />
-                  {index < SETTINGS_ROWS.length - 1 ? <View style={[styles.menuDivider, { backgroundColor: colors.border }]} /> : null}
-                </React.Fragment>
-              );
-            })}
-          </View>
-
-          {/* QUICK CONTROLS removed — notifications toggle lives in
-              /settings now (single source of truth for app prefs, reached
-              via the gear icon in the screen header). */}
-        </View>
-
-        {resolvedProfileUserId ? <ThinkingFingerprintCard userId={resolvedProfileUserId} isSelf /> : null}
-
-        <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} colors={colors} radius={radius} font={font} />
-
-        {activeTab === 'posts' ? (
-          profileEchoes.length === 0 ? (
-            <ProfileEmptyPosts
-              colors={colors}
-              radius={radius}
-              font={font}
-              onCreate={() => router.push('/create-post')}
-            />
-          ) : (
-            <PostsGrid
-              echoes={profileEchoes}
-              onPressEcho={handlePressEcho}
-              avatarColor={profileAccent}
-              containerWidth={layout.contentWidth}
-            />
-          )
-        ) : (
-          <AboutPanel
-            bio={bio}
-            creatorProfile={creatorProfile}
-            colors={colors}
-            radius={radius}
-            font={font}
-            onEdit={() => router.push('/edit-profile')}
-          />
-        )}
-
-        <View style={styles.sessionArea}>
-          <Pressable
-            onPress={() => { void signOut(); }}
-            accessibilityRole="button"
-            accessibilityLabel="Sign out"
-            accessibilityHint="Signs you out of Echo"
-          >
-            <View style={[styles.signOutButton, { borderRadius: radius.full, backgroundColor: colors.dangerMuted }]}>
-              <SignOut color={colors.danger} size={16} />
+            
+            {bio ? (
               <Text
-                style={[font.bodySemibold, styles.signOutText, { color: colors.danger }]}
-                numberOfLines={1}
-                maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
+                style={[font.body, { color: colors.textMuted, fontSize: 15, textAlign: 'center', marginTop: 16, paddingHorizontal: 32, lineHeight: 22 }]}
+                maxFontSizeMultiplier={BODY_TEXT_SCALE}
               >
-                Sign Out
+                {bio}
+              </Text>
+            ) : null}
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 28, gap: 32 }}>
+              <StatButton value={profileEchoes.length} label="Echoes" colors={colors} font={font} />
+              <StatButton value={followerCount} label="Followers" colors={colors} font={font} onPress={() => openFollowers('followers')} />
+              <StatButton value={followingCount} label="Following" colors={colors} font={font} onPress={() => openFollowers('following')} />
+            </View>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 32, gap: 12 }}>
+              <AnimatedPressable
+                onPress={() => router.push('/edit-profile')}
+                style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                scaleValue={0.96}
+              >
+                <PencilSimple color={colors.textSecondary} size={16} />
+                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>Edit Profile</Text>
+              </AnimatedPressable>
+              
+              <AnimatedPressable
+                onPress={() => router.push('/settings')}
+                style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                scaleValue={0.96}
+              >
+                <Gear color={colors.textSecondary} size={16} />
+                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>Settings</Text>
+              </AnimatedPressable>
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, marginBottom: 4 }}>
+            <Pressable style={{ flex: 1, alignItems: 'center', paddingVertical: 12 }} onPress={() => setActiveTab('posts')}>
+              <SquaresFour color={activeTab === 'posts' ? colors.text : colors.textMuted} size={26} weight={activeTab === 'posts' ? 'fill' : 'regular'} />
+            </Pressable>
+            <Pressable style={{ flex: 1, alignItems: 'center', paddingVertical: 12 }} onPress={() => setActiveTab('reechoes')}>
+              <ArrowsLeftRight color={activeTab === 'reechoes' ? colors.text : colors.textMuted} size={26} weight={activeTab === 'reechoes' ? 'bold' : 'regular'} />
+            </Pressable>
+            <Pressable style={{ flex: 1, alignItems: 'center', paddingVertical: 12 }} onPress={() => router.push('/bookmarks')}>
+              <BookmarkSimple color={colors.textMuted} size={26} weight="regular" />
+            </Pressable>
+          </View>
+
+        <View style={{ paddingBottom: layout.bottomChromePadding }}>
+          {activeTab === 'posts' ? (
+            profileEchoes.length === 0 ? (
+              <ProfileEmptyPosts
+                colors={colors}
+                radius={radius}
+                font={font}
+                onCreate={() => router.push('/create-post')}
+              />
+            ) : (
+              <PostsGrid
+                echoes={profileEchoes}
+                onPressEcho={handlePressEcho}
+                avatarColor={profileAccent}
+                containerWidth={layout.contentWidth}
+              />
+            )
+          ) : (
+            <View style={[{ marginHorizontal: 16, marginTop: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 24, padding: 32, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }]}>
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <ArrowsLeftRight color={colors.accent} size={24} weight="bold" />
+              </View>
+              <Text
+                style={[font.displayBlack, { color: colors.text, fontSize: 24, textAlign: 'center', marginBottom: 8 }]}
+                numberOfLines={2}
+              >
+                No Re-echoes yet.
+              </Text>
+              <Text
+                style={[font.body, { color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22 }]}
+              >
+                When you re-echo someone else's post, it will appear here.
               </Text>
             </View>
-          </Pressable>
+          )}
         </View>
         </View>
       </ScrollView>
@@ -598,31 +487,32 @@ function ProfileEmptyPosts({
   onCreate: () => void;
 }) {
   return (
-    <View style={styles.emptyPanel}>
+    <View style={[{ marginHorizontal: 16, marginTop: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 24, padding: 32, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }]}>
+      <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+        <Sparkle color={colors.accent} size={24} weight="fill" />
+      </View>
       <Text
-        style={[font.display, styles.emptyTitle, { color: colors.text }]}
+        style={[font.displayBlack, { color: colors.text, fontSize: 24, textAlign: 'center', marginBottom: 8 }]}
         numberOfLines={2}
         maxFontSizeMultiplier={TITLE_TEXT_SCALE}
       >
-        No Echoes yet
+        Your space, empty.
       </Text>
       <Text
-        style={[font.body, styles.emptySubtitle, { color: colors.textMuted }]}
+        style={[font.body, { color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 28, paddingHorizontal: 16 }]}
         maxFontSizeMultiplier={BODY_TEXT_SCALE}
       >
-        Publish one strong conversation or idea so people can understand what you are about.
+        Publish your first Echo to start building your unique digital footprint.
       </Text>
       <Pressable
         onPress={onCreate}
         accessibilityRole="button"
         accessibilityLabel="Create Echo"
       >
-        {/* Layout + fill live on the inner View — pressable style callbacks
-            returning arrays drop layout props (see AnimatedPressable note). */}
-        <View style={[styles.createButton, { borderRadius: radius.full, backgroundColor: colors.accent }]}>
-          <PencilSimple color="#fff" size={15} weight="bold" />
+        <View style={{ borderRadius: 999, backgroundColor: colors.text, paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <PencilSimple color={colors.bg} size={16} weight="bold" />
           <Text
-            style={[font.bodySemibold, styles.createButtonText]}
+            style={[font.bodySemibold, { color: colors.bg, fontSize: 15 }]}
             numberOfLines={1}
             maxFontSizeMultiplier={COMPACT_TEXT_SCALE}
           >
