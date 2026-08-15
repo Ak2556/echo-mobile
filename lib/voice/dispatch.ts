@@ -204,7 +204,7 @@ function matchMiniApp(spoken: string): string | null {
     habit: 'habits', shopping: 'shopping-list', grocery: 'shopping-list', calculator: 'calculator', calc: 'calculator',
     study: 'learn', course: 'learn', planner: 'planner', schedule: 'planner',
     memo: 'voice-memo', 'voice memo': 'voice-memo', recording: 'voice-memo',
-    photo: 'camera', 'image editor': 'image-editor', 'photo editor': 'image-editor',
+    photo: 'studio', camera: 'studio', 'image editor': 'editor', 'photo editor': 'editor',
     clock: 'world-clock', 'world clock': 'world-clock', timezone: 'world-clock',
     write: 'markdown', writing: 'markdown', password: 'password-gen', passwords: 'password-gen',
     // Hindi (Devanagari)
@@ -216,8 +216,8 @@ function matchMiniApp(spoken: string): string | null {
     'सीखो': 'learn', 'सीखें': 'learn', 'पढ़ाई': 'learn', 'लर्न': 'learn', 'कोर्स': 'learn',
     'प्लानर': 'planner', 'योजना': 'planner',
     'वॉइस मेमो': 'voice-memo', 'आवाज़ नोट': 'voice-memo', 'रिकॉर्ड': 'voice-memo', 'रिकॉर्डिंग': 'voice-memo',
-    'कैमरा': 'camera', 'फोटो': 'camera', 'तस्वीर': 'camera',
-    'फोटो एडिटर': 'image-editor', 'इमेज एडिटर': 'image-editor',
+    'कैमरा': 'studio', 'फोटो': 'studio', 'तस्वीर': 'studio',
+    'फोटो एडिटर': 'editor', 'इमेज एडिटर': 'editor',
     'घड़ी': 'world-clock', 'वर्ल्ड क्लॉक': 'world-clock', 'समय क्षेत्र': 'world-clock',
     'लिखो': 'markdown', 'लेखन': 'markdown', 'पासवर्ड': 'password-gen',
     // Romanized Hindi
