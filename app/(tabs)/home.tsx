@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, RefreshControl, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -20,6 +20,7 @@ import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
+import { useActiveVideoStore } from '../../store/useActiveVideoStore';
 import { useInfiniteFeed, useTrendingEvolutions } from '../../hooks/queries/useFeed';
 import { setReadableFeed } from '../../lib/voice/readFeed';
 import { registerVoiceActions, clearVoiceActions } from '../../lib/voice/actions';
@@ -434,10 +435,27 @@ export default function DiscoverScreen() {
   // plus scroll/refresh). Registered once; reads live refs so it stays stable.
   const popularItemsRef = useRef(popularItems);
   popularItemsRef.current = popularItems;
+  const setActiveEchoId = useActiveVideoStore(s => s.setActiveEchoId);
   const onVoiceViewable = useRef(({ viewableItems }: { viewableItems: { item?: any }[] }) => {
     const first = viewableItems?.find((v) => v?.item?.id)?.item;
-    if (first) currentEchoRef.current = first;
+    if (first) {
+      currentEchoRef.current = first;
+      setActiveEchoId(first.id);
+    } else {
+      setActiveEchoId(null);
+    }
   }).current;
+  
+  useFocusEffect(
+    useCallback(() => {
+      // Focus: do nothing, viewability config will update it
+      return () => {
+        // Blur: clear active video so it doesn't block other screens
+        setActiveEchoId(null);
+      };
+    }, [setActiveEchoId])
+  );
+
   useEffect(() => {
     registerVoiceActions({
       postAction: (action) => {

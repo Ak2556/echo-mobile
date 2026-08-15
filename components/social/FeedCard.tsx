@@ -511,7 +511,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
               <MediaGrid uris={item.mediaUris!} height={heroHeight} />
             )}
             {item.postType === 'video' && item.videoUri && (
-              <VideoPreview uri={item.videoUri} height={heroHeight} borderRadius={0} />
+              <VideoPreview uri={item.videoUri} height={heroHeight} borderRadius={0} echoId={item.id} />
             )}
 
             {/* Scrims for overlay legibility */}
@@ -865,7 +865,7 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
             {!!item.prompt && (
               <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 3}>{item.prompt}</Text>
             )}
-            <VideoPreview uri={item.videoUri} height={compactFeed ? 180 : 260} borderRadius={radius.md} />
+            <VideoPreview uri={item.videoUri} height={compactFeed ? 180 : 260} borderRadius={radius.md} echoId={item.id} />
           </View>
         )}
 
