@@ -355,10 +355,11 @@ function ReplyCard({
 // ─── ReactionBar ─────────────────────────────────────────────────────────────
 
 function ReactionBar({
-  reactions, myUserId, onToggle,
+  reactions, myUserId, isMe, onToggle,
 }: {
   reactions: RemoteMessageReaction[];
   myUserId: string;
+  isMe: boolean;
   onToggle: (reactionValue: string, hasReacted: boolean) => void;
 }) {
   const { colors } = useTheme();
@@ -372,7 +373,7 @@ function ReactionBar({
   }
 
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: -12, zIndex: 10, alignSelf: isMe ? 'flex-end' : 'flex-start' }}>
       {Object.entries(grouped).map(([val, { count, hasReacted }]) => (
         <Animated.View key={val} entering={ZoomIn.springify().damping(13).stiffness(240).mass(0.5)} layout={LinearTransition.springify()}>
           <Pressable
@@ -436,15 +437,13 @@ function TypingDots() {
 function DateSeparator({ label }: { label: string }) {
   const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 }}>
-      <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14 }}>
       <Text style={{
         color: colors.textMuted, fontSize: 11, fontWeight: '600',
-        marginHorizontal: 10, textTransform: 'uppercase', letterSpacing: 0.5,
+        textTransform: 'uppercase', letterSpacing: 0.5,
       }}>
         {label}
       </Text>
-      <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
     </View>
   );
 }
@@ -809,8 +808,8 @@ function DMBubble({
     transform: [{ scale: 0.6 + heartPop.value * 0.9 }],
   }));
 
-  const bubbleBg = isMe ? (colors.isDark ? '#38383D' : '#E5E5EA') : (colors.isDark ? '#2A2A2D' : colors.surfaceHover);
-  const textColor = colors.text;
+  const bubbleBg = isMe ? colors.accent : (colors.isDark ? '#2A2A2D' : colors.surfaceHover);
+  const textColor = isMe ? '#fff' : colors.text;
 
   const renderContent = () => {
     if (isDeleted) {
@@ -1090,6 +1089,7 @@ function DMBubble({
             <ReactionBar
               reactions={message.reactions}
               myUserId={myUserId}
+              isMe={isMe}
               onToggle={onReactionToggle}
             />
           )}
@@ -1134,12 +1134,8 @@ function DMBubble({
 function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?: boolean; onCatchUp?: () => void }) {
   const { colors } = useTheme();
   return (
-    <View style={{ paddingHorizontal: 16, paddingVertical: 10, gap: 9 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
-        <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("NEW MESSAGES")}</Text>
-        <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.accent + '66' }} />
-      </View>
+    <View style={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', gap: 9 }}>
+      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("NEW MESSAGES")}</Text>
       {onCatchUp && (count ?? 0) >= 3 && (
         <View style={{ alignItems: 'center' }}>
           <AnimatedPressable
