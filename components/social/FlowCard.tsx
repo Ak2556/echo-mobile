@@ -59,8 +59,8 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
   
   const height = layout.height;
   const { mutate: toggleLike } = useToggleRemoteLike();
-  const isGlobalMuted = useAppStore(s => s.isMuted);
-  const toggleMute = useAppStore(s => s.toggleMute);
+  const soundEnabled = useAppStore(s => s.soundEnabled);
+  const setSoundEnabled = useAppStore(s => s.setSoundEnabled);
 
   const avatarColor = warmAvatarColor(item.displayName || 'E');
   
@@ -74,7 +74,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
 
   return (
     <View style={{ height, width: '100%', backgroundColor: colors.bg }}>
-      <Pressable onPress={() => toggleMute(!isGlobalMuted)} style={StyleSheet.absoluteFill}>
+      <Pressable onPress={() => setSoundEnabled(!soundEnabled)} style={StyleSheet.absoluteFill}>
         <VideoPreview
           uri={item.videoUri}
           height={height}

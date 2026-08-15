@@ -72,7 +72,6 @@ export default function WatchScreen() {
         data={feed}
         style={{ width: '100%', height: '100%' }}
         pagingEnabled
-        estimatedItemSize={layout.height}
         snapToInterval={layout.height}
         snapToAlignment="start"
         decelerationRate="fast"
