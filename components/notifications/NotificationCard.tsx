@@ -171,7 +171,7 @@ export function NotificationCard({ notification, onPress, onLongPress, flush = f
         {/* Spacious, simple quote block */}
         {n.targetEchoPreview && (
           <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, marginTop: 4, paddingRight: 20 }} numberOfLines={2}>
-            "{n.targetEchoPreview}"
+            &quot;{n.targetEchoPreview}&quot;
           </Text>
         )}
 

@@ -176,7 +176,7 @@ function DailyThought() {
             </Pressable>
           </View>
           <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 20 : 24, lineHeight: layout.isPhone ? 28 : 32 }]}>
-            "{active.text}"
+            &quot;{active.text}&quot;
           </Text>
         </View>
       </View>
