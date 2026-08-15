@@ -111,7 +111,7 @@ export default function ListingDetailScreen() {
     try {
       await updateListingStatus(listing.id, 'removed');
       showToast('Listing removed', 'CheckCircle');
-      safeBack('/(tabs)/marketplace');
+      safeBack('/mini-apps/marketplace');
     } catch {
       showToast('Could not remove listing', 'Error');
     } finally {
@@ -133,7 +133,7 @@ export default function ListingDetailScreen() {
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, textAlign: 'center' }}>
           {ttx("This listing is no longer available.")}
         </Text>
-        <AnimatedPressable onPress={() => safeBack('/(tabs)/marketplace')} fadeOnPress style={{ marginTop: 20 }}>
+        <AnimatedPressable onPress={() => safeBack('/mini-apps/marketplace')} fadeOnPress style={{ marginTop: 20 }}>
           <Text style={{ color: colors.accent, fontSize: fontSizes.body }}>{ttx("Go back")}</Text>
         </AnimatedPressable>
       </View>
@@ -155,7 +155,7 @@ export default function ListingDetailScreen() {
         zIndex: 10,
       }}>
         <Pressable
-          onPress={() => safeBack('/(tabs)/marketplace')}
+          onPress={() => safeBack('/mini-apps/marketplace')}
           hitSlop={12}
           style={{
             width: 36, height: 36, borderRadius: 18,

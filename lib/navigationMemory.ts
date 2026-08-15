@@ -1,14 +1,14 @@
 import type { Href } from 'expo-router';
 import { persistGet, persistSet } from '../store/persist';
 
-export type PrimaryTabName = 'home' | 'explore' | 'marketplace' | 'chat' | 'you' | 'apps';
+export type PrimaryTabName = 'home' | 'explore' | 'watch' | 'chat' | 'you' | 'apps';
 
 const LAST_TAB_KEY = 'navigation:last-primary-tab';
 
 const TAB_ROUTES: Record<PrimaryTabName, Href> = {
   home: '/(tabs)/home',
   explore: '/(tabs)/explore',
-  marketplace: '/(tabs)/marketplace',
+  watch: '/(tabs)/watch',
   chat: '/(tabs)/chat',
   you: '/(tabs)/you',
   apps: '/(tabs)/apps',
@@ -17,7 +17,7 @@ const TAB_ROUTES: Record<PrimaryTabName, Href> = {
 const TAB_LABELS: Record<PrimaryTabName, string> = {
   home: 'Home',
   explore: 'Explore',
-  marketplace: 'Market',
+  watch: 'Watch',
   chat: 'Chat',
   you: 'You',
   apps: 'Tools',

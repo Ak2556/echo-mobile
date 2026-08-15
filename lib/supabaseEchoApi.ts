@@ -505,7 +505,7 @@ export async function fetchRankedFeed(options: {
 }
 
 export async function fetchRemoteFeed(
-  options: { limit?: number; cursor?: string } = {}
+  options: { limit?: number; cursor?: string; postType?: string } = {}
 ): Promise<FeedItem[]> {
   const uid = await getSessionUserId();
 
@@ -517,6 +517,10 @@ export async function fetchRemoteFeed(
     .eq('check_content', true)
     .order('created_at', { ascending: false })
     .limit(options.limit ?? 50);
+
+  if (options.postType) {
+    query = query.eq('post_type', options.postType);
+  }
 
   if (options.cursor) {
     query = query.lt('created_at', options.cursor);
