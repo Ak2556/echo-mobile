@@ -37,6 +37,9 @@ jobs:
         run: |
           mv fastlane_android android/fastlane
 
+      - name: Configure Gradle Memory
+        run: echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m" >> android/gradle.properties
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
