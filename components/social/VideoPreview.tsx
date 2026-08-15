@@ -3,7 +3,6 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { videoSourceForUri } from '../../lib/videoMedia';
-import { useAppStore } from '../../store/useAppStore';
 import { ttx } from '../../lib/i18n';
 import { WebView } from 'react-native-webview';
 
@@ -81,7 +80,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount }: 
 function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
-  const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
+  const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = false; p.loop = true; });
 
   useEffect(() => { setLoadState('loading'); }, [uri]);
 
@@ -141,7 +140,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount 
                     </style>
                   </head>
                   <body>
-                    <video src="${uri}" autoplay loop muted playsinline webkit-playsinline></video>
+                    <video src="${uri}" autoplay loop playsinline webkit-playsinline></video>
                   </body>
                 </html>
               `
