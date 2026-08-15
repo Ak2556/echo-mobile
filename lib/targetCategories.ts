@@ -12,8 +12,10 @@ export type TargetMiniAppId =
   | 'shopping-list'
   | 'bmi'
   | 'fitness'
-  | 'camera'
-  | 'image-editor'
+  
+  
+  | 'studio'
+  | 'editor'
   | 'voice-memo'
   | 'notes'
   | 'habits'
@@ -118,7 +120,7 @@ export const TARGET_CATEGORIES: TargetCategory[] = [
     label: 'Content',
     outcome: 'Create posts, videos, and ideas consistently',
     prompt: 'Help me design a content system that captures raw ideas, turns them into drafts, and tracks publishing consistency.',
-    apps: ['camera', 'image-editor', 'voice-memo', 'notes'],
+    apps: ['studio', 'editor', 'voice-memo', 'notes'],
     metrics: ['Ideas captured', 'Drafts', 'Published posts'],
     starter: 'Record one rough idea before polishing it.',
   },
@@ -163,7 +165,7 @@ export const TARGET_CATEGORIES: TargetCategory[] = [
     label: 'Relationships',
     outcome: 'Be more intentional with people',
     prompt: 'Help me become more thoughtful in relationships with reminders, conversation notes, and better follow-through.',
-    apps: ['notes', 'habits', 'voice-memo', 'camera'],
+    apps: ['notes', 'habits', 'voice-memo', 'studio'],
     metrics: ['Check-ins', 'Conversation notes', 'Follow-ups'],
     starter: 'Write the person and the next thoughtful action.',
   },
@@ -172,7 +174,7 @@ export const TARGET_CATEGORIES: TargetCategory[] = [
     label: 'Parenting',
     outcome: 'Organize family routines and memories',
     prompt: 'Help me make a parenting support system for routines, expenses, memories, and small weekly improvements.',
-    apps: ['habits', 'expenses', 'camera', 'notes'],
+    apps: ['habits', 'expenses', 'studio', 'notes'],
     metrics: ['Family routines', 'Costs', 'Memories saved'],
     starter: 'Add one family routine or memory to preserve.',
   },
@@ -181,7 +183,7 @@ export const TARGET_CATEGORIES: TargetCategory[] = [
     label: 'Creativity',
     outcome: 'Make more original work',
     prompt: 'Help me build a creative practice that captures inspiration, schedules making time, and turns drafts into shareable work.',
-    apps: ['notes', 'image-editor', 'voice-memo', 'camera'],
+    apps: ['notes', 'studio', 'voice-memo', 'studio'],
     metrics: ['Drafts', 'Inspiration', 'Creative sessions'],
     starter: 'Capture the seed of one idea before judging it.',
   },
@@ -190,7 +192,7 @@ export const TARGET_CATEGORIES: TargetCategory[] = [
     label: 'Cooking',
     outcome: 'Cook better and plan meals',
     prompt: 'Help me build a cooking system with meal ideas, measurements, food budget, and repeatable recipes.',
-    apps: ['shopping-list', 'expenses', 'notes', 'camera'],
+    apps: ['shopping-list', 'expenses', 'notes', 'studio'],
     metrics: ['Recipes', 'Food spend', 'Measurements'],
     starter: 'Save one recipe idea and the missing ingredients.',
   },

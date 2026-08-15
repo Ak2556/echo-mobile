@@ -329,8 +329,8 @@ export default function NotificationsScreen() {
             justifyContent: 'space-between',
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 26 }]}>{t('notif.title')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]}>{t('notif.title')}</Text>
             {unreadCount > 0 && (
               <View
                 style={{
@@ -408,7 +408,7 @@ export default function NotificationsScreen() {
             left: 0,
             right: 0,
             height: StyleSheet.hairlineWidth,
-            backgroundColor: colors.glassBorder,
+            backgroundColor: 'transparent',
           }}
         />
       </View>

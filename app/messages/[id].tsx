@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, KeyboardAvoidingView, Platform, ScrollView, FlatList,
+  View, Text, KeyboardAvoidingView, Platform, ScrollView,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
   ActivityIndicator, Alert, Linking, Dimensions,
 } from 'react-native';
@@ -139,6 +139,7 @@ interface NormalizedMessage {
 type ChatConversation = Conversation & {
   isGroup?: boolean;
   memberCount?: number;
+  otherLastSeenAt?: string | null;
 };
 
 function tryParsePayload(content: string | null): Record<string, unknown> | null {
@@ -249,6 +250,22 @@ function messageSearchText(message: NormalizedMessage): string {
     message.kind === 'link' ? 'link url website' : '',
     message.kind === 'contact' ? 'contact profile user' : '',
   ].filter(Boolean).join(' ').toLowerCase();
+}
+
+function formatLastSeen(dateStr: string | null): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'Active just now';
+  if (diffMins < 60) return `Active ${diffMins}m ago`;
+  const diffHrs = Math.floor(diffMins / 60);
+  if (diffHrs < 24) return `Active ${diffHrs}h ago`;
+  const diffDays = Math.floor(diffHrs / 24);
+  if (diffDays === 1) return 'Active yesterday';
+  if (diffDays < 7) return `Active ${diffDays}d ago`;
+  return `Active on ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
 }
 
 // ─── EchoShareCard ────────────────────────────────────────────────────────────
@@ -1235,7 +1252,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
             {query.length > 0 && <Pressable onPress={() => setQuery('')} hitSlop={8}><X color={colors.textMuted} size={15} /></Pressable>}
           </View>
 
-          <FlatList
+          <FlashList
             data={data}
             key={q ? 'search' : category}
             keyExtractor={(item, i) => `${item}-${i}`}
@@ -1322,7 +1339,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
             {ttx("No other conversations yet.")}
           </Text>
         ) : (
-          <FlatList
+          <FlashList
             data={targets}
             keyExtractor={c => c.id}
             renderItem={({ item }) => (
@@ -1938,6 +1955,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         displayName: remoteConvData.otherDisplayName,
         avatarColor: remoteConvData.otherAvatarColor,
         avatarUrl: remoteConvData.otherAvatarUrl ?? undefined,
+        otherLastSeenAt: remoteConvData.otherLastSeenAt,
         isGroup: remoteConvData.isGroup,
         memberCount: remoteConvData.memberCount,
         isVerified: false,
@@ -2146,14 +2164,13 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
   const markingReadRef = useRef(false);
   useEffect(() => {
     if (!remote || !id || markingReadRef.current) return;
-    const hasUnread = visibleMessages.some(m => m.senderId !== myId && !(m as any).readAt);
+    const hasUnread = visibleMessages.some(m => m.senderId !== myId && !m.isRead);
     if (hasUnread) {
       markingReadRef.current = true;
-      void markMessagesRead(id).then(() => {
-        doMarkRead(id);
-        setTimeout(() => { markingReadRef.current = false; }, 1000);
-      }).catch(() => {
-        markingReadRef.current = false;
+      doMarkRead(id, {
+        onSettled: () => {
+          setTimeout(() => { markingReadRef.current = false; }, 1000);
+        }
       });
     }
   }, [remote, id, visibleMessages, myId, doMarkRead]);
@@ -2650,7 +2667,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         groupedWithNext: isGroupedWithPrev(next, msg)
       });
     });
-    return data;
+    return data.reverse();
   }, [visibleMessages, searchTerm]);
 
   const memoizedFlashList = useMemo(() => {
@@ -2662,11 +2679,9 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         estimatedItemSize={70}
         getItemType={(item) => item.type}
         keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.type === 'unread' ? 'unread-divider' : item.msg.id}
-        contentContainerStyle={{ paddingVertical: 10, flexGrow: 1, justifyContent: 'flex-end' }}
+        contentContainerStyle={{ paddingVertical: 10 }}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => {
-          if (isAtBottom) listRef.current?.scrollToEnd({ animated: false });
-        }}
+        inverted={true}
         onEndReached={() => { if (hasNextPage) void fetchNextPage(); }}
         onEndReachedThreshold={0.25}
         // @ts-ignore FlashList typing doesn't include maintainVisibleContentPosition but it works natively on iOS
@@ -2842,7 +2857,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
             }}>
               {conversation.isGroup
                 ? (partnerIsTyping ? 'someone is typing…' : `${conversation.memberCount ?? 1} members · tap to manage`)
-                : partnerIsTyping ? 'typing…' : online ? 'Online now' : `@${conversation.username}`}
+                : partnerIsTyping ? 'typing…' : online ? 'Active now' : conversation.otherLastSeenAt ? formatLastSeen(conversation.otherLastSeenAt) : `@${conversation.username}`}
             </Text>
           </View>
         </Pressable>
@@ -3462,7 +3477,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
               <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Saved messages")}</Text>
               <Pressable onPress={() => setShowSaved(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
-            <FlatList
+            <FlashList
               data={conversationSaved}
               keyExtractor={s => s.id}
               contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8 }}

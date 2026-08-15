@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X } from 'phosphor-react-native';
+import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
 import { FeedCard } from '../../components/social/FeedCard';
 import { StoryCircles } from '../../components/social/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
@@ -92,8 +92,8 @@ function HomeHero({
   const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
   return (
-    <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 12 : 8, marginBottom: 12 }}>
-      <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 23 : 28, lineHeight: layout.isPhone ? 28 : 34 }]} numberOfLines={1}>
+    <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 24 : 16, marginBottom: 8 }}>
+      <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]} numberOfLines={2}>
         {username ? t('home.welcomeBack', { name: username }) : t('home.buildToday')}
       </Text>
     </View>
@@ -146,18 +146,18 @@ function DailyThought() {
     <Animated.View
       entering={FadeIn.duration(260)}
       exiting={FadeOut.duration(180)}
-      style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 4 : 2, marginBottom: 12 }}
+      style={{ marginHorizontal: layout.gutter, marginTop: 12, marginBottom: 32 }}
     >
-      <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+      <View style={{ position: 'relative', overflow: 'visible' }}>
         <LinearGradient
-          colors={[`${colors.accent}22`, `${colors.accent}0A`, 'transparent']}
+          colors={[`${colors.accent}15`, 'transparent']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
+          end={{ x: 0, y: 1 }}
+          style={{ position: 'absolute', top: -20, left: -20, right: -20, bottom: -40 }}
           pointerEvents="none"
         />
-        <View style={{ padding: 18 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <View style={{ paddingTop: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Sparkle color={colors.accent} size={14} weight="fill" />
               <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase' }]}>
@@ -174,8 +174,8 @@ function DailyThought() {
               <X color={colors.textMuted} size={16} weight="bold" />
             </Pressable>
           </View>
-          <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 17.5 : 20, lineHeight: layout.isPhone ? 24 : 27 }]}>
-            {active.text}
+          <Text style={[font.display, { color: colors.text, fontSize: layout.isPhone ? 20 : 24, lineHeight: layout.isPhone ? 28 : 32 }]}>
+            "{active.text}"
           </Text>
         </View>
       </View>
@@ -695,6 +695,15 @@ export default function DiscoverScreen() {
           </View>
 
           <Pressable
+            onPress={() => router.push('/messages')}
+            style={{ padding: 6, marginRight: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel="Messages"
+          >
+            <Envelope color={colors.textSecondary} size={22} />
+          </Pressable>
+
+          <Pressable
             onPress={() => router.push('/(tabs)/notifications')}
             style={{ padding: 6, marginRight: 4 }}
             accessibilityRole="button"
@@ -727,11 +736,7 @@ export default function DiscoverScreen() {
             </View>
           </Pressable>
 
-          <Pressable onPress={() => router.push('/user/me')} accessibilityLabel="Open your profile">
-            <View style={{ borderRadius: 17, borderWidth: 2, borderColor: colors.glassBorder }}>
-              <Avatar name={username || '?'} color={avatarColor} url={avatarUrl} size={30} />
-            </View>
-          </Pressable>
+
         </View>
 
         <Animated.View

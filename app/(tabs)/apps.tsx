@@ -33,13 +33,13 @@ const TOOL_LANES: { id: ToolLane; label: string; apps?: string[] }[] = [
   { id: 'focus', label: 'Focus', apps: ['pomodoro', 'learn', 'tasks', 'habits', 'notes'] },
   { id: 'money', label: 'Money', apps: ['expenses', 'shopping-list', 'calculator', 'notes'] },
   { id: 'health', label: 'Health', apps: ['fitness', 'habits', 'planner', 'notes'] },
-  { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'camera', 'image-editor', 'markdown', 'tasks'] },
+  { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'studio', 'editor', 'markdown', 'tasks'] },
   { id: 'utility', label: 'Utility', apps: ['calculator', 'world-clock', 'password-gen'] },
 ];
 
 type MiniApp = MiniAppCatalogItem;
 const APPS: MiniApp[] = MINI_APP_CATALOG.filter(a => 
-  ['tasks', 'habits', 'notes', 'expenses', 'planner', 'shopping-list', 'pomodoro', 'password-gen', 'learn', 'fitness'].includes(a.id)
+  ['tasks', 'habits', 'notes', 'expenses', 'planner', 'shopping-list', 'pomodoro', 'password-gen', 'learn', 'fitness', 'studio', 'editor'].includes(a.id)
 );
 
 /** Eyebrow section label — quiet, letterspaced, the app's editorial voice. */
@@ -117,11 +117,11 @@ function StatChip({ value, label, sub, color, onPress }: {
   const { colors } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-      <View style={{ width: 138, minHeight: 92, borderRadius: 18, padding: 14, backgroundColor: colors.surface, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }}>
+      <View style={{ width: 138, minHeight: 96, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
         <LinearGradient colors={[`${color}22`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-        <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }} numberOfLines={1}>{value}</Text>
-        <Text style={{ color: colors.text, fontFamily: 'Inter_600SemiBold', fontSize: 12.5, marginTop: 5 }} numberOfLines={1}>{label}</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 11.5, marginTop: 1 }} numberOfLines={1}>{sub}</Text>
+        <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_900Black', letterSpacing: -0.5 }} numberOfLines={1}>{value}</Text>
+        <Text style={{ color: colors.text, fontFamily: 'Inter_600SemiBold', fontSize: 13, marginTop: 5 }} numberOfLines={1}>{label}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>{sub}</Text>
       </View>
     </Pressable>
   );
@@ -425,9 +425,9 @@ export default function AppsScreen() {
             <View>
               <Eyebrow>{ttx("Your target")}</Eyebrow>
               <Pressable onPress={() => router.push('/target-progress' as Href)} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}>
-                <View style={{ borderRadius: 18, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
+                <View style={{ borderRadius: 20, overflow: 'hidden', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
                   <LinearGradient colors={[`${colors.accent}1F`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-                  <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}20` }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.accent}15` }}>
                     <Target color={colors.accent} size={22} weight="bold" />
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -471,10 +471,10 @@ export default function AppsScreen() {
         {useBlur && <AnimatedBlurView animatedProps={blurAnimatedProps} tint={tint} style={StyleSheet.absoluteFill} />}
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }, headerBgStyle]} />
         <View style={{ width: '100%', maxWidth: contentMaxWidth, alignSelf: 'center', paddingTop: insets.top + 10, paddingHorizontal: PAD, paddingBottom: 8 }}>
-          <Text style={{ color: colors.text, fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>{ttx("Echo Tools")}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{APPS.length} {ttx("connected essentials")}</Text>
+          <Text style={{ color: colors.text, fontSize: layout.isPhone ? 34 : 40, fontFamily: 'Fraunces_900Black', letterSpacing: -0.5 }}>{ttx("Echo Tools")}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 2 }}>{APPS.length} {ttx("connected essentials")}</Text>
         </View>
-        <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }, headerBorderStyle]} />
+        <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'transparent' }, headerBorderStyle]} />
       </View>
     </View>
   );

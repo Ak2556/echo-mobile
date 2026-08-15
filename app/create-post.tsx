@@ -941,6 +941,7 @@ export default function CreatePostScreen() {
           {/* Add-on toolbar — everything optional is one tap away */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
             {[
+              { key: 'camera', label: 'Camera', Icon: Camera, active: false, onPress: takePhoto },
               { key: 'photo', label: 'Photo', Icon: Images, active: imageUris.length > 0, onPress: pickImages },
               { key: 'video', label: 'Video', Icon: VideoCamera, active: videoUri.length > 0, onPress: pickVideo },
               { key: 'music', label: 'Music', Icon: MusicNotes, active: !!selectedMusic, onPress: () => { if (selectedMusic) setSelectedMusic(null); else setMusicPickerOpen(true); } },

@@ -16,11 +16,11 @@ export function resolvePerformanceProfile(
   mode: PerformanceMode,
   options: { reduceAnimations: boolean; dataSaver: boolean }
 ): PerformanceProfile {
-  const isHot = mode === 'hot';
+  // Max responsive mode: treat everything as 'hot'
+  const isHot = true;
   const reduceMotion = options.reduceAnimations || options.dataSaver || isHot;
-  const useBlur = Platform.OS === 'ios' && !options.dataSaver && !options.reduceAnimations && !isHot;
-  const maxBlurIntensity =
-    mode === 'overlay' ? 36 : mode === 'hero' ? 24 : isHot ? 0 : 48;
+  const useBlur = false; // Never use heavy BlurViews when max responsive
+  const maxBlurIntensity = 0;
 
   return {
     reduceMotion,

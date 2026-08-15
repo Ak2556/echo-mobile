@@ -126,12 +126,12 @@ function SettingsHero({
   ];
 
   return (
-    <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.surface, marginBottom: 18 }}>
+    <View style={{ overflow: 'visible', backgroundColor: 'transparent', marginBottom: 28 }}>
       <LinearGradient
-        colors={[`${colors.accent}42`, `${colors.accent}12`, 'transparent']}
+        colors={[`${colors.accent}30`, `${colors.accent}08`, 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
+        style={{ position: 'absolute', top: -40, left: -20, right: -20, bottom: -40 }}
         pointerEvents="none"
       />
       <View style={{ padding: 18, gap: 16 }}>
@@ -166,9 +166,7 @@ function SettingsHero({
                   flex: 1,
                   minHeight: 86,
                   borderRadius: radius.lg,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.border,
-                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.62)',
+                  backgroundColor: colors.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
                   padding: 12,
                   justifyContent: 'space-between',
                 }}
@@ -855,7 +853,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }}>
+      <View style={{ backgroundColor: 'transparent', paddingBottom: 8 }}>
         <View
           style={{
             flexDirection: 'row',
@@ -863,12 +861,13 @@ export default function SettingsScreen() {
             paddingLeft: layout.isMacDesktop ? 84 : 16,
             paddingRight: 16,
             paddingVertical: layout.isDesktop ? 14 : 12,
+            gap: 12,
           }}
         >
-          <AnimatedPressable onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }} scaleValue={0.88} haptic="light">
-            <ArrowLeft color={colors.text} size={24} />
+          <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
+            <ArrowLeft color={colors.text} size={28} />
           </AnimatedPressable>
-          <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>{t('settings.title')}</Text>
+          <Text style={{ color: colors.text, fontSize: layout.isPhone ? 32 : 36, fontFamily: 'Fraunces_900Black', letterSpacing: -0.5 }}>{t('settings.title')}</Text>
         </View>
       </View>
 

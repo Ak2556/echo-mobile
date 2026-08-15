@@ -3,19 +3,20 @@ import React, {
   useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle,
 } from 'react';
 import {
-  Modal, View, Text, Pressable, ActivityIndicator, Image as RNImage, ScrollView, LayoutChangeEvent,
+  Modal, View, Text, Pressable, ActivityIndicator, Image as RNImage, ScrollView, LayoutChangeEvent, TextInput,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import {
   X, Check, ArrowClockwise, ArrowCounterClockwise, FlipHorizontal, FlipVertical, Crop,
-  SlidersHorizontal, MagicWand, ArrowUUpLeft, Cube,
+  SlidersHorizontal, MagicWand, ArrowUUpLeft, Cube, Sun, SunDim, CircleHalf, Drop, Thermometer, DropHalf, Cloud,
+  Palette, Coffee, CornersIn, ScribbleLoop, PaintBucket, Eraser, TextT
 } from 'phosphor-react-native';
 import { useTheme } from '../../lib/theme';
 import { showToast } from '../ui/Toast';
 import { Slider } from '../ui/Slider';
 import {
-  finalMatrix, hasAdjustments, FILTER_PRESETS, NO_ADJUST, type Adjustments,
+  finalMatrix, hasAdjustments, FILTER_PRESETS, NO_ADJUST, IDENTITY, type Adjustments,
 } from '../../lib/photoFilters';
 import { ttx } from '../../lib/i18n';
 
@@ -49,11 +50,16 @@ interface PhotoEditorProps {
   onCancel: () => void;
 }
 
-type Mode = 'transform' | 'adjust' | 'filter';
+type Mode = 'transform' | 'adjust' | 'filter' | 'draw' | 'text';
+
+export type DrawPoint = { x: number; y: number };
+export type DrawPath = { points: DrawPoint[]; color: string; strokeWidth: number };
 
 const ASPECTS = [
   { key: 'square', label: '1:1', ratio: 1 },
   { key: 'portrait', label: '4:5', ratio: 4 / 5 },
+  { key: 'landscape', label: '5:4', ratio: 5 / 4 },
+  { key: 'story', label: '9:16', ratio: 9 / 16 },
   { key: 'wide', label: '16:9', ratio: 16 / 9 },
   { key: 'classic', label: '3:2', ratio: 3 / 2 },
 ];
@@ -64,16 +70,26 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
   const [mode, setMode] = useState<Mode>('transform');
   const [adjust, setAdjust] = useState<Adjustments>(NO_ADJUST);
   const [preset, setPreset] = useState('none');
+  const [activeAdjustTool, setActiveAdjustTool] = useState<keyof Adjustments>('exposure');
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [box, setBox] = useState({ w: 0, h: 0 });
+  const [showOriginal, setShowOriginal] = useState(false);
+  const [drawPaths, setDrawPaths] = useState<DrawPath[]>([]);
+  const [currentPath, setCurrentPath] = useState<DrawPoint[] | null>(null);
+  const [activeDrawColor, setActiveDrawColor] = useState('#EF4444');
+  const [activeStrokeWidth, setActiveStrokeWidth] = useState(0.015);
+  const [overlayText, setOverlayText] = useState('');
+  const [textPos, setTextPos] = useState({ x: 0.5, y: 0.5 });
+  const [textColor, setTextColor] = useState('#FFFFFF');
   const skiaRef = useRef<{ bake: () => Promise<string | null> }>(null);
 
   const matrix = useMemo(() => finalMatrix(preset, adjust), [preset, adjust]);
-  const colorDirty = preset !== 'none' || hasAdjustments(adjust);
+  const displayMatrix = showOriginal ? IDENTITY : matrix;
+  const colorDirty = preset !== 'none' || hasAdjustments(adjust) || drawPaths.length > 0 || overlayText.length > 0;
 
   useEffect(() => {
-    if (!visible || !uri) { setCur(null); setMode('transform'); setAdjust(NO_ADJUST); setPreset('none'); setDirty(false); return; }
+    if (!visible || !uri) { setCur(null); setMode('transform'); setAdjust(NO_ADJUST); setPreset('none'); setDrawPaths([]); setOverlayText(''); setDirty(false); return; }
     RNImage.getSize(uri, (w, h) => setCur({ uri, w, h }), () => setCur({ uri, w: 1, h: 1 }));
   }, [visible, uri]);
 
@@ -100,7 +116,15 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
   };
 
   const patchAdjust = (k: keyof Adjustments, v: number) => { setAdjust(a => ({ ...a, [k]: v })); setDirty(true); };
-  const resetColor = () => { setAdjust(NO_ADJUST); setPreset('none'); };
+  const resetColor = () => { setAdjust(NO_ADJUST); setPreset('none'); setDrawPaths([]); setOverlayText(''); };
+  
+  const resetTransform = () => {
+    if (!uri) return;
+    RNImage.getSize(uri, (w, h) => {
+      setCur({ uri, w, h });
+      setDirty(true);
+    }, () => setCur({ uri, w: 1, h: 1 }));
+  };
 
   const handleDone = async () => {
     if (!cur) return;
@@ -124,25 +148,47 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
       <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top', 'bottom']}>
         {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
           <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel={ttx("Cancel edits")}>
-            <X color="#fff" size={24} weight="bold" />
+            <Text style={{ color: '#fff', fontSize: 17, fontWeight: '400' }}>{ttx("Cancel")}</Text>
           </Pressable>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{ttx("Edit photo")}</Text>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 }}>{ttx("EDIT")}</Text>
           <Pressable onPress={handleDone} hitSlop={10} disabled={!cur || busy} accessibilityRole="button" accessibilityLabel={ttx("Apply edits")}>
-            <Check color={dirty ? colors.accent : '#fff'} size={24} weight="bold" />
+            <Text style={{ color: dirty ? colors.accent : '#fff', fontSize: 17, fontWeight: '600', opacity: (!cur || busy) ? 0.5 : 1 }}>{ttx("Done")}</Text>
           </Pressable>
         </View>
 
         {/* Preview */}
-        <View
+        <Pressable
           style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 }}
           onLayout={(e: LayoutChangeEvent) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+          onPressIn={() => setShowOriginal(true)}
+          onPressOut={() => setShowOriginal(false)}
         >
           {!cur ? (
             <ActivityIndicator color="#fff" />
           ) : SKIA_OK && Sk ? (
-            <SkiaColorPreview ref={skiaRef} uri={cur.uri} matrix={matrix} boxW={box.w} boxH={box.h} skia={Sk} />
+            <SkiaColorPreview ref={skiaRef} uri={cur.uri} matrix={displayMatrix} vignette={adjust.vignette} boxW={box.w} boxH={box.h} skia={Sk} 
+              drawPaths={drawPaths}
+              currentPath={currentPath}
+              activeDrawColor={activeDrawColor}
+              activeStrokeWidth={activeStrokeWidth}
+              isDrawingMode={mode === 'draw'}
+              isTextMode={mode === 'text'}
+              overlayText={overlayText}
+              textPos={textPos}
+              textColor={textColor}
+              onTextDrag={pt => { setTextPos(pt); setDirty(true); }}
+              onDrawStart={pt => setCurrentPath([pt])}
+              onDrawMove={pt => setCurrentPath(p => [...(p || []), pt])}
+              onDrawEnd={() => {
+                if (currentPath && currentPath.length > 0) {
+                  setDrawPaths(p => [...p, { points: currentPath, color: activeDrawColor, strokeWidth: activeStrokeWidth }]);
+                  setDirty(true);
+                }
+                setCurrentPath(null);
+              }}
+            />
           ) : (
             <Image source={{ uri: cur.uri }} style={{ flex: 1, width: '100%' }} contentFit="contain" transition={120} />
           )}
@@ -151,42 +197,75 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
               <ActivityIndicator color="#fff" />
             </View>
           )}
-        </View>
+        </Pressable>
 
         {/* Mode controls */}
         <View style={{ minHeight: 150, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 12 }}>
           {mode === 'transform' && (
             <>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 12 }}>
-                <ToolBtn icon={<ArrowCounterClockwise color="#fff" size={22} weight="bold" />} label={ttx("Rotate")} onPress={() => runTransform(() => [{ rotate: -90 }])} />
-                <ToolBtn icon={<ArrowClockwise color="#fff" size={22} weight="bold" />} label={ttx("Rotate")} onPress={() => runTransform(() => [{ rotate: 90 }])} />
-                <ToolBtn icon={<FlipHorizontal color="#fff" size={22} weight="bold" />} label={ttx("Flip")} onPress={() => runTransform(m => [{ flip: m.FlipType.Horizontal }])} />
-                <ToolBtn icon={<FlipVertical color="#fff" size={22} weight="bold" />} label={ttx("Flip")} onPress={() => runTransform(m => [{ flip: m.FlipType.Vertical }])} />
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingBottom: 20 }}>
+                <ToolBtn icon={<ArrowCounterClockwise color="#fff" size={20} weight="bold" />} onPress={() => runTransform(() => [{ rotate: -90 }])} />
+                <ToolBtn icon={<ArrowClockwise color="#fff" size={20} weight="bold" />} onPress={() => runTransform(() => [{ rotate: 90 }])} />
+                <ToolBtn icon={<FlipHorizontal color="#fff" size={20} weight="bold" />} onPress={() => runTransform(m => [{ flip: m.FlipType.Horizontal }])} />
+                <ToolBtn icon={<FlipVertical color="#fff" size={20} weight="bold" />} onPress={() => runTransform(m => [{ flip: m.FlipType.Vertical }])} />
+                <ToolBtn icon={<ArrowUUpLeft color="#fff" size={20} weight="bold" />} onPress={resetTransform} />
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 2 }}>
-                  <Crop color="rgba(255,255,255,0.6)" size={14} weight="bold" />
-                </View>
-                {ASPECTS.map(a => (
-                  <Pressable key={a.key} onPress={() => cropTo(a.ratio)} accessibilityRole="button" accessibilityLabel={`Crop ${a.label}`}
-                    style={({ pressed }) => ({ flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 10, backgroundColor: pressed ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.08)' })}>
-                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{a.label}</Text>
-                  </Pressable>
-                ))}
+              <View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10, alignItems: 'center' }}>
+                  <Crop color="rgba(255,255,255,0.6)" size={20} weight="bold" />
+                  <View style={{ width: 1, height: 20, backgroundColor: 'rgba(255,255,255,0.2)', marginHorizontal: 4 }} />
+                  {ASPECTS.map(a => (
+                    <Pressable key={a.key} onPress={() => cropTo(a.ratio)} accessibilityRole="button" accessibilityLabel={`Crop ${a.label}`}
+                      style={({ pressed }) => ({ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: pressed ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)' })}>
+                      <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600', letterSpacing: 0.5 }}>{a.label}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
             </>
           )}
 
           {mode === 'adjust' && (
-            <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
               {!SKIA_OK && (
-                <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 8 }}>{ttx("Color edits apply once the app is rebuilt with the editor engine.")}</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 8, textAlign: 'center' }}>{ttx("Color edits apply once the app is rebuilt with the editor engine.")}</Text>
               )}
-              <Slider label={ttx("Exposure")} value={adjust.exposure} onChange={v => patchAdjust('exposure', v)} accent={colors.accent} />
-              <Slider label={ttx("Brightness")} value={adjust.brightness} onChange={v => patchAdjust('brightness', v)} accent={colors.accent} />
-              <Slider label={ttx("Contrast")} value={adjust.contrast} onChange={v => patchAdjust('contrast', v)} accent={colors.accent} />
-              <Slider label={ttx("Saturation")} value={adjust.saturation} onChange={v => patchAdjust('saturation', v)} accent={colors.accent} />
-              <Slider label={ttx("Warmth")} value={adjust.warmth} onChange={v => patchAdjust('warmth', v)} accent={colors.accent} />
+              
+              <View style={{ height: 60, justifyContent: 'center' }}>
+                <Slider 
+                  label={ttx(activeAdjustTool.charAt(0).toUpperCase() + activeAdjustTool.slice(1))} 
+                  value={adjust[activeAdjustTool]} 
+                  onChange={v => patchAdjust(activeAdjustTool, v)} 
+                  accent={colors.accent} 
+                />
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 24, paddingTop: 20, paddingHorizontal: 12 }}>
+                {[
+                  { key: 'exposure', label: 'Exposure', icon: <Sun color={activeAdjustTool === 'exposure' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'exposure' ? 'fill' : 'regular'} /> },
+                  { key: 'brightness', label: 'Brightness', icon: <SunDim color={activeAdjustTool === 'brightness' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'brightness' ? 'fill' : 'regular'} /> },
+                  { key: 'contrast', label: 'Contrast', icon: <CircleHalf color={activeAdjustTool === 'contrast' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'contrast' ? 'fill' : 'regular'} /> },
+                  { key: 'saturation', label: 'Saturation', icon: <Drop color={activeAdjustTool === 'saturation' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'saturation' ? 'fill' : 'regular'} /> },
+                  { key: 'warmth', label: 'Warmth', icon: <Thermometer color={activeAdjustTool === 'warmth' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'warmth' ? 'fill' : 'regular'} /> },
+                  { key: 'tint', label: 'Tint', icon: <DropHalf color={activeAdjustTool === 'tint' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'tint' ? 'fill' : 'regular'} /> },
+                  { key: 'fade', label: 'Fade', icon: <Cloud color={activeAdjustTool === 'fade' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'fade' ? 'fill' : 'regular'} /> },
+                  { key: 'hue', label: 'Hue', icon: <Palette color={activeAdjustTool === 'hue' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'hue' ? 'fill' : 'regular'} /> },
+                  { key: 'sepia', label: 'Sepia', icon: <Coffee color={activeAdjustTool === 'sepia' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'sepia' ? 'fill' : 'regular'} /> },
+                  { key: 'vignette', label: 'Vignette', icon: <CornersIn color={activeAdjustTool === 'vignette' ? '#fff' : 'rgba(255,255,255,0.7)'} size={24} weight={activeAdjustTool === 'vignette' ? 'fill' : 'regular'} /> },
+                  { key: 'red', label: 'Red', icon: <Drop color={activeAdjustTool === 'red' ? '#EF4444' : 'rgba(239, 68, 68, 0.5)'} size={24} weight={activeAdjustTool === 'red' ? 'fill' : 'regular'} /> },
+                  { key: 'green', label: 'Green', icon: <Drop color={activeAdjustTool === 'green' ? '#22C55E' : 'rgba(34, 197, 94, 0.5)'} size={24} weight={activeAdjustTool === 'green' ? 'fill' : 'regular'} /> },
+                  { key: 'blue', label: 'Blue', icon: <Drop color={activeAdjustTool === 'blue' ? '#3B82F6' : 'rgba(59, 130, 246, 0.5)'} size={24} weight={activeAdjustTool === 'blue' ? 'fill' : 'regular'} /> },
+                ].map(tool => (
+                  <Pressable key={tool.key} onPress={() => setActiveAdjustTool(tool.key as keyof Adjustments)} style={{ alignItems: 'center', gap: 8 }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: activeAdjustTool === tool.key ? 'rgba(255,255,255,0.15)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                      {tool.icon}
+                    </View>
+                    <Text style={{ color: activeAdjustTool === tool.key ? '#fff' : 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '600' }}>
+                      {ttx(tool.label)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
             </View>
           )}
 
@@ -196,22 +275,72 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
                 <Pressable key={p.key} onPress={() => { setPreset(p.key); setDirty(true); }} accessibilityRole="button" accessibilityLabel={p.label}
                   style={{ alignItems: 'center', gap: 6 }}>
                   <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 2, borderColor: preset === p.key ? colors.accent : 'transparent', overflow: 'hidden' }}>
-                    {cur ? <Image source={{ uri: cur.uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : null}
+                    {cur ? (
+                      SKIA_OK && Sk ? (
+                        <View pointerEvents="none" style={{ flex: 1 }}>
+                          <SkiaColorPreview uri={cur.uri} matrix={p.matrix} vignette={adjust.vignette} boxW={64} boxH={64} skia={Sk} cover />
+                        </View>
+                      ) : (
+                        <Image source={{ uri: cur.uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                      )
+                    ) : null}
                   </View>
                   <Text style={{ color: preset === p.key ? colors.accent : 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '600' }}>{p.label}</Text>
                 </Pressable>
               ))}
             </ScrollView>
           )}
+
+          {mode === 'draw' && (
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24 }}>
+                <ToolBtn icon={<ArrowUUpLeft color={drawPaths.length > 0 ? '#fff' : 'rgba(255,255,255,0.3)'} size={20} />} onPress={() => { setDrawPaths(p => p.slice(0, -1)); setDirty(true); }} />
+                <ToolBtn icon={<Eraser color={drawPaths.length > 0 ? '#fff' : 'rgba(255,255,255,0.3)'} size={20} />} onPress={() => { setDrawPaths([]); setDirty(true); }} />
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingHorizontal: 12 }}>
+                {['#FFFFFF', '#000000', '#EF4444', '#22C55E', '#3B82F6', '#F59E0B', '#A855F7', '#EC4899'].map(c => (
+                  <Pressable key={c} onPress={() => setActiveDrawColor(c)} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c, borderWidth: 3, borderColor: activeDrawColor === c ? '#888' : 'transparent', shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 4 }} />
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {mode === 'text' && (
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16, alignItems: 'center', width: '100%' }}>
+              <TextInput
+                value={overlayText}
+                onChangeText={(t) => { setOverlayText(t); setDirty(true); }}
+                placeholder="Type here..."
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  width: '100%',
+                  padding: 12,
+                  borderRadius: 8,
+                  fontSize: 16,
+                  marginBottom: 16,
+                  textAlign: 'center',
+                }}
+              />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingHorizontal: 12 }}>
+                {['#FFFFFF', '#000000', '#EF4444', '#22C55E', '#3B82F6', '#F59E0B', '#A855F7', '#EC4899'].map(c => (
+                  <Pressable key={c} onPress={() => setTextColor(c)} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c, borderWidth: 3, borderColor: textColor === c ? '#888' : 'transparent', shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 4 }} />
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </View>
 
         {/* Mode tabs */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}>
-          <ModeTab icon={<Cube color={mode === 'transform' ? colors.accent : '#fff'} size={20} weight={mode === 'transform' ? 'fill' : 'bold'} />} label={ttx("Transform")} active={mode === 'transform'} onPress={() => setMode('transform')} accent={colors.accent} />
-          <ModeTab icon={<SlidersHorizontal color={mode === 'adjust' ? colors.accent : '#fff'} size={20} weight={mode === 'adjust' ? 'fill' : 'bold'} />} label={ttx("Adjust")} active={mode === 'adjust'} onPress={() => setMode('adjust')} accent={colors.accent} />
-          <ModeTab icon={<MagicWand color={mode === 'filter' ? colors.accent : '#fff'} size={20} weight={mode === 'filter' ? 'fill' : 'bold'} />} label={ttx("Filters")} active={mode === 'filter'} onPress={() => setMode('filter')} accent={colors.accent} />
+        <View style={{ flexDirection: 'row', justifyContent: 'center', paddingVertical: 16, gap: 24, flexWrap: 'wrap' }}>
+          <ModeTab label={ttx("DRAW")} active={mode === 'draw'} onPress={() => setMode('draw')} accent={colors.accent} />
+          <ModeTab label={ttx("TEXT")} active={mode === 'text'} onPress={() => setMode('text')} accent={colors.accent} />
+          <ModeTab label={ttx("ADJUST")} active={mode === 'adjust'} onPress={() => setMode('adjust')} accent={colors.accent} />
+          <ModeTab label={ttx("FILTERS")} active={mode === 'filter'} onPress={() => setMode('filter')} accent={colors.accent} />
+          <ModeTab label={ttx("CROP")} active={mode === 'transform'} onPress={() => setMode('transform')} accent={colors.accent} />
           {colorDirty && (
-            <ModeTab icon={<ArrowUUpLeft color="#fff" size={20} weight="bold" />} label={ttx("Reset")} active={false} onPress={resetColor} accent={colors.accent} />
+            <ModeTab label={ttx("RESET")} active={false} onPress={resetColor} accent={colors.accent} />
           )}
         </View>
       </SafeAreaView>
@@ -220,20 +349,19 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
   );
 }
 
-function ToolBtn({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
+function ToolBtn({ icon, onPress }: { icon: React.ReactNode; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={{ alignItems: 'center', gap: 4, minWidth: 56 }}>
+    <Pressable onPress={onPress} accessibilityRole="button" style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' }}>
       {icon}
-      <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>{label}</Text>
     </Pressable>
   );
 }
 
-function ModeTab({ icon, label, active, onPress, accent }: { icon: React.ReactNode; label: string; active: boolean; onPress: () => void; accent: string }) {
+function ModeTab({ label, active, onPress, accent }: { label: string; active: boolean; onPress: () => void; accent: string }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={{ alignItems: 'center', gap: 4, minWidth: 64 }}>
-      {icon}
-      <Text style={{ color: active ? accent : 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: active ? '700' : '500' }}>{label}</Text>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={{ alignItems: 'center', paddingVertical: 8 }}>
+      <Text style={{ color: active ? accent : 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: active ? '700' : '600', letterSpacing: 0.5 }}>{label}</Text>
+      {active && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: accent, marginTop: 4 }} />}
     </Pressable>
   );
 }
@@ -242,23 +370,60 @@ function ModeTab({ icon, label, active, onPress, accent }: { icon: React.ReactNo
 interface SkiaPreviewProps {
   uri: string;
   matrix: number[];
+  vignette?: number;
   boxW: number;
   boxH: number;
   skia: any;
+  cover?: boolean;
+  drawPaths?: DrawPath[];
+  currentPath?: DrawPoint[] | null;
+  activeDrawColor?: string;
+  activeStrokeWidth?: number;
+  isDrawingMode?: boolean;
+  isTextMode?: boolean;
+  overlayText?: string;
+  textPos?: { x: number; y: number };
+  textColor?: string;
+  onTextDrag?: (pt: { x: number; y: number }) => void;
+  onDrawStart?: (pt: DrawPoint) => void;
+  onDrawMove?: (pt: DrawPoint) => void;
+  onDrawEnd?: () => void;
+}
+function buildSvgPath(pts: DrawPoint[], w: number, h: number) {
+  if (!pts || pts.length === 0) return '';
+  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x * w} ${p.y * h}`).join(' ');
 }
 const SkiaColorPreview = forwardRef<{ bake: () => Promise<string | null> }, SkiaPreviewProps>(
-  function SkiaColorPreview({ uri, matrix, boxW, boxH, skia }, ref) {
-    const { useImage, Canvas, Image: SkImageComp, ColorMatrix, drawAsImage, ImageFormat } = skia;
+  function SkiaColorPreview({ uri, matrix, vignette, boxW, boxH, skia, cover, drawPaths, currentPath, activeDrawColor, activeStrokeWidth, isDrawingMode, isTextMode, overlayText, textPos, textColor, onTextDrag, onDrawStart, onDrawMove, onDrawEnd }, ref) {
+    const { useImage, Canvas, Image: SkImageComp, ColorMatrix, drawAsImage, ImageFormat, RadialGradient, vec, Rect, Group, Path, Text: SkText, useFont } = skia;
     const img = useImage(uri);
+    
+    // We require the font statically for Metro, then use it in Skia
+    const fontPreview = useFont(require('../../node_modules/@expo-google-fonts/inter/900Black/Inter_900Black.ttf'), 48);
 
     useImperativeHandle(ref, () => ({
       async bake() {
         if (!img) return null;
         const w = img.width(), h = img.height();
         const rendered = await drawAsImage(
-          <SkImageComp image={img} x={0} y={0} width={w} height={h} fit="cover">
-            <ColorMatrix matrix={matrix} />
-          </SkImageComp>,
+          <Group>
+            <SkImageComp image={img} x={0} y={0} width={w} height={h} fit="cover">
+              <ColorMatrix matrix={matrix} />
+            </SkImageComp>
+            {!!vignette && vignette > 0 && (
+              <Rect x={0} y={0} width={w} height={h} blendMode="multiply">
+                <RadialGradient c={vec(w / 2, h / 2)} r={Math.max(w, h) * (1 - vignette * 0.4)} colors={['transparent', 'rgba(0,0,0,0.8)']} />
+              </Rect>
+            )}
+            {drawPaths?.map((p, i) => (
+               <Path key={i} path={buildSvgPath(p.points, w, h)} color={p.color} style="stroke" strokeWidth={p.strokeWidth * Math.min(w, h)} strokeCap="round" strokeJoin="round" />
+            ))}
+            {!!overlayText && fontPreview && textPos && textColor && (
+              <Group transform={[{ translateX: textPos.x * w }, { translateY: textPos.y * h }, { scale: w / boxW }]}>
+                <SkText x={-fontPreview.getTextWidth(overlayText) / 2} y={fontPreview.getSize() / 2} text={overlayText} font={fontPreview} color={textColor} />
+              </Group>
+            )}
+          </Group>,
           { width: w, height: h },
         );
         const b64 = rendered.encodeToBase64(ImageFormat.JPEG, 90);
@@ -268,19 +433,53 @@ const SkiaColorPreview = forwardRef<{ bake: () => Promise<string | null> }, Skia
         await FS.writeAsStringAsync(out, b64, { encoding: FS.EncodingType.Base64 });
         return out;
       },
-    }), [img, matrix, drawAsImage, SkImageComp, ColorMatrix, ImageFormat]);
+    }), [img, matrix, vignette, drawAsImage, SkImageComp, ColorMatrix, ImageFormat, Group, Rect, RadialGradient, vec]);
 
     if (!img || boxW < 1 || boxH < 1) return <ActivityIndicator color="#fff" />;
-    const ar = img.width() / img.height();
-    let dw = boxW, dh = boxW / ar;
-    if (dh > boxH) { dh = boxH; dw = boxH * ar; }
+    
+    let dw = boxW, dh = boxH;
+    if (!cover) {
+      const ar = img.width() / img.height();
+      dh = boxW / ar;
+      if (dh > boxH) { dh = boxH; dw = boxH * ar; }
+    }
 
     return (
-      <Canvas style={{ width: dw, height: dh }}>
-        <SkImageComp image={img} x={0} y={0} width={dw} height={dh} fit="contain">
-          <ColorMatrix matrix={matrix} />
-        </SkImageComp>
-      </Canvas>
+      <View
+        style={{ width: dw, height: dh }}
+        onStartShouldSetResponder={() => !!isDrawingMode || !!isTextMode}
+        onResponderGrant={(e) => {
+          if (isDrawingMode) onDrawStart?.({ x: e.nativeEvent.locationX / dw, y: e.nativeEvent.locationY / dh });
+          if (isTextMode) onTextDrag?.({ x: e.nativeEvent.locationX / dw, y: e.nativeEvent.locationY / dh });
+        }}
+        onResponderMove={(e) => {
+          if (isDrawingMode) onDrawMove?.({ x: e.nativeEvent.locationX / dw, y: e.nativeEvent.locationY / dh });
+          if (isTextMode) onTextDrag?.({ x: e.nativeEvent.locationX / dw, y: e.nativeEvent.locationY / dh });
+        }}
+        onResponderRelease={() => isDrawingMode && onDrawEnd?.()}
+      >
+        <Canvas style={{ flex: 1 }} pointerEvents="none">
+          <SkImageComp image={img} x={0} y={0} width={dw} height={dh} fit={cover ? "cover" : "contain"}>
+            <ColorMatrix matrix={matrix} />
+          </SkImageComp>
+          {!!vignette && vignette > 0 && (
+            <Rect x={0} y={0} width={dw} height={dh} blendMode="multiply">
+              <RadialGradient c={vec(dw / 2, dh / 2)} r={Math.max(dw, dh) * (1 - vignette * 0.4)} colors={['transparent', 'rgba(0,0,0,0.8)']} />
+            </Rect>
+          )}
+          {drawPaths?.map((p, i) => (
+             <Path key={i} path={buildSvgPath(p.points, dw, dh)} color={p.color} style="stroke" strokeWidth={p.strokeWidth * Math.min(dw, dh)} strokeCap="round" strokeJoin="round" />
+          ))}
+          {currentPath && currentPath.length > 0 && activeDrawColor && activeStrokeWidth && (
+             <Path path={buildSvgPath(currentPath, dw, dh)} color={activeDrawColor} style="stroke" strokeWidth={activeStrokeWidth * Math.min(dw, dh)} strokeCap="round" strokeJoin="round" />
+          )}
+          {!!overlayText && fontPreview && textPos && textColor && (
+            <Group transform={[{ translateX: textPos.x * dw }, { translateY: textPos.y * dh }]}>
+              <SkText x={-fontPreview.getTextWidth(overlayText) / 2} y={fontPreview.getSize() / 2} text={overlayText} font={fontPreview} color={textColor} />
+            </Group>
+          )}
+        </Canvas>
+      </View>
     );
   },
 );

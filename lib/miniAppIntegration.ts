@@ -36,10 +36,12 @@ const NAME_ALIASES: Record<string, TargetMiniAppId> = {
   'classroom': 'learn',
   'voice memo': 'voice-memo',
   'day planner': 'planner',
-  'image editor': 'image-editor',
-  'photo editor': 'image-editor',
-  'edit photo': 'image-editor',
-  'edit image': 'image-editor',
+  'image editor': 'studio',
+  'photo editor': 'studio',
+  'edit photo': 'studio',
+  'edit image': 'studio',
+  'camera': 'studio',
+  'video': 'studio',
 };
 
 const FALLBACK_RELATED: Partial<Record<TargetMiniAppId, TargetMiniAppId[]>> = {
@@ -54,14 +56,13 @@ const FALLBACK_RELATED: Partial<Record<TargetMiniAppId, TargetMiniAppId[]>> = {
   'shopping-list': ['expenses', 'calculator', 'planner', 'notes'],
   bmi: ['fitness', 'habits', 'planner', 'notes'],
   fitness: ['habits', 'planner', 'shopping-list', 'notes'],
-  camera: ['image-editor', 'notes', 'fitness', 'voice-memo'],
-  'image-editor': ['camera', 'notes', 'markdown', 'voice-memo'],
+  studio: ['notes', 'fitness', 'voice-memo', 'markdown'],
   'voice-memo': ['notes', 'tasks', 'pomodoro', 'planner'],
   notes: ['learn', 'tasks', 'planner', 'markdown'],
   habits: ['tasks', 'pomodoro', 'fitness', 'planner'],
   expenses: ['shopping-list', 'calculator', 'notes', 'planner'],
   'world-clock': ['planner', 'notes', 'calculator', 'tasks'],
-  markdown: ['notes', 'learn', 'camera', 'voice-memo'],
+  markdown: ['notes', 'learn', 'studio', 'voice-memo'],
 };
 
 export function resolveMiniAppId(input: string | undefined): TargetMiniAppId | undefined {

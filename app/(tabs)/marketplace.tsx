@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  FlatList,
   Modal,
   Pressable,
   ScrollView,
@@ -14,6 +13,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FlashList } from '@shopify/flash-list';
 import {
   BookOpen,
   Briefcase,
@@ -174,10 +174,8 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
       haptic="light"
       style={{
         width,
-        borderRadius: radius.card,
-        backgroundColor: colors.surface,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: colors.border,
+        borderRadius: 20,
+        backgroundColor: colors.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
         overflow: 'hidden',
       }}
     >
@@ -544,23 +542,18 @@ export default function MarketplaceScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{
-        paddingTop: insets.top + 10,
-        paddingBottom: 10,
+        paddingTop: insets.top + (layout.isDesktop ? 14 : 8),
+        paddingBottom: 16,
         backgroundColor: colors.bg,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
       }}>
         <View style={{ width: '100%', maxWidth: gridOuterWidth, alignSelf: 'center', paddingHorizontal: CARD_H_PADDING, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-            <View style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: `${colors.accent}20`, alignItems: 'center', justifyContent: 'center' }}>
-              <Storefront color={colors.accent} size={21} weight="bold" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${colors.accent}15`, alignItems: 'center', justifyContent: 'center' }}>
+              <Storefront color={colors.accent} size={24} weight="bold" />
             </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>
+            <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]}>
                 {ttx("Market")}
-              </Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]} numberOfLines={1}>
-                {ttx("Everyone can buy. Anyone can sell.")}
               </Text>
             </View>
           </View>
@@ -598,12 +591,11 @@ export default function MarketplaceScreen() {
       ) : loadError && listings.length === 0 ? (
         <ErrorState kind={classifyError(loadError)} onRetry={() => load(query, category)} />
       ) : (
-        <FlatList
+        <FlashList
           key={columns}
           data={sortedListings}
           keyExtractor={item => item.id}
           numColumns={columns}
-          columnWrapperStyle={columns > 1 ? { gap: CARD_GAP } : undefined}
           ListHeaderComponent={header}
           contentContainerStyle={{
             width: '100%',

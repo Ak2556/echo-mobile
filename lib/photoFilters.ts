@@ -79,15 +79,88 @@ export function warmth(v: number): ColorMatrix {
   return [1, 0, 0, 0, w, 0, 1, 0, 0, 0, 0, 0, 1, 0, -w, 0, 0, 0, 1, 0];
 }
 
+export function tint(v: number): ColorMatrix {
+  const t = v * 0.15; // push magenta up / green down
+  return [1, 0, 0, 0, t, 0, 1, 0, 0, -t, 0, 0, 1, 0, t, 0, 0, 0, 1, 0];
+}
+
+export function fade(v: number): ColorMatrix {
+  const f = Math.max(0, v) * 0.2; // lift blacks up to 20%
+  return [
+    1 - f, 0, 0, 0, f,
+    0, 1 - f, 0, 0, f,
+    0, 0, 1 - f, 0, f,
+    0, 0, 0, 1, 0
+  ];
+}
+
+export function hue(v: number): ColorMatrix {
+  const angle = v * Math.PI;
+  const c = Math.cos(angle), s = Math.sin(angle);
+  const lr = 0.213, lg = 0.715, lb = 0.072;
+  return [
+    lr + c * (1 - lr) + s * (-lr), lg + c * (-lg) + s * (-lg), lb + c * (-lb) + s * (1 - lb), 0, 0,
+    lr + c * (-lr) + s * 0.143, lg + c * (1 - lg) + s * 0.140, lb + c * (-lb) + s * (-0.283), 0, 0,
+    lr + c * (-lr) + s * -(1 - lr), lg + c * (-lg) + s * lg, lb + c * (1 - lb) + s * lb, 0, 0,
+    0, 0, 0, 1, 0
+  ];
+}
+
+export function sepia(v: number): ColorMatrix {
+  const f = Math.max(0, v);
+  const inv = 1 - f;
+  return [
+    inv + f * 0.393, f * 0.769, f * 0.189, 0, 0,
+    f * 0.349, inv + f * 0.686, f * 0.168, 0, 0,
+    f * 0.272, f * 0.534, inv + f * 0.131, 0, 0,
+    0, 0, 0, 1, 0
+  ];
+}
+
+export function redChannel(v: number): ColorMatrix {
+  return [
+    1 + v, 0, 0, 0, 0,
+    0, 1, 0, 0, 0,
+    0, 0, 1, 0, 0,
+    0, 0, 0, 1, 0
+  ];
+}
+
+export function greenChannel(v: number): ColorMatrix {
+  return [
+    1, 0, 0, 0, 0,
+    0, 1 + v, 0, 0, 0,
+    0, 0, 1, 0, 0,
+    0, 0, 0, 1, 0
+  ];
+}
+
+export function blueChannel(v: number): ColorMatrix {
+  return [
+    1, 0, 0, 0, 0,
+    0, 1, 0, 0, 0,
+    0, 0, 1 + v, 0, 0,
+    0, 0, 0, 1, 0
+  ];
+}
+
 export interface Adjustments {
   brightness: number;
   contrast: number;
   saturation: number;
   exposure: number;
   warmth: number;
+  tint: number;
+  fade: number;
+  hue: number;
+  sepia: number;
+  red: number;
+  green: number;
+  blue: number;
+  vignette: number; // Stored here, handled visually via Skia spatial overlay
 }
 
-export const NO_ADJUST: Adjustments = { brightness: 0, contrast: 0, saturation: 0, exposure: 0, warmth: 0 };
+export const NO_ADJUST: Adjustments = { brightness: 0, contrast: 0, saturation: 0, exposure: 0, warmth: 0, tint: 0, fade: 0, hue: 0, sepia: 0, red: 0, green: 0, blue: 0, vignette: 0 };
 
 export function adjustmentsToMatrix(a: Adjustments): ColorMatrix {
   return composeAll(
@@ -96,11 +169,18 @@ export function adjustmentsToMatrix(a: Adjustments): ColorMatrix {
     contrast(a.contrast),
     saturation(a.saturation),
     warmth(a.warmth),
+    tint(a.tint),
+    fade(a.fade),
+    hue(a.hue),
+    sepia(a.sepia),
+    redChannel(a.red),
+    greenChannel(a.green),
+    blueChannel(a.blue)
   );
 }
 
 export function hasAdjustments(a: Adjustments): boolean {
-  return a.brightness !== 0 || a.contrast !== 0 || a.saturation !== 0 || a.exposure !== 0 || a.warmth !== 0;
+  return a.brightness !== 0 || a.contrast !== 0 || a.saturation !== 0 || a.exposure !== 0 || a.warmth !== 0 || a.tint !== 0 || a.fade !== 0 || a.hue !== 0 || a.sepia !== 0 || a.red !== 0 || a.green !== 0 || a.blue !== 0 || a.vignette !== 0;
 }
 
 // ── Filter presets (a base look; user adjustments compose on top) ──
@@ -116,6 +196,11 @@ export const FILTER_PRESETS: FilterPreset[] = [
   { key: 'vivid', label: 'Vivid', matrix: adjustmentsToMatrix({ ...NO_ADJUST, saturation: 0.35, contrast: 0.2 }) },
   { key: 'warm', label: 'Warm', matrix: adjustmentsToMatrix({ ...NO_ADJUST, warmth: 0.5, brightness: 0.04 }) },
   { key: 'cool', label: 'Cool', matrix: adjustmentsToMatrix({ ...NO_ADJUST, warmth: -0.5 }) },
+  { key: 'dramatic', label: 'Dramatic', matrix: adjustmentsToMatrix({ ...NO_ADJUST, saturation: -0.4, contrast: 0.3, fade: 0.2 }) },
+  { key: 'chrome', label: 'Chrome', matrix: adjustmentsToMatrix({ ...NO_ADJUST, saturation: 0.5, contrast: 0.25 }) },
+  { key: 'process', label: 'Process', matrix: adjustmentsToMatrix({ ...NO_ADJUST, tint: 0.3, warmth: -0.2, contrast: 0.15 }) },
+  { key: 'instant', label: 'Instant', matrix: adjustmentsToMatrix({ ...NO_ADJUST, fade: 0.4, warmth: 0.3, tint: 0.2, saturation: -0.1 }) },
+  { key: 'vintage', label: 'Vintage', matrix: adjustmentsToMatrix({ ...NO_ADJUST, sepia: 0.7, fade: 0.3, contrast: 0.1 }) },
   { key: 'fade', label: 'Fade', matrix: composeAll(saturation(-0.3), LIFT_BLACKS, contrast(-0.12)) },
   { key: 'mono', label: 'Mono', matrix: saturation(-1) },
   { key: 'noir', label: 'Noir', matrix: composeAll(saturation(-1), contrast(0.4)) },

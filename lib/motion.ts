@@ -1,14 +1,14 @@
 export const MOTION = {
-  pressSoft: { damping: 24, stiffness: 520, mass: 0.7 },
-  pressFirm: { damping: 22, stiffness: 620, mass: 0.72 },
-  pressDeep: { damping: 20, stiffness: 720, mass: 0.75 },
-  release: { damping: 18, stiffness: 420, mass: 0.85 },
-  snap: { damping: 22, stiffness: 620, mass: 0.72 },
-  settle: { damping: 24, stiffness: 360, mass: 0.9 },
-  overshoot: { damping: 13, stiffness: 430, mass: 0.75 },
-  entrance: { damping: 22, stiffness: 420, mass: 0.85 },
-  cardEntrance: { damping: 24, stiffness: 460, mass: 0.9 },
-  modalEntrance: { damping: 20, stiffness: 360, mass: 0.85 },
+  pressSoft: { damping: 18, stiffness: 800, mass: 0.4 },
+  pressFirm: { damping: 18, stiffness: 900, mass: 0.4 },
+  pressDeep: { damping: 18, stiffness: 1000, mass: 0.4 },
+  release: { damping: 20, stiffness: 700, mass: 0.5 },
+  snap: { damping: 20, stiffness: 800, mass: 0.5 },
+  settle: { damping: 22, stiffness: 600, mass: 0.5 },
+  overshoot: { damping: 16, stiffness: 500, mass: 0.6 },
+  entrance: { damping: 20, stiffness: 600, mass: 0.5 },
+  cardEntrance: { damping: 20, stiffness: 600, mass: 0.5 },
+  modalEntrance: { damping: 20, stiffness: 500, mass: 0.5 },
 } as const;
 
 export type PressDepth = 'soft' | 'medium' | 'deep';
