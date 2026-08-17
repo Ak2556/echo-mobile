@@ -5,16 +5,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { Users } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { UserRow } from '../components/social/UserRow';
+import { UserRow } from '../src/features/feed/ui/UserRow';
 import { UserRowSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
 import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useRemoteFollowersList, type ConnectionUser } from '../hooks/queries/useRemoteFollowers';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 export default function FollowersScreen() {
   const router = useRouter();
@@ -99,7 +99,6 @@ export default function FollowersScreen() {
       ) : (
         <FlashList
           data={data}
-          estimatedItemSize={100}
             renderItem={({ item }) => {
             const isSelf = item.id === storeUserId;
             const conn = remote ? (item as ConnectionUser) : null;

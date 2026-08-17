@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { Icon } from 'phosphor-react-native';
 import { AnimatedPressable } from './AnimatedPressable';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { ICON_SIZE, ICON_WEIGHT, type IconSizeToken, type IconRole } from '../../lib/icons';
 
 interface IconButtonProps {

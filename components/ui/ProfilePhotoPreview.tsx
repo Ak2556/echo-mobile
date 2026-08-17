@@ -2,8 +2,8 @@ import React from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { X } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
-import { ttx } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { ttx } from '../../src/shared/lib/i18n';
 
 interface ProfilePhotoPreviewProps {
   visible: boolean;

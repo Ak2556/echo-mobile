@@ -2,9 +2,9 @@ import React from 'react';
 import { Modal, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, BellSlash } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
-import { track } from '../../lib/analytics';
-import { ttx } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { track } from '../../src/shared/lib/analytics';
+import { ttx } from '../../src/shared/lib/i18n';
 
 interface PushPrePromptProps {
   visible: boolean;

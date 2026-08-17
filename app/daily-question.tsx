@@ -7,11 +7,11 @@ import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { ArrowLeft, LockSimple, Sparkle, Lightning, Clock, Users } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
-import { LinkifiedText } from '../components/social/LinkifiedText';
+import { LinkifiedText } from '../src/features/feed/ui/LinkifiedText';
 import { SpeakButton } from '../components/ui/SpeakButton';
 import { DailyQuestionComposer } from '../components/daily/DailyQuestionComposer';
-import { useTheme } from '../lib/theme';
-import { useI18n } from '../lib/i18n';
+import { useTheme } from '../src/shared/lib/theme';
+import { useI18n } from '../src/shared/lib/i18n';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import {
   fetchTodaysDailyQuestion,
@@ -26,7 +26,7 @@ import {
   type DailyAnswerWithAuthor,
   type DivergentDailyAnswer,
 } from '../lib/supabaseEchoApi';
-import { track } from '../lib/analytics';
+import { track } from '../src/shared/lib/analytics';
 import { captureException } from '../lib/monitoring';
 import { recordAppOpen } from '../lib/personalNudges';
 

@@ -10,7 +10,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { GlassPanel } from './GlassPanel';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 
 // Single shared value drives both scale + opacity — halves the animation count
 function Dot({ delay, color }: { delay: number; color: string }) {

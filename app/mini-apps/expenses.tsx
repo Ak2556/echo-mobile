@@ -15,8 +15,8 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useI18n } from '../../src/shared/lib/i18n';
 import { showToast } from '../../components/ui/Toast';
 import { CURRENCIES, formatPrice, getCurrencySymbol, type CurrencyCode } from '../../lib/currency';
 import {

@@ -16,25 +16,25 @@ import Animated, {
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
-import { FeedCard } from '../../components/social/FeedCard';
-import { StoryCircles } from '../../components/social/StoryCircles';
+import { FeedCard } from '../../src/features/feed/ui/FeedCard';
+import { StoryCircles } from '../../src/features/feed/ui/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
-import { useInfiniteFeed, useTrendingEvolutions } from '../../hooks/queries/useFeed';
+import { useInfiniteFeed, useTrendingEvolutions } from '../../src/features/feed/api/useFeed';
 import { setReadableFeed } from '../../lib/voice/readFeed';
 import { registerVoiceActions, clearVoiceActions } from '../../lib/voice/actions';
-import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
+import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useToggleRemoteFollow } from '../../src/features/feed/api/useSupabaseSocial';
 import { useFollow } from '../../hooks/queries/useFollow';
 import { EvolutionGroup, FeedItem } from '../../types';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { useAppStore } from '../../store/useAppStore';
-import { usePerformanceProfile } from '../../lib/performance';
+import { usePerformanceProfile } from '../../src/shared/lib/performance';
 import { groupDiscovery } from '../../lib/echoUX';
 import { useRealtimeNewEchoes } from '../../lib/realtime';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
 import { ComposeFAB } from '../../components/ui/ComposeFAB';
-import { UserRow } from '../../components/social/UserRow';
+import { UserRow } from '../../src/features/feed/ui/UserRow';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useSuggestedUsers } from '../../hooks/queries/useSuggestedUsers';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -43,12 +43,12 @@ import { pingDailyActivity } from '../../lib/retention';
 import { recordAppOpen } from '../../lib/personalNudges';
 import { features } from '../../lib/featureFlags';
 import { getTopPerspectiveSummary } from '../../lib/perspectives';
-import { track } from '../../lib/analytics';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { track } from '../../src/shared/lib/analytics';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useTutorialTarget } from '../../hooks/useTutorialTarget';
 import { useTutorialStore } from '../../store/tutorialStore';
-import { useI18n, type TranslationKey } from '../../lib/i18n';
+import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
 import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/dailyThoughts';
 
 
@@ -603,7 +603,6 @@ export default function DiscoverScreen() {
               )
             )}
             keyExtractor={item => item.id}
-            estimatedItemSize={250}
             contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
             onScroll={handleScroll}
             scrollEventThrottle={16}

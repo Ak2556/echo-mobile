@@ -1,7 +1,7 @@
 import React from 'react';
 import { PressableProps, Text, View, Platform, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface ButtonProps extends PressableProps {

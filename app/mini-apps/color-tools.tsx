@@ -5,8 +5,8 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
-import { useTheme } from '../../lib/theme';
-import { ttx } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { ttx } from '../../src/shared/lib/i18n';
 
 function hexToRgb(hex: string) {
   const c = hex.replace('#', '');

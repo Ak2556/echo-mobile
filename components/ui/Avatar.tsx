@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, View, Text } from 'react-native';
 import { Image } from 'expo-image';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { warmAvatarColor } from '../../lib/avatarPalette';
 import { ZoomableImageViewer } from './ZoomableImageViewer';
 

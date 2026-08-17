@@ -2,14 +2,14 @@ import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { ArrowRight, ChartLineUp, SquaresFour, Target } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { useAppStore } from '../../store/useAppStore';
 import { getTargetCategory } from '../../lib/targetCategories';
 import { miniAppById } from '../../lib/miniAppCatalog';
 import { MiniAppIcon } from '../mini-apps/MiniAppIcon';
 import { IconBadge } from '../ui/IconBadge';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 export function TargetToolsPanel({ compact = false, dense = false }: { compact?: boolean; dense?: boolean }) {
   const router = useRouter();

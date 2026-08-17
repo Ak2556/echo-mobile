@@ -3,11 +3,11 @@ import { View, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { FlowCard } from '../../components/social/FlowCard';
+import { FlowCard } from '../../src/features/feed/ui/FlowCard';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
-import { useInfiniteVideoFeed } from '../../hooks/queries/useFeed';
-import { useResponsiveLayout } from '../../lib/responsive';
-import { useTheme } from '../../lib/theme';
+import { useInfiniteVideoFeed } from '../../src/features/feed/api/useFeed';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
+import { useTheme } from '../../src/shared/lib/theme';
 
 
 export default function WatchScreen() {
@@ -82,7 +82,6 @@ export default function WatchScreen() {
           />
         )}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={layout.height}
         showsVerticalScrollIndicator={false}
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) {

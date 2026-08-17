@@ -19,15 +19,15 @@ import { useCommandPalette } from '../../lib/commandPalette';
 import { streamEchoAI } from '../../lib/api';
 import { isLocalTool } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { ToolCallCard, ToolCallItem } from './ToolCallCard';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
 import { IconBadge } from '../ui/IconBadge';
-import { usePerformanceProfile } from '../../lib/performance';
+import { usePerformanceProfile } from '../../src/shared/lib/performance';
 import { useAppStore } from '../../store/useAppStore';
 import { assistantLanguageInstruction } from '../../lib/languages';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 type Item =
   | { kind: 'text'; id: string; role: 'user' | 'assistant'; content: string }

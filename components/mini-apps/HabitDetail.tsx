@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Archive, CaretLeft, CaretRight, PencilSimple, Trash, X, Clock } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import {
   Habit, bestHabitStreak, completionRate, formatCheckInTime,
   getHabitStreak, isScheduledOn, todayStr,
 } from '../../lib/habits';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 function monthDays(year: number, month: number): (string | null)[] {
   const first = new Date(year, month, 1);

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, runOnJS } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 
 interface SliderProps {
   label: string;

@@ -18,11 +18,11 @@ import { Avatar } from '../components/ui/Avatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
 import { friendlyWriteError } from '../lib/mutationErrors';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { PollOption } from '../types';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { updateRemoteEcho } from '../lib/supabaseEchoApi';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 

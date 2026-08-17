@@ -6,15 +6,15 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniChip, MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
-import { useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useI18n } from '../../src/shared/lib/i18n';
 import { showToast } from '../../components/ui/Toast';
 import {
   TaskItem, TaskPriority, SubTask, loadTasks, saveTasks, taskStats,
   todayTaskDate, tomorrowTaskDate,
 } from '../../lib/tasks';
 import { scheduleTaskReminder, cancelTaskReminder } from '../../lib/taskReminders';
-import { tap } from '../../lib/haptics';
+import { tap } from '../../src/shared/lib/haptics';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
 import { DateTimePicker } from '../../components/ui/DateTimePicker';
 

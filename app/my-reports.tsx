@@ -7,9 +7,9 @@ import { Warning, CheckCircle, Clock, MagnifyingGlass, Scales, X } from 'phospho
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { fetchMyReports, type MyReport } from '../lib/supabaseEchoApi';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 // `tone` resolves to a theme token at render so status color adapts per theme.
 const STATUS_CONFIG = {

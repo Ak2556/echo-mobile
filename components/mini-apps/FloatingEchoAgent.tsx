@@ -5,14 +5,14 @@ import { ArrowSquareOut, Compass, NotePencil, Sparkle } from 'phosphor-react-nat
 import { ChatInput } from '../ai/ChatInput';
 import { MessageBubble } from '../ai/MessageBubble';
 import { ToolCallCard, type ToolCallItem } from '../ai/ToolCallCard';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { streamEchoAI } from '../../lib/api';
 import { isLocalTool, type LocalToolContext } from '../../lib/localTools';
 import { localContinuationFailureMessage, runLocalToolFlow } from '../../lib/localToolFlow';
 import { useAppStore } from '../../store/useAppStore';
 import type { ChatMessage } from '../../types';
 import { assistantLanguageInstruction } from '../../lib/languages';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 function makeId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;

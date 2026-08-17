@@ -16,13 +16,13 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Fad
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../lib/auth';
-import { track } from '../lib/analytics';
+import { track } from '../src/shared/lib/analytics';
 import { TARGET_CATEGORIES, getTargetCategory } from '../lib/targetCategories';
-import { useResponsiveLayout } from '../lib/responsive';
-import { useTheme } from '../lib/theme';
+import { useResponsiveLayout } from '../src/shared/lib/responsive';
+import { useTheme } from '../src/shared/lib/theme';
 import { useAppStore } from '../store/useAppStore';
 import { TextInput } from '../components/ui/TextInput';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 /**
  * Optional "set a goal" screen.

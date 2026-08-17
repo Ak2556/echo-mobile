@@ -5,7 +5,7 @@ import { getTodayProductivity, searchLocalProductivity } from './localSearch';
 import { createNote, formatNoteResult, updateNote } from './notes';
 import { deleteVoiceMemo, renameVoiceMemo } from './voiceMemos';
 import { publishPollFromArgs } from './polls';
-import { track } from './analytics';
+import { track } from '../src/shared/lib/analytics';
 
 export type LocalToolName =
   | 'create_note'

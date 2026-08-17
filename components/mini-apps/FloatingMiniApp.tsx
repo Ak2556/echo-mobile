@@ -8,18 +8,18 @@ import Animated, {
 import { usePathname } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Sparkle, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { useAuthStore } from '../../lib/auth/store';
 import { useFloatingApp } from '../../store/floatingApp';
 import { useVoiceControl } from '../../store/voiceControl';
-import { tap as haptic } from '../../lib/haptics';
+import { tap as haptic } from '../../src/shared/lib/haptics';
 import { useTutorialStore } from '../../store/tutorialStore';
 import { FLOATING_APPS, floatingAppMeta } from '../../lib/miniAppRegistry';
 import { MiniAppEmbedContext } from '../../lib/miniAppEmbed';
 import { MiniAppIcon, MiniAppGlyph } from './MiniAppIcon';
 import { MINI_APP_CATALOG } from '../../lib/miniAppCatalog';
 import { IconButton } from '../ui/IconButton';
-import { useI18n } from '../../lib/i18n';
+import { useI18n } from '../../src/shared/lib/i18n';
 
 // Per-app branding (colour + display name) from the shared catalog, so the
 // floating picker reads exactly like the Tools tab. Falls back to the

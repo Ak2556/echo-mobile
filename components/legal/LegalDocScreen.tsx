@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Markdown from 'react-native-markdown-display';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 
 interface LegalDocScreenProps {
   title: string;

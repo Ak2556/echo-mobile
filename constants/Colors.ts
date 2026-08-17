@@ -2,7 +2,7 @@
  * @deprecated Legacy color constants. Prefer using `useTheme()` from `@/lib/theme`
  * or `THEMES` for dynamic theme support.
  */
-import { THEMES } from '../lib/theme';
+import { THEMES } from '../src/shared/lib/theme';
 
 export const Colors = {
   background: THEMES.midnight.bg,

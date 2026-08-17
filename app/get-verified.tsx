@@ -4,14 +4,14 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera, SealCheck, ShieldCheck, Timer, XCircle } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { useAuth } from '../lib/auth';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import {
   VerificationState, getVerificationState, randomPose, submitVerification,
 } from '../lib/verificationApi';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 type Phase = 'loading' | 'intro' | 'preview' | 'submitting' | 'approved' | 'pending' | 'rejected';
 

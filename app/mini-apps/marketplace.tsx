@@ -35,7 +35,7 @@ import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ListingCardSkeleton } from '../../components/ui/Skeleton';
 import { ErrorState, classifyError } from '../../components/common/ErrorState';
-import { track } from '../../lib/analytics';
+import { track } from '../../src/shared/lib/analytics';
 import { formatPrice, type CurrencyCode } from '../../lib/currency';
 import {
   fetchListings,
@@ -44,12 +44,12 @@ import {
   ListingCondition,
   ListingWithSeller,
 } from '../../lib/marketplaceApi';
-import { useTheme } from '../../lib/theme';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { useAppStore } from '../../store/useAppStore';
 import { getTargetCategory } from '../../lib/targetCategories';
 import { clearRecentListings, getRecentListings, recordListingView, type RecentListing } from '../../lib/marketplaceRecents';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 const CARD_GAP = 12;
 const CARD_H_PADDING = 16;
@@ -645,7 +645,6 @@ export default function MarketplaceScreen() {
               </Pressable>
             </View>
           }
-          estimatedItemSize={100}
             renderItem={({ item }) => (
             <View style={{ width: cardWidth }}>
               <ListingCard item={item} width={cardWidth} />

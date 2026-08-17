@@ -12,12 +12,12 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteProfile, updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
 import { supabase } from '../lib/supabase';
-import { useResponsiveLayout } from '../lib/responsive';
-import { ttx } from '../lib/i18n';
+import { useResponsiveLayout } from '../src/shared/lib/responsive';
+import { ttx } from '../src/shared/lib/i18n';
 
 const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',

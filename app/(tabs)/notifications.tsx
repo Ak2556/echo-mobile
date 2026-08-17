@@ -10,12 +10,12 @@ import { NotificationCard } from '../../components/notifications/NotificationCar
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useI18n } from '../../src/shared/lib/i18n';
 import { setReadableNotifications } from '../../lib/voice/readNotifications';
 import { Notification } from '../../types';
-import { usePerformanceProfile } from '../../lib/performance';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { usePerformanceProfile } from '../../src/shared/lib/performance';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import {
   useRemoteNotifications,
@@ -282,7 +282,6 @@ export default function NotificationsScreen() {
             return `notif-${item.data.id}`;
           }}
           getItemType={(item: ListItem) => item.type}
-          estimatedItemSize={100}
             renderItem={renderItem}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
           refreshControl={

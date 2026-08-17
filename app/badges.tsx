@@ -3,10 +3,10 @@ import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { fetchBadges, type Badge } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 const TIER_COLOR: Record<Badge['tier'], string> = {
   bronze: '#B45309',

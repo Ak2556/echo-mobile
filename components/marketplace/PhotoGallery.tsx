@@ -14,7 +14,7 @@ import * as Sharing from 'expo-sharing';
 import { DownloadSimple, X } from 'phosphor-react-native';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 
 interface PhotoGalleryProps {
   urls: string[];

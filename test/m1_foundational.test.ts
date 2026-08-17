@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SPACING, GLASS_INTENSITY, THEMES } from '../lib/theme';
-import { tap, haptic, triggerHaptic } from '../lib/haptics';
+import { SPACING, GLASS_INTENSITY, THEMES } from '../src/shared/lib/theme';
+import { tap, haptic, triggerHaptic } from '../src/shared/lib/haptics';
 import { Colors } from '../constants/Colors';
 import { useAppStore } from '../store/useAppStore';
 

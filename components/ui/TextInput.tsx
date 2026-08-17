@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextInput as RNTextInput, TextInputProps, View } from 'react-native';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 
 export function TextInput(props: TextInputProps) {
   const { colors, radius } = useTheme();

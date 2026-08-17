@@ -4,7 +4,7 @@ import type { CurrencyCode } from '../../lib/currency';
 import { DEFAULT_TARGET_CATEGORY_ID, getTargetCategory } from '../../lib/targetCategories';
 import type { FontStyleName } from '../../lib/fontPresets';
 import { DEFAULT_APP_LANGUAGE, detectDeviceLanguage, normalizeAppLanguage, type AppLanguageCode } from '../../lib/languages';
-import type { ThemeName } from '../../lib/theme';
+import type { ThemeName } from '../../src/shared/lib/theme';
 
 const DEFAULT_ACCENT_COLOR = '#7A8B4E';
 const LEGACY_DEFAULT_ACCENT_COLOR = '#E06030';

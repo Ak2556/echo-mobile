@@ -13,12 +13,12 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import { persistGet, persistSet } from '../../store/persist';
 import { EmptyState } from '../../components/common/EmptyState';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { DMView } from './[id]';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { Conversation } from '../../types';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useCreateGroupConversation, useRemoteConversations, useSetDMPref } from '../../hooks/queries/useDMs';
@@ -26,7 +26,7 @@ import { usePresenceTracking } from '../../lib/presence';
 import { ConversationSkeleton } from '../../components/ui/Skeleton';
 import { RemoteConversation, searchRemoteUsers, UserSearchHit } from '../../lib/supabaseEchoApi';
 import { safeBack } from '../../lib/safeBack';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 import { MusicPickerModal, Song } from '../../components/ui/MusicPicker';
 import { ChatDetailsSidebar } from '../../components/chat/ChatDetailsSidebar';
 
@@ -867,7 +867,6 @@ export default function MessagesListScreen() {
 
       <FlashList
         data={filteredActive}
-        estimatedItemSize={100}
             renderItem={({ item, index }) => renderCard(item, index)}
         keyExtractor={item => item.id}
         ListHeaderComponent={(

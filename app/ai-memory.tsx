@@ -9,8 +9,8 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
 import { clearMemory, forgetPreference, loadMemory, MemoryItem, updatePreference } from '../lib/aiMemory';
-import { useTheme } from '../lib/theme';
-import { ttx } from '../lib/i18n';
+import { useTheme } from '../src/shared/lib/theme';
+import { ttx } from '../src/shared/lib/i18n';
 
 export default function AIMemoryScreen() {
   const theme = useTheme();

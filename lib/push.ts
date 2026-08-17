@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { supabase } from './supabase';
-import { track } from './analytics';
+import { track } from '../src/shared/lib/analytics';
 import { captureException } from './monitoring';
 
 if (Platform.OS !== 'web') {

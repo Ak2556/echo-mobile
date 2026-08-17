@@ -4,11 +4,11 @@ import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import { Sparkle, Check, Crown } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { PLANS } from '../constants/subscriptions';
 import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 /**
  * Echo tier upgrade screen.

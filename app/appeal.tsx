@@ -16,11 +16,11 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { showToast } from '../components/ui/Toast';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { fetchMyAppeals, submitAppeal, submitDecisionAppeal, fetchModerationDecision, type MyAppeal, type ModerationDecision } from '../lib/supabaseEchoApi';
 import { ErrorState, classifyError } from '../components/common/ErrorState';
 import { safeBack } from '../lib/safeBack';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 // `tone` resolves to a theme token at render so status color adapts per theme.
 const STATUS_CONFIG: Record<MyAppeal['status'], { label: string; tone: 'warning' | 'danger' | 'success'; Icon: React.ComponentType<any> }> = {

@@ -5,10 +5,10 @@ import { Backspace, ClockCounterClockwise, Copy, Equals, Function as FunctionIco
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../lib/theme';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { showToast } from '../../components/ui/Toast';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 type KeyKind = 'number' | 'operator' | 'utility' | 'science' | 'equals';
 type KeySpec = { label: string; kind: KeyKind; wide?: boolean; action?: string };

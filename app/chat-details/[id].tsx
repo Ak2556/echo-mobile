@@ -6,7 +6,7 @@ import {
   ArrowLeft, BellSlash, Bell, Images, UserCircle, Prohibit, Flag, EnvelopeSimple, Users, Check, X,
 } from 'phosphor-react-native';
 import { Avatar } from '../../components/ui/Avatar';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import { persistSet } from '../../store/persist';
 import { useAppStore } from '../../store/useAppStore';
@@ -15,7 +15,7 @@ import {
   fetchConversationPrefs, setDMPref, setRemoteBlock,
   type ConversationPrefs,
 } from '../../lib/supabaseEchoApi';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 // Reuse the thread's wallpaper palette so a theme choice shows instantly there.
 const THEMES: { id: string; tint: string | null; label: string }[] = [

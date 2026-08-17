@@ -6,8 +6,8 @@ import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useTutorialStore } from '../../store/tutorialStore';
 import { useAppStore } from '../../store/useAppStore';
 import { TOURS } from '../../lib/tutorialSteps';
-import { useTheme } from '../../lib/theme';
-import { ttx } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { ttx } from '../../src/shared/lib/i18n';
 
 const DIM = 'rgba(0,0,0,0.72)';
 

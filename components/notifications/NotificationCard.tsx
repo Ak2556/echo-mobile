@@ -6,7 +6,7 @@ import { Avatar } from '../ui/Avatar';
 import { IconBadge } from '../ui/IconBadge';
 import { SpeakButton } from '../ui/SpeakButton';
 import { Notification } from '../../types';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 
 // Warm editorial palette (lib/avatarPalette.ts) — one hue per notification type.
 const TYPE_COLOR: Record<string, string> = {

@@ -6,7 +6,7 @@ import Animated, {
   withSequence
 } from 'react-native-reanimated';
 import * as Crypto from 'expo-crypto';
-import { tap } from '../../lib/haptics';
+import { tap } from '../../src/shared/lib/haptics';
 import { BlurView } from 'expo-blur';
 import { 
   ArrowClockwise, Copy, Check, LockKey, ShieldCheck, Warning, ShieldWarning, 
@@ -18,8 +18,8 @@ import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
-import { useTheme } from '../../lib/theme';
-import { ttx } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { ttx } from '../../src/shared/lib/i18n';
 
 // --- MOCK DATA ---
 const VAULT_ITEMS = [
