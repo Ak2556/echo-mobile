@@ -15,7 +15,9 @@ import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
 import * as Notifications from 'expo-notifications';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
 import { Fraunces_400Regular, Fraunces_400Regular_Italic, Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
-import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query';
+import { QueryClient, MutationCache } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { mmkvPersister } from '../lib/queryPersister';
 import { ToastProvider, showToast } from '../components/ui/Toast';
 import { friendlyWriteError, isAuthSessionError } from '../lib/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
@@ -247,7 +249,7 @@ function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: mmkvPersister, maxAge: 1000 * 60 * 60 * 24 * 7 }}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthListenerProvider />
         <AuthGuard />
@@ -311,7 +313,7 @@ function RootLayout() {
         <ConsentBanner />
         {commandPaletteOpen ? <CommandPalette /> : null}
       </GestureHandlerRootView>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
 
