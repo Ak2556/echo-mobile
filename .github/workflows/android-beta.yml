@@ -55,10 +55,16 @@ jobs:
         env:
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
-        run: bundle exec fastlane firebase || echo "Fastlane failed, but APK is built!"
+        run: |
+          if [ -n "$FIREBASE_CREDENTIALS" ]; then
+            echo "$FIREBASE_CREDENTIALS" > firebase_credentials.json
+            export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/firebase_credentials.json
+          fi
+          bundle exec fastlane firebase || echo "Fastlane failed, but APK is built!"
 
       - name: Upload APK to GitHub Artifacts
         uses: actions/upload-artifact@v4
