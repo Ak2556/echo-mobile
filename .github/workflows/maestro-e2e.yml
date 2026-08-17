@@ -1,0 +1,46 @@
+name: Android E2E Tests (Maestro)
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Run Maestro E2E
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # We assume the app is built, or we build a dev client for UI testing.
+      # Since building an APK from scratch takes 20 mins, we build a local android debug APK.
+      - name: Build Android Debug APK
+        run: npx expo run:android --variant debug
+        env:
+          EXPO_NO_TELEMETRY: 1
+          CI: 1
+
+      # Run Maestro Cloud or local Maestro via an action
+      # For open-source, mobile.dev provides a maestro-cloud action
+      - name: Run Maestro Cloud Tests
+        uses: mobile-dev-inc/action-maestro-cloud@v1
+        with:
+          api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
+          app-file: android/app/build/outputs/apk/debug/app-debug.apk
+          workspace: .maestro
