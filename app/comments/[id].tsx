@@ -121,6 +121,7 @@ export default function CommentsScreen() {
         ) : (
           <FlashList
             data={threadedRows}
+            estimatedItemSize={100}
             renderItem={({ item }) => (
               <CommentCard
                 comment={item.comment}

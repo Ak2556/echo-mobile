@@ -94,7 +94,8 @@ export default function ThinkingPartnersScreen() {
           data={partners}
           keyExtractor={(p) => p.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
-          renderItem={({ item, index }) => (
+          estimatedItemSize={100}
+            renderItem={({ item, index }) => (
             <PartnerRow partner={item} index={index} mode={mode} />
           )}
         />

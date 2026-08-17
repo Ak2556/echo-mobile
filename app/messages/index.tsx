@@ -867,7 +867,8 @@ export default function MessagesListScreen() {
 
       <FlashList
         data={filteredActive}
-        renderItem={({ item, index }) => renderCard(item, index)}
+        estimatedItemSize={100}
+            renderItem={({ item, index }) => renderCard(item, index)}
         keyExtractor={item => item.id}
         ListHeaderComponent={(
           <View>

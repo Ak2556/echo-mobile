@@ -38,7 +38,8 @@ export default function MutedUsersScreen() {
       ) : (
         <FlashList
           data={mutedUsers}
-          renderItem={({ item, index }) => (
+          estimatedItemSize={100}
+            renderItem={({ item, index }) => (
             <Animated.View entering={animation(FadeInDown.delay(index * 50).duration(220))}>
               <View
                 className="flex-row items-center px-4 py-3.5"

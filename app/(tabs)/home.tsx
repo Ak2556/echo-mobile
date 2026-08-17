@@ -603,6 +603,7 @@ export default function DiscoverScreen() {
               )
             )}
             keyExtractor={item => item.id}
+            estimatedItemSize={250}
             contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
             onScroll={handleScroll}
             scrollEventThrottle={16}

@@ -99,7 +99,8 @@ export default function FollowersScreen() {
       ) : (
         <FlashList
           data={data}
-          renderItem={({ item }) => {
+          estimatedItemSize={100}
+            renderItem={({ item }) => {
             const isSelf = item.id === storeUserId;
             const conn = remote ? (item as ConnectionUser) : null;
             return (
