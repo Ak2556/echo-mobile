@@ -645,7 +645,8 @@ export default function MarketplaceScreen() {
               </Pressable>
             </View>
           }
-          renderItem={({ item }) => (
+          estimatedItemSize={100}
+            renderItem={({ item }) => (
             <View style={{ width: cardWidth }}>
               <ListingCard item={item} width={cardWidth} />
             </View>

@@ -845,6 +845,7 @@ export default function ChatScreen() {
             data={items}
             extraData={extraData}
             keyExtractor={(item) => item.kind === 'text' ? `t-${item.message.id}` : `c-${item.tool.id}`}
+            estimatedItemSize={100}
             renderItem={({ item }) =>
               (
                 <View style={layout.contentStyle}>

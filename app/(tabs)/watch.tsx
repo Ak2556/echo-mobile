@@ -82,6 +82,7 @@ export default function WatchScreen() {
           />
         )}
         keyExtractor={(item) => item.id}
+        estimatedItemSize={layout.height}
         showsVerticalScrollIndicator={false}
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) {

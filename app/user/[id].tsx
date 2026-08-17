@@ -348,7 +348,8 @@ export default function UserProfileScreen() {
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <FlashList
           data={orderedEchoes}
-          renderItem={({ item, index }) => (
+          estimatedItemSize={100}
+            renderItem={({ item, index }) => (
             <FeedCard
               item={item}
               index={index}
@@ -449,7 +450,8 @@ export default function UserProfileScreen() {
     <ResponsiveScreen>
       <FlashList
         data={userEchoes}
-        renderItem={({ item, index }) => (
+        estimatedItemSize={100}
+            renderItem={({ item, index }) => (
           <FeedCard item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />
         )}
         keyExtractor={item => item.id}

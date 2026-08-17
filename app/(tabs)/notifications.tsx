@@ -282,7 +282,8 @@ export default function NotificationsScreen() {
             return `notif-${item.data.id}`;
           }}
           getItemType={(item: ListItem) => item.type}
-          renderItem={renderItem}
+          estimatedItemSize={100}
+            renderItem={renderItem}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
           refreshControl={
             <RefreshControl

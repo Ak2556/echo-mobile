@@ -109,7 +109,8 @@ export default function BookmarksScreen() {
       ) : (
         <FlashList
           data={bookmarked}
-          renderItem={({ item, index }) => (
+          estimatedItemSize={100}
+            renderItem={({ item, index }) => (
             <Pressable onLongPress={() => handleAssignCollection(item.id)}>
               <FeedCard item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />
             </Pressable>
