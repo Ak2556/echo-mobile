@@ -28,7 +28,21 @@ export async function sendPhoneOtp(phone: string): Promise<ProviderResult & { ph
   if (e164.length < 8) {
     return { error: 'Enter a valid phone number.', phone: e164 };
   }
-  const { error } = await withAuthTimeout(supabase.auth.signInWithOtp({ phone: e164 }));
+  // Generate fallback metadata to prevent the "Database error saving new user" trigger crash
+  const username = `user_${e164.replace(/\D/g, '')}_${Math.floor(Math.random() * 10000)}`;
+
+  const { error } = await withAuthTimeout(
+    supabase.auth.signInWithOtp({ 
+      phone: e164,
+      options: {
+        shouldCreateUser: true,
+        data: {
+          username,
+          display_name: 'New User',
+        }
+      }
+    })
+  );
   return { error: error?.message ?? null, phone: e164 };
 }
 

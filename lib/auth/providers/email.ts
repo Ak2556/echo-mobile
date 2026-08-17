@@ -21,10 +21,21 @@ export async function sendEmailOtp(email: string): Promise<ProviderResult> {
   if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
     return { error: 'Enter a valid email address.' };
   }
+  // Generate fallback metadata to prevent the "Database error saving new user"
+  // trigger crash caused by public.profiles NOT NULL constraints.
+  const emailPrefix = trimmed.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '');
+  const username = `user_${emailPrefix}_${Math.floor(Math.random() * 100000)}`;
+
   const { error } = await withAuthTimeout(
     supabase.auth.signInWithOtp({
       email: trimmed,
-      options: { shouldCreateUser: true },
+      options: { 
+        shouldCreateUser: true,
+        data: {
+          username,
+          display_name: emailPrefix,
+        }
+      },
     }),
   );
   return { error: error?.message ?? null };
