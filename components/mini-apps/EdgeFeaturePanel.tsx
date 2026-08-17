@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, Sparkle, UsersThree, X, type Icon } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { showToast } from '../ui/Toast';
@@ -10,7 +10,7 @@ import { createNote } from '../../lib/notes';
 import { miniAppSnapshotText } from '../../lib/miniAppIntegration';
 import { askMiniAppCoach, coachAppFor } from '../../lib/miniAppCoach';
 import { CompareSheet } from './CompareSheet';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 interface EdgeFeaturePanelProps {
   appId?: string;

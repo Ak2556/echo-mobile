@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { features, FeatureFlag } from '../../lib/featureFlags';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 interface V2FeatureGuardProps {
   flag: FeatureFlag;

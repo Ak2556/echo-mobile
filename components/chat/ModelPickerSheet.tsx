@@ -4,10 +4,10 @@ import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Lightning, Sparkle, Star, Check } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
-import { tap } from '../../lib/haptics';
+import { useTheme } from '../../src/shared/lib/theme';
+import { tap } from '../../src/shared/lib/haptics';
 import type { EchoAIModel } from '../../lib/api';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 interface ModelMeta {
   key: EchoAIModel;

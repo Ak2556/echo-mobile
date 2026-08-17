@@ -25,7 +25,7 @@ import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { showToast } from '../../components/ui/Toast';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { CURRENCIES, formatPrice, type CurrencyCode } from '../../lib/currency';
 import { CURATED_LEARNING_TOPICS, createLearningGoalFromTopic, type CuratedLearningTopic } from '../../lib/learningTopicLibrary';
 import {
@@ -75,7 +75,7 @@ import {
   type LearningMode,
   type LearningSettings,
 } from '../../lib/learn';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 const LEVELS: { id: LearningLevel; label: string }[] = [
   { id: 'beginner', label: 'Beginner' },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Modal, Pressable, FlatList, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
 import { X, MagnifyingGlass, MusicNote } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { searchSpotify, SpotifyTrack } from '../../lib/spotify';
 import { Image } from 'expo-image';
 

@@ -7,8 +7,8 @@ import { X, Eye } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { Avatar } from '../components/ui/Avatar';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../lib/theme';
-import { ttx } from '../lib/i18n';
+import { useTheme } from '../src/shared/lib/theme';
+import { ttx } from '../src/shared/lib/i18n';
 
 const STORY_DURATION = 5000;
 const PAUSED_DURATION = 999999;

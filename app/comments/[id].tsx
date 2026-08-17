@@ -7,15 +7,15 @@ import { PaperPlaneTilt, ChatCircle, X, ArrowBendUpLeft } from 'phosphor-react-n
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { TextInput } from '../../components/ui/TextInput';
 import { Avatar } from '../../components/ui/Avatar';
-import { CommentCard } from '../../components/social/CommentCard';
-import { MentionSuggestions, applyMentionPick } from '../../components/social/MentionSuggestions';
+import { CommentCard } from '../../src/features/feed/ui/CommentCard';
+import { MentionSuggestions, applyMentionPick } from '../../src/features/feed/ui/MentionSuggestions';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { Comment } from '../../types';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useEchoComments, useAddRemoteComment } from '../../hooks/queries/useEchoComments';
-import { useTheme } from '../../lib/theme';
-import { ttx } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { ttx } from '../../src/shared/lib/i18n';
 
 interface ThreadedRow {
   comment: Comment;
@@ -121,7 +121,6 @@ export default function CommentsScreen() {
         ) : (
           <FlashList
             data={threadedRows}
-            estimatedItemSize={100}
             renderItem={({ item }) => (
               <CommentCard
                 comment={item.comment}

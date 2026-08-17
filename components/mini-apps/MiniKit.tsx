@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TextInput, type ViewStyle, type TextStyle, type StyleProp } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 

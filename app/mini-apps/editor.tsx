@@ -3,8 +3,8 @@ import { View, Text, Pressable, Alert } from 'react-native';
 import { Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ImageSquare, VideoCamera, SlidersHorizontal } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
-import { PhotoEditor } from '../../components/social/PhotoEditor';
+import { useTheme } from '../../src/shared/lib/theme';
+import { PhotoEditor } from '../../src/features/feed/ui/PhotoEditor';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 
 export default function EditorApp() {

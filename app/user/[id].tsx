@@ -14,24 +14,24 @@ import {
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { EmptyState } from '../../components/common/EmptyState';
-import { FeedCard } from '../../components/social/FeedCard';
-import { ThinkingFingerprintCard } from '../../components/social/ThinkingFingerprintCard';
+import { FeedCard } from '../../src/features/feed/ui/FeedCard';
+import { ThinkingFingerprintCard } from '../../src/features/feed/ui/ThinkingFingerprintCard';
 import { ProfileHeaderSkeleton, FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../../components/ui/ProfileAvatar';
 import { ProfilePhotoPreview } from '../../components/ui/ProfilePhotoPreview';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
-import { useFeed } from '../../hooks/queries/useFeed';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useFeed } from '../../src/features/feed/api/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
-import { useToggleRemoteFollow } from '../../hooks/queries/useSupabaseSocial';
+import { useToggleRemoteFollow } from '../../src/features/feed/api/useSupabaseSocial';
 import { useToggleRemoteBlock, useToggleRemoteMute } from '../../hooks/queries/useBlockMute';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
@@ -348,7 +348,6 @@ export default function UserProfileScreen() {
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <FlashList
           data={orderedEchoes}
-          estimatedItemSize={100}
             renderItem={({ item, index }) => (
             <FeedCard
               item={item}
@@ -450,7 +449,6 @@ export default function UserProfileScreen() {
     <ResponsiveScreen>
       <FlashList
         data={userEchoes}
-        estimatedItemSize={100}
             renderItem={({ item, index }) => (
           <FeedCard item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />
         )}

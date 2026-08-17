@@ -11,8 +11,8 @@ import {
   MagnifyingGlass, NotePencil, Plus, PushPin, ShareNetwork, Sparkle, Star,
   Tag, TextB, Trash, X,
 } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useI18n } from '../../src/shared/lib/i18n';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';

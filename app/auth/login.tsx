@@ -13,12 +13,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { EnvelopeSimple, GoogleLogo } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import * as Haptics from 'expo-haptics';
 import { CANCELLED, refreshAuthSession, signInAsDemo, signInWithGoogle } from '../../lib/auth';
 import { showToast } from '../../components/ui/Toast';
-import { useI18n, type TranslationKey } from '../../lib/i18n';
+import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
 
 const ROTATING_PROMPT_KEYS: TranslationKey[] = [
   'auth.prompt.song',

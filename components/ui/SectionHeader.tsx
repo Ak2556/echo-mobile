@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme } from '../../lib/theme';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 
 interface SectionHeaderProps {
   label: string;

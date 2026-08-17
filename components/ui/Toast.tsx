@@ -24,9 +24,9 @@ import {
   TextT,
   WarningCircle,
 } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { MOTION } from '../../lib/motion';
-import { usePerformanceProfile } from '../../lib/performance';
+import { usePerformanceProfile } from '../../src/shared/lib/performance';
 
 interface ToastState {
   message: string | null;

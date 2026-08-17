@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, X } from 'phosphor-react-native';
 import { IconButton } from './IconButton';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { safeBack } from '../../lib/safeBack';
 
 interface ScreenHeaderProps {

@@ -17,11 +17,11 @@ import {
   setPersonaEnabled,
   setPersonaUserNote,
 } from '../lib/persona';
-import { useTheme } from '../lib/theme';
-import { useResponsiveLayout } from '../lib/responsive';
+import { useTheme } from '../src/shared/lib/theme';
+import { useResponsiveLayout } from '../src/shared/lib/responsive';
 import { useAppStore } from '../store/useAppStore';
-import { track } from '../lib/analytics';
-import { ttx } from '../lib/i18n';
+import { track } from '../src/shared/lib/analytics';
+import { ttx } from '../src/shared/lib/i18n';
 
 function stageLabel(stage: PersonaStatus['stage']): string {
   switch (stage) {

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, NativeSyntheticEvent, NativeScrollEvent, StyleSheet, Platform, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 
 const ITEM_HEIGHT = 50;
 

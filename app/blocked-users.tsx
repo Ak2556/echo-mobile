@@ -10,9 +10,9 @@ import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/common/EmptyState';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { User } from '../types';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 export default function BlockedUsersScreen() {
   const { blockedIds, toggleBlock, getUser } = useAppStore();
@@ -55,7 +55,6 @@ export default function BlockedUsersScreen() {
       ) : (
         <FlashList
           data={blockedUsers}
-          estimatedItemSize={100}
             renderItem={({ item, index }) => (
             <Animated.View entering={animation(FadeInDown.delay(index * 50).duration(220))}>
               <View

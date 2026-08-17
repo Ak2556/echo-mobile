@@ -4,10 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Plus } from 'phosphor-react-native';
-import { useTheme } from '../../lib/theme';
-import { tap } from '../../lib/haptics';
+import { useTheme } from '../../src/shared/lib/theme';
+import { tap } from '../../src/shared/lib/haptics';
 import { useTutorialTarget } from '../../hooks/useTutorialTarget';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 /**
  * Floating compose button — single canonical creation entry point for v1.

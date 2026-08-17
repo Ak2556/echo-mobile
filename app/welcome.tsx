@@ -7,15 +7,15 @@ import { ChatCircleText, UsersThree, Target, ArrowRight, Sparkle, Flame } from '
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { DailyQuestionComposer } from '../components/daily/DailyQuestionComposer';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import {
   fetchTodaysDailyQuestion,
   fetchDailyAnswerStreak,
   type DailyQuestion,
 } from '../lib/supabaseEchoApi';
 import { getFirstRunFallbackQuestion } from '../lib/firstRunQuestion';
-import { track } from '../lib/analytics';
-import { useI18n } from '../lib/i18n';
+import { track } from '../src/shared/lib/analytics';
+import { useI18n } from '../src/shared/lib/i18n';
 
 /**
  * First-run value moment.

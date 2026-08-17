@@ -1,0 +1,355 @@
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View, Text, Pressable, ActivityIndicator, useWindowDimensions, Share,
+} from 'react-native';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withSpring, withTiming,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import {
+  HeartStraight, ChatCircle, BookmarkSimple, ShareNetwork,
+  SpeakerHigh, SpeakerSlash, SealCheck, Play, GitBranch,
+} from 'phosphor-react-native';
+import { useAppStore } from '../../../../store/useAppStore';
+import { showToast } from '../../../../components/ui/Toast';
+import { Avatar } from '../../../../components/ui/Avatar';
+import { FeedItem } from '../../../../types/index';
+import { ACCENT_COLORS, ACCENT_CHIP, accentShadow } from '../../../../lib/accentDesign';
+import { videoSourceForUri } from '../../../../lib/videoMedia';
+import { echoUrl } from '../../../../lib/echoUrl';
+import { ttx } from '../../../shared/lib/i18n';
+
+interface EchoCardProps {
+  item: FeedItem;
+  isActive: boolean;
+  onCommentPress?: (item: FeedItem) => void;
+}
+
+const VIDEO_LOAD_TIMEOUT_MS = 45_000;
+type VideoLoadState = 'loading' | 'ready' | 'error';
+
+function loadStateFromStatus(status: string | undefined): VideoLoadState | null {
+  if (status === 'readyToPlay') return 'ready';
+  if (status === 'error') return 'error';
+  if (status === 'loading' || status === 'idle') return 'loading';
+  return null;
+}
+
+function SidebarButton({
+  icon, label, color, onPress,
+}: {
+  icon: React.ReactNode;
+  label?: string | number;
+  color?: string;
+  onPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  const handlePress = () => {
+    scale.value = withSpring(0.8, { damping: 6 }, () => {
+      scale.value = withSpring(1, { damping: 10 });
+    });
+    onPress();
+  };
+
+  return (
+    <Pressable onPress={handlePress} style={{ alignItems: 'center', gap: 4 }}>
+      <Animated.View style={style}>{icon}</Animated.View>
+      {label !== undefined && label !== 0 && (
+        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>
+          {typeof label === 'number' && label >= 1000 ? `${(label / 1000).toFixed(1)}k` : label}
+        </Text>
+      )}
+    </Pressable>
+  );
+}
+
+export function EchoCard({ item, isActive, onCommentPress }: EchoCardProps) {
+  const router = useRouter();
+  const { height: SCREEN_H } = useWindowDimensions();
+  const toggleLike = useAppStore(s => s.toggleLike);
+  const toggleBookmark = useAppStore(s => s.toggleBookmark);
+
+  const videoUri = item.videoUri ?? '';
+  const player = useVideoPlayer(videoSourceForUri(videoUri), p => {
+    p.muted = true;
+    p.loop = true;
+  });
+  const [loadState, setLoadState] = useState<VideoLoadState>('loading');
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [isLiked, setIsLiked] = useState(item.isLiked);
+  const [likeCount, setLikeCount] = useState(item.likes);
+  const [isBookmarked, setIsBookmarked] = useState(item.isBookmarked);
+
+  const lastTapRef = useRef(0);
+
+  // Heart burst animation
+  const heartScale = useSharedValue(0);
+  const heartOpacity = useSharedValue(0);
+  const heartStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: heartScale.value }],
+    opacity: heartOpacity.value,
+  }));
+
+  // Safety-net timeout
+  useEffect(() => {
+    if (loadState !== 'loading') return;
+    const t = setTimeout(() => setLoadState(s => s === 'loading' ? 'error' : s), VIDEO_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [item.videoUri, loadState]);
+
+  useEffect(() => {
+    player.muted = muted;
+  }, [muted, player]);
+
+  useEffect(() => {
+    const statusSub = player.addListener('statusChange', ({ status }) => {
+      const nextState = loadStateFromStatus(status);
+      if (nextState) setLoadState(nextState);
+    });
+    const playingSub = player.addListener('playingChange', ({ isPlaying }) => {
+      setPlaying(isPlaying);
+    });
+    const initialState = loadStateFromStatus(player.status);
+    if (initialState) setLoadState(initialState);
+    return () => {
+      statusSub.remove();
+      playingSub.remove();
+    };
+  }, [player]);
+
+  // Auto-play / pause based on visibility
+  useEffect(() => {
+    if (loadState !== 'ready') return;
+    if (isActive) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isActive, loadState, player]);
+
+  const burstHeart = () => {
+    heartScale.value = 0;
+    heartOpacity.value = 1;
+    heartScale.value = withSpring(1.4, { damping: 7, stiffness: 200 });
+    setTimeout(() => {
+      heartOpacity.value = withTiming(0, { duration: 500 });
+    }, 700);
+  };
+
+  const handleTap = async () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 320) {
+      // Double-tap — like
+      if (!isLiked) {
+        setIsLiked(true);
+        setLikeCount(c => c + 1);
+        toggleLike(item.id);
+        burstHeart();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    } else {
+      // Single tap — play/pause
+      if (loadState !== 'ready') return;
+      if (playing) {
+        player.pause();
+      } else {
+        player.play();
+      }
+    }
+    lastTapRef.current = now;
+  };
+
+  const handleLike = () => {
+    const next = !isLiked;
+    setIsLiked(next);
+    setLikeCount(c => next ? c + 1 : c - 1);
+    toggleLike(item.id);
+    if (next) {
+      burstHeart();
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const handleBookmark = () => {
+    const next = !isBookmarked;
+    setIsBookmarked(next);
+    toggleBookmark(item.id);
+    showToast(next ? 'Saved to bookmarks' : 'Removed from bookmarks', next ? 'Saved' : 'Done');
+  };
+
+  const handleShare = async () => {
+    const url = echoUrl(item.id);
+    try {
+      await Share.share({ message: url, url });
+    } catch {
+      // User dismissed the share sheet — not an error
+    }
+  };
+
+  const handleRemix = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({ pathname: '/remix/[id]', params: { id: item.id, author: item.username } });
+  };
+
+  const toggleMute = async () => {
+    setMuted(m => !m);
+  };
+
+  const retryVideo = () => {
+    setLoadState('loading');
+    void player.replaceAsync(videoSourceForUri(videoUri));
+  };
+
+  return (
+    <View style={{ width: '100%', height: SCREEN_H, backgroundColor: '#000' }}>
+      {/* Video */}
+      <VideoView
+        player={player}
+        style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+        contentFit="cover"
+        nativeControls={false}
+        onFirstFrameRender={() => setLoadState('ready')}
+      />
+
+      {/* Loading overlay */}
+      {loadState === 'loading' && (
+        <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
+          <ActivityIndicator color="#fff" size="large" />
+        </View>
+      )}
+
+      {/* Error state */}
+      {loadState === 'error' && (
+        <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', gap: 12 }}>
+          <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15 }}>{`Couldn't load video`}</Text>
+          <Pressable
+            onPress={retryVideo}
+            style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: ACCENT_COLORS.cyan }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700' }}>{ttx("Retry")}</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Tap layer */}
+      <Pressable
+        onPress={handleTap}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+
+      {/* Paused indicator */}
+      {loadState === 'ready' && !playing && (
+        <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
+            <Play size={28} color="#fff" weight="fill" />
+          </View>
+        </View>
+      )}
+
+      {/* Heart burst */}
+      <Animated.View
+        pointerEvents="none"
+        style={[{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }, heartStyle]}
+      >
+        <HeartStraight color="#FF4D6D" size={96} weight="fill" />
+      </Animated.View>
+
+      {/* Bottom gradient */}
+      <View pointerEvents="none" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 340 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0)' }} />
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)' }} />
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.38)' }} />
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.62)' }} />
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.82)' }} />
+      </View>
+
+      {/* Author and caption */}
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 70, paddingHorizontal: 16, paddingBottom: 100 }}>
+        {item.parentEchoId && (
+          <Pressable
+            onPress={() => router.push({ pathname: '/thread/[id]', params: { id: String(item.parentEchoId) } })}
+            style={[ACCENT_CHIP, { backgroundColor: ACCENT_COLORS.cyanDim, marginBottom: 8 }, accentShadow(ACCENT_COLORS.cyan, 'soft')]}
+          >
+            <GitBranch color={ACCENT_COLORS.cyan} size={12} weight="fill" />
+            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 }}>{ttx("PERSPECTIVE")}</Text>
+          </Pressable>
+        )}
+        {/* Author row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <View style={{ borderRadius: 23, borderWidth: 2, borderColor: '#fff' }}>
+            <Avatar
+              name={item.displayName || item.username || '?'}
+              color={item.avatarColor}
+              url={item.avatarUrl}
+              size={42}
+            />
+          </View>
+          <View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}>
+                {item.displayName || item.username}
+              </Text>
+              {item.isVerified && <SealCheck color="#60A5FA" size={15} weight="fill" />}
+            </View>
+            <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12 }}>@{item.username}</Text>
+          </View>
+        </View>
+
+        {/* Caption */}
+        {!!item.prompt && (
+          <Text
+            numberOfLines={2}
+            style={{ color: '#fff', fontSize: 14, lineHeight: 20, fontWeight: '500', marginBottom: 8, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}
+          >
+            {item.prompt}
+          </Text>
+        )}
+
+        {/* Hashtags */}
+        {item.hashtags?.length > 0 && (
+          <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13 }}>
+            {item.hashtags.slice(0, 4).map(t => `#${t}`).join(' ')}
+          </Text>
+        )}
+      </View>
+
+      {/* Right sidebar */}
+      <View style={{ position: 'absolute', right: 12, bottom: 100, alignItems: 'center', gap: 24 }}>
+        <SidebarButton
+          icon={<HeartStraight color={isLiked ? '#FF4D6D' : '#fff'} size={30} weight={isLiked ? 'fill' : 'regular'} />}
+          label={likeCount}
+          onPress={handleLike}
+        />
+        <SidebarButton
+          icon={<ChatCircle color="#fff" size={30} />}
+          label={item.commentCount}
+          onPress={() => onCommentPress?.(item)}
+        />
+        <SidebarButton
+          icon={<GitBranch color={item.parentEchoId ? '#A78BFA' : '#fff'} size={28} weight={item.parentEchoId ? 'fill' : 'regular'} />}
+          label={item.remixCount && item.remixCount > 0 ? item.remixCount : undefined}
+          onPress={handleRemix}
+        />
+        <SidebarButton
+          icon={<BookmarkSimple color={isBookmarked ? '#FBBF24' : '#fff'} size={30} weight={isBookmarked ? 'fill' : 'regular'} />}
+          onPress={handleBookmark}
+        />
+        <SidebarButton
+          icon={<ShareNetwork color="#fff" size={28} />}
+          onPress={handleShare}
+        />
+        <SidebarButton
+          icon={muted
+            ? <SpeakerSlash color="#fff" size={26} />
+            : <SpeakerHigh color="#fff" size={26} />}
+          onPress={toggleMute}
+        />
+      </View>
+    </View>
+  );
+}

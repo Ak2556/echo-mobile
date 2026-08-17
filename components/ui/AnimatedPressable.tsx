@@ -4,7 +4,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../store/useAppStore';
 import { MOTION, PRESS_DEPTH, PressDepth } from '../../lib/motion';
-import { PerformanceMode, usePerformanceProfile } from '../../lib/performance';
+import { PerformanceMode, usePerformanceProfile } from '../../src/shared/lib/performance';
 
 const AnimatedPress = Animated.createAnimatedComponent(Pressable);
 

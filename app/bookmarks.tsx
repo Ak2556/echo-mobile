@@ -6,15 +6,15 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { BookmarkSimple, Plus } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { FeedCard } from '../components/social/FeedCard';
+import { FeedCard } from '../src/features/feed/ui/FeedCard';
 import { FeedCardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../lib/theme';
-import { useFeed } from '../hooks/queries/useFeed';
+import { useTheme } from '../src/shared/lib/theme';
+import { useFeed } from '../src/features/feed/api/useFeed';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useRemoteBookmarks } from '../hooks/queries/useRemoteBookmarks';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 export default function BookmarksScreen() {
   const router = useRouter();
@@ -109,7 +109,6 @@ export default function BookmarksScreen() {
       ) : (
         <FlashList
           data={bookmarked}
-          estimatedItemSize={100}
             renderItem={({ item, index }) => (
             <Pressable onLongPress={() => handleAssignCollection(item.id)}>
               <FeedCard item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />

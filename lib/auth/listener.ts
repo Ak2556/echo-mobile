@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { useAppStore } from '../../store/useAppStore';
-import { identify, resetIdentity, track } from '../analytics';
+import { identify, resetIdentity, track } from '../../src/shared/lib/analytics';
 import { identifyUser, clearUser, captureException } from '../monitoring';
 import { isSupabaseRemote } from '../remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes, fetchAndApplyRemoteSettings } from '../supabaseEchoApi';

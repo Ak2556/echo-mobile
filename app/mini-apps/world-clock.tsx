@@ -7,7 +7,7 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import {
   PRESET_CITIES,
   WorldClockCity,
@@ -17,7 +17,7 @@ import {
   saveWorldClockCities,
   searchWorldClockLocations,
 } from '../../lib/worldClock';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 function getTimeInZone(timezone: string) {
   const now = new Date();

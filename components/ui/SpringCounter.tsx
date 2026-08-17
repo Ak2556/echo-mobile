@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAppStore } from '../../store/useAppStore';
 import { MOTION } from '../../lib/motion';
-import { PerformanceMode, usePerformanceProfile } from '../../lib/performance';
+import { PerformanceMode, usePerformanceProfile } from '../../src/shared/lib/performance';
 
 interface SpringCounterProps {
   value: number;

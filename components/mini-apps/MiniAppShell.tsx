@@ -7,12 +7,12 @@ import { usePathname, useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft } from 'phosphor-react-native';
-import { useTheme, GLASS_INTENSITY } from '../../lib/theme';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { useTheme, GLASS_INTENSITY } from '../../src/shared/lib/theme';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { miniAppByRoute } from '../../lib/miniAppCatalog';
 import { useMiniAppEmbedded } from '../../lib/miniAppEmbed';
 import { MiniAppIcon } from './MiniAppIcon';
-import { useI18n } from '../../lib/i18n';
+import { useI18n } from '../../src/shared/lib/i18n';
 
 interface MiniAppShellProps {
   title: string;

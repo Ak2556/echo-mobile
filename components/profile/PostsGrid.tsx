@@ -4,9 +4,9 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Images } from 'phosphor-react-native';
 import { EmptyState } from '../common/EmptyState';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { FeedItem } from '../../types';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 const GRID_GAP = 8;
 const GRID_HORIZONTAL_INSET = 12;

@@ -6,7 +6,7 @@ import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSprin
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { MOTION } from '../../lib/motion';
 
 interface ChatInputProps {

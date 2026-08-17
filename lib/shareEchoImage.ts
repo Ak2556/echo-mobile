@@ -3,7 +3,7 @@ import { captureRef } from 'react-native-view-shot';
 import type { RefObject } from 'react';
 import type { View } from 'react-native';
 import { echoUrl } from './echoUrl';
-import { track } from './analytics';
+import { track } from '../src/shared/lib/analytics';
 import { captureException } from './monitoring';
 
 /**

@@ -5,13 +5,13 @@ import { useRouter } from 'expo-router';
 import { Warning, Trash } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TextInput } from '../components/ui/TextInput';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { deleteAccount } from '../lib/supabaseEchoApi';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { showToast } from '../components/ui/Toast';
-import { track } from '../lib/analytics';
-import { ttx } from '../lib/i18n';
+import { track } from '../src/shared/lib/analytics';
+import { ttx } from '../src/shared/lib/i18n';
 
 /**
  * In-app account deletion — required by Apple App Store guideline 5.1.1(v).

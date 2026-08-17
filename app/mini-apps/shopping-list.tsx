@@ -3,18 +3,18 @@ import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal } from 
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, CircleDashed, Plus, ShoppingCart, Trash, ListDashes, MagnifyingGlass, Tag, Scan, CaretDown, CurrencyDollar, ArrowLeft } from 'phosphor-react-native';
 import Animated, { FadeInDown, FadeOutUp, SlideInDown, SlideOutDown, Layout } from 'react-native-reanimated';
-import { tap } from '../../lib/haptics';
+import { tap } from '../../src/shared/lib/haptics';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniChip, MiniStatCard } from '../../components/mini-apps/MiniKit';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
   SHOPPING_CATEGORIES, FREQUENT_ITEMS, ShoppingItem, ShoppingListInfo,
   loadShoppingData, saveShoppingData, shoppingStats
 } from '../../lib/shoppingList';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 export default function ShoppingListScreen() {
   const { colors, radius } = useTheme();

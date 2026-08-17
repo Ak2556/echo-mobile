@@ -15,19 +15,19 @@ import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { fetchRemoteEchoById, setPinnedEcho, deleteRemoteEcho } from '../../lib/supabaseEchoApi';
 import { friendlyWriteError } from '../../lib/mutationErrors';
 import { showToast } from '../../components/ui/Toast';
-import { LikeButton } from '../../components/social/LikeButton';
-import { MediaGrid } from '../../components/social/MediaGrid';
-import { InlineVideo } from '../../components/social/InlineVideo';
-import { SimilarEchoesRail } from '../../components/social/SimilarEchoesRail';
+import { LikeButton } from '../../src/features/feed/ui/LikeButton';
+import { MediaGrid } from '../../src/features/feed/ui/MediaGrid';
+import { InlineVideo } from '../../src/features/feed/ui/InlineVideo';
+import { SimilarEchoesRail } from '../../src/features/feed/ui/SimilarEchoesRail';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
-import { useFeed } from '../../hooks/queries/useFeed';
+import { useTheme } from '../../src/shared/lib/theme';
+import { useFeed } from '../../src/features/feed/api/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
-import { useToggleRemoteBookmark } from '../../hooks/queries/useSupabaseSocial';
+import { useToggleRemoteBookmark } from '../../src/features/feed/api/useSupabaseSocial';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { inferTopics } from '../../lib/echoUX';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 export default function ThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

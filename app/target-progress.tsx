@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { ChatCircleText, ShareNetwork, Target, UsersThree, SquaresFour , CheckCircle, Barbell, Wallet, ListChecks } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { useTheme } from '../lib/theme';
-import { useResponsiveLayout } from '../lib/responsive';
+import { useTheme } from '../src/shared/lib/theme';
+import { useResponsiveLayout } from '../src/shared/lib/responsive';
 import { useAppStore } from '../store/useAppStore';
 import { getTargetCategory } from '../lib/targetCategories';
 import { getTodayProductivity, type TodayProductivity } from '../lib/localSearch';
@@ -13,7 +13,7 @@ import { buildTargetProgressDigest, type TargetProgressDigest } from '../lib/tar
 import { fetchCrossAppProgress, type CrossAppProgress } from '../lib/targetProgressRemote';
 import { setPendingPublishContext } from '../lib/publishContext';
 import { IconBadge } from '../components/ui/IconBadge';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 export default function TargetProgressScreen() {
   const router = useRouter();

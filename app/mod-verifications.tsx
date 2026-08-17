@@ -7,12 +7,12 @@ import { SealCheck, CheckCircle, XCircle } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { showToast } from '../components/ui/Toast';
 import {
   VerificationQueueItem, decideVerification, listVerificationQueue,
 } from '../lib/verificationApi';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 function VerificationCard({ item, onDecide }: {
   item: VerificationQueueItem;

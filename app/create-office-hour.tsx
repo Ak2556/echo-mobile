@@ -8,10 +8,10 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { createOfficeHour } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 const DURATIONS = [
   { label: '30 min', value: 30 },

@@ -8,10 +8,10 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TextInput } from '../components/ui/TextInput';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { createSalon } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 const COVER_COLORS = ['#7C3AED', '#EF4444', '#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#06B6D4', '#F97316'];
 const NAME_MAX = 40;

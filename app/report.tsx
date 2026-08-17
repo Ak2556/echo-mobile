@@ -9,8 +9,8 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { submitRemoteReport } from '../lib/supabaseEchoApi';
 import { isSupabaseRemote } from '../lib/remoteConfig';
-import { useTheme } from '../lib/theme';
-import { ttx } from '../lib/i18n';
+import { useTheme } from '../src/shared/lib/theme';
+import { ttx } from '../src/shared/lib/i18n';
 
 const REASONS = [
   'Spam or misleading',

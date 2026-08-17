@@ -45,7 +45,7 @@ import { recordAppOpen } from '../../lib/personalNudges';
 import { IconButton } from '../../components/ui/IconButton';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { HlsVideoPlayer } from '../../components/media/HlsVideoPlayer';
 import {
@@ -71,7 +71,7 @@ import { markMessagesRead, fetchGroupMembers, fetchConversationPrefs, setDMPref,
 import { usePresenceTracking } from '../../lib/presence';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -2676,7 +2676,6 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
       <FlashList<ListRow>
         ref={listRef}
         data={listData}
-        estimatedItemSize={70}
         getItemType={(item) => item.type}
         keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.type === 'unread' ? 'unread-divider' : item.msg.id}
         contentContainerStyle={{ paddingVertical: 10 }}

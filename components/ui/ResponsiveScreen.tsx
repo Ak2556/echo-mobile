@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
-import { useResponsiveLayout } from '../../lib/responsive';
-import { useTheme } from '../../lib/theme';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
+import { useTheme } from '../../src/shared/lib/theme';
 
 type Width = 'content' | 'wide' | 'form' | 'full';
 

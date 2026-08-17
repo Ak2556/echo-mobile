@@ -6,10 +6,10 @@ import Animated, { FadeIn, FadeOut, SlideInLeft, SlideOutLeft } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus, Trash, MagnifyingGlass, X, ChatCircle } from 'phosphor-react-native';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
-import { tap } from '../../lib/haptics';
+import { useTheme } from '../../src/shared/lib/theme';
+import { tap } from '../../src/shared/lib/haptics';
 import { ChatSession } from '../../types';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 interface SessionsDrawerProps {
   visible: boolean;

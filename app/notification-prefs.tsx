@@ -8,10 +8,10 @@ import {
 } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppStore } from '../store/useAppStore';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import { showToast } from '../components/ui/Toast';
 import { clearPushToken, registerForPush } from '../lib/push';
-import { ttx } from '../lib/i18n';
+import { ttx } from '../src/shared/lib/i18n';
 
 export default function NotificationPrefsScreen() {
   const { colors, radius, fontSizes, switchTrack, animation } = useTheme();

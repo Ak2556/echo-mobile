@@ -10,10 +10,10 @@ import { useAppStore } from '../../store/useAppStore';
 import { fetchRemoteEchoById, fetchEchoConversationSnapshot } from '../../lib/supabaseEchoApi';
 import { setPendingPublishContext } from '../../lib/publishContext';
 import { GRADIENTS, ACCENT_COLORS, DISPLAY_TYPE, accentShadow, feedbackHaptic } from '../../lib/accentDesign';
-import { track } from '../../lib/analytics';
+import { track } from '../../src/shared/lib/analytics';
 import { PERSPECTIVE_DESCRIPTIONS, PERSPECTIVE_LABELS, PERSPECTIVE_TYPES, isValidSourceUrl } from '../../lib/perspectives';
 import type { ChatMessage, PerspectiveType } from '../../types';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 /**
  * Add Perspective entry screen.

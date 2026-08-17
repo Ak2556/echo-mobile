@@ -20,11 +20,11 @@ import { refreshAuthSession, useAuth, sendEmailOtp, verifyEmailOtp } from '../..
 import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
-import { track, identify } from '../../lib/analytics';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { track, identify } from '../../src/shared/lib/analytics';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { WARM_AVATAR_COLORS } from '../../lib/avatarPalette';
 import { APP_LANGUAGES } from '../../lib/languages';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 const ACCENT = '#E06030';
 const SPRING = { damping: 24, stiffness: 300 };

@@ -24,13 +24,13 @@ import { gatherProactiveContext, pickProactiveOpener, expandChip, type Proactive
 import { syncPersonalNudges, recordAppOpen } from '../../lib/personalNudges';
 import { markCheckinSeen } from '../../lib/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { Avatar } from '../../components/ui/Avatar';
 import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Sparkle, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
-import { track } from '../../lib/analytics';
-import { useResponsiveLayout } from '../../lib/responsive';
+import { track } from '../../src/shared/lib/analytics';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { buildPersonaPromptContext, loadPersonaProfile, recordPersonaSignal, syncPersonaFromMessages } from '../../lib/persona';
 import { playSoundEffect } from '../../lib/sound';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
@@ -43,7 +43,7 @@ import { miniAppById } from '../../lib/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
 import { assistantLanguageInstruction } from '../../lib/languages';
-import { useI18n } from '../../lib/i18n';
+import { useI18n } from '../../src/shared/lib/i18n';
 
 
 function modelLabel(model: string): string {
@@ -845,7 +845,6 @@ export default function ChatScreen() {
             data={items}
             extraData={extraData}
             keyExtractor={(item) => item.kind === 'text' ? `t-${item.message.id}` : `c-${item.tool.id}`}
-            estimatedItemSize={100}
             renderItem={({ item }) =>
               (
                 <View style={layout.contentStyle}>

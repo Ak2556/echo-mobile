@@ -6,13 +6,13 @@ import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniChip, MiniButton, MiniCommandDeck } from '../../components/mini-apps/MiniKit';
-import { useTheme } from '../../lib/theme';
+import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../../components/ui/Toast';
 import {
   PLANNER_SLOTS, PlannerItem, PlannerSlot, loadPlanner, plannerStats,
   plannerToday, savePlanner, shiftPlannerDate,
 } from '../../lib/planner';
-import { ttx } from '../../lib/i18n';
+import { ttx } from '../../src/shared/lib/i18n';
 
 export default function PlannerScreen() {
   const { colors, font, radius } = useTheme();

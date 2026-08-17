@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../src/shared/lib/theme';
 import {
   getAnalyticsConsentAsync,
   setAnalyticsConsentAsync,
 } from '../lib/consent';
-import { initAnalytics, track } from '../lib/analytics';
-import { ttx } from '../lib/i18n';
+import { initAnalytics, track } from '../src/shared/lib/analytics';
+import { ttx } from '../src/shared/lib/i18n';
 
 /**
  * GDPR-style analytics consent banner shown on first launch.
