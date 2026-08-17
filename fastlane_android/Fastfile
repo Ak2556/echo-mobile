@@ -12,7 +12,6 @@ platform :android do
     
     firebase_app_distribution(
       app: ENV["FIREBASE_APP_ID"],
-      firebase_cli_token: ENV["FIREBASE_TOKEN"],
       apk_path: "app/build/outputs/apk/release/app-release.apk",
       release_notes: "Automated build from GitHub Actions",
       groups: "testers"
