@@ -1,7 +1,6 @@
 import React, { useCallback, useRef } from 'react';
-import { View, RefreshControl } from 'react-native';
+import { View, RefreshControl, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { FlowCard } from '../../src/features/feed/ui/FlowCard';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
@@ -55,8 +54,6 @@ export default function WatchScreen() {
     alignSelf: 'center' as const,
   };
 
-  const ListHeader = null;
-
   if (isLoading && feed.length === 0) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }} />
@@ -65,7 +62,7 @@ export default function WatchScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <FlashList
+      <FlatList
         ref={listRef}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
@@ -75,6 +72,10 @@ export default function WatchScreen() {
         snapToInterval={layout.height}
         snapToAlignment="start"
         decelerationRate="fast"
+        initialNumToRender={2}
+        maxToRenderPerBatch={2}
+        windowSize={3}
+        removeClippedSubviews={false}
         renderItem={({ item, index }) => (
           <FlowCard
             item={item}
