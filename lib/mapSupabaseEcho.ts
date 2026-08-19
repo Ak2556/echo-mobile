@@ -53,6 +53,8 @@ export type SupabaseEchoRow = {
   co_author_response?: string | null;
   /** Explicit post type. Defaults 'text'; 'musing' etc. stored verbatim. */
   post_type?: string | null;
+  /** HLS stream URL for fast video playback */
+  hls_url?: string | null;
 };
 
 /** Build a ReactionCounts object from a raw echo row's reaction columns. */
@@ -87,7 +89,9 @@ export function mapEchoRowToFeedItem(
 ): FeedItem {
   const username = author?.username ?? 'unknown';
   const mediaUris = echo.media_urls?.length ? echo.media_urls : undefined;
-  const videoUri = mediaUris?.find(isVideoUri);
+  // If we have an HLS transcoded URL, use it directly for instant playback.
+  // Otherwise, fallback to scanning media_urls for a raw .mp4 or .mov.
+  const videoUri = echo.hls_url ?? mediaUris?.find(isVideoUri);
   const moodActive = isMoodActive(author?.mood, author?.mood_expires_at);
   return {
     id: echo.id,

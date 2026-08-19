@@ -9,7 +9,7 @@ import { VideoPreview } from './VideoPreview';
 import { useResponsiveLayout } from '../../../shared/lib/responsive';
 import { useTheme } from '../../../shared/lib/theme';
 import { warmAvatarColor } from '../../../../lib/avatarPalette';
-import { useToggleRemoteLike } from '../api/useSupabaseSocial';
+import { useToggleRemoteLike, useToggleRemoteBookmark } from '../api/useSupabaseSocial';
 import { useAppStore } from '../../../../store/useAppStore';
 
 const SHADOW = {
@@ -59,6 +59,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
   
   const height = layout.height;
   const { mutate: toggleLike } = useToggleRemoteLike();
+  const { mutate: toggleBookmark } = useToggleRemoteBookmark();
   const soundEnabled = useAppStore(s => s.soundEnabled);
   const setSoundEnabled = useAppStore(s => s.setSoundEnabled);
 
@@ -146,11 +147,19 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
           />
           <ActionButton 
             icon={BookmarkSimple} 
+            color={item.isBookmarked ? '#FBBF24' : '#fff'}
+            weight={item.isBookmarked ? 'fill' : 'regular'}
             label="Save"
+            onPress={() => toggleBookmark({ echoId: item.id, bookmark: !item.isBookmarked })}
           />
           <ActionButton 
             icon={ShareNetwork} 
             label="Share"
+            onPress={() => {
+              import('react-native').then(({ Share }) => {
+                Share.share({ url: `https://echo.app/e/${item.id}`, message: `Check out this echo by @${item.username}: https://echo.app/e/${item.id}` });
+              });
+            }}
           />
         </View>
       </LinearGradient>
