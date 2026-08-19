@@ -15,16 +15,10 @@ interface UserRowProps {
   user: User;
   onPress?: () => void;
   showFollowButton?: boolean;
-  /** Override the default follow handler (e.g. to use a remote mutation) */
   onFollowPress?: () => void;
-  /** Controlled follow state (remote lists). Falls back to the local store. */
   following?: boolean;
-  /** This user follows the viewer — drives "Follow back" + the badge. */
   followsYou?: boolean;
-  /** Show the "Follows you" badge (suppress where it'd be redundant, e.g. your
-   *  own followers list where everyone follows you). Default true. */
   showFollowsYouBadge?: boolean;
-  /** Disable the button while a follow mutation is in flight. */
   followBusy?: boolean;
 }
 
@@ -46,8 +40,8 @@ export function UserRow({
   const handleFollow = () => {
     if (!reduceAnimations) {
       btnScale.value = withSequence(
-        withSpring(0.85, { damping: 10, stiffness: 400 }),
-        withSpring(1.05, { damping: 10, stiffness: 300 }),
+        withSpring(0.9, { damping: 10, stiffness: 400 }),
+        withSpring(1.02, { damping: 10, stiffness: 300 }),
         withSpring(1, { damping: 12, stiffness: 300 })
       );
     }
@@ -70,14 +64,13 @@ export function UserRow({
   return (
     <Pressable
       onPress={onPress}
-      style={{
+      style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
-      }}
+        paddingVertical: 10,
+        backgroundColor: pressed ? colors.surfaceHover : 'transparent',
+      })}
     >
       {showAvatars && (
         <Pressable
@@ -90,7 +83,7 @@ export function UserRow({
             name={user.displayName || user.username}
             color={user.avatarColor}
             url={user.avatarUrl}
-            size={44}
+            size={42}
             zoomable={false}
           />
         </Pressable>
@@ -98,7 +91,7 @@ export function UserRow({
 
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }} numberOfLines={1}>{user.displayName}</Text>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, letterSpacing: -0.2 }} numberOfLines={1}>{user.displayName}</Text>
           {user.isVerified && <SealCheck color={colors.accent} size={16} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }} numberOfLines={1}>@{user.username}</Text>
@@ -121,18 +114,17 @@ export function UserRow({
             accessibilityLabel={isFollowingState ? `Unfollow ${user.username}` : `Follow ${user.username}`}
             style={{
               marginLeft: 12,
-              paddingHorizontal: 18,
-              paddingVertical: 8,
-              borderRadius: 999,
+              paddingHorizontal: 16,
+              paddingVertical: 7,
+              borderRadius: 20,
+              minWidth: 84,
               alignItems: 'center',
               justifyContent: 'center',
               opacity: busy ? 0.6 : 1,
-              backgroundColor: isFollowingState ? colors.surfaceHover : colors.accent,
-              borderWidth: isFollowingState ? StyleSheet.hairlineWidth : 0,
-              borderColor: colors.border,
+              backgroundColor: isFollowingState ? colors.surfaceHover : colors.text,
             }}
           >
-            <Text style={{ fontSize: fontSizes.small, fontWeight: '700', color: isFollowingState ? colors.text : '#fff' }}>
+            <Text style={{ fontSize: fontSizes.small, fontWeight: '800', color: isFollowingState ? colors.text : colors.bg }}>
               {isFollowingState ? 'Following' : followsYou ? 'Follow back' : 'Follow'}
             </Text>
           </Pressable>
