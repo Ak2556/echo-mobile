@@ -53,7 +53,7 @@ export default function BlockedUsersScreen() {
           subtitle={ttx("Users you block won't be able to see your content or contact you.")}
         />
       ) : (
-        <FlashList
+        <FlashList 
           data={blockedUsers}
             renderItem={({ item, index }) => (
             <Animated.View entering={animation(FadeInDown.delay(index * 50).duration(220))}>

@@ -67,7 +67,7 @@ export default function EvolutionTreeScreen() {
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={ACCENT_COLORS.magenta} />
         </View>
-      ) : isError || !root ? (
+      ) : !root ? (
         <View style={styles.emptyWrap}>
           <Text style={styles.emptyTitle}>{ttx("Couldn't load this lineage")}</Text>
         </View>

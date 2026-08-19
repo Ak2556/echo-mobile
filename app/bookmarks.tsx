@@ -107,7 +107,7 @@ export default function BookmarksScreen() {
           onAction={() => router.push('/(tabs)/home')}
         />
       ) : (
-        <FlashList
+        <FlashList 
           data={bookmarked}
             renderItem={({ item, index }) => (
             <Pressable onLongPress={() => handleAssignCollection(item.id)}>

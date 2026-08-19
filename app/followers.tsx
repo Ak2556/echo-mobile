@@ -97,7 +97,7 @@ export default function FollowersScreen() {
             : 'Explore and follow people whose echoes inspire you.'}
         />
       ) : (
-        <FlashList
+        <FlashList 
           data={data}
             renderItem={({ item }) => {
             const isSelf = item.id === storeUserId;

@@ -36,7 +36,7 @@ export default function MutedUsersScreen() {
           subtitle={ttx("Muting hides their echoes from your feed but doesn't notify them.")}
         />
       ) : (
-        <FlashList
+        <FlashList 
           data={mutedUsers}
             renderItem={({ item, index }) => (
             <Animated.View entering={animation(FadeInDown.delay(index * 50).duration(220))}>
