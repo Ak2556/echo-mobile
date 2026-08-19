@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { HeartStraight, ChatCircle, ShareNetwork, BookmarkSimple, Play } from 'phosphor-react-native';
+import { HeartStraight, ChatCircle, ShareNetwork, BookmarkSimple, Play, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { FeedItem } from '../../../../types/index';
 import { VideoPreview } from './VideoPreview';
 import { useResponsiveLayout } from '../../../shared/lib/responsive';
@@ -11,6 +11,9 @@ import { useTheme } from '../../../shared/lib/theme';
 import { warmAvatarColor } from '../../../../lib/avatarPalette';
 import { useToggleRemoteLike, useToggleRemoteBookmark } from '../api/useSupabaseSocial';
 import { useAppStore } from '../../../../store/useAppStore';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, runOnJS, withDelay } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import * as Haptics from 'expo-haptics';
 
 const SHADOW = {
   shadowColor: '#000',
@@ -60,10 +63,92 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
   const height = layout.height;
   const { mutate: toggleLike } = useToggleRemoteLike();
   const { mutate: toggleBookmark } = useToggleRemoteBookmark();
+  
   const soundEnabled = useAppStore(s => s.soundEnabled);
   const setSoundEnabled = useAppStore(s => s.setSoundEnabled);
 
   const avatarColor = warmAvatarColor(item.displayName || 'E');
+
+  // Double tap heart animation state
+  const heartScale = useSharedValue(0);
+  const heartOpacity = useSharedValue(0);
+  const [heartPos, setHeartPos] = useState({ x: 0, y: 0 });
+
+  // Mute indicator animation state
+  const muteScale = useSharedValue(0);
+  const muteOpacity = useSharedValue(0);
+
+  const onDoubleTap = useCallback((x: number, y: number) => {
+    setHeartPos({ x, y });
+    
+    // Trigger haptics
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    
+    // Run animation
+    heartScale.value = 0;
+    heartOpacity.value = 1;
+    
+    heartScale.value = withSequence(
+      withSpring(1.2, { damping: 12, stiffness: 200 }),
+      withSpring(1.0, { damping: 10, stiffness: 150 }),
+      withDelay(400, withTiming(0, { duration: 300 }))
+    );
+    
+    heartOpacity.value = withSequence(
+      withTiming(1, { duration: 50 }),
+      withDelay(600, withTiming(0, { duration: 300 }))
+    );
+
+    // Persist like
+    if (!item.isLiked) {
+      toggleLike({ echoId: item.id, like: true });
+    }
+  }, [item.isLiked, item.id, toggleLike, heartScale, heartOpacity]);
+
+  const onSingleTap = useCallback(() => {
+    setSoundEnabled(!soundEnabled);
+    
+    // Show mute/unmute indicator briefly
+    muteScale.value = 0.5;
+    muteOpacity.value = 1;
+    
+    muteScale.value = withSpring(1, { damping: 15 });
+    muteOpacity.value = withSequence(
+      withTiming(1, { duration: 100 }),
+      withDelay(800, withTiming(0, { duration: 300 }))
+    );
+  }, [soundEnabled, setSoundEnabled, muteScale, muteOpacity]);
+
+  const singleTap = Gesture.Tap()
+    .maxDuration(250)
+    .onStart(() => {
+      runOnJS(onSingleTap)();
+    });
+
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .maxDelay(250)
+    .onStart((e) => {
+      runOnJS(onDoubleTap)(e.x, e.y);
+    });
+
+  // Exclusive tap gesture: require single tap to wait for double tap to fail
+  const taps = Gesture.Exclusive(doubleTap, singleTap);
+
+  const heartStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: -60 },
+      { translateY: -60 },
+      { scale: heartScale.value },
+      { rotate: '-10deg' }
+    ],
+    opacity: heartOpacity.value,
+  }));
+
+  const muteStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: muteScale.value }],
+    opacity: muteOpacity.value,
+  }));
   
   if (item.postType !== 'video' || !item.videoUri) {
     return (
@@ -75,15 +160,49 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
 
   return (
     <View style={{ height, width: '100%', backgroundColor: colors.bg }}>
-      <Pressable onPress={() => setSoundEnabled(!soundEnabled)} style={StyleSheet.absoluteFill}>
-        <VideoPreview
-          uri={item.videoUri}
-          height={height}
-          borderRadius={0}
-          echoId={item.id}
-          viewCount={item.viewCount}
-        />
-      </Pressable>
+      <GestureDetector gesture={taps}>
+        <View style={StyleSheet.absoluteFill}>
+          <VideoPreview
+            uri={item.videoUri}
+            height={height}
+            borderRadius={0}
+            echoId={item.id}
+            viewCount={item.viewCount}
+          />
+        </View>
+      </GestureDetector>
+
+      {/* Floating Double Tap Heart */}
+      <Animated.View pointerEvents="none" style={[{
+        position: 'absolute',
+        left: heartPos.x,
+        top: heartPos.y,
+        width: 120,
+        height: 120,
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...SHADOW,
+      }, heartStyle]}>
+        <HeartStraight weight="fill" color={colors.danger} size={120} />
+      </Animated.View>
+
+      {/* Floating Mute Indicator */}
+      <Animated.View pointerEvents="none" style={[{
+        position: 'absolute',
+        top: '40%',
+        alignSelf: 'center',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        padding: 24,
+        borderRadius: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }, muteStyle]}>
+        {!soundEnabled ? (
+          <SpeakerSlash color="#fff" size={48} weight="fill" />
+        ) : (
+          <SpeakerHigh color="#fff" size={48} weight="fill" />
+        )}
+      </Animated.View>
 
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.8)']}
