@@ -148,6 +148,13 @@ function titleFor(t: string, actorName: string, preview?: string): string {
       `${actorName} said your name. Ears burning?`,
       `${actorName} tagged you into the conversation`,
     ]);
+    case 'friend_post': return pick([
+      `${actorName} just posted`,
+      `New echo from ${actorName}`,
+      `${actorName} shared something new`,
+      `Catch up on ${actorName}'s latest`,
+      `${actorName} is active right now`,
+    ]);
     case 'dm': return pick([
       `${actorName} messaged you`,
       `New message from ${actorName}`,
@@ -200,6 +207,7 @@ function messageFor(t: string, preview?: string): string {
     case 'dm':
     case 'mention':
     case 'quote':
+    case 'friend_post':
       return (preview ?? '').slice(0, 140);
     case 'daily_react': {
       // Drop the leading emoji token; show the answer snippet as the body.

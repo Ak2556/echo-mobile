@@ -137,7 +137,10 @@ export default function NotificationsScreen() {
 
   // Group by (type, targetId) to collapse repeated actions ("Alice and 11 others liked").
   const groupedFlat = useMemo(() => {
-    const visible = notifications.filter(n => !mutedIds.includes(n.fromUserId)).filter(typeFilter);
+    const visible = notifications
+      .filter(n => n.type !== 'dm')
+      .filter(n => !mutedIds.includes(n.fromUserId))
+      .filter(typeFilter);
     type Bucket = { key: string; notifications: Notification[] };
     const buckets = new Map<string, Bucket>();
     for (const n of visible) {
