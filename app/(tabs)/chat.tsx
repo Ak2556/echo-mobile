@@ -840,7 +840,7 @@ export default function ChatScreen() {
         keyboardVerticalOffset={0}
       >
         <View style={{ flex: 1 }}>
-          <FlashList
+          <FlashList 
             ref={listRef as any}
             data={items}
             extraData={extraData}

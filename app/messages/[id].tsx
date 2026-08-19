@@ -1252,7 +1252,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
             {query.length > 0 && <Pressable onPress={() => setQuery('')} hitSlop={8}><X color={colors.textMuted} size={15} /></Pressable>}
           </View>
 
-          <FlashList
+          <FlashList 
             data={data}
             key={q ? 'search' : category}
             keyExtractor={(item, i) => `${item}-${i}`}
@@ -1339,7 +1339,7 @@ function ForwardSheet({ visible, currentConversationId, onSelect, onClose }: {
             {ttx("No other conversations yet.")}
           </Text>
         ) : (
-          <FlashList
+          <FlashList 
             data={targets}
             keyExtractor={c => c.id}
             renderItem={({ item }) => (
@@ -2673,7 +2673,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
   const memoizedFlashList = useMemo(() => {
     if (!conversation) return null;
     return (
-      <FlashList<ListRow>
+      <FlashList<ListRow> 
         ref={listRef}
         data={listData}
         getItemType={(item) => item.type}
@@ -3476,7 +3476,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
               <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Saved messages")}</Text>
               <Pressable onPress={() => setShowSaved(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
-            <FlashList
+            <FlashList 
               data={conversationSaved}
               keyExtractor={s => s.id}
               contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8 }}

@@ -567,7 +567,7 @@ export default function DiscoverScreen() {
             <FeedCardSkeleton />
           </View>
         </Animated.View>
-      ) : isError ? (
+      ) : isError && popularItems.length === 0 ? (
         <View style={{ flex: 1, paddingTop: headerHeight, alignItems: 'center', justifyContent: 'center' }}>
           <ErrorState kind={classifyError(error)} onRetry={() => refetch()} />
         </View>
@@ -586,7 +586,7 @@ export default function DiscoverScreen() {
               </Text>
             </Pressable>
           )}
-          <FlashList
+          <FlashList 
             ref={listRef}
             onViewableItemsChanged={onVoiceViewable}
             viewabilityConfig={VOICE_VIEWABILITY}

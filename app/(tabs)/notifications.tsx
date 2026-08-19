@@ -277,7 +277,7 @@ export default function NotificationsScreen() {
           />
         </Animated.View>
       ) : (
-        <FlashList
+        <FlashList 
           data={listData}
           keyExtractor={(item: ListItem) => {
             if (item.type === 'header') return `header-${item.label}`;

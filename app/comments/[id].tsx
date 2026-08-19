@@ -119,7 +119,7 @@ export default function CommentsScreen() {
             subtitle={ttx("Be the first to share your thoughts on this echo.")}
           />
         ) : (
-          <FlashList
+          <FlashList 
             data={threadedRows}
             renderItem={({ item }) => (
               <CommentCard

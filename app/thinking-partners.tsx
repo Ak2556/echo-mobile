@@ -80,7 +80,7 @@ export default function ThinkingPartnersScreen() {
           <ActivityIndicator color={ACCENT_COLORS.violet} size="large" />
           <Text style={styles.muted}>{ttx("Finding people…")}</Text>
         </View>
-      ) : isError ? (
+      ) : isError && partners.length === 0 ? (
         <ErrorState kind={classifyError(error)} onRetry={() => refetch()} />
       ) : partners.length === 0 ? (
         <View style={styles.center}>
@@ -90,7 +90,7 @@ export default function ThinkingPartnersScreen() {
           </Text>
         </View>
       ) : (
-        <FlashList
+        <FlashList 
           data={partners}
           keyExtractor={(p) => p.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}

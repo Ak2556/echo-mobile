@@ -346,7 +346,7 @@ export default function UserProfileScreen() {
 
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <FlashList
+        <FlashList 
           data={orderedEchoes}
             renderItem={({ item, index }) => (
             <FeedCard
@@ -447,7 +447,7 @@ export default function UserProfileScreen() {
 
   return (
     <ResponsiveScreen>
-      <FlashList
+      <FlashList 
         data={userEchoes}
             renderItem={({ item, index }) => (
           <FeedCard item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />

@@ -93,7 +93,7 @@ export default function RemixScreen() {
   };
 
   const isLoading = echoQuery.isLoading || snapshotQuery.isLoading;
-  const hasError = echoQuery.isError || (!isLoading && !parent);
+  const hasError = !isLoading && !parent;
 
   useEffect(() => {
     if (snapshotQuery.isError) {

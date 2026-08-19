@@ -591,7 +591,7 @@ export default function MarketplaceScreen() {
       ) : loadError && listings.length === 0 ? (
         <ErrorState kind={classifyError(loadError)} onRetry={() => load(query, category)} />
       ) : (
-        <FlashList
+        <FlashList 
           key={columns}
           data={sortedListings}
           keyExtractor={item => item.id}
