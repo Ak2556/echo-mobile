@@ -110,89 +110,79 @@ function pick(arr: string[]): string {
 function titleFor(t: string, actorName: string, preview?: string): string {
   switch (t) {
     case 'like': return pick([
-      `${actorName} liked your echo`,
-      `${actorName} smashed the like on your echo`,
-      `${actorName} approves of your echo 🫶`,
-      `Your echo just won ${actorName} over`,
-      `${actorName} tapped that little heart for you`,
-      `${actorName} liked your echo. Taste: impeccable.`,
-      `${actorName} caught feelings for your echo`,
+      `${actorName} smashed the like button`,
+      `Your echo is doing numbers rn`,
+      `${actorName} agrees with your take`,
+      `The dopamine hit you ordered 💌 (${actorName} liked your post)`,
+      `${actorName} tapped that little heart. Taste: impeccable.`,
+      `Warning: ${actorName} caught feelings for your echo`,
     ]);
     case 'comment': return pick([
-      `${actorName} had something to say`,
-      `${actorName} dropped a comment`,
-      `${actorName} replied to your echo`,
+      `${actorName} entered the chat`,
+      `${actorName} has thoughts. Lots of them.`,
       `${actorName} slid a comment under your echo`,
-      `${actorName} has thoughts. About your echo.`,
+      `Drama alert: ${actorName} replied`,
       `${actorName} couldn’t scroll past without commenting`,
     ]);
     case 'follow': return pick([
-      `${actorName} followed you. Great taste.`,
+      `${actorName} followed you. Don't let the clout get to your head.`,
       `New follower: ${actorName}. The fan club grows.`,
-      `${actorName} hit follow — wave hello?`,
-      `${actorName} signed up for your content. Bold move.`,
-      `${actorName} is officially in your corner now`,
-      `${actorName} followed you. The empire expands.`,
+      `${actorName} just signed up for your content. Bold move.`,
+      `You're famous now. Wave to ${actorName}.`,
+      `${actorName} is officially in your corner`,
     ]);
     case 'repost': return pick([
-      `${actorName} re-echoed you. Spreading the word.`,
-      `${actorName} gave your echo a bigger stage`,
-      `${actorName} re-echoed your post`,
       `${actorName} liked your echo enough to steal it (nicely)`,
+      `${actorName} gave your words a bigger stage`,
+      `Going viral? ${actorName} just re-echoed you.`,
       `${actorName} put your echo on their page. Flattery.`,
     ]);
     case 'mention': return pick([
       `${actorName} name-dropped you`,
-      `${actorName} pulled you into it`,
-      `${actorName} mentioned you`,
-      `${actorName} said your name. Ears burning?`,
-      `${actorName} tagged you into the conversation`,
+      `${actorName} pulled you into the mess`,
+      `Your ears burning? ${actorName} tagged you.`,
+      `${actorName} dragged you into the conversation`,
     ]);
     case 'friend_post': return pick([
-      `${actorName} just posted`,
-      `New echo from ${actorName}`,
-      `${actorName} shared something new`,
+      `Drop everything, ${actorName} just posted`,
+      `${actorName} dropped a banger (probably)`,
+      `Fresh tea from ${actorName} ☕️`,
+      `${actorName} is active rn. Go look.`,
       `Catch up on ${actorName}'s latest`,
-      `${actorName} is active right now`,
     ]);
     case 'dm': return pick([
-      `${actorName} messaged you`,
-      `New message from ${actorName}`,
       `${actorName} slid into your DMs`,
-      `${actorName} wants your attention`,
-      `${actorName} sent a little something`,
-      `Ping! ${actorName} is talking to you`,
+      `${actorName} sent a little something 🤫`,
+      `Ping! ${actorName} wants your attention`,
+      `Secret message from ${actorName}`,
     ]);
     case 'reaction': {
       const emoji = preview ? REACTION_EMOJI[preview] : '';
       if (!emoji) return `${actorName} reacted to your echo`;
       return pick([
         `${actorName} reacted ${emoji}`,
-        `${emoji} from ${actorName} on your echo`,
-        `${actorName} hit your echo with ${emoji}`,
+        `${emoji} incoming from ${actorName}`,
+        `${actorName} hit your echo with that ${emoji} energy`,
       ]);
     }
     case 'bookmark': return pick([
       `${actorName} saved your echo. It's a keeper.`,
-      `${actorName} bookmarked your echo for later. Fancy.`,
       `${actorName} filed your echo under "worth it"`,
       `${actorName} is keeping your echo forever. No pressure.`,
       `${actorName} bookmarked you. Museum-grade content.`,
     ]);
     case 'quote': return pick([
-      `${actorName} quoted you`,
-      `${actorName} built on your echo`,
-      `${actorName} quoted your echo`,
       `${actorName} took your echo and ran with it`,
       `${actorName} riffed on your echo`,
+      `${actorName} built an empire on your words`,
+      `${actorName} had a lot to say about your post`,
     ]);
     case 'daily_react': {
-      // preview is "<emoji>  <answer snippet>" — lead the title with the emoji.
       const emoji = preview ? preview.trim().split(/\s+/)[0] : '';
       if (!emoji) return `${actorName} reacted to your answer`;
       return pick([
-        `${actorName} reacted ${emoji} to your answer`,
         `${emoji} ${actorName} felt something about your answer`,
+        `${actorName} is judging your answer with ${emoji}`,
       ]);
     }
     case 'personal_nudge': return 'Echo';
