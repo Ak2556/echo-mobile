@@ -416,7 +416,7 @@ export default function DiscoverScreen() {
     let result: typeof feed;
     if (feedScope === 'following') {
       const followingSet = new Set(followingIds);
-      result = feed.filter(f => followingSet.has(f.userId));
+      result = feed; // backend already filters following feed
     } else if (feedScope === 'forYou') {
       result = grouped.rising.length > 0 ? grouped.rising : feed;
     } else {
