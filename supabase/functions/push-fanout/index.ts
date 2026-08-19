@@ -185,7 +185,13 @@ function titleFor(t: string, actorName: string, preview?: string): string {
         `${actorName} is judging your answer with ${emoji}`,
       ]);
     }
-    case 'personal_nudge': return 'Echo';
+    case 'personal_nudge': return pick([
+      `We miss you. Mostly.`,
+      `Your daily dose of Echo`,
+      `We’re literally waiting for you`,
+      `Don't make us beg. Open the app.`,
+      `psst... 🤫`,
+    ]);
     default: return 'Echo';
   }
 }

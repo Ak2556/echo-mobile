@@ -22,15 +22,48 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 // Only nudge again after this many hours — server-side frequency cap.
 const MIN_HOURS_BETWEEN = 20;
 
+// Pick a random variant so the same event never reads the same twice.
+function pick(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 // Interest-matched copy, keyed by the user's top surface.
-const SURFACE_COPY: Record<string, string> = {
-  daily: "Today's question is live — two minutes to add your take.",
-  dm: 'Pick a conversation back up — someone may be waiting on you.',
-  feed: 'Fresh thinking landed in your feed since you last looked.',
-  chat: "Want to think something through? Echo's ready when you are.",
-  tools: 'A minute to move one thing forward? Your tools are a tap away.',
-  marketplace: 'New listings dropped in the marketplace — worth a look?',
-  profile: 'See who engaged with your work today.',
+const SURFACE_COPY: Record<string, () => string> = {
+  daily: () => pick([
+    "Today's question is live. Prove you have the best take.",
+    "Everyone is wrong today. Come correct them.",
+    "The daily question is waiting for your brilliant, unfiltered opinion.",
+  ]),
+  dm: () => pick([
+    "You left them on read, didn't you?",
+    "Someone is literally waiting for your reply right now.",
+    "Your DMs are getting dusty. Go say hi.",
+  ]),
+  feed: () => pick([
+    "Your timeline is getting spicy today. Don't miss out.",
+    "People are posting things you're probably going to disagree with.",
+    "Fresh drama (or profound thoughts) just landed in your feed.",
+  ]),
+  chat: () => pick([
+    "Our AI is bored. Come talk to it.",
+    "Need a late-night therapy session? Echo is ready.",
+    "Got a weird thought? Drop it in the chat.",
+  ]),
+  tools: () => pick([
+    "Your productivity is begging for attention.",
+    "A minute to move one thing forward. You got this.",
+    "Stop procrastinating. Your tools are a tap away.",
+  ]),
+  marketplace: () => pick([
+    "Someone is probably selling exactly what you need.",
+    "New listings dropped. Time to impulse buy.",
+    "Window shopping is free. Check out the marketplace.",
+  ]),
+  profile: () => pick([
+    "Someone is stalking your profile. Go see who.",
+    "Your clout is rising. See who engaged with your work today.",
+    "You're kind of a big deal today.",
+  ]),
 };
 
 interface ProfileRow {
@@ -83,7 +116,8 @@ Deno.serve(async (req: Request) => {
     let surface = row.top_surface && SURFACE_COPY[row.top_surface] ? row.top_surface : 'chat';
     // If their interest is the daily question but they already answered, pivot.
     if (surface === 'daily' && answered.has(row.user_id)) surface = 'feed';
-    const body = SURFACE_COPY[surface] ?? SURFACE_COPY.chat;
+    const bodyFn = SURFACE_COPY[surface] ?? SURFACE_COPY.chat;
+    const body = bodyFn();
 
     const { error: insErr } = await supabase.from('notifications').insert({
       user_id: row.user_id,
