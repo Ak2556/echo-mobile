@@ -545,7 +545,7 @@ export default function DiscoverScreen() {
         </>
       )}
       <View ref={feedTarget.ref} onLayout={feedTarget.onLayout}>
-        <SectionHeader label={focusedHome ? t('home.fromCommunity') : t('home.topConversations')} sub={focusedHome ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />
+        {(feedScope !== 'following' || popularItems.length > 0) && <SectionHeader label={focusedHome ? t('home.fromCommunity') : t('home.topConversations')} sub={focusedHome ? undefined : t('home.liveNow')} icon={<TrendUp color={colors.accent} size={16} weight="bold" />} />}
       </View>
     </View>
   );
@@ -627,8 +627,8 @@ export default function DiscoverScreen() {
                     {t('home.followingQuietBody')}
                   </Text>
                   {remote && suggestedUsers.length > 0 ? (
-                    <>
-                      <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: fontSizes.caption, lineHeight: lineHeights.caption, marginBottom: 8 }]}>
+                    <View style={{ marginHorizontal: -layout.gutter }}>
+                      <Text style={[font.bodyBold, { color: colors.textMuted, fontSize: fontSizes.small, lineHeight: lineHeights.small, marginBottom: 12, paddingHorizontal: layout.gutter }]}>
                         {t('home.suggestedPeople')}
                       </Text>
                       {suggestedUsers.map(user => (
@@ -640,7 +640,7 @@ export default function DiscoverScreen() {
                           onFollowPress={() => followMut.mutate({ userId: user.id, follow: true })}
                         />
                       ))}
-                    </>
+                    </View>
                   ) : (
                     <Pressable
                       onPress={() => router.push('/(tabs)/explore')}
