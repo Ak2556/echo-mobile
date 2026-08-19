@@ -402,7 +402,7 @@ const SkiaColorPreview = forwardRef<{ bake: () => Promise<string | null> }, Skia
     const img = useImage(uri);
     
     // We require the font statically for Metro, then use it in Skia
-    const fontPreview = useFont(require('../../node_modules/@expo-google-fonts/inter/900Black/Inter_900Black.ttf'), 48);
+    const fontPreview = useFont(require('@expo-google-fonts/inter/900Black/Inter_900Black.ttf'), 48);
 
     useImperativeHandle(ref, () => ({
       async bake() {
