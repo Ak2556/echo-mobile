@@ -64,13 +64,13 @@ export function UserRow({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => ({
+      style={{
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 10,
-        backgroundColor: pressed ? colors.surfaceHover : 'transparent',
-      })}
+        backgroundColor: 'transparent',
+      }}
     >
       {showAvatars && (
         <Pressable
