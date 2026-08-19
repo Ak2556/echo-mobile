@@ -87,7 +87,8 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
 
   const activeEchoId = useActiveVideoStore(s => s.activeEchoId);
-  const isGlobalMuted = useAppStore(s => s.isMuted);
+  const soundEnabled = useAppStore(s => s.soundEnabled);
+  const isGlobalMuted = !soundEnabled;
   const isFocused = useIsFocused();
 
   const appState = useRef(AppState.currentState);
