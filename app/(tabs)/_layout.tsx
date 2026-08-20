@@ -397,6 +397,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
   const longPressActionList = longPressMenuRoute ? longPressActions(longPressMenuRoute) : null;
 
   return (
+    <>
     <GlassPanel
       borderRadius={0}
       elevated={false}
@@ -489,6 +490,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
             );
           })}
         </View>
+    </GlassPanel>
 
       <ActionSheet
         visible={!!longPressActionList}
@@ -499,7 +501,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
           onPress: () => { a.onPress(); setLongPressKey(null); },
         }))}
       />
-    </View>
+    </>
   );
 }
 
