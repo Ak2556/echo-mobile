@@ -18,25 +18,27 @@ export function useFollow() {
   const storeToggle = useAppStore(s => s.toggleFollow);
   const mut = useToggleRemoteFollow();
 
-  const { data: remoteSet } = useQuery({
+  const { data: remoteList } = useQuery({
     queryKey: ['my-following'],
     enabled: remote,
     staleTime: 60_000,
-    queryFn: async () => new Set((await fetchMyFollowSets()).following),
+    queryFn: async () => (await fetchMyFollowSets()).following,
   });
 
-  const following = remote ? (remoteSet ?? new Set<string>()) : new Set(storeFollowingIds);
+  // Guard against corrupted MMKV cache (where Set previously stringified to {})
+  const safeRemoteArray = Array.isArray(remoteList) ? remoteList : [];
+  const following = remote ? new Set<string>(safeRemoteArray) : new Set(storeFollowingIds);
 
   const isFollowing = useCallback((id: string) => following.has(id), [following]);
 
   const toggle = useCallback((id: string) => {
     if (!remote) { storeToggle(id); return; }
     const willFollow = !following.has(id);
-    // Optimistic: flip the shared set now; onSettled invalidation reconciles.
-    qc.setQueryData<Set<string>>(['my-following'], (old) => {
-      const next = new Set(old ?? []);
-      if (willFollow) next.add(id); else next.delete(id);
-      return next;
+    // Optimistic: flip the shared list now; onSettled invalidation reconciles.
+    qc.setQueryData<string[]>(['my-following'], (old) => {
+      const nextSet = new Set(Array.isArray(old) ? old : []);
+      if (willFollow) nextSet.add(id); else nextSet.delete(id);
+      return Array.from(nextSet);
     });
     mut.mutate({ userId: id, follow: willFollow });
   }, [remote, following, qc, storeToggle, mut]);
