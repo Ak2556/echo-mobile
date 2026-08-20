@@ -574,6 +574,7 @@ export function AurasRow() {
   const [viewingAura, setViewingAura] = useState<any>(null);
   const [musicPickerOpen, setMusicPickerOpen] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState<Song | null>(null);
+  const [expiresInHours, setExpiresInHours] = useState(24);
 
   const meUserId = useAppStore(s => s.userId);
   const myProfile = useAppStore(s => s.profile);
@@ -591,6 +592,7 @@ export function AurasRow() {
       music_title: selectedMusic?.title,
       music_artist: selectedMusic?.artist,
       music_url: selectedMusic?.url,
+      expires_in_hours: expiresInHours,
     };
     if (remote) {
       publishMutation.mutate(payload);
@@ -662,6 +664,14 @@ export function AurasRow() {
                 <Text style={{ color: colors.accent, fontWeight: '600' }}>+ Add Music</Text>
               </Pressable>
             )}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 12 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>Expires in:</Text>
+              {[8, 12, 24].map(hrs => (
+                <Pressable key={hrs} onPress={() => setExpiresInHours(hrs)} style={{ backgroundColor: expiresInHours === hrs ? colors.accent : colors.surfaceHover, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+                  <Text style={{ color: expiresInHours === hrs ? '#fff' : colors.text, fontSize: 13, fontWeight: '600' }}>{hrs}h</Text>
+                </Pressable>
+              ))}
+            </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.surfaceHover }} onPress={() => setModalOpen(false)}>
                 <Text style={{ color: colors.text, fontWeight: '700' }}>Cancel</Text>
