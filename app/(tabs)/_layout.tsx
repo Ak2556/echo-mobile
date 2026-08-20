@@ -5,6 +5,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Plus, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront, PlayCircle } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import { GlassPanel } from '../../components/ui/GlassPanel';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
@@ -396,7 +397,9 @@ function FloatingTabBar(props: BottomTabBarProps) {
   const longPressActionList = longPressMenuRoute ? longPressActions(longPressMenuRoute) : null;
 
   return (
-    <View
+    <GlassPanel
+      borderRadius={0}
+      elevated={false}
       style={{
         position: 'absolute',
         bottom: 0,
@@ -406,22 +409,8 @@ function FloatingTabBar(props: BottomTabBarProps) {
         paddingBottom: insets.bottom,
         borderTopWidth: StyleSheet.hairlineWidth,
         borderTopColor: colors.border,
-        overflow: 'hidden',
       }}
-      pointerEvents="box-none"
     >
-      <BlurView
-        intensity={50}
-        tint={colors.isDark ? 'dark' : 'light'}
-        style={StyleSheet.absoluteFill}
-      />
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: colors.bg, opacity: 0.72 },
-        ]}
-        pointerEvents="none"
-      />
         <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5 }}>
           {visibleRoutes.map(route => {
             const isFocused = state.routes[state.index].name === route.name;

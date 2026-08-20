@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, View, Text, Pressable, StyleSheet, TextInput, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { FlashList } from '@shopify/flash-list';
+import { GlassPanel } from '../ui/GlassPanel';
 import Animated, { FadeIn, FadeOut, SlideInLeft, SlideOutLeft } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus, Trash, MagnifyingGlass, X, ChatCircle } from 'phosphor-react-native';
@@ -54,11 +54,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
           maxWidth: 360,
         }}
       >
-        <View style={{ flex: 1, overflow: 'hidden', borderTopRightRadius: 24, borderBottomRightRadius: 24 }}>
-          {Platform.OS === 'ios' && (
-            <BlurView intensity={70} tint={colors.isDark ? 'dark' : 'extraLight'} style={StyleSheet.absoluteFill} />
-          )}
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: Platform.OS === 'ios' ? colors.glassFill : colors.bg }]} />
+        <GlassPanel style={{ flex: 1, overflow: 'hidden', borderTopRightRadius: 24, borderBottomRightRadius: 24 }}>
           <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{ttx("Conversations")}</Text>
             <Pressable onPress={onClose} style={{ padding: 6 }}>
@@ -159,7 +155,7 @@ export function SessionsDrawer({ visible, onClose, onSelect, onNew }: SessionsDr
               </View>
             )}
           />
-        </View>
+        </GlassPanel>
       </Animated.View>
     </Modal>
   );

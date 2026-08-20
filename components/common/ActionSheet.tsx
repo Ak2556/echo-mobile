@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
+import { GlassPanel } from '../ui/GlassPanel';
 import { useTheme } from '../../src/shared/lib/theme';
 import { tap } from '../../src/shared/lib/haptics';
 import { ttx } from '../../src/shared/lib/i18n';
@@ -63,20 +63,15 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
         }}
       >
         {/* Action card — glass sheet over the dimmed content */}
-        <View
+        <GlassPanel
+          borderRadius={22}
           style={{
-            borderRadius: 22,
-            overflow: 'hidden',
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassBorder,
             shadowColor: '#000',
             shadowOpacity: 0.35,
             shadowRadius: 24,
             shadowOffset: { width: 0, height: 12 },
           }}
         >
-          <BlurView intensity={60} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.62 }]} pointerEvents="none" />
           {(title || subtitle) && (
             <View
               style={{
@@ -173,22 +168,19 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
               </Pressable>
             </View>
           ))}
-        </View>
+        </GlassPanel>
 
         {/* Cancel — separate glass pill */}
-        <View style={{
-          marginTop: 10,
-          borderRadius: 18,
-          overflow: 'hidden',
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.glassBorder,
-          shadowColor: '#000',
-          shadowOpacity: 0.25,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: 8 },
-        }}>
-          <BlurView intensity={60} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.62 }]} pointerEvents="none" />
+        <GlassPanel
+          borderRadius={18}
+          style={{
+            marginTop: 10,
+            shadowColor: '#000',
+            shadowOpacity: 0.25,
+            shadowRadius: 16,
+            shadowOffset: { width: 0, height: 8 },
+          }}
+        >
           <Pressable
             onPress={() => { tap('light'); onClose(); }}
             style={{ paddingVertical: 16, alignItems: 'center' }}
@@ -197,7 +189,7 @@ export function ActionSheet({ visible, onClose, title, subtitle, actions }: Acti
           >
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{ttx("Cancel")}</Text>
           </Pressable>
-        </View>
+        </GlassPanel>
       </Animated.View>
     </Modal>
   );

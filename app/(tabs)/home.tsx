@@ -13,7 +13,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
+import { GlassPanel } from '../../components/ui/GlassPanel';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
 import { FeedCard } from '../../src/features/feed/ui/FeedCard';
@@ -54,7 +54,6 @@ import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/da
 
 
 const NAV_BAR_HEIGHT = 56;
-const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 const SENSITIVE_TAGS = new Set(['nsfw', 'adult', 'explicit', 'mature', '18+', '18plus', 'gore', 'graphic', 'disturbing']);
 
 // Stable viewability config for voice "act on the post in view".
@@ -651,86 +650,72 @@ export default function DiscoverScreen() {
           zIndex: 10,
         }}
       >
-        {useBlur ? (
-          <AnimatedBlurView
-            animatedProps={blurAnimatedProps}
-            tint={tint}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : null}
-
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: colors.bg },
-            useBlur ? headerBgStyle : { opacity: 0.95 },
-          ]}
-        />
-
-        <View
-          style={{
-            width: '100%',
-            maxWidth: feedMaxWidth,
-            alignSelf: 'center',
-            paddingTop: insets.top + (layout.isDesktop ? 10 : 0),
-            height: headerHeight,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: layout.gutter,
-            paddingBottom: 6,
-          }}
-        >
-          <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>
-            Echo
-          </Text>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Pressable
-              onPress={() => router.push('/messages')}
-              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
-              accessibilityRole="button"
-              accessibilityLabel="Messages"
+        <Animated.View style={[StyleSheet.absoluteFill, headerBgStyle]}>
+          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill}>
+            <View
+              style={{
+                width: '100%',
+                maxWidth: feedMaxWidth,
+                alignSelf: 'center',
+                paddingTop: insets.top + (layout.isDesktop ? 10 : 0),
+                height: headerHeight,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: layout.gutter,
+                paddingBottom: 6,
+              }}
             >
-              <Envelope color={colors.text} size={24} />
-            </Pressable>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>
+                Echo
+              </Text>
 
-            <Pressable
-              onPress={() => router.push('/(tabs)/notifications')}
-              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
-              accessibilityRole="button"
-              accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
-            >
-              <View>
-                <Bell color={colors.text} size={24} />
-                {unreadNotifs > 0 && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: -3,
-                      right: -3,
-                      minWidth: 16,
-                      height: 16,
-                      paddingHorizontal: 4,
-                      borderRadius: 8,
-                      backgroundColor: colors.danger,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1.5,
-                      borderColor: colors.bg,
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                      {unreadNotifs > 99 ? '99+' : unreadNotifs}
-                    </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Pressable
+                  onPress={() => router.push('/messages')}
+                  style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
+                  accessibilityRole="button"
+                  accessibilityLabel="Messages"
+                >
+                  <Envelope color={colors.text} size={24} />
+                </Pressable>
+
+                <Pressable
+                  onPress={() => router.push('/(tabs)/notifications')}
+                  style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
+                  accessibilityRole="button"
+                  accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
+                >
+                  <View>
+                    <Bell color={colors.text} size={24} />
+                    {unreadNotifs > 0 && (
+                      <View
+                        style={{
+                          position: 'absolute',
+                          top: -3,
+                          right: -3,
+                          minWidth: 16,
+                          height: 16,
+                          paddingHorizontal: 4,
+                          borderRadius: 8,
+                          backgroundColor: colors.danger,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1.5,
+                          borderColor: colors.bg,
+                        }}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                          {unreadNotifs > 99 ? '99+' : unreadNotifs}
+                        </Text>
+                      </View>
+                    )}
                   </View>
-                )}
+                </Pressable>
               </View>
-            </Pressable>
-          </View>
-
-
-        </View>
+            </View>
+          </GlassPanel>
+        </Animated.View>
 
         <Animated.View
           style={[

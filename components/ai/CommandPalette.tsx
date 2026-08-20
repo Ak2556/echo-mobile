@@ -10,7 +10,6 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useRouter, type Href } from 'expo-router';
 import { Brain, Envelope, GearSix, Lightning, MagnifyingGlass, PencilSimple, SquaresFour, X, ArrowUp, Question } from 'phosphor-react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -248,17 +247,7 @@ export function CommandPalette() {
       statusBarTranslucent
     >
       {/* Blurred backdrop */}
-      <View style={StyleSheet.absoluteFill}>
-        {performance.useBlur ? (
-          <BlurView intensity={performance.maxBlurIntensity} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : null}
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: 'rgba(0,0,0,0.55)' },
-          ]}
-        />
-      </View>
+      <GlassPanel style={StyleSheet.absoluteFill} />
 
       <Pressable
         onPress={close}

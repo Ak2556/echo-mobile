@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { Brain, CaretRight, ChartLineUp, Cpu, Hash, PaintBrush, RocketLaunch, UsersThree } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import { GlassPanel } from '../../components/ui/GlassPanel';
 import { SearchBar } from '../../src/features/feed/ui/SearchBar';
 import { Avatar } from '../../components/ui/Avatar';
 import { UserRow } from '../../src/features/feed/ui/UserRow';
@@ -242,15 +242,15 @@ export default function SearchScreen() {
       )}
 
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, zIndex: 10, overflow: 'hidden' }}>
-        <BlurView intensity={58} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.78 }]} pointerEvents="none" />
-        <View style={[layout.wideContentStyle, { paddingTop: insets.top + (layout.isDesktop ? 14 : 8), paddingHorizontal: layout.gutter, paddingBottom: 10 }]}>
-          <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5, marginBottom: 16 }]}>
-            {t('nav.explore')}
-          </Text>
-          <SearchBar value={query} onChangeText={setQuery} placeholder={t('explore.searchPlaceholder')} />
-        </View>
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'transparent' }} />
+        <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill}>
+          <View style={[layout.wideContentStyle, { paddingTop: insets.top + (layout.isDesktop ? 14 : 8), paddingHorizontal: layout.gutter, paddingBottom: 10 }]}>
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5, marginBottom: 16 }]}>
+              {t('nav.explore')}
+            </Text>
+            <SearchBar value={query} onChangeText={setQuery} placeholder={t('explore.searchPlaceholder')} />
+          </View>
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'transparent' }} />
+        </GlassPanel>
       </View>
     </View>
   );
