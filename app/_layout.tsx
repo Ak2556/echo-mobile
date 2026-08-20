@@ -24,6 +24,8 @@ import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/commandPalette';
 import { AuthListenerProvider, useAuth, signOut } from '../lib/auth';
 import { useAppStore } from '../store/useAppStore';
+import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
+import { database } from '../src/shared/database';
 import { usePresenceTracking } from '../lib/presence';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
