@@ -29,7 +29,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { safeBack } from '../../lib/safeBack';
 import { ttx } from '../../src/shared/lib/i18n';
 import { MusicPickerModal, Song } from '../../components/ui/MusicPicker';
-import { ChatDetailsSidebar } from '../../components/chat/ChatDetailsSidebar';
+import { ChatDetailsSidebar } from '../../src/features/chat/ui/ChatDetailsSidebar';
 
 function getTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
