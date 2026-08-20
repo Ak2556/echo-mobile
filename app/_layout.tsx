@@ -23,6 +23,8 @@ import { friendlyWriteError, isAuthSessionError } from '../lib/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/commandPalette';
 import { AuthListenerProvider, useAuth, signOut } from '../lib/auth';
+import { useAppStore } from '../store/useAppStore';
+import { usePresenceTracking } from '../lib/presence';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
@@ -156,6 +158,8 @@ function UniversalLinkRouter(): null {
 }
 
 function RootLayout() {
+  const userId = useAppStore(s => s.userId);
+  usePresenceTracking(userId ?? undefined);
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
   const router = useRouter();
 
