@@ -17,6 +17,13 @@ export type AuthProfile = {
   bio: string | null;
   avatar_color: string | null;
   avatar_url: string | null;
+  is_private?: boolean;
+  dm_privacy?: 'everyone' | 'followers' | 'nobody';
+  activity_status?: boolean;
+  online_status?: boolean;
+  read_receipts?: boolean;
+  sensitive_content_filter?: boolean;
+  personalized_notifications?: boolean;
 };
 
 export type AuthState = {
