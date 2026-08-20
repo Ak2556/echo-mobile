@@ -8,7 +8,9 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { BlurView } from 'expo-blur';
+import { GlassPanel } from './GlassPanel';
+
+const AnimatedGlassPanel = Animated.createAnimatedComponent(GlassPanel);
 import { create } from 'zustand';
 import {
   ArrowsClockwise,
@@ -165,7 +167,9 @@ export function ToastProvider() {
 
   return (
     <GestureDetector gesture={pan}>
-      <Animated.View
+      <AnimatedGlassPanel
+        borderRadius={20}
+        performanceMode="overlay"
         style={[
           {
             position: 'absolute',
@@ -173,10 +177,6 @@ export function ToastProvider() {
             left: 20,
             right: 20,
             zIndex: 9999,
-            borderRadius: 20,
-            overflow: 'hidden',
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassBorder,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 8 },
             shadowOpacity: colors.isDark ? 0.45 : 0.18,
@@ -186,68 +186,24 @@ export function ToastProvider() {
           animStyle,
         ]}
       >
-        {performance.useBlur ? (
-          <>
-            <BlurView
-              intensity={performance.maxBlurIntensity}
-              tint={colors.isDark ? 'dark' : 'extraLight'}
-              style={StyleSheet.absoluteFill}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: colors.glassHeavyFill ?? 'rgba(255,255,255,0.12)' },
-              ]}
-            />
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 1,
-                backgroundColor: colors.glassHighlight,
-              }}
-            />
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingVertical: 14,
-                paddingHorizontal: 20,
-              }}
-            >
-              <ToastIcon value={icon} />
-              <Text
-                style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}
-                accessibilityLiveRegion="polite"
-              >
-                {message}
-              </Text>
-            </View>
-          </>
-        ) : (
-          <View
-            style={{
-              backgroundColor: colors.surface,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingVertical: 14,
-              paddingHorizontal: 20,
-            }}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+          }}
+        >
+          <ToastIcon value={icon} />
+          <Text
+            style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}
+            accessibilityLiveRegion="polite"
           >
-            <ToastIcon value={icon} />
-            <Text
-              style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}
-              accessibilityLiveRegion="polite"
-            >
-              {message}
-            </Text>
-          </View>
-        )}
-      </Animated.View>
+            {message}
+          </Text>
+        </View>
+      </AnimatedGlassPanel>
     </GestureDetector>
   );
 }

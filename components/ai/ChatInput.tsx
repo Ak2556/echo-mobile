@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { ArrowUp, Stop } from 'phosphor-react-native';
+import { GlassPanel } from '../ui/GlassPanel';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -74,7 +74,7 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
   const sendBg = isStop ? colors.danger : canSend ? colors.accent : colors.surfaceHover;
 
   return (
-    <View
+    <GlassPanel
       style={{
         overflow: 'hidden',
         paddingHorizontal: 12,
@@ -82,21 +82,6 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
         paddingBottom: 8,
       }}
     >
-      {Platform.OS === 'ios' && !reduceAnimations ? (
-        <>
-          <BlurView
-            intensity={70}
-            tint={colors.isDark ? 'dark' : 'extraLight'}
-            style={StyleSheet.absoluteFill}
-          />
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.isDark ? 'rgba(0,0,0,0.36)' : 'rgba(255,255,255,0.58)' }]}
-          />
-        </>
-      ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }]} />
-      )}
-
       <View
         style={{
           flexDirection: 'row',
@@ -176,6 +161,6 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
           </AnimatedPressable>
         </Animated.View>
       </View>
-    </View>
+    </GlassPanel>
   );
 }

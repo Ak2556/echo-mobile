@@ -3,7 +3,7 @@ import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet, Pressabl
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
+import { GlassPanel } from '../../components/ui/GlassPanel';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
@@ -923,67 +923,67 @@ export default function ChatScreen() {
           height: headerHeight, overflow: 'hidden', zIndex: 10,
         }}
       >
-        {useBlurHeader ? (
-          <BlurView intensity={78} tint={tint} style={StyleSheet.absoluteFill} />
-        ) : null}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlurHeader ? 0.55 : 0.98 }]} />
-        <Animated.View
-          entering={animation(FadeIn.duration(80))}
-          style={{
-            width: '100%',
-            maxWidth: layout.contentMaxWidth,
-            alignSelf: 'center',
-            paddingTop: insets.top + 6,
-            height: headerHeight,
-            paddingHorizontal: layout.gutter,
-            paddingBottom: 7,
-            gap: 7,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
-              <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Echo</Text>
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlurHeader ? 0.55 : 0.98 }]}>
+          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill}>
+            <Animated.View
+              entering={animation(FadeIn.duration(80))}
+              style={{
+                width: '100%',
+                maxWidth: layout.contentMaxWidth,
+                alignSelf: 'center',
+                paddingTop: insets.top + 6,
+                height: headerHeight,
+                paddingHorizontal: layout.gutter,
+                paddingBottom: 7,
+                gap: 7,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', padding: 3, borderRadius: 999 }}>
+                  <View style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
+                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Echo</Text>
+                  </View>
+                  <Pressable onPress={() => router.push('/messages' as Href)} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Messages</Text>
+                  </Pressable>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
+                  <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={t('nav.newEcho')} onPress={handleNewChat} />
+                  <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
+                  <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label={t('common.share')} onPress={handleShare} accent />
+                </View>
               </View>
-              <Pressable onPress={() => router.push('/messages' as Href)} style={{ paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>Messages</Text>
-              </Pressable>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <HeaderIconButton icon={<List color={colors.textSecondary} size={18} />} label={t('chat.recent')} onPress={() => setDrawerOpen(true)} />
-              <HeaderIconButton icon={<Plus color={colors.textSecondary} size={18} />} label={t('nav.newEcho')} onPress={handleNewChat} />
-              <HeaderIconButton icon={<Question color={colors.textSecondary} size={18} />} label={t('mini.echoActions')} onPress={() => setShowActionCenter(true)} />
-              <HeaderIconButton icon={<ShareNetwork color="#fff" size={18} />} label={t('common.share')} onPress={handleShare} accent />
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ flex: 1 }} />
-              <Pressable
-                onPress={() => setModelSheetOpen(true)}
-                style={{
-                  minHeight: 38,
-                  width: layout.isPhone ? 46 : undefined,
-                  borderRadius: 999,
-                  backgroundColor: colors.surface,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.border,
-                  paddingHorizontal: layout.isPhone ? 0 : 12,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                }}
-              >
-                <Lightning color={colors.accent} size={14} weight="fill" />
-                {!layout.isPhone ? (
-                  <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{modelLabel(aiModel)}</Text>
-                ) : null}
-              </Pressable>
-          </View>
+    
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ flex: 1 }} />
+                  <Pressable
+                    onPress={() => setModelSheetOpen(true)}
+                    style={{
+                      minHeight: 38,
+                      width: layout.isPhone ? 46 : undefined,
+                      borderRadius: 999,
+                      backgroundColor: colors.surface,
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: colors.border,
+                      paddingHorizontal: layout.isPhone ? 0 : 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Lightning color={colors.accent} size={14} weight="fill" />
+                    {!layout.isPhone ? (
+                      <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{modelLabel(aiModel)}</Text>
+                    ) : null}
+                  </Pressable>
+              </View>
+            </Animated.View>
+    
+            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
+          </GlassPanel>
         </Animated.View>
-
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
       </View>
 
       {/* First-run command palette tooltip */}

@@ -5,7 +5,7 @@ import { FlashList as _FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Bell, Checks } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
+import { GlassPanel } from '../../components/ui/GlassPanel';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -309,115 +309,105 @@ export default function NotificationsScreen() {
           zIndex: 10,
         }}
       >
-        {useBlur && (
-          <BlurView
-            intensity={performance.maxBlurIntensity}
-            tint={tint}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: colors.bg, opacity: useBlur ? 0.28 : 0.97 },
-          ]}
-        />
-
-        <View style={[layout.contentStyle, { paddingTop: insets.top + (layout.isDesktop ? 10 : 0) }]}>
-        {/* Title row */}
-        <View
-          style={{
-            paddingHorizontal: layout.gutter,
-            paddingBottom: 6,
-            height: layout.isDesktop ? 64 : NAV_BAR_HEIGHT,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>{t('notif.title')}</Text>
-            {unreadCount > 0 && (
-              <View
-                style={{
-                  backgroundColor: colors.accent,
-                  borderRadius: 99,
-                  paddingHorizontal: 7,
-                  paddingVertical: 2,
-                  minWidth: 20,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={[font.bodyBold, { color: '#fff', fontSize: 11 }]}>{unreadCount}</Text>
-              </View>
-            )}
-          </View>
-          {unreadCount > 0 && (
-            <AnimatedPressable
-              onPress={remote ? () => markAllRemote.mutate() : markAllNotificationsRead}
-              performanceMode="hot"
-              haptic="medium"
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlur ? 0.28 : 0.97 }]}>
+          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill}>
+            <View style={[layout.contentStyle, { paddingTop: insets.top + (layout.isDesktop ? 10 : 0) }]}>
+            {/* Title row */}
+            <View
               style={{
+                paddingHorizontal: layout.gutter,
+                paddingBottom: 6,
+                height: layout.isDesktop ? 64 : NAV_BAR_HEIGHT,
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 6,
-                paddingHorizontal: 12,
-                paddingVertical: 7,
-                borderRadius: 99,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: colors.border,
+                justifyContent: 'space-between',
               }}
             >
-              <Checks color={colors.textSecondary} size={14} />
-              <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{t('notif.readAll')}</Text>
-            </AnimatedPressable>
-          )}
-        </View>
-
-        {/* Filter tabs */}
-        <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: layout.gutter, gap: 8, paddingBottom: 10, paddingTop: 4 }}>
-          {(['all', 'unread', 'mentions', 'replies', 'follows'] as const).map(tab => (
-            <Pressable
-              key={tab}
-              onPress={() => setFilter(tab)}
-              style={({ pressed }) => ({
-                paddingHorizontal: 14,
-                paddingVertical: 6,
-                borderRadius: 99,
-                backgroundColor: filter === tab ? colors.accent : 'transparent',
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: filter === tab ? 'transparent' : colors.border,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <Text
-                style={[
-                  font.bodySemibold,
-                  {
-                    fontSize: 13,
-                    textTransform: 'capitalize',
-                    color: filter === tab ? '#fff' : colors.textSecondary,
-                  }
-                ]}
-              >
-                {tab === 'all' ? t('notif.filterAll') : tab === 'unread' ? t('notif.filterUnread') : tab === 'mentions' ? t('notif.filterMentions') : tab === 'replies' ? t('notif.filterReplies') : t('notif.filterFollows')}
-              </Text>
-            </Pressable>
-          ))}
-        </Animated.ScrollView>
-        </View>
-
-        {/* Bottom border */}
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: StyleSheet.hairlineWidth,
-            backgroundColor: 'transparent',
-          }}
-        />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>{t('notif.title')}</Text>
+                {unreadCount > 0 && (
+                  <View
+                    style={{
+                      backgroundColor: colors.accent,
+                      borderRadius: 99,
+                      paddingHorizontal: 7,
+                      paddingVertical: 2,
+                      minWidth: 20,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={[font.bodyBold, { color: '#fff', fontSize: 11 }]}>{unreadCount}</Text>
+                  </View>
+                )}
+              </View>
+              {unreadCount > 0 && (
+                <AnimatedPressable
+                  onPress={remote ? () => markAllRemote.mutate() : markAllNotificationsRead}
+                  performanceMode="hot"
+                  haptic="medium"
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingHorizontal: 12,
+                    paddingVertical: 7,
+                    borderRadius: 99,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <Checks color={colors.textSecondary} size={14} />
+                  <Text style={[font.bodySemibold, { color: colors.textSecondary, fontSize: 12 }]}>{t('notif.readAll')}</Text>
+                </AnimatedPressable>
+              )}
+            </View>
+    
+            {/* Filter tabs */}
+            <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: layout.gutter, gap: 8, paddingBottom: 10, paddingTop: 4 }}>
+              {(['all', 'unread', 'mentions', 'replies', 'follows'] as const).map(tab => (
+                <Pressable
+                  key={tab}
+                  onPress={() => setFilter(tab)}
+                  style={({ pressed }) => ({
+                    paddingHorizontal: 14,
+                    paddingVertical: 6,
+                    borderRadius: 99,
+                    backgroundColor: filter === tab ? colors.accent : 'transparent',
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: filter === tab ? 'transparent' : colors.border,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <Text
+                    style={[
+                      font.bodySemibold,
+                      {
+                        fontSize: 13,
+                        textTransform: 'capitalize',
+                        color: filter === tab ? '#fff' : colors.textSecondary,
+                      }
+                    ]}
+                  >
+                    {tab === 'all' ? t('notif.filterAll') : tab === 'unread' ? t('notif.filterUnread') : tab === 'mentions' ? t('notif.filterMentions') : tab === 'replies' ? t('notif.filterReplies') : t('notif.filterFollows')}
+                  </Text>
+                </Pressable>
+              ))}
+            </Animated.ScrollView>
+            </View>
+    
+            {/* Bottom border */}
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: StyleSheet.hairlineWidth,
+                backgroundColor: 'transparent',
+              }}
+            />
+          </GlassPanel>
+        </Animated.View>
       </View>
     </View>
   );

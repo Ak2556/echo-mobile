@@ -1,6 +1,6 @@
 import React from 'react';
 import { PressableProps, Text, View, Platform, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { GlassPanel } from './GlassPanel';
 import { useTheme } from '../../src/shared/lib/theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -33,31 +33,19 @@ export function Button({ label, variant = 'primary', size = 'regular', leftIcon,
         style={[
           {
             borderRadius: radius.lg,
-            overflow: 'hidden',
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.glassBorder,
           },
           props.style,
         ]}
       >
-        <BlurView
+        <GlassPanel
+          borderRadius={radius.lg}
           intensity={variant === 'secondary' ? 60 : 30}
-          tint={colors.isDark ? 'dark' : 'extraLight'}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor:
-                variant === 'secondary'
-                  ? (colors.glassHeavyFill ?? 'rgba(255,255,255,0.1)')
-                  : 'transparent',
-            },
-          ]}
-        />
-        <View
-          style={{
+          tintOverride={
+            variant === 'secondary'
+              ? (colors.glassHeavyFill ?? 'rgba(255,255,255,0.1)')
+              : 'transparent'
+          }
+          contentStyle={{
             paddingHorizontal,
             paddingVertical,
             flexDirection: 'row',
@@ -69,7 +57,7 @@ export function Button({ label, variant = 'primary', size = 'regular', leftIcon,
           {leftIcon}
           <Text style={{ color: textColor, fontWeight: '600' }}>{label}</Text>
           {rightIcon}
-        </View>
+        </GlassPanel>
       </AnimatedPressable>
     );
   }

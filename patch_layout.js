@@ -1,20 +1,59 @@
 const fs = require('fs');
-const file = 'app/_layout.tsx';
+const file = 'app/(tabs)/_layout.tsx';
 let code = fs.readFileSync(file, 'utf8');
 
-code = code.replace(
-  "import { useAppStore } from '../store/useAppStore';",
-  "import { useAppStore } from '../store/useAppStore';\nimport DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';\nimport { database } from '../src/shared/database';"
-);
+code = code.replace("import { BlurView } from 'expo-blur';", "import { BlurView } from 'expo-blur';\nimport { GlassPanel } from '../../components/ui/GlassPanel';");
 
-code = code.replace(
-  "<QueryClientProvider client={queryClient}>",
-  "<DatabaseProvider database={database}>\n          <QueryClientProvider client={queryClient}>"
-);
+const oldView = `<View
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: tabHeight + insets.bottom,
+        paddingBottom: insets.bottom,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: colors.border,
+        overflow: 'hidden',
+      }}
+      pointerEvents="box-none"
+    >
+      <BlurView
+        intensity={50}
+        tint={colors.isDark ? 'dark' : 'light'}
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: colors.bg, opacity: 0.72 },
+        ]}
+        pointerEvents="none"
+      />`;
 
+const newView = `<GlassPanel
+      borderRadius={0}
+      elevated={false}
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: tabHeight + insets.bottom,
+        paddingBottom: insets.bottom,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: colors.border,
+      }}
+    >`;
+
+code = code.replace(oldView, newView);
 code = code.replace(
-  "</QueryClientProvider>",
-  "</QueryClientProvider>\n          </DatabaseProvider>"
+  `        </View>
+      </View>
+      {/* Mini App Action Sheet */}`,
+  `        </View>
+      </GlassPanel>
+      {/* Mini App Action Sheet */}`
 );
 
 fs.writeFileSync(file, code);
