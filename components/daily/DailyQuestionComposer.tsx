@@ -93,7 +93,7 @@ export function DailyQuestionComposer({
               {t('daily.today')} · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <SpeakButton text={question.question} id={`dq:${question.id}`} color="rgba(255,255,255,0.92)" size={18} />
+              <SpeakButton text={tt(question.question)} id={`dq:${question.id}`} color="rgba(255,255,255,0.92)" size={18} />
               {streak > 0 && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
                   <Flame color="#fff" size={13} weight="fill" />
@@ -105,7 +105,7 @@ export function DailyQuestionComposer({
             </View>
           </View>
           <Text style={{ color: '#fff', fontSize: 24, lineHeight: 32, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
-            {question.question}
+            {tt(question.question)}
           </Text>
         </LinearGradient>
       </Animated.View>
