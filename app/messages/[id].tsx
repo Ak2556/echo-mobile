@@ -4,6 +4,11 @@ import {
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
   ActivityIndicator, Alert, Linking, Dimensions,
 } from 'react-native';
+import withObservables from '@nozbe/with-observables';
+import { database } from '../../src/shared/database';
+import MessageModel from '../../src/shared/database/models/Message';
+import { Q } from '@nozbe/watermelondb';
+import { VirtualizedChatFeed } from '../../src/features/chat/ui/VirtualizedChatFeed';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1797,7 +1802,7 @@ export default function DMScreen() {
 
 // The conversation thread. Rendered as its own route (above) or embedded in the
 // messages split-pane on iPad/Mac (id passed as a prop instead of a URL param).
-export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewProps) {
+function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -1968,13 +1973,15 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
   const pinnedMessage = remoteConvData?.pinnedMessage ?? null;
 
   // Remote hooks
-  const { data: remoteMessagePages, fetchNextPage, hasNextPage } = useRemoteMessages(remote ? id : undefined);
+  // const { data: remoteMessagePages, fetchNextPage, hasNextPage } = useRemoteMessages(remote ? id : undefined);
+  const hasNextPage = false;
+  const fetchNextPage = () => {};
   // Pages arrive newest-block-first ([newest 40, next-older 40, …]), each block
   // internally oldest→newest. Reverse the page order before flattening so the
   // full list reads oldest→newest top-to-bottom; this also puts newly fetched
   // older pages at the front (prepended above, matching maintainVisibleContent-
   // Position) and keeps the optimistic append at the very bottom.
-  const remoteMessages = [...(remoteMessagePages?.pages ?? [])].reverse().flat();
+  // const remoteMessages = [...(remoteMessagePages?.pages ?? [])].reverse().flat();
   const isGroupConversation = !!conversation?.isGroup;
   const sendRemote = useSendRemoteDM(id, conversation?.userId ?? undefined, isGroupConversation);
   const sendImageDM = useSendImageDM(id, conversation?.userId ?? undefined, isGroupConversation);
@@ -2963,7 +2970,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
       >
 
         {/* Message list */}
-        {memoizedFlashList}
+        <VirtualizedChatFeed messages={messages} currentUserId={myId} colors={colors} />
 
         {/* Jump to bottom pill — grows to show how many new messages landed
             while you were reading back, and springs in so it reads as an event. */}
@@ -3548,3 +3555,13 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
     </SafeAreaView>
   );
 }
+
+
+const enhance = withObservables(['id'], ({ id }: DMViewProps) => ({
+  wmMessages: database.collections.get<MessageModel>('messages').query(
+    Q.where('thread_id', id || ''),
+    Q.sortBy('created_at', Q.asc)
+  ).observe()
+}));
+
+export const DMView = enhance(DMViewInner);
