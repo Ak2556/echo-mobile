@@ -4,7 +4,7 @@ import { FlashList } from '@shopify/flash-list';
 import { Message } from '../../../../hooks/useOptimisticChat';
 
 interface Props {
-  messages: Message[];
+  messages: any[];
   currentUserId: string;
   colors: any;
 }
@@ -20,8 +20,8 @@ export function VirtualizedChatFeed({ messages, currentUserId, colors }: Props) 
     }
   }, [messages.length]);
 
-  const renderItem = ({ item }: { item: Message }) => {
-    const isSender = item.sender_id === currentUserId;
+  const renderItem = ({ item }: { item: any }) => {
+    const isSender = item.senderId === currentUserId;
 
     return (
       <View style={[styles.messageRow, isSender ? styles.messageRowSender : styles.messageRowRecipient]}>
@@ -41,7 +41,7 @@ export function VirtualizedChatFeed({ messages, currentUserId, colors }: Props) 
               ? { color: colors.isDark ? '#f4f4f5' : '#0f766e' } 
               : { color: colors.isDark ? '#f4f4f5' : '#18181b' }
           ]}>
-            {item.text}
+            {item.content}
           </Text>
           {item.failed && <Text style={styles.failedText}>Failed to send.</Text>}
         </View>
