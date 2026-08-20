@@ -204,6 +204,7 @@ async function uploadLocalFileWithSignedUrl(
   const result = await FileSystem.uploadAsync(signed.signedUrl, uri, {
     httpMethod: 'PUT',
     uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
     headers: {
       'cache-control': 'max-age=31536000',
       'content-type': contentType,

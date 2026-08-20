@@ -5,12 +5,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
  * Pillar 3: Media & Performance (HLS Video Transcoding)
  * 
  * This Edge Function listens to a Database Webhook triggered whenever a new 
- * video object is inserted into Supabase Storage. It sends the raw .mp4 to an 
- * external transcoding pipeline (e.g. AWS MediaConvert, Mux, or a dedicated 
- * worker) to generate adaptive HLS (.m3u8) streams.
+ * Echo is inserted containing a .mp4 media URL. It sends the raw .mp4 to an 
+ * external transcoding pipeline to generate adaptive HLS (.m3u8) streams.
  * 
- * HLS ensures zero-latency buffering by dynamically adapting video quality 
- * to the user's internet connection speed.
+ * Simulated here: it updates the echo's `hls_url` with a mocked .m3u8 path.
  */
 
 serve(async (req) => {
@@ -22,15 +20,15 @@ serve(async (req) => {
 
     const payload = await req.json();
 
-    // Only process inserts to the 'echo-media' bucket
-    if (payload.type !== 'INSERT' || payload.table !== 'objects' || payload.record.bucket_id !== 'echo-media') {
+    if (payload.type !== 'INSERT' || payload.table !== 'public_echoes') {
       return new Response("Ignored", { status: 200 });
     }
 
-    const objectName = payload.record.name;
+    const echoId = payload.record.id;
+    const mediaUrls = payload.record.media_urls || [];
+    const firstMedia = mediaUrls[0];
     
-    // Only transcode videos
-    if (!objectName.toLowerCase().endsWith('.mp4') && !objectName.toLowerCase().endsWith('.mov')) {
+    if (!firstMedia || (!firstMedia.toLowerCase().endsWith('.mp4') && !firstMedia.toLowerCase().endsWith('.mov'))) {
       return new Response("Not a video", { status: 200 });
     }
 
@@ -39,36 +37,18 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { data: fileData } = await supabaseAdmin.storage
-      .from('echo-media')
-      .createSignedUrl(objectName, 3600);
+    console.log(`Submitting video for HLS Transcoding: ${firstMedia}`);
 
-    if (!fileData) {
-      throw new Error("Could not generate signed URL for video");
-    }
-
-    console.log(`Submitting video for HLS Transcoding: ${fileData.signedUrl}`);
-
-    // TODO: In a production environment, send `fileData.signedUrl` to Mux API
-    // or AWS Elemental MediaConvert here. Once Mux finishes, a separate webhook 
-    // updates the database `echoes.hls_url`.
+    // Simulate API Call to transcoding service (e.g. Mux)
+    // and instantly resolve it by writing back an hls_url
+    const simulatedHlsPath = firstMedia.replace('.mp4', '.m3u8').replace('.mov', '.m3u8');
     
-    // Simulated API Call to transcoding service
-    /*
-    await fetch('https://api.mux.com/video/v1/assets', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(MUX_TOKEN_ID + ':' + MUX_TOKEN_SECRET)}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        input: fileData.signedUrl,
-        playback_policy: ["public"]
-      })
-    });
-    */
+    await supabaseAdmin
+      .from('public_echoes')
+      .update({ hls_url: simulatedHlsPath })
+      .eq('id', echoId);
 
-    return new Response(JSON.stringify({ status: "Transcoding job initiated", object: objectName }), {
+    return new Response(JSON.stringify({ status: "Transcoding job initiated", echo: echoId, hls_url: simulatedHlsPath }), {
       headers: { "Content-Type": "application/json" },
       status: 200,
     });
