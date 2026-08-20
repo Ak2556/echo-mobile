@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Platform, StyleSheet, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { DynamicReflection } from './DynamicReflection';
 import { useTheme, GLASS_INTENSITY } from '../../src/shared/lib/theme';
 import { PerformanceMode, usePerformanceProfile } from '../../src/shared/lib/performance';
 
