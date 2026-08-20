@@ -14,7 +14,7 @@ import { TypingIndicator } from '../../components/ui/TypingIndicator';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { SessionsDrawer } from '../../components/ai/SessionsDrawer';
 import { EditMessageModal } from '../../components/ai/EditMessageModal';
-import { ModelPickerSheet } from '../../components/chat/ModelPickerSheet';
+import { ModelPickerSheet } from '../../src/features/chat/ui/ModelPickerSheet';
 import { streamEchoAI, isRateLimitError } from '../../lib/api';
 import { speak } from '../../lib/tts';
 import { isLocalTool, LocalToolContext } from '../../lib/localTools';
