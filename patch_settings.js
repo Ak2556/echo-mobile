@@ -2,15 +2,15 @@ const fs = require('fs');
 const file = 'app/settings.tsx';
 let code = fs.readFileSync(file, 'utf8');
 
-code = code.replace(
-  '<SettingsRow theme={theme} icon={Lightning} label={ttx("Reduce Animations")} subtitle={ttx("Minimize motion effects")} right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />',
-  '<SettingsRow theme={theme} icon={Lightning} label={ttx("Reduce Animations")} subtitle={ttx("Minimize motion effects")} right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />\n            <SettingsRow theme={theme} icon={Sparkle} label={ttx("Glass Theme")} subtitle={ttx("Enable blurred backgrounds (requires high-end device)")} right={SwitchEl(s.glassTheme, s.setGlassTheme)} />'
-);
-
-// We might need to import Sparkle if it's not imported.
-// Actually Sparkle might already be imported. Let's check imports.
-if (code.includes('import { Sparkle }')) {
-  // It's there. Wait, is it?
+if (!code.includes('import { EncryptionKeys }')) {
+  code = code.replace("import { GlassPanel } from '../components/ui/GlassPanel';", "import { GlassPanel } from '../components/ui/GlassPanel';\nimport { EncryptionKeys } from '../components/settings/EncryptionKeys';");
+  
+  const target = `{showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>`;
+  
+  code = code.replace(
+    target,
+    `{showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(150).duration(220))} style={sectionStyle}><EncryptionKeys /></Animated.View>}\n\n        ` + target
+  );
+  
+  fs.writeFileSync(file, code);
 }
-
-fs.writeFileSync(file, code);
