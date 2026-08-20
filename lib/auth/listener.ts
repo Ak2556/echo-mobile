@@ -38,7 +38,7 @@ async function fetchProfile(userId: string): Promise<AuthProfile | null> {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, username, display_name, bio, avatar_color, avatar_url')
+      .select('id, username, display_name, bio, avatar_color, avatar_url, is_private, dm_privacy, activity_status, online_status, read_receipts, sensitive_content_filter, personalized_notifications')
       .eq('id', userId)
       .maybeSingle();
     if (error) return null;
@@ -80,6 +80,11 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
       app.setAvatarUrl(profile.avatar_url ?? '');
     }
     app.setHasSeenOnboarding(true);
+
+    if (profile.is_private !== undefined) app.setPrivateAccount(profile.is_private);
+    if (profile.dm_privacy) app.setDmPrivacy(profile.dm_privacy);
+    if (profile.sensitive_content_filter !== undefined) app.setSensitiveContentFilter(profile.sensitive_content_filter);
+    if (profile.personalized_notifications !== undefined) app.setPersonalizedNotifications(profile.personalized_notifications);
   }
 
   // Hydrate block/mute lists + cross-device settings in the background — non-fatal.
