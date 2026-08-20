@@ -18,6 +18,7 @@ import {
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
+import { EncryptionKeys } from '../components/settings/EncryptionKeys';
 import { IconBadge } from '../components/ui/IconBadge';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
@@ -915,6 +916,8 @@ export default function SettingsScreen() {
         </Animated.View>}
 
         {}
+        {showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(150).duration(220))} style={sectionStyle}><EncryptionKeys /></Animated.View>}
+
         {showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Privacy & Safety")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
