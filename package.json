@@ -64,6 +64,7 @@
     "expo-linking": "~8.0.12",
     "expo-notifications": "~0.32.17",
     "expo-router": "~6.0.24",
+    "expo-sensors": "~15.0.8",
     "expo-sharing": "~14.0.8",
     "expo-speech": "~14.0.8",
     "expo-splash-screen": "~31.0.13",

@@ -68,7 +68,7 @@ export function GlassPanel({
     ...style,
   };
 
-  if (Platform.OS === 'ios' && performance.useBlur && blurIntensity > 0) {
+  if (performance.useBlur && blurIntensity > 0) {
     return (
       <View style={outerStyle}>
         <BlurView
@@ -89,6 +89,8 @@ export function GlassPanel({
             backgroundColor: highlight,
           }}
         />
+        {/* Dynamic Device Reflection */}
+        <DynamicReflection intensity={colors.isDark ? 0.6 : 0.8} />
         {/* Optional bottom edge highlight */}
         {bottomHighlight && (
           <View
