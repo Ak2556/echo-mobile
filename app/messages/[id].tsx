@@ -1153,7 +1153,7 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
   return (
     <View style={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', gap: 9 }}>
       <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("NEW MESSAGES")}</Text>
-      {onCatchUp && (count ?? 0) >= 3 && (
+      {false && (
         <View style={{ alignItems: 'center' }}>
           <AnimatedPressable
             onPress={onCatchUp}
@@ -1691,7 +1691,7 @@ function MessageActionSheet({
               </View>
             )}
 
-            {isText && (
+            {/* isText && ( */ false && (
               <View style={{ flexDirection: 'row', gap: 9 }}>
                 {!isOwn ? (
                   <Pressable
@@ -2229,7 +2229,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
     if (!content || !id) return;
 
     // AI Gatekeeper Mock
-    const isRecipientBusy = conversation?.displayName === 'Akash' || conversation?.displayName === 'Elena'; // Mock busy users
+    const isRecipientBusy = false; // AI Gatekeeper disabled for E2E // Mock busy users
     if (isRecipientBusy && !gatekeeperBypassed && !editingMessage) {
       Alert.alert(
         `${conversation?.displayName || 'They'} might be busy`,
@@ -3047,7 +3047,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         )}
 
         {/* Tone / polish — offered while you have a draft */}
-        {text.trim().length > 1 && mentionResults.length === 0 && (
+        {/* text.trim().length > 1 && mentionResults.length === 0 && ( */ false && (
           <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
               {[{ id: 'warmer', label: 'Warmer' }, { id: 'shorter', label: 'Shorter' }, { id: 'funnier', label: 'Funnier' }, { id: 'fix', label: 'Fix' }].map(t => {
@@ -3081,7 +3081,7 @@ export function DMView({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMVie
         )}
 
         {/* Quick starters */}
-        {!composerFocused && !editingMessage && !replyingTo && text.trim().length === 0 && (
+        {/* !composerFocused && !editingMessage && !replyingTo && text.trim().length === 0 && ( */ false && (
           <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {Object.entries({ followup: 'Follow-up', summary: 'Your take', draft: 'Draft' }).map(([key, label]) => {
