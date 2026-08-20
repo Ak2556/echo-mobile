@@ -342,7 +342,7 @@ export const GLASS_INTENSITY = {
 
 export type GlassIntensityTokens = typeof GLASS_INTENSITY;
 
-const MOCK_ONLINE_USER_IDS = new Set(['u1', 'u4', 'u5', 'u7']);
+
 
 
 export const getPairedTheme = (themeName: ThemeName, wantDark: boolean): ThemeColors => {
@@ -418,7 +418,7 @@ export function useTheme() {
   const switchTrack = { false: colors.surfaceHover, true: colors.accent };
 
   const isUserOnline = (userId: string): boolean => {
-    return onlineStatus && (presenceIds.has(userId) || MOCK_ONLINE_USER_IDS.has(userId));
+    return onlineStatus && presenceIds.has(userId);
   };
 
   const font = buildFontPreset(fontStyle);
