@@ -12,17 +12,12 @@ const VARIANT_INTENSITY = GLASS_INTENSITY;
 interface GlassPanelProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  /** Preset intensity level — overrides explicit `intensity` if provided */
   variant?: GlassVariant;
-  /** Explicit blur intensity (0–100). `variant` takes precedence when both set. */
   intensity?: number;
   borderRadius?: number;
   contentStyle?: ViewStyle;
-  /** Custom fill color override (e.g. accent-tinted glass) */
   tintOverride?: string;
-  /** Show bottom edge highlight in addition to the default top one */
   bottomHighlight?: boolean;
-  /** Elevation shadow — depth perception */
   elevated?: boolean;
   performanceMode?: PerformanceMode;
 }
@@ -50,67 +45,81 @@ export function GlassPanel({
     : (intensity ?? intensityMap.medium);
   const blurIntensity = Math.min(baseIntensity, performance.maxBlurIntensity);
 
-  const fill = tintOverride ?? (colors.glassFill ?? 'rgba(255,255,255,0.07)');
-  const border = colors.glassBorder ?? 'rgba(255,255,255,0.13)';
-  const highlight = colors.glassHighlight ?? 'rgba(255,255,255,0.09)';
-
+  // Premium fill and border colors
+  const fill = tintOverride ?? (colors.isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)');
+  const border = colors.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.5)';
+  const innerShadow = colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)';
+  
+  // Outer container handles layout and shadows (unclipped)
   const outerStyle: ViewStyle = {
     borderRadius,
-    overflow: 'hidden',
-    borderWidth: 0,
-    borderColor: 'transparent',
     ...(elevated && {
-      shadowColor: '#000',
-      shadowOpacity: colors.isDark ? 0.28 : 0.10,
-      shadowRadius: 14,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 4,
+      shadowColor: colors.isDark ? '#000' : colors.primary, // tinted shadow looks much more premium
+      shadowOpacity: colors.isDark ? 0.4 : 0.15,
+      shadowRadius: 24,
+      shadowOffset: { width: 0, height: 12 },
+      elevation: 6,
     }),
     ...style,
+  };
+
+  // Inner container clips the blur and gradients
+  const innerStyle: ViewStyle = {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius,
+    overflow: 'hidden',
   };
 
   if (performance.useBlur && blurIntensity > 0) {
     return (
       <View style={outerStyle}>
-        <BlurView
-          intensity={blurIntensity}
-          tint={colors.isDark ? 'dark' : 'extraLight'}
-          style={StyleSheet.absoluteFill}
+        <View style={innerStyle}>
+          <BlurView
+            intensity={blurIntensity}
+            tint={colors.isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Glass fill overlay */}
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: fill }]} />
+          
+          {/* Dynamic Device Reflection */}
+          <DynamicReflection intensity={colors.isDark ? 0.7 : 1} />
+        </View>
+
+        {/* 1px Inner stroke to create the bevel effect (drawn OVER the overflow: hidden) */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius,
+              borderWidth: StyleSheet.hairlineWidth * 2,
+              borderColor: border,
+              pointerEvents: 'none',
+            },
+          ]}
         />
-        {/* Glass fill overlay */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: fill }]} />
-        {/* Top edge highlight */}
+        
+        {/* Soft Inner Highlight at the top edge */}
         <View
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
+            top: 1,
+            left: 1,
+            right: 1,
             height: 1,
-            backgroundColor: highlight,
+            backgroundColor: innerShadow,
+            borderTopLeftRadius: borderRadius - 1,
+            borderTopRightRadius: borderRadius - 1,
+            pointerEvents: 'none',
           }}
         />
-        {/* Dynamic Device Reflection */}
-        <DynamicReflection intensity={colors.isDark ? 0.6 : 0.8} />
-        {/* Optional bottom edge highlight */}
-        {bottomHighlight && (
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: StyleSheet.hairlineWidth,
-              backgroundColor: highlight,
-            }}
-          />
-        )}
-        <View style={[{ flex: 1 }, contentStyle]}>{children}</View>
+
+        <View style={[{ flex: 1, zIndex: 2 }, contentStyle]}>{children}</View>
       </View>
     );
   }
 
-  // Android / performance mode: borderless, soft transparent background
+  // Fallback
   return (
     <View
       style={[

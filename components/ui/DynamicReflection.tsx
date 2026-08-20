@@ -8,7 +8,6 @@ import Animated, {
   interpolate,
   Extrapolation,
   withTiming,
-  useSharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../src/shared/lib/theme';
@@ -17,10 +16,8 @@ interface DynamicReflectionProps {
   intensity?: number;
 }
 
-export function DynamicReflection({ intensity = 0.5 }: DynamicReflectionProps) {
+export function DynamicReflection({ intensity = 1 }: DynamicReflectionProps) {
   const { colors } = useTheme();
-  // We use the rotation sensor to get absolute device tilt.
-  // Pitch and roll give us the 2D tilt.
   const sensor = useAnimatedSensor(SensorType.ROTATION, { interval: 16 });
 
   const rStyle = useAnimatedStyle(() => {
@@ -31,49 +28,48 @@ export function DynamicReflection({ intensity = 0.5 }: DynamicReflectionProps) {
 
     // We map tilt (-PI/2 to PI/2) to a translation on the X and Y axes.
     // Assuming the view is a large overlay, moving it creates the reflection shift.
-    // We move a bright gradient overlay up to 200px based on tilt.
+    // Increased range of motion for dramatic effect (-400 to 400).
     const translateX = withSpring(
-      interpolate(roll, [-Math.PI / 2, Math.PI / 2], [-200, 200], Extrapolation.CLAMP),
-      { damping: 20, stiffness: 90 }
+      interpolate(roll, [-Math.PI / 2, Math.PI / 2], [-400, 400], Extrapolation.CLAMP),
+      { damping: 30, stiffness: 120 }
     );
     
     const translateY = withSpring(
-      interpolate(pitch, [-Math.PI / 2, Math.PI / 2], [-200, 200], Extrapolation.CLAMP),
-      { damping: 20, stiffness: 90 }
+      interpolate(pitch, [-Math.PI / 2, Math.PI / 2], [-400, 400], Extrapolation.CLAMP),
+      { damping: 30, stiffness: 120 }
     );
 
     return {
       transform: [
         { translateX },
         { translateY },
-        { rotate: '35deg' }, // Angle the reflection
+        { rotate: '25deg' }, // Angle the reflection
       ],
       opacity: withTiming(intensity, { duration: 300 }),
     };
   });
 
-  // A wide, semi-transparent white/bright band
   const gradientColors = colors.isDark
-    ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0)']
-    : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.4)', 'rgba(255,255,255,0)'];
+    ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0)']
+    : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.2)', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0)'];
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {/* We make the animated view much larger than its container so we can shift it */}
       <Animated.View
         style={[
           {
             position: 'absolute',
-            width: '250%',
-            height: '250%',
-            top: '-75%',
-            left: '-75%',
+            width: '300%',
+            height: '300%',
+            top: '-100%',
+            left: '-100%',
           },
           rStyle,
         ]}
       >
         <LinearGradient
           colors={gradientColors}
+          locations={[0, 0.45, 0.5, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
