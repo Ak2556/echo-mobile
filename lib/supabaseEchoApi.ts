@@ -3913,11 +3913,13 @@ export async function fetchNetworkAuras(): Promise<UserAura[]> {
   });
 }
 
-export async function publishAura(aura: { text_content?: string, music_title?: string, music_artist?: string, music_url?: string, voice_url?: string }) {
+export async function publishAura(aura: { text_content?: string, music_title?: string, music_artist?: string, music_url?: string, voice_url?: string, expires_in_hours?: number }) {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not logged in');
   
   await supabase.from('user_auras').delete().eq('user_id', uid);
+  
+  const expiresAt = new Date(Date.now() + (aura.expires_in_hours || 24) * 60 * 60 * 1000).toISOString();
   
   const { error } = await supabase.from('user_auras').insert({
     user_id: uid,
@@ -3926,6 +3928,7 @@ export async function publishAura(aura: { text_content?: string, music_title?: s
     music_artist: aura.music_artist || null,
     music_url: aura.music_url || null,
     voice_url: aura.voice_url || null,
+    expires_at: expiresAt,
   });
   if (error) throw error;
 }
