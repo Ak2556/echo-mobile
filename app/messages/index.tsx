@@ -24,7 +24,8 @@ import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useCreateGroupConversation, useRemoteConversations, useSetDMPref } from '../../hooks/queries/useDMs';
 import { usePresenceTracking } from '../../lib/presence';
 import { ConversationSkeleton } from '../../components/ui/Skeleton';
-import { RemoteConversation, searchRemoteUsers, UserSearchHit } from '../../lib/supabaseEchoApi';
+import { RemoteConversation, searchRemoteUsers, UserSearchHit, fetchNetworkAuras, publishAura } from '../../lib/supabaseEchoApi';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { safeBack } from '../../lib/safeBack';
 import { ttx } from '../../src/shared/lib/i18n';
 import { MusicPickerModal, Song } from '../../components/ui/MusicPicker';
@@ -551,30 +552,73 @@ export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
 
 export function AurasRow() {
   const { colors, radius, fontSizes } = useTheme();
+  const remote = isSupabaseRemote();
+  const qc = useQueryClient();
+  
+  const { data: networkAuras } = useQuery({
+    queryKey: ['network-auras'],
+    queryFn: fetchNetworkAuras,
+    enabled: remote,
+    staleTime: 60_000,
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: publishAura,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['network-auras'] });
+    }
+  });
+
   const [modalOpen, setModalOpen] = useState(false);
   const [auraText, setAuraText] = useState('');
-  const [myAura, setMyAura] = useState<any>(null);
   const [viewingAura, setViewingAura] = useState<any>(null);
   const [musicPickerOpen, setMusicPickerOpen] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState<Song | null>(null);
 
-  const mockAuras = [
-    { id: '1', name: 'Akash', color: '#FF5733', aura: { text_content: 'Deep work 🎧' } },
-    { id: '2', name: 'Elena', color: '#33FF57', aura: { text_content: 'At the gym 💪' } },
-    { id: '3', name: 'Sarah', color: '#3357FF', aura: { text_content: 'Need coffee ☕' } },
-  ];
+  const meUserId = useAppStore(s => s.userId);
+  const myProfile = useAppStore(s => s.profile);
+  
+  const allAuras = networkAuras || [];
+  const myAuraObj = allAuras.find(a => a.user_id === meUserId);
+  const othersAuras = allAuras.filter(a => a.user_id !== meUserId);
+
+  // Fallback to local state if not remote
+  const [localMyAura, setLocalMyAura] = useState<any>(null);
+  
+  const handlePublish = () => {
+    const payload = {
+      text_content: auraText || undefined,
+      music_title: selectedMusic?.title,
+      music_artist: selectedMusic?.artist,
+      music_url: selectedMusic?.url,
+    };
+    if (remote) {
+      publishMutation.mutate(payload);
+    } else {
+      setLocalMyAura(payload);
+    }
+    setModalOpen(false);
+    setAuraText('');
+    setSelectedMusic(null);
+  };
 
   return (
     <View style={{ paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.surface }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 16, paddingBottom: 8 }}>
         <StatusAvatar
-          name="Me" color={colors.accent} isMe
-          aura={myAura}
+          name="Me" color={myProfile?.avatarColor || colors.accent} isMe
+          aura={remote ? myAuraObj : localMyAura}
           onPress={() => setModalOpen(true)}
         />
-        {mockAuras.map((a: any) => (
-          <StatusAvatar key={a.id} name={a.name} color={a.color} aura={a.aura} onPress={() => setViewingAura(a)} />
+        {othersAuras.map((a) => (
+          <StatusAvatar key={a.user_id} name={a.name} color={a.color} aura={a} onPress={() => setViewingAura(a)} />
         ))}
+        {!remote && (
+          <>
+            <StatusAvatar key="m1" name="Akash" color="#FF5733" aura={{ text_content: 'Deep work 🎧' }} onPress={() => setViewingAura({ name: 'Akash', color: '#FF5733', aura: { text_content: 'Deep work 🎧' } })} />
+            <StatusAvatar key="m2" name="Elena" color="#33FF57" aura={{ text_content: 'At the gym 💪' }} onPress={() => setViewingAura({ name: 'Elena', color: '#33FF57', aura: { text_content: 'At the gym 💪' } })} />
+          </>
+        )}
       </ScrollView>
 
       {/* Viewer Modal */}
@@ -583,9 +627,14 @@ export function AurasRow() {
           <View style={{ alignItems: 'center', gap: 16 }}>
             <Avatar name={viewingAura?.name ?? '?'} color={viewingAura?.color} size={100} />
             <Text style={{ color: '#fff', fontSize: 24, fontWeight: 'bold' }}>{viewingAura?.name}</Text>
-            {viewingAura?.aura?.text_content ? (
+            {viewingAura?.text_content || viewingAura?.aura?.text_content ? (
               <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 24 }}>
-                <Text style={{ color: '#fff', fontSize: 20 }}>{viewingAura.aura.text_content}</Text>
+                <Text style={{ color: '#fff', fontSize: 20 }}>{viewingAura?.text_content || viewingAura?.aura?.text_content}</Text>
+              </View>
+            ) : null}
+            {viewingAura?.music_title ? (
+              <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ color: '#fff', fontSize: 16 }}>🎵 {viewingAura.music_title} - {viewingAura.music_artist}</Text>
               </View>
             ) : null}
           </View>
@@ -617,12 +666,7 @@ export function AurasRow() {
               <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.surfaceHover }} onPress={() => setModalOpen(false)}>
                 <Text style={{ color: colors.text, fontWeight: '700' }}>Cancel</Text>
               </Pressable>
-              <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.accent }} onPress={() => {
-                setMyAura(auraText || selectedMusic ? { text_content: auraText, music_title: selectedMusic?.title, music_artist: selectedMusic?.artist, music_url: selectedMusic?.url } : null);
-                setModalOpen(false);
-                setAuraText('');
-                setSelectedMusic(null);
-              }}>
+              <Pressable style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: colors.accent }} onPress={handlePublish}>
                 <Text style={{ color: '#fff', fontWeight: '700' }}>Publish</Text>
               </Pressable>
             </View>
