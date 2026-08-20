@@ -47,7 +47,7 @@ export function DailyQuestionComposer({
   submitUpdateLabel,
 }: DailyQuestionComposerProps) {
   const { colors, radius, fontSizes } = useTheme();
-  const { t } = useI18n();
+  const { t, tt } = useI18n();
   const [draft, setDraft] = useState(initialAnswer ?? '');
   const [submitting, setSubmitting] = useState(false);
   const answered = initialAnswer != null;
