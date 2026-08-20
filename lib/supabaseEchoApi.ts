@@ -3854,3 +3854,78 @@ export async function setRemoteMute(targetUserId: string, mute: boolean): Promis
     if (error) throw error;
   }
 }
+
+export interface UserAura {
+  user_id: string;
+  name: string;
+  color: string;
+  text_content?: string;
+  music_title?: string;
+  music_artist?: string;
+  music_url?: string;
+  voice_url?: string;
+  created_at: string;
+}
+
+export async function fetchNetworkAuras(): Promise<UserAura[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+
+  const { data: auras, error } = await supabase
+    .from('user_auras')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  
+  if (!auras || auras.length === 0) return [];
+
+  const map = new Map<string, any>();
+  for (const row of auras) {
+    if (!map.has(row.user_id)) {
+      map.set(row.user_id, row);
+    }
+  }
+  const uniqueAuras = Array.from(map.values());
+  const userIds = uniqueAuras.map(a => a.user_id);
+
+  const { data: profiles, error: pErr } = await supabase
+    .from('profiles')
+    .select('id, display_name, avatar_color')
+    .in('id', userIds);
+  if (pErr) throw pErr;
+
+  const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+  return uniqueAuras.map(row => {
+    const p = profileMap.get(row.user_id);
+    return {
+      user_id: row.user_id,
+      name: p?.display_name || 'Unknown',
+      color: p?.avatar_color || '#999',
+      text_content: row.text_content,
+      music_title: row.music_title,
+      music_artist: row.music_artist,
+      music_url: row.music_url,
+      voice_url: row.voice_url,
+      created_at: row.created_at,
+    };
+  });
+}
+
+export async function publishAura(aura: { text_content?: string, music_title?: string, music_artist?: string, music_url?: string, voice_url?: string }) {
+  const uid = await getSessionUserId();
+  if (!uid) throw new Error('Not logged in');
+  
+  await supabase.from('user_auras').delete().eq('user_id', uid);
+  
+  const { error } = await supabase.from('user_auras').insert({
+    user_id: uid,
+    text_content: aura.text_content || null,
+    music_title: aura.music_title || null,
+    music_artist: aura.music_artist || null,
+    music_url: aura.music_url || null,
+    voice_url: aura.voice_url || null,
+  });
+  if (error) throw error;
+}
