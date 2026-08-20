@@ -57,6 +57,7 @@ export interface SettingsSlice {
   compactFeed: boolean; setCompactFeed: (v: boolean) => void;
   dismissedFirstEchoCoach: boolean; setDismissedFirstEchoCoach: (v: boolean) => void;
   reduceAnimations: boolean; setReduceAnimations: (v: boolean) => void;
+  glassTheme: boolean; setGlassTheme: (v: boolean) => void;
   accentColor: string; setAccentColor: (v: string) => void;
   showAvatars: boolean; setShowAvatars: (v: boolean) => void;
   showPreviewCards: boolean; setShowPreviewCards: (v: boolean) => void;
@@ -210,6 +211,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     compactFeed: b('compactFeed', false), setCompactFeed: s(set, 'compactFeed'),
     dismissedFirstEchoCoach: b('dismissedFirstEchoCoach', false), setDismissedFirstEchoCoach: s(set, 'dismissedFirstEchoCoach'),
     reduceAnimations: b('reduceAnimations', false), setReduceAnimations: s(set, 'reduceAnimations'),
+    glassTheme: b('glassTheme', false), setGlassTheme: s(set, 'glassTheme'),
     accentColor: getAccentColor(),
     setAccentColor: (v) => { persistSet('accentColor', v); set({ accentColor: v }); },
     showAvatars: b('showAvatars', true), setShowAvatars: s(set, 'showAvatars'),
