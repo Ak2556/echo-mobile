@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, AppState } from 'react-native';
+import { View, Text, Pressable, StyleSheet, AppState, Platform } from 'react-native';
 import { Tabs, useRouter, type Href } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Plus, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront, PlayCircle } from 'phosphor-react-native';
@@ -400,7 +400,9 @@ function FloatingTabBar(props: BottomTabBarProps) {
     <>
     <GlassPanel
       borderRadius={0}
-      elevated={false} tintOverride={colors.isDark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.6)'} fallbackTint={colors.bg}
+      elevated={false} 
+      tintOverride={Platform.OS === 'android' ? (colors.isDark ? 'rgba(9, 11, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)') : (colors.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.4)')} 
+      fallbackTint={colors.bg}
       style={{
         position: 'absolute',
         bottom: 0,
@@ -410,7 +412,9 @@ function FloatingTabBar(props: BottomTabBarProps) {
         paddingBottom: insets.bottom,
         borderTopWidth: StyleSheet.hairlineWidth,
         borderTopColor: colors.border,
+        zIndex: 100,
       }}
+      contentStyle={{ flex: 1 }}
     >
         <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5 }}>
           {visibleRoutes.map(route => {
