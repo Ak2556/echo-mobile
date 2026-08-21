@@ -58,6 +58,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_CLOUDFLARE_WORKER_URL: ${{ secrets.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL }}
         run: |
           if [ -n "$FIREBASE_CREDENTIALS" ]; then
             echo "$FIREBASE_CREDENTIALS" > firebase_credentials.json

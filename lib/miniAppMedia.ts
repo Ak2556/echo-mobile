@@ -24,7 +24,7 @@ export async function uploadMiniAppMedia(
   const extension = sanitizeExtension(input?.extension ?? input?.fileName?.split('.').pop() ?? uri.split('?')[0].split('.').pop() ?? contentType.split('/')[1] ?? 'bin');
   const path = `${uid}/${app}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension}`;
   
-  const workerRes = await fetch(`https://echo-mobile.workers.dev/upload-url?bucket=${BUCKET}&path=${path}`, {
+  const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL}/upload-url?bucket=${BUCKET}&path=${path}`, {
     headers: { 'Authorization': `Bearer ${sessionData.session.access_token}` }
   });
   if (!workerRes.ok) throw new Error('Could not create upload URL');
@@ -48,7 +48,7 @@ export async function uploadMiniAppMedia(
 
 export async function getMiniAppMediaUrl(path?: string | null, expiresIn = 3600): Promise<string | null> {
   if (!path || !isSupabaseRemote()) return null;
-  return `https://echo-mobile.workers.dev/${BUCKET}/${path}`;
+  return `${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL}/${BUCKET}/${path}`;
 }
 
 function normalizeContentType(input: string | null | undefined, uri: string, fileName?: string | null): string {
