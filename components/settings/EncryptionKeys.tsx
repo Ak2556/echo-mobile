@@ -4,7 +4,7 @@ import { ShieldCheck, Key, Warning, ArrowsClockwise } from 'phosphor-react-nativ
 import { useTheme } from '../../src/shared/lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { getMyPublicKey, generateAndStoreKeyPair } from '../../src/shared/lib/e2ee';
-import { supabase } from '../../src/shared/lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 export function EncryptionKeys() {
   const { colors, font } = useTheme();
