@@ -17,6 +17,7 @@ interface GlassPanelProps {
   borderRadius?: number;
   contentStyle?: ViewStyle;
   tintOverride?: string;
+  fallbackTint?: string;
   bottomHighlight?: boolean;
   elevated?: boolean;
   performanceMode?: PerformanceMode;
@@ -30,6 +31,7 @@ export function GlassPanel({
   borderRadius: customBorderRadius,
   contentStyle,
   tintOverride,
+  fallbackTint,
   bottomHighlight = false,
   elevated = false,
   performanceMode = 'default',
@@ -46,7 +48,8 @@ export function GlassPanel({
   const blurIntensity = Math.min(baseIntensity, performance.maxBlurIntensity);
 
   // Premium fill and border colors
-  const fill = tintOverride ?? (colors.isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)');
+  const fill = tintOverride ?? (colors.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)');
+  const fallback = fallbackTint ?? colors.surface;
   const border = colors.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.5)';
   const innerShadow = colors.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)';
   
@@ -54,7 +57,7 @@ export function GlassPanel({
   const outerStyle: ViewStyle = {
     borderRadius,
     ...(elevated && {
-      shadowColor: colors.isDark ? '#000' : colors.primary, // tinted shadow looks much more premium
+      shadowColor: colors.isDark ? '#000' : colors.primary,
       shadowOpacity: colors.isDark ? 0.4 : 0.15,
       shadowRadius: 24,
       shadowOffset: { width: 0, height: 12 },
@@ -86,7 +89,7 @@ export function GlassPanel({
           <DynamicReflection intensity={colors.isDark ? 0.7 : 1} />
         </View>
 
-        {/* 1px Inner stroke to create the bevel effect (drawn OVER the overflow: hidden) */}
+        {/* 1px Inner stroke to create the bevel effect */}
         <View
           style={[
             StyleSheet.absoluteFill,
@@ -114,23 +117,24 @@ export function GlassPanel({
           }}
         />
 
-        <View style={[{ flex: 1, zIndex: 2 }, contentStyle]}>{children}</View>
+        <View style={[{ zIndex: 2 }, contentStyle]}>{children}</View>
       </View>
     );
   }
 
-  // Fallback
+  // Fallback for when glass theme is disabled
   return (
     <View
       style={[
         outerStyle,
         {
-          backgroundColor: colors.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-          borderWidth: 0,
+          backgroundColor: fallback,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
         },
       ]}
     >
-      <View style={[{ flex: 1 }, contentStyle]}>{children}</View>
+      <View style={[contentStyle]}>{children}</View>
     </View>
   );
 }
