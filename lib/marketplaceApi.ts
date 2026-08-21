@@ -170,8 +170,8 @@ export async function updateListingStatus(id: string, status: ListingStatus): Pr
 
 /** Upload up to 6 images to the marketplace-photos bucket. */
 export async function uploadListingImages(uris: string[]): Promise<string[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in');
+  const { data: { user, session } } = await supabase.auth.getSession();
+  if (!user || !session) throw new Error('Not signed in');
 
   const urls: string[] = [];
   for (let i = 0; i < Math.min(uris.length, 6); i++) {
@@ -180,12 +180,13 @@ export async function uploadListingImages(uris: string[]): Promise<string[]> {
     const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext) ? ext : 'jpg';
     const path = `${user.id}/${Date.now()}_${i}.${safeExt}`;
 
-    const { data: signed, error: signedErr } = await supabase.storage
-      .from('marketplace-photos')
-      .createSignedUploadUrl(path);
-    if (signedErr) throw signedErr;
+    const workerRes = await fetch(`https://echo-mobile.workers.dev/upload-url?bucket=marketplace-photos&path=${path}`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    });
+    if (!workerRes.ok) throw new Error('Could not create upload URL');
+    const { signedUrl, publicUrl } = await workerRes.json();
 
-    const result = await FileSystem.uploadAsync(signed.signedUrl, uri, {
+    const result = await FileSystem.uploadAsync(signedUrl, uri, {
       httpMethod: 'PUT',
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
       headers: {
@@ -197,8 +198,7 @@ export async function uploadListingImages(uris: string[]): Promise<string[]> {
       throw new Error(`Photo upload failed (${result.status})`);
     }
 
-    const { data } = supabase.storage.from('marketplace-photos').getPublicUrl(path);
-    urls.push(data.publicUrl);
+    urls.push(publicUrl);
   }
   return urls;
 }

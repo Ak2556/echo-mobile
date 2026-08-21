@@ -18,15 +18,19 @@ export async function uploadMiniAppMedia(
   if (!uri || /^https?:\/\//i.test(uri) || !isSupabaseRemote()) return null;
   const { data: sessionData } = await supabase.auth.getSession();
   const uid = sessionData.session?.user?.id;
-  if (!uid) return null;
+  if (!uid || !sessionData.session) return null;
 
   const contentType = normalizeContentType(input?.mimeType, uri, input?.fileName);
   const extension = sanitizeExtension(input?.extension ?? input?.fileName?.split('.').pop() ?? uri.split('?')[0].split('.').pop() ?? contentType.split('/')[1] ?? 'bin');
   const path = `${uid}/${app}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension}`;
-  const { data: signed, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path);
-  if (error || !signed?.signedUrl) throw error ?? new Error('Could not create upload URL');
+  
+  const workerRes = await fetch(`https://echo-mobile.workers.dev/upload-url?bucket=${BUCKET}&path=${path}`, {
+    headers: { 'Authorization': `Bearer ${sessionData.session.access_token}` }
+  });
+  if (!workerRes.ok) throw new Error('Could not create upload URL');
+  const { signedUrl, publicUrl } = await workerRes.json();
 
-  const result = await FileSystem.uploadAsync(signed.signedUrl, uri, {
+  const result = await FileSystem.uploadAsync(signedUrl, uri, {
     httpMethod: 'PUT',
     uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
     headers: {
@@ -39,14 +43,12 @@ export async function uploadMiniAppMedia(
     throw new Error(result.body || `Media upload failed (${result.status})`);
   }
 
-  return { path, signedUrl: await getMiniAppMediaUrl(path) };
+  return { path, signedUrl: publicUrl };
 }
 
 export async function getMiniAppMediaUrl(path?: string | null, expiresIn = 3600): Promise<string | null> {
   if (!path || !isSupabaseRemote()) return null;
-  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, expiresIn);
-  if (error) return null;
-  return data?.signedUrl ?? null;
+  return `https://echo-mobile.workers.dev/${BUCKET}/${path}`;
 }
 
 function normalizeContentType(input: string | null | undefined, uri: string, fileName?: string | null): string {
