@@ -170,7 +170,8 @@ export async function updateListingStatus(id: string, status: ListingStatus): Pr
 
 /** Upload up to 6 images to the marketplace-photos bucket. */
 export async function uploadListingImages(uris: string[]): Promise<string[]> {
-  const { data: { user, session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user || !session) throw new Error('Not signed in');
 
   const urls: string[] = [];
