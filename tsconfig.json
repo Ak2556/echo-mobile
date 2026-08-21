@@ -2,6 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "experimentalDecorators": true,
     "paths": {
       "@/*": [
         "./*"
@@ -21,6 +22,7 @@
     ".claire/**",
     ".codex/**",
     ".qodo/**",
-    "supabase/functions/**/*"
+    "supabase/functions/**/*",
+    "cloudflare/**"
   ]
 }

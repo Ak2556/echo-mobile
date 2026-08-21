@@ -6,6 +6,7 @@ module.exports = function (api) {
       "nativewind/babel",
     ],
     plugins: [
+      ["@babel/plugin-transform-typescript", { "allowDeclareFields": true, "allowNamespaces": true }],
       ["@babel/plugin-proposal-decorators", { "legacy": true }]
     ]
   };
