@@ -25,11 +25,25 @@ app.use('*', async (c, next) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const payload = await jwt.verify(token, c.env.SUPABASE_JWT_SECRET);
-    c.set('user_id', payload.sub);
+    const supabaseUrl = 'https://eyokhisijabitzjiydmz.supabase.co';
+    const anonKey = 'sb_publishable_QpEskJHtmFlVVAJXUsBj9Q_nDPl6wP4';
+    
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: anonKey
+      }
+    });
+
+    if (!userRes.ok) {
+      return c.json({ error: 'Invalid Supabase token' }, 401);
+    }
+
+    const user = await userRes.json();
+    c.set('user_id', user.id);
     await next();
   } catch (e) {
-    return c.json({ error: 'Invalid JWT' }, 401);
+    return c.json({ error: 'Authentication failed' }, 401);
   }
 });
 
@@ -55,6 +69,8 @@ app.get('/upload-url', async (c) => {
   const r2Client = new AwsClient({
     accessKeyId: c.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: c.env.AWS_SECRET_ACCESS_KEY,
+    service: 's3',
+    region: 'auto',
   });
 
   const url = new URL(
@@ -67,8 +83,7 @@ app.get('/upload-url', async (c) => {
       method: 'PUT',
     }),
     {
-      aws_service: 's3',
-      aws_region: 'auto',
+      aws: { signQuery: true }
     }
   );
 
