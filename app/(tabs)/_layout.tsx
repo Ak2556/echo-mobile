@@ -400,7 +400,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
     <>
     <GlassPanel
       borderRadius={0}
-      elevated={false}
+      elevated={false} tintOverride={colors.isDark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.6)'} fallbackTint={colors.bg}
       style={{
         position: 'absolute',
         bottom: 0,
