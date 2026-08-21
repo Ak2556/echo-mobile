@@ -95,7 +95,7 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    subgraph Client Application
+    subgraph ClientApp [Client Application]
         RN[React Native 0.81] --> E[Expo SDK 54]
         E --> Z[Zustand State]
         E --> W[WatermelonDB]
@@ -103,18 +103,18 @@ graph TD
         E --> N[NativeWind UI]
     end
     
-    subgraph Edge Infrastructure
+    subgraph EdgeInfra [Edge Infrastructure]
         CW[Cloudflare Workers] --> R2[Cloudflare R2 Storage]
         CW --> Auth[JWT & Auth Edge]
     end
     
-    subgraph Backend & AI
+    subgraph BackendAI [Backend & AI]
         SB[Supabase Postgres]
         AI[Gemini / OpenRouter]
     end
     
-    Client Application --> Edge Infrastructure
-    Client Application --> Backend & AI
+    ClientApp --> EdgeInfra
+    ClientApp --> BackendAI
 ```
 
 ---
