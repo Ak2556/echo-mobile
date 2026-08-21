@@ -16,11 +16,7 @@ binding = "DM_MEDIA_BUCKET"
 bucket_name = "dm-media"
 
 [vars]
-# Ensure you set these via `wrangler secret put` or Cloudflare Dashboard
-# SUPABASE_JWT_SECRET = "your-supabase-jwt-secret"
-# AWS_ACCESS_KEY_ID = "your-r2-access-key-id"
-# AWS_SECRET_ACCESS_KEY = "your-r2-secret-access-key"
-# R2_ACCOUNT_ID = "your-cloudflare-account-id"
+R2_ACCOUNT_ID = "5f35370a3c9265072a8ae6c47b22dd46"
 
 [[r2_buckets]]
 binding = "MINI_APP_MEDIA_BUCKET"
