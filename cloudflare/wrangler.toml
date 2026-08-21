@@ -1,0 +1,33 @@
+name = "echo-mobile"
+main = "src/index.ts"
+compatibility_date = "2024-03-20"
+
+# R2 Buckets configuration
+[[r2_buckets]]
+binding = "AVATARS_BUCKET"
+bucket_name = "avatars"
+
+[[r2_buckets]]
+binding = "ECHO_MEDIA_BUCKET"
+bucket_name = "echo-media"
+
+[[r2_buckets]]
+binding = "DM_MEDIA_BUCKET"
+bucket_name = "dm-media"
+
+[vars]
+# Ensure you set these via `wrangler secret put` or Cloudflare Dashboard
+# SUPABASE_JWT_SECRET = "your-supabase-jwt-secret"
+# AWS_ACCESS_KEY_ID = "your-r2-access-key-id"
+# AWS_SECRET_ACCESS_KEY = "your-r2-secret-access-key"
+# R2_ACCOUNT_ID = "your-cloudflare-account-id"
+
+[[r2_buckets]]
+binding = "MINI_APP_MEDIA_BUCKET"
+bucket_name = "mini-app-media"
+
+
+[[r2_buckets]]
+binding = "MARKETPLACE_PHOTOS_BUCKET"
+bucket_name = "marketplace-photos"
+

@@ -65,6 +65,7 @@
     "expo-linking": "~8.0.12",
     "expo-notifications": "~0.32.17",
     "expo-router": "~6.0.24",
+    "expo-secure-store": "~15.0.8",
     "expo-sensors": "~15.0.8",
     "expo-sharing": "~14.0.8",
     "expo-speech": "~14.0.8",
@@ -115,7 +116,11 @@
     "@react-native/virtualized-lists": "0.81.5",
     "postcss": "8.5.10",
     "uuid": "11.1.1",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "@nozbe/with-observables": {
+      "react": "$react",
+      "@types/react": "$@types/react"
+    }
   },
   "private": true
 }

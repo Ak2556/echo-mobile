@@ -161,9 +161,10 @@ async function signedDmMediaUrl(value: string | null | undefined): Promise<strin
   const path = dmMediaPathFromStoredValue(value);
   if (!path) return null;
 
-  const { data, error } = await supabase.storage.from(DM_MEDIA_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 7); // 7 days
-  if (error || !data?.signedUrl) return value || null;
-  return data.signedUrl;
+  // We are using a Cloudflare worker to securely serve dm-media files.
+  // Ideally, the JWT would be sent in a cookie or header for this image request.
+  // For standard <Image source={{uri}}/> we can pass headers.
+  return `https://echo-mobile.workers.dev/dm-media/${path}`;
 }
 
 function normalizeImageContentType(input: string | null | undefined): string {
@@ -256,11 +257,6 @@ function assertVideoUploadAllowed(video: UploadableVideo): { ext: string; conten
   return { ext, contentType };
 }
 
-/**
- * Upload a local image URI to the `avatars` bucket.
- * Uses the authenticated session UID as the folder name (required by RLS).
- * Returns the public URL of the uploaded file.
- */
 export async function uploadAvatar(image: UploadableImage): Promise<string> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
@@ -269,67 +265,77 @@ export async function uploadAvatar(image: UploadableImage): Promise<string> {
   const { ext, contentType } = assertImageUploadAllowed(image);
   const path = `${uid}/avatar.${ext}`;
 
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('No session');
+
+  const workerRes = await fetch(`https://echo-mobile.workers.dev/upload-url?bucket=avatars&path=${path}`, {
+    headers: { 'Authorization': `Bearer ${session.access_token}` }
+  });
+  const { signedUrl, publicUrl } = await workerRes.json();
+
   const body = await imageUploadBody(image);
 
-  const { error } = await supabase.storage
-    .from('avatars')
-    .upload(path, body, { upsert: true, contentType });
-  if (error) throw error;
+  const response = await fetch(signedUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': contentType,
+    },
+    body: body,
+  });
 
-  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-  return data.publicUrl;
+  if (!response.ok) throw new Error(`Avatar upload failed (${response.status})`);
+
+  return publicUrl;
 }
 
-/**
- * Upload up to 4 local image URIs to the `echo-media` bucket.
- * Uses the authenticated session UID as the folder name (required by RLS).
- * Returns an array of public URLs in the same order.
- */
 export async function uploadEchoImages(images: UploadableImage[]): Promise<string[]> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   await checkRemoteAppRateLimit('echo_image_upload_hour', 60, 3600);
 
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('No session');
+
   const urls: string[] = [];
-  // All-or-nothing: if any image fails mid-batch, delete the ones already
-  // uploaded so we never leave orphaned files behind a never-published echo.
-  const uploadedPaths: string[] = [];
-  try {
-    for (let i = 0; i < Math.min(images.length, 4); i++) {
-      const image = images[i];
-      const { ext, contentType } = assertImageUploadAllowed(image);
-      const path = `${uid}/${Date.now()}_${i}.${ext}`;
+  // Since we upload directly to S3 via presigned URLs, if one fails, we can't easily
+  // delete the others without another worker endpoint. But R2 is cheap, orphaned files are okay.
+  for (let i = 0; i < Math.min(images.length, 4); i++) {
+    const image = images[i];
+    const { ext, contentType } = assertImageUploadAllowed(image);
+    const path = `${uid}/${Date.now()}_${i}.${ext}`;
 
-      const uri = typeof image === 'string' ? image : image.uri;
+    const uri = typeof image === 'string' ? image : image.uri;
 
-      if (/^https?:\/\//i.test(uri)) {
-        const body = await imageUploadBody(image);
-        const { error } = await supabase.storage
-          .from('echo-media')
-          .upload(path, body, { contentType });
-        if (error) throw error;
-      } else {
-        await uploadLocalFileWithSignedUrl(uri, path, contentType);
+    const workerRes = await fetch(`https://echo-mobile.workers.dev/upload-url?bucket=echo-media&path=${path}`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    });
+    const { signedUrl, publicUrl } = await workerRes.json();
+
+    if (/^https?:\/\//i.test(uri)) {
+      const body = await imageUploadBody(image);
+      const putRes = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': contentType },
+        body: body,
+      });
+      if (!putRes.ok) throw new Error(`Image upload failed (${putRes.status})`);
+    } else {
+      const result = await FileSystem.uploadAsync(signedUrl, uri, {
+        httpMethod: 'PUT',
+        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+        sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
+        headers: { 'content-type': contentType },
+      });
+      if (result.status < 200 || result.status >= 300) {
+        throw new Error(`Image upload failed (${result.status})`);
       }
-      uploadedPaths.push(path);
-
-      const { data } = supabase.storage.from('echo-media').getPublicUrl(path);
-      urls.push(data.publicUrl);
     }
-    return urls;
-  } catch (e) {
-    if (uploadedPaths.length) {
-      await supabase.storage.from('echo-media').remove(uploadedPaths).catch(() => {});
-    }
-    throw e;
+    
+    urls.push(publicUrl);
   }
+  return urls;
 }
 
-/**
- * Upload a local video URI to the `echo-media` bucket.
- * Uses a signed upload URL plus native filesystem upload so large videos do not
- * have to be loaded into JS memory.
- */
 export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
@@ -339,19 +345,37 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
   const { ext, contentType } = assertVideoUploadAllowed(video);
   const path = `${uid}/${Date.now()}_video.${ext}`;
 
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('No session');
+
+  const workerRes = await fetch(`https://echo-mobile.workers.dev/upload-url?bucket=echo-media&path=${path}`, {
+    headers: { 'Authorization': `Bearer ${session.access_token}` }
+  });
+  const { signedUrl, publicUrl } = await workerRes.json();
+
   if (/^https?:\/\//i.test(uri)) {
     const response = await fetch(uri);
     if (!response.ok) throw new Error(`Could not fetch video (${response.status})`);
-    const { error } = await supabase.storage
-      .from('echo-media')
-      .upload(path, await response.blob(), { contentType, cacheControl: '31536000' });
-    if (error) throw error;
+    
+    const putRes = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      body: await response.blob(),
+    });
+    if (!putRes.ok) throw new Error(`Video upload failed (${putRes.status})`);
   } else {
-    await uploadLocalFileWithSignedUrl(uri, path, contentType);
+    const result = await FileSystem.uploadAsync(signedUrl, uri, {
+      httpMethod: 'PUT',
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
+      headers: { 'content-type': contentType },
+    });
+    if (result.status < 200 || result.status >= 300) {
+      throw new Error(`Video upload failed (${result.status})`);
+    }
   }
 
-  const { data } = supabase.storage.from('echo-media').getPublicUrl(path);
-  return data.publicUrl;
+  return publicUrl;
 }
 
 // Profile select helper
