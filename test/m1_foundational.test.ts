@@ -32,10 +32,10 @@ describe('Milestone M1 Foundational Tokens & System Empirical Tests', () => {
   describe('2. GLASS_INTENSITY Blur Tokens', () => {
     it('defines exact glass blur intensity levels', () => {
       expect(GLASS_INTENSITY).toEqual({
-        light: 18,
-        medium: 30,
-        heavy: 45,
-        ultra: 70,
+        light: 35,
+        medium: 65,
+        heavy: 85,
+        ultra: 100,
       });
     });
 

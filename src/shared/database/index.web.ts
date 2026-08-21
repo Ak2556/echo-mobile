@@ -1,15 +1,16 @@
 import { Database } from '@nozbe/watermelondb'
-import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite'
+import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs'
 
 import schema from './schema'
 import User from './models/User'
 import Message from './models/Message'
 
-const adapter = new SQLiteAdapter({
+const adapter = new LokiJSAdapter({
   schema,
-  jsi: false, // fast sync
+  useWebWorker: false,
+  useIncrementalIndexedDB: true,
   onSetUpError: error => {
-    console.error('Database setup failed', error)
+    console.error('LokiJS setup failed', error)
   }
 })
 
