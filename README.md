@@ -116,12 +116,22 @@ We refused to compromise on developer velocity or user performance. Our stack is
 
 - **Cross-Platform:** `Expo SDK 54` & `React Native 0.81`
 - **Language & Safety:** `TypeScript (Strict Mode)`
-- **State & Caching:** `Zustand` & `TanStack Query`
+- **State & Caching:** `Zustand`, `TanStack Query`, & `WatermelonDB` (SQLite Native / LokiJS Web)
 - **UI & Animations:** `NativeWind` & `Reanimated 4`
-- **Database & Auth:** `Supabase` (Postgres, RLS Auth, Edge Storage)
+- **Database & Auth:** `Supabase` (Postgres, RLS Auth)
+- **Edge Compute & Storage:** `Cloudflare Workers` & `Cloudflare R2` (Zero-egress media storage)
 - **AI Engine:** `Gemini via OpenRouter`
 - **Observability:** `Sentry` & `PostHog`
-- **CI/CD:** Fully automated GitHub Actions pipelines for tests, linting, and multi-platform deployments.
+- **CI/CD:** Fully automated GitHub Actions pipelines for tests, linting, Web export (GitHub Pages), and Android Beta builds (Fastlane Firebase App Distribution).
+
+---
+
+## 🌩️ Recent Infrastructure Upgrades (Scale & Economics)
+
+To fiercely protect our Supabase quotas and ensure unlimited, zero-egress media scaling, we recently completed a **major infrastructure migration**:
+1. **Cloudflare R2 Media Storage:** All user media (avatars, chats, mini-apps, and marketplace photos) is now routed entirely through Cloudflare R2, bypassing Supabase storage constraints.
+2. **Edge Authentication:** We deployed a lightning-fast Cloudflare Worker (`hono` framework) that securely validates Supabase access tokens via REST API at the edge, dynamically generating presigned AWS SigV4 upload URLs for the mobile clients.
+3. **Robust CI/CD Pipelines:** Complete CI/CD overhaul to guarantee `WatermelonDB` seamlessly swaps between `SQLite` (for native/desktop) and `LokiJS` (for GitHub Pages web exports) during automated builds, alongside automated Fastlane Android Beta releases.
 
 ---
 
