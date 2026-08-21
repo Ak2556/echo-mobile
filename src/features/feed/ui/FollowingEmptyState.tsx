@@ -26,7 +26,7 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
           Your feed is quiet
         </Text>
         <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 16, textAlign: 'center', lineHeight: 24, maxWidth: 300 }]}>
-          When you follow people, their latest echoes will show up here. Let's find some voices.
+          When you follow people, their latest echoes will show up here. Let&apos;s find some voices.
         </Text>
       </View>
 
