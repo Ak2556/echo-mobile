@@ -138,7 +138,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
+export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const remote = isSupabaseRemote();
@@ -913,4 +913,4 @@ export function FeedCard({ item, index, onPress, pinned }: FeedCardProps) {
       {AllModals}
     </Animated.View>
   );
-}
+});

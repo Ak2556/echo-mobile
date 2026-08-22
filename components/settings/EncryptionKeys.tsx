@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { ShieldCheck, Key, Warning, ArrowsClockwise } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
-import { getMyPublicKey, generateAndStoreKeyPair } from '../../src/shared/lib/e2ee';
+import { getOrGenerateKeyPair } from '../../src/shared/lib/e2ee';
 import { supabase } from '../../lib/supabase';
 
 export function EncryptionKeys() {
@@ -12,7 +12,7 @@ export function EncryptionKeys() {
   const [loading, setLoading] = useState(true);
 
   const fetchKey = async () => {
-    const key = await getMyPublicKey();
+    const key = (await getOrGenerateKeyPair()).publicKey;
     setPublicKey(key);
     setLoading(false);
   };
@@ -33,7 +33,7 @@ export function EncryptionKeys() {
           onPress: async () => {
             setLoading(true);
             try {
-              const newKey = await generateAndStoreKeyPair();
+              const newKey = ((await getOrGenerateKeyPair()).publicKey);
               const { data: { session } } = await supabase.auth.getSession();
               if (session?.user.id) {
                 await supabase.from('users').update({ public_key: newKey }).eq('id', session.user.id);
@@ -70,16 +70,16 @@ export function EncryptionKeys() {
           <Text style={{ ...font.bodyBold, color: colors.text, marginLeft: 8 }}>E2E Encryption Active</Text>
         </View>
         
-        <Text style={{ ...font.caption, color: colors.textSecondary, marginBottom: 16, lineHeight: 20 }}>
+        <Text style={{ ...font.bodyMedium, color: colors.textSecondary, marginBottom: 16, lineHeight: 20 }}>
           Your Direct Messages are secured with device-bound Curve25519 cryptography. Neither Echo nor any third party can read your conversations.
         </Text>
 
         <View style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', padding: 12, borderRadius: 12, marginBottom: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
             <Key color={colors.textMuted} size={16} />
-            <Text style={{ ...font.caption, color: colors.textSecondary, marginLeft: 6 }}>Device Public Fingerprint</Text>
+            <Text style={{ ...font.bodyMedium, color: colors.textSecondary, marginLeft: 6 }}>Device Public Fingerprint</Text>
           </View>
-          <Text style={{ ...font.caption, color: colors.text, fontFamily: 'Courier', opacity: 0.8 }} numberOfLines={2}>
+          <Text style={{ ...font.bodyMedium, color: colors.text, fontFamily: 'Courier', opacity: 0.8 }} numberOfLines={2}>
             {loading ? "Loading..." : (publicKey ? `\${publicKey.slice(0, 16)}...\${publicKey.slice(-16)}` : "No key found")}
           </Text>
         </View>
@@ -89,7 +89,7 @@ export function EncryptionKeys() {
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, backgroundColor: colors.isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)', borderRadius: 10 }}
         >
           <ArrowsClockwise color="#ef4444" size={18} />
-          <Text style={{ ...font.captionBold, color: '#ef4444', marginLeft: 8 }}>Reset Encryption Keys</Text>
+          <Text style={{ ...font.bodyBold, color: '#ef4444', marginLeft: 8 }}>Reset Encryption Keys</Text>
         </TouchableOpacity>
       </GlassPanel>
     </View>

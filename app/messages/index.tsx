@@ -577,7 +577,7 @@ export function AurasRow() {
   const [expiresInHours, setExpiresInHours] = useState(24);
 
   const meUserId = useAppStore(s => s.userId);
-  const myProfile = useAppStore(s => s.profile);
+  const myProfile = useAppStore(s => s);
   
   const allAuras = networkAuras || [];
   const myAuraObj = allAuras.find(a => a.user_id === meUserId);

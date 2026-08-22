@@ -924,7 +924,7 @@ export default function ChatScreen() {
         }}
       >
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlurHeader ? 0.55 : 0.98 }]}>
-          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill}>
+          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}>
             <Animated.View
               entering={animation(FadeIn.duration(80))}
               style={{

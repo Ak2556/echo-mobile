@@ -74,10 +74,10 @@ export async function syncDatabase() {
       const userId = session?.user.id;
       if (!userId) return;
 
-      if (changes.messages.created.length > 0) {
+      if ((changes as any).messages.created.length > 0) {
         // E2EE Encryption for outgoing messages
         const encryptedInserts = [];
-        for (const m of changes.messages.created as any[]) {
+        for (const m of (changes as any).messages.created as any[]) {
           // We need the recipient ID to encrypt it.
           // Since we only have thread_id (conversation_id) in the model, we fetch the conversation to find the recipient
           const { data: conv } = await supabase

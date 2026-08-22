@@ -247,7 +247,7 @@ export function CommandPalette() {
       statusBarTranslucent
     >
       {/* Blurred backdrop */}
-      <GlassPanel style={StyleSheet.absoluteFill} />
+      <GlassPanel style={StyleSheet.absoluteFill as any}><View /></GlassPanel>
 
       <Pressable
         onPress={close}

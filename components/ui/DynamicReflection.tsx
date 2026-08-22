@@ -68,7 +68,7 @@ export function DynamicReflection({ intensity = 1 }: DynamicReflectionProps) {
         ]}
       >
         <LinearGradient
-          colors={gradientColors}
+          colors={gradientColors as unknown as readonly [string, string, ...string[]]}
           locations={[0, 0.45, 0.5, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}

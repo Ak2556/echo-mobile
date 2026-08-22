@@ -242,7 +242,7 @@ export default function SearchScreen() {
       )}
 
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, zIndex: 10, overflow: 'hidden' }}>
-        <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill}>
+        <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}>
           <View style={[layout.wideContentStyle, { paddingTop: insets.top + (layout.isDesktop ? 14 : 8), paddingHorizontal: layout.gutter, paddingBottom: 10 }]}>
             <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5, marginBottom: 16 }]}>
               {t('nav.explore')}
@@ -421,7 +421,7 @@ function TopicTile({
           colors={[`${color}22`, 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFill}
+          style={StyleSheet.absoluteFill as any}
           pointerEvents="none"
         />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -526,7 +526,7 @@ function ExploreGridTile({ item, width, onPress }: { item: any; width: number; o
           </>
         ) : (
           <>
-            <LinearGradient colors={[`${tint}50`, `${tint}14`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+            <LinearGradient colors={[`${tint}50`, `${tint}14`, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFill as any} pointerEvents="none" />
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 12 }}>
               <Text style={[font.display, { color: colors.text, fontSize: 14, lineHeight: 19, textAlign: 'center', marginBottom: 4 }]} numberOfLines={isTall ? 3 : 2}>
                 {item.editorialTitle || item.prompt}

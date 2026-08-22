@@ -57,7 +57,7 @@ export function GlassPanel({
   const outerStyle: ViewStyle = {
     borderRadius,
     ...(elevated && {
-      shadowColor: colors.isDark ? '#000' : colors.primary,
+      shadowColor: colors.isDark ? '#000' : colors.accent,
       shadowOpacity: colors.isDark ? 0.4 : 0.15,
       shadowRadius: 24,
       shadowOffset: { width: 0, height: 12 },

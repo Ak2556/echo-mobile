@@ -310,7 +310,7 @@ export default function NotificationsScreen() {
         }}
       >
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlur ? 0.28 : 0.97 }]}>
-          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill}>
+          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}>
             <View style={[layout.contentStyle, { paddingTop: insets.top + (layout.isDesktop ? 10 : 0) }]}>
             {/* Title row */}
             <View

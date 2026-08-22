@@ -557,6 +557,25 @@ export default function DiscoverScreen() {
     </View>
   );
 
+  const popularItemsWithAds = useMemo(() => {
+    if (!randomAd) return popularItems;
+    const arr: { type: string, item: any }[] = [];
+    popularItems.forEach((item, index) => {
+      arr.push({ type: 'post', item });
+      if (index > 0 && index % 5 === 0) {
+        arr.push({ type: 'ad', item: randomAd });
+      }
+    });
+    return arr;
+  }, [popularItems, randomAd]);
+
+  const renderItem = useCallback(({ item, index }: { item: any, index: number }) => {
+    if (item.type === 'ad') {
+      return <AdCard ad={item.item} />;
+    }
+    return <FeedCard item={item.item} index={index} onPress={() => handlePressThread(item.item)} />;
+  }, [useMasonry]);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
 
@@ -597,24 +616,14 @@ export default function DiscoverScreen() {
             ref={listRef}
             onViewableItemsChanged={onVoiceViewable}
             viewabilityConfig={VOICE_VIEWABILITY}
-            data={popularItems}
+            data={popularItemsWithAds}
             numColumns={useMasonry ? 2 : 1}
             masonry={useMasonry}
             optimizeItemArrangement={useMasonry}
             style={feedContainerStyle}
-            renderItem={({ item, index }) => (
-              <React.Fragment>
-                {randomAd && index > 0 && index % 5 === 0 && (
-                  <AdCard ad={randomAd} />
-                )}
-                {useMasonry ? (
-                  <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
-                ) : (
-                  <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
-                )}
-              </React.Fragment>
-            )}
-            keyExtractor={item => item.id}
+            renderItem={renderItem}
+            getItemType={(item) => item.type}
+            keyExtractor={(item, index) => item.type === 'ad' ? `ad-${index}` : item.item.id}
             contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
             onScroll={handleScroll}
             scrollEventThrottle={16}
