@@ -15,7 +15,7 @@ import {
   Play,
   Plus,
   Question,
-  Sparkle,
+  Waveform,
   Target,
   Timer,
 } from 'phosphor-react-native';
@@ -820,7 +820,7 @@ function SetupPanel(props: {
       </View>
       <Pressable onPress={props.onCreate} disabled={!props.title.trim()}>
         <View style={{ minHeight: 50, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: props.title.trim() ? colors.accent : colors.surfaceHover }}>
-          <Sparkle color={colors.bgPure} size={18} weight="bold" />
+          <Waveform color={colors.bgPure} size={18} weight="bold" />
           <Text style={{ color: colors.bgPure, fontSize: 15, fontWeight: '900' }}>{ttx("Build my path")}</Text>
         </View>
       </Pressable>
@@ -916,7 +916,7 @@ function TopicLibraryTab({ query, setQuery, onStartTopic }: {
     <>
       <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 10 }} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <IconBadge color={colors.accent} size={44} radius={15}><Sparkle color={colors.bgPure} size={21} weight="bold" /></IconBadge>
+          <IconBadge color={colors.accent} size={44} radius={15}><Waveform color={colors.bgPure} size={21} weight="bold" /></IconBadge>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 25, lineHeight: 30 }]}>{ttx("2026 learning library")}</Text>
             <Text style={[font.body, { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 2 }]}>
@@ -1766,7 +1766,7 @@ function LearningSystemCard({ goal }: { goal: LearningGoal }) {
   return (
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 15, gap: 10 }} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Sparkle color={colors.accent} size={19} weight="bold" />
+        <Waveform color={colors.accent} size={19} weight="bold" />
         <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>
           {goal.mode === 'teacher' ? 'Teacher workflow' : goal.mode === 'coach' ? 'Coaching loop' : 'Study system'}
         </Text>

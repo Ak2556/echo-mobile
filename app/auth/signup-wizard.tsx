@@ -23,6 +23,7 @@ import { showToast } from '../../components/ui/Toast';
 import { track, identify } from '../../src/shared/lib/analytics';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { WARM_AVATAR_COLORS } from '../../lib/avatarPalette';
+import { MINIMUM_AGE, checkDateOfBirth, ageRejectionMessage } from '../../constants/legal/ageGate';
 import { APP_LANGUAGES } from '../../lib/languages';
 import { ttx } from '../../src/shared/lib/i18n';
 
@@ -32,9 +33,9 @@ const SPRING = { damping: 24, stiffness: 300 };
 // Named panel indices — the wizard is an animated horizontal "tape" of panels.
 // Deriving the tape width / progress / counter from these constants (instead of
 // magic numbers) keeps the flow correct as steps are added or reordered.
-const STEP = { EMAIL: 0, OTP: 1, NAME: 2, AVATAR: 3, BIO: 4, INTERESTS: 5, ARCHETYPE: 6, FOLLOW: 7, CONFIRM: 8 } as const;
-const PANEL_COUNT = 9;
-const NUMBERED_STEPS = 8; // input steps 0..7; CONFIRM is the celebratory outro
+const STEP = { EMAIL: 0, OTP: 1, NAME: 2, DOB: 3, AVATAR: 4, BIO: 5, INTERESTS: 6, ARCHETYPE: 7, FOLLOW: 8, CONFIRM: 9 } as const;
+const PANEL_COUNT = 10;
+const NUMBERED_STEPS = 9; // input steps 0..8; CONFIRM is the celebratory outro
 
 // Warm editorial identity palette — single source: lib/avatarPalette.ts.
 const AVATAR_COLORS = [...WARM_AVATAR_COLORS];
@@ -65,7 +66,9 @@ const INTERESTS = [
   { id: 'fashion', label: 'Fashion' },
 ];
 
-const CONFETTI_COLORS = [ACCENT, '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#06B6D4', '#F97316'];
+// Confetti stays inside the brand's warm range — a rainbow burst here was the
+// one moment the app looked like a template.
+const CONFETTI_COLORS = [ACCENT, ...WARM_AVATAR_COLORS.slice(0, 7)];
 
 function SwatchItem({ color, selected, onPress }: {
   color: string; selected: boolean; onPress: () => void;
@@ -267,6 +270,32 @@ export default function SignupWizard() {
   } = useAppStore();
 
   const [currentStep, setCurrentStep] = useState<number>(session ? STEP.NAME : STEP.EMAIL);
+
+  // ── date of birth (STEP.DOB) ──────────────────────────────────────────────
+  // Three plain numeric fields rather than a native picker: the picker differs
+  // per platform, defaults to today (which is never a valid answer), and is
+  // awkward for someone scrolling back 25 years.
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
+
+  const dobResult = useMemo(() => {
+    if (dobDay.length < 1 || dobMonth.length < 1 || dobYear.length < 4) return null;
+    const d = Number(dobDay), m = Number(dobMonth), y = Number(dobYear);
+    if (!d || !m || !y) return null;
+    const parsed = new Date(Date.UTC(y, m - 1, d));
+    // Reject dates the calendar rolled over, e.g. 31 February.
+    if (parsed.getUTCMonth() !== m - 1 || parsed.getUTCDate() !== d) {
+      return { ok: false as const, reason: 'implausible' as const, age: null };
+    }
+    return checkDateOfBirth(parsed);
+  }, [dobDay, dobMonth, dobYear]);
+
+  const dobIso = useMemo(() => {
+    if (!dobResult?.ok) return null;
+    const pad = (n: string) => n.padStart(2, '0');
+    return `${dobYear}-${pad(dobMonth)}-${pad(dobDay)}`;
+  }, [dobResult, dobDay, dobMonth, dobYear]);
   const [displayName, setDisplayNameLocal] = useState('');
   const [usernameRaw, setUsernameRaw] = useState('');
 
@@ -510,6 +539,7 @@ export default function SignupWizard() {
     setSaving(true);
 
     const { error } = await supabase.from('profiles').upsert({
+      ...(dobIso ? { date_of_birth: dobIso } : {}),
       id: session.user.id,
       username: usernameClean,
       display_name: displayName.trim(),
@@ -821,7 +851,7 @@ export default function SignupWizard() {
 
               <View style={{ paddingBottom: 16 }}>
                 <AnimatedPressable
-                  onPress={() => canStep0 && goToStep(STEP.AVATAR)}
+                  onPress={() => canStep0 && goToStep(STEP.DOB)}
                   disabled={!canStep0}
                   scaleValue={0.97}
                   haptic="medium"
@@ -837,6 +867,92 @@ export default function SignupWizard() {
                 >
                   <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
                 </AnimatedPressable>
+              </View>
+            </View>
+
+            {/* ── STEP.DOB — age assurance ─────────────────────────────────
+                Required before an account can exist: the Terms set a minimum
+                age, and India's DPDP Act treats under-18s as children who must
+                not be profiled or advertised to. Enforced again in Postgres
+                (20260822140000_age_gate.sql) — this panel is the explanation,
+                not the guarantee. */}
+            <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
+              <View style={{ flex: 1, paddingTop: 8 }}>
+                <Text style={{
+                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold',
+                  letterSpacing: -0.5, marginBottom: 6,
+                }}>
+                  {ttx("When were you born?")}
+                </Text>
+                <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 24 }}>
+                  {ttx("We ask once, to check you're old enough and to keep ads and tracking away from younger accounts. It never appears on your profile.")}
+                </Text>
+
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {([
+                    { key: 'day',   label: ttx('DAY'),   value: dobDay,   set: setDobDay,   max: 2, flex: 1 },
+                    { key: 'month', label: ttx('MONTH'), value: dobMonth, set: setDobMonth, max: 2, flex: 1 },
+                    { key: 'year',  label: ttx('YEAR'),  value: dobYear,  set: setDobYear,  max: 4, flex: 1.4 },
+                  ] as const).map(f => (
+                    <View key={f.key} style={{ flex: f.flex }}>
+                      <Text style={{
+                        color: '#A1A1AA', fontSize: 12, fontWeight: '700',
+                        letterSpacing: 0.8, marginBottom: 8,
+                      }}>
+                        {f.label}
+                      </Text>
+                      <TextInput
+                        value={f.value}
+                        onChangeText={(t: string) => f.set(t.replace(/[^0-9]/g, '').slice(0, f.max))}
+                        keyboardType="number-pad"
+                        maxLength={f.max}
+                        placeholder={'0'.repeat(f.max)}
+                        placeholderTextColor="#3F3F46"
+                        accessibilityLabel={f.label}
+                        style={{
+                          fontSize: 20, color: '#fff', backgroundColor: '#18181B',
+                          borderRadius: 14, borderWidth: 1,
+                          borderColor: f.value ? '#3F3F46' : '#27272A',
+                          paddingHorizontal: 16, paddingVertical: 14, textAlign: 'center',
+                        }}
+                      />
+                    </View>
+                  ))}
+                </View>
+
+                {dobResult && !dobResult.ok && (
+                  <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 14 }}>
+                    {ageRejectionMessage(dobResult.reason)}
+                  </Text>
+                )}
+                {dobResult?.ok && !dobResult.isAdult && (
+                  <Text style={{ color: '#A1A1AA', fontSize: 13, marginTop: 14, lineHeight: 19 }}>
+                    {ttx("You'll get Echo without advertising or personalised tracking.")}
+                  </Text>
+                )}
+              </View>
+
+              <View style={{ paddingBottom: 16 }}>
+                <AnimatedPressable
+                  onPress={() => dobResult?.ok && goToStep(STEP.AVATAR)}
+                  disabled={!dobResult?.ok}
+                  scaleValue={0.97}
+                  haptic="medium"
+                  style={{
+                    backgroundColor: dobResult?.ok ? ACCENT : '#27272A',
+                    borderRadius: 14, paddingVertical: 16,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: dobResult?.ok ? 1 : 0.5,
+                    shadowColor: ACCENT,
+                    shadowOpacity: dobResult?.ok ? 0.4 : 0,
+                    shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{ttx("Continue")}</Text>
+                </AnimatedPressable>
+                <Text style={{ color: '#3F3F46', fontSize: 12, textAlign: 'center', marginTop: 12 }}>
+                  {ttx("You must be at least")} {MINIMUM_AGE} {ttx("to use Echo.")}
+                </Text>
               </View>
             </View>
 

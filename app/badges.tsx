@@ -12,7 +12,10 @@ const TIER_COLOR: Record<Badge['tier'], string> = {
   bronze: '#B45309',
   silver: '#71717A',
   gold: '#EAB308',
-  special: '#A855F7',
+  // Was #A855F7. Purple is off-palette and reads as template chrome; the
+  // in-family plum from ACCENT_COLORS keeps "special" distinct from gold
+  // without leaving Echo's warm editorial range.
+  special: '#8B5E7D',
 };
 
 function BadgesScreenInner() {

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
-import { Sparkle, Check, Crown } from 'phosphor-react-native';
+import { Medal, Check, Crown } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../src/shared/lib/theme';
 import { PLANS } from '../constants/subscriptions';
@@ -34,7 +34,7 @@ export default function UpgradeScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 24, gap: 24 }}>
         <EmptyState
-          icon={<Sparkle color={colors.accent} size={28} weight="fill" />}
+          icon={<Medal color={colors.accent} size={28} weight="fill" />}
           title={ttx("Echo Tiers")}
           subtitle={ttx("Every person gets a unique Echo. Higher tiers add more capacity, deeper persona memory, and exclusive access.")}
         />
@@ -56,7 +56,7 @@ export default function UpgradeScreen() {
                 {plan.exclusive ? (
                   <Crown color={colors.accent} size={20} weight="fill" />
                 ) : (
-                  <Sparkle color={colors.accent} size={20} weight="fill" />
+                  <Medal color={colors.accent} size={20} weight="fill" />
                 )}
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{plan.name}</Text>

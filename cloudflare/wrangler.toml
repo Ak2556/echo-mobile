@@ -2,7 +2,23 @@ name = "echo-mobile"
 main = "src/index.ts"
 compatibility_date = "2024-03-20"
 
-# R2 Buckets configuration
+# ── Secrets — set with `wrangler secret put <NAME>`, never committed ──
+#
+#   SUPABASE_URL         project URL, e.g. https://<ref>.supabase.co
+#   SUPABASE_ANON_KEY    publishable key (public, but not hardcoded so it can
+#                        be rotated without a code change)
+#   PURGE_SECRET         shared with the `delete-account` edge function; gates
+#                        POST /purge-user, which erases a user's R2 objects
+#   AWS_ACCESS_KEY_ID    R2 access key
+#   AWS_SECRET_ACCESS_KEY
+#
+# SUPABASE_URL and SUPABASE_ANON_KEY were previously hardcoded in src/index.ts.
+# They are bindings now; the old key should be rotated.
+
+[vars]
+# Account id is not a secret, but it is environment-specific.
+R2_ACCOUNT_ID = "5f35370a3c9265072a8ae6c47b22dd46"
+
 [[r2_buckets]]
 binding = "AVATARS_BUCKET"
 bucket_name = "avatars"
@@ -15,19 +31,10 @@ bucket_name = "echo-media"
 binding = "DM_MEDIA_BUCKET"
 bucket_name = "dm-media"
 
-[vars]
-# Ensure you set these via `wrangler secret put` or Cloudflare Dashboard
-# SUPABASE_JWT_SECRET = "your-supabase-jwt-secret"
-# AWS_ACCESS_KEY_ID = "your-r2-access-key-id"
-# AWS_SECRET_ACCESS_KEY = "your-r2-secret-access-key"
-# R2_ACCOUNT_ID = "your-cloudflare-account-id"
-
 [[r2_buckets]]
 binding = "MINI_APP_MEDIA_BUCKET"
 bucket_name = "mini-app-media"
 
-
 [[r2_buckets]]
 binding = "MARKETPLACE_PHOTOS_BUCKET"
 bucket_name = "marketplace-photos"
-

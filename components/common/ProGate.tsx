@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { Sparkle } from 'phosphor-react-native';
+import { CrownSimple } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { EmptyState } from './EmptyState';
 
@@ -29,7 +29,7 @@ export function ProGate({
 
   return (
     <EmptyState
-      icon={<Sparkle color={colors.accent} size={26} weight="fill" />}
+      icon={<CrownSimple color={colors.accent} size={26} weight="fill" />}
       title={title}
       subtitle={subtitle}
       actionLabel={ctaLabel}

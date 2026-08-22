@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, Sparkle, UsersThree, X, type Icon } from 'phosphor-react-native';
+import { ArrowUpRight, ChatCircleText, NotePencil, ShareNetwork, UsersThree, Waveform, X, type Icon } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { GlassPanel } from '../ui/GlassPanel';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
@@ -168,7 +168,7 @@ export function EdgeFeaturePanel({
             <View style={{ width: 36, height: 4, borderRadius: radius.sm, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 18 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 12 }}>
               <View style={{ width: 34, height: 34, borderRadius: radius.md, backgroundColor: `${accent}22`, alignItems: 'center', justifyContent: 'center' }}>
-                <Sparkle color={accent} size={18} weight="fill" />
+                <Waveform color={accent} size={18} weight="fill" />
               </View>
               <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flex: 1 }]}>{ttx("Echo on your")} {appName.toLowerCase()}</Text>
               <Pressable onPress={() => setCoaching(null)} hitSlop={10}><X color={colors.textMuted} size={20} weight="bold" /></Pressable>

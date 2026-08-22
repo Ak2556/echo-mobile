@@ -14,11 +14,10 @@ import {
   BellSlash, Rectangle, FileText,
   Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
   Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
-  Sparkle, Microphone,
+  BellRinging, Drop, MapTrifold, Microphone,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
-import { EncryptionKeys } from '../components/settings/EncryptionKeys';
 import { IconBadge } from '../components/ui/IconBadge';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
@@ -916,7 +915,7 @@ export default function SettingsScreen() {
         </Animated.View>}
 
         {}
-        {showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(150).duration(220))} style={sectionStyle}><EncryptionKeys /></Animated.View>}
+
 
         {showGroup('privacy') && <Animated.View entering={animation(FadeInDown.delay(100).duration(220))} style={sectionStyle}>
           <Text style={sectionHeaderStyle}>{ttx("Privacy & Safety")}</Text>
@@ -936,7 +935,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={ChatCircle} label={ttx("Read Receipts")} subtitle={ttx("Show when you've read messages")} right={SwitchEl(s.readReceipts, handleReadReceipts)} />
             {divider}
-            <SettingsRow theme={theme} icon={Sparkle} iconColor={colors.accent} label={ttx("Personalized Notifications")} subtitle={ttx("Let Echo learn your best times and interests to time reminders. Off by default; no profiling until you turn it on.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
+            <SettingsRow theme={theme} icon={BellRinging} iconColor={colors.accent} label={ttx("Personalized Notifications")} subtitle={ttx("Let Echo learn your best times and interests to time reminders. Off by default; no profiling until you turn it on.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
             {divider}
             <SettingsRow theme={theme} icon={Envelope} label={ttx("Who Can Message You")} subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
@@ -1015,7 +1014,7 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={SquaresFour} label={ttx("Show Preview Cards")} subtitle={ttx("Show response previews in feed")} right={SwitchEl(s.showPreviewCards, s.setShowPreviewCards)} />
             {divider}
             <SettingsRow theme={theme} icon={Lightning} label={ttx("Reduce Animations")} subtitle={ttx("Minimize motion effects")} right={SwitchEl(s.reduceAnimations, s.setReduceAnimations)} />
-            <SettingsRow theme={theme} icon={Sparkle} label={ttx("Glass Theme")} subtitle={ttx("Enable blurred backgrounds (requires high-end device)")} right={SwitchEl(s.glassTheme, s.setGlassTheme)} />
+            <SettingsRow theme={theme} icon={Drop} label={ttx("Glass Theme")} subtitle={ttx("Enable blurred backgrounds (requires high-end device)")} right={SwitchEl(s.glassTheme, s.setGlassTheme)} />
           </GlassPanel>
         </Animated.View>}
 
@@ -1118,7 +1117,7 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={Question} label={ttx("Help & Support")} onPress={() => openTrustedExternalUrl(`mailto:${SUPPORT_EMAIL}`)} />
             {divider}
-            <SettingsRow theme={theme} icon={Sparkle} label={t('settings.replayTour')} subtitle={t('settings.replayTourSubtitle')} onPress={() => { router.push('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
+            <SettingsRow theme={theme} icon={MapTrifold} label={t('settings.replayTour')} subtitle={t('settings.replayTourSubtitle')} onPress={() => { router.push('/(tabs)/home'); setTimeout(() => useTutorialStore.getState().startTour('home'), 450); }} />
             {divider}
             {__DEV__ && (
               <SettingsRow

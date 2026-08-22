@@ -3,11 +3,12 @@ import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { Lightning, Sparkle, Star, Check } from 'phosphor-react-native';
+import { Lightning, Feather, Star, Check } from 'phosphor-react-native';
 import { useTheme } from '../../../shared/lib/theme';
 import { tap } from '../../../shared/lib/haptics';
 import type { EchoAIModel } from '../../../../lib/api';
 import { ttx } from '../../../shared/lib/i18n';
+import { ACCENT_COLORS } from '../../../../lib/accentDesign';
 
 interface ModelMeta {
   key: EchoAIModel;
@@ -28,21 +29,21 @@ const MODELS: ModelMeta[] = [
     name: 'Flash',
     tagline: 'Balanced',
     Icon: Lightning,
-    accent: '#FACC15', // amber — speed
+    accent: ACCENT_COLORS.amber, // ochre — speed
   },
   {
     key: 'gemini-2.5-pro',
     name: 'Pro',
     tagline: 'Deep',
     Icon: Star,
-    accent: '#A78BFA', // violet — premium
+    accent: ACCENT_COLORS.violet, // muted violet — premium
   },
   {
     key: 'gemini-2.5-flash-lite',
     name: 'Lite',
     tagline: 'Fast',
-    Icon: Sparkle,
-    accent: '#38BDF8', // cyan — featherweight
+    Icon: Feather,
+    accent: ACCENT_COLORS.cyan, // muted cyan — featherweight
   },
 ];
 

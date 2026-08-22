@@ -1,3 +1,23 @@
+/**
+ * ⚠ NOT WIRED INTO THE PRODUCT. Do not describe Echo as end-to-end encrypted.
+ *
+ * This module implements a Curve25519 keypair and box encryption, but nothing
+ * in the shipping app calls it:
+ *   · the only consumer is src/shared/database/sync.ts
+ *   · `syncDatabase()` there is never invoked from anywhere in the codebase
+ *   · the live DM path (lib/supabaseEchoApi.ts) writes plaintext straight to
+ *     the `direct_messages` table
+ *
+ * It also writes the public key to `public.users`, a table no migration
+ * creates, so key registration could not succeed even if it were called.
+ *
+ * The Settings panel that advertised "E2E Encryption Active" was removed on
+ * 2026-08-22 because the claim was not true. Before re-enabling any of this,
+ * real E2EE needs: a working key registry on `profiles`, encryption on the
+ * actual send path, a multi-device story, and a decision about what it means
+ * for search, moderation and lawful-access requests.
+ */
+
 import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 import * as Crypto from 'expo-crypto';

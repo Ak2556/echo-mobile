@@ -206,7 +206,7 @@ function matchMiniApp(spoken: string): string | null {
     memo: 'voice-memo', 'voice memo': 'voice-memo', recording: 'voice-memo',
     photo: 'studio', camera: 'studio', 'image editor': 'editor', 'photo editor': 'editor',
     clock: 'world-clock', 'world clock': 'world-clock', timezone: 'world-clock',
-    write: 'markdown', writing: 'markdown', password: 'password-gen', passwords: 'password-gen',
+    write: 'markdown', writing: 'markdown',
     // Hindi (Devanagari)
     'टाइमर': 'pomodoro', 'पोमोडोरो': 'pomodoro', 'टास्क': 'tasks', 'काम': 'tasks', 'नोट': 'notes', 'नोट्स': 'notes',
     'आदत': 'habits', 'आदतें': 'habits', 'पैसा': 'expenses', 'खर्च': 'expenses', 'बजट': 'expenses',
@@ -219,7 +219,7 @@ function matchMiniApp(spoken: string): string | null {
     'कैमरा': 'studio', 'फोटो': 'studio', 'तस्वीर': 'studio',
     'फोटो एडिटर': 'editor', 'इमेज एडिटर': 'editor',
     'घड़ी': 'world-clock', 'वर्ल्ड क्लॉक': 'world-clock', 'समय क्षेत्र': 'world-clock',
-    'लिखो': 'markdown', 'लेखन': 'markdown', 'पासवर्ड': 'password-gen',
+    'लिखो': 'markdown', 'लेखन': 'markdown',
     // Romanized Hindi
     samay: 'pomodoro', kaam: 'tasks', aadat: 'habits', paisa: 'expenses', kharch: 'expenses',
     kasrat: 'fitness', vyayam: 'fitness', hisab: 'calculator', ganna: 'calculator',

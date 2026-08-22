@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { usePathname, useRouter, type Href } from 'expo-router';
-import { ArrowSquareOut, Compass, NotePencil, Sparkle } from 'phosphor-react-native';
+import { ArrowSquareOut, Compass, NotePencil, Waveform } from 'phosphor-react-native';
 import { ChatInput } from '../ai/ChatInput';
 import { MessageBubble } from '../ai/MessageBubble';
 import { ToolCallCard, type ToolCallItem } from '../ai/ToolCallCard';
@@ -414,7 +414,7 @@ export default function FloatingEchoAgent() {
                 justifyContent: 'center',
               }}
             >
-              <Sparkle color={colors.bgPure} size={21} weight="fill" />
+              <Waveform color={colors.bgPure} size={21} weight="fill" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[font.display, { color: colors.text, fontSize: 22 }]}>{ttx("Echo AI")}</Text>

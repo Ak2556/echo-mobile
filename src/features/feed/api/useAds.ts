@@ -18,11 +18,38 @@ export interface AdItem {
   };
 }
 
-export function useRandomAd() {
+/**
+ * Whether this account may be shown advertising at all.
+ *
+ * Asks Postgres rather than deciding on the device: `can_be_profiled()` reads
+ * the date of birth the client cannot see and fails closed on unknown age, so
+ * an account that predates the age gate gets no ads until it supplies one.
+ * India's DPDP Act 2023 prohibits targeted advertising directed at under-18s.
+ */
+export function useCanSeeAds() {
   return useQuery({
-    queryKey: ['random-ad'],
+    queryKey: ['can-see-ads'],
+    queryFn: async () => {
+      if (!isSupabaseRemote()) return false;
+      const { data, error } = await supabase.rpc('can_be_profiled');
+      if (error) return false; // fail closed
+      return data === true;
+    },
+    staleTime: 15 * 60 * 1000,
+  });
+}
+
+export function useRandomAd() {
+  const { data: canSeeAds } = useCanSeeAds();
+
+  return useQuery({
+    // Keyed on eligibility so turning 18 — or supplying a DOB — refetches
+    // instead of serving a cached "no ads" result forever.
+    queryKey: ['random-ad', canSeeAds === true],
+    enabled: canSeeAds === true,
     queryFn: async () => {
       if (!isSupabaseRemote()) return null;
+      if (canSeeAds !== true) return null;
       // Fetch active ads
       const { data, error } = await supabase
         .from('ads')
