@@ -189,7 +189,7 @@ export function useInfiniteFeed() {
       const followSet = new Set(followingIds);
 
       const filterHidden = (list: FeedItem[]) =>
-        list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
+        list.filter(item => item.postType !== 'video' && !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
         // Remote pages are returned RAW here; block/mute/not-interested filtering
@@ -270,6 +270,7 @@ export function useInfiniteFeed() {
         ...data,
         pages: data.pages.map(page =>
           page.filter(item => {
+            if (item.postType === 'video') return false; // Isolate videos from home feed
             if (blockSet.has(item.userId) || skipSet.has(item.id)) return false;
             if (seen.has(item.id)) return false;
             seen.add(item.id);
