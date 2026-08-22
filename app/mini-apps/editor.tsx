@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import { Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as Sharing from 'expo-sharing';
 import { ImageSquare, VideoCamera, SlidersHorizontal } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { PhotoEditor } from '../../src/features/feed/ui/PhotoEditor';
@@ -38,7 +39,13 @@ export default function EditorApp() {
       videoQuality: ImagePicker.UIImagePickerControllerQualityType.High,
     });
     if (!result.canceled && result.assets[0]) {
-      Alert.alert('Video Edit Complete', 'Your trimmed and edited video has been saved locally.');
+      const uri = result.assets[0].uri;
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri);
+      } else {
+        Alert.alert('Video Trimmed', 'Your video was processed but sharing is not available on this device.');
+      }
     }
   };
 
@@ -80,9 +87,14 @@ export default function EditorApp() {
         visible={!!editingPhotoUri}
         uri={editingPhotoUri || ''}
         onCancel={() => setEditingPhotoUri(null)}
-        onDone={(uri) => {
+        onDone={async (uri) => {
           setEditingPhotoUri(null);
-          Alert.alert('Photo Edit Complete', 'Your edits have been successfully baked into the image.');
+          const canShare = await Sharing.isAvailableAsync();
+          if (canShare && uri) {
+            await Sharing.shareAsync(uri);
+          } else {
+            Alert.alert('Photo Edit Complete', 'Your edits have been baked successfully.');
+          }
         }}
       />
     </MiniAppShell>
