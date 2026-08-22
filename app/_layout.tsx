@@ -3,6 +3,7 @@ import { Stack, useRouter, usePathname } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
 import { Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useDatabaseSync } from "../hooks/useDatabaseSync";
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../src/shared/lib/analytics';
 import { recordAppOpen, noteNudgeOpened } from '../lib/personalNudges';
@@ -160,6 +161,7 @@ function UniversalLinkRouter(): null {
 }
 
 function RootLayout() {
+  useDatabaseSync();
   const userId = useAppStore(s => s.userId);
   usePresenceTracking(userId ?? undefined);
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);
