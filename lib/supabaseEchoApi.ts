@@ -164,7 +164,7 @@ async function signedDmMediaUrl(value: string | null | undefined): Promise<strin
   // We are using a Cloudflare worker to securely serve dm-media files.
   // Ideally, the JWT would be sent in a cookie or header for this image request.
   // For standard <Image source={{uri}}/> we can pass headers.
-  return `${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL}/dm-media/${path}`;
+  return `${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/dm-media/${path}`;
 }
 
 function normalizeImageContentType(input: string | null | undefined): string {
@@ -268,7 +268,7 @@ export async function uploadAvatar(image: UploadableImage): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('No session');
 
-  const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL}/upload-url?bucket=avatars&path=${path}`, {
+  const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=avatars&path=${path}`, {
     headers: { 'Authorization': `Bearer ${session.access_token}` }
   });
   const { signedUrl, publicUrl } = await workerRes.json();
@@ -306,7 +306,7 @@ export async function uploadEchoImages(images: UploadableImage[]): Promise<strin
 
     const uri = typeof image === 'string' ? image : image.uri;
 
-    const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL}/upload-url?bucket=echo-media&path=${path}`, {
+    const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=echo-media&path=${path}`, {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     });
     const { signedUrl, publicUrl } = await workerRes.json();
@@ -348,7 +348,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('No session');
 
-  const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL}/upload-url?bucket=echo-media&path=${path}`, {
+  const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=echo-media&path=${path}`, {
     headers: { 'Authorization': `Bearer ${session.access_token}` }
   });
   const { signedUrl, publicUrl } = await workerRes.json();
