@@ -1,3 +1,5 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import React, { useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
@@ -60,6 +62,7 @@ function ActionButton({ icon: Icon, color = '#fff', weight = 'regular', label, o
 export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
   const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   
   const height = layout.height;
@@ -183,7 +186,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
         locations={[0, 0.5, 1]}
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          paddingTop: 80, paddingBottom: layout.bottomChromePadding + 20,
+          paddingTop: 80, paddingBottom: layout.isDesktop ? 32 : (56 + (insets?.bottom || 0) + 16),
           paddingHorizontal: 16, flexDirection: 'row', alignItems: 'flex-end',
           justifyContent: 'space-between', pointerEvents: 'box-none'
         }}
