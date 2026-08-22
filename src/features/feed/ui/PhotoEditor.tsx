@@ -407,7 +407,14 @@ const SkiaColorPreview = forwardRef<{ bake: () => Promise<string | null> }, Skia
     useImperativeHandle(ref, () => ({
       async bake() {
         if (!img) return null;
-        const w = img.width(), h = img.height();
+        let w = img.width(), h = img.height();
+        // Cap export dimensions to 1920 to prevent JS thread hanging and OOM crashes on 48MP+ images
+        const MAX_DIM = 1920;
+        if (w > MAX_DIM || h > MAX_DIM) {
+          const ratio = w / h;
+          if (ratio > 1) { w = MAX_DIM; h = Math.round(MAX_DIM / ratio); }
+          else { h = MAX_DIM; w = Math.round(MAX_DIM * ratio); }
+        }
         const rendered = await drawAsImage(
           <Group>
             <SkImageComp image={img} x={0} y={0} width={w} height={h} fit="cover">
