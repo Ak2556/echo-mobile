@@ -1,6 +1,7 @@
 name: OTA Updates
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -15,6 +16,7 @@ jobs:
   update:
     name: Publish EAS Update
     runs-on: ubuntu-latest
+  workflow_dispatch:
     steps:
       - name: 🏗 Setup repository
         uses: actions/checkout@v4
@@ -23,11 +25,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+  workflow_dispatch:
 
       - name: 🏗 Setup Expo and EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
+  workflow_dispatch:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
