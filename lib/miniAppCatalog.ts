@@ -180,17 +180,6 @@ export const MINI_APP_CATALOG: MiniAppCatalogItem[] = [
     route: '/mini-apps/markdown',
   },
   {
-    id: 'password-gen',
-    name: 'Passwords',
-    description: 'Secure',
-    suite: 'Utility',
-    promise: 'Generate, audit, copy safely.',
-    highlights: ['Strong', 'Options', 'Copy'],
-    replaces: ['Password generator'],
-    color: '#10B981',
-    route: '/mini-apps/password-gen',
-  },
-  {
     id: 'marketplace',
     name: 'Marketplace',
     description: 'Trade & Sell',

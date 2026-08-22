@@ -34,12 +34,12 @@ const TOOL_LANES: { id: ToolLane; label: string; apps?: string[] }[] = [
   { id: 'money', label: 'Money', apps: ['expenses', 'shopping-list', 'calculator', 'notes'] },
   { id: 'health', label: 'Health', apps: ['fitness', 'habits', 'planner', 'notes'] },
   { id: 'capture', label: 'Capture', apps: ['notes', 'voice-memo', 'studio', 'editor', 'markdown', 'tasks'] },
-  { id: 'utility', label: 'Utility', apps: ['calculator', 'world-clock', 'password-gen', 'marketplace'] },
+  { id: 'utility', label: 'Utility', apps: ['calculator', 'world-clock', 'marketplace'] },
 ];
 
 type MiniApp = MiniAppCatalogItem;
 const APPS: MiniApp[] = MINI_APP_CATALOG.filter(a => 
-  ['tasks', 'habits', 'notes', 'expenses', 'planner', 'shopping-list', 'pomodoro', 'password-gen', 'learn', 'fitness', 'studio', 'editor', 'marketplace'].includes(a.id)
+  ['tasks', 'habits', 'notes', 'expenses', 'planner', 'shopping-list', 'pomodoro', 'learn', 'fitness', 'studio', 'editor', 'marketplace'].includes(a.id)
 );
 
 /** Eyebrow section label — quiet, letterspaced, the app's editorial voice. */

@@ -45,7 +45,6 @@ export const FLOATING_APPS: FloatingAppMeta[] = [
   { id: 'markdown', name: 'Markdown', Icon: TextAa, Component: lazy(() => import('../app/mini-apps/markdown')) },
   { id: 'json-formatter', name: 'JSON', Icon: Code, color: '#5E748B', Component: lazy(() => import('../app/mini-apps/json-formatter')) },
   { id: 'color-tools', name: 'Colors', Icon: Palette, color: '#B35D6B', Component: lazy(() => import('../app/mini-apps/color-tools')) },
-  { id: 'password-gen', name: 'Passwords', Icon: Key, Component: lazy(() => import('../app/mini-apps/password-gen')) },
   { id: 'bill-splitter', name: 'Bill Split', Icon: Receipt, color: '#8B6F4E', Component: lazy(() => import('../app/mini-apps/bill-splitter')) },
   { id: 'expenses', name: 'Expenses', Icon: Wallet, Component: lazy(() => import('../app/mini-apps/expenses')) },
   { id: 'planner', name: 'Planner', Icon: CalendarBlank, Component: lazy(() => import('../app/mini-apps/planner')) },
