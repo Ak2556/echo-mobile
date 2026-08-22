@@ -16,6 +16,8 @@ import Animated, {
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
+import { AdCard } from "../../src/features/feed/ui/AdCard";
+import { useRandomAd } from "../../src/features/feed/api/useAds";
 import { FeedCard } from '../../src/features/feed/ui/FeedCard';
 import { StoryCircles } from '../../src/features/feed/ui/StoryCircles';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
@@ -323,6 +325,8 @@ export default function DiscoverScreen() {
   const listRef = useRef<any>(null);
   const currentEchoRef = useRef<any>(null);
   const { colors, animation, font, fontSizes, lineHeights } = useTheme();
+  const { data: randomAd } = useRandomAd();
+
   const { t } = useI18n();
   const performance = usePerformanceProfile('hot');
   const { username, avatarColor, avatarUrl, interests, followingIds } = useAppStore();
@@ -390,6 +394,9 @@ export default function DiscoverScreen() {
   }));
   const headerBgStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
+  }));
+  const glassOpacityStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, 40], [0, 1], Extrapolation.CLAMP),
   }));
   const headerBorderStyle = useAnimatedStyle(() => ({
     opacity: borderOpacity.value,
@@ -596,11 +603,16 @@ export default function DiscoverScreen() {
             optimizeItemArrangement={useMasonry}
             style={feedContainerStyle}
             renderItem={({ item, index }) => (
-              useMasonry ? (
-                <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
-              ) : (
-                <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
-              )
+              <React.Fragment>
+                {randomAd && index > 0 && index % 5 === 0 && (
+                  <AdCard ad={randomAd} />
+                )}
+                {useMasonry ? (
+                  <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
+                ) : (
+                  <FeedCard item={item} index={index} onPress={() => handlePressThread(item)} />
+                )}
+              </React.Fragment>
             )}
             keyExtractor={item => item.id}
             contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
@@ -650,8 +662,9 @@ export default function DiscoverScreen() {
           zIndex: 10,
         }}
       >
-        <Animated.View style={[StyleSheet.absoluteFill, headerBgStyle]}>
-          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill}>
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, glassOpacityStyle]}>
+          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}><View /></GlassPanel>
+        </Animated.View>
             <View
               style={{
                 width: '100%',
@@ -714,8 +727,6 @@ export default function DiscoverScreen() {
                 </Pressable>
               </View>
             </View>
-          </GlassPanel>
-        </Animated.View>
 
         <Animated.View
           style={[
@@ -763,7 +774,7 @@ function EvolvingNowRail({ items }: { items: EvolutionGroup[] }) {
                 colors={[`${colors.accent}38`, `${colors.accent}0F`, 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0.9, y: 1 }}
-                style={StyleSheet.absoluteFill}
+                style={StyleSheet.absoluteFill as any}
                 pointerEvents="none"
               />
               <View style={{ padding: 15 }}>
