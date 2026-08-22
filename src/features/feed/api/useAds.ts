@@ -58,7 +58,7 @@ export async function trackAdClick(adId: string) {
 
 // NOTE: You must install react-native-razorpay (e.g. npm install react-native-razorpay)
 // and run npx expo prebuild for this to work natively.
-// import RazorpayCheckout from 'react-native-razorpay';
+import RazorpayCheckout from 'react-native-razorpay';
 
 export async function createAndPayAd(adData: Partial<AdItem>, amountInINR: number) {
   if (!isSupabaseRemote()) throw new Error('Supabase not connected');
@@ -86,7 +86,7 @@ export async function createAndPayAd(adData: Partial<AdItem>, amountInINR: numbe
 
   if (adError) throw new Error('Failed to save ad details');
 
-  /* 
+  
   // 3. Open Razorpay Checkout (Uncomment once react-native-razorpay is installed)
   const options = {
     description: 'Echo Ad Campaign',
@@ -106,7 +106,7 @@ export async function createAndPayAd(adData: Partial<AdItem>, amountInINR: numbe
   } catch (error) {
     throw new Error('Payment cancelled or failed');
   }
-  */
+ 
   
   return { success: true, orderId: orderData.id, adId: adRecord.id, status: 'awaiting_payment' };
 }
