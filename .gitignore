@@ -72,3 +72,4 @@ supabase/.branches/
 # Electron desktop build output
 desktop/
 release/
+vendor/

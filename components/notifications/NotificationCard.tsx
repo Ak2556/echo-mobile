@@ -124,7 +124,7 @@ interface NotificationCardProps {
   flush?: boolean;
 }
 
-export function NotificationCard({ notification, onPress, onLongPress, flush = false }: NotificationCardProps) {
+export const NotificationCard = React.memo(function NotificationCard({ notification, onPress, onLongPress, flush = false }: NotificationCardProps) {
   const { colors, fontSizes } = useTheme();
   const n = notification;
   const unread = !n.isRead;
@@ -192,4 +192,4 @@ export function NotificationCard({ notification, onPress, onLongPress, flush = f
       </View>
     </AnimatedPressable>
   );
-}
+}, (prev, next) => prev.notification.id === next.notification.id && prev.notification.isRead === next.notification.isRead);
