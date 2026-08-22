@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert, Activi
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import {
-  Users, Sparkle, MagnifyingGlass, X, Crown, SignOut, BellSlash, UserPlus,
+  Users, Waveform, MagnifyingGlass, X, Crown, SignOut, BellSlash, UserPlus,
 } from 'phosphor-react-native';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useTheme } from '../../src/shared/lib/theme';
@@ -92,7 +92,7 @@ export default function GroupInfoScreen() {
     setSuggesting(true);
     try {
       const suggestion = await suggestGroupName(members.map(m => m.displayName));
-      if (suggestion) { setName(suggestion); if (id && isAdmin) await updateGroupMeta(id, suggestion, color); showToast('Echo named it', 'Sparkle'); void load(); }
+      if (suggestion) { setName(suggestion); if (id && isAdmin) await updateGroupMeta(id, suggestion, color); showToast('Echo named it', 'Waveform'); void load(); }
       else showToast('Couldn’t reach Echo — try again', 'Error');
     } finally {
       setSuggesting(false);
@@ -195,7 +195,7 @@ export default function GroupInfoScreen() {
                 scaleValue={0.96} haptic="light"
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '66', paddingHorizontal: 14, paddingVertical: 8, opacity: suggesting ? 0.6 : 1 }}
               >
-                {suggesting ? <ActivityIndicator size="small" color={colors.accent} /> : <Sparkle color={colors.accent} size={15} weight="fill" />}
+                {suggesting ? <ActivityIndicator size="small" color={colors.accent} /> : <Waveform color={colors.accent} size={15} weight="fill" />}
                 <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{ttx("Ask Echo to name it")}</Text>
               </AnimatedPressable>
             )}

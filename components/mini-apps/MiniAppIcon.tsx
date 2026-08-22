@@ -20,7 +20,7 @@ import {
   Pulse,
   Receipt,
   ShoppingCart,
-  Sparkle,
+  Waveform,
   Timer,
   Wallet,
   DiceFive,
@@ -54,7 +54,7 @@ function shade(hex: string, factor: number): string {
 export function MiniAppGlyph({ id, color, size = 24, weight = 'fill' }: MiniAppGlyphProps) {
   const p = { color, size, weight };
   switch (id) {
-    case 'echo-ai': return <Sparkle {...p} />;
+    case 'echo-ai': return <Waveform {...p} />;
     case 'tasks': return <ListChecks {...p} />;
     case 'planner': return <CalendarBlank {...p} />;
     case 'notes': return <NotePencil {...p} />;

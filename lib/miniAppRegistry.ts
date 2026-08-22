@@ -2,7 +2,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import {
   Calculator, NotePencil, ArrowsLeftRight, DiceFive, Globe, ListChecks,
   ShoppingCart, TextAa, Code, Palette, Key, Receipt, Wallet, CalendarBlank,
-  Scales, Repeat, ImageSquare, Sparkle, GraduationCap, Microphone, Camera, Heartbeat, Aperture, SlidersHorizontal, type Icon,
+  Scales, Repeat, ImageSquare, Waveform, GraduationCap, Microphone, Camera, Heartbeat, Aperture, SlidersHorizontal, type Icon,
 } from 'phosphor-react-native';
 
 /**
@@ -30,7 +30,7 @@ export const FLOATING_APPS: FloatingAppMeta[] = [
   {
     id: 'echo-ai',
     name: 'Echo AI',
-    Icon: Sparkle,
+    Icon: Waveform,
     description: 'Ask, plan, write, decide.',
     color: '#E06030',
     Component: lazy(() => import('../components/mini-apps/FloatingEchoAgent')),

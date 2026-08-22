@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, Bell, Sparkle, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
+import { ArrowUpRight, Bell, Waveform, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
 import { AdCard } from "../../src/features/feed/ui/AdCard";
 import { useRandomAd } from "../../src/features/feed/api/useAds";
 import { FeedCard } from '../../src/features/feed/ui/FeedCard';
@@ -162,7 +162,7 @@ function DailyThought() {
         <View style={{ paddingTop: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-              <Sparkle color={colors.accent} size={14} weight="fill" />
+              <Waveform color={colors.accent} size={14} weight="fill" />
               <Text style={[font.bodySemibold, { color: colors.accent, fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase' }]}>
                 {t('home.thoughtForToday')}
               </Text>
@@ -217,7 +217,7 @@ function HomeNextStep({ hasStartedFirstChat, publishedCount, t }: {
           route: '/create-post' as const,
         }
       : {
-          icon: <Sparkle color="#fff" size={22} weight="fill" />,
+          icon: <Waveform color="#fff" size={22} weight="fill" />,
           title: t('home.nextDaily'),
           body: t('home.nextDailyBody'),
           route: '/daily-question' as const,

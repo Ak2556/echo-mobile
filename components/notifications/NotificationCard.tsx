@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope, BookmarkSimple, Sparkle, Quotes, CheckCircle, ShieldWarning } from 'phosphor-react-native';
+import { HeartStraight, ChatCircle, UserPlus, ArrowsClockwise, At, Envelope, BookmarkSimple, SmileySticker, Quotes, CheckCircle, ShieldWarning } from 'phosphor-react-native';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { Avatar } from '../ui/Avatar';
 import { IconBadge } from '../ui/IconBadge';
@@ -65,7 +65,7 @@ function NotifIcon({ type, size, color }: { type: string; size: number; color: s
     case 'repost':          return <ArrowsClockwise {...p} />;
     case 'mention':         return <At              {...p} />;
     case 'dm':              return <Envelope        {...p} />;
-    case 'reaction':        return <Sparkle         {...p} />;
+    case 'reaction':        return <SmileySticker   {...p} />;
     case 'bookmark':        return <BookmarkSimple  {...p} />;
     case 'quote':           return <Quotes          {...p} />;
     case 'report_resolved': return <CheckCircle     {...p} />;

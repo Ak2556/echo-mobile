@@ -26,7 +26,7 @@ import { markCheckinSeen } from '../../lib/proactiveCheckin';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
 import { Avatar } from '../../components/ui/Avatar';
-import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Sparkle, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
+import { ShareNetwork, Plus, Lightning, List, Question, ArrowUpRight, Envelope, SealCheck, PencilSimple, Waveform, Target, SquaresFour, NotePencil, ChartLineUp, Users, ChatCircleText, CaretRight } from 'phosphor-react-native';
 import { ChatMessage } from '../../types';
 import { peekPendingPublishContext, setPendingPublishContext } from '../../lib/publishContext';
 import { track } from '../../src/shared/lib/analytics';
@@ -139,7 +139,7 @@ function ChatEmptyLaunchpad({
         <View style={{ paddingTop: 12, gap: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 13 }}>
             <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: `${colors.accent}15`, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-              <Sparkle color={colors.accent} size={28} weight="fill" />
+              <Waveform color={colors.accent} size={28} weight="fill" />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               {opener ? (

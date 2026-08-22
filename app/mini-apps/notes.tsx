@@ -8,7 +8,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import {
   Archive, CheckSquare, Clock, Copy, FileText, FolderOpen, FunnelSimple,
-  MagnifyingGlass, NotePencil, Plus, PushPin, ShareNetwork, Sparkle, Star,
+  MagnifyingGlass, NotePencil, Plus, PushPin, ShareNetwork, Waveform, Star,
   Tag, TextB, Trash, X,
 } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
@@ -305,7 +305,7 @@ function NoteEditor({
                     borderColor: colors.glassBorder,
                   }}
                 >
-                  <Sparkle color={template.color} size={14} weight="fill" />
+                  <Waveform color={template.color} size={14} weight="fill" />
                   <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '800' }}>{tt(template.label)}</Text>
                 </Pressable>
               ))}
@@ -367,7 +367,7 @@ function NoteEditor({
                 { id: 'note', label: 'Note', icon: <FileText color={kind === 'note' ? colors.bgPure : colors.textMuted} size={14} /> },
                 { id: 'checklist', label: 'Checklist', icon: <CheckSquare color={kind === 'checklist' ? colors.bgPure : colors.textMuted} size={14} /> },
                 { id: 'meeting', label: 'Meeting', icon: <Clock color={kind === 'meeting' ? colors.bgPure : colors.textMuted} size={14} /> },
-                { id: 'idea', label: 'Idea', icon: <Sparkle color={kind === 'idea' ? colors.bgPure : colors.textMuted} size={14} /> },
+                { id: 'idea', label: 'Idea', icon: <Waveform color={kind === 'idea' ? colors.bgPure : colors.textMuted} size={14} /> },
                 { id: 'journal', label: 'Journal', icon: <TextB color={kind === 'journal' ? colors.bgPure : colors.textMuted} size={14} /> },
                 { id: 'research', label: 'Research', icon: <FolderOpen color={kind === 'research' ? colors.bgPure : colors.textMuted} size={14} /> },
               ].map(item => (
@@ -759,7 +759,7 @@ export default function NotesApp() {
               borderColor: template.id === 'blank' ? colors.glassBorder : `${template.color}55`,
             }}
           >
-            <Sparkle color={template.color} size={18} weight={template.id === 'blank' ? 'regular' : 'fill'} />
+            <Waveform color={template.color} size={18} weight={template.id === 'blank' ? 'regular' : 'fill'} />
             <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 9 }}>{tt(template.label)}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
               {tt(template.folder)}

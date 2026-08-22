@@ -12,8 +12,11 @@ import { useTheme } from '../src/shared/lib/theme';
 import { createSalon } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../src/shared/lib/i18n';
+import { WARM_AVATAR_COLORS } from '../lib/avatarPalette';
 
-const COVER_COLORS = ['#7C3AED', '#EF4444', '#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#06B6D4', '#F97316'];
+// Salon covers use the same warm identity palette as avatars, so a salon
+// never becomes the loudest thing on a screen. See lib/avatarPalette.ts.
+const COVER_COLORS = WARM_AVATAR_COLORS.slice(0, 8);
 const NAME_MAX = 40;
 const DESC_MAX = 240;
 

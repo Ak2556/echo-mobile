@@ -13,7 +13,7 @@ import {
   SealCheck,
   PencilSimple,
   SignOut,
-  Sparkle,
+  Waveform,
   SquaresFour,
   X,
 } from 'phosphor-react-native';
@@ -489,7 +489,7 @@ function ProfileEmptyPosts({
   return (
     <View style={[{ marginHorizontal: 16, marginTop: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 24, padding: 32, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }]}>
       <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-        <Sparkle color={colors.accent} size={24} weight="fill" />
+        <Waveform color={colors.accent} size={24} weight="fill" />
       </View>
       <Text
         style={[font.displayBlack, { color: colors.text, fontSize: 24, textAlign: 'center', marginBottom: 8 }]}
@@ -571,7 +571,7 @@ function AboutPanel({
       <View style={styles.aboutCard}>
         <InfoRow icon={<CalendarBlank color={colors.textMuted} size={18} />} label={`Joined Echo ${creatorProfile.joinedYear}`} colors={colors} font={font} />
         {creatorProfile.topics[0] ? (
-          <InfoRow icon={<Sparkle color={colors.textMuted} size={18} />} label={`Best known for ${creatorProfile.topics[0]}`} colors={colors} font={font} />
+          <InfoRow icon={<Waveform color={colors.textMuted} size={18} />} label={`Best known for ${creatorProfile.topics[0]}`} colors={colors} font={font} />
         ) : null}
         <InfoRow
           icon={<Compass color={colors.textMuted} size={18} />}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView, Alert, StyleSheet, TextInput } from 'react-native';
 import { ResponsiveScreen } from '../../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, GitBranch, PaperPlaneRight, Sparkle } from 'phosphor-react-native';
+import { ArrowLeft, GitBranch, PaperPlaneRight, Waveform } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
@@ -148,7 +148,7 @@ export default function RemixScreen() {
               >
                 <View style={styles.heroInner}>
                   <View style={styles.heroIconWrap}>
-                    <Sparkle color="#000" size={26} weight="fill" />
+                    <Waveform color="#000" size={26} weight="fill" />
                   </View>
                   <Text style={styles.heroEyebrow}>{ttx("WATCH THIS THOUGHT EVOLVE")}</Text>
                   <Text style={styles.heroTitle} numberOfLines={2}>

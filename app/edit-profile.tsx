@@ -12,6 +12,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { showToast } from '../components/ui/Toast';
 import { useAppStore } from '../store/useAppStore';
+import { WARM_AVATAR_COLORS } from '../lib/avatarPalette';
 import { useTheme } from '../src/shared/lib/theme';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { fetchRemoteProfile, updateRemoteProfile, uploadAvatar } from '../lib/supabaseEchoApi';
@@ -19,10 +20,10 @@ import { supabase } from '../lib/supabase';
 import { useResponsiveLayout } from '../src/shared/lib/responsive';
 import { ttx } from '../src/shared/lib/i18n';
 
-const AVATAR_COLORS = [
-  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
-  '#EC4899', '#06B6D4', '#14B8A6', '#F97316', '#6366F1',
-];
+// The picker offers the canonical warm identity palette. It previously held
+// raw Tailwind hues, which meant a freshly-edited profile could set a colour
+// the rest of the app immediately remapped (see lib/avatarPalette.ts).
+const AVATAR_COLORS = WARM_AVATAR_COLORS;
 
 const BIO_MAX = 160;
 const BIO_WARN = 140;

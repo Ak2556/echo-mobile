@@ -65,7 +65,9 @@ const INTERESTS = [
   { id: 'fashion', label: 'Fashion' },
 ];
 
-const CONFETTI_COLORS = [ACCENT, '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#06B6D4', '#F97316'];
+// Confetti stays inside the brand's warm range — a rainbow burst here was the
+// one moment the app looked like a template.
+const CONFETTI_COLORS = [ACCENT, ...WARM_AVATAR_COLORS.slice(0, 7)];
 
 function SwatchItem({ color, selected, onPress }: {
   color: string; selected: boolean; onPress: () => void;

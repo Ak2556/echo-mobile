@@ -19,7 +19,7 @@ import { safeBack } from '../../lib/safeBack';
 import { speak, isTtsAvailable } from '../../lib/tts';
 import {
   CaretLeft, PaperPlaneTilt, Quotes, SealCheck, Flag,
-  Sparkle, Copy, Trash, ArrowBendUpLeft, PencilSimple, SpeakerHigh,
+  Waveform, Copy, Trash, ArrowBendUpLeft, PencilSimple, SpeakerHigh,
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
   Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
@@ -1175,7 +1175,7 @@ function UnreadDivider({ count, loading, onCatchUp }: { count?: number; loading?
               borderWidth: 1, borderColor: `${colors.accent}55`,
             }}
           >
-            {loading ? <ActivityIndicator size="small" color={colors.accent} /> : <Sparkle color={colors.accent} size={13} weight="fill" />}
+            {loading ? <ActivityIndicator size="small" color={colors.accent} /> : <Waveform color={colors.accent} size={13} weight="fill" />}
             <Text style={{ color: colors.accent, fontSize: 12.5, fontWeight: '800' }}>
               {ttx("Catch me up on")} {count} {ttx("message")}{count === 1 ? '' : 's'}
             </Text>
@@ -1239,7 +1239,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
       >
         <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
-            <Sparkle color={colors.accent} size={16} weight="fill" />
+            <Waveform color={colors.accent} size={16} weight="fill" />
             <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Emoji & Stickers")}</Text>
             <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
           </View>
@@ -1629,7 +1629,7 @@ function MessageActionSheet({
                     ? <Images color={colors.accent} size={20} weight="bold" />
                     : message.kind === 'voice'
                       ? <Microphone color={colors.accent} size={20} weight="fill" />
-                      : <Sparkle color={colors.accent} size={20} weight="fill" />
+                      : <Waveform color={colors.accent} size={20} weight="fill" />
                 }
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -1718,7 +1718,7 @@ function MessageActionSheet({
                       opacity: pressed ? 0.68 : 1,
                     })}
                   >
-                    <Sparkle color={colors.accent} size={18} weight="fill" />
+                    <Waveform color={colors.accent} size={18} weight="fill" />
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={{ color: colors.accent, fontSize: 13.5, fontWeight: '900' }} numberOfLines={1}>{ttx("Echo reply")}</Text>
                       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>{ttx("Draft in context")}</Text>
@@ -2960,7 +2960,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             flexDirection: 'row', alignItems: 'center', gap: 8,
           }}
         >
-          <Sparkle color={colors.accent} size={14} weight="fill" />
+          <Waveform color={colors.accent} size={14} weight="fill" />
           <Text style={{ color: colors.textSecondary, fontSize: 13, flex: 1 }} numberOfLines={1}>
             <Text style={{ fontWeight: '700', color: colors.text }}>{ttx("Echo:")} </Text>
             {echoTitle}
@@ -3083,7 +3083,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   >
                     {busy
                       ? <ActivityIndicator size="small" color={colors.accent} />
-                      : <Sparkle color={colors.textMuted} size={12} weight="fill" />}
+                      : <Waveform color={colors.textMuted} size={12} weight="fill" />}
                     <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600' }} numberOfLines={1}>{t.label}</Text>
                   </AnimatedPressable>
                 );
@@ -3119,7 +3119,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   >
                     {busy
                       ? <ActivityIndicator size="small" color={colors.accent} />
-                      : <Sparkle color={quickAction === key ? colors.accent : colors.textMuted} size={12} weight="fill" />
+                      : <Waveform color={quickAction === key ? colors.accent : colors.textMuted} size={12} weight="fill" />
                     }
                     <Text style={{
                       color: quickAction === key ? colors.accent : colors.textSecondary,
@@ -3154,7 +3154,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               borderColor: colors.border,
             }}>
               {[
-                { key: 'stickers', label: 'Stickers', icon: <Sparkle color={colors.accent} size={17} weight="fill" />, onPress: () => { setAttachmentMenuOpen(false); setStickerOpen(true); } },
+                { key: 'stickers', label: 'Stickers', icon: <Waveform color={colors.accent} size={17} weight="fill" />, onPress: () => { setAttachmentMenuOpen(false); setStickerOpen(true); } },
                 { key: 'camera', label: 'Camera', icon: <Camera color={colors.accent} size={17} weight="bold" />, onPress: handleTakePhoto },
                 { key: 'gallery', label: 'Gallery', icon: <Images color={colors.accent} size={17} weight="bold" />, onPress: handlePickImage },
                 ...(!conversation?.isGroup ? [{ key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={17} weight="bold" />, onPress: handleShareContact }] : []),
@@ -3526,7 +3526,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         >
           <View style={{ borderRadius: 22, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.accent}44`, padding: 20 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <Sparkle color={colors.accent} size={18} weight="fill" />
+              <Waveform color={colors.accent} size={18} weight="fill" />
               <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Caught up")}</Text>
               <View style={{ flex: 1 }} />
               <Pressable onPress={() => setCatchup(null)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>

@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { usePathname } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { Sparkle, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
+import { Waveform, ArrowsInSimple, GridFour, Microphone } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useAuthStore } from '../../lib/auth/store';
 import { useFloatingApp } from '../../store/floatingApp';
@@ -130,7 +130,7 @@ function Bubble() {
       >
         {listening
           ? <Microphone color={colors.bgPure} size={24} weight="fill" />
-          : meta ? <MiniAppGlyph id={meta.id} color={colors.bgPure} size={24} /> : <Sparkle color={colors.bgPure} size={24} weight="fill" />}
+          : meta ? <MiniAppGlyph id={meta.id} color={colors.bgPure} size={24} /> : <Waveform color={colors.bgPure} size={24} weight="fill" />}
       </Animated.View>
     </GestureDetector>
   );
@@ -189,7 +189,7 @@ function Panel() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
             {meta
               ? <MiniAppIcon id={meta.id} color={brand} size={28} />
-              : <Sparkle color={colors.accent} size={20} weight="fill" />}
+              : <Waveform color={colors.accent} size={20} weight="fill" />}
             <Text style={{ flex: 1, color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }} numberOfLines={1}>
               {meta ? meta.name : t('mini.pickerTitle')}
             </Text>

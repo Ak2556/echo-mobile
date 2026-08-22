@@ -4,10 +4,11 @@ import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChartLineUp, Flame, Heart, Sparkle } from 'phosphor-react-native';
+import { ChartLineUp, Flame, Heart, Confetti } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useTheme } from '../src/shared/lib/theme';
+import { GRADIENTS } from '../lib/accentDesign';
 import { fetchOrComputeYearWrap, type YearWrap } from '../lib/supabaseEchoApi';
 import { V2FeatureGuard } from '../components/common/V2FeatureGuard';
 import { ttx } from '../src/shared/lib/i18n';
@@ -48,7 +49,7 @@ function YearInEchoScreenInner() {
         </View>
       ) : !wrap || wrap.total_echoes === 0 ? (
         <View style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center' }}>
-          <Sparkle color={colors.textMuted} size={48} />
+          <Confetti color={colors.textMuted} size={48} />
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
             {ttx("Your year is just getting started")}
           </Text>
@@ -61,12 +62,12 @@ function YearInEchoScreenInner() {
           {/* Hero gradient card */}
           <Animated.View entering={FadeInUp.duration(220)} style={{ marginBottom: 16 }}>
             <LinearGradient
-              colors={['#A855F7', '#3B82F6', '#06B6D4']}
+              colors={GRADIENTS.achievement}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={{ padding: 24, borderRadius: 24, alignItems: 'center' }}
             >
-              <Sparkle color="#fff" size={32} weight="fill" />
+              <Confetti color="#fff" size={32} weight="fill" />
               <Text style={{ color: '#fff', fontSize: 38, fontWeight: '800', marginTop: 8 }}>{wrap.total_echoes}</Text>
               <Text style={{ color: '#fff', fontSize: 14, opacity: 0.9, marginTop: 4, fontWeight: '600' }}>{ttx("echoes posted in")} {year}</Text>
             </LinearGradient>

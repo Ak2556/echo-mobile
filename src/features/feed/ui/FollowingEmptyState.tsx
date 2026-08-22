@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { UsersThree, Plus, Sparkle } from 'phosphor-react-native';
+import { UsersThree, Plus, Compass } from 'phosphor-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../shared/lib/theme';
 import { UserRow } from './UserRow';
@@ -33,7 +33,7 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
       {suggestedUsers && suggestedUsers.length > 0 && (
         <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 8 }}>
-            <Sparkle color={colors.accent} size={18} weight="fill" />
+            <Compass color={colors.accent} size={18} weight="fill" />
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]}>Suggested Creators</Text>
           </View>
           

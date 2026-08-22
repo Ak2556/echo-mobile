@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { safeBack } from '../lib/safeBack';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
-import { ArrowLeft, LockSimple, Sparkle, Lightning, Clock, Users } from 'phosphor-react-native';
+import { ArrowLeft, LockSimple, Question, ChatCircleDots, Lightning, Clock, Users } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { ProfileAvatar } from '../components/ui/ProfileAvatar';
 import { LinkifiedText } from '../src/features/feed/ui/LinkifiedText';
@@ -159,7 +159,7 @@ function DailyQuestionScreenInner() {
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <ScreenHeader title={t('daily.title')} onBack={() => safeBack()} />
         <View style={{ padding: 24, alignItems: 'center', marginTop: 80 }}>
-          <Sparkle color={colors.textMuted} size={40} />
+          <Question color={colors.textMuted} size={40} />
           <Text style={{ color: colors.textMuted, marginTop: 16, textAlign: 'center', lineHeight: 22 }}>
             {t('daily.noQuestion')}
           </Text>
@@ -310,7 +310,7 @@ function DailyQuestionScreenInner() {
                   borderColor: colors.border,
                   alignItems: 'center',
                 }}>
-                  <Sparkle color={colors.accent} size={24} weight="fill" />
+                  <ChatCircleDots color={colors.accent} size={24} weight="fill" />
                   <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
                     {t('daily.recentEmpty')}
                   </Text>

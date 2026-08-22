@@ -3,7 +3,7 @@ import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platfo
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
-import { ChatCircleText, UsersThree, Target, ArrowRight, Sparkle, Flame } from 'phosphor-react-native';
+import { ChatCircleText, UsersThree, Target, ArrowRight, Waveform, Flame } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { DailyQuestionComposer } from '../components/daily/DailyQuestionComposer';
 import { useAppStore } from '../store/useAppStore';
@@ -104,7 +104,7 @@ export default function WelcomeScreen() {
             <>
               <Animated.View entering={FadeIn.duration(240)} style={{ marginTop: 8, marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <Sparkle color={colors.accent} size={22} weight="fill" />
+                  <Waveform color={colors.accent} size={22} weight="fill" />
                   <Text style={[font.eyebrow, { color: colors.textMuted }]}>{t('welcome.eyebrow')}</Text>
                 </View>
                 <Text style={[font.display, { color: colors.text, fontSize: 30, lineHeight: 36, letterSpacing: -0.4 }]}>
