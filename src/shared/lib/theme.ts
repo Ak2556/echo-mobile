@@ -334,10 +334,10 @@ export const SPACING = {
 export type SpacingTokens = typeof SPACING;
 
 export const GLASS_INTENSITY = {
-  light: 18,
-  medium: 30,
-  heavy: 45,
-  ultra: 70,
+  light: 35,
+  medium: 65,
+  heavy: 85,
+  ultra: 100,
 } as const;
 
 export type GlassIntensityTokens = typeof GLASS_INTENSITY;

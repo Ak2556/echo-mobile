@@ -5,10 +5,10 @@ import User from './User'
 export default class Message extends Model {
   static table = 'messages'
 
-  @text('thread_id') threadId!: string
-  @text('content') content!: string
-  @date('created_at') createdAt!: Date
+  @text('thread_id') threadId: string
+  @text('content') content: string
+  @date('created_at') createdAt: Date
   
-  @text('sender_id') senderId!: string
-  @relation('users', 'sender_id') sender!: any
+  @text('sender_id') senderId: string
+  @relation('users', 'sender_id') sender: any
 }
