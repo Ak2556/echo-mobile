@@ -50,7 +50,7 @@ export function AdCard({ ad }: { ad: AdItem }) {
         <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 12 }]}>Sponsored</Text>
       </View>
 
-      <Text style={[font.title, { color: colors.text, fontSize: 18, marginBottom: 8 }]}>{ad.headline}</Text>
+      <Text style={[font.bodyBold, { color: colors.text, fontSize: 18, marginBottom: 8 }]}>{ad.headline}</Text>
       {ad.body ? (
         <Text style={[font.body, { color: colors.textSecondary, fontSize: 15, marginBottom: 16 }]} numberOfLines={3}>
           {ad.body}
@@ -65,7 +65,7 @@ export function AdCard({ ad }: { ad: AdItem }) {
         />
       ) : null}
 
-      <View style={{ backgroundColor: colors.accent, paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.button, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ backgroundColor: colors.accent, paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.full, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
         <Text style={[font.bodyBold, { color: '#000', fontSize: 15, marginRight: 6 }]}>{ad.call_to_action}</Text>
         <ArrowUpRight size={16} color="#000" weight="bold" />
       </View>

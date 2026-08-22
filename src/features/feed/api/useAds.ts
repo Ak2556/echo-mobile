@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { supabase } from '../../../shared/lib/supabase';
+import { supabase } from '../../../../lib/supabase';
 import { isSupabaseRemote } from '../../../../lib/remoteConfig';
 
 export interface AdItem {
@@ -58,6 +58,7 @@ export async function trackAdClick(adId: string) {
 
 // NOTE: You must install react-native-razorpay (e.g. npm install react-native-razorpay)
 // and run npx expo prebuild for this to work natively.
+// @ts-ignore
 import RazorpayCheckout from 'react-native-razorpay';
 
 export async function createAndPayAd(adData: Partial<AdItem>, amountInINR: number) {
