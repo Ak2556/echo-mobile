@@ -5,6 +5,7 @@ import {
   ActivityIndicator, Alert, Linking, Dimensions,
 } from 'react-native';
 import withObservables from '@nozbe/with-observables';
+import { of } from 'rxjs';
 import { database } from '../../src/shared/database';
 import MessageModel from '../../src/shared/database/models/Message';
 import { Q } from '@nozbe/watermelondb';
@@ -3557,16 +3558,92 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           );
         }}
       />
+
+      <Modal visible={capsuleModalOpen} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 24, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+              <Hourglass color={colors.accent} size={24} weight="bold" />
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>Time Capsule</Text>
+            </View>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>
+              Write a message that will remain locked until the future date you choose.
+            </Text>
+            
+            <RNTextInput
+              style={{ backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', color: colors.text, padding: 16, borderRadius: 16, fontSize: 16, minHeight: 100, marginBottom: 20 }}
+              placeholder="What do you want to say to the future?"
+              placeholderTextColor={colors.textMuted}
+              multiline
+              value={capsuleText}
+              onChangeText={setCapsuleText}
+            />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 }}>
+              {[1, 7, 30, 365].map(days => (
+                <Pressable
+                  key={days}
+                  onPress={() => setCapsuleDurationDays(days)}
+                  style={{
+                    paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12,
+                    backgroundColor: capsuleDurationDays === days ? colors.accent : (colors.isDark ? '#333' : '#eee')
+                  }}
+                >
+                  <Text style={{ color: capsuleDurationDays === days ? '#fff' : colors.text, fontWeight: '700', fontSize: 13 }}>
+                    {days === 1 ? '1 day' : days === 7 ? '1 week' : days === 30 ? '1 month' : '1 year'}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable style={{ flex: 1, padding: 14, borderRadius: 16, backgroundColor: colors.isDark ? '#333' : '#eee', alignItems: 'center' }} onPress={() => setCapsuleModalOpen(false)}>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>Cancel</Text>
+              </Pressable>
+              <Pressable 
+                style={{ flex: 1, padding: 14, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', opacity: capsuleText.trim() ? 1 : 0.5 }}
+                onPress={async () => {
+                  if (!capsuleText.trim()) return;
+                  const unlockDate = new Date();
+                  unlockDate.setDate(unlockDate.getDate() + capsuleDurationDays);
+                  const payload = { type: 'capsule', text: capsuleText.trim(), unlockAt: unlockDate.toISOString() };
+                  const content = JSON.stringify(payload);
+                  try {
+                    await fetch('https://api.echocorp.dev/v1/dms/send', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ recipientId: conversation?.userId || id, content })
+                    });
+                    setCapsuleModalOpen(false);
+                    setCapsuleText('');
+                  } catch (e) {
+                    Alert.alert('Error', 'Failed to send Time Capsule');
+                  }
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Seal & Send</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 
-const enhance = withObservables(['id'], ({ id }: DMViewProps) => ({
-  wmMessages: database.collections.get<MessageModel>('messages').query(
-    Q.where('thread_id', id || ''),
-    Q.sortBy('created_at', Q.asc)
-  ).observe()
-}));
+const enhance = withObservables(['id'], ({ id }: DMViewProps) => {
+  const coll = database.collections.get<MessageModel>('messages');
+  if (!coll) {
+    console.warn("WatermelonDB collection 'messages' is null or undefined! Bailing out.");
+    return { wmMessages: of([]) };
+  }
+  return {
+    wmMessages: coll.query(
+      Q.where('thread_id', id || ''),
+      Q.sortBy('created_at', Q.asc)
+    ).observe()
+  };
+});
 
 export const DMView = enhance(DMViewInner);
