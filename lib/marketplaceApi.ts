@@ -181,7 +181,7 @@ export async function uploadListingImages(uris: string[]): Promise<string[]> {
     const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext) ? ext : 'jpg';
     const path = `${user.id}/${Date.now()}_${i}.${safeExt}`;
 
-    const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL}/upload-url?bucket=marketplace-photos&path=${path}`, {
+    const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=marketplace-photos&path=${path}`, {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     });
     if (!workerRes.ok) throw new Error('Could not create upload URL');
