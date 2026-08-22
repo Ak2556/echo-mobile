@@ -1,3 +1,7 @@
+// ⚠ DEAD CODE. `syncDatabase()` is not called from anywhere in the app; the
+// live DM path writes plaintext via lib/supabaseEchoApi.ts. The encryption
+// below therefore never runs. See src/shared/lib/e2ee.ts for the full note.
+
 import { synchronize } from '@nozbe/watermelondb/sync';
 import { database } from './index';
 import { supabase } from '../../../lib/supabase';

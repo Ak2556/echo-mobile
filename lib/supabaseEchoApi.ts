@@ -3847,9 +3847,32 @@ export async function setRemoteBlock(targetUserId: string, block: boolean): Prom
   }
 }
 
+/**
+ * Delete the signed-in account and everything it owns.
+ *
+ * Goes through the `delete-account` edge function rather than calling the
+ * `delete_account()` RPC directly. The RPC only reaches Postgres and Supabase
+ * Storage; every uploaded file actually lives in Cloudflare R2, which the
+ * function purges first. Calling the RPC on its own would delete the account
+ * while silently orphaning the user's media.
+ *
+ * Deliberately does NOT fall back to the bare RPC on failure: a "successful"
+ * deletion that leaves photos behind is the exact outcome this replaces.
+ */
 export async function deleteAccount(): Promise<void> {
-  const { error } = await supabase.rpc('delete_account');
-  if (error) throw error;
+  const { data, error } = await supabase.functions.invoke('delete-account', {
+    body: {},
+  });
+
+  if (error) {
+    // Surface the function's own message when it sent one — it explains
+    // whether anything was deleted.
+    const detail =
+      (data as { error?: string } | null)?.error ??
+      (error as { message?: string }).message ??
+      'Account deletion failed.';
+    throw new Error(detail);
+  }
 }
 
 export async function deleteRemoteAIConversations(): Promise<void> {

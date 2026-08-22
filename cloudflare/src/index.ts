@@ -1,12 +1,21 @@
 import { Hono } from 'hono';
 import { AwsClient } from 'aws4fetch';
-import * as jwt from 'hono/jwt';
 
 type Bindings = {
-  SUPABASE_JWT_SECRET: string;
+  /** Supabase project URL. Set via `wrangler secret put SUPABASE_URL`. */
+  SUPABASE_URL: string;
+  /** Supabase publishable (anon) key. Safe to expose, but not to hardcode. */
+  SUPABASE_ANON_KEY: string;
+  /**
+   * Shared secret for POST /purge-user. Only the account-deletion edge function
+   * knows it. `wrangler secret put PURGE_SECRET`.
+   */
+  PURGE_SECRET: string;
+
   AWS_ACCESS_KEY_ID: string;
   AWS_SECRET_ACCESS_KEY: string;
   R2_ACCOUNT_ID: string;
+
   AVATARS_BUCKET: R2Bucket;
   ECHO_MEDIA_BUCKET: R2Bucket;
   DM_MEDIA_BUCKET: R2Bucket;
@@ -14,39 +23,112 @@ type Bindings = {
   MARKETPLACE_PHOTOS_BUCKET: R2Bucket;
 };
 
-const app = new Hono<{ Bindings: Bindings }>();
+type Vars = { user_id: string; access_token: string };
 
-// Middleware to verify Supabase JWT
+const app = new Hono<{ Bindings: Bindings; Variables: Vars }>();
+
+const ALLOWED_BUCKETS = ['avatars', 'echo-media', 'dm-media', 'mini-app-media', 'marketplace-photos'] as const;
+type BucketName = (typeof ALLOWED_BUCKETS)[number];
+
+function bucketBinding(env: Bindings, name: BucketName): R2Bucket {
+  switch (name) {
+    case 'avatars': return env.AVATARS_BUCKET;
+    case 'echo-media': return env.ECHO_MEDIA_BUCKET;
+    case 'dm-media': return env.DM_MEDIA_BUCKET;
+    case 'mini-app-media': return env.MINI_APP_MEDIA_BUCKET;
+    case 'marketplace-photos': return env.MARKETPLACE_PHOTOS_BUCKET;
+  }
+}
+
+/**
+ * Delete every object under `${userId}/` in one bucket.
+ * R2 lists 1000 keys at a time, so this pages until the listing is exhausted.
+ */
+async function purgePrefix(bucket: R2Bucket, prefix: string): Promise<number> {
+  let deleted = 0;
+  let cursor: string | undefined;
+  do {
+    const listing = await bucket.list({ prefix, cursor, limit: 1000 });
+    const keys = listing.objects.map(o => o.key);
+    if (keys.length) {
+      await bucket.delete(keys);
+      deleted += keys.length;
+    }
+    cursor = listing.truncated ? listing.cursor : undefined;
+  } while (cursor);
+  return deleted;
+}
+
+// ── service-to-service purge ────────────────────────────────────────────────
+// Registered BEFORE the user-auth middleware: this caller is the account
+// deletion edge function holding a shared secret, not a signed-in user.
+app.post('/purge-user', async (c) => {
+  const provided = c.req.header('X-Purge-Secret');
+  const expected = c.env.PURGE_SECRET;
+
+  if (!expected) return c.json({ error: 'Purge is not configured' }, 503);
+  // Constant-length compare; these are short strings so a plain !== leaks
+  // little, but there is no reason to be sloppy about it.
+  if (!provided || provided.length !== expected.length || provided !== expected) {
+    return c.json({ error: 'Forbidden' }, 403);
+  }
+
+  const body = await c.req
+    .json<{ user_id?: string }>()
+    .catch(() => ({}) as { user_id?: string });
+  const userId = body.user_id;
+  if (!userId || !/^[0-9a-f-]{36}$/i.test(userId)) {
+    return c.json({ error: 'A valid user_id is required' }, 400);
+  }
+
+  const prefix = `${userId}/`;
+  const result: Record<string, number> = {};
+  for (const name of ALLOWED_BUCKETS) {
+    try {
+      result[name] = await purgePrefix(bucketBinding(c.env, name), prefix);
+    } catch (err) {
+      // Report per-bucket rather than failing the whole purge — a partial
+      // purge that reports honestly is better than an opaque 500.
+      result[name] = -1;
+    }
+  }
+
+  const failed = Object.values(result).some(n => n < 0);
+  return c.json({ user_id: userId, deleted: result }, failed ? 207 : 200);
+});
+
+// ── user auth ───────────────────────────────────────────────────────────────
 app.use('*', async (c, next) => {
   const authHeader = c.req.header('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return c.json({ error: 'Missing or invalid Authorization header' }, 401);
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.slice('Bearer '.length);
+  const supabaseUrl = c.env.SUPABASE_URL;
+  const anonKey = c.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !anonKey) {
+    return c.json({ error: 'Auth is not configured' }, 503);
+  }
+
   try {
-    const supabaseUrl = 'https://eyokhisijabitzjiydmz.supabase.co';
-    const anonKey = 'sb_publishable_QpEskJHtmFlVVAJXUsBj9Q_nDPl6wP4';
-    
     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: anonKey
-      }
+      headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
     });
+    if (!userRes.ok) return c.json({ error: 'Invalid Supabase token' }, 401);
 
-    if (!userRes.ok) {
-      return c.json({ error: 'Invalid Supabase token' }, 401);
-    }
+    const user = await userRes.json<{ id?: string }>();
+    if (!user?.id) return c.json({ error: 'Invalid Supabase token' }, 401);
 
-    const user = await userRes.json();
     c.set('user_id', user.id);
+    c.set('access_token', token);
     await next();
-  } catch (e) {
+  } catch {
     return c.json({ error: 'Authentication failed' }, 401);
   }
 });
 
+// ── signed upload ───────────────────────────────────────────────────────────
 app.get('/upload-url', async (c) => {
   const bucket = c.req.query('bucket');
   const path = c.req.query('path');
@@ -55,15 +137,12 @@ app.get('/upload-url', async (c) => {
   if (!bucket || !path) {
     return c.json({ error: 'Missing bucket or path query parameters' }, 400);
   }
-
-  // Enforce RLS: users can only upload to their own directory
-  if (!path.startsWith(`${userId}/`)) {
-    return c.json({ error: 'Unauthorized path. You can only upload to your own directory.' }, 403);
-  }
-
-  const allowedBuckets = ['avatars', 'echo-media', 'dm-media', 'mini-app-media', 'marketplace-photos'];
-  if (!allowedBuckets.includes(bucket)) {
+  if (!ALLOWED_BUCKETS.includes(bucket as BucketName)) {
     return c.json({ error: 'Invalid bucket' }, 400);
+  }
+  // Users may only write inside their own directory.
+  if (!path.startsWith(`${userId}/`) || path.includes('..')) {
+    return c.json({ error: 'Unauthorized path. You can only upload to your own directory.' }, 403);
   }
 
   const r2Client = new AwsClient({
@@ -73,55 +152,89 @@ app.get('/upload-url', async (c) => {
     region: 'auto',
   });
 
-  const url = new URL(
-    `https://${c.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${bucket}/${path}`
-  );
-
-  // Generate Presigned URL for PUT
-  const signedRequest = await r2Client.sign(
-    new Request(url, {
-      method: 'PUT',
-    }),
-    {
-      aws: { signQuery: true }
-    }
-  );
-
-  // You need to set up a custom domain for R2 in Cloudflare dashboard
-  // For now, we will return a generic public URL, but you must configure R2 public access
-  // or a custom domain for avatars and echo-media.
-  const publicUrl = `https://pub-${c.env.R2_ACCOUNT_ID}.r2.dev/${path}`; // Replace with actual custom domain if set
+  const url = new URL(`https://${c.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${bucket}/${path}`);
+  const signedRequest = await r2Client.sign(new Request(url, { method: 'PUT' }), {
+    aws: { signQuery: true },
+  });
 
   return c.json({
     signedUrl: signedRequest.url,
-    publicUrl: publicUrl,
+    publicUrl: `https://pub-${c.env.R2_ACCOUNT_ID}.r2.dev/${path}`,
   });
 });
 
+// ── delete your own object ──────────────────────────────────────────────────
+app.delete('/object', async (c) => {
+  const bucket = c.req.query('bucket');
+  const path = c.req.query('path');
+  const userId = c.get('user_id');
+
+  if (!bucket || !path) return c.json({ error: 'Missing bucket or path' }, 400);
+  if (!ALLOWED_BUCKETS.includes(bucket as BucketName)) {
+    return c.json({ error: 'Invalid bucket' }, 400);
+  }
+  if (!path.startsWith(`${userId}/`) || path.includes('..')) {
+    return c.json({ error: 'You can only delete objects in your own directory.' }, 403);
+  }
+
+  await bucketBinding(c.env, bucket as BucketName).delete(path);
+  return c.json({ ok: true });
+});
+
+// ── DM media, gated on conversation membership ──────────────────────────────
 app.get('/dm-media/:userId/:filename', async (c) => {
   const currentUserId = c.get('user_id');
   const pathUserId = c.req.param('userId');
   const filename = c.req.param('filename');
-  const path = `${pathUserId}/${filename}`;
 
-  // For DMs, you'll need your own logic to determine if currentUserId can view pathUserId's media
-  // (e.g., query Supabase or check conversation membership).
-  // For simplicity here, we assume if they have the link, they can read it (signed URL approach).
-  // To truly secure it, implement conversation checks here.
-
-  const object = await c.env.DM_MEDIA_BUCKET.get(path);
-
-  if (object === null) {
-    return c.text('Not Found', 404);
+  if (filename.includes('..') || filename.includes('/')) {
+    return c.text('Bad Request', 400);
   }
+
+  // Authorization is delegated to Postgres RLS rather than reimplemented here.
+  // `dm_conversation_members` is SELECT-able only for conversations the caller
+  // belongs to, so asking — with the CALLER's own token — whether the owner is
+  // a member of anything visible answers "do we share a conversation?".
+  if (currentUserId !== pathUserId) {
+    const token = c.get('access_token');
+    const base = c.env.SUPABASE_URL;
+    const headers = { Authorization: `Bearer ${token}`, apikey: c.env.SUPABASE_ANON_KEY };
+
+    let shared = false;
+    try {
+      // Group conversations.
+      const memberRes = await fetch(
+        `${base}/rest/v1/dm_conversation_members?user_id=eq.${pathUserId}&select=conversation_id&limit=1`,
+        { headers },
+      );
+      shared = memberRes.ok && ((await memberRes.json<unknown[]>())?.length ?? 0) > 0;
+
+      // One-to-one conversations, which predate the members table.
+      if (!shared) {
+        const pairRes = await fetch(
+          `${base}/rest/v1/dm_conversations?select=id&limit=1&or=` +
+            `(and(user_a.eq.${currentUserId},user_b.eq.${pathUserId}),` +
+            `and(user_a.eq.${pathUserId},user_b.eq.${currentUserId}))`,
+          { headers },
+        );
+        shared = pairRes.ok && ((await pairRes.json<unknown[]>())?.length ?? 0) > 0;
+      }
+    } catch {
+      return c.text('Forbidden', 403);
+    }
+
+    if (!shared) return c.text('Forbidden', 403);
+  }
+
+  const object = await c.env.DM_MEDIA_BUCKET.get(`${pathUserId}/${filename}`);
+  if (object === null) return c.text('Not Found', 404);
 
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set('etag', object.httpEtag);
-
-  return new Response(object.body, {
-    headers,
-  });
+  // Private media must never be cached by a shared cache.
+  headers.set('Cache-Control', 'private, max-age=300');
+  return new Response(object.body, { headers });
 });
 
 export default app;

@@ -28,7 +28,9 @@
     "loadtest:smoke": "k6 run loadtest/smoke.js",
     "loadtest:run": "k6 run loadtest/main.js",
     "loadtest:realtime": "k6 run loadtest/realtime.js",
-    "loadtest:all": "bash loadtest/run-all.sh"
+    "loadtest:all": "bash loadtest/run-all.sh",
+    "legal:translate": "node scripts/generate-legal-translations.mjs",
+    "legal:sbom": "node scripts/generate-sbom.mjs"
   },
   "dependencies": {
     "@babel/plugin-proposal-decorators": "^7.29.7",
