@@ -558,11 +558,10 @@ export default function DiscoverScreen() {
   );
 
   const popularItemsWithAds = useMemo(() => {
-    if (!randomAd) return popularItems;
     const arr: { type: string, item: any }[] = [];
     popularItems.forEach((item, index) => {
       arr.push({ type: 'post', item });
-      if (index > 0 && index % 5 === 0) {
+      if (randomAd && index > 0 && index % 5 === 0) {
         arr.push({ type: 'ad', item: randomAd });
       }
     });
