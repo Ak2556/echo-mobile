@@ -22,7 +22,7 @@ import {
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
   Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
-  ChatCircleText, Phone, VideoCamera, Smiley,
+  ChatCircleText, Phone, VideoCamera, Smiley, Hourglass, Calendar,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -1851,6 +1851,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   const lastNewestIdRef = useRef<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [capsuleModalOpen, setCapsuleModalOpen] = useState(false);
+  const [capsuleText, setCapsuleText] = useState('');
+  const [capsuleDurationDays, setCapsuleDurationDays] = useState(7);
   const [stickerOpen, setStickerOpen] = useState(false);
   const [composerFocused, setComposerFocused] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -2018,7 +2021,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           isRead: !!m.readAt,
           deletedAt: m.deletedAt,
           editedAt: m.editedAt,
-          kind: contact ? 'contact' : m.kind,
+          kind: payload?.type === 'capsule' ? 'capsule' : (contact ? 'contact' : m.kind),
+          capsuleUnlockAt: payload?.type === 'capsule' ? payload.unlockAt : null,
           sharedEchoId: m.sharedEchoId,
           sharedEchoTitle: m.kind === 'echo'
             ? ((payload?.title as string | undefined) ?? (m.content ?? 'Shared Echo'))
@@ -3154,6 +3158,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 { key: 'gallery', label: 'Gallery', icon: <Images color={colors.accent} size={17} weight="bold" />, onPress: handlePickImage },
                 ...(!conversation?.isGroup ? [{ key: 'contact', label: 'Contact', icon: <UserCircle color={colors.accent} size={17} weight="bold" />, onPress: handleShareContact }] : []),
                 { key: 'link', label: 'Link', icon: <LinkSimple color={colors.accent} size={17} weight="bold" />, onPress: handleSendLinkFromComposer },
+                { key: 'capsule', label: 'Time Capsule', icon: <Hourglass color={colors.accent} size={17} weight="bold" />, onPress: () => { setAttachmentMenuOpen(false); setCapsuleModalOpen(true); } },
               ].map(action => (
                 <Pressable
                   key={action.key}
