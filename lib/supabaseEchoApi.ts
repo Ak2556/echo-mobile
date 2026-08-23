@@ -12,6 +12,7 @@ import { captureException } from './monitoring';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
 import { APP_LANGUAGES } from './languages';
+import { dmMediaUrl, uploadUrlEndpoint } from './workerUrl';
 
 async function translateFeedItems(items: FeedItem[]): Promise<FeedItem[]> {
   const contentLanguage = useAppStore.getState().contentLanguage;
@@ -164,7 +165,7 @@ async function signedDmMediaUrl(value: string | null | undefined): Promise<strin
   // We are using a Cloudflare worker to securely serve dm-media files.
   // Ideally, the JWT would be sent in a cookie or header for this image request.
   // For standard <Image source={{uri}}/> we can pass headers.
-  return `${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/dm-media/${path}`;
+  return dmMediaUrl(path);
 }
 
 function normalizeImageContentType(input: string | null | undefined): string {
@@ -268,7 +269,7 @@ export async function uploadAvatar(image: UploadableImage): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('No session');
 
-  const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=avatars&path=${path}`, {
+  const workerRes = await fetch(uploadUrlEndpoint('avatars', path), {
     headers: { 'Authorization': `Bearer ${session.access_token}` }
   });
   if (!workerRes.ok) throw new Error(`Could not create upload URL (${workerRes.status})`);
@@ -307,7 +308,7 @@ export async function uploadEchoImages(images: UploadableImage[]): Promise<strin
 
     const uri = typeof image === 'string' ? image : image.uri;
 
-    const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=echo-media&path=${path}`, {
+    const workerRes = await fetch(uploadUrlEndpoint('echo-media', path), {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     });
     // Without this the error body destructures to `undefined`, and the upload
@@ -353,7 +354,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('No session');
 
-  const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=echo-media&path=${path}`, {
+  const workerRes = await fetch(uploadUrlEndpoint('echo-media', path), {
     headers: { 'Authorization': `Bearer ${session.access_token}` }
   });
   if (!workerRes.ok) throw new Error(`Could not create upload URL (${workerRes.status})`);

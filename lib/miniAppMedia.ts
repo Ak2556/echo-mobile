@@ -2,6 +2,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import { isSupabaseRemote } from './remoteConfig';
 import type { MiniApp } from './miniAppSync';
+import { publicMediaUrl, uploadUrlEndpoint } from './workerUrl';
 
 const BUCKET = 'mini-app-media';
 
@@ -24,7 +25,7 @@ export async function uploadMiniAppMedia(
   const extension = sanitizeExtension(input?.extension ?? input?.fileName?.split('.').pop() ?? uri.split('?')[0].split('.').pop() ?? contentType.split('/')[1] ?? 'bin');
   const path = `${uid}/${app}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension}`;
   
-  const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=${BUCKET}&path=${path}`, {
+  const workerRes = await fetch(uploadUrlEndpoint(BUCKET, path), {
     headers: { 'Authorization': `Bearer ${sessionData.session.access_token}` }
   });
   if (!workerRes.ok) throw new Error('Could not create upload URL');
@@ -48,7 +49,7 @@ export async function uploadMiniAppMedia(
 
 export async function getMiniAppMediaUrl(path?: string | null, expiresIn = 3600): Promise<string | null> {
   if (!path || !isSupabaseRemote()) return null;
-  return `${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/${BUCKET}/${path}`;
+  return publicMediaUrl(BUCKET, path);
 }
 
 function normalizeContentType(input: string | null | undefined, uri: string, fileName?: string | null): string {
