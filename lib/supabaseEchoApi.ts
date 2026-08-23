@@ -1423,12 +1423,26 @@ export async function fetchCurrentUserProfile(): Promise<SupabaseProfileRow | nu
   return fetchRemoteProfile(uid);
 }
 
-export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
+/**
+ * Insert a comment.
+ *
+ * `clientId` makes the write idempotent: it becomes the row's primary key, so
+ * replaying the same queued comment collides instead of posting twice. The
+ * offline outbox passes its op id here — without it, a drain that runs after a
+ * request succeeded but its response was lost would duplicate the comment.
+ */
+export async function insertRemoteComment(
+  echoId: string,
+  content: string,
+  parentCommentId?: string,
+  clientId?: string,
+): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { data, error } = await supabase
     .from('echo_comments')
     .insert({
+      ...(clientId ? { id: clientId } : {}),
       echo_id: echoId,
       author_id: uid,
       content,
