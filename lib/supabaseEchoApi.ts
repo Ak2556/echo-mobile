@@ -1551,6 +1551,70 @@ export async function setPinnedEcho(echoId: string | null): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Echoes this user has reposted — the profile's "Reechoed" section.
+ *
+ * Reposts are stored as (user_id, echo_id) rows rather than duplicated echoes,
+ * so this resolves the ids and then loads the echoes with their own authors.
+ * The moderation gate is applied for the same reason the feed applies it: a
+ * repost must not become a way to surface content the feed itself would hide.
+ */
+export async function fetchRemoteRepostsByUser(userId: string): Promise<FeedItem[]> {
+  const { data: repostRows, error: repostErr } = await supabase
+    .from('echo_reposts')
+    .select('echo_id, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (repostErr) throw repostErr;
+
+  const ids = (repostRows || []).map((r: { echo_id: string }) => r.echo_id).filter(Boolean);
+  if (ids.length === 0) return [];
+
+  const { data: echoes, error } = await supabase
+    .from('public_echoes')
+    .select(ECHO_SELECT)
+    .in('id', ids)
+    .eq('check_content', true);
+  if (error) throw error;
+
+  const rows = (echoes || []) as SupabaseEchoRow[];
+  if (rows.length === 0) return [];
+
+  // Reposted echoes belong to other people, so every distinct author is needed.
+  const authorIds = Array.from(new Set(rows.map(r => r.author_id).filter(Boolean)));
+  const { data: profileRows } = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT)
+    .in('id', authorIds);
+  const profileById = new Map(
+    ((profileRows || []) as SupabaseProfileRow[]).map(pr => [pr.id, pr]),
+  );
+
+  const uid = await getSessionUserId();
+  let liked = new Set<string>();
+  let bookmarked = new Set<string>();
+  let reposted = new Set<string>();
+  if (uid) {
+    const [{ data: likeRows }, { data: bmRows }, { data: rpRows }] = await Promise.all([
+      supabase.from('echo_likes').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+      supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+      supabase.from('echo_reposts').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+    ]);
+    liked = new Set((likeRows || []).map((r: { echo_id: string }) => r.echo_id));
+    bookmarked = new Set((bmRows || []).map((r: { echo_id: string }) => r.echo_id));
+    reposted = new Set((rpRows || []).map((r: { echo_id: string }) => r.echo_id));
+  }
+
+  // `in` does not preserve order, so restore the order they were reposted in.
+  const byId = new Map(rows.map(r => [r.id, r]));
+  return ids
+    .map(id => byId.get(id))
+    .filter((r): r is SupabaseEchoRow => !!r)
+    .map(echo =>
+      mapEchoRowToFeedItem(echo, profileById.get(echo.author_id), liked, bookmarked, reposted),
+    );
+}
+
 export async function fetchRemoteEchoesByAuthor(authorId: string): Promise<FeedItem[]> {
   const { data: echoes, error } = await supabase
     .from('public_echoes')
