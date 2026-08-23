@@ -10,7 +10,7 @@
 # the router failing to resolve the initial route.
 #
 # Run locally:  maestro test e2e/ci-launch.yaml
-appId: com.ak2556.echo
+appId: com.downloadecho.echo
 ---
 - launchApp:
     clearState: true
