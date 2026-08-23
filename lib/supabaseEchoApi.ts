@@ -549,9 +549,11 @@ export async function fetchRemoteFeed(
     .order('created_at', { ascending: false })
     .limit(options.limit ?? 50);
 
-  if (options.postType === 'video') {
-    query = query.or('post_type.eq.video,video_uri.not.is.null');
-  } else if (options.postType) {
+  // public_echoes has no video_uri column — filtering on one made PostgREST
+  // reject the whole request with 42703, so the Flow tab threw instead of
+  // rendering. A post that carries video but is typed otherwise is a data
+  // problem and is corrected at write time, not worked around here.
+  if (options.postType) {
     query = query.eq('post_type', options.postType);
   }
 
