@@ -431,6 +431,8 @@ export default function DiscoverScreen() {
     if (sensitiveContentFilter) {
       result = result.filter(f => !f.hashtags?.some(tag => SENSITIVE_TAGS.has(tag.toLowerCase().replace(/^#/, ''))));
     }
+    // Videos are completely isolated to the Flow (watch) tab
+    result = result.filter(f => f.postType !== 'video' && !f.videoUri);
     return result;
   }, [feed, feedScope, followingIds, grouped.forYou, grouped.rising, sensitiveContentFilter]);
 

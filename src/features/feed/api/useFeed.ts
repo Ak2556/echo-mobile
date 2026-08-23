@@ -189,7 +189,7 @@ export function useInfiniteFeed() {
       const followSet = new Set(followingIds);
 
       const filterHidden = (list: FeedItem[]) =>
-        list.filter(item => item.postType !== 'video' && !blockSet.has(item.userId) && !skipSet.has(item.id));
+        list.filter(item => item.postType !== 'video' && !item.videoUri && !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
         // Remote pages are returned RAW here; block/mute/not-interested filtering
@@ -270,7 +270,7 @@ export function useInfiniteFeed() {
         ...data,
         pages: data.pages.map(page =>
           page.filter(item => {
-            if (item.postType === 'video') return false; // Isolate videos from home feed
+            if (item.postType === 'video' || !!item.videoUri) return false; // Isolate videos from home feed
             if (blockSet.has(item.userId) || skipSet.has(item.id)) return false;
             if (seen.has(item.id)) return false;
             seen.add(item.id);
@@ -319,7 +319,7 @@ export function useInfiniteVideoFeed() {
         if (!pageParam) {
           const localVideos = publishedEchoes
             .map(coerceFeedItem)
-            .filter(i => i.postType === 'video' && i.videoUri);
+            .filter(i => i.postType === 'video' || !!i.videoUri);
             
           const remoteIds = new Set(remoteFeed.map(r => r.id));
           const newLocals = localVideos.filter(l => !remoteIds.has(l.id));
@@ -332,7 +332,7 @@ export function useInfiniteVideoFeed() {
 
       // Local fallback
       let merged = [...publishedEchoes.map(coerceFeedItem), ...LOCAL_SEED_FEED]
-        .filter(i => i.postType === 'video' && i.videoUri);
+        .filter(i => i.postType === 'video' || !!i.videoUri);
 
       merged = filterHidden(merged);
       merged.sort((a, b) => a.createdAt > b.createdAt ? -1 : 1);
