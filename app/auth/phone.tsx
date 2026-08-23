@@ -171,7 +171,7 @@ export default function PhoneAuthScreen() {
                   ref={phoneRef}
                   value={phoneRaw}
                   onChangeText={setPhoneRaw}
-                  placeholder="+1 555 123 4567"
+                  placeholder="+91 98765 43210"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="phone-pad"
                   returnKeyType="send"
