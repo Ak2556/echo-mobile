@@ -34,17 +34,17 @@ export const COURTS_VENUE = '[[COURTS / VENUE]]';
  * Rule 3(2). Name, designation and contact must be published on the service.
  */
 export const GRIEVANCE_OFFICER_NAME = '[[GRIEVANCE OFFICER NAME]]';
-export const GRIEVANCE_OFFICER_EMAIL = 'grievance@echo.app';
+export const GRIEVANCE_OFFICER_EMAIL = 'grievance@downloadecho.com';
 
 /**
  * Data Protection Officer / contact for DPDP Act 2023 requests. May be the
  * same person as the Grievance Officer for a company of Echo's size.
  */
-export const DPO_EMAIL = 'privacy@echo.app';
+export const DPO_EMAIL = 'privacy@downloadecho.com';
 
 /** General support and the DSA point of contact. */
-export const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? 'support@echo.app';
-export const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL ?? 'dsa@echo.app';
+export const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? 'support@downloadecho.com';
+export const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL ?? 'dsa@downloadecho.com';
 
 /**
  * True once every placeholder above has been replaced. Guards the pre-launch
