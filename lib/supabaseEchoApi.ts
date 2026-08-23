@@ -12,7 +12,7 @@ import { captureException } from './monitoring';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
 import { APP_LANGUAGES } from './languages';
-import { dmMediaUrl, uploadUrlEndpoint } from './workerUrl';
+import { WORKER_URL, dmMediaUrl, uploadUrlEndpoint } from './workerUrl';
 
 async function translateFeedItems(items: FeedItem[]): Promise<FeedItem[]> {
   const contentLanguage = useAppStore.getState().contentLanguage;
@@ -190,6 +190,60 @@ async function imageUploadBody(image: UploadableImage): Promise<Blob | ArrayBuff
 
   const response = await fetch(uri);
   return response.blob();
+}
+
+/**
+ * Upload DM media to R2 through the worker.
+ *
+ * DM attachments used to go to Supabase Storage while `signedDmMediaUrl` handed
+ * the client a worker URL backed by R2 — two different stores, so every DM image
+ * and voice note read 404'd. R2 is also the only store `delete-account` purges,
+ * so media written anywhere else outlives the account that produced it.
+ *
+ * Works on web and native: FileSystem.uploadAsync has no web implementation, so
+ * the browser path PUTs a blob instead.
+ */
+async function uploadDmMediaToR2(uri: string, path: string, contentType: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('No session');
+
+  const res = await fetch(uploadUrlEndpoint(DM_MEDIA_BUCKET, path), {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  if (!res.ok) throw new Error(`Could not create upload URL (${res.status})`);
+  const { signedUrl } = await res.json();
+  if (!signedUrl) throw new Error('Upload URL was missing from the response');
+
+  if (Platform.OS === 'web') {
+    const body = await (await fetch(uri)).blob();
+    const put = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      body,
+    });
+    if (!put.ok) throw new Error(`Upload failed (${put.status})`);
+    return;
+  }
+
+  const result = await FileSystem.uploadAsync(signedUrl, uri, {
+    httpMethod: 'PUT',
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
+    headers: { 'content-type': contentType },
+  });
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(result.body || `Upload failed (${result.status})`);
+  }
+}
+
+/** Remove an orphaned DM object after the message row failed to insert. */
+async function deleteDmMediaFromR2(path: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  await fetch(
+    `${WORKER_URL}/object?bucket=${DM_MEDIA_BUCKET}&path=${encodeURIComponent(path)}`,
+    { method: 'DELETE', headers: { Authorization: `Bearer ${session.access_token}` } },
+  ).catch(() => undefined);
 }
 
 async function uploadLocalFileWithSignedUrl(
@@ -3234,19 +3288,10 @@ export async function sendDMImageToConversation(
   const ext = imageExtFromContentType(contentType);
   const path = `${uid}/${conversationId}/${Date.now()}.${ext}`;
 
-  if (Platform.OS === 'web') {
-    const response = await fetch(uri);
-    const body = await response.blob();
-    const { error: upErr } = await supabase.storage
-      .from(DM_MEDIA_BUCKET)
-      .upload(path, body, { contentType, cacheControl: '31536000' });
-    if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
-  } else {
-    try {
-      await uploadLocalFileWithSignedUrl(uri, path, contentType, DM_MEDIA_BUCKET);
-    } catch (upErr: any) {
-      throw new Error(`Image upload failed: ${upErr.message}`);
-    }
+  try {
+    await uploadDmMediaToR2(uri, path, contentType);
+  } catch (upErr: any) {
+    throw new Error(`Image upload failed: ${upErr.message}`);
   }
 
   const trimmedCaption = caption?.trim();
@@ -3259,7 +3304,7 @@ export async function sendDMImageToConversation(
     });
   } catch (e) {
     // Message row failed after the upload — remove the orphaned media.
-    await supabase.storage.from(DM_MEDIA_BUCKET).remove([path]).catch(() => {});
+    await deleteDmMediaFromR2(path);
     throw e;
   }
 }
@@ -3285,19 +3330,10 @@ export async function sendDMVoiceToConversation(
   if (!uid) throw new Error('Not signed in');
 
   const path = `${uid}/${conversationId}/${Date.now()}.m4a`;
-  if (Platform.OS === 'web') {
-    const response = await fetch(uri);
-    const body = await response.blob();
-    const { error: upErr } = await supabase.storage
-      .from(DM_MEDIA_BUCKET)
-      .upload(path, body, { contentType: 'audio/mp4', cacheControl: '31536000' });
-    if (upErr) throw new Error(`Voice upload failed: ${upErr.message}`);
-  } else {
-    try {
-      await uploadLocalFileWithSignedUrl(uri, path, 'audio/mp4', DM_MEDIA_BUCKET);
-    } catch (upErr: any) {
-      throw new Error(`Voice upload failed: ${upErr.message}`);
-    }
+  try {
+    await uploadDmMediaToR2(uri, path, 'audio/mp4');
+  } catch (upErr: any) {
+    throw new Error(`Voice upload failed: ${upErr.message}`);
   }
 
   try {
@@ -3308,7 +3344,7 @@ export async function sendDMVoiceToConversation(
       replyToId,
     });
   } catch (e) {
-    await supabase.storage.from(DM_MEDIA_BUCKET).remove([path]).catch(() => {});
+    await deleteDmMediaFromR2(path);
     throw e;
   }
 }

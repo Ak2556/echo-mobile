@@ -221,12 +221,16 @@ app.delete('/object', async (c) => {
 });
 
 // ── DM media, gated on conversation membership ──────────────────────────────
-app.get('/dm-media/:userId/:filename', async (c) => {
+// Keys are `${senderId}/${conversationId}/${timestamp}.ext` — three segments.
+// This route matched `:userId/:filename` and rejected a filename containing a
+// slash, so it could never match a real key. `{.+}` spans the remainder.
+app.get('/dm-media/:userId/:key{.+}', async (c) => {
   const currentUserId = c.get('user_id');
   const pathUserId = c.req.param('userId');
-  const filename = c.req.param('filename');
+  const filename = c.req.param('key');
 
-  if (filename.includes('..') || filename.includes('/')) {
+  // Traversal is still refused; only the segment count changed.
+  if (filename.includes('..')) {
     return c.text('Bad Request', 400);
   }
 
