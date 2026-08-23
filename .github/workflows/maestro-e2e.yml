@@ -128,17 +128,47 @@ jobs:
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
+      # `target: default` is an AOSP image, deliberately. On google_apis the run
+      # failed with "Pixel Launcher isn't responding" filling the screen — the
+      # launcher ANR'd under software rendering while Play services were still
+      # starting, so the app never came to the foreground and the flow failed on
+      # an assertion that had nothing to do with the app. AOSP ships neither
+      # Pixel Launcher nor GMS.
+      #
+      # Nothing in the cold-launch path needs Play services: push registration
+      # is only called from signed-in surfaces, and there is no
+      # googleServicesFile, so FCM is not configured on this build regardless.
+      # If a future flow signs in with Google, it will need google_apis back.
+      #
+      # pixel_2 over pixel_6 for the same reason — fewer pixels to render in
+      # software is less for a headless emulator to do.
       - name: Run Maestro on an emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: google_apis
+          target: default
           arch: x86_64
-          profile: pixel_6
+          profile: pixel_2
+          cores: 4
           ram-size: 4096M
+          heap-size: 1024M
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-spellchecker: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -camera-back none
           script: |
+            # The action returns once the emulator answers adb, which is earlier
+            # than the system being settled. Installing and driving the UI while
+            # package manager and the launcher are still starting is what
+            # produced the ANR.
+            adb wait-for-device
+            timeout 300 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done'
+            timeout 120 adb shell 'while [ -n "$(pm path android 2>/dev/null; echo)" ] && ! pm list packages >/dev/null 2>&1; do sleep 2; done' || true
+            sleep 15
+
+            adb shell input keyevent KEYCODE_WAKEUP || true
+            adb shell wm dismiss-keyguard || true
+
             adb install -r android/app/build/outputs/apk/release/app-release.apk
             maestro test e2e/ci-launch.yaml --format junit --output maestro-report.xml
 
