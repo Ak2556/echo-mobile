@@ -1,11 +1,18 @@
-// ⚠ DEAD CODE. `syncDatabase()` is not called from anywhere in the app; the
-// live DM path writes plaintext via lib/supabaseEchoApi.ts. The encryption
-// below therefore never runs. See src/shared/lib/e2ee.ts for the full note.
+// Offline sync for direct messages (WatermelonDB <-> Supabase).
+//
+// Live: app/_layout.tsx calls useDatabaseSync(), which runs this on mount and
+// again whenever the app returns to the foreground.
+//
+// The client-side encryption that used to live here was removed on 2026-08-23.
+// It could never work — it read sender keys from `public.users`, a table no
+// migration creates, so the lookup always came back empty and every message
+// fell through to plaintext anyway. Echo's chosen model is transport and
+// at-rest encryption with server-held keys (see Privacy Policy s14), not
+// end-to-end, so the honest thing is to not pretend otherwise here.
 
 import { synchronize } from '@nozbe/watermelondb/sync';
 import { database } from './index';
 import { supabase } from '../../../lib/supabase';
-import { encryptMessage, decryptMessage, getUserPublicKey } from '../lib/e2ee';
 
 export async function syncDatabase() {
   await synchronize({
@@ -24,34 +31,18 @@ export async function syncDatabase() {
         .select('*, dm_conversations!inner(user_a, user_b)')
         .gt('created_at', timestamp);
 
-      const decryptedMessages = [];
-      
+      const pulledMessages = [];
+
       if (rawMessages && rawMessages.length > 0) {
-        // Find the sender public keys
-        const userIds = new Set<string>();
-        rawMessages.forEach(m => userIds.add(m.sender_id));
-        
-        const { data: profiles } = await supabase
-          .from('users')
-          .select('id, public_key')
-          .in('id', Array.from(userIds));
-          
-        const publicKeys = new Map<string, string>();
-        profiles?.forEach(p => p.public_key && publicKeys.set(p.id, p.public_key));
-
         for (const m of rawMessages) {
-          let content = m.text;
-          
-          // E2EE Decryption Attempt
-          if (content && content.startsWith('E2EE:')) {
-            const senderPubKey = publicKeys.get(m.sender_id);
-            if (senderPubKey) {
-              const decrypted = await decryptMessage(content.replace('E2EE:', ''), senderPubKey);
-              if (decrypted) content = decrypted;
-            }
-          }
+          // Rows written by the old encryption attempt carry an "E2EE:" prefix
+          // over ciphertext nobody holds a key for. Show them as unavailable
+          // rather than rendering the raw base64 as if it were the message.
+          const content = typeof m.text === 'string' && m.text.startsWith('E2EE:')
+            ? '[This message can no longer be displayed]'
+            : m.text;
 
-          decryptedMessages.push({
+          pulledMessages.push({
             id: m.id,
             thread_id: m.conversation_id,
             sender_id: m.sender_id,
@@ -64,7 +55,7 @@ export async function syncDatabase() {
       return {
         changes: {
           messages: {
-            created: decryptedMessages,
+            created: pulledMessages,
             updated: [],
             deleted: [], // Handling deletions later
           },
@@ -80,38 +71,23 @@ export async function syncDatabase() {
 
       if ((changes as any).messages.created.length > 0) {
         // E2EE Encryption for outgoing messages
-        const encryptedInserts = [];
+        const inserts = [];
         for (const m of (changes as any).messages.created as any[]) {
           // We need the recipient ID to encrypt it.
           // Since we only have thread_id (conversation_id) in the model, we fetch the conversation to find the recipient
-          const { data: conv } = await supabase
-            .from('dm_conversations')
-            .select('user_a, user_b')
-            .eq('id', m.thread_id)
-            .single();
-            
-          let finalContent = m.content;
-          
-          if (conv) {
-            const recipientId = conv.user_a === userId ? conv.user_b : conv.user_a;
-            const recipientKey = await getUserPublicKey(recipientId);
-            
-            if (recipientKey) {
-              const encrypted = await encryptMessage(m.content, recipientKey);
-              finalContent = `E2EE:${encrypted}`;
-            }
-          }
-          
-          encryptedInserts.push({
+          inserts.push({
             id: m.id,
             conversation_id: m.thread_id,
             sender_id: m.sender_id,
-            text: finalContent,
+            text: m.content,
             kind: 'text',
           });
         }
-        
-        await supabase.from('direct_messages').insert(encryptedInserts);
+
+        const { error } = await supabase.from('direct_messages').insert(inserts);
+        // Surface the failure instead of swallowing it: a silent loss here
+        // means a message the user watched send never actually left the device.
+        if (error) throw error;
       }
     },
   });
