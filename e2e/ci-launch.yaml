@@ -1,0 +1,43 @@
+# Cold-launch smoke, for CI.
+#
+# The other flows in this directory assume a signed-in session and seeded data,
+# which CI cannot have — sign-in is a one-time code sent to a real inbox. This
+# flow deliberately asserts only what is true on a fresh install, so it can run
+# unattended on every pull request.
+#
+# That still catches the failures E2E is actually for: the JS bundle not
+# building, a native module missing from the prebuild, a crash on launch, or
+# the router failing to resolve the initial route.
+#
+# Run locally:  maestro test e2e/ci-launch.yaml
+appId: com.ak2556.echo
+---
+- launchApp:
+    clearState: true
+
+# With no session, app/index.tsx redirects to /auth/login. Reaching this at all
+# means the bundle loaded, the native side booted and expo-router resolved.
+# The Google button label is hardcoded English (login.tsx), so it does not move
+# with the device locale the way the i18n strings do. The regex covers both
+# "Sign up with Google" and "Log in with Google", since the screen remembers
+# which mode it was last in.
+- assertVisible:
+    text: ".*with Google.*"
+    timeout: 30000
+
+- takeScreenshot: e2e/shots/ci-launch
+
+# The legal routes are reachable without an account and are a store-review
+# requirement, so they are worth guarding.
+- tapOn: "Terms"
+- assertVisible:
+    text: "Terms of Service"
+    timeout: 15000
+- takeScreenshot: e2e/shots/ci-terms
+- back
+
+- tapOn: "Privacy"
+- assertVisible:
+    text: "Privacy Policy"
+    timeout: 15000
+- takeScreenshot: e2e/shots/ci-privacy

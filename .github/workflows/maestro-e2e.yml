@@ -1,46 +1,132 @@
 name: Android E2E Tests (Maestro)
 
+# WHAT CHANGED AND WHY (2026-08-23)
+#
+# This workflow had never passed. Three things were wrong:
+#
+#   1. It built with `expo run:android`, which builds AND installs AND launches
+#      on a device. GitHub runners have no device, so it died at
+#      "No Android connected device found" before any test ran. Building an APK
+#      does not need a device — prebuild + `gradlew assembleDebug` does it.
+#
+#   2. It uploaded to Maestro Cloud using MAESTRO_CLOUD_API_KEY, a secret that
+#      is not configured on this repository. Even with a working build, the
+#      step would have failed. Maestro now runs locally on a CI emulator, which
+#      needs no account.
+#
+#   3. It pointed at .maestro/smoke-test.yaml, which was fiction: it declared
+#      appId com.echo.app (the real id is com.ak2556.echo, so the app could
+#      never launch) and drove a password login screen that does not exist —
+#      Echo signs in with a one-time code. That file has been deleted.
+#
+# The flow it runs now asserts only what is true on a fresh install, because CI
+# cannot complete an OTP sign-in. See e2e/ci-launch.yaml.
+
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
+    paths:
+      # Skip the ~20 minute Android build for changes that cannot affect it.
+      - 'app/**'
+      - 'components/**'
+      - 'src/**'
+      - 'lib/**'
+      - 'constants/**'
+      - 'assets/**'
+      - 'e2e/**'
+      - 'app.json'
+      - 'app.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/maestro-e2e.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: maestro-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     name: Run Maestro E2E
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    timeout-minutes: 45
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: zulu
           java-version: '17'
 
-      # We assume the app is built, or we build a dev client for UI testing.
-      # Since building an APK from scratch takes 20 mins, we build a local android debug APK.
-      - name: Build Android Debug APK
-        run: npx expo run:android --variant debug
-        env:
-          EXPO_NO_TELEMETRY: 1
-          CI: 1
-
-      # Run Maestro Cloud or local Maestro via an action
-      # For open-source, mobile.dev provides a maestro-cloud action
-      - name: Run Maestro Cloud Tests
-        uses: mobile-dev-inc/action-maestro-cloud@v1
+      - name: Cache Gradle
+        uses: actions/cache@v4
         with:
-          api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
-          app-file: android/app/build/outputs/apk/debug/app-debug.apk
-          workspace: .maestro
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json', 'app.json') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      # android/ is gitignored prebuild output, so it has to be generated here.
+      - name: Prebuild Android project
+        run: npx expo prebuild --platform android --no-install
+        env:
+          EXPO_NO_TELEMETRY: '1'
+
+      # Builds the APK without needing a device attached.
+      - name: Assemble debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        working-directory: android
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run Maestro on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            maestro test e2e/ci-launch.yaml --format junit --output maestro-report.xml
+
+      # Screenshots and the Maestro log are the only way to tell a real UI
+      # regression from a flaky emulator, so keep them either way.
+      - name: Upload Maestro artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-results
+          path: |
+            maestro-report.xml
+            e2e/shots/
+            ~/.maestro/tests/
+          if-no-files-found: ignore
+          retention-days: 14
