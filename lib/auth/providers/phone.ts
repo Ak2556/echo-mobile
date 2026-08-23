@@ -1,6 +1,7 @@
 import { supabase } from '../../supabase';
 import type { ProviderResult } from '../types';
 import { withAuthTimeout } from '../timeout';
+import { isValidE164, normalizeE164 } from '../phoneNumber';
 
 /**
  * Phone OTP sign-in.
@@ -10,23 +11,18 @@ import { withAuthTimeout } from '../timeout';
  *
  * Requirements (one-time, user-side):
  *   - Supabase → Auth → Providers → Phone: enabled + Twilio (or other) wired
+ *   - India: DLT registration (entity, sender header, message templates).
+ *     Indian carriers block unregistered A2P SMS, so this cannot ship until
+ *     the operating entity exists.
  *
- * Caller is responsible for normalizing the phone to E.164 (+15551234567).
+ * Input is normalised to E.164 here; see ../phoneNumber.
  */
-
-function normalizeE164(phone: string): string {
-  const trimmed = phone.trim();
-  // If it already starts with +, keep as-is (just strip spaces/dashes).
-  if (trimmed.startsWith('+')) return trimmed.replace(/[\s\-()]/g, '');
-  // Otherwise strip non-digits and assume US country code as a fallback.
-  const digits = trimmed.replace(/\D/g, '');
-  return digits.length === 10 ? `+1${digits}` : `+${digits}`;
-}
 
 export async function sendPhoneOtp(phone: string): Promise<ProviderResult & { phone: string }> {
   const e164 = normalizeE164(phone);
-  if (e164.length < 8) {
-    return { error: 'Enter a valid phone number.', phone: e164 };
+  // Every OTP is a paid SMS, so reject what cannot be delivered before sending.
+  if (!isValidE164(e164)) {
+    return { error: 'Enter a valid mobile number.', phone: e164 };
   }
   // Generate fallback metadata to prevent the "Database error saving new user" trigger crash
   const username = `user_${e164.replace(/\D/g, '')}_${Math.floor(Math.random() * 10000)}`;
