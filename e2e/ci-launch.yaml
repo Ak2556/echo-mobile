@@ -32,6 +32,16 @@ appId: com.downloadecho.echo
 
 - takeScreenshot: e2e/shots/ci-launch
 
+# First launch asks for analytics consent, and the sheet sits on top of the
+# login screen — the Terms tap underneath it silently did nothing until this
+# was here. Conditional so the flow still passes if the sheet is ever moved,
+# and "No thanks" because CI should not be posting analytics events.
+- runFlow:
+    when:
+      visible: "Help us improve Echo"
+    commands:
+      - tapOn: "No thanks"
+
 # The legal routes are reachable without an account and are a store-review
 # requirement, so they are worth guarding. These labels come from i18n
 # (auth.terms / auth.privacy) and resolve to "Terms" and "Privacy." in English,
