@@ -174,7 +174,7 @@ These are real, current, and would otherwise cost you an afternoon.
 
 - **`android/` and `ios/` are generated.** They're prebuild output and gitignored. Change `app.json`, never the native projects.
 - **Echo does not have end-to-end encrypted messaging.** `src/shared/lib/e2ee.ts` implements a keypair, but nothing calls it and the live DM path writes plaintext. Both files carry banners saying so. Please don't describe Echo as end-to-end encrypted.
-- **Offline works, but not via WatermelonDB.** The real mechanism is TanStack Query persisted to MMKV with a seven-day window, plus AsyncStorage and server sync for mini-apps. The WatermelonDB models exist but nothing writes to them.
+- **Offline has two layers.** WatermelonDB backs direct messages — `useDatabaseSync()` runs from `app/_layout.tsx` on mount and on foreground. Everything else relies on TanStack Query persisted to MMKV with a seven-day window, plus AsyncStorage and server sync for mini-apps.
 - **The feed is ranked**, not chronological — follows, engagement and content embeddings. A chronological **Latest** tab is the alternative.
 - **Account deletion goes through the `delete-account` edge function**, not the `delete_account()` RPC. The RPC only reaches Postgres; media lives in R2 and has to be purged first.
 - **The mini-app catalog is the source of truth** for what ships. `lib/miniAppCatalog.ts`.
