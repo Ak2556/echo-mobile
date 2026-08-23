@@ -139,7 +139,7 @@ function AuthGuard() {
 
 /**
  * Universal-link router. Listens for inbound deep links that match the
- * echo.app domain and pushes to the right in-app route. Auth callbacks
+ * downloadecho.com domain and pushes to the right in-app route. Auth callbacks
  * (echo://auth/callback?code=…) are handled by AuthListenerProvider, NOT
  * here — keeping the two responsibilities cleanly split.
  */

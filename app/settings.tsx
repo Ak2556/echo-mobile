@@ -42,8 +42,8 @@ import { APP_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguag
 import { useI18n , ttx } from '../src/shared/lib/i18n';
 import { speak } from '../lib/tts';
 
-const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@echo.app';
-const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@echo.app';
+const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@downloadecho.com';
+const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@downloadecho.com';
 type SettingsGroup = 'all' | 'essentials' | 'privacy' | 'display' | 'feed' | 'ai' | 'data' | 'support';
 
 function openTrustedExternalUrl(url: string): void {

@@ -1,12 +1,12 @@
 function launchHost() {
   const rawBaseUrl = process.env.EXPO_PUBLIC_WEB_BASE_URL;
-  if (!rawBaseUrl) return 'echo.app';
+  if (!rawBaseUrl) return 'downloadecho.com';
 
   try {
     const parsed = new URL(rawBaseUrl);
-    return parsed.protocol === 'https:' && parsed.hostname ? parsed.hostname : 'echo.app';
+    return parsed.protocol === 'https:' && parsed.hostname ? parsed.hostname : 'downloadecho.com';
   } catch {
-    return 'echo.app';
+    return 'downloadecho.com';
   }
 }
 
