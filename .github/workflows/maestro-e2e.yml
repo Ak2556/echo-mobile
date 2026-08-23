@@ -19,6 +19,12 @@ name: Android E2E Tests (Maestro)
 #      never launch) and drove a password login screen that does not exist —
 #      Echo signs in with a one-time code. That file has been deleted.
 #
+#   4. It built the debug variant. With expo-dev-client installed, a debug APK
+#      boots into the dev launcher and waits for Metro, so in CI the app never
+#      renders itself at all — the first run that got this far showed
+#      "Development Build / Start a local development server" until the
+#      assertion timed out. Release builds bundle the JS and launch standalone.
+#
 # The flow it runs now asserts only what is true on a fresh install, because CI
 # cannot complete an OTP sign-in. See e2e/ci-launch.yaml.
 
@@ -82,9 +88,14 @@ jobs:
         env:
           EXPO_NO_TELEMETRY: '1'
 
-      # Builds the APK without needing a device attached.
-      - name: Assemble debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+      # Release, not debug. expo-dev-client makes a debug APK boot into the
+      # dev launcher and wait for a Metro server, which CI does not run — the
+      # app just sits on "Start a local development server" forever. A release
+      # build bundles the JS, so it launches standalone. React Native's Gradle
+      # template signs release with the debug keystore, so this needs no
+      # secrets.
+      - name: Assemble release APK
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
         working-directory: android
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
@@ -114,7 +125,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r android/app/build/outputs/apk/release/app-release.apk
             maestro test e2e/ci-launch.yaml --format junit --output maestro-report.xml
 
       # Screenshots and the Maestro log are the only way to tell a real UI
