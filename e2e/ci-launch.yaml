@@ -9,6 +9,10 @@
 # building, a native module missing from the prebuild, a crash on launch, or
 # the router failing to resolve the initial route.
 #
+# Note on syntax: waits use `extendedWaitUntil`, which takes a timeout.
+# `assertVisible` does not accept one — passing it fails the whole flow with
+# "Unknown Property: timeout" before a single step runs.
+#
 # Run locally:  maestro test e2e/ci-launch.yaml
 appId: com.downloadecho.echo
 ---
@@ -17,27 +21,30 @@ appId: com.downloadecho.echo
 
 # With no session, app/index.tsx redirects to /auth/login. Reaching this at all
 # means the bundle loaded, the native side booted and expo-router resolved.
-# The Google button label is hardcoded English (login.tsx), so it does not move
-# with the device locale the way the i18n strings do. The regex covers both
-# "Sign up with Google" and "Log in with Google", since the screen remembers
-# which mode it was last in.
-- assertVisible:
-    text: ".*with Google.*"
-    timeout: 30000
+# The Google button label is hardcoded English in login.tsx, so it does not
+# move with the device locale the way the i18n strings do. The regex covers
+# both "Sign up with Google" and "Log in with Google", since the screen
+# remembers which mode it was last in. Generous timeout: a debug bundle on a
+# cold emulator is slow to first paint.
+- extendedWaitUntil:
+    visible: ".*with Google.*"
+    timeout: 60000
 
 - takeScreenshot: e2e/shots/ci-launch
 
 # The legal routes are reachable without an account and are a store-review
-# requirement, so they are worth guarding.
+# requirement, so they are worth guarding. These labels come from i18n
+# (auth.terms / auth.privacy) and resolve to "Terms" and "Privacy." in English,
+# which is what a CI emulator runs.
 - tapOn: "Terms"
-- assertVisible:
-    text: "Terms of Service"
-    timeout: 15000
+- extendedWaitUntil:
+    visible: "Terms of Service"
+    timeout: 20000
 - takeScreenshot: e2e/shots/ci-terms
 - back
 
 - tapOn: "Privacy"
-- assertVisible:
-    text: "Privacy Policy"
-    timeout: 15000
+- extendedWaitUntil:
+    visible: "Privacy Policy"
+    timeout: 20000
 - takeScreenshot: e2e/shots/ci-privacy
