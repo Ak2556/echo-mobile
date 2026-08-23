@@ -10,6 +10,8 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { useI18n } from '../../src/shared/lib/i18n';
 import { SpeakButton } from '../ui/SpeakButton';
 import { submitDailyAnswer, type DailyQuestion } from '../../lib/supabaseEchoApi';
+import { isAppOnline } from '../../lib/net';
+import { outbox } from '../../store/outbox';
 import { track } from '../../src/shared/lib/analytics';
 
 export const MAX_ANSWER_LENGTH = 600;
@@ -63,10 +65,18 @@ export function DailyQuestionComposer({
     setSubmitting(true);
     try {
       if (persist) {
-        await submitDailyAnswer(question.id, answer);
+        // The daily question is the retention loop; losing an answer to a bad
+        // signal is the one failure most likely to stop someone coming back.
+        // Queue it instead. submitDailyAnswer upserts on (user, question), so
+        // a replay is naturally idempotent.
+        if (isAppOnline()) {
+          await submitDailyAnswer(question.id, answer);
+        } else {
+          outbox.enqueue('dailyAnswer', { questionId: question.id, answer });
+        }
         track('daily_answer_submitted', { question_id: question.id, is_update: answered, length: answer.length });
       }
-      showToast(t('daily.answerSaved'), '✅');
+      showToast(t('daily.answerSaved'));
       onSubmitted?.(answer);
     } catch (e) {
       Alert.alert(t('daily.submitFailed'), (e as Error).message);

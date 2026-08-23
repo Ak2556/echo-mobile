@@ -271,6 +271,7 @@ export async function uploadAvatar(image: UploadableImage): Promise<string> {
   const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=avatars&path=${path}`, {
     headers: { 'Authorization': `Bearer ${session.access_token}` }
   });
+  if (!workerRes.ok) throw new Error(`Could not create upload URL (${workerRes.status})`);
   const { signedUrl, publicUrl } = await workerRes.json();
 
   const body = await imageUploadBody(image);
@@ -309,6 +310,10 @@ export async function uploadEchoImages(images: UploadableImage[]): Promise<strin
     const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=echo-media&path=${path}`, {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     });
+    // Without this the error body destructures to `undefined`, and the upload
+    // proceeds to FileSystem.uploadAsync(undefined, …) — a native call with no
+    // URL — or pushes an undefined publicUrl into the post.
+    if (!workerRes.ok) throw new Error(`Could not create upload URL (${workerRes.status})`);
     const { signedUrl, publicUrl } = await workerRes.json();
 
     if (/^https?:\/\//i.test(uri)) {
@@ -351,6 +356,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
   const workerRes = await fetch(`${process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || "https://echo-mobile.at3236129.workers.dev"}/upload-url?bucket=echo-media&path=${path}`, {
     headers: { 'Authorization': `Bearer ${session.access_token}` }
   });
+  if (!workerRes.ok) throw new Error(`Could not create upload URL (${workerRes.status})`);
   const { signedUrl, publicUrl } = await workerRes.json();
 
   if (/^https?:\/\//i.test(uri)) {
@@ -543,7 +549,9 @@ export async function fetchRemoteFeed(
     .order('created_at', { ascending: false })
     .limit(options.limit ?? 50);
 
-  if (options.postType) {
+  if (options.postType === 'video') {
+    query = query.or('post_type.eq.video,video_uri.not.is.null');
+  } else if (options.postType) {
     query = query.eq('post_type', options.postType);
   }
 
@@ -1423,12 +1431,26 @@ export async function fetchCurrentUserProfile(): Promise<SupabaseProfileRow | nu
   return fetchRemoteProfile(uid);
 }
 
-export async function insertRemoteComment(echoId: string, content: string, parentCommentId?: string): Promise<void> {
+/**
+ * Insert a comment.
+ *
+ * `clientId` makes the write idempotent: it becomes the row's primary key, so
+ * replaying the same queued comment collides instead of posting twice. The
+ * offline outbox passes its op id here — without it, a drain that runs after a
+ * request succeeded but its response was lost would duplicate the comment.
+ */
+export async function insertRemoteComment(
+  echoId: string,
+  content: string,
+  parentCommentId?: string,
+  clientId?: string,
+): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { data, error } = await supabase
     .from('echo_comments')
     .insert({
+      ...(clientId ? { id: clientId } : {}),
       echo_id: echoId,
       author_id: uid,
       content,

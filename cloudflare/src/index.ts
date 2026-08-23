@@ -97,6 +97,39 @@ app.post('/purge-user', async (c) => {
   return c.json({ user_id: userId, deleted: result }, failed ? 207 : 200);
 });
 
+// ── public media read ───────────────────────────────────────────────────────
+// Registered BEFORE the user-auth middleware, and deliberately so: feed images
+// and avatars are rendered by <Image source={{ uri }} />, which has no way to
+// attach an Authorization header. Before the R2 migration these lived on
+// Supabase Storage under /object/public/..., so serving them unauthenticated
+// restores the previous boundary rather than widening it.
+//
+// dm-media is deliberately absent. It stays behind /dm-media/:userId/:filename,
+// which checks conversation membership.
+const PUBLIC_READ_BUCKETS = ['avatars', 'echo-media', 'mini-app-media', 'marketplace-photos'] as const;
+
+app.get('/media/:bucket/:key{.+}', async (c) => {
+  const bucket = c.req.param('bucket');
+  const key = c.req.param('key');
+
+  if (!(PUBLIC_READ_BUCKETS as readonly string[]).includes(bucket)) {
+    // Covers both unknown buckets and dm-media, which must not be readable here.
+    return c.text('Not Found', 404);
+  }
+  if (key.includes('..')) return c.text('Bad Request', 400);
+
+  const object = await bucketBinding(c.env, bucket as BucketName).get(key);
+  if (!object) return c.text('Not Found', 404);
+
+  const headers = new Headers();
+  object.writeHttpMetadata(headers); // content-type, as stored on upload
+  headers.set('etag', object.httpEtag);
+  // Keys embed an upload timestamp and are never rewritten, so a hit is safe to
+  // cache indefinitely.
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  return new Response(object.body, { headers });
+});
+
 // ── user auth ───────────────────────────────────────────────────────────────
 app.use('*', async (c, next) => {
   const authHeader = c.req.header('Authorization');
@@ -159,7 +192,13 @@ app.get('/upload-url', async (c) => {
 
   return c.json({
     signedUrl: signedRequest.url,
-    publicUrl: `https://pub-${c.env.R2_ACCOUNT_ID}.r2.dev/${path}`,
+    // Served back through this worker's own public read route. The previous
+    // value was `https://pub-${R2_ACCOUNT_ID}.r2.dev/${path}` — a placeholder
+    // that dropped the bucket segment and used the account id where r2.dev
+    // expects a per-bucket public hash, so every URL it produced returned 401.
+    // Deriving the origin from the request keeps this correct on workers.dev
+    // and on any custom domain without a second binding to keep in sync.
+    publicUrl: `${new URL(c.req.url).origin}/media/${bucket}/${path}`,
   });
 });
 

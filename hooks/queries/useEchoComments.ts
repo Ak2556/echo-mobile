@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { fetchRemoteComments, getSessionUserId, insertRemoteComment, setRemoteCommentLike } from '../../lib/supabaseEchoApi';
-import { withTimeout } from '../../lib/net';
+import { withTimeout, isAppOnline } from '../../lib/net';
+import { outbox } from '../../store/outbox';
 import { Comment } from '../../types';
 import { appendCommentCache } from '../../lib/queryCache';
 
@@ -26,6 +27,13 @@ export function useAddRemoteComment(echoId: string | undefined) {
     mutationFn: async (input: { content: string; parentId?: string } | string) => {
       if (!echoId) throw new Error('No echo');
       const arg = typeof input === 'string' ? { content: input } : input;
+      // Offline: queue it. The optimistic comment below stays on screen and the
+      // outbox replays on reconnect, keyed by its op id so a retry cannot
+      // post the same comment twice.
+      if (!isAppOnline()) {
+        outbox.enqueue('comment', { echoId, content: arg.content, parentId: arg.parentId });
+        return;
+      }
       await withTimeout(insertRemoteComment(echoId, arg.content, arg.parentId), 20000, 'comment');
     },
     onMutate: async (input) => {
@@ -71,6 +79,7 @@ export function useToggleRemoteCommentLike(echoId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ commentId, like }: { commentId: string; like: boolean }) => {
+      if (!isAppOnline()) { outbox.enqueue('commentLike', { commentId, like }); return; }
       await setRemoteCommentLike(commentId, like);
     },
     onMutate: async ({ commentId, like }) => {
