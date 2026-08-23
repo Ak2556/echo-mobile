@@ -94,8 +94,18 @@ jobs:
       # build bundles the JS, so it launches standalone. React Native's Gradle
       # template signs release with the debug keystore, so this needs no
       # secrets.
+      # lintVital is a release-only lint gate, and it crashes here before it
+      # checks anything: "Can't initialize detector TranslationDetector …
+      # this is a bug in lint or one of the libraries it depends on". It fails
+      # inside react-native-async-storage and expo-modules-core — third-party
+      # modules, not our source — so there is no finding to fix, and it is
+      # scoped to the AGP/JDK pair the runner provides.
+      #
+      # We want an APK to drive a UI test, not a lint report. Excluding the
+      # task keeps that failure from masking real E2E results; `npm run lint`
+      # in the quality job is what actually guards our code.
       - name: Assemble release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: ./gradlew assembleRelease --no-daemon --stacktrace -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease
         working-directory: android
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
