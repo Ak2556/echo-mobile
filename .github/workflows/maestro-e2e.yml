@@ -101,6 +101,10 @@ jobs:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          # The Sentry Gradle plugin uploads source maps on release builds and
+          # fails the build without an auth token. CI does not need symbolicated
+          # stack traces, and eas.json already sets this for preview builds.
+          SENTRY_DISABLE_AUTO_UPLOAD: 'true'
 
       - name: Enable KVM for the emulator
         run: |
