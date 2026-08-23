@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -18,6 +18,8 @@ import { showToast } from '../../components/ui/Toast';
 import { LikeButton } from '../../src/features/feed/ui/LikeButton';
 import { MediaGrid } from '../../src/features/feed/ui/MediaGrid';
 import { InlineVideo } from '../../src/features/feed/ui/InlineVideo';
+import { FlowCard } from '../../src/features/feed/ui/FlowCard';
+import { useActiveVideoStore } from '../../store/useActiveVideoStore';
 import { SimilarEchoesRail } from '../../src/features/feed/ui/SimilarEchoesRail';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
@@ -41,6 +43,9 @@ export default function ThreadDetailScreen() {
   const remoteBm = useToggleRemoteBookmark();
   const startConvMut = useStartRemoteConversation();
   const [showMenu, setShowMenu] = useState(false);
+  // Echo's own full-screen video view, shown in place of the OS player.
+  const [videoFullscreen, setVideoFullscreen] = useState(false);
+  const setActiveEchoId = useActiveVideoStore(s => s.setActiveEchoId);
   // Pull the owner's profile to know whether THIS echo is currently their pin.
   const ownProfile = useRemoteProfileBundle(remote ? currentUserId : undefined);
   const myPinnedId = ownProfile.data?.pinnedEcho?.id ?? null;
@@ -79,6 +84,25 @@ export default function ThreadDetailScreen() {
     toggleBookmark(id);
     qc.invalidateQueries({ queryKey: ['feed'] });
   };
+
+  /**
+   * Open Echo's full-screen video view.
+   *
+   * FlowCard's player only runs while this echo is the active video, so the
+   * store has to be set before the view mounts and cleared when it closes —
+   * otherwise the thread's inline player and the full-screen one would both
+   * consider themselves active and play over each other.
+   */
+  const openVideoFullscreen = useCallback(() => {
+    if (!item) return;
+    setActiveEchoId(item.id);
+    setVideoFullscreen(true);
+  }, [item, setActiveEchoId]);
+
+  const closeVideoFullscreen = useCallback(() => {
+    setVideoFullscreen(false);
+    setActiveEchoId(null);
+  }, [setActiveEchoId]);
 
   if (!item) {
     return (
@@ -261,6 +285,36 @@ export default function ThreadDetailScreen() {
         return <ActionSheet visible={showMenu} onClose={() => setShowMenu(false)} subtitle={item.editorialTitle || item.prompt} actions={menuActions} />;
       })()}
 
+      {/* Echo's own full-screen video view, in place of the OS player.
+          Presented over the thread so scroll position survives, and shown
+          exclusively — no tab bar, no surrounding chrome. */}
+      <Modal
+        visible={videoFullscreen}
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={closeVideoFullscreen}
+      >
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
+          <FlowCard item={item} index={0} />
+          <Pressable
+            onPress={closeVideoFullscreen}
+            accessibilityRole="button"
+            accessibilityLabel={ttx('Close full screen')}
+            hitSlop={12}
+            style={{
+              position: 'absolute',
+              top: insets.top + 12,
+              left: 16,
+              padding: 8,
+              borderRadius: 20,
+              backgroundColor: 'rgba(0,0,0,0.55)',
+            }}
+          >
+            <ArrowLeft size={22} color="#fff" weight="bold" />
+          </Pressable>
+        </View>
+      </Modal>
+
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 58, paddingBottom: 36 }}>
         {/* Entrance choreography: the screen lifts in (fade_from_bottom on
             the stack), then media settles first and the article staggers
@@ -272,7 +326,12 @@ export default function ThreadDetailScreen() {
         ) : null}
         {item.postType === 'video' && item.videoUri ? (
           <Animated.View entering={FadeIn.duration(260)} style={{ marginBottom: 18, marginHorizontal: -8, borderRadius: 22, overflow: 'hidden' }}>
-            <InlineVideo uri={item.videoUri} height={340} qualities={item.videoQualities} />
+            <InlineVideo
+              uri={item.videoUri}
+              height={340}
+              qualities={item.videoQualities}
+              onRequestFullscreen={openVideoFullscreen}
+            />
           </Animated.View>
         ) : null}
 

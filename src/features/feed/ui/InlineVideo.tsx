@@ -14,6 +14,13 @@ interface InlineVideoProps {
   caption?: string;
   height?: number;
   qualities?: QualityOption[];
+  /**
+   * Present Echo's full-screen video view. The caller owns the presentation
+   * because it holds the FeedItem; this component only signals the intent.
+   * Omit it and the full-screen control is hidden rather than falling back to
+   * the OS player.
+   */
+  onRequestFullscreen?: () => void;
 }
 
 const SPEEDS = [0.5, 1, 1.5, 2] as const;
@@ -38,7 +45,7 @@ interface InlineVideoInnerProps extends InlineVideoProps {
   onRetry: () => void;
 }
 
-function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: InlineVideoInnerProps) {
+function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRequestFullscreen }: InlineVideoInnerProps) {
   const { colors, radius, fontSizes } = useTheme();
   const videoRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
@@ -108,7 +115,21 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
   const toggleMute = () => { try { setMuted(m => !m); } catch {} };
   const toggleLoop = () => setLoop(l => !l);
   const cycleSpeed = () => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]);
-  const openFullscreen = async () => { try { await videoRef.current?.enterFullscreen(); } catch {} };
+  /**
+   * Hand off to Echo's own full-screen view rather than the OS player.
+   *
+   * This used to call videoRef.enterFullscreen(), which presents the system
+   * video controls — a different visual language from the rest of the app, and
+   * a second surface to maintain. The inline player pauses first so audio does
+   * not continue underneath the full-screen view.
+   *
+   * Without a handler the control is not rendered at all; falling back to the
+   * OS player would reintroduce exactly the inconsistency this removes.
+   */
+  const openFullscreen = () => {
+    try { player.pause(); } catch {}
+    onRequestFullscreen?.();
+  };
 
   const seekTo = (x: number) => {
     if (duration <= 0 || loadState !== 'ready') return;
@@ -161,7 +182,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
               style={{ flex: 1 }}
               contentFit="cover"
               nativeControls={true}
-              fullscreenOptions={{ enable: true }}
+              fullscreenOptions={{ enable: false }}
             />
 
             {loadState === 'loading' && (
@@ -192,9 +213,16 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry }: In
                 <Pressable onPress={cycleSpeed} style={[PILL, { paddingHorizontal: 10 }]}>
                   <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{speed === 1 ? '1x' : `${speed}x`}</Text>
                 </Pressable>
-                <Pressable onPress={openFullscreen} style={PILL}>
-                  <CornersOut size={16} color="#fff" />
-                </Pressable>
+                {onRequestFullscreen && (
+                  <Pressable
+                    onPress={openFullscreen}
+                    style={PILL}
+                    accessibilityRole="button"
+                    accessibilityLabel={ttx('Full screen')}
+                  >
+                    <CornersOut size={16} color="#fff" />
+                  </Pressable>
+                )}
               </View>
             )}
 
