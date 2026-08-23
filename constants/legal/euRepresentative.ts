@@ -19,7 +19,7 @@ Under the EU Digital Services Act and the GDPR, providers offering services in t
 
 For all EU Digital Services Act and GDPR matters, you can reach Echo's designated contact at:
 
-**dsa@echo.app**
+**dsa@downloadecho.com**
 
 We aim to respond to EU regulatory and data-protection enquiries without undue delay.
 
@@ -29,5 +29,5 @@ Echo's appointed EU legal representative will be listed here. Until an individua
 
 ## Reporting illegal content
 
-Any person or entity may notify us of content they consider illegal using the in-app report action or by emailing **dsa@echo.app**. We review every notice and, where required, inform you of the outcome and your options to appeal (Art. 16 and Art. 20).
+Any person or entity may notify us of content they consider illegal using the in-app report action or by emailing **dsa@downloadecho.com**. We review every notice and, where required, inform you of the outcome and your options to appeal (Art. 16 and Art. 20).
 `;
