@@ -26,6 +26,9 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { useFeed } from '../../src/features/feed/api/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
+import { useQuery } from '@tanstack/react-query';
+import { fetchRemoteRepostsByUser } from '../../lib/supabaseEchoApi';
+import { useActiveVideoTracking } from '../../hooks/useActiveVideoTracking';
 import { useToggleRemoteFollow } from '../../src/features/feed/api/useSupabaseSocial';
 import { useToggleRemoteBlock, useToggleRemoteMute } from '../../hooks/queries/useBlockMute';
 import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
@@ -33,7 +36,81 @@ import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
 
-function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId }: any) {
+export const PROFILE_SECTIONS = ['echoes', 'photos', 'flows', 'reechoed'] as const;
+export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
+
+const SECTION_LABELS: Record<ProfileSection, string> = {
+  echoes: 'Echoes',
+  photos: 'Photos',
+  flows: 'Flows',
+  reechoed: 'Reechoed',
+};
+
+/**
+ * Split a profile's posts into the sections the tab bar offers.
+ *
+ * `postType` is the intent recorded at publish time, but four production rows
+ * carry a video as their only media while typed otherwise, so the media itself
+ * is checked too — a post is a Flow if it has a video, whatever it claims.
+ * Reposts are not derived here; they belong to another author and are fetched
+ * separately.
+ */
+export function splitProfileSections(echoes: any[]) {
+  const flows = echoes.filter(e => e.postType === 'video' || !!e.videoUri);
+  const flowIds = new Set(flows.map(e => e.id));
+  const photos = echoes.filter(
+    e => !flowIds.has(e.id) && (e.postType === 'photo' || (e.mediaUris?.length ?? 0) > 0),
+  );
+  return { echoes, photos, flows };
+}
+
+function ProfileSections({ section, onChange, counts, colors }: any) {
+  return (
+    <View
+      style={{ flexDirection: 'row', paddingHorizontal: 12, marginBottom: 8 }}
+      accessibilityRole="tablist"
+    >
+      {PROFILE_SECTIONS.map(key => {
+        const active = section === key;
+        const count = counts?.[key];
+        return (
+          <AnimatedPressable
+            key={key}
+            onPress={() => onChange(key)}
+            scaleValue={0.95}
+            haptic="light"
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={`${SECTION_LABELS[key]}${typeof count === 'number' ? `, ${count}` : ''}`}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              paddingVertical: 10,
+              borderBottomWidth: 2,
+              // The inactive underline is transparent rather than absent so the
+              // row does not shift by two pixels when the selection moves.
+              borderBottomColor: active ? colors.accent : 'transparent',
+            }}
+          >
+            <Text
+              numberOfLines={1}
+              style={{
+                color: active ? colors.text : colors.textMuted,
+                fontSize: 12,
+                fontWeight: active ? '700' : '600',
+              }}
+            >
+              {ttx(SECTION_LABELS[key])}
+              {typeof count === 'number' ? ` \u00B7 ${count}` : ''}
+            </Text>
+          </AnimatedPressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, onMessage, messageLoading, onReport, onBlock, onMute, onShare, showMenu, setShowMenu, isSelf, router, creatorProfile, fingerprintUserId, section, onSectionChange, sectionCounts }: any) {
   const { colors, radius, animation, isUserOnline } = useTheme();
   const online = isUserOnline(user.id);
   const primaryTopic = creatorProfile?.topics?.[0];
@@ -254,9 +331,12 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
       </View>
 
       <View className="mx-4 mb-2" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }} />
-      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', paddingHorizontal: 16, marginBottom: 8 }}>
-        {ttx("Echoes")} {'\u00B7'} {echoeCount}
-      </Text>
+      <ProfileSections
+        section={section}
+        onChange={onSectionChange}
+        counts={sectionCounts}
+        colors={colors}
+      />
       <ProfilePhotoPreview
         visible={photoPreviewOpen}
         imageUrl={user.avatarUrl}
@@ -270,8 +350,22 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  // Without this, VideoPreview never becomes the active video and a video echo
+  // renders as a black rectangle: the player mounts, never starts, never paints.
+  const videoTracking = useActiveVideoTracking();
   const remote = isSupabaseRemote();
   const remoteBundle = useRemoteProfileBundle(remote ? id : undefined);
+  const [section, setSection] = useState<ProfileSection>('echoes');
+  // `id` may be a username, so the reposts query keys on the resolved profile
+  // id from the bundle. Fetched only when the tab is opened — most visitors
+  // never look at Reechoed, and it is a second round-trip.
+  const profileUserId = remoteBundle.data?.user?.id;
+  const reposts = useQuery({
+    queryKey: ['profile', 'reposts', profileUserId],
+    queryFn: () => fetchRemoteRepostsByUser(profileUserId!),
+    enabled: !!profileUserId && section === 'reechoed',
+    staleTime: 60_000,
+  });
   const followMut = useToggleRemoteFollow();
   const blockMut = useToggleRemoteBlock();
   const muteMut = useToggleRemoteMute();
@@ -344,10 +438,26 @@ export default function UserProfileScreen() {
       ? [pinnedEcho, ...echoes.filter(e => e.id !== pinnedEcho.id)]
       : echoes;
 
+    const buckets = splitProfileSections(orderedEchoes);
+    const sectionCounts = {
+      echoes: buckets.echoes.length,
+      photos: buckets.photos.length,
+      flows: buckets.flows.length,
+      // Undefined until the tab is opened, so the label shows no count rather
+      // than a confident zero for a list that has not been fetched.
+      reechoed: reposts.data?.length,
+    };
+    const listData =
+      section === 'photos' ? buckets.photos
+      : section === 'flows' ? buckets.flows
+      : section === 'reechoed' ? (reposts.data ?? [])
+      : buckets.echoes;
+
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <FlashList 
-          data={orderedEchoes}
+        <FlashList
+            {...videoTracking}
+          data={listData}
             renderItem={({ item, index }) => (
             <FeedCard
               item={item}
@@ -361,6 +471,9 @@ export default function UserProfileScreen() {
             <ProfileHeader
               user={user}
               echoeCount={echoes.length}
+              section={section}
+              onSectionChange={setSection}
+              sectionCounts={sectionCounts}
               following={remoteFollowing}
               blocked={blocked}
               muted={muted}
@@ -447,7 +560,8 @@ export default function UserProfileScreen() {
 
   return (
     <ResponsiveScreen>
-      <FlashList 
+      <FlashList
+            {...videoTracking}
         data={userEchoes}
             renderItem={({ item, index }) => (
           <FeedCard item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />
