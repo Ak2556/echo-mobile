@@ -2,6 +2,7 @@ import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
+import { authLock } from './authLock';
 
 const configuredSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const configuredSupabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -41,7 +42,6 @@ const webStorage = {
   },
 };
 
-const authLock = async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => fn();
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

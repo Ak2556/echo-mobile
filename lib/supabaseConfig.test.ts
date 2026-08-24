@@ -21,6 +21,10 @@ const createClientMock = vi.fn(
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: createClientMock,
+  // lib/authLock picks one of these for the auth `lock` option. Their real
+  // behaviour is covered in authLock.test.ts; here they only need to exist.
+  processLock: vi.fn(),
+  navigatorLock: vi.fn(),
 }));
 
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: {} }));
