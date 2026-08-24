@@ -118,6 +118,14 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
   }
   if (key.includes('..')) return c.text('Bad Request', 400);
 
+  // workers.dev applies no zone caching, so without this every view of the same
+  // image costs a worker invocation and an R2 read. Responses carry
+  // `immutable` already; this is what makes the edge honour it.
+  const cache = caches.default;
+  const cacheKey = new Request(new URL(c.req.url).toString(), { method: 'GET' });
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
   const object = await bucketBinding(c.env, bucket as BucketName).get(key);
   if (!object) return c.text('Not Found', 404);
 
@@ -127,7 +135,13 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
   // Keys embed an upload timestamp and are never rewritten, so a hit is safe to
   // cache indefinitely.
   headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-  return new Response(object.body, { headers });
+
+  const res = new Response(object.body, { headers });
+  // Cache after responding — the user should not wait on the write. Only the
+  // public buckets reach here; dm-media is served by its own gated route and is
+  // deliberately never edge-cached.
+  c.executionCtx.waitUntil(cache.put(cacheKey, res.clone()));
+  return res;
 });
 
 // ── user auth ───────────────────────────────────────────────────────────────
