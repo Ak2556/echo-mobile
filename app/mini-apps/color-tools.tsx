@@ -25,7 +25,7 @@ function lum(r: number, g: number, b: number) {
   return [r,g,b].reduce((a,c,i) => { const s=c/255; return a + (s<=0.03928?s/12.92:((s+0.055)/1.055)**2.4)*[0.2126,0.7152,0.0722][i]; }, 0);
 }
 function contrast(hex: string) {
-  const rgb = hexToRgb(hex); if (!rgb) return ', ';
+  const rgb = hexToRgb(hex); if (!rgb) return '-';
   const L = lum(rgb.r,rgb.g,rgb.b);
   return `${((1+0.05)/(L+0.05)).toFixed(1)}:1 vs white · ${((L+0.05)/0.05).toFixed(1)}:1 vs black`;
 }

