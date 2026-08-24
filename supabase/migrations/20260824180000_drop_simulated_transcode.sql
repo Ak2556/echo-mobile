@@ -1,0 +1,24 @@
+-- Remove the simulated HLS transcode webhook.
+--
+-- 20260820163000 added an AFTER INSERT trigger on public_echoes that posts to a
+-- `transcode-video` edge function. That function was never real: its own header
+-- says "Simulated here", and its body writes back an hls_url by swapping .mp4
+-- for .m3u8 on the original URL. No transcoding happens and no such file exists.
+--
+-- The client prefers that field — mapSupabaseEcho.ts reads
+-- `echo.hls_url ?? mediaUris.find(isVideoUri)` — so every video whose row got an
+-- hls_url would play from a URL that 404s. Video works today only because the
+-- function was never deployed, and because the trigger's default target is
+-- http://kong:8000, a local-development address that does not resolve in
+-- production. It is a trap armed and waiting for someone to deploy the
+-- function or set app.settings.edge_function_url.
+--
+-- Dropping the trigger and its function also removes the last SECURITY DEFINER
+-- function in the schema without a pinned search_path, which was the one
+-- privilege-escalation shape the security audit found.
+--
+-- public_echoes.hls_url stays. It costs nothing, and real transcoding — Mux,
+-- Cloudflare Stream, or a worker — can repopulate it later. What should not
+-- come back is a placeholder that writes a URL nobody serves.
+drop trigger if exists on_echo_insert_transcode on public.public_echoes;
+drop function if exists public.handle_echo_insert_transcode();

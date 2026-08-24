@@ -22,7 +22,7 @@ import {
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
   Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
-  ChatCircleText, Phone, VideoCamera, Smiley, Hourglass, Calendar, Flame,
+  ChatCircleText, Smiley, Hourglass, Calendar, Flame,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -47,7 +47,6 @@ import { streamEchoAI } from '../../lib/api';
 import { EMOJI_CATEGORIES, searchEmoji } from '../../lib/emojiData';
 import { persistGet, persistSet } from '../../store/persist';
 import { recordAppOpen } from '../../lib/personalNudges';
-import { IconButton } from '../../components/ui/IconButton';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
@@ -2921,28 +2920,6 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           </View>
         </Pressable>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
-          <IconButton
-            icon={Phone}
-            label={ttx("Audio call")}
-            onPress={() => {}}
-            size="sm"
-            role="active"
-            color={colors.accent}
-            variant="surface"
-            hitSize={38}
-          />
-          <IconButton
-            icon={VideoCamera}
-            label={ttx("Video call")}
-            onPress={() => {}}
-            size="sm"
-            role="active"
-            color={colors.accent}
-            variant="surface"
-            hitSize={38}
-          />
-        </View>
       </View>
 
       {searchOpen && (
