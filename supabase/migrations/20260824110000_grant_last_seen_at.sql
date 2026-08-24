@@ -1,0 +1,13 @@
+-- Grant the missing SELECT on profiles.last_seen_at.
+--
+-- 20260815121000 added the column but no column grant. public.profiles has
+-- column-level grants (20260622100000 revoked the table-level ones), and a
+-- single ungranted column fails the entire SELECT with 42501 "permission
+-- denied for table profiles" — so fetchConversationById, the only query that
+-- reads last_seen_at, returned no row at all. The chat header fell back to its
+-- placeholders and every conversation opened as "User / @unknown".
+--
+-- Granted to authenticated only, alongside activity_status / online_status in
+-- 20260705000000: a peer's last-seen time is needed to render a conversation,
+-- but there is no reason to expose it to anon.
+grant select (last_seen_at) on public.profiles to authenticated;
