@@ -33,7 +33,7 @@ Echo starts from the other end. You speak, and the app does the rest.
 
 **The interface is localised, not just the content.** Greeting, filter tabs, navigation, prompts and layout direction all follow the reader. The same build renders left-to-right in Hindi and right-to-left in Arabic.
 
-**A reason to come back that isn't the scroll.** One Daily Question, the same for everyone, that *closes* — you answer, you read what the network said, you're done until tomorrow. Plus 22 everyday tools, so there's a reason to open Echo on a day you have nothing to post.
+**A reason to come back that isn't the scroll.** One Daily Question, the same for everyone, that *closes* — you answer, you read what the network said, you're done until tomorrow. Plus a shelf of everyday tools, so there's a reason to open Echo on a day you have nothing to post.
 
 <div align="center">
 <img src="docs/screenshots/home-en.png" width="180" alt="English" />
@@ -50,13 +50,13 @@ Echo starts from the other end. You speak, and the app does the rest.
 | | |
 |---|---|
 | Screens | 87 |
-| Database tables | 66 (RLS on 58) |
+| Database tables | 68 — row-level security on all 68, across 201 policies |
 | Edge functions | 19 |
-| Migrations | 122 |
-| Mini-apps | 22 |
+| Migrations | 124 |
+| Mini-apps | 16 in the catalog, 23 routes in the tree |
 | Languages | 26 — 13 Indian, 13 global |
-| First-party TypeScript | ~91,000 lines |
-| Unit tests | 241, Vitest |
+| First-party TypeScript | ~98,900 lines |
+| Unit tests | 315, Vitest |
 
 Counts are derived from the tree rather than maintained by hand. Re-derive them before quoting them anywhere.
 
@@ -69,7 +69,7 @@ Counts are derived from the tree rather than maintained by hand. Re-derive them 
 - **Daily Question** — a seeded, self-healing question bank with reactions and divergent-view discovery
 - **Mini-apps** — habits, tasks, notes, planner, expenses, fitness, pomodoro and more, syncing across devices
 - **Community & commerce** — salons, office hours, a peer marketplace, and first-party in-feed advertising
-- **Trust & safety** — an LLM moderation gate before publication, reports queue, moderator role, statement-of-reasons and a six-month appeals window
+- **Trust & safety** — an LLM moderation gate on text *and* uploaded images before anything reaches the feed, reports queue, moderator role, statement-of-reasons and a six-month appeals window. Video is not visually checked yet — a still-image model cannot read an mp4, and no frame is extracted during transcode.
 
 ---
 
@@ -105,7 +105,7 @@ Counts are derived from the tree rather than maintained by hand. Re-derive them 
 | Backend | Supabase — Postgres, Auth, Realtime, Deno edge functions |
 | Object storage | Cloudflare R2, fronted by a Hono Worker |
 | AI | Google Gemini 2.5 (flash / flash-lite / pro) via OpenRouter |
-| Payments | Apple / Google IAP, RevenueCat entitlements, Razorpay for ad orders |
+| Payments | Razorpay for ad orders (live). Subscriptions are **not wired**: the RevenueCat webhook and entitlements table exist server-side, but the client ships no purchase SDK and `getCurrentPlan()` returns `free` for everyone |
 | Observability | Sentry, PostHog (consent-gated) |
 | Tests | Vitest, Maestro |
 
@@ -143,9 +143,11 @@ npm run i18n:generate     # fill machine translations for UI strings
 
 ## Testing
 
-**Unit — 241 tests, Vitest.** Covers feed filtering and scoring, the engagement model, publish validation, marketplace logic, URL safety, the age gate boundaries, i18n date handling and the voice intent dispatcher.
+**Unit — 315 tests, Vitest.** Covers feed filtering and scoring, the engagement model, publish validation, marketplace logic, URL safety, the age gate boundaries, i18n date handling and the voice intent dispatcher. Several exist to pin bugs that were invisible in review rather than to describe behaviour: that the auth lock actually serializes, that the session on disk is unreadable, that every `profiles` column the client selects is granted, that the DM thread renders through the real bubble renderer.
 
-**End-to-end — Maestro.** A cold-launch flow runs on every pull request against an Android emulator: first paint, and the Terms and Privacy routes. The signed-in flows — bottom-tab navigation and DM threads — stay manual, because sign-in is a one-time code sent to a real inbox and CI has no way to receive it. Flows and their prerequisites are documented in [`e2e/`](e2e/).
+**End-to-end — Maestro.** A cold-launch flow runs on every pull request against an Android emulator: first paint, and the Terms and Privacy routes. It first got as far as running the flow on 24 August 2026 — before that it had never built an APK at all, dying in six seconds on a device error, then on Gradle heap during packaging. That first real run failed, and usefully: it caught a bug no unit test could, in that the legal routes were unreachable without an account. The fix landed the same day, so the first fully green run is still ahead of us. Budget ~40 minutes for the job; the release build alone is around 31.
+
+The signed-in flows — bottom-tab navigation and DM threads — stay manual, because sign-in is a one-time code sent to a real inbox and CI has no way to receive it. Flows and their prerequisites are documented in [`e2e/`](e2e/).
 
 **Human — across ten age groups.** The build is being tested by people spanning ten age brackets, on their own devices and in their own languages. Automated tests catch regressions; they don't tell you that a filter tab reads as a button to a sixteen-year-old and as decoration to a sixty-year-old, or that a Hindi speaker looks for the mic before the keyboard. Most of the interface changes worth making so far have come from watching someone hold the phone.
 
@@ -173,7 +175,10 @@ scripts/              i18n, SBOM and legal-translation generators
 These are real, current, and would otherwise cost you an afternoon.
 
 - **`android/` and `ios/` are generated.** They're prebuild output and gitignored. Change `app.json`, never the native projects.
-- **Echo does not have end-to-end encrypted messaging.** `src/shared/lib/e2ee.ts` implements a keypair, but nothing calls it and the live DM path writes plaintext. Both files carry banners saying so. Please don't describe Echo as end-to-end encrypted.
+- **Echo does not have end-to-end encrypted messaging.** `src/shared/lib/e2ee.ts` implements a keypair, but nothing calls it and the live DM path writes plaintext. Both files carry banners saying so. Please don't describe Echo as end-to-end encrypted. The *session* is encrypted at rest — an AES-256 key in the Keychain, the session itself in AsyncStorage under it — which is a different claim.
+- **Write RLS policies as `(select auth.uid())`, never bare `auth.uid()`.** Postgres treats the bare call as volatile and re-runs it per row scanned; the subquery form is evaluated once per statement. All 167 policies that reference it were converted in `20260824160000`; a new one written the old way silently reintroduces the problem on the table it guards.
+- **Adding a column to `profiles`? Grant it.** That table has column-level grants, so a single ungranted column fails the *entire* select with `42501` — one forgotten grant takes out every screen running that query. `lib/profilesColumnGrants.test.ts` fails the build if the client selects something that was never granted.
+- **Moderation is fail-closed.** A post stays hidden until the classifier passes it. That means a throttled or unfunded `OPENROUTER_API_KEY` does not degrade moderation — it silently stops publishing.
 - **Offline has two layers.** WatermelonDB backs direct messages — `useDatabaseSync()` runs from `app/_layout.tsx` on mount and on foreground. Everything else relies on TanStack Query persisted to MMKV with a seven-day window, plus AsyncStorage and server sync for mini-apps.
 - **The feed is ranked**, not chronological — follows, engagement and content embeddings. A chronological **Latest** tab is the alternative.
 - **Account deletion goes through the `delete-account` edge function**, not the `delete_account()` RPC. The RPC only reaches Postgres; media lives in R2 and has to be purged first.
