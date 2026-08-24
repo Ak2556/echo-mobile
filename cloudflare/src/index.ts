@@ -118,13 +118,31 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
   }
   if (key.includes('..')) return c.text('Bad Request', 400);
 
-  // workers.dev applies no zone caching, so without this every view of the same
-  // image costs a worker invocation and an R2 read. Responses carry
-  // `immutable` already; this is what makes the edge honour it.
+  // Distributable builds are revocable; feed media is not.
+  //
+  // Everything else under /media is content-addressed by an upload timestamp
+  // and never rewritten, so caching it for a year is free correctness. A build
+  // under downloads/ is different: deleting it from R2 is supposed to withdraw
+  // it. With an immutable edge copy it does not — deleting the 24 August APK
+  // left the edge serving it with cf-cache-status: HIT and age 17343, and it
+  // would have kept doing so for a year. workers.dev has no zone, so there is
+  // no purge API to reach for, and the Cache API only evicts the colo you
+  // happen to hit.
+  //
+  // So downloads/ is read straight from R2 every time. It is a rare, large
+  // request where an R2 read costs nothing next to the transfer, and it makes
+  // deletion mean deletion in every colo at once.
+  const revocable = key.startsWith('downloads/');
+
   const cache = caches.default;
   const cacheKey = new Request(new URL(c.req.url).toString(), { method: 'GET' });
-  const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (!revocable) {
+    // workers.dev applies no zone caching, so without this every view of the
+    // same image costs a worker invocation and an R2 read. Responses carry
+    // `immutable` already; this is what makes the edge honour it.
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+  }
 
   const object = await bucketBinding(c.env, bucket as BucketName).get(key);
   if (!object) return c.text('Not Found', 404);
@@ -133,14 +151,19 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
   object.writeHttpMetadata(headers); // content-type, as stored on upload
   headers.set('etag', object.httpEtag);
   // Keys embed an upload timestamp and are never rewritten, so a hit is safe to
-  // cache indefinitely.
-  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  // cache indefinitely — except for builds, which have to stay withdrawable.
+  headers.set(
+    'Cache-Control',
+    revocable ? 'public, max-age=300, must-revalidate' : 'public, max-age=31536000, immutable',
+  );
 
   const res = new Response(object.body, { headers });
-  // Cache after responding — the user should not wait on the write. Only the
-  // public buckets reach here; dm-media is served by its own gated route and is
-  // deliberately never edge-cached.
-  c.executionCtx.waitUntil(cache.put(cacheKey, res.clone()));
+  if (!revocable) {
+    // Cache after responding — the user should not wait on the write. Only the
+    // public buckets reach here; dm-media is served by its own gated route and
+    // is deliberately never edge-cached.
+    c.executionCtx.waitUntil(cache.put(cacheKey, res.clone()));
+  }
   return res;
 });
 
