@@ -573,7 +573,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
                   accessibilityRole="button"
                   accessibilityLabel={`Follow ${item.username}`}
                   depth="soft" haptic="light" performanceMode="hot"
-                  style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.5)', opacity: followPendingId === item.userId ? 0.6 : 1 }}
+                  style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.5)', opacity: followPendingId === item.userId ? 0.6 : 1 }}
                 >
                   <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('feed.follow')}</Text>
                 </AnimatedPressable>
@@ -759,10 +759,13 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
               disabled={followPendingId === item.userId}
               accessibilityRole="button"
               accessibilityLabel={`Follow ${item.username}`}
-              depth="soft" haptic="light" performanceMode="hot"
-              style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, marginRight: 8, backgroundColor: colors.accent, opacity: followPendingId === item.userId ? 0.6 : 1 }}
+              haptic="light" performanceMode="hot"
+              // Sized to the 34px icon buttons beside it and flat rather than raised:
+              // as a filled accent pill with a shadow it stood taller than everything
+              // else in the row and read as a floating blob.
+              style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentMuted, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent, opacity: followPendingId === item.userId ? 0.6 : 1 }}
             >
-              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('feed.follow')}</Text>
+                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700', letterSpacing: -0.1 }}>{t('feed.follow')}</Text>
             </AnimatedPressable>
           )}
           <SpeakButton text={readableText} id={`echo:${item.id}`} size={20} />

@@ -68,7 +68,7 @@ function formatViewCount(n: number): string {
 // Static fallback (Expo Go / no native module)
 function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, echoId }: VideoPreviewProps) {
   return (
-    <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden' }}>
+    <Pressable onPress={onPress} disabled={!onPress} pointerEvents={onPress ? 'auto' : 'box-none'} style={{ height, borderRadius, overflow: 'hidden' }}>
       <LinearGradient
         colors={['#2A2018', '#1A1512', '#0C0B09']}
         start={{ x: 0, y: 0 }}
@@ -165,7 +165,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   }, [loadState, uri]);
 
   return (
-    <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#09090B' }}>
+    <Pressable onPress={onPress} disabled={!onPress} pointerEvents={onPress ? 'auto' : 'box-none'} style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#09090B' }}>
       <VideoView
         player={player}
         style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
@@ -228,7 +228,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
 
 function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
   return (
-    <Pressable onPress={onPress} disabled={!onPress} style={{ height, borderRadius, overflow: 'hidden' }}>
+    <Pressable onPress={onPress} disabled={!onPress} pointerEvents={onPress ? 'auto' : 'box-none'} style={{ height, borderRadius, overflow: 'hidden' }}>
       <LinearGradient
         colors={['#2A2018', '#1A1512', '#0C0B09']}
         start={{ x: 0, y: 0 }}
