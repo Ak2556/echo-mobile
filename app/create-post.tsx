@@ -863,7 +863,7 @@ export default function CreatePostScreen() {
               {/* Preview / empty state */}
               {videoUri ? (
                 <View style={{ marginBottom: 14, borderRadius: radius.card, overflow: 'hidden' }}>
-                  <VideoPreview uri={videoUri} height={200} borderRadius={radius.card} />
+                  <VideoPreview uri={videoUri} height={200} borderRadius={radius.card} autoplay />
                   <Pressable
                     onPress={() => setVideo(null)}
                     style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 14, padding: 6 }}

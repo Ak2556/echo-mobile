@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Brain, CaretRight, ChartLineUp, Cpu, Hash, PaintBrush, RocketLaunch, UsersThree } from 'phosphor-react-native';
+import { Brain, CaretRight, ChartLineUp, Cpu, Hash, PaintBrush, Play, RocketLaunch, UsersThree } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -10,7 +10,6 @@ import { SearchBar } from '../../src/features/feed/ui/SearchBar';
 import { Avatar } from '../../components/ui/Avatar';
 import { UserRow } from '../../src/features/feed/ui/UserRow';
 import { FeedCard } from '../../src/features/feed/ui/FeedCard';
-import { VideoPreview } from '../../src/features/feed/ui/VideoPreview';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
@@ -498,6 +497,56 @@ function PillButton({ label, onPress }: { label: string; onPress: () => void }) 
   );
 }
 
+/**
+ * A video in the explore grid — a still tile, not a player.
+ *
+ * The grid used to mount a real VideoPreview per tile. Because none of them
+ * passed echoId, every one decided it was the active video, so opening Explore
+ * started every visible video at once and their audio played over each other.
+ *
+ * Nothing here can play: no player is mounted at all, which is a stronger
+ * guarantee than a paused one and costs no video decoders — Android has a small
+ * fixed number of those, and a grid can exhaust them. Tapping the tile opens
+ * the echo, which is where playback belongs.
+ *
+ * Echo does not store a poster frame for uploaded video, so this is a styled
+ * placeholder rather than a still from the video itself. Real thumbnails need
+ * generating at upload time.
+ */
+function ExploreVideoTile({ item, width, height, colors }: { item: any; width: number; height: number; colors: any }) {
+  const tint = item.avatarColor || colors.accent;
+  return (
+    <View
+      style={{ width, height, backgroundColor: colors.surface }}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={`Video by ${item.username}. Open to play.`}
+    >
+      <LinearGradient
+        colors={[`${tint}55`, `${tint}18`, 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
+        style={StyleSheet.absoluteFill as any}
+        pointerEvents="none"
+      />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <View
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.45)',
+          }}
+        >
+          <Play size={20} color="#fff" weight="fill" />
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function ExploreGridTile({ item, width, onPress }: { item: any; width: number; onPress: () => void }) {
   const { colors, font, radius } = useTheme();
   
@@ -509,8 +558,13 @@ function ExploreGridTile({ item, width, onPress }: { item: any; width: number; o
   const tint = item.avatarColor || colors.accent;
   
   
-  const isTall = item.id.length % 2 === 0;
-  const height = hasMedia ? (isTall ? width * 1.5 : width * 1.2) : (isTall ? width * 1.25 : width);
+  // One tile shape for every card. Height used to come from
+  // `item.id.length % 2`, so whether a tile was tall depended on the parity
+  // of a UUID's length — visually random, and it left the masonry columns
+  // ragged because the round-robin fill assumes equal heights. A single 4:5
+  // ratio makes the columns line up and the page read as a grid.
+  const isTall = false;
+  const height = width * 1.25;
 
   return (
     <AnimatedPressable onPress={onPress} style={{ width, height, marginBottom: 20 }}>
@@ -518,7 +572,7 @@ function ExploreGridTile({ item, width, onPress }: { item: any; width: number; o
         {hasMedia ? (
           <>
             {isVideo ? (
-              <VideoPreview uri={item.videoUri} height={height} borderRadius={0} />
+              <ExploreVideoTile item={item} width={width} height={height} colors={colors} />
             ) : (
               <ExpoImage source={{ uri: mediaUri }} style={{ width, height }} contentFit="cover" cachePolicy="memory-disk" />
             )}

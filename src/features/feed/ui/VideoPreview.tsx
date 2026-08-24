@@ -26,7 +26,20 @@ interface VideoPreviewProps {
   borderRadius?: number;
   onPress?: () => void;
   viewCount?: number;
+  /**
+   * The echo this video belongs to. Playback follows the active-video store,
+   * so only the one video the user is actually looking at plays.
+   */
   echoId?: string;
+  /**
+   * Play without participating in the active-video store. Only for a surface
+   * showing exactly one video that has no echo yet — the composer preview.
+   *
+   * Omitting echoId used to imply this, which meant a grid of videos each
+   * decided it was active and they all played at once, audio and all. Opting
+   * in explicitly makes that impossible to do by accident.
+   */
+  autoplay?: boolean;
 }
 
 const VIDEO_PREVIEW_TIMEOUT_MS = 45_000;
@@ -81,7 +94,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, ec
 }
 
 // Full video player (dev client / production build)
-function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId }: VideoPreviewProps) {
+function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId, autoplay = false }: VideoPreviewProps) {
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
@@ -100,7 +113,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
     return () => sub.remove();
   }, []);
 
-  const isActive = isFocused && isAppActive && (!echoId || activeEchoId === echoId);
+  const isActive = isFocused && isAppActive && (echoId ? activeEchoId === echoId : autoplay);
 
   useEffect(() => { setLoadState('loading'); }, [uri]);
 
