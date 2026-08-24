@@ -164,17 +164,26 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
 
   return (
     <View style={{ height, width: '100%', backgroundColor: '#000' }}>
+      <View style={StyleSheet.absoluteFill}>
+        <VideoPreview
+          uri={item.videoUri}
+          height={height}
+          borderRadius={0}
+          echoId={item.id}
+          viewCount={item.viewCount}
+          paused={paused}
+        />
+      </View>
+
+      {/* The tap surface sits ON TOP of the video, not around it.
+          expo-video's VideoView is a native surface; when it was a descendant
+          of the GestureDetector it consumed the touch itself and neither the
+          single nor the double tap ever fired. A transparent sibling above it
+          receives the touch instead.
+          Controls rendered after this are still tappable — later siblings take
+          the touch first. */}
       <GestureDetector gesture={taps}>
-        <View style={StyleSheet.absoluteFill}>
-          <VideoPreview
-            uri={item.videoUri}
-            height={height}
-            borderRadius={0}
-            echoId={item.id}
-            viewCount={item.viewCount}
-            paused={paused}
-          />
-        </View>
+        <View style={StyleSheet.absoluteFill} collapsable={false} />
       </GestureDetector>
 
       <Animated.View pointerEvents="none" style={[{
