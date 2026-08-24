@@ -18,7 +18,7 @@ import { Avatar } from '../../../../components/ui/Avatar';
 import { ZoomableImageViewer } from '../../../../components/ui/ZoomableImageViewer';
 import { showToast } from '../../../../components/ui/Toast';
 import { warmAvatarColor } from '../../../../lib/avatarPalette';
-import { ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, GitBranch, Trash } from 'phosphor-react-native';
+import { MusicNote, ChatCircle, BookmarkSimple, ArrowsClockwise, ShareNetwork, SealCheck, DotsThree, Flag, UserCircle, UserMinus, ChartBar, Question, PushPin, HeartStraight, GitBranch, Trash } from 'phosphor-react-native';
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FeedItem, PerspectiveType, Poll } from '../../../../types/index';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -783,7 +783,8 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
 
         {item.musicTitle && (
           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginBottom: 10, alignSelf: 'flex-start' }}>
-            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>🎵 {item.musicTitle} - {item.musicArtist}</Text>
+            <MusicNote color={colors.textSecondary} size={13} weight="fill" style={{ marginRight: 6 }} />
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', flexShrink: 1 }} numberOfLines={1}>{item.musicTitle} · {item.musicArtist}</Text>
           </View>
         )}
 

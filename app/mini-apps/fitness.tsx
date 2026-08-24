@@ -816,7 +816,7 @@ function MeasurementModal({ latest, onAdd, onClose }: {
                   value={values[f.key]}
                   onChange={v => setValues({ ...values, [f.key]: v })}
                   keyboard="decimal-pad"
-                  placeholder=", "
+                  placeholder="-"
                 />
               </View>
             ))}
@@ -1267,7 +1267,7 @@ export default function FitnessApp() {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("Body weight")}</Text>
                 <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
-                  {latestWeight ? latestWeight.kg.toFixed(1) : ', '}
+                  {latestWeight ? latestWeight.kg.toFixed(1) : '-'}
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> {ttx("kg")}</Text>
                 </Text>
                 {sortedWeights.length > 1 && (
