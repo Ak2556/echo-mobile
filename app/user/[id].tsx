@@ -470,7 +470,15 @@ export default function UserProfileScreen() {
           renderItem={() => null}
           keyExtractor={(_item, index) => String(index)}
           ListFooterComponent={
-            listData.length === 0 ? null : (
+              listData.length === 0 ? (
+                <View style={{ paddingTop: 56 }}>
+                  <EmptyState
+                    icon={<Images color={colors.accent} size={28} weight="duotone" />}
+                    title={ttx("No echoes yet")}
+                    subtitle={ttx("When they publish, you’ll see it here.")}
+                  />
+                </View>
+              ) : (
               <PostsGrid
                 echoes={listData}
                 onPressEcho={(echo) => router.push(`/thread/${echo.id}`)}
@@ -524,15 +532,6 @@ export default function UserProfileScreen() {
               fingerprintUserId={user.id}
             />
           }
-          ListEmptyComponent={
-            <View style={{ paddingTop: 56 }}>
-              <EmptyState
-                icon={<Images color={colors.accent} size={28} weight="duotone" />}
-                title={ttx("No echoes yet")}
-                subtitle={ttx("When they publish, you’ll see it here.")}
-              />
-            </View>
-          }
         />
       </SafeAreaView>
     );
@@ -580,7 +579,15 @@ export default function UserProfileScreen() {
           renderItem={() => null}
           keyExtractor={(_item, index) => String(index)}
           ListFooterComponent={
-            userEchoes.length === 0 ? null : (
+            userEchoes.length === 0 ? (
+              <View style={{ paddingTop: 56 }}>
+                <EmptyState
+                  icon={<Images color={colors.accent} size={28} weight="duotone" />}
+                  title={ttx("No echoes yet")}
+                  subtitle={ttx("When they publish, you’ll see it here.")}
+                />
+              </View>
+            ) : (
               <PostsGrid
                 echoes={userEchoes}
                 onPressEcho={(echo) => router.push(`/thread/${echo.id}`)}
@@ -613,15 +620,6 @@ export default function UserProfileScreen() {
             router={router}
             creatorProfile={creatorProfile}
           />
-        }
-        ListEmptyComponent={
-          <View style={{ paddingTop: 40 }}>
-            <EmptyState
-              icon={<Images color={colors.accent} size={28} weight="duotone" />}
-              title={ttx("No echoes yet")}
-              subtitle={ttx("When they publish, you’ll see it here.")}
-            />
-          </View>
         }
       />
     </ResponsiveScreen>
