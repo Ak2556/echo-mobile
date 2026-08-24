@@ -18,7 +18,8 @@
 // the incident.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { moderateContent } from "./moderation.ts";
+import { moderateContent, moderateImages } from "./moderation.ts";
+import { splitMediaForModeration } from "./mediaKinds.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -45,6 +46,7 @@ interface EchoRow {
   prompt: string;
   response: string;
   conversation_snapshot: { role: string; content: string }[] | null;
+  media_urls: string[] | null;
 }
 
 function buildEmbeddingText(row: EchoRow): string {
@@ -143,7 +145,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: row, error: fetchErr } = await supabase
     .from("public_echoes")
-    .select("id, author_id, title, prompt, response, conversation_snapshot")
+    .select("id, author_id, title, prompt, response, conversation_snapshot, media_urls")
     .eq("id", echoId)
     .single();
   if (fetchErr || !row) {
@@ -199,6 +201,42 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ ok: false, reason: "moderation_unavailable" }),
       { status: 503, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
+  }
+
+  // Uploaded images go through the same gate. Text-only moderation used to let
+  // any photo reach the feed unexamined, which is exactly what App Store
+  // guideline 1.2 asks a UGC app to filter.
+  //
+  // Only run it when the text passed: a post already destined to stay hidden
+  // does not need a second billed call.
+  const { images, unchecked } = splitMediaForModeration(echoRow.media_urls);
+  if (verdict.ok && images.length > 0) {
+    let imageVerdict = await moderateImages(images);
+    for (
+      let attempt = 0;
+      attempt < 2 && !imageVerdict.ok && imageVerdict.categories.includes("moderation_unavailable");
+      attempt++
+    ) {
+      await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+      imageVerdict = await moderateImages(images);
+    }
+    if (!imageVerdict.ok && imageVerdict.categories.includes("moderation_unavailable")) {
+      console.error(`[embed-echo] image moderation unavailable for ${echoId}; leaving pending:`, imageVerdict.error);
+      return new Response(
+        JSON.stringify({ ok: false, reason: "moderation_unavailable" }),
+        { status: 503, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+      );
+    }
+    verdict = imageVerdict.ok
+      ? verdict
+      : { ok: false, categories: imageVerdict.categories.map((c) => `image:${c}`) };
+  }
+  if (unchecked.length > 0) {
+    // Video is the case this covers. A still-image model cannot read an mp4 or
+    // an HLS manifest, and no frame is extracted anywhere in the pipeline yet,
+    // so these reach the feed on the strength of their text alone. Logged so
+    // the gap is visible in function logs rather than implied by silence.
+    console.warn(`[embed-echo] ${unchecked.length} media item(s) on ${echoId} not visually checked`);
   }
   const { error: gateErr } = await supabase
     .from("public_echoes")
