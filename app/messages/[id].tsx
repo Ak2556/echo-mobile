@@ -9,7 +9,6 @@ import { of } from 'rxjs';
 import { database } from '../../src/shared/database';
 import MessageModel from '../../src/shared/database/models/Message';
 import { Q } from '@nozbe/watermelondb';
-import { VirtualizedChatFeed } from '../../src/features/chat/ui/VirtualizedChatFeed';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -3024,7 +3023,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
       >
 
         {/* Message list */}
-        <VirtualizedChatFeed messages={messages} currentUserId={myId} colors={colors} />
+        {memoizedFlashList}
 
         {/* Jump to bottom pill — grows to show how many new messages landed
             while you were reading back, and springs in so it reads as an event. */}
