@@ -36,6 +36,7 @@
     "@babel/plugin-proposal-decorators": "^7.29.7",
     "@expo-google-fonts/fraunces": "^0.4.1",
     "@expo-google-fonts/inter": "^0.4.2",
+    "@noble/ciphers": "^2.3.0",
     "@nozbe/watermelondb": "^0.28.0",
     "@nozbe/with-observables": "^1.6.0",
     "@react-native-async-storage/async-storage": "2.2.0",
