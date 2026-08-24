@@ -34,6 +34,7 @@ import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
 import { VoiceControl } from '../src/features/voice/ui/VoiceControl';
 import { NowReadingBar } from '../src/features/voice/ui/NowReadingBar';
+import { isPublicRoute } from '../lib/publicRoutes';
 import { enableFreeze } from 'react-native-screens';
 import '../global.css';
 
@@ -131,7 +132,7 @@ function AuthGuard() {
   const router = useRouter();
   useEffect(() => {
     if (status !== 'signed-out') return;
-    if (pathname === '/' || pathname.startsWith('/auth') || pathname === '/welcome' || pathname === '/onboarding') return;
+    if (isPublicRoute(pathname)) return;
     router.replace('/auth/login');
   }, [status, pathname, router]);
   return null;
