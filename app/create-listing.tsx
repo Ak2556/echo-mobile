@@ -300,7 +300,7 @@ export default function CreateListingScreen() {
               paddingVertical: 6,
               marginTop: 4,
             }}
-            placeholder={ttx("Describe it — condition, size, what a buyer should know…")}
+            placeholder={ttx("Describe it. Condition, size, what a buyer should know…")}
             placeholderTextColor={colors.textMuted}
             value={description}
             onChangeText={setDescription}
@@ -365,7 +365,7 @@ export default function CreateListingScreen() {
           <View style={{ gap: 12 }}>
             <TextInput
               style={softField}
-              placeholder={ttx("Location — city, area, or 'Ships nationally'")}
+              placeholder={ttx("Location. City, area, or 'Ships nationally'")}
               placeholderTextColor={colors.textMuted}
               value={location}
               onChangeText={setLocation}
@@ -374,7 +374,7 @@ export default function CreateListingScreen() {
             />
             <TextInput
               style={softField}
-              placeholder={ttx("How to get it — pickup, shipping, local delivery…")}
+              placeholder={ttx("How to get it. Pickup, shipping, local delivery…")}
               placeholderTextColor={colors.textMuted}
               value={fulfillment}
               onChangeText={setFulfillment}
@@ -383,7 +383,7 @@ export default function CreateListingScreen() {
             />
             <TextInput
               style={softField}
-              placeholder={ttx("Tags — vintage, leather, size-M (comma separated)")}
+              placeholder={ttx("Tags. Vintage, leather, size-M (comma separated)")}
               placeholderTextColor={colors.textMuted}
               value={tagsText}
               onChangeText={setTagsText}

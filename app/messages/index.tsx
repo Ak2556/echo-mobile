@@ -617,8 +617,8 @@ export function AurasRow() {
         ))}
         {!remote && (
           <>
-            <StatusAvatar key="m1" name="Akash" color="#FF5733" aura={{ text_content: 'Deep work 🎧' }} onPress={() => setViewingAura({ name: 'Akash', color: '#FF5733', aura: { text_content: 'Deep work 🎧' } })} />
-            <StatusAvatar key="m2" name="Elena" color="#33FF57" aura={{ text_content: 'At the gym 💪' }} onPress={() => setViewingAura({ name: 'Elena', color: '#33FF57', aura: { text_content: 'At the gym 💪' } })} />
+            <StatusAvatar key="m1" name="Akash" color={colors.accent} aura={{ text_content: 'Deep work' }} onPress={() => setViewingAura({ name: 'Akash', color: '#FF5733', aura: { text_content: 'Deep work 🎧' } })} />
+            <StatusAvatar key="m2" name="Elena" color={colors.textMuted} aura={{ text_content: 'At the gym' }} onPress={() => setViewingAura({ name: 'Elena', color: '#33FF57', aura: { text_content: 'At the gym 💪' } })} />
           </>
         )}
       </ScrollView>

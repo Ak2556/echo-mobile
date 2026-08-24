@@ -236,7 +236,7 @@ function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCo
         style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
       >
         <WifiSlash color="rgba(255,255,255,0.5)" size={24} />
-        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '500' }}>{ttx("Video paused — Data Saver on")}</Text>
+        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '500' }}>{ttx("Video paused, Data Saver on")}</Text>
       </LinearGradient>
       {viewCount !== undefined && (
         <View style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)' }}>

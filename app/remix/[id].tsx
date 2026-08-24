@@ -210,7 +210,7 @@ export default function RemixScreen() {
             <Text style={styles.sectionLabel}>{ttx("The original conversation")}</Text>
             {snapshot.length > 1 && (
               <Text style={styles.forkHint}>
-                {ttx("Tap any message to branch from that point — everything after it is trimmed from your perspective.")}
+                {ttx("Tap any message to branch from that point. Everything after it is trimmed from your perspective.")}
               </Text>
             )}
 

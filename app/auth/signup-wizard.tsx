@@ -552,7 +552,7 @@ export default function SignupWizard() {
     if (error) {
       const msg = error.message.toLowerCase();
       if (error.code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
-        showToast('Username taken — pick another', 'Error');
+        showToast('Username taken. Pick another', 'Error');
         setUsernameRaw('');
         goToStep(STEP.NAME, true);
         setSaving(false);
@@ -1309,7 +1309,7 @@ export default function SignupWizard() {
                 ) : suggested.length === 0 ? (
                   <View style={{ paddingTop: 24, paddingHorizontal: 4 }}>
                     <Text style={{ color: '#52525B', fontSize: 14, lineHeight: 20 }}>
-                      {ttx("No suggestions yet — you can find people to follow from Explore once you're in.")}
+                      {ttx("No suggestions yet. You can find people to follow from Explore once you're in.")}
                     </Text>
                   </View>
                 ) : (

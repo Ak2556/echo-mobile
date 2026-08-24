@@ -93,7 +93,7 @@ export default function GroupInfoScreen() {
     try {
       const suggestion = await suggestGroupName(members.map(m => m.displayName));
       if (suggestion) { setName(suggestion); if (id && isAdmin) await updateGroupMeta(id, suggestion, color); showToast('Echo named it', 'Waveform'); void load(); }
-      else showToast('Couldn’t reach Echo — try again', 'Error');
+      else showToast('Couldn’t reach Echo. Try again', 'Error');
     } finally {
       setSuggesting(false);
     }

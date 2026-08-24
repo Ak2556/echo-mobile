@@ -73,7 +73,7 @@ export function CompareSheet({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.glassBorder, marginBottom: 16 }}>
             <View style={{ flex: 1 }}>
               <Text style={[font.bodySemibold, { color: colors.text, fontSize: 14 }]}>{ttx("Let your followers see this")}</Text>
-              <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("Only your streak numbers — never your notes or entries.")}</Text>
+              <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]}>{ttx("Only your streak numbers. Never your notes or entries.")}</Text>
             </View>
             <Switch value={sharing} onValueChange={toggleShare} trackColor={{ true: accent, false: colors.border }} />
           </View>

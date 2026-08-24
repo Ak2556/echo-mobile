@@ -122,7 +122,7 @@ export default function BillSplitterScreen() {
   const shareSummary = () => {
     if (total <= 0) { showToast('Enter the bill first', 'Bill Splitter'); return; }
     const lines = [
-      'Bill split — Echo',
+      'Bill split, Echo',
       `Subtotal $${fmt(billNum)}${taxNum > 0 ? ` · Tax $${fmt(taxNum)}` : ''} · Tip ${effectiveTip}% ($${fmt(tipAmount)})`,
       `Total $${fmt(total)}`,
       '',

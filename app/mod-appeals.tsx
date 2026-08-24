@@ -48,7 +48,7 @@ function AppealCard({
   const confirmResolve = (resolution: 'upheld' | 'overturned') => {
     // 'upheld' = the moderation decision is upheld (stands, appeal declined);
     // 'overturned' = the decision is overturned and removed content is restored.
-    const label = resolution === 'upheld' ? 'Uphold decision' : 'Overturn — restore content';
+    const label = resolution === 'upheld' ? 'Uphold decision' : 'Overturn. Restore content';
     Alert.alert(
       label,
       resolution === 'upheld'

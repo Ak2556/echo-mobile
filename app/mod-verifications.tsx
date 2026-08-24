@@ -25,8 +25,8 @@ function VerificationCard({ item, onDecide }: {
     Alert.alert(
       approve ? 'Approve verification' : 'Reject verification',
       approve
-        ? 'Grant the verified badge — the selfie matches the profile photo.'
-        : 'Reject — the selfie could not be confirmed. The selfie is deleted either way.',
+        ? 'Grant the verified badge. The selfie matches the profile photo.'
+        : 'Reject. The selfie could not be confirmed. The selfie is deleted either way.',
       [
         { text: 'Cancel', style: 'cancel' },
         {

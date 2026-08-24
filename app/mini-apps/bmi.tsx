@@ -184,7 +184,7 @@ export default function BmiScreen() {
     let hM: number;
     if (unit === 'metric') hM = parseFloat(height) / 100;
     else { const ft = parseFloat(heightFt)||0, inch = parseFloat(heightIn)||0; hM = (ft*12+inch)*0.0254; }
-    if (!hM) return '—';
+    if (!hM) return ', ';
     const minKg = 18.5*hM*hM, maxKg = 24.9*hM*hM;
     return unit === 'metric' ? `${minKg.toFixed(1)}–${maxKg.toFixed(1)} kg` : `${(minKg/0.453592).toFixed(1)}–${(maxKg/0.453592).toFixed(1)} lbs`;
   };

@@ -66,7 +66,7 @@ function SalonsScreenInner() {
             {ttx("No salons yet")}
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
-            {ttx("Start the first one — a circle of people thinking about a shared topic.")}
+            {ttx("Start the first one. A circle of people thinking about a shared topic.")}
           </Text>
           <AnimatedPressable
             onPress={() => router.push('/create-salon')}

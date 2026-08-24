@@ -355,7 +355,7 @@ function AddMealModal({ customFoods, recentMeals, favoriteIds, onToggleFavorite,
               <View style={{ paddingVertical: 18, alignItems: 'center' }}>
                 <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700' }}>{ttx("No matches")}</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
-                  {ttx("Nothing found offline or online — enter calories/macros below and save it to My foods.")}
+                  {ttx("Nothing found offline or online. Enter calories/macros below and save it to My foods.")}
                 </Text>
               </View>
             )}
@@ -806,7 +806,7 @@ function MeasurementModal({ latest, onAdd, onClose }: {
         <SheetHeader title={ttx("Body Measurements")} onClose={onClose} />
         <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
           <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 20 }}>
-            {ttx("All in centimetres. Fill only what you measured — the rest carries over on the trend.")}
+            {ttx("All in centimetres. Fill only what you measured. The rest carries over on the trend.")}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {MEASUREMENT_FIELDS.map(f => (
@@ -816,7 +816,7 @@ function MeasurementModal({ latest, onAdd, onClose }: {
                   value={values[f.key]}
                   onChange={v => setValues({ ...values, [f.key]: v })}
                   keyboard="decimal-pad"
-                  placeholder="—"
+                  placeholder=", "
                 />
               </View>
             ))}
@@ -1179,7 +1179,7 @@ export default function FitnessApp() {
           </View>
           {doc.routines.length === 0 ? (
             <Text style={{ color: colors.textMuted, fontSize: 13.5, lineHeight: 20, marginBottom: 16 }}>
-              {ttx("Save the workouts you repeat — then start one with a tap and follow along set by set, rest timer included.")}
+              {ttx("Save the workouts you repeat. Then start one with a tap and follow along set by set, rest timer included.")}
             </Text>
           ) : (
             <View style={{ marginBottom: 16, gap: 10 }}>
@@ -1267,7 +1267,7 @@ export default function FitnessApp() {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("Body weight")}</Text>
                 <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
-                  {latestWeight ? latestWeight.kg.toFixed(1) : '—'}
+                  {latestWeight ? latestWeight.kg.toFixed(1) : ', '}
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> {ttx("kg")}</Text>
                 </Text>
                 {sortedWeights.length > 1 && (
@@ -1407,7 +1407,7 @@ export default function FitnessApp() {
       {tab === 'library' && (
         <>
           <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginBottom: 12 }}>
-            {EXERCISE_CATALOG.length} {ttx("exercises. Tap one for form cues — featured moves animate.")}
+            {EXERCISE_CATALOG.length} {ttx("exercises. Tap one for form cues. Featured moves animate.")}
           </Text>
 
           <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 }} style={{ marginBottom: 10 }}>
