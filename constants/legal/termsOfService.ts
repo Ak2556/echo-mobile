@@ -25,9 +25,16 @@
  *   2. MINIMUM AGE. §2 sets 16 globally, with a higher bar where local law
  *      requires it. India's DPDP Act 2023 treats under-18s as children needing
  *      verifiable parental consent and restricts tracking and targeted ads for
- *      them. Echo has NO date-of-birth field in the schema today, so §2 is not
- *      yet enforceable in product. Counsel to decide: 18+ in India, or 16+ with
- *      a verifiable parental-consent flow. Either answer creates engineering work.
+ *      them.
+ *
+ *      The product side is now built, contrary to what this note said before
+ *      20260822140000: profiles.date_of_birth exists, age is derived in
+ *      Postgres rather than on the device, advertising and behavioural
+ *      profiling are suppressed for under-18s server-side, and an unknown age
+ *      fails closed.
+ *
+ *      What remains is a decision, not engineering: 18+ in India, or 16+ with a
+ *      verifiable parental-consent flow. Only the second creates further work.
  *
  *   3. ARBITRATION. §21 currently uses courts, not arbitration. If an
  *      arbitration clause and class-action waiver are wanted, they must be
@@ -52,8 +59,8 @@ import {
   DSA_EMAIL,
 } from './entity';
 
-export const TERMS_UPDATED = 'August 22, 2026';
-export const TERMS_VERSION = '3.0-draft';
+export const TERMS_UPDATED = 'August 24, 2026';
+export const TERMS_VERSION = '3.1-draft';
 
 /** Language the Terms are authoritative in. See §25. */
 export const TERMS_AUTHORITATIVE_LANGUAGE = 'en';
@@ -164,6 +171,7 @@ If you see something that breaks these Terms, use the report action on the post,
 - You can see the status of reports you filed under **Settings → My Reports**.
 - If a moderation decision affects your Content or Account, you may appeal it for human review under **Settings → Appeals**. Appeals remain open for **six months** from the decision.
 - If your appeal succeeds, we restore the Content or the Account and record the reversal.
+- **Trusted flaggers.** Notices submitted by an entity awarded trusted-flagger status under **Article 22 of the Digital Services Act** are given priority and decided without undue delay, ahead of the ordinary queue.
 
 **In India**, if you are not satisfied, you may escalate to our Grievance Officer under §24. **In the European Union**, you retain the rights given to you by the Digital Services Act, including out-of-court dispute settlement; contact **${DSA_EMAIL}**.
 
@@ -324,11 +332,13 @@ Subject to §24 and to any non-waivable right you have to bring proceedings in y
 
 ## 22. General
 
-- **Changes to these Terms.** We may update these Terms. For material changes we will notify you in the app and update the version and date above, and where the law requires it we will seek your consent. Continuing to use the Service after a change takes effect means you accept it. If you do not accept it, stop using the Service and delete your Account.
+- **Changes to these Terms.** We may update these Terms. For material changes we will notify you in the app and update the version and date above, and the change takes effect **no earlier than 15 days after that notice**, so that you have time to read it and decide. A change required by law, or one needed to address a security risk or abuse, may take effect immediately, and we will say so when we tell you about it. Where the law requires it we will seek your consent. Continuing to use the Service after a change takes effect means you accept it. If you do not accept it, stop using the Service and delete your Account.
 - **Assignment.** You may not assign these Terms. We may assign them to an affiliate or in connection with a merger, acquisition or sale of assets, on notice to you.
 - **Severability.** If a provision is held unenforceable, it is modified to the minimum extent necessary, or severed, and the rest stays in force.
 - **No waiver.** Not enforcing a provision is not a waiver of it.
 - **Entire agreement.** These Terms and the Privacy Policy are the entire agreement between us about the Service.
+- **Survival.** Sections that by their nature should outlast the agreement do: §4 (the licence you give us, for content already distributed), §13 (our intellectual property), §18 (disclaimers), §19 (limitation of liability), §20 (indemnity), §21 (governing law and disputes), and this §22.
+- **Export and sanctions.** You may not use the Service if you are subject to sanctions that prohibit it, or located in a country under a comprehensive trade embargo that applies to us. You agree not to use the Service in breach of applicable export-control law.
 - **No third-party beneficiaries**, except as stated in §23.
 - **Force majeure.** We are not liable for failure to perform caused by events beyond our reasonable control, including outages of third-party infrastructure, natural events, war, civil unrest, or government action.
 - **Notices.** We may notify you in the app, by email, or by push notification. Notices to us go to **${SUPPORT_EMAIL}**.
