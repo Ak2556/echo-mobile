@@ -1,7 +1,7 @@
 # Navigation smoke: the app shell loads and every bottom tab renders without
 # crashing. Assumes the dev build is already installed and signed into an
 # account (akashhere12). Run: maestro test e2e/smoke.yaml
-appId: com.ak2556.echo
+appId: com.downloadecho.echo
 ---
 - assertVisible: "Home"
 - assertVisible: "Explore"

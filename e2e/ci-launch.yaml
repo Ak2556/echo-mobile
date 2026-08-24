@@ -1,0 +1,68 @@
+# Cold-launch smoke, for CI.
+#
+# The other flows in this directory assume a signed-in session and seeded data,
+# which CI cannot have — sign-in is a one-time code sent to a real inbox. This
+# flow deliberately asserts only what is true on a fresh install, so it can run
+# unattended on every pull request.
+#
+# That still catches the failures E2E is actually for: the JS bundle not
+# building, a native module missing from the prebuild, a crash on launch, or
+# the router failing to resolve the initial route.
+#
+# Note on syntax: waits use `extendedWaitUntil`, which takes a timeout.
+# `assertVisible` does not accept one — passing it fails the whole flow with
+# "Unknown Property: timeout" before a single step runs.
+#
+# Run locally:  maestro test e2e/ci-launch.yaml
+appId: com.downloadecho.echo
+---
+- launchApp:
+    clearState: true
+
+# With no session, app/index.tsx redirects to /auth/login. Reaching this at all
+# means the bundle loaded, the native side booted and expo-router resolved.
+# The Google button label is hardcoded English in login.tsx, so it does not
+# move with the device locale the way the i18n strings do. The regex covers
+# both "Sign up with Google" and "Log in with Google", since the screen
+# remembers which mode it was last in. Generous timeout: a debug bundle on a
+# cold emulator is slow to first paint.
+- extendedWaitUntil:
+    visible: ".*with Google.*"
+    timeout: 60000
+
+- takeScreenshot: e2e/shots/ci-launch
+
+# First launch asks for analytics consent, and the sheet sits on top of the
+# login screen — the Terms tap underneath it silently did nothing until this
+# was here. Conditional so the flow still passes if the sheet is ever moved,
+# and "No thanks" because CI should not be posting analytics events.
+- runFlow:
+    when:
+      visible: "Help us improve Echo"
+    commands:
+      - tapOn: "No thanks"
+
+# The legal routes are reachable without an account and are a store-review
+# requirement, so they are worth guarding.
+#
+# Reached by deep link rather than by tapping the login footer. "Terms" and
+# "Privacy." are nested <Text> spans inside a sentence, and Android flattens
+# that into one accessibility node reading "By continuing you agree to our
+# Terms & Privacy." — Maestro matches the sentence and taps its centre, which
+# is not on either link, so the tap silently did nothing.
+#
+# What this flow is actually for is proving the legal routes resolve and render
+# on a fresh install. openLink tests that directly and does not depend on the
+# footer's layout. That the footer links are not individually reachable is a
+# real accessibility problem, but it belongs in the app, not here.
+- openLink: echo:///terms
+- extendedWaitUntil:
+    visible: "Terms of Service"
+    timeout: 20000
+- takeScreenshot: e2e/shots/ci-terms
+
+- openLink: echo:///privacy
+- extendedWaitUntil:
+    visible: "Privacy Policy"
+    timeout: 20000
+- takeScreenshot: e2e/shots/ci-privacy

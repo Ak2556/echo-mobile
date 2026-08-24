@@ -5,7 +5,7 @@
 # Note: the composer is a bare RN TextInput whose placeholder isn't exposed to
 # accessibility, so send/compose can't be asserted here yet — tracked as an
 # a11y-label pass (icon-only send/attach buttons also need labels).
-appId: com.ak2556.echo
+appId: com.downloadecho.echo
 ---
 - openLink: echo://messages
 - assertVisible: "Messages"
