@@ -40,6 +40,12 @@ interface VideoPreviewProps {
    * in explicitly makes that impossible to do by accident.
    */
   autoplay?: boolean;
+  /**
+   * User-initiated pause. Separate from `isActive`, which only says whether
+   * this is the video on screen — a paused video is still the active one, and
+   * must stay paused until the user says otherwise.
+   */
+  paused?: boolean;
 }
 
 const VIDEO_PREVIEW_TIMEOUT_MS = 45_000;
@@ -94,7 +100,7 @@ function VideoFallback({ height = 260, borderRadius = 16, onPress, viewCount, ec
 }
 
 // Full video player (dev client / production build)
-function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId, autoplay = false }: VideoPreviewProps) {
+function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount, echoId, autoplay = false, paused = false }: VideoPreviewProps) {
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
@@ -114,29 +120,34 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   }, []);
 
   const isActive = isFocused && isAppActive && (echoId ? activeEchoId === echoId : autoplay);
+  // Playback is driven by effects, so a user pause has to be part of the
+  // condition rather than a one-off player.pause() — otherwise the next effect
+  // run (a mute toggle, a status change, a re-render) restarts the video and
+  // the pause looks broken.
+  const shouldPlay = isActive && !paused;
 
   useEffect(() => { setLoadState('loading'); }, [uri]);
 
   useEffect(() => {
     player.muted = isGlobalMuted || !isActive;
     if (loadState === 'ready') {
-      if (isActive) player.play();
+      if (shouldPlay) player.play();
       else player.pause();
     }
-  }, [isActive, isGlobalMuted, loadState, player]);
+  }, [shouldPlay, isActive, isGlobalMuted, loadState, player]);
 
   useEffect(() => {
     const initialState = loadStateFromStatus(player.status);
     if (initialState) {
       setLoadState(initialState);
-      if (initialState === 'ready' && isActive) player.play();
+      if (initialState === 'ready' && shouldPlay) player.play();
     }
 
     const sub = player.addListener('statusChange', ({ status, error }: { status: string; error?: { message?: string } }) => {
       const nextState = loadStateFromStatus(status);
       if (!nextState) return;
       if (nextState === 'ready') {
-        if (isActive) player.play();
+        if (shouldPlay) player.play();
         else player.pause();
       }
       if (nextState === 'error' && __DEV__) {
@@ -145,7 +156,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
       setLoadState(nextState);
     });
     return () => sub.remove();
-  }, [player, uri, isActive]);
+  }, [player, uri, shouldPlay]);
 
   useEffect(() => {
     if (loadState !== 'loading') return;
