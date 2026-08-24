@@ -55,7 +55,11 @@ jobs:
   test:
     name: Run Maestro E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The release build alone is ~31 minutes here, and android-beta.yml — same
+    # runner, same release APK — took 38. 45 left nothing for booting an
+    # emulator and running the flow, so a green build would still have timed
+    # out. The Gradle cache does not survive a failed job, so assume cold.
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -87,6 +91,21 @@ jobs:
         run: npx expo prebuild --platform android --no-install
         env:
           EXPO_NO_TELEMETRY: '1'
+
+      # Expo generates `org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m`.
+      # That is not enough to package this app: the first run to get past the
+      # device error compiled everything and then died after 31 minutes with
+      #
+      #   java.lang.OutOfMemoryError: Java heap space
+      #     at com.android.zipflinger.Compressor.deflate
+      #     at com.android.builder.internal.packaging.ApkFlinger
+      #
+      # zipflinger deflates each entry through an in-memory buffer, and the
+      # release APK is ~190 MB. android-beta.yml already raises this; the same
+      # gap here cost a full build every time. The last value in the file wins,
+      # so appending overrides the generated one. Runners have 16 GB.
+      - name: Configure Gradle memory
+        run: echo "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
 
       # Release, not debug. expo-dev-client makes a debug APK boot into the
       # dev launcher and wait for a Metro server, which CI does not run — the
