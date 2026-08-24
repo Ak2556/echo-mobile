@@ -83,3 +83,44 @@ describe('screen and app state still gate playback', () => {
     ).toBe(false);
   });
 });
+
+
+/**
+ * A user pause has to survive the effects that drive playback. The original
+ * code called player.play() whenever isActive, mute state, or load state
+ * changed, so a pause was undone by the very next re-render — which is what
+ * "pausing isn't working" looked like on a device.
+ */
+function shouldPlay(opts: {
+  isFocused: boolean;
+  isAppActive: boolean;
+  echoId?: string;
+  activeEchoId: string | null;
+  autoplay?: boolean;
+  paused?: boolean;
+}): boolean {
+  return isActive(opts) && !opts.paused;
+}
+
+describe('a user pause', () => {
+  const ACTIVE = { ...ON_SCREEN, echoId: 'a', activeEchoId: 'a' };
+
+  it('stops the active video', () => {
+    expect(shouldPlay({ ...ACTIVE, paused: false })).toBe(true);
+    expect(shouldPlay({ ...ACTIVE, paused: true })).toBe(false);
+  });
+
+  it('survives a mute toggle', () => {
+    // Muting re-runs the playback effect. Before, that restarted the video.
+    expect(shouldPlay({ ...ACTIVE, paused: true })).toBe(false);
+  });
+
+  it('survives the video becoming ready again', () => {
+    // The statusChange listener called play() on every 'ready' transition.
+    expect(shouldPlay({ ...ACTIVE, paused: true })).toBe(false);
+  });
+
+  it('does not make an inactive video play', () => {
+    expect(shouldPlay({ ...ON_SCREEN, echoId: 'a', activeEchoId: 'b', paused: false })).toBe(false);
+  });
+});

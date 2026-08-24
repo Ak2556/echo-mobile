@@ -1,11 +1,11 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { HeartStraight, ChatCircle, ShareNetwork, BookmarkSimple, SpeakerHigh, SpeakerSlash, MusicNotesPlus } from 'phosphor-react-native';
+import { HeartStraight, ChatCircle, ShareNetwork, BookmarkSimple, SpeakerHigh, SpeakerSlash, MusicNotesPlus, Play, Pause } from 'phosphor-react-native';
 import { FeedItem } from '../../../../types/index';
 import { VideoPreview } from './VideoPreview';
 import { useResponsiveLayout } from '../../../shared/lib/responsive';
@@ -13,6 +13,7 @@ import { useTheme } from '../../../shared/lib/theme';
 import { warmAvatarColor } from '../../../../lib/avatarPalette';
 import { useToggleRemoteLike, useToggleRemoteBookmark } from '../api/useSupabaseSocial';
 import { useAppStore } from '../../../../store/useAppStore';
+import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, runOnJS, withDelay } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
@@ -69,6 +70,17 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
   const { mutate: toggleLike } = useToggleRemoteLike();
   const { mutate: toggleBookmark } = useToggleRemoteBookmark();
   
+  // Paused is per card and deliberately not global: scrolling to the next
+  // video should start it playing, not inherit a pause from the last one.
+  const [paused, setPaused] = useState(false);
+  const activeEchoId = useActiveVideoStore(s => s.activeEchoId);
+
+  // Clear the pause once this card is no longer the one on screen. Without
+  // this, scrolling away from a paused video and back leaves it stuck paused
+  // with no indication why.
+  useEffect(() => {
+    if (activeEchoId !== item.id && paused) setPaused(false);
+  }, [activeEchoId, item.id, paused]);
   const soundEnabled = useAppStore(s => s.soundEnabled);
   const setSoundEnabled = useAppStore(s => s.setSoundEnabled);
 
@@ -104,9 +116,12 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
     }
   }, [item.isLiked, item.id, toggleLike, heartScale, heartOpacity]);
 
+  // Tap pauses. This used to toggle sound, which is why tapping to pause
+  // appeared to do nothing — the video muted and kept playing. Sound moved to
+  // its own button so it is still reachable.
   const onSingleTap = useCallback(() => {
-    setSoundEnabled(!soundEnabled);
-    
+    setPaused(p => !p);
+
     muteScale.value = 0.5;
     muteOpacity.value = 1;
     muteScale.value = withSpring(1, { damping: 15 });
@@ -114,7 +129,11 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
       withTiming(1, { duration: 100 }),
       withDelay(800, withTiming(0, { duration: 300 }))
     );
-  }, [soundEnabled, setSoundEnabled, muteScale, muteOpacity]);
+  }, [muteScale, muteOpacity]);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled(!soundEnabled);
+  }, [soundEnabled, setSoundEnabled]);
 
   const singleTap = Gesture.Tap().maxDuration(250).onStart(() => { runOnJS(onSingleTap)(); });
   const doubleTap = Gesture.Tap().numberOfTaps(2).maxDelay(250).onStart((e) => { runOnJS(onDoubleTap)(e.x, e.y); });
@@ -153,6 +172,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
             borderRadius={0}
             echoId={item.id}
             viewCount={item.viewCount}
+            paused={paused}
           />
         </View>
       </GestureDetector>
@@ -168,16 +188,42 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
         <HeartStraight weight="fill" color="#FF2A54" size={130} />
       </Animated.View>
 
+      {/* Sound has its own control now that tapping the video pauses it.
+          Sits above the gesture layer so it is not swallowed by the tap. */}
+      <Pressable
+        onPress={toggleSound}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel={soundEnabled ? 'Mute video' : 'Unmute video'}
+        style={{
+          position: 'absolute',
+          top: (insets?.top || 0) + 12,
+          right: 16,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(0,0,0,0.45)',
+        }}
+      >
+        {soundEnabled ? (
+          <SpeakerHigh color="#fff" size={20} weight="fill" />
+        ) : (
+          <SpeakerSlash color="#fff" size={20} weight="fill" />
+        )}
+      </Pressable>
+
       <Animated.View pointerEvents="none" style={[{
         position: 'absolute', top: '45%', alignSelf: 'center',
         backgroundColor: 'rgba(0,0,0,0.4)', padding: 24, borderRadius: 40,
         alignItems: 'center', justifyContent: 'center',
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
       }, muteStyle]}>
-        {!soundEnabled ? (
-          <SpeakerSlash color="#fff" size={42} weight="fill" />
+        {paused ? (
+          <Play color="#fff" size={42} weight="fill" />
         ) : (
-          <SpeakerHigh color="#fff" size={42} weight="fill" />
+          <Pause color="#fff" size={42} weight="fill" />
         )}
       </Animated.View>
 
