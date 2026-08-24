@@ -3624,11 +3624,19 @@ export async function fetchConversationById(conversationId: string): Promise<Rem
   }
 
   const otherId: string = (conv.user_a as string) === uid ? (conv.user_b as string) : (conv.user_a as string);
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id, username, display_name, avatar_color, avatar_url, last_seen_at')
     .eq('id', otherId)
     .single();
+  // A failure here is invisible in the UI — the fallbacks below just render
+  // "User / @unknown" in the chat header. That is how a missing column grant on
+  // last_seen_at (42501 fails the whole select) went unnoticed, so report it.
+  if (profileError) {
+    captureException(profileError, {
+      tags: { module: 'supabaseEchoApi', fn: 'fetchConversationById', op: 'profile' },
+    });
+  }
 
   const pm = (conv as Record<string, unknown>).pinned_msg as Record<string, unknown> | null;
 
