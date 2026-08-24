@@ -11,6 +11,7 @@ import { fetchRemoteBlocks, fetchRemoteMutes, fetchAndApplyRemoteSettings } from
 import { loadPersonaProfile } from '../persona';
 import { syncNotificationProfile } from '../personalNudges';
 import { useAuthStore } from './store';
+import { destinationFor } from './destination';
 import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
 import { withAuthTimeout } from './timeout';
@@ -139,36 +140,17 @@ async function handleDeepLink(url: string): Promise<void> {
 }
 
 /**
- * Send the user to the right route for the current status. Called whenever
- * the auth store's status changes — keeps /auth/phone, /auth/email, etc.
- * from stranding the user after a successful verify.
- *
- * Idempotent: if the user is already on the right route, do nothing.
+ * Apply destinationFor. Called on mount and whenever the route or the status
+ * moves, so a screen that arrives after the status has settled is routed too.
+ * Idempotent: destinationFor returns null when the user is already right.
  */
 function routeFor(
   router: ReturnType<typeof useRouter>,
   pathname: string,
   status: AuthStatus,
 ): void {
-  if (status === 'checking') return;
-
-  // Don't yank the user out of the wizard while they're working.
-  if (pathname === '/auth/signup-wizard' && status === 'needs-onboarding') return;
-
-  if (status === 'signed-out') {
-    if (!pathname.startsWith('/auth/')) router.replace('/auth/login');
-    return;
-  }
-  if (status === 'needs-onboarding') {
-    router.replace('/auth/signup-wizard');
-    return;
-  }
-  if (status === 'ready') {
-    if (pathname.startsWith('/auth/') || pathname === '/') {
-      router.replace('/(tabs)/home');
-    }
-    return;
-  }
+  const destination = destinationFor(pathname, status);
+  if (destination) router.replace(destination);
 }
 
 /**
@@ -188,13 +170,17 @@ export function AuthListenerProvider(): null {
 
   // Status-driven navigation. Runs whenever status changes — pushes the
   // current view to the right destination if it's stale.
+  const status = useAuthStore(s => s.status);
+
   useEffect(() => {
-    const unsub = useAuthStore.subscribe((s, prev) => {
-      if (s.status === prev.status) return;
-      routeFor(router, pathname, s.status);
-    });
-    return unsub;
-  }, [router, pathname]);
+    // Level-triggered, deliberately. This used to subscribe to the store and
+    // act only when the status differed from the previous one, which loses
+    // every case where the status settled before the screen asking about it
+    // mounted — the Google callback being the one users hit. Reading the
+    // current status as a hook re-runs this on arrival as well as on change,
+    // so the question is answered whenever either side moves.
+    routeFor(router, pathname, status);
+  }, [router, pathname, status]);
 
   useEffect(() => {
     if (started) return;

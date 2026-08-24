@@ -114,7 +114,22 @@ export async function consumeAuthCallbackUrl(url: string): Promise<AuthCallbackR
 
     if (params.code) {
       const { data, error } = await supabase.auth.exchangeCodeForSession(params.code);
-      if (error) return { status: 'error', type: params.type, error: error.message };
+      if (error) {
+        // A PKCE code is single-use, and this URL reaches up to three
+        // consumers: the browser result in providers/google.ts, the Linking
+        // event in listener.ts, and the app/auth/callback.tsx screen. One wins
+        // the exchange and the rest see "code verifier" or "already used".
+        //
+        // Losing that race is not a failed sign-in. What decides the outcome
+        // is whether a session exists now, not which consumer created it —
+        // reporting an error here told users who were already signed in that
+        // sign-in had failed.
+        const { data: existing } = await supabase.auth.getSession();
+        if (existing?.session) {
+          return { status: 'success', type: params.type, session: existing.session };
+        }
+        return { status: 'error', type: params.type, error: error.message };
+      }
       return { status: 'success', type: params.type, session: data.session };
     }
 
