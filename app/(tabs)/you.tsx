@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +29,8 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { useI18n } from '../../src/shared/lib/i18n';
 import { signOut } from '../../lib/auth';
 import { FeedItem } from '../../types';
+import { useQuery } from '@tanstack/react-query';
+import { fetchRemoteRepostsByUser } from '../../lib/supabaseEchoApi';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { StreakXPBadge } from '../../src/features/feed/ui/StreakXPBadge';
@@ -130,6 +132,17 @@ export default function ProfileScreen() {
   const resolvedProfileUserId = profileUserId || userId;
   const { data: remoteBundle, refetch: refetchRemoteProfile } = useRemoteProfileBundle(resolvedProfileUserId);
   const profileEchoes = remoteBundle?.echoes ?? publishedEchoes;
+  // The Re-echoes tab rendered a hardcoded "No Re-echoes yet" no matter what:
+  // there was no query behind it at all. Reposts live in echo_reposts as
+  // (user_id, echo_id), so they have to be fetched separately from the
+  // profile's own echoes. Only when the tab is open — most visits never
+  // touch it.
+  const reechoes = useQuery({
+    queryKey: ['profile', 'reposts', resolvedProfileUserId],
+    queryFn: () => fetchRemoteRepostsByUser(resolvedProfileUserId!),
+    enabled: !!resolvedProfileUserId && activeTab === 'reechoes',
+    staleTime: 60_000,
+  });
   const showCompletionBanner = !bannerDismissed && !profileComplete && profileEchoes.length < 10;
   const createdAt = remoteBundle?.user?.createdAt ?? new Date().toISOString();
   const creatorProfile = useMemo(
@@ -306,7 +319,18 @@ export default function ProfileScreen() {
                 containerWidth={layout.contentWidth}
               />
             )
-          ) : (
+            ) : reechoes.data && reechoes.data.length > 0 ? (
+              <PostsGrid
+                echoes={reechoes.data}
+                onPressEcho={handlePressEcho}
+                avatarColor={profileAccent}
+                containerWidth={layout.contentWidth}
+              />
+            ) : reechoes.isLoading ? (
+              <View style={{ paddingVertical: 60, alignItems: 'center' }}>
+                <ActivityIndicator color={colors.textMuted} />
+              </View>
+            ) : (
             <View style={[{ marginHorizontal: 16, marginTop: 16, backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 24, padding: 32, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }]}>
               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                 <ArrowsLeftRight color={colors.accent} size={24} weight="bold" />
