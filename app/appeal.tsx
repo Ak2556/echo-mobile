@@ -25,8 +25,8 @@ import { ttx } from '../src/shared/lib/i18n';
 // `tone` resolves to a theme token at render so status color adapts per theme.
 const STATUS_CONFIG: Record<MyAppeal['status'], { label: string; tone: 'warning' | 'danger' | 'success'; Icon: React.ComponentType<any> }> = {
   pending:    { label: 'Under review',  tone: 'warning', Icon: Clock },
-  upheld:     { label: 'Upheld — decision stands',     tone: 'danger', Icon: X },
-  overturned: { label: 'Overturned — content restored', tone: 'success', Icon: CheckCircle },
+  upheld:     { label: 'Upheld. Decision stands',     tone: 'danger', Icon: X },
+  overturned: { label: 'Overturned. Content restored', tone: 'success', Icon: CheckCircle },
 };
 
 function timeAgo(iso: string): string {
@@ -97,7 +97,7 @@ export default function AppealScreen() {
       <ScreenHeader
         safeTop
         title={isNew ? 'Appeal a decision' : 'My appeals'}
-        subtitle={isNew ? 'Art. 20 — DSA internal appeals mechanism' : 'Your appeal history'}
+        subtitle={isNew ? 'Art. 20, DSA internal appeals mechanism' : 'Your appeal history'}
         right={<Scales color={colors.accent} size={22} weight="duotone" style={{ marginRight: 8 }} />}
       />
 
@@ -188,7 +188,7 @@ export default function AppealScreen() {
                       textAlignVertical: 'top',
                     }}
                     multiline
-                    placeholder={ttx("Explain why you believe this decision was incorrect — include any relevant context, evidence, or information the moderator may not have had.")}
+                    placeholder={ttx("Explain why you believe this decision was incorrect. Include any relevant context, evidence, or information the moderator may not have had.")}
                     placeholderTextColor={colors.textMuted}
                     value={reason}
                     onChangeText={t => setReason(t.slice(0, MAX_CHARS))}

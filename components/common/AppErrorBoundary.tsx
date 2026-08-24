@@ -55,7 +55,7 @@ export function AppErrorBoundary({ error, retry }: ErrorBoundaryProps) {
             maxWidth: 320,
           }}
         >
-          {ttx("Echo hit an unexpected hiccup. Tap retry to reload this screen — your data is safe.")}
+          {ttx("Echo hit an unexpected hiccup. Tap retry to reload this screen. Your data is safe.")}
         </Text>
 
         {/* Wrapper View owns the accent fill; the Pressable stays bare.

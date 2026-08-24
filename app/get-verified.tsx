@@ -162,7 +162,7 @@ export default function GetVerifiedScreen() {
 
           <View style={{ gap: 14 }}>
             {[
-              { icon: <Camera color={colors.accent} size={20} weight="fill" />, text: 'Take a live selfie — we’ll ask for a quick pose so it can’t be a saved photo.' },
+              { icon: <Camera color={colors.accent} size={20} weight="fill" />, text: 'Take a live selfie. We’ll ask for a quick pose so it can’t be a saved photo.' },
               { icon: <SealCheck color={colors.accent} size={20} weight="fill" />, text: 'It’s compared with your profile photo. A clear match verifies you instantly; otherwise a human reviews it.' },
               { icon: <ShieldCheck color={colors.accent} size={20} weight="fill" />, text: 'Your selfie is used only for this check and deleted as soon as a decision is made. It is never shown on your profile.' },
             ].map((row, i) => (
@@ -176,7 +176,7 @@ export default function GetVerifiedScreen() {
           {!profile?.avatar_url ? (
             <View style={{ backgroundColor: '#F59E0B14', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#F59E0B33' }}>
               <Text style={{ color: '#F59E0B', fontSize: 13.5, lineHeight: 19 }}>
-                {ttx("You need a profile photo with your face first — add one in Edit profile, then come back.")}
+                {ttx("You need a profile photo with your face first. Add one in Edit profile, then come back.")}
               </Text>
             </View>
           ) : (

@@ -1123,7 +1123,7 @@ function DMBubble({
         <Pressable onPress={onRetry} hitSlop={8}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3, marginHorizontal: 2 }}>
             <WarningCircle color={colors.danger} size={12} weight="fill" />
-            <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700' }}>{ttx("Failed to send — tap to retry")}</Text>
+            <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700' }}>{ttx("Failed to send. Tap to retry")}</Text>
           </View>
         </Pressable>
       ) : !groupedWithNext && (
@@ -2554,7 +2554,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
       if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
       setText(QUICK_STARTERS[intent] ?? '');
-      showToast('Couldn’t reach Echo — starter added', 'Offline');
+      showToast('Couldn’t reach Echo. Starter added', 'Offline');
     } finally {
       setReplyLoading(null);
       inputRef.current?.focus();
@@ -2639,7 +2639,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         message: `Translate the following message to English. If it is already English, translate it to Spanish instead. Output only the translation, no quotes or notes:\n\n${msg.content}`,
         onEvent: e => { if (e.type === 'text_delta') { acc += e.delta; setTranslations(prev => ({ ...prev, [msg.id]: acc.trim() })); } },
       });
-      setTranslations(prev => ({ ...prev, [msg.id]: acc.trim() || '—' }));
+      setTranslations(prev => ({ ...prev, [msg.id]: acc.trim() || ', ' }));
     } catch {
       showToast('Couldn’t translate right now', 'Offline');
       setTranslations(prev => { const next = { ...prev }; delete next[msg.id]; return next; });
@@ -2730,7 +2730,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 300 }}>
               {conversation.isGroup
                 ? 'This is the start of the group. Send something to get it going.'
-                : 'The start of your conversation. Send the first message — Echo can help you find the words.'}
+                : 'The start of your conversation. Send the first message, Echo can help you find the words.'}
             </Text>
           </Animated.View>
         ) : null}

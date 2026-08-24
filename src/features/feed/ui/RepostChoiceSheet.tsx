@@ -80,7 +80,7 @@ export function RepostChoiceSheet({ visible, onClose, reposted, onRepost, onRemi
               name={reposted ? 'Undo re-echo' : 'Re-echo'}
               tagline={reposted
                 ? 'Remove from your followers’ feed'
-                : 'Share as-is — credits the original author'}
+                : 'Share as-is. Credits the original author'}
               onPress={() => { tap('light'); onRepost(); onClose(); }}
               destructive={reposted}
               colors={colors}

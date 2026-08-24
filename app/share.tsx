@@ -336,7 +336,7 @@ export default function ShareScreen() {
             />
             {!editedResponse.trim() && (
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 6 }}>
-                {ttx("Required — write the takeaway you want to publish.")}
+                {ttx("Required. Write the takeaway you want to publish.")}
               </Text>
             )}
 

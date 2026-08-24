@@ -192,7 +192,7 @@ function OfficeHourDetailScreenInner() {
             <View style={{ padding: 20, alignItems: 'center' }}>
               <Microphone color={colors.textMuted} size={28} />
               <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 8, textAlign: 'center' }}>
-                {ttx("No questions yet. Be first — top-voted Qs get answered first.")}
+                {ttx("No questions yet. Be first. Top-voted Qs get answered first.")}
               </Text>
             </View>
           ) : (

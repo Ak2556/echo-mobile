@@ -659,7 +659,7 @@ export default function CreatePostScreen() {
               >
                 <Question color={colors.accent} size={20} weight="duotone" />
                 <Text style={{ color: colors.text, fontSize: 13, lineHeight: 19, flex: 1 }}>
-                  {ttx("A musing is a thought you're still working through — no need for a tidy answer. Think out loud.")}
+                  {ttx("A musing is a thought you're still working through. No need for a tidy answer. Think out loud.")}
                 </Text>
               </View>
               <Text style={s.label}>{ttx("What's on your mind?")}</Text>
@@ -771,7 +771,7 @@ export default function CreatePostScreen() {
 
               {/* Count */}
               <Text style={[s.label, { color: imageUris.length >= MAX_PHOTOS ? colors.accent : colors.textMuted }]}>
-                {imageUris.length}/{MAX_PHOTOS} {ttx("selected")}{imageUris.length > 1 ? ' · tap ✎ to edit, arrows to reorder' : ''}
+                {imageUris.length}/{MAX_PHOTOS} {ttx("selected")}{imageUris.length > 1 ? ' · tap to edit, arrows to reorder' : ''}
               </Text>
 
               {/* Thumbnail grid */}

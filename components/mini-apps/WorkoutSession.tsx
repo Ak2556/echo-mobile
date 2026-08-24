@@ -196,7 +196,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
                 <Trophy color={colors.accent} size={20} weight="fill" />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800' }}>{pr.name}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>{ttx("New best —")} {pr.weight} {ttx("kg ×")} {pr.reps}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12.5 }}>{ttx("New best, ")} {pr.weight} {ttx("kg ×")} {pr.reps}</Text>
                 </View>
               </View>
             ))}
