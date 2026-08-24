@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Images } from 'phosphor-react-native';
+import { Images, Play } from 'phosphor-react-native';
 import { EmptyState } from '../common/EmptyState';
 import { useTheme } from '../../src/shared/lib/theme';
 import { FeedItem } from '../../types';
@@ -36,6 +36,9 @@ function MosaicTile({
 }) {
   const { colors, font } = useTheme();
   const mediaUri = item.mediaUris?.[0];
+  // mapSupabaseEcho clears mediaUris once it detects a video, so a video tile
+  // falls through to the text treatment with nothing marking it as a video.
+  const isVideo = item.postType === 'video' || !!item.videoUri;
 
   return (
     <Pressable onPress={onPress}>
@@ -85,6 +88,10 @@ export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: 
   const usable = Math.max(gridWidth - GRID_HORIZONTAL_INSET * 2, 240);
   const columns = usable >= 620 ? 3 : 2;
   const tileWidth = Math.floor((usable - GRID_GAP * (columns - 1)) / columns);
+  // One height for every tile. Heights used to alternate on `idx % 3`, which in
+  // a flex-wrap leaves uneven gaps under the shorter tiles and stops the grid
+  // reading as rows at all. 4:5 keeps portrait media from being over-cropped.
+  const tileHeight = Math.round(tileWidth * 1.25);
 
   if (echoes.length === 0) {
     return (

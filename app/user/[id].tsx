@@ -14,7 +14,7 @@ import {
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { EmptyState } from '../../components/common/EmptyState';
-import { FeedCard } from '../../src/features/feed/ui/FeedCard';
+import { PostsGrid } from '../../components/profile/PostsGrid';
 import { ThinkingFingerprintCard } from '../../src/features/feed/ui/ThinkingFingerprintCard';
 import { ProfileHeaderSkeleton, FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
@@ -23,6 +23,7 @@ import { ProfilePhotoPreview } from '../../components/ui/ProfilePhotoPreview';
 import { showToast } from '../../components/ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
 import { useTheme } from '../../src/shared/lib/theme';
+import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { useFeed } from '../../src/features/feed/api/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
@@ -35,6 +36,9 @@ import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
+
+// FlashList still owns the header and scrolling; the grid is the footer.
+const EMPTY_LIST: any[] = [];
 
 export const PROFILE_SECTIONS = ['echoes', 'photos', 'flows', 'reechoed'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
@@ -353,6 +357,7 @@ export default function UserProfileScreen() {
   // Without this, VideoPreview never becomes the active video and a video echo
   // renders as a black rectangle: the player mounts, never starts, never paints.
   const videoTracking = useActiveVideoTracking();
+  const layout = useResponsiveLayout();
   const remote = isSupabaseRemote();
   const remoteBundle = useRemoteProfileBundle(remote ? id : undefined);
   const [section, setSection] = useState<ProfileSection>('echoes');
@@ -456,17 +461,24 @@ export default function UserProfileScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
         <FlashList
-            {...videoTracking}
-          data={listData}
-            renderItem={({ item, index }) => (
-            <FeedCard
-              item={item}
-              index={index}
-              pinned={pinnedEcho?.id === item.id}
-              onPress={() => router.push(`/thread/${item.id}`)}
-            />
-          )}
-          keyExtractor={item => item.id}
+          {...videoTracking}
+          // The grid renders as one block under the header rather than a row
+          // per item: a profile holds tens of posts, not thousands, and
+          // PostsGrid needs the whole set to lay out its wrap. Keeping
+          // FlashList preserves the existing header, scroll and empty states.
+          data={EMPTY_LIST}
+          renderItem={() => null}
+          keyExtractor={(_item, index) => String(index)}
+          ListFooterComponent={
+            listData.length === 0 ? null : (
+              <PostsGrid
+                echoes={listData}
+                onPressEcho={(echo) => router.push(`/thread/${echo.id}`)}
+                avatarColor={user.avatarColor}
+                containerWidth={layout.contentWidth}
+              />
+            )
+          }
           ListHeaderComponent={
             <ProfileHeader
               user={user}
@@ -560,13 +572,23 @@ export default function UserProfileScreen() {
 
   return (
     <ResponsiveScreen>
-      <FlashList
-            {...videoTracking}
-        data={userEchoes}
-            renderItem={({ item, index }) => (
-          <FeedCard item={item} index={index} onPress={() => router.push(`/thread/${item.id}`)} />
-        )}
-        keyExtractor={item => item.id}
+        <FlashList
+          {...videoTracking}
+          // Same grid as the remote path, so the offline profile does not
+          // look like a different screen.
+          data={EMPTY_LIST}
+          renderItem={() => null}
+          keyExtractor={(_item, index) => String(index)}
+          ListFooterComponent={
+            userEchoes.length === 0 ? null : (
+              <PostsGrid
+                echoes={userEchoes}
+                onPressEcho={(echo) => router.push(`/thread/${echo.id}`)}
+                avatarColor={user.avatarColor}
+                containerWidth={layout.contentWidth}
+              />
+            )
+          }
         ListHeaderComponent={
           <ProfileHeader
             user={user}
