@@ -119,11 +119,13 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
                   accessibilityLabel={`${m.name}. ${m.tagline}`}
+                  // Only paint on the pressable. Layout props set here —
+                  // flexDirection, gap, padding — are dropped in release
+                  // builds through the NativeWind interop, which is why this
+                  // sheet rendered as a vertical pile of icon, name, tagline
+                  // and check instead of a row. The inner View below owns the
+                  // layout, which is the pattern that survives.
                   style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 14,
-                    padding: 14,
                     borderRadius: 14,
                     backgroundColor: active
                       ? colors.accentMuted
@@ -134,6 +136,7 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
                     borderColor: active ? colors.accent : colors.border,
                   })}
                 >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 }}>
                   {/* Icon tile */}
                   <View style={{
                     width: 40,
@@ -166,6 +169,7 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
                       <Check color="#fff" size={14} weight="bold" />
                     </View>
                   )}
+                  </View>
                 </Pressable>
               );
             })}
@@ -182,7 +186,6 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: colors.border,
             paddingVertical: 16,
-            alignItems: 'center',
             shadowColor: '#000',
             shadowOpacity: 0.25,
             shadowRadius: 16,
@@ -191,7 +194,7 @@ export function ModelPickerSheet({ visible, onClose, selected, onSelect }: Model
           accessibilityRole="button"
           accessibilityLabel={ttx("Cancel")}
         >
-          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16 }]}>{ttx("Cancel")}</Text>
+          <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, textAlign: 'center' }]}>{ttx("Cancel")}</Text>
         </Pressable>
       </Animated.View>
     </Modal>

@@ -1,5 +1,6 @@
 import EventSource from 'react-native-sse';
 import { supabase } from './supabase';
+import type { AiMode } from '../supabase/functions/echo-ai/mode';
 
 // Direct connection to the Supabase Edge Function "echo-ai".
 // We don't expose the OpenRouter key — it lives in the function's env.
@@ -56,6 +57,13 @@ const AI_MODEL_MAP: Record<EchoAIModel, string> = {
 
 interface StreamArgs {
   message?: string;
+  /**
+   * 'ask' keeps Echo conversational: the Edge Function offers it no tools, so
+   * it cannot act. 'do' offers all of them, with writes still pausing on a
+   * confirm card. Omitting it means 'do' on the server, for clients that
+   * predate the switch.
+   */
+  mode?: AiMode;
   conversationId?: string;
   confirm?: { tool_call_id: string; tool_name: string; args: any; approve: boolean };
   localResult?: {
@@ -250,6 +258,7 @@ function openStream(
 
 export async function streamEchoAI({
   message,
+  mode,
   conversationId,
   confirm,
   localResult,
@@ -287,6 +296,7 @@ export async function streamEchoAI({
   if (preferredModel && AI_MODEL_MAP[preferredModel]) {
     payload.preferred_model = AI_MODEL_MAP[preferredModel];
   }
+  if (mode) payload.mode = mode;
   if (currentScreen) payload.current_screen = currentScreen;
   if (personaContext) payload.persona_context = personaContext.slice(0, 2800);
 
