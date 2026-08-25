@@ -32,9 +32,23 @@ describe('destinationFor', () => {
     }
   });
 
+  it('leaves a signed-out user on the public legal routes', () => {
+    // Regression: this function shipped with its own signed-out rule
+    // (pathname.startsWith('/auth/')) while AuthGuard used isPublicRoute. Two
+    // authorities, different rules, and the stricter one won — so a signed-out
+    // visitor deep-linking to /terms was bounced to login within a frame, which
+    // is exactly the bug the legal-routes fix had already closed.
+    expect(destinationFor('/terms', 'signed-out')).toBeNull();
+    expect(destinationFor('/privacy', 'signed-out')).toBeNull();
+    expect(destinationFor('/legal/eu-rep', 'signed-out')).toBeNull();
+    expect(destinationFor('/welcome', 'signed-out')).toBeNull();
+  });
+
   it('sends a signed-out user to login from anywhere but the auth screens', () => {
     expect(destinationFor('/messages/abc', 'signed-out')).toBe('/auth/login');
-    expect(destinationFor('/', 'signed-out')).toBe('/auth/login');
+    expect(destinationFor('/create-post', 'signed-out')).toBe('/auth/login');
+    // '/' is public here on purpose: app/index.tsx renders its own Redirect for
+    // a signed-out user, and racing it from two places is how loops start.
     // Already somewhere in auth: leave them there rather than bouncing them
     // out of the phone or email step they are mid-way through.
     expect(destinationFor('/auth/phone', 'signed-out')).toBeNull();

@@ -1,5 +1,6 @@
 import type { Href } from 'expo-router';
 import type { AuthStatus } from './types';
+import { isPublicRoute } from '../publicRoutes';
 
 /**
  * Where a given auth status should send someone standing on a given route.
@@ -36,7 +37,13 @@ export function destinationFor(pathname: string, status: AuthStatus): Href | nul
   if (pathname === '/auth/signup-wizard' && status === 'needs-onboarding') return null;
 
   if (status === 'signed-out') {
-    return pathname.startsWith('/auth/') ? null : '/auth/login';
+    // isPublicRoute, not a local rule. This function shipped with its own
+    // startsWith('/auth/') test while AuthGuard used isPublicRoute — two
+    // authorities with different answers, and the stricter one won. A
+    // signed-out visitor deep-linking to /terms was bounced to login within a
+    // frame, undoing the legal-routes fix and, incidentally, making every
+    // inbound deep link look like it was being ignored.
+    return isPublicRoute(pathname) ? null : '/auth/login';
   }
 
   if (status === 'needs-onboarding') {
