@@ -198,7 +198,13 @@ export default function AppsScreen() {
   const useBlur = Platform.OS === 'ios' && !reduceAnimations;
   const tint = colors.isDark ? 'dark' : 'extraLight';
 
-  const HEADER_HEIGHT = insets.top + 70;
+  // Tall enough for both lines the header actually draws. At 70 the sticky
+  // header clipped "12 connected essentials" through the middle, because the
+  // container sets overflow:'hidden' while its content needs roughly 83pt: 10
+  // top padding, a 34pt Fraunces title that lays out near 44, 2 of margin, a
+  // 14pt subtitle near 19, and 8 of bottom padding. The desktop title is 40pt,
+  // so it needs correspondingly more.
+  const HEADER_HEIGHT = insets.top + (layout.isPhone ? 88 : 98);
   const contentMaxWidth = Math.min(windowWidth, layout.isDesktop ? 980 : layout.wideMaxWidth);
   const columns = layout.isDesktop ? 6 : layout.isTablet ? 4 : 2;
   const cardWidth = Math.floor((contentMaxWidth - PAD * 2 - GAP * (columns - 1)) / columns);

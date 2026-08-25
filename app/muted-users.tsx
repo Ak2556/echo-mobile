@@ -13,6 +13,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
 import { User } from '../types';
 import { ttx } from '../src/shared/lib/i18n';
+import { personName } from '../lib/personName';
 
 export default function MutedUsersScreen() {
   const { mutedIds, toggleMute, getUser } = useAppStore();
@@ -46,11 +47,11 @@ export default function MutedUsersScreen() {
               >
                 {showAvatars && (
                   <View className="mr-3">
-                    <Avatar name={item.displayName} color={item.avatarColor} url={item.avatarUrl} size={44} />
+                    <Avatar name={personName(item)} color={item.avatarColor} url={item.avatarUrl} size={44} />
                   </View>
                 )}
                 <View className="flex-1">
-                  <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>{item.displayName}</Text>
+                  <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.body }}>{personName(item)}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }}>@{item.username}</Text>
                 </View>
                 <AnimatedPressable

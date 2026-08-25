@@ -36,6 +36,7 @@ import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
+import { personName } from '../../lib/personName';
 
 // FlashList still owns the header and scrolling; the grid is the footer.
 const EMPTY_LIST: any[] = [];
@@ -199,7 +200,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
         >
           <View className="relative">
             <ProfileAvatar
-              displayName={user.displayName}
+              displayName={personName(user)}
               avatarColor={user.avatarColor}
               avatarUrl={user.avatarUrl}
               size={82}
@@ -211,7 +212,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
           </View>
         </AnimatedPressable>
         <View className="flex-row items-center gap-1.5 mb-1">
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>{user.displayName}</Text>
+          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>{personName(user)}</Text>
           {user.isVerified && <SealCheck color={colors.accent} size={20} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: 14, marginBottom: 8 }}>@{user.username}</Text>
@@ -344,7 +345,7 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
       <ProfilePhotoPreview
         visible={photoPreviewOpen}
         imageUrl={user.avatarUrl}
-        displayName={user.displayName}
+        displayName={personName(user)}
         onClose={() => setPhotoPreviewOpen(false)}
       />
     </View>

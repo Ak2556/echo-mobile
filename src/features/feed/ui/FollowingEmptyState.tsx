@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../../shared/lib/theme';
 import { UserRow } from './UserRow';
 import { Avatar } from '../../../../components/ui/Avatar';
+import { personName } from '../../../../lib/personName';
 
 export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
   const { colors, font, fontSizes } = useTheme();
@@ -46,7 +47,7 @@ export function FollowingEmptyState({ suggestedUsers, onFollow }: any) {
               >
                 <Avatar name={user.displayName || user.username} url={user.avatarUrl} color={user.avatarColor} size={46} zoomable={false} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>{user.displayName}</Text>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>{personName(user)}</Text>
                   <Text style={[font.bodyMedium, { color: colors.textMuted, fontSize: 13 }]} numberOfLines={1}>@{user.username}</Text>
                 </View>
                 <Pressable 
