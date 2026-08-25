@@ -1,5 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
+import { AppState } from 'react-native';
 import { supabase } from '../../supabase';
+import { settleAuthSession } from '../browserSession';
 import type { ProviderResult } from '../types';
 import { CANCELLED } from '../types';
 import { consumeAuthCallbackUrl } from '../callback';
@@ -35,15 +37,36 @@ export async function signInWithGoogle(): Promise<ProviderResult> {
       return { error: error?.message ?? 'Could not start Google sign-in.' };
     }
 
-    const result = await WebBrowser.openAuthSessionAsync(data.url, REDIRECT_TO);
-    if (result.type === 'cancel' || result.type === 'dismiss') {
-      return { error: CANCELLED };
-    }
-    if (result.type !== 'success' || !result.url) {
-      return { error: 'Google sign-in did not finish. Try again.' };
-    }
+    // openAuthSessionAsync does not resolve reliably when the tab is torn down
+    // by something other than the user — another activity coming to the front,
+    // a call, the OS reclaiming it. Left alone it hangs, and the sign-in screen
+    // guards with `if (googleLoading) return`, so the button sticks on
+    // "Signing in…" and refuses every retry until the app is force-quit.
+    //
+    // Returning to the foreground is the signal that the session is over one
+    // way or another. See ../browserSession for how the two race.
+    const foreground = new Promise<void>(resolve => {
+      const sub = AppState.addEventListener('change', state => {
+        if (state === 'active') {
+          sub.remove();
+          resolve();
+        }
+      });
+    });
 
-    const outcome = await consumeAuthCallbackUrl(result.url);
+    const settled = await settleAuthSession({
+      browser: WebBrowser.openAuthSessionAsync(data.url, REDIRECT_TO),
+      foreground,
+      hasSession: async () => Boolean((await supabase.auth.getSession()).data.session),
+    });
+
+    // Interrupted, but the redirect had already been consumed elsewhere — the
+    // Linking listener and the callback screen both handle it. The user is
+    // signed in; saying otherwise would be a lie with a toast attached.
+    if (settled.kind === 'signed-in') return { error: null };
+    if (settled.kind === 'cancelled') return { error: CANCELLED };
+
+    const outcome = await consumeAuthCallbackUrl(settled.url);
     if (outcome.status === 'success') return { error: null };
     return {
       error: outcome.status === 'error' ? outcome.error : 'Google sign-in did not finish. Try again.',
