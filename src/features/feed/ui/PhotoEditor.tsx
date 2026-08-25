@@ -214,7 +214,16 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
               </View>
               <View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10, alignItems: 'center' }}>
-                  <Crop color="rgba(255,255,255,0.6)" size={20} weight="bold" />
+                  {/* A label for the ratios beside it, not a control. It was
+                      read as a button and tapped, because a lone icon in a
+                      toolbar looks like one — the word makes what it is
+                      unambiguous. The ratio pills are what actually crop. */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} accessible={false} importantForAccessibility="no-hide-descendants">
+                    <Crop color="rgba(255,255,255,0.6)" size={20} weight="bold" />
+                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '700', letterSpacing: 0.6 }}>
+                      {ttx('Crop')}
+                    </Text>
+                  </View>
                   <View style={{ width: 1, height: 20, backgroundColor: 'rgba(255,255,255,0.2)', marginHorizontal: 4 }} />
                   {ASPECTS.map(a => (
                     <Pressable key={a.key} onPress={() => cropTo(a.ratio)} accessibilityRole="button" accessibilityLabel={`Crop ${a.label}`}

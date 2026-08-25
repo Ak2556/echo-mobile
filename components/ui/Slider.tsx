@@ -59,6 +59,12 @@ export function Slider({ label, value, min = -1, max = 1, onChange, onCommit, ac
       </View>
       <GestureDetector gesture={pan}>
         <View
+          // collapsable={false} or React Native flattens this view away: its
+          // styles are pure layout, so there is nothing to draw and the
+          // optimiser removes it — taking the GestureDetector's target with it
+          // and leaving the slider unresponsive to drags. This is the view
+          // gesture-handler warns about by name.
+          collapsable={false}
           onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}
           style={{ height: THUMB, justifyContent: 'center' }}
         >
