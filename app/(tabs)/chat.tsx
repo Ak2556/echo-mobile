@@ -43,7 +43,8 @@ import { miniAppById } from '../../lib/miniAppCatalog';
 import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 import { persistGet } from '../../store/persist';
 import { assistantLanguageInstruction } from '../../lib/languages';
-import { useI18n } from '../../src/shared/lib/i18n';
+import { useI18n, ttx } from '../../src/shared/lib/i18n';
+import type { AiMode } from '../../supabase/functions/echo-ai/mode';
 
 
 function modelLabel(model: string): string {
@@ -78,6 +79,68 @@ function HeaderIconButton({ icon, onPress, label, accent = false }: { icon: Reac
 }
 
 
+
+/**
+ * Ask / Do.
+ *
+ * Ask keeps Echo conversational — the Edge Function offers it no tools, so it
+ * cannot post, follow or log anything. Do offers all 34, with writes still
+ * pausing on the confirm card that already existed.
+ *
+ * It sits directly above the composer rather than in the header, because the
+ * mode belongs to the message you are about to send, and the header segment
+ * already means something else (Echo vs Messages).
+ */
+function AskDoSwitch({ mode, onChange }: { mode: AiMode; onChange: (next: AiMode) => void }) {
+  const { colors, font } = useTheme();
+
+  return (
+    <View
+      accessibilityRole="tablist"
+      style={{ flexDirection: 'row', alignSelf: 'center', gap: 6, marginBottom: 8 }}
+    >
+      {(['ask', 'do'] as const).map(value => {
+        const active = mode === value;
+        return (
+          <Pressable
+            key={value}
+            onPress={() => onChange(value)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={value === 'ask' ? ttx('Ask') : ttx('Do')}
+            accessibilityHint={
+              value === 'ask'
+                ? ttx('Echo replies but takes no action')
+                : ttx('Echo can act, and asks before anything is written')
+            }
+            hitSlop={8}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 5,
+              borderRadius: 999,
+              backgroundColor: active ? colors.accent : 'transparent',
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: active ? colors.accent : colors.glassBorder,
+            }}
+          >
+            <Text
+              style={[
+                font.body,
+                {
+                  fontSize: 12,
+                  fontWeight: active ? '700' : '600',
+                  color: active ? colors.bg : colors.textMuted,
+                },
+              ]}
+            >
+              {value === 'ask' ? ttx('Ask') : ttx('Do')}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 function ChatEmptyLaunchpad({
   targetLabel,
@@ -348,6 +411,7 @@ export default function ChatScreen() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [draft, setDraft] = useState('');
+  const [aiMode, setAiMode] = useState<AiMode>('ask');
   const [showHint, setShowHint] = useState(false);
   const [editTarget, setEditTarget] = useState<Message | null>(null);
   const listRef = useRef<any>(null);
@@ -581,6 +645,7 @@ export default function ChatScreen() {
       try {
         await streamEchoAI({
           ...opts,
+          mode: aiMode,
           preferredModel: aiModel,
           personaContext: opts.personaContext ?? buildEchoContext(),
           onAbortHandle: (stop) => { stopStreamRef.current = stop; },
@@ -906,6 +971,7 @@ export default function ChatScreen() {
             </Animated.View>
           ) : null}
           <View style={[layout.contentStyle, { paddingHorizontal: layout.isDesktop ? layout.gutter : 0 }]}>
+            <AskDoSwitch mode={aiMode} onChange={setAiMode} />
             <ChatInput
               onSend={handleSend}
               isLoading={isStreaming}

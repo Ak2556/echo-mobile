@@ -5,6 +5,7 @@
 // Endpoint contract: see ./README.md (or scroll to handleRequest).
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { normalizeAiMode, toolsForMode } from "./mode.ts";
 import { moderateContent } from "./moderation.ts";
 import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
 
@@ -1228,7 +1229,13 @@ async function runAgentLoop(
       ...history,
     ];
 
-    const { content, tool_calls } = await openRouterChat(messages, ORTOOL_DEFS, modelOverride);
+    const { content, tool_calls } = await openRouterChat(
+      messages,
+      // ask mode sends no tools at all, so the model has nothing to call
+      // and the request carries 34 fewer schemas.
+      toolsForMode(normalizeAiMode(body.mode), ORTOOL_DEFS),
+      modelOverride,
+    );
 
     // Persist the assistant turn (with tool_calls if any).
     await persistMessage(supabase, conversationId, userId, {
