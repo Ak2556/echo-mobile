@@ -53,6 +53,7 @@ import { useTutorialTarget } from '../../hooks/useTutorialTarget';
 import { useTutorialStore } from '../../store/tutorialStore';
 import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
 import { DAILY_THOUGHTS, pickThought, thoughtById, todayKey } from '../../lib/dailyThoughts';
+import { personName } from '../../lib/personName';
 
 
 const NAV_BAR_HEIGHT = 56;
@@ -86,10 +87,10 @@ function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: Rea
 }
 
 function HomeHero({
-  username,
+  name,
   t,
 }: {
-  username: string;
+  name: string;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
   const { colors, font } = useTheme();
@@ -97,7 +98,7 @@ function HomeHero({
   return (
     <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 24 : 16, marginBottom: 8 }}>
       <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]} numberOfLines={2}>
-        {username ? t('home.welcomeBack', { name: username }) : t('home.buildToday')}
+        {name ? t('home.welcomeBack', { name }) : t('home.buildToday')}
       </Text>
     </View>
   );
@@ -329,7 +330,7 @@ export default function DiscoverScreen() {
 
   const { t } = useI18n();
   const performance = usePerformanceProfile('hot');
-  const { username, avatarColor, avatarUrl, interests, followingIds } = useAppStore();
+  const { username, displayName, avatarColor, avatarUrl, interests, followingIds } = useAppStore();
   const publishedCount = useAppStore(s => s.publishedEchoes.length);
   const hasCompletedFirstRun = useAppStore(s => s.hasCompletedFirstRun);
   const messagesBySession = useAppStore(s => s.messagesBySession);
@@ -504,7 +505,10 @@ export default function DiscoverScreen() {
   const ListHeader = (
     <View style={feedContainerStyle}>
       <HomeHero
-        username={username}
+        // Greet people by the name they chose. The profile screen, the chat
+        // greeting and this line were showing two different identities for the
+        // same person — "Akash" in Chat, "akashhere12" here.
+        name={personName({ displayName, username })}
         t={t}
       />
       {/* A single interest-tuned thought, once a day, dismissible with ✕. */}

@@ -17,6 +17,7 @@ import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, runOnJS, withDelay } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
+import { personName } from '../../../../lib/personName';
 
 const TEXT_SHADOW = {
   textShadowColor: 'rgba(0, 0, 0, 0.4)',
@@ -264,7 +265,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
                 </View>
               )}
             </View>
-            <Text style={[font.bodyBold, { color: '#fff', fontSize: 16, letterSpacing: 0.2, ...TEXT_SHADOW }]}>{item.displayName}</Text>
+            <Text style={[font.bodyBold, { color: '#fff', fontSize: 16, letterSpacing: 0.2, ...TEXT_SHADOW }]}>{personName(item)}</Text>
             
             {/* Tiny Follow Pill */}
             {!item.isLiked && ( // Just an aesthetic mockup for the pill

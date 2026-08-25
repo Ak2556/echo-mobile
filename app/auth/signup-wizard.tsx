@@ -26,6 +26,7 @@ import { WARM_AVATAR_COLORS } from '../../lib/avatarPalette';
 import { MINIMUM_AGE, checkDateOfBirth, ageRejectionMessage } from '../../constants/legal/ageGate';
 import { APP_LANGUAGES } from '../../lib/languages';
 import { ttx } from '../../src/shared/lib/i18n';
+import { personName } from '../../lib/personName';
 
 const ACCENT = '#E06030';
 const SPRING = { damping: 24, stiffness: 300 };
@@ -168,7 +169,7 @@ function SuggestedFollowRow({ user, selected, onToggle }: {
       }}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: selected }}
-      accessibilityLabel={`${ttx("Follow")} ${user.displayName}`}
+      accessibilityLabel={`${ttx("Follow")} ${personName(user)}`}
     >
       <View style={{
         width: 44, height: 44, borderRadius: 22,
@@ -178,7 +179,7 @@ function SuggestedFollowRow({ user, selected, onToggle }: {
         <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{initial}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{user.displayName}</Text>
+        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{personName(user)}</Text>
         <Text numberOfLines={1} style={{ color: '#52525B', fontSize: 13 }}>
           @{user.username}{user.followerCount ? ` · ${user.followerCount} ${ttx("followers")}` : ''}
         </Text>

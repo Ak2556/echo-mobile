@@ -10,6 +10,7 @@ import { useFollow } from '../../../../hooks/queries/useFollow';
 import { useTheme } from '../../../shared/lib/theme';
 import { track } from '../../../shared/lib/analytics';
 import { ttx } from '../../../shared/lib/i18n';
+import { personName } from '../../../../lib/personName';
 
 interface UserRowProps {
   user: User;
@@ -76,7 +77,7 @@ export function UserRow({
         <Pressable
           onPress={(e) => { e.stopPropagation?.(); openProfile(); }}
           accessibilityRole="button"
-          accessibilityLabel={`Open ${user.displayName}'s profile`}
+          accessibilityLabel={`Open ${personName(user)}'s profile`}
           style={{ marginRight: 12 }}
         >
           <Avatar
@@ -91,7 +92,7 @@ export function UserRow({
 
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, letterSpacing: -0.2 }} numberOfLines={1}>{user.displayName}</Text>
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: fontSizes.body, letterSpacing: -0.2 }} numberOfLines={1}>{personName(user)}</Text>
           {user.isVerified && <SealCheck color={colors.accent} size={16} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: fontSizes.small }} numberOfLines={1}>@{user.username}</Text>
