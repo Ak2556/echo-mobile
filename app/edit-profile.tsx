@@ -66,6 +66,42 @@ export default function EditProfileScreen() {
     })();
   }, []);
 
+  /**
+   * The badge on the avatar is a camera, and it opened the photo library.
+   * Reported as "camera does not open" — it never was opened, because nothing
+   * called it. Now the icon offers what it depicts, with the library still one
+   * tap away, and both paths land in the same editor.
+   */
+  const handleAvatarBadge = () => {
+    Alert.alert(
+      ttx('Profile photo'),
+      undefined,
+      [
+        { text: ttx('Take photo'), onPress: () => { void takeAvatarPhoto(); } },
+        { text: ttx('Choose from library'), onPress: () => { void handlePickAvatar(); } },
+        { text: ttx('Cancel'), style: 'cancel' },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  const takeAvatarPhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        ttx('Camera unavailable'),
+        ttx('Echo needs camera access to take a profile photo. You can turn it on in Settings.'),
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.72,
+    });
+    if (result.canceled) return;
+    setEditingUri(result.assets[0].uri);
+  };
+
   const handlePickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -218,7 +254,7 @@ export default function EditProfileScreen() {
           <View style={{ padding: 18, gap: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <AnimatedPressable
-                onPress={() => { void handlePickAvatar(); }}
+                onPress={handleAvatarBadge}
                 disabled={uploadingAvatar}
                 style={{ position: 'relative' }}
                 scaleValue={0.95}
