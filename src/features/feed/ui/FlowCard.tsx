@@ -12,6 +12,7 @@ import { useResponsiveLayout } from '../../../shared/lib/responsive';
 import { useTheme } from '../../../shared/lib/theme';
 import { warmAvatarColor } from '../../../../lib/avatarPalette';
 import { useToggleRemoteLike, useToggleRemoteBookmark } from '../api/useSupabaseSocial';
+import { CommentsSheet } from './CommentsSheet';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, runOnJS, withDelay } from 'react-native-reanimated';
@@ -69,6 +70,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
   
   const height = layout.height;
   const { mutate: toggleLike } = useToggleRemoteLike();
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const { mutate: toggleBookmark } = useToggleRemoteBookmark();
   
   // Paused is per card and deliberately not global: scrolling to the next
@@ -320,7 +322,7 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
             icon={ChatCircle} 
             weight="fill"
             label={formatCount(item.commentCount) || '0'}
-            onPress={() => router.push(`/thread/${item.id}`)}
+            onPress={() => setCommentsOpen(true)}
           />
           <ActionButton 
             icon={BookmarkSimple} 
@@ -341,6 +343,12 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
           />
         </View>
       </LinearGradient>
+
+      <CommentsSheet
+        visible={commentsOpen}
+        echoId={item.id}
+        onClose={() => setCommentsOpen(false)}
+      />
     </View>
   );
 }

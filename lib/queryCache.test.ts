@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { InfiniteData } from '@tanstack/react-query';
-import { prependEchoToFeedCache } from './queryCache';
+import { QueryClient } from '@tanstack/react-query';
+import { patchLikeCaches, prependEchoToFeedCache } from './queryCache';
 import type { FeedItem } from '../types';
 
 // Minimal FeedItem factory — only the id matters for these cache tests.
@@ -53,5 +54,43 @@ describe('prependEchoToFeedCache', () => {
   it('leaves an unrecognized shape untouched', () => {
     const weird = { foo: 'bar' };
     expect(prependEchoToFeedCache(weird, echo('new'))).toBe(weird);
+  });
+});
+
+describe('patchLikeCaches across feed shapes', () => {
+  const item = (id: string): FeedItem =>
+    ({ id, likes: 1, isLiked: false } as unknown as FeedItem);
+
+  it('patches an infinite feed that is not keyed "paginated"', () => {
+    // The Flow feed is keyed ['feed','videos',…] and holds InfiniteData. It
+    // used to match only the flat-array branch, fail the Array.isArray guard
+    // and come back untouched — so likes on Flow had no optimistic update.
+    const qc = new QueryClient();
+    qc.setQueryData(['feed', 'videos', [], [], []], {
+      pages: [[item('a'), item('b')]],
+      pageParams: [undefined],
+    });
+
+    patchLikeCaches(qc, 'a', true);
+
+    const data = qc.getQueryData(['feed', 'videos', [], [], []]) as
+      { pages: FeedItem[][] };
+    expect(data.pages[0][0].isLiked).toBe(true);
+    expect(data.pages[0][0].likes).toBe(2);
+    expect(data.pages[0][1].isLiked).toBe(false);
+  });
+
+  it('still patches a flat feed cache', () => {
+    const qc = new QueryClient();
+    qc.setQueryData(['feed'], [item('a')]);
+    patchLikeCaches(qc, 'a', true);
+    expect((qc.getQueryData(['feed']) as FeedItem[])[0].likes).toBe(2);
+  });
+
+  it('leaves a cache of an unexpected shape alone rather than corrupting it', () => {
+    const qc = new QueryClient();
+    qc.setQueryData(['feed', 'meta'], { total: 3 });
+    patchLikeCaches(qc, 'a', true);
+    expect(qc.getQueryData(['feed', 'meta'])).toEqual({ total: 3 });
   });
 });

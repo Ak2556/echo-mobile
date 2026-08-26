@@ -69,17 +69,32 @@ export function patchFeedCaches(
   echoId: string,
   updater: (item: FeedItem) => FeedItem
 ) {
-  // Flat feed (useFeed / useQuery)
-  qc.setQueriesData<FeedItem[]>({ queryKey: ['feed'] }, (current) =>
-    updateFeedList(current, echoId, updater)
-  );
-  // Paginated feed (useInfiniteFeed / useInfiniteQuery) — patch within each page
-  qc.setQueriesData<InfiniteData<FeedItem[]>>({ queryKey: ['feed', 'paginated'] }, (current) => {
+  // Every ['feed', …] cache, whatever shape it holds.
+  //
+  // This used to be two passes: a flat one keyed ['feed'] and an infinite one
+  // keyed ['feed', 'paginated']. The Flow feed is keyed ['feed', 'videos', …]
+  // and is an infinite query, so it matched only the flat pass — where its
+  // InfiniteData object failed the Array.isArray guard and was returned
+  // untouched — and never matched the paginated pass at all. The result was
+  // that likes, bookmarks and reposts on Flow had no optimistic update and
+  // appeared only once the refetch landed, which reads as a slow, unresponsive
+  // button. Dispatching on the shape rather than on the key covers any feed
+  // cache added later without needing this list updated.
+  qc.setQueriesData({ queryKey: ['feed'] }, (current: unknown) => {
     if (!current) return current;
-    return {
-      ...current,
-      pages: current.pages.map(page => page.map(item => updateFeedItem(item, echoId, updater))),
-    };
+    if (Array.isArray(current)) {
+      return updateFeedList(current as FeedItem[], echoId, updater);
+    }
+    const infinite = current as InfiniteData<FeedItem[]>;
+    if (Array.isArray(infinite.pages)) {
+      return {
+        ...infinite,
+        pages: infinite.pages.map(page =>
+          Array.isArray(page) ? page.map(item => updateFeedItem(item, echoId, updater)) : page
+        ),
+      };
+    }
+    return current;
   });
   qc.setQueryData<FeedItem[]>(['bookmarks'], (current) =>
     updateFeedList(current, echoId, updater)
