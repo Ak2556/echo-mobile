@@ -181,7 +181,13 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
               player={player}
               style={{ flex: 1 }}
               contentFit="cover"
-              nativeControls={true}
+              // false, matching EchoCard and VideoPreview. This player already
+              // draws its own play/pause, seek, mute, speed and quality
+              // controls just below, so the native set was a second, competing
+              // layer — and on Android its overflow menu offers Download,
+              // handing every viewer a way to save someone else's video
+              // straight out of the feed.
+              nativeControls={false}
               fullscreenOptions={{ enable: false }}
             />
 

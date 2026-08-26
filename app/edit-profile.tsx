@@ -19,6 +19,7 @@ import { fetchRemoteProfile, updateRemoteProfile, uploadAvatar } from '../lib/su
 import { supabase } from '../lib/supabase';
 import { useResponsiveLayout } from '../src/shared/lib/responsive';
 import { ttx } from '../src/shared/lib/i18n';
+import { PhotoEditor } from '../src/features/feed/ui/PhotoEditor';
 
 // The picker offers the canonical warm identity palette. It previously held
 // raw Tailwind hues, which meant a freshly-edited profile could set a colour
@@ -41,6 +42,7 @@ export default function EditProfileScreen() {
   const [newBio, setNewBio] = useState(bio);
   const [newColor, setNewColor] = useState(avatarColor);
   const [newAvatarUrl, setNewAvatarUrl] = useState(avatarUrl || '');
+  const [editingUri, setEditingUri] = useState<string | null>(null);
   const [newPronouns, setNewPronouns] = useState('');
   const [newMood, setNewMood] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -64,6 +66,42 @@ export default function EditProfileScreen() {
     })();
   }, []);
 
+  /**
+   * The badge on the avatar is a camera, and it opened the photo library.
+   * Reported as "camera does not open" — it never was opened, because nothing
+   * called it. Now the icon offers what it depicts, with the library still one
+   * tap away, and both paths land in the same editor.
+   */
+  const handleAvatarBadge = () => {
+    Alert.alert(
+      ttx('Profile photo'),
+      undefined,
+      [
+        { text: ttx('Take photo'), onPress: () => { void takeAvatarPhoto(); } },
+        { text: ttx('Choose from library'), onPress: () => { void handlePickAvatar(); } },
+        { text: ttx('Cancel'), style: 'cancel' },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  const takeAvatarPhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        ttx('Camera unavailable'),
+        ttx('Echo needs camera access to take a profile photo. You can turn it on in Settings.'),
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.72,
+    });
+    if (result.canceled) return;
+    setEditingUri(result.assets[0].uri);
+  };
+
   const handlePickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -72,13 +110,27 @@ export default function EditProfileScreen() {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
+      // allowsEditing/aspect handed the crop to the OS, which is a different
+      // editor from the one every other upload in Echo uses. The picked image
+      // now goes through PhotoEditor instead, same as create-post.
       quality: 0.72,
       base64: true,
     });
     if (result.canceled) return;
-    const asset = result.assets[0];
+    setEditingUri(result.assets[0].uri);
+  };
+
+  /** Called by PhotoEditor once the crop and any edits are applied. */
+  const handleAvatarEdited = async (editedUri: string) => {
+    setEditingUri(null);
+    // PhotoEditor writes a JPEG to a local file and hands back its uri. There
+    // is no base64 to reuse — uploadAvatar reads the file when base64 is absent.
+    const asset = {
+      uri: editedUri,
+      base64: undefined as string | undefined,
+      mimeType: 'image/jpeg',
+      fileName: `avatar-${Date.now()}.jpg`,
+    };
     const localUri = asset.uri;
 
     if (!isSupabaseRemote()) {
@@ -202,7 +254,7 @@ export default function EditProfileScreen() {
           <View style={{ padding: 18, gap: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <AnimatedPressable
-                onPress={() => { void handlePickAvatar(); }}
+                onPress={handleAvatarBadge}
                 disabled={uploadingAvatar}
                 style={{ position: 'relative' }}
                 scaleValue={0.95}
@@ -472,6 +524,12 @@ export default function EditProfileScreen() {
         </Animated.View>
       </ScrollView>
       </KeyboardAvoidingView>
+      <PhotoEditor
+        visible={editingUri !== null}
+        uri={editingUri}
+        onDone={handleAvatarEdited}
+        onCancel={() => setEditingUri(null)}
+      />
     </SafeAreaView>
   );
 }

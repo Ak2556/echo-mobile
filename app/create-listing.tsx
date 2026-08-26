@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -90,6 +91,42 @@ export default function CreateListingScreen() {
 
   const price = parseFloat(priceText.replace(/,/g, '')) || 0;
   const canSubmit = title.trim().length >= 3 && price >= 0 && !saving;
+
+  /**
+   * The empty state draws a camera, and every path behind it opened the photo
+   * library — there was no camera call in this screen at all. Someone
+   * photographing the thing they are listing had no way to do it from here.
+   */
+  const addPhotos = () => {
+    Alert.alert(
+      ttx('Add photos'),
+      undefined,
+      [
+        { text: ttx('Take photo'), onPress: () => { void takeListingPhoto(); } },
+        { text: ttx('Choose from library'), onPress: () => { void pickPhotos(); } },
+        { text: ttx('Cancel'), style: 'cancel' },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  const takeListingPhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        ttx('Camera unavailable'),
+        ttx('Echo needs camera access to photograph your listing. You can turn it on in Settings.'),
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (!result.canceled) {
+      setPhotos(prev => [...prev, result.assets[0].uri].slice(0, MAX_PHOTOS));
+    }
+  };
 
   const pickPhotos = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -191,7 +228,7 @@ export default function CreateListingScreen() {
         >
           {/* Photos */}
           {photos.length === 0 ? (
-            <Pressable onPress={pickPhotos}>
+            <Pressable onPress={addPhotos}>
               <View style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: colors.surface }}>
                 <LinearGradient
                   colors={[`${colors.accent}2E`, `${colors.accent}0E`, 'transparent']}
@@ -249,7 +286,7 @@ export default function CreateListingScreen() {
                   </View>
                 ))}
                 {photos.length < MAX_PHOTOS && (
-                  <Pressable onPress={pickPhotos}>
+                  <Pressable onPress={addPhotos}>
                     <View style={{
                       width: 110, height: 110,
                       borderRadius: 18,
