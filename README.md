@@ -171,7 +171,10 @@ Counts are derived from the tree and the live database rather than maintained by
 
 ## Getting started
 
-**Prerequisites:** Node 20+, and the Expo tooling. iOS builds need Xcode; Android needs a JDK 17.
+**Prerequisites:** Node 20+, and the Expo tooling. iOS builds need Xcode; Android needs a JDK 17
+(not 21 or 24 — the CMake step fails on those with a misleading message). If you have `direnv`,
+`direnv allow` pins the JDK and Android SDK for you; otherwise see
+[docs/deployment/android-build.md](docs/deployment/android-build.md).
 
 ```bash
 git clone https://github.com/Ak2556/echo-mobile.git
