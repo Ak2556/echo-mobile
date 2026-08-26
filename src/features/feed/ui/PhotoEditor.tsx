@@ -20,6 +20,8 @@ import {
   finalMatrix, hasAdjustments, FILTER_PRESETS, NO_ADJUST, IDENTITY, type Adjustments,
 } from '../../../../lib/photoFilters';
 import { ttx } from '../../../shared/lib/i18n';
+import { InteractiveCrop } from './InteractiveCrop';
+import { screenRectToImageCrop, type Rect as CropRect, type ViewTransform } from '../../../../lib/cropGeometry';
 
 type OptionalManipulator = {
   manipulateAsync: (uri: string, actions: unknown[], options: { compress?: number; format?: unknown }) => Promise<{ uri: string; width: number; height: number }>;
@@ -75,6 +77,7 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [box, setBox] = useState({ w: 0, h: 0 });
+  const [cropping, setCropping] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [drawPaths, setDrawPaths] = useState<DrawPath[]>([]);
   const [currentPath, setCurrentPath] = useState<DrawPoint[] | null>(null);
@@ -114,6 +117,24 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
     if (a > ratio) { cw = Math.round(cur.h * ratio); ox = Math.round((cur.w - cw) / 2); }
     else { ch = Math.round(cur.w / ratio); oy = Math.round((cur.h - ch) / 2); }
     void runTransform(() => [{ crop: { originX: ox, originY: oy, width: cw, height: ch } }]);
+  };
+
+  /**
+   * Interactive crop. cropTo() above is the one-tap ratio crop and stays as it
+   * was; this is the freeform path, and it only touches the image on Apply.
+   */
+  const applyInteractiveCrop = (rect: CropRect, view: ViewTransform) => {
+    setCropping(false);
+    if (!cur || box.w === 0) return;
+    const pixels = screenRectToImageCrop(
+      rect,
+      { width: box.w, height: box.h },
+      { width: cur.w, height: cur.h },
+      view,
+    );
+    void runTransform(() => [{
+      crop: { originX: pixels.x, originY: pixels.y, width: pixels.width, height: pixels.height },
+    }]);
   };
 
   const patchAdjust = (k: keyof Adjustments, v: number) => { setAdjust(a => ({ ...a, [k]: v })); setDirty(true); };
@@ -169,6 +190,14 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
         >
           {!cur ? (
             <ActivityIndicator color="#fff" />
+          ) : cropping ? (
+            <InteractiveCrop
+              uri={cur.uri}
+              box={{ width: box.w, height: box.h }}
+              image={{ width: cur.w, height: cur.h }}
+              onCancel={() => setCropping(false)}
+              onApply={applyInteractiveCrop}
+            />
           ) : SKIA_OK && Sk ? (
             <SkiaColorPreview ref={skiaRef} uri={cur.uri} matrix={displayMatrix} vignette={adjust.vignette} boxW={box.w} boxH={box.h} skia={Sk} 
               drawPaths={drawPaths}
@@ -225,6 +254,20 @@ export function PhotoEditor({ visible, uri, onDone, onCancel }: PhotoEditorProps
                     </Text>
                   </View>
                   <View style={{ width: 1, height: 20, backgroundColor: 'rgba(255,255,255,0.2)', marginHorizontal: 4 }} />
+                  <Pressable
+                    onPress={() => setCropping(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={ttx('Freeform crop')}
+                    accessibilityHint={ttx('Drag the corners, or pinch the photo')}
+                    style={({ pressed }) => ({
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 20,
+                      backgroundColor: pressed ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.16)',
+                    })}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700', letterSpacing: 0.5 }}>{ttx('Free')}</Text>
+                  </Pressable>
                   {ASPECTS.map(a => (
                     <Pressable key={a.key} onPress={() => cropTo(a.ratio)} accessibilityRole="button" accessibilityLabel={`Crop ${a.label}`}
                       style={({ pressed }) => ({ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: pressed ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)' })}>
