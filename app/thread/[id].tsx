@@ -6,12 +6,11 @@ import { BlurView } from 'expo-blur';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookmarkSimple, ChatCircle, Compass, DotsThreeOutline, Flag, GitBranch, NotePencil, PaperPlaneTilt, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
+import { ArrowLeft, BookmarkSimple, ChatCircle, DotsThreeOutline, Flag, NotePencil, PushPin, PushPinSlash, ShareNetwork, Trash } from 'phosphor-react-native';
 import { ActionSheet, ActionItem } from '../../components/common/ActionSheet';
 import { Avatar } from '../../components/ui/Avatar';
 import { SpeakButton } from '../../components/ui/SpeakButton';
 import { IconButton } from '../../components/ui/IconButton';
-import { ConnectionPanel } from '../../components/common/ConnectionPanel';
 import { fetchRemoteEchoById, setPinnedEcho, deleteRemoteEcho } from '../../lib/supabaseEchoApi';
 import { friendlyWriteError } from '../../lib/mutationErrors';
 import { showToast } from '../../components/ui/Toast';
@@ -27,9 +26,9 @@ import { useFeed } from '../../src/features/feed/api/useFeed';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { useToggleRemoteBookmark } from '../../src/features/feed/api/useSupabaseSocial';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
-import { useStartRemoteConversation } from '../../hooks/queries/useDMs';
 import { inferTopics } from '../../lib/echoUX';
 import { ttx } from '../../src/shared/lib/i18n';
+import { CommentsSheet } from '../../src/features/feed/ui/CommentsSheet';
 
 export default function ThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,12 +36,12 @@ export default function ThreadDetailScreen() {
   const qc = useQueryClient();
   const remote = isSupabaseRemote();
   const { data: feed = [] } = useFeed();
-  const { isBookmarked, toggleBookmark, deleteEcho, userId: currentUserId, getOrCreateConversation } = useAppStore();
+  const { isBookmarked, toggleBookmark, deleteEcho, userId: currentUserId } = useAppStore();
   const { colors, radius, fontSizes, showAvatars, font } = useTheme();
   const insets = useSafeAreaInsets();
   const remoteBm = useToggleRemoteBookmark();
-  const startConvMut = useStartRemoteConversation();
   const [showMenu, setShowMenu] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   // Echo's own full-screen video view, shown in place of the OS player.
   const [videoFullscreen, setVideoFullscreen] = useState(false);
   const setActiveEchoId = useActiveVideoStore(s => s.setActiveEchoId);
@@ -122,7 +121,6 @@ export default function ThreadDetailScreen() {
   }
 
   const isOwner = item.userId === currentUserId || item.userId === 'me';
-  const primaryTopic = visibleTopics[0];
 
   const handleDelete = () => {
     Alert.alert('Delete Echo', 'This cannot be undone.', [
@@ -143,76 +141,6 @@ export default function ThreadDetailScreen() {
       } },
     ]);
   };
-
-  const handleMessageAboutEcho = async () => {
-    const user = {
-      id: item.userId,
-      username: item.username,
-      displayName: item.displayName,
-      avatarColor: item.avatarColor,
-      avatarUrl: item.avatarUrl,
-      bio: '',
-      isVerified: item.isVerified,
-      followerCount: 0,
-      followingCount: 0,
-      echoCount: 0,
-      createdAt: item.createdAt,
-    };
-    try {
-      const conversationId = remote
-        ? await startConvMut.mutateAsync(item.userId)
-        : getOrCreateConversation(user);
-      router.push({
-        pathname: '/messages/[id]',
-        params: {
-          id: conversationId,
-          echoId: item.id,
-          echoTitle: item.editorialTitle || item.prompt,
-          echoPreview: item.authorNote || item.response || item.prompt,
-          echoAuthor: item.displayName || item.username,
-        },
-      });
-    } catch {
-      showToast('Could not open messages', 'Error');
-    }
-  };
-
-  const connectionActions = [
-    {
-      key: 'comments',
-      label: `Comments (${item.commentCount ?? 0})`,
-      icon: <ChatCircle color={colors.textSecondary} size={18} />,
-      onPress: () => router.push(`/comments/${item.id}`),
-    },
-    {
-      key: 'perspective',
-      label: 'Add perspective',
-      icon: <GitBranch color={colors.textSecondary} size={18} weight="bold" />,
-      onPress: () => router.push({
-        pathname: '/remix/[id]',
-        params: { id: item.id, author: item.username, parentTitle: item.editorialTitle || item.prompt },
-      }),
-      emphasis: 'primary' as const,
-    },
-    {
-      key: 'quote',
-      label: 'Quote',
-      icon: <NotePencil color={colors.textSecondary} size={18} />,
-      onPress: () => router.push({ pathname: '/create-post', params: { quoted: item.id } }),
-    },
-    ...(primaryTopic ? [{
-      key: 'topic',
-      label: `Explore #${primaryTopic}`,
-      icon: <Compass color={colors.textSecondary} size={18} />,
-      onPress: () => router.push({ pathname: '/(tabs)/explore', params: { q: primaryTopic } }),
-    }] : []),
-    ...(!isOwner ? [{
-      key: 'message',
-      label: 'Message author',
-      icon: <PaperPlaneTilt color={colors.textSecondary} size={18} />,
-      onPress: handleMessageAboutEcho,
-    }] : []),
-  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -410,7 +338,7 @@ export default function ThreadDetailScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8 }}>
           <LikeButton echoId={item.id} initialLikes={item.likes} initialLiked={item.isLiked} />
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable onPress={() => id && router.push(`/comments/${id}`)} style={{ padding: 8, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: colors.surface }}>
+            <Pressable onPress={() => setCommentsOpen(true)} style={{ padding: 8, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: colors.surface }}>
               <ChatCircle color={colors.textSecondary} size={20} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small }}>{item.commentCount ?? 0}</Text>
             </Pressable>
@@ -436,10 +364,6 @@ export default function ThreadDetailScreen() {
           </View>
         </View>
 
-        <View style={{ marginTop: 18 }}>
-          <ConnectionPanel actions={connectionActions} />
-        </View>
-
         <SimilarEchoesRail echoId={item.id} />
 
         {relatedEchoes.length > 0 ? (
@@ -463,6 +387,12 @@ export default function ThreadDetailScreen() {
         ) : null}
         </Animated.View>
       </ScrollView>
+
+      <CommentsSheet
+        visible={commentsOpen}
+        echoId={id}
+        onClose={() => setCommentsOpen(false)}
+      />
     </View>
   );
 }
