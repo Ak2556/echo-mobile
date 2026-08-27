@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { Microphone, X } from 'phosphor-react-native';
 import { useTheme } from '../../../shared/lib/theme';
