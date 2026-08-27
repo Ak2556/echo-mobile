@@ -72,6 +72,7 @@ import {
   useRemoteConversations,
 } from '../../hooks/queries/useDMs';
 import { markMessagesRead, fetchGroupMembers, fetchConversationPrefs, setDMPref, type GroupMember, type RemoteMessageReaction, type ConversationPrefs } from '../../lib/supabaseEchoApi';
+import { supabase } from '../../lib/supabase';
 import { usePresenceTracking } from '../../lib/presence';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
@@ -514,12 +515,13 @@ function fmtVoiceTime(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
+function VoiceBubble({ url, durationSec, isMe, pending, onLongPress, sessionToken }: {
   url: string;
   durationSec: number;
   isMe: boolean;
   pending: boolean;
   onLongPress: () => void;
+  sessionToken?: string | null;
 }) {
   const { colors } = useTheme();
   const [playing, setPlaying] = useState(false);
@@ -558,7 +560,8 @@ function VoiceBubble({ url, durationSec, isMe, pending, onLongPress }: {
     if (playing) { stop(); return; }
     try {
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-      const player = createAudioPlayer({ uri: url });
+      const source = sessionToken ? { uri: url, headers: { Authorization: `Bearer ${sessionToken}` } } : { uri: url };
+      const player = createAudioPlayer(source);
       subRef.current = player.addListener('playbackStatusUpdate', status => {
         if (typeof status.currentTime === 'number') setPosition(status.currentTime);
         if (status.didJustFinish) stop();
@@ -749,7 +752,7 @@ function MessageEffect({ kind, onDone }: { kind: EffectKind; onDone: () => void 
 function DMBubble({
   message, isMe, showReadReceipt, myUserId, groupedWithPrev, groupedWithNext, animate, translation, translating, saved,
   selectionMode, selected, onSelectToggle,
-  onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry, quickReaction = '❤️',
+  onLongPress, onReactionToggle, onReplyPress, onImagePress, onSwipeReply, onRetry, quickReaction = '❤️', sessionToken,
 }: {
   message: NormalizedMessage;
   isMe: boolean;
@@ -771,6 +774,7 @@ function DMBubble({
   onImagePress?: (url: string) => void;
   onSwipeReply?: () => void;
   onRetry?: () => void;
+  sessionToken?: string | null;
 }) {
   const router = useRouter();
   const fontSizeSetting = useAppStore(s => s.fontSize);
@@ -920,11 +924,12 @@ function DMBubble({
                 <HlsVideoPlayer
                   src={message.mediaUrl}
                   poster={message.mediaUrl.replace('.m3u8', '_thumb.jpg')}
+                  headers={sessionToken ? { Authorization: `Bearer ${sessionToken}` } : undefined}
                 />
               </View>
             ) : (
               <Image
-                source={{ uri: message.mediaUrl }}
+                source={sessionToken ? { uri: message.mediaUrl, headers: { Authorization: `Bearer ${sessionToken}` } } : { uri: message.mediaUrl }}
                 onError={() => setImageFailed(true)}
                 style={{
                   width: 220,
@@ -1004,6 +1009,7 @@ function DMBubble({
           isMe={isMe}
           pending={message.id.startsWith('pending-')}
           onLongPress={onLongPress}
+          sessionToken={sessionToken}
         />
       );
     }
@@ -1976,6 +1982,13 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   const myId = userId ?? 'me';
   usePresenceTracking(remote ? (userId ?? undefined) : undefined);
 
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (remote) {
+      supabase.auth.getSession().then((res: any) => setSessionToken(res.data?.session?.access_token ?? null));
+    }
+  }, [remote]);
+
   // Per-conversation prefs (nickname, quick reaction, mark-unread).
   const [convPrefs, setConvPrefs] = useState<ConversationPrefs | null>(null);
   useEffect(() => {
@@ -2726,7 +2739,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         groupedWithNext: isGroupedWithPrev(next, msg)
       });
     });
-    return data.reverse();
+    return data;
   }, [visibleMessages, searchTerm]);
 
   const memoizedFlashList = useMemo(() => {
@@ -2739,9 +2752,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         keyExtractor={(item, i) => item.type === 'date' ? `date-${i}` : item.type === 'unread' ? 'unread-divider' : item.msg.id}
         contentContainerStyle={{ paddingVertical: 10 }}
         showsVerticalScrollIndicator={false}
-        inverted={true}
-        onEndReached={() => { if (hasNextPage) void fetchNextPage(); }}
-        onEndReachedThreshold={0.25}
+        initialScrollIndex={listData.length > 0 ? listData.length - 1 : undefined}
+        onStartReached={() => { if (hasNextPage) void fetchNextPage(); }}
+        onStartReachedThreshold={0.25}
         // @ts-ignore FlashList typing doesn't include maintainVisibleContentPosition but it works natively on iOS
         maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
         onScroll={e => {
@@ -2799,6 +2812,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               saved={savedIdSet.has(msg.id)}
               selectionMode={selectionMode}
               selected={selectedIds.includes(msg.id)}
+              sessionToken={sessionToken}
               onSelectToggle={() => toggleSelect(msg.id)}
               showReadReceipt={readReceipts}
               myUserId={myId}

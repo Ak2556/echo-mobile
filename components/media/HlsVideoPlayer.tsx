@@ -7,10 +7,12 @@ interface Props {
   poster?: string;
   autoPlay?: boolean;
   style?: any;
+  headers?: Record<string, string>;
 }
 
-export function HlsVideoPlayer({ src, poster, autoPlay = false, style }: Props) {
-  const player = useVideoPlayer(src, player => {
+export function HlsVideoPlayer({ src, poster, autoPlay = false, style, headers }: Props) {
+  const source = headers ? { uri: src, headers } : src;
+  const player = useVideoPlayer(source, player => {
     player.loop = true;
     if (autoPlay) {
       player.play();
