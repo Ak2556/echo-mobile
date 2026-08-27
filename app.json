@@ -102,6 +102,16 @@
         }
       ],
       [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Echo to access your microphone so you can speak commands.",
+          "speechRecognitionPermission": "Allow Echo to recognise your speech so commands run instantly on your device.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/images/android-icon-monochrome.png",

@@ -147,6 +147,7 @@ Deno.serve(async (req) => {
   // upload and the model starting work. Both still have to succeed — they just
   // no longer queue behind each other.
   let audioB64 = "";
+  let spokenText = "";
   let format = "wav";
   let hintLocale = "";
 
@@ -165,16 +166,23 @@ Deno.serve(async (req) => {
   {
     const body = bodyResult.b;
     audioB64 = typeof body.audio === "string" ? body.audio : "";
+    if (typeof body.text === "string") spokenText = body.text.trim();
     if (typeof body.format === "string") format = body.format;
     if (typeof body.locale === "string") hintLocale = body.locale;
   }
-  if (!audioB64) return json({ error: "No audio" }, 400);
+
+  // Two shapes now. The client recognises speech on the device and sends the
+  // transcript, which skips both the upload and the model's transcription work;
+  // audio remains for devices with no recognition service. One or the other.
+  if (!audioB64 && !spokenText) return json({ error: "No audio or text" }, 400);
+  if (spokenText.length > 2_000) return json({ error: "Command too long" }, 413);
   // Guard against oversized clips (base64 ~1.37x). ~4MB base64 ≈ ~3MB audio ≈ plenty for a command.
   if (audioB64.length > 4_500_000) return json({ error: "Clip too long" }, 413);
 
-  const userText = hintLocale
-    ? `The user's app language is "${hintLocale}". Here is the voice command:`
-    : "Here is the voice command:";
+  const localeHint = hintLocale ? `The user's app language is "${hintLocale}". ` : "";
+  const userText = spokenText
+    ? `${localeHint}The user said: "${spokenText}"`
+    : `${localeHint}Here is the voice command:`;
 
   try {
     let content = "";
@@ -184,7 +192,12 @@ Deno.serve(async (req) => {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
       const geminiBody = JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ role: "user", parts: [{ text: userText }, { inlineData: { mimeType: mime, data: audioB64 } }] }],
+        contents: [{
+          role: "user",
+          parts: spokenText
+            ? [{ text: userText }]
+            : [{ text: userText }, { inlineData: { mimeType: mime, data: audioB64 } }],
+        }],
         // Low temp = steadier, more deterministic intent detection.
         generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
       });
@@ -213,10 +226,14 @@ Deno.serve(async (req) => {
             { role: "system", content: SYSTEM_PROMPT },
             {
               role: "user",
-              content: [
-                { type: "text", text: userText },
-                { type: "input_audio", input_audio: { data: audioB64, format } },
-              ],
+              // A transcript needs no recording attached. Sending the audio part
+              // anyway would ship an empty payload on the text path.
+              content: spokenText
+                ? userText
+                : [
+                    { type: "text", text: userText },
+                    { type: "input_audio", input_audio: { data: audioB64, format } },
+                  ],
             },
           ],
           response_format: { type: "json_object" },

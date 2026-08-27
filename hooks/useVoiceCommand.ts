@@ -1,9 +1,18 @@
 // useVoiceCommand — the hands-free control loop.
 //
-// record (expo-audio, already in the dev client) → base64 → voice-command edge
-// function (Gemini does STT + intent in one call) → dispatch the intent. No new
-// native module, so it runs on the current build. TTS read-back is added later
-// with a native rebuild; until then the overlay shows the reply text.
+// Two paths, fast first:
+//
+//   on-device speech recognition → transcript → matchLocalIntent → dispatch
+//
+// Commands people actually repeat ("go home", "open notes", "trending") never
+// leave the phone. The old path measured roughly a quarter of a second before
+// the edge function did any work at all, plus upload and model inference on top
+// of that, and it ran for every utterance including the trivial ones.
+//
+// Anything the local matcher will not confidently claim falls through to the
+// model — the transcript goes as text, not audio, so even the slow path stops
+// uploading a recording. If speech recognition is unavailable on the device at
+// all, the original record-and-upload path still runs unchanged.
 
 import { useCallback, useRef, useState } from 'react';
 import { Platform } from 'react-native';
@@ -18,7 +27,12 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
 import { dispatchVoiceIntent } from '../lib/voice/dispatch';
+import { matchLocalIntent } from '../lib/voice/localIntent';
 import { speak, stopSpeaking } from '../lib/tts';
 import { VOICE_INTENTS, type VoicePhase, type VoiceResult } from '../lib/voice/types';
 
@@ -69,6 +83,9 @@ export function useVoiceCommand() {
   const [state, setState] = useState<VoiceCommandState>(IDLE);
   const appLanguage = useAppStore(s => s.appLanguage);
   const busyRef = useRef(false);
+  // 'stt' once on-device recognition has started, so the recorder teardown and
+  // the result handler know which path is live.
+  const modeRef = useRef<'stt' | 'audio' | null>(null);
 
   const reset = useCallback(() => setState(IDLE), []);
 
@@ -101,9 +118,102 @@ export function useVoiceCommand() {
     }, 150);
   }, [appLanguage]);
 
+  /**
+   * Act on a transcript, however it was produced.
+   *
+   * The local matcher gets first refusal. When it claims the phrase the action
+   * runs immediately with no network at all — that is the whole point of doing
+   * recognition on the device. When it declines, the transcript goes to the
+   * model as text; still a round trip, but no audio upload attached to it.
+   */
+  const runTranscript = useCallback(async (transcript: string) => {
+    const local = matchLocalIntent(transcript, appLanguage);
+    if (local) {
+      const outcome = dispatchVoiceIntent(local);
+      if (outcome.handled) {
+        const reply = outcome.reply || local.reply;
+        if (reply && !outcome.spoken) speak(reply, { language: appLanguage, id: 'voice-reply' });
+        setState({ phase: 'done', transcript, reply, error: null });
+        return;
+      }
+      // Matched a phrase but the action refused: fall through to the model
+      // rather than telling the user it worked.
+    }
+
+    setState(s => ({ ...s, phase: 'thinking', transcript }));
+    try {
+      const { data, error } = await supabase.functions.invoke('voice-command', {
+        body: { text: transcript, locale: appLanguage },
+      });
+      if (error) throw error;
+      const result = normalizeResult(data);
+      const outcome = dispatchVoiceIntent(result);
+      const reply = outcome.reply || result.reply;
+      if (outcome.handled) {
+        if (reply && !outcome.spoken) speak(reply, { language: appLanguage, id: 'voice-reply' });
+        setState({ phase: 'done', transcript: result.transcript || transcript, reply, error: null });
+      } else {
+        setState({ phase: 'error', transcript: result.transcript || transcript, reply: '', error: 'not-understood' });
+      }
+    } catch {
+      setState({ ...IDLE, phase: 'error', transcript, error: 'transcribe-failed' });
+    }
+  }, [appLanguage]);
+
+  // On-device recognition results. `isFinal` matters: interim results stream in
+  // while the user is still talking and acting on those would fire commands
+  // mid-sentence.
+  useSpeechRecognitionEvent('result', event => {
+    if (modeRef.current !== 'stt') return;
+    const transcript = event?.results?.[0]?.transcript ?? '';
+    if (!event?.isFinal || !transcript.trim()) return;
+    modeRef.current = null;
+    busyRef.current = false;
+    void runTranscript(transcript.trim());
+  });
+
+  useSpeechRecognitionEvent('error', () => {
+    if (modeRef.current !== 'stt') return;
+    modeRef.current = null;
+    busyRef.current = false;
+    // No speech, no match, no permission — all read the same to the user.
+    setState({ ...IDLE, phase: 'error', error: 'not-understood' });
+  });
+
   const start = useCallback(async () => {
     if (busyRef.current) return;
     stopSpeaking(); // don't record our own read-back
+
+    // Fast path. Recognition on the device means the transcript exists the
+    // moment the user stops talking, so a recognised command dispatches with no
+    // network at all. Availability is checked rather than assumed — an Android
+    // build without a recognition service, or a locale with no model, must fall
+    // back rather than hang on a listener that never fires.
+    try {
+      if (ExpoSpeechRecognitionModule.isRecognitionAvailable()) {
+        const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+        if (perm.granted) {
+          busyRef.current = true;
+          modeRef.current = 'stt';
+          ExpoSpeechRecognitionModule.start({
+            lang: appLanguage || 'en-US',
+            interimResults: true,
+            continuous: false,
+            // Prefer the on-device model; the module falls back to the network
+            // recognizer by itself when the device has no offline model.
+            requiresOnDeviceRecognition: true,
+            maxAlternatives: 1,
+          });
+          setState({ phase: 'listening', transcript: '', reply: '', error: null });
+          return;
+        }
+      }
+    } catch {
+      // Recognition refused to start; the recorder below still works.
+      modeRef.current = null;
+      busyRef.current = false;
+    }
+
     try {
       const { status } = await requestRecordingPermissionsAsync();
       if (status !== 'granted') {
@@ -111,6 +221,7 @@ export function useVoiceCommand() {
         return;
       }
       busyRef.current = true;
+      modeRef.current = 'audio';
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
@@ -119,12 +230,27 @@ export function useVoiceCommand() {
       busyRef.current = false;
       setState({ ...IDLE, phase: 'error', error: 'record-failed' });
     }
-  }, [recorder]);
+  }, [recorder, appLanguage]);
 
   // Stop recording, transcribe, and act. Call this when the user releases the
   // mic (or when a silence timeout fires).
   const stopAndRun = useCallback(async () => {
     if (state.phase !== 'listening') return;
+
+    // On the recognition path there is nothing to upload — stopping makes the
+    // recognizer emit its final result, which the 'result' listener acts on.
+    if (modeRef.current === 'stt') {
+      setState(s => ({ ...s, phase: 'thinking' }));
+      try {
+        ExpoSpeechRecognitionModule.stop();
+      } catch {
+        modeRef.current = null;
+        busyRef.current = false;
+        setState({ ...IDLE, phase: 'error', error: 'transcribe-failed' });
+      }
+      return;
+    }
+
     setState(s => ({ ...s, phase: 'thinking' }));
     let uri: string | null = null;
     const t0 = Date.now();
@@ -185,10 +311,15 @@ export function useVoiceCommand() {
 
   const cancel = useCallback(async () => {
     try {
-      if (state.phase === 'listening') await recorder.stop();
+      if (modeRef.current === 'stt') {
+        ExpoSpeechRecognitionModule.abort();
+      } else if (state.phase === 'listening') {
+        await recorder.stop();
+      }
     } catch {
       // ignore
     } finally {
+      modeRef.current = null;
       busyRef.current = false;
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
       setState(IDLE);
