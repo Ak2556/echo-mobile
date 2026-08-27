@@ -1,6 +1,7 @@
 import { supabase } from '../../supabase';
 import type { ProviderResult } from '../types';
 import { withAuthTimeout } from '../timeout';
+import { friendlyAuthError } from '../friendlyAuthError';
 
 /**
  * Email OTP sign-in.
@@ -38,7 +39,7 @@ export async function sendEmailOtp(email: string): Promise<ProviderResult> {
       },
     }),
   );
-  return { error: error?.message ?? null };
+  return { error: friendlyAuthError(error?.message) };
 }
 
 export async function verifyEmailOtp(email: string, code: string): Promise<ProviderResult> {
@@ -54,7 +55,7 @@ export async function verifyEmailOtp(email: string, code: string): Promise<Provi
       type: 'email',
     }),
   );
-  return { error: error?.message ?? null };
+  return { error: friendlyAuthError(error?.message) };
 }
 
 /**
@@ -75,5 +76,5 @@ export async function signInAsDemo(): Promise<ProviderResult> {
   const { error } = await withAuthTimeout(
     supabase.auth.signInWithPassword({ email, password }),
   );
-  return { error: error?.message ?? null };
+  return { error: friendlyAuthError(error?.message) };
 }

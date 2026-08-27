@@ -2,6 +2,7 @@ import { supabase } from '../../supabase';
 import type { ProviderResult } from '../types';
 import { withAuthTimeout } from '../timeout';
 import { isValidE164, normalizeE164 } from '../phoneNumber';
+import { friendlyAuthError } from '../friendlyAuthError';
 
 /**
  * Phone OTP sign-in.
@@ -39,7 +40,7 @@ export async function sendPhoneOtp(phone: string): Promise<ProviderResult & { ph
       }
     })
   );
-  return { error: error?.message ?? null, phone: e164 };
+  return { error: friendlyAuthError(error?.message), phone: e164 };
 }
 
 export async function verifyPhoneOtp(phone: string, code: string): Promise<ProviderResult> {
@@ -55,5 +56,5 @@ export async function verifyPhoneOtp(phone: string, code: string): Promise<Provi
       type: 'sms',
     }),
   );
-  return { error: error?.message ?? null };
+  return { error: friendlyAuthError(error?.message) };
 }
