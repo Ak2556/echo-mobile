@@ -97,7 +97,28 @@ function HomeHero({
   const layout = useResponsiveLayout();
   return (
     <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 24 : 16, marginBottom: 8 }}>
-      <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5 }]} numberOfLines={2}>
+      {/* Typography as the primary move, not a neutral delivery vehicle: the
+          greeting is set large, tight and optically negative-tracked, so the
+          first thing on screen reads as a masthead rather than a label.
+          Line height sits just under the point size — at this scale generous
+          leading reads as looseness, not air.
+
+          maxFontSizeMultiplier is deliberate. OS Dynamic Type and the in-app
+          fontScale compound with nothing capping them, so at large accessibility
+          sizes this would push the whole feed off screen. */}
+      <Text
+        style={[
+          font.displayBlack,
+          {
+            color: colors.text,
+            fontSize: layout.isPhone ? 46 : 60,
+            lineHeight: layout.isPhone ? 46 : 60,
+            letterSpacing: layout.isPhone ? -1.6 : -2.1,
+          },
+        ]}
+        numberOfLines={2}
+        maxFontSizeMultiplier={1.15}
+      >
         {name ? t('home.welcomeBack', { name }) : t('home.buildToday')}
       </Text>
     </View>
