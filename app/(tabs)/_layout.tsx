@@ -409,8 +409,9 @@ function FloatingTabBar(props: BottomTabBarProps) {
         right: 0,
         height: tabHeight + insets.bottom,
         paddingBottom: insets.bottom,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: colors.border,
+        // No rule along the top. The glass edge already marks where the bar
+        // begins, so the hairline was a second boundary drawn over the first —
+        // the same reasoning that removed it from ScreenHeader.
         zIndex: 100,
       }}
       contentStyle={{ flex: 1 }}
