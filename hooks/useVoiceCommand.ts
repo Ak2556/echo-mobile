@@ -33,6 +33,7 @@ import {
 } from 'expo-speech-recognition';
 import { dispatchVoiceIntent } from '../lib/voice/dispatch';
 import { matchLocalIntent } from '../lib/voice/localIntent';
+import { toSpeechLocale } from '../lib/voice/voiceLocale';
 import { speak, stopSpeaking } from '../lib/tts';
 import { VOICE_INTENTS, type VoicePhase, type VoiceResult } from '../lib/voice/types';
 
@@ -172,12 +173,26 @@ export function useVoiceCommand() {
     void runTranscript(transcript.trim());
   });
 
-  useSpeechRecognitionEvent('error', () => {
+  useSpeechRecognitionEvent('error', event => {
     if (modeRef.current !== 'stt') return;
     modeRef.current = null;
     busyRef.current = false;
-    // No speech, no match, no permission — all read the same to the user.
-    setState({ ...IDLE, phase: 'error', error: 'not-understood' });
+
+    const code = event?.error ?? 'unknown';
+    if (__DEV__) {
+      // Swallowing this code cost a debugging round trip: every failure looked
+      // like "not understood" whatever had actually gone wrong.
+      console.log(`[voice] recognition error: ${code} — ${event?.message ?? ''}`);
+    }
+
+    // Distinguish the ones the user can act on from the ones they cannot.
+    const mapped =
+      code === 'not-allowed' || code === 'service-not-allowed'
+        ? 'mic-permission'
+        : code === 'no-speech'
+          ? 'not-understood'
+          : 'transcribe-failed';
+    setState({ ...IDLE, phase: 'error', error: mapped });
   });
 
   const start = useCallback(async () => {
@@ -196,12 +211,19 @@ export function useVoiceCommand() {
           busyRef.current = true;
           modeRef.current = 'stt';
           ExpoSpeechRecognitionModule.start({
-            lang: appLanguage || 'en-US',
+            // appLanguage is a bare two-letter code; the recogniser needs a
+            // BCP-47 tag and answers a bare one with language-not-supported.
+            lang: toSpeechLocale(appLanguage),
             interimResults: true,
             continuous: false,
-            // Prefer the on-device model; the module falls back to the network
-            // recognizer by itself when the device has no offline model.
-            requiresOnDeviceRecognition: true,
+            // Not forced on-device. Requiring it fails outright on a device with
+            // no offline model for the locale, which is most devices for most
+            // Indian languages — an earlier comment here claimed the module
+            // falls back on its own, which was an assumption and wrong. Android
+            // already prefers an installed offline model when one exists, so
+            // leaving this false keeps the fast path where it is available and
+            // a working path everywhere else.
+            requiresOnDeviceRecognition: false,
             maxAlternatives: 1,
           });
           setState({ phase: 'listening', transcript: '', reply: '', error: null });
