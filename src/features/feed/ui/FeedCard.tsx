@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { ShareSheet } from '../../../../components/common/ShareSheet';
 import { ActionSheet, ActionItem } from '../../../../components/common/ActionSheet';
@@ -14,6 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { LinkifiedText } from './LinkifiedText';
 import { ReactionBar } from './ReactionBar';
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
+import { GestureCard, type GestureCardAction } from '../../../../components/ui/GestureCard';
 import { Avatar } from '../../../../components/ui/Avatar';
 import { ZoomableImageViewer } from '../../../../components/ui/ZoomableImageViewer';
 import { showToast } from '../../../../components/ui/Toast';
@@ -243,6 +244,24 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
   const handleNativeShare = async () => {
     setShareOpen(true);
   };
+
+  // Gestures on the card body. Each one is also published to the screen-reader
+  // rotor by GestureCard, so nothing here is reachable only by swiping.
+  //
+  // Like has no translation key — the neighbouring Like button hardcodes its
+  // label the same way. Worth fixing across the action row rather than here.
+  const swipeLike = useMemo<GestureCardAction>(
+    () => ({ id: 'like', label: liked ? 'Unlike' : 'Like', run: handleLikePress }),
+    [liked, handleLikePress],
+  );
+  const swipeSave = useMemo<GestureCardAction>(
+    () => ({ id: 'save', label: t('common.save'), run: toggleBookmarkPress }),
+    [t, toggleBookmarkPress],
+  );
+  const pressShare = useMemo<GestureCardAction>(
+    () => ({ id: 'share', label: t('common.share'), run: handleNativeShare }),
+    [t, handleNativeShare],
+  );
 
   const handleQuoteRepost = useCallback(() => {
     setRepostSheetOpen(false);
@@ -655,6 +674,17 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
           pointerEvents="none"
         />
       )}
+      <GestureCard
+        swipeRight={swipeLike}
+        swipeLeft={swipeSave}
+        longPress={pressShare}
+        revealRight={
+          <HeartStraight color="#EF4444" size={26} weight={liked ? 'regular' : 'fill'} />
+        }
+        revealLeft={
+          <BookmarkSimple color={colors.accent} size={26} weight={bookmarked ? 'regular' : 'fill'} />
+        }
+      >
       <AnimatedPressable
         onPress={handleMainPress}
         depth="soft"
@@ -913,6 +943,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
 
         {ActionsRow}
       </AnimatedPressable>
+      </GestureCard>
       </View>
       {AllModals}
     </Animated.View>
