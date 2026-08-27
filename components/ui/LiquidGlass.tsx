@@ -43,7 +43,7 @@ try {
 const SKIA_OK = !!Sk?.Skia?.RuntimeEffect;
 
 /**
- * Rim light, chromatic edge split, and a drifting specular sweep.
+ * Rim light, chromatic edge split, a drifting specular sweep, and static grain.
  *
  * Kept to a signed-distance rounded rectangle and two exponentials: this runs per
  * pixel per frame, and the tier above it already decided the device can spare that.
@@ -53,6 +53,12 @@ uniform float2 u_size;
 uniform float  u_time;
 uniform float2 u_tilt;
 uniform float  u_radius;
+
+// Cheap value hash. Deterministic per pixel, so the grain is stable rather
+// than crawling when the panel moves.
+float hash(float2 p) {
+  return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
+}
 
 float sdRoundRect(float2 p, float2 b, float r) {
   float2 q = abs(p) - b + r;
@@ -78,12 +84,20 @@ half4 main(float2 xy) {
   float centre = u_tilt.x * 0.25 + sin(u_time * 0.3) * 0.2;
   float sweep = exp(-36.0 * (proj - centre) * (proj - centre)) * inside * 0.5;
 
-  float a = clamp(edge * 0.5 + sweep, 0.0, 0.85);
+  // Grain. Real glass and printed ink are never perfectly smooth, and a
+  // gradient with no tooth is the giveaway that a surface was drawn by code.
+  // Static rather than animated: this is a print imperfection, not film grain,
+  // and animating it would mean re-shading every pixel every frame for an
+  // effect nobody consciously sees.
+  float grain = (hash(floor(xy)) - 0.5) * 0.055 * inside;
+
+  float a = clamp(edge * 0.5 + sweep + abs(grain), 0.0, 0.85);
 
   // Glass disperses: the rim leans warm on one side, cool on the other.
   half3 col = half3(1.0, 1.0, 1.0);
   col.r += edge * 0.10;
   col.b += edge * 0.16;
+  col += half3(grain);
 
   // Premultiplied, as Skia expects from a runtime effect.
   return half4(col * a, a);

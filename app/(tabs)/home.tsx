@@ -12,6 +12,7 @@ import Animated, {
   useAnimatedReaction,
   interpolate,
   Extrapolation,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { LiquidGlass } from '../../components/ui/LiquidGlass';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -89,14 +90,42 @@ function SectionHeader({ label, sub }: { label: string; sub?: string; icon?: Rea
 function HomeHero({
   name,
   t,
+  scrollY,
+  reduceMotion,
 }: {
   name: string;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
+  scrollY: SharedValue<number>;
+  reduceMotion: boolean;
 }) {
   const { colors, font } = useTheme();
   const layout = useResponsiveLayout();
+
+  // Kinetic, not decorative. The masthead is the largest thing on the screen,
+  // so as the feed comes up it compresses and lifts slightly faster than the
+  // list scrolls — the greeting gets out of the way of the content instead of
+  // simply sliding off. Anchored at the left edge so the type shrinks towards
+  // its own margin rather than towards the middle of the screen.
+  const kinetic = useAnimatedStyle(() => {
+    if (reduceMotion) return {};
+    const p = interpolate(scrollY.value, [0, 140], [0, 1], Extrapolation.CLAMP);
+    return {
+      transform: [
+        { translateY: -p * 26 },
+        { scale: 1 - p * 0.14 },
+      ],
+      opacity: 1 - p * 0.45,
+    };
+  });
+
   return (
-    <View style={{ marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 24 : 16, marginBottom: 8 }}>
+    <Animated.View
+      style={[
+        { marginHorizontal: layout.gutter, marginTop: layout.isDesktop ? 24 : 16, marginBottom: 8,
+          transformOrigin: 'left center' },
+        kinetic,
+      ]}
+    >
       {/* Typography as the primary move, not a neutral delivery vehicle: the
           greeting is set large, tight and optically negative-tracked, so the
           first thing on screen reads as a masthead rather than a label.
@@ -121,7 +150,7 @@ function HomeHero({
       >
         {name ? t('home.welcomeBack', { name }) : t('home.buildToday')}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -526,6 +555,8 @@ export default function DiscoverScreen() {
   const ListHeader = (
     <View style={feedContainerStyle}>
       <HomeHero
+        scrollY={scrollY}
+        reduceMotion={performance.reduceMotion}
         // Greet people by the name they chose. The profile screen, the chat
         // greeting and this line were showing two different identities for the
         // same person — "Akash" in Chat, "akashhere12" here.
