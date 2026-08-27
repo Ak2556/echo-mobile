@@ -90,8 +90,12 @@ export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: 
   const tileWidth = Math.floor((usable - GRID_GAP * (columns - 1)) / columns);
   // One height for every tile. Heights used to alternate on `idx % 3`, which in
   // a flex-wrap leaves uneven gaps under the shorter tiles and stops the grid
-  // reading as rows at all. 4:5 keeps portrait media from being over-cropped.
-  const tileHeight = Math.round(tileWidth * 1.25);
+  // reading as rows at all. 3:4 is the portrait ratio modern media grids use,
+  // and it crops portrait photography far less than a square.
+  //
+  // This was already computed and then ignored: the render kept passing pixel
+  // literals, so the comment above described behaviour the grid did not have.
+  const tileHeight = Math.round(tileWidth * (4 / 3));
 
   if (echoes.length === 0) {
     return (
@@ -120,14 +124,14 @@ export function PostsGrid({ echoes, onPressEcho, avatarColor, containerWidth }: 
         />
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP }}>
-        {rest.map((item, idx) => (
+        {rest.map(item => (
           <MosaicTile
             key={item.id}
             item={item}
             onPress={() => onPressEcho(item)}
             tint={item.avatarColor || avatarColor}
             width={tileWidth}
-            height={columns === 3 ? (idx % 3 === 0 ? 190 : 150) : (idx % 3 === 0 ? 220 : 170)}
+            height={tileHeight}
           />
         ))}
       </View>

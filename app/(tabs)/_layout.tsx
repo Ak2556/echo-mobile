@@ -5,7 +5,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Plus, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront, PlayCircle } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { GlassPanel } from '../../components/ui/GlassPanel';
+import { LiquidGlass } from '../../components/ui/LiquidGlass';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
@@ -397,7 +397,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
 
   return (
     <>
-    <GlassPanel
+    <LiquidGlass
       borderRadius={0}
       elevated={false} 
       tintOverride={Platform.OS === 'android' ? (colors.isDark ? 'rgba(9, 11, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)') : (colors.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.4)')} 
@@ -493,7 +493,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
             );
           })}
         </View>
-    </GlassPanel>
+    </LiquidGlass>
 
       <ActionSheet
         visible={!!longPressActionList}

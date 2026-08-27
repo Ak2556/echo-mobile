@@ -13,7 +13,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-import { GlassPanel } from '../../components/ui/GlassPanel';
+import { LiquidGlass } from '../../components/ui/LiquidGlass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowUpRight, Bell, Waveform, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
 import { AdCard } from "../../src/features/feed/ui/AdCard";
@@ -677,7 +677,7 @@ export default function DiscoverScreen() {
         }}
       >
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, glassOpacityStyle]}>
-          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}><View /></GlassPanel>
+          <LiquidGlass borderRadius={0} style={StyleSheet.absoluteFill as any}><View /></LiquidGlass>
         </Animated.View>
             <View
               style={{
