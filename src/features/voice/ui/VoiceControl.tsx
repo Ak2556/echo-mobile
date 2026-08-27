@@ -92,9 +92,9 @@ export function VoiceControl() {
             <Pressable style={StyleSheet.absoluteFill} onPress={state.phase === 'listening' ? stopAndRun : cancel} />
           </BlurView>
           
-          <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 60, width: '100%' }}>
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 24, width: '100%' }}>
             {state.phase === 'listening' && (
-               <Animated.View style={[{ position: 'absolute', top: -5, width: 120, height: 120, borderRadius: 60, backgroundColor: colors.accent }, animatedRingStyle]} pointerEvents="none" />
+               <Animated.View style={[{ position: 'absolute', top: -4, width: 84, height: 84, borderRadius: 42, backgroundColor: colors.accent }, animatedRingStyle]} pointerEvents="none" />
             )}
             
             <Pressable
@@ -102,38 +102,38 @@ export function VoiceControl() {
                style={{ zIndex: 10 }}
             >
               <Animated.View style={[{
-                 width: 110, height: 110, borderRadius: 55,
+                 width: 72, height: 72, borderRadius: 36,
                  backgroundColor: state.phase === 'error' ? colors.danger : colors.accent,
                  alignItems: 'center', justifyContent: 'center',
                  borderWidth: 2, borderColor: 'rgba(255, 255, 255, 0.4)'
               }, animatedMicStyle]}>
                  {state.phase === 'thinking' ? (
-                   <ActivityIndicator color="#fff" size="large" />
+                   <ActivityIndicator color="#fff" />
                  ) : (
-                   <Microphone color="#fff" size={48} weight="fill" />
+                   <Microphone color="#fff" size={30} weight="fill" />
                  )}
               </Animated.View>
             </Pressable>
             
-            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginTop: 40, letterSpacing: -0.5, textShadowColor: 'rgba(0,0,0,0.2)', textShadowRadius: 10, textShadowOffset: { width: 0, height: 2 } }}>
+            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 22, letterSpacing: -0.3, textShadowColor: 'rgba(0,0,0,0.2)', textShadowRadius: 10, textShadowOffset: { width: 0, height: 2 } }}>
               {statusLine}
             </Text>
 
             {state.phase === 'listening' && (
-              <Text style={{ color: colors.textSecondary, fontSize: 16, marginTop: 12, fontWeight: '500', letterSpacing: -0.2 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 8, fontWeight: '500', letterSpacing: -0.2 }}>
                 {t('voice.tapToStop')}
               </Text>
             )}
 
             {captions && !!state.transcript && (
-              <View style={{ marginTop: 32, paddingHorizontal: 30, width: '100%' }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '600', textAlign: 'center', marginBottom: 8 }}>{t('voice.youSaid')}</Text>
-                <Text style={{ color: colors.text, fontSize: 20, lineHeight: 28, fontWeight: '600', textAlign: 'center' }}>{state.transcript}</Text>
+              <View style={{ marginTop: 20, paddingHorizontal: 30, width: '100%' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>{t('voice.youSaid')}</Text>
+                <Text style={{ color: colors.text, fontSize: 16, lineHeight: 22, fontWeight: '600', textAlign: 'center' }}>{state.transcript}</Text>
               </View>
             )}
             
             {!!state.reply && state.phase === 'done' && (
-              <Text style={{ color: colors.text, fontSize: 18, marginTop: 24, textAlign: 'center', paddingHorizontal: 20 }}>{state.reply}</Text>
+              <Text style={{ color: colors.text, fontSize: 15, marginTop: 16, textAlign: 'center', paddingHorizontal: 20 }}>{state.reply}</Text>
             )}
             
             {state.phase === 'error' && (
@@ -149,8 +149,9 @@ export function VoiceControl() {
               </View>
             )}
             
-            <Pressable onPress={cancel} style={{ marginTop: 40, padding: 16, borderRadius: 30, backgroundColor: colors.surfaceHover }}>
-               <X color={colors.text} size={24} weight="bold" />
+            <Pressable onPress={cancel} hitSlop={8}
+               style={{ marginTop: 24, padding: 13, borderRadius: 30, backgroundColor: colors.surfaceHover }}>
+               <X color={colors.text} size={18} weight="bold" />
             </Pressable>
           </View>
         </Animated.View>
