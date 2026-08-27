@@ -45,20 +45,37 @@ export async function signInWithGoogle(): Promise<ProviderResult> {
     //
     // Returning to the foreground is the signal that the session is over one
     // way or another. See ../browserSession for how the two race.
+    //
+    // On iOS 'active' may never arrive at all — the Safari sheet is hosted
+    // inside this app's own scene, so the app never leaves the foreground to
+    // return to it. The subscription therefore cannot rely on its own handler
+    // to unsubscribe; releaseForeground runs whatever happens.
+    // Only a return from the *background* counts. Presenting the sheet makes
+    // iOS resign active for ~2s (the "…wants to use google.com to Sign In"
+    // alert), and treating that bounce as a return concluded the sign-in was
+    // over while the user was still on Google's consent screen. Android's
+    // Custom Tab genuinely backgrounds the app, so this still fires there;
+    // on iOS the browser, poll and timeout arms settle the session instead.
+    let releaseForeground = () => {};
     const foreground = new Promise<void>(resolve => {
+      let wasBackgrounded = false;
       const sub = AppState.addEventListener('change', state => {
-        if (state === 'active') {
-          sub.remove();
-          resolve();
-        }
+        if (state === 'background') wasBackgrounded = true;
+        else if (state === 'active' && wasBackgrounded) resolve();
       });
+      releaseForeground = () => sub.remove();
     });
 
-    const settled = await settleAuthSession({
-      browser: WebBrowser.openAuthSessionAsync(data.url, REDIRECT_TO),
-      foreground,
-      hasSession: async () => Boolean((await supabase.auth.getSession()).data.session),
-    });
+    let settled;
+    try {
+      settled = await settleAuthSession({
+        browser: WebBrowser.openAuthSessionAsync(data.url, REDIRECT_TO),
+        foreground,
+        hasSession: async () => Boolean((await supabase.auth.getSession()).data.session),
+      });
+    } finally {
+      releaseForeground();
+    }
 
     // Interrupted, but the redirect had already been consumed elsewhere — the
     // Linking listener and the callback screen both handle it. The user is
