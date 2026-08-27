@@ -14,7 +14,31 @@ import { synchronize } from '@nozbe/watermelondb/sync';
 import { database } from './index';
 import { supabase } from '../../../lib/supabase';
 
-export async function syncDatabase() {
+/**
+ * In-flight sync, if there is one.
+ *
+ * Three things trigger a sync — mount, returning to the foreground, and a
+ * 15-second poll — and nothing coordinated them. WatermelonDB refuses
+ * concurrent synchronize() calls and aborts the loser *before it commits*, so
+ * a collision did not just log a warning, it threw away everything that pull
+ * had already fetched. Foreground-plus-poll, or any sync still running when
+ * the next tick fires, hit this routinely:
+ *
+ *   [Sync] Concurrent synchronization is not allowed.
+ *
+ * Callers now share the running sync instead of starting a second one. The
+ * result is the same for them — a promise that resolves when the data has
+ * landed — and no work is discarded.
+ */
+let inFlight: Promise<void> | null = null;
+
+export function syncDatabase(): Promise<void> {
+  if (inFlight) return inFlight;
+  inFlight = runSync().finally(() => { inFlight = null; });
+  return inFlight;
+}
+
+async function runSync() {
   await synchronize({
     database,
     pullChanges: async ({ lastPulledAt }) => {
