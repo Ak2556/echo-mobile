@@ -15,6 +15,7 @@ import { destinationFor } from './destination';
 import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
 import { withAuthTimeout } from './timeout';
+import { makeAuthStateCallback } from './authStateCallback';
 
 /**
  * THE single auth listener.
@@ -195,7 +196,14 @@ export function AuthListenerProvider(): null {
     });
 
     // The ONE onAuthStateChange subscription.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    //
+    // The callback is deliberately NOT async. GoTrue awaits every subscriber
+    // inside its auth lock, so awaiting a Supabase call here — hydrateFromSession
+    // queries `profiles`, and every PostgREST call fetches the token through
+    // getSession() — re-enters the lock this callback is holding and deadlocks
+    // the client for the rest of the process. See ./authStateCallback.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      makeAuthStateCallback(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         track('signin_completed');
         identify(session.user.id);
@@ -226,7 +234,8 @@ export function AuthListenerProvider(): null {
         app.resetSocialData();
         app.clearChatHistory();
       }
-    });
+      }),
+    );
 
     // Deep-link handlers — cold-start + while-running.
     Linking.getInitialURL().then(url => { if (url) handleDeepLink(url); });
