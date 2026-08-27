@@ -53,7 +53,7 @@ function report(error: unknown, op: string): void {
  * "Keychain access failed". Callers fall back to storing plaintext there: the
  * alternative is an app that cannot hold a session in development at all.
  */
-async function getKey(): Promise<Uint8Array | null> {
+async function getKey(hasEnvelope = false): Promise<Uint8Array | null> {
   if (cachedKey) return cachedKey;
   try {
     const stored = await SecureStore.getItemAsync(KEYCHAIN_ENTRY);
@@ -61,6 +61,19 @@ async function getKey(): Promise<Uint8Array | null> {
       cachedKey = hexToBytes(stored);
       return cachedKey;
     }
+
+    // No key. On a first run that is expected. With an envelope already in
+    // storage it is not: minting a key here orphans that envelope for good,
+    // and the user is signed out with a valid session sitting on disk. Mint
+    // anyway — the ciphertext is unrecoverable either way — but say so, or
+    // the only symptom is "it logged me out again" with nothing to look at.
+    if (hasEnvelope) {
+      report(
+        new Error('session envelope present but keychain key missing — signing out'),
+        'key-missing',
+      );
+    }
+
     const fresh = getRandomBytes(KEY_BYTES);
     // AFTER_FIRST_UNLOCK, not the default: a token refresh can run while the
     // screen is locked, and the default class would deny the read.
@@ -69,7 +82,11 @@ async function getKey(): Promise<Uint8Array | null> {
     });
     cachedKey = fresh;
     return cachedKey;
-  } catch {
+  } catch (error) {
+    // Was a bare `catch { return null }`. Every Keychain failure therefore
+    // signed the user out invisibly, which is exactly the report that cannot
+    // be acted on: no error, no breadcrumb, a valid session still on disk.
+    report(error, 'keychain');
     return null;
   }
 }
@@ -99,7 +116,7 @@ export const secureSessionStorage = {
       return raw;
     }
 
-    const aesKey = await getKey();
+    const aesKey = await getKey(true);
     // The envelope is encrypted but the key is gone — a restored backup, or
     // cleared Keychain. There is no session to recover; signing in again is
     // the only path, and null is how this adapter says so.

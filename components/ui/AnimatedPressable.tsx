@@ -139,6 +139,7 @@ function LitePressable({
         accessibilityRole={accessibilityRole ?? 'button'}
         accessibilityLabel={inferredLabel}
         accessibilityState={disabled ? { disabled: true } : undefined}
+        hitSlop={DEFAULT_HIT_SLOP}
         style={({ pressed }) => {
           const t = outer.transform ? [...outer.transform, { scale: pressed ? 0.97 : 1 }] : [{ scale: pressed ? 0.97 : 1 }];
           return { ...outer, opacity: pressOpacity(pressed), transform: t };
@@ -157,6 +158,7 @@ function LitePressable({
       accessibilityRole={accessibilityRole ?? 'button'}
       accessibilityLabel={inferredLabel}
       accessibilityState={disabled ? { disabled: true } : undefined}
+      hitSlop={DEFAULT_HIT_SLOP}
       // Flatten to a single object: function styles returning ARRAYS have
       // dropped layout props (flexDirection/width/gap) in Release builds —
       // see the ActionSheet regression note. A flat merged object survives.
@@ -171,6 +173,18 @@ function LitePressable({
     </Pressable>
   );
 }
+
+/**
+ * Default touch slop.
+ *
+ * Most callers wrap a 14–20pt icon and set no padding, which leaves a touch
+ * target well under Apple's 44pt minimum — an audit of the accessibility tree
+ * found comment actions only 14pt tall. Slop costs nothing in layout and is
+ * invisible, so it is safer as a default than as something 75 call sites have
+ * to remember. Kept modest so adjacent controls do not overlap; anywhere that
+ * needs the full 44pt passes its own hitSlop, which wins via {...rest}.
+ */
+const DEFAULT_HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 
 const styles = StyleSheet.create({ fill: { flex: 1 } });
 

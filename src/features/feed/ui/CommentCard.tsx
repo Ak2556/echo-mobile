@@ -31,6 +31,9 @@ interface CommentCardProps {
   onReply?: (c: Comment) => void;
 }
 
+/** 14pt glyphs with 15pt of slop clear Apple's 44pt minimum. */
+const ACTION_HIT_SLOP = { top: 15, bottom: 15, left: 10, right: 10 };
+
 export function CommentCard({ comment, echoId, indented, onReply }: CommentCardProps) {
   const { likeComment } = useAppStore();
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
@@ -82,32 +85,40 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
         <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: fontSizes.small * 1.5 }}>{comment.content}</Text>
 
         <View className="flex-row items-center gap-5 mt-2">
+          {/* The row is 14pt tall by design — it should read as a caption, not a
+              toolbar. hitSlop takes the touch target to 44pt without changing
+              that, and the layout lives on an inner View because NativeWind's
+              cssInterop drops box props off a touchable's own style. */}
           <AnimatedPressable
             onPress={handleLike}
-            className="flex-row items-center gap-1"
             scaleValue={0.85}
             haptic="none"
+            hitSlop={ACTION_HIT_SLOP}
             accessibilityLabel={comment.isLiked ? 'Unlike comment' : 'Like comment'}
             accessibilityRole="button"
           >
-            <Animated.View style={heartAnim}>
-              <HeartStraight
-                color={comment.isLiked ? colors.danger : colors.textMuted}
-                size={14}
-                weight="regular"
-              />
-            </Animated.View>
-            <Text style={{ fontSize: fontSizes.caption, color: comment.isLiked ? colors.danger : colors.textMuted }}>
-              {comment.likes}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Animated.View style={heartAnim}>
+                <HeartStraight
+                  color={comment.isLiked ? colors.danger : colors.textMuted}
+                  size={14}
+                  weight="regular"
+                />
+              </Animated.View>
+              <Text style={{ fontSize: fontSizes.caption, color: comment.isLiked ? colors.danger : colors.textMuted }}>
+                {comment.likes}
+              </Text>
+            </View>
           </AnimatedPressable>
           {!indented && (
-            <AnimatedPressable style={{ flexDirection: "row", alignItems: "center", gap: 4 }} scaleValue={0.85} haptic="light" onPress={() => onReply?.(comment)} accessibilityLabel={ttx("Reply to comment")} accessibilityRole="button">
-              <ChatCircle color={colors.textMuted} size={14} />
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Reply")}</Text>
+            <AnimatedPressable scaleValue={0.85} haptic="light" hitSlop={ACTION_HIT_SLOP} onPress={() => onReply?.(comment)} accessibilityLabel={ttx("Reply to comment")} accessibilityRole="button">
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <ChatCircle color={colors.textMuted} size={14} />
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Reply")}</Text>
+              </View>
             </AnimatedPressable>
           )}
-          <SpeakButton text={comment.content} id={`comment:${comment.id}`} size={14} />
+          <SpeakButton text={comment.content} id={`comment:${comment.id}`} size={14} hitSlop={15} />
         </View>
       </View>
     </Animated.View>
