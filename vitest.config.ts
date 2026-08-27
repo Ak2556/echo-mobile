@@ -17,6 +17,13 @@ const alias = {
   // every test that reaches lib/supabase would fail on the native runtime.
   'expo-secure-store': path.resolve(__dirname, 'test/stubs/expo-secure-store.ts'),
   'expo-crypto': path.resolve(__dirname, 'test/stubs/expo-crypto.ts'),
+  // Reanimated 4 loads react-native-worklets at import time, which reaches for
+  // the native TurboModule registry and throws under jsdom. 95 files import it,
+  // so component tests cannot mount anything real without this.
+  'react-native-reanimated': path.resolve(__dirname, 'test/stubs/react-native-reanimated.ts'),
+  // expo-blur ships JSX inside a .js build file, which Vite will not parse.
+  'expo-blur': path.resolve(__dirname, 'test/stubs/expo-blur.ts'),
+  'expo-linear-gradient': path.resolve(__dirname, 'test/stubs/expo-linear-gradient.ts'),
 };
 
 const exclude = [
