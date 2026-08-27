@@ -16,8 +16,7 @@ import { useI18n } from '../../src/shared/lib/i18n';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
-import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniChip, MiniCommandDeck, MiniEmptyState } from '../../components/mini-apps/MiniKit';
+import { MiniChip, MiniEmptyState } from '../../components/mini-apps/MiniKit';
 import { showToast } from '../../components/ui/Toast';
 import { NOTE_COLORS, Note, loadNotes, saveNotes } from '../../lib/notes';
 
@@ -616,9 +615,13 @@ export default function NotesApp() {
     }, [vAction, vValue]),
   );
 
+  // Only folders that actually hold something. The default list was always
+  // padded in, so a screen with two notes offered six folders to filter by,
+  // four of which were guaranteed empty. DEFAULT_FOLDERS still seeds the
+  // picker when creating a note; it just no longer populates the filter row.
   const folders = useMemo(() => {
-    const fromNotes = notes.map(folderName);
-    return ['All', ...Array.from(new Set([...DEFAULT_FOLDERS, ...fromNotes]))];
+    const fromNotes = Array.from(new Set(notes.map(folderName)));
+    return fromNotes.length > 1 ? ['All', ...fromNotes] : fromNotes;
   }, [notes]);
 
   const activeNotes = notes.filter(note => !note.archived);
@@ -716,34 +719,16 @@ export default function NotesApp() {
       headerRight={NewBtn}
       bottomPad={56}
     >
-      <MiniCommandDeck
-        accent={colors.accent}
-        title={tt('Knowledge capture system')}
-        subtitle={tt('Ideas, drafts, recall.')}
-        metrics={[
-          { label: tt('Active'), value: `${activeNotes.length}`, detail: tt('notes') },
-          { label: tt('Words'), value: `${totalWords}`, detail: tt('saved') },
-          { label: tt('Lists'), value: `${checklistCount}`, detail: tt('checklists') },
-        ]}
-        chips={[tt('Templates'), tt('Folders'), tt('Echo drafts')]}
-      />
+      {/* The command deck repeated what the header already says — "4 active ·
+          794 words" in the subtitle, then Active 4 and Words 794 again in the
+          deck — and cost roughly a quarter of the screen to do it, pushing the
+          notes themselves below the fold. The header carries the counts. */}
 
-      <EdgeFeaturePanel
-        appName="Notes"
-        accent={colors.accent}
-        headline={tt('Turn notes into outcomes')}
-        caption={tt('Use saved ideas as coaching context, progress proof, or public Echo drafts.')}
-        metrics={[
-          { label: tt('Active'), value: `${activeNotes.length}` },
-          { label: tt('Words'), value: `${totalWords}` },
-          { label: tt('Folders'), value: `${Math.max(0, folders.length - 1)}` },
-        ]}
-        prompt="Review my notes and help me choose the next strongest action, idea, or Echo to publish."
-        shareText={`Notes progress: ${activeNotes.length} active notes, ${totalWords} words, ${pinnedCount} pinned, ${favoriteCount} favorites.`}
-        publishTitle="Notes progress"
-        publishBody={`I am building a notes system with ${activeNotes.length} active notes, ${totalWords} words, ${pinnedCount} pinned notes, and ${checklistCount} checklists.`}
-      />
 
+      {/* Templates help when there is nothing to look at yet. Once notes exist
+          they are permanent clutter above the content, and the header's + already
+          creates one. */}
+      {notes.length === 0 ? (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 9, paddingBottom: 14 }}>
         {TEMPLATES.map(template => (
           <AnimatedPressable
@@ -767,6 +752,7 @@ export default function NotesApp() {
           </AnimatedPressable>
         ))}
       </ScrollView>
+      ) : null}
 
       <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11, gap: 10 }} style={{ marginBottom: 12 }}>
         <MagnifyingGlass color={colors.textMuted} size={18} />
@@ -795,6 +781,8 @@ export default function NotesApp() {
         ))}
       </ScrollView>
 
+      {/* Nothing to filter or reorder below a handful of notes in one folder. */}
+      {folders.length > 0 || notes.length > 4 ? (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
         {folders.map(folder => (
           <MiniChip
@@ -814,6 +802,7 @@ export default function NotesApp() {
           <MiniChip key={mode.id} accent={colors.accent} label={tt(mode.label)} active={sortMode === mode.id} onPress={() => setSortMode(mode.id as SortMode)} />
         ))}
       </ScrollView>
+      ) : null}
 
       {filtered.length === 0 ? (
         <MiniEmptyState

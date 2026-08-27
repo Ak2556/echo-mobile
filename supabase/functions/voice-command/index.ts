@@ -141,19 +141,32 @@ Deno.serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
     auth: { persistSession: false },
   });
-  const { data: userData, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !userData?.user) return json({ error: "Not authenticated" }, 401);
-
+  // Verifying the caller and reading the body are independent, and the auth
+  // check is a network round trip to Supabase. Running them one after the other
+  // put that round trip directly on the path between the phone finishing its
+  // upload and the model starting work. Both still have to succeed — they just
+  // no longer queue behind each other.
   let audioB64 = "";
   let format = "wav";
   let hintLocale = "";
-  try {
-    const body = await req.json();
+
+  const [authResult, bodyResult] = await Promise.all([
+    supabase.auth.getUser(),
+    req.json().then(
+      (b: Record<string, unknown>) => ({ ok: true as const, b }),
+      () => ({ ok: false as const, b: null }),
+    ),
+  ]);
+
+  const { data: userData, error: userErr } = authResult;
+  if (userErr || !userData?.user) return json({ error: "Not authenticated" }, 401);
+
+  if (!bodyResult.ok || !bodyResult.b) return json({ error: "Bad request" }, 400);
+  {
+    const body = bodyResult.b;
     audioB64 = typeof body.audio === "string" ? body.audio : "";
     if (typeof body.format === "string") format = body.format;
     if (typeof body.locale === "string") hintLocale = body.locale;
-  } catch {
-    return json({ error: "Bad request" }, 400);
   }
   if (!audioB64) return json({ error: "No audio" }, 400);
   // Guard against oversized clips (base64 ~1.37x). ~4MB base64 ≈ ~3MB audio ≈ plenty for a command.

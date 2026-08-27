@@ -40,8 +40,20 @@ const WAV_OPTIONS: RecordingOptions = {
   },
 };
 
+// Android recorded at the HIGH_QUALITY preset — 44.1kHz, stereo, 128kbps —
+// while iOS was deliberately tuned to 16kHz mono. Speech recognition gains
+// nothing above 16kHz mono, so every command was uploading roughly five times
+// the bytes it needed to, and upload sits directly on the path between the user
+// finishing their sentence and anything happening.
+const M4A_OPTIONS: RecordingOptions = {
+  ...RecordingPresets.HIGH_QUALITY,
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 32000,
+};
+
 const RECORD_FORMAT = Platform.OS === 'ios' ? 'wav' : 'm4a';
-const RECORD_OPTIONS = Platform.OS === 'ios' ? WAV_OPTIONS : RecordingPresets.HIGH_QUALITY;
+const RECORD_OPTIONS = Platform.OS === 'ios' ? WAV_OPTIONS : M4A_OPTIONS;
 
 export interface VoiceCommandState {
   phase: VoicePhase;
@@ -115,6 +127,7 @@ export function useVoiceCommand() {
     if (state.phase !== 'listening') return;
     setState(s => ({ ...s, phase: 'thinking' }));
     let uri: string | null = null;
+    const t0 = Date.now();
     try {
       await recorder.stop();
       uri = recorder.uri;
@@ -122,7 +135,11 @@ export function useVoiceCommand() {
       // fall through — handled below
     } finally {
       busyRef.current = false;
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+      // Deliberately not awaited. Releasing the audio session is cleanup, not a
+      // precondition for uploading, and awaiting it here put a native call
+      // between the user finishing their sentence and the request leaving the
+      // phone. It still runs; it just no longer blocks.
+      void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
 
     if (!uri) {
@@ -132,9 +149,18 @@ export function useVoiceCommand() {
 
     try {
       const audio = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      const tRead = Date.now();
       const { data, error } = await supabase.functions.invoke('voice-command', {
         body: { audio, format: RECORD_FORMAT, locale: appLanguage },
       });
+      const tModel = Date.now();
+      if (__DEV__) {
+        // Where the wait actually goes. Read this with `adb logcat -s ReactNativeJS`.
+        console.log(
+          `[voice] encode ${tRead - t0}ms · round-trip ${tModel - tRead}ms · ` +
+          `total ${tModel - t0}ms · ${Math.round(audio.length / 1024)}KB b64`,
+        );
+      }
       if (error) throw error;
 
       const result = normalizeResult(data);
