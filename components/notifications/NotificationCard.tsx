@@ -8,53 +8,11 @@ import { SpeakButton } from '../ui/SpeakButton';
 import { Notification } from '../../types';
 import { useTheme } from '../../src/shared/lib/theme';
 
-// Warm editorial palette (lib/avatarPalette.ts) — one hue per notification type.
-const TYPE_COLOR: Record<string, string> = {
-  like: '#A04E4E',
-  comment: '#4E7A8B',
-  follow: '#7A8B4E',
-  repost: '#4E8B7A',
-  mention: '#B08536',
-  dm: '#5E748B',
-  reaction: '#B35D6B',
-  bookmark: '#8B6F4E',
-  quote: '#8B5E7D',
-  report_resolved: '#7A8B4E',
-  content_removed: '#A04E4E',
-  appeal_resolved: '#4E7A8B',
-};
-
-const REACTION_LABEL: Record<string, string> = {
-  mind_blown: 'insightful',
-  taking_notes: 'taking notes',
-  agree: 'agree',
-  disagree: 'rethink',
-};
-
-// Notifications with no real actor — they get a standalone type-icon avatar
-// rather than a person's photo.
-const SYSTEM_TYPES = new Set(['report_resolved', 'content_removed', 'appeal_resolved']);
-
-function actionTextFor(n: Notification): string {
-  switch (n.type) {
-    case 'like': return 'liked your echo';
-    case 'comment': return 'commented on your echo';
-    case 'follow': return 'started following you';
-    case 'repost': return 're-echoed your post';
-    case 'mention': return 'mentioned you';
-    case 'dm': return 'sent you a message';
-    case 'reaction': {
-      const label = n.targetPreview ? REACTION_LABEL[n.targetPreview] : '';
-      return label ? `reacted: ${label}` : 'reacted to your echo';
-    }
-    case 'bookmark': return 'saved your echo';
-    case 'quote': return 'quoted your echo';
-    case 'report_resolved': return n.targetPreview ?? 'Your report has been reviewed';
-    case 'content_removed': return n.targetPreview ?? 'Content was removed';
-    case 'appeal_resolved': return n.targetPreview ?? 'Your appeal has been reviewed';
-    default: return 'interacted with you';
-  }
-}
+import {
+  SYSTEM_TYPES,
+  TYPE_COLOR,
+  actionTextFor,
+} from '../../lib/notifications/presentation';
 
 function NotifIcon({ type, size, color }: { type: string; size: number; color: string }) {
   const p = { size, weight: 'fill' as const, color };
@@ -71,6 +29,11 @@ function NotifIcon({ type, size, color }: { type: string; size: number; color: s
     case 'report_resolved': return <CheckCircle     {...p} />;
     case 'content_removed': return <ShieldWarning   {...p} />;
     case 'appeal_resolved': return <CheckCircle     {...p} />;
+    case 'friend_post':     return <Quotes          {...p} />;
+    case 'friend_answer':   return <ChatCircle      {...p} />;
+    case 'daily_react':     return <SmileySticker   {...p} />;
+    case 'personal_nudge':  return <At              {...p} />;
+    case 'social_task_update': return <CheckCircle  {...p} />;
     default:                return <HeartStraight   {...p} />;
   }
 }
@@ -158,7 +121,7 @@ export const NotificationCard = React.memo(function NotificationCard({ notificat
           <Text style={{ color: colors.text, fontSize: 15, lineHeight: 21, flex: 1, paddingRight: 12 }} numberOfLines={2}>
             {!isSystem && <Text style={{ fontFamily: 'Inter_700Bold' }}>{n.fromDisplayName || n.fromUsername}</Text>}
             {!isSystem ? ' ' : ''}
-            <Text style={{ color: colors.textSecondary }}>{actionTextFor(n)}</Text>
+            <Text style={{ color: colors.textSecondary }}>{actionTextFor(n.type, n.targetPreview)}</Text>
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 2 }}>
             <Text style={{ color: colors.textMuted, fontSize: 13 }}>

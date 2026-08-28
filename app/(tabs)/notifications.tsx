@@ -7,6 +7,7 @@ import { Bell, Checks } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
+import { destinationFor, summaryTextFor } from '../../lib/notifications/presentation';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
@@ -30,35 +31,8 @@ type SectionItem = { type: 'item'; data: Notification };
 type SectionRow = { type: 'row'; data: Notification[] };
 type ListItem = SectionHeader | SectionItem | SectionRow;
 
-const REACTION_LABEL: Record<string, string> = {
-  mind_blown: 'insightful',
-  taking_notes: 'taking notes',
-  agree: 'agree',
-  disagree: 'rethink',
-};
 
-function labelForType(n: Notification): string {
-  switch (n.type) {
-    case 'like': return 'liked your echo';
-    case 'comment': return 'commented';
-    case 'follow': return 'followed you';
-    case 'repost': return 're-echoed';
-    case 'mention': return 'mentioned you';
-    case 'dm': return 'sent a message';
-    case 'reaction': {
-      const label = n.targetPreview ? REACTION_LABEL[n.targetPreview] : '';
-      return label ? `reacted: ${label}` : 'reacted to your echo';
-    }
-    case 'bookmark': return 'saved your echo';
-    case 'quote': return 'quoted your echo';
-    case 'report_resolved': return n.targetPreview ?? 'Your report has been reviewed';
-    case 'content_removed': return n.targetPreview ?? 'Content was removed by a moderator';
-    case 'appeal_resolved': return n.targetPreview ?? 'Your appeal has been reviewed';
-    case 'friend_post': return 'published a new echo';
-    case 'social_task_update': return n.targetPreview ? `completed a task: ${n.targetPreview}` : 'completed a task';
-    default: return '';
-  }
-}
+
 
 function groupNotifications(notifications: Notification[], columns: number): ListItem[] {
   const now = Date.now();
@@ -116,7 +90,7 @@ export default function NotificationsScreen() {
 
   // Publish readable rows so the voice "read my notifications" command can read them.
   useEffect(() => {
-    setReadableNotifications(notifications.map(n => `${n.fromDisplayName || n.fromUsername || ''} ${labelForType(n)}`.trim()));
+    setReadableNotifications(notifications.map(n => `${n.fromDisplayName || n.fromUsername || ''} ${summaryTextFor(n.type, n.targetPreview)}`.trim()));
   }, [notifications]);
 
   // Type filter: each chip narrows by Notification['type'].
@@ -166,7 +140,7 @@ export default function NotificationsScreen() {
         return [{
           ...sample,
           groupCount: b.notifications.length,
-          targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${labelForType(sample)}`,
+          targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${summaryTextFor(sample.type, sample.targetPreview)}`,
         }];
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -245,19 +219,32 @@ export default function NotificationsScreen() {
     } else {
       storeMarkRead(n.id);
     }
-    if (n.type === 'follow') {
-      router.push(`/user/${n.fromUserId}`);
-    } else if (n.type === 'content_removed' && n.targetId) {
-      // DSA Art. 17/20: statement of reasons + appeal the moderation decision.
-      router.push({ pathname: '/appeal', params: { decisionId: n.targetId } });
-    } else if (n.type === 'appeal_resolved') {
-      router.push('/appeal');
-    } else if (n.type === 'report_resolved') {
-      router.push('/my-reports');
-    } else if (n.type === 'dm' && n.targetId) {
-      router.push(`/messages/${n.targetId}`);
-    } else if (n.targetId) {
-      router.push(`/thread/${n.targetId}`);
+    switch (destinationFor(n.type)) {
+      case 'profile':
+        if (n.fromUserId) router.push(`/user/${n.fromUserId}`);
+        break;
+      case 'appeal-decision':
+        // DSA Art. 17/20: statement of reasons + appeal the moderation decision.
+        if (n.targetId) router.push({ pathname: '/appeal', params: { decisionId: n.targetId } });
+        break;
+      case 'appeal':
+        router.push('/appeal');
+        break;
+      case 'reports':
+        router.push('/my-reports');
+        break;
+      case 'dm':
+        if (n.targetId) router.push(`/messages/${n.targetId}`);
+        break;
+      case 'daily':
+        // targetId here is a daily_answers row, not an echo.
+        router.push('/daily-question');
+        break;
+      case 'thread':
+        if (n.targetId) router.push(`/thread/${n.targetId}`);
+        break;
+      case 'none':
+        break;
     }
   };
 
