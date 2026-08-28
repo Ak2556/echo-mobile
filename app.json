@@ -135,7 +135,8 @@
       ],
       "expo-asset",
       "expo-build-properties",
-      "expo-font"
+      "expo-font",
+      "./plugins/withAndroidEntryPoints"
     ],
     "experiments": {
       "baseUrl": "/echo-mobile",
