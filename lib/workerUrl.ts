@@ -52,3 +52,8 @@ export function dmMediaUrl(path: string): string {
 export function lectureUrlEndpoint(lectureId: string): string {
   return `${WORKER_URL}/learn-lecture-url?id=${encodeURIComponent(lectureId)}`;
 }
+
+/** The public page a tutor shares so people without an Echo account can book. */
+export function bookingPageUrl(slug: string): string {
+  return `${WORKER_URL}/book/${encodeURIComponent(slug)}`;
+}

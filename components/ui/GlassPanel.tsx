@@ -21,6 +21,15 @@ interface GlassPanelProps {
   bottomHighlight?: boolean;
   elevated?: boolean;
   performanceMode?: PerformanceMode;
+  /**
+   * Keep this view in the native hierarchy.
+   *
+   * React Native flattens views that exist only for layout, and a flattened
+   * view has no native node — so a GestureDetector wrapping one has nothing to
+   * attach to and its gesture silently stops firing. Needed by any caller that
+   * puts a GlassPanel directly inside a GestureDetector.
+   */
+  collapsable?: boolean;
 }
 
 export function GlassPanel({
@@ -35,6 +44,7 @@ export function GlassPanel({
   bottomHighlight = false,
   elevated = false,
   performanceMode = 'default',
+  collapsable,
 }: GlassPanelProps) {
   const { colors, radius, glass } = useTheme();
   const performance = usePerformanceProfile(performanceMode);
@@ -75,7 +85,7 @@ export function GlassPanel({
 
   if (performance.useBlur && blurIntensity > 0) {
     return (
-      <View style={outerStyle}>
+      <View style={outerStyle} collapsable={collapsable}>
         <View style={innerStyle}>
           <BlurView
             intensity={blurIntensity}
@@ -125,6 +135,7 @@ export function GlassPanel({
   // Fallback for when glass theme is disabled
   return (
     <View
+      collapsable={collapsable}
       style={[
         outerStyle,
         {

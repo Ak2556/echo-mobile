@@ -174,6 +174,93 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
   return res;
 });
 
+// ── public booking page ─────────────────────────────────────────────────────
+// Served before the auth middleware, because the whole point is that the person
+// opening it has no Echo account. Only published profiles with a slug resolve;
+// everything else is a 404, so this can never turn a private profile into a
+// public one.
+app.get('/book/:slug', async (c) => {
+  const slug = (c.req.param('slug') ?? '').toLowerCase();
+  if (!/^[a-z0-9][a-z0-9-]{1,48}$/.test(slug)) return c.text('Not Found', 404);
+
+  let tutor: { headline?: string; bio?: string; subjects?: string[]; hourly_rate?: string | null; currency?: string } | undefined;
+  try {
+    const res = await fetch(
+      `${c.env.SUPABASE_URL}/rest/v1/learn_tutors?public_slug=eq.${slug}&is_published=eq.true` +
+      `&select=headline,bio,subjects,hourly_rate,currency&limit=1`,
+      { headers: { apikey: c.env.SUPABASE_ANON_KEY } },
+    );
+    if (res.ok) tutor = (await res.json<typeof tutor[]>())[0];
+  } catch {
+    return c.text('Temporarily unavailable', 503);
+  }
+  if (!tutor) return c.text('Not Found', 404);
+
+  const esc = (v: unknown) =>
+    String(v ?? '').replace(/[&<>"']/g, ch =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!));
+
+  const rate = tutor.hourly_rate
+    ? `${esc(tutor.currency ?? 'INR')} ${esc(tutor.hourly_rate)} / hour`
+    : '';
+
+  const html = `<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Book a session &middot; Echo</title>
+<style>
+  :root{color-scheme:dark;--bg:#0C0B09;--fg:#F5F2EC;--mut:#9B958A;--acc:#8FA65C;--sur:#17150F}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  main{max-width:34rem;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+  h1{font-size:1.6rem;line-height:1.25;margin:0 0 .25rem}
+  .mut{color:var(--mut)}
+  .subjects{margin:.75rem 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:.5rem}
+  .subjects li{background:var(--sur);border-radius:999px;padding:.3rem .7rem;font-size:.82rem}
+  form{margin-top:2rem;display:grid;gap:.75rem}
+  label{font-size:.85rem;color:var(--mut)}
+  input,textarea{width:100%;background:var(--sur);border:0;border-radius:.7rem;padding:.85rem;color:var(--fg);font:inherit}
+  textarea{min-height:5.5rem;resize:vertical}
+  button{background:var(--acc);color:#0C0B09;border:0;border-radius:.7rem;padding:.95rem;font:inherit;font-weight:700;cursor:pointer}
+  button[disabled]{opacity:.55;cursor:default}
+  #msg{margin-top:1rem;font-size:.9rem}
+  .ok{color:var(--acc)} .err{color:#E2725B}
+</style></head><body><main>
+  <h1>${esc(tutor.headline || 'Book a session')}</h1>
+  ${rate ? `<p class="mut">${rate}</p>` : ''}
+  ${tutor.bio ? `<p>${esc(tutor.bio)}</p>` : ''}
+  ${(tutor.subjects ?? []).length ? `<ul class="subjects">${(tutor.subjects ?? []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+
+  <form id="f">
+    <div><label for="n">Your name</label><input id="n" name="name" required maxlength="80" autocomplete="name"></div>
+    <div><label for="e">Email (so they can reply)</label><input id="e" name="email" type="email" maxlength="200" autocomplete="email"></div>
+    <div><label for="m">What would you like help with?</label><textarea id="m" name="note" maxlength="1000"></textarea></div>
+    <button type="submit">Request a session</button>
+  </form>
+  <p id="msg"></p>
+
+<script>
+  var f=document.getElementById('f'),msg=document.getElementById('msg'),btn=f.querySelector('button');
+  f.addEventListener('submit',function(ev){
+    ev.preventDefault();
+    btn.disabled=true;msg.className='';msg.textContent='Sending…';
+    fetch(${JSON.stringify(c.env.SUPABASE_URL + '/functions/v1/learn-guest-booking')},{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({slug:${JSON.stringify(slug)},name:f.name.value,email:f.email.value,note:f.note.value})
+    }).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+     .then(function(o){
+       if(!o.ok){throw new Error(o.j&&o.j.error||'Could not send that request')}
+       f.style.display='none';msg.className='ok';
+       msg.textContent='Sent. They will get in touch by email.';
+     })
+     .catch(function(err){btn.disabled=false;msg.className='err';msg.textContent=err.message});
+  });
+</script>
+</main></body></html>`;
+
+  return c.html(html, 200, { 'cache-control': 'public, max-age=120' });
+});
+
 // ── user auth ───────────────────────────────────────────────────────────────
 app.use('*', async (c, next) => {
   const authHeader = c.req.header('Authorization');

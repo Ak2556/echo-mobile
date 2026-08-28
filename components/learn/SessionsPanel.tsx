@@ -1,14 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Linking, TextInput } from 'react-native';
-import { CalendarBlank, VideoCamera } from 'phosphor-react-native';
+import { View, Text, Pressable, ActivityIndicator, Linking, TextInput, Share } from 'react-native';
+import { CalendarBlank, ShareNetwork, VideoCamera } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../ui/Toast';
 import { getSessionUserId } from '../../lib/supabaseEchoApi';
+import { bookingPageUrl } from '../../lib/workerUrl';
 import {
   fetchMyBookings,
+  fetchMyTutorProfile,
   fetchPeople,
   fetchPublishedTutors,
   requestBooking,
+  saveTutorProfile,
+  setTutorPublished,
   updateBooking,
   type Booking,
   type BookingStatus,
@@ -46,16 +50,27 @@ export function SessionsPanel() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [people, setPeople] = useState<Record<string, Person>>({});
   const [tutors, setTutors] = useState<TutorProfile[]>([]);
+  const [mine, setMine] = useState<TutorProfile | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [headline, setHeadline] = useState('');
+  const [subjects, setSubjects] = useState('');
+  const [rate, setRate] = useState('');
   const [loading, setLoading] = useState(true);
   const [linkFor, setLinkFor] = useState<string | null>(null);
   const [linkDraft, setLinkDraft] = useState('');
 
   const reload = useCallback(async () => {
     try {
-      const [uid, list, published] = await Promise.all([
-        getSessionUserId(), fetchMyBookings(), fetchPublishedTutors(20),
+      const [uid, list, published, ownProfile] = await Promise.all([
+        getSessionUserId(), fetchMyBookings(), fetchPublishedTutors(20), fetchMyTutorProfile(),
       ]);
       setMe(uid);
+      setMine(ownProfile);
+      if (ownProfile) {
+        setHeadline(ownProfile.headline);
+        setSubjects(ownProfile.subjects.join(', '));
+        setRate(ownProfile.hourlyRate == null ? '' : String(ownProfile.hourlyRate));
+      }
       setBookings(list);
       setTutors(published.filter(t => t.userId !== uid));
       setPeople(await fetchPeople(list.flatMap(b => [b.tutorId, b.learnerId ?? ''])));
@@ -104,6 +119,35 @@ export function SessionsPanel() {
       await reload();
     } catch {
       showToast('Could not send that request', 'Error');
+    }
+  };
+
+  const saveProfile = async () => {
+    if (!headline.trim()) {
+      showToast('Give your sessions a headline first', 'Error');
+      return;
+    }
+    try {
+      const parsedRate = rate.trim() ? Number(rate.trim()) : null;
+      const saved = await saveTutorProfile({
+        headline: headline.trim(),
+        subjects: subjects.split(',').map(x => x.trim()).filter(Boolean),
+        hourlyRate: Number.isFinite(parsedRate as number) ? parsedRate : null,
+      });
+      setMine(saved);
+      setEditing(false);
+    } catch {
+      showToast('Could not save your profile', 'Error');
+    }
+  };
+
+  const togglePublished = async () => {
+    try {
+      const saved = await setTutorPublished(!mine?.isPublished);
+      setMine(saved);
+      showToast(saved.isPublished ? 'Your page is live' : 'Your page is hidden', 'Done');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Could not update', 'Error');
     }
   };
 
@@ -205,6 +249,82 @@ export function SessionsPanel() {
           );
         })
       )}
+
+      <View style={{ padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, gap: 10, marginTop: 8 }}>
+        <Text style={[font.bodyBold, { color: colors.text, fontSize: 14 }]}>
+          {mine ? 'Your sessions' : 'Offer 1:1 sessions'}
+        </Text>
+
+        {editing || !mine ? (
+          <>
+            <TextInput
+              value={headline} onChangeText={setHeadline}
+              placeholder="What you teach, in a few words"
+              placeholderTextColor={colors.textMuted}
+              style={[font.body, { color: colors.text, fontSize: 14, backgroundColor: colors.bg, borderRadius: radius.card, paddingHorizontal: 12, paddingVertical: 10 }]}
+            />
+            <TextInput
+              value={subjects} onChangeText={setSubjects}
+              placeholder="Subjects, comma separated"
+              placeholderTextColor={colors.textMuted}
+              style={[font.body, { color: colors.text, fontSize: 14, backgroundColor: colors.bg, borderRadius: radius.card, paddingHorizontal: 12, paddingVertical: 10 }]}
+            />
+            <TextInput
+              value={rate} onChangeText={setRate}
+              placeholder="Hourly rate (optional)"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="number-pad"
+              style={[font.body, { color: colors.text, fontSize: 14, backgroundColor: colors.bg, borderRadius: radius.card, paddingHorizontal: 12, paddingVertical: 10 }]}
+            />
+            <Pressable onPress={saveProfile} accessibilityRole="button">
+              <View style={{ alignItems: 'center', paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.accent }}>
+                <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Save</Text>
+              </View>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Text style={[font.body, { color: colors.textMuted, fontSize: 13 }]}>
+              {mine.headline}{mine.subjects.length ? ` · ${mine.subjects.join(', ')}` : ''}
+            </Text>
+
+            {mine.isPublished && mine.publicSlug && (
+              <Pressable
+                onPress={() => {
+                  // A booking link exists to be sent to someone, so the share
+                  // sheet is the gesture rather than a silent copy.
+                  Share.share({ message: bookingPageUrl(mine.publicSlug!) })
+                    .catch(() => showToast('Could not open the share sheet', 'Error'));
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Share your booking link"
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: radius.card, backgroundColor: colors.bg }}>
+                  <ShareNetwork size={14} weight="bold" color={colors.accent} />
+                  <Text numberOfLines={1} style={[font.body, { color: colors.textMuted, fontSize: 12, flex: 1 }]}>
+                    {bookingPageUrl(mine.publicSlug)}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable onPress={() => setEditing(true)} accessibilityRole="button" style={{ flex: 1 }}>
+                <View style={{ alignItems: 'center', paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.bg }}>
+                  <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>Edit</Text>
+                </View>
+              </Pressable>
+              <Pressable onPress={togglePublished} accessibilityRole="button" style={{ flex: 1 }}>
+                <View style={{ alignItems: 'center', paddingVertical: 12, borderRadius: radius.card, backgroundColor: mine.isPublished ? colors.bg : colors.accent }}>
+                  <Text style={[font.bodyBold, { color: mine.isPublished ? colors.text : colors.bg, fontSize: 13 }]}>
+                    {mine.isPublished ? 'Unpublish' : 'Publish page'}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+          </>
+        )}
+      </View>
 
       {tutors.length > 0 && (
         <>

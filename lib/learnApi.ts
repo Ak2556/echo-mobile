@@ -584,3 +584,45 @@ export async function fetchPeople(ids: string[]): Promise<Record<string, Person>
   }
   return out;
 }
+
+/* ── publishing a booking page ─────────────────────────────────────────── */
+
+/** URL-safe, lowercase, no leading or trailing dashes. */
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+
+/**
+ * Publish or unpublish the signed-in user's booking page.
+ *
+ * A slug is minted on first publish and then kept, because it is the link the
+ * tutor has already shared — regenerating it on every toggle would break every
+ * copy of it in the wild. `public_slug` is unique, so a collision is a real
+ * possibility on common headlines; a few suffixed retries are cheaper than
+ * asking the user to invent a unique string.
+ */
+export async function setTutorPublished(publish: boolean): Promise<TutorProfile> {
+  const existing = await fetchMyTutorProfile();
+  if (!publish) return saveTutorProfile({ isPublished: false });
+
+  if (existing?.publicSlug) return saveTutorProfile({ isPublished: true });
+
+  const base = slugify(existing?.headline || '') || 'sessions';
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const slug = attempt === 0
+      ? base
+      : `${base}-${Math.random().toString(36).slice(2, 7)}`;
+    try {
+      return await saveTutorProfile({ isPublished: true, publicSlug: slug });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '';
+      // 23505 unique_violation — someone already has this slug. Try another.
+      if (!message.includes('duplicate') && !message.includes('23505')) throw e;
+    }
+  }
+  throw new Error('Could not find a free link for your page. Try a different headline.');
+}

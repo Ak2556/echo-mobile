@@ -167,7 +167,15 @@ export function ToastProvider() {
 
   return (
     <GestureDetector gesture={pan}>
+      {/*
+        collapsable={false} keeps this view in the native hierarchy. React
+        Native flattens a view whose only job is layout, and a flattened view
+        has no native node for the gesture handler to attach to — which is what
+        "GestureDetector has received a child that may get view-flattened"
+        warns about. Left as-is the swipe-to-dismiss silently stops working.
+      */}
       <AnimatedGlassPanel
+        collapsable={false}
         borderRadius={20}
         performanceMode="overlay"
         style={[
