@@ -198,7 +198,6 @@ import android.content.ContentProviderOperation
 import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Bundle
 import android.provider.ContactsContract
 import androidx.core.content.ContextCompat
 
@@ -234,11 +233,28 @@ object EchoContactSync {
 
       if (!canWriteContacts(context)) return
 
-      val extras = Bundle().apply {
-        putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
-        putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
-      }
-      ContentResolver.requestSync(account, ContactsContract.AUTHORITY, extras)
+      // Write the row here rather than waiting for the sync adapter.
+      //
+      // The sync framework was answering every requestSync with
+      // Bundle[{initialize=true}], which AbstractThreadedSyncAdapter consumes
+      // itself without ever calling onPerformSync — so the row was never
+      // written. Chasing that is unnecessary: a sync adapter is not what makes
+      // a write legitimate. Owning the account type and passing
+      // CALLER_IS_SYNCADAPTER on the URI is, and both are true here.
+      //
+      // The adapter stays registered because it is what makes the account a
+      // real contacts source to Android, but nothing depends on it running.
+      //
+      // Off the main thread: this is called from MainActivity.onCreate and a
+      // contacts applyBatch is disk I/O.
+      val appContext = context.applicationContext
+      Thread {
+        try {
+          writeEchoContact(appContext, account)
+        } catch (e: Exception) {
+          // A missing contact row must never take the app down with it.
+        }
+      }.start()
     } catch (e: Exception) {
       // Never let a contact-card failure stop the app from starting.
     }
@@ -304,6 +320,27 @@ object EchoContactSync {
         .build()
     )
 
+    // A website row as well, because the custom MIME type above is only drawn
+    // by contacts apps that honour contacts.xml — Google Contacts, which is
+    // what most people actually have, ignores third-party MIME types on the
+    // detail screen. This one is a standard type every contacts app renders,
+    // and it is tappable, so the card is useful rather than merely present.
+    ops.add(
+      ContentProviderOperation.newInsert(syncUri(ContactsContract.Data.CONTENT_URI))
+        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+        .withValue(
+          ContactsContract.Data.MIMETYPE,
+          ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE
+        )
+        .withValue(ContactsContract.CommonDataKinds.Website.URL, "https://downloadecho.com/a")
+        .withValue(
+          ContactsContract.CommonDataKinds.Website.TYPE,
+          ContactsContract.CommonDataKinds.Website.TYPE_CUSTOM
+        )
+        .withValue(ContactsContract.CommonDataKinds.Website.LABEL, "Talk to Echo")
+        .build()
+    )
+
     resolver.applyBatch(ContactsContract.AUTHORITY, ops)
   }
 
@@ -334,14 +371,18 @@ const xmlResources = (pkg, accountType, mimeType) => ({
     android:userVisible="false" />
 `,
   // Without this the custom row exists in the database and draws as nothing.
+  // ContactsAccountType, not the legacy ContactsSource: the Contacts app reads
+  // this to learn how to draw a custom MIME type, and with the old root element
+  // it parses nothing and the row is invisible even though it exists in the
+  // database.
   'contacts.xml': `<?xml version="1.0" encoding="utf-8"?>
-<ContactsSource xmlns:android="http://schemas.android.com/apk/res/android">
+<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android">
   <ContactsDataKind
       android:mimeType="${mimeType}"
       android:icon="@mipmap/ic_launcher"
       android:summaryColumn="data2"
       android:detailColumn="data3" />
-</ContactsSource>
+</ContactsAccountType>
 `,
 });
 
