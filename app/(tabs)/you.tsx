@@ -269,6 +269,16 @@ export default function ProfileScreen() {
               <StatButton value={followingCount} label="Following" colors={colors} font={font} onPress={() => openFollowers('following')} />
             </View>
             
+            {/*
+              Streak, level and XP. The badge existed and was imported here but
+              never rendered, so every point the app awarded went somewhere
+              nobody could see — a progression system with no progression. It
+              hides itself until there is something to show.
+            */}
+            <View style={{ alignItems: 'center', marginTop: 20 }}>
+              <StreakXPBadge />
+            </View>
+
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 32, gap: 12 }}>
               <AnimatedPressable
                 onPress={() => router.push('/edit-profile')}

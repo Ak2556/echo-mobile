@@ -92,10 +92,25 @@ function withDecay(model: EngagementModel, now: Date): EngagementModel {
  * the ignored-nudge streak — the user came back, so the reach-back "worked"
  * enough to reset back-off.
  */
-export function recordOpen(model: EngagementModel, now: Date, surface?: Surface): EngagementModel {
+/**
+ * Record an app open.
+ *
+ * `opts.hour` exists because more than one screen announces the same launch:
+ * the root layout records every open and the feed records its own. Counting
+ * the hour twice for a feed landing biased topActiveHours toward whichever
+ * hour people happened to open the feed, so a second announcement can
+ * attribute its surface without touching the timing weights.
+ */
+export function recordOpen(
+  model: EngagementModel,
+  now: Date,
+  surface?: Surface,
+  opts: { hour?: boolean } = {},
+): EngagementModel {
+  const countHour = opts.hour !== false;
   const m = withDecay(model, now);
   const hours = m.hours.slice();
-  hours[now.getHours()] += 1;
+  if (countHour) hours[now.getHours()] += 1;
   const surfaces = { ...m.surfaces };
   if (surface) surfaces[surface] = (surfaces[surface] ?? 0) + 1;
   return { ...m, hours, surfaces, ignoredStreak: 0 };

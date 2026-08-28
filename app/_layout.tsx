@@ -7,6 +7,7 @@ import { useDatabaseSync } from "../hooks/useDatabaseSync";
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../src/shared/lib/analytics';
 import { recordAppOpen, noteNudgeOpened, ensureNudgesScheduled } from '../lib/personalNudges';
+import { pingDailyActivity } from '../lib/retention';
 import { cancelLegacyProactiveNudges } from '../lib/proactiveNudges';
 import { captureException, initMonitoring, wrapRoot } from '../lib/monitoring';
 import { startOutbox } from '../lib/outboxProcessor';
@@ -233,6 +234,11 @@ function RootLayout() {
     // the open. Without the first half the fatigue model could only ever be
     // reset, never incremented, so back-off never engaged.
     recordAppOpen();
+    // The daily streak used to be counted only by the home feed, so opening
+    // Echo from a notification — a DM, a comment, the assist gesture — never
+    // counted toward it. Notification opens are precisely the path the
+    // retention loop exists to create, so the streak has to be counted here.
+    pingDailyActivity();
     // Retire the old fixed-slot check-ins in favor of personalized nudges.
     void cancelLegacyProactiveNudges();
     // Scheduling used to live on the chat tab alone, so anyone who never opened

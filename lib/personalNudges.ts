@@ -52,10 +52,26 @@ function saveModel(m: EngagementModel): void {
  * doing it this way round means a tap still wins over the miss we just counted
  * for the same notification.
  */
+let countedThisProcess = false;
+
 export function recordAppOpen(surface?: Surface): void {
   try {
     const now = new Date();
     let model = loadModel();
+
+    // One open per launch, however many screens announce themselves.
+    //
+    // The root layout records every open and the feed records its own, so
+    // landing on the feed used to weight that hour twice while landing on a
+    // thread from a notification weighted it once. topActiveHours reads those
+    // weights, so the timing model was quietly biased toward whatever hour
+    // people happened to open the feed. Later calls still attribute their
+    // surface; only the hour is counted once.
+    if (countedThisProcess) {
+      if (surface) saveModel(recordOpen(model, now, surface, { hour: false }));
+      return;
+    }
+    countedThisProcess = true;
 
     const hours = persistGet<number[]>(HOURS_KEY, []);
     const lastReconciled = persistGet<string>(RECONCILED_KEY, '');
