@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
   Platform, TouchableOpacity, Pressable, Alert, Modal, StyleSheet,
@@ -65,7 +65,7 @@ function formatBytes(bytes: number): string {
 export default function CreatePostScreen() {
   const router = useRouter();
   const qc = useQueryClient();
-  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string; firstEcho?: string }>();
+  const params = useLocalSearchParams<{ quoted?: string; prefillTitle?: string; prefillBody?: string; prefillPrompt?: string; firstEcho?: string; prefillImages?: string }>();
   const { colors, radius, fontSizes, animation } = useTheme();
   const { t } = useI18n();
   const { username, userId, avatarColor, avatarUrl, profilePhotoVisible, displayName, publishEcho, setUserId, publishedEchoes } = useAppStore();
@@ -111,6 +111,22 @@ export default function CreatePostScreen() {
   const [images, setImages] = useState<LocalImageUpload[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const imageUris = images.map(image => image.uri);
+
+  // Photos handed over by a share from another app. Seeded once: re-running on
+  // every render would fight the user every time they removed one.
+  const seededShare = useRef(false);
+  useEffect(() => {
+    if (seededShare.current || !params.prefillImages) return;
+    seededShare.current = true;
+    try {
+      const incoming = JSON.parse(params.prefillImages) as LocalImageUpload[];
+      if (Array.isArray(incoming) && incoming.length) {
+        setImages(incoming.slice(0, MAX_PHOTOS));
+      }
+    } catch {
+      // A malformed param is not worth blocking the composer for.
+    }
+  }, [params.prefillImages]);
 
   // Music state
   const [musicPickerOpen, setMusicPickerOpen] = useState(false);

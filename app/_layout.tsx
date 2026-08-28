@@ -24,6 +24,7 @@ import { friendlyWriteError, isAuthSessionError } from '../lib/mutationErrors';
 import { CommandPalette } from '../components/ai/CommandPalette';
 import { useCommandPalette } from '../lib/commandPalette';
 import { AuthListenerProvider, useAuth, signOut } from '../lib/auth';
+import { ShareIntentProvider, useShareIntentContext } from 'expo-share-intent';
 import { useAppStore } from '../store/useAppStore';
 import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { database } from '../src/shared/database';
@@ -145,6 +146,22 @@ function PushTokenRefresh() {
     if (Platform.OS === 'web' || status !== 'ready') return;
     void registerPushAndStoreToken(userId);
   }, [status, userId]);
+  return null;
+}
+
+/**
+ * Route to the chooser whenever another app shares something to Echo.
+ *
+ * The payload survives until it is reset, so this fires on a cold start (the
+ * app was launched by the share) and on a warm one (it was already running)
+ * without either case needing its own path.
+ */
+function ShareIntentRouter() {
+  const router = useRouter();
+  const { hasShareIntent } = useShareIntentContext();
+  useEffect(() => {
+    if (hasShareIntent) router.push('/share-intent');
+  }, [hasShareIntent, router]);
   return null;
 }
 
@@ -315,11 +332,16 @@ function RootLayout() {
   }, []);
 
   return (
+    // Outermost: ShareIntentRouter reads this context, and a share can be what
+    // launched the process, so the provider has to exist before anything else
+    // mounts.
+    <ShareIntentProvider options={{ resetOnBackground: false }}>
     <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: mmkvPersister, maxAge: 1000 * 60 * 60 * 24 * 7 }}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthListenerProvider />
         <AuthGuard />
         <PushTokenRefresh />
+        <ShareIntentRouter />
         <UniversalLinkRouter />
         <PomodoroRuntimeHost />
         <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
@@ -331,6 +353,7 @@ function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="thread/[id]" options={{ presentation: 'card', animation: 'fade_from_bottom', animationDuration: 240 }} />
           <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'fade' }} />
+          <Stack.Screen name="share-intent" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="comments/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="user/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="messages/index" options={{ presentation: 'card' }} />
@@ -381,6 +404,7 @@ function RootLayout() {
         {commandPaletteOpen ? <CommandPalette /> : null}
       </GestureHandlerRootView>
     </PersistQueryClientProvider>
+    </ShareIntentProvider>
   );
 }
 

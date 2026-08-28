@@ -136,6 +136,21 @@
       "expo-asset",
       "expo-build-properties",
       "expo-font",
+      [
+        "expo-share-intent",
+        {
+          "androidIntentFilters": [
+            "text/*",
+            "image/*"
+          ],
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsText": true,
+            "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+            "NSExtensionActivationSupportsImageWithMaxCount": 4
+          },
+          "iosShareExtensionName": "Echo"
+        }
+      ],
       "./plugins/withAndroidEntryPoints"
     ],
     "experiments": {
