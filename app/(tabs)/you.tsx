@@ -300,6 +300,19 @@ export default function ProfileScreen() {
             <Pressable style={{ flex: 1, alignItems: 'center', paddingVertical: 12 }} onPress={() => router.push('/bookmarks')}>
               <BookmarkSimple color={colors.textMuted} size={26} weight="regular" />
             </Pressable>
+            {/*
+              Year in Echo was finished, registered in the Stack, and backed by
+              a real year_wraps table — with nothing anywhere linking to it, so
+              the only way in was typing the deep link. This is that way in.
+            */}
+            <Pressable
+              style={{ flex: 1, alignItems: 'center', paddingVertical: 12 }}
+              onPress={() => router.push('/year-in-echo')}
+              accessibilityRole="button"
+              accessibilityLabel="Your year in Echo"
+            >
+              <CalendarBlank color={colors.textMuted} size={26} weight="regular" />
+            </Pressable>
           </View>
 
         <View style={{ paddingBottom: layout.bottomChromePadding }}>

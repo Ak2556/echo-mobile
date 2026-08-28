@@ -5,6 +5,7 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../ui/Toast';
 import { getSessionUserId } from '../../lib/supabaseEchoApi';
 import { bookingPageUrl } from '../../lib/workerUrl';
+import { TutorOfferings } from './TutorOfferings';
 import {
   fetchMyBookings,
   fetchMyTutorProfile,
@@ -325,6 +326,8 @@ export function SessionsPanel() {
           </>
         )}
       </View>
+
+      {mine && !editing && me && <TutorOfferings tutorId={me} />}
 
       {tutors.length > 0 && (
         <>
