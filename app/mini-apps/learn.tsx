@@ -22,6 +22,9 @@ import {
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
 import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
+import { Disclosure } from '../../components/learn/Disclosure';
+import { LecturesPanel } from '../../components/learn/LecturesPanel';
+import { SessionsPanel } from '../../components/learn/SessionsPanel';
 import { GlassPanel } from '../../components/ui/GlassPanel';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { showToast } from '../../components/ui/Toast';
@@ -89,7 +92,29 @@ const MODES: { id: LearningMode; label: string; caption: string }[] = [
   { id: 'coach', label: 'Coach', caption: 'Practice, feedback' },
 ];
 const MINUTES = [10, 20, 30, 45, 60];
-type LearnTab = 'today' | 'library' | 'oneOnOne' | 'studio' | 'people' | 'roadmap' | 'practice' | 'coach' | 'classroom' | 'progress' | 'settings';
+/**
+ * Four places, not eleven.
+ *
+ * Learn had a tab each for today, library, 1:1, studio, people, roadmap,
+ * practice, coach, classroom, progress and settings — eight of them visible
+ * even with teacher tools switched off. Nothing was wrong with any single one;
+ * the row of chips was simply longer than anyone would read, so most of the app
+ * was never found.
+ *
+ * These four are the questions people actually arrive with: what do I do now,
+ * what am I studying, who am I meeting, how far have I come. Everything that
+ * used to be a tab is still here, as a labelled section inside the group it
+ * belongs to — collapsed by default, so a tab opens on one thing.
+ */
+type LearnTab = 'today' | 'learn' | 'sessions' | 'progress' | 'settings';
+
+const TAB_LABEL: Record<LearnTab, string> = {
+  today: 'Today',
+  learn: 'Learn',
+  sessions: 'Sessions',
+  progress: 'Progress',
+  settings: 'Settings',
+};
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { colors, radius } = useTheme();
@@ -223,14 +248,8 @@ export default function LearnScreen() {
   const activeGoal = useMemo(() => goals.find(goal => goal.id === activeId) ?? goals[0], [activeId, goals]);
   const stats = activeGoal ? learningStats(activeGoal) : null;
   const prompts = activeGoal ? learningCoachPrompts(activeGoal) : [];
-  const learnTabs = useMemo(() => {
-    const next: LearnTab[] = ['today', 'library', 'oneOnOne'];
-    if (settings.showTeacherTools) next.push('studio', 'people');
-    next.push('roadmap', 'practice', 'coach');
-    if (settings.showTeacherTools) next.push('classroom');
-    next.push('progress', 'settings');
-    return next;
-  }, [settings.showTeacherTools]);
+  // Settings stays out of the row — it is reached by the gear in the header.
+  const learnTabs = useMemo<LearnTab[]>(() => ['today', 'learn', 'sessions', 'progress'], []);
 
   React.useEffect(() => {
     if (!activeGoal) return;
@@ -524,9 +543,13 @@ export default function LearnScreen() {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 16 }}>
             {learnTabs.map(item => (
-              <Chip key={item} label={item === 'today' ? 'Today' : item === 'people' ? 'People' : item === 'oneOnOne' ? '1:1' : item.charAt(0).toUpperCase() + item.slice(1)} active={tab === item} onPress={() => setTab(item)} />
+              <Chip key={item} label={TAB_LABEL[item]} active={tab === item} onPress={() => setTab(item)} />
             ))}
           </ScrollView>
+
+          {tab === 'learn' && <LecturesPanel />}
+
+          {tab === 'sessions' && <SessionsPanel />}
 
           {tab === 'today' && (
             <TodayTab
@@ -540,15 +563,18 @@ export default function LearnScreen() {
             />
           )}
 
-          {tab === 'library' && (
+          {tab === 'learn' && (
+            <Disclosure title="Topic library">
             <TopicLibraryTab
               query={topicSearch}
               setQuery={setTopicSearch}
               onStartTopic={startTopic}
             />
+            </Disclosure>
           )}
 
-          {tab === 'oneOnOne' && (
+          {tab === 'sessions' && (
+            <Disclosure title="My tutoring setup">
             <OneOnOneTab
               goal={activeGoal}
               stats={stats}
@@ -605,9 +631,11 @@ export default function LearnScreen() {
               onSaveBookingNotes={saveBookingNotes}
               onUpdateBookingStatus={(id, status, paymentStatus) => updateGoal(updateOneOnOneBookingStatus(activeGoal, id, status, paymentStatus))}
             />
+            </Disclosure>
           )}
 
-          {tab === 'studio' && (
+          {tab === 'progress' && settings.showTeacherTools && (
+            <Disclosure title="Course studio">
             <StudioTab
               goal={activeGoal}
               stats={stats}
@@ -624,9 +652,11 @@ export default function LearnScreen() {
               setEvidenceDetail={setEvidenceDetail}
               onCreateEvidence={createEvidence}
             />
+            </Disclosure>
           )}
 
-          {tab === 'people' && (
+          {tab === 'sessions' && settings.showTeacherTools && (
+            <Disclosure title="Learners" meta={`${activeGoal.learners.length}`}>
             <PeopleTab
               goal={activeGoal}
               learnerName={learnerName}
@@ -640,11 +670,17 @@ export default function LearnScreen() {
               onCreateLearner={createLearner}
               onUpdateProgress={(id, progress) => updateGoal(updateLearnerProgress(activeGoal, id, progress))}
             />
+            </Disclosure>
           )}
 
-          {tab === 'roadmap' && <RoadmapTab goal={activeGoal} />}
+          {tab === 'today' && (
+            <Disclosure title="Full plan" meta={`${stats.done}/${stats.total} done`}>
+              <RoadmapTab goal={activeGoal} />
+            </Disclosure>
+          )}
 
-          {tab === 'practice' && (
+          {tab === 'learn' && (
+            <Disclosure title="Practice">
             <PracticeTab
               goal={activeGoal}
               onToggleCard={(id) => updateGoal(toggleFlashcard(activeGoal, id))}
@@ -668,9 +704,11 @@ export default function LearnScreen() {
               onToggleCodeLab={(id) => updateGoal(toggleLearningCodeLab(activeGoal, id))}
               showCodeLabs={settings.showCodeLabs}
             />
+            </Disclosure>
           )}
 
-          {tab === 'coach' && (
+          {tab === 'today' && (
+            <Disclosure title="Reflect and coach">
             <CoachTab
               goal={activeGoal}
               prompts={prompts}
@@ -679,9 +717,11 @@ export default function LearnScreen() {
               onCreateReflection={createReflection}
               onChat={() => router.push('/(tabs)/chat' as Href)}
             />
+            </Disclosure>
           )}
 
-          {tab === 'classroom' && (
+          {tab === 'sessions' && settings.showTeacherTools && (
+            <Disclosure title="Assignments and resources">
             <ClassroomTab
               goal={activeGoal}
               assignmentTitle={assignmentTitle}
@@ -701,6 +741,7 @@ export default function LearnScreen() {
               setLinkedNoteBody={setLinkedNoteBody}
               onCreateLinkedNote={() => { void createLinkedNote(); }}
             />
+            </Disclosure>
           )}
 
           {tab === 'progress' && (

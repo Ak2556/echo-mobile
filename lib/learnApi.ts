@@ -550,3 +550,37 @@ export async function deleteNote(id: string): Promise<void> {
   const { error } = await supabase.from('learn_lecture_notes').delete().eq('id', id);
   if (error) throw error;
 }
+
+/* ── people on the other side of a booking ─────────────────────────────── */
+
+export interface Person {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+/**
+ * Names for a set of user ids, so a booking can say who it is with.
+ *
+ * Bookings store ids only. Joining profiles into the booking select would be
+ * neater but the FK points at auth.users, not public.profiles, so PostgREST has
+ * no relationship to traverse — hence a second query.
+ */
+export async function fetchPeople(ids: string[]): Promise<Record<string, Person>> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (!unique.length) return {};
+  const { data, error } = await supabase
+    .from('profiles').select('id, username, display_name, avatar_url').in('id', unique);
+  if (error) throw error;
+  const out: Record<string, Person> = {};
+  for (const r of data ?? []) {
+    out[String(r.id)] = {
+      id: String(r.id),
+      username: String(r.username ?? ''),
+      displayName: String(r.display_name ?? r.username ?? 'Someone'),
+      avatarUrl: (r.avatar_url as string | null) ?? null,
+    };
+  }
+  return out;
+}
