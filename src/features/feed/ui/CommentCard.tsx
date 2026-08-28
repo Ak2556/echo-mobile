@@ -63,9 +63,24 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
   };
 
   return (
-    <Animated.View entering={animation(FadeInDown.duration(220))} className="flex-row py-3" style={{ borderBottomWidth: 0.5, borderBottomColor: colors.border, paddingLeft: indented ? 48 : 16, paddingRight: 16 }}>
+    <Animated.View
+      entering={animation(FadeInDown.duration(220))}
+      style={{
+        flexDirection: 'row',
+        // These were Tailwind classes (`flex-row py-3`), but this file lives in
+        // src/ and tailwind.config only scans ./app and ./components — so none
+        // of the utilities on this card ever generated a style. The spacing the
+        // code appeared to specify was never actually applied, which is why the
+        // row read as cramped.
+        paddingVertical: 14,
+        borderBottomWidth: 0.5,
+        borderBottomColor: colors.border,
+        paddingLeft: indented ? 52 : 16,
+        paddingRight: 16,
+      }}
+    >
       {showAvatars && (
-        <View className="mr-3 mt-0.5">
+        <View style={{ marginRight: 12, marginTop: 2 }}>
           <Avatar
             name={comment.displayName}
             color={comment.avatarColor}
@@ -75,20 +90,21 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
         </View>
       )}
 
-      <View className="flex-1">
-        <View className="flex-row items-center gap-1 mb-1">
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 }}>
           <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small }}>{comment.displayName}</Text>
           {comment.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
           <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{'\u00B7'} {getTimeAgo(comment.createdAt)}</Text>
         </View>
 
-        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: fontSizes.small * 1.5 }}>{comment.content}</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: fontSizes.small, lineHeight: fontSizes.small * 1.55 }}>{comment.content}</Text>
 
-        <View className="flex-row items-center gap-5 mt-2">
-          {/* The row is 14pt tall by design — it should read as a caption, not a
-              toolbar. hitSlop takes the touch target to 44pt without changing
-              that, and the layout lives on an inner View because NativeWind's
-              cssInterop drops box props off a touchable's own style. */}
+        {/* Actions sit apart on purpose. They read as a quiet caption rather
+            than a toolbar, but each needs room to be aimed at: 24pt between
+            them, and padding inside each so the tappable area is real rather
+            than only hitSlop. Layout stays on an inner View because box props
+            on a touchable's own style get dropped in release builds. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, marginTop: 10 }}>
           <AnimatedPressable
             onPress={handleLike}
             scaleValue={0.85}
@@ -97,11 +113,11 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
             accessibilityLabel={comment.isLiked ? 'Unlike comment' : 'Like comment'}
             accessibilityRole="button"
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
               <Animated.View style={heartAnim}>
                 <HeartStraight
                   color={comment.isLiked ? colors.danger : colors.textMuted}
-                  size={14}
+                  size={16}
                   weight="regular"
                 />
               </Animated.View>
@@ -112,13 +128,13 @@ export function CommentCard({ comment, echoId, indented, onReply }: CommentCardP
           </AnimatedPressable>
           {!indented && (
             <AnimatedPressable scaleValue={0.85} haptic="light" hitSlop={ACTION_HIT_SLOP} onPress={() => onReply?.(comment)} accessibilityLabel={ttx("Reply to comment")} accessibilityRole="button">
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <ChatCircle color={colors.textMuted} size={14} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
+                <ChatCircle color={colors.textMuted} size={16} />
                 <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{ttx("Reply")}</Text>
               </View>
             </AnimatedPressable>
           )}
-          <SpeakButton text={comment.content} id={`comment:${comment.id}`} size={14} hitSlop={15} />
+          <SpeakButton text={comment.content} id={`comment:${comment.id}`} size={16} hitSlop={15} />
         </View>
       </View>
     </Animated.View>

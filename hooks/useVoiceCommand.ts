@@ -27,10 +27,14 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
+// Guarded, not imported directly: a bare import of the native module crashes
+// on launch for any binary that predates it — including anything reached by an
+// over-the-air JS update. See lib/voice/speechRecognition.
 import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
+  SpeechRecognition,
+  useSpeechEvent,
+  canRecognise,
+} from '../lib/voice/speechRecognition';
 import { dispatchVoiceIntent } from '../lib/voice/dispatch';
 import { matchLocalIntent } from '../lib/voice/localIntent';
 import { toSpeechLocale } from '../lib/voice/voiceLocale';
@@ -187,7 +191,7 @@ export function useVoiceCommand() {
   // On-device recognition results. `isFinal` matters: interim results stream in
   // while the user is still talking and acting on those would fire commands
   // mid-sentence.
-  useSpeechRecognitionEvent('result', event => {
+  useSpeechEvent('result', (event: any) => {
     if (modeRef.current !== 'stt') return;
     const transcript = event?.results?.[0]?.transcript ?? '';
     if (!event?.isFinal || !transcript.trim()) return;
@@ -196,7 +200,7 @@ export function useVoiceCommand() {
     void runTranscript(transcript.trim());
   });
 
-  useSpeechRecognitionEvent('error', event => {
+  useSpeechEvent('error', (event: any) => {
     if (modeRef.current !== 'stt') return;
     modeRef.current = null;
     busyRef.current = false;
@@ -228,12 +232,12 @@ export function useVoiceCommand() {
     // build without a recognition service, or a locale with no model, must fall
     // back rather than hang on a listener that never fires.
     try {
-      if (ExpoSpeechRecognitionModule.isRecognitionAvailable()) {
-        const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (canRecognise() && SpeechRecognition) {
+        const perm = await SpeechRecognition.requestPermissionsAsync();
         if (perm.granted) {
           busyRef.current = true;
           modeRef.current = 'stt';
-          ExpoSpeechRecognitionModule.start({
+          SpeechRecognition.start({
             // appLanguage is a bare two-letter code; the recogniser needs a
             // BCP-47 tag and answers a bare one with language-not-supported.
             lang: toSpeechLocale(appLanguage),
@@ -287,7 +291,7 @@ export function useVoiceCommand() {
     if (modeRef.current === 'stt') {
       setState(s => ({ ...s, phase: 'thinking' }));
       try {
-        ExpoSpeechRecognitionModule.stop();
+        SpeechRecognition?.stop();
       } catch {
         modeRef.current = null;
         busyRef.current = false;
@@ -357,7 +361,7 @@ export function useVoiceCommand() {
   const cancel = useCallback(async () => {
     try {
       if (modeRef.current === 'stt') {
-        ExpoSpeechRecognitionModule.abort();
+        SpeechRecognition?.abort();
       } else if (state.phase === 'listening') {
         await recorder.stop();
       }
