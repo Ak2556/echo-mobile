@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { View, Text, Pressable, Image, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useShareIntentContext } from 'expo-share-intent';
 import { ChatCircle, NotePencil, PaperPlaneTilt } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -25,13 +25,18 @@ export default function ShareIntentScreen() {
   const router = useRouter();
   const { colors, font, radius } = useTheme();
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext();
+  // Text selected in another app arrives here as a query param rather than a
+  // share intent: ACTION_PROCESS_TEXT carries it in an intent extra, which a
+  // tiny native activity turns into this deep link (see
+  // plugins/withAndroidEntryPoints.js). Same destination, different door.
+  const { text: selectedText } = useLocalSearchParams<{ text?: string }>();
 
   // Text and a shared URL arrive in different fields; for every action here
   // they are the same thing — words the user wants Echo to do something with.
   const body = useMemo(() => {
-    const parts = [shareIntent?.text, shareIntent?.webUrl].filter(Boolean) as string[];
+    const parts = [shareIntent?.text, shareIntent?.webUrl, selectedText].filter(Boolean) as string[];
     return [...new Set(parts)].join('\n\n').trim();
-  }, [shareIntent?.text, shareIntent?.webUrl]);
+  }, [shareIntent?.text, shareIntent?.webUrl, selectedText]);
 
   const images = useMemo(
     () => (shareIntent?.files ?? []).filter(f => f.mimeType?.startsWith('image/')),

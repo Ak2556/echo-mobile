@@ -25,7 +25,7 @@ module.exports = ({ config }) => {
         {
           action: 'VIEW',
           autoVerify: true,
-          data: ['/e', '/u', '/c', '/a'].map(pathPrefix => ({
+          data: ['/e', '/u', '/c'].map(pathPrefix => ({
             scheme: 'https',
             host,
             pathPrefix,

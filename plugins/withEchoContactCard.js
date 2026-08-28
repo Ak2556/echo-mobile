@@ -283,8 +283,24 @@ object EchoContactSync {
       arrayOf(account.type, account.name, SOURCE_ID),
       null
     )
+    // Replace rather than skip.
+    //
+    // Skipping when a row already exists meant the contact froze at whatever
+    // it looked like the first time it was written — a corrected URL or label
+    // could never reach a device that already had one. Deleting our own row
+    // and re-inserting keeps the card in step with the app, and is safe
+    // because nothing but this code owns it.
+    var alreadyThere = false
     existing.use { cursor ->
-      if (cursor != null && cursor.count > 0) return
+      alreadyThere = cursor != null && cursor.count > 0
+    }
+    if (alreadyThere) {
+      resolver.delete(
+        syncUri(ContactsContract.RawContacts.CONTENT_URI),
+        ContactsContract.RawContacts.ACCOUNT_TYPE + " = ? AND " +
+          ContactsContract.RawContacts.SOURCE_ID + " = ?",
+        arrayOf(account.type, SOURCE_ID)
+      )
     }
 
     val ops = ArrayList<ContentProviderOperation>()
@@ -332,7 +348,7 @@ object EchoContactSync {
           ContactsContract.Data.MIMETYPE,
           ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE
         )
-        .withValue(ContactsContract.CommonDataKinds.Website.URL, "https://downloadecho.com/a")
+        .withValue(ContactsContract.CommonDataKinds.Website.URL, "https://downloadecho.com")
         .withValue(
           ContactsContract.CommonDataKinds.Website.TYPE,
           ContactsContract.CommonDataKinds.Website.TYPE_CUSTOM
