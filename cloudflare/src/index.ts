@@ -21,13 +21,17 @@ type Bindings = {
   DM_MEDIA_BUCKET: R2Bucket;
   MINI_APP_MEDIA_BUCKET: R2Bucket;
   MARKETPLACE_PHOTOS_BUCKET: R2Bucket;
+  LEARN_LECTURES_BUCKET: R2Bucket;
 };
 
 type Vars = { user_id: string; access_token: string };
 
+/** Six hours: longer than any lecture, shorter than a day. */
+const LECTURE_URL_TTL_SECONDS = 6 * 60 * 60;
+
 const app = new Hono<{ Bindings: Bindings; Variables: Vars }>();
 
-const ALLOWED_BUCKETS = ['avatars', 'echo-media', 'dm-media', 'mini-app-media', 'marketplace-photos'] as const;
+const ALLOWED_BUCKETS = ['avatars', 'echo-media', 'dm-media', 'mini-app-media', 'marketplace-photos', 'learn-lectures'] as const;
 type BucketName = (typeof ALLOWED_BUCKETS)[number];
 
 function bucketBinding(env: Bindings, name: BucketName): R2Bucket {
@@ -37,6 +41,7 @@ function bucketBinding(env: Bindings, name: BucketName): R2Bucket {
     case 'dm-media': return env.DM_MEDIA_BUCKET;
     case 'mini-app-media': return env.MINI_APP_MEDIA_BUCKET;
     case 'marketplace-photos': return env.MARKETPLACE_PHOTOS_BUCKET;
+    case 'learn-lectures': return env.LEARN_LECTURES_BUCKET;
   }
 }
 
@@ -105,7 +110,9 @@ app.post('/purge-user', async (c) => {
 // restores the previous boundary rather than widening it.
 //
 // dm-media is deliberately absent. It stays behind /dm-media/:userId/:filename,
-// which checks conversation membership.
+// which checks conversation membership. learn-lectures is absent for the same
+// reason: who may watch a lecture is decided by RLS, and playback goes through
+// a short-lived presigned URL minted by /learn-lecture-url.
 const PUBLIC_READ_BUCKETS = ['avatars', 'echo-media', 'mini-app-media', 'marketplace-photos'] as const;
 
 app.get('/media/:bucket/:key{.+}', async (c) => {
@@ -315,6 +322,67 @@ app.get('/dm-media/:userId/:key{.+}', async (c) => {
   // Private media must never be cached by a shared cache.
   headers.set('Cache-Control', 'private, max-age=300');
   return new Response(object.body, { headers });
+});
+
+// ── lecture playback ────────────────────────────────────────────────────────
+// A lecture is either a link someone pasted or a video in R2. Either way the
+// question "may this person watch it?" is answered by Postgres, not here: the
+// row is fetched with the CALLER's own token, so the learn_lectures RLS policy
+// (owner, or public, or a learner with a live booking) is the only access rule
+// and there is no second copy of it to drift.
+//
+// Uploads are handed back as a presigned GET rather than proxied. R2's S3
+// endpoint serves Range requests natively, which is what lets a player seek in
+// a two-hour lecture; proxying would mean reimplementing Range here and paying
+// a worker invocation per seek. R2 charges no egress either way.
+app.get('/learn-lecture-url', async (c) => {
+  const id = c.req.query('id') ?? '';
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return c.json({ error: 'Invalid lecture id' }, 400);
+  }
+
+  const token = c.get('access_token');
+  let rows: { source?: string; r2_key?: string | null; external_url?: string | null }[] = [];
+  try {
+    const res = await fetch(
+      `${c.env.SUPABASE_URL}/rest/v1/learn_lectures?id=eq.${id}&select=source,r2_key,external_url&limit=1`,
+      { headers: { Authorization: `Bearer ${token}`, apikey: c.env.SUPABASE_ANON_KEY } },
+    );
+    if (!res.ok) return c.json({ error: 'Lookup failed' }, 502);
+    rows = await res.json();
+  } catch {
+    return c.json({ error: 'Lookup failed' }, 502);
+  }
+
+  // RLS returning nothing is indistinguishable from the row not existing, and
+  // that is the point — "not found" leaks less than "forbidden".
+  const lecture = rows[0];
+  if (!lecture) return c.json({ error: 'Not found' }, 404);
+
+  if (lecture.source === 'link') {
+    return c.json({ kind: 'link', url: lecture.external_url });
+  }
+  if (!lecture.r2_key) return c.json({ error: 'Lecture has no file' }, 409);
+
+  const r2Client = new AwsClient({
+    accessKeyId: c.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: c.env.AWS_SECRET_ACCESS_KEY,
+    service: 's3',
+    region: 'auto',
+  });
+
+  const url = new URL(
+    `https://${c.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/learn-lectures/${lecture.r2_key}`,
+  );
+  // Long enough to watch a lecture without the URL dying mid-playback, short
+  // enough that a copied link stops working the same day.
+  url.searchParams.set('X-Amz-Expires', String(LECTURE_URL_TTL_SECONDS));
+
+  const signed = await r2Client.sign(new Request(url, { method: 'GET' }), {
+    aws: { signQuery: true },
+  });
+
+  return c.json({ kind: 'upload', url: signed.url, expiresIn: LECTURE_URL_TTL_SECONDS });
 });
 
 export default app;

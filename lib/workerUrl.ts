@@ -40,3 +40,15 @@ export function uploadUrlEndpoint(bucket: string, path: string): string {
 export function dmMediaUrl(path: string): string {
   return `${WORKER_URL}/dm-media/${path.replace(/^\/+/, '')}`;
 }
+
+/**
+ * Endpoint that resolves a lecture to something playable.
+ *
+ * Lectures are not under /media. Access is decided by Postgres RLS, and an
+ * upload comes back as a short-lived presigned R2 URL so the player can seek —
+ * the worker's /media route ignores Range headers entirely and answers a range
+ * request with the whole object.
+ */
+export function lectureUrlEndpoint(lectureId: string): string {
+  return `${WORKER_URL}/learn-lecture-url?id=${encodeURIComponent(lectureId)}`;
+}

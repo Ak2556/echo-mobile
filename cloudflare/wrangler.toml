@@ -38,3 +38,7 @@ bucket_name = "mini-app-media"
 [[r2_buckets]]
 binding = "MARKETPLACE_PHOTOS_BUCKET"
 bucket_name = "marketplace-photos"
+
+[[r2_buckets]]
+binding = "LEARN_LECTURES_BUCKET"
+bucket_name = "learn-lectures"
