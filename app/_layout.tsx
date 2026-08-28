@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useDatabaseSync } from "../hooks/useDatabaseSync";
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../src/shared/lib/analytics';
-import { recordAppOpen, noteNudgeOpened } from '../lib/personalNudges';
+import { recordAppOpen, noteNudgeOpened, ensureNudgesScheduled } from '../lib/personalNudges';
 import { cancelLegacyProactiveNudges } from '../lib/proactiveNudges';
 import { captureException, initMonitoring, wrapRoot } from '../lib/monitoring';
 import { startOutbox } from '../lib/outboxProcessor';
@@ -229,9 +229,16 @@ function RootLayout() {
   useEffect(() => {
     const coldMs = Date.now() - COLD_START_T0;
     track('app_open', { cold_ms: coldMs });
+    // Settles up for nudges that fired while the app was closed, then records
+    // the open. Without the first half the fatigue model could only ever be
+    // reset, never incremented, so back-off never engaged.
     recordAppOpen();
     // Retire the old fixed-slot check-ins in favor of personalized nudges.
     void cancelLegacyProactiveNudges();
+    // Scheduling used to live on the chat tab alone, so anyone who never opened
+    // that tab was never scheduled anything. The chat tab still reschedules
+    // with richer signals; this only guarantees a plan exists.
+    void ensureNudgesScheduled(useAppStore.getState().proactiveAiEnabled);
   }, []);
 
   // Push notification taps.

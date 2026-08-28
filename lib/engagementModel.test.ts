@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  emptyModel, recordOpen, recordNudgeSent, recordNudgeOpened,
+  emptyModel, recordOpen, recordNudgeSent, recordNudgeOpened, reconcileNudges,
   topActiveHours, topSurface, isQuietHour, shouldSendNudge, plannedNudgeHours,
   DEFAULT_POLICY,
 } from './engagementModel';
@@ -105,5 +105,74 @@ describe('plannedNudgeHours', () => {
     expect(hrs).toContain(14);
     expect(hrs.every((h) => !isQuietHour(h, DEFAULT_POLICY))).toBe(true);
     expect(hrs.length).toBeLessThanOrEqual(DEFAULT_POLICY.maxPerDay);
+  });
+});
+
+describe('reconcileNudges — letting the fatigue model learn', () => {
+  const at = (iso: string) => new Date(iso);
+
+  it('counts a nudge the user did not tap', () => {
+    // The whole point: local notifications fire without running JS, so this is
+    // the only chance to notice one went out unanswered.
+    const before = emptyModel();
+    const after = reconcileNudges(before, [9], at('2026-08-28T08:00:00'), at('2026-08-28T12:00:00'));
+    expect(after.ignoredStreak).toBe(1);
+    expect(after.notifSent).toBe(1);
+    expect(after.nudgeCountToday).toBe(1);
+  });
+
+  it('counts every scheduled hour that has passed', () => {
+    const after = reconcileNudges(emptyModel(), [9, 19], at('2026-08-28T08:00:00'), at('2026-08-28T21:00:00'));
+    expect(after.ignoredStreak).toBe(2);
+  });
+
+  it('ignores hours that have not come round yet', () => {
+    const after = reconcileNudges(emptyModel(), [9, 19], at('2026-08-28T08:00:00'), at('2026-08-28T12:00:00'));
+    expect(after.ignoredStreak).toBe(1);
+  });
+
+  it('counts across days away', () => {
+    const after = reconcileNudges(emptyModel(), [9], at('2026-08-26T08:00:00'), at('2026-08-28T12:00:00'));
+    expect(after.ignoredStreak).toBe(3); // 26th, 27th, 28th
+  });
+
+  it('caps a long absence so the feature can recover', () => {
+    // Three weeks away really is sixty ignored nudges, but modelling it that
+    // way would suppress nudges so hard they never come back.
+    const after = reconcileNudges(emptyModel(), [9, 19], at('2026-08-01T08:00:00'), at('2026-08-28T12:00:00'));
+    expect(after.ignoredStreak).toBe(DEFAULT_POLICY.maxPerDay * 3);
+  });
+
+  it('does nothing without a previous reconcile point', () => {
+    // A first run must not invent history for a user who has seen nothing.
+    expect(reconcileNudges(emptyModel(), [9], null, at('2026-08-28T12:00:00')).ignoredStreak).toBe(0);
+  });
+
+  it('does nothing when nothing is scheduled, or when no time has passed', () => {
+    expect(reconcileNudges(emptyModel(), [], at('2026-08-28T08:00:00'), at('2026-08-28T12:00:00')).ignoredStreak).toBe(0);
+    expect(reconcileNudges(emptyModel(), [9], at('2026-08-28T12:00:00'), at('2026-08-28T08:00:00')).ignoredStreak).toBe(0);
+  });
+
+  it('ignores nonsense hours rather than looping on them', () => {
+    expect(reconcileNudges(emptyModel(), [99, -1, 1.5], at('2026-08-28T08:00:00'), at('2026-08-29T12:00:00')).ignoredStreak).toBe(0);
+  });
+
+  it('is what finally lets back-off engage', () => {
+    // Before this existed, ignoredStreak could only ever be reset to 0, so
+    // shouldSendNudge's back-off branch was unreachable in production.
+    let m = emptyModel();
+    m = reconcileNudges(m, [9, 19], at('2026-08-26T08:00:00'), at('2026-08-27T20:00:00'));
+    expect(m.ignoredStreak).toBeGreaterThanOrEqual(DEFAULT_POLICY.backOffAfterIgnored);
+
+    // With back-off engaged the daily allowance halves.
+    const hours = plannedNudgeHours(m, DEFAULT_POLICY);
+    expect(hours.length).toBeLessThanOrEqual(Math.max(1, Math.floor(DEFAULT_POLICY.maxPerDay / 2)));
+  });
+
+  it('an open still clears the streak, so a returning user is not punished', () => {
+    let m = reconcileNudges(emptyModel(), [9, 19], at('2026-08-20T08:00:00'), at('2026-08-28T20:00:00'));
+    expect(m.ignoredStreak).toBeGreaterThan(0);
+    m = recordNudgeOpened(m);
+    expect(m.ignoredStreak).toBe(0);
   });
 });

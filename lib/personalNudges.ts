@@ -20,7 +20,7 @@ import { supabase } from './supabase';
 import {
   type EngagementModel, type Surface, type NudgePolicy,
   emptyModel, recordOpen, recordNudgeOpened, plannedNudgeHours,
-  topActiveHours, topSurface, DEFAULT_POLICY,
+  topActiveHours, topSurface, DEFAULT_POLICY, reconcileNudges,
 } from './engagementModel';
 import { type NudgeSignals, buildPlannedNudges } from './nudgeContent';
 import { getRecentTools } from './miniAppRecents';
@@ -29,6 +29,12 @@ export type { NudgeSignals } from './nudgeContent';
 
 const MODEL_KEY = 'nudges:engagementModel';
 const IDS_KEY = 'nudges:scheduledIds';
+/** Hours we last scheduled, so a later open can tell which of them fired. */
+const HOURS_KEY = 'nudges:scheduledHours';
+/** When the fatigue model was last brought up to date. */
+const RECONCILED_KEY = 'nudges:lastReconciledAt';
+/** When nudges were last scheduled, so a stale plan can be refreshed. */
+const SCHEDULED_AT_KEY = 'nudges:lastScheduledAt';
 
 export function loadModel(): EngagementModel {
   return persistGet<EngagementModel>(MODEL_KEY, emptyModel());
@@ -37,9 +43,32 @@ function saveModel(m: EngagementModel): void {
   persistSet(MODEL_KEY, m);
 }
 
-/** Record an app open (optionally attributed to a surface) into the model. */
+/**
+ * Record an app open, and settle up for any nudges that fired while we were
+ * closed.
+ *
+ * Order matters: reconcile first, then record the open. A nudge the user
+ * actually tapped is handled by noteNudgeOpened, which resets the streak — so
+ * doing it this way round means a tap still wins over the miss we just counted
+ * for the same notification.
+ */
 export function recordAppOpen(surface?: Surface): void {
-  try { saveModel(recordOpen(loadModel(), new Date(), surface)); } catch { /* best effort */ }
+  try {
+    const now = new Date();
+    let model = loadModel();
+
+    const hours = persistGet<number[]>(HOURS_KEY, []);
+    const lastReconciled = persistGet<string>(RECONCILED_KEY, '');
+    model = reconcileNudges(
+      model,
+      Array.isArray(hours) ? hours : [],
+      lastReconciled ? new Date(lastReconciled) : null,
+      now,
+    );
+    persistSet(RECONCILED_KEY, now.toISOString());
+
+    saveModel(recordOpen(model, now, surface));
+  } catch { /* best effort */ }
 }
 
 /** A notification tap is our on-device "opened" signal — resets back-off. */
@@ -133,5 +162,40 @@ export async function syncPersonalNudges(
       ids.push(id);
     }
     persistSet(IDS_KEY, ids);
+    persistSet(HOURS_KEY, planned.map(n => n.hour));
+    persistSet(SCHEDULED_AT_KEY, new Date().toISOString());
+    // Start the reconcile clock now; anything scheduled before this moment has
+    // already been accounted for.
+    persistSet(RECONCILED_KEY, new Date().toISOString());
   } catch { /* notifications unavailable (old build / denied) */ }
+}
+
+/**
+ * How long a nudge plan is allowed to stand before it is rebuilt.
+ *
+ * Under a day, so the plan tracks a person whose routine shifts, and so the
+ * fatigue model's back-off reaches the schedule rather than only the decision
+ * to send.
+ */
+const PLAN_MAX_AGE_MS = 20 * 60 * 60 * 1000;
+
+/**
+ * Make sure a nudge plan exists, without needing a particular screen.
+ *
+ * Scheduling used to happen in one place: a focus effect on the chat tab. A
+ * user who never opened that tab was never scheduled anything at all, which is
+ * to say the retention loop was off for exactly the people it exists for.
+ *
+ * This runs on app open with whatever signals are to hand. The chat tab still
+ * reschedules with its richer context — streak at risk, habits outstanding —
+ * and because that path writes the same keys, the sharper plan simply replaces
+ * this one.
+ */
+export async function ensureNudgesScheduled(enabled: boolean): Promise<void> {
+  if (!enabled) return;
+  try {
+    const last = persistGet<string>(SCHEDULED_AT_KEY, '');
+    if (last && Date.now() - new Date(last).getTime() < PLAN_MAX_AGE_MS) return;
+    await syncPersonalNudges(true);
+  } catch { /* best effort */ }
 }

@@ -206,3 +206,61 @@ export function plannedNudgeHours(
   const fallback = [9, 19].filter((h) => !isQuietHour(h, policy));
   return (hours.length ? hours : fallback).slice(0, cap);
 }
+
+/**
+ * Count the nudges that fired while the app was closed.
+ *
+ * Local notifications fire without running any JavaScript, so nothing was
+ * recording that a nudge went out. Only `recordNudgeOpened` was wired, and it
+ * sets `ignoredStreak` to 0 — so the counter could only ever go down. Back-off
+ * and the daily cap read that counter, which meant neither could ever engage:
+ * the model believed the user ignored nothing and Echo would nudge at full rate
+ * forever.
+ *
+ * This closes the loop on the next app open by asking a simpler question than
+ * "was it delivered": how many of the hours we scheduled have passed since we
+ * last looked? Each one is a nudge the user saw and did not tap, because a tap
+ * would have recorded an open.
+ *
+ * The cap matters. Someone returning after three weeks did ignore every nudge,
+ * but modelling that as sixty consecutive misses would suppress nudges so hard
+ * the feature never recovers. Three days' worth backs off decisively and stays
+ * recoverable.
+ */
+export function reconcileNudges(
+  model: EngagementModel,
+  scheduledHours: number[],
+  lastReconciledAt: Date | null,
+  now: Date,
+  policy: NudgePolicy = DEFAULT_POLICY,
+): EngagementModel {
+  if (!scheduledHours.length || !lastReconciledAt) return model;
+  if (now.getTime() <= lastReconciledAt.getTime()) return model;
+
+  const hours = [...new Set(scheduledHours)].filter(h => Number.isInteger(h) && h >= 0 && h <= 23);
+  if (!hours.length) return model;
+
+  let fired = 0;
+  // Walk day by day from the last reconcile, counting scheduled hours that
+  // fall inside the window. Bounded by the cap below, so a long absence cannot
+  // make this loop expensive.
+  const maxFirings = policy.maxPerDay * 3;
+  const cursor = new Date(lastReconciledAt);
+  cursor.setMinutes(0, 0, 0);
+
+  while (cursor.getTime() <= now.getTime() && fired < maxFirings) {
+    for (const hour of hours) {
+      const firing = new Date(cursor);
+      firing.setHours(hour, 0, 0, 0);
+      if (firing.getTime() > lastReconciledAt.getTime() && firing.getTime() <= now.getTime()) {
+        fired += 1;
+        if (fired >= maxFirings) break;
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  let next = model;
+  for (let i = 0; i < fired; i++) next = recordNudgeSent(next, now);
+  return next;
+}
