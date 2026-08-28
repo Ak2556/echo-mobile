@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Switch, Alert, Modal, Platform, StyleSheet, Linking } from 'react-native';
+import { contactCardEnabled, contactCardSupported, enableContactCard } from '../lib/contactCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -15,6 +16,7 @@ import {
   Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
   Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
   BellRinging, Drop, MapTrifold, Microphone,
+  AddressBook,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -825,6 +827,35 @@ export default function SettingsScreen() {
 
   const divider = <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }} />;
 
+  // Echo's row in the address book. Android only — iOS has no supported way
+  // for an app to own a contact card row.
+  const [inContacts, setInContacts] = useState(false);
+  useEffect(() => { void contactCardEnabled().then(setInContacts); }, []);
+
+  const handleContactCardToggle = async (next: boolean) => {
+    if (!next) {
+      Alert.alert(
+        'Remove Echo from contacts',
+        'Turn off Contacts access for Echo in Android settings, and the entry stops syncing.',
+        [{ text: 'Cancel', style: 'cancel' }, { text: 'Open settings', onPress: () => void Linking.openSettings() }],
+      );
+      return;
+    }
+    const result = await enableContactCard();
+    if (result === 'enabled') {
+      setInContacts(true);
+      // Honest: the sync adapter is the only thing allowed to write the row,
+      // and it runs on Android's schedule. The next launch always triggers one.
+      Alert.alert('Echo is on its way', 'Echo will appear in your contacts the next time you open the app.');
+    } else if (result === 'blocked') {
+      Alert.alert(
+        'Contacts access is off',
+        'Android has blocked the prompt. You can turn Contacts on for Echo in system settings.',
+        [{ text: 'Cancel', style: 'cancel' }, { text: 'Open settings', onPress: () => void Linking.openSettings() }],
+      );
+    }
+  };
+
   const SwitchEl = (v: boolean, onChange: (val: boolean) => void) => (
     <Switch value={v} onValueChange={onChange} trackColor={switchTrack} thumbColor="#fff" />
   );
@@ -897,6 +928,19 @@ export default function SettingsScreen() {
             <SettingsRow theme={theme} icon={Vibrate} label={ttx("Haptic Feedback")} subtitle={ttx("Vibration on interactions")} right={SwitchEl(s.hapticEnabled, s.setHapticEnabled)} />
             {divider}
             <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Sound Effects")} subtitle={ttx("Play sounds for actions")} right={SwitchEl(s.soundEnabled, s.setSoundEnabled)} />
+            {contactCardSupported() ? (
+              <>
+                {divider}
+                <SettingsRow
+                  theme={theme}
+                  icon={AddressBook}
+                  iconColor={colors.accent}
+                  label={ttx("Echo in Contacts")}
+                  subtitle={inContacts ? ttx("Reach Echo like a person") : ttx("Add Echo to your address book")}
+                  right={SwitchEl(inContacts, (v) => { void handleContactCardToggle(v); })}
+                />
+              </>
+            ) : null}
             {divider}
             <SettingsRow theme={theme} icon={SpeakerHigh} label={ttx("Read-aloud speed")} subtitle={ttx("How fast Echo speaks content")} onPress={cycleSpeechRate} right={chevronValue(rateLabel(s.speechRate))} />
             {divider}

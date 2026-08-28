@@ -67,7 +67,9 @@
       ],
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
       ],
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
@@ -151,7 +153,8 @@
           "iosShareExtensionName": "Echo"
         }
       ],
-      "./plugins/withAndroidEntryPoints"
+      "./plugins/withAndroidEntryPoints",
+      "./plugins/withEchoContactCard"
     ],
     "experiments": {
       "baseUrl": "/echo-mobile",
