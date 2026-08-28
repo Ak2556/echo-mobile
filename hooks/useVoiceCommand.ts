@@ -34,6 +34,7 @@ import {
 import { dispatchVoiceIntent } from '../lib/voice/dispatch';
 import { matchLocalIntent } from '../lib/voice/localIntent';
 import { toSpeechLocale } from '../lib/voice/voiceLocale';
+import { trySocialIntent } from '../lib/voice/socialIntents';
 import { speak, stopSpeaking } from '../lib/tts';
 import { VOICE_INTENTS, type VoicePhase, type VoiceResult } from '../lib/voice/types';
 
@@ -128,6 +129,28 @@ export function useVoiceCommand() {
    * model as text; still a round trip, but no audio upload attached to it.
    */
   const runTranscript = useCallback(async (transcript: string) => {
+    // Messaging first. It needs a lookup, so it cannot live in the instant
+    // local matcher, but it must be tried before the model — "message Kav
+    // saying I'm late" is a command, not a sentence to interpret.
+    setState(s => ({ ...s, transcript }));
+    try {
+      const social = await trySocialIntent(transcript);
+      if (social) {
+        if (social.reply && !social.spoken) {
+          speak(social.reply, { language: appLanguage, id: 'voice-reply' });
+        }
+        setState({
+          phase: social.handled ? 'done' : 'error',
+          transcript,
+          reply: social.reply,
+          error: social.handled ? null : 'transcribe-failed',
+        });
+        return;
+      }
+    } catch {
+      // Fall through to the normal path rather than failing the whole command.
+    }
+
     const local = matchLocalIntent(transcript, appLanguage);
     if (local) {
       const outcome = dispatchVoiceIntent(local);
