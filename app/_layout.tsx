@@ -30,6 +30,8 @@ import { database } from '../src/shared/database';
 import { usePresenceTracking } from '../lib/presence';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
+import { handleNotificationReply } from '../lib/notifications/handleReplyResponse';
+import { initNotificationSurface } from '../lib/push';
 import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
 import { VoiceControl } from '../src/features/voice/ui/VoiceControl';
@@ -196,6 +198,11 @@ function RootLayout() {
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
+    // Channels and reply actions, registered before any notification can land.
+    // A category is matched by id at delivery time, so this cannot wait for the
+    // permission prompt or the Reply button never appears on the first push.
+    void initNotificationSurface();
+
     let cancelled = false;
     const VALID_KINDS = new Set(['daily_question', 'daily_react', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin', 'personal_nudge']);
     const route = (data: Record<string, unknown> | null | undefined) => {
@@ -229,7 +236,7 @@ function RootLayout() {
       // Follows carry no target_id — the object of the notification is the
       // follower, passed as actor_id. Route to their profile.
       const actorId = safeRouteId(String(data.actor_id ?? ''));
-      if (kind === 'daily_question' || kind === 'daily_react') {
+      if (kind === 'daily_question' || kind === 'daily_react' || kind === 'friend_answer') {
         track('notification_tapped', { kind });
         router.push('/daily-question');
         return;
@@ -254,10 +261,20 @@ function RootLayout() {
       }
     };
 
+    // A reply typed in the shade is not a tap: it must send, not just navigate.
+    // Both entry points go through the same check — a cold start caused by
+    // tapping Send is the case that matters most, because the reply only exists
+    // in this response object.
+    const handle = (response: Notifications.NotificationResponse) => {
+      const data = response.notification.request.content.data as Record<string, unknown>;
+      if (handleNotificationReply(response.actionIdentifier, response.userText, data)) return;
+      route(data);
+    };
+
     Notifications.getLastNotificationResponseAsync()
       .then((response) => {
         if (cancelled || !response) return;
-        route(response.notification.request.content.data as Record<string, unknown>);
+        handle(response);
       })
       .catch((error) => {
         if (!isUnsignedSimulatorNotificationError(error)) {
@@ -265,9 +282,7 @@ function RootLayout() {
         }
       });
 
-    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      route(response.notification.request.content.data as Record<string, unknown>);
-    });
+    const sub = Notifications.addNotificationResponseReceivedListener(handle);
 
     return () => {
       cancelled = true;

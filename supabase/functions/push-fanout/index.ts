@@ -11,6 +11,15 @@
 // "Alice reacted with 🤯" instead of just "New reaction".
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Shared with the app so the channel/category ids can never drift apart: the
+// client registers exactly what this stamps. See lib/notifications/routing.ts.
+import {
+  DAILY_PUSH_CAP,
+  bypassesDailyCap,
+  categoryForKind,
+  channelForKind,
+  priorityForKind,
+} from '../../../lib/notifications/routing.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -49,11 +58,20 @@ Deno.serve(async (req: Request) => {
 
   // Load recipient token + actor name in parallel. allSettled so a failed
   // actor lookup doesn't abort the notification entirely.
-  const [recipientResult, actorResult] = await Promise.allSettled([
+  const [recipientResult, actorResult, unreadResult] = await Promise.allSettled([
     supabase.from('profiles').select('push_token').eq('id', body.user_id).maybeSingle(),
     body.actor_id
       ? supabase.from('profiles').select('display_name, username').eq('id', body.actor_id).maybeSingle()
       : Promise.resolve({ data: null as { display_name?: string; username?: string } | null }),
+    // Real badge number. This used to be a hardcoded 1, so an iOS home screen
+    // read "1" whether the user had one notification waiting or forty, and it
+    // never went back down. Served by idx_notifications_user_unread, a partial
+    // index on exactly this predicate.
+    supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', body.user_id)
+      .is('read_at', null),
   ]);
 
   if (recipientResult.status === 'rejected') {
@@ -66,19 +84,53 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ skipped: 'no token' }), { status: 200 });
   }
 
+  // Daily delivery cap. The notification row is already written — the in-app
+  // inbox is never capped — so nothing is lost here; it just isn't pushed.
+  // Messages and moderation decisions bypass it: those are not engagement.
+  if (!bypassesDailyCap(body.type)) {
+    const { count: recentPushes } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', body.user_id)
+      .not('type', 'in', '("dm","appeal_resolved","content_removed")')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+    if ((recentPushes ?? 0) > DAILY_PUSH_CAP) {
+      return new Response(
+        JSON.stringify({ skipped: 'daily cap', cap: DAILY_PUSH_CAP, seen: recentPushes }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    }
+  }
+
   const actorData = actorResult.status === 'fulfilled' ? actorResult.value.data : null;
   const actorName = actorData?.display_name || actorData?.username || 'Someone';
   const title = titleFor(body.type, actorName, body.preview);
-  const message = messageFor(body.type, body.preview);
+  const message = messageFor(body.type, actorName, body.preview);
 
   // data payload routes the tap. The client tap handler reads `kind` +
   // `target_id` from here and routes accordingly.
+  const category = categoryForKind(body.type);
+  const unread = unreadResult.status === 'fulfilled' ? (unreadResult.value.count ?? null) : null;
+
   const expoPayload = [{
     to: recipient.push_token,
     title,
     body: message,
     sound: 'default',
-    badge: 1,
+    // Omitted rather than guessed when the count query failed — a wrong badge
+    // that never clears is worse than no badge.
+    ...(unread === null ? {} : { badge: unread }),
+    // Android 8+ takes importance, sound and vibration from the channel, not
+    // from this payload, so the channel is the only way to let someone mute
+    // likes while keeping DMs. Unknown ids are safe: expo-notifications falls
+    // back to its own channel rather than dropping the notification, so an
+    // install running older JS still gets everything.
+    channelId: channelForKind(body.type),
+    // Draws the Reply button. Only set on kinds the client will actually act
+    // on; a Reply button whose text goes nowhere is worse than no button.
+    ...(category ? { categoryId: category } : {}),
+    priority: priorityForKind(body.type),
     data: {
       kind: body.type,
       target_id: body.target_id ?? null,
@@ -150,6 +202,11 @@ function titleFor(t: string, actorName: string, preview?: string): string {
       `${actorName} is active rn. Go look.`,
       `Catch up on ${actorName}'s latest`,
     ]);
+    case 'friend_answer': return pick([
+      `${actorName} answered today's question`,
+      `${actorName} just answered`,
+      `${actorName} took today's question`,
+    ]);
     case 'dm': return pick([
       `${actorName} slid into your DMs`,
       `${actorName} sent a little something 🤫`,
@@ -177,6 +234,10 @@ function titleFor(t: string, actorName: string, preview?: string): string {
       `${actorName} built an empire on your words`,
       `${actorName} had a lot to say about your post`,
     ]);
+    // The answer itself is the draw — show it, don't describe it.
+    case 'friend_answer':
+      return preview && preview.trim() ? preview.trim() : 'Go read it.';
+
     case 'daily_react': {
       const emoji = preview ? preview.trim().split(/\s+/)[0] : '';
       if (!emoji) return `${actorName} reacted to your answer`;
@@ -196,7 +257,7 @@ function titleFor(t: string, actorName: string, preview?: string): string {
   }
 }
 
-function messageFor(t: string, preview?: string): string {
+function messageFor(t: string, actorName: string, preview?: string): string {
   switch (t) {
     // Content-carrying: show the real text.
     case 'comment':

@@ -1053,6 +1053,11 @@ interface RequestBody {
   current_screen?: string;
   /** Compact private personalization summary generated on the client. */
   persona_context?: string;
+  /**
+   * 'ask' | 'do' — see mode.ts. Absent means 'do', which is what every client
+   * in the wild sends today.
+   */
+  mode?: string;
 }
 
 async function handleRequest(req: Request): Promise<Response> {
@@ -1155,6 +1160,7 @@ async function handleRequest(req: Request): Promise<Response> {
             send,
             selectedModel,
             systemPrompt,
+            body.mode,
           );
         } else if (body.confirm) {
           await runToolAndContinue(
@@ -1165,6 +1171,7 @@ async function handleRequest(req: Request): Promise<Response> {
             send,
             selectedModel,
             systemPrompt,
+            body.mode,
           );
         } else if (body.message) {
           // Fresh user turn
@@ -1184,7 +1191,7 @@ async function handleRequest(req: Request): Promise<Response> {
           }
           const userMsg: ORMessage = { role: "user", content: body.message };
           await persistMessage(supabase, conversationId, userId, userMsg);
-          await runAgentLoop(supabase, userId, conversationId, send, 6, selectedModel, systemPrompt);
+          await runAgentLoop(supabase, userId, conversationId, send, 6, selectedModel, systemPrompt, body.mode);
         } else {
           send({ type: "error", message: "missing message or confirm" });
         }
@@ -1221,6 +1228,7 @@ async function runAgentLoop(
   maxSteps = 6,
   modelOverride?: string,
   systemPrompt = FALLBACK_SYSTEM_PROMPT,
+  mode?: string,
 ): Promise<void> {
   for (let step = 0; step < maxSteps; step++) {
     const history = await loadHistory(supabase, conversationId);
@@ -1233,7 +1241,7 @@ async function runAgentLoop(
       messages,
       // ask mode sends no tools at all, so the model has nothing to call
       // and the request carries 34 fewer schemas.
-      toolsForMode(normalizeAiMode(body.mode), ORTOOL_DEFS),
+      toolsForMode(normalizeAiMode(mode), ORTOOL_DEFS),
       modelOverride,
     );
 
@@ -1338,6 +1346,7 @@ async function runToolAndContinue(
   send: (e: SSEEvent) => void,
   modelOverride?: string,
   systemPrompt = FALLBACK_SYSTEM_PROMPT,
+  mode?: string,
 ): Promise<void> {
   const spec = TOOL_BY_NAME.get(confirm.tool_name);
   if (!spec) {
@@ -1374,7 +1383,7 @@ async function runToolAndContinue(
       error: "rejected",
     });
     // Continue loop so the model can recover (e.g. apologize or offer alternative).
-    await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);
+    await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt, mode);
     return;
   }
 
@@ -1387,7 +1396,7 @@ async function runToolAndContinue(
     confirm.args,
     send,
   );
-  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);
+  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt, mode);
 }
 
 async function recordLocalToolResultAndContinue(
@@ -1398,6 +1407,7 @@ async function recordLocalToolResultAndContinue(
   send: (e: SSEEvent) => void,
   modelOverride?: string,
   systemPrompt = FALLBACK_SYSTEM_PROMPT,
+  mode?: string,
 ): Promise<void> {
   const spec = TOOL_BY_NAME.get(localResult.tool_name);
   if (!spec) {
@@ -1461,7 +1471,7 @@ async function recordLocalToolResultAndContinue(
     });
   }
 
-  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt);
+  await runAgentLoop(supabase, userId, conversationId, send, 6, modelOverride, systemPrompt, mode);
 }
 
 async function executeAndRecord(
