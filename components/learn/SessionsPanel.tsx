@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Linking } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Linking, TextInput } from 'react-native';
 import { CalendarBlank, VideoCamera } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { showToast } from '../ui/Toast';
@@ -47,6 +47,8 @@ export function SessionsPanel() {
   const [people, setPeople] = useState<Record<string, Person>>({});
   const [tutors, setTutors] = useState<TutorProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [linkFor, setLinkFor] = useState<string | null>(null);
+  const [linkDraft, setLinkDraft] = useState('');
 
   const reload = useCallback(async () => {
     try {
@@ -79,6 +81,22 @@ export function SessionsPanel() {
     }
   };
 
+  const saveMeetingLink = async (booking: Booking) => {
+    const link = linkDraft.trim();
+    if (!/^https?:\/\//i.test(link)) {
+      showToast('That needs to be a http or https link', 'Error');
+      return;
+    }
+    try {
+      const updated = await updateBooking(booking.id, { meetingLink: link });
+      setBookings(prev => prev.map(b => (b.id === booking.id ? updated : b)));
+      setLinkFor(null);
+      setLinkDraft('');
+    } catch {
+      showToast('Could not save that link', 'Error');
+    }
+  };
+
   const request = async (tutor: TutorProfile) => {
     try {
       await requestBooking({ tutorId: tutor.userId });
@@ -103,7 +121,13 @@ export function SessionsPanel() {
           const otherId = isTutor ? booking.learnerId : booking.tutorId;
           const other = otherId ? people[otherId]?.displayName : booking.guestName;
           const action = isTutor ? NEXT_ACTION[booking.status] : undefined;
-          const joinable = booking.status === 'scheduled' && (booking.meetingLink || booking.meetingRoom);
+          // Only a real link is joinable. In-app meetings need LiveKit
+          // credentials and a client SDK that this build does not have, so
+          // offering a Join button for meeting_room would be a button that
+          // apologises instead of working.
+          const joinable = !!booking.meetingLink && booking.status !== 'cancelled';
+          const canAddLink = isTutor && !booking.meetingLink
+            && (booking.status === 'accepted' || booking.status === 'scheduled');
 
           return (
             <View key={booking.id} style={{ padding: 14, borderRadius: radius.card, backgroundColor: colors.surface, gap: 8 }}>
@@ -119,20 +143,28 @@ export function SessionsPanel() {
                 </View>
               </View>
 
-              {(action || joinable) && (
+              {(action || joinable || canAddLink) && (
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {joinable && (
                     <Pressable
-                      onPress={() => {
-                        if (booking.meetingLink) void Linking.openURL(booking.meetingLink);
-                        else showToast('In-app meetings are not enabled yet', 'Info');
-                      }}
+                      onPress={() => void Linking.openURL(booking.meetingLink!)}
                       accessibilityRole="button"
                       style={{ flex: 1 }}
                     >
                       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.accent }}>
                         <VideoCamera size={16} weight="fill" color={colors.bg} />
                         <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Join</Text>
+                      </View>
+                    </Pressable>
+                  )}
+                  {canAddLink && (
+                    <Pressable
+                      onPress={() => { setLinkFor(booking.id); setLinkDraft(''); }}
+                      accessibilityRole="button"
+                      style={{ flex: 1 }}
+                    >
+                      <View style={{ alignItems: 'center', paddingVertical: 12, borderRadius: radius.card, backgroundColor: colors.bg }}>
+                        <Text style={[font.bodyBold, { color: colors.text, fontSize: 13 }]}>Add meeting link</Text>
                       </View>
                     </Pressable>
                   )}
@@ -143,6 +175,30 @@ export function SessionsPanel() {
                       </View>
                     </Pressable>
                   )}
+                </View>
+              )}
+
+              {linkFor === booking.id && (
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TextInput
+                    value={linkDraft}
+                    onChangeText={setLinkDraft}
+                    placeholder="https://…"
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="none"
+                    keyboardType="url"
+                    autoFocus
+                    style={[font.body, {
+                      flex: 1, color: colors.text, fontSize: 13,
+                      backgroundColor: colors.bg, borderRadius: radius.card,
+                      paddingHorizontal: 12, paddingVertical: 10,
+                    }]}
+                  />
+                  <Pressable onPress={() => saveMeetingLink(booking)} accessibilityRole="button">
+                    <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.card, backgroundColor: colors.accent }}>
+                      <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>Save</Text>
+                    </View>
+                  </Pressable>
                 </View>
               )}
             </View>

@@ -21,7 +21,6 @@ import {
 } from 'phosphor-react-native';
 import { MiniAppShell } from '../../components/mini-apps/MiniAppShell';
 import { EdgeFeaturePanel } from '../../components/mini-apps/EdgeFeaturePanel';
-import { MiniCommandDeck } from '../../components/mini-apps/MiniKit';
 import { Disclosure } from '../../components/learn/Disclosure';
 import { LecturesPanel } from '../../components/learn/LecturesPanel';
 import { SessionsPanel } from '../../components/learn/SessionsPanel';
@@ -523,18 +522,6 @@ export default function LearnScreen() {
       {activeGoal && stats ? (
         <>
           <Hero goal={activeGoal} stats={stats} />
-          <MiniCommandDeck
-            accent={colors.accent}
-            title={ttx("Mastery studio")}
-            subtitle={ttx("Paths, practice, proof.")}
-            metrics={[
-              { label: 'Progress', value: `${stats.percent}%`, detail: 'path' },
-              { label: 'Quiz', value: `${stats.quizScore}%`, detail: 'score' },
-              { label: 'Study', value: `${activeGoal.studyMinutes}`, detail: 'minutes' },
-            ]}
-            chips={['Code-along', '1:1 teaching', 'Echo partner']}
-          />
-
           {goals.length > 1 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 12 }}>
               {goals.map(goal => <Chip key={goal.id} label={goal.title} active={goal.id === activeGoal.id} onPress={() => setActiveId(goal.id)} />)}
@@ -893,8 +880,8 @@ function Hero({ goal, stats }: { goal: LearningGoal; stats: ReturnType<typeof le
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
         <Stat label={ttx("Open steps")} value={`${stats.open}`} />
-        <Stat label={ttx("Quiz score")} value={`${stats.quizScore}%`} />
         <Stat label={ttx("Streak")} value={`${goal.streak}d`} />
+        <Stat label={ttx("Studied")} value={`${goal.studyMinutes}m`} />
       </View>
     </GlassPanel>
   );
