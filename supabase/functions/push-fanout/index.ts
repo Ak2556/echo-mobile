@@ -15,6 +15,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // client registers exactly what this stamps. See lib/notifications/routing.ts.
 import {
   DAILY_PUSH_CAP,
+  allowsKind,
   bypassesDailyCap,
   categoryForKind,
   channelForKind,
@@ -59,7 +60,7 @@ Deno.serve(async (req: Request) => {
   // Load recipient token + actor name in parallel. allSettled so a failed
   // actor lookup doesn't abort the notification entirely.
   const [recipientResult, actorResult, unreadResult] = await Promise.allSettled([
-    supabase.from('profiles').select('push_token').eq('id', body.user_id).maybeSingle(),
+    supabase.from('profiles').select('push_token, notification_prefs').eq('id', body.user_id).maybeSingle(),
     body.actor_id
       ? supabase.from('profiles').select('display_name, username').eq('id', body.actor_id).maybeSingle()
       : Promise.resolve({ data: null as { display_name?: string; username?: string } | null }),
@@ -82,6 +83,18 @@ Deno.serve(async (req: Request) => {
   const recipient = recipientResult.value.data;
   if (!recipient?.push_token) {
     return new Response(JSON.stringify({ skipped: 'no token' }), { status: 200 });
+  }
+
+  // The switches in Notification Preferences are enforced here, which is the
+  // only place they can be: the decision has to hold for a device that is
+  // asleep. The notification row is still written, so the in-app inbox stays
+  // complete — turning a kind off silences the buzz, it does not erase the
+  // record.
+  if (!allowsKind(recipient.notification_prefs as Record<string, unknown> | null, body.type)) {
+    return new Response(
+      JSON.stringify({ skipped: 'muted by user preference', kind: body.type }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
   }
 
   // Daily delivery cap. The notification row is already written — the in-app
@@ -147,6 +160,31 @@ Deno.serve(async (req: Request) => {
     body: JSON.stringify(expoPayload),
   });
   const j = await r.json().catch(() => ({}));
+
+  // Prune tokens Expo has rejected.
+  //
+  // Expo answers a send with a ticket per token, and a token belonging to an
+  // uninstalled app or a rotated install comes back as DeviceNotRegistered.
+  // Nothing read these before, so dead tokens stayed on file forever: every
+  // later notification paid a round trip to deliver nothing, and the count of
+  // "reachable users" drifted further from the truth with every uninstall.
+  try {
+    const tickets = (j as { data?: { status?: string; details?: { error?: string } }[] }).data ?? [];
+    if (tickets.some(t => t?.details?.error === 'DeviceNotRegistered')) {
+      await Promise.all([
+        supabase.from('push_tokens').delete().eq('token', recipient.push_token),
+        // The legacy column holds one token for the whole account; clear it
+        // only when it is this same dead token.
+        supabase.from('profiles').update({ push_token: null })
+          .eq('id', body.user_id).eq('push_token', recipient.push_token),
+      ]);
+      console.log('[push-fanout] pruned unregistered token for', body.user_id);
+    }
+  } catch (e) {
+    // Pruning is housekeeping; never fail the send over it.
+    console.error('[push-fanout] token prune failed:', e);
+  }
+
   return new Response(JSON.stringify(j), { status: r.ok ? 200 : 502, headers: { 'content-type': 'application/json' } });
 });
 

@@ -11,6 +11,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../src/shared/lib/theme';
 import { showToast } from '../components/ui/Toast';
 import { clearPushToken, registerForPush } from '../lib/push';
+import { syncNotificationPrefs } from '../lib/notifications/prefsSync';
 import { ttx } from '../src/shared/lib/i18n';
 
 export default function NotificationPrefsScreen() {
@@ -104,17 +105,17 @@ export default function NotificationPrefsScreen() {
               borderColor: colors.border,
             }}
           >
-            <ToggleRow icon={HeartStraight} iconColor={colors.danger} label={ttx("Likes")} subtitle={ttx("When someone likes your echo")} value={notifyLikes} onValueChange={setNotifyLikes} />
+            <ToggleRow icon={HeartStraight} iconColor={colors.danger} label={ttx("Likes")} subtitle={ttx("When someone likes your echo")} value={notifyLikes} onValueChange={(v) => { setNotifyLikes(v); void syncNotificationPrefs(); }} />
             {divider}
-            <ToggleRow icon={ChatCircle} iconColor={colors.accent} label={ttx("Comments")} subtitle={ttx("When someone comments on your echo")} value={notifyComments} onValueChange={setNotifyComments} />
+            <ToggleRow icon={ChatCircle} iconColor={colors.accent} label={ttx("Comments")} subtitle={ttx("When someone comments on your echo")} value={notifyComments} onValueChange={(v) => { setNotifyComments(v); void syncNotificationPrefs(); }} />
             {divider}
-            <ToggleRow icon={UserPlus} iconColor={colors.success} label={ttx("New Followers")} subtitle={ttx("When someone follows you")} value={notifyFollows} onValueChange={setNotifyFollows} />
+            <ToggleRow icon={UserPlus} iconColor={colors.success} label={ttx("New Followers")} subtitle={ttx("When someone follows you")} value={notifyFollows} onValueChange={(v) => { setNotifyFollows(v); void syncNotificationPrefs(); }} />
             {divider}
-            <ToggleRow icon={Envelope} iconColor={colors.accent} label={ttx("Direct Messages")} subtitle={ttx("When you receive a new message")} value={notifyDMs} onValueChange={setNotifyDMs} />
+            <ToggleRow icon={Envelope} iconColor={colors.accent} label={ttx("Direct Messages")} subtitle={ttx("When you receive a new message")} value={notifyDMs} onValueChange={(v) => { setNotifyDMs(v); void syncNotificationPrefs(); }} />
             {divider}
-            <ToggleRow icon={ArrowsClockwise} iconColor={colors.accent} label={ttx("Re-echoes")} subtitle={ttx("When someone re-echoes your post")} value={notifyReposts} onValueChange={setNotifyReposts} />
+            <ToggleRow icon={ArrowsClockwise} iconColor={colors.accent} label={ttx("Re-echoes")} subtitle={ttx("When someone re-echoes your post")} value={notifyReposts} onValueChange={(v) => { setNotifyReposts(v); void syncNotificationPrefs(); }} />
             {divider}
-            <ToggleRow icon={Quotes} iconColor={colors.accent} label={ttx("Mentions")} subtitle={ttx("When someone mentions you")} value={notifyMentions} onValueChange={setNotifyMentions} />
+            <ToggleRow icon={Quotes} iconColor={colors.accent} label={ttx("Mentions")} subtitle={ttx("When someone mentions you")} value={notifyMentions} onValueChange={(v) => { setNotifyMentions(v); void syncNotificationPrefs(); }} />
           </View>
         </Animated.View>
 

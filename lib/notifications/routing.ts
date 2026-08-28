@@ -94,3 +94,39 @@ export function bypassesDailyCap(kind: string | null | undefined): boolean {
  * is, so nothing is lost, it just waits to be found.
  */
 export const DAILY_PUSH_CAP = 6;
+
+/**
+ * Which preference switch governs a notification kind.
+ *
+ * Notification Preferences offers six switches. Kinds with no switch — the
+ * daily question, moderation decisions, personal nudges — return null and are
+ * never suppressed by this, because there is no control offering to stop them
+ * and silently dropping them would be a lie by omission.
+ */
+export function prefKeyForKind(kind: string | null | undefined): string | null {
+  switch (kind) {
+    case 'like':        return 'likes';
+    case 'comment':     return 'comments';
+    case 'follow':      return 'follows';
+    case 'dm':          return 'dms';
+    case 'repost':      return 'reposts';
+    case 'mention':
+    case 'quote':       return 'mentions';
+    default:            return null;
+  }
+}
+
+/**
+ * Whether a kind may be delivered, given the recipient's stored preferences.
+ *
+ * Absent means on. A user who has never opened the screen has an empty object,
+ * and every kind must keep working for them.
+ */
+export function allowsKind(
+  prefs: Record<string, unknown> | null | undefined,
+  kind: string | null | undefined,
+): boolean {
+  const key = prefKeyForKind(kind);
+  if (!key) return true;
+  return prefs?.[key] !== false;
+}

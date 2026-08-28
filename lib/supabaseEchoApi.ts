@@ -1773,6 +1773,8 @@ export async function updateRemoteProfile(updates: {
   content_language?: string;
   stream_responses?: boolean;
   auto_save_chats?: boolean;
+  /** Per-kind push switches; see lib/notifications/routing.ts. */
+  notification_prefs?: Record<string, boolean>;
 }): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
@@ -1786,7 +1788,7 @@ export async function fetchAndApplyRemoteSettings(): Promise<void> {
   if (!uid) return;
   const { data, error } = await supabase
     .from('profiles')
-    .select('ai_model, sensitive_content_filter, content_language, stream_responses, auto_save_chats, is_private, dm_privacy, activity_status, online_status, read_receipts, personalized_notifications')
+    .select('ai_model, sensitive_content_filter, content_language, stream_responses, auto_save_chats, is_private, dm_privacy, activity_status, online_status, read_receipts, personalized_notifications, notification_prefs')
     .eq('id', uid)
     .single();
   if (error || !data) return;
@@ -1797,6 +1799,10 @@ export async function fetchAndApplyRemoteSettings(): Promise<void> {
   if (data.content_language)                  s.setContentLanguage(data.content_language);
   if (data.stream_responses != null)          s.setStreamResponses(data.stream_responses);
   if (data.auto_save_chats != null)           s.setAutoSaveChats(data.auto_save_chats);
+  if (data.notification_prefs) {
+    const { applyNotificationPrefs } = require('./notifications/prefsSync') as typeof import('./notifications/prefsSync');
+    applyNotificationPrefs(data.notification_prefs as Record<string, unknown>);
+  }
   if (data.is_private != null)                s.setPrivateAccount(data.is_private);
   if (data.dm_privacy)                        s.setDmPrivacy(data.dm_privacy as any);
   if (data.activity_status != null)           s.setActivityStatus(data.activity_status);

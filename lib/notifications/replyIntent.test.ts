@@ -7,6 +7,7 @@ import {
   categoryForKind,
   resolveReplyIntent,
 } from './replyIntent';
+import { allowsKind, prefKeyForKind } from './routing';
 import { channelForKind, CHANNEL_DAILY, CHANNEL_MESSAGES, CHANNEL_SOCIAL, CHANNEL_SYSTEM } from './channels';
 
 const uuid = '11111111-2222-3333-4444-555555555555';
@@ -99,5 +100,55 @@ describe('channelForKind', () => {
   it('sends an unknown kind to the quietest channel a stranger can reach', () => {
     expect(channelForKind('something_new')).toBe(CHANNEL_SOCIAL);
     expect(channelForKind(undefined)).toBe(CHANNEL_SOCIAL);
+  });
+});
+
+describe('notification preference switches', () => {
+  it('maps each switch in the UI to the kinds it governs', () => {
+    expect(prefKeyForKind('like')).toBe('likes');
+    expect(prefKeyForKind('comment')).toBe('comments');
+    expect(prefKeyForKind('follow')).toBe('follows');
+    expect(prefKeyForKind('dm')).toBe('dms');
+    expect(prefKeyForKind('repost')).toBe('reposts');
+    // One switch, two kinds — a quote is a mention with extra steps.
+    expect(prefKeyForKind('mention')).toBe('mentions');
+    expect(prefKeyForKind('quote')).toBe('mentions');
+  });
+
+  it('governs nothing the screen does not offer a switch for', () => {
+    // Suppressing these would be a silent drop with no control to explain it.
+    for (const kind of ['daily_question', 'content_removed', 'appeal_resolved', 'personal_nudge']) {
+      expect(prefKeyForKind(kind)).toBeNull();
+      expect(allowsKind({ likes: false }, kind)).toBe(true);
+    }
+  });
+
+  it('treats an absent preference as on', () => {
+    // Every account predating the column has {}. They must keep receiving.
+    expect(allowsKind({}, 'like')).toBe(true);
+    expect(allowsKind(null, 'like')).toBe(true);
+    expect(allowsKind(undefined, 'dm')).toBe(true);
+  });
+
+  it('suppresses only the kind that was switched off', () => {
+    const prefs = { likes: false };
+    expect(allowsKind(prefs, 'like')).toBe(false);
+    expect(allowsKind(prefs, 'comment')).toBe(true);
+    expect(allowsKind(prefs, 'dm')).toBe(true);
+  });
+
+  it('only false suppresses — a truthy or junk value still delivers', () => {
+    expect(allowsKind({ likes: true }, 'like')).toBe(true);
+    expect(allowsKind({ likes: 'no' as unknown as boolean }, 'like')).toBe(true);
+  });
+
+  it('covers every switch the preferences screen renders', () => {
+    // If a switch is added to the screen without a mapping here it would move,
+    // persist, and change nothing — the exact bug this replaced.
+    const screenKeys = ['likes', 'comments', 'follows', 'dms', 'reposts', 'mentions'];
+    const mapped = new Set(
+      ['like', 'comment', 'follow', 'dm', 'repost', 'mention', 'quote'].map(prefKeyForKind),
+    );
+    for (const key of screenKeys) expect(mapped.has(key), `no kind maps to ${key}`).toBe(true);
   });
 });
