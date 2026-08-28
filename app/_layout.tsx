@@ -31,7 +31,7 @@ import { usePresenceTracking } from '../lib/presence';
 import { persistGet, persistSet, persistDelete } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import { handleNotificationReply } from '../lib/notifications/handleReplyResponse';
-import { initNotificationSurface } from '../lib/push';
+import { initNotificationSurface, registerPushAndStoreToken } from '../lib/push';
 import { PomodoroRuntimeHost } from '../lib/pomodoroRuntime';
 import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
 import { VoiceControl } from '../src/features/voice/ui/VoiceControl';
@@ -123,6 +123,29 @@ const queryClient = new QueryClient({
 
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <AppErrorBoundary {...props} />;
+}
+
+/**
+ * Refresh this device's push token whenever a session becomes active.
+ *
+ * Expo push tokens rotate — on reinstall, on restore to a new device, and at
+ * the OS's discretion. Nothing ran at launch to notice, so a rotated token left
+ * the account pointing at an address that no longer resolved and notifications
+ * simply stopped, with no error anywhere to say so.
+ *
+ * registerPushAndStoreToken only proceeds when permission is already granted,
+ * so this can never surprise anyone with a permission dialog on startup.
+ */
+function PushTokenRefresh() {
+  const { status, session } = useAuth();
+  const userId = session?.user?.id;
+  useEffect(() => {
+    // 'ready' is the only status with a usable session; 'needs-onboarding'
+    // still has no profile row to hang a token off.
+    if (Platform.OS === 'web' || status !== 'ready') return;
+    void registerPushAndStoreToken(userId);
+  }, [status, userId]);
+  return null;
 }
 
 // Live auth guard: if the session clears mid-session (e.g. refresh token revoked
@@ -296,6 +319,7 @@ function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthListenerProvider />
         <AuthGuard />
+        <PushTokenRefresh />
         <UniversalLinkRouter />
         <PomodoroRuntimeHost />
         <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
