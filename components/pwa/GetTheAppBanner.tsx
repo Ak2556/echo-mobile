@@ -31,7 +31,7 @@ interface BeforeInstallPromptEvent extends Event {
   readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-type Offer = 'apk' | 'install' | null;
+type Offer = 'apk' | 'install' | 'page';
 
 export function GetTheAppBanner() {
   const { colors, font, radius } = useTheme();
@@ -70,6 +70,11 @@ export function GetTheAppBanner() {
   }, []);
 
   const act = useCallback(async () => {
+    if (!isAndroid && !deferred) {
+      // Nothing installable here — send them to the download page instead.
+      void Linking.openURL('/download');
+      return;
+    }
     if (isAndroid) {
       void Linking.openURL(APK_URL);
       dismiss();
@@ -83,8 +88,12 @@ export function GetTheAppBanner() {
     } catch { /* dismissed */ }
   }, [isAndroid, deferred, dismiss]);
 
-  const offer: Offer = isAndroid ? 'apk' : deferred ? 'install' : null;
-  if (Platform.OS !== 'web' || dismissed || !offer) return null;
+  // Three states, not two. A desktop visitor on Safari or Firefox gets no
+  // beforeinstallprompt and cannot install — but they can still be told the
+  // Android app exists, so they get a quiet link to the download page rather
+  // than nothing.
+  const offer: Offer = isAndroid ? 'apk' : deferred ? 'install' : 'page';
+  if (Platform.OS !== 'web' || dismissed) return null;
 
   return (
     <View
@@ -98,13 +107,15 @@ export function GetTheAppBanner() {
       <Text style={[font.body, { color: colors.text, fontSize: 13, flex: 1 }]} numberOfLines={2}>
         {offer === 'apk'
           ? 'Echo works better in the app — voice, notifications and offline.'
-          : 'Install Echo for a faster, full-screen experience.'}
+          : offer === 'install'
+            ? 'Install Echo for a faster, full-screen experience.'
+            : 'Echo also has an Android app — voice, notifications and offline.'}
       </Text>
 
       <Pressable onPress={act} accessibilityRole="button">
         <View style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.card, backgroundColor: colors.accent }}>
           <Text style={[font.bodyBold, { color: colors.bg, fontSize: 13 }]}>
-            {offer === 'apk' ? 'Get the app' : 'Install'}
+            {offer === 'apk' ? 'Get the app' : offer === 'install' ? 'Install' : 'Learn more'}
           </Text>
         </View>
       </Pressable>
