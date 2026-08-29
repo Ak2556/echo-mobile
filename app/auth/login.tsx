@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +18,7 @@ import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import * as Haptics from 'expo-haptics';
 import { CANCELLED, refreshAuthSession, signInAsDemo, signInWithGoogle } from '../../lib/auth';
 import { GetTheAppBanner } from '../../components/pwa/GetTheAppBanner';
+import { WebLandingPanel } from '../../components/pwa/WebLandingPanel';
 import { showToast } from '../../components/ui/Toast';
 import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
 
@@ -36,6 +37,10 @@ export default function LoginScreen() {
   const router = useRouter();
   const { colors, radius, font } = useTheme();
   const layout = useResponsiveLayout();
+  // The marketing column only exists on a wide browser; WebLandingPanel makes
+  // the same call, so both sides agree on the layout.
+  const { width: windowWidth } = useWindowDimensions();
+  const showLanding = Platform.OS === 'web' && windowWidth >= 1000;
   const { t, textDirection } = useI18n();
   const isDark = colors.isDark;
 
@@ -115,18 +120,40 @@ export default function LoginScreen() {
         <View
           style={{
             flex: 1,
+            flexDirection: 'row',
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            alignSelf: 'center',
             width: '100%',
-            maxWidth: layout.formMaxWidth,
+            maxWidth: showLanding ? 1240 : layout.formMaxWidth,
+            paddingHorizontal: showLanding ? 48 : 0,
+            gap: showLanding ? 40 : 0,
+          }}
+        >
+          <WebLandingPanel />
+
+        <View
+          style={{
+            // Not `flex: 0` — React Native compiles that to `flex: 0 1 0%`,
+            // and a zero flex-basis collapses the column to 0px wide, leaving
+            // every label to wrap one word per line. An explicit basis with no
+            // grow or shrink is what actually reserves the space.
+            flexGrow: showLanding ? 0 : 1,
+            flexShrink: 0,
+            flexBasis: showLanding ? 420 : 'auto',
+            width: showLanding ? undefined : '100%',
+            maxWidth: showLanding ? undefined : layout.formMaxWidth,
             alignSelf: 'center',
             paddingHorizontal: layout.isWide ? 0 : 28,
             justifyContent: 'space-between',
             paddingBottom: 24,
+            ...(showLanding ? {} : { flexGrow: 1 }),
           }}
         >
 
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Animated.View entering={FadeInDown.duration(400).springify().mass(0.6).damping(16)} style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 104, lineHeight: 110, letterSpacing: -2 }]}>
+              <Text style={[font.displayBlack, { color: colors.text, fontSize: showLanding ? 64 : 104, lineHeight: showLanding ? 68 : 110, letterSpacing: -2 }]}>
                 echo
               </Text>
               <Animated.View style={[{ marginLeft: 2, marginBottom: 14 }, dotStyle]}>
@@ -254,6 +281,7 @@ export default function LoginScreen() {
               </Animated.View>
             )}
           </View>
+        </View>
         </View>
       </SafeAreaView>
     </View>
