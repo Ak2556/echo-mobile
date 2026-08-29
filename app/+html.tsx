@@ -35,6 +35,9 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Safari ignores the manifest for Add to Home Screen and reads these
             instead. Without them an iOS install opens in a browser tab with a
             screenshot for an icon. */}
+        {/* The standard name; Chrome warns that the apple-prefixed one alone is
+            deprecated. Both are kept because Safari still reads only its own. */}
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Echo" />
