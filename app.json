@@ -158,7 +158,6 @@
       "./plugins/withEchoContactCard"
     ],
     "experiments": {
-      "baseUrl": "/echo-mobile",
       "typedRoutes": true,
       "reactCompiler": true
     },
