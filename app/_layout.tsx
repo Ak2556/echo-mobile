@@ -27,6 +27,7 @@ import { useCommandPalette } from '../lib/commandPalette';
 import { AuthListenerProvider, useAuth, signOut } from '../lib/auth';
 import { ShareIntentProvider, useShareIntentContext } from 'expo-share-intent';
 import { useAppStore } from '../store/useAppStore';
+import { ServiceWorkerRegistrar } from '../components/pwa/ServiceWorkerRegistrar';
 import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { database } from '../src/shared/database';
 import { usePresenceTracking } from '../lib/presence';
@@ -353,6 +354,9 @@ function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthListenerProvider />
         <AuthGuard />
+        {/* Web-only; a no-op on native. Mounted here so the worker registers
+            wherever the user lands, not only on the home route. */}
+        <ServiceWorkerRegistrar />
         <PushTokenRefresh />
         <ShareIntentRouter />
         <UniversalLinkRouter />
