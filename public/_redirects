@@ -1,0 +1,28 @@
+# Netlify rewrites for Echo's web build.
+#
+# Expo's static export writes a dynamic route as a literal file — thread/[id].html —
+# so a real URL like /thread/abc123 matches nothing on disk and 404s. Every shared
+# echo, profile and conversation link is a dynamic route, so without these the
+# links Echo puts into the world all break.
+#
+# 200 rather than 301: the browser keeps the real URL, and expo-router reads the
+# id from it on the client. A redirect would rewrite the address bar and lose it.
+#
+# Generated from the export; regenerate when a dynamic route is added.
+
+/chat-details/*    /chat-details/[id].html   200
+/chat-media/*    /chat-media/[id].html   200
+/comments/*    /comments/[id].html   200
+/e/*    /e/[id].html   200
+/evolution/*    /evolution/[rootId].html   200
+/group/*    /group/[id].html   200
+/listing/*    /listing/[id].html   200
+/messages/*    /messages/[id].html   200
+/office-hours/*    /office-hours/[id].html   200
+/remix/*    /remix/[id].html   200
+/salon/*    /salon/[slug].html   200
+/thread/*    /thread/[id].html   200
+/user/*    /user/[id].html   200
+
+# Anything else unknown falls through to Expo's own not-found page.
+/*    /+not-found.html   404

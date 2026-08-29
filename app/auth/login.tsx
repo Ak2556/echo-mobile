@@ -17,6 +17,7 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import * as Haptics from 'expo-haptics';
 import { CANCELLED, refreshAuthSession, signInAsDemo, signInWithGoogle } from '../../lib/auth';
+import { GetTheAppBanner } from '../../components/pwa/GetTheAppBanner';
 import { showToast } from '../../components/ui/Toast';
 import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
 
@@ -107,6 +108,8 @@ export default function LoginScreen() {
           style={{ position: 'absolute', inset: 0 }}
         />
       </View>
+
+      <GetTheAppBanner />
 
       <SafeAreaView style={{ flex: 1 }}>
         <View
