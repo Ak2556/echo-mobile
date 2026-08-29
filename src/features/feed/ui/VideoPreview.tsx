@@ -6,11 +6,18 @@ import { videoSourceForUri } from '../../../../lib/videoMedia';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
 import { ttx } from '../../../shared/lib/i18n';
-import { WebView } from 'react-native-webview';
 import { useIsFocused } from '@react-navigation/native';
 
 // Safely attempt to load expo-video (unavailable in Expo Go).
 // In Expo Go this stays null and we render the static fallback.
+// react-native-webview ships no web build at all, and a static import runs at
+// module load — so on web it throws before this component is ever rendered,
+// taking the feed, explore, threads and profiles down with it. Loaded the same
+// guarded way as expo-video below; null on web, where the fallback below is
+// used instead.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const WebView: any = (() => { try { return require('react-native-webview').WebView; } catch { return null; } })();
+
 let ExpoVideoModule: { VideoView: any; useVideoPlayer: any } | null = null;
 try {
   // Dynamic require is required: expo-video's native module is absent in Expo
@@ -182,7 +189,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
 
       {loadState === 'error' && (
         <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}>
-          {isActive && (
+          {isActive && WebView && (
             <WebView
               source={{
                 html: `

@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActionSheetIOS, ActivityIndicator, Modal, Platform, Pressable, Text, View } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { useVideoPlayer, VideoView } from 'expo-video';
+
+// Only used on iOS (see the Platform.OS branch below), but a static import runs
+// everywhere — and react-native-webview has no web build, so importing it would
+// break every screen that renders a video on the website.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const WebView: any = (() => { try { return require('react-native-webview').WebView; } catch { return null; } })();
 import { ArrowsClockwise, CornersOut, Pause, Play, SlidersHorizontal, SpeakerHigh, SpeakerSlash } from 'phosphor-react-native';
 import { useTheme } from '../../../shared/lib/theme';
 import { videoSourceForUri } from '../../../../lib/videoMedia';
