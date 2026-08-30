@@ -4,6 +4,7 @@ import {
   isBirthday,
   selectTrigger,
   copyForTrigger,
+  istDateString,
   type NudgeTrigger,
 } from './triggerCopy';
 
@@ -44,6 +45,26 @@ describe('isBirthday', () => {
   it('handles a 29 Feb birthday without matching 1 March', () => {
     expect(isBirthday('2000-02-29', '2026-03-01')).toBe(false);
     expect(isBirthday('2000-02-29', '2028-02-29')).toBe(true);
+  });
+});
+
+describe('istDateString', () => {
+  it('formats as YYYY-MM-DD', () => {
+    expect(istDateString(new Date('2026-06-15T12:00:00.000Z'))).toBe('2026-06-15');
+  });
+
+  it('reports the next day during the UTC-to-IST gap the fanout bug hit', () => {
+    // 20:00 UTC on Aug 30 is 01:30 IST on Aug 31 (UTC+5:30) — squarely inside
+    // the 00:00-05:30 IST window where the naive UTC date is still "yesterday".
+    const instant = new Date('2026-08-30T20:00:00.000Z');
+    expect(instant.toISOString().slice(0, 10)).toBe('2026-08-30');
+    expect(istDateString(instant)).toBe('2026-08-31');
+  });
+
+  it('agrees with the UTC date well inside the Indian daytime', () => {
+    // 12:00 UTC is 17:30 IST — same calendar day either way.
+    const instant = new Date('2026-08-30T12:00:00.000Z');
+    expect(istDateString(instant)).toBe(instant.toISOString().slice(0, 10));
   });
 });
 

@@ -74,6 +74,22 @@ function monthDay(isoDate: string): string {
 }
 
 /**
+ * Today's calendar date in India Standard Time, as `YYYY-MM-DD`.
+ *
+ * For occasion triggers ONLY (birthdays, festivals) — `new
+ * Date().toISOString().slice(0, 10)` reports the UTC date, which is still
+ * "yesterday" between 00:00 and 05:30 IST. An occasion check running on that
+ * UTC date misses the last 5.5 hours of the Indian day, which is exactly the
+ * "greeting someone on the wrong day is a worse failure than staying silent"
+ * mistake this file warns about above. Do not use this for the daily-question
+ * lookup — that stays on the UTC date deliberately, since changing it would
+ * change which question a user sees.
+ */
+export function istDateString(date: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(date);
+}
+
+/**
  * The festival falling on `today` (an ISO `YYYY-MM-DD`), or null.
  * Exact-dated movable feasts win over fixed ones when both somehow match.
  */

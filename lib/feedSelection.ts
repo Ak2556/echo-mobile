@@ -21,12 +21,36 @@ export interface DiversityOptions {
   explorationShare: number;
 }
 
-export function applyDiversity<T extends SelectableItem>(
+export interface DiversitySelection<T> {
+  /** The items that survived the author cap and the exploration reserve. */
+  items: T[];
+  /**
+   * The deepest item the selector looked at in score order — NOT the last item
+   * it kept. The keyset cursor for the next page has to be taken from here:
+   * rows rejected by the author cap scored ABOVE the last kept row, so a cursor
+   * built from the kept set re-fetches them on every later page, where they are
+   * rejected again. They stay unreachable either way, but a cursor taken from
+   * the examined set stops them from eating the next page's capacity forever.
+   * Null only when nothing was examined (empty input or a non-positive limit).
+   */
+  lastExamined: T | null;
+  /** How far down the score-ordered list the page consumed, 1-based. */
+  examinedCount: number;
+}
+
+/**
+ * Diversity selection, reporting how deep into the score-ordered candidates it
+ * had to reach. `applyDiversity` is this function's `items` — the pagination
+ * caller wants `lastExamined` as well.
+ */
+export function selectWithDiversity<T extends SelectableItem>(
   items: T[],
   opts: DiversityOptions,
-): T[] {
+): DiversitySelection<T> {
   const { limit, perAuthorCap, explorationShare } = opts;
-  if (limit <= 0 || items.length === 0) return [];
+  if (limit <= 0 || items.length === 0) {
+    return { items: [], lastExamined: null, examinedCount: 0 };
+  }
 
   // Clamp so a caller cannot break the one hard invariant (never exceed limit):
   // a negative share would make mainSlots larger than limit.
@@ -42,8 +66,13 @@ export function applyDiversity<T extends SelectableItem>(
   const perAuthor = new Map<string, number>();
   const chosen: T[] = [];
   const taken = new Set<string>();
+  // Furthest index in `byScore` this selection actually inspected, across all
+  // three passes. Everything at or above it has been decided; everything below
+  // it was never looked at and is what the next page must start from.
+  let deepest = -1;
 
-  const tryTake = (item: T): boolean => {
+  const tryTake = (item: T, index: number): boolean => {
+    if (index > deepest) deepest = index;
     if (taken.has(item.id)) return false;
     const used = perAuthor.get(item.authorId) ?? 0;
     if (used >= cap) return false;
@@ -54,23 +83,36 @@ export function applyDiversity<T extends SelectableItem>(
   };
 
   // Main slots: best scoring items that respect the author cap.
-  for (const item of byScore) {
+  for (let i = 0; i < byScore.length; i++) {
     if (chosen.length >= mainSlots) break;
-    tryTake(item);
+    tryTake(byScore[i], i);
   }
 
   // Reserved slots: exploration first, then anything left over. When the main
   // pass underfills because of the author cap, exploration items are preferred
   // for the leftover capacity even at explorationShare 0 — deliberate: a full
   // page beats a short one.
-  for (const item of byScore.filter(i => i.source === 'exploration')) {
+  for (let i = 0; i < byScore.length; i++) {
     if (chosen.length >= limit) break;
-    tryTake(item);
+    if (byScore[i].source !== 'exploration') continue;
+    tryTake(byScore[i], i);
   }
-  for (const item of byScore) {
+  for (let i = 0; i < byScore.length; i++) {
     if (chosen.length >= limit) break;
-    tryTake(item);
+    tryTake(byScore[i], i);
   }
 
-  return chosen;
+  return {
+    items: chosen,
+    lastExamined: deepest >= 0 ? byScore[deepest] : null,
+    examinedCount: deepest + 1,
+  };
+}
+
+/** Back-compatible wrapper: the selected page, without the cursor bookkeeping. */
+export function applyDiversity<T extends SelectableItem>(
+  items: T[],
+  opts: DiversityOptions,
+): T[] {
+  return selectWithDiversity(items, opts).items;
 }

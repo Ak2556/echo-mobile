@@ -187,6 +187,14 @@ export function useInfiniteFeed() {
     getNextPageParam: (lastPage: FeedItem[]): RankedFeedCursor => {
       if (lastPage.length < PAGE_SIZE) return undefined;
       const last = lastPage[lastPage.length - 1];
+      // The personal-feed diversity trim can reject rows scoring above
+      // everything it kept; fetchPersonalFeed stamps the deepest candidate it
+      // actually examined onto the last item as `personalFeedCursor`. Using
+      // that instead of this item's own rankScore is what stops the rejected
+      // rows from being re-fetched, re-rejected, and eating page capacity on
+      // every later page. Absent on the ranked/fallback paths, which fall
+      // through to the plain rankScore cursor below.
+      if (last.personalFeedCursor) return last.personalFeedCursor;
       return last.rankScore != null ? { score: last.rankScore, id: last.id } : undefined;
     },
     staleTime: remote ? 30_000 : Infinity,

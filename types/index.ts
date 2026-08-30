@@ -132,6 +132,15 @@ export interface FeedItem {
   isPending?: boolean;
   // Server-computed ranking score — present on remote items, absent on local/seed items.
   rankScore?: number;
+  // Pagination-only: set on the LAST item of a personal-feed page to the
+  // (score, id) of the deepest candidate the client-side diversity trim
+  // actually examined, when that differs from this item's own (rankScore,
+  // id). The author cap can reject rows scoring above everything kept on the
+  // page; building the next keyset cursor from this item's own rankScore
+  // would re-fetch those rejected rows on every later page, where they are
+  // rejected again forever. See lib/feedSelection.ts (`selectWithDiversity`)
+  // and fetchPersonalFeed in lib/supabaseEchoApi.ts. Never rendered.
+  personalFeedCursor?: { score: number; id: string };
   // Remix lineage
   parentEchoId?: string;
   remixRootId?: string;

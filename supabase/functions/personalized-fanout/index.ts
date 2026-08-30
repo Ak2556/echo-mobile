@@ -14,7 +14,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Occasion copy (birthday, Indian festivals) lives beside the routing table the
 // push path already shares. See lib/notifications/triggerCopy.ts.
-import { selectTrigger, copyForTrigger } from '../../../lib/notifications/triggerCopy.ts';
+import { selectTrigger, copyForTrigger, istDateString } from '../../../lib/notifications/triggerCopy.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -118,9 +118,14 @@ Deno.serve(async (req: Request) => {
 
   // Which of these users already answered today's daily question — so a
   // 'daily'-surface nudge doesn't tell them to do something they've done.
+  // Deliberately UTC: changing this to IST would change which question a
+  // user sees, which is out of scope here — see istDateString's docstring.
   const today = new Date().toISOString().slice(0, 10);
   const { data: q } = await supabase
     .from('daily_questions').select('id').eq('active_date', today).maybeSingle();
+  // Occasion triggers (birthday/festival) use the IST calendar date instead —
+  // the audience is IST, and a UTC date is still "yesterday" until 05:30 IST.
+  const occasionToday = istDateString();
   const answered = new Set<string>();
   if (q?.id) {
     const { data: ans } = await supabase
@@ -142,7 +147,7 @@ Deno.serve(async (req: Request) => {
     // copyForTrigger returns null, so the existing path runs untouched.
     const trigger = selectTrigger({
       dateOfBirth: profileOf(row)?.date_of_birth ?? null,
-      today,
+      today: occasionToday,
       surface,
     });
     const occasionBody = copyForTrigger(trigger, pick);

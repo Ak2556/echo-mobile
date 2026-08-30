@@ -8,7 +8,7 @@ import {
   SupabaseEchoRow,
   SupabaseProfileRow,
 } from './mapSupabaseEcho';
-import { applyDiversity, type SelectableItem } from './feedSelection';
+import { selectWithDiversity, type SelectableItem } from './feedSelection';
 import { captureException } from './monitoring';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
@@ -959,22 +959,49 @@ export async function fetchPersonalFeed(options: {
   const overFetched = (data ?? []) as PersonalFeedRow[];
   if (overFetched.length === 0) return [];
 
-  // The RPC over-fetches (up to 3x limit) so the diversity pass has enough
-  // candidates to draw from; the author cap and exploration reserve are
-  // applied here, where they are unit-tested. 'reseen' and 'ranked' rows are
-  // backfill/fallback, not a deliberate exploration pick, so they're folded
-  // into 'trending' and must not consume the exploration reserve.
-  const selected = applyDiversity(
-    overFetched.map(r => ({
-      id: r.id,
-      authorId: r.author_id,
-      score: r.rank_score,
-      source: (r.source === 'reseen' || r.source === 'ranked' ? 'trending' : r.source) as SelectableItem['source'],
-      row: r,
-    })),
-    { limit, perAuthorCap: 2, explorationShare: 0.2 },
-  );
-  const rows = selected.map(s => s.row);
+  // Stage-0 fallback: the viewer couldn't be profiled (no DOB today — every
+  // current user), so get_personal_feed already ran get_ranked_feed and
+  // returned exactly `limit` rows, every one tagged 'ranked'. That ordering
+  // and limit are final — running the diversity trim over it anyway drops
+  // rows the fallback never over-fetched replacements for, producing a short
+  // page that ends the feed after one screen for 100% of today's users.
+  const isFallback = overFetched.every(r => r.source === 'ranked');
+
+  let rows: PersonalFeedRow[];
+  let cursor: { score: number; id: string } | undefined;
+
+  if (isFallback) {
+    rows = overFetched;
+    const last = rows[rows.length - 1];
+    cursor = last ? { score: last.rank_score, id: last.id } : undefined;
+  } else {
+    // The RPC over-fetches (up to 3x limit) so the diversity pass has enough
+    // candidates to draw from; the author cap and exploration reserve are
+    // applied here, where they are unit-tested. 'reseen' rows are backfill,
+    // not a deliberate exploration pick, so they're folded into 'trending'
+    // and must not consume the exploration reserve.
+    const selection = selectWithDiversity(
+      overFetched.map(r => ({
+        id: r.id,
+        authorId: r.author_id,
+        score: r.rank_score,
+        // 'ranked' should not appear here (isFallback is exclusive with this
+        // branch), but folding it into 'trending' defensively costs nothing.
+        source: (r.source === 'reseen' || r.source === 'ranked' ? 'trending' : r.source) as SelectableItem['source'],
+        row: r,
+      })),
+      { limit, perAuthorCap: 2, explorationShare: 0.2 },
+    );
+    rows = selection.items.map(s => s.row);
+    // The next page's keyset cursor must reflect how deep into the
+    // score-ordered candidates this page actually reached, not which rows
+    // survived the author cap — see selectWithDiversity's DiversitySelection
+    // docstring for why a cursor built from the kept set permanently loses
+    // rows the cap rejected.
+    cursor = selection.lastExamined
+      ? { score: selection.lastExamined.score, id: selection.lastExamined.id }
+      : undefined;
+  }
 
   const profileById = new Map<string, SupabaseProfileRow>(
     rows.map(r => [r.author_id, {
@@ -1006,13 +1033,27 @@ export async function fetchPersonalFeed(options: {
   const bookmarked = new Set((bmRows ?? []).map((r: { echo_id: string }) => r.echo_id));
   const reposted = new Set((repostRows ?? []).map((r: { echo_id: string }) => r.echo_id));
 
-  return await translateFeedItems(rows.map(row =>
+  const items = await translateFeedItems(rows.map(row =>
     mapEchoRowToFeedItem(
       row as SupabaseEchoRow,
       profileById.get(row.author_id),
       liked, bookmarked, reposted
     )
   ));
+
+  // Convey the keyset cursor to useInfiniteFeed by attaching it to the last
+  // item: FeedItem[] is the established return type for every feed fetcher,
+  // and an extra optional field on the last item is invisible to every other
+  // caller (the non-paginated useFeed() call, translateFeedItems, rendering)
+  // while surviving straight through react-query's cache — unlike a property
+  // on the array itself, which JSON.stringify (and the MMKV query persister)
+  // silently drops. Omitted on the fallback path's untrimmed rows, where the
+  // last row's own rankScore is already a correct cursor.
+  if (!isFallback && cursor && items.length > 0) {
+    items[items.length - 1] = { ...items[items.length - 1], personalFeedCursor: cursor };
+  }
+
+  return items;
 }
 
 export async function fetchSimilarEchoes(echoId: string, limit = 6): Promise<FeedItem[]> {
