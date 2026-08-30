@@ -468,6 +468,28 @@ export async function getSessionUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
+/**
+ * Records a negative signal so the personalized ranker stops surfacing this
+ * echo, or this author, for the current user. Best-effort: a failure here must
+ * never block the UI gesture that triggered it.
+ */
+export async function markNotInterested(
+  target: { echoId: string } | { authorId: string },
+): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+
+  const row: { user_id: string; echo_id: string | null; author_id: string | null } = 'echoId' in target
+    ? { user_id: uid, echo_id: target.echoId, author_id: null }
+    : { user_id: uid, echo_id: null, author_id: target.authorId };
+
+  const { error } = await supabase.from('user_not_interested').insert(row);
+  // Unique-violation means it is already recorded; nothing to do.
+  if (error && error.code !== '23505') {
+    captureException(error, { tags: { source: 'mark_not_interested' } });
+  }
+}
+
 async function checkRemoteAppRateLimit(action: string, limit: number, windowSeconds: number): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
