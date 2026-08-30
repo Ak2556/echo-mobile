@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { FeedItem } from '../../../../types/index';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -6,7 +7,7 @@ import { captureException } from '../../../../lib/monitoring';
 import {
   fetchRankedFeed,
   fetchRemoteFeed,
-  fetchSemanticFeed,
+  fetchPersonalFeed,
   fetchSimilarEchoes,
   fetchTrendingEvolutions,
   fetchRemixTree,
@@ -30,6 +31,8 @@ export function useFeed() {
   const notInterestedIds = useAppStore(s => s.notInterestedIds);
   const interests       = useAppStore(s => s.interests);
   const remote          = isSupabaseRemote();
+  // Stable per-mount seed so exploration sampling doesn't re-roll on every refetch.
+  const sessionSeed = useMemo(() => Math.floor(Math.random() * 1_000_000), []);
 
   return useQuery({
     queryKey: remote
@@ -46,19 +49,19 @@ export function useFeed() {
         list.filter(item => !blockSet.has(item.userId) && !skipSet.has(item.id));
 
       if (remote) {
-        // Semantic ("For You") scope routes to pgvector cosine similarity
-        // against the user's recent interaction embeddings. Falls back to
-        // ranked feed if the user has no embedding signal yet (the RPC
-        // handles that internally but we double-fallback on RPC error too).
+        // Semantic ("For You") scope routes to the personal ranker, which
+        // blends follow/semantic/trending/exploration candidates server-side
+        // and falls back to the ranked feed internally for users who can't
+        // be profiled. We double-fallback on RPC error too.
         if (feedScope === 'semantic') {
           try {
-            const rows = await fetchSemanticFeed(50);
+            const rows = await fetchPersonalFeed({ limit: 50, sessionSeed });
             const filtered = filterHidden(rows);
             if (filtered.length > 0) return filtered;
-            // No semantic results yet (e.g. fresh install) — fall through
+            // No personal results yet (e.g. fresh install) — fall through
             // to ranked feed so the surface is never empty.
-          } catch (semErr) {
-            captureException(semErr, { tags: { hook: 'useFeed', fallback: 'ranked' } });
+          } catch (personalErr) {
+            captureException(personalErr, { tags: { hook: 'useFeed', fallback: 'ranked' } });
           }
         }
         // Gravity: recency-heavy for 'latest', engagement-heavy for 'popular'.
@@ -164,6 +167,10 @@ export function useInfiniteFeed() {
   const notInterestedIds = useAppStore(s => s.notInterestedIds);
   const interests        = useAppStore(s => s.interests);
   const remote           = isSupabaseRemote();
+  // Stable per-mount seed: passed to get_personal_feed so page 2+ samples
+  // the same exploration set as page 1 instead of re-rolling and
+  // duplicating/skipping rows across the scroll session.
+  const sessionSeed = useMemo(() => Math.floor(Math.random() * 1_000_000), []);
 
   return useInfiniteQuery<
     FeedItem[],
@@ -201,6 +208,21 @@ export function useInfiniteFeed() {
         if (feedScope === 'latest') {
           if (pageParam) return [];
           return fetchRemoteFeed({ limit: PAGE_SIZE * 3 });
+        }
+
+        // Semantic ("For You") scope routes to the personal ranker. The RPC
+        // falls back internally to the ranked feed for users who can't be
+        // profiled, so an empty/failed first page still falls through below;
+        // later pages just stop rather than switch ranking systems mid-scroll
+        // (the ranked feed's cursor isn't meaningful against personal scores).
+        if (feedScope === 'semantic') {
+          try {
+            const rows = await fetchPersonalFeed({ limit: PAGE_SIZE, cursor: pageParam, sessionSeed });
+            if (rows.length > 0 || pageParam) return rows;
+          } catch (personalErr) {
+            captureException(personalErr, { tags: { hook: 'useInfiniteFeed', fallback: 'ranked' } });
+            if (pageParam) return [];
+          }
         }
 
         const gravity = feedSort === 'popular' ? GRAVITY.popular : GRAVITY.latest;

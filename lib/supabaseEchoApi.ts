@@ -8,6 +8,7 @@ import {
   SupabaseEchoRow,
   SupabaseProfileRow,
 } from './mapSupabaseEcho';
+import { applyDiversity, type SelectableItem } from './feedSelection';
 import { captureException } from './monitoring';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
@@ -897,6 +898,98 @@ export async function fetchSemanticFeed(limit = 30): Promise<FeedItem[]> {
 
   return await translateFeedItems(rows.map(row =>
     mapEchoRowToFeedItem(row as SupabaseEchoRow, profileById.get(row.author_id), liked, bookmarked, reposted)
+  ));
+}
+
+// get_personal_feed returns the ranked-feed columns plus the candidate
+// source. 'reseen' is a backfilled already-seen echo used when the unseen
+// pool runs dry; 'ranked' means the whole page came from the non-personalized
+// fallback because the viewer couldn't be profiled (under-18 or unknown age).
+type PersonalFeedRow = RankedFeedRow & {
+  source: 'follow' | 'semantic' | 'trending' | 'exploration' | 'reseen' | 'ranked';
+};
+
+/**
+ * Personalized For You feed. The RPC already falls back server-side to the
+ * ranked feed for users who cannot be profiled, so callers never need to
+ * branch on consent — the client-side try/catch around this call only needs
+ * to cover RPC failure.
+ */
+export async function fetchPersonalFeed(options: {
+  limit?: number;
+  cursor?: RankedFeedCursor;
+  sessionSeed?: number;
+} = {}): Promise<FeedItem[]> {
+  const uid = await getSessionUserId();
+  if (!uid) return [];
+
+  const limit = options.limit ?? 20;
+  const { data, error } = await supabase.rpc('get_personal_feed', {
+    p_user_id: uid,
+    p_limit: limit,
+    p_cursor_score: options.cursor?.score ?? null,
+    p_cursor_id: options.cursor?.id ?? null,
+    p_session_seed: options.sessionSeed ?? 0,
+  });
+
+  if (error) throw error;
+
+  const overFetched = (data ?? []) as PersonalFeedRow[];
+  if (overFetched.length === 0) return [];
+
+  // The RPC over-fetches (up to 3x limit) so the diversity pass has enough
+  // candidates to draw from; the author cap and exploration reserve are
+  // applied here, where they are unit-tested. 'reseen' and 'ranked' rows are
+  // backfill/fallback, not a deliberate exploration pick, so they're folded
+  // into 'trending' and must not consume the exploration reserve.
+  const selected = applyDiversity(
+    overFetched.map(r => ({
+      id: r.id,
+      authorId: r.author_id,
+      score: r.rank_score,
+      source: (r.source === 'reseen' || r.source === 'ranked' ? 'trending' : r.source) as SelectableItem['source'],
+      row: r,
+    })),
+    { limit, perAuthorCap: 2, explorationShare: 0.2 },
+  );
+  const rows = selected.map(s => s.row);
+
+  const profileById = new Map<string, SupabaseProfileRow>(
+    rows.map(r => [r.author_id, {
+      id: r.author_id,
+      username: r.username,
+      display_name: r.display_name,
+      bio: r.bio,
+      avatar_color: r.avatar_color,
+      avatar_url: r.avatar_url,
+      is_verified: r.is_verified,
+      created_at: '',
+      follower_count: r.follower_count,
+    }])
+  );
+
+  // Engagement state is computed only for the rows actually returned after
+  // diversity trimming — not the full over-fetched set — and all three
+  // queries are scoped to those ids. fetchRankedFeed leaves the likes/
+  // bookmarks queries unscoped (fine there since it never trims), but that
+  // pattern would mean fetching a user's entire like/bookmark history on
+  // every personal-feed page here, so it isn't copied.
+  const ids = rows.map(r => r.id);
+  const [{ data: likeRows }, { data: bmRows }, { data: repostRows }] = await Promise.all([
+    supabase.from('echo_likes').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+    supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+    supabase.from('echo_reposts').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+  ]);
+  const liked = new Set((likeRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+  const bookmarked = new Set((bmRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+  const reposted = new Set((repostRows ?? []).map((r: { echo_id: string }) => r.echo_id));
+
+  return await translateFeedItems(rows.map(row =>
+    mapEchoRowToFeedItem(
+      row as SupabaseEchoRow,
+      profileById.get(row.author_id),
+      liked, bookmarked, reposted
+    )
   ));
 }
 
