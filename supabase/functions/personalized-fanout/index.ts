@@ -12,6 +12,9 @@
 //   (+ the same value in Vault as personalized_push_secret — see the migration)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Occasion copy (birthday, Indian festivals) lives beside the routing table the
+// push path already shares. See lib/notifications/triggerCopy.ts.
+import { selectTrigger, copyForTrigger } from '../../../lib/notifications/triggerCopy.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -23,7 +26,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 const MIN_HOURS_BETWEEN = 20;
 
 // Pick a random variant so the same event never reads the same twice.
-function pick(arr: string[]): string {
+function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
@@ -71,6 +74,22 @@ interface ProfileRow {
   best_hours: number[] | null;
   top_surface: string | null;
   last_nudged_at: string | null;
+  // PostgREST returns an embedded to-one relation as an object, but types it
+  // loosely enough that an array shows up in some client versions. Normalised
+  // by profileOf() rather than trusted either way.
+  profiles?: EmbeddedProfile | EmbeddedProfile[] | null;
+}
+
+interface EmbeddedProfile {
+  personalized_notifications?: boolean | null;
+  push_token?: string | null;
+  date_of_birth?: string | null;
+}
+
+function profileOf(row: ProfileRow): EmbeddedProfile | null {
+  const p = row.profiles;
+  if (!p) return null;
+  return Array.isArray(p) ? (p[0] ?? null) : p;
 }
 
 Deno.serve(async (req: Request) => {
@@ -86,7 +105,7 @@ Deno.serve(async (req: Request) => {
   // profiles enforces consent (personalized_notifications = true) and a token.
   const { data, error } = await supabase
     .from('notification_profiles')
-    .select('user_id, best_hours, top_surface, last_nudged_at, profiles!inner(personalized_notifications, push_token)')
+    .select('user_id, best_hours, top_surface, last_nudged_at, profiles!inner(personalized_notifications, push_token, date_of_birth)')
     .contains('best_hours', [nowHour])
     .or(`last_nudged_at.is.null,last_nudged_at.lt.${cutoff}`)
     .eq('profiles.personalized_notifications', true)
@@ -116,14 +135,26 @@ Deno.serve(async (req: Request) => {
     let surface = row.top_surface && SURFACE_COPY[row.top_surface] ? row.top_surface : 'chat';
     // If their interest is the daily question but they already answered, pivot.
     if (surface === 'daily' && answered.has(row.user_id)) surface = 'feed';
-    const bodyFn = SURFACE_COPY[surface] ?? SURFACE_COPY.chat;
-    const body = bodyFn();
+
+    // An occasion outranks the usual interest nudge: a birthday or festival is
+    // rare enough to be worth the one notification this user will tolerate
+    // today. On an ordinary day selectTrigger returns the surface and
+    // copyForTrigger returns null, so the existing path runs untouched.
+    const trigger = selectTrigger({
+      dateOfBirth: profileOf(row)?.date_of_birth ?? null,
+      today,
+      surface,
+    });
+    const occasionBody = copyForTrigger(trigger, pick);
+    const body = occasionBody ?? (SURFACE_COPY[surface] ?? SURFACE_COPY.chat)();
 
     const { error: insErr } = await supabase.from('notifications').insert({
       user_id: row.user_id,
       type: 'personal_nudge',
       actor_id: null,          // system-generated (actor_id is nullable since the DSA migration)
-      target_kind: surface,    // push-fanout forwards this so the tap routes to the right surface
+      // Occasion nudges have no surface of their own; route them to the feed so
+      // the tap still lands somewhere sensible.
+      target_kind: trigger.kind === 'surface' ? surface : 'feed',
       preview: body,
     });
     if (insErr) continue;
