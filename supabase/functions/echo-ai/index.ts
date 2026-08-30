@@ -835,14 +835,16 @@ interface UserProfile {
 }
 
 const SCREEN_LABELS: Record<string, string> = {
-  '/(tabs)/discover':  'Home',
-  '/(tabs)/chat':      'Chat',
-  '/(tabs)/profile':   'You',
-  '/(tabs)/search':    'Explore',
-  '/messages':         'Messages',
-  '/create-post':      'Create Echo',
-  '/bookmarks':        'Bookmarks',
-  '/notifications':    'Activity',
+  '/home':          'Home',
+  '/chat':          'Chat',
+  '/you':           'You',
+  '/explore':       'Explore',
+  '/watch':         'Flow',
+  '/apps':          'Tools',
+  '/messages':      'Messages',
+  '/create-post':   'Create Echo',
+  '/bookmarks':     'Bookmarks',
+  '/notifications': 'Activity',
 };
 
 function buildSystemPrompt(profile?: UserProfile | null, currentScreen?: string | null, personaContext?: string | null): string {
@@ -888,6 +890,7 @@ Vocabulary — map what the user says to the right action:
 
 Rules:
 - Always call a tool when the user wants to act. Never describe what you would do — do it.
+- If the user's message refers to "my habits", "my target", "my tasks", "my notes", or "my expenses" without stating the specifics inline, call get_today_productivity (or the matching local read tool) first and answer from that — never ask the user to restate data the app already has on-device.
 - Questions are NOT actions. "explain X", "tell me about X", "what is X", "help me understand X" → answer directly in chat. Never call compose_post, draft_echo, or comment_on_post unless the user explicitly asks to post, publish, share, draft, or comment. When in doubt, answer in chat.
 - compose_post: ALWAYS fill BOTH fields — prompt (the question that sparked it) AND response (the insight). If the user only gives you one piece of text, infer a natural question from context or ask one short clarifying question before composing.
 - draft_echo: use this when the user says "draft", "prepare", "open compose", or "write but don't publish". Opens the create-post screen pre-filled — nothing is published until the user taps Post themselves.

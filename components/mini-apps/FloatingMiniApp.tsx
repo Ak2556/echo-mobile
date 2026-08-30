@@ -36,8 +36,16 @@ export function FloatingMiniApp() {
   const pathname = usePathname();
 
   // Only overlay the signed-in app — never the auth/onboarding flow.
-  // Hide on chat screens to reduce clutter.
-  if (!authed || mode === 'closed' || pathname.startsWith('/messages/') || pathname.startsWith('/thread/')) return null;
+  // Hide on chat screens to reduce clutter, and on the AI Chat tab, whose own
+  // composer sits in the same bottom-right corner as this bubble — without
+  // this the two circular controls overlap and a tap can land on either one.
+  if (
+    !authed ||
+    mode === 'closed' ||
+    pathname.startsWith('/messages/') ||
+    pathname.startsWith('/thread/') ||
+    pathname === '/chat'
+  ) return null;
   // box-none: this full-screen layer ignores touches except on its children,
   // so the app underneath stays scrollable "alongside" the floating tool.
   // High zIndex/elevation keeps it above screen content (Toast sits at 9999).

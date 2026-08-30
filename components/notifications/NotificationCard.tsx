@@ -148,7 +148,7 @@ export const NotificationCard = React.memo(function NotificationCard({ notificat
         {grouped && (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
             <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: 'Inter_500Medium' }}>
-              and {(n.groupCount ?? 1) - 1} others
+              and {(n.groupCount ?? 1) - 1} other{(n.groupCount ?? 1) - 1 === 1 ? '' : 's'}
             </Text>
           </View>
         )}
