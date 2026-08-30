@@ -27,7 +27,7 @@ import { useTheme } from '../../../shared/lib/theme';
 import { useI18n, ttx } from '../../../shared/lib/i18n';
 import { SpeakButton } from '../../../../components/ui/SpeakButton';
 import { isSupabaseRemote } from '../../../../lib/remoteConfig';
-import { recordRemoteEchoView } from '../../../../lib/supabaseEchoApi';
+import { recordRemoteEchoView, markNotInterested } from '../../../../lib/supabaseEchoApi';
 import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useDeleteRemoteEcho } from '../api/useSupabaseSocial';
 import { useFollow } from '../../../../hooks/queries/useFollow';
 import { usePerformanceProfile } from '../../../shared/lib/performance';
@@ -334,6 +334,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       icon: <Flag color={colors.textSecondary} size={20} />,
       onPress: () => {
         setNotInterestedIds([...notInterestedIds, item.id]);
+        void markNotInterested({ echoId: item.id });
         tap('success');
         showToast(t('feed.hidden'), '✓');
       },
