@@ -595,8 +595,8 @@ export async function fetchRankedFeed(options: {
   if (uid) {
     const ids = rows.map(r => r.id);
     const [{ data: likeRows }, { data: bmRows }, { data: repostRows }] = await Promise.all([
-      supabase.from('echo_likes').select('echo_id').eq('user_id', uid),
-      supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid),
+      supabase.from('echo_likes').select('echo_id').eq('user_id', uid).in('echo_id', ids),
+      supabase.from('echo_bookmarks').select('echo_id').eq('user_id', uid).in('echo_id', ids),
       supabase.from('echo_reposts').select('echo_id').eq('user_id', uid).in('echo_id', ids),
     ]);
     liked = new Set((likeRows ?? []).map((r: { echo_id: string }) => r.echo_id));
@@ -1019,10 +1019,7 @@ export async function fetchPersonalFeed(options: {
 
   // Engagement state is computed only for the rows actually returned after
   // diversity trimming — not the full over-fetched set — and all three
-  // queries are scoped to those ids. fetchRankedFeed leaves the likes/
-  // bookmarks queries unscoped (fine there since it never trims), but that
-  // pattern would mean fetching a user's entire like/bookmark history on
-  // every personal-feed page here, so it isn't copied.
+  // queries are scoped to those ids, same as fetchRankedFeed above.
   const ids = rows.map(r => r.id);
   const [{ data: likeRows }, { data: bmRows }, { data: repostRows }] = await Promise.all([
     supabase.from('echo_likes').select('echo_id').eq('user_id', uid).in('echo_id', ids),

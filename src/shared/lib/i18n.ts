@@ -240,6 +240,8 @@ const BASE_TRANSLATIONS = {
   'feed.viewProfile': 'View Profile',
   'feed.showLess': 'Show less like this',
   'feed.notInterested': 'Not interested',
+  'feed.notInterestedAuthor': 'Not interested in @{username}',
+  'feed.hiddenAuthor': 'Hidden posts from @{username}',
   'feed.report': 'Report',
   'feed.mute': 'Mute @{username}',
   'feed.unmute': 'Unmute @{username}',

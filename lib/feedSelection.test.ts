@@ -61,6 +61,22 @@ describe('applyDiversity', () => {
     expect(applyDiversity(items, { limit: 4, perAuthorCap: 2, explorationShare: -0.5 })).toHaveLength(4);
     expect(applyDiversity(items, { limit: 4, perAuthorCap: 2, explorationShare: 5 })).toHaveLength(4);
   });
+
+  it('never returns the same id twice when the input contains a literal duplicate', () => {
+    // The primary and backfill tiers can, in edge cases, surface the same
+    // echo. The per-author cap is set well above the number of duplicates
+    // (5, vs. 2 copies of the same author/id) so it would let both copies
+    // through on its own — only the `taken` id guard inside tryTake can stop
+    // the second copy. If that guard were removed, the main-slots pass alone
+    // would take both copies (mainSlots = 2, no other candidate competing for
+    // the slots), so this fails without it.
+    const items = [
+      item('dup', 'author-a', 100),
+      item('dup', 'author-a', 100),
+    ];
+    const out = applyDiversity(items, { limit: 2, perAuthorCap: 5, explorationShare: 0 });
+    expect(out.filter(i => i.id === 'dup')).toHaveLength(1);
+  });
 });
 
 describe('selectWithDiversity', () => {

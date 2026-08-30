@@ -340,6 +340,17 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       },
     },
     {
+      key: 'notinterestedauthor',
+      label: t('feed.notInterestedAuthor', { username: item.username }),
+      icon: <Flag color={colors.textSecondary} size={20} />,
+      onPress: () => {
+        setNotInterestedIds([...notInterestedIds, item.id]);
+        void markNotInterested({ authorId: item.userId });
+        tap('success');
+        showToast(t('feed.hiddenAuthor', { username: item.username }), '✓');
+      },
+    },
+    {
       key: 'mute',
       label: isMuted(item.userId) ? t('feed.unmute', { username: item.username }) : t('feed.mute', { username: item.username }),
       icon: <UserMinus color={colors.textSecondary} size={20} />,
