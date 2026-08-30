@@ -161,16 +161,27 @@ Deno.serve(async (req: Request) => {
   });
   const j = await r.json().catch(() => ({}));
 
-  // Prune tokens Expo has rejected.
+  // Read the tickets. Expo answers a send with HTTP 200 and one ticket per
+  // token, and a ticket carries its OWN status — so `r.ok` says only that Expo
+  // accepted the request, never that the push was accepted for delivery.
   //
-  // Expo answers a send with a ticket per token, and a token belonging to an
-  // uninstalled app or a rotated install comes back as DeviceNotRegistered.
-  // Nothing read these before, so dead tokens stayed on file forever: every
-  // later notification paid a round trip to deliver nothing, and the count of
-  // "reachable users" drifted further from the truth with every uninstall.
-  try {
-    const tickets = (j as { data?: { status?: string; details?: { error?: string } }[] }).data ?? [];
-    if (tickets.some(t => t?.details?.error === 'DeviceNotRegistered')) {
+  // This mattered: from 2026-08-11 no FCM credential was assigned to the Expo
+  // project, so every send came back `status: "error"` /
+  // `details.error: "InvalidCredentials"` inside an HTTP 200. Only
+  // DeviceNotRegistered was ever inspected, so a completely dead push stack
+  // reported success on every call for weeks and nothing in the logs disagreed.
+  const tickets = (j as {
+    data?: { status?: string; message?: string; details?: { error?: string } }[];
+  }).data ?? [];
+  const errors = tickets.filter(t => t?.status === 'error');
+
+  // A token belonging to an uninstalled app or a rotated install comes back as
+  // DeviceNotRegistered. Prune it: otherwise dead tokens stay on file forever,
+  // every later notification pays a round trip to deliver nothing, and the count
+  // of "reachable users" drifts further from the truth with every uninstall.
+  const deviceGone = errors.some(t => t?.details?.error === 'DeviceNotRegistered');
+  if (deviceGone) {
+    try {
       await Promise.all([
         supabase.from('push_tokens').delete().eq('token', recipient.push_token),
         // The legacy column holds one token for the whole account; clear it
@@ -179,10 +190,22 @@ Deno.serve(async (req: Request) => {
           .eq('id', body.user_id).eq('push_token', recipient.push_token),
       ]);
       console.log('[push-fanout] pruned unregistered token for', body.user_id);
+    } catch (e) {
+      // Pruning is housekeeping; never fail the send over it.
+      console.error('[push-fanout] token prune failed:', e);
     }
-  } catch (e) {
-    // Pruning is housekeeping; never fail the send over it.
-    console.error('[push-fanout] token prune failed:', e);
+  }
+
+  // Anything else is a real failure — a missing/expired FCM credential, a
+  // payload Expo rejected, a sender-id mismatch. Log it loudly and answer 502
+  // so it shows up as a non-200 in the edge logs instead of hiding inside a 200.
+  const fatal = errors.filter(t => t?.details?.error !== 'DeviceNotRegistered');
+  if (fatal.length > 0) {
+    console.error(
+      '[push-fanout] Expo rejected the push for', body.user_id, '—',
+      fatal.map(t => `${t?.details?.error ?? 'unknown'}: ${t?.message ?? ''}`).join('; '),
+    );
+    return new Response(JSON.stringify(j), { status: 502, headers: { 'content-type': 'application/json' } });
   }
 
   return new Response(JSON.stringify(j), { status: r.ok ? 200 : 502, headers: { 'content-type': 'application/json' } });
