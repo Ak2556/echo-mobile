@@ -41,12 +41,17 @@ export default function VoiceEntryScreen() {
 
     // If VoiceControl never registers — it is gated on auth — do not strand the
     // user on an empty screen.
+    //
+    // 10s, not 4s: registration now genuinely waits for auth to reach 'ready',
+    // and a cold start from a launcher shortcut has to hydrate the session
+    // first. Bailing at 4s raced that hydration and dropped the user on the
+    // feed with no panel — the exact failure this timeout exists to report.
     const bail = setTimeout(() => {
       if (!done) {
         done = true;
         router.replace('/(tabs)/home');
       }
-    }, 4000);
+    }, 10_000);
 
     return () => {
       unsubscribe();

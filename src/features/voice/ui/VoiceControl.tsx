@@ -19,10 +19,21 @@ export function VoiceControl() {
   const setVoicePhase = useVoiceControl(s => s.setPhase);
   const captions = useAppStore(s => s.voiceCaptions);
 
+  // Only advertise `start` once this component can actually SHOW something.
+  // The auth gate below is a render guard placed after the hooks, so this
+  // effect used to register regardless of status — meaning a launcher shortcut
+  // could fire start() while status was still 'checking', engaging the
+  // microphone behind a component rendering null. The user landed on the feed
+  // with no panel and no way to tell the mic was live. app/voice.tsx already
+  // assumes registration is "gated on auth"; this makes that true.
   useEffect(() => {
+    if (status !== 'ready') {
+      registerVoice(null);
+      return;
+    }
     registerVoice(start);
     return () => registerVoice(null);
-  }, [registerVoice, start]);
+  }, [registerVoice, start, status]);
 
   useEffect(() => {
     setVoicePhase(state.phase);
