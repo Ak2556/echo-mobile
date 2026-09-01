@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname, useRouter, useRootNavigationState } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { useAppStore } from '../../store/useAppStore';
@@ -173,7 +173,17 @@ export function AuthListenerProvider(): null {
   // current view to the right destination if it's stale.
   const status = useAuthStore(s => s.status);
 
+  // This provider is mounted above <Stack> in app/_layout.tsx, so this effect
+  // can run before the navigator exists. Navigating then throws "Attempted to
+  // navigate before mounting the Root Layout component" and strands the user on
+  // the error screen — reproduced by cold-starting from a launcher shortcut,
+  // where the deep link delays the navigator while GoTrue's INITIAL_SESSION
+  // still fires on time. Waiting for the key costs one extra render and makes
+  // the level-triggered behaviour below correct rather than racy.
+  const navKey = useRootNavigationState()?.key;
+
   useEffect(() => {
+    if (!navKey) return;
     // Level-triggered, deliberately. This used to subscribe to the store and
     // act only when the status differed from the previous one, which loses
     // every case where the status settled before the screen asking about it
@@ -181,7 +191,7 @@ export function AuthListenerProvider(): null {
     // current status as a hook re-runs this on arrival as well as on change,
     // so the question is answered whenever either side moves.
     routeFor(router, pathname, status);
-  }, [router, pathname, status]);
+  }, [navKey, router, pathname, status]);
 
   useEffect(() => {
     if (started) return;
