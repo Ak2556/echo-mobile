@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Stack, useRouter, usePathname } from 'expo-router';
+import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
 import { Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -161,9 +161,13 @@ function PushTokenRefresh() {
 function ShareIntentRouter() {
   const router = useRouter();
   const { hasShareIntent } = useShareIntentContext();
+  // Same ordering hazard as AuthGuard: a share-launched cold start can deliver
+  // the intent before <Stack> has mounted. See the comment there.
+  const navKey = useRootNavigationState()?.key;
   useEffect(() => {
+    if (!navKey) return;
     if (hasShareIntent) router.push('/share-intent');
-  }, [hasShareIntent, router]);
+  }, [navKey, hasShareIntent, router]);
   return null;
 }
 
@@ -174,11 +178,19 @@ function AuthGuard() {
   const { status } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  // This component is a sibling rendered BEFORE <Stack>, so its effect fires
+  // before the navigator registers. Navigating then throws "Attempted to
+  // navigate before mounting the Root Layout component" and drops the user on
+  // the error screen. Usually invisible because status starts as 'checking',
+  // but a cold start that resolves to signed-out before <Stack> mounts — a
+  // notification tap, for instance — loses the race.
+  const navKey = useRootNavigationState()?.key;
   useEffect(() => {
+    if (!navKey) return;
     if (status !== 'signed-out') return;
     if (isPublicRoute(pathname)) return;
     router.replace('/auth/login');
-  }, [status, pathname, router]);
+  }, [navKey, status, pathname, router]);
   return null;
 }
 
@@ -190,7 +202,11 @@ function AuthGuard() {
  */
 function UniversalLinkRouter(): null {
   const router = useRouter();
+  // Same ordering hazard as AuthGuard: getInitialURL resolves on a
+  // link-launched cold start, which can beat <Stack> mounting.
+  const navKey = useRootNavigationState()?.key;
   useEffect(() => {
+    if (!navKey) return;
     const handle = (url: string) => {
       const route = parseEchoUniversalLink(url);
       if (!route) return;
@@ -201,7 +217,7 @@ function UniversalLinkRouter(): null {
     Linking.getInitialURL().then(url => { if (url) handle(url); });
     const sub = Linking.addEventListener('url', ({ url }) => handle(url));
     return () => sub.remove();
-  }, [router]);
+  }, [navKey, router]);
   return null;
 }
 
