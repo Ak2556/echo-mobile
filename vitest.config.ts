@@ -83,6 +83,12 @@ export default defineConfig({
           include: ['**/*.test.tsx'],
           exclude,
           setupFiles: [path.resolve(__dirname, 'test/setup-ui.ts')],
+          // Mounting a whole screen pulls a large dependency graph through
+          // Vite's transform — ~4s locally for app/welcome.test.tsx, which
+          // overran vitest's 5s default on the slower CI runner and turned a
+          // passing test red. The work is real, not a hang, so give screen
+          // mounts room rather than trimming what they cover.
+          testTimeout: 30_000,
         },
       },
     ],
