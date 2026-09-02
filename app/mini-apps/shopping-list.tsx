@@ -15,6 +15,10 @@ import {
   loadShoppingData, saveShoppingData, shoppingStats
 } from '../../lib/shoppingList';
 import { ttx } from '../../src/shared/lib/i18n';
+import { emit } from '../../lib/minilink/queue';
+import { drainMiniLink, undoFact } from '../../lib/minilink/drain';
+import { hasApplied } from '../../lib/minilink/ledger';
+import { shouldEmitPurchase, describePostDrain } from '../../lib/minilink/rules';
 
 export default function ShoppingListScreen() {
   const { colors, radius } = useTheme();
@@ -119,7 +123,37 @@ export default function ShoppingListScreen() {
 
   const toggle = (item: ShoppingItem) => {
     tap('light');
-    updateItems(items.map(row => row.id === item.id ? { ...row, checked: !row.checked } : row));
+    const nextChecked = !item.checked;
+    updateItems(items.map(row => row.id === item.id ? { ...row, checked: nextChecked } : row));
+
+    if (!shouldEmitPurchase(item, nextChecked)) return;
+
+    // Fire-and-forget: emit() never throws, and the drain is not awaited, so a
+    // slow or failing delivery cannot make the checkbox feel laggy.
+    const fact = emit('purchase', 'shopping-list', item.id, {
+      label: item.name,
+      amount: item.price,
+      category: item.category,
+    });
+    if (!fact) return;
+
+    void drainMiniLink()
+      .then(() => {
+        // The drain resolving doesn't mean THIS fact landed — it swallows
+        // per-fact failures so one bad fact can't block the rest. Check the
+        // ledger before telling the user money was logged.
+        const { message, showUndo } = describePostDrain(hasApplied(fact.id));
+        showToast(
+          ttx(message),
+          '',
+          showUndo ? { label: ttx('Undo'), onPress: () => { void undoFact(fact.id); } } : undefined,
+        );
+      })
+      .catch(() => {
+        // Defence in depth: the UI must never depend on the drain's internal
+        // discipline. The fact is still queued and will retry on next drain.
+        showToast(ttx("Couldn't log to Expenses yet"), '');
+      });
   };
 
   const remove = (item: ShoppingItem) => {

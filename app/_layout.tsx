@@ -11,6 +11,7 @@ import { pingDailyActivity } from '../lib/retention';
 import { cancelLegacyProactiveNudges } from '../lib/proactiveNudges';
 import { captureException, initMonitoring, wrapRoot } from '../lib/monitoring';
 import { startOutbox } from '../lib/outboxProcessor';
+import { drainMiniLink } from '../lib/minilink/drain';
 import { getAnalyticsConsent } from '../lib/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
 import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
@@ -87,6 +88,7 @@ if (typeof ErrorUtils !== 'undefined') {
 
 initMonitoring();
 startOutbox(); // connectivity + replay any queued writes
+void drainMiniLink(); // deliver any facts emitted in a previous session
 if (getAnalyticsConsent() === 'accepted') {
   initAnalytics();
 }

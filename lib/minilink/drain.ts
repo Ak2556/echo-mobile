@@ -1,6 +1,7 @@
 import { listPending, markFailure, removeFact } from './queue';
 import { hasApplied, recordApplied, findByFact, markReversed } from './ledger';
 import { findLink, LINKS } from './links';
+import type { Fact } from './types';
 
 /**
  * Deliver every pending fact.
@@ -11,10 +12,19 @@ import { findLink, LINKS } from './links';
  * Each fact's body is isolated in its own try/catch, including the early
  * exits: removeFact and markFailure write to storage and can throw, and a
  * single storage error must not abort the whole loop and stop delivery for
- * every other pending fact.
+ * every other pending fact. Reading the pending list itself is guarded too —
+ * if storage cannot be read there is nothing to drain, and this promise must
+ * still resolve rather than reject into an unhandled rejection at the caller.
  */
 export async function drainMiniLink(): Promise<void> {
-  for (const fact of listPending()) {
+  let pending: Fact[];
+  try {
+    pending = listPending();
+  } catch {
+    return;
+  }
+
+  for (const fact of pending) {
     try {
       // The ledger, not the handler, is what makes this safe to retry.
       if (hasApplied(fact.id)) { removeFact(fact.id); continue; }
