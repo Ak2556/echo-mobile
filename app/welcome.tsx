@@ -15,6 +15,7 @@ import {
 } from '../lib/supabaseEchoApi';
 import { getFirstRunFallbackQuestion } from '../lib/firstRunQuestion';
 import { track } from '../src/shared/lib/analytics';
+import { registerForPush } from '../lib/push';
 import { useI18n } from '../src/shared/lib/i18n';
 
 /**
@@ -82,6 +83,31 @@ export default function WelcomeScreen() {
     track('first_run_answered', { persisted: persistAnswer });
     if (persistAnswer) setStreak(s => (s > 0 ? s : 1));
     setPhase('reveal');
+    askForPushOnce();
+  };
+
+  /**
+   * The only place a new user is asked for notification permission.
+   *
+   * Every other call site (Settings, notification prefs, the tab long-press,
+   * post-compose) sits behind a control the user has to go looking for, and
+   * `PushTokenRefresh` in the root layout deliberately never prompts. The
+   * result was 2 push tokens across 54 accounts, which silently zeroed the
+   * whole nudge system: personalized-fanout ran hourly and returned
+   * {"sent":0} because it had nobody to send to.
+   *
+   * Asked here because this is the moment the permission is *about* something:
+   * the user has just answered today's question, the streak is on screen, and
+   * the notification we want to send is the reminder for tomorrow's. Asking at
+   * sign-up instead would spend the one prompt iOS gives us on a user who does
+   * not yet know what Echo is.
+   *
+   * Fire-and-forget on purpose. registerForPush() guards web, persists the
+   * token itself, reports its own denial to analytics, and swallows every
+   * error, so nothing here can block or break the reveal.
+   */
+  const askForPushOnce = () => {
+    void registerForPush();
   };
 
   if (loading || !question) {

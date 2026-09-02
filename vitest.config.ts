@@ -23,6 +23,13 @@ const alias = {
   'react-native-reanimated': path.resolve(__dirname, 'test/stubs/react-native-reanimated.ts'),
   // expo-blur ships JSX inside a .js build file, which Vite will not parse.
   'expo-blur': path.resolve(__dirname, 'test/stubs/expo-blur.ts'),
+  // react-native-safe-area-context's commonjs build ships untranspiled .tsx.
+  // Screen-level components import it for SafeAreaView, so no screen can be
+  // mounted without this.
+  'react-native-safe-area-context': path.resolve(__dirname, 'test/stubs/react-native-safe-area-context.ts'),
+  // react-native-svg's commonjs build ships untranspiled .ts too, and every
+  // phosphor icon imports it, so it blocks any screen with an icon in it.
+  'react-native-svg': path.resolve(__dirname, 'test/stubs/react-native-svg.ts'),
   'expo-linear-gradient': path.resolve(__dirname, 'test/stubs/expo-linear-gradient.ts'),
 };
 

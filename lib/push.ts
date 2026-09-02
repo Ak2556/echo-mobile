@@ -38,6 +38,11 @@ export async function requestPushPermission(): Promise<boolean> {
 }
 
 export async function registerForPush(): Promise<{ token: string | null; granted: boolean }> {
+  // There is no push on web, and requestPushPermission() already returns false
+  // there — but falling through to that would report a `push_permission_denied`
+  // for a user who was never asked, in every one of this function's call sites.
+  if (Platform.OS === 'web') return { token: null, granted: false };
+
   try {
     const granted = await requestPushPermission();
     if (!granted) {
