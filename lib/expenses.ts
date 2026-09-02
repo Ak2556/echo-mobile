@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CURRENCY_MAP, type CurrencyCode } from './currency';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 import { pushExpensesStructured } from './expensesRemote';
+import type { Fact } from './minilink/types';
+import { uuidv4 } from '../store/outbox';
 
 export const TX_KEY = 'mini:expenses';
 export const DEFAULT_EXPENSE_CURRENCY: CurrencyCode = 'USD';
@@ -357,4 +359,33 @@ function rangeStart(range: 'week' | 'month' | 'all'): Date | null {
   if (range === 'week') d.setDate(d.getDate() - 7);
   else d.setMonth(d.getMonth() - 1);
   return d;
+}
+
+/**
+ * Apply a `purchase` fact from another mini-app.
+ *
+ * Currency is deliberately absent from the payload: ExpensesDoc.currency is
+ * the source of truth, so an emitting app cannot mislabel rupees as dollars.
+ *
+ * Returns the created transaction id, which the bus records in the ledger so
+ * the write can be undone and traced back to its source.
+ */
+export async function logPurchase(f: Fact<'purchase'>): Promise<string> {
+  const doc = await loadExpensesDoc();
+  const tx: Transaction = {
+    id: uuidv4(),
+    type: 'expense',
+    amount: f.payload.amount,
+    category: f.payload.category ?? 'Other',
+    note: f.payload.label,
+    date: new Date().toISOString().slice(0, 10),
+  };
+  await saveExpensesDoc({ ...doc, txs: [tx, ...doc.txs] });
+  return tx.id;
+}
+
+/** Reverse of logPurchase. Unknown ids are a no-op — undo must never throw. */
+export async function deletePurchase(createdItemId: string): Promise<void> {
+  const doc = await loadExpensesDoc();
+  await saveExpensesDoc({ ...doc, txs: doc.txs.filter((t) => t.id !== createdItemId) });
 }
