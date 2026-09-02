@@ -12,8 +12,9 @@ export type TargetMiniAppId =
   | 'shopping-list'
   | 'bmi'
   | 'fitness'
-  
-  
+  | 'color-tools'
+  | 'dice'
+  | 'json-formatter'
   | 'studio'
   | 'editor'
   | 'voice-memo'

@@ -57,7 +57,7 @@ describe('voice dispatch — navigate (English · Devanagari · Romanized)', () 
   });
 });
 
-describe('voice dispatch — open_mini_app (all 16, Hindi)', () => {
+describe('voice dispatch — open_mini_app (all 22, Hindi)', () => {
   const cases: Array<[string, string]> = [
     ['pomodoro', '/mini-apps/pomodoro'], ['टाइमर', '/mini-apps/pomodoro'], ['samay', '/mini-apps/pomodoro'],
     ['tasks', '/mini-apps/tasks'], ['टास्क', '/mini-apps/tasks'], ['काम', '/mini-apps/tasks'],
@@ -72,6 +72,15 @@ describe('voice dispatch — open_mini_app (all 16, Hindi)', () => {
     ['shopping-list', '/mini-apps/shopping-list'], ['खरीदारी', '/mini-apps/shopping-list'],
     ['voice-memo', '/mini-apps/voice-memo'], ['रिकॉर्ड', '/mini-apps/voice-memo'],
     ['camera', '/mini-apps/studio'], ['कैमरा', '/mini-apps/studio'],
+    // Catalogued 2026-09-03. These routes existed all along but were absent
+    // from MINI_APP_CATALOG, which is the list matchMiniApp walks — so voice
+    // could not open them at all.
+    ['bill-splitter', '/mini-apps/bill-splitter'], ['split', '/mini-apps/bill-splitter'], ['बिल', '/mini-apps/bill-splitter'],
+    ['bmi', '/mini-apps/bmi'], ['वज़न', '/mini-apps/bmi'],
+    ['converter', '/mini-apps/converter'], ['convert', '/mini-apps/converter'], ['बदलो', '/mini-apps/converter'],
+    ['color-tools', '/mini-apps/color-tools'], ['palette', '/mini-apps/color-tools'], ['रंग', '/mini-apps/color-tools'],
+    ['json-formatter', '/mini-apps/json-formatter'], ['json', '/mini-apps/json-formatter'],
+    ['dice', '/mini-apps/dice'], ['roll', '/mini-apps/dice'], ['पासा', '/mini-apps/dice'],
   ];
   it.each(cases)('%s → %s', (app, route) => {
     const o = dispatchVoiceIntent(res('open_mini_app', { app }));
@@ -211,4 +220,42 @@ describe('voice dispatch — set_language (Hindi)', () => {
       expect(setAppLanguage).toHaveBeenCalledWith(code);
     },
   );
+});
+
+/**
+ * The gap this catches: a mini-app route can be built, shipped and linked in
+ * the floating panel while never being added to MINI_APP_CATALOG — which is
+ * the only list matchMiniApp walks. Six apps (bill-splitter, bmi, color-tools,
+ * converter, dice, json-formatter) shipped that way and were unreachable by
+ * voice, unsearchable in Tools, and invisible to nudge copy, with nothing
+ * failing anywhere to say so.
+ */
+describe('mini-app catalog covers every shipped route', () => {
+  it('has an entry for each app/mini-apps/*.tsx screen', async () => {
+    const { readdirSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { MINI_APP_CATALOG } = await import('../miniAppCatalog');
+
+    const routes = readdirSync(join(process.cwd(), 'app/mini-apps'))
+      .filter(f => f.endsWith('.tsx') && f !== '_layout.tsx')
+      .map(f => f.replace(/\.tsx$/, ''))
+      .sort();
+
+    const catalogued = MINI_APP_CATALOG.map(a => String(a.route).replace('/mini-apps/', '')).sort();
+    const missing = routes.filter(r => !catalogued.includes(r));
+
+    expect(missing, `mini-app screens missing from MINI_APP_CATALOG (unreachable by voice/search): ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('every catalog entry points at a screen that exists', async () => {
+    const { existsSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { MINI_APP_CATALOG } = await import('../miniAppCatalog');
+
+    const dangling = MINI_APP_CATALOG
+      .map(a => String(a.route).replace('/mini-apps/', ''))
+      .filter(id => !existsSync(join(process.cwd(), `app/mini-apps/${id}.tsx`)));
+
+    expect(dangling, `catalog entries with no screen: ${dangling.join(', ')}`).toEqual([]);
+  });
 });

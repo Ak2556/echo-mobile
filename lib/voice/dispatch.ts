@@ -207,6 +207,18 @@ function matchMiniApp(spoken: string): string | null {
     photo: 'studio', camera: 'studio', 'image editor': 'editor', 'photo editor': 'editor',
     clock: 'world-clock', 'world clock': 'world-clock', timezone: 'world-clock',
     write: 'markdown', writing: 'markdown',
+    // Utilities added to the catalog on 2026-09-03. Exact names already match
+    // via MINI_APP_CATALOG; these are the words people actually say.
+    split: 'bill-splitter', 'split the bill': 'bill-splitter', bill: 'bill-splitter', tip: 'bill-splitter',
+    weight: 'bmi', bmi: 'bmi', 'body mass': 'bmi',
+    convert: 'converter', conversion: 'converter', unit: 'converter', units: 'converter',
+    colour: 'color-tools', color: 'color-tools', 'color picker': 'color-tools', palette: 'color-tools', hex: 'color-tools',
+    json: 'json-formatter', 'format json': 'json-formatter',
+    roll: 'dice', die: 'dice', 'roll a die': 'dice', random: 'dice',
+    // Hindi
+    'बिल': 'bill-splitter', 'बाँटो': 'bill-splitter',
+    'वज़न': 'bmi', 'वजन': 'bmi',
+    'बदलो': 'converter', 'रंग': 'color-tools', 'पासा': 'dice',
     // Hindi (Devanagari)
     'टाइमर': 'pomodoro', 'पोमोडोरो': 'pomodoro', 'टास्क': 'tasks', 'काम': 'tasks', 'नोट': 'notes', 'नोट्स': 'notes',
     'आदत': 'habits', 'आदतें': 'habits', 'पैसा': 'expenses', 'खर्च': 'expenses', 'बजट': 'expenses',

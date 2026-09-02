@@ -189,7 +189,78 @@ export const MINI_APP_CATALOG: MiniAppCatalogItem[] = [
     replaces: ['Classifieds', 'Local market'],
     color: '#E06030',
     route: '/mini-apps/marketplace',
-  }
+  },
+  // ── Utilities that shipped as routes but were never catalogued ───────────
+  // Each of these has a full screen under app/mini-apps/ built on the same
+  // MiniAppShell + EdgeFeaturePanel platform as everything above, but was
+  // absent from this list — which is what voice, search, Explore and the
+  // nudge copy all read. They were reachable only by typing the URL.
+  {
+    id: 'bill-splitter',
+    name: 'Bill Splitter',
+    description: 'Money',
+    suite: 'Money',
+    promise: 'Split it fairly. Settle it fast.',
+    highlights: ['Even', 'Shares', 'Exact'],
+    replaces: ['Splitwise', 'Tip calculator'],
+    color: '#22C55E',
+    route: '/mini-apps/bill-splitter',
+  },
+  {
+    id: 'bmi',
+    name: 'BMI',
+    description: 'Health',
+    suite: 'Health',
+    promise: 'Know the number behind the goal.',
+    highlights: ['BMI', 'Metric', 'Activity'],
+    replaces: ['BMI chart', 'Calorie calculator'],
+    color: '#F97316',
+    route: '/mini-apps/bmi',
+  },
+  {
+    id: 'converter',
+    name: 'Converter',
+    description: 'Utility',
+    suite: 'Utility',
+    promise: 'Any unit into the one you think in.',
+    highlights: ['Length', 'Weight', 'Volume'],
+    replaces: ['Unit converter', 'Google search'],
+    color: '#0891B2',
+    route: '/mini-apps/converter',
+  },
+  {
+    id: 'color-tools',
+    name: 'Color Tools',
+    description: 'Utility',
+    suite: 'Utility',
+    promise: 'Pick it, check it, ship it.',
+    highlights: ['Palettes', 'Contrast', 'Hex'],
+    replaces: ['Color picker', 'Contrast checker'],
+    color: '#D946EF',
+    route: '/mini-apps/color-tools',
+  },
+  {
+    id: 'json-formatter',
+    name: 'JSON Formatter',
+    description: 'Utility',
+    suite: 'Utility',
+    promise: 'Unmangle it. Read it. Move on.',
+    highlights: ['Format', 'Minify', 'Validate'],
+    replaces: ['JSON beautifier', 'Online validator'],
+    color: '#64748B',
+    route: '/mini-apps/json-formatter',
+  },
+  {
+    id: 'dice',
+    name: 'Dice',
+    description: 'Utility',
+    suite: 'Utility',
+    promise: 'Settle it with a roll.',
+    highlights: ['D4-D20', 'Multiple', 'History'],
+    replaces: ['Physical dice', 'Random picker'],
+    color: '#A16207',
+    route: '/mini-apps/dice',
+  },
 ];
 
 // The core daily-loop mini-apps — pinned first and visually highlighted at the
