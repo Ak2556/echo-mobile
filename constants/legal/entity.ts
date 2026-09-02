@@ -14,26 +14,26 @@
  */
 
 /** Registered legal name of the company that operates Echo. */
-export const ENTITY_NAME = '[[ENTITY LEGAL NAME]]';
+export const ENTITY_NAME = 'Akash Thakur';
 
 /** Company / CIN / registration number in the jurisdiction of incorporation. */
-export const ENTITY_REGISTRATION = '[[COMPANY REGISTRATION NUMBER]]';
+export const ENTITY_REGISTRATION = 'Not applicable — sole proprietor';
 
 /** Registered office address, as filed. */
-export const ENTITY_ADDRESS = '[[REGISTERED OFFICE ADDRESS]]';
+export const ENTITY_ADDRESS = 'Shankar Nagar, Hoshiarpur, Punjab 146001, India';
 
 /** Jurisdiction whose law governs the Terms, e.g. "the Republic of India". */
-export const GOVERNING_LAW = '[[GOVERNING LAW JURISDICTION]]';
+export const GOVERNING_LAW = 'the Republic of India';
 
 /** Courts with exclusive jurisdiction, e.g. "the courts at Bengaluru, India". */
-export const COURTS_VENUE = '[[COURTS / VENUE]]';
+export const COURTS_VENUE = 'the District Court, Hoshiarpur, Punjab';
 
 /**
  * Grievance Officer — mandatory for intermediaries in India under the
  * IT (Intermediary Guidelines and Digital Media Ethics Code) Rules 2021,
  * Rule 3(2). Name, designation and contact must be published on the service.
  */
-export const GRIEVANCE_OFFICER_NAME = '[[GRIEVANCE OFFICER NAME]]';
+export const GRIEVANCE_OFFICER_NAME = 'Akash Thakur';
 export const GRIEVANCE_OFFICER_EMAIL = 'grievance@downloadecho.com';
 
 /**

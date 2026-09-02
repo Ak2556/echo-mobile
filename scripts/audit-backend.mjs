@@ -34,7 +34,7 @@ function readAll(dirs, exts) {
 }
 
 // ── 1. AI model IDs vs OpenRouter catalogs ─────────────────────────────────
-console.log('\n[1/3] AI model IDs vs OpenRouter catalogs');
+console.log('\n[1/4] AI model IDs vs OpenRouter catalogs');
 {
   const src = readAll(['supabase/functions', 'lib'], ['.ts']);
   const referenced = [...new Set([...src.matchAll(/["'`](google\/[a-z0-9.\-]+|openai\/[a-z0-9.\-]+|mistralai\/[a-z0-9.\-]+)["'`]/g)].map((m) => m[1]))];
@@ -50,7 +50,7 @@ console.log('\n[1/3] AI model IDs vs OpenRouter catalogs');
 }
 
 // ── 2. Storage buckets referenced in code exist in prod ────────────────────
-console.log('\n[2/3] Storage buckets');
+console.log('\n[2/4] Storage buckets');
 {
   const src = readAll(['lib', 'app', 'components', 'supabase/functions'], ['.ts', '.tsx']);
   const buckets = [...new Set([...src.matchAll(/storage\s*[\n\s]*\.from\(["'`]([a-z0-9\-]+)["'`]\)/g)].map((m) => m[1]))];
@@ -76,7 +76,7 @@ console.log('\n[2/3] Storage buckets');
 }
 
 // ── 3. App enums vs migration check constraints ────────────────────────────
-console.log('\n[3/3] Enum ↔ check-constraint sync');
+console.log('\n[3/4] Enum ↔ check-constraint sync');
 {
   const migrations = readAll(['supabase/migrations'], ['.sql']);
   const latestConstraint = (column) => {
@@ -117,6 +117,31 @@ console.log('\n[3/3] Enum ↔ check-constraint sync');
     if (missing.length) fail(`${c.name} — app uses values not in DB constraint: ${missing.join(', ')}`);
     else ok(`${c.name} (${c.app.length} app values all allowed)`);
   }
+}
+
+console.log('\n[4/4] Legal entity placeholders');
+{
+  // constants/legal/entity.ts is TypeScript, so it cannot be imported here.
+  // hasUnresolvedEntityFacts() is the source of truth for WHICH constants must
+  // be resolved; read that list out of the file and check each declaration, so
+  // adding a constant to the guard automatically covers it here too.
+  const src = readFileSync(join(ROOT, 'constants/legal/entity.ts'), 'utf8');
+  const guard = src.match(/hasUnresolvedEntityFacts\(\)[^{]*\{\s*return \[([^\]]+)\]/);
+
+  if (!guard) {
+    fail('hasUnresolvedEntityFacts() not found in constants/legal/entity.ts — the legal guard has been removed or renamed');
+  } else {
+    const required = guard[1].split(',').map((n) => n.trim()).filter(Boolean);
+    for (const name of required) {
+      const decl = src.match(new RegExp(`export const ${name}\\s*=\\s*([^;]+);`));
+      if (!decl) fail(`${name} — referenced by the guard but not declared`);
+      else if (decl[1].includes('[[')) fail(`${name} — still an unresolved placeholder`);
+      else ok(`${name} resolved`);
+    }
+  }
+
+  const euRep = readFileSync(join(ROOT, 'constants/legal/euRepresentative.ts'), 'utf8');
+  if (euRep.includes('[[')) fail('euRepresentative.ts — unresolved placeholder');
 }
 
 console.log(failures ? `\n${failures} failure(s)` : '\nAll checks passed');
