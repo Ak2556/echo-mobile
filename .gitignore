@@ -74,3 +74,20 @@ desktop/
 release/
 vendor/
 build-*.apk
+
+# Tool output — never commit
+*.log
+patch.diff
+lint_results.txt
+i18n_extracted.json
+
+# One-off scripts belong in a scratchpad, not the repo root
+/test.js
+/test_*.ts
+/update_*.js
+/disable_*.js
+/apply_tasks.py
+/refactor_tasks.js
+/remove_ai_script.js
+/generate_noise.js
+/revert_noise.js
