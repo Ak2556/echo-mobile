@@ -1,0 +1,12 @@
+-- record_ad_event is an internal helper. Supabase's default privileges grant
+-- EXECUTE on every new function to anon/authenticated/service_role, so the
+-- previous migration's `revoke ... from public, anon` left `authenticated`
+-- holding a grant the surrounding comment claimed it did not have.
+--
+-- Reachable directly, it lets a signed-in user insert their own dedup row
+-- without moving a counter — suppressing their own view from ever being
+-- counted. Not an inflation vector, but not the contract either.
+--
+-- The two callers are SECURITY DEFINER and execute as the owner, which keeps
+-- its own grant, so revoking here does not break them.
+revoke execute on function public.record_ad_event(uuid, text) from authenticated;

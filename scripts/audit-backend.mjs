@@ -34,7 +34,7 @@ function readAll(dirs, exts) {
 }
 
 // ── 1. AI model IDs vs OpenRouter catalogs ─────────────────────────────────
-console.log('\n[1/4] AI model IDs vs OpenRouter catalogs');
+console.log('\n[1/5] AI model IDs vs OpenRouter catalogs');
 {
   const src = readAll(['supabase/functions', 'lib'], ['.ts']);
   const referenced = [...new Set([...src.matchAll(/["'`](google\/[a-z0-9.\-]+|openai\/[a-z0-9.\-]+|mistralai\/[a-z0-9.\-]+)["'`]/g)].map((m) => m[1]))];
@@ -50,7 +50,7 @@ console.log('\n[1/4] AI model IDs vs OpenRouter catalogs');
 }
 
 // ── 2. Storage buckets referenced in code exist in prod ────────────────────
-console.log('\n[2/4] Storage buckets');
+console.log('\n[2/5] Storage buckets');
 {
   const src = readAll(['lib', 'app', 'components', 'supabase/functions'], ['.ts', '.tsx']);
   const buckets = [...new Set([...src.matchAll(/storage\s*[\n\s]*\.from\(["'`]([a-z0-9\-]+)["'`]\)/g)].map((m) => m[1]))];
@@ -76,14 +76,25 @@ console.log('\n[2/4] Storage buckets');
 }
 
 // ── 3. App enums vs migration check constraints ────────────────────────────
-console.log('\n[3/4] Enum ↔ check-constraint sync');
+console.log('\n[3/5] Enum ↔ check-constraint sync');
 {
   const migrations = readAll(['supabase/migrations'], ['.sql']);
-  const latestConstraint = (column) => {
-    // Last occurrence in migration order wins (files are read in name order).
+  // Scoped to the owning table: matching on column name alone meant any later
+  // migration that happened to add a `kind`, `condition` or `currency` check to
+  // an unrelated table hijacked the comparison and reported a false drift.
+  // ad_events.kind in ('view','click') did exactly that to direct_messages.kind.
+  const latestConstraint = (table, column) => {
     const re = new RegExp(`${column}\\s+in\\s*\\(([^)]+)\\)`, 'gi');
+    const owns = new RegExp(`\\b${table}\\b`, 'i');
     let last = null;
-    for (const m of migrations.matchAll(re)) last = m[1];
+    for (const m of migrations.matchAll(re)) {
+      // The statement containing this match must name the table it belongs to.
+      const from = migrations.lastIndexOf(';', m.index) + 1;
+      const to = migrations.indexOf(';', m.index);
+      const statement = migrations.slice(from, to === -1 ? undefined : to);
+      if (!owns.test(statement)) continue;
+      last = m[1]; // last match in migration order wins
+    }
     if (!last) return null;
     return new Set([...last.matchAll(/'([^']+)'/g)].map((m) => m[1]));
   };
@@ -91,22 +102,22 @@ console.log('\n[3/4] Enum ↔ check-constraint sync');
   const checks = [
     {
       name: 'direct_messages.kind',
-      db: latestConstraint('kind'),
+      db: latestConstraint('direct_messages', 'kind'),
       app: [...new Set([...readAll(['lib', 'app', 'hooks'], ['.ts', '.tsx']).matchAll(/kind:\s*['"](text|image|voice|echo|link|contact)['"]/g)].map((m) => m[1]))],
     },
     {
       name: 'marketplace_listings.condition',
-      db: latestConstraint('condition'),
+      db: latestConstraint('marketplace_listings', 'condition'),
       app: [...readFileSync(join(ROOT, 'lib/marketplaceApi.ts'), 'utf8').matchAll(/ListingCondition = ([^;]+);/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1])),
     },
     {
       name: 'marketplace_listings.currency',
-      db: latestConstraint('currency'),
+      db: latestConstraint('marketplace_listings', 'currency'),
       app: [...new Set([...readFileSync(join(ROOT, 'lib/currency.ts'), 'utf8').matchAll(/code:\s*'([^']+)'/g)].map((m) => m[1]))],
     },
     {
       name: 'profiles.ai_model',
-      db: latestConstraint('ai_model'),
+      db: latestConstraint('profiles', 'ai_model'),
       app: [...readFileSync(join(ROOT, 'lib/api.ts'), 'utf8').matchAll(/EchoAIModel = ([^;]+);/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1])),
     },
   ];
@@ -119,7 +130,7 @@ console.log('\n[3/4] Enum ↔ check-constraint sync');
   }
 }
 
-console.log('\n[4/4] Legal entity placeholders');
+console.log('\n[4/5] Legal entity placeholders');
 {
   // constants/legal/entity.ts is TypeScript, so it cannot be imported here.
   // hasUnresolvedEntityFacts() is the source of truth for WHICH constants must
@@ -142,6 +153,34 @@ console.log('\n[4/4] Legal entity placeholders');
 
   const euRep = readFileSync(join(ROOT, 'constants/legal/euRepresentative.ts'), 'utf8');
   if (euRep.includes('[[')) fail('euRepresentative.ts — unresolved placeholder');
+}
+
+console.log('\n[5/5] Ad counter dedup');
+{
+  // The primary key of ad_events IS the dedup rule for increment_ad_view /
+  // increment_ad_click. Drop it and both counters silently return to being
+  // unbounded — no error, no failing test, just numbers an advertiser is shown
+  // that anyone can inflate. Assert it survives in the migration history.
+  const sql = readAll(['supabase/migrations'], ['.sql']);
+
+  const hasTable = /create table if not exists public\.ad_events/i.test(sql);
+  const hasPk = /primary key \(ad_id, user_id, kind, day\)/i.test(sql);
+  const dropped = /drop table[^;]*ad_events/i.test(sql)
+    || /alter table[^;]*ad_events[^;]*drop constraint[^;]*pkey/i.test(sql);
+
+  if (!hasTable) fail('ad_events table is not created by any migration');
+  else if (!hasPk) fail('ad_events has lost its (ad_id, user_id, kind, day) primary key — the dedup rule');
+  else if (dropped) fail('a later migration drops ad_events or its primary key — dedup is off');
+  else ok('ad_events dedup key intact');
+
+  // Both counters must go through the guard rather than incrementing directly.
+  for (const fn of ['increment_ad_view', 'increment_ad_click']) {
+    const bodies = [...sql.matchAll(new RegExp(`create or replace function public\\.${fn}[\\s\\S]*?\\$\\$;`, 'gi'))];
+    const latest = bodies[bodies.length - 1]?.[0] ?? '';
+    if (!latest) fail(`${fn} — not found in migrations`);
+    else if (!/record_ad_event/.test(latest)) fail(`${fn} — newest definition does not call record_ad_event; dedup is bypassed`);
+    else ok(`${fn} goes through record_ad_event`);
+  }
 }
 
 console.log(failures ? `\n${failures} failure(s)` : '\nAll checks passed');
