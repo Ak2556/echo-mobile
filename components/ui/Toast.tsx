@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -30,22 +30,29 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { MOTION } from '../../lib/motion';
 import { usePerformanceProfile } from '../../src/shared/lib/performance';
 
+export interface ToastAction {
+  label: string;
+  onPress: () => void;
+}
+
 interface ToastState {
   message: string | null;
   icon: string | null;
-  show: (message: string, icon?: string) => void;
+  action: ToastAction | null;
+  show: (message: string, icon?: string, action?: ToastAction) => void;
   hide: () => void;
 }
 
 export const useToastStore = create<ToastState>((set) => ({
   message: null,
   icon: null,
-  show: (message, icon = '') => set({ message, icon }),
-  hide: () => set({ message: null, icon: null }),
+  action: null,
+  show: (message, icon = '', action) => set({ message, icon, action: action ?? null }),
+  hide: () => set({ message: null, icon: null, action: null }),
 }));
 
-export function showToast(message: string, icon?: string) {
-  useToastStore.getState().show(message, icon);
+export function showToast(message: string, icon?: string, action?: ToastAction) {
+  useToastStore.getState().show(message, icon, action);
 }
 
 function ToastIcon({ value }: { value: string | null }) {
@@ -103,7 +110,7 @@ function ToastIcon({ value }: { value: string | null }) {
 }
 
 export function ToastProvider() {
-  const { message, icon, hide } = useToastStore();
+  const { message, icon, action, hide } = useToastStore();
   const { colors } = useTheme();
   const performance = usePerformanceProfile('overlay');
   const translateY = useSharedValue(-120);
@@ -198,18 +205,32 @@ export function ToastProvider() {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: action ? 'space-between' : 'center',
             paddingVertical: 14,
             paddingHorizontal: 20,
           }}
         >
           <ToastIcon value={icon} />
           <Text
-            style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}
+            style={[
+              { color: colors.text, fontSize: 14, fontWeight: '600' },
+              action ? { flexShrink: 1 } : null,
+            ]}
             accessibilityLiveRegion="polite"
           >
             {message}
           </Text>
+          {action ? (
+            <Pressable
+              onPress={() => { action.onPress(); hide(); }}
+              hitSlop={12}
+              style={{ paddingHorizontal: 12, paddingVertical: 4 }}
+            >
+              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '700' }}>
+                {action.label}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </AnimatedGlassPanel>
     </GestureDetector>

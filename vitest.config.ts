@@ -30,6 +30,10 @@ const alias = {
   // react-native-svg's commonjs build ships untranspiled .ts too, and every
   // phosphor icon imports it, so it blocks any screen with an icon in it.
   'react-native-svg': path.resolve(__dirname, 'test/stubs/react-native-svg.ts'),
+  // Ships untranspiled TS in its commonjs build (see the stub file for
+  // detail); Gesture/GestureDetector are imported at module scope by Toast,
+  // GestureCard, FlowCard, and others, so those modules can't load otherwise.
+  'react-native-gesture-handler': path.resolve(__dirname, 'test/stubs/react-native-gesture-handler.ts'),
   'expo-linear-gradient': path.resolve(__dirname, 'test/stubs/expo-linear-gradient.ts'),
 };
 
