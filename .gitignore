@@ -91,3 +91,11 @@ i18n_extracted.json
 /remove_ai_script.js
 /generate_noise.js
 /revert_noise.js
+
+# Multi-agent session artefacts and scratch copies — process noise, not source
+.agents/
+scratch/
+
+# Cloudflare worker build cache and generated downloads
+cloudflare/.wrangler/
+cloudflare/downloads/

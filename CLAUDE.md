@@ -60,7 +60,7 @@ Tabs in `app/(tabs)/`; everything else stack-pushes from the root. Cold-start ro
 | `hooks/queries/` | Older React Query hooks (DMs, follows, notifications, profile). Coexists with `src/features/*/api`; new feature hooks go in `src/features`. |
 | `store/` | Zustand, sliced (`slices/{auth,chat,social,settings,retention}Slice.ts`). |
 | `supabase/functions/` | 20 Deno edge functions. |
-| `backend/` | Legacy Python/FastAPI service. `backend/db/schema.sql` is still a schema reference; `backend/venv/` is committed noise — ignore it. |
+| `supabase/migrations/` | 155 migrations — the only source of truth for the schema. A legacy Python/FastAPI service lived in `backend/` and was removed on 2026-09-04; nothing referenced it and the edge functions superseded it. Recover from git history if ever needed. |
 
 Imports are relative in `app/`; `@/*` maps to the repo root via tsconfig `paths`.
 
