@@ -53,18 +53,41 @@ This repository is public, so Actions minutes on standard runners are free and
 unmetered, and there is no new service to operate — which for a solo maintainer
 is worth as much as the money.
 
-What it costs instead is latency. A scheduled workflow runs at most every five
-minutes and GitHub may delay it further under load, so a video is laddered
-minutes after upload rather than seconds. That is acceptable only because
-publishing is progressive: the echo appears immediately and plays the original,
-which now starts quickly because byte ranges shipped the same day. The ladder is
-an upgrade that lands later, never a gate on the post appearing.
+**Event-driven, not scheduled — because the repository will be private.** This
+is the decision that changed when privacy was confirmed. GitHub bills Actions on
+private repositories against a 2,000 minute monthly allowance and rounds every
+job up to a whole minute. A five-minute cron is 8,640 runs a month, so it would
+consume roughly 8,640 minutes — about $53/month — mostly for runs that find
+nothing to do. That is worse than the container this design rejected.
 
-Two properties of scheduled workflows shape the rest of the design: they are
+Firing only when a video actually arrives inverts that: cost scales with
+uploads rather than with time.
+
+    echo row inserted (trigger) → net.http_post → GitHub repository_dispatch
+                                → workflow runs only when there is work
+
+    10 videos/day    ~300 min/mo     $0
+    60 videos/day  ~1,800 min/mo     $0
+   100 videos/day  ~3,000 min/mo    ~$8
+ 1,000 videos/day ~30,000 min/mo  ~$224
+
+**A low-frequency cron remains, as a safety net only.** A dispatch can be lost —
+a network failure, a revoked token, a GitHub incident — and pure event-driven
+would leave that job pending forever with nothing to retry it. An hourly
+schedule (about 720 minutes a month, inside the allowance) drains anything the
+dispatch missed. Latency for the normal path stays seconds-to-a-minute; the
+cron exists for the abnormal one.
+
+Latency is the cost either way, and it is acceptable only because publishing is
+progressive: the echo appears immediately and plays the original, which now
+starts quickly because byte ranges shipped the same day. The ladder is an
+upgrade that lands later, never a gate on the post appearing.
+
+Two properties of scheduled workflows shape the safety net: schedules are
 disabled automatically after 60 days without repository activity, and a run can
-be skipped entirely when GitHub is busy. Neither is detectable from inside the
-workflow, which is why the liveness check lives in Postgres and measures
-oldest-pending age rather than trusting the job to report on itself.
+be skipped when GitHub is busy. Neither is detectable from inside the workflow,
+which is why the liveness check lives in Postgres and measures oldest-pending
+age rather than trusting the job to report on itself.
 
 **HLS ladder over tier-selected MP4s.** Tier-selected MP4s are simpler and
 would reuse the range support already shipped, but the choice is made once at
@@ -84,6 +107,35 @@ are purpose-built but keep job state outside Postgres, where the existing
 creates the echo with `media_urls` — so at upload time there is no echo id to
 enqueue against. A trigger on `public_echoes` needs no change to the upload
 path, cannot miss a video, and makes backfill a single INSERT…SELECT.
+
+## The dispatch trigger
+
+The same trigger that enqueues the job also asks GitHub to run. It follows the
+pattern already working in `20260802130000_server_side_moderation.sql`: read the
+credential from `vault.decrypted_secrets`, then `net.http_post`.
+
+```sql
+select decrypted_secret into v_token from vault.decrypted_secrets
+ where name = 'github_dispatch_token';
+
+perform net.http_post(
+  url     := 'https://api.github.com/repos/Ak2556/echo-mobile/dispatches',
+  headers := jsonb_build_object(
+               'Authorization', 'Bearer ' || v_token,
+               'Accept', 'application/vnd.github+json',
+               'Content-Type', 'application/json'),
+  body    := jsonb_build_object('event_type', 'transcode-video'));
+```
+
+**The credential must come from the vault, not from `current_setting`.** The
+removed transcode trigger read `current_setting('app.settings.edge_function_url')`
+with a fallback of `http://kong:8000` — a local-development address that silently
+does nothing in production, which is the only reason it never broke anything. A
+missing vault secret fails loudly instead, and this project has already lost a
+week to a cron that was dead because its vault secret was absent.
+
+The dispatch is fire-and-forget and its failure is not fatal: the job row is
+already committed, so the hourly safety net will pick it up.
 
 ## The job table
 
@@ -300,6 +352,48 @@ which is the entire reason for not using a managed service.
 If the repository is ever made private, Actions becomes metered and this
 decision has to be revisited — at ~20 seconds per video plus install overhead,
 the free tier for private repos would be exhausted well before launch volume.
+
+## What to switch, and when
+
+The encoder is deliberately the only replaceable part. `video_jobs` does not
+know or care what drains it, so moving off GitHub Actions is a deployment
+change, not a migration: no schema change, no app change, no backfill, and the
+two can run side by side while you watch.
+
+**The trigger to watch is a monthly Actions bill above roughly $10**, which
+happens somewhere around 2,000 videos a month. Below that, Actions is free and
+operating nothing is worth more than the difference. Above it, the cost is both
+higher and less predictable than a flat container, and it grows with a number
+you do not control.
+
+    select count(*) from video_jobs
+     where created_at > now() - interval '30 days';
+
+Watch that alongside the Actions usage page. When it approaches 2,000, switch.
+
+**What switching looks like:** run the same ffmpeg pipeline in a small
+always-on container (Fly, Railway, Render — roughly $5-10/month flat), pointed
+at the same table with the same claim query. Delete the workflow and the
+dispatch trigger once the container has been draining cleanly for a day. The
+`FOR UPDATE SKIP LOCKED` claim already tolerates both running at once, so the
+cutover needs no downtime and no coordination.
+
+**Three other signals that mean switch early**, regardless of volume:
+
+- **Latency becomes a complaint.** Actions dispatch-to-start is seconds to a
+  minute; a container polling is sub-second. If people notice videos looking
+  soft for the first minute, that is the fix.
+- **The repository stops being the deploy unit.** Encoding inside CI couples
+  your media pipeline to your source control. If a CI outage or a bad workflow
+  edit starts blocking video, that coupling has become a liability.
+- **Encoding needs more than a runner gives.** GPU encoding, longer videos than
+  the six-hour job limit, or per-rung parallelism across machines all argue for
+  a container before cost does.
+
+**What does not change on switching:** the job table, the trigger that enqueues,
+the claim semantics, the R2 layout, `hls_url` being written last, the
+oldest-pending liveness check, and every line of app code. That is the point of
+putting the queue in Postgres rather than in the CI system.
 
 ## Explicitly out of scope
 
