@@ -1,0 +1,23 @@
+# THROWAWAY — verifies the runner image ships ffmpeg before a design depends on
+# it. Delete once the answer is recorded.
+name: _probe ffmpeg
+on: workflow_dispatch
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Is ffmpeg present, and what can it do?
+        run: |
+          echo "--- which ---"
+          which ffmpeg ffprobe || echo "NOT INSTALLED"
+          echo "--- version ---"
+          ffmpeg -hide_banner -version | head -3
+          echo "--- encoders we need ---"
+          ffmpeg -hide_banner -encoders 2>/dev/null | grep -E " libx264| aac " || echo "MISSING ENCODER"
+          echo "--- hls muxer ---"
+          ffmpeg -hide_banner -muxers 2>/dev/null | grep -E " hls| segment" || echo "MISSING HLS MUXER"
+          echo "--- aws cli (for R2 upload) ---"
+          aws --version 2>/dev/null || echo "NO AWS CLI"
+          echo "--- runner spec ---"
+          nproc; free -h | head -2
