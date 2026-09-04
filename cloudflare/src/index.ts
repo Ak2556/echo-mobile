@@ -141,9 +141,23 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
   // deletion mean deletion in every colo at once.
   const revocable = key.startsWith('downloads/');
 
+  // Video needs byte ranges. Without them a player cannot fetch a header, start
+  // on a partial buffer, or seek — it has to pull the whole file before the
+  // first frame, so every scroll in the flow stalls for the length of a full
+  // download. Measured on a real feed video: `Range: bytes=0-1023` returned
+  // HTTP 200 and all 2,781,332 bytes.
+  const rangeHeader = c.req.header('range');
+
   const cache = caches.default;
   const cacheKey = new Request(new URL(c.req.url).toString(), { method: 'GET' });
-  if (!revocable) {
+
+  // Range requests bypass the edge cache in both directions. Reading is
+  // pointless (the cached entry is the whole object, and slicing it here would
+  // cost more than the R2 read), and WRITING a partial body under the plain URL
+  // key would poison the cache: every later full request would be served a
+  // truncated file. The cache key carries no Range, so this separation is the
+  // only thing keeping the two response shapes apart.
+  if (!revocable && !rangeHeader) {
     // workers.dev applies no zone caching, so without this every view of the
     // same image costs a worker invocation and an R2 read. Responses carry
     // `immutable` already; this is what makes the edge honour it.
@@ -151,12 +165,37 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
     if (cached) return cached;
   }
 
-  const object = await bucketBinding(c.env, bucket as BucketName).get(key);
+  // Hand R2 the raw headers and let it parse the Range itself, so suffix ranges
+  // ("bytes=-500") and open-ended ranges ("bytes=1000-") behave to spec without
+  // this worker reimplementing RFC 7233.
+  // R2 THROWS on an unsatisfiable range rather than returning null, so this has
+  // to be caught: without the try/catch the exception escapes as a 500 and a
+  // player probing past the end of a file gets a server error instead of the
+  // 416 that tells it the real length. Verified against a preview deployment —
+  // `Range: bytes=99999999-` returned 500 before this catch existed.
+  let object: R2ObjectBody | null;
+  try {
+    object = rangeHeader
+      ? await bucketBinding(c.env, bucket as BucketName).get(key, { range: c.req.raw.headers })
+      : await bucketBinding(c.env, bucket as BucketName).get(key);
+  } catch {
+    const head = await bucketBinding(c.env, bucket as BucketName).head(key);
+    if (!head) return c.text('Not Found', 404);
+    return new Response(null, {
+      status: 416,
+      headers: { 'Content-Range': `bytes */${head.size}`, 'Accept-Ranges': 'bytes' },
+    });
+  }
+
   if (!object) return c.text('Not Found', 404);
 
   const headers = new Headers();
   object.writeHttpMetadata(headers); // content-type, as stored on upload
   headers.set('etag', object.httpEtag);
+  // Advertised on EVERY response, not just ranged ones. A player that asks for
+  // the first bytes and sees no Accept-Ranges on the reply gives up on partial
+  // fetches for the rest of the file.
+  headers.set('Accept-Ranges', 'bytes');
   // Keys embed an upload timestamp and are never rewritten, so a hit is safe to
   // cache indefinitely — except for builds, which have to stay withdrawable.
   headers.set(
@@ -164,11 +203,31 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
     revocable ? 'public, max-age=300, must-revalidate' : 'public, max-age=31536000, immutable',
   );
 
+  const resolved = 'range' in object ? object.range : undefined;
+  if (rangeHeader && resolved) {
+    // object.size is the size of the WHOLE object even on a ranged get, which
+    // is what Content-Range's total has to report.
+    const total = object.size;
+    const offset = 'offset' in resolved && resolved.offset !== undefined
+      ? resolved.offset
+      : 'suffix' in resolved
+        ? total - resolved.suffix
+        : 0;
+    const length = 'length' in resolved && resolved.length !== undefined
+      ? resolved.length
+      : total - offset;
+    const end = offset + length - 1;
+
+    headers.set('Content-Range', `bytes ${offset}-${end}/${total}`);
+    headers.set('Content-Length', String(length));
+    return new Response(object.body, { status: 206, headers });
+  }
+
   const res = new Response(object.body, { headers });
   if (!revocable) {
     // Cache after responding — the user should not wait on the write. Only the
     // public buckets reach here; dm-media is served by its own gated route and
-    // is deliberately never edge-cached.
+    // is deliberately never edge-cached. Only full responses reach this line.
     c.executionCtx.waitUntil(cache.put(cacheKey, res.clone()));
   }
   return res;
