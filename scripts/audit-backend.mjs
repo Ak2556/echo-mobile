@@ -34,7 +34,7 @@ function readAll(dirs, exts) {
 }
 
 // ── 1. AI model IDs vs OpenRouter catalogs ─────────────────────────────────
-console.log('\n[1/5] AI model IDs vs OpenRouter catalogs');
+console.log('\n[1/6] AI model IDs vs OpenRouter catalogs');
 {
   const src = readAll(['supabase/functions', 'lib'], ['.ts']);
   const referenced = [...new Set([...src.matchAll(/["'`](google\/[a-z0-9.\-]+|openai\/[a-z0-9.\-]+|mistralai\/[a-z0-9.\-]+)["'`]/g)].map((m) => m[1]))];
@@ -50,7 +50,7 @@ console.log('\n[1/5] AI model IDs vs OpenRouter catalogs');
 }
 
 // ── 2. Storage buckets referenced in code exist in prod ────────────────────
-console.log('\n[2/5] Storage buckets');
+console.log('\n[2/6] Storage buckets');
 {
   const src = readAll(['lib', 'app', 'components', 'supabase/functions'], ['.ts', '.tsx']);
   const buckets = [...new Set([...src.matchAll(/storage\s*[\n\s]*\.from\(["'`]([a-z0-9\-]+)["'`]\)/g)].map((m) => m[1]))];
@@ -76,7 +76,7 @@ console.log('\n[2/5] Storage buckets');
 }
 
 // ── 3. App enums vs migration check constraints ────────────────────────────
-console.log('\n[3/5] Enum ↔ check-constraint sync');
+console.log('\n[3/6] Enum ↔ check-constraint sync');
 {
   const migrations = readAll(['supabase/migrations'], ['.sql']);
   // Scoped to the owning table: matching on column name alone meant any later
@@ -130,7 +130,7 @@ console.log('\n[3/5] Enum ↔ check-constraint sync');
   }
 }
 
-console.log('\n[4/5] Legal entity placeholders');
+console.log('\n[4/6] Legal entity placeholders');
 {
   // constants/legal/entity.ts is TypeScript, so it cannot be imported here.
   // hasUnresolvedEntityFacts() is the source of truth for WHICH constants must
@@ -155,7 +155,7 @@ console.log('\n[4/5] Legal entity placeholders');
   if (euRep.includes('[[')) fail('euRepresentative.ts — unresolved placeholder');
 }
 
-console.log('\n[5/5] Ad counter dedup');
+console.log('\n[5/6] Ad counter dedup');
 {
   // The primary key of ad_events IS the dedup rule for increment_ad_view /
   // increment_ad_click. Drop it and both counters silently return to being
@@ -181,6 +181,38 @@ console.log('\n[5/5] Ad counter dedup');
     else if (!/record_ad_event/.test(latest)) fail(`${fn} — newest definition does not call record_ad_event; dedup is bypassed`);
     else ok(`${fn} goes through record_ad_event`);
   }
+}
+
+console.log('\n[6/6] Mini-app fact queue');
+{
+  // A queue that silently accumulates failures is the exact shape of the bugs
+  // this script exists to catch: green everywhere, dead in fact. The count
+  // lives on-device, so what is asserted here is that the plumbing that
+  // surfaces it is still wired.
+  //
+  // Read the source files directly rather than via readAll(['lib/minilink']),
+  // which would also pull in links.test.ts — the tests reference every one of
+  // these symbols too, so a walk that includes them would report healthy even
+  // if queue.ts or drain.ts lost the behaviour entirely.
+  const src = readFileSync(join(ROOT, 'lib/minilink/queue.ts'), 'utf8')
+    + readFileSync(join(ROOT, 'lib/minilink/drain.ts'), 'utf8');
+
+  // Anchored with \s*\( so a superset rename (listFailed -> listFailed2)
+  // cannot walk past the check by leaving the old name as a literal prefix —
+  // it also pins the match to a real function declaration rather than a
+  // substring that could appear in a comment or string.
+  if (!/export function markFailure\s*\(/.test(src)) fail('minilink queue has no markFailure — failures cannot be recorded');
+  else if (!/status:\s*attempts >= MAX_FACT_ATTEMPTS/.test(src)) fail('minilink queue no longer parks exhausted facts as failed');
+  else ok('failed facts are parked, not dropped');
+
+  if (!/export function listFailed\s*\(/.test(src)) fail('minilink queue has no listFailed — failures cannot be surfaced');
+  else ok('failed facts are queryable');
+
+  // Identifier-generic on the receiver so a harmless rename of the loop
+  // variable (fact -> f) doesn't false-fail, while the call shape itself —
+  // guarding on some record's .id — still has to survive.
+  if (!/hasApplied\([a-zA-Z_$][\w$]*\.id\)/.test(src)) fail('drain no longer checks the ledger — delivery is not idempotent');
+  else ok('drain is ledger-guarded');
 }
 
 console.log(failures ? `\n${failures} failure(s)` : '\nAll checks passed');
