@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActionSheetIOS, ActivityIndicator, Modal, Platform, Pressable, Text, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { probePlayerCreated, probePlayerReleased } from '../../../../lib/devVideoProbe';
 
 // Only used on iOS (see the Platform.OS branch below), but a static import runs
 // everywhere — and react-native-webview has no web build, so importing it would
@@ -55,6 +56,12 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
   const videoRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
   const player = useVideoPlayer(activeUri);
+
+  // THROWAWAY probe (lib/devVideoProbe.ts) — remove with it.
+  useEffect(() => {
+    probePlayerCreated();
+    return () => { probePlayerReleased(); };
+  }, []);
 
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const [videoError, setVideoError] = useState<string>('');

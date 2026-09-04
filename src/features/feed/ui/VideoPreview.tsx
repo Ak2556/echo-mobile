@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
+import { probePlayerCreated, probePlayerReleased } from '../../../../lib/devVideoProbe';
 import { videoSourceForUri } from '../../../../lib/videoMedia';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
@@ -111,6 +112,14 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   const { VideoView, useVideoPlayer } = ExpoVideoModule!;
   const [loadState, setLoadState] = useState<VideoLoadState>('loading');
   const player = useVideoPlayer(videoSourceForUri(uri), (p: any) => { p.muted = true; p.loop = true; });
+
+  // THROWAWAY probe (lib/devVideoProbe.ts). A player is constructed here on
+  // MOUNT, not when the card becomes active — counting them is the whole point
+  // of the investigation. Remove with the probe.
+  useEffect(() => {
+    probePlayerCreated();
+    return () => { probePlayerReleased(); };
+  }, []);
 
   const activeEchoId = useActiveVideoStore(s => s.activeEchoId);
   const soundEnabled = useAppStore(s => s.soundEnabled);

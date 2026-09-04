@@ -1,4 +1,5 @@
 import React, { useCallback, useRef } from 'react';
+import { VideoProbeOverlay } from '../../components/dev/VideoProbeOverlay';
 import { View, RefreshControl, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -100,6 +101,7 @@ export default function WatchScreen() {
           />
         }
       />
+      <VideoProbeOverlay />
     </View>
   );
 }
