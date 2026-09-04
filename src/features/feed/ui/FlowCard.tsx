@@ -175,6 +175,11 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
           echoId={item.id}
           viewCount={item.viewCount}
           paused={paused}
+          // Safe here and only here: the Flow pages one full-screen card at a
+          // time, so a card without a player is never on screen. The list keeps
+          // ~3 cards mounted, which meant 3 hardware decoders alive to show
+          // one video.
+          releaseWhenInactive
         />
       </View>
 

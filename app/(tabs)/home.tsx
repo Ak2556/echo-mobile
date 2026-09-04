@@ -33,6 +33,7 @@ import { EvolutionGroup, FeedItem } from '../../types';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { FollowingEmptyState } from '../../src/features/feed/ui/FollowingEmptyState';
+import { getDeviceTier } from '../../lib/deviceTier';
 import { usePerformanceProfile } from '../../src/shared/lib/performance';
 import { groupDiscovery } from '../../lib/echoUX';
 import { useRealtimeNewEchoes } from '../../lib/realtime';
@@ -354,6 +355,16 @@ function FeedScopeRail({
 }
 
 export default function DiscoverScreen() {
+  // How far beyond the viewport FlashList renders, in px. Every rendered video
+  // card constructs a native player, so this is effectively a cap on concurrent
+  // hardware decoders. FlashList's default is generous and tuned for cheap
+  // cells; video cells are not cheap.
+  const videoDrawDistance = useMemo(() => {
+    let tier: 'high' | 'mid' | 'low' = 'mid';
+    try { tier = getDeviceTier(); } catch { /* unknown device stays on mid */ }
+    return tier === 'high' ? 600 : tier === 'mid' ? 300 : 120;
+  }, []);
+
   const router = useRouter();
   const {
     data: feedData,
@@ -671,6 +682,13 @@ export default function DiscoverScreen() {
           )}
           <FlashList 
             ref={listRef}
+            // The home feed shows several video cards at once and there are no
+            // server-side thumbnails, so releasing an inactive card's player
+            // would replace a paused frame with a blank box. Cap how far ahead
+            // the list renders instead: fewer mounted cards is fewer decoders,
+            // without any visible placeholder. Scaled by device tier because
+            // the whole point is what a low-RAM phone can hold at once.
+            drawDistance={videoDrawDistance}
             onViewableItemsChanged={onVoiceViewable}
             viewabilityConfig={VOICE_VIEWABILITY}
             data={popularItemsWithAds}

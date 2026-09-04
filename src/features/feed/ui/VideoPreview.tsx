@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { probePlayerCreated, probePlayerReleased } from '../../../../lib/devVideoProbe';
+import { useVideoMountPolicy } from '../lib/videoMountPolicy';
 import { videoSourceForUri } from '../../../../lib/videoMedia';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
@@ -39,6 +40,17 @@ interface VideoPreviewProps {
    * so only the one video the user is actually looking at plays.
    */
   echoId?: string;
+  /**
+   * Release the native player when this card is not the active video.
+   *
+   * Opt-in, because it trades a still frame for a decoder. A surface where one
+   * card fills the screen (the Flow) can set it freely — the released cards are
+   * off-screen, so nobody sees the placeholder. A scrolling feed where several
+   * video cards are visible at once should NOT, because there are no
+   * server-side thumbnails: a released card shows a blank surface rather than a
+   * paused frame. Cap that surface's mounted-card count instead.
+   */
+  releaseWhenInactive?: boolean;
   /**
    * Play without participating in the active-video store. Only for a surface
    * showing exactly one video that has no echo yet — the composer preview.
@@ -242,6 +254,25 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   );
 }
 
+/**
+ * What a card shows while its player is released.
+ *
+ * Deliberately plain: there are no server-side thumbnails, so there is no frame
+ * to show. It holds the exact height the player would occupy, because a
+ * placeholder of a different size makes the list jump as cards mount and
+ * release — which would be a worse artefact than the decoders this saves.
+ */
+function ReleasedVideoPlaceholder({ height = 260, borderRadius = 16, onPress }: VideoPreviewProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      pointerEvents={onPress ? 'auto' : 'box-none'}
+      style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#0C0B09' }}
+    />
+  );
+}
+
 function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCount }: VideoPreviewProps) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} pointerEvents={onPress ? 'auto' : 'box-none'} style={{ height, borderRadius, overflow: 'hidden' }}>
@@ -267,7 +298,16 @@ function DataSaverPlaceholder({ height = 260, borderRadius = 16, onPress, viewCo
 // Public export — auto-selects based on native module availability and Data Saver flag
 export function VideoPreview(props: VideoPreviewProps) {
   const dataSaver = useAppStore(s => s.dataSaver);
+  const activeEchoId = useActiveVideoStore(s => s.activeEchoId);
+
+  // Matches VideoPlayer's own definition of active. Computed here too so the
+  // decision to construct a player can be made BEFORE one exists — inside
+  // VideoPlayer it is already too late, the useVideoPlayer call has run.
+  const isActive = props.echoId ? activeEchoId === props.echoId : !!props.autoplay;
+  const keepMounted = useVideoMountPolicy(isActive);
+
   if (dataSaver) return <DataSaverPlaceholder {...props} />;
   if (!ExpoVideoModule) return <VideoFallback {...props} />;
+  if (props.releaseWhenInactive && !keepMounted) return <ReleasedVideoPlaceholder {...props} />;
   return <VideoPlayer {...props} />;
 }
