@@ -23,7 +23,13 @@ jobs:
       - name: 🏗 Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          # 22, not 20, because eas-cli pulls @oclif/plugin-autocomplete, which
+          # requires node >= 22. This workflow failed silently on every run from
+          # at least 2026-08-30 to 2026-09-04 — testers received no OTA update
+          # for five days — because the install step died before `eas update`
+          # ever ran. The other workflows stay on 20 to match local dev; only
+          # this one installs eas-cli.
+          node-version: 22
 
       - name: 🏗 Setup Expo and EAS
         uses: expo/expo-github-action@v8
