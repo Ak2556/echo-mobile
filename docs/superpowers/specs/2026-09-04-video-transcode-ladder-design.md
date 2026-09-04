@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-04
 **Status:** approved design, not yet implemented
-**Scope:** an HLS adaptive ladder for feed video; no change to the upload path, and almost none to the app
+**Scope:** an HLS adaptive ladder for feed video, encoded on GitHub Actions at zero compute cost; no change to the upload path, and almost none to the app
 
 ## Purpose
 
@@ -43,9 +43,28 @@ degrades mid-video should downshift, not stall.
 
 **Self-hosted encoder over Cloudflare Stream.** R2 has zero egress fees. At
 10,000 videos viewed 100 times each, Stream's per-delivered-minute pricing is
-roughly $1,000/month against roughly $1 for R2 storage plus a flat container.
-For a high-view, low-revenue-per-user audience that is the wrong shape of bill,
-and this project is already constrained by cost elsewhere.
+roughly $1,000/month against roughly $1 for R2 storage. For a high-view,
+low-revenue-per-user audience that is the wrong shape of bill, and this project
+is already constrained by cost elsewhere.
+
+**GitHub Actions over a Fly/Railway container.** The container was the original
+choice at roughly $5-10/month; the requirement changed to zero initial cost.
+This repository is public, so Actions minutes on standard runners are free and
+unmetered, and there is no new service to operate — which for a solo maintainer
+is worth as much as the money.
+
+What it costs instead is latency. A scheduled workflow runs at most every five
+minutes and GitHub may delay it further under load, so a video is laddered
+minutes after upload rather than seconds. That is acceptable only because
+publishing is progressive: the echo appears immediately and plays the original,
+which now starts quickly because byte ranges shipped the same day. The ladder is
+an upgrade that lands later, never a gate on the post appearing.
+
+Two properties of scheduled workflows shape the rest of the design: they are
+disabled automatically after 60 days without repository activity, and a run can
+be skipped entirely when GitHub is busy. Neither is detectable from inside the
+workflow, which is why the liveness check lives in Postgres and measures
+oldest-pending age rather than trusting the job to report on itself.
 
 **HLS ladder over tier-selected MP4s.** Tier-selected MP4s are simpler and
 would reuse the range support already shipped, but the choice is made once at
@@ -88,7 +107,8 @@ create index video_jobs_pending_idx on public.video_jobs (status, created_at)
 
 RLS enabled with no client policy: only the encoder's service role touches it.
 
-Claiming is atomic, and reclaims work abandoned by a crashed container:
+Claiming is atomic and batched — a workflow run drains several jobs rather than
+one — and reclaims work abandoned by a run that was cancelled or timed out:
 
 ```sql
 update video_jobs
@@ -98,14 +118,15 @@ update video_jobs
     where status='pending'
        or (status='encoding' and claimed_at < now() - interval '15 minutes')
     order by created_at
-    limit 1
+    limit :batch
     for update skip locked)
 returning *;
 ```
 
-`FOR UPDATE SKIP LOCKED` means a second container can be added later with no
-change. The `claimed_at` clause is the crash recovery: without it, one container
-death strands a video permanently.
+`FOR UPDATE SKIP LOCKED` means two workflow runs overlapping — which GitHub
+permits — cannot claim the same job. The `claimed_at` clause is the recovery
+path: a run cancelled mid-encode leaves rows in `encoding` forever without it,
+and a cancelled run is normal on Actions, not exceptional.
 
 `attempts` caps at 3, after which the row rests in `failed` with `last_error`.
 
@@ -149,6 +170,20 @@ unsuitable, so an unusual upload cannot fail the job.
 requires; `-1` can yield an odd width and fail the encode outright. Audio is
 mono because this is a voice-first app — stereo music is not the payload.
 
+**The runner has no ffmpeg.** Measured, not assumed — the first probe of
+`ubuntu-latest` reported `ffmpeg: command not found`, contradicting the
+expectation this design was initially sketched on. It is installed per run from
+a static build (`FedericoCarboni/setup-ffmpeg@v3`, ffmpeg 7.0.2), which does
+provide `libx264`, `aac` and the `hls` muxer. `aws-cli` 2.36.29 IS preinstalled,
+so the R2 upload needs no extra tooling.
+
+**Measured throughput.** A synthetic 60-second 720p source through the full
+three-rung ladder took **19.7 seconds** on the standard 4-CPU / 15 GB runner.
+The synthetic source (`testsrc2`) is high-entropy and harder to encode than real
+phone footage, so this is an upper bound. A five-minute cron can therefore drain
+a substantial backlog in a single run, and batch size is bounded by the job
+timeout rather than by CPU.
+
 **MPEG-TS segments, 4 seconds.** fMP4/CMAF is more efficient and both ExoPlayer
 and AVPlayer support it, but TS has fewer edge cases and this is the first
 version of a pipeline operated by one person. 4s balances switch responsiveness
@@ -169,6 +204,16 @@ echo-media/<uid>/<ts>_hls/720p/…
 **The original is kept.** It is the fallback when HLS playback errors, it allows
 re-encoding with better settings later without asking users to re-upload, and at
 60-second clips the storage is negligible against R2's $0.015/GB.
+
+**`hls_url` is written only after the manifest exists in R2.** This is not a
+style preference. Migration `20260824180000_drop_simulated_transcode.sql`
+removed an earlier trigger that wrote an `hls_url` by swapping `.mp4` for
+`.m3u8` on the original URL — a file that never existed. Because
+`mapSupabaseEcho.ts:94` prefers `hls_url`, every video it touched would have
+played from a 404; it was harmless only because it was never deployed. That
+migration's closing line is explicit: *"What should not come back is a
+placeholder that writes a URL nobody serves."* The write happens last, after
+every segment and manifest has been uploaded and verified, or not at all.
 
 Two things the encoder must get right on PUT, both of which fail silently:
 
@@ -203,7 +248,8 @@ Two additions:
 ## Failure and visibility
 
 The health signal is deliberately not "did the last job succeed". If the
-container dies, jobs still enqueue and nothing errors — the table quietly fills,
+encoder stops running — a disabled schedule, a revoked secret, a workflow
+someone deleted — jobs still enqueue and nothing errors. The table quietly fills,
 and that is the only symptom:
 
 ```sql
@@ -215,8 +261,10 @@ check against a 30-minute threshold.
 
 | Failure | Behaviour |
 |---|---|
-| Container dies mid-encode | Row stuck in `encoding`; reclaimed after 15 minutes |
-| Container dies entirely | Jobs accumulate as `pending`; oldest-pending age trips the audit |
+| Run cancelled or times out mid-encode | Row stuck in `encoding`; reclaimed after 15 minutes |
+| Scheduled run skipped or delayed by GitHub | Jobs stay `pending`; the next run drains them |
+| Workflow auto-disabled after 60 days idle | Jobs accumulate; oldest-pending age trips the audit |
+| Secrets rotated or revoked | Job fails on upload, `last_error` records it, `attempts` caps at 3 |
 | ffmpeg fails on one file | `attempts` increments; after 3 → `failed` with `last_error` |
 | Encoder writes a bad manifest | App falls back to the original MP4 |
 | Job never enqueued | Trigger-based, so an un-jobbed video row is itself queryable |
@@ -244,9 +292,14 @@ anyone uploads anything new.
 
 ## Cost
 
-Container ~$5–10/month flat, R2 storage for renditions ~$1/month at 10,000
-videos, egress $0. The bill does not grow with views, which is the entire reason
-for not using a managed service.
+**$0 for compute.** GitHub Actions is free and unmetered for public
+repositories on standard runners. R2 storage for renditions is roughly $1/month
+at 10,000 videos, and egress is $0. Nothing in this pipeline scales with views,
+which is the entire reason for not using a managed service.
+
+If the repository is ever made private, Actions becomes metered and this
+decision has to be revisited — at ~20 seconds per video plus install overhead,
+the free tier for private repos would be exhausted well before launch volume.
 
 ## Explicitly out of scope
 
