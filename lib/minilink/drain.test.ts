@@ -54,14 +54,35 @@ vi.mock('@react-native-async-storage/async-storage', () => ({
  */
 const failing = vi.hoisted(() => ({ on: false }));
 const failTarget = vi.hoisted(() => ({ kind: 'purchase', from: 'shopping-list' }));
+
+/**
+ * Gate queue for the reentrancy test. Each real `apply()` call shifts one
+ * promise off the front and awaits it before doing any work, so a test can
+ * hold the Nth concurrent apply open and choose exactly when it proceeds.
+ * Empty (the default) means apply runs unimpeded, so every other test is
+ * unaffected.
+ */
+const gates = vi.hoisted(() => ({ queue: [] as Promise<void>[] }));
+
 vi.mock('./links', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./links')>();
   return {
     ...actual,
-    findLink: (kind: string, from: string) =>
-      failing.on && kind === failTarget.kind && from === failTarget.from
-        ? { kind, from, to: 'expenses', apply: () => Promise.reject(new Error('boom')), revert: () => Promise.resolve() }
-        : actual.findLink(kind as never, from as never),
+    findLink: (kind: string, from: string) => {
+      if (failing.on && kind === failTarget.kind && from === failTarget.from) {
+        return { kind, from, to: 'expenses', apply: () => Promise.reject(new Error('boom')), revert: () => Promise.resolve() };
+      }
+      const link = actual.findLink(kind as never, from as never);
+      if (!link) return link;
+      return {
+        ...link,
+        apply: async (f: Parameters<typeof link.apply>[0]) => {
+          const gate = gates.queue.shift();
+          if (gate) await gate;
+          return link.apply(f);
+        },
+      };
+    },
   };
 });
 
@@ -101,6 +122,61 @@ describe('minilink drain', () => {
     failTarget.kind = 'purchase';
     failTarget.from = 'shopping-list';
     removeFactBoom.id = '';
+    gates.queue = [];
+  });
+
+  /** Let queued microtasks run so a started drain reaches its first await. */
+  const settle = async (n = 10) => { for (let i = 0; i < n; i++) await Promise.resolve(); };
+
+  it('serializes overlapping drains so a fact is never applied twice', async () => {
+    // The real scenario: check off item A, then item B ~200ms later. A's
+    // link.apply is still blocked on the network inside loadExpensesDoc, so
+    // removeFact(A) has not run and the ledger row for A does not exist yet.
+    // Unserialized, the second drain's listPending() still contains A and
+    // hasApplied(A) is still false, so A is logged to Expenses a second time —
+    // and the second recordApplied is a silent no-op, leaving the duplicate
+    // transaction with no ledger row that Undo could ever reach.
+    const deferred = () => {
+      let release!: () => void;
+      const promise = new Promise<void>((r) => { release = r; });
+      return { promise, release };
+    };
+    const first = deferred();
+    const second = deferred();
+    gates.queue = [first.promise, second.promise];
+
+    const fact = emit('purchase', 'shopping-list', 'item-1', { label: 'milk', amount: 80 })!;
+
+    const drainA = drainMiniLink();
+    await settle();               // drain A is now parked inside apply()
+    const drainB = drainMiniLink();
+    await settle();               // unserialized, drain B is parked in apply() too
+
+    first.release();
+    await settle();               // drain A completes: tx written, fact removed
+    second.release();
+    await Promise.all([drainA, drainB]);
+
+    // Exactly one transaction, and it is the one the ledger knows about.
+    const txs = await loadTransactions();
+    expect(txs).toHaveLength(1);
+    expect(hasApplied(fact.id)).toBe(true);
+    expect(findByCreatedItem(txs[0].id)?.factId).toBe(fact.id);
+    expect(listPending()).toHaveLength(0);
+  });
+
+  it('a rejection in one drain does not poison the chain for later callers', async () => {
+    // The tail is chained with .then(runDrain, runDrain) precisely so a
+    // rejected link in one run cannot leave every subsequent drain unresolved.
+    failing.on = true;
+    emit('purchase', 'shopping-list', 'bad', { label: 'milk', amount: 80 });
+    await drainMiniLink();
+
+    failing.on = false;
+    emit('purchase', 'shopping-list', 'good', { label: 'eggs', amount: 40 });
+    await drainMiniLink();
+
+    expect((await loadTransactions()).some((t) => t.note === 'eggs')).toBe(true);
   });
 
   it('delivers a pending fact to its link and clears it from the queue', async () => {

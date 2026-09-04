@@ -18,7 +18,28 @@ import { ttx } from '../../src/shared/lib/i18n';
 import { emit } from '../../lib/minilink/queue';
 import { drainMiniLink, undoFact } from '../../lib/minilink/drain';
 import { hasApplied } from '../../lib/minilink/ledger';
-import { shouldEmitPurchase, describePostDrain } from '../../lib/minilink/rules';
+import { shouldEmitPurchase, describePostDrain, describeUndo } from '../../lib/minilink/rules';
+
+/**
+ * Reverse a delivered purchase fact and report honestly if it didn't happen.
+ *
+ * Neither half of this can be dropped. `undoFact` resolves false when there is
+ * no live ledger row to reverse, and the delete underneath it writes to storage
+ * and can reject — so firing this off and letting the toast dismiss would tell
+ * the user their expense was removed when it may still be on their books. Same
+ * rule the drain path already follows: never claim a money write happened.
+ */
+function runUndo(factId: string): void {
+  void undoFact(factId)
+    .then((reversed) => {
+      const message = describeUndo(reversed ? 'reversed' : 'nothing-to-undo');
+      if (message) showToast(ttx(message), '');
+    })
+    .catch(() => {
+      const message = describeUndo('failed');
+      if (message) showToast(ttx(message), '');
+    });
+}
 
 export default function ShoppingListScreen() {
   const { colors, radius } = useTheme();
@@ -146,7 +167,7 @@ export default function ShoppingListScreen() {
         showToast(
           ttx(message),
           '',
-          showUndo ? { label: ttx('Undo'), onPress: () => { void undoFact(fact.id); } } : undefined,
+          showUndo ? { label: ttx('Undo'), onPress: () => { runUndo(fact.id); } } : undefined,
         );
       })
       .catch(() => {

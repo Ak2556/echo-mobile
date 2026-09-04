@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { shouldEmitPurchase, describePostDrain } from './rules';
+import { shouldEmitPurchase, describePostDrain, describeUndo } from './rules';
 import type { ShoppingItem } from '../shoppingList';
 
 const item = (over: Partial<ShoppingItem> = {}): ShoppingItem => ({
@@ -41,5 +41,24 @@ describe('describePostDrain', () => {
     const result = describePostDrain(false);
     expect(result.showUndo).toBe(false);
     expect(result.message.toLowerCase()).not.toContain('logged to expenses');
+  });
+});
+
+describe('describeUndo', () => {
+  it('stays silent when the row really was removed', () => {
+    expect(describeUndo('reversed')).toBeNull();
+  });
+
+  it('says so when there was nothing to reverse', () => {
+    const message = describeUndo('nothing-to-undo');
+    expect(message).toBeTruthy();
+    expect(message?.toLowerCase()).toContain('nothing to undo');
+  });
+
+  it('says so when the removal failed, without claiming it succeeded', () => {
+    const message = describeUndo('failed');
+    expect(message).toBeTruthy();
+    expect(message?.toLowerCase()).toContain("couldn't remove");
+    expect(message?.toLowerCase()).not.toContain('removed from');
   });
 });

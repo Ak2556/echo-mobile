@@ -32,7 +32,7 @@ import { ServiceWorkerRegistrar } from '../components/pwa/ServiceWorkerRegistrar
 import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { database } from '../src/shared/database';
 import { usePresenceTracking } from '../lib/presence';
-import { persistGet, persistSet, persistDelete } from '../store/persist';
+import { persistGet, persistSet, persistDelete, storageHydrate } from '../store/persist';
 import { parseEchoUniversalLink, safeRouteId } from '../lib/urlSafety';
 import { handleNotificationReply } from '../lib/notifications/handleReplyResponse';
 import { initNotificationSurface, registerPushAndStoreToken } from '../lib/push';
@@ -88,7 +88,6 @@ if (typeof ErrorUtils !== 'undefined') {
 
 initMonitoring();
 startOutbox(); // connectivity + replay any queued writes
-void drainMiniLink(); // deliver any facts emitted in a previous session
 if (getAnalyticsConsent() === 'accepted') {
   initAnalytics();
 }
@@ -150,6 +149,38 @@ function PushTokenRefresh() {
     if (Platform.OS === 'web' || status !== 'ready') return;
     void registerPushAndStoreToken(userId);
   }, [status, userId]);
+  return null;
+}
+
+/**
+ * Deliver mini-app facts left pending by a previous session.
+ *
+ * This used to run at module scope, where it could not work and could do harm.
+ * On the AsyncStorage fallback path (Expo Go, or a build where MMKV didn't
+ * link) the sync cache is still empty at module load and is seeded
+ * asynchronously afterwards — so the drain read an empty queue and last
+ * session's facts sat undelivered until the user happened to check off another
+ * item. And it ran before the auth session was restored, so the expenses pull
+ * came back empty and the save pushed the un-merged local doc to remote: a
+ * silent last-write-wins clobber of another device's expenses, with no user
+ * action behind it.
+ *
+ * Gated on 'ready' for the same reason as PushTokenRefresh above — it is the
+ * only status with a usable session. storageHydrate() is a no-op under MMKV
+ * and idempotent otherwise, so awaiting it here just guarantees the queue is
+ * readable before we look at it.
+ */
+function MiniLinkDrain() {
+  const { status } = useAuth();
+  useEffect(() => {
+    if (status !== 'ready') return;
+    let cancelled = false;
+    void storageHydrate().then(() => {
+      if (cancelled) return;
+      return drainMiniLink();
+    });
+    return () => { cancelled = true; };
+  }, [status]);
   return null;
 }
 
@@ -376,6 +407,7 @@ function RootLayout() {
             wherever the user lands, not only on the home route. */}
         <ServiceWorkerRegistrar />
         <PushTokenRefresh />
+        <MiniLinkDrain />
         <ShareIntentRouter />
         <UniversalLinkRouter />
         <PomodoroRuntimeHost />
