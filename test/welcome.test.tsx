@@ -3,6 +3,20 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 /**
+ * Lives in test/, not beside app/welcome.tsx, and must stay here.
+ *
+ * expo-router treats EVERY file under app/ as a route, so a colocated
+ * *.test.tsx is compiled into the production bundle and drags vitest — and
+ * therefore vite — in with it. Metro then fails outright:
+ *   "`import.meta` is not supported in Hermes"  (vite/dist/node/module-runner.js)
+ * which broke `expo export` for native AND web, taking out OTA updates, EAS
+ * production builds and the GitHub Pages deploy for two days.
+ *
+ * Colocated tests are fine everywhere else in this repo. app/ is the one
+ * directory where a test file becomes shipped code.
+ */
+
+/**
  * Guards the only place a new user is asked for notification permission.
  *
  * Before this, every push prompt sat behind a control users had to go find, so
@@ -61,7 +75,7 @@ describe('welcome first-run', () => {
   beforeEach(() => { registerForPush.mockClear(); });
 
   it('asks for push permission once the daily question is answered', async () => {
-    const { default: WelcomeScreen } = await import('./welcome');
+    const { default: WelcomeScreen } = await import('../app/welcome');
     render(React.createElement(WelcomeScreen));
 
     const button = await screen.findByTestId('answer');
