@@ -22,6 +22,7 @@ jobs:
       worker_ok: ${{ steps.worker.outputs.ok }}
       functions_ok: ${{ steps.functions.outputs.ok }}
       legal_ok: ${{ steps.legal.outputs.ok }}
+      crons_ok: ${{ steps.crons.outputs.ok }}
       failure_summary: ${{ steps.summary.outputs.text }}
     steps:
       - name: Ping Supabase REST
@@ -119,6 +120,36 @@ jobs:
             echo "ok=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Check scheduled jobs
+        id: crons
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          set -o pipefail
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ]; then
+            echo "ok=skipped" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # cron_health() checks both that each job succeeded recently and that
+          # pg_net has no failing responses — pg_cron reports success for a job
+          # that ran and did nothing, which is how personalized-fanout stayed
+          # dead for weeks while looking healthy.
+          body=$(curl -s --max-time 20 -X POST \
+            "${EXPO_PUBLIC_SUPABASE_URL%/}/rest/v1/rpc/cron_health" \
+            -H "apikey: $EXPO_PUBLIC_SUPABASE_ANON_KEY" \
+            -H 'Content-Type: application/json' -d '{}' || echo '')
+          echo "cron_health -> $body"
+          n=$(printf '%s' "$body" | python3 -c "import json,sys
+try: print(json.load(sys.stdin)[0]['unhealthy'])
+except Exception: print(-1)")
+          if [ "$n" = "0" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            # -1 means the call itself failed to parse, which is also not healthy.
+            echo "detail=$body" >> "$GITHUB_OUTPUT"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build failure summary
         id: summary
         run: |
@@ -135,6 +166,9 @@ jobs:
           if [ "${{ steps.legal.outputs.ok }}" = "false" ]; then
             parts="${parts}- downloadecho.com/privacy is not reachable — store listings require it\n"
           fi
+          if [ "${{ steps.crons.outputs.ok }}" = "false" ]; then
+            parts="${parts}- Scheduled jobs unhealthy: ${{ steps.crons.outputs.detail }}\n"
+          fi
           {
             echo "text<<EOF"
             printf "%b" "$parts"
@@ -143,7 +177,7 @@ jobs:
 
   open_issue_on_failure:
     needs: ping
-    if: ${{ needs.ping.outputs.supabase_ok == 'false' || needs.ping.outputs.worker_ok == 'false' || needs.ping.outputs.functions_ok == 'false' || needs.ping.outputs.legal_ok == 'false' }}
+    if: ${{ needs.ping.outputs.supabase_ok == 'false' || needs.ping.outputs.worker_ok == 'false' || needs.ping.outputs.functions_ok == 'false' || needs.ping.outputs.legal_ok == 'false' || needs.ping.outputs.crons_ok == 'false' }}
     runs-on: ubuntu-latest
     steps:
       - name: Open / update incident issue
