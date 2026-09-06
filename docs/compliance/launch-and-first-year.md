@@ -141,7 +141,19 @@ preference:
 2. Keep both, and amend §2 of the privacy policy to explain exactly why the
    permission exists and that nothing is read or transmitted.
 
-Do (1) if it works, (2) if it does not. Doing neither is a rejection risk.
+**Resolved 2026-09-06 with option (2).** Option (1) is not safe without a
+device: `plugins/withEchoContactCard.js:277` queries
+`ContactsContract.RawContacts.CONTENT_URI` directly — not through the `syncUri`
+wrapper it uses for writes — to check whether Echo's own row already exists
+before inserting it. Without `READ_CONTACTS` that query most likely throws, and
+the failure mode if it silently returns nothing is a duplicate Echo contact
+added on every sync. §2 of the privacy policy now explains the permission
+instead.
+
+**Follow-up, post-launch:** routing that read through `syncUri(...)` sets
+`CALLER_IS_SYNCADAPTER`, which is the documented way for a sync adapter to touch
+its own rows without the read permission. That would let `READ_CONTACTS` be
+dropped — but it needs a device to verify, so it is not a freeze-week change.
 
 **(b) Health data.** §2 says *"we do not collect ... health data from Apple
 Health or Google Fit"*, which is true — Echo reads neither API. But §1 states

@@ -55,7 +55,7 @@ import {
 } from './entity';
 import { MINIMUM_AGE, ADULT_AGE } from './ageGate';
 
-export const PRIVACY_UPDATED = 'August 22, 2026';
+export const PRIVACY_UPDATED = 'September 6, 2026';
 export const PRIVACY_VERSION = '3.0-draft';
 
 export const PRIVACY_POLICY_MD = `# Privacy Policy
@@ -95,7 +95,9 @@ It is written to be read, not to be survived. If anything here is unclear, ask u
 
 ## 2. What we do not collect
 
-We do not collect precise GPS location, contacts, calendar, health data from Apple Health or Google Fit, or advertising identifiers. We do not track you across other apps or websites, and we do not buy data about you.
+We do not collect precise GPS location, calendar, health data from Apple Health or Google Fit, or advertising identifiers. We do not track you across other apps or websites, and we do not buy data about you.
+
+**Contacts.** On Android, Echo asks for contacts permission for one purpose: to put *its own* entry in your address book, so that "Message on Echo" appears on a contact card the way it does for other messaging apps. Echo does not read your contacts, does not upload them, and does not use them to suggest people to follow. The permission covers reading too, because the component that writes Echo's entry has to check whether it is already there before adding it again.
 
 ---
 
