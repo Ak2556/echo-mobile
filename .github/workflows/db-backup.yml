@@ -1,0 +1,134 @@
+name: Database Backup
+
+# Supabase takes its own backups, but they are short-retention and tied to the
+# account. This one is ours: if the account is lost or suspended, or a migration
+# destroys data, this file is the recovery path. See docs/runbook/monitoring.md.
+#
+# Inert until configured. Without the secrets it warns and exits 0 rather than
+# failing — a workflow that fails every night until someone does manual setup
+# just teaches you to ignore the notifications, which is the exact failure the
+# healthcheck already had.
+#
+# Required repository secrets:
+#   SUPABASE_DB_URL        Project Settings > Database > Connection string (URI)
+#   R2_ACCOUNT_ID          Cloudflare account id
+#   R2_ACCESS_KEY_ID       R2 API token, scoped to the echo-backups bucket only
+#   R2_SECRET_ACCESS_KEY   its secret
+#
+# SUPABASE_DB_URL is the most powerful secret in this repository. It is here
+# because a solo operator with no backup has no recovery, and that is the larger
+# risk. Scope the R2 token to one bucket, and rotate the database URL if this
+# repository is ever made public.
+
+on:
+  schedule:
+    - cron: '15 20 * * *'   # 01:45 IST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check configuration
+        id: config
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          missing=""
+          [ -z "$SUPABASE_DB_URL" ]      && missing="$missing SUPABASE_DB_URL"
+          [ -z "$R2_ACCOUNT_ID" ]        && missing="$missing R2_ACCOUNT_ID"
+          [ -z "$R2_ACCESS_KEY_ID" ]     && missing="$missing R2_ACCESS_KEY_ID"
+          [ -z "$R2_SECRET_ACCESS_KEY" ] && missing="$missing R2_SECRET_ACCESS_KEY"
+          if [ -n "$missing" ]; then
+            echo "::warning::Database backups are NOT running. Missing secrets:$missing"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install postgresql-client 17
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Dump
+        if: steps.config.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          name="echo-$(date -u +%Y-%m-%d).sql.gz"
+          # --no-owner/--no-acl because the target of a real restore is a fresh
+          # project whose roles differ from this one's.
+          pg_dump "$SUPABASE_DB_URL" --no-owner --no-acl --clean --if-exists | gzip -9 > "$name"
+          size=$(stat -c%s "$name")
+          echo "$name is $size bytes"
+          # A dump that is suspiciously small is a failed dump that exited 0 —
+          # the shape of silent data loss, so treat it as a hard failure.
+          if [ "$size" -lt 50000 ]; then
+            echo "::error::dump is only $size bytes — treating as a failure"
+            exit 1
+          fi
+          echo "NAME=$name" >> "$GITHUB_ENV"
+
+      - name: Upload to R2 and prune past 30 days
+        if: steps.config.outputs.ready == 'true'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          ACCOUNT: ${{ secrets.R2_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          endpoint="https://${ACCOUNT}.r2.cloudflarestorage.com"
+          aws s3 cp "$NAME" "s3://echo-backups/db/$NAME" --endpoint-url "$endpoint"
+          # Retention lives here rather than in a bucket lifecycle rule so the
+          # policy is visible next to the thing it deletes.
+          cutoff=$(date -u -d '30 days ago' +%Y-%m-%d)
+          aws s3 ls "s3://echo-backups/db/" --endpoint-url "$endpoint" | awk '{print $4}' | while read -r f; do
+            d=$(echo "$f" | sed -n 's/^echo-\([0-9-]\{10\}\)\.sql\.gz$/\1/p')
+            if [ -n "$d" ] && [ "$d" \< "$cutoff" ]; then
+              aws s3 rm "s3://echo-backups/db/$f" --endpoint-url "$endpoint"
+            fi
+          done
+
+      - name: Report a backup failure
+        if: failure() && steps.config.outputs.ready == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Reuses one open issue rather than creating one per night, for the
+            // same reason the healthcheck stopped commenting: a nightly job that
+            // files a nightly issue is a nightly notification you will mute.
+            const title = 'Database backup failing';
+            const body =
+              `The nightly dump did not complete.\n\n` +
+              `Last failure: ${new Date().toISOString()}\n` +
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\n` +
+              `Runbook: docs/runbook/monitoring.md`;
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'incident,backup', per_page: 5,
+            });
+            if (open.length > 0) {
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: open[0].number, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['incident', 'backup'],
+              });
+            }

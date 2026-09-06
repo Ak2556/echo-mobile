@@ -114,6 +114,31 @@ the wrong project.
 
 ---
 
+## Restoring the database
+
+Backups are at `s3://echo-backups/db/echo-YYYY-MM-DD.sql.gz`, 30 days retained,
+written nightly by `.github/workflows/db-backup.yml`. That workflow is inert
+until `SUPABASE_DB_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and
+`R2_SECRET_ACCESS_KEY` are set — it warns and exits rather than failing every
+night, so **check that a backup exists before you need one.**
+
+```bash
+export ENDPOINT="https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com"
+aws s3 ls s3://echo-backups/db/ --endpoint-url "$ENDPOINT"
+aws s3 cp s3://echo-backups/db/echo-2026-09-07.sql.gz . --endpoint-url "$ENDPOINT"
+gunzip -c echo-2026-09-07.sql.gz | psql "$TARGET_DB_URL"
+```
+
+**The dump is taken with `--clean --if-exists`, so it DROPS existing objects
+before recreating them.** Never point it at production to "merge" data back in —
+it will delete what is there. Restore into a fresh project or a local
+`supabase start` database, verify, then decide what to move.
+
+Restore into a local database at least once a quarter. A backup nobody has
+restored is a hypothesis, not a backup.
+
+---
+
 ## If you are unavailable
 
 The obligations that do not pause because you are asleep, ill, or travelling:
