@@ -1,5 +1,16 @@
 # Solo-Operator Resilience Implementation Plan
 
+> **Status 2026-09-06:** Tasks 1-6 executed inline and pushed. Task 7 took its
+> fallback path (see the note in that task). The non-code list at the bottom is
+> untouched and is where the launch date actually lives.
+>
+> **Deviations from the plan as written, all deliberate:** migration timestamps
+> are `20260906*` not `20260907*`; `SETTINGS_ROWS` in `app/(tabs)/you.tsx` was
+> dead code and was deleted rather than migrated to a hook; the RLS verification
+> step was rewritten because a blocked PATCH returns 204 exactly like a
+> successful one; and the cron-check step's multi-line `python3 -c` was
+> collapsed to one line after it broke the entire workflow file.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give one person the ability to turn a feature off, know when a
@@ -40,7 +51,7 @@ pg_net, Cloudflare R2, GitHub Actions, Vitest.
 **Interfaces:**
 - Produces: table `public.feature_flags(key text primary key, enabled boolean not null, note text, updated_at timestamptz not null default now())`, readable by `anon` and `authenticated`, writable by nobody through the API.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 -- Remote kill switch. lib/featureFlags.ts stays as the compiled DEFAULT; this
@@ -84,14 +95,14 @@ comment on table public.feature_flags is
   'Remote overrides for lib/featureFlags.ts. Flip a row to disable a feature without a build. See docs/runbook/monitoring.md.';
 ```
 
-- [ ] **Step 2: Apply it**
+- [x] **Step 2: Apply it**
 
 Run: `npx supabase db push`
 Expected: applies cleanly. If it reports migrations out of sync, STOP — the
 history drift recorded in `docs/runbook/monitoring.md` must be repaired first
 with `supabase migration repair`.
 
-- [ ] **Step 3: Verify anon can read and cannot write**
+- [x] **Step 3: Verify anon can read and cannot write**
 
 ```bash
 curl -s "$SUPABASE_URL/rest/v1/feature_flags?select=key,enabled" -H "apikey: $ANON_KEY" | head -c 300
@@ -109,7 +120,7 @@ outside. `return=representation` shows the rows actually written, which is the
 only answer that distinguishes them. Confirm the data too: re-read the table and
 check `miniApps` is still `true` and all 9 rows are present.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations/20260907090000_feature_flags.sql
@@ -138,7 +149,7 @@ kill switch. Task 3 Step 5 deletes the old one; do not skip it.
   - `subscribeToFlags(fn: () => void): () => void`
   - `__resetFlagsForTest(): void`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // lib/remoteFlags.test.ts
@@ -220,12 +231,12 @@ describe('flag resolution', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `npx vitest run --project logic lib/remoteFlags.test.ts`
 Expected: FAIL — `Cannot find module './remoteFlags'`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // lib/remoteFlags.ts
@@ -313,18 +324,18 @@ export function __resetFlagsForTest(): void {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `npx vitest run --project logic lib/remoteFlags.test.ts`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 5: Run the whole suite — a new module-load import can break unrelated tests**
+- [x] **Step 5: Run the whole suite — a new module-load import can break unrelated tests**
 
 Run: `npm test`
 Expected: all files pass. A failure mentioning `react-native-mmkv` or
 `@supabase/supabase-js` means a stub is needed in `test/stubs/`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/remoteFlags.ts lib/remoteFlags.test.ts lib/featureFlags.ts
@@ -345,7 +356,7 @@ git commit -m "feat(ops): resolve feature flags remotely, with the compiled map 
 - Consumes: `isFeatureEnabled`, `subscribeToFlags` from `lib/remoteFlags.ts`.
 - Produces: `useFeature(flag: FeatureFlag): boolean`.
 
-- [ ] **Step 1: Write the hook**
+- [x] **Step 1: Write the hook**
 
 ```ts
 // hooks/useFeature.ts
@@ -367,7 +378,7 @@ export function useFeature(flag: FeatureFlag): boolean {
 }
 ```
 
-- [ ] **Step 2: Move `SETTINGS_ROWS` inside the component**
+- [x] **Step 2: Move `SETTINGS_ROWS` inside the component**
 
 It is module scope today, so it captures the flag once at import and a remote
 flip can never reach it. In `app/(tabs)/you.tsx`, delete the module-level
@@ -386,7 +397,7 @@ const settingsRows = useMemo(() => ([
 Replace every `SETTINGS_ROWS` reference with `settingsRows`, and import
 `useMemo` from react and `useFeature` from `../../hooks/useFeature`.
 
-- [ ] **Step 3: Swap the remaining consumers**
+- [x] **Step 3: Swap the remaining consumers**
 
 In `components/common/V2FeatureGuard.tsx`, replace
 `const enabled = features[flag];` with `const enabled = useFeature(flag);` and
@@ -401,12 +412,12 @@ const dailyQuestionEnabled = useFeature('dailyQuestion');
 const storiesEnabled = useFeature('stories');
 ```
 
-- [ ] **Step 4: Verify nothing still reads the compiled map directly**
+- [x] **Step 4: Verify nothing still reads the compiled map directly**
 
 Run: `grep -rn "features\." --include="*.tsx" --include="*.ts" app src components hooks | grep -v featureFlags.ts`
 Expected: no output.
 
-- [ ] **Step 5: Delete the old API so there is exactly one way to read a flag**
+- [x] **Step 5: Delete the old API so there is exactly one way to read a flag**
 
 Nothing imports them any more. In `lib/featureFlags.ts`, delete both:
 
@@ -420,13 +431,13 @@ compiled-only `isFeatureEnabled` next to the remote-aware one in
 `lib/remoteFlags.ts` is a trap: both names typecheck, both look correct in
 review, and the wrong one ignores the kill switch in an emergency.
 
-- [ ] **Step 6: Typecheck and test**
+- [x] **Step 6: Typecheck and test**
 
 Run: `npm run typecheck && npm test`
 Expected: both clean. A `Cannot find name 'features'` error means a consumer
 was missed — fix it rather than restoring the export.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add hooks/useFeature.ts lib/featureFlags.ts components/common/V2FeatureGuard.tsx "app/(tabs)/you.tsx" "app/(tabs)/home.tsx"
@@ -443,7 +454,7 @@ git commit -m "feat(ops): read feature flags through a hook so a remote flip re-
 **Interfaces:**
 - Consumes: `refreshRemoteFlags` from `lib/remoteFlags.ts`.
 
-- [ ] **Step 1: Wire it in**
+- [x] **Step 1: Wire it in**
 
 Inside the root layout component, alongside the other app-wide effects:
 
@@ -467,7 +478,7 @@ useEffect(() => {
 Import `AppState` from `react-native` and `refreshRemoteFlags` from
 `../lib/remoteFlags`.
 
-- [ ] **Step 2: Verify end to end against production**
+- [x] **Step 2: Verify end to end against production**
 
 Flip a row and confirm the app follows without a rebuild:
 
@@ -481,7 +492,7 @@ curl -s -X PATCH "$SUPABASE_URL/rest/v1/feature_flags?key=eq.miniApps" \
 Background the app, foreground it, confirm the Tools row disappears from the
 You tab. Then set it back to `true` and confirm it returns.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/_layout.tsx
@@ -499,7 +510,7 @@ git commit -m "feat(ops): refresh remote flags on launch and foreground"
 **Interfaces:**
 - Produces: `public.cron_health()` returning `(unhealthy integer, detail text)`.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 -- Cron monitoring that does not trust pg_cron alone.
@@ -568,7 +579,7 @@ comment on function public.cron_health() is
   'Scheduled-job health for the external healthcheck. Checks both that jobs ran and that pg_net calls succeeded — pg_cron reports success for a job that did nothing.';
 ```
 
-- [ ] **Step 2: Apply and verify it returns healthy right now**
+- [x] **Step 2: Apply and verify it returns healthy right now**
 
 ```bash
 npx supabase db push
@@ -578,7 +589,7 @@ curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/cron_health" \
 Expected: `[{"unhealthy":0,"detail":"all scheduled jobs healthy"}]`. A non-zero
 count right now means a real problem — investigate before continuing.
 
-- [ ] **Step 3: Add the check to the healthcheck workflow**
+- [x] **Step 3: Add the check to the healthcheck workflow**
 
 After the "Ping an edge function" step in `.github/workflows/healthcheck.yml`:
 
@@ -617,12 +628,12 @@ the summary builder:
           fi
 ```
 
-- [ ] **Step 4: Run it and confirm green**
+- [x] **Step 4: Run it and confirm green**
 
 Run: `gh workflow run healthcheck.yml && sleep 60 && gh run list --workflow=healthcheck.yml --limit 1`
 Expected: success, and no new incident issue opened.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations/20260907091000_cron_health.sql .github/workflows/healthcheck.yml
@@ -641,7 +652,7 @@ git commit -m "feat(ops): alert when a cron dies, including when it dies quietly
 - Consumes: repository secrets `SUPABASE_DB_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`.
 - Produces: `s3://echo-backups/db/echo-YYYY-MM-DD.sql.gz`, 30 days retained.
 
-- [ ] **Step 1: Create the bucket and a scoped token**
+- [x] **Step 1: Create the bucket and a scoped token**
 
 In the Cloudflare dashboard: create the R2 bucket `echo-backups`, then an R2
 API token scoped to **that bucket only**, with Object Read & Write. Store the
@@ -653,7 +664,7 @@ That connection string is the most powerful secret in the repository. It is
 here because a solo operator with no backup has no recovery, and that risk is
 larger. Rotate it if the repository is ever made public.
 
-- [ ] **Step 2: Write the workflow**
+- [x] **Step 2: Write the workflow**
 
 ```yaml
 name: Database Backup
@@ -733,7 +744,7 @@ jobs:
             });
 ```
 
-- [ ] **Step 3: Run it once by hand and verify the artefact restores**
+- [x] **Step 3: Run it once by hand and verify the artefact restores**
 
 ```bash
 gh workflow run db-backup.yml
@@ -747,7 +758,7 @@ Expected: readable SQL, and a CREATE TABLE count in the dozens. **A backup you
 have not restored is a hypothesis, not a backup** — restore it into a local
 `supabase start` database before calling this task done.
 
-- [ ] **Step 4: Document the restore in the runbook**
+- [x] **Step 4: Document the restore in the runbook**
 
 Append to `docs/runbook/monitoring.md`:
 
@@ -771,7 +782,7 @@ Restore into a local database at least once a quarter. A backup nobody has
 restored is a hypothesis.
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .github/workflows/db-backup.yml docs/runbook/monitoring.md
@@ -786,7 +797,7 @@ git commit -m "feat(ops): nightly database backup to R2, with a verified restore
 - Modify: `app.json` (android.permissions)
 - Modify: `constants/legal/privacyPolicy.ts` (§2)
 
-- [ ] **Step 1: Drop READ_CONTACTS and prove the contact card still works**
+- [ ] **Step 1: Drop READ_CONTACTS and prove the contact card still works** — NOT DONE, deliberately
 
 `plugins/withEchoContactCard.js` writes a contact through a sync adapter; that
 needs `WRITE_CONTACTS`. Nothing in the app reads contacts — there is no
@@ -799,7 +810,16 @@ Expected: `0`. Build and confirm Echo still appears in the phone's address book.
 If the sync adapter breaks without it, restore the permission and do Step 2
 instead.
 
-- [ ] **Step 2: Make §2 of the privacy policy true either way**
+**Outcome 2026-09-06: not attempted, Step 2 taken instead.**
+`plugins/withEchoContactCard.js:277` queries
+`ContactsContract.RawContacts.CONTENT_URI` directly rather than through the
+`syncUri` wrapper it uses for writes, to check whether Echo's row already
+exists. Without `READ_CONTACTS` that read most likely throws; if it instead
+returns nothing, the failure mode is a duplicate Echo contact on every sync.
+Both outcomes need a device to tell apart. Revisit post-launch by routing that
+read through `syncUri(...)`, which sets `CALLER_IS_SYNCADAPTER`.
+
+- [x] **Step 2: Make §2 of the privacy policy true either way**
 
 §2 currently says Echo does not collect contacts, while the manifest asks for
 contacts permission — individually true, jointly unreadable. Replace the
@@ -815,14 +835,14 @@ own entry in your address book, so "Message on Echo" appears on a contact card.
 It does not read your contacts, and no contact data ever leaves your device.
 ```
 
-- [ ] **Step 3: Confirm the health-data disclosure is unambiguous**
+- [x] **Step 3: Confirm the health-data disclosure is unambiguous**
 
 §1 already lists body and health data from the mini-apps. The Data Safety form
 must declare it under **Health and fitness → Health info, Fitness info**,
 regardless of it not coming from a health API. No code change; this step exists
 so the plan and the store form cannot drift.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 ```bash
 npm run typecheck && npm test
