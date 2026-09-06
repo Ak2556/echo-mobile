@@ -95,11 +95,19 @@ with `supabase migration repair`.
 
 ```bash
 curl -s "$SUPABASE_URL/rest/v1/feature_flags?select=key,enabled" -H "apikey: $ANON_KEY" | head -c 300
-curl -s -o /dev/null -w '%{http_code}\n' -X PATCH \
-  "$SUPABASE_URL/rest/v1/feature_flags?key=eq.miniApps" \
-  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' -d '{"enabled":false}'
+# Prefer: return=representation, NOT the status code.
+curl -s -X PATCH "$SUPABASE_URL/rest/v1/feature_flags?key=eq.miniApps" \
+  -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+  -H 'Prefer: return=representation' -d '{"enabled":false}'
 ```
-Expected: the read returns 9 rows; the write returns 401, 403 or 404 — never 204.
+Expected: the read returns 9 rows; the write returns `[]`.
+
+**Do not test this with the status code.** A blocked PATCH returns **204**, the
+same as a successful one — RLS does not reject the statement, it matches zero
+rows, and "updated nothing" and "updated everything" look identical from the
+outside. `return=representation` shows the rows actually written, which is the
+only answer that distinguishes them. Confirm the data too: re-read the table and
+check `miniApps` is still `true` and all 9 rows are present.
 
 - [ ] **Step 4: Commit**
 
