@@ -1,47 +1,15 @@
-import { encode as btoa } from 'base-64';
+// Music search, by way of the spotify-search edge function.
+//
+// The credentials used to live here. They had to be EXPO_PUBLIC_ variables to
+// be readable from the app, and Expo inlines those into the bundle at build
+// time, so the Spotify client secret shipped inside every build we ever made —
+// extractable from an APK with `unzip` and `strings`. Spotify's
+// client-credentials grant is a server-side grant; it was never safe here.
+//
+// The function takes a query and returns the same shape this module always
+// returned, so nothing above it had to change.
 
-// Environment variables must start with EXPO_PUBLIC_ to be available in the client bundle
-const SPOTIFY_CLIENT_ID = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
-const SPOTIFY_CLIENT_SECRET = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
-
-let accessToken: string | null = null;
-let tokenExpirationTime = 0;
-
-/**
- * Fetches a client credentials access token from Spotify.
- */
-async function getAccessToken(): Promise<string> {
-  if (accessToken && Date.now() < tokenExpirationTime) {
-    return accessToken;
-  }
-
-  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
-    throw new Error('Spotify API keys are missing. Please add EXPO_PUBLIC_SPOTIFY_CLIENT_ID and EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET to your .env file.');
-  }
-
-  const credentials = btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`);
-
-  const response = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${credentials}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Spotify Auth Error: ${response.status} ${response.statusText} - ${errorText}`);
-  }
-
-  const data = await response.json();
-  accessToken = data.access_token;
-  // Subtract 60 seconds to ensure we refresh before it actually expires
-  tokenExpirationTime = Date.now() + (data.expires_in - 60) * 1000;
-  
-  return accessToken!;
-}
+import { supabase } from './supabase';
 
 export interface SpotifyTrack {
   id: string;
@@ -52,33 +20,28 @@ export interface SpotifyTrack {
 }
 
 /**
- * Searches the Spotify API for tracks matching the query.
- * Filters out tracks that do not have a 30-second preview_url.
+ * Searches Spotify for tracks matching the query.
+ *
+ * Throws on failure rather than returning empty, because MusicPickerModal
+ * distinguishes "no results" from "search is broken" and shows the message.
  */
 export async function searchSpotify(query: string): Promise<SpotifyTrack[]> {
   if (!query.trim()) return [];
-  
-  const token = await getAccessToken();
-  const encodedQuery = encodeURIComponent(query);
-  const response = await fetch(`https://api.spotify.com/v1/search?q=${encodedQuery}&type=track`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Spotify Search Error: ${response.status} ${response.statusText} - ${errorText}`);
+  const { data, error } = await supabase.functions.invoke<SpotifyTrack[] | { error?: string }>(
+    'spotify-search',
+    { body: { query } },
+  );
+
+  if (error) {
+    throw new Error(error.message || 'Could not reach music search');
   }
 
-  const data = await response.json();
-  
-  return data.tracks.items
-    .map((track: any) => ({
-      id: track.id,
-      title: track.name,
-      artist: track.artists.map((a: any) => a.name).join(', '),
-      url: track.preview_url || track.external_urls?.spotify || '',
-      coverArt: track.album.images[0]?.url || '',
-    }));
+  // A non-2xx from the function arrives as an { error } object rather than the
+  // array, so shape is what distinguishes success from a handled failure.
+  if (!Array.isArray(data)) {
+    throw new Error((data && data.error) || 'Music search is unavailable');
+  }
+
+  return data;
 }
