@@ -1,0 +1,42 @@
+# Hosting for downloadecho.com.
+#
+# The site had been a single hand-uploaded landing page, so everything the
+# stores and the OS need from the domain returned 404: the privacy policy and
+# terms (both stores require a publicly reachable privacy URL before they will
+# accept a submission), the .well-known association files that make app links
+# verify, and every share link the app emits. All of it already existed in the
+# web export; none of it was ever deployed.
+
+[build]
+  # prepare-web-assets writes _redirects and, when APPLE_TEAM_ID is set, the
+  # Apple App Site Association file. It must run before the export, because the
+  # export is what copies public/ into dist/.
+  command = "node scripts/prepare-web-assets.mjs && npx expo export -p web"
+  publish = "dist"
+
+[build.environment]
+  # Matches the version the export is verified against locally and in CI.
+  NODE_VERSION = "20"
+
+# Apple fetches this file with no extension and requires a JSON content type;
+# served as anything else, the association silently fails to verify.
+[[headers]]
+  for = "/.well-known/apple-app-site-association"
+  [headers.values]
+    Content-Type = "application/json"
+
+# Android's verifier is stricter than the extension suggests, and Netlify will
+# not always infer JSON for a dotted directory.
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+
+# The association files must be fetchable by Apple's and Google's crawlers with
+# no interference. Everything else gets ordinary hardening.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
