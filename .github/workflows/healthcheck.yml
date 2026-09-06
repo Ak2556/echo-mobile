@@ -19,7 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       supabase_ok: ${{ steps.supabase.outputs.ok }}
-      fastapi_ok: ${{ steps.fastapi.outputs.ok }}
+      worker_ok: ${{ steps.worker.outputs.ok }}
+      functions_ok: ${{ steps.functions.outputs.ok }}
+      legal_ok: ${{ steps.legal.outputs.ok }}
       failure_summary: ${{ steps.summary.outputs.text }}
     steps:
       - name: Ping Supabase REST
@@ -45,19 +47,72 @@ jobs:
             echo "ok=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Ping FastAPI /health
-        id: fastapi
+      # The FastAPI check that used to live here was removed. The service it
+      # pinged was deleted, so it failed every 15 minutes from 2026-08-15 and
+      # appended 439 comments to one incident issue before anyone noticed —
+      # which is worse than having no alerting at all, because it trained the
+      # only alarm we have to be ignorable.
+      #
+      # What replaced it is the rule for anything added here: check things that
+      # can plausibly break and that we would want waking up for. A check that
+      # cannot fail is noise; a check that always fails is worse.
+
+      - name: Ping the media worker
+        id: worker
         env:
-          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_CLOUDFLARE_WORKER_URL: ${{ secrets.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL }}
         run: |
           set -o pipefail
-          if [ -z "$EXPO_PUBLIC_API_URL" ]; then
+          if [ -z "$EXPO_PUBLIC_CLOUDFLARE_WORKER_URL" ]; then
+            echo "::warning::EXPO_PUBLIC_CLOUDFLARE_WORKER_URL is not set — media delivery is unmonitored"
             echo "ok=skipped" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
-            "${EXPO_PUBLIC_API_URL%/}/health" || echo "000")
-          echo "FastAPI /health -> $code"
+          # A real bucket with a key that will never exist: this exercises
+          # routing AND the R2 binding, and a healthy worker answers 404. An
+          # unbound or broken worker throws, which surfaces as 5xx or 000 —
+          # so only those count as down. Hitting an unrouted path instead
+          # would 404 even on a completely misconfigured worker.
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 \
+            "${EXPO_PUBLIC_CLOUDFLARE_WORKER_URL%/}/media/echo-media/__healthcheck__" || echo "000")
+          echo "media worker -> $code"
+          if [ "$code" != "000" ] && [ "$code" -lt 500 ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ping an edge function
+        id: functions
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+        run: |
+          set -o pipefail
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ]; then
+            echo "ok=skipped" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # CORS preflight needs no credentials and no quota, so this tells us
+          # the function runtime is serving without spending an AI request.
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 -X OPTIONS \
+            "${EXPO_PUBLIC_SUPABASE_URL%/}/functions/v1/voice-command" || echo "000")
+          echo "edge function OPTIONS -> $code"
+          if [ "$code" != "000" ] && [ "$code" -lt 500 ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check the public legal pages
+        id: legal
+        run: |
+          set -o pipefail
+          # Both stores require a publicly reachable privacy policy. If this
+          # 404s, the listing is out of compliance and a resubmission can be
+          # rejected without anything in the app having changed.
+          code=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 15 \
+            "https://downloadecho.com/privacy" || echo "000")
+          echo "privacy policy -> $code"
           if [ "$code" = "200" ]; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
           else
@@ -71,8 +126,14 @@ jobs:
           if [ "${{ steps.supabase.outputs.ok }}" = "false" ]; then
             parts="${parts}- Supabase REST is failing\n"
           fi
-          if [ "${{ steps.fastapi.outputs.ok }}" = "false" ]; then
-            parts="${parts}- FastAPI /health is failing\n"
+          if [ "${{ steps.worker.outputs.ok }}" = "false" ]; then
+            parts="${parts}- Cloudflare media worker is failing — images and video will not load\n"
+          fi
+          if [ "${{ steps.functions.outputs.ok }}" = "false" ]; then
+            parts="${parts}- Supabase edge functions are failing — voice, chat and translation are down\n"
+          fi
+          if [ "${{ steps.legal.outputs.ok }}" = "false" ]; then
+            parts="${parts}- downloadecho.com/privacy is not reachable — store listings require it\n"
           fi
           {
             echo "text<<EOF"
@@ -82,7 +143,7 @@ jobs:
 
   open_issue_on_failure:
     needs: ping
-    if: ${{ needs.ping.outputs.supabase_ok == 'false' || needs.ping.outputs.fastapi_ok == 'false' }}
+    if: ${{ needs.ping.outputs.supabase_ok == 'false' || needs.ping.outputs.worker_ok == 'false' || needs.ping.outputs.functions_ok == 'false' || needs.ping.outputs.legal_ok == 'false' }}
     runs-on: ubuntu-latest
     steps:
       - name: Open / update incident issue
