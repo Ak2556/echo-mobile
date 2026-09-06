@@ -1,0 +1,95 @@
+name: Play Closed Test
+
+# Manual only, never on push. An EAS build costs quota, and this workflow's
+# whole purpose is the one build that matters — the AAB that starts and then
+# feeds Google's closed-testing clock.
+#
+# Google requires a personal developer account to run a closed test with at
+# least 12 testers opted in, continuously for 14 days, before it may even apply
+# for production access. Internal testing does not count toward that. The
+# submit track in eas.json is 'alpha' (closed testing) for exactly this reason.
+#
+# Prerequisites, once:
+#   1. Play Console > Testing > Closed testing — create the track, add >= 12
+#      testers, and send them the opt-in link. The clock starts when they are
+#      opted in, not when the build uploads.
+#   2. A Google Cloud service account with the "Service Account User" role,
+#      granted access in Play Console under Users and permissions with the
+#      "Release to testing tracks" permission. Store its JSON key as the
+#      PLAY_SERVICE_ACCOUNT_JSON repository secret.
+#
+# After the first successful upload, read Play Console > Setup > App signing and
+# put the SHA-256 of the *App signing key* into the ANDROID_CERT_SHA256 build
+# variable on Netlify. Until that is set, scripts/prepare-web-assets.mjs
+# publishes no assetlinks.json and Android app links stay unverified.
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: 'Upload to the Play closed track when the build finishes'
+        type: boolean
+        default: true
+
+concurrency:
+  group: play-closed-test
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      # Fail here rather than after a build has already been spent.
+      - name: Check the submit credentials exist
+        if: inputs.submit
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not set — see the header of this workflow."
+            exit 1
+          fi
+
+      # Through the environment, not interpolated into the script: a service
+      # account key is multi-line PEM, and inlining it would break the quoting
+      # and leak fragments into the log.
+      - name: Write the Play service account key
+        if: inputs.submit
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > play-service-account.json
+          python3 -c "import json;json.load(open('play-service-account.json'))" \
+            || { echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not valid JSON"; exit 1; }
+
+      - name: Build the app bundle${{ inputs.submit && ' and submit it' || '' }}
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_CLOUDFLARE_WORKER_URL: ${{ secrets.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL }}
+          EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.EXPO_PUBLIC_SENTRY_DSN }}
+        run: |
+          eas build \
+            --platform android \
+            --profile production \
+            --non-interactive \
+            ${{ inputs.submit && '--auto-submit' || '' }}
+
+      - name: Remove the service account key
+        if: always()
+        run: rm -f play-service-account.json

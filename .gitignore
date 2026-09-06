@@ -99,3 +99,4 @@ scratch/
 # Cloudflare worker build cache and generated downloads
 cloudflare/.wrangler/
 cloudflare/downloads/
+play-service-account.json
