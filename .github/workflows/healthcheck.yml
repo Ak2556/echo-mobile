@@ -186,13 +186,16 @@ except Exception: print(-1)")
           SUMMARY: ${{ needs.ping.outputs.failure_summary }}
         with:
           script: |
+            // Updates the issue body rather than commenting on it. The previous
+            // version commented on every failing run — every fifteen minutes,
+            // which reached 439 comments on one issue across twenty-two days of
+            // a check that was pinging a service that no longer existed. A
+            // persistent failure should be one issue that stays current, not a
+            // stream that teaches you to mute the label.
             const title = '🚨 Healthcheck failure — production endpoints unhealthy';
-            const body =
-              `Automated healthcheck detected a failure.\n\n` +
-              `${process.env.SUMMARY || '(no detail)'}` +
-              `\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}` +
-              `/actions/runs/${context.runId}` +
-              `\n\nRunbook: docs/runbook/monitoring.md`;
+            const now = new Date().toISOString();
+            const summary = process.env.SUMMARY || '(no detail)';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const { data: existing } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -202,12 +205,27 @@ except Exception: print(-1)")
               per_page: 5,
             });
 
+            const firstSeen = existing.length > 0
+              ? (existing[0].body?.match(/First detected: (\S+)/)?.[1] ?? existing[0].created_at)
+              : now;
+
+            const body =
+              `Automated healthcheck is failing.\n\n` +
+              `**Currently failing:**\n${summary}\n\n` +
+              `First detected: ${firstSeen}\n` +
+              `Last checked: ${now}\n\n` +
+              `Latest run: ${runUrl}\n\n` +
+              `Runbook: docs/runbook/monitoring.md\n\n` +
+              `_This body is rewritten on each failing run. If the failure is expected ` +
+              `and will not be fixed soon, fix or remove the check rather than closing ` +
+              `this issue — a check you have learned to ignore is worse than no check._`;
+
             if (existing.length > 0) {
-              await github.rest.issues.createComment({
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: existing[0].number,
-                body: body,
+                body,
               });
             } else {
               await github.rest.issues.create({
@@ -216,5 +234,39 @@ except Exception: print(-1)")
                 title,
                 body,
                 labels: ['incident', 'healthcheck'],
+              });
+            }
+
+  close_issue_on_recovery:
+    needs: ping
+    if: ${{ needs.ping.outputs.supabase_ok != 'false' && needs.ping.outputs.worker_ok != 'false' && needs.ping.outputs.functions_ok != 'false' && needs.ping.outputs.legal_ok != 'false' && needs.ping.outputs.crons_ok != 'false' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Close the incident once everything is healthy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Without this, a recovered incident stays open until someone
+            // notices, and an issue that is open when nothing is wrong is the
+            // same false signal in a slower form.
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'incident,healthcheck',
+              per_page: 10,
+            });
+            for (const issue of open) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `All checks healthy again as of ${new Date().toISOString()}. Closing automatically.`,
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issue.number, state: 'closed',
               });
             }
