@@ -598,9 +598,11 @@ After the "Ping an edge function" step in `.github/workflows/healthcheck.yml`:
             -H "apikey: $EXPO_PUBLIC_SUPABASE_ANON_KEY" \
             -H 'Content-Type: application/json' -d '{}' || echo '')
           echo "cron_health -> $body"
-          n=$(printf '%s' "$body" | python3 -c "import json,sys
-try: print(json.load(sys.stdin)[0]['unhealthy'])
-except Exception: print(-1)")
+          # One line on purpose: a multi-line python -c inside a YAML block
+          # scalar dedents to column 0, which ends the block and makes YAML read
+          # "try:" as a top-level key — it breaks the whole workflow file, not
+          # just this step.
+          n=$(printf '%s' "$body" | python3 -c "import json,sys; print(json.load(sys.stdin)[0]['unhealthy'])" 2>/dev/null || echo -1)
           if [ "$n" = "0" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"
           else echo "ok=false" >> "$GITHUB_OUTPUT"; fi
 ```
