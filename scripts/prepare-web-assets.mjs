@@ -6,6 +6,7 @@
  *
  *   1. _redirects   — derived from the routes that actually exist in app/
  *   2. apple-app-site-association — derived from APPLE_TEAM_ID
+ *   3. assetlinks.json — derived from ANDROID_CERT_SHA256
  *
  * ## _redirects
  *
@@ -96,8 +97,58 @@ const TEAM_ID_PATTERN = /^[A-Z0-9]{10}$/;
 /** Must stay in step with app.config.js and lib/urlSafety.ts. */
 const PATH_PREFIXES = ['/e', '/u', '/c'];
 
+const assetlinksPath = join(wellKnown, 'assetlinks.json');
+
+/** A SHA-256 certificate fingerprint: 32 hex byte pairs, colon separated. */
+const CERT_SHA256_PATTERN = /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/;
+
+/**
+ * Android App Links, from the certificate Google Play actually signs releases
+ * with — read it from Play Console under Setup > App signing, as the SHA-256
+ * of the *App signing key*, not the upload key.
+ *
+ * The committed version of this file used to carry the fingerprint of the
+ * Android debug keystore, because that is what the release build was signed
+ * with (android/app/build.gradle still points buildTypes.release at
+ * signingConfigs.debug). Expo ships that same debug keystore to every project,
+ * so publishing its fingerprint would have declared that *any* app signed with
+ * the default debug key is a verified handler for our domain — not only ours.
+ *
+ * Absent beats wrong for the same reason as the AASA above: an unverifiable
+ * declaration is a hole, and a missing one merely means links open the browser.
+ */
+function writeAssetLinks(pkg) {
+  const fingerprint = (process.env.ANDROID_CERT_SHA256 || '').trim().toUpperCase();
+
+  if (!fingerprint) {
+    if (existsSync(assetlinksPath)) {
+      rmSync(assetlinksPath);
+      console.log('prepare-web-assets: ANDROID_CERT_SHA256 unset — removed stale assetlinks.json');
+    } else {
+      console.log('prepare-web-assets: ANDROID_CERT_SHA256 unset — skipping assetlinks.json (Android app links stay off)');
+    }
+    return;
+  }
+
+  if (!CERT_SHA256_PATTERN.test(fingerprint)) {
+    console.error(`prepare-web-assets: ANDROID_CERT_SHA256 is not a colon-separated SHA-256 fingerprint`);
+    process.exit(1);
+  }
+
+  mkdirSync(wellKnown, { recursive: true });
+  writeFileSync(assetlinksPath, `${JSON.stringify([
+    {
+      relation: ['delegate_permission/common.handle_all_urls'],
+      target: { namespace: 'android_app', package_name: pkg, sha256_cert_fingerprints: [fingerprint] },
+    },
+  ], null, 2)}\n`);
+  console.log(`prepare-web-assets: wrote assetlinks.json for ${pkg}`);
+}
+
 const bundleId = 'com.downloadecho.echo';
 const teamId = (process.env.APPLE_TEAM_ID || '').trim().toUpperCase();
+
+writeAssetLinks(bundleId);
 
 if (!teamId) {
   // Remove rather than leave: a file from an earlier build with a different
