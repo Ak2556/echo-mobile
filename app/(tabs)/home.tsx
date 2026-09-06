@@ -46,7 +46,7 @@ import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { feedbackHaptic } from '../../lib/accentDesign';
 import { pingDailyActivity } from '../../lib/retention';
 import { recordAppOpen } from '../../lib/personalNudges';
-import { features } from '../../lib/featureFlags';
+import { useFeature } from '../../hooks/useFeature';
 import { getTopPerspectiveSummary } from '../../lib/perspectives';
 import { track } from '../../src/shared/lib/analytics';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
@@ -355,6 +355,11 @@ function FeedScopeRail({
 }
 
 export default function DiscoverScreen() {
+  // Read through the hook, not the compiled map: these re-render when a flag
+  // is flipped remotely, which is the point of the kill switch.
+  const dailyQuestionEnabled = useFeature('dailyQuestion');
+  const storiesEnabled = useFeature('stories');
+
   // How far beyond the viewport FlashList renders, in px. Every rendered video
   // card constructs a native player, so this is effectively a cap on concurrent
   // hardware decoders. FlashList's default is generous and tuned for cheap
@@ -583,7 +588,7 @@ export default function DiscoverScreen() {
       )}
       {/* The daily-question ritual is the north-star action — it leads on an
           engaged home, right under the greeting, before the feed controls. */}
-      {features.dailyQuestion && !focusedHome && (
+      {dailyQuestionEnabled && !focusedHome && (
         <Pressable onPress={() => router.push('/daily-question')} style={{ marginHorizontal: 12, marginTop: 4, marginBottom: 6 }}>
           <View style={{ borderRadius: 20, overflow: 'hidden' }}>
             <LinearGradient
@@ -608,7 +613,7 @@ export default function DiscoverScreen() {
       {!focusedHome && (
         <FeedScopeRail feedScope={feedScope} setFeedScope={setFeedScope} t={t} />
       )}
-      {!focusedHome && features.stories && !remote && (
+      {!focusedHome && storiesEnabled && !remote && (
         <>
           <SectionHeader label={t('home.yourStories')} />
           <StoryCircles />
@@ -650,7 +655,7 @@ export default function DiscoverScreen() {
       {isLoading ? (
         <Animated.View entering={animation(FadeIn.duration(80))} style={{ flex: 1, paddingTop: headerHeight }}>
           <View style={feedContainerStyle}>
-            {features.stories && !remote && (
+            {storiesEnabled && !remote && (
               <>
                 <SectionHeader label={t('home.yourStories')} />
                 <StoryCircles />

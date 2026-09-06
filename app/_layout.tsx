@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
-import { Linking, LogBox, Platform } from 'react-native';
+import { AppState, Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useDatabaseSync } from "../hooks/useDatabaseSync";
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
@@ -41,6 +41,7 @@ import { FloatingMiniApp } from '../components/mini-apps/FloatingMiniApp';
 import { VoiceControl } from '../src/features/voice/ui/VoiceControl';
 import { NowReadingBar } from '../src/features/voice/ui/NowReadingBar';
 import { isPublicRoute } from '../lib/publicRoutes';
+import { refreshRemoteFlags } from '../lib/remoteFlags';
 import { enableFreeze } from 'react-native-screens';
 import '../global.css';
 
@@ -295,6 +296,30 @@ function RootLayout() {
     // that tab was never scheduled anything. The chat tab still reschedules
     // with richer signals; this only guarantees a plan exists.
     void ensureNudgesScheduled(useAppStore.getState().proactiveAiEnabled);
+  }, []);
+
+  // Remote feature flags — the kill switch. Fetched on launch and again when
+  // the app comes back to the foreground, so switching a feature off reaches
+  // users within one resume instead of one release.
+  //
+  // A failure here is deliberately silent: refreshRemoteFlags keeps the last
+  // known values, and the compiled defaults in lib/featureFlags.ts sit under
+  // those, so the worst case is the app behaving exactly as it shipped.
+  useEffect(() => {
+    // Throttled so this never becomes a round trip on every resume — someone
+    // checking a notification twenty times an hour is on a metered connection.
+    const MIN_GAP_MS = 5 * 60 * 1000;
+    let lastAt = 0;
+    const refresh = () => {
+      if (Date.now() - lastAt < MIN_GAP_MS) return;
+      lastAt = Date.now();
+      void refreshRemoteFlags();
+    };
+    refresh();
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') refresh();
+    });
+    return () => sub.remove();
   }, []);
 
   // Push notification taps.

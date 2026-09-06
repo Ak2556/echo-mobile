@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/shared/lib/theme';
-import { features, FeatureFlag } from '../../lib/featureFlags';
+import type { FeatureFlag } from '../../lib/featureFlags';
+import { useFeature } from '../../hooks/useFeature';
 import { ttx } from '../../src/shared/lib/i18n';
 
 interface V2FeatureGuardProps {
@@ -21,7 +22,7 @@ interface V2FeatureGuardProps {
 export function V2FeatureGuard({ flag, children }: V2FeatureGuardProps) {
   const router = useRouter();
   const { colors } = useTheme();
-  const enabled = features[flag];
+  const enabled = useFeature(flag);
 
   useEffect(() => {
     if (!enabled) router.replace('/(tabs)/home');

@@ -38,9 +38,9 @@ export const FLAGS = {
 
 export type FeatureFlag = keyof typeof FLAGS;
 
-export function isFeatureEnabled(flag: FeatureFlag): boolean {
-  return FLAGS[flag];
-}
-
-/** Convenience hook-free getters for components that just want a boolean. */
-export const features = FLAGS;
+// isFeatureEnabled() and `features` used to live here and were deleted on
+// purpose. A compiled-only reader sitting beside the remote-aware one in
+// lib/remoteFlags.ts is a trap: both names typecheck, both look right in
+// review, and the wrong import silently ignores the kill switch in the exact
+// emergency it exists for. Read flags through lib/remoteFlags.ts or
+// hooks/useFeature.ts.

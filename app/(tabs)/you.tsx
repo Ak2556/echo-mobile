@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowsLeftRight,
@@ -10,7 +10,6 @@ import {
   CaretRight,
   Compass,
   Gear,
-  SealCheck,
   PencilSimple,
   SignOut,
   Waveform,
@@ -34,7 +33,6 @@ import { fetchRemoteRepostsByUser } from '../../lib/supabaseEchoApi';
 import { useRemoteProfileBundle } from '../../hooks/queries/useRemoteProfile';
 import { buildCreatorProfile } from '../../lib/echoUX';
 import { StreakXPBadge } from '../../src/features/feed/ui/StreakXPBadge';
-import { features } from '../../lib/featureFlags';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { getSessionUserId } from '../../lib/supabaseEchoApi';
@@ -85,15 +83,6 @@ function ProfileCompletionBanner({
     </Pressable>
   );
 }
-
-// Library menu — only the two surfaces that are PRIMARY discovery for
-// the user's own content. Messages moved into /settings; Settings became
-// the gear icon in the header. Apps stays gated behind feature flag.
-const SETTINGS_ROWS: { key: string; Icon: React.ComponentType<any>; label: string; route: Href | null }[] = [
-  { key: 'bookmarks', Icon: BookmarkSimple, label: 'Bookmarks', route: '/bookmarks' },
-  ...(features.miniApps ? [{ key: 'apps', Icon: SquaresFour, label: 'Tools', route: '/(tabs)/apps' as Href }] : []),
-  { key: 'verify', Icon: SealCheck, label: 'Get verified', route: '/get-verified' },
-];
 
 type ProfileColors = ReturnType<typeof useTheme>['colors'];
 type ProfileRadius = ReturnType<typeof useTheme>['radius'];
