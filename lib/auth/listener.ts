@@ -16,6 +16,7 @@ import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
 import { withAuthTimeout } from './timeout';
 import { makeAuthStateCallback } from './authStateCallback';
+import { TRUSTED_WEB_HOSTS } from '../publicHost';
 
 /**
  * THE single auth listener.
@@ -25,7 +26,7 @@ import { makeAuthStateCallback } from './authStateCallback';
  *   1. Cold-start session check → set status to 'signed-out' | 'needs-onboarding' | 'ready'
  *   2. Subscribe to onAuthStateChange — hydrate store + analytics on SIGNED_IN,
  *      clear on SIGNED_OUT.
- *   3. Listen for deep links — both Universal Links (echo.app/e/<id>) and
+ *   3. Listen for deep links — both Universal Links (<public host>/e/<id>) and
  *      auth callbacks (echo://auth/callback?code=…).
  *
  * No other file should call supabase.auth.getSession() or subscribe to
@@ -121,7 +122,7 @@ async function handleDeepLink(url: string): Promise<void> {
   // Universal Links → in-app navigation. Don't touch auth.
   try {
     const parsed = new URL(url);
-    if (parsed.hostname === 'echo.app' || parsed.hostname === 'www.echo.app') {
+    if (TRUSTED_WEB_HOSTS.has(parsed.hostname.toLowerCase())) {
       // The root layout handles route push for universal links.
       return;
     }

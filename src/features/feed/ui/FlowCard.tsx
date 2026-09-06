@@ -19,6 +19,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, w
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { personName } from '../../../../lib/personName';
+import { echoUrl } from '../../../../lib/echoUrl';
 
 const TEXT_SHADOW = {
   textShadowColor: 'rgba(0, 0, 0, 0.4)',
@@ -342,7 +343,8 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
             label="Share"
             onPress={() => {
               import('react-native').then(({ Share }) => {
-                Share.share({ url: `https://echo.app/e/${item.id}`, message: `Check out this echo by @${item.username}: https://echo.app/e/${item.id}` });
+                const url = echoUrl(item.id);
+                Share.share({ url, message: `Check out this echo by @${item.username}: ${url}` });
               });
             }}
           />

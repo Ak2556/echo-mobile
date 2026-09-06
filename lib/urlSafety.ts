@@ -1,4 +1,5 @@
-const TRUSTED_WEB_HOSTS = new Set(['echo.app', 'www.echo.app']);
+import { TRUSTED_WEB_HOSTS } from './publicHost';
+
 const AUTH_CALLBACK_PATHS = new Set(['/auth/callback']);
 const AUTH_CALLBACK_SCHEME_HOSTS = new Set(['auth']);
 const ROUTE_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
