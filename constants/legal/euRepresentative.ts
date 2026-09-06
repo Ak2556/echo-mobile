@@ -1,33 +1,59 @@
 /**
- * DSA / GDPR EU-representative disclosure (rendered by app/legal/eu-rep.tsx).
+ * EU availability and representative disclosure (rendered by app/legal/eu-rep.tsx).
  *
- * TODO before store submission: replace the bracketed placeholder with the
- * actual appointed EU legal representative (name, postal address, contact) as
- * required by DSA Art. 13 / GDPR Art. 27. Until appointed, the DSA contact
- * mailbox below is the point of contact.
+ * The previous version of this page said that, until a representative was
+ * formally designated, the dsa@ mailbox "serves as Echo's Union point of
+ * contact for authorities and users." That is not something a mailbox can do.
+ * DSA Art. 13 requires a legal representative *designated in writing* and
+ * established *in a Member State*; an address in India is neither, and Art. 13
+ * carries no micro-enterprise exemption — Art. 19 excludes Section 3 only.
+ *
+ * Echo launches without offering the service in the European Union, which is
+ * what makes the absence of a representative correct rather than a gap. See
+ * docs/compliance/launch-and-first-year.md §1.
+ *
+ * TO CHANGE THIS: appointing an EU representative is not the first step —
+ * listing in the EU is. Before enabling any EU territory in Play Console or
+ * App Store Connect, appoint BOTH a DSA Art. 13 legal representative and a
+ * GDPR Art. 27 representative (they are separate obligations and usually
+ * separate contracts), then replace the "Availability" section below with
+ * their name, postal address and contact details.
  */
 
-export const EU_REP_UPDATED = 'July 30, 2026';
+export const EU_REP_UPDATED = 'September 6, 2026';
 
-export const EU_REPRESENTATIVE_MD = `# EU Legal Representative
+export const EU_REPRESENTATIVE_MD = `# EU availability and representative
 
 **Last updated:** ${EU_REP_UPDATED}
 
-Under the EU Digital Services Act and the GDPR, providers offering services in the European Union may be required to designate a legal representative or point of contact in the Union.
+## Availability
 
-## Point of contact
+Echo is **not currently offered in the European Union**. It is not listed in EU
+territories on the App Store or Google Play, and it is not directed at users in
+the Union.
 
-For all EU Digital Services Act and GDPR matters, you can reach Echo's designated contact at:
+Because Echo does not offer its services in the Union, it is not required to
+designate a legal representative there under Article 13 of the Digital Services
+Act, or a representative under Article 27 of the GDPR. If Echo becomes
+available in the EU, representatives will be appointed and named on this page
+before that happens.
 
-**dsa@downloadecho.com**
+## Contact
 
-We aim to respond to EU regulatory and data-protection enquiries without undue delay.
-
-## Designated representative
-
-Echo's appointed EU legal representative will be listed here. Until an individual representative is formally designated, the mailbox above serves as Echo's Union point of contact for authorities and users.
+For questions about content, moderation or data protection — from anywhere —
+write to **dsa@downloadecho.com**. We aim to respond without undue delay.
 
 ## Reporting illegal content
 
-Any person or entity may notify us of content they consider illegal using the in-app report action or by emailing **dsa@downloadecho.com**. We review every notice and, where required, inform you of the outcome and your options to appeal (Art. 16 and Art. 20).
+Any person or entity may notify us of content they consider illegal, using the
+in-app report action or by emailing **dsa@downloadecho.com**.
+
+We review every notice, tell you the outcome, and give the author a statement of
+reasons for any decision against their content. Authors can appeal a moderation
+decision for human review under **Settings → Appeals**, and appeals stay open
+for six months.
+
+We provide the notice-and-action, statement-of-reasons and appeal processes
+described above to every user, in every country, whether or not the law of that
+country requires them.
 `;
