@@ -25,6 +25,32 @@ export const BUDGET_BYTES = 900_000;
 // let 13KB hide from the first measurement of this very page.
 const REF = /(?:src|href|poster)\s*=\s*["']([^"']+)["']/gi;
 
+// The page's own JavaScript is not reachable through any attribute: tier.js and
+// scene.js are pulled in by ES imports inside an inline <script type="module">.
+// An attribute-only scan counted neither, so the page's script weight was
+// invisible AND a broken module path — which is precisely what took the live
+// site's entire interactive layer down — looked identical to no change at all.
+const SCRIPT = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+// Matched only inside script bodies, so prose containing the word "import"
+// cannot produce a phantom reference that fails the build.
+const SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)["']([^"']+)["']/g;
+
+// Bare specifiers ("three") are resolved by the import map to a CDN URL, which
+// is deliberately outside this budget. Only relative and root-absolute paths
+// name bytes we ship.
+function* moduleSpecifiers(htmlText) {
+  for (const [, body] of htmlText.matchAll(SCRIPT)) {
+    for (const [, spec] of body.matchAll(SPECIFIER)) {
+      if (spec.startsWith('.') || spec.startsWith('/')) yield spec;
+    }
+  }
+}
+
+function* references(htmlText) {
+  for (const [, ref] of htmlText.matchAll(REF)) yield ref;
+  yield* moduleSpecifiers(htmlText);
+}
+
 export async function measurePage(htmlPath, siteRoot) {
   const root = dirname(resolve(htmlPath));
   // The page lives at public/download/index.html but is SERVED at "/", so its
@@ -37,7 +63,7 @@ export async function measurePage(htmlPath, siteRoot) {
 
   const seen = new Set();
   const missing = [];
-  for (const [, ref] of html.toString('utf8').matchAll(REF)) {
+  for (const ref of references(html.toString('utf8'))) {
     if (/^(https?:)?\/\//.test(ref) || ref.startsWith('data:') || ref.startsWith('#') || ref.startsWith('mailto:')) continue;
     // A root-absolute ref is either a real asset under the publish root or a
     // site route like /privacy that this page does not own. Resolve it against

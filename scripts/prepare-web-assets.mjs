@@ -90,6 +90,32 @@ function writeRedirects() {
   console.log(`prepare-web-assets: wrote _redirects with ${rules.length} route rewrites`);
 }
 
+/**
+ * Everything under public/ is copied verbatim into dist/ and published. A test
+ * file colocated with a page asset is therefore not colocated at all — it is
+ * deployed. downloadecho.com/download/tier.test.ts served a 200 for exactly
+ * that reason. Tests for anything in public/ belong in test/.
+ */
+function assertNoTestsInPublicDir() {
+  const publicDir = join(repoRoot, 'public');
+  const found = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(test|spec)\./.test(entry.name)) found.push(full.slice(publicDir.length + 1));
+    }
+  };
+  walk(publicDir);
+  if (found.length) {
+    console.error('prepare-web-assets: test files under public/ would be published:');
+    for (const f of found) console.error(`    public/${f}`);
+    console.error('  Move them to test/ — public/ is the publish root, not a source tree.');
+    process.exit(1);
+  }
+}
+
+assertNoTestsInPublicDir();
 writeRedirects();
 
 /**

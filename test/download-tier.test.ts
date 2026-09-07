@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveTier, demote } from './tier.js';
+import { resolveTier, demote } from '../public/download/tier.js';
 
 const capable = {
   reducedMotion: false, hasWebGL: true, saveData: false,

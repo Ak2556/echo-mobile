@@ -109,3 +109,69 @@ describe('root-absolute assets under the publish root', () => {
     expect(r.breakdown).toHaveLength(1);
   });
 });
+
+// The page loads tier.js and scene.js with ES imports inside an inline
+// <script type="module">, never with src=. An attribute-only scan therefore
+// could not see them: the page's own JavaScript went uncounted, and a broken
+// module path — the exact failure that took the live site's whole interactive
+// layer down — registered here as no change at all.
+describe('module specifiers', () => {
+  it('counts a statically imported module', async () => {
+    const r = await measurePage(fixture(
+      '<html><script type="module">import { resolveTier } from "./tier.js";</script></html>',
+      { 'tier.js': 'a'.repeat(40_000) },
+    ));
+    expect(r.breakdown.map(b => b.file).sort()).toEqual(['index.html', 'tier.js']);
+  });
+
+  it('counts a dynamically imported module', async () => {
+    const r = await measurePage(fixture(
+      '<html><script type="module">const m = await import("./scene.js");</script></html>',
+      { 'scene.js': 'b'.repeat(40_000) },
+    ));
+    expect(r.breakdown.map(b => b.file).sort()).toEqual(['index.html', 'scene.js']);
+  });
+
+  it('counts a side-effect import with no bindings', async () => {
+    const r = await measurePage(fixture(
+      '<html><script type="module">import "./boot.js";</script></html>',
+      { 'boot.js': 'c'.repeat(40_000) },
+    ));
+    expect(r.breakdown.map(b => b.file).sort()).toEqual(['boot.js', 'index.html']);
+  });
+
+  it('counts a root-absolute module under the publish root', async () => {
+    const site = mkdtempSync(join(tmpdir(), 'site-'));
+    mkdirSync(join(site, 'download'), { recursive: true });
+    writeFileSync(join(site, 'download', 'tier.js'), 'd'.repeat(60_000));
+    writeFileSync(join(site, 'download', 'index.html'),
+      '<html><script type="module">import { t } from "/download/tier.js";</script></html>');
+    const r = await measurePage(join(site, 'download', 'index.html'), site);
+    expect(r.missing).toEqual([]);
+    expect(r.breakdown.map(b => b.file).sort()).toEqual(['download/tier.js', 'index.html']);
+  });
+
+  it('reports a broken module path instead of silently getting cheaper', async () => {
+    const r = await measurePage(fixture(
+      '<html><script type="module">import { x } from "./gone.js";</script></html>',
+    ));
+    expect(r.missing).toEqual(['gone.js']);
+  });
+
+  it('ignores bare and remote specifiers — the import map points at the CDN', async () => {
+    const r = await measurePage(fixture(
+      '<html><script type="importmap">{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.185.1/three.module.min.js"}}</script>'
+      + '<script type="module">import * as THREE from "three";</script></html>',
+    ));
+    expect(r.missing).toEqual([]);
+    expect(r.breakdown).toHaveLength(1);
+  });
+
+  it('does not mistake the word import in page copy for a reference', async () => {
+    const r = await measurePage(fixture(
+      '<html><p>You can import your notes from "./anywhere.js" if you like.</p></html>',
+    ));
+    expect(r.missing).toEqual([]);
+    expect(r.breakdown).toHaveLength(1);
+  });
+});
