@@ -73,7 +73,60 @@
       loadUmd('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js'),
     ]).then(() => {
       if (useGsap()) removeEventListener('scroll', drive);
+      return initSmoothScroll();
     }).catch(() => { /* keep the plain listener */ });
+
+    /* Inertial scrolling.
+     *
+     * This is the single largest contributor to how expensive a site feels,
+     * and the reason is unglamorous: native scroll snaps to the wheel, while
+     * an eased one carries momentum, so every section arrives instead of
+     * appearing. 4.8KB gzipped.
+     *
+     * It is also the most user-hostile thing on this page if handled badly.
+     * Taking over scrolling breaks the one interaction everybody already
+     * knows, so it is off for anyone who asked for reduced motion, off on the
+     * poster tier, and it never touches keyboard or anchor navigation —
+     * Lenis keeps those native. If the CDN fails the page scrolls normally
+     * and nothing announces the loss.
+     *
+     * Second CDN on this page, noted deliberately: Lenis is not published to
+     * cdnjs, so this is jsdelivr, pinned exactly like everything else.
+     */
+    async function initSmoothScroll() {
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (!window.gsap || !window.ScrollTrigger) return;
+      try {
+        await loadUmd('https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js');
+      } catch { return; }
+      const Lenis = window.Lenis;
+      if (!Lenis) return;
+
+      const lenis = new Lenis({
+        duration: 0.9,          // long enough to glide, short enough to obey
+        smoothWheel: true,
+        smoothTouch: false,     // touch already has native momentum; doubling it feels broken
+      });
+
+      // One clock. Letting Lenis run its own rAF alongside GSAP's ticker makes
+      // the two disagree by a frame and the scene judder.
+      lenis.on('scroll', window.ScrollTrigger.update);
+      window.gsap.ticker.add(t => lenis.raf(t * 1000));
+      window.gsap.ticker.lagSmoothing(0);
+
+      // In-page anchors still work; without this they jump while the smooth
+      // scroller is mid-flight and fight each other.
+      for (const a of document.querySelectorAll('a[href^="#"]')) {
+        a.addEventListener('click', e => {
+          const id = a.getAttribute('href');
+          if (!id || id === '#') return;
+          const el = document.querySelector(id);
+          if (!el) return;
+          e.preventDefault();
+          lenis.scrollTo(el, { offset: -70 });
+        });
+      }
+    }
   }
 </script>
 </head>
