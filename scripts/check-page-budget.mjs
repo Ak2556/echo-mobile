@@ -25,8 +25,13 @@ export const BUDGET_BYTES = 900_000;
 // let 13KB hide from the first measurement of this very page.
 const REF = /(?:src|href|poster)\s*=\s*["']([^"']+)["']/gi;
 
-export async function measurePage(htmlPath) {
+export async function measurePage(htmlPath, siteRoot) {
   const root = dirname(resolve(htmlPath));
+  // The page lives at public/download/index.html but is SERVED at "/", so its
+  // asset paths are root-absolute. Those have to be resolved against the
+  // publish root or the budget silently stops counting them — which is worse
+  // than over-counting, because the number would quietly go to nearly zero.
+  const site = siteRoot ? resolve(siteRoot) : dirname(root);
   const html = await readFile(htmlPath);
   const breakdown = [{ file: 'index.html', gzip: (await gz(html, { level: 9 })).length }];
 
@@ -34,15 +39,27 @@ export async function measurePage(htmlPath) {
   const missing = [];
   for (const [, ref] of html.toString('utf8').matchAll(REF)) {
     if (/^(https?:)?\/\//.test(ref) || ref.startsWith('data:') || ref.startsWith('#') || ref.startsWith('mailto:')) continue;
-    // A root-absolute path is a SITE route, not a page asset. This page lives
-    // at public/download/index.html but deploys to /download/, so resolving
-    // "/privacy" against the page's directory walks up out of the repo and
-    // reports a file that was never supposed to be there. Those routes are
-    // real and checked by the healthcheck; they are not this page's bytes.
-    if (ref.startsWith('/')) continue;
+    // A root-absolute ref is either a real asset under the publish root or a
+    // site route like /privacy that this page does not own. Resolve it against
+    // the publish root: found means it is our bytes, missing means it is a
+    // route (checked by the healthcheck, not counted here).
+    let abs;
+    if (ref.startsWith('/')) {
+      const candidate = resolve(site, '.' + ref.split('?')[0].split('#')[0]);
+      try {
+        const st = await stat(candidate);
+        if (!st.isFile()) continue;
+      } catch {
+        continue; // a site route, not an asset
+      }
+      if (seen.has(candidate)) continue;
+      seen.add(candidate);
+      breakdown.push({ file: relative(site, candidate), gzip: (await gz(await readFile(candidate), { level: 9 })).length });
+      continue;
+    }
     const clean = ref.split('?')[0].split('#')[0];
     if (!clean) continue;
-    const abs = resolve(root, clean);
+    abs = resolve(root, clean);
     if (seen.has(abs)) continue;
     seen.add(abs);
     try {
@@ -63,7 +80,8 @@ export async function measurePage(htmlPath) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const target = process.argv[2] ?? join(process.cwd(), 'public/download/index.html');
-  const { total, breakdown, missing } = await measurePage(target);
+  const siteRoot = process.argv[3] ?? join(process.cwd(), 'public');
+  const { total, breakdown, missing } = await measurePage(target, siteRoot);
   for (const b of breakdown.sort((a, c) => c.gzip - a.gzip)) {
     console.log(`  ${String(b.gzip).padStart(9)}  ${b.file}`);
   }

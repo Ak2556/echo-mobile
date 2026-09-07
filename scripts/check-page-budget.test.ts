@@ -88,3 +88,24 @@ describe('root-absolute references', () => {
     expect(r.breakdown.map(b => b.file).sort()).toEqual(['index.html', 'media/a.webp']);
   });
 });
+
+describe('root-absolute assets under the publish root', () => {
+  it('counts /download/media/x.webp when it exists under the site root', async () => {
+    const site = mkdtempSync(join(tmpdir(), 'site-'));
+    mkdirSync(join(site, 'download', 'media'), { recursive: true });
+    writeFileSync(join(site, 'download', 'media', 'a.webp'), 'w'.repeat(60_000));
+    writeFileSync(join(site, 'download', 'index.html'), '<html><img src="/download/media/a.webp"></html>');
+    const r = await measurePage(join(site, 'download', 'index.html'), site);
+    expect(r.missing).toEqual([]);
+    expect(r.breakdown.map(b => b.file).sort()).toEqual(['download/media/a.webp', 'index.html']);
+  });
+
+  it('still treats /privacy as a route rather than an asset', async () => {
+    const site = mkdtempSync(join(tmpdir(), 'site-'));
+    mkdirSync(join(site, 'download'), { recursive: true });
+    writeFileSync(join(site, 'download', 'index.html'), '<html><a href="/privacy">P</a></html>');
+    const r = await measurePage(join(site, 'download', 'index.html'), site);
+    expect(r.missing).toEqual([]);
+    expect(r.breakdown).toHaveLength(1);
+  });
+});

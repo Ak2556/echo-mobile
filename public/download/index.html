@@ -14,7 +14,7 @@
 <script type="module">
   // Tier resolution runs BEFORE three is fetched. A phone that will end up on
   // the poster must never pay 86KB for a renderer it will not use.
-  import { resolveTier } from './tier.js';
+  import { resolveTier } from '/download/tier.js';
   const hasWebGL = (() => {
     try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
   })();
@@ -43,7 +43,7 @@
   }
 
   if (tier !== 'poster') {
-    const { createScene } = await import('./scene.js');
+    const { createScene } = await import('/download/scene.js');
     const canvas = document.getElementById('stage');
     const api = createScene(canvas, tier);
     addEventListener('resize', () => api.resize(), { passive: true });
@@ -1118,7 +1118,7 @@
 
 <header class="hero dark" id="top">
   <div class="hero-in">
-    <img src="./media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="lazy" decoding="async">
+    <img src="/download/media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="lazy" decoding="async">
     <h1>Echo</h1>
     <p class="tag">Built for the thought that didn't get posted.</p>
     <p class="sub">A voice-first social network with an AI that listens, acts and translates — built for the 500 million Indians whose first language isn't English.</p>
@@ -1132,7 +1132,7 @@
 
 <section class="bleed" data-bleed>
   <div class="glow"></div>
-  <div class="device"><img src="./media/a83fb32c.webp" width="420" height="912" alt="Echo home feed" loading="lazy" decoding="async"></div>
+  <div class="device"><img src="/download/media/a83fb32c.webp" width="420" height="912" alt="Echo home feed" loading="lazy" decoding="async"></div>
 </section>
 
 <section class="stage dark" id="problem">
@@ -1214,10 +1214,10 @@
     <div class="gallery">
       <div class="gal-phone">
         <div class="frame">
-          <img src="./media/a83fb32c.webp" class="on" width="420" height="912" alt="Echo home feed" loading="lazy" decoding="async" data-shot>
-          <img src="./media/5c4eac27.webp" width="420" height="912" alt="Daily Question" loading="lazy" decoding="async" data-shot>
-          <img src="./media/c28f4e36.webp" width="420" height="912" alt="Assistant with Ask and Do modes" loading="lazy" decoding="async" data-shot>
-          <img src="./media/66393123.webp" width="420" height="912" alt="Echo Tools" loading="lazy" decoding="async" data-shot>
+          <img src="/download/media/a83fb32c.webp" class="on" width="420" height="912" alt="Echo home feed" loading="lazy" decoding="async" data-shot>
+          <img src="/download/media/5c4eac27.webp" width="420" height="912" alt="Daily Question" loading="lazy" decoding="async" data-shot>
+          <img src="/download/media/c28f4e36.webp" width="420" height="912" alt="Assistant with Ask and Do modes" loading="lazy" decoding="async" data-shot>
+          <img src="/download/media/66393123.webp" width="420" height="912" alt="Echo Tools" loading="lazy" decoding="async" data-shot>
         </div>
       </div>
       <div class="gal-copy">
@@ -1331,7 +1331,7 @@
 
 <section class="bleed" data-bleed>
   <div class="glow"></div>
-  <div class="device"><img src="./media/5c4eac27.webp" width="420" height="912" alt="The Daily Question" loading="lazy" decoding="async"></div>
+  <div class="device"><img src="/download/media/5c4eac27.webp" width="420" height="912" alt="The Daily Question" loading="lazy" decoding="async"></div>
 </section>
 
 

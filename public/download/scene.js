@@ -13,7 +13,7 @@
  * difference between a page people scroll and one that heats the phone.
  */
 import * as THREE from 'three';
-import { demote } from './tier.js';
+import { demote } from '/download/tier.js';
 
 export function createScene(canvas, tier) {
   const COUNT = tier === 'full' ? 1200 : 620;
