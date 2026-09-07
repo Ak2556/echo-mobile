@@ -523,7 +523,8 @@
 
   .phone {
     justify-self: center;
-    width: 268px; border-radius: 30px; padding: 9px;
+    width: clamp(150px, calc((100svh - 11rem) * 0.4605), 268px);
+    border-radius: 30px; padding: 9px;
     background: #050603; border: 1px solid var(--line);
     box-shadow: 0 30px 80px rgba(0,0,0,.6);
   }
@@ -606,6 +607,14 @@
   .divider h2 { font-size: var(--step-4); }
 
   .close { min-height: 92svh; display: grid; place-items: center; text-align: center; }
+  /* The scene reads as atmosphere behind the words, not as noise through
+     them. Sits inside the footer's own stacking context, so it darkens the
+     particles without touching the page background. */
+  .close::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(ellipse 58% 48% at 50% 50%,
+      rgba(11,13,7,.94) 0%, rgba(11,13,7,.74) 44%, rgba(11,13,7,0) 78%);
+  }
   .close h2 { font-size: var(--step-4); }
   .close .tag { color: var(--ink-soft); margin-top: 1.2rem; }
   .close .site {
@@ -781,7 +790,12 @@
   /* Pinned product gallery: the device holds still, the screen changes. */
   .gallery { display: grid; gap: 2.4rem; align-items: center; width: 100%; max-width: 1080px; }
   @media (min-width: 900px) { .gallery { grid-template-columns: 300px 1fr; gap: 4.5rem; } }
-  .gal-phone { position: relative; justify-self: center; width: 268px; }
+  /* A device sized in fixed px is taller than the stage that pins it as soon
+     as the window is short — a tab strip and a bookmarks bar are enough — and
+     .pin-in's overflow:hidden then eats the bottom half of the phone. Width is
+     derived from the height actually available, so the device always fits. */
+  .gal-phone { position: relative; justify-self: center;
+    width: clamp(140px, calc((100svh - 7rem) * 0.4605), 268px); }
   .gal-phone .frame {
     border-radius: 30px; padding: 9px; background: #050603;
     border: 1px solid var(--line); box-shadow: 0 30px 80px rgba(0,0,0,.6);
@@ -844,7 +858,7 @@
     #different .dots { display: none; }
 
     /* The product tour keeps its pin — it fits once the device shrinks. */
-    .gal-phone { width: 186px; }
+    .gal-phone { width: clamp(120px, calc((100svh - 19rem) * 0.4605), 186px); }
     .gallery { gap: 1.5rem; }
     .gal-copy .panel h3 { font-size: var(--step-1); }
     .gal-copy .panel p { font-size: var(--step--1); max-width: none; }
@@ -862,12 +876,22 @@
     .dl-btn { width: 100%; justify-content: center; }
   }
 
+  /* A pinned stage is only honest if its content fits the viewport it is
+     pinned to. The language mock is sized by its own content rather than an
+     image aspect, so on a short window it stops pinning and simply stacks. */
+  @media (max-height: 700px) {
+    .morph { height: auto !important; }
+    .morph-pin { position: static; height: auto; display: block; padding-block: 3rem; overflow: visible; }
+    .morph-grid { display: block; }
+    .morph-grid .phone { margin: 0 auto 1.8rem; }
+  }
+
   /* Very small phones: give the type and padding one more step down. */
   @media (max-width: 420px) {
     .stage { padding-left: 1.1rem; padding-right: 1.1rem; }
     .topbar { padding-inline: 1rem; }
     .topbar .cta { padding: .45rem .85rem; font-size: .78rem; }
-    .gal-phone { width: 164px; }
+    .gal-phone { width: clamp(110px, calc((100svh - 19rem) * 0.4605), 164px); }
   }
 
   /* Large desktops: let the measure grow rather than stranding text in a
@@ -891,12 +915,23 @@
    where a careful person looks for who is behind it and leaves if nobody is.
    Quiet by design — this is the part you read when you have a reason to. */
 .colophon {
-  border-top: 1px solid var(--line);
+  position: relative;
+  background:
+    radial-gradient(150% 130% at 50% 0%, rgba(163,193,101,.055) 0%, rgba(163,193,101,0) 58%),
+    linear-gradient(180deg, var(--ground-2) 0%, #060804 100%);
   /* Horizontal inset matches .stage exactly — a footer that reaches the
      viewport edge while every section above it is gutter-aligned reads as a
      different page stapled on. Vertical is tighter: this is the quiet end of
      the document, not another full stage. */
   padding: clamp(3.5rem, 8vh, 5.5rem) clamp(1.25rem, 5vw, 3rem) clamp(2rem, 5vh, 3rem);
+}
+/* Replaces the flat border-top: a rule that fades in from the gutters and
+   carries a little accent through the middle, so the seam is deliberate. */
+.colophon::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 0%, var(--line) 14%,
+    rgba(163,193,101,.42) 50%, var(--line) 86%, transparent 100%);
 }
 .colo-grid, .colo-base { max-width: 1180px; margin-inline: auto; width: 100%; }
 .colo-grid {
