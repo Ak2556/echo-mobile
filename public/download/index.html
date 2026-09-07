@@ -8,6 +8,74 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
 <meta name="color-scheme" content="dark light">
+<script type="importmap">
+{ "imports": { "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.185.1/three.module.min.js" } }
+</script>
+<script type="module">
+  // Tier resolution runs BEFORE three is fetched. A phone that will end up on
+  // the poster must never pay 86KB for a renderer it will not use.
+  import { resolveTier } from './tier.js';
+  const hasWebGL = (() => {
+    try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
+  })();
+  const c = navigator.connection || {};
+  const tier = resolveTier({
+    reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+    hasWebGL,
+    saveData: !!c.saveData,
+    effectiveType: c.effectiveType,
+    deviceMemory: navigator.deviceMemory,
+    hardwareConcurrency: navigator.hardwareConcurrency,
+    forced: new URLSearchParams(location.search).get('tier') ?? undefined,
+  });
+  document.documentElement.dataset.tier = tier;
+
+  /** GSAP is UMD on cdnjs, so it is injected as a classic script rather than
+   *  imported. Gated with the scene: the poster tier's reveals are already
+   *  handled by the page's own IntersectionObserver, so a device that cannot
+   *  run the scene downloads nothing extra at all. */
+  function loadUmd(src) {
+    return new Promise((res, rej) => {
+      const el = document.createElement('script');
+      el.src = src; el.onload = res; el.onerror = rej;
+      document.head.appendChild(el);
+    });
+  }
+
+  if (tier !== 'poster') {
+    const { createScene } = await import('./scene.js');
+    const canvas = document.getElementById('stage');
+    const api = createScene(canvas, tier);
+    addEventListener('resize', () => api.resize(), { passive: true });
+
+    const hero = document.getElementById('top');
+    const drive = () => {
+      const h = hero.offsetHeight || 1;
+      api.setProgress(Math.min(1, Math.max(0, window.scrollY / h)));
+    };
+    // A passive scroll listener drives the scene immediately; GSAP takes over
+    // once it arrives. The scene is never frozen waiting on a CDN, and if the
+    // CDN is blocked entirely the page still works.
+    addEventListener('scroll', drive, { passive: true });
+    drive();
+
+    const useGsap = () => {
+      if (!window.gsap || !window.ScrollTrigger) return false;
+      window.gsap.registerPlugin(window.ScrollTrigger);
+      window.ScrollTrigger.create({
+        trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.6,
+        onUpdate: self => api.setProgress(self.progress),
+      });
+      return true;
+    };
+    Promise.all([
+      loadUmd('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js'),
+      loadUmd('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js'),
+    ]).then(() => {
+      if (useGsap()) removeEventListener('scroll', drive);
+    }).catch(() => { /* keep the plain listener */ });
+  }
+</script>
 </head>
 <body>
 <style>
@@ -768,6 +836,19 @@
   .try-caret { animation: none; }
   .try-keys button.wrong { animation: none; }
 }
+
+/* ── The hero scene ─────────────────────────────────────────────────────
+   Absolutely positioned inside the hero rather than fixed behind the whole
+   page, because every section below carries an opaque --ground background
+   and would simply cover a fixed canvas. Hidden by default and revealed only
+   for tiers that earned it, so the poster path never shows an empty box. */
+.hero { position: relative; }
+#stage {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: none; pointer-events: none; z-index: 0;
+}
+:root[data-tier="full"] #stage, :root[data-tier="reduced"] #stage { display: block; }
+.hero-in { position: relative; z-index: 1; }
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -784,10 +865,11 @@
 </header>
 
 <header class="hero dark" id="top">
+  <canvas id="stage" aria-hidden="true"></canvas>
   <div class="hero-in">
     <img src="./media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="lazy" decoding="async">
     <h1>Echo</h1>
-    <p class="tag">Speak. Echo does the rest.</p>
+    <p class="tag">Built for the thought that didn't get posted.</p>
     <p class="sub">A voice-first social network with an AI that listens, acts and translates — built for the 500 million Indians whose first language isn't English.</p>
     <canvas id="wave" width="840" height="92" aria-hidden="true"></canvas>
     <p class="chip">Private beta · Android</p>
@@ -842,7 +924,6 @@
 
 <section class="stage light" id="insight">
   <div class="wrap">
-    <p class="eyebrow rv">The insight</p>
     <h2 class="rv d1">Start from the mouth, not the keyboard</h2>
     <p class="lead rv d2">You speak. One recording becomes a transcript, a structured intent and a spoken reply in a <em class="hl">single model call</em>.</p>
     <p class="body rv d2">Echo doesn't dictate into a text box and leave you there. It <strong>acts</strong> on what you said — posts it, searches it, opens the tool you asked for. Eighteen in-app actions are reachable by voice today.</p>
@@ -868,7 +949,6 @@
         </div>
       </div>
       <div class="gal-copy">
-        <p class="eyebrow">The product</p>
         <div class="panels">
           <div class="panel on" data-panel>
             <p class="gal-index">01 / 04</p>
@@ -902,7 +982,6 @@
     <div class="morph-grid">
       <div class="phone rv"><video class="" width="300" height="654" autoplay muted loop playsinline preload="metadata" poster="./media/989b97b3-poster.webp" aria-label="The same screen rendering in English, Hindi and Arabic"><source src="./media/989b97b3.webm" type="video/webm"><source src="./media/989b97b3.mp4" type="video/mp4"></video></div>
       <div>
-        <p class="eyebrow rv">The product</p>
         <h2 class="rv d1">One build. The interface follows the reader.</h2>
         <p class="body rv d2">Greeting, filter tabs, navigation, prompts and layout direction all follow the reader. The same binary renders left-to-right in Hindi and right-to-left in Arabic — not a separate build, not a web view, not a translation layer bolted over an English shell.</p>
         <div class="langs" id="langs">
@@ -924,7 +1003,6 @@
 <section class="pin dark" id="different" style="height:340vh">
   <div class="pin-in">
     <div style="width:100%;max-width:1080px">
-      <p class="eyebrow">Why it's different</p>
       <h2 style="max-width:18ch">Three decisions competitors can't retrofit</h2>
       <div class="panels" style="margin-top:2.4rem">
         <div class="panel on" data-panel>
@@ -996,7 +1074,6 @@
 <footer class="stage close dark" id="close">
   <div>
     <h2 class="rv">Speak. Echo does the rest.</h2>
-    <p class="tag rv d1">Built for the thought that didn't get posted.</p>
     <div class="dl rv d2">
       <a class="dl-btn" href="https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>Download for Android</a>
       <p class="dl-meta">Echo.apk · 181 MB · always the current build</p>
@@ -1010,7 +1087,7 @@
   <div class="colo-grid">
     <div class="colo-brand">
       <p class="colo-mark">Echo</p>
-      <p class="colo-line">Speak. Echo does the rest.</p>
+      <p class="colo-line">A voice-first social network, in 26 languages.</p>
       <p class="colo-addr">
         Akash Thakur · Sole proprietor<br>
         Shankar Nagar, Hoshiarpur<br>
