@@ -16,7 +16,7 @@ import * as THREE from 'three';
 import { demote } from './tier.js';
 
 export function createScene(canvas, tier) {
-  const COUNT = tier === 'full' ? 900 : 320;
+  const COUNT = tier === 'full' ? 1200 : 620;
 
   const renderer = new THREE.WebGLRenderer({
     canvas, antialias: tier === 'full', alpha: true, powerPreference: 'low-power',
@@ -80,9 +80,9 @@ export function createScene(canvas, tier) {
     drift[i * 3 + 2] = (Math.random() - 0.5) * 3.5;
     // Layout D — the outbox. Points stack into a held column: nothing is lost,
     // nothing has sent. This is store/outbox.ts, not an abstract flourish.
-    const row = Math.floor(i / 26);
-    queue[i * 3]     = ((i % 26) - 12.5) * 0.11;
-    queue[i * 3 + 1] = 2.1 - row * 0.135;
+    const row = Math.floor(i / 34);
+    queue[i * 3]     = ((i % 34) - 16.5) * 0.095;
+    queue[i * 3 + 1] = 1.9 - row * 0.105;
     queue[i * 3 + 2] = (seed[i] - 0.5) * 0.25;
   }
 
@@ -92,7 +92,7 @@ export function createScene(canvas, tier) {
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
   const points = new THREE.Points(geometry, new THREE.PointsMaterial({
-    size: tier === 'full' ? 0.045 : 0.06,
+    size: tier === 'full' ? 0.05 : 0.075,
     vertexColors: true,
     transparent: true,
     opacity: 0.95,
@@ -109,6 +109,8 @@ export function createScene(canvas, tier) {
 
   function build(now) {
     const p = progress;
+    // Cheap early-out: while the scene is hidden there is nothing to compute.
+    if (p > 0.21 && p < 0.89) { points.visible = false; return; }
     // Five beats across the whole document. The camera never cuts.
     //   .00-.18  a voice          ring
     //   .18-.38  it becomes a post ring -> card
@@ -119,9 +121,9 @@ export function createScene(canvas, tier) {
     const ease = t => t * t * (3 - 2 * t);
 
     const toCard   = ease(seg(0.18, 0.38));
-    const toDrift  = ease(seg(0.38, 0.58));
-    const toQueue  = ease(seg(0.58, 0.78));
-    const toLand   = ease(seg(0.78, 1.00));
+    const toDrift  = ease(seg(0.14, 0.20));
+    const toQueue  = ease(seg(0.90, 0.955));
+    const toLand   = ease(seg(0.955, 1.00));
     const breathe  = Math.sin(now * 0.0013) * 0.5 + 0.5;
 
     for (let i = 0; i < COUNT; i++) {
@@ -153,18 +155,22 @@ export function createScene(canvas, tier) {
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.color.needsUpdate = true;
 
-    // The scene bookends the story rather than running through it.
+    // Commit or disappear.
     //
-    // The middle of this page explains the product with real screenshots and
-    // dense body copy, and a point cloud crossing a paragraph is unreadable at
-    // the size people actually read — verified in the browser, where the wave
-    // ran straight through "A feed that ends". No scrim rescues that; the fix
-    // is to get out of the way. Full presence in the hero, almost gone through
-    // the content, back for the offline beat and the landing.
-    const enterContent = ease(seg(0.10, 0.22));   // fade out as content starts
-    const returnForEnd = ease(seg(0.70, 0.84));   // come back for the last act
-    const presence = 1 - enterContent * (1 - returnForEnd);
-    points.material.opacity = 0.10 + presence * 0.85;
+    // The first version faded to a tenth through the content and read as dust
+    // on the screen — visible enough to look like an artifact, faint enough to
+    // look unintentional. That is worse than either extreme. So the scene is
+    // fully present where it can be beautiful and fully ABSENT where it would
+    // fight body copy; there is no in-between state where it merely lingers.
+    const leave  = ease(seg(0.09, 0.20));
+    // Returns only for the closing CTA. The panels section occupies most of
+    // the last quarter of the scroll and is dense with text, so an earlier
+    // ramp put the cloud straight through "competitors can't retrofit" —
+    // the same mistake as the first version, just further down the page.
+    const arrive = ease(seg(0.90, 0.97));
+    const presence = Math.max(1 - leave, arrive);
+    points.material.opacity = 0.95 * presence;
+    points.visible = presence > 0.02;
 
     points.rotation.y = p * 1.35 + Math.sin(now * 0.0004) * 0.06;
     points.rotation.x = -0.28 * Math.sin(p * Math.PI);

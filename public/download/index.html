@@ -935,6 +935,28 @@
 }
 .ui-switch button.on { background: var(--accent); color: var(--ground); border-color: var(--accent); }
 .ui-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The panels section was 340vh of pinned scroll for three short cards
+   centred in a viewport — about 60% of every frame was empty, which reads as
+   a section that ran out of content rather than as deliberate space. The card
+   now carries a numeral and fills the column, and the pin is shorter so the
+   scroll does not drag. */
+.panel .card.accent {
+  display: grid; grid-template-columns: auto 1fr; gap: clamp(1.25rem, 4vw, 3rem);
+  align-items: start; padding: clamp(1.75rem, 4vw, 3rem);
+  min-height: clamp(15rem, 34vh, 22rem);
+  align-content: center;
+}
+.panel-n {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: clamp(2.5rem, 7vw, 5rem); line-height: .9;
+  color: var(--accent); opacity: .38; font-weight: 500;
+}
+.panel-body h3 { font-size: clamp(1.4rem, 3.2vw, 2.2rem); margin: 0 0 .75rem; }
+.panel-body p { font-size: var(--step-0); max-width: 52ch; margin: 0; }
+@media (max-width: 620px) {
+  .panel .card.accent { grid-template-columns: 1fr; gap: .75rem; }
+}
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -1109,27 +1131,30 @@
   </div>
 </section>
 
-<section class="pin dark" id="different" style="height:340vh">
+<section class="pin dark" id="different" style="height:265vh">
   <div class="pin-in">
     <div style="width:100%;max-width:1080px">
       <h2 style="max-width:18ch">Three decisions competitors can't retrofit</h2>
       <div class="panels" style="margin-top:2.4rem">
         <div class="panel on" data-panel>
           <div class="card accent">
-            <h3>Voice-first, not voice-added</h3>
-            <p>Speech, intent and reply in one call, mapped onto 18 real actions. Bolting this onto an existing app means rebuilding its command surface.</p>
+            <span class="panel-n" aria-hidden="true">01</span>
+            <div class="panel-body"><h3>Voice-first, not voice-added</h3>
+            <p>Speech, intent and reply in one call, mapped onto 18 real actions. Bolting this onto an existing app means rebuilding its command surface.</p></div>
           </div>
         </div>
         <div class="panel" data-panel>
           <div class="card accent">
-            <h3>The interface is localised</h3>
-            <p>Not just the content. 26 languages including RTL, from one codebase — a retrofit means re-authoring every screen.</p>
+            <span class="panel-n" aria-hidden="true">02</span>
+            <div class="panel-body"><h3>The interface is localised</h3>
+            <p>Not just the content. 26 languages including RTL, from one codebase — a retrofit means re-authoring every screen.</p></div>
           </div>
         </div>
         <div class="panel" data-panel>
           <div class="card accent">
-            <h3>A reason to return that isn't the scroll</h3>
-            <p>One Daily Question, the same for everyone, that closes. You answer, you read the network, you're done. Retention without an infinite feed.</p>
+            <span class="panel-n" aria-hidden="true">03</span>
+            <div class="panel-body"><h3>A reason to return that isn't the scroll</h3>
+            <p>One Daily Question, the same for everyone, that closes. You answer, you read the network, you're done. Retention without an infinite feed.</p></div>
           </div>
         </div>
       </div>
