@@ -701,7 +701,8 @@
     display: grid; place-items: center; overflow: hidden;
     background: #050603;
   }
-  .bleed img, .bleed video { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .bleed img, .bleed video { display: block; width: 100%; height: auto;
+    aspect-ratio: 420 / 912; object-fit: cover; }
   .bleed .glow {
     position: absolute; inset: 0;
     background: radial-gradient(120% 80% at 50% 40%, rgba(163,193,101,.16), transparent 62%);
@@ -801,7 +802,10 @@
     border: 1px solid var(--line); box-shadow: 0 30px 80px rgba(0,0,0,.6);
   }
   .gal-phone img {
-    grid-area: 1 / 1; display: block; width: 100%; border-radius: 22px;
+    grid-area: 1 / 1; align-self: start;
+    display: block; width: 100%; height: auto;
+    aspect-ratio: 420 / 912; object-fit: cover;
+    border-radius: 22px;
     opacity: 0; transform: scale(1.015);
     transition: opacity .5s var(--ease), transform .5s var(--ease);
   }
