@@ -272,6 +272,121 @@
   }
   .cue i { display: block; width: 1px; height: 30px; background: linear-gradient(var(--line), transparent); }
 
+  /* ---------- the hero microphone ----------
+     The argument of this page is that speaking beats typing. Asserting that
+     costs nothing and convinces nobody, so the hero hands over the microphone
+     and lets the visitor settle it themselves. Everything below is state for
+     four moments: idle, listening, transcribing, posted. */
+
+  .mic { margin-top: 2rem; width: 100%; max-width: 640px; margin-inline: auto; }
+
+  .mic-langs {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem;
+    margin-bottom: 1.4rem;
+  }
+  .mic-langs button {
+    font: inherit; font-size: var(--step--1); color: var(--ink-faint);
+    background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: .38rem .9rem; cursor: pointer;
+    transition: color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+  }
+  .mic-langs button:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .mic-langs button.on { color: #10160B; background: var(--accent); border-color: var(--accent); }
+  .mic-langs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .mic-btn {
+    position: relative; display: inline-flex; align-items: center; gap: .7rem;
+    font: inherit; font-weight: 600; font-size: var(--step-0);
+    color: #10160B; background: var(--accent);
+    border: 0; border-radius: 999px; padding: .95rem 1.9rem;
+    cursor: pointer; -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none; touch-action: manipulation;
+    transition: transform .18s var(--ease), box-shadow .25s var(--ease), background .2s var(--ease);
+  }
+  .mic-btn svg { width: 20px; height: 20px; }
+  .mic-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 44px rgba(163,193,101,.28); }
+  .mic-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+  /* The ring is the only thing that says "I am listening" at a glance, so it
+     is a real animation rather than a colour change. */
+  .mic-ring {
+    position: absolute; inset: -6px; border-radius: 999px;
+    border: 2px solid var(--accent); opacity: 0; pointer-events: none;
+  }
+  .mic[data-state="listening"] .mic-ring { animation: micPulse 1.5s var(--ease) infinite; }
+  @keyframes micPulse {
+    0%   { opacity: .75; transform: scale(1); }
+    100% { opacity: 0;   transform: scale(1.28); }
+  }
+  .mic[data-state="listening"] .mic-btn { background: #C8E08A; transform: translateY(-2px); }
+  .mic[data-state="listening"] .mic-btn:hover { transform: translateY(-2px); }
+
+  .mic-hint {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--2); letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-faint); margin-top: 1rem; min-height: 1.2em;
+  }
+
+  #wave { display: block; width: min(520px, 82vw); height: 46px; margin: 1.1rem auto 0; opacity: .5;
+          transition: opacity .3s var(--ease); }
+  .mic[data-state="listening"] #wave { opacity: 1; }
+
+  .mic-out { min-height: 2.6em; margin-top: 1rem; display: flex; align-items: center; justify-content: center; }
+  .mic-transcript {
+    font-family: Fraunces, ui-serif, Georgia, serif;
+    font-size: clamp(1.15rem, .8rem + 1.4vw, 1.75rem); line-height: 1.3;
+    color: var(--ink); max-width: 30ch; margin: 0;
+  }
+  .mic-transcript.interim { color: var(--ink-faint); }
+
+  /* The payoff. Deliberately shaped like a real Echo feed card, because the
+     claim is not "we transcribed you" — it is "that was a post". */
+  .mic-post { margin-top: 1.6rem; animation: micRise .5s var(--ease) both; }
+  @keyframes micRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .mic-post-card {
+    text-align: start; background: var(--surface); border: 1px solid var(--line);
+    border-left: 2px solid var(--accent); border-radius: 6px;
+    padding: 1.1rem 1.25rem; max-width: 460px; margin-inline: auto;
+  }
+  .mic-post-top { display: flex; align-items: center; gap: .7rem; margin-bottom: .7rem; }
+  .mic-av {
+    width: 34px; height: 34px; border-radius: 999px; flex: none;
+    display: grid; place-items: center; background: var(--accent); color: #10160B;
+    font-weight: 700; font-size: .9rem;
+  }
+  .mic-who { display: flex; flex-direction: column; line-height: 1.25; }
+  .mic-who b { color: var(--ink); font-size: var(--step--1); }
+  .mic-who i {
+    font-style: normal; color: var(--ink-faint);
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--step--2);
+  }
+  .mic-post-body { color: var(--ink); font-size: var(--step-0); margin: 0; }
+  .mic-post-note { font-size: var(--step--2); color: var(--ink-faint); margin-top: .9rem; max-width: 46ch; margin-inline: auto; }
+
+  /* Firefox has no SpeechRecognition and a denied permission is not a bug.
+     Both get told the truth rather than a spinner that never resolves. */
+  .mic-fallback { font-size: var(--step--1); color: var(--ink-faint); margin-top: 1rem; max-width: 44ch; margin-inline: auto; }
+
+  .mic-idle {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--1); color: var(--ink-faint); margin: 0;
+    transition: opacity .25s var(--ease);
+  }
+  .mic[data-state="listening"] .mic-idle, .mic.said .mic-idle { display: none; }
+
+  /* Secondary by design: the hero wants the microphone pressed first. */
+  .dl-btn.ghost {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--line); box-shadow: none;
+  }
+  .dl-btn.ghost:hover {
+    background: rgba(163,193,101,.08); border-color: var(--accent);
+    color: var(--ink); box-shadow: none;
+  }
+
+  .hero-cta { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .hero-cta .chip { margin-top: 0; }
+
   /* ---------- grids ---------- */
 
   .two { display: grid; gap: clamp(1.6rem, 4vw, 3.2rem); margin-top: 2.6rem; }
@@ -497,7 +612,6 @@
     margin-top: 2.4rem; font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: var(--step--1); letter-spacing: .12em; color: var(--accent);
   }
-
 
 
   /* ---------- alternating chapters ----------
@@ -1014,27 +1128,15 @@
 /* The invitation. Without it the interaction is a secret, and a secret
    interaction is the same as none. Shown only where the scene actually
    responds — on the poster tier there is nothing to hold. */
-.hold-hint {
-  display: none;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: var(--step--2); letter-spacing: .22em; text-transform: uppercase;
-  color: var(--ink-faint); margin: 1rem 0 0;
-  transition: opacity .5s var(--ease), color .3s var(--ease);
-  animation: hint-breathe 3.4s var(--ease) infinite;
-}
-:root[data-tier="full"] .hold-hint, :root[data-tier="reduced"] .hold-hint { display: block; }
-:root.holding .hold-hint { color: var(--accent); animation: none; }
-:root.has-held .hold-hint { opacity: 0; }
-@keyframes hint-breathe { 0%, 100% { opacity: .45; } 50% { opacity: .9; } }
-@media (prefers-reduced-motion: reduce) { .hold-hint { animation: none; opacity: .6; } }
 :root[data-tier="full"] body, :root[data-tier="reduced"] body { cursor: default; }
 
 /* ── The origin ─────────────────────────────────────────────────────────
    The page argued the problem as market structure — "the supply side is
    thin" — which is true, well written and bloodless. Nobody on it was a
-   person. This section is the only place the reader meets one, and it sits
-   immediately after they have failed at the Devanagari keyboard themselves,
-   where the claim has just stopped being abstract.
+   person. This section is the only place the reader meets one, and it now
+   sits immediately after the hero, where they have just held the button and
+   watched a sentence become a post: the story says why that mattered, and
+   the keyboard beat below then shows them the alternative they were spared.
    Deliberately unlike every other section: no cards, no stats, no numerals.
    One voice, generous space, and a name to hold responsible — which is also
    what a stranger wants before installing an APK from outside a store. */
@@ -1058,6 +1160,12 @@
 .origin-quote p:first-child::first-letter { initial-letter: normal; }
 @media (min-width: 900px) {
   .origin-fig { max-width: 52rem; margin-inline-start: clamp(0rem, 5vw, 4rem); }
+}
+.origin-punch {
+  font-family: Fraunces, ui-serif, Georgia, serif;
+  font-size: clamp(1.6rem, 1rem + 2.6vw, 3rem); line-height: 1.1;
+  letter-spacing: -.02em; color: var(--accent);
+  margin: 2rem 0 0; max-width: 18ch;
 }
 .origin-by {
   display: flex; flex-wrap: wrap; gap: .55rem 1rem; align-items: baseline;
@@ -1108,7 +1216,7 @@
 <header class="topbar">
   <a class="brand" href="#top">Echo</a>
   <nav id="topnav">
-    <a href="#problem">Problem</a>
+    <a href="#origin">Why</a>
     <a href="#tour">Product</a>
     <a href="#build">Language</a>
     <a href="/">Open the app</a>
@@ -1118,25 +1226,86 @@
 
 <header class="hero dark" id="top">
   <div class="hero-in">
-    <img src="/download/media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="lazy" decoding="async">
-    <h1>Echo</h1>
-    <p class="tag">Built for the thought that didn't get posted.</p>
-    <p class="sub">A voice-first social network with an AI that listens, acts and translates — built for the 500 million Indians whose first language isn't English.</p>
-    <canvas id="wave" width="840" height="92" aria-hidden="true"></canvas>
-    <p class="hold-hint" id="holdhint" aria-hidden="true">press and hold</p>
-    <p class="chip">Private beta · Android</p>
+    <img src="/download/media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="eager" decoding="async">
+    <h1>Say it.<br>It&rsquo;s posted.</h1>
+    <p class="tag">In the language you actually think in.</p>
+
+    <!-- The page performs the promise instead of describing it. Hold the
+         button, speak, watch the words land in a post. Everything here runs
+         on the browser's own speech engine: no Echo backend, no API quota,
+         nothing leaves for our servers. -->
+    <div class="mic" id="mic" data-state="idle">
+      <div class="mic-langs" role="group" aria-label="Language to speak in">
+        <button type="button" class="on" data-sr="en-IN">English</button>
+        <button type="button" data-sr="hi-IN" lang="hi">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</button>
+        <button type="button" data-sr="pa-IN" lang="pa">&#2602;&#2672;&#2588;&#2622;&#2604;&#2624;</button>
+        <button type="button" data-sr="ta-IN" lang="ta">&#2980;&#2990;&#3007;&#2996;&#3021;</button>
+      </div>
+
+      <button type="button" class="mic-btn" id="micBtn" aria-describedby="micHint">
+        <span class="mic-ring" aria-hidden="true"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
+        <span class="mic-label">Hold to speak</span>
+      </button>
+      <p class="mic-hint" id="micHint">Hold, say one sentence, let go.</p>
+
+      <canvas id="wave" width="840" height="92" aria-hidden="true"></canvas>
+
+      <div class="mic-out">
+        <p class="mic-idle" id="micIdle">try saying &mdash; &ldquo;my mind feels light today&rdquo;</p>
+        <p class="mic-transcript" id="micText" aria-live="polite"></p>
+      </div>
+
+      <div class="mic-post" id="micPost" hidden>
+        <div class="mic-post-card">
+          <div class="mic-post-top">
+            <span class="mic-av" aria-hidden="true">A</span>
+            <span class="mic-who"><b>You</b><i>just now &middot; via voice</i></span>
+          </div>
+          <p class="mic-post-body" id="micPostBody"></p>
+        </div>
+        <p class="mic-post-note">That is the whole interaction. <strong>Nothing was posted.</strong> This is a preview, and your browser&rsquo;s own speech recognition did the transcribing &mdash; it never reached Echo.</p>
+      </div>
+
+      <p class="mic-fallback" id="micFallback" hidden></p>
+    </div>
+
+    <div class="hero-cta">
+      <a class="dl-btn ghost" href="https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>Download for Android</a>
+      <p class="chip">Private beta &middot; Android &middot; free</p>
+    </div>
   </div>
   <div class="cue" aria-hidden="true"><span>Scroll</span><i></i></div>
 </header>
 
 
-<section class="bleed" data-bleed>
-  <div class="glow"></div>
-  <div class="device"><img src="/download/media/a83fb32c.webp" width="420" height="912" alt="Echo home feed" loading="lazy" decoding="async"></div>
+<section class="stage dark origin" id="origin">
+  <div class="wrap">
+    <figure class="origin-fig">
+      <p class="eyebrow rv">Why this exists</p>
+      <blockquote class="origin-quote rv d1">
+        <p>I watched my mother start a message, stop, and delete it. Not because
+        she had nothing to say &mdash; because saying it meant fighting a keyboard
+        built for a language that isn&rsquo;t hers.</p>
+        <p>She had plenty to say. She said it out loud, to me, in the next
+        breath.</p>
+      </blockquote>
+      <p class="origin-punch rv d2">That is the whole product.</p>
+      <figcaption class="origin-by rv d3">
+        <span class="origin-name">Akash Thakur</span>
+        <span class="origin-role">built Echo &middot; Hoshiarpur, Punjab</span>
+      </figcaption>
+    </figure>
+  </div>
 </section>
 
 <section class="stage dark" id="problem">
   <div class="wrap">
+    <h2 class="rv">Now type the same thing.</h2>
+    <p class="lead rv d1">You just spoke a sentence and watched it land. Here is the
+    other way &mdash; the only way most people have ever been offered. Same thought,
+    same phone, a keyboard in between.</p>
+
 <div class="try rv">
       <p class="try-ask"><span class="try-round">Round 1 of 2</span> Post this thought.</p>
       <p class="try-target" id="tryTarget" lang="en" dir="ltr">my mind feels light today</p>
@@ -1150,66 +1319,44 @@
       <p class="try-bridge" id="tryBridge" hidden></p>
       <div class="try-done" hidden>
         <p class="try-verdict"></p>
-        <p class="try-alt">Or hold one button and say it. <strong>1.4 seconds.</strong></p>
+        <p class="try-alt">Or hold one button and say it &mdash; which you already did, at the top of this page.</p>
       </div>
       <button class="try-skip" type="button">I get it — skip &rarr;</button>
     </div>
 
-    <h2 class="rv d1">Most people don't type the way they think</h2>
-    <div class="two">
-      <div>
-        <p class="lead rv d2">Writing a full thought in Devanagari or Tamil on a phone is slow enough that most people simply don't. The thought gets shortened, or it never gets posted.</p>
-        <p class="body rv d2">And the apps that <em class="hl">do</em> translate usually translate the content while leaving an English interface around it. The product never feels like it was made for you — it feels like a product made for someone else, that you are allowed to use.</p>
-        <p class="body rv d3">So a market of hundreds of millions consumes constantly and posts rarely. The supply side of Indian-language social is thin, and it is thin for a mechanical reason: the keyboard.</p>
-      </div>
-      <div class="cards">
-        <div class="card rv d3">
-          <h3>Consume, don't create</h3>
-          <p>Vernacular users are the majority of India's internet and a minority of its posts.</p>
-        </div>
-        <div class="card rv d4">
-          <h3>Translated content, English chrome</h3>
-          <p>Localisation stops at the post body. Navigation, prompts and layout stay foreign.</p>
-        </div>
-      </div>
-    </div>
+    <p class="body rv d2">Most people never finish. Writing a full thought in
+    Devanagari or Tamil on a phone is slow enough that the thought gets
+    shortened, or it simply never gets posted &mdash; and the person quietly
+    decides they are someone who reads rather than someone who writes.</p>
+    <p class="body rv d3">The apps that <em class="hl">do</em> translate usually
+    translate the content and leave an English interface around it. Navigation,
+    prompts and layout stay foreign. It never feels like a product made for you.
+    It feels like a product made for someone else, that you are allowed to use.</p>
   </div>
 </section>
 
-<section class="stage dark origin" id="origin">
-  <div class="wrap">
-    <figure class="origin-fig">
-      <blockquote class="origin-quote">
-        <p>I watched my mother start a message, stop, and delete it. Not because
-        she had nothing to say — because saying it meant fighting a keyboard
-        built for a language that isn't hers.</p>
-        <p>She had plenty to say. She said it out loud, to me, in the next
-        breath. That is the whole product.</p>
-      </blockquote>
-      <figcaption class="origin-by">
-        <span class="origin-name">Akash Thakur</span>
-        <span class="origin-role">built Echo · Hoshiarpur, Punjab</span>
-      </figcaption>
-    </figure>
-  </div>
-</section>
 
 <section class="stage light" id="insight">
   <div class="wrap">
-    <h2 class="rv d1">Start from the mouth, not the keyboard</h2>
-    <p class="lead rv d2">You speak. One recording becomes a transcript, a structured intent and a spoken reply in a <em class="hl">single model call</em>.</p>
-    <p class="body rv d2">Echo doesn't dictate into a text box and leave you there. It <strong>acts</strong> on what you said — posts it, searches it, opens the tool you asked for. Eighteen in-app actions are reachable by voice today.</p>
-    <p class="body rv d3">The same vocabulary is now a choice in the assistant, not a guess it makes for you: <strong>Ask</strong> and Echo only talks, <strong>Do</strong> and it can act on 34 tools — with anything that writes pausing for confirmation first.</p>
+    <h2 class="rv">It doesn&rsquo;t just write it down. It does it.</h2>
+    <p class="lead rv d1">Dictation drops your words in a text box and leaves you
+    there. Say <em class="hl">post this</em>, <em class="hl">find that thread from
+    last week</em>, <em class="hl">remind me tomorrow morning</em> &mdash; and the
+    thing you asked for is already done when you look up.</p>
+    <p class="body rv d2">You choose how much rope it gets. <strong>Ask</strong>
+    and Echo only talks back. <strong>Do</strong> and it can act on your behalf
+    &mdash; and anything that writes, posts or spends stops and shows you a
+    confirmation card first. It never takes an action you did not watch it take.</p>
     <div class="steps">
-      <div class="step rv d2"><em>1 · Speak</em><p>Hold to talk, in any of 26 languages.</p></div>
-      <div class="step rv d3"><em>2 · Intent</em><p>Speech, intent and reply resolve in one round trip — not three chained calls.</p></div>
-      <div class="step rv d4"><em>3 · Act</em><p>The app performs it. Posting, searching, opening a tool, answering back aloud.</p></div>
+      <div class="step rv d2"><em>1 &middot; Speak</em><p>Hold one button and talk, in any of 26 languages.</p></div>
+      <div class="step rv d3"><em>2 &middot; It understands</em><p>Not just the words &mdash; what you wanted done with them.</p></div>
+      <div class="step rv d4"><em>3 &middot; It&rsquo;s done</em><p>Posted, found, opened, scheduled. Answered back out loud if you want.</p></div>
     </div>
   </div>
 </section>
 
 
-<section class="pin dark" id="tour" style="height:420vh">
+<section class="pin dark" id="tour" style="height:300vh">
   <div class="pin-in">
     <div class="gallery">
       <div class="gal-phone">
@@ -1224,23 +1371,23 @@
         <div class="panels">
           <div class="panel on" data-panel>
             <p class="gal-index">01 / 04</p>
-            <h3>A feed that ends</h3>
-            <p>The greeting is the reader's name in the reader's language. One Daily Spark, four filters, and a session with a bottom to it.</p>
+            <h3>A feed you can actually finish</h3>
+            <p>It greets you by name, in your language, and then it ends. You reach the bottom and you put the phone down. Nobody designed this to keep you here.</p>
           </div>
           <div class="panel" data-panel>
             <p class="gal-index">02 / 04</p>
-            <h3>One question, the same for everyone</h3>
-            <p>Answer to unlock the network's answers. It closes — the reason to come back tomorrow is not an infinite scroll.</p>
+            <h3>One question a day, the same for everyone</h3>
+            <p>Answer it and you unlock everyone else's. Strangers, in their own languages, on the one thing you were all asked today. Then it closes until tomorrow.</p>
           </div>
           <div class="panel" data-panel>
             <p class="gal-index">03 / 04</p>
-            <h3>Ask, or Do</h3>
-            <p>Ask and Echo only talks. Do and it acts across 34 tools, pausing for confirmation before anything that writes.</p>
+            <h3>The part you were going to skip</h3>
+            <p>Writing the caption, finding the message, setting the reminder. Say it once and it is handled &#8212; and you see every action before it happens.</p>
           </div>
           <div class="panel" data-panel>
             <p class="gal-index">04 / 04</p>
-            <h3>Twenty-three tools, in the app</h3>
-            <p>Tasks, habits, notes, focus timers and money — the reasons people open the app on a day they have nothing to post.</p>
+            <h3>Reasons to open it on a quiet day</h3>
+            <p>Tasks, habits, notes, focus timers, money. Twenty-three small tools, so the app still earns its place on days you have nothing to say.</p>
           </div>
         </div>
         <div class="dots" data-dots aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
@@ -1278,52 +1425,22 @@
         </div>
       </div>
       <div>
-        <h2 class="rv d1">One build. The interface follows the reader.</h2>
-        <p class="body rv d2">Greeting, filter tabs, navigation, prompts and layout direction all follow the reader. The same binary renders left-to-right in Hindi and right-to-left in Arabic — not a separate build, not a web view, not a translation layer bolted over an English shell.</p>
+        <h2 class="rv d1">Your language, all the way down.</h2>
+        <p class="body rv d2">Not just the posts &mdash; the whole app. The greeting, the
+        filter tabs, the buttons, the prompts, the direction the layout runs in.
+        Switch it and everything moves, including right-to-left for Arabic. You
+        are not using an English app that has learned to translate. You are using
+        an app that is in your language.</p>
         <div class="langs" id="langs">
           <div class="lang on"><b>English</b><span>Left to right</span></div>
           <div class="lang"><b>हिन्दी</b><span>Left to right · Devanagari</span></div>
           <div class="lang"><b>العربية</b><span>Right to left · mirrored layout</span></div>
         </div>
-        <div class="stats" style="margin-top:1.8rem">
+        <div class="stats" style="margin-top:1.8rem;grid-template-columns:repeat(2,1fr)">
           <div class="stat"><b data-count="26">0</b><span>languages</span></div>
-          <div class="stat"><b data-count="13">0</b><span>Indian</span></div>
-          <div class="stat"><b data-count="4">0</b><span>platforms</span></div>
-          <div class="stat"><b data-count="1">0</b><span>codebase</span></div>
+          <div class="stat"><b data-count="13">0</b><span>of them Indian</span></div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
-
-<section class="pin dark" id="different" style="height:265vh">
-  <div class="pin-in">
-    <div style="width:100%;max-width:1080px">
-      <h2 style="max-width:18ch">Three decisions competitors can't retrofit</h2>
-      <div class="panels" style="margin-top:2.4rem">
-        <div class="panel on" data-panel>
-          <div class="card accent">
-            <span class="panel-n" aria-hidden="true">01</span>
-            <div class="panel-body"><h3>Voice-first, not voice-added</h3>
-            <p>Speech, intent and reply in one call, mapped onto 18 real actions. Bolting this onto an existing app means rebuilding its command surface.</p></div>
-          </div>
-        </div>
-        <div class="panel" data-panel>
-          <div class="card accent">
-            <span class="panel-n" aria-hidden="true">02</span>
-            <div class="panel-body"><h3>The interface is localised</h3>
-            <p>Not just the content. 26 languages including RTL, from one codebase — a retrofit means re-authoring every screen.</p></div>
-          </div>
-        </div>
-        <div class="panel" data-panel>
-          <div class="card accent">
-            <span class="panel-n" aria-hidden="true">03</span>
-            <div class="panel-body"><h3>A reason to return that isn't the scroll</h3>
-            <p>One Daily Question, the same for everyone, that closes. You answer, you read the network, you're done. Retention without an infinite feed.</p></div>
-          </div>
-        </div>
-      </div>
-      <div class="dots" data-dots aria-hidden="true"><i class="on"></i><i></i><i></i></div>
     </div>
   </div>
 </section>
@@ -1335,49 +1452,19 @@
 </section>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <footer class="stage close dark" id="close">
   <div>
-    <h2 class="rv">Speak. Echo does the rest.</h2>
+    <h2 class="rv">Say the next one out loud.</h2>
+    <p class="lead rv d1" style="margin-inline:auto;text-align:center">There is a
+    thought you did not post this week because typing it was not worth it. That
+    one. Start there.</p>
     <div class="dl rv d2">
       <a class="dl-btn" href="https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>Download for Android</a>
-      <p class="dl-meta">Echo.apk · 181 MB · always the current build</p>
-      <p class="dl-note">Android only for now. Your phone will ask you to allow installs from this source — expected for a build distributed outside the Play Store.</p>
-      <p class="dl-url">https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk</p>
+      <p class="dl-meta">Echo.apk &middot; 181 MB &middot; free &middot; always the current build</p>
+      <p class="dl-note">Android for now, iOS next. Your phone will ask whether to
+      allow an install from outside the Play Store &mdash; say yes; that is simply
+      what a beta looks like before it is listed. The file comes straight from us,
+      not a mirror.</p>
     </div>
   </div>
 </footer>
@@ -1738,30 +1825,240 @@
     updateLaunchModel();
   }
 
-  /* ---- hero waveform ---- */
-  var cv = document.getElementById('wave');
-  if (cv && cv.getContext) {
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height, bars = 68, t0 = performance.now();
+})();
+</script>
 
-    function draw(now) {
-      var t = (now - t0) / 1000;
-      ctx.clearRect(0, 0, W, H);
-      var gap = W / bars;
-      for (var i = 0; i < bars; i++) {
-        // Two out-of-phase sines: an idling voice, not a level meter.
-        var env = Math.sin((i / bars) * Math.PI);
+
+<script>
+/* The hero microphone.
+ *
+ * This page claims speaking beats typing. Rather than assert it, the hero
+ * hands over the mic and lets the visitor settle the question in about four
+ * seconds. Three things had to be true for that to be honest:
+ *
+ *  1. It has to be REAL speech, not a canned transcript timed to look live.
+ *     Faking it would be the one lie this page cannot afford, since the whole
+ *     argument is that the mechanism works.
+ *  2. It cannot touch Echo's backend. The AI account is free-tier and a
+ *     landing page can see more traffic in an hour than the daily quota, so
+ *     the browser's own SpeechRecognition does the work: no key, no cost, no
+ *     outage that takes the pitch down with it.
+ *  3. It has to fail gracefully and say so. Firefox has no SpeechRecognition
+ *     at all and a denied mic permission is a choice, not an error — both get
+ *     a straight answer instead of a button that silently does nothing.
+ */
+(function () {
+  var mic = document.getElementById('mic');
+  if (!mic) return;
+
+  var btn      = document.getElementById('micBtn');
+  var label    = btn.querySelector('.mic-label');
+  var hint     = document.getElementById('micHint');
+  var textEl   = document.getElementById('micText');
+  var postEl   = document.getElementById('micPost');
+  var postBody = document.getElementById('micPostBody');
+  var fallback = document.getElementById('micFallback');
+  var canvas   = document.getElementById('wave');
+  var idleEl   = document.getElementById('micIdle');
+  var reduce   = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var lang = 'en-IN';
+  var rec = null, held = false, finalText = '', sawResult = false;
+
+  // A sentence to borrow, in the language of the pill you picked. The Hindi
+  // one is the same thought the typing beat below asks you to type, so the
+  // two halves of the argument are measuring the same thing.
+  var SUGGEST = {
+    'en-IN': 'try saying &mdash; &ldquo;my mind feels light today&rdquo;',
+    'hi-IN': '\u092c\u094b\u0932\u0915\u0930 \u0926\u0947\u0916\u093f\u090f &mdash; \u201c\u0906\u091c \u092e\u0928 \u0939\u0932\u094d\u0915\u093e \u0932\u0917 \u0930\u0939\u093e \u0939\u0948\u201d',
+    'pa-IN': '\u0a2c\u0a4b\u0a32 \u0a15\u0a47 \u0a26\u0a47\u0a16\u0a4b &mdash; \u201c\u0a05\u0a71\u0a1c \u0a2e\u0a28 \u0a39\u0a4c\u0a32\u0a3e \u0a32\u0a71\u0a17 \u0a30\u0a3f\u0a39\u0a3e \u0a39\u0a48\u201d',
+    'ta-IN': '\u0b9a\u0bcb\u0bb2\u0bcd\u0bb2\u0bbf\u0baa\u0bcd \u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb2\u0bbe\u0bae\u0bcd &mdash; \u201c\u0b87\u0ba9\u0bcd\u0bb1\u0bc1 \u0bae\u0ba9\u0bae\u0bcd \u0bb2\u0b95\u0bc1\u0bb5\u0bbe\u0b95 \u0b89\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1\u201d'
+  };
+
+  /* ---- language pills ---- */
+  mic.querySelectorAll('.mic-langs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      mic.querySelectorAll('.mic-langs button').forEach(function (o) { o.classList.remove('on'); });
+      b.classList.add('on');
+      lang = b.getAttribute('data-sr');
+      idleEl.innerHTML = SUGGEST[lang] || SUGGEST['en-IN'];
+      idleEl.setAttribute('lang', lang.split('-')[0]);
+      // The example sentence and the typed output are in the chosen language,
+      // so a half-finished attempt in the previous one is just confusing.
+      resetOutput();
+    });
+  });
+
+  function resetOutput() {
+    finalText = ''; sawResult = false;
+    mic.classList.remove('said');
+    textEl.textContent = '';
+    textEl.classList.remove('interim');
+    postEl.hidden = true;
+  }
+
+  /* ---- waveform: real levels while listening, a slow idle otherwise ---- */
+  var ctx2d = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+  var BARS = 68, t0 = performance.now(), analyser = null, freq = null, raf = 0;
+
+  function draw(now) {
+    if (!ctx2d) return;
+    var W = canvas.width, H = canvas.height, gap = W / BARS;
+    ctx2d.clearRect(0, 0, W, H);
+
+    if (analyser) analyser.getByteFrequencyData(freq);
+    var t = (now - t0) / 1000;
+
+    for (var i = 0; i < BARS; i++) {
+      var env = Math.sin((i / BARS) * Math.PI), h;
+      if (analyser) {
+        // Low bins carry almost all the energy in speech, so sampling the
+        // whole spectrum linearly gives a bar chart that barely moves.
+        var v = freq[Math.floor((i / BARS) * (freq.length * 0.55))] / 255;
+        h = Math.max(2, env * Math.pow(v, 0.85) * H);
+      } else {
         var a = Math.sin(t * 1.7 + i * 0.38) * 0.5 + 0.5;
         var b = Math.sin(t * 0.9 + i * 0.13) * 0.5 + 0.5;
-        var h = Math.max(2, env * (a * 0.62 + b * 0.38) * H * 0.92);
-        ctx.fillStyle = i % 7 === 0 ? '#A3C165' : '#3C4A28';
-        var x = i * gap;
-        ctx.fillRect(x, (H - h) / 2, Math.max(1.5, gap * 0.34), h);
+        h = Math.max(2, env * (a * 0.62 + b * 0.38) * H * 0.42);
       }
-      if (!reduce) requestAnimationFrame(draw);
+      ctx2d.fillStyle = analyser ? '#A3C165' : (i % 7 === 0 ? '#A3C165' : '#3C4A28');
+      ctx2d.fillRect(i * gap, (H - h) / 2, Math.max(1.5, gap * 0.34), h);
     }
-    if (reduce) draw(t0); else requestAnimationFrame(draw);
+    if (!reduce || analyser) raf = requestAnimationFrame(draw);
   }
+  if (ctx2d) { if (reduce) draw(performance.now()); else raf = requestAnimationFrame(draw); }
+
+  /* ---- microphone level, purely for the waveform ---- */
+  var audioCtx = null, stream = null;
+  function openLevels() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (st) {
+      // The press may already be over by the time permission resolves.
+      if (!held) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
+      stream = st;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var src = audioCtx.createMediaStreamSource(st);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.72;
+      freq = new Uint8Array(analyser.frequencyBinCount);
+      src.connect(analyser);
+      if (!raf) raf = requestAnimationFrame(draw);
+    }).catch(function () { /* the ring and the transcript still carry it */ });
+  }
+  function closeLevels() {
+    analyser = null; freq = null;
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  }
+
+  /* ---- press and hold ---- */
+  function start() {
+    if (held) return;
+    if (!SR) { unsupported(); return; }
+    held = true;
+    token++;
+    resetOutput();
+    mic.setAttribute('data-state', 'listening');
+    label.textContent = 'Listening\u2026';
+    hint.textContent = 'let go when you are done';
+    fallback.hidden = true;
+    openLevels();
+
+    rec = new SR();
+    rec.lang = lang;
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.maxAlternatives = 1;
+
+    rec.onresult = function (e) {
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var chunk = e.results[i][0].transcript;
+        if (e.results[i].isFinal) { finalText += chunk; sawResult = true; }
+        else interim += chunk;
+      }
+      textEl.textContent = (finalText + interim).trim();
+      textEl.classList.toggle('interim', !finalText && !!interim);
+    };
+    rec.onerror = function (e) {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') denied();
+      else if (e.error === 'no-speech') nothingHeard();
+      finish();
+    };
+    var mine = token;
+    rec.onend = function () { if (held) return; settle(mine); };
+
+    try { rec.start(); } catch (err) { /* a double-start is harmless */ }
+  }
+
+  function stop() {
+    if (!held) return;
+    held = false;
+    mic.setAttribute('data-state', 'idle');
+    label.textContent = 'Hold to speak';
+    hint.textContent = 'Hold, say one sentence, let go.';
+    closeLevels();
+    if (rec) { try { rec.stop(); } catch (err) {} }
+    // onend usually settles this, but a recogniser that never started needs
+    // a floor so the UI cannot hang in "listening".
+    var mine = token;
+    setTimeout(function () { settle(mine); }, 900);
+  }
+
+  var token = 0;
+  function settle(forToken) {
+    if (forToken !== undefined && forToken !== token) return;
+    finish();
+  }
+
+  function finish() {
+    closeLevels();
+    var said = (finalText || textEl.textContent || '').trim();
+    if (!said) { if (!fallback.hidden) return; nothingHeard(); return; }
+    textEl.classList.remove('interim');
+    textEl.textContent = said;
+    mic.classList.add('said');
+    postBody.textContent = said;
+    postBody.setAttribute('lang', lang.split('-')[0]);
+    postEl.hidden = false;
+  }
+
+  function nothingHeard() {
+    fallback.hidden = false;
+    fallback.textContent = 'Nothing came through. Hold the button down while you speak \u2014 let go when you have finished the sentence.';
+  }
+  function denied() {
+    fallback.hidden = false;
+    fallback.textContent = 'Your browser blocked the microphone. That is the right instinct on a page you have just met \u2014 allow it in the address bar if you want to try, or take our word for it and read on.';
+  }
+  function unsupported() {
+    fallback.hidden = false;
+    fallback.innerHTML = 'This browser has no speech engine of its own \u2014 Firefox is the usual reason. Chrome, Edge and Safari will run the demo. The app itself does not depend on the browser: it uses the phone.';
+  }
+
+  if (!SR) {
+    hint.textContent = 'demo needs Chrome, Edge or Safari';
+  }
+
+  btn.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    // Keeps pointerup on the button even if the thumb drifts off it mid-sentence.
+    if (btn.setPointerCapture) { try { btn.setPointerCapture(e.pointerId); } catch (err) {} }
+    start();
+  });
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointercancel', stop);
+  // Space and Enter are how this button is reachable without a pointer, and
+  // key repeat would otherwise restart the recogniser thirty times a second.
+  btn.addEventListener('keydown', function (e) {
+    if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); start(); }
+  });
+  btn.addEventListener('keyup', function (e) {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stop(); }
+  });
+  window.addEventListener('blur', function () { if (held) stop(); });
 })();
 </script>
 
@@ -1977,17 +2274,6 @@
 })();
 </script>
 
-<script>
-/* Retire the prompt once it has been obeyed. A hint that keeps pulsing after
- * you have done the thing is nagging, not guidance. */
-(function () {
-  const root = document.documentElement;
-  const done = () => {
-    root.classList.add('has-held');
-    removeEventListener('pointerdown', done);
-  };
-  addEventListener('pointerdown', done, { passive: true });
-})();
-</script>
+
 </body>
 </html>
