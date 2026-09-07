@@ -44,9 +44,17 @@ and this design does not add one.
 
 ## 3. Global constraints
 
-- **Single self-contained file** at `public/download/index.html`. No bundler, no
-  new npm dependencies, no change to the deploy pipeline. The repository is in
-  feature freeze.
+- **No bundler, no new npm dependencies, no change to the deploy pipeline.** The
+  repository is in feature freeze. The page is `public/download/index.html` plus
+  a small number of ESM modules served beside it from the same directory —
+  browsers load them directly, and `public/` is copied verbatim into `dist/`, so
+  there is still nothing to build.
+
+  *Revised from "a single self-contained file" during planning.* The tier
+  resolver is pure logic worth unit-testing, and logic inside a `<script>` tag
+  cannot be imported by vitest; testing a mirrored copy only lets the two drift.
+  The constraint that mattered was avoiding a build step, and separate ESM files
+  do not introduce one.
 - **Total page weight ≤ 900KB gzipped**, including WebGL. Enforced by a script
   that fails CI.
 - **Libraries from cdnjs at pinned exact versions**, loaded as ESM via an import
