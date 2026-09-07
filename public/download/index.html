@@ -1057,6 +1057,38 @@
   font-size: var(--step--2); letter-spacing: .12em; text-transform: uppercase;
   color: var(--ink-faint);
 }
+
+.try-round {
+  color: var(--ink-faint); letter-spacing: .14em; margin-right: .55rem;
+}
+.try-gloss {
+  font-size: var(--step--1); color: var(--ink-faint); margin: -.5rem 0 1rem;
+  font-style: italic;
+}
+.try-bridge {
+  font-size: var(--step-0); color: var(--ink); margin: 0 0 1rem;
+  padding: .85rem 1rem; border-left: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent-wash) 55%, transparent);
+}
+.try-bridge strong { color: var(--accent); }
+.try-delta {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--step--1); color: var(--flag); display: block; margin-top: .4rem;
+}
+
+/* Rows replace the auto-fit grid. A keyboard you recognise is fast; a grid of
+   the same letters is not, and the difference between those two is exactly
+   what round one is supposed to measure. */
+.try-keys { display: flex; flex-direction: column; gap: 5px; }
+.try-row { display: flex; gap: 5px; }
+.try-row button { flex: 1 1 0; min-width: 0; }
+.try-keys[data-layout="qwerty"] .try-row button { max-width: 3.4rem; }
+.try-keys[data-layout="grid"] .try-row { justify-content: flex-start; }
+.try-keys[data-layout="grid"] .try-row button { flex: 0 0 auto; min-width: 2.4rem; }
+@media (max-width: 560px) {
+  .try-keys[data-layout="qwerty"] .try-row { padding-inline-start: 0 !important; }
+  .try-keys[data-layout="grid"] .try-row button { min-width: 2rem; }
+}
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -1094,14 +1126,16 @@
 <section class="stage dark" id="problem">
   <div class="wrap">
 <div class="try rv">
-      <p class="try-ask">Post this thought.</p>
-      <p class="try-target" lang="hi" dir="ltr">आज मन बहुत हल्का है</p>
+      <p class="try-ask"><span class="try-round">Round 1 of 2</span> Post this thought.</p>
+      <p class="try-target" id="tryTarget" lang="en" dir="ltr">my mind feels light today</p>
+      <p class="try-gloss" id="tryGloss" hidden></p>
       <div class="try-out" aria-live="polite"><span class="try-typed"></span><span class="try-caret"></span></div>
       <div class="try-meta">
         <span class="try-timer">0.0s</span>
-        <span class="try-hint">tap the characters, in order</span>
+        <span class="try-hint">tap the letters, in order</span>
       </div>
-      <div class="try-keys" role="group" aria-label="Devanagari keyboard"></div>
+      <div class="try-keys" role="group" aria-label="Keyboard"></div>
+      <p class="try-bridge" id="tryBridge" hidden></p>
       <div class="try-done" hidden>
         <p class="try-verdict"></p>
         <p class="try-alt">Or hold one button and say it. <strong>1.4 seconds.</strong></p>
@@ -1736,33 +1770,60 @@
 
 
 <script>
-/* The typing beat.
+/* The typing beat, in two rounds.
  *
- * Fifteen taps across a sixty-key board. That number is chosen, not arbitrary:
- * it is long enough that the visitor feels the hunt and short enough that
- * finishing is plausible. The skip is always visible because the argument is
- * made in the first four seconds and everything after that is just cost.
+ * One round in Devanagari only proved the keyboard was slow, but an English
+ * reader had no baseline to weigh it against — and no idea what the sentence
+ * even said. Two rounds fix both. The same thought is typed twice, and the
+ * DIFFERENCE is the argument. Nobody has to be told that thirty seconds is a
+ * long time when they just spent five on the identical sentence.
  *
- * The keyboard is not a real InScript layout — a real one is worse, with the
- * glyphs spread over multiple shift layers. This single flat board is the
- * charitable version of the problem, and it is still slow.
+ * Round one is QWERTY-ordered on purpose. It is fast because the layout is
+ * one you have known for years, not because English is inherently easier —
+ * which is precisely the point about InScript, a layout most Hindi speakers
+ * were never taught and which spreads these glyphs over several shift layers.
+ * The single flat board in round two is the charitable version of the real
+ * problem and is still slow.
  */
 (function () {
   const root = document.querySelector('.try');
   if (!root) return;
 
-  const TARGET = 'आज मन बहुत हल्का है';
-  const seq = [...TARGET];
-
-  const KEYS = [
-    'अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ',
-    'क','ख','ग','घ','ङ','च','छ','ज','झ','ञ',
-    'ट','ठ','ड','ढ','ण','त','थ','द','ध','न',
-    'प','फ','ब','भ','म','य','र','ल','व','श',
-    'ष','स','ह','क्ष','त्र','ज्ञ','ड़','ढ़','ऋ','ॠ',
-    'ा','ि','ी','ु','ू','े','ै','ो','ौ','ं','ः','्',
+  // Rows, with the real stagger. QWERTY ORDER alone was not enough: rendered
+  // as a uniform auto-fit grid, nobody recognises it, so round one was not
+  // actually fast and the comparison collapsed. The shape is the point —
+  // muscle memory is what you are measuring against.
+  const QWERTY = [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['z','x','c','v','b','n','m'],
+  ];
+  // Deliberately NOT laid out as a keyboard. There is no familiar shape here
+  // for most people, and pretending otherwise would be the lie the whole beat
+  // exists to disprove.
+  const DEVANAGARI = [
+    ['अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ'],
+    ['क','ख','ग','घ','ङ','च','छ','ज','झ','ञ'],
+    ['ट','ठ','ड','ढ','ण','त','थ','द','ध','न'],
+    ['प','फ','ब','भ','म','य','र','ल','व','श'],
+    ['ष','स','ह','क्ष','त्र','ज्ञ','ड़','ढ़','ऋ','ॠ'],
+    ['ा','ि','ी','ु','ू','े','ै','ो','ौ','ं'],
+    ['ः','्'],
   ];
 
+  const ROUNDS = [
+    { lang: 'en', dir: 'ltr', target: 'my mind feels light today',
+      keys: QWERTY, layout: 'qwerty', hint: 'tap the letters, in order', gloss: null },
+    { lang: 'hi', dir: 'ltr', target: 'आज मन बहुत हल्का है',
+      keys: DEVANAGARI, layout: 'grid', hint: 'tap the characters, in order',
+      gloss: '“my mind feels light today” — the same sentence' },
+  ];
+
+  const askEl    = root.querySelector('.try-ask');
+  const roundEl  = root.querySelector('.try-round');
+  const targetEl = root.querySelector('#tryTarget');
+  const glossEl  = root.querySelector('#tryGloss');
+  const bridgeEl = root.querySelector('#tryBridge');
   const keysEl   = root.querySelector('.try-keys');
   const typedEl  = root.querySelector('.try-typed');
   const timerEl  = root.querySelector('.try-timer');
@@ -1771,68 +1832,111 @@
   const skipEl   = root.querySelector('.try-skip');
   const hintEl   = root.querySelector('.try-hint');
 
-  let i = 0, t0 = 0, tick = null, finished = false;
+  let r = 0, seq = [], i = 0, t0 = 0, tick = null, finished = false;
+  const times = [];
 
-  for (const k of KEYS) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = k;
-    b.addEventListener('click', () => press(k, b));
-    keysEl.appendChild(b);
+  function fmt(n) { return n.toFixed(1) + 's'; }
+
+  function loadRound(n) {
+    const round = ROUNDS[n];
+    seq = [...round.target]; i = 0; t0 = 0;
+    clearInterval(tick); tick = null;
+    typedEl.textContent = '';
+    timerEl.textContent = '0.0s';
+    hintEl.textContent = round.hint;
+    roundEl.textContent = 'Round ' + (n + 1) + ' of ' + ROUNDS.length;
+    targetEl.textContent = round.target;
+    targetEl.lang = round.lang; targetEl.dir = round.dir;
+    if (round.gloss) { glossEl.textContent = round.gloss; glossEl.hidden = false; }
+    else glossEl.hidden = true;
+
+    keysEl.innerHTML = '';
+    keysEl.dataset.layout = round.layout;
+    round.keys.forEach((rowKeys, rowIndex) => {
+      const row = document.createElement('div');
+      row.className = 'try-row';
+      // The half-key indents that make a QWERTY board recognisable at a glance.
+      if (round.layout === 'qwerty') row.style.paddingInlineStart = (rowIndex * 1.35) + 'rem';
+      for (const k of rowKeys) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = k;
+        b.addEventListener('click', () => press(k, b));
+        row.appendChild(b);
+      }
+      keysEl.appendChild(row);
+    });
+    keysEl.style.opacity = ''; keysEl.style.pointerEvents = '';
+    keysEl.removeAttribute('aria-hidden');
   }
 
   function startTimer() {
     if (t0) return;
     t0 = performance.now();
-    tick = setInterval(() => {
-      timerEl.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's';
-    }, 100);
+    tick = setInterval(() => { timerEl.textContent = fmt((performance.now() - t0) / 1000); }, 100);
   }
 
   function press(k, btn) {
     if (finished) return;
     startTimer();
-    // Spaces are free — the visitor is not here to hunt for a space bar.
     while (seq[i] === ' ') { typedEl.textContent += ' '; i++; }
     if (seq[i] === k) {
-      typedEl.textContent += k;
-      i++;
+      typedEl.textContent += k; i++;
       while (seq[i] === ' ') { typedEl.textContent += ' '; i++; }
-      if (i >= seq.length) finish(false);
+      if (i >= seq.length) endRound(false);
     } else {
-      btn.classList.remove('wrong');
-      void btn.offsetWidth;           // restart the animation
-      btn.classList.add('wrong');
+      btn.classList.remove('wrong'); void btn.offsetWidth; btn.classList.add('wrong');
       hintEl.textContent = 'not that one';
     }
   }
 
-  function finish(skipped) {
-    if (finished) return;
-    finished = true;
-    clearInterval(tick);
-    const secs = t0 ? (performance.now() - t0) / 1000 : 0;
-    // A floor, because the verdict has to survive being wrong. Nobody hunting
-    // fifteen glyphs across sixty keys finishes in under three seconds, so a
-    // number that low means something odd happened — and "that took 0.0
-    // seconds" would argue the opposite of the point the beat exists to make.
-    verdictEl.textContent = skipped
-      ? 'You stopped. Most people stop too — that is the point.'
-      : secs < 3
-        ? 'Fast. Now imagine it on a phone, one-thumbed, in a moving bus.'
-        : 'That took ' + secs.toFixed(1) + ' seconds. For one sentence.';
-    doneEl.hidden = false;
+  function lockKeys() {
+    clearInterval(tick); tick = null;
     keysEl.setAttribute('aria-hidden', 'true');
     keysEl.style.opacity = '.28';
     keysEl.style.pointerEvents = 'none';
-    skipEl.hidden = true;
-    hintEl.textContent = '';
   }
 
-  skipEl.addEventListener('click', () => finish(true));
+  function endRound(skipped) {
+    const secs = t0 ? (performance.now() - t0) / 1000 : 0;
+    times[r] = skipped ? null : secs;
+
+    if (r === 0) {
+      lockKeys();
+      // The bridge is the hinge of the whole beat: it names what just happened
+      // and asks for the same thing again, in the language they think in.
+      // Same floor as the final verdict, which I forgot to apply here first
+      // time round. This line is the hinge of the whole beat, and
+      // "0.0s. On a layout you have known for years" reads as nonsense.
+      bridgeEl.innerHTML = (skipped || secs < 1.5)
+        ? 'Easy enough. <strong>Now the same thought, in the language you think in.</strong>'
+        : '<strong>' + fmt(secs) + '.</strong> On a layout you have known for years. '
+          + 'Now the same thought, in the language you think in.';
+      bridgeEl.hidden = false;
+      setTimeout(() => { bridgeEl.hidden = true; r = 1; loadRound(1); }, skipped ? 1400 : 2600);
+      return;
+    }
+
+    finished = true;
+    lockKeys();
+    skipEl.hidden = true;
+    hintEl.textContent = '';
+    const en = times[0], hi = times[1];
+    let line;
+    if (hi === null) line = 'You stopped. Most people stop too — that is the point.';
+    else if (hi < 3)  line = 'Fast. Now imagine it one-thumbed, on a phone, in a moving bus.';
+    else              line = fmt(hi) + '. For the same sentence.';
+    verdictEl.innerHTML = line
+      + (en !== null && hi !== null
+          ? '<span class="try-delta">' + fmt(en) + ' in English · ' + fmt(hi) + ' in Hindi · '
+            + (hi / en).toFixed(1) + '× slower</span>'
+          : '');
+    doneEl.hidden = false;
+  }
+
+  skipEl.addEventListener('click', () => endRound(true));
+  loadRound(0);
 })();
 </script>
-
 <script>
 /* Language switch for the build section.
  *
