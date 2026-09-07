@@ -25,7 +25,7 @@ export function createScene(canvas, tier) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-  camera.position.set(0, 0, 7.2);
+  camera.position.set(0, 0, 5.4);
 
   const css = getComputedStyle(document.documentElement);
   const read = (n, fb) => {
@@ -46,15 +46,30 @@ export function createScene(canvas, tier) {
   const queue     = new Float32Array(COUNT * 3);
   const seed      = new Float32Array(COUNT);
 
-  // Layout A — a radial waveform. Radius modulated by summed sines so it reads
-  // as an audio meter rather than a plain circle.
+  // Layout A — concentric ripples.
+  //
+  // This replaced a single wobbling perimeter with an amplitude of +-0.62 on a
+  // 2.15 radius. That read as a lumpy closed blob, because an irregular curve
+  // has no symmetry and nothing tells the eye it was chosen rather than
+  // stumbled into. Perfect circles are unmistakably deliberate, and rings
+  // spreading outward are what the product is named after.
+  //
+  // The displacement here is 0.035, roughly a twentieth of what it was: enough
+  // that the rings breathe, far too little to make them look drawn by hand.
+  const RINGS = 7;
+  const perRing = Math.floor(COUNT / RINGS);
+  const ringIndex = new Float32Array(COUNT);
   for (let i = 0; i < COUNT; i++) {
-    const a = (i / COUNT) * Math.PI * 2;
-    const amp = 0.55 * Math.sin(a * 7) + 0.30 * Math.sin(a * 13 + 1.1) + 0.18 * Math.sin(a * 23 + 2.3);
-    const r = 2.15 + amp * 0.62;
-    ring[i * 3]     = Math.cos(a) * r;
-    ring[i * 3 + 1] = Math.sin(a) * r * 0.62;
-    ring[i * 3 + 2] = Math.sin(a * 5) * 0.20;
+    const r_i = Math.min(RINGS - 1, Math.floor(i / perRing));
+    const k = i - r_i * perRing;
+    // Offset each ring's start angle so the dots do not line up into spokes,
+    // which is the other way a pattern like this looks cheap.
+    const a = (k / perRing) * Math.PI * 2 + r_i * 0.37;
+    const radius = 0.9 + r_i * 0.42;
+    ringIndex[i] = r_i;
+    ring[i * 3]     = Math.cos(a) * radius;
+    ring[i * 3 + 1] = Math.sin(a) * radius * 0.82;
+    ring[i * 3 + 2] = -r_i * 0.16;
     seed[i] = Math.random();
   }
 
@@ -92,7 +107,7 @@ export function createScene(canvas, tier) {
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
   const points = new THREE.Points(geometry, new THREE.PointsMaterial({
-    size: tier === 'full' ? 0.05 : 0.075,
+    size: tier === 'full' ? 0.028 : 0.042,
     vertexColors: true,
     transparent: true,
     opacity: 0.95,
@@ -137,19 +152,30 @@ export function createScene(canvas, tier) {
       const lift = toLand * (0.55 + seed[i] * 0.45);
       x += (0 - x) * lift; y += (0.15 - y) * lift; z += (0 - z) * lift;
 
-      // Idle life while at rest, so a paused scroll is not a still image.
+      // At rest the rings travel outward and fade — an echo leaving, on a
+      // loop. Motion carries the idea; the geometry stays perfectly circular.
       const calm = (1 - toCard) * (1 - toLand);
-      positions[j] = x;
-      positions[j + 1] = y + calm * 0.05 * Math.sin(now * 0.0022 + seed[i] * 31.4);
-      positions[j + 2] = z;
+      if (calm > 0.001) {
+        const phase = (now * 0.00016 + ringIndex[i] / RINGS) % 1;
+        const spread = 1 + phase * 1.5;
+        x *= 1 + (spread - 1) * calm;
+        y *= 1 + (spread - 1) * calm;
+        // Breathe, not wobble: 0.035 against a radius near 1, so the ring
+        // stays a ring.
+        const b = 0.035 * Math.sin(now * 0.0019 + seed[i] * 6.28);
+        x += x * b; y += y * b;
+      }
+      positions[j] = x; positions[j + 1] = y; positions[j + 2] = z;
 
       // Colour carries the meaning: accent while it is a voice, gold as it
       // becomes a post, drained to faint while the network is gone, accent
       // again once it sends.
+      const fade = 1 - (ringIndex[i] / RINGS) * 0.55;
       tmp.copy(accent)
         .lerp(flag, toCard * 0.55 * (0.6 + breathe * 0.4))
         .lerp(faint, toQueue * (1 - toLand))
-        .lerp(accent, toLand * 0.8);
+        .lerp(accent, toLand * 0.8)
+        .multiplyScalar(0.45 + fade * 0.55);
       colors[j] = tmp.r; colors[j + 1] = tmp.g; colors[j + 2] = tmp.b;
     }
     geometry.attributes.position.needsUpdate = true;
@@ -172,9 +198,9 @@ export function createScene(canvas, tier) {
     points.material.opacity = 0.95 * presence;
     points.visible = presence > 0.02;
 
-    points.rotation.y = p * 1.35 + Math.sin(now * 0.0004) * 0.06;
+    points.rotation.y = p * 0.9 + Math.sin(now * 0.0004) * 0.04;
     points.rotation.x = -0.28 * Math.sin(p * Math.PI);
-    camera.position.z = 7.2 - Math.sin(p * Math.PI) * 1.6;
+    camera.position.z = 5.4 - Math.sin(p * Math.PI) * 1.1;
   }
 
   function draw() {
