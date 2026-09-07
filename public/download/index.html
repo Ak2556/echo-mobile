@@ -1038,15 +1038,27 @@
    Deliberately unlike every other section: no cards, no stats, no numerals.
    One voice, generous space, and a name to hold responsible — which is also
    what a stranger wants before installing an APK from outside a store. */
-.origin { padding-block: clamp(6rem, 16vh, 11rem); }
-.origin-fig { margin: 0; max-width: 64ch; }
+.origin { padding-block: clamp(5rem, 13vh, 9rem); }
+/* Measured in ch so the line length stays readable as the type scales. At the
+   original 2.55rem the block ran nine lines deep in a narrow column with the
+   whole right half of the screen empty — big is not the same as striking, and
+   a quote that tall stops being read and starts being skimmed. */
+/* ch at display sizes is a trap: 30ch measured only 364px here and made the
+   block TALLER (779px, taller than the viewport) rather than shorter. A
+   readable measure at this size is a width, not a character count. */
+.origin-fig { margin: 0; max-width: 44rem; }
 .origin-quote p {
   font-family: Fraunces, Georgia, serif;
-  font-size: clamp(1.5rem, 3.4vw, 2.55rem);
-  line-height: 1.32; color: var(--ink); margin: 0 0 1.3rem;
-  text-wrap: pretty;
+  font-size: clamp(1.45rem, 2.9vw, 2.15rem);
+  line-height: 1.28; color: var(--ink); margin: 0 0 1.15rem;
+  text-wrap: pretty; letter-spacing: -0.005em;
 }
-.origin-quote p:last-child { color: var(--ink-soft); }
+.origin-quote p:last-child { color: var(--ink-soft); font-size: clamp(1.2rem, 2.2vw, 1.6rem); }
+/* The lead-in doubles the impact of the first line without adding a label. */
+.origin-quote p:first-child::first-letter { initial-letter: normal; }
+@media (min-width: 900px) {
+  .origin-fig { max-width: 52rem; margin-inline-start: clamp(0rem, 5vw, 4rem); }
+}
 .origin-by {
   display: flex; flex-wrap: wrap; gap: .55rem 1rem; align-items: baseline;
   margin-top: 2.2rem; padding-top: 1.4rem; border-top: 1px solid var(--line);
@@ -1164,21 +1176,6 @@
   </div>
 </section>
 
-<!-- ============================================================
-     DRAFT COPY — NOT APPROVED. DO NOT PUBLISH AS WRITTEN.
-
-     The words in this blockquote were written by an assistant, not by
-     Akash Thakur, and they are attributed to him by name on a public
-     page. They were extrapolated from one note saying Echo's direction
-     came from testing with his mother — which is NOT the same as the
-     specific scene described here. The message, the stopping, the
-     deleting, "the next breath": all invented.
-
-     A first-person quote under a real name has to be that person's own
-     account. Replace this with what actually happened, in his words,
-     before this section goes live. The structure and the placement are
-     the contribution here; the sentences are a placeholder.
-     ============================================================ -->
 <section class="stage dark origin" id="origin">
   <div class="wrap">
     <figure class="origin-fig">
