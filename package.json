@@ -32,7 +32,8 @@
     "legal:translate": "node scripts/generate-legal-translations.mjs",
     "legal:sbom": "node scripts/generate-sbom.mjs",
     "web:prepare": "node scripts/prepare-web-assets.mjs",
-    "web:build": "npm run web:prepare && expo export -p web"
+    "web:build": "npm run web:prepare && expo export -p web",
+    "check:page": "node scripts/check-page-budget.mjs"
   },
   "dependencies": {
     "@babel/plugin-proposal-decorators": "^7.29.7",

@@ -24,3 +24,6 @@ jobs:
       - run: npm run typecheck
 
       - run: npm test
+
+      - name: Download page byte budget
+        run: npm run check:page
