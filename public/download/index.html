@@ -645,6 +645,64 @@
     .rv { opacity: 1; transform: none; transition: none; }
     .spine i { transition: none; }
   }
+
+/* ── Colophon ───────────────────────────────────────────────────────────
+   The page had no footer at all — the <footer> element was the closing
+   download CTA. So the privacy policy, the terms and the grievance officer
+   were reachable only by typing a URL, which is a problem twice over: India's
+   IT Rules 2021 require an intermediary to PUBLISH the officer's name and
+   contact, and an APK distributed outside a store is exactly the situation
+   where a careful person looks for who is behind it and leaves if nobody is.
+   Quiet by design — this is the part you read when you have a reason to. */
+.colophon {
+  border-top: 1px solid var(--line);
+  /* Horizontal inset matches .stage exactly — a footer that reaches the
+     viewport edge while every section above it is gutter-aligned reads as a
+     different page stapled on. Vertical is tighter: this is the quiet end of
+     the document, not another full stage. */
+  padding: clamp(3.5rem, 8vh, 5.5rem) clamp(1.25rem, 5vw, 3rem) clamp(2rem, 5vh, 3rem);
+}
+.colo-grid, .colo-base { max-width: 1180px; margin-inline: auto; width: 100%; }
+.colo-grid {
+  display: grid; gap: 2.75rem 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  align-items: start;
+}
+.colo-brand .colo-mark {
+  font-family: Fraunces, Georgia, serif; font-size: var(--step-1);
+  color: var(--ink); margin: 0 0 .55rem;
+}
+.colo-line { color: var(--ink-soft); font-size: var(--step--1); margin: 0 0 1.1rem; }
+.colo-addr {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--step--2); line-height: 1.75; color: var(--ink-faint); margin: 0;
+}
+.colo-col { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; }
+.colo-col a, .colo-static {
+  color: var(--ink-soft); font-size: var(--step--1);
+  text-decoration: none; border-bottom: 1px solid transparent;
+  transition: color .2s var(--ease), border-color .2s var(--ease);
+}
+.colo-col a:hover, .colo-col a:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
+/* Focus must stay visible for keyboard users — the hover colour alone is not a focus indicator. */
+.colo-col a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.colo-static { color: var(--ink); }
+.colo-note {
+  font-size: var(--step--2); line-height: 1.65; color: var(--ink-faint);
+  margin: .35rem 0 0; max-width: 34ch;
+}
+.colo-base {
+  display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between;
+  align-items: baseline; margin-top: 3.5rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--step--2); color: var(--ink-faint);
+}
+.colo-base p { margin: 0; }
+.colo-age {
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: .2rem .6rem; letter-spacing: .1em;
+}
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -867,6 +925,51 @@
     </div>
   </div>
 </footer>
+
+<div class="stage colophon dark">
+  <div class="colo-grid">
+    <div class="colo-brand">
+      <p class="colo-mark">Echo</p>
+      <p class="colo-line">Speak. Echo does the rest.</p>
+      <p class="colo-addr">
+        Akash Thakur · Sole proprietor<br>
+        Shankar Nagar, Hoshiarpur<br>
+        Punjab 146001, India
+      </p>
+    </div>
+
+    <nav class="colo-col" aria-label="Legal">
+      <p class="eyebrow">Legal</p>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+      <a href="/legal/eu-rep">EU availability</a>
+    </nav>
+
+    <div class="colo-col">
+      <p class="eyebrow">Contact</p>
+      <a href="mailto:support@downloadecho.com">support@downloadecho.com</a>
+      <a href="mailto:privacy@downloadecho.com">privacy@downloadecho.com</a>
+      <a href="mailto:dsa@downloadecho.com">dsa@downloadecho.com</a>
+    </div>
+
+    <div class="colo-col">
+      <p class="eyebrow">Grievance Officer</p>
+      <p class="colo-static">Akash Thakur</p>
+      <a href="mailto:grievance@downloadecho.com">grievance@downloadecho.com</a>
+      <p class="colo-note">
+        Published under the Information Technology (Intermediary Guidelines and
+        Digital Media Ethics Code) Rules, 2021. Complaints are acknowledged
+        within 24 hours and resolved within 15 days.
+      </p>
+    </div>
+  </div>
+
+  <div class="colo-base">
+    <p>© 2026 Akash Thakur · Echo is an independent product</p>
+    <p class="colo-age">16+</p>
+  </div>
+</div>
+
 
 <script>
 (function () {

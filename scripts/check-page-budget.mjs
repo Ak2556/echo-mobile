@@ -34,6 +34,12 @@ export async function measurePage(htmlPath) {
   const missing = [];
   for (const [, ref] of html.toString('utf8').matchAll(REF)) {
     if (/^(https?:)?\/\//.test(ref) || ref.startsWith('data:') || ref.startsWith('#') || ref.startsWith('mailto:')) continue;
+    // A root-absolute path is a SITE route, not a page asset. This page lives
+    // at public/download/index.html but deploys to /download/, so resolving
+    // "/privacy" against the page's directory walks up out of the repo and
+    // reports a file that was never supposed to be there. Those routes are
+    // real and checked by the healthcheck; they are not this page's bytes.
+    if (ref.startsWith('/')) continue;
     const clean = ref.split('?')[0].split('#')[0];
     if (!clean) continue;
     const abs = resolve(root, clean);

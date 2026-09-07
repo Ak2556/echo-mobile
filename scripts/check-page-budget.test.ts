@@ -71,3 +71,20 @@ describe('reference coverage', () => {
     expect(r.missing).toEqual(['gone.webp']);
   });
 });
+
+describe('root-absolute references', () => {
+  it('treats /privacy as a site route, not a missing file', async () => {
+    const r = await measurePage(fixture('<html><a href="/privacy">Privacy</a></html>'));
+    expect(r.missing).toEqual([]);
+    expect(r.breakdown).toHaveLength(1);
+  });
+
+  it('still counts genuinely relative assets alongside routes', async () => {
+    const r = await measurePage(fixture(
+      '<html><a href="/terms">T</a><img src="./media/a.webp"></html>',
+      { 'media/a.webp': 'z'.repeat(30_000) },
+    ));
+    expect(r.missing).toEqual([]);
+    expect(r.breakdown.map(b => b.file).sort()).toEqual(['index.html', 'media/a.webp']);
+  });
+});
