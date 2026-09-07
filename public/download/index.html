@@ -48,10 +48,9 @@
     const api = createScene(canvas, tier);
     addEventListener('resize', () => api.resize(), { passive: true });
 
-    const hero = document.getElementById('top');
     const drive = () => {
-      const h = hero.offsetHeight || 1;
-      api.setProgress(Math.min(1, Math.max(0, window.scrollY / h)));
+      const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+      api.setProgress(Math.min(1, Math.max(0, window.scrollY / max)));
     };
     // A passive scroll listener drives the scene immediately; GSAP takes over
     // once it arrives. The scene is never frozen waiting on a CDN, and if the
@@ -63,8 +62,9 @@
       if (!window.gsap || !window.ScrollTrigger) return false;
       window.gsap.registerPlugin(window.ScrollTrigger);
       window.ScrollTrigger.create({
-        trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.6,
+        trigger: document.body, start: 'top top', end: 'bottom bottom', scrub: 0.6,
         onUpdate: self => api.setProgress(self.progress),
+        invalidateOnRefresh: true,
       });
       return true;
     };
@@ -78,6 +78,7 @@
 </script>
 </head>
 <body>
+<canvas id="stage" aria-hidden="true"></canvas>
 <style>
   /* Echo wears one visual world on purpose: this is the product's own palette,
      and the page is the product's first impression. Every colour is painted
@@ -843,12 +844,54 @@
    and would simply cover a fixed canvas. Hidden by default and revealed only
    for tiers that earned it, so the poster path never shows an empty box. */
 .hero { position: relative; }
+/* Fixed behind the whole document. The camera moves through one continuous
+   space while the content scrolls over it — that is what makes five sections
+   read as one story rather than five panels with an animation in the first. */
 #stage {
-  position: absolute; inset: 0; width: 100%; height: 100%;
+  position: fixed; inset: 0; width: 100%; height: 100%;
   display: none; pointer-events: none; z-index: 0;
 }
 :root[data-tier="full"] #stage, :root[data-tier="reduced"] #stage { display: block; }
 .hero-in { position: relative; z-index: 1; }
+
+/* Dark sections go transparent so the scene shows through; body keeps
+   --ground beneath it, so nothing is ever see-through to white.
+   .light sections deliberately stay opaque: they invert the palette, and an
+   accent-green point cloud over a pale ground reads as dirt rather than
+   sound. The scene submerging through the light section and surfacing after
+   is a rhythm, not a bug. */
+:root[data-tier="full"] .dark, :root[data-tier="reduced"] .dark { background: transparent; }
+.stage, .hero, .pin, footer { position: relative; z-index: 1; }
+
+/* Text needs a floor to sit on. A point cloud behind body copy destroys
+   legibility at exactly the sizes people actually read, so every text column
+   in a dark section gets a soft radial scrim — invisible as a shape, decisive
+   for contrast. */
+:root[data-tier="full"] .dark .wrap,
+:root[data-tier="reduced"] .dark .wrap,
+:root[data-tier="full"] .hero-in,
+:root[data-tier="reduced"] .hero-in {
+  position: relative;
+}
+:root[data-tier="full"] .dark .gal-copy,
+:root[data-tier="reduced"] .dark .gal-copy,
+:root[data-tier="full"] .dark .panel,
+:root[data-tier="reduced"] .dark .panel { position: relative; }
+:root[data-tier="full"] .dark .wrap::before,
+:root[data-tier="reduced"] .dark .wrap::before,
+:root[data-tier="full"] .dark .gal-copy::before,
+:root[data-tier="reduced"] .dark .gal-copy::before,
+:root[data-tier="full"] .dark .panel::before,
+:root[data-tier="reduced"] .dark .panel::before,
+:root[data-tier="full"] .hero-in::before,
+:root[data-tier="reduced"] .hero-in::before {
+  content: ""; position: absolute; inset: -8% -6%;
+  background: radial-gradient(60% 55% at 50% 50%,
+    color-mix(in srgb, var(--ground) 88%, transparent) 0%,
+    color-mix(in srgb, var(--ground) 62%, transparent) 55%,
+    transparent 100%);
+  z-index: -1; pointer-events: none;
+}
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -865,7 +908,6 @@
 </header>
 
 <header class="hero dark" id="top">
-  <canvas id="stage" aria-hidden="true"></canvas>
   <div class="hero-in">
     <img src="./media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="lazy" decoding="async">
     <h1>Echo</h1>

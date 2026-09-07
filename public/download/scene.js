@@ -43,6 +43,7 @@ export function createScene(canvas, tier) {
   const ring      = new Float32Array(COUNT * 3);
   const card      = new Float32Array(COUNT * 3);
   const drift     = new Float32Array(COUNT * 3);
+  const queue     = new Float32Array(COUNT * 3);
   const seed      = new Float32Array(COUNT);
 
   // Layout A — a radial waveform. Radius modulated by summed sines so it reads
@@ -77,6 +78,12 @@ export function createScene(canvas, tier) {
     drift[i * 3]     = (seed[i] - 0.5) * 9;
     drift[i * 3 + 1] = (Math.random() - 0.5) * 5;
     drift[i * 3 + 2] = (Math.random() - 0.5) * 3.5;
+    // Layout D — the outbox. Points stack into a held column: nothing is lost,
+    // nothing has sent. This is store/outbox.ts, not an abstract flourish.
+    const row = Math.floor(i / 26);
+    queue[i * 3]     = ((i % 26) - 12.5) * 0.11;
+    queue[i * 3 + 1] = 2.1 - row * 0.135;
+    queue[i * 3 + 2] = (seed[i] - 0.5) * 0.25;
   }
 
   positions.set(ring);
@@ -102,40 +109,66 @@ export function createScene(canvas, tier) {
 
   function build(now) {
     const p = progress;
-    // 0.00–0.45 wave → card. 0.45–1.00 card → offline drift.
-    const morph = Math.min(1, p / 0.45);
-    const scatter = Math.max(0, (p - 0.45) / 0.55);
-    const breathe = Math.sin(now * 0.0013) * 0.5 + 0.5;
+    // Five beats across the whole document. The camera never cuts.
+    //   .00-.18  a voice          ring
+    //   .18-.38  it becomes a post ring -> card
+    //   .38-.58  it carries        card -> drift
+    //   .58-.78  the signal drops  drift -> queue, colour falls out
+    //   .78-1.0  it lands          queue -> converge behind the CTA
+    const seg = (a, b) => Math.min(1, Math.max(0, (p - a) / (b - a)));
+    const ease = t => t * t * (3 - 2 * t);
+
+    const toCard   = ease(seg(0.18, 0.38));
+    const toDrift  = ease(seg(0.38, 0.58));
+    const toQueue  = ease(seg(0.58, 0.78));
+    const toLand   = ease(seg(0.78, 1.00));
+    const breathe  = Math.sin(now * 0.0013) * 0.5 + 0.5;
 
     for (let i = 0; i < COUNT; i++) {
       const j = i * 3;
-      const ease = morph * morph * (3 - 2 * morph);
-      let x = ring[j] + (card[j] - ring[j]) * ease;
-      let y = ring[j + 1] + (card[j + 1] - ring[j + 1]) * ease;
-      let z = ring[j + 2] + (card[j + 2] - ring[j + 2]) * ease;
+      let x = ring[j], y = ring[j + 1], z = ring[j + 2];
+      x += (card[j]  - x) * toCard;  y += (card[j + 1]  - y) * toCard;  z += (card[j + 2]  - z) * toCard;
+      x += (drift[j] - x) * toDrift; y += (drift[j + 1] - y) * toDrift; z += (drift[j + 2] - z) * toDrift;
+      x += (queue[j] - x) * toQueue; y += (queue[j + 1] - y) * toQueue; z += (queue[j + 2] - z) * toQueue;
+      // Landing: everything converges and lifts, fastest points first, so the
+      // release reads as a drain rather than a fade.
+      const lift = toLand * (0.55 + seed[i] * 0.45);
+      x += (0 - x) * lift; y += (0.15 - y) * lift; z += (0 - z) * lift;
 
-      if (scatter > 0) {
-        const s = scatter * scatter;
-        x += (drift[j] - x) * s;
-        y += (drift[j + 1] - y) * s;
-        z += (drift[j + 2] - z) * s;
-      }
+      // Idle life while at rest, so a paused scroll is not a still image.
+      const calm = (1 - toCard) * (1 - toLand);
+      positions[j] = x;
+      positions[j + 1] = y + calm * 0.05 * Math.sin(now * 0.0022 + seed[i] * 31.4);
+      positions[j + 2] = z;
 
-      // Idle life while at rest, so a static hero is not a still image.
-      const wob = (1 - ease) * 0.05 * Math.sin(now * 0.0022 + seed[i] * 31.4);
-      positions[j] = x; positions[j + 1] = y + wob; positions[j + 2] = z;
-
-      // Colour tells the story: accent while it is a voice, gold as it becomes
-      // a post, faint when the network is gone.
-      tmp.copy(accent).lerp(flag, ease * 0.5 * (0.6 + breathe * 0.4)).lerp(faint, scatter);
+      // Colour carries the meaning: accent while it is a voice, gold as it
+      // becomes a post, drained to faint while the network is gone, accent
+      // again once it sends.
+      tmp.copy(accent)
+        .lerp(flag, toCard * 0.55 * (0.6 + breathe * 0.4))
+        .lerp(faint, toQueue * (1 - toLand))
+        .lerp(accent, toLand * 0.8);
       colors[j] = tmp.r; colors[j + 1] = tmp.g; colors[j + 2] = tmp.b;
     }
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.color.needsUpdate = true;
 
-    points.rotation.y = p * 0.75 + Math.sin(now * 0.0004) * 0.06;
-    points.rotation.x = p * -0.22;
-    camera.position.z = 7.2 - p * 1.1;
+    // The scene bookends the story rather than running through it.
+    //
+    // The middle of this page explains the product with real screenshots and
+    // dense body copy, and a point cloud crossing a paragraph is unreadable at
+    // the size people actually read — verified in the browser, where the wave
+    // ran straight through "A feed that ends". No scrim rescues that; the fix
+    // is to get out of the way. Full presence in the hero, almost gone through
+    // the content, back for the offline beat and the landing.
+    const enterContent = ease(seg(0.10, 0.22));   // fade out as content starts
+    const returnForEnd = ease(seg(0.70, 0.84));   // come back for the last act
+    const presence = 1 - enterContent * (1 - returnForEnd);
+    points.material.opacity = 0.10 + presence * 0.85;
+
+    points.rotation.y = p * 1.35 + Math.sin(now * 0.0004) * 0.06;
+    points.rotation.x = -0.28 * Math.sin(p * Math.PI);
+    camera.position.z = 7.2 - Math.sin(p * Math.PI) * 1.6;
   }
 
   function draw() {
