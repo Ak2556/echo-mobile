@@ -1028,6 +1028,35 @@
 @keyframes hint-breathe { 0%, 100% { opacity: .45; } 50% { opacity: .9; } }
 @media (prefers-reduced-motion: reduce) { .hold-hint { animation: none; opacity: .6; } }
 :root[data-tier="full"] body, :root[data-tier="reduced"] body { cursor: default; }
+
+/* ── The origin ─────────────────────────────────────────────────────────
+   The page argued the problem as market structure — "the supply side is
+   thin" — which is true, well written and bloodless. Nobody on it was a
+   person. This section is the only place the reader meets one, and it sits
+   immediately after they have failed at the Devanagari keyboard themselves,
+   where the claim has just stopped being abstract.
+   Deliberately unlike every other section: no cards, no stats, no numerals.
+   One voice, generous space, and a name to hold responsible — which is also
+   what a stranger wants before installing an APK from outside a store. */
+.origin { padding-block: clamp(6rem, 16vh, 11rem); }
+.origin-fig { margin: 0; max-width: 64ch; }
+.origin-quote p {
+  font-family: Fraunces, Georgia, serif;
+  font-size: clamp(1.5rem, 3.4vw, 2.55rem);
+  line-height: 1.32; color: var(--ink); margin: 0 0 1.3rem;
+  text-wrap: pretty;
+}
+.origin-quote p:last-child { color: var(--ink-soft); }
+.origin-by {
+  display: flex; flex-wrap: wrap; gap: .55rem 1rem; align-items: baseline;
+  margin-top: 2.2rem; padding-top: 1.4rem; border-top: 1px solid var(--line);
+}
+.origin-name { font-size: var(--step-0); color: var(--ink); }
+.origin-role {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--step--2); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -1098,6 +1127,39 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     DRAFT COPY — NOT APPROVED. DO NOT PUBLISH AS WRITTEN.
+
+     The words in this blockquote were written by an assistant, not by
+     Akash Thakur, and they are attributed to him by name on a public
+     page. They were extrapolated from one note saying Echo's direction
+     came from testing with his mother — which is NOT the same as the
+     specific scene described here. The message, the stopping, the
+     deleting, "the next breath": all invented.
+
+     A first-person quote under a real name has to be that person's own
+     account. Replace this with what actually happened, in his words,
+     before this section goes live. The structure and the placement are
+     the contribution here; the sentences are a placeholder.
+     ============================================================ -->
+<section class="stage dark origin" id="origin">
+  <div class="wrap">
+    <figure class="origin-fig">
+      <blockquote class="origin-quote">
+        <p>I watched my mother start a message, stop, and delete it. Not because
+        she had nothing to say — because saying it meant fighting a keyboard
+        built for a language that isn't hers.</p>
+        <p>She had plenty to say. She said it out loud, to me, in the next
+        breath. That is the whole product.</p>
+      </blockquote>
+      <figcaption class="origin-by">
+        <span class="origin-name">Akash Thakur</span>
+        <span class="origin-role">built Echo · Hoshiarpur, Punjab</span>
+      </figcaption>
+    </figure>
   </div>
 </section>
 
