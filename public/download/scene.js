@@ -122,6 +122,19 @@ export function createScene(canvas, tier) {
   const tmp = new THREE.Color();
   let progress = 0, queued = false, visible = true, disposed = false, t0 = performance.now();
 
+  /* Interaction.
+   *
+   * Scroll-reactive is animation; pointer-reactive is interaction, and the
+   * difference is whether the page answers the person or the scrollbar.
+   *
+   * The gesture is the product's own: press and hold is how you speak into
+   * Echo, so holding here swells the ripples the way holding the record button
+   * swells a waveform, and releasing sends one out. The site's interaction and
+   * the app's interaction are the same gesture, which is the only reason to
+   * choose this one over a hundred prettier ideas. */
+  const ptr = { x: 0, y: 0, tx: 0, ty: 0 };
+  let energy = 0, targetEnergy = 0, burstAt = -9, holding = false;
+
   function build(now) {
     const p = progress;
     // Cheap early-out: while the scene is hidden there is nothing to compute.
@@ -156,14 +169,36 @@ export function createScene(canvas, tier) {
       // loop. Motion carries the idea; the geometry stays perfectly circular.
       const calm = (1 - toCard) * (1 - toLand);
       if (calm > 0.001) {
-        const phase = (now * 0.00016 + ringIndex[i] / RINGS) % 1;
-        const spread = 1 + phase * 1.5;
+        // Holding speeds the rings up and pushes them wider; a release sends
+        // one pulse travelling outward from the moment of release.
+        const since = (now - burstAt) * 0.001;
+        const burst = since > 0 && since < 2.2 ? (1 - since / 2.2) : 0;
+        // Holding must not blow the rings apart. The first attempt tripled
+        // the travel speed and widened the spread by 1.1, which pushed every
+        // ring off-screen and left a scattered starfield — losing the exact
+        // structure that made the form read as deliberate, at the precise
+        // moment someone is interacting with it. A hold should swell and
+        // brighten in place.
+        const speed = 0.00016 * (1 + energy * 0.55);
+        const phase = (now * speed + ringIndex[i] / RINGS) % 1;
+        const spread = 1 + phase * (1.5 + energy * 0.22 + burst * 0.55);
         x *= 1 + (spread - 1) * calm;
         y *= 1 + (spread - 1) * calm;
         // Breathe, not wobble: 0.035 against a radius near 1, so the ring
         // stays a ring.
-        const b = 0.035 * Math.sin(now * 0.0019 + seed[i] * 6.28);
+        // Amplitude grows with the hold — the ring still stays a ring, the
+        // ceiling is 0.10 rather than the 0.62 that made it a blob.
+        const amp = 0.035 + energy * 0.085;
+        // Phase per RING, not per point. seed[i] is random per point, so using
+        // it made every dot on a ring breathe independently — an imperceptible
+        // shimmer at 0.035 and a shredded, fuzzy band at 0.12 under a hold.
+        // A ring only stays a ring if its points move together.
+        const b = amp * Math.sin(now * (0.0019 + energy * 0.0022) + ringIndex[i] * 1.05);
         x += x * b; y += y * b;
+        // Parallax: the field leans toward the pointer. Small on purpose —
+        // enough to feel alive, not enough to look like it is chasing you.
+        x += ptr.x * 0.22 * (0.4 + ringIndex[i] / RINGS);
+        y += ptr.y * 0.16 * (0.4 + ringIndex[i] / RINGS);
       }
       positions[j] = x; positions[j + 1] = y; positions[j + 2] = z;
 
@@ -175,7 +210,7 @@ export function createScene(canvas, tier) {
         .lerp(flag, toCard * 0.55 * (0.6 + breathe * 0.4))
         .lerp(faint, toQueue * (1 - toLand))
         .lerp(accent, toLand * 0.8)
-        .multiplyScalar(0.45 + fade * 0.55);
+        .multiplyScalar((0.45 + fade * 0.55) * (1 + energy * 1.35));
       colors[j] = tmp.r; colors[j + 1] = tmp.g; colors[j + 2] = tmp.b;
     }
     geometry.attributes.position.needsUpdate = true;
@@ -206,6 +241,10 @@ export function createScene(canvas, tier) {
   function draw() {
     queued = false;
     if (disposed || !visible) return;
+    ptr.x += (ptr.tx - ptr.x) * 0.07;
+    ptr.y += (ptr.ty - ptr.y) * 0.07;
+    // Rises quickly, falls slowly — a held note, not a switch.
+    energy += (targetEnergy - energy) * (targetEnergy > energy ? 0.10 : 0.035);
     build(performance.now() - t0);
     renderer.render(scene, camera);
   }
@@ -265,6 +304,26 @@ export function createScene(canvas, tier) {
     origDraw();
   }
   draw = probedDraw;
+
+  const onMove = e => {
+    ptr.tx = (e.clientX / innerWidth) * 2 - 1;
+    ptr.ty = -((e.clientY / innerHeight) * 2 - 1);
+    request();
+  };
+  const press = () => { holding = true; targetEnergy = 1; document.documentElement.classList.add('holding'); request(); };
+  const release = () => {
+    if (!holding) return;
+    holding = false; targetEnergy = 0;
+    burstAt = performance.now() - t0;
+    document.documentElement.classList.remove('holding');
+    request();
+  };
+  addEventListener('pointermove', onMove, { passive: true });
+  addEventListener('pointerdown', press, { passive: true });
+  addEventListener('pointerup', release, { passive: true });
+  addEventListener('pointercancel', release, { passive: true });
+  // Leaving the window while held would otherwise strand energy at 1 forever.
+  addEventListener('blur', release);
 
   resize();
   startIdle();

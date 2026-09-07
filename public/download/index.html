@@ -957,6 +957,24 @@
 @media (max-width: 620px) {
   .panel .card.accent { grid-template-columns: 1fr; gap: .75rem; }
 }
+
+/* The invitation. Without it the interaction is a secret, and a secret
+   interaction is the same as none. Shown only where the scene actually
+   responds — on the poster tier there is nothing to hold. */
+.hold-hint {
+  display: none;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--step--2); letter-spacing: .22em; text-transform: uppercase;
+  color: var(--ink-faint); margin: 1rem 0 0;
+  transition: opacity .5s var(--ease), color .3s var(--ease);
+  animation: hint-breathe 3.4s var(--ease) infinite;
+}
+:root[data-tier="full"] .hold-hint, :root[data-tier="reduced"] .hold-hint { display: block; }
+:root.holding .hold-hint { color: var(--accent); animation: none; }
+:root.has-held .hold-hint { opacity: 0; }
+@keyframes hint-breathe { 0%, 100% { opacity: .45; } 50% { opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .hold-hint { animation: none; opacity: .6; } }
+:root[data-tier="full"] body, :root[data-tier="reduced"] body { cursor: default; }
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -979,6 +997,7 @@
     <p class="tag">Built for the thought that didn't get posted.</p>
     <p class="sub">A voice-first social network with an AI that listens, acts and translates — built for the 500 million Indians whose first language isn't English.</p>
     <canvas id="wave" width="840" height="92" aria-hidden="true"></canvas>
+    <p class="hold-hint" id="holdhint" aria-hidden="true">press and hold</p>
     <p class="chip">Private beta · Android</p>
   </div>
   <div class="cue" aria-hidden="true"><span>Scroll</span><i></i></div>
@@ -1739,6 +1758,19 @@
     buttons.forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
   }
   buttons.forEach(b => b.addEventListener('click', () => apply(b.dataset.lang)));
+})();
+</script>
+
+<script>
+/* Retire the prompt once it has been obeyed. A hint that keeps pulsing after
+ * you have done the thing is nagging, not guidance. */
+(function () {
+  const root = document.documentElement;
+  const done = () => {
+    root.classList.add('has-held');
+    removeEventListener('pointerdown', done);
+  };
+  addEventListener('pointerdown', done, { passive: true });
 })();
 </script>
 </body>
