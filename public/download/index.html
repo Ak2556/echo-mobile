@@ -892,6 +892,49 @@
     transparent 100%);
   z-index: -1; pointer-events: none;
 }
+
+/* ── The language switch ────────────────────────────────────────────────
+   This replaced a video. The video dissolved between an English screen and a
+   Hindi one, and spent most of its duration mid-dissolve with two sets of
+   text drawn on top of each other — illegible, and it never reached Arabic at
+   all despite its own alt text promising it. A section whose claim is "the
+   interface follows the reader" cannot be illustrated by a picture in which
+   you cannot read the interface.
+   Real DOM instead: the strings swap, and for Arabic the whole layout mirrors
+   because dir="rtl" actually flips it. That is the claim, demonstrated. */
+.ui {
+  background: #0B0D07; border: 1px solid #262C1A; border-radius: 22px;
+  padding: 1rem .9rem 0; width: 300px; max-width: 100%;
+  font-size: 13px; color: #F1F3E7; overflow: hidden;
+}
+.ui-bar { display: flex; justify-content: space-between; font-size: 10px; color: #7C8470; margin-bottom: .6rem; }
+.ui-brand { font-family: Fraunces, Georgia, serif; font-size: 19px; margin: 0 0 .15rem; }
+.ui-greet { font-family: Fraunces, Georgia, serif; font-size: 17px; margin: 0 0 .7rem; }
+.ui-card { background: #12150D; border-radius: 10px; padding: .6rem .7rem; margin-bottom: .6rem; }
+.ui-kicker { font-family: "IBM Plex Mono", monospace; font-size: 8.5px; letter-spacing: .14em; color: #A3C165; margin: 0 0 .3rem; }
+.ui-quote { font-family: Fraunces, Georgia, serif; font-size: 13px; line-height: 1.4; margin: 0; }
+.ui-spark {
+  background: linear-gradient(90deg, #E2703A, #D9542B); border-radius: 10px;
+  padding: .55rem .7rem; margin-bottom: .6rem; font-size: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.ui-tabs { display: flex; gap: .3rem; margin-bottom: .7rem; flex-wrap: wrap; }
+.ui-tabs span { font-size: 10.5px; padding: .25rem .55rem; border-radius: 99px; background: #12150D; color: #A9B197; }
+.ui-tabs span.on { background: #A3C165; color: #0B0D07; }
+.ui-nav {
+  display: flex; justify-content: space-between; border-top: 1px solid #1C2114;
+  padding: .5rem .1rem; font-size: 9px; color: #7C8470; margin: 0 -.9rem;
+}
+.ui-nav span:first-child { color: #A3C165; }
+.ui-switch { display: flex; gap: .35rem; margin-top: .9rem; justify-content: center; flex-wrap: wrap; }
+.ui-switch button {
+  font: inherit; font-size: var(--step--2); cursor: pointer;
+  padding: .3rem .7rem; border-radius: 99px;
+  border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+  transition: background .18s var(--ease), color .18s var(--ease);
+}
+.ui-switch button.on { background: var(--accent); color: var(--ground); border-color: var(--accent); }
+.ui-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -1022,7 +1065,31 @@
 <section class="morph light" id="build">
   <div class="morph-pin">
     <div class="morph-grid">
-      <div class="phone rv"><video class="" width="300" height="654" autoplay muted loop playsinline preload="metadata" poster="./media/989b97b3-poster.webp" aria-label="The same screen rendering in English, Hindi and Arabic"><source src="./media/989b97b3.webm" type="video/webm"><source src="./media/989b97b3.mp4" type="video/mp4"></video></div>
+      <div class="phone rv">
+        <div class="ui" id="langui" lang="en" dir="ltr">
+          <div class="ui-bar"><span class="ui-time">10:11</span><span class="ui-dots">••••</span></div>
+          <p class="ui-brand">Echo</p>
+          <p class="ui-greet" data-k="greet">Welcome back, Akash</p>
+          <div class="ui-card">
+            <p class="ui-kicker" data-k="kicker">THOUGHT FOR TODAY</p>
+            <p class="ui-quote" data-k="quote">The quietest thoughts are usually the honest ones.</p>
+          </div>
+          <div class="ui-spark"><span data-k="spark">Today's question</span><span class="ui-arrow">↗</span></div>
+          <div class="ui-tabs">
+            <span class="on" data-k="t1">For You</span><span data-k="t2">Trending</span>
+            <span data-k="t3">Following</span><span data-k="t4">Latest</span>
+          </div>
+          <div class="ui-nav">
+            <span data-k="n1">Home</span><span data-k="n2">Explore</span>
+            <span data-k="n3">Chat</span><span data-k="n4">Tools</span><span data-k="n5">You</span>
+          </div>
+        </div>
+        <div class="ui-switch" role="group" aria-label="Preview language">
+          <button type="button" class="on" data-lang="en">English</button>
+          <button type="button" data-lang="hi" lang="hi">हिन्दी</button>
+          <button type="button" data-lang="ar" lang="ar">العربية</button>
+        </div>
+      </div>
       <div>
         <h2 class="rv d1">One build. The interface follows the reader.</h2>
         <p class="body rv d2">Greeting, filter tabs, navigation, prompts and layout direction all follow the reader. The same binary renders left-to-right in Hindi and right-to-left in Arabic — not a separate build, not a web view, not a translation layer bolted over an English shell.</p>
@@ -1604,6 +1671,49 @@
   }
 
   skipEl.addEventListener('click', () => finish(true));
+})();
+</script>
+
+<script>
+/* Language switch for the build section.
+ *
+ * Swapping strings is the easy half. The half that carries the argument is
+ * dir="rtl" on the container for Arabic — the greeting, the spark arrow, the
+ * tab row and the nav all mirror because the browser mirrors them, which is
+ * exactly the claim the section makes about the app. A graphic cannot show
+ * that; a real element can.
+ */
+(function () {
+  const ui = document.getElementById('langui');
+  if (!ui) return;
+  const STRINGS = {
+    en: { greet:'Welcome back, Akash', kicker:'THOUGHT FOR TODAY',
+          quote:'The quietest thoughts are usually the honest ones.',
+          spark:"Today's question", t1:'For You', t2:'Trending', t3:'Following', t4:'Latest',
+          n1:'Home', n2:'Explore', n3:'Chat', n4:'Tools', n5:'You' },
+    hi: { greet:'वापसी पर स्वागत है, आकाश', kicker:'आज का विचार',
+          quote:'सबसे शांत विचार अक्सर सबसे सच्चे होते हैं।',
+          spark:'आज का सवाल', t1:'आपके लिए', t2:'ट्रेंडिंग', t3:'फ़ॉलोइंग', t4:'नवीनतम',
+          n1:'होम', n2:'खोजें', n3:'चैट', n4:'टूल्स', n5:'आप' },
+    ar: { greet:'مرحبًا بعودتك، آكاش', kicker:'فكرة اليوم',
+          quote:'أهدأ الأفكار هي عادةً أصدقها.',
+          spark:'سؤال اليوم', t1:'لك', t2:'رائج', t3:'المتابَعون', t4:'الأحدث',
+          n1:'الرئيسية', n2:'استكشاف', n3:'محادثة', n4:'أدوات', n5:'أنت' },
+  };
+  const buttons = [...document.querySelectorAll('.ui-switch button')];
+  function apply(lang) {
+    const set = STRINGS[lang];
+    for (const el of ui.querySelectorAll('[data-k]')) {
+      const v = set[el.dataset.k];
+      if (v) el.textContent = v;
+    }
+    ui.lang = lang;
+    // The whole point: Arabic mirrors the layout, it is not just translated.
+    ui.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    ui.querySelector('.ui-arrow').textContent = lang === 'ar' ? '↖' : '↗';
+    buttons.forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
+  }
+  buttons.forEach(b => b.addEventListener('click', () => apply(b.dataset.lang)));
 })();
 </script>
 </body>
