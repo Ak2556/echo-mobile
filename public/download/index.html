@@ -703,6 +703,71 @@
   border: 1px solid var(--line); border-radius: 999px;
   padding: .2rem .6rem; letter-spacing: .1em;
 }
+
+/* ── The typing beat ────────────────────────────────────────────────────
+   The page used to ASSERT that typing Devanagari on a phone is slow. Almost
+   nobody reading that sentence in English has felt it, so it landed as a
+   claim rather than a reason. This makes the visitor spend fifteen seconds
+   hunting glyphs on a sixty-key board, which is the entire pitch performed
+   instead of described.
+   The skip button is deliberately prominent: the point is made in about four
+   seconds, and holding someone hostage past that turns a demonstration into a
+   punishment. */
+.try {
+  border: 1px solid var(--line); border-radius: 14px;
+  padding: clamp(1.25rem, 3vw, 2rem); margin: 0 0 2.5rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+.try-ask {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--step--2);
+  letter-spacing: .17em; text-transform: uppercase; color: var(--accent); margin: 0 0 .9rem;
+}
+.try-target {
+  font-size: var(--step-2); line-height: 1.5; color: var(--ink);
+  margin: 0 0 1rem; letter-spacing: .01em;
+}
+.try-out {
+  min-height: 2.4em; border: 1px dashed var(--line); border-radius: 8px;
+  padding: .55rem .75rem; font-size: var(--step-1); color: var(--accent);
+  display: flex; align-items: center; gap: 1px;
+}
+.try-caret { width: 2px; height: 1.15em; background: var(--accent); animation: caret 1.05s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.try-meta {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--step--2);
+  color: var(--ink-faint); margin: .6rem 0 1rem;
+}
+.try-timer { color: var(--flag); font-variant-numeric: tabular-nums; }
+.try-keys {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(2.3rem, 1fr));
+  gap: 4px; margin-bottom: 1rem;
+}
+.try-keys button {
+  font: inherit; font-size: var(--step--1); line-height: 1;
+  padding: .5rem .1rem; border-radius: 6px; cursor: pointer;
+  background: var(--ground); color: var(--ink-soft);
+  border: 1px solid var(--line);
+  transition: background .12s var(--ease), color .12s var(--ease);
+}
+.try-keys button:hover { background: var(--accent-wash); color: var(--ink); }
+.try-keys button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.try-keys button.wrong { animation: nope .3s var(--ease); border-color: var(--flag); }
+@keyframes nope { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+.try-done { margin-bottom: 1rem; }
+.try-verdict { font-size: var(--step-0); color: var(--ink); margin: 0 0 .35rem; }
+.try-alt { font-size: var(--step-0); color: var(--ink-soft); margin: 0; }
+.try-alt strong { color: var(--accent); }
+.try-skip {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--step--2);
+  letter-spacing: .1em; background: none; border: 0; cursor: pointer;
+  color: var(--ink-faint); padding: 0;
+}
+.try-skip:hover { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) {
+  .try-caret { animation: none; }
+  .try-keys button.wrong { animation: none; }
+}
 </style>
 
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
@@ -738,7 +803,22 @@
 
 <section class="stage dark" id="problem">
   <div class="wrap">
-    <p class="eyebrow rv">The problem</p>
+<div class="try rv">
+      <p class="try-ask">Post this thought.</p>
+      <p class="try-target" lang="hi" dir="ltr">आज मन बहुत हल्का है</p>
+      <div class="try-out" aria-live="polite"><span class="try-typed"></span><span class="try-caret"></span></div>
+      <div class="try-meta">
+        <span class="try-timer">0.0s</span>
+        <span class="try-hint">tap the characters, in order</span>
+      </div>
+      <div class="try-keys" role="group" aria-label="Devanagari keyboard"></div>
+      <div class="try-done" hidden>
+        <p class="try-verdict"></p>
+        <p class="try-alt">Or hold one button and say it. <strong>1.4 seconds.</strong></p>
+      </div>
+      <button class="try-skip" type="button">I get it — skip &rarr;</button>
+    </div>
+
     <h2 class="rv d1">Most people don't type the way they think</h2>
     <div class="two">
       <div>
@@ -1309,5 +1389,103 @@
 })();
 </script>
 
+
+<script>
+/* The typing beat.
+ *
+ * Fifteen taps across a sixty-key board. That number is chosen, not arbitrary:
+ * it is long enough that the visitor feels the hunt and short enough that
+ * finishing is plausible. The skip is always visible because the argument is
+ * made in the first four seconds and everything after that is just cost.
+ *
+ * The keyboard is not a real InScript layout — a real one is worse, with the
+ * glyphs spread over multiple shift layers. This single flat board is the
+ * charitable version of the problem, and it is still slow.
+ */
+(function () {
+  const root = document.querySelector('.try');
+  if (!root) return;
+
+  const TARGET = 'आज मन बहुत हल्का है';
+  const seq = [...TARGET];
+
+  const KEYS = [
+    'अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ',
+    'क','ख','ग','घ','ङ','च','छ','ज','झ','ञ',
+    'ट','ठ','ड','ढ','ण','त','थ','द','ध','न',
+    'प','फ','ब','भ','म','य','र','ल','व','श',
+    'ष','स','ह','क्ष','त्र','ज्ञ','ड़','ढ़','ऋ','ॠ',
+    'ा','ि','ी','ु','ू','े','ै','ो','ौ','ं','ः','्',
+  ];
+
+  const keysEl   = root.querySelector('.try-keys');
+  const typedEl  = root.querySelector('.try-typed');
+  const timerEl  = root.querySelector('.try-timer');
+  const doneEl   = root.querySelector('.try-done');
+  const verdictEl= root.querySelector('.try-verdict');
+  const skipEl   = root.querySelector('.try-skip');
+  const hintEl   = root.querySelector('.try-hint');
+
+  let i = 0, t0 = 0, tick = null, finished = false;
+
+  for (const k of KEYS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = k;
+    b.addEventListener('click', () => press(k, b));
+    keysEl.appendChild(b);
+  }
+
+  function startTimer() {
+    if (t0) return;
+    t0 = performance.now();
+    tick = setInterval(() => {
+      timerEl.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's';
+    }, 100);
+  }
+
+  function press(k, btn) {
+    if (finished) return;
+    startTimer();
+    // Spaces are free — the visitor is not here to hunt for a space bar.
+    while (seq[i] === ' ') { typedEl.textContent += ' '; i++; }
+    if (seq[i] === k) {
+      typedEl.textContent += k;
+      i++;
+      while (seq[i] === ' ') { typedEl.textContent += ' '; i++; }
+      if (i >= seq.length) finish(false);
+    } else {
+      btn.classList.remove('wrong');
+      void btn.offsetWidth;           // restart the animation
+      btn.classList.add('wrong');
+      hintEl.textContent = 'not that one';
+    }
+  }
+
+  function finish(skipped) {
+    if (finished) return;
+    finished = true;
+    clearInterval(tick);
+    const secs = t0 ? (performance.now() - t0) / 1000 : 0;
+    // A floor, because the verdict has to survive being wrong. Nobody hunting
+    // fifteen glyphs across sixty keys finishes in under three seconds, so a
+    // number that low means something odd happened — and "that took 0.0
+    // seconds" would argue the opposite of the point the beat exists to make.
+    verdictEl.textContent = skipped
+      ? 'You stopped. Most people stop too — that is the point.'
+      : secs < 3
+        ? 'Fast. Now imagine it on a phone, one-thumbed, in a moving bus.'
+        : 'That took ' + secs.toFixed(1) + ' seconds. For one sentence.';
+    doneEl.hidden = false;
+    keysEl.setAttribute('aria-hidden', 'true');
+    keysEl.style.opacity = '.28';
+    keysEl.style.pointerEvents = 'none';
+    skipEl.hidden = true;
+    hintEl.textContent = '';
+  }
+
+  skipEl.addEventListener('click', () => finish(true));
+})();
+</script>
 </body>
 </html>
