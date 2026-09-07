@@ -701,7 +701,7 @@
     display: grid; place-items: center; overflow: hidden;
     background: #050603;
   }
-  .bleed img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .bleed img, .bleed video { display: block; width: 100%; height: 100%; object-fit: cover; }
   .bleed .glow {
     position: absolute; inset: 0;
     background: radial-gradient(120% 80% at 50% 40%, rgba(163,193,101,.16), transparent 62%);
@@ -713,7 +713,7 @@
     box-shadow: 0 40px 110px rgba(0,0,0,.75);
     transform: translateY(calc(var(--bp, .5) * -34px + 17px)) scale(calc(1 + var(--bp, .5) * .04));
   }
-  .bleed .device img { border-radius: 24px; }
+  .bleed .device img, .bleed .device video { border-radius: 24px; }
 
 
   /* ---------- download ----------
@@ -1483,7 +1483,16 @@
 
 <section class="bleed" data-bleed>
   <div class="glow"></div>
-  <div class="device"><img src="/download/media/5c4eac27.webp" width="420" height="912" alt="The Daily Question" loading="lazy" decoding="async"></div>
+  <div class="device">
+    <!-- preload="none": 300KB should not be spent on a visitor who never
+         scrolls this far. The observer below loads and plays it on entry and
+         pauses it on exit, so it costs nothing until it is on screen. -->
+    <video id="navloop" width="420" height="912" muted loop playsinline
+           preload="none" poster="/download/media/echo-nav-poster.webp"
+           aria-label="Moving through Echo: the daily question, the assistant, and the tools">
+      <source src="/download/media/echo-nav.mp4" type="video/mp4">
+    </video>
+  </div>
 </section>
 
 
@@ -2310,5 +2319,44 @@
 </script>
 
 
+
+
+<script>
+/* The navigation loop.
+ *
+ * A muted, looping clip of the app being used is the closest this page gets
+ * to handing someone the phone. Two rules keep it from being a tax:
+ *
+ *  1. It does not load until it is on screen. preload="none" plus this
+ *     observer means a visitor who stops reading above it pays nothing.
+ *  2. It never plays for someone who asked for less motion. An autoplaying
+ *     loop is exactly the thing that setting exists to stop, so those
+ *     visitors keep the poster frame and nothing moves.
+ */
+(function () {
+  var v = document.getElementById('navloop');
+  if (!v) return;
+
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  if (!('IntersectionObserver' in window)) { v.setAttribute('preload', 'metadata'); return; }
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        // load() is what actually honours preload="none" being lifted.
+        if (!v.dataset.started) { v.dataset.started = '1'; v.load(); }
+        var play = v.play();
+        // Autoplay can still be refused; the poster is a fine resting state.
+        if (play && play.catch) play.catch(function () {});
+      } else if (!v.paused) {
+        v.pause();
+      }
+    });
+  }, { rootMargin: '200px 0px', threshold: 0.15 });
+
+  io.observe(v);
+})();
+</script>
 </body>
 </html>
