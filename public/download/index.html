@@ -158,12 +158,12 @@
 
     --step--2: .72rem;
     --step--1: .845rem;
-    --step-0:  1.06rem;
-    --step-1:  1.3rem;
-    --step-2:  1.75rem;
-    --step-3:  clamp(2rem, 1.2rem + 2.8vw, 3.4rem);
-    --step-4:  clamp(2.6rem, 1.3rem + 5.2vw, 5.4rem);
-    --step-5:  clamp(3.4rem, 1rem + 10vw, 9rem);
+    --step-0:  1.15rem;
+    --step-1:  1.4rem;
+    --step-2:  1.85rem;
+    --step-3:  clamp(1.95rem, 1.2rem + 2.2vw, 2.75rem);
+    --step-4:  clamp(2.3rem, 1.35rem + 3.4vw, 4.2rem);
+    --step-5:  clamp(3rem, 1.2rem + 6.6vw, 7rem);
 
     --rail: 190px;
     --ease: cubic-bezier(.22,.61,.36,1);
@@ -205,10 +205,10 @@
 
   .stage {
     position: relative;
-    padding: clamp(4.5rem, 11vh, 8.5rem) clamp(1.25rem, 5vw, 3rem);
+    padding: clamp(3.5rem, 8vh, 6rem) clamp(1.25rem, 5vw, 3rem);
   }
   .wrap { width: 100%; max-width: 1080px; margin: 0 auto; }
-  .stage { padding-top: clamp(5.5rem, 12vh, 9rem); }
+  .stage { padding-top: clamp(4.25rem, 9vh, 6.5rem); }
   /* The bar is fixed, so an anchor would otherwise drop the chapter
      opening behind it. */
   section[id], header[id], footer[id] { scroll-margin-top: 82px; }
@@ -259,7 +259,6 @@
     font-size: var(--step--2); letter-spacing: .1em; text-transform: uppercase;
     color: var(--ink-faint);
   }
-  #wave { display: block; width: min(420px, 74vw); height: 46px; margin: 2.4rem auto 0; opacity: .85; }
   /* The cue is absolutely positioned, so on a short viewport it lands on top
      of the beta chip. Only show it where there is actually room below. */
   .cue { display: none; }
@@ -330,7 +329,7 @@
     color: var(--ink-faint); margin-top: 1rem; min-height: 1.2em;
   }
 
-  #wave { display: block; width: min(520px, 82vw); height: 46px; margin: 1.1rem auto 0; opacity: .5;
+  #wave { display: block; width: min(520px, 82vw); height: 66px; margin: 1.25rem auto 0; opacity: .72;
           transition: opacity .3s var(--ease); }
   .mic[data-state="listening"] #wave { opacity: 1; }
 
@@ -609,7 +608,7 @@
   .divider { text-align: center; padding-block: clamp(6rem, 16vh, 11rem); }
   .divider h2 { font-size: var(--step-4); }
 
-  .close { min-height: 92svh; display: grid; place-items: center; text-align: center; }
+  .close { min-height: 72svh; display: grid; place-items: center; text-align: center; }
 
   .close h2 { font-size: var(--step-4); }
   .close .tag { color: var(--ink-soft); margin-top: 1.2rem; }
@@ -682,18 +681,15 @@
      Centred, and much larger than a document heading: each chapter opens like
      a title card, then the supporting material sits underneath in its own
      alignment. */
-  .stage > .wrap > .eyebrow,
-  .stage > .wrap > h2,
-  .stage > .wrap > .lead,
   .pin-in .chap .eyebrow,
   .pin-in .chap h2 { text-align: center; margin-left: auto; margin-right: auto; }
-  .stage > .wrap > h2, .pin-in .chap h2 { font-size: var(--step-4); max-width: 19ch; line-height: 1.02; }
+  .stage > .wrap > h2, .pin-in .chap h2 { font-size: var(--step-4); max-width: 22ch; line-height: 1.04; }
   .stage > .wrap > .lead { max-width: 56ch; }
 
   /* ---------- full-bleed visual bands ---------- */
   .bleed {
     position: relative; width: 100%;
-    min-height: min(86svh, 720px);
+    min-height: min(70svh, 600px);
     display: grid; place-items: center; overflow: hidden;
     background: #050603;
   }
@@ -1214,7 +1210,7 @@
    Deliberately unlike every other section: no cards, no stats, no numerals.
    One voice, generous space, and a name to hold responsible — which is also
    what a stranger wants before installing an APK from outside a store. */
-.origin { padding-block: clamp(5rem, 13vh, 9rem); }
+.origin { padding-block: clamp(4rem, 9vh, 6.5rem); }
 /* Measured in ch so the line length stays readable as the type scales. At the
    original 2.55rem the block ran nine lines deep in a narrow column with the
    whole right half of the screen empty — big is not the same as striking, and
@@ -1222,7 +1218,7 @@
 /* ch at display sizes is a trap: 30ch measured only 364px here and made the
    block TALLER (779px, taller than the viewport) rather than shorter. A
    readable measure at this size is a width, not a character count. */
-.origin-fig { margin: 0; max-width: 44rem; }
+.origin-fig { margin: 0 auto; max-width: 46rem; }
 .origin-quote p {
   font-family: Fraunces, Georgia, serif;
   font-size: clamp(1.45rem, 2.9vw, 2.15rem);
@@ -1233,7 +1229,7 @@
 /* The lead-in doubles the impact of the first line without adding a label. */
 .origin-quote p:first-child::first-letter { initial-letter: normal; }
 @media (min-width: 900px) {
-  .origin-fig { max-width: 52rem; margin-inline-start: clamp(0rem, 5vw, 4rem); }
+  .origin-fig { max-width: 50rem; margin-inline: auto; }
 }
 .origin-punch {
   font-family: Fraunces, ui-serif, Georgia, serif;
@@ -2003,7 +1999,10 @@
       } else {
         var a = Math.sin(t * 1.7 + i * 0.38) * 0.5 + 0.5;
         var b = Math.sin(t * 0.9 + i * 0.13) * 0.5 + 0.5;
-        h = Math.max(2, env * (a * 0.62 + b * 0.38) * H * 0.42);
+        // At rest this was scaled to 0.42 of the canvas, which drew a scratch
+        // rather than a voice. The idle state has to look like audio, since it
+        // is the only thing on screen carrying the claim before you press.
+        h = Math.max(2, env * (a * 0.62 + b * 0.38) * H * 0.62);
       }
       ctx2d.fillStyle = analyser ? '#A3C165' : (i % 7 === 0 ? '#A3C165' : '#3C4A28');
       ctx2d.fillRect(i * gap, (H - h) / 2, Math.max(1.5, gap * 0.34), h);
