@@ -12,11 +12,18 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { EnvelopeSimple, GoogleLogo } from 'phosphor-react-native';
+import { AppleLogo, EnvelopeSimple, GoogleLogo } from 'phosphor-react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import * as Haptics from 'expo-haptics';
-import { CANCELLED, refreshAuthSession, signInAsDemo, signInWithGoogle } from '../../lib/auth';
+import {
+  CANCELLED,
+  isAppleSignInAvailable,
+  refreshAuthSession,
+  signInAsDemo,
+  signInWithApple,
+  signInWithGoogle,
+} from '../../lib/auth';
 import { GetTheAppBanner } from '../../components/pwa/GetTheAppBanner';
 import { WebLandingPanel } from '../../components/pwa/WebLandingPanel';
 import { showToast } from '../../components/ui/Toast';
@@ -46,8 +53,39 @@ export default function LoginScreen() {
 
   const [demoLoading, setDemoLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  // Asked rather than assumed: the sheet exists on iOS 13+ only, and the
+  // button must not render where tapping it could not work.
+  const [appleAvailable, setAppleAvailable] = useState(false);
   const [promptIdx, setPromptIdx] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
+
+  useEffect(() => {
+    let alive = true;
+    isAppleSignInAvailable().then(ok => {
+      if (alive) setAppleAvailable(ok);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const handleApple = async () => {
+    if (appleLoading) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setAppleLoading(true);
+    const { error } = await signInWithApple();
+    if (error) {
+      setAppleLoading(false);
+      // Dismissing Apple's sheet is a choice, not an error worth a toast.
+      if (error !== CANCELLED) showToast(error, t('auth.error'));
+      return;
+    }
+    const status = await refreshAuthSession();
+    setAppleLoading(false);
+    if (status === 'ready') router.replace('/(tabs)/home');
+    else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
+  };
 
   const handleGoogle = async () => {
     if (googleLoading) return;
@@ -190,6 +228,23 @@ export default function LoginScreen() {
           </View>
 
           <View style={{ gap: 14 }}>
+            {appleAvailable && (
+              <Animated.View entering={FadeInDown.delay(60).duration(400).springify().mass(0.7)}>
+                <PrimaryButton
+                  icon={appleLoading
+                    ? null
+                    : <AppleLogo color={isDark ? '#0C0B09' : '#fff'} size={22} weight="fill" />}
+                  label={appleLoading ? t('auth.signingIn') : (authMode === 'signup' ? 'Sign up with Apple' : 'Log in with Apple')}
+                  onPress={handleApple}
+                  bg={isDark ? '#FFFFFF' : '#0C0B09'}
+                  fg={isDark ? '#0C0B09' : '#fff'}
+                  radius={radius.full}
+                  font={font.bodyBold}
+                  glow={true}
+                />
+              </Animated.View>
+            )}
+
             <Animated.View entering={FadeInDown.delay(100).duration(400).springify().mass(0.7)}>
               <PrimaryButton
                 icon={googleLoading

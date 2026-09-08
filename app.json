@@ -24,7 +24,8 @@
         "UIBackgroundModes": [
           "audio"
         ]
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -155,7 +156,8 @@
         }
       ],
       "./plugins/withAndroidEntryPoints",
-      "./plugins/withEchoContactCard"
+      "./plugins/withEchoContactCard",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true,
