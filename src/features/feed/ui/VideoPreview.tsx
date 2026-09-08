@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
@@ -154,7 +154,12 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   // the pause looks broken.
   const shouldPlay = isActive && !paused;
 
-  useEffect(() => { setLoadState('loading'); }, [uri]);
+  // THROWAWAY, with the probe. 'error' has two very different causes — a real
+  // player error or the 45s timeout expiring with the state still 'loading' —
+  // and they point at opposite fixes, so record which one happened.
+  const [failReason, setFailReason] = useState('');
+
+  useEffect(() => { setLoadState('loading'); setFailReason(''); }, [uri]);
 
   useEffect(() => {
     player.muted = isGlobalMuted || !isActive;
@@ -178,8 +183,9 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
         if (shouldPlay) player.play();
         else player.pause();
       }
-      if (nextState === 'error' && __DEV__) {
-        console.warn('[video-preview] load failed', error?.message ?? uri);
+      if (nextState === 'error') {
+        setFailReason(error?.message ? `player: ${error.message}` : 'player: no message');
+        if (__DEV__) console.warn('[video-preview] load failed', error?.message ?? uri);
       }
       setLoadState(nextState);
     });
@@ -207,14 +213,71 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
       playerMuted,
       playerPlaying,
       load: loadState,
+      fail: failReason,
     });
-  }, [echoId, activeEchoId, isFocused, isAppActive, isActive, paused, shouldPlay, soundEnabled, loadState, player, autoplay]);
+  }, [echoId, activeEchoId, isFocused, isAppActive, isActive, paused, shouldPlay, soundEnabled, loadState, player, autoplay, failReason]);
 
   useEffect(() => {
     if (loadState !== 'loading') return;
-    const t = setTimeout(() => setLoadState(s => s === 'loading' ? 'error' : s), VIDEO_PREVIEW_TIMEOUT_MS);
+    const t = setTimeout(() => setLoadState(s => {
+      if (s !== 'loading') return s;
+      setFailReason(`timeout ${VIDEO_PREVIEW_TIMEOUT_MS / 1000}s`);
+      return 'error';
+    }), VIDEO_PREVIEW_TIMEOUT_MS);
     return () => clearTimeout(t);
   }, [loadState, uri]);
+
+  const webRef = useRef<any>(null);
+
+  /**
+   * The fallback's markup must depend on the uri and NOTHING else.
+   *
+   * Anything else in here — the muted attribute, an autoplay flag — changes the
+   * html string, which changes `source`, which reloads the WebView and restarts
+   * the video from zero. State is applied through injectJavaScript below
+   * instead, on the live element.
+   *
+   * It starts muted on purpose. An unmuted autoplaying element was the whole
+   * defect: it sang away underneath a mute button that had no connection to it.
+   */
+  const fallbackHtml = useMemo(() => `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <style>
+          body { margin: 0; padding: 0; background-color: #09090B; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+          video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        </style>
+      </head>
+      <body>
+        <video src="${uri}" autoplay loop muted playsinline webkit-playsinline></video>
+      </body>
+    </html>
+  `, [uri]);
+
+  /**
+   * Drive the fallback from the same two decisions that drive the native
+   * player. Without this the WebView obeyed neither: `player.muted = true`
+   * muted an expo-video player that had failed to load, while the audible
+   * element was this one — so the mute button reported success and changed
+   * nothing the user could hear, and tap-to-pause lost to `autoplay loop`.
+   */
+  const fallbackMuted = isGlobalMuted || !isActive;
+  useEffect(() => {
+    if (loadState !== 'error') return;
+    const web = webRef.current;
+    if (!web) return;
+    web.injectJavaScript(`
+      (function () {
+        var v = document.querySelector('video');
+        if (!v) return;
+        v.muted = ${fallbackMuted ? 'true' : 'false'};
+        ${shouldPlay ? 'var p = v.play(); if (p && p.catch) p.catch(function () {});' : 'v.pause();'}
+      })();
+      true;
+    `);
+  }, [loadState, fallbackMuted, shouldPlay]);
 
   return (
     <Pressable onPress={onPress} disabled={!onPress} pointerEvents={onPress ? 'auto' : 'box-none'} style={{ height, borderRadius, overflow: 'hidden', backgroundColor: '#09090B' }}>
@@ -236,22 +299,22 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
         <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}>
           {isActive && WebView && (
             <WebView
-              source={{
-                html: `
-                  <!DOCTYPE html>
-                  <html>
-                    <head>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                      <style>
-                        body { margin: 0; padding: 0; background-color: #09090B; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-                        video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-                      </style>
-                    </head>
-                    <body>
-                      <video src="${uri}" autoplay loop playsinline webkit-playsinline></video>
-                    </body>
-                  </html>
-                `
+              ref={webRef}
+              source={{ html: fallbackHtml }}
+              // Apply the current mute/play state as soon as the document is
+              // live, not only on the next toggle — otherwise a card that falls
+              // back while sound is off starts audible and stays that way until
+              // the user touches something.
+              onLoadEnd={() => {
+                webRef.current?.injectJavaScript(`
+                  (function () {
+                    var v = document.querySelector('video');
+                    if (!v) return;
+                    v.muted = ${fallbackMuted ? 'true' : 'false'};
+                    ${shouldPlay ? 'var p = v.play(); if (p && p.catch) p.catch(function () {});' : 'v.pause();'}
+                  })();
+                  true;
+                `);
               }}
               style={{ flex: 1, backgroundColor: '#09090B' }}
               scrollEnabled={false}

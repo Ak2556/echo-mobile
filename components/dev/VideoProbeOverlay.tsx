@@ -110,6 +110,11 @@ export function VideoProbeOverlay() {
             <Text style={{ color: '#8f8', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
               {`SOUND ${b(probe.trace.soundEnabled)} P.MUTED ${b(probe.trace.playerMuted)} P.PLAYING ${b(probe.trace.playerPlaying)}`}
             </Text>
+            {probe.trace.fail ? (
+              <Text style={{ color: '#ff8', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
+                {`WHY ${probe.trace.fail}`}
+              </Text>
+            ) : null}
           </>
         ) : (
           <Text style={{ color: '#f88', fontSize: 11 }}>no playback trace — no active card</Text>

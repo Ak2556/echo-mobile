@@ -72,6 +72,8 @@ export type PlaybackTrace = {
   playerMuted: boolean | null;
   playerPlaying: boolean | null;
   load: string;
+  /** Why load failed: a player error message, or the timeout. */
+  fail: string;
 };
 
 let trace: PlaybackTrace | null = null;
