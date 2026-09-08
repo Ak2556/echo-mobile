@@ -1231,6 +1231,15 @@
 @media (min-width: 900px) {
   .origin-fig { max-width: 50rem; margin-inline: auto; }
 }
+/* A line that has to carry on its own. The origin section proved the
+   device works: pulling the thesis out of its paragraph is what made it read
+   as a thesis rather than as a clause someone happened to write. */
+.punch {
+  font-family: Fraunces, ui-serif, Georgia, serif;
+  font-size: clamp(1.35rem, .9rem + 1.9vw, 2.3rem); line-height: 1.18;
+  letter-spacing: -.02em; color: var(--accent);
+  margin: 1.7rem 0 0; max-width: 26ch;
+}
 .origin-punch {
   font-family: Fraunces, ui-serif, Georgia, serif;
   font-size: clamp(1.6rem, 1rem + 2.6vw, 3rem); line-height: 1.1;
@@ -1371,7 +1380,7 @@
 
 <section class="stage dark" id="problem">
   <div class="wrap">
-    <h2 class="rv">Now type the same thing.</h2>
+    <h2 class="rv">How long would that have taken to type?</h2>
     <p class="lead rv d1">You just spoke a sentence and watched it land. Here is the
     other way &mdash; the only way most people have ever been offered. Same thought,
     same phone, a keyboard in between.</p>
@@ -1396,23 +1405,26 @@
 
     <p class="body rv d2">Most people never finish. Writing a full thought in
     Devanagari or Tamil on a phone is slow enough that the thought gets
-    shortened, or it simply never gets posted &mdash; and the person quietly
-    decides they are someone who reads rather than someone who writes.</p>
+    shortened, or it simply never gets posted.</p>
     <p class="body rv d3">The apps that <em class="hl">do</em> translate usually
     translate the content and leave an English interface around it. Navigation,
     prompts and layout stay foreign. It never feels like a product made for you.
     It feels like a product made for someone else, that you are allowed to use.</p>
+    <p class="punch rv d3">And you quietly decide you are someone who reads,
+    not someone who writes.</p>
   </div>
 </section>
 
 
 <section class="stage light" id="insight">
   <div class="wrap">
-    <h2 class="rv">It doesn&rsquo;t just write it down. It does it.</h2>
-    <p class="lead rv d1">Dictation drops your words in a text box and leaves you
-    there. Say <em class="hl">post this</em>, <em class="hl">find that thread from
-    last week</em>, <em class="hl">remind me tomorrow morning</em> &mdash; and the
-    thing you asked for is already done when you look up.</p>
+    <h2 class="rv">Most thoughts die at the second step.</h2>
+    <p class="lead rv d1">You know what you want to say. Then there is a keyboard,
+    or a search box, or a reminder to set &mdash; and somewhere in there you decide
+    it was not that important after all. Say <em class="hl">post this</em>,
+    <em class="hl">find that thread from last week</em>,
+    <em class="hl">remind me tomorrow morning</em>, and the thing you asked for is
+    already done when you look up.</p>
     <p class="body rv d2">You choose how much rope it gets. <strong>Ask</strong>
     and Echo only talks back. <strong>Do</strong> and it can act on your behalf
     &mdash; and anything that writes, posts or spends stops and shows you a
@@ -1534,9 +1546,9 @@
 <footer class="stage close dark" id="close">
   <div>
     <h2 class="rv">Say the next one out loud.</h2>
-    <p class="lead rv d1" style="margin-inline:auto;text-align:center">There is a
-    thought you did not post this week because typing it was not worth it. That
-    one. Start there.</p>
+    <p class="lead rv d1" style="margin-inline:auto;text-align:center">She said it
+    out loud, in the next breath. There is a thought you did not post this week
+    for the same reason hers went unsent. That one. Start there.</p>
     <div class="dl rv d2">
       <a class="dl-btn" href="https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>Download for Android</a>
       <p class="dl-meta">Echo.apk &middot; 181 MB &middot; free &middot; always the current build</p>
