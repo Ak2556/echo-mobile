@@ -138,6 +138,9 @@
      explicitly so the page never borrows the host's ground. */
   :root {
     --ground:      #0B0D07;
+    /* Not overridden by .light: a pale section still needs to name the dark
+       it borders in order to fade into it. */
+    --ground-dark: #0B0D07;
     --ground-2:    #0F1209;
     --surface:     #12150D;
     --surface-2:   #191E12;
@@ -607,14 +610,7 @@
   .divider h2 { font-size: var(--step-4); }
 
   .close { min-height: 92svh; display: grid; place-items: center; text-align: center; }
-  /* The scene reads as atmosphere behind the words, not as noise through
-     them. Sits inside the footer's own stacking context, so it darkens the
-     particles without touching the page background. */
-  .close::before {
-    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: radial-gradient(ellipse 58% 48% at 50% 50%,
-      rgba(11,13,7,.94) 0%, rgba(11,13,7,.74) 44%, rgba(11,13,7,0) 78%);
-  }
+
   .close h2 { font-size: var(--step-4); }
   .close .tag { color: var(--ink-soft); margin-top: 1.2rem; }
   .close .site {
@@ -920,9 +916,11 @@
    Quiet by design — this is the part you read when you have a reason to. */
 .colophon {
   position: relative;
+  /* Deep enough to read as a base plate the document rests on, with the
+     accent pooling at the seam where the eye arrives from the close. */
   background:
-    radial-gradient(150% 130% at 50% 0%, rgba(163,193,101,.055) 0%, rgba(163,193,101,0) 58%),
-    linear-gradient(180deg, var(--ground-2) 0%, #060804 100%);
+    radial-gradient(120% 90% at 50% 0%, rgba(163,193,101,.10) 0%, rgba(163,193,101,0) 62%),
+    linear-gradient(180deg, #14180E 0%, #0B0D07 38%, #050603 100%);
   /* Horizontal inset matches .stage exactly — a footer that reaches the
      viewport edge while every section above it is gutter-aligned reads as a
      different page stapled on. Vertical is tighter: this is the quiet end of
@@ -1060,14 +1058,47 @@
 :root[data-tier="full"] #stage, :root[data-tier="reduced"] #stage { display: block; }
 .hero-in { position: relative; z-index: 1; }
 
+
+/* ── Section seams ──────────────────────────────────────────────────────
+   The page alternates dark and light chapters, and every boundary was a hard
+   horizontal cut — the kind of edge that reads as two pages stapled together
+   rather than one document changing register. Each light chapter now carries
+   the dark ground a little way into itself at both edges and lets it fall
+   off, so the change of palette happens over ~100px of scroll instead of on a
+   single row of pixels. The full-bleed band gets the same treatment: its
+   ground is darker than the page's, which was its own visible seam.
+
+   Painted at z-index -1 inside each section's own stacking context, so a
+   bridge sits above that section's background and below everything in it. */
+.stage.light::before, .stage.light::after,
+.morph.light::before, .morph.light::after,
+.bleed::before, .bleed::after {
+  content: ""; position: absolute; left: 0; right: 0;
+  height: clamp(56px, 8vh, 120px);
+  pointer-events: none; z-index: -1;
+}
+.stage.light::before, .morph.light::before, .bleed::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--ground-dark) 0%, transparent 100%);
+}
+.stage.light::after, .morph.light::after, .bleed::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--ground-dark) 0%, transparent 100%);
+}
+
+/* The device in the bleed band must stay above its seams. */
+.bleed .device { z-index: 2; }
+
+/* Reduced motion keeps the seams — they are colour, not movement. */
 /* Dark sections go transparent so the scene shows through; body keeps
    --ground beneath it, so nothing is ever see-through to white.
    .light sections deliberately stay opaque: they invert the palette, and an
    accent-green point cloud over a pale ground reads as dirt rather than
    sound. The scene submerging through the light section and surfacing after
    is a rhythm, not a bug. */
-:root[data-tier="full"] .dark, :root[data-tier="reduced"] .dark { background: transparent; }
-.stage, .hero, .pin, footer { position: relative; z-index: 1; }
+:root[data-tier="full"] .dark:not(.colophon),
+:root[data-tier="reduced"] .dark:not(.colophon) { background: transparent; }
+.stage, .hero, .pin, .morph, .bleed, footer { position: relative; z-index: 1; }
 
 /* Text needs a floor to sit on. A point cloud behind body copy destroys
    legibility at exactly the sizes people actually read, so every text column
@@ -1079,12 +1110,16 @@
 :root[data-tier="reduced"] .hero-in {
   position: relative;
 }
+:root[data-tier="full"] .close > div,
+:root[data-tier="reduced"] .close > div,
 :root[data-tier="full"] .dark .gal-copy,
 :root[data-tier="reduced"] .dark .gal-copy,
 :root[data-tier="full"] .dark .panel,
 :root[data-tier="reduced"] .dark .panel { position: relative; }
 :root[data-tier="full"] .dark .wrap::before,
 :root[data-tier="reduced"] .dark .wrap::before,
+:root[data-tier="full"] .close > div::before,
+:root[data-tier="reduced"] .close > div::before,
 :root[data-tier="full"] .dark .gal-copy::before,
 :root[data-tier="reduced"] .dark .gal-copy::before,
 :root[data-tier="full"] .dark .panel::before,
