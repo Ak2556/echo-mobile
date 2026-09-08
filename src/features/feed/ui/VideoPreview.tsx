@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ActivityIndicator, Pressable, Text, View, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
-import { probePlayerCreated, probePlayerReleased } from '../../../../lib/devVideoProbe';
+import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../../../lib/devVideoProbe';
 import { useVideoMountPolicy } from '../lib/videoMountPolicy';
 import { videoSourceForUri } from '../../../../lib/videoMedia';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -185,6 +185,30 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
     });
     return () => sub.remove();
   }, [player, uri, shouldPlay]);
+
+  // THROWAWAY (lib/devVideoProbe.ts). Reports which term of the playback
+  // decision is false for the card on screen, because pause and mute both
+  // stopped responding while a player was demonstrably alive.
+  useEffect(() => {
+    if (!__DEV__) return;
+    if (echoId && activeEchoId !== echoId) return; // only the card on screen
+    let playerMuted: boolean | null = null;
+    let playerPlaying: boolean | null = null;
+    try { playerMuted = player.muted; } catch { /* property may not be readable */ }
+    try { playerPlaying = (player as any).playing ?? null; } catch { /* ditto */ }
+    probeTrace({
+      focused: isFocused,
+      appActive: isAppActive,
+      activeMatch: echoId ? activeEchoId === echoId : !!autoplay,
+      isActive,
+      paused,
+      shouldPlay,
+      soundEnabled,
+      playerMuted,
+      playerPlaying,
+      load: loadState,
+    });
+  }, [echoId, activeEchoId, isFocused, isAppActive, isActive, paused, shouldPlay, soundEnabled, loadState, player, autoplay]);
 
   useEffect(() => {
     if (loadState !== 'loading') return;
