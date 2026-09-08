@@ -1,3 +1,4 @@
+import type { CurrencyCode } from './currency';
 import type { Href } from 'expo-router';
 import { loadTransactions, summarizeExpenses, formatMoney } from './expenses';
 import { getStreak, loadHabits, todayStr } from './habits';
@@ -65,6 +66,7 @@ export interface TodayProductivity {
     expense: number;
     balance: number;
     biggestCategory?: { category: string; amount: number };
+    currency: CurrencyCode;
   };
   voiceMemos: {
     total: number;
@@ -320,6 +322,7 @@ export async function getTodayProductivity(): Promise<TodayProductivity> {
       income: expenseSummary.income,
       expense: expenseSummary.expense,
       balance: expenseSummary.balance,
+      currency: expenseSummary.currency,
       biggestCategory: expenseSummary.byCategory.find(item => item.type === 'expense'),
     },
     voiceMemos: {
