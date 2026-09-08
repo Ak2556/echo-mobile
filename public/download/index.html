@@ -389,6 +389,91 @@
   .hero-cta { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
   .hero-cta .chip { margin-top: 0; }
 
+  /* ---------- the two scrollers ----------
+     One box that never ends and one that does, side by side, because the
+     difference between them is the entire argument and it is not an argument
+     that survives being asserted. */
+  .ends { display: grid; gap: 1.4rem; margin-top: 2.6rem; }
+  @media (min-width: 700px) { .ends { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+  .ends-col { min-width: 0; }
+  .ends-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--2); letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 0 0 .6rem;
+  }
+  .ends-box {
+    height: 250px; overflow-y: auto; overscroll-behavior: contain;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--ground-2);
+    scrollbar-width: thin;
+  }
+  .ends-row {
+    display: flex; align-items: center; gap: .8rem;
+    padding: .7rem .9rem; border-bottom: 1px solid var(--line-soft);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--2); color: var(--ink-faint);
+  }
+  .ends-row i {
+    flex: none; width: 26px; height: 26px; border-radius: 999px;
+    background: var(--surface-2); display: block;
+  }
+  .ends-row u {
+    flex: none; text-decoration: none; font-size: var(--step--2);
+    color: var(--ink-faint); opacity: .75; min-width: 2ch; text-align: right;
+  }
+  .ends-row span { display: block; height: 7px; border-radius: 4px;
+    background: var(--surface-2); flex: 1; }
+  .ends-end {
+    padding: 1.4rem .9rem; text-align: center; color: var(--accent);
+    font-family: Fraunces, ui-serif, Georgia, serif; font-size: var(--step-1);
+    line-height: 1.3;
+  }
+  .ends-end small {
+    display: block; margin-top: .4rem; color: var(--ink-faint);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--2); letter-spacing: .08em; text-transform: uppercase;
+  }
+  .ends-note { font-size: var(--step--1); color: var(--ink-soft); margin: .7rem 0 0; }
+
+  /* ---------- tap-to-taste ----------
+     Same principle as the typing beat: a claim the visitor performs beats a
+     claim they read. These render the confirmation card rather than describing
+     it, and say plainly that nothing has happened. */
+  .taste { margin-top: 2.2rem; }
+  .taste-ask { font-size: var(--step--1); color: var(--ink-soft); margin: 0 0 .9rem; }
+  .taste-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .taste-chips button {
+    font: inherit; font-size: var(--step--1); color: var(--ink-soft);
+    background: transparent; border: 1px solid var(--line); border-radius: 999px;
+    padding: .45rem 1rem; cursor: pointer;
+    transition: color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+  }
+  .taste-chips button:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .taste-chips button.on { color: #10160B; background: var(--accent); border-color: var(--accent); }
+  .taste-chips button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .taste-out { min-height: 1px; }
+  .taste-card {
+    margin-top: 1rem; background: var(--surface); border: 1px solid var(--line);
+    border-left: 2px solid var(--accent); border-radius: 6px;
+    padding: 1rem 1.15rem; max-width: 30rem;
+    animation: tasteRise .34s var(--ease) both;
+  }
+  @keyframes tasteRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .taste-kind {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--2); letter-spacing: .13em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 .5rem;
+  }
+  .taste-body { color: var(--ink); margin: 0 0 .2rem; }
+  .taste-meta { font-size: var(--step--1); color: var(--ink-faint); margin: 0; }
+  .taste-act { display: flex; align-items: center; gap: .6rem; margin-top: .9rem; }
+  .taste-act b {
+    font-size: var(--step--1); font-weight: 600; color: #10160B;
+    background: var(--accent); border-radius: 999px; padding: .35rem .9rem;
+  }
+  .taste-act em { font-style: normal; font-size: var(--step--1); color: var(--ink-faint); }
+  .taste-none { font-size: var(--step--1); color: var(--ink-faint); margin-top: .9rem; }
+
   /* ---------- grids ---------- */
 
   .two { display: grid; gap: clamp(1.6rem, 4vw, 3.2rem); margin-top: 2.6rem; }
@@ -1297,6 +1382,7 @@
   <nav id="topnav">
     <a href="#origin">Why</a>
     <a href="#tour">Product</a>
+    <a href="#instead">Why switch</a>
     <a href="#build">Language</a>
     <a href="/">Open the app</a>
   </nav>
@@ -1382,7 +1468,7 @@
   <div class="wrap">
     <h2 class="rv">How long would that have taken to type?</h2>
     <p class="lead rv d1">You just spoke a sentence and watched it land. Here is the
-    other way &mdash; the only way most people have ever been offered. Same thought,
+    other way &mdash; <strong>the only way most people have ever been offered</strong>. Same thought,
     same phone, a keyboard in between.</p>
 
 <div class="try rv">
@@ -1403,13 +1489,12 @@
       <button class="try-skip" type="button">I get it — skip &rarr;</button>
     </div>
 
-    <p class="body rv d2">Most people never finish. Writing a full thought in
+    <p class="body rv d2"><strong>Most people never finish.</strong> Writing a full thought in
     Devanagari or Tamil on a phone is slow enough that the thought gets
     shortened, or it simply never gets posted.</p>
-    <p class="body rv d3">The apps that <em class="hl">do</em> translate usually
-    translate the content and leave an English interface around it. Navigation,
-    prompts and layout stay foreign. It never feels like a product made for you.
-    It feels like a product made for someone else, that you are allowed to use.</p>
+    <p class="body rv d3">Other apps translate the posts and leave the app in
+    English. <strong>Built for someone else. You are only allowed to
+    use it.</strong></p>
     <p class="punch rv d3">And you quietly decide you are someone who reads,
     not someone who writes.</p>
   </div>
@@ -1419,16 +1504,24 @@
 <section class="stage light" id="insight">
   <div class="wrap">
     <h2 class="rv">Most thoughts die at the second step.</h2>
-    <p class="lead rv d1">You know what you want to say. Then there is a keyboard,
-    or a search box, or a reminder to set &mdash; and somewhere in there you decide
-    it was not that important after all. Say <em class="hl">post this</em>,
-    <em class="hl">find that thread from last week</em>,
-    <em class="hl">remind me tomorrow morning</em>, and the thing you asked for is
-    already done when you look up.</p>
-    <p class="body rv d2">You choose how much rope it gets. <strong>Ask</strong>
-    and Echo only talks back. <strong>Do</strong> and it can act on your behalf
-    &mdash; and anything that writes, posts or spends stops and shows you a
-    confirmation card first. It never takes an action you did not watch it take.</p>
+    <p class="lead rv d1">You know what you want to say. Then there is a
+    keyboard, a search box, a reminder to set &mdash; and you drop it. Say
+    <em class="hl">post this</em>, <em class="hl">find that thread</em>,
+    <em class="hl">remind me tomorrow</em>. <strong>Done before you look
+    up.</strong></p>
+    <p class="body rv d2"><strong>Ask</strong> and it only talks.
+    <strong>Do</strong> and it acts. Anything that writes, posts or spends stops
+    for your confirmation first.</p>
+    <div class="taste rv d3">
+      <p class="taste-ask">Tap one. <strong>This is the card Echo shows you first.</strong></p>
+      <div class="taste-chips" role="group" aria-label="Example commands">
+        <button type="button" data-taste="0">&ldquo;post that I&rsquo;m heading home&rdquo;</button>
+        <button type="button" data-taste="1">&ldquo;remind me to call Ma at seven tomorrow&rdquo;</button>
+        <button type="button" data-taste="2">&ldquo;open my notes&rdquo;</button>
+      </div>
+      <div class="taste-out" id="tasteOut" aria-live="polite"></div>
+    </div>
+
     <div class="steps">
       <div class="step rv d2"><em>1 &middot; Speak</em><p>Hold one button and talk, in any of 26 languages.</p></div>
       <div class="step rv d3"><em>2 &middot; It understands</em><p>Not just the words &mdash; what you wanted done with them.</p></div>
@@ -1454,17 +1547,17 @@
           <div class="panel on" data-panel>
             <p class="gal-index">01 / 04</p>
             <h3>A feed you can actually finish</h3>
-            <p>It greets you by name, in your language, and then it ends. You reach the bottom and you put the phone down. Nobody designed this to keep you here.</p>
+            <p>It greets you by name, in your language, and <strong>then it ends</strong>. You reach the bottom and you put the phone down. Nobody designed this to keep you here.</p>
           </div>
           <div class="panel" data-panel>
             <p class="gal-index">02 / 04</p>
             <h3>One question a day, the same for everyone</h3>
-            <p>Answer it and you unlock everyone else's. Strangers, in their own languages, on the one thing you were all asked today. Then it closes until tomorrow.</p>
+            <p>Answer it and <strong>you unlock everyone else&rsquo;s</strong>. Strangers, in their own languages, on the one thing you were all asked today. Then it closes until tomorrow.</p>
           </div>
           <div class="panel" data-panel>
             <p class="gal-index">03 / 04</p>
             <h3>The part you were going to skip</h3>
-            <p>Writing the caption, finding the message, setting the reminder. Say it once and it is handled &#8212; and you see every action before it happens.</p>
+            <p>Writing the caption, finding the message, setting the reminder. <strong>Say it once and it is handled</strong> &#8212; and you see every action before it happens.</p>
           </div>
           <div class="panel" data-panel>
             <p class="gal-index">04 / 04</p>
@@ -1475,6 +1568,39 @@
         <div class="dots" data-dots aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="stage dark" id="instead">
+  <div class="wrap">
+    <h2 class="rv">Every other feed is built so this never happens.</h2>
+    <p class="lead rv d1">Infinite scroll is not a feature they chose.
+    <strong>It is the business model.</strong> That is why none of them can
+    copy this.</p>
+
+    <!-- Two scrollers rather than a sentence. The claim is about an ending,
+         and an ending is a thing you feel by reaching it. Neither box contains
+         invented posts: fabricating a feed of people who do not exist, on a
+         page whose argument is that real people cannot post, would be the one
+         lie this section cannot afford. They are counters. -->
+    <div class="ends rv d2">
+      <div class="ends-col">
+        <p class="ends-label">What you use now</p>
+        <div class="ends-box" data-endless><div class="ends-inner"></div></div>
+        <p class="ends-note">Keep scrolling. <strong>It will not stop.</strong></p>
+      </div>
+      <div class="ends-col">
+        <p class="ends-label">Echo</p>
+        <div class="ends-box" data-finite><div class="ends-inner"></div></div>
+        <p class="ends-note">Keep scrolling. <strong>You will reach the bottom.</strong></p>
+      </div>
+    </div>
+
+    <p class="body rv d3">Then the daily question. One a day, the same for
+    everyone, and <strong>you answer before you can read anyone else</strong>.
+    No network paid by attention will ever ship that.</p>
+
+    <p class="punch rv d4">Nothing here is for sale. You included.</p>
   </div>
 </section>
 
@@ -1508,11 +1634,10 @@
       </div>
       <div>
         <h2 class="rv d1">Your language, all the way down.</h2>
-        <p class="body rv d2">Not just the posts &mdash; the whole app. The greeting, the
-        filter tabs, the buttons, the prompts, the direction the layout runs in.
-        Switch it and everything moves, including right-to-left for Arabic. You
-        are not using an English app that has learned to translate. You are using
-        an app that is in your language.</p>
+        <p class="body rv d2">Not just the posts &mdash; <strong>the whole
+        app</strong>. Greeting, tabs, buttons, prompts, even the direction it
+        runs. Switch it and everything moves. <strong>Not an English app that
+        translates. An app that is yours.</strong></p>
         <div class="langs" id="langs">
           <div class="lang on"><b>English</b><span>Left to right</span></div>
           <div class="lang"><b>हिन्दी</b><span>Left to right · Devanagari</span></div>
@@ -1552,10 +1677,9 @@
     <div class="dl rv d2">
       <a class="dl-btn" href="https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>Download for Android</a>
       <p class="dl-meta">Echo.apk &middot; 181 MB &middot; free &middot; always the current build</p>
-      <p class="dl-note">Android for now, iOS next. Your phone will ask whether to
-      allow an install from outside the Play Store &mdash; say yes; that is simply
-      what a beta looks like before it is listed. The file comes straight from us,
-      not a mirror.</p>
+      <p class="dl-note">Android for now, iOS next. Your phone will ask to allow
+      an install from outside the Play Store &mdash; <strong>say yes</strong>.
+      That is what a beta looks like.</p>
     </div>
   </div>
 </footer>
@@ -2406,6 +2530,111 @@
   }, { rootMargin: '200px 0px', threshold: 0.15 });
 
   io.observe(v);
+})();
+</script>
+
+
+<script>
+/* The two scrollers.
+ *
+ * The endless one grows as you approach its bottom, so it behaves the way the
+ * thing it is describing behaves. The finite one is twelve rows and a full
+ * stop. Rows are deliberately abstract — a shape, not a post. Inventing a feed
+ * of people who do not exist, in a section arguing that real people cannot
+ * post, would undo the section.
+ */
+(function () {
+  var endless = document.querySelector('[data-endless] .ends-inner');
+  var finite  = document.querySelector('[data-finite] .ends-inner');
+  if (!endless || !finite) return;
+
+  // Numbered, because an unnumbered row of grey bars reads as a loading
+  // skeleton — a visitor would think the page was broken rather than that it
+  // was making a point. The count also does the work: you can see how far you
+  // got, which is the whole difference between the two boxes.
+  function row(n) {
+    var d = document.createElement('div');
+    d.className = 'ends-row';
+    d.innerHTML = '<i></i><span style="width:' + (46 + Math.random() * 40) + '%"></span><u>' + n + '</u>';
+    return d;
+  }
+  function fill(node, n) {
+    var from = node.childElementCount;
+    for (var i = 0; i < n; i++) node.appendChild(row(from + i + 1));
+  }
+
+  fill(endless, 14);
+  fill(finite, 12);
+
+  var end = document.createElement('div');
+  end.className = 'ends-end';
+  end.innerHTML = 'That is everything.<small>see you tomorrow</small>';
+  finite.appendChild(end);
+
+  // Grow the endless column as its bottom is approached, so it is never
+  // reached. No timers: it only costs anything while someone is scrolling it.
+  var box = endless.parentElement;
+  box.addEventListener('scroll', function () {
+    if (box.scrollTop + box.clientHeight > box.scrollHeight - 260) fill(endless, 10);
+  }, { passive: true });
+})();
+</script>
+
+
+<script>
+/* Tap-to-taste.
+ *
+ * Three real commands and the card each one produces. The third is the point
+ * of the set: opening notes writes nothing, so it needs no confirmation, which
+ * is the Ask/Do distinction shown rather than explained.
+ *
+ * Every card says nothing happened, because nothing did. A preview that lets
+ * someone believe they just posted would be the same lie as a faked feed.
+ */
+(function () {
+  var out = document.getElementById('tasteOut');
+  if (!out) return;
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.taste-chips button'));
+
+  var CARDS = [
+    { kind: 'Post \u00b7 to your feed',
+      body: 'Heading home.',
+      meta: 'Voice \u00b7 posts as you, in the language you spoke',
+      act: 'Confirm', hint: 'nothing posts until you tap it' },
+    { kind: 'Reminder \u00b7 tomorrow 07:00',
+      body: 'Call Ma',
+      meta: 'Parsed from \u201cat seven tomorrow\u201d',
+      act: 'Confirm', hint: 'nothing is set until you tap it' },
+    { kind: 'Open \u00b7 Notes',
+      body: 'Notes opens.',
+      meta: 'Reading changes nothing, so there is nothing to confirm.',
+      act: null, hint: null }
+  ];
+
+  function render(i) {
+    var c = CARDS[i];
+    var el = document.createElement('div');
+    el.className = 'taste-card';
+    var html = '<p class="taste-kind">' + c.kind + '</p>'
+             + '<p class="taste-body">' + c.body + '</p>'
+             + '<p class="taste-meta">' + c.meta + '</p>';
+    if (c.act) {
+      html += '<div class="taste-act"><b>' + c.act + '</b><em>' + c.hint + '</em></div>';
+    }
+    html += '<p class="taste-none">This is a preview. <strong>Nothing was posted, '
+          + 'set or opened</strong> \u2014 the page cannot reach your account.</p>';
+    el.innerHTML = html;
+    out.innerHTML = '';
+    out.appendChild(el);
+  }
+
+  chips.forEach(function (b, i) {
+    b.addEventListener('click', function () {
+      chips.forEach(function (o) { o.classList.remove('on'); });
+      b.classList.add('on');
+      render(i);
+    });
+  });
 })();
 </script>
 </body>
