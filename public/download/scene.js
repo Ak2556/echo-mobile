@@ -95,9 +95,32 @@ export function createScene(canvas, tier) {
     drift[i * 3 + 2] = (Math.random() - 0.5) * 3.5;
     // Layout D — the outbox. Points stack into a held column: nothing is lost,
     // nothing has sent. This is store/outbox.ts, not an abstract flourish.
+    //
+    // Two corrections to how that idea was drawn. It was a perfect lattice,
+    // which reads as a texture swatch rather than a queue — the eye sees
+    // graph paper, not held messages — so the rows now carry a little jitter.
+    // And it sat dead centre at uniform density, directly behind the closing
+    // headline, the button and the fine print. An additive field behind body
+    // copy is unreadable at exactly the sizes people read, and this is the
+    // last thing anyone sees before deciding to download.
+    //
+    // Points landing inside the reading ellipse are pushed out along their own
+    // radius, furthest from the middle, so the queue opens around the words
+    // and closes again above and below them. The column is still a column; it
+    // just stopped being drawn through the sentence.
     const row = Math.floor(i / 34);
-    queue[i * 3]     = ((i % 34) - 16.5) * 0.095;
-    queue[i * 3 + 1] = 1.9 - row * 0.105;
+    let qx = ((i % 34) - 16.5) * 0.105 + (seed[i] - 0.5) * 0.05;
+    let qy = 1.9 - row * 0.105 + (Math.random() - 0.5) * 0.042;
+    const ex = qx / 1.35, ey = qy / 0.95;
+    const inside = Math.sqrt(ex * ex + ey * ey);
+    if (inside < 1) {
+      const len = Math.max(1e-4, Math.sqrt(qx * qx + qy * qy));
+      const push = (1 - inside) * 1.05 + 0.10;
+      qx += (qx / len) * push;
+      qy += (qy / len) * push;
+    }
+    queue[i * 3]     = qx;
+    queue[i * 3 + 1] = qy;
     queue[i * 3 + 2] = (seed[i] - 0.5) * 0.25;
   }
 
