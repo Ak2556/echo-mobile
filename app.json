@@ -152,7 +152,7 @@
             "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
             "NSExtensionActivationSupportsImageWithMaxCount": 4
           },
-          "iosShareExtensionName": "Echo"
+          "iosShareExtensionName": "EchoShare"
         }
       ],
       "./plugins/withAndroidEntryPoints",
