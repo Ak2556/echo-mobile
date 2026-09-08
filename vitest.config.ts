@@ -17,6 +17,7 @@ const alias = {
   // every test that reaches lib/supabase would fail on the native runtime.
   'expo-secure-store': path.resolve(__dirname, 'test/stubs/expo-secure-store.ts'),
   'expo-crypto': path.resolve(__dirname, 'test/stubs/expo-crypto.ts'),
+  'expo-apple-authentication': path.resolve(__dirname, 'test/stubs/expo-apple-authentication.ts'),
   // Reanimated 4 loads react-native-worklets at import time, which reaches for
   // the native TurboModule registry and throws under jsdom. 95 files import it,
   // so component tests cannot mount anything real without this.
