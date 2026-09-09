@@ -16,7 +16,7 @@ import {
   Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
   Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
   BellRinging, Drop, MapTrifold, Microphone,
-  AddressBook,
+  AddressBook, DownloadSimple,
 } from 'phosphor-react-native';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { GlassPanel } from '../components/ui/GlassPanel';
@@ -700,6 +700,18 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleAllowDownloads = async (enabled: boolean) => {
+    const prev = s.allowDownloads;
+    s.setAllowDownloads(enabled);
+    if (!isSupabaseRemote()) return;
+    try {
+      await updateRemoteProfile({ allow_downloads: enabled });
+    } catch (e) {
+      s.setAllowDownloads(prev);
+      Alert.alert('Could not update download permission', (e as Error).message);
+    }
+  };
+
   const handleReadReceipts = async (enabled: boolean) => {
     const prev = s.readReceipts;
     s.setReadReceipts(enabled);
@@ -978,6 +990,8 @@ export default function SettingsScreen() {
             />
             {divider}
             <SettingsRow theme={theme} icon={ChatCircle} label={ttx("Read Receipts")} subtitle={ttx("Show when you've read messages")} right={SwitchEl(s.readReceipts, handleReadReceipts)} />
+            {divider}
+            <SettingsRow theme={theme} icon={DownloadSimple} label={ttx("Allow Downloads")} subtitle={ttx("Let others save your photos and videos to their device. Turning this off hides the save option on everything you have posted.")} right={SwitchEl(s.allowDownloads, handleAllowDownloads)} />
             {divider}
             <SettingsRow theme={theme} icon={BellRinging} iconColor={colors.accent} label={ttx("Personalized Notifications")} subtitle={ttx("Let Echo learn your best times and interests to time reminders. Off by default; no profiling until you turn it on.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
             {divider}

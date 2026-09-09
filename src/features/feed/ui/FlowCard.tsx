@@ -5,7 +5,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { HeartStraight, ChatCircle, ShareNetwork, BookmarkSimple, SpeakerHigh, SpeakerSlash, MusicNotesPlus, Play, Pause } from 'phosphor-react-native';
+import { HeartStraight, ChatCircle, ShareNetwork, BookmarkSimple, DownloadSimple, SpeakerHigh, SpeakerSlash, MusicNotesPlus, Play, Pause } from 'phosphor-react-native';
 import { FeedItem } from '../../../../types/index';
 import { VideoPreview } from './VideoPreview';
 import { useResponsiveLayout } from '../../../shared/lib/responsive';
@@ -14,6 +14,8 @@ import { warmAvatarColor } from '../../../../lib/avatarPalette';
 import { useToggleRemoteLike, useToggleRemoteBookmark } from '../api/useSupabaseSocial';
 import { CommentsSheet } from './CommentsSheet';
 import { useAppStore } from '../../../../store/useAppStore';
+import { saveMediaToDevice } from '../../../../lib/mediaDownload';
+import { showToast } from '../../../../components/ui/Toast';
 import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, runOnJS, withDelay } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -138,6 +140,22 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
   const toggleSound = useCallback(() => {
     setSoundEnabled(!soundEnabled);
   }, [soundEnabled, setSoundEnabled]);
+
+  const [saving, setSaving] = useState(false);
+  const handleSaveToDevice = useCallback(async () => {
+    if (saving) return;
+    // Re-checked here even though the button is hidden when the author has
+    // opted out: the gate is the author's decision, and it should not depend on
+    // a render path staying correct.
+    if (item.allowDownloads === false) {
+      showToast('This creator does not allow downloads.');
+      return;
+    }
+    setSaving(true);
+    const result = await saveMediaToDevice(item.videoUri);
+    setSaving(false);
+    if (!result.ok) showToast(result.reason);
+  }, [saving, item.allowDownloads, item.videoUri]);
 
   const singleTap = Gesture.Tap().maxDuration(250).onStart(() => { runOnJS(onSingleTap)(); });
   const doubleTap = Gesture.Tap().numberOfTaps(2).maxDelay(250).onStart((e) => { runOnJS(onDoubleTap)(e.x, e.y); });
@@ -337,6 +355,14 @@ export function FlowCard({ item, index }: { item: FeedItem; index: number }) {
             label={item.isBookmarked ? 'Saved' : 'Save'}
             onPress={() => toggleBookmark({ echoId: item.id, bookmark: !item.isBookmarked })}
           />
+          {item.allowDownloads !== false && (
+            <ActionButton
+              icon={DownloadSimple}
+              weight="fill"
+              label={saving ? 'Saving…' : 'Download'}
+              onPress={handleSaveToDevice}
+            />
+          )}
           <ActionButton 
             icon={ShareNetwork} 
             weight="fill"

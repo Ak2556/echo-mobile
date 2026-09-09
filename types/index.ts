@@ -99,6 +99,12 @@ export interface FeedItem {
   editorialTitle?: string;
   authorNote?: string;
   visibility?: 'public' | 'followers';
+  /**
+   * Whether this echo's author permits their media to be saved to a device.
+   * Defaults true when the author's profile is not loaded — the column itself
+   * defaults true, so an absent value means "not yet known", not "denied".
+   */
+  allowDownloads?: boolean;
   pinned?: boolean;
   series?: string;
   conversationContext?: string;
