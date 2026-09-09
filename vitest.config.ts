@@ -24,6 +24,10 @@ const alias = {
   'react-native-reanimated': path.resolve(__dirname, 'test/stubs/react-native-reanimated.ts'),
   // expo-blur ships JSX inside a .js build file, which Vite will not parse.
   'expo-blur': path.resolve(__dirname, 'test/stubs/expo-blur.ts'),
+  // expo-image imports expo-modules-core at load, which reaches for the Expo
+  // native runtime and throws under jsdom. Most components render an image, so
+  // without this they cannot be mounted at all.
+  'expo-image': path.resolve(__dirname, 'test/stubs/expo-image.ts'),
   // react-native-safe-area-context's commonjs build ships untranspiled .tsx.
   // Screen-level components import it for SafeAreaView, so no screen can be
   // mounted without this.

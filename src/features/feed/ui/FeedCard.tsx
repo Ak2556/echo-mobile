@@ -539,7 +539,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
         >
           <View style={{ height: heroHeight }}>
             {item.postType === 'photo' && (
-              <MediaGrid uris={item.mediaUris!} height={heroHeight} />
+              <MediaGrid uris={item.mediaUris!} height={heroHeight} allowDownloads={item.allowDownloads !== false} />
             )}
             {item.postType === 'video' && item.videoUri && (
               <VideoPreview uri={item.videoUri} height={heroHeight} borderRadius={0} echoId={item.id} />
@@ -901,7 +901,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
               <Text style={{ fontSize: textSize, color: colors.text, marginBottom: 10 }} numberOfLines={compactFeed ? 1 : 3}>{item.prompt}</Text>
             )}
             {item.mediaUris && item.mediaUris.length > 0 && (
-              <MediaGrid uris={item.mediaUris} />
+              <MediaGrid uris={item.mediaUris} allowDownloads={item.allowDownloads !== false} />
             )}
           </View>
         )}
