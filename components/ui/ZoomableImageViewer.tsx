@@ -2,15 +2,25 @@ import React from 'react';
 import { Modal, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CaretLeft, CaretRight, X } from 'phosphor-react-native';
+import { CaretLeft, CaretRight, DownloadSimple, X } from 'phosphor-react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { saveMediaToDevice } from '../../lib/mediaDownload';
+import { showToast } from './Toast';
 
 interface ZoomableImageViewerProps {
   visible: boolean;
   uris: string[];
   initialIndex?: number;
   title?: string;
+  /**
+   * Offer to save the image being viewed.
+   *
+   * Opt-in, and off by default, because this viewer is also used for avatars
+   * and other chrome — only posted media the author permits saving should
+   * carry the action. Callers pass the author's allowDownloads.
+   */
+  canDownload?: boolean;
   onClose: () => void;
 }
 
@@ -19,14 +29,26 @@ export function ZoomableImageViewer({
   uris,
   initialIndex = 0,
   title,
+  canDownload = false,
   onClose,
 }: ZoomableImageViewerProps) {
   const insets = useSafeAreaInsets();
   const [index, setIndex] = React.useState(initialIndex);
+  const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
     if (visible) setIndex(initialIndex);
   }, [initialIndex, visible]);
+
+  const handleSave = React.useCallback(async () => {
+    if (saving) return;
+    setSaving(true);
+    // currentUri, not uris[0]: with up to four photos on a post, the only
+    // unambiguous thing to save is the one actually on screen.
+    const result = await saveMediaToDevice(uris[Math.min(index, uris.length - 1)]);
+    setSaving(false);
+    if (!result.ok) showToast(result.reason);
+  }, [saving, uris, index]);
 
   if (!uris.length) return null;
 
@@ -60,7 +82,20 @@ export function ZoomableImageViewer({
               </Text>
             ) : null}
           </View>
-          <View style={{ width: 40 }} />
+          {canDownload ? (
+            <Pressable
+              onPress={handleSave}
+              hitSlop={14}
+              disabled={saving}
+              accessibilityRole="button"
+              accessibilityLabel={saving ? 'Saving photo' : 'Save photo to your device'}
+              style={[controlStyle, { opacity: saving ? 0.5 : 1 }]}
+            >
+              <DownloadSimple color="#fff" size={20} weight="bold" />
+            </Pressable>
+          ) : (
+            <View style={{ width: 40 }} />
+          )}
         </View>
 
         <ZoomableImage uri={currentUri} resetKey={currentUri} />

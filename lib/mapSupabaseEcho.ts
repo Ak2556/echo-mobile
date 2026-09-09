@@ -18,6 +18,8 @@ export type SupabaseProfileRow = {
   /** ID of the echo the user has pinned to their profile, or null. */
   pinned_echo_id?: string | null;
   is_moderator?: boolean;
+  /** Author opt-out for offline saving of their media. */
+  allow_downloads?: boolean;
 };
 
 export type SupabaseEchoRow = {
@@ -101,6 +103,10 @@ export function mapEchoRowToFeedItem(
     avatarColor: warmAvatarColor(author?.avatar_color, username),
     avatarUrl: author?.avatar_url ?? undefined,
     isVerified: author?.is_verified ?? false,
+    // Default true, matching the column default: an author whose profile row
+    // has not loaded has not denied anything. The action is still gated on the
+    // media existing, so a text echo shows nothing regardless.
+    allowDownloads: author?.allow_downloads ?? true,
     prompt: echo.prompt,
     response: echo.response,
     likes: echo.likes_count ?? 0,

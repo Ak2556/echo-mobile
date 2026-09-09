@@ -441,7 +441,7 @@ export async function uploadEchoVideo(video: UploadableVideo): Promise<string> {
 }
 
 // Profile select helper
-const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id, is_moderator, is_private, dm_privacy, activity_status, online_status, read_receipts, sensitive_content_filter, personalized_notifications';
+const PROFILE_SELECT = 'id, username, display_name, bio, avatar_color, avatar_url, is_verified, created_at, follower_count, mood, mood_expires_at, pronouns, pinned_echo_id, is_moderator, is_private, dm_privacy, activity_status, online_status, read_receipts, sensitive_content_filter, personalized_notifications, allow_downloads';
 const ECHO_SELECT = 'id, author_id, title, prompt, response, likes_count, comment_count, repost_count, view_count, created_at, media_urls, quoted_echo_id, parent_echo_id, remix_root_id, remix_count, perspective_type, perspective_note, source_url, source_conversation_id, thoughtfulness_score, mind_blown_count, taking_notes_count, agree_count, disagree_count, co_author_id, co_author_response, post_type, hls_url';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -1920,6 +1920,8 @@ export async function updateRemoteProfile(updates: {
   online_status?: boolean;
   read_receipts?: boolean;
   personalized_notifications?: boolean;
+  /** Author opt-out for offline saving of their media. */
+  allow_downloads?: boolean;
   // content + AI prefs — synced across all devices
   ai_model?: 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-2.5-flash-lite';
   sensitive_content_filter?: boolean;
@@ -1941,7 +1943,7 @@ export async function fetchAndApplyRemoteSettings(): Promise<void> {
   if (!uid) return;
   const { data, error } = await supabase
     .from('profiles')
-    .select('ai_model, sensitive_content_filter, content_language, stream_responses, auto_save_chats, is_private, dm_privacy, activity_status, online_status, read_receipts, personalized_notifications, notification_prefs')
+    .select('ai_model, sensitive_content_filter, content_language, stream_responses, auto_save_chats, is_private, dm_privacy, activity_status, online_status, read_receipts, personalized_notifications, allow_downloads, notification_prefs')
     .eq('id', uid)
     .single();
   if (error || !data) return;
@@ -1961,6 +1963,7 @@ export async function fetchAndApplyRemoteSettings(): Promise<void> {
   if (data.activity_status != null)           s.setActivityStatus(data.activity_status);
   if (data.online_status != null)             s.setOnlineStatus(data.online_status);
   if (data.read_receipts != null)             s.setReadReceipts(data.read_receipts);
+  if (data.allow_downloads != null)           s.setAllowDownloads(data.allow_downloads);
   if (data.personalized_notifications != null) s.setPersonalizedNotifications(data.personalized_notifications);
 }
 

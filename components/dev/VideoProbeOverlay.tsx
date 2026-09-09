@@ -34,6 +34,12 @@ import { useVideoProbe, probeReset } from '../../lib/devVideoProbe';
  * loop only measures the JS thread, so smooth JS FPS with visible stutter means
  * the cost is native — decode or compositing — and that is itself a finding.
  */
+/** 1/0/- reads faster than true/false/null in a cramped HUD. */
+function b(v: boolean | null): string {
+  if (v === null || v === undefined) return '-';
+  return v ? '1' : '0';
+}
+
 export function VideoProbeOverlay() {
   const probe = useVideoProbe();
   const [fps, setFps] = useState(0);
@@ -93,6 +99,26 @@ export function VideoProbeOverlay() {
         <Text style={{ color: '#fff', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
           {`TIER ${tier}   JS FPS ${fps}   SLOW FRAMES ${drops}/s`}
         </Text>
+        {probe.trace ? (
+          <>
+            <Text style={{ color: '#8f8', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
+              {`FOCUS ${b(probe.trace.focused)} APP ${b(probe.trace.appActive)} MATCH ${b(probe.trace.activeMatch)} ACTIVE ${b(probe.trace.isActive)}`}
+            </Text>
+            <Text style={{ color: '#8f8', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
+              {`PAUSED ${b(probe.trace.paused)} SHOULDPLAY ${b(probe.trace.shouldPlay)} LOAD ${probe.trace.load}`}
+            </Text>
+            <Text style={{ color: '#8f8', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
+              {`SOUND ${b(probe.trace.soundEnabled)} P.MUTED ${b(probe.trace.playerMuted)} P.PLAYING ${b(probe.trace.playerPlaying)}`}
+            </Text>
+            {probe.trace.fail ? (
+              <Text style={{ color: '#ff8', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
+                {`WHY ${probe.trace.fail}`}
+              </Text>
+            ) : null}
+          </>
+        ) : (
+          <Text style={{ color: '#f88', fontSize: 11 }}>no playback trace — no active card</Text>
+        )}
         <Text style={{ color: '#bbb', fontSize: 9, marginTop: 2 }}>tap to reset counters</Text>
       </Pressable>
     </View>

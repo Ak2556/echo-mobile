@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Brain, CaretRight, ChartLineUp, Cpu, Hash, PaintBrush, Play, RocketLaunch, UsersThree } from 'phosphor-react-native';
+import { BookOpen, Brain, Camera, CaretRight, ChartLineUp, Code, Cpu, GameController, MusicNote, PaintBrush, Play, RocketLaunch, Sparkle, UsersThree, VideoCamera } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -28,14 +28,51 @@ import { MiniAppIcon } from '../../components/mini-apps/MiniAppIcon';
 type SearchTab = 'all' | 'people' | 'echoes' | 'topics' | 'tools';
 
 
-const CATEGORY_FALLBACKS = [
-  { label: 'AI', color: '#4E7A8B', Icon: Cpu },
-  { label: 'Design', color: '#C65F3F', Icon: PaintBrush },
-  { label: 'Productivity', color: '#7A8B4E', Icon: ChartLineUp },
-  { label: 'Startups', color: '#8B5E7D', Icon: RocketLaunch },
+const CATEGORY_FALLBACKS = ['AI', 'Design', 'Productivity', 'Startups'];
+
+/**
+ * Icon and colour are chosen by what a topic IS. The previous code indexed a
+ * four-entry table by list position, so the first topic always got the AI chip
+ * and the second always got the design brush — which is why "Video" shipped
+ * wearing a CPU icon and "Ai" a paintbrush.
+ */
+const TOPIC_VISUALS: { match: RegExp; color: string; Icon: React.ComponentType<any> }[] = [
+  { match: /(^|\b)(ai|ml|llm|gpt|machine\s?learning|neural)/i, color: '#4E7A8B', Icon: Cpu },
+  { match: /(video|film|movie|reel|clip|cinema)/i, color: '#C6533F', Icon: VideoCamera },
+  { match: /(design|ux|ui|art|draw|illustrat)/i, color: '#C65F3F', Icon: PaintBrush },
+  { match: /(code|coding|dev|program|software|engineer)/i, color: '#5E7A8B', Icon: Code },
+  { match: /(music|song|audio|beat|sound)/i, color: '#8B5E7D', Icon: MusicNote },
+  { match: /(photo|camera|picture|shot)/i, color: '#7D8B5E', Icon: Camera },
+  { match: /(book|read|writ|story|poem)/i, color: '#8B7A4E', Icon: BookOpen },
+  { match: /(game|gaming|play)/i, color: '#6E5E8B', Icon: GameController },
+  { match: /(startup|founder|business|money|finance)/i, color: '#8B5E7D', Icon: RocketLaunch },
+  { match: /(productiv|habit|focus|growth|goal)/i, color: '#7A8B4E', Icon: ChartLineUp },
 ];
 
+const NEUTRAL_TOPIC_PALETTE = ['#4E7A8B', '#C65F3F', '#7A8B4E', '#8B5E7D', '#6E5E8B'];
+
+function resolveTopicVisual(topic: string) {
+  const hit = TOPIC_VISUALS.find(entry => entry.match.test(topic));
+  if (hit) return { color: hit.color, Icon: hit.Icon };
+  // Hash rather than index: an unrecognised topic keeps the same colour when
+  // the feed reorders it, instead of changing hue on every refresh.
+  let hash = 0;
+  for (let i = 0; i < topic.length; i += 1) hash = (hash * 31 + topic.charCodeAt(i)) >>> 0;
+  return { color: NEUTRAL_TOPIC_PALETTE[hash % NEUTRAL_TOPIC_PALETTE.length], Icon: Sparkle };
+}
+
+/** Hashtags arrive in whatever case the author typed, so "ai" rendered as "Ai". */
+const TOPIC_INITIALISMS = new Set(['ai', 'ui', 'ux', 'ml', 'api', 'diy', 'ceo', 'nba', 'nfl', 'vr', 'ar']);
+function formatTopicLabel(topic: string) {
+  if (TOPIC_INITIALISMS.has(topic.toLowerCase())) return topic.toUpperCase();
+  return topic.charAt(0).toUpperCase() + topic.slice(1);
+}
+
 const SEARCH_TABS: SearchTab[] = ['all', 'people', 'echoes', 'topics', 'tools'];
+
+const HEADER_SEARCH_HEIGHT = 52;
+const HEADER_TITLE_GAP = 12;
+const HEADER_BOTTOM_PAD = 14;
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -101,9 +138,21 @@ export default function SearchScreen() {
   const discovery = useMemo(() => groupDiscovery(feed, interests, followingIds), [feed, followingIds, interests]);
   const { data: remoteSuggested } = useSuggestedUsers();
   const suggestedUsers = (remote ? (remoteSuggested ?? []) : users).slice(0, layout.isWide ? 6 : 4);
-  const topTopics = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(item => ({ topic: item.label, count: 0 }));
-  const headerHeight = insets.top + (layout.isDesktop ? 86 : 112);
-  const trendingColumns = layout.isDesktop ? 3 : 2;
+  const topTopics = topics.length > 0 ? topics : CATEGORY_FALLBACKS.map(label => ({ topic: label, count: 0 }));
+  // Derived from the pieces the header actually contains rather than guessed.
+  // The old constants (112, or 86 on desktop) were smaller than their own
+  // content — ~130pt of title plus a 52pt search field inside a 112pt box with
+  // overflow:'hidden' — so the search bar was clipped along its bottom edge on
+  // every platform. onLayout then corrects the estimate, which matters when
+  // Dynamic Type grows the title beyond its nominal line height.
+  const headerTopPad = insets.top + (layout.isDesktop ? 14 : 10);
+  const headerTitleLine = layout.isPhone ? 38 : 44;
+  const estimatedHeaderHeight = headerTopPad + headerTitleLine + HEADER_TITLE_GAP + HEADER_SEARCH_HEIGHT + HEADER_BOTTOM_PAD;
+  const [measuredHeaderHeight, setMeasuredHeaderHeight] = useState(0);
+  const headerHeight = measuredHeaderHeight || estimatedHeaderHeight;
+  // iPad is not `isDesktop` (that flag is web-only), so it was falling through
+  // to the phone's 2-up grid and rendering ~660pt-wide tiles holding one glyph.
+  const trendingColumns = layout.isDesktop ? 4 : layout.isWide ? 3 : 2;
   const tileGap = 10;
   const tileWidth = Math.floor((layout.wideContentWidth - layout.gutter * 2 - tileGap * (trendingColumns - 1)) / trendingColumns);
   const hasAnyResult = searchBuckets.userMatches.length > 0 ||
@@ -179,16 +228,16 @@ export default function SearchScreen() {
 
             <SectionHeader label={t('explore.browseTopics')} />
             <View style={{ paddingHorizontal: layout.gutter, flexDirection: 'row', flexWrap: 'wrap', gap: tileGap, marginBottom: 18 }}>
-              {topTopics.slice(0, 8).map((item, index) => {
-                const fallback = CATEGORY_FALLBACKS[index % CATEGORY_FALLBACKS.length];
+              {topTopics.slice(0, 8).map(item => {
+                const visual = resolveTopicVisual(item.topic);
                 return (
                   <TopicTile
                     key={item.topic}
-                    label={item.topic}
+                    label={formatTopicLabel(item.topic)}
                     count={item.count}
-                    color={fallback.color}
+                    color={visual.color}
                     width={tileWidth}
-                    Icon={fallback.Icon}
+                    Icon={visual.Icon}
                     onPress={() => setQuery(item.topic)}
                   />
                 );
@@ -242,13 +291,21 @@ export default function SearchScreen() {
 
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, zIndex: 10, overflow: 'hidden' }}>
         <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}>
-          <View style={[layout.wideContentStyle, { paddingTop: insets.top + (layout.isDesktop ? 14 : 8), paddingHorizontal: layout.gutter, paddingBottom: 10 }]}>
-            <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: layout.isPhone ? 38 : 44, letterSpacing: -0.5, marginBottom: 16 }]}>
+          <View
+            onLayout={event => {
+              const next = Math.ceil(event.nativeEvent.layout.height);
+              if (next > 0 && Math.abs(next - headerHeight) > 1) setMeasuredHeaderHeight(next);
+            }}
+            style={[layout.wideContentStyle, { paddingTop: headerTopPad, paddingHorizontal: layout.gutter, paddingBottom: HEADER_BOTTOM_PAD }]}
+          >
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: layout.isPhone ? 34 : 40, lineHeight: headerTitleLine, letterSpacing: -0.5, marginBottom: HEADER_TITLE_GAP }]}>
               {t('nav.explore')}
             </Text>
             <SearchBar value={query} onChangeText={setQuery} placeholder={t('explore.searchPlaceholder')} />
           </View>
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'transparent' }} />
+          {/* Was backgroundColor:'transparent' — an invisible divider, so the
+              glass simply stopped dead against the page and read as a seam. */}
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
         </GlassPanel>
       </View>
     </View>
@@ -415,23 +472,44 @@ function TopicTile({
   const { colors, font } = useTheme();
   return (
     <Pressable onPress={onPress} style={{ width }}>
-      <View style={{ minHeight: 96, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
+      {/* A background and a border: the tile used to be a tint fading to
+          transparent, which on a black ground gave it no bottom edge at all —
+          it dissolved into the page instead of reading as a card. */}
+      <View style={{
+        minHeight: 104,
+        borderRadius: 20,
+        padding: 14,
+        overflow: 'hidden',
+        backgroundColor: colors.surface,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.border,
+        justifyContent: 'space-between',
+      }}>
         <LinearGradient
-          colors={[`${color}22`, 'transparent']}
+          colors={[`${color}2E`, 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={StyleSheet.absoluteFill as any}
           pointerEvents="none"
         />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <Icon color={color} size={20} weight="bold" />
+        <View style={{
+          width: 34,
+          height: 34,
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: `${color}26`,
+        }}>
+          <Icon color={color} size={19} weight="bold" />
         </View>
-        <Text style={[font.display, { color: colors.text, fontSize: 16 }]} numberOfLines={1}>
-          {label}
-        </Text>
-        <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 4 }]}>
-          {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : 'Start exploring'}
-        </Text>
+        <View style={{ marginTop: 14 }}>
+          <Text style={[font.display, { color: colors.text, fontSize: 16 }]} numberOfLines={1}>
+            {label}
+          </Text>
+          <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 3 }]}>
+            {count > 0 ? `${count} Echo${count === 1 ? '' : 'es'}` : 'Start exploring'}
+          </Text>
+        </View>
       </View>
     </Pressable>
   );

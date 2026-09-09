@@ -43,6 +43,8 @@ export interface SettingsSlice {
   soundEnabled: boolean; setSoundEnabled: (v: boolean) => void;
   // ── Privacy ──
   readReceipts: boolean; setReadReceipts: (v: boolean) => void;
+  /** Whether others may save this user's posted media to their device. */
+  allowDownloads: boolean; setAllowDownloads: (v: boolean) => void;
   onlineStatus: boolean; setOnlineStatus: (v: boolean) => void;
   /** DSA opt-in: behavioral profiling to personalize notification timing/content. Default off. */
   personalizedNotifications: boolean; setPersonalizedNotifications: (v: boolean) => void;
@@ -197,6 +199,7 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     notifyMentions: b('notifyMentions', true), setNotifyMentions: s(set, 'notifyMentions'),
     soundEnabled: b('soundEnabled', true), setSoundEnabled: s(set, 'soundEnabled'),
     readReceipts: b('readReceipts', true), setReadReceipts: s(set, 'readReceipts'),
+    allowDownloads: b('allowDownloads', true), setAllowDownloads: s(set, 'allowDownloads'),
     onlineStatus: b('onlineStatus', true), setOnlineStatus: s(set, 'onlineStatus'),
     personalizedNotifications: b('personalizedNotifications', false), setPersonalizedNotifications: s(set, 'personalizedNotifications'),
     dmPrivacy: persistGet<'everyone' | 'followers' | 'nobody'>('dmPrivacy', 'everyone'),

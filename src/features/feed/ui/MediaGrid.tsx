@@ -12,9 +12,11 @@ interface MediaGridProps {
   /** Fill this exact height instead of the default aspect heights (e.g. the
    *  full-bleed hero card). Multi-image grids split it across their rows. */
   height?: number;
+  /** Whether the author permits their media to be saved to a device. */
+  allowDownloads?: boolean;
 }
 
-export function MediaGrid({ uris, height }: MediaGridProps) {
+export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridProps) {
   const { radius } = useTheme();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const count = uris.length;
@@ -95,6 +97,7 @@ export function MediaGrid({ uris, height }: MediaGridProps) {
         visible={viewerIndex !== null}
         uris={uris}
         initialIndex={viewerIndex ?? 0}
+        canDownload={allowDownloads}
         onClose={close}
       />
     </>

@@ -1,3 +1,4 @@
+import { getCurrencySymbol } from '../../lib/currency';
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Platform, Pressable, TextInput, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -422,7 +423,7 @@ export default function AppsScreen() {
                   <StatChip color="#4F7DF3" value={`${dashboard.tasks.open}`} label={ttx("Open tasks")} sub={`${dashboard.tasks.dueToday} due today`} onPress={() => router.push('/mini-apps/tasks' as Href)} />
                   <StatChip color="#7C6CE8" value={`${dashboard.planner.open}`} label={ttx("Plan open")} sub={`${dashboard.planner.done}/${dashboard.planner.total} done`} onPress={() => router.push('/mini-apps/planner' as Href)} />
                   <StatChip color="#12A878" value={`${dashboard.shopping.remaining}`} label={ttx("Shopping")} sub={`${dashboard.shopping.checked} checked`} onPress={() => router.push('/mini-apps/shopping-list' as Href)} />
-                  <StatChip color="#8B5E7D" value={`$${formatMoney(Math.abs(dashboard.expenses.balance))}`} label={ttx("Weekly balance")} sub={`$${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
+                  <StatChip color="#8B5E7D" value={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(Math.abs(dashboard.expenses.balance))}`} label={ttx("Weekly balance")} sub={`${getCurrencySymbol(dashboard.expenses.currency)}${formatMoney(dashboard.expenses.expense)} spent`} onPress={() => router.push('/mini-apps/expenses' as Href)} />
                 </ScrollView>
               </View>
             )}

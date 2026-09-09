@@ -53,8 +53,40 @@ export function probePlayerReleased(): void {
   emit();
 }
 
-export function probeSnapshot(): { live: number; peak: number; created: number } {
-  return { ...state };
+/**
+ * The playback decision for the card currently on screen.
+ *
+ * Added because pause and mute both stopped responding while `live` read 1 —
+ * so the player exists, and the fault is in one of the terms that gate
+ * play/pause/mute. Every one of them looks identical from the source; this
+ * reports which is actually false on the device.
+ */
+export type PlaybackTrace = {
+  focused: boolean;
+  appActive: boolean;
+  activeMatch: boolean;
+  isActive: boolean;
+  paused: boolean;
+  shouldPlay: boolean;
+  soundEnabled: boolean;
+  playerMuted: boolean | null;
+  playerPlaying: boolean | null;
+  load: string;
+  /** Why load failed: a player error message, or the timeout. */
+  fail: string;
+};
+
+let trace: PlaybackTrace | null = null;
+
+/** Reported from an effect, never during render — emit() sets listener state. */
+export function probeTrace(next: PlaybackTrace): void {
+  if (!__DEV__) return;
+  trace = next;
+  emit();
+}
+
+export function probeSnapshot(): { live: number; peak: number; created: number; trace: PlaybackTrace | null } {
+  return { ...state, trace };
 }
 
 export function probeReset(): void {
@@ -65,7 +97,7 @@ export function probeReset(): void {
 }
 
 /** Subscribe a component to counter changes. */
-export function useVideoProbe(): { live: number; peak: number; created: number } {
+export function useVideoProbe(): { live: number; peak: number; created: number; trace: PlaybackTrace | null } {
   const [snap, setSnap] = useState(probeSnapshot);
   useEffect(() => {
     const l = () => setSnap(probeSnapshot());

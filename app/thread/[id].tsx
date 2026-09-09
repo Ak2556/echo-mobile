@@ -249,7 +249,7 @@ export default function ThreadDetailScreen() {
             in beneath it — reads as continuity from the tapped feed card. */}
         {item.postType === 'photo' && item.mediaUris && item.mediaUris.length > 0 ? (
           <Animated.View entering={FadeIn.duration(260)} style={{ marginBottom: 18, marginHorizontal: -8, borderRadius: 22, overflow: 'hidden' }}>
-            <MediaGrid uris={item.mediaUris} />
+            <MediaGrid uris={item.mediaUris} allowDownloads={item.allowDownloads !== false} />
           </Animated.View>
         ) : null}
         {item.postType === 'video' && item.videoUri ? (

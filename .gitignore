@@ -100,3 +100,6 @@ scratch/
 cloudflare/.wrangler/
 cloudflare/downloads/
 play-service-account.json
+
+# Local Netlify folder
+.netlify

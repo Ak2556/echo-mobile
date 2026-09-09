@@ -83,8 +83,15 @@ export default function LoginScreen() {
     }
     const status = await refreshAuthSession();
     setAppleLoading(false);
-    if (status === 'ready') router.replace('/(tabs)/home');
-    else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
+    if (status === 'ready') { router.replace('/(tabs)/home'); return; }
+    if (status === 'needs-onboarding') { router.replace('/auth/signup-wizard'); return; }
+    // Apple returned a credential and Supabase accepted it, yet no session
+    // came back. Previously this fell off the end of the function: no
+    // navigation, no toast, no log — the button just stopped spinning and the
+    // screen sat there. A dead end the user cannot act on is worse than an
+    // error they can report, so say so and leave a trace in the console.
+    console.error('[auth/apple] signed in but session did not settle, status =', status);
+    showToast('Apple sign-in did not complete. Please try again.', t('auth.error'));
   };
 
   const handleGoogle = async () => {

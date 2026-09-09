@@ -29,20 +29,44 @@ export default function WatchScreen() {
   const layout = useResponsiveLayout();
 
   const setActiveEchoId = useActiveVideoStore(s => s.setActiveEchoId);
+
+  // Which card was on screen when we left. Needed because focus cannot ask the
+  // list what is visible, and the list will not volunteer it again — see below.
+  const lastActiveIdRef = useRef<string | null>(null);
+  // Read inside the focus effect without making the feed a dependency: adding
+  // it there would re-run the effect on every refetch, and the cleanup would
+  // null the active video mid-scroll.
+  const feedRef = useRef(feed);
+  feedRef.current = feed;
+
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: { item?: any }[] }) => {
     const first = viewableItems?.find((v) => v?.item?.id)?.item;
     if (first) {
+      lastActiveIdRef.current = first.id;
       setActiveEchoId(first.id);
     } else {
       setActiveEchoId(null);
     }
   }).current;
-  
+
   useFocusEffect(
     useCallback(() => {
-      // Focus: do nothing, viewability config will update it
+      // Restoring on focus is not redundant with the viewability callback.
+      // FlatList reports viewable items only when that set CHANGES, and coming
+      // back to this tab changes nothing — the same card is still on screen.
+      // So the id cleared on blur stayed null, no card was active, and
+      // useVideoMountPolicy released the player. Tap-to-pause and the mute
+      // button then toggled state against a player that no longer existed, and
+      // both looked dead until the user happened to scroll.
+      const remembered = lastActiveIdRef.current;
+      // Only if it survived: a refetch while away can drop the card, and
+      // activating a stale id would leave nothing playing. In that case the
+      // item set really did change, so viewability fires on its own.
+      if (remembered && feedRef.current.some(entry => entry.id === remembered)) {
+        setActiveEchoId(remembered);
+      }
       return () => {
-        // Blur: clear active video so it doesn't block other screens
+        // Blur: clear active video so it doesn't block other screens.
         setActiveEchoId(null);
       };
     }, [setActiveEchoId])

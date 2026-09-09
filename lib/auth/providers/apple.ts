@@ -53,6 +53,10 @@ export async function signInWithApple(): Promise<ProviderResult> {
     // Anything we want from them has to be taken here or it is gone. The
     // identity token is the only part that arrives every time.
     if (!credential.identityToken) {
+      console.error('[auth/apple] no identityToken on credential', {
+        user: credential.user,
+        hasEmail: Boolean(credential.email),
+      });
       return { error: 'Apple did not return an identity token. Try again.' };
     }
 
@@ -61,7 +65,13 @@ export async function signInWithApple(): Promise<ProviderResult> {
       token: credential.identityToken,
     });
 
-    if (error) return { error: error.message };
+    if (error) {
+      // Returned as a value AND logged. The value drives the toast; the log is
+      // what makes the cause recoverable from a device, where the toast is
+      // gone in three seconds and there is no other trace.
+      console.error('[auth/apple] signInWithIdToken failed:', error.message, error);
+      return { error: error.message };
+    }
     return { error: null };
   } catch (e) {
     // Dismissing the sheet is a choice, not a failure. The login screen
@@ -70,6 +80,7 @@ export async function signInWithApple(): Promise<ProviderResult> {
     if (code === 'ERR_REQUEST_CANCELED' || code === 'ERR_CANCELED') {
       return { error: CANCELLED };
     }
+    console.error('[auth/apple] threw:', code, e);
     return { error: e instanceof Error ? e.message : 'Apple sign-in failed.' };
   }
 }

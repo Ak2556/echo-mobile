@@ -28,6 +28,16 @@ export interface ThemeColors {
   textMuted: string;
   accent: string;
   accentMuted: string;
+  /**
+   * A foreground that is actually readable on `accent`.
+   *
+   * `accent` is user-chosen, and the built-in themes ship accents as light as
+   * #FFFFFF — so no fixed foreground works for it. Call sites that hardcoded
+   * '#fff' put white on white in two of the nine themes, and white on a light
+   * custom accent for anyone who picked one: the Chat share nudge rendered as
+   * a blank accent-coloured bar with an arrow and no readable label.
+   */
+  onAccent: string;
   danger: string;
   dangerMuted: string;
   success: string;
@@ -44,7 +54,13 @@ export interface ThemeColors {
     ambientGradient: readonly [string, string];
 }
 
-const THEMES: Record<ThemeName, ThemeColors> = {
+/**
+ * onAccent is derived from the accent at use time, not stored per theme —
+ * the user can override the accent, so a baked-in value would be stale.
+ */
+type BaseThemeColors = Omit<ThemeColors, 'onAccent'>;
+
+const THEMES: Record<ThemeName, BaseThemeColors> = {
   midnight: {
     name: 'Midnight',
     isDark: true,
@@ -345,7 +361,7 @@ export type GlassIntensityTokens = typeof GLASS_INTENSITY;
 
 
 
-export const getPairedTheme = (themeName: ThemeName, wantDark: boolean): ThemeColors => {
+export const getPairedTheme = (themeName: ThemeName, wantDark: boolean): BaseThemeColors => {
   const base = THEMES[themeName] || THEMES.midnight;
   if (base.isDark === wantDark) return base;
     const map: Record<string, ThemeName> = {
@@ -381,6 +397,21 @@ export function useTheme() {
   const base = getPairedTheme(themeName, darkMode);
 
   
+  /**
+   * Whichever of near-black / white contrasts better with the accent, by WCAG
+   * relative luminance. The threshold is the crossover point where the two
+   * swap places (L+0.05)^2 = 0.0588, not a guess.
+   */
+  const readableOn = (hex: string): string => {
+    const raw = (hex || '').replace('#', '');
+    const full = raw.length === 3 ? raw.split('').map(ch => ch + ch).join('') : raw;
+    if (full.length < 6 || /[^0-9a-f]/i.test(full.slice(0, 6))) return '#FFFFFF';
+    const channel = (i: number) => parseInt(full.slice(i, i + 2), 16) / 255;
+    const lin = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    const luminance = 0.2126 * lin(channel(0)) + 0.7152 * lin(channel(2)) + 0.0722 * lin(channel(4));
+    return luminance > 0.1925 ? '#09090B' : '#FFFFFF';
+  };
+
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -392,6 +423,7 @@ export function useTheme() {
     ...base,
     accent: accentColor || base.accent,
     accentMuted: hexToRgba(accentColor || base.accent, base.isDark ? 0.15 : 0.12),
+    onAccent: readableOn(accentColor || base.accent),
     bg: (pureBlackBg && base.isDark) ? base.bgPure : base.bg,
   };
 

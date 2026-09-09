@@ -142,12 +142,19 @@ export interface ExpenseSummary {
   balance: number;
   byCategory: Array<{ category: string; amount: number; type: TxType }>;
   transactions: Transaction[];
+  /** The user's chosen currency. Without this every caller has to guess, and
+   *  the Tools dashboard guessed dollars at a user keeping books in rupees. */
+  currency: CurrencyCode;
 }
 
 export async function summarizeExpenses(input: {
   range?: 'week' | 'month' | 'all';
 } = {}): Promise<ExpenseSummary> {
-  const txs = await loadTransactions();
+  // The doc rather than loadTransactions(): it is the same single read —
+  // loadTransactions() calls loadExpensesDoc() — and it also carries the
+  // currency, which the summary previously threw away.
+  const doc = await loadExpensesDoc();
+  const txs = doc.txs;
   const range = input.range ?? 'week';
   const from = rangeStart(range);
   const transactions = from ? txs.filter(tx => new Date(tx.date) >= from) : txs;
@@ -166,6 +173,7 @@ export async function summarizeExpenses(input: {
     balance: income - expense,
     byCategory: [...categoryMap.values()].sort((a, b) => b.amount - a.amount),
     transactions,
+    currency: doc.currency,
   };
 }
 
