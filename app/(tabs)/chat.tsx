@@ -959,14 +959,14 @@ export default function ChatScreen() {
                 }}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', letterSpacing: 0 }}>
+                  <Text style={{ color: colors.onAccent, fontSize: 14, fontWeight: '700', letterSpacing: 0 }}>
                     Draft ready
                   </Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12, marginTop: 2 }}>
+                  <Text style={{ color: colors.onAccent, opacity: 0.78, fontSize: 12, marginTop: 2 }}>
                     Turn this conversation into an Echo.
                   </Text>
                 </View>
-                <ArrowUpRight color="#fff" size={18} weight="bold" />
+                <ArrowUpRight color={colors.onAccent} size={18} weight="bold" />
               </AnimatedPressable>
             </Animated.View>
           ) : null}
