@@ -1,5 +1,6 @@
 import { EchoReaction, FeedItem, PerspectiveType, ReactionCounts } from '../types';
 import { isVideoUri } from './videoMedia';
+import { normalizeLegacyMediaUrl } from './workerUrl';
 import { warmAvatarColor } from './avatarPalette';
 
 export type SupabaseProfileRow = {
@@ -90,10 +91,18 @@ export function mapEchoRowToFeedItem(
   coAuthor?: SupabaseProfileRow | undefined,
 ): FeedItem {
   const username = author?.username ?? 'unknown';
-  const mediaUris = echo.media_urls?.length ? echo.media_urls : undefined;
+  // Normalised at the boundary, once: echoes posted before media moved to R2
+  // still carry Supabase Storage URLs, and that origin is the one that fails
+  // when the project is egress-restricted. Doing it here rather than at each
+  // consumer means no screen can forget.
+  const mediaUris = echo.media_urls?.length
+    ? echo.media_urls.map(url => normalizeLegacyMediaUrl(url))
+    : undefined;
   // If we have an HLS transcoded URL, use it directly for instant playback.
   // Otherwise, fallback to scanning media_urls for a raw .mp4 or .mov.
-  const videoUri = echo.hls_url ?? mediaUris?.find(isVideoUri);
+  const videoUri = echo.hls_url
+    ? normalizeLegacyMediaUrl(echo.hls_url)
+    : mediaUris?.find(isVideoUri);
   const moodActive = isMoodActive(author?.mood, author?.mood_expires_at);
   return {
     id: echo.id,
@@ -101,7 +110,7 @@ export function mapEchoRowToFeedItem(
     username,
     displayName: author?.display_name || username,
     avatarColor: warmAvatarColor(author?.avatar_color, username),
-    avatarUrl: author?.avatar_url ?? undefined,
+    avatarUrl: normalizeLegacyMediaUrl(author?.avatar_url ?? undefined),
     isVerified: author?.is_verified ?? false,
     // Default true, matching the column default: an author whose profile row
     // has not loaded has not denied anything. The action is still gated on the
@@ -149,7 +158,7 @@ export function mapEchoRowToFeedItem(
       username: coAuthor?.username ?? 'unknown',
       displayName: coAuthor?.display_name || coAuthor?.username || 'unknown',
       avatarColor: warmAvatarColor(coAuthor?.avatar_color, coAuthor?.username ?? 'co'),
-      avatarUrl: coAuthor?.avatar_url ?? undefined,
+      avatarUrl: normalizeLegacyMediaUrl(coAuthor?.avatar_url ?? undefined),
       isVerified: coAuthor?.is_verified ?? false,
     } : undefined,
     coAuthorResponse: echo.co_author_response ?? undefined,
