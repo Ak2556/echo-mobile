@@ -1,3 +1,4 @@
+import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { hmac } from "https://deno.land/x/crypto@v0.3.0/mod.ts";
@@ -21,7 +22,7 @@ serve(async (req) => {
       "hex"
     );
 
-    if (expectedSignature !== signature) {
+    if (!(await timingSafeEqual(expectedSignature, signature))) {
       return new Response('Invalid signature', { status: 400 })
     }
 

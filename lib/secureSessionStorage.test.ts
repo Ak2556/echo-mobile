@@ -128,13 +128,41 @@ describe('secureSessionStorage', () => {
     await expect(relaunched.getItem(KEY)).resolves.toBeNull();
   });
 
-  it('still signs people in when the keychain is unavailable', async () => {
-    // iOS simulators without a signing entitlement throw on every keychain
-    // call. Failing closed there would make the app unusable in development.
+  it('refuses to persist the session when the keychain is unavailable', async () => {
+    // This used to fall back to writing the session as plaintext, so that an
+    // iOS simulator without a signing entitlement — which throws on every
+    // keychain call — stayed usable. That traded the one thing this module
+    // exists to prevent for developer convenience, and did it silently.
+    //
+    // Now it declines. The session is still live in memory, so the user stays
+    // signed in for this launch; they re-authenticate on the next one. The
+    // cost is re-signing in on such a simulator every launch.
     secureStoreAvailable = false;
 
     await secureSessionStorage.setItem(KEY, SESSION);
-    await expect(secureSessionStorage.getItem(KEY)).resolves.toBe(SESSION);
+
+    expect(asyncStore[KEY], 'the session must never reach disk unencrypted').toBeUndefined();
+    await expect(secureSessionStorage.getItem(KEY)).resolves.toBeNull();
+  });
+
+  it('clears any earlier envelope rather than leaving a stale session behind', async () => {
+    // Persist normally, then lose the keychain. Declining to write is not
+    // enough on its own: the previous envelope would still be there, and the
+    // next launch would restore an older session than the one the user just
+    // established.
+    await secureSessionStorage.setItem(KEY, SESSION);
+    expect(asyncStore[KEY]).toBeDefined();
+
+    // A cold process is required: the running one still holds the key in
+    // memory, so it would happily encrypt and never reach the refusal path.
+    for (const k of Object.keys(secureStore)) delete secureStore[k];
+    secureStoreAvailable = false;
+    vi.resetModules();
+    const relaunched = (await import('./secureSessionStorage')).secureSessionStorage;
+
+    await relaunched.setItem(KEY, '{"access_token":"newer"}');
+
+    expect(asyncStore[KEY]).toBeUndefined();
   });
 
   it('removes both halves on sign-out', async () => {

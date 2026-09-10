@@ -12,6 +12,7 @@ import { loadPersonaProfile } from '../persona';
 import { syncNotificationProfile } from '../personalNudges';
 import { useAuthStore } from './store';
 import { destinationFor } from './destination';
+import { clearLocalUserData } from '../localDataReset';
 import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
 import { withAuthTimeout } from './timeout';
@@ -244,6 +245,10 @@ export function AuthListenerProvider(): null {
         app.setOnboardingDraftCreated(false);
         app.resetSocialData();
         app.clearChatHistory();
+        // The Zustand stores above are only half of it: the persisted query
+        // cache and the offline message database outlive them, unencrypted,
+        // and held the previous account's DMs until this was added.
+        void clearLocalUserData();
       }
       }),
     );

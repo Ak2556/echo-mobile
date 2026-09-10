@@ -15,6 +15,7 @@
 // The same secret must also live in Vault as `daily_push_secret` so the cron
 // SQL can read it (the migration explains this).
 
+import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -41,7 +42,7 @@ Deno.serve(async (req: Request) => {
   // Gate: constant header check. Refuse if no secret is configured at all so a
   // misconfigured deploy can't be triggered anonymously.
   const provided = req.headers.get('x-cron-secret') ?? '';
-  if (!CRON_SECRET || provided !== CRON_SECRET) {
+  if (!CRON_SECRET || !(await timingSafeEqual(provided, CRON_SECRET))) {
     return json({ error: 'unauthorized' }, 401);
   }
 
