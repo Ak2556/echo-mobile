@@ -1,3 +1,4 @@
+import { timingSafeEqual } from './timingSafeEqual';
 import { Hono } from 'hono';
 import { AwsClient } from 'aws4fetch';
 
@@ -72,9 +73,10 @@ app.post('/purge-user', async (c) => {
   const expected = c.env.PURGE_SECRET;
 
   if (!expected) return c.json({ error: 'Purge is not configured' }, 503);
-  // Constant-length compare; these are short strings so a plain !== leaks
-  // little, but there is no reason to be sloppy about it.
-  if (!provided || provided.length !== expected.length || provided !== expected) {
+  // Genuinely constant-time now. The previous comment claimed this and the
+  // code did not do it: `provided !== expected` short-circuits on the first
+  // differing byte.
+  if (!provided || !(await timingSafeEqual(provided, expected))) {
     return c.json({ error: 'Forbidden' }, 403);
   }
 

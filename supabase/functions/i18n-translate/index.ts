@@ -10,6 +10,7 @@
 //   POST { language: "hi", languageName: "Hindi", items: { "key": "English text" } }
 //   200  { translations: { "key": "अनुवाद" } }
 
+import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
   // offline script can populate all languages without a session. App calls still
   // go through normal user auth below.
   const genSecret = req.headers.get("x-gen-secret") ?? "";
-  const isGenerator = GEN_SECRET.length > 0 && genSecret === GEN_SECRET;
+  const isGenerator = GEN_SECRET.length > 0 && (await timingSafeEqual(genSecret, GEN_SECRET));
 
   if (!isGenerator) {
     const authHeader = req.headers.get("Authorization") ?? "";

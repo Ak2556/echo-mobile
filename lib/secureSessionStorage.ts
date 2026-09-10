@@ -135,14 +135,25 @@ export const secureSessionStorage = {
   async setItem(key: string, value: string): Promise<void> {
     const aesKey = await getKey();
     if (!aesKey) {
-      await AsyncStorage.setItem(key, value);
+      // Refuse rather than downgrade. Writing the session unencrypted is the
+      // exact thing this module exists to prevent, and the old fallback did it
+      // silently — no report on this branch — so an app could sit in plaintext
+      // forever with nothing to show for it.
+      //
+      // Removing the key as well as declining to write it matters: a stale
+      // envelope left behind would restore an older session on next launch,
+      // which is a worse surprise than signing in again. The user stays signed
+      // in for this launch (the session is live in memory) and re-authenticates
+      // next time.
+      report(new Error('keychain unavailable — refusing to persist session unencrypted'), 'keychain');
+      await AsyncStorage.removeItem(key);
       return;
     }
     try {
       await AsyncStorage.setItem(key, encrypt(aesKey, value));
     } catch (error) {
       report(error, 'encrypt');
-      await AsyncStorage.setItem(key, value);
+      await AsyncStorage.removeItem(key);
     }
   },
 

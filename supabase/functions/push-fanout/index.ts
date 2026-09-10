@@ -10,6 +10,7 @@
 // The actor_id is used to load the actor's display_name so the title can read
 // "Alice reacted with 🤯" instead of just "New reaction".
 
+import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Shared with the app so the channel/category ids can never drift apart: the
 // client registers exactly what this stamps. See lib/notifications/routing.ts.
@@ -49,7 +50,7 @@ Deno.serve(async (req: Request) => {
 
   // Only the DB trigger (which passes the shared secret) may call this function.
   const provided = req.headers.get('x-push-fanout-secret') ?? '';
-  if (!PUSH_FANOUT_SECRET || provided !== PUSH_FANOUT_SECRET) {
+  if (!PUSH_FANOUT_SECRET || !(await timingSafeEqual(provided, PUSH_FANOUT_SECRET))) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
   }
 

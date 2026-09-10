@@ -46,6 +46,19 @@ const webStorage = {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: Platform.OS === 'web' ? webStorage : secureSessionStorage,
+    // PKCE, not the library default of 'implicit'.
+    //
+    // Under the implicit flow the provider hands back the access AND refresh
+    // tokens in the redirect fragment — here, a deep link to echo://auth/callback.
+    // A custom scheme is not owned: any app on the device can register echo://,
+    // and one that wins that race walks away with a refresh token, which is
+    // account takeover that survives a password change.
+    //
+    // PKCE returns a single-use code instead, worthless without the verifier
+    // held in this app's own storage. lib/auth/callback.ts already called
+    // exchangeCodeForSession — the flow was written for PKCE and only the
+    // configuration was missing.
+    flowType: 'pkce',
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: Platform.OS === 'web',

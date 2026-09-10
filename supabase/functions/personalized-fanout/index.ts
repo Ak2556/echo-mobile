@@ -11,6 +11,7 @@
 //   supabase secrets set PERSONALIZED_PUSH_SECRET=<random-string>
 //   (+ the same value in Vault as personalized_push_secret — see the migration)
 
+import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Occasion copy (birthday, Indian festivals) lives beside the routing table the
 // push path already shares. See lib/notifications/triggerCopy.ts.
@@ -96,7 +97,7 @@ Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
 
   const provided = req.headers.get('x-cron-secret') ?? '';
-  if (!CRON_SECRET || provided !== CRON_SECRET) return json({ error: 'unauthorized' }, 401);
+  if (!CRON_SECRET || !(await timingSafeEqual(provided, CRON_SECRET))) return json({ error: 'unauthorized' }, 401);
 
   const nowHour = new Date().getUTCHours();
   const cutoff = new Date(Date.now() - MIN_HOURS_BETWEEN * 3_600_000).toISOString();

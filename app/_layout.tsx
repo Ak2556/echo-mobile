@@ -1,3 +1,4 @@
+import { registerQueryClient } from '../lib/localDataReset';
 import { useEffect } from 'react';
 import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
@@ -125,6 +126,10 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// So sign-out can clear it. The listener cannot import this file — it
+// renders the listener — so the client registers itself here instead.
+registerQueryClient(queryClient);
 
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <AppErrorBoundary {...props} />;

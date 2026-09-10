@@ -9,6 +9,7 @@
 //
 // POST body: { "limit"?: number }  (default 20, max 50)
 
+import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -87,7 +88,7 @@ Deno.serve(async (req: Request) => {
 
   // Admin-only ops tool — reject all callers that don't know the secret.
   const provided = req.headers.get("x-admin-secret") ?? "";
-  if (!ADMIN_SECRET || provided !== ADMIN_SECRET) {
+  if (!ADMIN_SECRET || !(await timingSafeEqual(provided, ADMIN_SECRET))) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
       status: 401,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
