@@ -552,7 +552,7 @@ RETURNS TABLE (
   distance       float8
 )
 LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
   WITH anchor AS (
     SELECT embedding FROM public.visible_echoes WHERE id = p_echo_id AND check_content = true
@@ -575,7 +575,7 @@ AS $$
 $$;
 
 -- ── get_trending_evolutions: 2 references repointed ──────────────────────────
-create function public.get_trending_evolutions(
+create or replace function public.get_trending_evolutions(
   p_limit int default 20
 )
 returns table (
@@ -655,7 +655,7 @@ as $$
 $$;
 
 -- ── get_remix_tree: 2 references repointed ──────────────────────────
-create function public.get_remix_tree(
+create or replace function public.get_remix_tree(
   p_root_id uuid
 )
 returns table (
@@ -731,7 +731,7 @@ returns table (
   affinity       float8   -- cosine similarity in [-1, 1]; 1 = identical taste
 )
 language sql stable security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   with viewer as (
     select avg(e.embedding)::vector(768) as centroid
