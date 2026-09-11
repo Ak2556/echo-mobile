@@ -14,6 +14,7 @@ import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
 import { APP_LANGUAGES } from './languages';
 import { WORKER_URL, dmMediaUrl, uploadUrlEndpoint } from './workerUrl';
+import { downscaleForUpload, MAX_UPLOAD_EDGE } from './imageUploadPrep';
 
 async function translateFeedItems(items: FeedItem[]): Promise<FeedItem[]> {
   const contentLanguage = useAppStore.getState().contentLanguage;
@@ -133,6 +134,22 @@ function assertImageUploadAllowed(image: UploadableImage): { ext: string; conten
   }
 
   return { ext: ext === 'jpeg' ? 'jpg' : ext, contentType };
+}
+
+/**
+ * Validate a picked image, then downscale it for upload.
+ *
+ * Validation runs on the original, so a type the app rejects cannot slip
+ * through by being re-encoded as JPEG.
+ */
+async function prepareImageUpload(
+  picked: UploadableImage,
+  maxEdge: number,
+): Promise<{ image: UploadableImage; ext: string; contentType: string }> {
+  const original = assertImageUploadAllowed(picked);
+  const resized = await downscaleForUpload(typeof picked === 'string' ? picked : picked.uri, maxEdge);
+  if (!resized) return { image: picked, ...original };
+  return { image: { uri: resized, mimeType: 'image/jpeg' }, ext: 'jpg', contentType: 'image/jpeg' };
 }
 
 function dmMediaPathFromStoredValue(value: string | null | undefined): string | null {
@@ -313,12 +330,12 @@ function assertVideoUploadAllowed(video: UploadableVideo): { ext: string; conten
   return { ext, contentType };
 }
 
-export async function uploadAvatar(image: UploadableImage): Promise<string> {
+export async function uploadAvatar(picked: UploadableImage): Promise<string> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   await checkRemoteAppRateLimit('avatar_upload_hour', 10, 3600);
 
-  const { ext, contentType } = assertImageUploadAllowed(image);
+  const { image, ext, contentType } = await prepareImageUpload(picked, MAX_UPLOAD_EDGE.avatar);
   const path = `${uid}/avatar.${ext}`;
 
   const { data: { session } } = await supabase.auth.getSession();
@@ -357,8 +374,7 @@ export async function uploadEchoImages(images: UploadableImage[]): Promise<strin
   // Since we upload directly to S3 via presigned URLs, if one fails, we can't easily
   // delete the others without another worker endpoint. But R2 is cheap, orphaned files are okay.
   for (let i = 0; i < Math.min(images.length, 4); i++) {
-    const image = images[i];
-    const { ext, contentType } = assertImageUploadAllowed(image);
+    const { image, ext, contentType } = await prepareImageUpload(images[i], MAX_UPLOAD_EDGE.post);
     const path = `${uid}/${Date.now()}_${i}.${ext}`;
 
     const uri = typeof image === 'string' ? image : image.uri;

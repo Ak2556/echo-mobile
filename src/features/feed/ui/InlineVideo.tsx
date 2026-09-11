@@ -55,7 +55,7 @@ function InlineVideoInner({ uri, caption, height = 260, qualities, onRetry, onRe
   const { colors, radius, fontSizes } = useTheme();
   const videoRef = useRef<VideoView>(null);
   const [activeUri, setActiveUri] = useState(uri);
-  const player = useVideoPlayer(activeUri);
+  const player = useVideoPlayer(videoSourceForUri(activeUri));
 
   // THROWAWAY probe (lib/devVideoProbe.ts) — remove with it.
   useEffect(() => {

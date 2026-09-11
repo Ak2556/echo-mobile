@@ -16,8 +16,21 @@ export function videoContentKind(uri: string): VideoContentKind {
   return 'auto';
 }
 
+/**
+ * The player source for a URI.
+ *
+ * `useCaching` keeps a remote video on disk after it has played. Without it
+ * expo-video fetches the whole file again every time a player is created for it
+ * — scrolling back to a post, reopening the feed. HLS is left out: iOS cannot
+ * cache it.
+ */
 export function videoSourceForUri(uri: string | undefined | null): VideoSource {
   if (!uri) return null;
   const contentType = videoContentKind(uri);
-  return contentType === 'auto' ? { uri } : { uri, contentType };
+  const useCaching = contentType !== 'hls' && /^https?:\/\//i.test(uri);
+  return {
+    uri,
+    ...(contentType === 'auto' ? {} : { contentType }),
+    ...(useCaching ? { useCaching: true } : {}),
+  };
 }
