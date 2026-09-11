@@ -2,6 +2,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import type { CurrencyCode } from './currency';
 import { uploadUrlEndpoint } from './workerUrl';
+import { downscaleForUpload, MAX_UPLOAD_EDGE } from './imageUploadPrep';
 
 export type ListingCondition = 'New' | 'Like new' | 'Good' | 'Service';
 export type ListingStatus = 'active' | 'sold' | 'paused' | 'removed';
@@ -177,7 +178,8 @@ export async function uploadListingImages(uris: string[]): Promise<string[]> {
 
   const urls: string[] = [];
   for (let i = 0; i < Math.min(uris.length, 6); i++) {
-    const uri = uris[i];
+    // A downscaled copy is written as .jpg, so the extension below follows it.
+    const uri = (await downscaleForUpload(uris[i], MAX_UPLOAD_EDGE.post)) ?? uris[i];
     const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
     const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext) ? ext : 'jpg';
     const path = `${user.id}/${Date.now()}_${i}.${safeExt}`;
