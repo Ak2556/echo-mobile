@@ -114,14 +114,20 @@ function selectLegacySql() {
 }
 
 /**
- * The first complete JSON object in the CLI's stdout, or null. The CLI can print
- * other text around it, such as its "new version available" notice, so parsing
- * everything from the first `{` fails. This walks braces, skipping strings, to
- * find where the object ends.
+ * The first complete JSON value (object or array) in the CLI's stdout, or null.
+ * The CLI can print other text around it, such as its "new version available"
+ * notice. This walks brackets, skipping strings, to find where the value ends.
+ *
+ * Arrays matter: `supabase db query -o json` prints the rows as a bare array.
+ * An earlier version looked only for `{`, parsed the FIRST ROW as the whole
+ * result, found no `.rows` on it, and reported zero rows. That is the failure
+ * this function must never repeat, so `rowsFrom` refuses any shape it does not
+ * recognise instead of defaulting to [].
  */
 export function extractJsonObject(text) {
-  const start = text.indexOf('{');
-  if (start < 0) return null;
+  const match = /[[{]/.exec(text);
+  if (!match) return null;
+  const start = match.index;
   let depth = 0;
   let inString = false;
   let escaped = false;
@@ -134,13 +140,20 @@ export function extractJsonObject(text) {
       continue;
     }
     if (ch === '"') inString = true;
-    else if (ch === '{') depth += 1;
-    else if (ch === '}') {
+    else if (ch === '{' || ch === '[') depth += 1;
+    else if (ch === '}' || ch === ']') {
       depth -= 1;
       if (depth === 0) return JSON.parse(text.slice(start, i + 1));
     }
   }
   throw new Error(`unterminated JSON in CLI output: ${text.slice(start, start + 200)}`);
+}
+
+/** Rows from a parsed CLI result. Throws on anything unrecognised — never []. */
+export function rowsFrom(parsed) {
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && Array.isArray(parsed.rows)) return parsed.rows;
+  throw new Error(`unrecognised CLI JSON shape: ${JSON.stringify(parsed).slice(0, 200)}`);
 }
 
 async function query(sql, { rowsExpected = true } = {}) {
@@ -150,12 +163,28 @@ async function query(sql, { rowsExpected = true } = {}) {
     env: { ...process.env, SUPABASE_INTERNAL_NO_UPDATE_CHECK: '1' },
   });
   const parsed = extractJsonObject(stdout);
-  if (!parsed) {
+  if (parsed === null) {
     // A DO block returns no rows, and the CLI may print nothing JSON-shaped for it.
     if (!rowsExpected) return [];
     throw new Error(`unexpected CLI output: ${stdout.slice(0, 200)}`);
   }
-  return parsed.rows ?? [];
+  return rowsExpected ? rowsFrom(parsed) : [];
+}
+
+function countLegacySql() {
+  return 'select (' + TARGETS.map(({ table, column }) =>
+    `(select count(*) from public.${table} where ${column}::text like '%supabase.co/storage/v1/object/public/%')`,
+  ).join(' + ') + ')::int as n';
+}
+
+/** Cross-check: the row listing must agree with an independent count. */
+async function legacyRows() {
+  const rows = await query(selectLegacySql());
+  const [countRow] = await query(countLegacySql());
+  const n = Number(countRow?.n);
+  if (!Number.isInteger(n)) throw new Error(`count query returned ${JSON.stringify(countRow)}`);
+  if (n !== rows.length) throw new Error(`listing returned ${rows.length} rows but count says ${n}; refusing to continue`);
+  return rows;
 }
 
 // The CLI may hand jsonb back parsed or as JSON text; a bare URL is never valid
@@ -178,7 +207,7 @@ async function main() {
 
   log(`\n${APPLY ? 'APPLY' : 'DRY RUN'} — legacy Supabase Storage URLs -> ${WORKER_URL}\n`);
 
-  const rows = (await query(selectLegacySql())).map((r) => ({ ...r, value: parseValue(r.value) }));
+  const rows = (await legacyRows()).map((r) => ({ ...r, value: parseValue(r.value) }));
   const plans = planRewrites(rows);
 
   const present = new Set();
@@ -208,7 +237,7 @@ async function main() {
   if (!APPLY || ready.length === 0) return;
 
   await query(buildDoBlock(ready, { from: 'oldValue', to: 'newValue' }), { rowsExpected: false });
-  const left = await query(selectLegacySql());
+  const left = await legacyRows();
   log(`rewrote ${ready.length} row(s); ${left.length} still hold legacy URLs. Undo with --revert ${path}`);
 }
 

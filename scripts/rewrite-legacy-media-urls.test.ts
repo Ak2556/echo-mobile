@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeLegacyMediaUrl } from '../lib/workerUrl';
-import { buildDoBlock, extractJsonObject, planRewrites, rewriteUrl } from './rewrite-legacy-media-urls.mjs';
+import { buildDoBlock, extractJsonObject, planRewrites, rewriteUrl, rowsFrom } from './rewrite-legacy-media-urls.mjs';
 
 const OBJECT = 'https://eyokhisijabitzjiydmz.supabase.co/storage/v1/object';
 const WORKER = 'https://echo-mobile.at3236129.workers.dev';
@@ -80,5 +80,26 @@ describe('extractJsonObject', () => {
 
   it('returns null when there is no JSON at all', () => {
     expect(extractJsonObject('Finished.\n')).toBeNull();
+  });
+});
+
+describe('rowsFrom', () => {
+  // Regression: the CLI prints rows as a bare array. Taking the first `{` parsed
+  // only the first row, and `.rows ?? []` turned 55 legacy rows into zero.
+  it('reads a bare array of rows, not just the first row', () => {
+    const out = 'Initialising login role...\n[{"id":"a","value":"x"},{"id":"b","value":"y"}]\nA new version of Supabase CLI is available';
+    expect(rowsFrom(extractJsonObject(out))).toHaveLength(2);
+  });
+
+  it('reads the {rows} envelope', () => {
+    expect(rowsFrom({ rows: [{ n: 1 }] })).toEqual([{ n: 1 }]);
+  });
+
+  it('refuses an unrecognised shape instead of returning no rows', () => {
+    expect(() => rowsFrom({ id: 'a', value: 'x' })).toThrow(/unrecognised/);
+  });
+
+  it('keeps brackets inside strings from ending the array early', () => {
+    expect(rowsFrom(extractJsonObject('[{"v":"a]b"},{"v":"c"}]'))).toHaveLength(2);
   });
 });
