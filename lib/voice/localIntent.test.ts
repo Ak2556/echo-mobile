@@ -111,3 +111,64 @@ describe('matchLocalIntent — refusing to guess', () => {
     }
   });
 });
+
+/**
+ * Ordinary sentences must not perform actions.
+ *
+ * Every line below fired a command before the matcher required equality rather
+ * than containment: "my mind feels light today" switched the theme, "i feel so
+ * down today" scrolled, "my back hurts" navigated back. They are all short
+ * enough to pass MAX_WORDS and all contain a word that is also a rule phrase,
+ * which is exactly the shape of thing people speak into this product.
+ *
+ * A miss here is free — the utterance goes to the model, which is the designed
+ * fallback. A false match is not: the app does something nobody asked for.
+ */
+describe('ordinary speech is never a command', () => {
+  it.each([
+    // the sentence the landing page itself suggests
+    'my mind feels light today',
+    'i feel so down today',
+    'my back hurts',
+    'i am going home now',
+    'that video was funny',
+    'i need money',
+    'it is dark outside',
+    'the light is beautiful',
+    'i want to go back to sleep',
+    'this chat was lovely',
+    'my notes are messy',
+    'lost track of time',
+    'turn the light off',
+    'walking home in the rain',
+    'money is tight',
+    'feeling up for it',
+  ])('ignores %j', (said) => {
+    expect(matchLocalIntent(said)).toBeNull();
+  });
+});
+
+describe('real commands still resolve', () => {
+  it.each([
+    ['notes', 'Notes'],
+    ['open my notes', 'Notes'],
+    ['go home', 'Home'],
+    ['home', 'Home'],
+    ['dark mode', 'Dark'],
+    ['scroll down', 'Scrolling'],
+    ['go back', 'Back'],
+    ['trending', 'Trending'],
+    ['show me trending', 'Trending'],
+    ['take me to explore', 'Explore'],
+    ['what can you do', 'Help'],
+    ['read my notifications', 'Reading notifications'],
+    ['daily question', 'Daily question'],
+    ['my profile', 'Profile'],
+    ['खोज', 'Explore'],
+    ['नोट खोलो', 'Notes'],
+    ['ghar', 'Home'],
+    ['post karo', 'New echo'],
+  ])('%j still means %s', (said, reply) => {
+    expect(matchLocalIntent(said)?.reply).toBe(reply);
+  });
+});
