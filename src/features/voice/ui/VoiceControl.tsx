@@ -9,10 +9,15 @@ import { useVoiceCommand } from '../../../../hooks/useVoiceCommand';
 import { useVoiceControl } from '../../../../store/voiceControl';
 import { useAppStore } from '../../../../store/useAppStore';
 import { BlurView } from 'expo-blur';
+import { usePerformanceProfile } from '../../../shared/lib/performance';
 
 export function VoiceControl() {
   const { status } = useAuth();
   const { colors } = useTheme();
+  // The scrim's blur was hardcoded, so reduce-transparency, a hot device and a
+  // low device tier all still paid for it. This is the same profile every other
+  // glass surface in the app already respects.
+  const performance = usePerformanceProfile('overlay');
   const { t } = useI18n();
   const { state, start, stopAndRun, cancel, reset, runTextCommand } = useVoiceCommand();
   const registerVoice = useVoiceControl(s => s.register);
@@ -98,7 +103,7 @@ export function VoiceControl() {
           pointerEvents="box-none"
           style={[StyleSheet.absoluteFill, { zIndex: 60, justifyContent: 'center', alignItems: 'center' }]}
         >
-          <BlurView intensity={colors.isDark ? 40 : 20} tint={colors.isDark ? "dark" : "light"} style={StyleSheet.absoluteFill}>
+          <BlurView intensity={Math.min(colors.isDark ? 40 : 20, performance.maxBlurIntensity)} tint={colors.isDark ? "dark" : "light"} style={StyleSheet.absoluteFill}>
             <Pressable style={StyleSheet.absoluteFill} onPress={state.phase === 'listening' ? stopAndRun : cancel} />
           </BlurView>
           

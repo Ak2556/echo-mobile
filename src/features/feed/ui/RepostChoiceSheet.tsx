@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
+import { LiquidGlass } from '../../../../components/ui/LiquidGlass';
 import { ArrowsClockwise, GitFork } from 'phosphor-react-native';
 import { useTheme } from '../../../shared/lib/theme';
 import { tap } from '../../../shared/lib/haptics';
@@ -52,18 +52,19 @@ export function RepostChoiceSheet({ visible, onClose, reposted, onRepost, onRemi
           paddingBottom: insets.bottom + 12,
         }}
       >
-        <View style={{
-          borderRadius: 22,
-          overflow: 'hidden',
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.glassBorder,
-          shadowColor: '#000',
-          shadowOpacity: 0.4,
-          shadowRadius: 28,
-          shadowOffset: { width: 0, height: 14 },
-        }}>
-          <BlurView intensity={60} tint={colors.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: 0.62 }]} pointerEvents="none" />
+        {/* Was a raw BlurView at a hardcoded intensity of 60, which bypassed
+            usePerformanceProfile entirely: reduce-transparency, a hot device and
+            a low device tier all still got the full blur. LiquidGlass picks
+            shader / blur / solid from that profile, and adds the rim, the
+            chromatic edge and the tilt response the rest of the app has.
+            Nothing scrolls behind a modal sheet, so no maxTier ceiling. */}
+        <LiquidGlass
+          borderRadius={22}
+          variant="heavy"
+          tintOverride={colors.isDark ? 'rgba(0,0,0,0.42)' : 'rgba(255,255,255,0.58)'}
+          fallbackTint={colors.bg}
+          elevated
+        >
           <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 }}>
             <Text style={[font.display, { color: colors.text, fontSize: 18, letterSpacing: -0.3 }]}>
               {ttx("Spread this echo")}
@@ -96,7 +97,7 @@ export function RepostChoiceSheet({ visible, onClose, reposted, onRepost, onRemi
               font={font}
             />
           </View>
-        </View>
+        </LiquidGlass>
 
         <Pressable
           onPress={() => { tap('light'); onClose(); }}

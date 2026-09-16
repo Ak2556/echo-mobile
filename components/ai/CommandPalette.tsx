@@ -22,6 +22,7 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { ToolCallCard, ToolCallItem } from './ToolCallCard';
 import { AnimatedPressable } from '../ui/AnimatedPressable';
 import { GlassPanel } from '../ui/GlassPanel';
+import { LiquidGlass } from '../ui/LiquidGlass';
 import { IconBadge } from '../ui/IconBadge';
 import { usePerformanceProfile } from '../../src/shared/lib/performance';
 import { useAppStore } from '../../store/useAppStore';
@@ -266,7 +267,11 @@ export function CommandPalette() {
               exiting={reduceAnimations ? undefined : FadeOut.duration(60)}
               style={{ maxHeight: '80%' }}
             >
-              <GlassPanel variant="ultra" borderRadius={20} elevated performanceMode="overlay">
+              {/* The panel gets the shader tier: it is a single, static overlay
+                  with nothing scrolling behind it, which is exactly where the rim
+                  and chromatic edge read. The backdrop above stays a plain
+                  GlassPanel — a full-bleed scrim has no edge to light. */}
+              <LiquidGlass variant="ultra" borderRadius={20} elevated performanceMode="overlay">
                 {/* Header / input row */}
                 <View
                   style={{
@@ -397,7 +402,7 @@ export function CommandPalette() {
                     )}
                   </ScrollView>
                 )}
-              </GlassPanel>
+              </LiquidGlass>
             </Animated.View>
           </Pressable>
         </KeyboardAvoidingView>
