@@ -38,6 +38,7 @@ let dmMedia: ReturnType<typeof bucket>;
 let miniAppMedia: ReturnType<typeof bucket>;
 let avatars: ReturnType<typeof bucket>;
 let cachePut: ReturnType<typeof vi.fn>;
+let dailyQuestionRows: { question: string }[];
 let cached: Response | undefined;
 let memberOf: string[];
 let fetchCalls: string[];
@@ -83,6 +84,7 @@ beforeEach(() => {
   miniAppMedia = bucket({ [`${ME}/voice-memo/1-abc.m4a`]: { body: 'memo', type: 'audio/mp4' } });
   avatars = bucket({ [`${ME}/avatar.jpg`]: { body: 'avatar-bytes', type: 'image/jpeg' } });
   cached = undefined;
+  dailyQuestionRows = [{ question: 'What did you almost say today?' }];
   memberOf = [];
   fetchCalls = [];
 
@@ -101,6 +103,9 @@ beforeEach(() => {
     if (conv) return Response.json(memberOf.includes(conv[1]) ? [{ id: conv[1] }] : []);
     if (url.includes('/rest/v1/dm_conversation_members')) {
       return Response.json(memberOf.length ? [{ conversation_id: memberOf[0] }] : []);
+    }
+    if (url.includes('/rest/v1/daily_questions')) {
+      return Response.json(dailyQuestionRows);
     }
     if (url.includes('/rest/v1/dm_conversations?select=id')) return Response.json([]);
     return new Response('unexpected', { status: 500 });
@@ -255,5 +260,52 @@ describe('/dm-media', () => {
     memberOf = [CONV];
     const res = await call(`/dm-media/${OTHER}/legacy.jpg`, authed());
     expect(res.status).toBe(200);
+  });
+});
+
+/**
+ * The landing page claims "one question a day, the same for everyone". Showing
+ * the real one turns that from a claim into something a visitor can verify by
+ * installing and seeing the same sentence.
+ */
+describe('/daily-question', () => {
+  it('returns today\'s question without an account', async () => {
+    const res = await call('/daily-question');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { question: string; date: string };
+    expect(body.question).toBe('What did you almost say today?');
+    expect(body.date).toBe(new Date().toISOString().slice(0, 10));
+  });
+
+  // ensure_daily_question() is granted to anon and INSERTS a row when one is
+  // missing. A marketing page must never reach a writer: the bank is seeded a
+  // year ahead, so a plain select is all this needs.
+  it('reads, and never calls the self-healing writer', async () => {
+    await call('/daily-question');
+    expect(fetchCalls.some(u => u.includes('/rest/v1/daily_questions'))).toBe(true);
+    expect(fetchCalls.some(u => u.includes('ensure_daily_question'))).toBe(false);
+    expect(fetchCalls.some(u => u.includes('/rpc/'))).toBe(false);
+  });
+
+  it('expires at UTC midnight so nobody is served yesterday', async () => {
+    const res = await call('/daily-question');
+    const maxAge = Number(/max-age=(\d+)/.exec(res.headers.get('Cache-Control') ?? '')?.[1]);
+    const untilMidnight = Math.ceil((Date.parse(new Date().toISOString().slice(0, 10) + 'T00:00:00Z') + 86400000 - Date.now()) / 1000);
+    expect(maxAge).toBeGreaterThan(0);
+    expect(maxAge).toBeLessThanOrEqual(untilMidnight);
+  });
+
+  // The page keeps its written copy when this is null, so a missing row must
+  // never be an error the visitor can see.
+  it('answers null rather than failing when no row exists', async () => {
+    dailyQuestionRows = [];
+    const res = await call('/daily-question');
+    expect(res.status).toBe(200);
+    expect((await res.json() as { question: string | null }).question).toBeNull();
+  });
+
+  it('is readable from the site on its own origin', async () => {
+    const res = await call('/daily-question');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBeTruthy();
   });
 });

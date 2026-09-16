@@ -358,6 +358,48 @@ app.get('/book/:slug', async (c) => {
   return c.html(html, 200, { 'cache-control': 'public, max-age=120' });
 });
 
+// ── today's daily question ──────────────────────────────────────────────────
+// Registered BEFORE the user-auth middleware: downloadecho.com shows the real
+// question to visitors who have no account, which is the point. The page says
+// "one question a day, the same for everyone" — serving the actual sentence
+// turns that from a claim into something a visitor can check by installing.
+//
+// A plain select, never public.ensure_daily_question(). That RPC is granted to
+// anon and INSERTS when a row is missing, so a marketing page pointed at it
+// would be a public write endpoint taking an arbitrary date. The bank is seeded
+// a year ahead (20260727120000), so reading is enough.
+//
+// Proxied rather than called from the browser so a spike costs Supabase one
+// read per colo per day instead of one per visitor.
+app.get('/daily-question', async (c) => {
+  // Postgres compares against current_date, which is UTC — the page must use
+  // the same day or it shows a different question than the app does.
+  const date = new Date().toISOString().slice(0, 10);
+
+  let question: string | null = null;
+  try {
+    const res = await fetch(
+      `${c.env.SUPABASE_URL}/rest/v1/daily_questions?active_date=eq.${date}&select=question&limit=1`,
+      { headers: { apikey: c.env.SUPABASE_ANON_KEY } },
+    );
+    if (res.ok) question = (await res.json<{ question: string }[]>())[0]?.question ?? null;
+  } catch {
+    // Falls through to null: the page keeps its own written copy, so the
+    // section degrades to what it says today rather than showing an error.
+  }
+
+  // Expire exactly at UTC midnight. A fixed max-age would let an edge copy
+  // taken late in the day serve yesterday's question to tomorrow's visitors.
+  const untilMidnight = Math.ceil((Date.parse(`${date}T00:00:00Z`) + 86_400_000 - Date.now()) / 1000);
+
+  return c.json({ date, question }, 200, {
+    'Cache-Control': `public, max-age=${Math.max(60, untilMidnight)}`,
+    // Public, read-only, uncredentialed text that the page fetches from a
+    // different origin than the worker.
+    'Access-Control-Allow-Origin': '*',
+  });
+});
+
 // ── user auth ───────────────────────────────────────────────────────────────
 app.use('*', async (c, next) => {
   const authHeader = c.req.header('Authorization');
