@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeLegacyMediaUrl } from '../lib/workerUrl';
-import { buildDoBlock, planRewrites, rewriteUrl } from './rewrite-legacy-media-urls.mjs';
+import { buildDoBlock, extractJsonObject, planRewrites, rewriteUrl } from './rewrite-legacy-media-urls.mjs';
 
 const OBJECT = 'https://eyokhisijabitzjiydmz.supabase.co/storage/v1/object';
 const WORKER = 'https://echo-mobile.at3236129.workers.dev';
@@ -65,5 +65,20 @@ describe('buildDoBlock', () => {
   it('refuses an id that is not a uuid, and a column it was not written for', () => {
     expect(() => buildDoBlock([{ ...plan, id: "1' or '1'='1" }], { from: 'oldValue', to: 'newValue' })).toThrow(/non-uuid/);
     expect(() => buildDoBlock([{ ...plan, column: 'bio' }], { from: 'oldValue', to: 'newValue' })).toThrow(/unknown column/);
+  });
+});
+
+describe('extractJsonObject', () => {
+  it('ignores the CLI update notice after the JSON', () => {
+    const out = '{"rows":[{"id":"a","value":"x}y"}]}\nA new version of Supabase CLI is available: v2.117.0\n';
+    expect(extractJsonObject(out)).toEqual({ rows: [{ id: 'a', value: 'x}y' }] });
+  });
+
+  it('ignores text before the JSON and braces inside strings', () => {
+    expect(extractJsonObject('Initialising login role...\n{"rows":[{"v":"{\\"a\\":1}"}]}')).toEqual({ rows: [{ v: '{"a":1}' }] });
+  });
+
+  it('returns null when there is no JSON at all', () => {
+    expect(extractJsonObject('Finished.\n')).toBeNull();
   });
 });

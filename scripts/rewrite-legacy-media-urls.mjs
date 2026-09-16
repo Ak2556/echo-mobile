@@ -113,14 +113,49 @@ function selectLegacySql() {
   ).join('\nunion all\n');
 }
 
-async function query(sql) {
+/**
+ * The first complete JSON object in the CLI's stdout, or null. The CLI can print
+ * other text around it, such as its "new version available" notice, so parsing
+ * everything from the first `{` fails. This walks braces, skipping strings, to
+ * find where the object ends.
+ */
+export function extractJsonObject(text) {
+  const start = text.indexOf('{');
+  if (start < 0) return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i += 1) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === '{') depth += 1;
+    else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) return JSON.parse(text.slice(start, i + 1));
+    }
+  }
+  throw new Error(`unterminated JSON in CLI output: ${text.slice(start, start + 200)}`);
+}
+
+async function query(sql, { rowsExpected = true } = {}) {
   const { stdout } = await run('supabase', ['db', 'query', '--linked', '--output-format', 'json', sql], {
     cwd: process.cwd(),
     maxBuffer: 1024 * 1024 * 32,
+    env: { ...process.env, SUPABASE_INTERNAL_NO_UPDATE_CHECK: '1' },
   });
-  const start = stdout.indexOf('{');
-  if (start < 0) throw new Error(`unexpected CLI output: ${stdout.slice(0, 200)}`);
-  return JSON.parse(stdout.slice(start)).rows ?? [];
+  const parsed = extractJsonObject(stdout);
+  if (!parsed) {
+    // A DO block returns no rows, and the CLI may print nothing JSON-shaped for it.
+    if (!rowsExpected) return [];
+    throw new Error(`unexpected CLI output: ${stdout.slice(0, 200)}`);
+  }
+  return parsed.rows ?? [];
 }
 
 // The CLI may hand jsonb back parsed or as JSON text; a bare URL is never valid
@@ -172,7 +207,7 @@ async function main() {
   }
   if (!APPLY || ready.length === 0) return;
 
-  await query(buildDoBlock(ready, { from: 'oldValue', to: 'newValue' }));
+  await query(buildDoBlock(ready, { from: 'oldValue', to: 'newValue' }), { rowsExpected: false });
   const left = await query(selectLegacySql());
   log(`rewrote ${ready.length} row(s); ${left.length} still hold legacy URLs. Undo with --revert ${path}`);
 }
@@ -187,7 +222,7 @@ async function revert(file) {
     console.error(`${file} is a dry-run report; nothing was applied from it`);
     process.exit(2);
   }
-  await query(buildDoBlock(report.ready, { from: 'newValue', to: 'oldValue' }));
+  await query(buildDoBlock(report.ready, { from: 'newValue', to: 'oldValue' }), { rowsExpected: false });
   log(`reverted ${report.ready.length} row(s) from ${file}`);
 }
 

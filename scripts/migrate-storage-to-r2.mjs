@@ -85,13 +85,18 @@ async function listAll(bucket) {
     return found;
   };
 
-  for (const entry of await listOne('')) {
-    // A folder placeholder has no id; a real object does.
-    if (entry.id) { out.push(entry.name); continue; }
-    for (const child of await listOne(entry.name)) {
-      if (child.id) out.push(`${entry.name}/${child.name}`);
+  // Keys can be nested: dm-media is `<user>/<conversation>/<file>` and
+  // mini-app-media is `<user>/<app>/<file>`. Stopping one level down missed all
+  // of them.
+  const walk = async (prefix, depth) => {
+    for (const entry of await listOne(prefix)) {
+      const name = prefix ? `${prefix}/${entry.name}` : entry.name;
+      // A folder placeholder has no id; a real object does.
+      if (entry.id) out.push(name);
+      else if (depth < 5) await walk(name, depth + 1);
     }
-  }
+  };
+  await walk('', 0);
   return out;
 }
 
