@@ -13,7 +13,7 @@ import { captureException } from './monitoring';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
 import { APP_LANGUAGES } from './languages';
-import { WORKER_URL, dmMediaUrl, uploadUrlEndpoint } from './workerUrl';
+import { WORKER_URL, dmMediaUrl, uploadUrlEndpoint, versionedAvatarUrl } from './workerUrl';
 import { downscaleForUpload, MAX_UPLOAD_EDGE } from './imageUploadPrep';
 
 async function translateFeedItems(items: FeedItem[]): Promise<FeedItem[]> {
@@ -359,7 +359,10 @@ export async function uploadAvatar(picked: UploadableImage): Promise<string> {
 
   if (!response.ok) throw new Error(`Avatar upload failed (${response.status})`);
 
-  return publicUrl;
+  // `path` is a fixed key, so publicUrl is byte-identical to the one this
+  // profile already had. Returned bare, a viewer holding the previous image
+  // has no way to know it is stale. Stamped, the new picture is a new URL.
+  return versionedAvatarUrl(publicUrl);
 }
 
 export async function uploadEchoImages(images: UploadableImage[]): Promise<string[]> {
