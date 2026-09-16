@@ -17,6 +17,7 @@
 // no client path can grant the badge.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { spendActionBudget } from "../_shared/actionLimit.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -141,6 +142,18 @@ Deno.serve(async (req) => {
     const selfiePath = String(body.selfie_path ?? "");
     const pose = String(body.pose ?? "").slice(0, 60);
     if (!selfiePath.startsWith(`${user.id}/`)) return json({ error: "Bad selfie path" }, 400);
+
+    // Each submission is a vision-model call. Five a day is room for a few
+    // failed poses, not for grinding the model until it says yes.
+    const budget = await spendActionBudget(user.id, [
+      { action: "verify_identity_day", limit: 5, windowSeconds: 86400 },
+    ]);
+    if (!budget.ok) {
+      return json(
+        { error: budget.status === 429 ? "too_many_attempts" : "unavailable", retryAfter: budget.retryAfterSeconds },
+        budget.status,
+      );
+    }
 
     // Replace any previous pending request (and its stored selfie).
     const { data: pending } = await service

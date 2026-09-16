@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeLegacyMediaUrl } from '../lib/workerUrl';
-import { buildDoBlock, planRewrites, rewriteUrl } from './rewrite-legacy-media-urls.mjs';
+import { buildDoBlock, extractJsonObject, planRewrites, rewriteUrl, rowsFrom } from './rewrite-legacy-media-urls.mjs';
 
 const OBJECT = 'https://eyokhisijabitzjiydmz.supabase.co/storage/v1/object';
 const WORKER = 'https://echo-mobile.at3236129.workers.dev';
@@ -65,5 +65,41 @@ describe('buildDoBlock', () => {
   it('refuses an id that is not a uuid, and a column it was not written for', () => {
     expect(() => buildDoBlock([{ ...plan, id: "1' or '1'='1" }], { from: 'oldValue', to: 'newValue' })).toThrow(/non-uuid/);
     expect(() => buildDoBlock([{ ...plan, column: 'bio' }], { from: 'oldValue', to: 'newValue' })).toThrow(/unknown column/);
+  });
+});
+
+describe('extractJsonObject', () => {
+  it('ignores the CLI update notice after the JSON', () => {
+    const out = '{"rows":[{"id":"a","value":"x}y"}]}\nA new version of Supabase CLI is available: v2.117.0\n';
+    expect(extractJsonObject(out)).toEqual({ rows: [{ id: 'a', value: 'x}y' }] });
+  });
+
+  it('ignores text before the JSON and braces inside strings', () => {
+    expect(extractJsonObject('Initialising login role...\n{"rows":[{"v":"{\\"a\\":1}"}]}')).toEqual({ rows: [{ v: '{"a":1}' }] });
+  });
+
+  it('returns null when there is no JSON at all', () => {
+    expect(extractJsonObject('Finished.\n')).toBeNull();
+  });
+});
+
+describe('rowsFrom', () => {
+  // Regression: the CLI prints rows as a bare array. Taking the first `{` parsed
+  // only the first row, and `.rows ?? []` turned 55 legacy rows into zero.
+  it('reads a bare array of rows, not just the first row', () => {
+    const out = 'Initialising login role...\n[{"id":"a","value":"x"},{"id":"b","value":"y"}]\nA new version of Supabase CLI is available';
+    expect(rowsFrom(extractJsonObject(out))).toHaveLength(2);
+  });
+
+  it('reads the {rows} envelope', () => {
+    expect(rowsFrom({ rows: [{ n: 1 }] })).toEqual([{ n: 1 }]);
+  });
+
+  it('refuses an unrecognised shape instead of returning no rows', () => {
+    expect(() => rowsFrom({ id: 'a', value: 'x' })).toThrow(/unrecognised/);
+  });
+
+  it('keeps brackets inside strings from ending the array early', () => {
+    expect(rowsFrom(extractJsonObject('[{"v":"a]b"},{"v":"c"}]'))).toHaveLength(2);
   });
 });

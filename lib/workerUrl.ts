@@ -17,8 +17,13 @@ export const WORKER_URL = (
   process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || DEFAULT_WORKER_URL
 ).replace(/\/+$/, '');
 
-/** Buckets the worker serves publicly, under /media. Mirrors the worker's own list. */
-export type PublicBucket = 'avatars' | 'echo-media' | 'mini-app-media' | 'marketplace-photos';
+/**
+ * Buckets the worker serves publicly, under /media. Mirrors the worker's own list.
+ *
+ * mini-app-media is not one of them: it was a private Supabase bucket, and its
+ * objects are reached only through signed URLs (see miniAppMediaUrlsEndpoint).
+ */
+export type PublicBucket = 'avatars' | 'echo-media' | 'marketplace-photos';
 
 /**
  * Public read URL for an object.
@@ -61,7 +66,6 @@ const LEGACY_PUBLIC_STORAGE = /^https?:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1
 const PUBLIC_BUCKETS: readonly PublicBucket[] = [
   'avatars',
   'echo-media',
-  'mini-app-media',
   'marketplace-photos',
 ];
 
@@ -83,6 +87,14 @@ export function normalizeLegacyMediaUrl(url: string | undefined | null): string 
 /** Endpoint that mints a presigned PUT for an upload. */
 export function uploadUrlEndpoint(bucket: string, path: string): string {
   return `${WORKER_URL}/upload-url?bucket=${bucket}&path=${path}`;
+}
+
+/**
+ * Endpoint that signs short-lived GET URLs for the caller's own mini-app media
+ * (voice memos, studio captures). POST { paths: string[], expiresIn?: number }.
+ */
+export function miniAppMediaUrlsEndpoint(): string {
+  return `${WORKER_URL}/mini-app-media-urls`;
 }
 
 /** DM media is access-controlled and is NOT served from /media. */

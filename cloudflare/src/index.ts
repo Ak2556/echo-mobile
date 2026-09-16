@@ -1,6 +1,7 @@
 import { timingSafeEqual } from './timingSafeEqual';
 import { Hono } from 'hono';
 import { AwsClient } from 'aws4fetch';
+import { UUID_PATTERN, dmConversationFromKey, mediaHeaders, presignTtl, uploadPathAllowed } from './mediaPolicy';
 
 type Bindings = {
   /** Supabase project URL. Set via `wrangler secret put SUPABASE_URL`. */
@@ -29,6 +30,13 @@ type Vars = { user_id: string; access_token: string };
 
 /** Six hours: longer than any lecture, shorter than a day. */
 const LECTURE_URL_TTL_SECONDS = 6 * 60 * 60;
+
+/**
+ * An upload starts as soon as its URL arrives, and R2 checks expiry when the
+ * request starts, not when it finishes. Fifteen minutes is plenty. aws4fetch's
+ * default is a day.
+ */
+const UPLOAD_URL_TTL_SECONDS = 15 * 60;
 
 const app = new Hono<{ Bindings: Bindings; Variables: Vars }>();
 
@@ -115,7 +123,12 @@ app.post('/purge-user', async (c) => {
 // which checks conversation membership. learn-lectures is absent for the same
 // reason: who may watch a lecture is decided by RLS, and playback goes through
 // a short-lived presigned URL minted by /learn-lecture-url.
-const PUBLIC_READ_BUCKETS = ['avatars', 'echo-media', 'mini-app-media', 'marketplace-photos'] as const;
+//
+// mini-app-media is absent too. It was a PRIVATE Supabase bucket (owner-read
+// only), so serving it here widened access rather than restoring it. Voice
+// memos and studio captures now go through /mini-app-media-urls, which signs
+// short-lived URLs for the owner alone.
+const PUBLIC_READ_BUCKETS = ['avatars', 'echo-media', 'marketplace-photos'] as const;
 
 app.get('/media/:bucket/:key{.+}', async (c) => {
   const bucket = c.req.param('bucket');
@@ -164,7 +177,14 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
     // same image costs a worker invocation and an R2 read. Responses carry
     // `immutable` already; this is what makes the edge honour it.
     const cached = await cache.match(cacheKey);
-    if (cached) return cached;
+    // Headers are re-derived on the way out, so an entry cached before
+    // mediaHeaders existed can't still be served as a page.
+    if (cached) {
+      return new Response(cached.body, {
+        status: cached.status,
+        headers: mediaHeaders(cached.headers, key),
+      });
+    }
   }
 
   // Hand R2 the raw headers and let it parse the Range itself, so suffix ranges
@@ -191,8 +211,9 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
 
   if (!object) return c.text('Not Found', 404);
 
-  const headers = new Headers();
-  object.writeHttpMetadata(headers); // content-type, as stored on upload
+  const stored = new Headers();
+  object.writeHttpMetadata(stored); // content-type, as stored on upload
+  const headers = mediaHeaders(stored, key);
   headers.set('etag', object.httpEtag);
   // Advertised on EVERY response, not just ranged ones. A player that asks for
   // the first bytes and sees no Accept-Ranges on the reply gives up on partial
@@ -369,6 +390,9 @@ app.get('/upload-url', async (c) => {
   if (!path.startsWith(`${userId}/`) || path.includes('..')) {
     return c.json({ error: 'Unauthorized path. You can only upload to your own directory.' }, 403);
   }
+  if (!uploadPathAllowed(path)) {
+    return c.json({ error: 'That file type cannot be uploaded' }, 400);
+  }
 
   const r2Client = new AwsClient({
     accessKeyId: c.env.AWS_ACCESS_KEY_ID,
@@ -378,6 +402,7 @@ app.get('/upload-url', async (c) => {
   });
 
   const url = new URL(`https://${c.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${bucket}/${path}`);
+  url.searchParams.set('X-Amz-Expires', String(UPLOAD_URL_TTL_SECONDS));
   const signedRequest = await r2Client.sign(new Request(url, { method: 'PUT' }), {
     aws: { signQuery: true },
   });
@@ -421,8 +446,9 @@ app.get('/dm-media/:userId/:key{.+}', async (c) => {
   const pathUserId = c.req.param('userId');
   const filename = c.req.param('key');
 
-  // Traversal is still refused; only the segment count changed.
-  if (filename.includes('..')) {
+  // Traversal is still refused; only the segment count changed. The owner id
+  // goes into PostgREST filters below, so it has to be a UUID.
+  if (filename.includes('..') || !UUID_PATTERN.test(pathUserId)) {
     return c.text('Bad Request', 400);
   }
 
@@ -436,13 +462,31 @@ app.get('/dm-media/:userId/:key{.+}', async (c) => {
     const headers = { Authorization: `Bearer ${token}`, apikey: c.env.SUPABASE_ANON_KEY };
 
     let shared = false;
+    const conversationId = dmConversationFromKey(filename);
     try {
-      // Group conversations.
-      const memberRes = await fetch(
-        `${base}/rest/v1/dm_conversation_members?user_id=eq.${pathUserId}&select=conversation_id&limit=1`,
-        { headers },
-      );
-      shared = memberRes.ok && ((await memberRes.json<unknown[]>())?.length ?? 0) > 0;
+      if (conversationId) {
+        // The key names its conversation, so ask about that conversation.
+        // Sharing SOME thread with the sender used to be enough, which let any
+        // contact read media the sender posted in other threads.
+        // dm_conversations is readable only by its members (RLS), and the
+        // caller's own token is what gets sent.
+        const convRes = await fetch(
+          `${base}/rest/v1/dm_conversations?id=eq.${conversationId}&select=id&limit=1`,
+          { headers },
+        );
+        const member = convRes.ok && ((await convRes.json<unknown[]>())?.length ?? 0) > 0;
+        if (!member) return c.text('Forbidden', 403);
+        shared = true;
+      } else {
+        // Legacy two-segment keys carry no conversation, so they keep the older
+        // question: do these two people share any conversation at all?
+        // Group conversations first.
+        const memberRes = await fetch(
+          `${base}/rest/v1/dm_conversation_members?user_id=eq.${pathUserId}&select=conversation_id&limit=1`,
+          { headers },
+        );
+        shared = memberRes.ok && ((await memberRes.json<unknown[]>())?.length ?? 0) > 0;
+      }
 
       // One-to-one conversations, which predate the members table.
       if (!shared) {
@@ -464,12 +508,54 @@ app.get('/dm-media/:userId/:key{.+}', async (c) => {
   const object = await c.env.DM_MEDIA_BUCKET.get(`${pathUserId}/${filename}`);
   if (object === null) return c.text('Not Found', 404);
 
-  const headers = new Headers();
-  object.writeHttpMetadata(headers);
+  const stored = new Headers();
+  object.writeHttpMetadata(stored);
+  const headers = mediaHeaders(stored, filename);
   headers.set('etag', object.httpEtag);
   // Private media must never be cached by a shared cache.
   headers.set('Cache-Control', 'private, max-age=300');
   return new Response(object.body, { headers });
+});
+
+// ── private mini-app media ──────────────────────────────────────────────────
+// Voice memos and studio captures belong to one person. The app keeps the key
+// and asks here for URLs when it shows them, so a URL that leaks (logs, crash
+// reports, a screenshot) stops working within the hour. It's a batch, because
+// the studio gallery would otherwise pay one worker call and one auth check per
+// capture.
+app.post('/mini-app-media-urls', async (c) => {
+  const userId = c.get('user_id');
+  const body = await c.req
+    .json<{ paths?: unknown; expiresIn?: unknown }>()
+    .catch(() => ({}) as { paths?: unknown; expiresIn?: unknown });
+  const paths = Array.isArray(body.paths)
+    ? body.paths.filter((p): p is string => typeof p === 'string')
+    : [];
+  if (paths.length === 0 || paths.length > 100) {
+    return c.json({ error: 'Send between 1 and 100 paths' }, 400);
+  }
+  const ttl = presignTtl(body.expiresIn == null ? undefined : String(body.expiresIn));
+
+  const r2Client = new AwsClient({
+    accessKeyId: c.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: c.env.AWS_SECRET_ACCESS_KEY,
+    service: 's3',
+    region: 'auto',
+  });
+
+  const urls: Record<string, string> = {};
+  for (const path of new Set(paths)) {
+    // Someone else's key, or a malformed one, is just left out of the answer.
+    // Its absence says nothing either way.
+    if (!path.startsWith(`${userId}/`) || !uploadPathAllowed(path)) continue;
+    const url = new URL(`https://${c.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/mini-app-media/${path}`);
+    url.searchParams.set('X-Amz-Expires', String(ttl));
+    const signed = await r2Client.sign(new Request(url, { method: 'GET' }), {
+      aws: { signQuery: true },
+    });
+    urls[path] = signed.url;
+  }
+  return c.json({ urls, expiresIn: ttl });
 });
 
 // ── lecture playback ────────────────────────────────────────────────────────
