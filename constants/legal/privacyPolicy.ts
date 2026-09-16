@@ -79,6 +79,7 @@ It is written to be read, not to be survived. If anything here is unclear, ask u
 - **Facial images** — only if you apply for a verified badge: a pose-challenge selfie, compared against your profile photo.
 - **Mini-app data** — whatever you put into the tools: habits, tasks, notes, expenses, and **body and health data** such as weight, measurements, meals, water and workouts.
 - **Marketplace listings** — items you list, their prices and photos.
+- **iOS waiting list** — if you ask us on downloadecho.com to tell you when the iPhone app is ready, your email address, and nothing else. It is used for that one message and is not linked to any account, not used for any other mailing, and not shared. Tell us at **${SUPPORT_EMAIL}** and we delete it; we delete it ourselves once the iPhone app has shipped.
 
 **We generate:**
 

@@ -891,6 +891,38 @@
 
   .gal-copy .panel h3 { font-size: var(--step-2); }
   .gal-copy .panel p { color: var(--ink-soft); margin-top: .8rem; max-width: 46ch; }
+  /* Today's real question. Deliberately not a card: it is a sentence someone
+     will answer, so it is set as one, in the display face the hero uses. */
+  .dq { margin: 1.6rem 0 0; padding: 0 0 0 1.1rem; border-left: 2px solid var(--accent); }
+  .dq blockquote {
+    margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: var(--step-1);
+    line-height: 1.32; color: var(--ink); text-wrap: balance;
+  }
+  .dq figcaption { margin-top: .5rem; font-size: var(--step--2); color: var(--ink-soft); }
+  @media (prefers-reduced-motion: no-preference) {
+    .dq[data-in] { animation: dqIn .5s var(--ease) both; }
+    @keyframes dqIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+
+  .ios { margin: 1.5rem auto 0; max-width: 34rem; text-align: left; }
+  .ios-label { display: block; font-size: var(--step--1); color: var(--ink-soft); margin-bottom: .55rem; }
+  .ios-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .ios-row input {
+    /* 11rem, not 14: at the narrowest this block gets (~354px) a 14rem basis
+       plus the button overflows by a few pixels and wraps the button onto its
+       own line. This keeps them on one row down to about 320px. */
+    flex: 1 1 11rem; min-width: 0; padding: .7rem .9rem; color: var(--ink);
+    background: transparent; border: 1px solid var(--line); border-radius: 999px;
+    font: inherit; font-size: var(--step--1);
+  }
+  .ios-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
+  .ios-row button {
+    padding: .7rem 1.2rem; border: 1px solid var(--accent); border-radius: 999px;
+    background: var(--accent); color: #10160B; font: inherit; font-size: var(--step--1);
+    font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .ios-row button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
   .gal-index {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: var(--step--2); letter-spacing: .12em; color: var(--accent);
@@ -1600,6 +1632,20 @@
     everyone, and <strong>you answer before you can read anyone else</strong>.
     No network paid by attention will ever ship that.</p>
 
+    <!-- Today's real question, filled from the worker. It sits directly under
+         the claim rather than inside the scroll-driven gallery, where a panel is
+         only on screen for a narrow slice of the scroll and most visitors would
+         never see it. Hidden until the fetch returns; the paragraph above
+         already stands on its own. -->
+    <!-- No .rv here on purpose: that class starts at opacity 0 and is revealed by
+         an IntersectionObserver that has already passed this section by the time
+         the fetch unhides the figure, which would leave it invisible forever.
+         The .dq[data-in] rule does its own reveal, and respects reduced motion. -->
+    <figure class="dq" id="dq" hidden>
+      <blockquote id="dqText"></blockquote>
+      <figcaption>Today&rsquo;s question, live. Everyone on Echo was asked this.</figcaption>
+    </figure>
+
     <p class="punch rv d4">Nothing here is for sale. You included.</p>
   </div>
 </section>
@@ -1677,6 +1723,17 @@
     <div class="dl rv d2">
       <a class="dl-btn" href="https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>Download for Android</a>
       <p class="dl-meta">Echo.apk &middot; 181 MB &middot; free &middot; always the current build</p>
+      <!-- Netlify detects this form at deploy time; submissions land in the site
+           dashboard. No backend, and nothing new that can write to Supabase. -->
+      <form class="ios" name="ios-waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+        <input type="hidden" name="form-name" value="ios-waitlist">
+        <p hidden><label>Leave this empty <input name="bot-field"></label></p>
+        <label class="ios-label" for="iosEmail">On an iPhone? We will email you once, when it is ready.</label>
+        <div class="ios-row">
+          <input id="iosEmail" name="email" type="email" required autocomplete="email" placeholder="you@example.com">
+          <button type="submit">Tell me when</button>
+        </div>
+      </form>
       <p class="dl-note">Android for now, iOS next. Your phone will ask to allow
       an install from outside the Play Store &mdash; <strong>say yes</strong>.
       That is what a beta looks like.</p>
@@ -2045,6 +2102,37 @@
 
 
 <script>
+/* Today's question, live.
+ *
+ * The panel above claims "one question a day, the same for everyone". A claim
+ * on a landing page is worth nothing; the real sentence is checkable — install
+ * Echo and you are asked this exact thing today.
+ *
+ * Read through the worker rather than Supabase directly, so a traffic spike
+ * costs one read per colo per day instead of one per visitor, and so the page
+ * never holds a database key.
+ *
+ * Fails silent on purpose. The written copy stands on its own, so a fetch that
+ * does not return leaves the section exactly as it reads now — never an error,
+ * never an empty quote mark.
+ */
+(function () {
+  var fig = document.getElementById('dq');
+  var out = document.getElementById('dqText');
+  if (!fig || !out || typeof fetch !== 'function') return;
+
+  fetch('https://echo-mobile.at3236129.workers.dev/daily-question')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) {
+      var q = j && typeof j.question === 'string' ? j.question.trim() : '';
+      if (!q) return;
+      out.textContent = q;          // textContent, never innerHTML: this string
+      fig.hidden = false;            // comes from the database.
+      fig.setAttribute('data-in', '');
+    })
+    .catch(function () { /* copy already says it */ });
+})();
+
 /* The hero microphone.
  *
  * This page claims speaking beats typing. Rather than assert it, the hero
