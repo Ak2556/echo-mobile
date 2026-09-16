@@ -12,6 +12,56 @@
 { "imports": { "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.185.1/three.module.min.js" } }
 </script>
 <script type="module">
+  /* What Echo understood.
+   *
+   * The hero already proves speaking is faster than typing. This proves the
+   * second, larger claim: that Echo reads the sentence as an ACTION, not just
+   * dictation. It runs the parser the phone runs — intent.js is generated from
+   * lib/voice/localIntent.ts, and public/download/intent.test.ts fails if the
+   * two drift — so what a visitor sees here is what the app would do.
+   *
+   * No network, no key, no AI quota: the same reason the microphone uses the
+   * browser's own recognition rather than Echo's backend.
+   */
+  import { matchLocalIntent } from '/download/intent.js';
+
+  const out = document.getElementById('micIntent');
+  const tryRow = document.getElementById('micTry');
+  if (out && tryRow) {
+    const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    function show(text) {
+      const hit = matchLocalIntent(text);
+      if (!hit) {
+        // Not a command, and saying so would be a lie: the parser is a fast
+        // path for fixed phrases, and anything else goes to the model. The
+        // post card above already tells that story on its own.
+        out.hidden = true;
+        return;
+      }
+      out.innerHTML = 'Echo read that as an action &mdash; <b>' + esc(hit.reply) + '</b>. '
+        + 'In the app it happens straight away, with no screen to find.';
+      out.hidden = false;
+    }
+
+    document.addEventListener('echo:said', (e) => show(e.detail.text));
+
+    // Someone who will not talk to a page they have just met should still be
+    // able to see the mechanism.
+    tryRow.hidden = false;
+    tryRow.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-say]');
+      if (!btn) return;
+      const said = btn.getAttribute('data-say');
+      const body = document.getElementById('micPostBody');
+      const post = document.getElementById('micPost');
+      if (body && post) { body.textContent = said; post.hidden = false; }
+      show(said);
+    });
+  }
+</script>
+
+<script type="module">
   // Tier resolution runs BEFORE three is fetched. A phone that will end up on
   // the poster must never pay 86KB for a renderer it will not use.
   import { resolveTier } from '/download/tier.js';
@@ -215,7 +265,7 @@
 
   .eyebrow {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
-    font-size: var(--step--2); letter-spacing: .17em; text-transform: uppercase;
+    font-size: var(--step--2); letter-spacing: .04em;
     color: var(--accent); margin-bottom: .9rem;
   }
   .eyebrow.dim { color: var(--ink-faint); }
@@ -398,7 +448,7 @@
   .ends-col { min-width: 0; }
   .ends-label {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
-    font-size: var(--step--2); letter-spacing: .14em; text-transform: uppercase;
+    font-size: var(--step--2); letter-spacing: .04em;
     color: var(--ink-faint); margin: 0 0 .6rem;
   }
   .ends-box {
@@ -904,6 +954,23 @@
     @keyframes dqIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   }
 
+  .mic-intent {
+    margin: .9rem auto 0; max-width: 640px; font-size: var(--step--1);
+    color: var(--ink-soft); text-align: left;
+  }
+  .mic-intent b { color: var(--accent); font-weight: 600; }
+  .mic-try {
+    margin: .9rem auto 0; max-width: 640px; display: flex; flex-wrap: wrap;
+    gap: .45rem; align-items: center; font-size: var(--step--2); color: var(--ink-soft);
+  }
+  .mic-try span { margin-right: .2rem; }
+  .mic-try button {
+    padding: .3rem .7rem; border: 1px solid var(--line); border-radius: 999px;
+    background: transparent; color: var(--ink-soft); font: inherit; cursor: pointer;
+  }
+  .mic-try button:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .mic-try button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
   .ios { margin: 1.5rem auto 0; max-width: 34rem; text-align: left; }
   .ios-label { display: block; font-size: var(--step--1); color: var(--ink-soft); margin-bottom: .55rem; }
   .ios-row { display: flex; gap: .5rem; flex-wrap: wrap; }
@@ -923,11 +990,6 @@
   }
   .ios-row button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
-  .gal-index {
-    font-family: "IBM Plex Mono", ui-monospace, monospace;
-    font-size: var(--step--2); letter-spacing: .12em; color: var(--accent);
-    margin-bottom: .9rem;
-  }
 
   /* A single line, held full-bleed. Used once. */
   .statement { text-align: center; max-width: 20ch; margin: 0 auto; }
@@ -948,7 +1010,7 @@
   body.reduced .panel { opacity: 1; transform: none; pointer-events: auto; margin-bottom: 3rem; }
   body.reduced .gal-phone img { opacity: 1; transform: none; position: static; margin-bottom: 1rem; }
   body.reduced .gal-phone .frame { display: block; }
-  body.reduced .dots, body.reduced .gal-index { display: none; }
+  body.reduced .dots { display: none; }
   body.reduced .hero-in, body.reduced .statement h2 { transform: none; opacity: 1; }
 
 
@@ -1463,6 +1525,15 @@
         </div>
         <p class="mic-post-note">That is the whole interaction. <strong>Nothing was posted.</strong> This is a preview, and your browser&rsquo;s own speech recognition did the transcribing &mdash; it never reached Echo.</p>
       </div>
+      <!-- Filled by intent.js, which is generated from the app's own parser.
+           Only appears when the utterance really is a command. -->
+      <p class="mic-intent" id="micIntent" hidden></p>
+      <div class="mic-try" id="micTry" hidden>
+        <span>Or tap one, and watch it read the command:</span>
+        <button type="button" data-say="open my notes">open my notes</button>
+        <button type="button" data-say="dark mode">dark mode</button>
+        <button type="button" data-say="&#2326;&#2379;&#2332;">&#2326;&#2379;&#2332;</button>
+      </div>
 
       <p class="mic-fallback" id="micFallback" hidden></p>
     </div>
@@ -1518,7 +1589,7 @@
         <p class="try-verdict"></p>
         <p class="try-alt">Or hold one button and say it &mdash; which you already did, at the top of this page.</p>
       </div>
-      <button class="try-skip" type="button">I get it — skip &rarr;</button>
+      <button class="try-skip" type="button">I get it, skip this</button>
     </div>
 
     <p class="body rv d2"><strong>Most people never finish.</strong> Writing a full thought in
@@ -1577,22 +1648,18 @@
       <div class="gal-copy">
         <div class="panels">
           <div class="panel on" data-panel>
-            <p class="gal-index">01 / 04</p>
             <h3>A feed you can actually finish</h3>
             <p>It greets you by name, in your language, and <strong>then it ends</strong>. You reach the bottom and you put the phone down. Nobody designed this to keep you here.</p>
           </div>
           <div class="panel" data-panel>
-            <p class="gal-index">02 / 04</p>
             <h3>One question a day, the same for everyone</h3>
             <p>Answer it and <strong>you unlock everyone else&rsquo;s</strong>. Strangers, in their own languages, on the one thing you were all asked today. Then it closes until tomorrow.</p>
           </div>
           <div class="panel" data-panel>
-            <p class="gal-index">03 / 04</p>
             <h3>The part you were going to skip</h3>
             <p>Writing the caption, finding the message, setting the reminder. <strong>Say it once and it is handled</strong> &#8212; and you see every action before it happens.</p>
           </div>
           <div class="panel" data-panel>
-            <p class="gal-index">04 / 04</p>
             <h3>Reasons to open it on a quiet day</h3>
             <p>Tasks, habits, notes, focus timers, money. Twelve, right there in the tab, so the app still earns its place on days you have nothing to say.</p>
           </div>
@@ -2329,6 +2396,10 @@
     postBody.textContent = said;
     postBody.setAttribute('lang', lang.split('-')[0]);
     postEl.hidden = false;
+    // Announced rather than handled here: the parser is an ES module and this
+    // is a classic script. Decoupling also means a failed module import costs
+    // the transcript nothing.
+    document.dispatchEvent(new CustomEvent('echo:said', { detail: { text: said } }));
   }
 
   function nothingHeard() {
