@@ -13,7 +13,6 @@ describe('normalizeLegacyMediaUrl', () => {
   it.each([
     ['echo-media', 'user-1/1787386061572_video.mp4'],
     ['avatars', 'user-1/avatar.jpg'],
-    ['mini-app-media', 'user-1/note.png'],
     ['marketplace-photos', 'user-1/listing.webp'],
   ])('rewrites %s to the worker', (bucket, path) => {
     expect(normalizeLegacyMediaUrl(`${LEGACY}/${bucket}/${path}`))
@@ -22,6 +21,11 @@ describe('normalizeLegacyMediaUrl', () => {
 
   it('leaves verification alone — there is no R2 bucket behind it', () => {
     const url = `${LEGACY}/verification/user-1/1234.jpg`;
+    expect(normalizeLegacyMediaUrl(url)).toBe(url);
+  });
+
+  it('leaves mini-app-media alone — it is private and only reachable through signed URLs', () => {
+    const url = `${LEGACY}/mini-app-media/user-1/note.png`;
     expect(normalizeLegacyMediaUrl(url)).toBe(url);
   });
 

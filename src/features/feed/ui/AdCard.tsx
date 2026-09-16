@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { useTheme } from '../../../shared/lib/theme';
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { AdItem, trackAdView, trackAdClick } from '../api/useAds';
+import { isSafeExternalUrl } from '../../../../lib/urlSafety';
 import { ArrowUpRight } from 'phosphor-react-native';
 
 export function AdCard({ ad }: { ad: AdItem }) {
@@ -19,6 +20,9 @@ export function AdCard({ ad }: { ad: AdItem }) {
 
   const handlePress = async () => {
     trackAdClick(ad.id).catch(() => {});
+    // target_url is advertiser-supplied. Anything other than https or mailto
+    // (intent:, tel:, a custom scheme into another app) is not ours to open.
+    if (!isSafeExternalUrl(ad.target_url)) return;
     try {
       await Linking.openURL(ad.target_url);
     } catch (e) {}

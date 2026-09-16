@@ -10,6 +10,7 @@
 // no dev-client rebuild. All keys stay server-side.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { spendActionBudget } from "../_shared/actionLimit.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 // Prefer a fast multimodal model. gemini-2.5-flash-lite handles Hindi audio well.
@@ -161,6 +162,19 @@ Deno.serve(async (req) => {
 
   const { data: userData, error: userErr } = authResult;
   if (userErr || !userData?.user) return json({ error: "Not authenticated" }, 401);
+
+  // One round trip, after auth because the budget has to belong to a verified
+  // user. Generous enough that nobody talking to the app will reach it.
+  const budget = await spendActionBudget(userData.user.id, [
+    { action: "voice_command_hour", limit: 120, windowSeconds: 3600 },
+    { action: "voice_command_day", limit: 600, windowSeconds: 86400 },
+  ]);
+  if (!budget.ok) {
+    return json(
+      { error: budget.status === 429 ? "Too many voice commands. Try again later." : "Voice is unavailable right now", retryAfter: budget.retryAfterSeconds },
+      budget.status,
+    );
+  }
 
   if (!bodyResult.ok || !bodyResult.b) return json({ error: "Bad request" }, 400);
   {

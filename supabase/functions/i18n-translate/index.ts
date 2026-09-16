@@ -12,6 +12,7 @@
 
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { spendActionBudget } from "../_shared/actionLimit.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const MODEL = Deno.env.get("I18N_TRANSLATE_MODEL") ?? Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
@@ -81,6 +82,19 @@ Deno.serve(async (req) => {
     });
     const { data: userData, error: userErr } = await supabase.auth.getUser();
     if (userErr || !userData?.user) return json({ error: "Not authenticated" }, 401);
+
+    // The client caches every translation, so a real user asks for a handful of
+    // batches per language. Anything past this is someone using the endpoint as
+    // a free model.
+    const budget = await spendActionBudget(userData.user.id, [
+      { action: "i18n_translate_hour", limit: 60, windowSeconds: 3600 },
+    ]);
+    if (!budget.ok) {
+      return json(
+        { error: budget.status === 429 ? "Too many translation requests" : "Translation is unavailable right now", retryAfter: budget.retryAfterSeconds },
+        budget.status,
+      );
+    }
   }
 
   let language = "";

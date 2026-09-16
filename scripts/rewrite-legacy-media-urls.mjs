@@ -38,7 +38,7 @@ const WORKER_URL = (process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || 'https://ec
 // cannot import TypeScript. rewrite-legacy-media-urls.test.ts asserts the two
 // agree, so they cannot drift silently.
 const LEGACY_PUBLIC_STORAGE = /^https?:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/([^/?#]+)\/([^?#]+)(\?[^#]*)?/i;
-const PUBLIC_BUCKETS = ['avatars', 'echo-media', 'mini-app-media', 'marketplace-photos'];
+const PUBLIC_BUCKETS = ['avatars', 'echo-media', 'marketplace-photos'];
 
 // Every column that held a legacy public URL on 2026-09-10, from a scan of all
 // text, array and jsonb columns in `public`. dm-media URLs are left alone: that

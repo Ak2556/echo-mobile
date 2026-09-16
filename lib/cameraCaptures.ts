@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getMiniAppMediaUrl } from './miniAppMedia';
+import { getMiniAppMediaUrls } from './miniAppMedia';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 
 export const CAMERA_CAPTURES_KEY = 'mini:camera';
@@ -38,10 +38,13 @@ function normalizeCaptures(raw: unknown): CameraCapture[] {
 }
 
 async function hydrateSignedUrls(captures: CameraCapture[]): Promise<CameraCapture[]> {
-  return Promise.all(captures.map(async capture => {
-    const signed = await getMiniAppMediaUrl(capture.storagePath);
+  // One request for the whole gallery. Asking per capture cost a worker call
+  // and an auth check each.
+  const urls = await getMiniAppMediaUrls(captures.map(capture => capture.storagePath));
+  return captures.map(capture => {
+    const signed = capture.storagePath ? urls[capture.storagePath] : undefined;
     return signed ? { ...capture, uri: signed } : capture;
-  }));
+  });
 }
 
 export async function loadCameraCaptures(): Promise<CameraCapture[]> {

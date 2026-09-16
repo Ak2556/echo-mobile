@@ -6,6 +6,7 @@
 // "Ask Echo about {app}" bar. All keys come from Deno env at request time.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { spendActionBudget } from "../_shared/actionLimit.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? "google/gemini-2.5-flash";
@@ -97,6 +98,16 @@ Deno.serve(async (req) => {
   });
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   if (userErr || !userData?.user) return json({ error: "Not authenticated" }, 401);
+
+  const budget = await spendActionBudget(userData.user.id, [
+    { action: "mini_app_coach_hour", limit: 20, windowSeconds: 3600 },
+  ]);
+  if (!budget.ok) {
+    return json(
+      { error: budget.status === 429 ? "That's plenty of coaching for now. Try again later." : "AI is unavailable right now", retryAfter: budget.retryAfterSeconds },
+      budget.status,
+    );
+  }
 
   const { data: stats, error: rpcErr } = await supabase.rpc(RPC[app]);
   if (rpcErr) return json({ error: "Could not read your data" }, 500);

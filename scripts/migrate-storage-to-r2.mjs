@@ -29,9 +29,11 @@ const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://eyokhisija
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const WORKER_URL = process.env.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL || 'https://echo-mobile.at3236129.workers.dev';
 
-// Exactly the buckets the worker serves at /media, mirroring PublicBucket in
-// lib/workerUrl.ts. dm-media is access-controlled and lives behind /dm-media;
-// `verification` holds selfies and has no R2 bucket at all.
+// Every bucket with an R2 counterpart that still has objects to copy. That is
+// PublicBucket in lib/workerUrl.ts plus mini-app-media, which the worker serves
+// only through signed URLs (/mini-app-media-urls) but which still has to be in
+// R2 for those URLs to resolve. dm-media is access-controlled and lives behind
+// /dm-media; `verification` holds selfies and has no R2 bucket at all.
 const BUCKETS = ['avatars', 'echo-media', 'mini-app-media', 'marketplace-photos'];
 
 const args = process.argv.slice(2);
