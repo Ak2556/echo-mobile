@@ -12,6 +12,130 @@
 { "imports": { "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.185.1/three.module.min.js" } }
 </script>
 <script type="module">
+/* The hero speaks your language.
+ *
+ * A module, not a classic script: this block sits in <head>, and a classic
+ * script there runs before the hero exists, finds nothing and binds nothing.
+ * Modules defer by default.
+ *
+ * The page's strongest claim is the one it used to leave until the very
+ * bottom: not an English app that translates the posts, but an app that is
+ * yours all the way down, including which direction it runs. A claim that far
+ * down the page is a claim most visitors never read.
+ *
+ * So the hero makes it instead of stating it. Pick a language and the headline,
+ * the promise under it, the button and the hint all change — and Arabic mirrors
+ * the hero, because that is the part nobody else does. The chips already chose
+ * which language the microphone listens for; now they choose the page too, so
+ * one control does what the product does.
+ *
+ * TRANSLATIONS: these are the page's claim about itself, so they are worth a
+ * native read before anyone leans on them. Hindi and Arabic follow the strings
+ * already shipped in the language section further down.
+ */
+(function () {
+  var hero = document.querySelector('.hero-in');
+  var h1 = document.getElementById('heroH1');
+  var tag = document.getElementById('heroTag');
+  var scope = document.getElementById('heroScope');
+  var label = document.getElementById('micLabel');
+  var hint = document.getElementById('micHint');
+  if (!hero || !h1) return;
+
+  // Urdu is an Indian language that runs right to left. Treating RTL as an
+  // Arabic-only concern is how Urdu speakers get a mirrored app everywhere
+  // except the page that promised them one.
+  var RTL = new Set(['ur', 'ar']);
+
+  var S = {
+    en: { h1: ["Say it.", "It’s posted."],
+          tag: "In the language you actually think in.",
+          scope: "26 languages. The whole app, not just the posts.",
+          label: "Hold to speak", hint: "Hold, say one sentence, let go." },
+    hi: { h1: ["बोलिए।", "पोस्ट हो गया।"],
+          tag: "उसी भाषा में, जिसमें आप सोचते हैं।",
+          scope: "26 भाषाएँ। पूरा ऐप, सिर्फ़ पोस्ट नहीं।",
+          label: "बोलने के लिए दबाए रखें", hint: "दबाए रखें, एक वाक्य बोलें, छोड़ दें।" },
+    bn: { h1: ["বলুন।", "পোস্ট হয়ে গেছে।"],
+          tag: "যে ভাষায় আপনি সত্যিই ভাবেন, সেই ভাষায়।",
+          scope: "২৬টি ভাষা। শুধু পোস্ট নয়, পুরো অ্যাপ।",
+          label: "বলতে চেপে ধরুন", hint: "চেপে ধরুন, একটি বাক্য বলুন, ছেড়ে দিন।" },
+    te: { h1: ["చెప్పండి.", "పోస్ట్ అయ్యింది."],
+          tag: "మీరు నిజంగా ఆలోచించే భాషలో.",
+          scope: "26 భాషలు. పోస్ట్‌లే కాదు, యాప్ మొత్తం.",
+          label: "మాట్లాడటానికి నొక్కి పట్టుకోండి", hint: "నొక్కి పట్టుకోండి, ఒక వాక్యం చెప్పండి, వదిలేయండి." },
+    mr: { h1: ["बोला.", "पोस्ट झाले."],
+          tag: "तुम्ही खरोखर ज्या भाषेत विचार करता, त्या भाषेत.",
+          scope: "26 भाषा. फक्त पोस्ट नाही, संपूर्ण ॲप.",
+          label: "बोलण्यासाठी दाबून धरा", hint: "दाबून धरा, एक वाक्य बोला, सोडा." },
+    ta: { h1: ["சொல்லுங்கள்.", "பதிவாகிவிட்டது."],
+          tag: "நீங்கள் உண்மையில் சிந்திக்கும் மொழியில்.",
+          scope: "26 மொழிகள். பதிவுகள் மட்டுமல்ல, முழு செயலியும்.",
+          label: "பேச அழுத்திப் பிடிக்கவும்", hint: "அழுத்திப் பிடித்து, ஒரு வாக்கியம் சொல்லி, விடுங்கள்." },
+    ur: { h1: ["کہیے۔", "پوسٹ ہو گیا۔"],
+          tag: "اُسی زبان میں جس میں آپ واقعی سوچتے ہیں۔",
+          scope: "۲۶ زبانیں۔ صرف پوسٹس نہیں، پوری ایپ۔",
+          label: "بولنے کے لیے دبائے رکھیں", hint: "دبائے رکھیں، ایک جملہ بولیں، چھوڑ دیں۔" },
+    gu: { h1: ["બોલો.", "પોસ્ટ થઈ ગયું."],
+          tag: "તમે ખરેખર જે ભાષામાં વિચારો છો, એ જ ભાષામાં.",
+          scope: "26 ભાષાઓ. ફક્ત પોસ્ટ નહીં, આખી ઍપ.",
+          label: "બોલવા માટે દબાવી રાખો", hint: "દબાવી રાખો, એક વાક્ય બોલો, છોડી દો." },
+    kn: { h1: ["ಹೇಳಿ.", "ಪೋಸ್ಟ್ ಆಗಿದೆ."],
+          tag: "ನೀವು ನಿಜವಾಗಿ ಯೋಚಿಸುವ ಭಾಷೆಯಲ್ಲಿ.",
+          scope: "26 ಭಾಷೆಗಳು. ಪೋಸ್ಟ್‌ಗಳಷ್ಟೇ ಅಲ್ಲ, ಇಡೀ ಆ್ಯಪ್.",
+          label: "ಮಾತನಾಡಲು ಒತ್ತಿ ಹಿಡಿಯಿರಿ", hint: "ಒತ್ತಿ ಹಿಡಿಯಿರಿ, ಒಂದು ವಾಕ್ಯ ಹೇಳಿ, ಬಿಡಿ." },
+    ml: { h1: ["പറയൂ.", "പോസ്റ്റ് ആയി."],
+          tag: "നിങ്ങൾ ശരിക്കും ചിന്തിക്കുന്ന ഭാഷയിൽ.",
+          scope: "26 ഭാഷകൾ. പോസ്റ്റുകൾ മാത്രമല്ല, ആപ്പ് മുഴുവൻ.",
+          label: "സംസാരിക്കാൻ അമർത്തിപ്പിടിക്കുക", hint: "അമർത്തിപ്പിടിക്കുക, ഒരു വാക്യം പറയുക, വിടുക." },
+    pa: { h1: ["ਬੋਲੋ।", "ਪੋਸਟ ਹੋ ਗਿਆ।"],
+          tag: "ਉਸੇ ਬੋਲੀ ਵਿੱਚ, ਜਿਸ ਵਿੱਚ ਤੁਸੀਂ ਸੋਚਦੇ ਹੋ।",
+          scope: "26 ਬੋਲੀਆਂ। ਪੂਰੀ ਐਪ, ਸਿਰਫ਼ ਪੋਸਟਾਂ ਨਹੀਂ।",
+          label: "ਬੋਲਣ ਲਈ ਦਬਾਈ ਰੱਖੋ", hint: "ਦਬਾਈ ਰੱਖੋ, ਇੱਕ ਵਾਕ ਬੋਲੋ, ਛੱਡ ਦਿਓ।" },
+    or: { h1: ["କୁହନ୍ତୁ।", "ପୋଷ୍ଟ ହୋଇଗଲା।"],
+          tag: "ଆପଣ ପ୍ରକୃତରେ ଯେଉଁ ଭାଷାରେ ଚିନ୍ତା କରନ୍ତି, ସେହି ଭାଷାରେ।",
+          scope: "26 ଭାଷା। କେବଳ ପୋଷ୍ଟ ନୁହେଁ, ସମ୍ପୂର୍ଣ୍ଣ ଆପ୍।",
+          label: "କହିବା ପାଇଁ ଦବାଇ ରଖନ୍ତୁ", hint: "ଦବାଇ ରଖନ୍ତୁ, ଗୋଟିଏ ବାକ୍ୟ କୁହନ୍ତୁ, ଛାଡ଼ିଦିଅନ୍ତୁ।" },
+    as: { h1: ["কওক।", "পোষ্ট হ’ল।"],
+          tag: "আপুনি সঁচাকৈ যি ভাষাত ভাবে, সেই ভাষাতে।",
+          scope: "২৬টা ভাষা। কেৱল পোষ্ট নহয়, গোটেই এপ্‌টো।",
+          label: "ক’বলৈ টিপি ধৰক", hint: "টিপি ধৰক, এটা বাক্য কওক, এৰি দিয়ক।" },
+    ne: { h1: ["भन्नुहोस्।", "पोस्ट भयो।"],
+          tag: "तपाईं वास्तवमा जुन भाषामा सोच्नुहुन्छ, त्यही भाषामा।",
+          scope: "26 भाषा। पोस्ट मात्र होइन, सिङ्गो एप।",
+          label: "बोल्न थिचिराख्नुहोस्", hint: "थिचिराख्नुहोस्, एउटा वाक्य भन्नुहोस्, छोड्नुहोस्।" },
+    ar: { h1: ["قُلها.", "تمّ النشر."],
+          tag: "باللغة التي تفكر بها فعلاً.",
+          scope: "٢٦ لغة. التطبيق بأكمله، لا المنشورات فقط.",
+          label: "اضغط مع الاستمرار للتحدث", hint: "اضغط، قل جملة واحدة، ثم اترك." },
+  };
+
+  function apply(code) {
+    var set = S[code] || S.en;
+    // Two text nodes and a <br>, not innerHTML: these strings are authored
+    // here, but a translation table is exactly the kind of thing that later
+    // gets loaded from somewhere else.
+    h1.textContent = '';
+    h1.appendChild(document.createTextNode(set.h1[0]));
+    h1.appendChild(document.createElement('br'));
+    h1.appendChild(document.createTextNode(set.h1[1]));
+    if (tag) tag.textContent = set.tag;
+    if (scope) scope.textContent = set.scope;
+    if (label) label.textContent = set.label;
+    if (hint) hint.textContent = set.hint;
+    hero.lang = code;
+    hero.dir = RTL.has(code) ? 'rtl' : 'ltr';
+  }
+
+  document.querySelector('.mic-langs').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button[data-sr]');
+    if (!btn) return;
+    apply((btn.getAttribute('data-sr') || 'en').split('-')[0]);
+  });
+})();
+</script>
+
+<script type="module">
   /* What Echo understood.
    *
    * The hero already proves speaking is faster than typing. This proves the
@@ -331,6 +455,15 @@
      four moments: idle, listening, transcribing, posted. */
 
   .mic { margin-top: 2rem; width: 100%; max-width: 640px; margin-inline: auto; }
+
+  .hero-scope {
+    margin: .9rem auto 0; max-width: 40ch; font-size: var(--step--1);
+    color: var(--ink-soft); line-height: 1.45; text-wrap: balance;
+  }
+  /* Mirroring is the proof, so it has to reach the controls too, not only the
+     prose. Everything in the hero is centred, so this is the whole of it. */
+  .hero-in[dir="rtl"] .mic-langs,
+  .hero-in[dir="rtl"] .hero-cta { flex-direction: row-reverse; }
 
   .mic-langs {
     display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem;
@@ -1486,8 +1619,8 @@
 <header class="hero dark" id="top">
   <div class="hero-in">
     <img src="/download/media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="eager" decoding="async">
-    <h1>Say it.<br>It&rsquo;s posted.</h1>
-    <p class="tag">In the language you actually think in.</p>
+    <h1 id="heroH1">Say it.<br>It&rsquo;s posted.</h1>
+    <p class="tag" id="heroTag">In the language you actually think in.</p>
 
     <!-- The page performs the promise instead of describing it. Hold the
          button, speak, watch the words land in a post. Everything here runs
@@ -1496,15 +1629,29 @@
     <div class="mic" id="mic" data-state="idle">
       <div class="mic-langs" role="group" aria-label="Language to speak in">
         <button type="button" class="on" data-sr="en-IN">English</button>
-        <button type="button" data-sr="hi-IN" lang="hi">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</button>
-        <button type="button" data-sr="pa-IN" lang="pa">&#2602;&#2672;&#2588;&#2622;&#2604;&#2624;</button>
-        <button type="button" data-sr="ta-IN" lang="ta">&#2980;&#2990;&#3007;&#2996;&#3021;</button>
+        <button type="button" data-sr="hi-IN" lang="hi">हिन्दी</button>
+        <button type="button" data-sr="bn-IN" lang="bn">বাংলা</button>
+        <button type="button" data-sr="te-IN" lang="te">తెలుగు</button>
+        <button type="button" data-sr="mr-IN" lang="mr">मराठी</button>
+        <button type="button" data-sr="ta-IN" lang="ta">தமிழ்</button>
+        <button type="button" data-sr="ur-IN" lang="ur">اردو</button>
+        <button type="button" data-sr="gu-IN" lang="gu">ગુજરાતી</button>
+        <button type="button" data-sr="kn-IN" lang="kn">ಕನ್ನಡ</button>
+        <button type="button" data-sr="ml-IN" lang="ml">മലയാളം</button>
+        <button type="button" data-sr="pa-IN" lang="pa">ਪੰਜਾਬੀ</button>
+        <button type="button" data-sr="or-IN" lang="or">ଓଡ଼ିଆ</button>
+        <button type="button" data-sr="as-IN" lang="as">অসমীয়া</button>
+        <button type="button" data-sr="ne-NP" lang="ne">नेपाली</button>
+        <button type="button" data-sr="ar-SA" lang="ar">العربية</button>
       </div>
+      <!-- Not a caption: it changes with the rest of the hero, so the sentence
+           makes its own case in whatever language you picked. -->
+      <p class="hero-scope" id="heroScope">26 languages. The whole app, not just the posts.</p>
 
       <button type="button" class="mic-btn" id="micBtn" aria-describedby="micHint">
         <span class="mic-ring" aria-hidden="true"></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
-        <span class="mic-label">Hold to speak</span>
+        <span class="mic-label" id="micLabel">Hold to speak</span>
       </button>
       <p class="mic-hint" id="micHint">Hold, say one sentence, let go.</p>
 
@@ -2240,10 +2387,21 @@
   // one is the same thought the typing beat below asks you to type, so the
   // two halves of the argument are measuring the same thing.
   var SUGGEST = {
-    'en-IN': 'try saying &mdash; &ldquo;my mind feels light today&rdquo;',
-    'hi-IN': '\u092c\u094b\u0932\u0915\u0930 \u0926\u0947\u0916\u093f\u090f &mdash; \u201c\u0906\u091c \u092e\u0928 \u0939\u0932\u094d\u0915\u093e \u0932\u0917 \u0930\u0939\u093e \u0939\u0948\u201d',
-    'pa-IN': '\u0a2c\u0a4b\u0a32 \u0a15\u0a47 \u0a26\u0a47\u0a16\u0a4b &mdash; \u201c\u0a05\u0a71\u0a1c \u0a2e\u0a28 \u0a39\u0a4c\u0a32\u0a3e \u0a32\u0a71\u0a17 \u0a30\u0a3f\u0a39\u0a3e \u0a39\u0a48\u201d',
-    'ta-IN': '\u0b9a\u0bcb\u0bb2\u0bcd\u0bb2\u0bbf\u0baa\u0bcd \u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb2\u0bbe\u0bae\u0bcd &mdash; \u201c\u0b87\u0ba9\u0bcd\u0bb1\u0bc1 \u0bae\u0ba9\u0bae\u0bcd \u0bb2\u0b95\u0bc1\u0bb5\u0bbe\u0b95 \u0b89\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1\u201d'
+    'en-IN': "try saying — “my mind feels light today”",
+    'hi-IN': "बोलकर देखिए — “आज मन हल्का लग रहा है”",
+    'bn-IN': "বলে দেখুন — “আজ মনটা হালকা লাগছে”",
+    'te-IN': "ఇలా చెప్పి చూడండి — “ఈరోజు మనసు తేలికగా ఉంది”",
+    'mr-IN': "बोलून पाहा — “आज मन हलकं वाटतंय”",
+    'ta-IN': "சொல்லிப் பார்க்கலாம் — “இன்று மனம் லகுவாக உள்ளது”",
+    'ur-IN': "کہہ کر دیکھیے — “آج دل ہلکا لگ رہا ہے”",
+    'gu-IN': "બોલીને જુઓ — “આજે મન હળવું લાગે છે”",
+    'kn-IN': "ಹೇಳಿ ನೋಡಿ — “ಇಂದು ಮನಸ್ಸು ಹಗುರವಾಗಿದೆ”",
+    'ml-IN': "പറഞ്ഞു നോക്കൂ — “ഇന്ന് മനസ്സ് ലഘുവായി തോന്നുന്നു”",
+    'pa-IN': "ਬੋਲ ਕੇ ਦੇਖੋ — “ਅੱਜ ਮਨ ਹੌਲਾ ਲੱਗ ਰਿਹਾ ਹੈ”",
+    'or-IN': "କହି ଦେଖନ୍ତୁ — “ଆଜି ମନ ହାଲୁକା ଲାଗୁଛି”",
+    'as-IN': "কৈ চাওক — “আজি মনটো পাতল লাগিছে”",
+    'ne-NP': "भनेर हेर्नुहोस् — “आज मन हलुका लागेको छ”",
+    'ar-SA': "جرّب أن تقول — “ذهني صافٍ اليوم”"
   };
 
   /* ---- language pills ---- */
