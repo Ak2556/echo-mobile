@@ -27,14 +27,28 @@ export function createScene(canvas, tier) {
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
   camera.position.set(0, 0, 5.4);
 
-  const css = getComputedStyle(document.documentElement);
   const read = (n, fb) => {
-    const v = css.getPropertyValue(n).trim();
+    // Re-read the computed style each time: cached once, a theme change would
+    // leave the scene wearing the palette the page has stopped using.
+    const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim();
     try { return new THREE.Color(v || fb); } catch { return new THREE.Color(fb); }
   };
   const accent = read('--accent', '#A3C165');
   const faint  = read('--ink-faint', '#7C8470');
   const flag   = read('--flag', '#DDAF60');
+
+  /**
+   * Re-sample the palette after the page changes theme.
+   *
+   * These three are mutated in place every frame (`tmp.copy(accent).lerp(...)`),
+   * so setting them here is enough — the next frame picks it up with no
+   * rebuild, no reallocation and no visible seam.
+   */
+  function retint() {
+    accent.copy(read('--accent', '#A3C165'));
+    faint.copy(read('--ink-faint', '#7C8470'));
+    flag.copy(read('--flag', '#DDAF60'));
+  }
 
   // Allocated once, mutated in place. Rebuilding buffers per frame is what
   // produces the GC sawtooth that reads as stutter on cheap Android.
@@ -350,5 +364,5 @@ export function createScene(canvas, tier) {
 
   resize();
   startIdle();
-  return { setProgress, resize, dispose };
+  return { setProgress, resize, dispose, retint };
 }

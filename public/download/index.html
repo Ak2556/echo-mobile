@@ -7,10 +7,189 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="light dark" id="csMeta">
+<script>
+  /* Theme, decided before the first paint.
+   *
+   * Light is the default, deliberately: a visitor who has expressed no
+   * preference gets the lighter page. A stored choice wins over that, and
+   * prefers-color-scheme is only consulted when the visitor has not chosen
+   * here — asking the OS to override an explicit click would be rude.
+   *
+   * Inline and synchronous because anything later means painting one theme and
+   * then swapping it, which reads as a bug.
+   */
+  (function () {
+    var stored = null;
+    try { stored = localStorage.getItem('echo-theme'); } catch (e) {}
+    // Light unless this visitor has chosen otherwise here. prefers-color-scheme
+    // is deliberately not consulted: the brief is that the page opens light.
+    var theme = stored === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
 <script type="importmap">
 { "imports": { "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.185.1/three.module.min.js" } }
 </script>
+<script type="module">
+/* The theme control.
+ *
+ * The page opens light. This only ever changes that for the person who clicks
+ * it, on this browser — the choice is stored locally and nothing is sent
+ * anywhere. The pre-paint script in <head> reads it back on the next visit.
+ *
+ * scene.js samples the CSS variables when it builds, so a live switch is told
+ * to re-read them rather than being left on the previous palette.
+ */
+(function () {
+  var btn = document.getElementById('themeBtn');
+  var label = document.getElementById('themeLabel');
+  var meta = document.getElementById('csMeta');
+  if (!btn) return;
+
+  function sync() {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.setAttribute('aria-pressed', String(dark));
+    if (label) label.textContent = dark ? 'Switch to light' : 'Switch to dark';
+    if (meta) meta.setAttribute('content', dark ? 'dark light' : 'light dark');
+  }
+  sync();
+
+  btn.addEventListener('click', function () {
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('echo-theme', next); } catch (e) {}
+    sync();
+    // The 3D scene read its colours once, at build time.
+    document.dispatchEvent(new CustomEvent('echo:theme', { detail: { theme: next } }));
+  });
+})();
+</script>
+
+<script type="module">
+/* The hero speaks your language.
+ *
+ * A module, not a classic script: this block sits in <head>, and a classic
+ * script there runs before the hero exists, finds nothing and binds nothing.
+ * Modules defer by default.
+ *
+ * The page's strongest claim is the one it used to leave until the very
+ * bottom: not an English app that translates the posts, but an app that is
+ * yours all the way down, including which direction it runs. A claim that far
+ * down the page is a claim most visitors never read.
+ *
+ * So the hero makes it instead of stating it. Pick a language and the headline,
+ * the promise under it, the button and the hint all change — and Arabic mirrors
+ * the hero, because that is the part nobody else does. The chips already chose
+ * which language the microphone listens for; now they choose the page too, so
+ * one control does what the product does.
+ *
+ * TRANSLATIONS: these are the page's claim about itself, so they are worth a
+ * native read before anyone leans on them. Hindi and Arabic follow the strings
+ * already shipped in the language section further down.
+ */
+(function () {
+  var hero = document.querySelector('.hero-in');
+  var h1 = document.getElementById('heroH1');
+  var tag = document.getElementById('heroTag');
+  var scope = document.getElementById('heroScope');
+  var label = document.getElementById('micLabel');
+  var hint = document.getElementById('micHint');
+  if (!hero || !h1) return;
+
+  // Urdu is an Indian language that runs right to left. Treating RTL as an
+  // Arabic-only concern is how Urdu speakers get a mirrored app everywhere
+  // except the page that promised them one.
+  var RTL = new Set(['ur', 'ar']);
+
+  var S = {
+    en: { h1: ["Say it.", "It’s posted."],
+          tag: "In the language you actually think in.",
+          scope: "26 languages. The whole app, not just the posts.",
+          label: "Hold to speak", hint: "Hold, say one sentence, let go." },
+    hi: { h1: ["बोलिए।", "पोस्ट हो गया।"],
+          tag: "उसी भाषा में, जिसमें आप सोचते हैं।",
+          scope: "26 भाषाएँ। पूरा ऐप, सिर्फ़ पोस्ट नहीं।",
+          label: "बोलने के लिए दबाए रखें", hint: "दबाए रखें, एक वाक्य बोलें, छोड़ दें।" },
+    bn: { h1: ["বলুন।", "পোস্ট হয়ে গেছে।"],
+          tag: "যে ভাষায় আপনি সত্যিই ভাবেন, সেই ভাষায়।",
+          scope: "২৬টি ভাষা। শুধু পোস্ট নয়, পুরো অ্যাপ।",
+          label: "বলতে চেপে ধরুন", hint: "চেপে ধরুন, একটি বাক্য বলুন, ছেড়ে দিন।" },
+    te: { h1: ["చెప్పండి.", "పోస్ట్ అయ్యింది."],
+          tag: "మీరు నిజంగా ఆలోచించే భాషలో.",
+          scope: "26 భాషలు. పోస్ట్‌లే కాదు, యాప్ మొత్తం.",
+          label: "మాట్లాడటానికి నొక్కి పట్టుకోండి", hint: "నొక్కి పట్టుకోండి, ఒక వాక్యం చెప్పండి, వదిలేయండి." },
+    mr: { h1: ["बोला.", "पोस्ट झाले."],
+          tag: "तुम्ही खरोखर ज्या भाषेत विचार करता, त्या भाषेत.",
+          scope: "26 भाषा. फक्त पोस्ट नाही, संपूर्ण ॲप.",
+          label: "बोलण्यासाठी दाबून धरा", hint: "दाबून धरा, एक वाक्य बोला, सोडा." },
+    ta: { h1: ["சொல்லுங்கள்.", "பதிவாகிவிட்டது."],
+          tag: "நீங்கள் உண்மையில் சிந்திக்கும் மொழியில்.",
+          scope: "26 மொழிகள். பதிவுகள் மட்டுமல்ல, முழு செயலியும்.",
+          label: "பேச அழுத்திப் பிடிக்கவும்", hint: "அழுத்திப் பிடித்து, ஒரு வாக்கியம் சொல்லி, விடுங்கள்." },
+    ur: { h1: ["کہیے۔", "پوسٹ ہو گیا۔"],
+          tag: "اُسی زبان میں جس میں آپ واقعی سوچتے ہیں۔",
+          scope: "۲۶ زبانیں۔ صرف پوسٹس نہیں، پوری ایپ۔",
+          label: "بولنے کے لیے دبائے رکھیں", hint: "دبائے رکھیں، ایک جملہ بولیں، چھوڑ دیں۔" },
+    gu: { h1: ["બોલો.", "પોસ્ટ થઈ ગયું."],
+          tag: "તમે ખરેખર જે ભાષામાં વિચારો છો, એ જ ભાષામાં.",
+          scope: "26 ભાષાઓ. ફક્ત પોસ્ટ નહીં, આખી ઍપ.",
+          label: "બોલવા માટે દબાવી રાખો", hint: "દબાવી રાખો, એક વાક્ય બોલો, છોડી દો." },
+    kn: { h1: ["ಹೇಳಿ.", "ಪೋಸ್ಟ್ ಆಗಿದೆ."],
+          tag: "ನೀವು ನಿಜವಾಗಿ ಯೋಚಿಸುವ ಭಾಷೆಯಲ್ಲಿ.",
+          scope: "26 ಭಾಷೆಗಳು. ಪೋಸ್ಟ್‌ಗಳಷ್ಟೇ ಅಲ್ಲ, ಇಡೀ ಆ್ಯಪ್.",
+          label: "ಮಾತನಾಡಲು ಒತ್ತಿ ಹಿಡಿಯಿರಿ", hint: "ಒತ್ತಿ ಹಿಡಿಯಿರಿ, ಒಂದು ವಾಕ್ಯ ಹೇಳಿ, ಬಿಡಿ." },
+    ml: { h1: ["പറയൂ.", "പോസ്റ്റ് ആയി."],
+          tag: "നിങ്ങൾ ശരിക്കും ചിന്തിക്കുന്ന ഭാഷയിൽ.",
+          scope: "26 ഭാഷകൾ. പോസ്റ്റുകൾ മാത്രമല്ല, ആപ്പ് മുഴുവൻ.",
+          label: "സംസാരിക്കാൻ അമർത്തിപ്പിടിക്കുക", hint: "അമർത്തിപ്പിടിക്കുക, ഒരു വാക്യം പറയുക, വിടുക." },
+    pa: { h1: ["ਬੋਲੋ।", "ਪੋਸਟ ਹੋ ਗਿਆ।"],
+          tag: "ਉਸੇ ਬੋਲੀ ਵਿੱਚ, ਜਿਸ ਵਿੱਚ ਤੁਸੀਂ ਸੋਚਦੇ ਹੋ।",
+          scope: "26 ਬੋਲੀਆਂ। ਪੂਰੀ ਐਪ, ਸਿਰਫ਼ ਪੋਸਟਾਂ ਨਹੀਂ।",
+          label: "ਬੋਲਣ ਲਈ ਦਬਾਈ ਰੱਖੋ", hint: "ਦਬਾਈ ਰੱਖੋ, ਇੱਕ ਵਾਕ ਬੋਲੋ, ਛੱਡ ਦਿਓ।" },
+    or: { h1: ["କୁହନ୍ତୁ।", "ପୋଷ୍ଟ ହୋଇଗଲା।"],
+          tag: "ଆପଣ ପ୍ରକୃତରେ ଯେଉଁ ଭାଷାରେ ଚିନ୍ତା କରନ୍ତି, ସେହି ଭାଷାରେ।",
+          scope: "26 ଭାଷା। କେବଳ ପୋଷ୍ଟ ନୁହେଁ, ସମ୍ପୂର୍ଣ୍ଣ ଆପ୍।",
+          label: "କହିବା ପାଇଁ ଦବାଇ ରଖନ୍ତୁ", hint: "ଦବାଇ ରଖନ୍ତୁ, ଗୋଟିଏ ବାକ୍ୟ କୁହନ୍ତୁ, ଛାଡ଼ିଦିଅନ୍ତୁ।" },
+    as: { h1: ["কওক।", "পোষ্ট হ’ল।"],
+          tag: "আপুনি সঁচাকৈ যি ভাষাত ভাবে, সেই ভাষাতে।",
+          scope: "২৬টা ভাষা। কেৱল পোষ্ট নহয়, গোটেই এপ্‌টো।",
+          label: "ক’বলৈ টিপি ধৰক", hint: "টিপি ধৰক, এটা বাক্য কওক, এৰি দিয়ক।" },
+    ne: { h1: ["भन्नुहोस्।", "पोस्ट भयो।"],
+          tag: "तपाईं वास्तवमा जुन भाषामा सोच्नुहुन्छ, त्यही भाषामा।",
+          scope: "26 भाषा। पोस्ट मात्र होइन, सिङ्गो एप।",
+          label: "बोल्न थिचिराख्नुहोस्", hint: "थिचिराख्नुहोस्, एउटा वाक्य भन्नुहोस्, छोड्नुहोस्।" },
+    ar: { h1: ["قُلها.", "تمّ النشر."],
+          tag: "باللغة التي تفكر بها فعلاً.",
+          scope: "٢٦ لغة. التطبيق بأكمله، لا المنشورات فقط.",
+          label: "اضغط مع الاستمرار للتحدث", hint: "اضغط، قل جملة واحدة، ثم اترك." },
+  };
+
+  function apply(code) {
+    var set = S[code] || S.en;
+    // Two text nodes and a <br>, not innerHTML: these strings are authored
+    // here, but a translation table is exactly the kind of thing that later
+    // gets loaded from somewhere else.
+    h1.textContent = '';
+    h1.appendChild(document.createTextNode(set.h1[0]));
+    h1.appendChild(document.createElement('br'));
+    h1.appendChild(document.createTextNode(set.h1[1]));
+    if (tag) tag.textContent = set.tag;
+    if (scope) scope.textContent = set.scope;
+    if (label) label.textContent = set.label;
+    if (hint) hint.textContent = set.hint;
+    hero.lang = code;
+    hero.dir = RTL.has(code) ? 'rtl' : 'ltr';
+  }
+
+  document.querySelector('.mic-langs').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button[data-sr]');
+    if (!btn) return;
+    apply((btn.getAttribute('data-sr') || 'en').split('-')[0]);
+  });
+})();
+</script>
+
 <script type="module">
   /* What Echo understood.
    *
@@ -97,6 +276,9 @@
     const canvas = document.getElementById('stage');
     const api = createScene(canvas, tier);
     addEventListener('resize', () => api.resize(), { passive: true });
+    // The theme control changes the CSS variables this scene sampled when it
+    // built. Without this the 3D layer keeps the old palette until a reload.
+    document.addEventListener('echo:theme', () => api.retint?.());
 
     const drive = () => {
       const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
@@ -205,6 +387,16 @@
     --terracotta:  #C67A55;
     --flag:        #DDAF60;
     --flag-wash:   #2A2011;
+    /* Hardcoded before: these are the values that made the page dark no matter
+       what the tokens said. Named so a theme can move them. */
+    --ground-deep: #050603;
+    --on-accent:   #10160B;
+    --accent-lift: #B6D178;
+    --accent-glow: rgba(163,193,101,.28);
+    --bar-bg:      rgba(9, 11, 6, .72);
+    --bar-line:    rgba(241,243,231,.09);
+    --shadow:      rgba(0,0,0,.6);
+    --colophon-top: #14180E;
 
     --step--2: .72rem;
     --step--1: .845rem;
@@ -234,7 +426,7 @@
     overflow-x: hidden;
   }
 
-  ::selection { background: var(--accent-deep); color: #0B0D07; }
+  ::selection { background: var(--accent-deep); color: var(--ground); }
 
   h1, h2, h3 { font-family: Fraunces, ui-serif, Georgia, serif; font-weight: 500; margin: 0; }
   h2 { font-size: var(--step-3); line-height: 1.06; letter-spacing: -.022em; text-wrap: balance; }
@@ -332,31 +524,66 @@
 
   .mic { margin-top: 2rem; width: 100%; max-width: 640px; margin-inline: auto; }
 
+  .dl-steps {
+    margin: 1.1rem auto 0; max-width: 46ch; text-align: left;
+    display: grid; gap: .7rem;
+  }
+  .dl-steps p { margin: 0; font-size: var(--step--1); color: var(--ink-soft); line-height: 1.5; }
+  .dl-steps b { color: var(--ink); font-weight: 600; }
+
+  /* Specificity has to match `.gal-copy .panel p` (0,3,0) or the panel rule
+     wins and the moment renders at body size in body colour, which is the one
+     thing it must not do — it is the lead, not the supporting text. */
+  .gal-copy .panel .gal-scene {
+    font-family: 'Fraunces', Georgia, serif; font-size: var(--step-1);
+    line-height: 1.34; color: var(--ink); margin: .2rem 0 .7rem;
+    text-wrap: pretty; max-width: 34ch;
+  }
+
+  .hero-scope {
+    margin: .9rem auto 0; max-width: 40ch; font-size: var(--step--1);
+    color: var(--ink-soft); line-height: 1.45; text-wrap: balance;
+  }
+  /* Mirroring is the proof, so it has to reach the controls too, not only the
+     prose. Everything in the hero is centred, so this is the whole of it. */
+  .hero-in[dir="rtl"] .mic-langs,
+  .hero-in[dir="rtl"] .hero-cta { flex-direction: row-reverse; }
+
   .mic-langs {
     display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem;
     margin-bottom: 1.4rem;
   }
   .mic-langs button {
-    font: inherit; font-size: var(--step--1); color: var(--ink-faint);
-    background: transparent; border: 1px solid var(--line);
+    font: inherit; font-size: var(--step--1); color: var(--ink-soft);
+    background: var(--glass-tint);
+    -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-edge);
+    box-shadow: inset 0 1px 0 var(--glass-lit);
     border-radius: 999px; padding: .38rem .9rem; cursor: pointer;
     transition: color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
   }
   .mic-langs button:hover { color: var(--ink); border-color: var(--ink-faint); }
-  .mic-langs button.on { color: #10160B; background: var(--accent); border-color: var(--accent); }
+  .mic-langs button.on { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
   .mic-langs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .mic-btn {
     position: relative; display: inline-flex; align-items: center; gap: .7rem;
     font: inherit; font-weight: 600; font-size: var(--step-0);
-    color: #10160B; background: var(--accent);
-    border: 0; border-radius: 999px; padding: .95rem 1.9rem;
+    color: var(--on-accent);
+    /* Tinted glass rather than flat fill: the scene behind still shows through
+       the accent, which is what stops the primary control looking pasted on. */
+    background: color-mix(in srgb, var(--accent) 88%, transparent);
+    -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    border: 1px solid color-mix(in srgb, #FFFFFF 22%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #FFFFFF 34%, transparent),
+                0 10px 30px color-mix(in srgb, var(--accent) 26%, transparent);
+    border-radius: 999px; padding: .95rem 1.9rem;
     cursor: pointer; -webkit-user-select: none; user-select: none;
     -webkit-touch-callout: none; touch-action: manipulation;
     transition: transform .18s var(--ease), box-shadow .25s var(--ease), background .2s var(--ease);
   }
   .mic-btn svg { width: 20px; height: 20px; }
-  .mic-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 44px rgba(163,193,101,.28); }
+  .mic-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 44px var(--accent-glow); }
   .mic-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 
   /* The ring is the only thing that says "I am listening" at a glance, so it
@@ -370,7 +597,7 @@
     0%   { opacity: .75; transform: scale(1); }
     100% { opacity: 0;   transform: scale(1.28); }
   }
-  .mic[data-state="listening"] .mic-btn { background: #C8E08A; transform: translateY(-2px); }
+  .mic[data-state="listening"] .mic-btn { background: var(--accent-lift); transform: translateY(-2px); }
   .mic[data-state="listening"] .mic-btn:hover { transform: translateY(-2px); }
 
   .mic-hint {
@@ -403,7 +630,7 @@
   .mic-post-top { display: flex; align-items: center; gap: .7rem; margin-bottom: .7rem; }
   .mic-av {
     width: 34px; height: 34px; border-radius: 999px; flex: none;
-    display: grid; place-items: center; background: var(--accent); color: #10160B;
+    display: grid; place-items: center; background: var(--accent); color: var(--on-accent);
     font-weight: 700; font-size: .9rem;
   }
   .mic-who { display: flex; flex-direction: column; line-height: 1.25; }
@@ -432,7 +659,7 @@
     border: 1px solid var(--line); box-shadow: none;
   }
   .dl-btn.ghost:hover {
-    background: rgba(163,193,101,.08); border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: var(--accent);
     color: var(--ink); box-shadow: none;
   }
 
@@ -498,7 +725,7 @@
     transition: color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
   }
   .taste-chips button:hover { color: var(--ink); border-color: var(--ink-faint); }
-  .taste-chips button.on { color: #10160B; background: var(--accent); border-color: var(--accent); }
+  .taste-chips button.on { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
   .taste-chips button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .taste-out { min-height: 1px; }
@@ -518,7 +745,7 @@
   .taste-meta { font-size: var(--step--1); color: var(--ink-faint); margin: 0; }
   .taste-act { display: flex; align-items: center; gap: .6rem; margin-top: .9rem; }
   .taste-act b {
-    font-size: var(--step--1); font-weight: 600; color: #10160B;
+    font-size: var(--step--1); font-weight: 600; color: var(--on-accent);
     background: var(--accent); border-radius: 999px; padding: .35rem .9rem;
   }
   .taste-act em { font-style: normal; font-size: var(--step--1); color: var(--ink-faint); }
@@ -584,7 +811,7 @@
     letter-spacing: .08em; text-transform: uppercase;
     transition: background .22s var(--ease), color .22s var(--ease);
   }
-  .seg button.on { background: var(--accent); color: #0B0D07; }
+  .seg button.on { background: var(--accent); color: var(--ground); }
   .dash-grid { display: grid; gap: 1px; background: var(--line); }
   @media (min-width: 920px) { .dash-grid { grid-template-columns: 1.15fr .85fr; } }
   .dash-panel { background: var(--surface); padding: 1.25rem; min-width: 0; }
@@ -662,8 +889,8 @@
     justify-self: center;
     width: clamp(150px, calc((100svh - 11rem) * 0.4605), 268px);
     border-radius: 30px; padding: 9px;
-    background: #050603; border: 1px solid var(--line);
-    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    background: var(--ground-deep); border: 1px solid var(--line);
+    box-shadow: 0 30px 80px var(--shadow);
   }
   .phone img { display: block; width: 100%; border-radius: 22px; }
 
@@ -731,7 +958,7 @@
   .shots figure { margin: 0; }
   .shots img {
     display: block; width: 100%; border-radius: 12px;
-    border: 1px solid var(--line); background: #050603;
+    border: 1px solid var(--line); background: var(--ground-deep);
   }
   .shots figcaption {
     margin-top: .6rem; font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -766,7 +993,7 @@
     --line-soft:   #E4E1D3;
     --ink:         #14180E;
     --ink-soft:    #4B5340;
-    --ink-faint:   #7C8470;
+    --ink-faint:   var(--ink-faint);
     --accent:      #55731F;
     --accent-deep: #3D5415;
     --accent-wash: #E4EAD2;
@@ -774,39 +1001,221 @@
     background: var(--ground);
     color: var(--ink);
   }
+  /* Light mode.
+   *
+   * The values are the ones .light already used on #insight and #build, so this
+   * is a palette the page has been wearing in places all along rather than a
+   * new one invented for a toggle. The accent changes with it: var(--accent) is tuned
+   * for near-black and fails contrast on cream, which is why the light sections
+   * always used the deeper #55731F.
+   *
+   * scene.js reads --accent, --ink-faint and --flag from the computed styles,
+   * so the 3D scene follows without knowing a theme exists.
+   */
+  :root[data-theme="light"] {
+    --ground:      #F2F1E7;
+    --ground-2:    #EAE8DB;
+    --surface:     #FBFAF4;
+    --surface-2:   #F1EFE4;
+    --line:        #D8D5C3;
+    --line-soft:   #E4E1D3;
+    --ink:         #14180E;
+    --ink-soft:    #4B5340;
+    --ink-faint:   #7C8470;
+    --accent:      #55731F;
+    --accent-deep: #3D5415;
+    --accent-wash: #E4EAD2;
+    --flag-wash:   #F4E7C9;
+    --ground-deep: #E6E4D6;
+    --on-accent:   #FBFAF4;
+    --accent-lift: #3D5415;
+    --accent-glow: rgba(85,115,31,.22);
+    --bar-bg:      rgba(242,241,231,.78);
+    --bar-line:    rgba(20,24,14,.10);
+    --shadow:      rgba(20,24,14,.18);
+    /* The seam gradients fade a section into the ones bordering it. That colour
+       is the NEIGHBOUR's ground, so in light mode it is cream — left at the
+       dark value it painted a black smudge across the top and bottom edge of
+       every pale section. Deliberately overridden here at the theme root, not
+       on .light, which is the distinction the token's own comment draws. */
+    --ground-dark: #F2F1E7;
+    /* The base plate darkens slightly under the document. Left at the dark
+       value it painted a near-black band across the top of the footer. */
+    --colophon-top: #E4E2D4;
+  }
+
+  /* The page alternates heavy and relief sections. In light mode the relief has
+     to go the other way or the whole thing flattens into one cream. */
+  :root[data-theme="light"] .light {
+    --ground:      #E4E2D4;
+    --ground-2:    #DBD9C9;
+    --surface:     #EFEDE1;
+    --line:        #CDC9B5;
+  }
+
   .dark { background: var(--ground); color: var(--ink); }
+
+  .theme-btn {
+    display: inline-grid; place-items: center; width: 34px; height: 34px;
+    margin-left: auto; padding: 0; border: 1px solid var(--glass-edge);
+    border-radius: 999px; color: var(--ink-soft);
+    background: var(--glass-tint);
+    -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    box-shadow: inset 0 1px 0 var(--glass-lit);
+    cursor: pointer;
+  }
+  .theme-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .theme-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .theme-btn svg { grid-area: 1 / 1; width: 17px; height: 17px; }
+  /* Show the destination, not the current state: the control offers the other
+     theme, so it wears the other theme's icon. */
+  :root[data-theme="light"] .t-sun,
+  :root[data-theme="dark"]  .t-moon { display: none; }
+  .vh {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+
+  /* ---------- liquid glass ----------
+   *
+   * Applied only to controls that float over live content — the top bar, the
+   * language chips, the microphone, the command chips, the theme switch. The
+   * hero runs a WebGL scene behind them, which is the whole reason glass means
+   * anything here: over a flat colour it is just a tinted box.
+   *
+   * The prose is deliberately left alone. This page's identity is typographic,
+   * and glassing the body would swap a voice for a borrowed skin.
+   *
+   * What makes it read as glass rather than a blur:
+   *   1. saturation, not just blur — glass concentrates the colour behind it
+   *   2. a bright rim on the lit edge and a dark one opposite, which is the
+   *      specular highlight that tells the eye there is a thickness
+   *   3. an inner top highlight, so the surface has a near side
+   * Apple's version refracts with a real shader. This does not pretend to:
+   * backdrop-filter cannot displace, so the edge does the work instead.
+   */
+  :root {
+    --glass-tint:  color-mix(in srgb, var(--surface) 42%, transparent);
+    --glass-edge:  color-mix(in srgb, var(--ink) 12%, transparent);
+    --glass-lit:   color-mix(in srgb, #FFFFFF 26%, transparent);
+    --glass-blur:  blur(18px) saturate(1.7);
+  }
+  :root[data-theme="light"] {
+    /* Cream needs a denser tint and a much softer specular, or the rim reads as
+       a white scratch rather than a lit edge. */
+    --glass-tint:  color-mix(in srgb, #FFFFFF 52%, transparent);
+    --glass-edge:  color-mix(in srgb, var(--ink) 10%, transparent);
+    --glass-lit:   color-mix(in srgb, #FFFFFF 70%, transparent);
+  }
+
+  .glass {
+    position: relative;
+    background: var(--glass-tint);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-edge);
+    box-shadow:
+      inset 0 1px 0 var(--glass-lit),
+      inset 0 -1px 0 color-mix(in srgb, var(--ink) 5%, transparent),
+      0 6px 20px color-mix(in srgb, var(--shadow) 55%, transparent);
+  }
+
+  /* The lit edge follows the radius. A border alone cannot fade round a corner,
+     and a rim that is uniformly bright looks printed on rather than lit. */
+  .glass::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    padding: 1px; pointer-events: none;
+    background: linear-gradient(160deg, var(--glass-lit), transparent 42%, transparent 62%, color-mix(in srgb, var(--ink) 8%, transparent));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+
+  /* backdrop-filter is the most expensive thing on this page, and the audience
+     is mid-range Android. The tier that already decides whether to run WebGL
+     decides this too: no blur, a solid tint instead, same shape. */
+  /* Written against the real controls, not a .glass class. An earlier version
+     of this guard targeted .glass while the properties were applied directly to
+     these selectors, so it matched nothing and the most expensive filter on the
+     page ran on the cheapest phones — the exact devices the tier exists for.
+     A solid tint at the same shape costs nothing and looks deliberate. */
+  :root[data-tier="poster"] .topbar,
+  :root[data-tier="poster"] .mic-langs button,
+  :root[data-tier="poster"] .mic-btn,
+  :root[data-tier="poster"] .mic-try button,
+  :root[data-tier="poster"] .theme-btn,
+  :root[data-tier="poster"] .ios-row input,
+  :root[data-tier="poster"] .glass {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  }
+  :root[data-tier="poster"] .topbar,
+  :root[data-tier="poster"] .mic-langs button,
+  :root[data-tier="poster"] .mic-try button,
+  :root[data-tier="poster"] .theme-btn,
+  :root[data-tier="poster"] .ios-row input,
+  :root[data-tier="poster"] .glass {
+    background: color-mix(in srgb, var(--surface) 92%, var(--ground));
+  }
+  :root[data-tier="poster"] .mic-btn { background: var(--accent); }
+  :root[data-tier="poster"] .glass::after { display: none; }
 
   /* ---------- sticky product bar ---------- */
   .topbar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 70;
     display: flex; align-items: center; gap: 1.4rem;
     padding: .85rem clamp(1rem, 4vw, 2.4rem);
-    background: rgba(9, 11, 6, .72);
-    backdrop-filter: blur(16px) saturate(1.3);
-    -webkit-backdrop-filter: blur(16px) saturate(1.3);
-    border-bottom: 1px solid rgba(241,243,231,.09);
+    background: var(--glass-tint);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--glass-edge);
+    box-shadow: inset 0 1px 0 var(--glass-lit);
   }
   .topbar .brand {
     font-family: Fraunces, ui-serif, Georgia, serif;
     font-size: 1.16rem; font-weight: 600; letter-spacing: -.02em;
-    color: #F1F3E7; margin-right: auto; text-decoration: none;
+    color: var(--ink); margin-right: auto; text-decoration: none;
+    display: inline-flex; align-items: center; gap: .48rem;
   }
+
+  /* The mark is typographic, so it is set rather than drawn.
+   *
+   * The alternative was the 256px webp the hero uses, but that has its dark
+   * tile baked into the pixels: next to the wordmark it reads as a sticker,
+   * and on cream it is a black square that ignores the theme. Set as type it
+   * inherits the colour, stays crisp at any size, weighs nothing, and is the
+   * same glyph in the same face the logo already is.
+   *
+   * aria-hidden because the word "Echo" is right beside it — a screen reader
+   * should not announce the brand twice.
+   */
+  /* The real mark, the same file the hero loads, so it is already in cache and
+     costs no extra request.
+     It carries its own dark tile — there is no transparency in it — so on the
+     light theme it stays a dark square. That is what an app icon is, and it is
+     the shape people will look for on their home screen, so it is left alone
+     rather than recoloured into something they would not recognise.
+     alt="" because the word "Echo" sits right beside it. */
+  .brand-mark {
+    width: 1.55em; height: 1.55em; border-radius: .34em;
+    flex: none; display: block; object-fit: cover;
+  }
+  .colo-brand .colo-mark { display: inline-flex; align-items: center; gap: .5rem; }
   .topbar nav { display: none; gap: 1.5rem; }
   @media (min-width: 900px) { .topbar nav { display: flex; gap: 1rem; } }
   @media (min-width: 1100px) { .topbar nav { gap: 1.5rem; } }
   .topbar nav a {
-    font-size: .86rem; color: rgba(241,243,231,.55); text-decoration: none;
+    font-size: .86rem; color: color-mix(in srgb, var(--ink) 55%, transparent); text-decoration: none;
     transition: color .25s var(--ease);
   }
-  .topbar nav a:hover { color: rgba(241,243,231,.9); }
-  .topbar nav a.on { color: #F1F3E7; }
+  .topbar nav a:hover { color: color-mix(in srgb, var(--ink) 90%, transparent); }
+  .topbar nav a.on { color: var(--ink); }
   .topbar .cta {
     padding: .5rem 1.05rem; border-radius: 999px;
-    background: #A3C165; color: #0B0D07;
+    background: var(--accent); color: var(--ground);
     font-size: .84rem; font-weight: 600; text-decoration: none;
     white-space: nowrap; transition: background .25s var(--ease);
   }
-  .topbar .cta:hover { background: #B6D178; }
+  .topbar .cta:hover { background: var(--accent-lift); }
 
   /* progress, now a hairline under the bar */
   .spine { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 71; background: transparent; }
@@ -826,18 +1235,18 @@
     position: relative; width: 100%;
     min-height: min(70svh, 600px);
     display: grid; place-items: center; overflow: hidden;
-    background: #050603;
+    background: var(--ground-deep);
   }
   .bleed img, .bleed video { display: block; width: 100%; height: auto;
     aspect-ratio: 420 / 912; object-fit: cover; }
   .bleed .glow {
     position: absolute; inset: 0;
-    background: radial-gradient(120% 80% at 50% 40%, rgba(163,193,101,.16), transparent 62%);
+    background: radial-gradient(120% 80% at 50% 40%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%);
   }
   .bleed .device {
     position: relative; width: min(300px, 62vw);
-    border-radius: 32px; padding: 10px; background: #050603;
-    border: 1px solid rgba(241,243,231,.14);
+    border-radius: 32px; padding: 10px; background: var(--ground-deep);
+    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
     box-shadow: 0 40px 110px rgba(0,0,0,.75);
     transform: translateY(calc(var(--bp, .5) * -34px + 17px)) scale(calc(1 + var(--bp, .5) * .04));
   }
@@ -856,12 +1265,12 @@
   .dl-btn {
     display: inline-flex; align-items: center; gap: .6rem;
     padding: .95rem 1.9rem; border-radius: 999px;
-    background: var(--accent); color: #0B0D07;
+    background: var(--accent); color: var(--ground);
     font-size: 1.02rem; font-weight: 650; text-decoration: none;
-    box-shadow: 0 10px 34px rgba(163,193,101,.22);
+    box-shadow: 0 10px 34px color-mix(in srgb, var(--accent) 22%, transparent);
     transition: transform .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
   }
-  .dl-btn:hover { background: #B6D178; transform: translateY(-2px); box-shadow: 0 16px 44px rgba(163,193,101,.3); }
+  .dl-btn:hover { background: var(--accent-lift); transform: translateY(-2px); box-shadow: 0 16px 44px color-mix(in srgb, var(--accent) 30%, transparent); }
   .dl-btn:active { transform: translateY(0); }
   .dl-btn svg { width: 19px; height: 19px; }
   .dl-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
@@ -925,8 +1334,8 @@
   .gal-phone { position: relative; justify-self: center;
     width: clamp(140px, calc((100svh - 7rem) * 0.4605), 268px); }
   .gal-phone .frame {
-    border-radius: 30px; padding: 9px; background: #050603;
-    border: 1px solid var(--line); box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    border-radius: 30px; padding: 9px; background: var(--ground-deep);
+    border: 1px solid var(--line); box-shadow: 0 30px 80px var(--shadow);
   }
   .gal-phone img {
     grid-area: 1 / 1; align-self: start;
@@ -979,13 +1388,16 @@
        plus the button overflows by a few pixels and wraps the button onto its
        own line. This keeps them on one row down to about 320px. */
     flex: 1 1 11rem; min-width: 0; padding: .7rem .9rem; color: var(--ink);
-    background: transparent; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--glass-tint);
+    -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-edge); border-radius: 999px;
+    box-shadow: inset 0 1px 0 var(--glass-lit);
     font: inherit; font-size: var(--step--1);
   }
   .ios-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
   .ios-row button {
     padding: .7rem 1.2rem; border: 1px solid var(--accent); border-radius: 999px;
-    background: var(--accent); color: #10160B; font: inherit; font-size: var(--step--1);
+    background: var(--accent); color: var(--on-accent); font: inherit; font-size: var(--step--1);
     font-weight: 600; cursor: pointer; white-space: nowrap;
   }
   .ios-row button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
@@ -1037,6 +1449,8 @@
     .gallery { gap: 1.5rem; }
     .gal-copy .panel h3 { font-size: var(--step-1); }
     .gal-copy .panel p { font-size: var(--step--1); max-width: none; }
+    /* Re-stated inside the breakpoint for the same reason as above. */
+    .gal-copy .panel .gal-scene { font-size: var(--step-0); max-width: none; }
     .pin > .pin-in { padding-block: 1.5rem; }
 
     .bleed { min-height: 62svh; }
@@ -1094,8 +1508,8 @@
   /* Deep enough to read as a base plate the document rests on, with the
      accent pooling at the seam where the eye arrives from the close. */
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(163,193,101,.10) 0%, rgba(163,193,101,0) 62%),
-    linear-gradient(180deg, #14180E 0%, #0B0D07 38%, #050603 100%);
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, color-mix(in srgb, var(--accent) 0%, transparent) 62%),
+    linear-gradient(180deg, var(--colophon-top) 0%, var(--ground) 38%, var(--ground-deep) 100%);
   /* Horizontal inset matches .stage exactly — a footer that reaches the
      viewport edge while every section above it is gutter-aligned reads as a
      different page stapled on. Vertical is tighter: this is the quiet end of
@@ -1108,7 +1522,7 @@
   content: ""; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
   background: linear-gradient(90deg,
     transparent 0%, var(--line) 14%,
-    rgba(163,193,101,.42) 50%, var(--line) 86%, transparent 100%);
+    color-mix(in srgb, var(--accent) 42%, transparent) 50%, var(--line) 86%, transparent 100%);
 }
 .colo-grid, .colo-base { max-width: 1180px; margin-inline: auto; width: 100%; }
 .colo-grid {
@@ -1249,7 +1663,9 @@
 .morph.light::before, .morph.light::after,
 .bleed::before, .bleed::after {
   content: ""; position: absolute; left: 0; right: 0;
-  height: clamp(56px, 8vh, 120px);
+  /* Long enough that the eye never finds where one section stopped. A short
+     band still reads as a join; this reads as the page changing its mind. */
+  height: clamp(120px, 18vh, 260px);
   pointer-events: none; z-index: -1;
 }
 .stage.light::before, .morph.light::before, .bleed::before {
@@ -1319,15 +1735,15 @@
    Real DOM instead: the strings swap, and for Arabic the whole layout mirrors
    because dir="rtl" actually flips it. That is the claim, demonstrated. */
 .ui {
-  background: #0B0D07; border: 1px solid #262C1A; border-radius: 22px;
+  background: var(--ground); border: 1px solid #262C1A; border-radius: 22px;
   padding: 1rem .9rem 0; width: 300px; max-width: 100%;
-  font-size: 13px; color: #F1F3E7; overflow: hidden;
+  font-size: 13px; color: var(--ink); overflow: hidden;
 }
-.ui-bar { display: flex; justify-content: space-between; font-size: 10px; color: #7C8470; margin-bottom: .6rem; }
+.ui-bar { display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-faint); margin-bottom: .6rem; }
 .ui-brand { font-family: Fraunces, Georgia, serif; font-size: 19px; margin: 0 0 .15rem; }
 .ui-greet { font-family: Fraunces, Georgia, serif; font-size: 17px; margin: 0 0 .7rem; }
-.ui-card { background: #12150D; border-radius: 10px; padding: .6rem .7rem; margin-bottom: .6rem; }
-.ui-kicker { font-family: "IBM Plex Mono", monospace; font-size: 8.5px; letter-spacing: .14em; color: #A3C165; margin: 0 0 .3rem; }
+.ui-card { background: var(--surface); border-radius: 10px; padding: .6rem .7rem; margin-bottom: .6rem; }
+.ui-kicker { font-family: "IBM Plex Mono", monospace; font-size: 8.5px; letter-spacing: .14em; color: var(--accent); margin: 0 0 .3rem; }
 .ui-quote { font-family: Fraunces, Georgia, serif; font-size: 13px; line-height: 1.4; margin: 0; }
 .ui-spark {
   background: linear-gradient(90deg, #E2703A, #D9542B); border-radius: 10px;
@@ -1335,13 +1751,13 @@
   display: flex; justify-content: space-between; align-items: center;
 }
 .ui-tabs { display: flex; gap: .3rem; margin-bottom: .7rem; flex-wrap: wrap; }
-.ui-tabs span { font-size: 10.5px; padding: .25rem .55rem; border-radius: 99px; background: #12150D; color: #A9B197; }
-.ui-tabs span.on { background: #A3C165; color: #0B0D07; }
+.ui-tabs span { font-size: 10.5px; padding: .25rem .55rem; border-radius: 99px; background: var(--surface); color: #A9B197; }
+.ui-tabs span.on { background: var(--accent); color: var(--ground); }
 .ui-nav {
   display: flex; justify-content: space-between; border-top: 1px solid #1C2114;
-  padding: .5rem .1rem; font-size: 9px; color: #7C8470; margin: 0 -.9rem;
+  padding: .5rem .1rem; font-size: 9px; color: var(--ink-faint); margin: 0 -.9rem;
 }
-.ui-nav span:first-child { color: #A3C165; }
+.ui-nav span:first-child { color: var(--accent); }
 .ui-switch { display: flex; gap: .35rem; margin-top: .9rem; justify-content: center; flex-wrap: wrap; }
 .ui-switch button {
   font: inherit; font-size: var(--step--2); cursor: pointer;
@@ -1472,7 +1888,7 @@
 <div class="spine" aria-hidden="true"><i id="spine"></i></div>
 
 <header class="topbar">
-  <a class="brand" href="#top">Echo</a>
+  <a class="brand" href="#top"><img class="brand-mark" src="/download/media/65b05dc0.webp" width="256" height="256" alt="" aria-hidden="true" decoding="async">Echo</a>
   <nav id="topnav">
     <a href="#origin">Why</a>
     <a href="#tour">Product</a>
@@ -1480,14 +1896,19 @@
     <a href="#build">Language</a>
     <a href="/">Open the app</a>
   </nav>
+  <button type="button" class="theme-btn" id="themeBtn" aria-pressed="false">
+    <svg class="t-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+    <svg class="t-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <span class="vh" id="themeLabel">Switch to dark</span>
+  </button>
   <a class="cta" href="https://echo-mobile.at3236129.workers.dev/media/echo-media/downloads/echo-latest.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>Download APK</a>
 </header>
 
 <header class="hero dark" id="top">
   <div class="hero-in">
     <img src="/download/media/65b05dc0.webp" class="mark" width="256" height="256" alt="Echo" loading="eager" decoding="async">
-    <h1>Say it.<br>It&rsquo;s posted.</h1>
-    <p class="tag">In the language you actually think in.</p>
+    <h1 id="heroH1">Say it.<br>It&rsquo;s posted.</h1>
+    <p class="tag" id="heroTag">In the language you actually think in.</p>
 
     <!-- The page performs the promise instead of describing it. Hold the
          button, speak, watch the words land in a post. Everything here runs
@@ -1496,15 +1917,29 @@
     <div class="mic" id="mic" data-state="idle">
       <div class="mic-langs" role="group" aria-label="Language to speak in">
         <button type="button" class="on" data-sr="en-IN">English</button>
-        <button type="button" data-sr="hi-IN" lang="hi">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</button>
-        <button type="button" data-sr="pa-IN" lang="pa">&#2602;&#2672;&#2588;&#2622;&#2604;&#2624;</button>
-        <button type="button" data-sr="ta-IN" lang="ta">&#2980;&#2990;&#3007;&#2996;&#3021;</button>
+        <button type="button" data-sr="hi-IN" lang="hi">हिन्दी</button>
+        <button type="button" data-sr="bn-IN" lang="bn">বাংলা</button>
+        <button type="button" data-sr="te-IN" lang="te">తెలుగు</button>
+        <button type="button" data-sr="mr-IN" lang="mr">मराठी</button>
+        <button type="button" data-sr="ta-IN" lang="ta">தமிழ்</button>
+        <button type="button" data-sr="ur-IN" lang="ur">اردو</button>
+        <button type="button" data-sr="gu-IN" lang="gu">ગુજરાતી</button>
+        <button type="button" data-sr="kn-IN" lang="kn">ಕನ್ನಡ</button>
+        <button type="button" data-sr="ml-IN" lang="ml">മലയാളം</button>
+        <button type="button" data-sr="pa-IN" lang="pa">ਪੰਜਾਬੀ</button>
+        <button type="button" data-sr="or-IN" lang="or">ଓଡ଼ିଆ</button>
+        <button type="button" data-sr="as-IN" lang="as">অসমীয়া</button>
+        <button type="button" data-sr="ne-NP" lang="ne">नेपाली</button>
+        <button type="button" data-sr="ar-SA" lang="ar">العربية</button>
       </div>
+      <!-- Not a caption: it changes with the rest of the hero, so the sentence
+           makes its own case in whatever language you picked. -->
+      <p class="hero-scope" id="heroScope">26 languages. The whole app, not just the posts.</p>
 
       <button type="button" class="mic-btn" id="micBtn" aria-describedby="micHint">
         <span class="mic-ring" aria-hidden="true"></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
-        <span class="mic-label">Hold to speak</span>
+        <span class="mic-label" id="micLabel">Hold to speak</span>
       </button>
       <p class="mic-hint" id="micHint">Hold, say one sentence, let go.</p>
 
@@ -1649,18 +2084,22 @@
         <div class="panels">
           <div class="panel on" data-panel>
             <h3>A feed you can actually finish</h3>
+            <p class="gal-scene">It is twenty to midnight. You open Echo, read twelve things, reach the bottom, and put the phone down.</p>
             <p>It greets you by name, in your language, and <strong>then it ends</strong>. You reach the bottom and you put the phone down. Nobody designed this to keep you here.</p>
           </div>
           <div class="panel" data-panel>
             <h3>One question a day, the same for everyone</h3>
+            <p class="gal-scene">Your neighbour answered today’s in Punjabi. Someone in Kochi answered it in Malayalam. You read both — after you had answered your own.</p>
             <p>Answer it and <strong>you unlock everyone else&rsquo;s</strong>. Strangers, in their own languages, on the one thing you were all asked today. Then it closes until tomorrow.</p>
           </div>
           <div class="panel" data-panel>
             <h3>The part you were going to skip</h3>
+            <p class="gal-scene">You are walking back from the shop when you remember your mother’s tablets. You say it out loud. The reminder is set before you reach the gate.</p>
             <p>Writing the caption, finding the message, setting the reminder. <strong>Say it once and it is handled</strong> &#8212; and you see every action before it happens.</p>
           </div>
           <div class="panel" data-panel>
             <h3>Reasons to open it on a quiet day</h3>
+            <p class="gal-scene">Nothing to say today. You log the ₹180 that went on vegetables, tick two habits, and close it.</p>
             <p>Tasks, habits, notes, focus timers, money. Twelve, right there in the tab, so the app still earns its place on days you have nothing to say.</p>
           </div>
         </div>
@@ -1747,6 +2186,11 @@
       </div>
       <div>
         <h2 class="rv d1">Your language, all the way down.</h2>
+        <!-- The hero already switched this page. Repeating the pitch here read
+             as the page forgetting what the visitor had just done, so this
+             names it and moves to the half the hero cannot show: the app. -->
+        <p class="body rv d2">You changed this page at the top. That was the easy
+        half &mdash; a website is words. Here is the app doing it.</p>
         <p class="body rv d2">Not just the posts &mdash; <strong>the whole
         app</strong>. Greeting, tabs, buttons, prompts, even the direction it
         runs. Switch it and everything moves. <strong>Not an English app that
@@ -1801,9 +2245,21 @@
           <button type="submit">Tell me when</button>
         </div>
       </form>
-      <p class="dl-note">Android for now, iOS next. Your phone will ask to allow
-      an install from outside the Play Store &mdash; <strong>say yes</strong>.
-      That is what a beta looks like.</p>
+      <!-- The only place this page asks for real trust, and it used to get one
+           sentence. Someone being asked to install a 181 MB file from a site
+           they met four minutes ago deserves to know exactly what is coming. -->
+      <p class="dl-note">Android for now, iOS next.</p>
+      <div class="dl-steps">
+        <p><b>Your phone will try to stop you.</b> It will say something like
+        &ldquo;Chrome is not allowed to install unknown apps&rdquo;. It says that
+        about every app that did not come from the Play Store, including the ones
+        you already trust. Tap <b>Settings</b>, allow it once, tap <b>Install</b>.</p>
+        <p><b>It takes about a minute on a normal connection</b> and asks for
+        nothing while it installs. Echo asks for the microphone the first time you
+        hold the button, and for nothing else until you use the part that needs it.</p>
+        <p><b>It uninstalls like anything else.</b> Hold the icon, remove, gone
+        &mdash; and if you delete your account first, what you wrote goes with it.</p>
+      </div>
     </div>
   </div>
 </footer>
@@ -1811,7 +2267,7 @@
 <div class="stage colophon dark">
   <div class="colo-grid">
     <div class="colo-brand">
-      <p class="colo-mark">Echo</p>
+      <p class="colo-mark"><img class="brand-mark" src="/download/media/65b05dc0.webp" width="256" height="256" alt="" aria-hidden="true" decoding="async">Echo</p>
       <p class="colo-line">A voice-first social network, in 26 languages.</p>
       <p class="colo-addr">
         Akash Thakur · Sole proprietor<br>
@@ -2240,10 +2696,21 @@
   // one is the same thought the typing beat below asks you to type, so the
   // two halves of the argument are measuring the same thing.
   var SUGGEST = {
-    'en-IN': 'try saying &mdash; &ldquo;my mind feels light today&rdquo;',
-    'hi-IN': '\u092c\u094b\u0932\u0915\u0930 \u0926\u0947\u0916\u093f\u090f &mdash; \u201c\u0906\u091c \u092e\u0928 \u0939\u0932\u094d\u0915\u093e \u0932\u0917 \u0930\u0939\u093e \u0939\u0948\u201d',
-    'pa-IN': '\u0a2c\u0a4b\u0a32 \u0a15\u0a47 \u0a26\u0a47\u0a16\u0a4b &mdash; \u201c\u0a05\u0a71\u0a1c \u0a2e\u0a28 \u0a39\u0a4c\u0a32\u0a3e \u0a32\u0a71\u0a17 \u0a30\u0a3f\u0a39\u0a3e \u0a39\u0a48\u201d',
-    'ta-IN': '\u0b9a\u0bcb\u0bb2\u0bcd\u0bb2\u0bbf\u0baa\u0bcd \u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb2\u0bbe\u0bae\u0bcd &mdash; \u201c\u0b87\u0ba9\u0bcd\u0bb1\u0bc1 \u0bae\u0ba9\u0bae\u0bcd \u0bb2\u0b95\u0bc1\u0bb5\u0bbe\u0b95 \u0b89\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1\u201d'
+    'en-IN': "try saying — “my mind feels light today”",
+    'hi-IN': "बोलकर देखिए — “आज मन हल्का लग रहा है”",
+    'bn-IN': "বলে দেখুন — “আজ মনটা হালকা লাগছে”",
+    'te-IN': "ఇలా చెప్పి చూడండి — “ఈరోజు మనసు తేలికగా ఉంది”",
+    'mr-IN': "बोलून पाहा — “आज मन हलकं वाटतंय”",
+    'ta-IN': "சொல்லிப் பார்க்கலாம் — “இன்று மனம் லகுவாக உள்ளது”",
+    'ur-IN': "کہہ کر دیکھیے — “آج دل ہلکا لگ رہا ہے”",
+    'gu-IN': "બોલીને જુઓ — “આજે મન હળવું લાગે છે”",
+    'kn-IN': "ಹೇಳಿ ನೋಡಿ — “ಇಂದು ಮನಸ್ಸು ಹಗುರವಾಗಿದೆ”",
+    'ml-IN': "പറഞ്ഞു നോക്കൂ — “ഇന്ന് മനസ്സ് ലഘുവായി തോന്നുന്നു”",
+    'pa-IN': "ਬੋਲ ਕੇ ਦੇਖੋ — “ਅੱਜ ਮਨ ਹੌਲਾ ਲੱਗ ਰਿਹਾ ਹੈ”",
+    'or-IN': "କହି ଦେଖନ୍ତୁ — “ଆଜି ମନ ହାଲୁକା ଲାଗୁଛି”",
+    'as-IN': "কৈ চাওক — “আজি মনটো পাতল লাগিছে”",
+    'ne-NP': "भनेर हेर्नुहोस् — “आज मन हलुका लागेको छ”",
+    'ar-SA': "جرّب أن تقول — “ذهني صافٍ اليوم”"
   };
 
   /* ---- language pills ---- */
