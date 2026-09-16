@@ -156,6 +156,19 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
   // deletion mean deletion in every colo at once.
   const revocable = key.startsWith('downloads/');
 
+  // Avatars break the timestamp assumption above. uploadAvatar (see
+  // lib/supabaseEchoApi.ts) writes `${uid}/avatar.${ext}` — a FIXED key,
+  // overwritten in place every time someone changes their picture, so the URL
+  // never changes and an immutable edge copy pins the OLD image for a year.
+  // Exactly the downloads/ failure again, with a different cause: there the
+  // object is deleted, here it is replaced.
+  //
+  // It is still worth edge-caching (a feed is mostly avatars, and making them
+  // revocable would cost an R2 read per card), so this is a short TTL plus
+  // must-revalidate rather than no caching at all: a new picture is live within
+  // the minute, and revalidation after that is a cheap 304 against the etag.
+  const mutable = bucket === 'avatars';
+
   // Video needs byte ranges. Without them a player cannot fetch a header, start
   // on a partial buffer, or seek — it has to pull the whole file before the
   // first frame, so every scroll in the flow stalls for the length of a full
@@ -223,7 +236,9 @@ app.get('/media/:bucket/:key{.+}', async (c) => {
   // cache indefinitely — except for builds, which have to stay withdrawable.
   headers.set(
     'Cache-Control',
-    revocable ? 'public, max-age=300, must-revalidate' : 'public, max-age=31536000, immutable',
+    revocable || mutable
+      ? `public, max-age=${revocable ? 300 : 60}, must-revalidate`
+      : 'public, max-age=31536000, immutable',
   );
 
   const resolved = 'range' in object ? object.range : undefined;

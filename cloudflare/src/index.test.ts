@@ -36,6 +36,8 @@ function bucket(objects: Record<string, Stored> = {}) {
 let echoMedia: ReturnType<typeof bucket>;
 let dmMedia: ReturnType<typeof bucket>;
 let miniAppMedia: ReturnType<typeof bucket>;
+let avatars: ReturnType<typeof bucket>;
+let cachePut: ReturnType<typeof vi.fn>;
 let cached: Response | undefined;
 let memberOf: string[];
 let fetchCalls: string[];
@@ -48,7 +50,7 @@ function env() {
     AWS_ACCESS_KEY_ID: 'AKIDEXAMPLE',
     AWS_SECRET_ACCESS_KEY: 'secret',
     R2_ACCOUNT_ID: 'acct',
-    AVATARS_BUCKET: bucket(),
+    AVATARS_BUCKET: avatars,
     ECHO_MEDIA_BUCKET: echoMedia,
     DM_MEDIA_BUCKET: dmMedia,
     MINI_APP_MEDIA_BUCKET: miniAppMedia,
@@ -79,14 +81,16 @@ beforeEach(() => {
     [`${OTHER}/legacy.jpg`]: { body: 'old-dm-bytes', type: 'image/jpeg' },
   });
   miniAppMedia = bucket({ [`${ME}/voice-memo/1-abc.m4a`]: { body: 'memo', type: 'audio/mp4' } });
+  avatars = bucket({ [`${ME}/avatar.jpg`]: { body: 'avatar-bytes', type: 'image/jpeg' } });
   cached = undefined;
   memberOf = [];
   fetchCalls = [];
 
+  cachePut = vi.fn(async () => undefined);
   vi.stubGlobal('caches', {
     default: {
       match: vi.fn(async () => cached),
-      put: vi.fn(async () => undefined),
+      put: cachePut,
     },
   });
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
@@ -131,6 +135,33 @@ describe('/media', () => {
   it('keeps the real APK installable', async () => {
     const res = await call('/media/echo-media/downloads/echo-latest.apk');
     expect(res.headers.get('Content-Type')).toBe('application/vnd.android.package-archive');
+  });
+
+  // Regression: avatars are keyed `<uid>/avatar.<ext>` (supabaseEchoApi.uploadAvatar),
+  // a FIXED key overwritten on every upload — so the "keys embed an upload
+  // timestamp and are never rewritten" assumption behind the immutable year
+  // does not hold for them. Served immutable, a new profile picture never
+  // reaches anyone who already loaded the old one.
+  it('does not serve an avatar immutable — the key is reused on every upload', async () => {
+    const res = await call(`/media/avatars/${ME}/avatar.jpg`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=60, must-revalidate');
+  });
+
+  it('still edge-caches avatars, so a feed of them costs no extra R2 reads', async () => {
+    await call(`/media/avatars/${ME}/avatar.jpg`);
+    expect(cachePut).toHaveBeenCalled();
+  });
+
+  it('keeps the immutable year for timestamped post media', async () => {
+    const res = await call(`/media/echo-media/${ME}/a.jpg`);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=31536000, immutable');
+  });
+
+  it('still never edge-caches a withdrawable build', async () => {
+    const res = await call('/media/echo-media/downloads/echo-latest.apk');
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=300, must-revalidate');
+    expect(cachePut).not.toHaveBeenCalled();
   });
 
   it('no longer serves private mini-app media publicly', async () => {
