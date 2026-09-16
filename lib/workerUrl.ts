@@ -85,6 +85,28 @@ export function normalizeLegacyMediaUrl(url: string | undefined | null): string 
 }
 
 /** Endpoint that mints a presigned PUT for an upload. */
+/**
+ * Stamp an avatar URL so a new picture is a new URL.
+ *
+ * uploadAvatar writes a FIXED key — `<uid>/avatar.<ext>` — and overwrites it in
+ * place, so the URL is identical before and after someone changes their photo.
+ * Anything holding the old bytes therefore keeps serving them: that is what
+ * pinned nine profile pictures behind a year-long immutable edge copy.
+ *
+ * The worker now sends avatars a short max-age, which fixes it server-side.
+ * This makes it true independently of the cache policy, and it is what reaches
+ * a client whose own HTTP cache still holds a pre-fix `immutable` entry.
+ *
+ * Built with string operations rather than URL.searchParams: React Native's URL
+ * polyfill does not reliably implement searchParams, and this runs on device.
+ */
+export function versionedAvatarUrl(url: string, now: number = Date.now()): string {
+  // Any existing query is replaced, never appended to — stacking `?v=` stamps
+  // would grow the stored value on every upload.
+  const base = url.split('#')[0].split('?')[0];
+  return `${base}?v=${now}`;
+}
+
 export function uploadUrlEndpoint(bucket: string, path: string): string {
   return `${WORKER_URL}/upload-url?bucket=${bucket}&path=${path}`;
 }

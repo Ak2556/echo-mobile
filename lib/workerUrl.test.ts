@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeLegacyMediaUrl, WORKER_URL } from './workerUrl';
+import { normalizeLegacyMediaUrl, versionedAvatarUrl, WORKER_URL } from './workerUrl';
 
 /**
  * The exclusions are the whole risk here. Rewriting a bucket that has no R2
@@ -74,5 +74,31 @@ describe('normalizeLegacyMediaUrl', () => {
     expect(normalizeLegacyMediaUrl('')).toBe('');
     expect(normalizeLegacyMediaUrl(undefined)).toBeUndefined();
     expect(normalizeLegacyMediaUrl(null)).toBeUndefined();
+  });
+});
+
+/**
+ * Avatars live at a FIXED key (`<uid>/avatar.<ext>`) that uploadAvatar
+ * overwrites in place, so changing your picture does not change your URL and
+ * anything holding the old bytes keeps serving them. Stamping the URL is what
+ * makes a new picture a new URL.
+ */
+describe('versionedAvatarUrl', () => {
+  const BARE = `${WORKER_URL}/media/avatars/user-1/avatar.jpg`;
+
+  it('stamps a bare avatar url', () => {
+    expect(versionedAvatarUrl(BARE, 1789554257)).toBe(`${BARE}?v=1789554257`);
+  });
+
+  it('replaces an existing stamp instead of stacking them', () => {
+    expect(versionedAvatarUrl(`${BARE}?v=1`, 2)).toBe(`${BARE}?v=2`);
+  });
+
+  it('drops a fragment, which would otherwise land after the query', () => {
+    expect(versionedAvatarUrl(`${BARE}#top`, 7)).toBe(`${BARE}?v=7`);
+  });
+
+  it('changes the url whenever the picture changes', () => {
+    expect(versionedAvatarUrl(BARE, 1)).not.toBe(versionedAvatarUrl(BARE, 2));
   });
 });
