@@ -40,6 +40,10 @@ const alias = {
   // GestureCard, FlowCard, and others, so those modules can't load otherwise.
   'react-native-gesture-handler': path.resolve(__dirname, 'test/stubs/react-native-gesture-handler.ts'),
   'expo-linear-gradient': path.resolve(__dirname, 'test/stubs/expo-linear-gradient.ts'),
+  // Same two problems as expo-blur, plus one worse: GlassView.ios.js calls
+  // requireNativeViewManager at module load, so importing it under jsdom throws
+  // before any component renders.
+  'expo-glass-effect': path.resolve(__dirname, 'test/stubs/expo-glass-effect.ts'),
 };
 
 const exclude = [

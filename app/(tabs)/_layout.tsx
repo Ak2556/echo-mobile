@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, AppState, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, AppState } from 'react-native';
 import { Tabs, useRouter, type Href } from 'expo-router';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { House, MagnifyingGlass, ChatTeardropDots, Bell, User, SquaresFour, Envelope, PencilSimple, Plus, Checks, MagicWand, Bell as BellIcon, BellSlash, EyeSlash, Lightning, Storefront, PlayCircle } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
-import { LiquidGlass } from '../../components/ui/LiquidGlass';
+import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { useTheme } from '../../src/shared/lib/theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useCommandPalette } from '../../lib/commandPalette';
@@ -397,24 +396,11 @@ function FloatingTabBar(props: BottomTabBarProps) {
 
   return (
     <>
-    <LiquidGlass
-      borderRadius={0}
-      elevated={false} 
-      tintOverride={Platform.OS === 'android' ? (colors.isDark ? 'rgba(9, 11, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)') : (colors.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.4)')} 
-      fallbackTint={colors.bg}
-      style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: tabHeight + insets.bottom,
-        paddingBottom: insets.bottom,
-        // No rule along the top. The glass edge already marks where the bar
-        // begins, so the hairline was a second boundary drawn over the first —
-        // the same reasoning that removed it from ScreenHeader.
-        zIndex: 100,
-      }}
-      contentStyle={{ flex: 1 }}
+    <EdgeGlass
+      edge="bottom"
+      height={tabHeight + insets.bottom}
+      style={{ zIndex: 100 }}
+      contentStyle={{ paddingBottom: insets.bottom }}
     >
         <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 5 }}>
           {visibleRoutes.map(route => {
@@ -494,7 +480,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
             );
           })}
         </View>
-    </LiquidGlass>
+    </EdgeGlass>
 
       <ActionSheet
         visible={!!longPressActionList}

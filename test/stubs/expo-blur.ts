@@ -12,10 +12,11 @@ export interface BlurViewProps extends ViewProps {
   intensity?: number;
   tint?: string;
   blurReductionFactor?: number;
+  experimentalBlurMethod?: 'none' | 'dimezisBlurView';
 }
 
 export const BlurView = React.forwardRef<unknown, BlurViewProps>(
-  ({ intensity, tint, blurReductionFactor: _f, children, ...rest }, ref) =>
+  ({ intensity, tint, blurReductionFactor: _f, experimentalBlurMethod: _m, children, ...rest }, ref) =>
     React.createElement(
       View,
       { ...rest, ref, 'data-blur-intensity': intensity, 'data-blur-tint': tint } as never,
