@@ -88,6 +88,36 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'This page is not taking requests right now. Try again later.' }, 429);
   }
 
+  // The slot is resolved against this tutor rather than trusted. Nothing in
+  // this request is authenticated, so a caller may name any slot id it likes —
+  // including an active slot belonging to a different tutor, which would book
+  // one tutor's calendar through another tutor's public page.
+  let slotId: string | null = null;
+  if (body.slotId) {
+    const { data: slot } = await supabase
+      .from('learn_slots')
+      .select('id')
+      .eq('id', body.slotId)
+      .eq('tutor_id', tutor.user_id)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!slot) return json({ error: 'That time is no longer available' }, 400);
+    slotId = slot.id;
+  }
+
+  // scheduled_for is likewise caller-supplied. Bound it: a bare timestamp lets
+  // a request land in the past, or far enough out to sit in the tutor's list
+  // indefinitely.
+  let scheduledFor: string | null = null;
+  if (body.scheduledFor) {
+    const when = Date.parse(body.scheduledFor);
+    const now = Date.now();
+    if (Number.isNaN(when) || when < now || when > now + 365 * 24 * 60 * 60 * 1000) {
+      return json({ error: 'That time is not a valid booking time' }, 400);
+    }
+    scheduledFor = new Date(when).toISOString();
+  }
+
   // 32 bytes of randomness, hex. This is the guest's only credential.
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -98,8 +128,8 @@ Deno.serve(async (req: Request) => {
     guest_name: name,
     guest_email: email || null,
     guest_token: guestToken,
-    slot_id: body.slotId ?? null,
-    scheduled_for: body.scheduledFor ?? null,
+    slot_id: slotId,
+    scheduled_for: scheduledFor,
     prep_note: (body.note ?? '').trim().slice(0, 1000) || null,
   });
 

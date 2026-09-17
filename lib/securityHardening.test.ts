@@ -253,3 +253,138 @@ describe('blocks and DM privacy are enforced by the server', () => {
     }
   });
 });
+
+/**
+ * Postgres OR-combines permissive policies: one surviving `for select using
+ * (true)` does not just leave a table open, it cancels every stricter policy
+ * sitting beside it. So the invariant has to be "no table ends up with an open
+ * SELECT policy", checked across all of them — a per-table test only ever pins
+ * the tables somebody already thought to fix, which is how fourteen of these
+ * stayed open while public_echoes and daily_answers were being hardened.
+ *
+ * Adding a table to PUBLIC_BY_DESIGN is a deliberate act: it says the rows
+ * contain no user, or that the table's protection is column grants rather than
+ * row visibility. Anything else belongs behind a predicate.
+ */
+describe('no table is left open to everyone', () => {
+  const PUBLIC_BY_DESIGN = new Map([
+    ['badges', 'badge catalogue; no user in the row'],
+    ['quests', 'quest catalogue; no user in the row'],
+    ['daily_questions', 'question catalogue; no user in the row'],
+    ['daily_question_bank', 'question catalogue; no user in the row'],
+    ['feature_flags', 'read before sign-in, by design'],
+    ['salons', 'public directory; membership is gated on salon_members'],
+    ['profiles', 'row-hiding breaks every screen; protected by column grants — is_private and the settings columns are granted to authenticated only'],
+  ]);
+
+  /** Final policy set per table, replaying drop/create/alter in migration order. */
+  function finalPolicies() {
+    const tables = new Map<string, Map<string, string>>();
+    for (const { text } of allStatements) {
+      let m = /^drop policy (?:if exists )?"?(.+?)"? on (?:public\.)?(\w+)$/i.exec(text);
+      if (m) { tables.get(m[2])?.delete(m[1]); continue; }
+      m = /^create policy "?(.+?)"? on (?:public\.)?(\w+) (.*)$/i.exec(text);
+      if (m) {
+        if (!tables.has(m[2])) tables.set(m[2], new Map());
+        tables.get(m[2])!.set(m[1], m[3]);
+        continue;
+      }
+      m = /^alter policy "?(.+?)"? on (?:public\.)?(\w+) to ([\w, ]+)$/i.exec(text);
+      if (m && tables.get(m[2])?.has(m[1])) {
+        tables.get(m[2])!.set(m[1], `${tables.get(m[2])!.get(m[1])} [to ${m[3]}]`);
+      }
+    }
+    return tables;
+  }
+
+  it('every SELECT USING (true) is on a table that is public by design', () => {
+    const open: string[] = [];
+    for (const [table, policies] of finalPolicies()) {
+      if (PUBLIC_BY_DESIGN.has(table)) continue;
+      for (const [name, text] of policies) {
+        if (/for select/i.test(text) && /using \(\s*true\s*\)/i.test(text)) {
+          open.push(`${table}."${name}"`);
+        }
+      }
+    }
+    expect(open, 'USING (true) cancels every stricter policy beside it — gate the table or justify it in PUBLIC_BY_DESIGN').toEqual([]);
+  });
+
+  it('the engagement tables are gated on the thing they hang off, or on the actor', () => {
+    const policies = finalPolicies();
+    const attached: Array<[string, string]> = [
+      ['echo_reactions', 'public_echoes'],
+      ['echo_mentions', 'public_echoes'],
+      ['echo_reposts', 'public_echoes'],
+      ['comment_likes', 'echo_comments'],
+      ['comment_reactions', 'echo_comments'],
+      ['comment_mentions', 'echo_comments'],
+      ['daily_answer_reactions', 'daily_answers'],
+    ];
+    for (const [table, parent] of attached) {
+      const selects = [...(policies.get(table) ?? [])].filter(([, t]) => /for select/i.test(t));
+      expect(selects.length, `${table} should have exactly one SELECT policy`).toBe(1);
+      expect(selects[0][1], `${table} must inherit ${parent}'s visibility`).toMatch(
+        new RegExp(`exists \\(\\s*select 1 from public\\.${parent}\\b`, 'i'));
+    }
+
+    const actorGated = ['user_badges', 'salon_members', 'office_hours', 'office_hour_questions', 'office_hour_rsvps', 'office_hour_question_upvotes'];
+    for (const table of actorGated) {
+      const selects = [...(policies.get(table) ?? [])].filter(([, t]) => /for select/i.test(t));
+      expect(selects.length, `${table} should have exactly one SELECT policy`).toBe(1);
+      expect(selects[0][1], `${table} must gate on the acting user`).toMatch(/can_view_echo_author/i);
+    }
+  });
+
+  it('a follow edge is visible only when both of its ends are', () => {
+    const selects = [...(finalPolicies().get('follows') ?? [])].filter(([, t]) => /for select/i.test(t));
+    expect(selects.length).toBe(1);
+    expect(selects[0][1]).toMatch(/can_view_echo_author\(\s*follows\.follower_id\s*\)/i);
+    expect(selects[0][1]).toMatch(/can_view_echo_author\(\s*follows\.following_id\s*\)/i);
+  });
+});
+
+/**
+ * handle_new_user() runs inside the auth.users insert. profiles.username and
+ * .display_name are NOT NULL and username is UNIQUE, so anything this function
+ * raises aborts the signup — the user sees "Database error saving new user"
+ * and nothing names this trigger. 20260810090000 dropped the fallbacks that
+ * 20260525180000 had added and killed every provider that does not send a
+ * username, which is all of them except a client that sets options.data.
+ *
+ * The rule is therefore: no expression feeding either column may be able to
+ * produce null, and the UNIQUE index must be settled rather than hit.
+ */
+describe('signup cannot be aborted by the profile trigger', () => {
+  const trigger = fns.get('public.handle_new_user');
+
+  it('the trigger exists and runs as definer with a pinned search_path', () => {
+    expect(trigger, 'handle_new_user must be defined in a migration').toBeTruthy();
+    expect(trigger!.head).toMatch(/security definer/i);
+    expect(trigger!.head).toMatch(/set search_path = public/i);
+  });
+
+  it('both NOT NULL columns fall back to something derived from new.id', () => {
+    const body = trigger!.body;
+    // The terminal fallback cannot depend on email or on provider metadata,
+    // because phone signup has neither.
+    expect(body, 'needs a fallback built from new.id').toMatch(/new\.id::text/);
+    for (const key of ['username', 'display_name']) {
+      expect(body, `${key} must have a coalesce chain`).toMatch(
+        new RegExp(`raw_user_meta_data->>'${key}'`));
+    }
+    // Providers send these instead of display_name; without them an OAuth
+    // signup gets a uuid for a name even when it told us who the person is.
+    expect(body).toMatch(/raw_user_meta_data->>'full_name'/);
+    expect(body).toMatch(/raw_user_meta_data->>'name'/);
+  });
+
+  it('a username collision is settled, not raised', () => {
+    const body = trigger!.body;
+    // on conflict (id) does not cover profiles_username_key — a second user
+    // whose email local-part matches an existing username would abort signup.
+    expect(body, 'must probe profiles.username before inserting').toMatch(
+      /select 1 from public\.profiles p where p\.username/i);
+    expect(body, 'the probe must be bounded so it cannot spin').toMatch(/loop/i);
+  });
+});
