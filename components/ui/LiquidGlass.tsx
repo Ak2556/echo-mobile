@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, type ViewStyle, type LayoutChangeEvent } from 'react-native';
-import { useDerivedValue } from 'react-native-reanimated';
 import { GlassPanel } from './GlassPanel';
+import { NativeGlassView, isNativeGlassAvailable } from './nativeGlass';
 import { resolveSurface } from './liquidGlassTier';
 import { useTheme, GLASS_INTENSITY } from '../../src/shared/lib/theme';
 import {
@@ -43,22 +43,40 @@ try {
 const SKIA_OK = !!Sk?.Skia?.RuntimeEffect;
 
 /**
- * Rim light, chromatic edge split, a drifting specular sweep, and static grain.
+ * The refractive edge of a pane of glass. Nothing else.
  *
- * Kept to a signed-distance rounded rectangle and two exponentials: this runs per
- * pixel per frame, and the tier above it already decided the device can spare that.
+ * Glass does not glow, and it does not have a highlight that wanders across it on
+ * its own — a moving specular says the *light* is moving, which on a phone held
+ * still is a lie the eye catches even when it cannot name it. What actually tells
+ * you a pane has depth is the band at its border, where the surface curves away
+ * and bends what is behind it. So that is all this draws:
+ *
+ *   refraction   a gradient falling off from the border, steepest where the
+ *                curvature is greatest. The bulk of the effect.
+ *   dispersion   the bend is wavelength-dependent, so the band leans warm at one
+ *                end of the spectrum and cool at the other, widening toward the
+ *                border where the bend is hardest.
+ *   contact      a dark line where the band meets the flat centre. Without it the
+ *                pane reads as printed on; it is what separates glass from a decal.
+ *
+ * The centre is left completely alone — fully transparent, nothing painted over
+ * it. Whatever is behind the panel is what you see, which is the point.
+ *
+ * Consequently this has no clock and no per-frame work: it re-renders on layout
+ * and then never again. What it cannot do is sample the actual backdrop, so the
+ * refraction is modelled rather than measured; see the note on the component for
+ * why no API in this stack can, and what does it on iOS 26.
  */
 const SOURCE = `
 uniform float2 u_size;
-uniform float  u_time;
-uniform float2 u_tilt;
 uniform float  u_radius;
-
-// Cheap value hash. Deterministic per pixel, so the grain is stable rather
-// than crawling when the panel moves.
-float hash(float2 p) {
-  return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
-}
+// 0 suppresses the edge entirely. A full-bleed surface has no edge to light, and
+// the signed-distance outline at radius 0 is a rectangle drawn around the screen.
+uniform float  u_rim;
+// How far the refractive band reaches in from the border, in points. Supplied by
+// the caller because it has to scale with the panel: the band that reads as thick
+// on a 42pt button reads as a smear across a full-width sheet.
+uniform float  u_edge;
 
 float sdRoundRect(float2 p, float2 b, float r) {
   float2 q = abs(p) - b + r;
@@ -73,34 +91,40 @@ half4 main(float2 xy) {
   // Everything is clipped to the rounded shape; nothing paints outside it.
   float inside = 1.0 - smoothstep(-1.5, 0.5, d);
 
-  // Bright hairline just within the border — the bevel that reads as thickness.
-  float edge = (1.0 - smoothstep(0.0, 3.0, abs(d))) * inside;
+  // 0 at the border, 1 where the band settles into the flat centre of the pane.
+  float band = clamp(-d / max(u_edge, 1.0), 0.0, 1.0);
 
-  // Specular band. u_tilt steers it; the caller supplies a slow drift so the
-  // highlight wanders rather than sitting still.
-  float2 dir = normalize(float2(0.55, -0.83) + u_tilt * 0.8);
-  float longest = max(u_size.x, u_size.y);
-  float proj = dot(p / longest, dir);
-  float centre = u_tilt.x * 0.25 + sin(u_time * 0.3) * 0.2;
-  float sweep = exp(-36.0 * (proj - centre) * (proj - centre)) * inside * 0.5;
+  // The refractive shoulder. Light bends hardest where the surface curves most,
+  // which is right at the border, and the falloff is steep rather than linear —
+  // a linear ramp reads as a gradient someone drew, not as a curved surface.
+  float shoulder = pow(1.0 - band, 2.4) * inside * u_rim;
 
-  // Grain. Real glass and printed ink are never perfectly smooth, and a
-  // gradient with no tooth is the giveaway that a surface was drawn by code.
-  // Static rather than animated: this is a print imperfection, not film grain,
-  // and animating it would mean re-shading every pixel every frame for an
-  // effect nobody consciously sees.
-  float grain = (hash(floor(xy)) - 0.5) * 0.055 * inside;
+  // The lit bevel itself, a narrow hot line riding on top of the shoulder.
+  float bevel = (1.0 - smoothstep(0.0, 2.0, abs(d))) * inside * u_rim;
 
-  float a = clamp(edge * 0.5 + sweep + abs(grain), 0.0, 0.85);
+  // Contact shadow where the shoulder meets the flat. Narrow, offset inward, and
+  // the single cheapest thing that stops a pane looking like a sticker.
+  float contact = exp(-26.0 * (band - 0.52) * (band - 0.52)) * inside * u_rim;
 
-  // Glass disperses: the rim leans warm on one side, cool on the other.
-  half3 col = half3(1.0, 1.0, 1.0);
-  col.r += edge * 0.10;
-  col.b += edge * 0.16;
-  col += half3(grain);
+  // Everything that adds light, and the one thing that removes it. They are kept
+  // apart because the output is premultiplied: a dark contribution is alpha with
+  // no colour behind it, not a negative colour.
+  float lift  = shoulder * 0.13 + bevel * 0.40;
+  float shade = contact * 0.16;
 
-  // Premultiplied, as Skia expects from a runtime effect.
-  return half4(col * a, a);
+  // Both terms are zero once band reaches 1, so the centre of the pane is exactly
+  // untouched rather than merely faint.
+  float a = clamp(lift + shade, 0.0, 0.88);
+
+  // Dispersion. Red refracts least and blue most, which is why glass edges go warm
+  // on one side and cold on the other. The split widens toward the border.
+  half3 tintv = half3(1.0, 1.0, 1.0);
+  tintv.r += shoulder * 0.05 + bevel * 0.10;
+  tintv.b += shoulder * 0.09 + bevel * 0.20;
+
+  // Premultiplied, as Skia expects. 'shade' deliberately carries no colour: that
+  // is what makes it darken rather than tint.
+  return half4(tintv * lift, a);
 }
 `;
 
@@ -122,6 +146,15 @@ export interface LiquidGlassProps {
    * pass 'blur' however capable the device is.
    */
   maxTier?: SurfaceTier;
+  /** Forwarded to GlassPanel. Full-bleed surfaces pass false. See GlassPanel. */
+  chrome?: boolean;
+  /**
+   * Forwarded to GlassPanel: drop the fill wash and the reflection sweep, and blur
+   * for real on Android. A surface using the refractive edge almost always wants
+   * this — the edge is the whole effect, and a flat wash under it hides the thing
+   * it is meant to be refracting.
+   */
+  clear?: boolean;
 }
 
 /** Compiled once per process — RuntimeEffect.Make is not cheap and the source is fixed. */
@@ -148,12 +181,17 @@ export function LiquidGlass({
   elevated = false,
   performanceMode = 'default',
   maxTier = 'shader',
+  chrome = true,
+  clear = false,
 }: LiquidGlassProps) {
-  const { radius } = useTheme();
+  const { radius, colors } = useTheme();
   const profile = usePerformanceProfile(performanceMode);
   const borderRadius = customRadius ?? radius.card;
 
   const tier = resolveSurface(profile.surfaceTier, SKIA_OK, maxTier);
+  // Bound to a local so TypeScript can narrow it into the JSX below.
+  const NativeGlass =
+    tier !== 'solid' && isNativeGlassAvailable() ? NativeGlassView : null;
 
   // Measured rather than assumed: the shader needs real pixel dimensions, and a
   // glass panel is almost always sized by its parent's layout.
@@ -165,9 +203,14 @@ export function LiquidGlass({
     );
   };
 
+  // On the shader tier the host owns the layout and the panel fills it, because
+  // the Skia canvas has to overlay the panel's exact box. Handing the caller's
+  // style to the panel instead leaves the host with no size at all — which is
+  // invisible for a caller passing absolute offsets or a fixed height (all of them,
+  // until the feed action buttons), and total collapse for one passing `flex: 1`.
   const panel = (
     <GlassPanel
-      style={style}
+      style={tier === 'shader' ? styles.fill : style}
       variant={variant}
       intensity={intensity}
       borderRadius={borderRadius}
@@ -176,60 +219,105 @@ export function LiquidGlass({
       fallbackTint={fallbackTint}
       elevated={elevated}
       performanceMode={performanceMode}
+      chrome={chrome}
+      clear={clear}
+      // Never, on any tier. The refractive edge is the whole effect here, and a
+      // white gradient sliding across the face from the rotation sensor is the
+      // "animated glass background" it exists to replace. It also costs every
+      // panel a 60Hz sensor subscription and a spring on a 300%-sized view.
+      reflection={false}
     >
       {children}
     </GlassPanel>
   );
 
+  // iOS 26's real glass replaces both the blur and the shader when it is there.
+  // Not a tier above them: UIVisualEffectView costs less than our own Skia canvas,
+  // so gating it behind `deviceTier === 'high'` would withhold the better and
+  // cheaper surface from the devices that need it most. `solid` still wins, because
+  // that is reduce-transparency or data saver asking for no translucency at all.
+  if (NativeGlass) {
+    // `overflow: hidden` would clip the drop shadow off, so elevation is carried
+    // by an outer view and the glass is clipped inside it. The callers that pass
+    // `elevated` are sheets, and a sheet with no shadow does not read as lifted
+    // off the screen.
+    const lift: ViewStyle = elevated
+      ? {
+          shadowColor: colors.isDark ? '#000' : colors.accent,
+          shadowOpacity: colors.isDark ? 0.4 : 0.15,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: 12 },
+          elevation: 6,
+        }
+      : {};
+    return (
+      <View style={[{ borderRadius }, lift, style]}>
+        <View style={[StyleSheet.absoluteFill, { borderRadius, overflow: 'hidden' }]}>
+          <NativeGlass
+            glassEffectStyle="regular"
+            colorScheme={colors.isDark ? 'dark' : 'light'}
+            tintColor={tintOverride}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
+        <View style={contentStyle}>{children}</View>
+      </View>
+    );
+  }
+
   if (tier !== 'shader') return panel;
 
   return (
-    <View style={styles.host} onLayout={onLayout}>
+    <View style={[styles.host, style]} onLayout={onLayout}>
       {panel}
       {size.width > 0 && size.height > 0 ? (
-        <ShaderSheen width={size.width} height={size.height} borderRadius={borderRadius} />
+        <RefractiveEdge
+          width={size.width}
+          height={size.height}
+          borderRadius={borderRadius}
+          rim={chrome ? 1 : 0}
+        />
       ) : null}
     </View>
   );
 }
 
 /**
- * The Skia layer. Separated so its hooks only ever mount on the shader tier —
- * the Skia canvas and clock only exist where they are actually drawn.
+ * The Skia layer. Separated so it only ever mounts on the shader tier — the canvas
+ * exists only where it is actually drawn.
+ *
+ * No clock, no shared values, no reanimated. The uniforms are a plain object and
+ * they only change when the panel is re-measured, so this paints once per layout
+ * and then sits there. The previous version drove a drifting specular off
+ * `useClock`, which meant every glass surface on screen re-shaded every pixel every
+ * frame for a highlight that was wrong anyway: a moving specular says the light
+ * source is moving, which on a phone lying still is a lie.
  */
-function ShaderSheen({
+function RefractiveEdge({
   width,
   height,
   borderRadius,
+  rim,
 }: {
   width: number;
   height: number;
   borderRadius: number;
+  rim: number;
 }) {
+  // The refractive band scales with the panel, and is capped hard against its
+  // short side. The cap is the whole ballgame: at 0.42 of the short side a 42pt
+  // action button had a 17pt band biting in from both edges, which leaves three
+  // points of flat centre — the control stopped reading as glass and became a
+  // glowing pill. An edge has to be a fraction of the thing it edges.
+  const edge = Math.max(3, Math.min(borderRadius * 0.9, Math.min(width, height) * 0.18));
   const source = effect();
-  const clock = Sk.useClock();
 
-  // Driven by the clock alone, deliberately.
-  //
-  // The richer version fed device tilt in through useAnimatedSensor, so the
-  // highlight appeared to stay fixed in the room while the panel moved under it.
-  // That crashed natively on the iOS simulator, which has no CoreMotion, and the
-  // crash survived guarding the sensor read — the hook itself is the problem, not
-  // the value. Since it cannot be verified here, the sensor is left out rather
-  // than shipped unverified; a slow drift reads well enough on its own, and the
-  // tilt input can be reinstated behind an availability check once it can be
-  // tested on hardware.
-  const uniforms = useDerivedValue(() => {
-    const t = (clock?.value ?? 0) / 1000;
-    // A slow, irrational-ratio wander, so the sweep never visibly loops.
-    const drift: [number, number] = [Math.sin(t * 0.21) * 0.5, Math.cos(t * 0.13) * 0.35];
-    return {
-      u_size: [width, height],
-      u_time: t,
-      u_tilt: drift,
-      u_radius: borderRadius,
-    };
-  }, [width, height, borderRadius]);
+  const uniforms = {
+    u_size: [width, height],
+    u_radius: borderRadius,
+    u_rim: rim,
+    u_edge: edge,
+  };
 
   if (!source) return null;
 
@@ -245,6 +333,7 @@ function ShaderSheen({
 
 const styles = StyleSheet.create({
   host: { position: 'relative' },
+  fill: { flex: 1 },
   // Purely decorative: it must never intercept a touch meant for the content.
   sheen: { pointerEvents: 'none' },
 });

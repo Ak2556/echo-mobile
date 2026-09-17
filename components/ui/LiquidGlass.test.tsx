@@ -78,6 +78,22 @@ describe('LiquidGlass', () => {
     expect(screen.getByText('capped')).toBeTruthy();
   });
 
+  it('gives the host the caller layout on the shader tier', () => {
+    // The shader tier wraps the panel in a host so the Skia canvas can overlay it.
+    // If the caller's style goes to the panel instead, the host has no size — which
+    // is merely invisible for a caller passing absolute offsets, and total collapse
+    // for one passing `flex: 1`, as the feed action buttons do.
+    const { container } = render(
+      <LiquidGlass style={{ flex: 1 }}>
+        <Text>sized</Text>
+      </LiquidGlass>,
+    );
+    const host = container.firstElementChild as HTMLElement;
+    expect(host).toBeTruthy();
+    expect(host.style.flexGrow).toBe('1');
+    expect(screen.getByText('sized')).toBeTruthy();
+  });
+
   it('survives a binary with no Skia rather than throwing', () => {
     // The whole point of the require guard. If this ever throws, an over-the-air
     // update would crash on launch for anyone on an older build.

@@ -13,6 +13,15 @@ import { VideoPreview } from './VideoPreview';
 import { useQueryClient } from '@tanstack/react-query';
 import { LinkifiedText } from './LinkifiedText';
 import { ReactionBar } from './ReactionBar';
+import { LiquidGlass } from '../../../../components/ui/LiquidGlass';
+import { GlassRow } from '../../../../components/ui/GlassRow';
+
+/**
+ * The action row's geometry, named because the shader's refractive band is derived
+ * from the radius and a stray number here changes how thick the glass looks.
+ */
+const ACTION_HEIGHT = 42;
+const ACTION_RADIUS = 14;
 import { AnimatedPressable } from '../../../../components/ui/AnimatedPressable';
 import { GestureCard, type GestureCardAction } from '../../../../components/ui/GestureCard';
 import { Avatar } from '../../../../components/ui/Avatar';
@@ -420,38 +429,55 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
       style={{
         flex: 1,
         minWidth: 0,
-        height: 42,
-        borderRadius: 14,
-        paddingHorizontal: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 5,
-        backgroundColor: active ? `${color}1F` : colors.surfaceHover,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: active ? `${color}55` : colors.glassBorder,
+        height: ACTION_HEIGHT,
+        borderRadius: ACTION_RADIUS,
       }}
       depth="medium"
       fadeOnPress
       haptic={active ? 'medium' : 'light'}
-      performanceMode="hot"
+      // Not 'hot'. These are 42pt controls, not card-sized surfaces, so the top
+      // device tier is allowed the shader here and nowhere else in the card; see
+      // the PerformanceMode doc in shared/lib/performance.
+      performanceMode="control"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
     >
-      {icon}
-      {count !== undefined && count > 0 ? (
-        <Text
-          style={{
-            color: active ? color : colors.textSecondary,
-            fontSize: 12.5,
-            fontFamily: 'Inter_600SemiBold',
-            fontVariant: ['tabular-nums'],
-          }}
-          numberOfLines={1}
-        >
-          {formatCount(count)}
-        </Text>
-      ) : null}
+      <LiquidGlass
+        borderRadius={ACTION_RADIUS}
+        variant="medium"
+        performanceMode="control"
+        style={{ flex: 1 }}
+        clear
+        // Only an active button takes a fill, and only because the state has to be
+        // legible at a glance. An idle one is left completely clear: no wash, no
+        // reflection, nothing between you and the card but the blur and the
+        // refractive edge.
+        tintOverride={active ? `${color}2E` : undefined}
+        fallbackTint={active ? `${color}1F` : colors.surfaceHover}
+        contentStyle={{
+          flex: 1,
+          paddingHorizontal: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 5,
+        }}
+      >
+        {icon}
+        {count !== undefined && count > 0 ? (
+          <Text
+            style={{
+              color: active ? color : colors.textSecondary,
+              fontSize: 12.5,
+              fontFamily: 'Inter_600SemiBold',
+              fontVariant: ['tabular-nums'],
+            }}
+            numberOfLines={1}
+          >
+            {formatCount(count)}
+          </Text>
+        ) : null}
+      </LiquidGlass>
     </AnimatedPressable>
   );
 
@@ -465,7 +491,10 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
           compact
         />
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+      <GlassRow
+        spacing={10}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}
+      >
         <ActionButton
           label="Like"
           icon={<HeartStraight color={liked ? '#EF4444' : colors.textMuted} size={20} weight={liked ? 'fill' : 'regular'} />}
@@ -522,7 +551,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
           onPress={(e) => { e.stopPropagation?.(); handleNativeShare(); }}
           accessibilityLabel="Share"
         />
-      </View>
+      </GlassRow>
     </View>
   );
 

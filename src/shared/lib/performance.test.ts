@@ -61,6 +61,57 @@ describe('resolvePerformanceProfile — surface tier', () => {
   });
 });
 
+describe("resolvePerformanceProfile — the 'control' exception", () => {
+  // A feed card's action buttons live inside the scrolling list, where 'hot' bans
+  // the shader outright. They are 42pt controls rather than card-sized surfaces, so
+  // 'control' lifts that ban — for the top tier only. Every other reason to step
+  // down must still win, or the exception is a hole.
+
+  it('shades a small control on capable hardware', () => {
+    expect(resolvePerformanceProfile('control', RICHEST).surfaceTier).toBe('shader');
+  });
+
+  it('still steps a mid device down to blur', () => {
+    expect(
+      resolvePerformanceProfile('control', { ...RICHEST, deviceTier: 'mid' }).surfaceTier,
+    ).toBe('blur');
+  });
+
+  it('still collapses a low-end device to solid', () => {
+    expect(
+      resolvePerformanceProfile('control', { ...RICHEST, deviceTier: 'low' }).surfaceTier,
+    ).toBe('solid');
+  });
+
+  it('still obeys Reduce Motion — a shader is animated by definition', () => {
+    expect(
+      resolvePerformanceProfile('control', { ...RICHEST, osReduceMotion: true }).surfaceTier,
+    ).toBe('blur');
+  });
+
+  it('still obeys Reduce Transparency', () => {
+    expect(
+      resolvePerformanceProfile('control', { ...RICHEST, osReduceTransparency: true })
+        .surfaceTier,
+    ).toBe('solid');
+  });
+
+  it('still obeys data saver and the glass-off setting', () => {
+    expect(
+      resolvePerformanceProfile('control', { ...RICHEST, dataSaver: true }).surfaceTier,
+    ).toBe('solid');
+    expect(
+      resolvePerformanceProfile('control', { ...RICHEST, glassTheme: false }).surfaceTier,
+    ).toBe('solid');
+  });
+
+  it("does not quietly widen 'hot'", () => {
+    // The exception is for 'control' alone. If this ever goes green for 'hot', a
+    // card-sized surface is being shaded per row mid-scroll.
+    expect(resolvePerformanceProfile('hot', RICHEST).surfaceTier).toBe('blur');
+  });
+});
+
 describe('resolvePerformanceProfile — existing contract', () => {
   it('keeps the pre-existing behaviour when no new signals are supplied', () => {
     // The nine existing call sites pass only these three options.

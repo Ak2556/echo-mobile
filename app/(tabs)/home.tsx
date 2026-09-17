@@ -7,14 +7,12 @@ import Animated, {
   FadeIn,
   FadeOut,
   useSharedValue,
-  useAnimatedProps,
   useAnimatedStyle,
-  useAnimatedReaction,
   interpolate,
   Extrapolation,
   type SharedValue,
 } from 'react-native-reanimated';
-import { LiquidGlass } from '../../components/ui/LiquidGlass';
+import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowUpRight, Bell, Waveform, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
 import { AdCard } from "../../src/features/feed/ui/AdCard";
@@ -436,37 +434,11 @@ export default function DiscoverScreen() {
   }, [scrollY]);
 
   const headerHeight = insets.top + (layout.isDesktop ? 64 : NAV_BAR_HEIGHT);
-  const useBlur = performance.useBlur;
-  const tint = colors.isDark ? 'dark' : 'extraLight';
-
-  const blurIntensity = useSharedValue(0);
-  const overlayOpacity = useSharedValue(0);
-  const borderOpacity = useSharedValue(0);
-
-  useAnimatedReaction(
-    () => interpolate(scrollY.value, [0, 80], [0, performance.maxBlurIntensity], Extrapolation.CLAMP),
-    (target) => { blurIntensity.value = target; },
-  );
-  useAnimatedReaction(
-    () => interpolate(scrollY.value, [0, 80], [0, 0.35], Extrapolation.CLAMP),
-    (target) => { overlayOpacity.value = target; },
-  );
-  useAnimatedReaction(
-    () => interpolate(scrollY.value, [20, 80], [0, 1], Extrapolation.CLAMP),
-    (target) => { borderOpacity.value = target; },
-  );
-
-  const blurAnimatedProps = useAnimatedProps(() => ({
-    intensity: blurIntensity.value,
-  }));
-  const headerBgStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value,
-  }));
+  // The glass arrives as the feed moves under it. EdgeGlass owns everything the
+  // header used to hand-roll here — the blur ramp, the tint, the fade — so all
+  // that is left to drive is whether the backdrop is there at all.
   const glassOpacityStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, 40], [0, 1], Extrapolation.CLAMP),
-  }));
-  const headerBorderStyle = useAnimatedStyle(() => ({
-    opacity: borderOpacity.value,
   }));
 
   const handlePressThread = useCallback(
@@ -740,97 +712,76 @@ export default function DiscoverScreen() {
         </>
       )}
 
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: headerHeight,
-          overflow: 'hidden',
-          zIndex: 10,
-        }}
+      <EdgeGlass
+        edge="top"
+        height={headerHeight}
+        backdropStyle={glassOpacityStyle}
+        style={{ zIndex: 10 }}
       >
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, glassOpacityStyle]}>
-          <LiquidGlass borderRadius={0} style={StyleSheet.absoluteFill as any}><View /></LiquidGlass>
-        </Animated.View>
-            <View
-              style={{
-                width: '100%',
-                maxWidth: feedMaxWidth,
-                alignSelf: 'center',
-                paddingTop: insets.top + (layout.isDesktop ? 10 : 0),
-                height: headerHeight,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: layout.gutter,
-                paddingBottom: 6,
-              }}
+        <View
+          style={{
+            width: '100%',
+            maxWidth: feedMaxWidth,
+            alignSelf: 'center',
+            paddingTop: insets.top + (layout.isDesktop ? 10 : 0),
+            height: headerHeight,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: layout.gutter,
+            paddingBottom: 6,
+          }}
+        >
+          <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>
+            Echo
+          </Text>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Pressable
+              onPress={() => router.push('/messages')}
+              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
+              accessibilityRole="button"
+              accessibilityLabel="Messages"
             >
-              <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>
-                Echo
-              </Text>
+              <Envelope color={colors.text} size={24} />
+            </Pressable>
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Pressable
-                  onPress={() => router.push('/messages')}
-                  style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
-                  accessibilityRole="button"
-                  accessibilityLabel="Messages"
-                >
-                  <Envelope color={colors.text} size={24} />
-                </Pressable>
-
-                <Pressable
-                  onPress={() => router.push('/(tabs)/notifications')}
-                  style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
-                  accessibilityRole="button"
-                  accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
-                >
-                  <View>
-                    <Bell color={colors.text} size={24} />
-                    {unreadNotifs > 0 && (
-                      <View
-                        style={{
-                          position: 'absolute',
-                          top: -3,
-                          right: -3,
-                          minWidth: 16,
-                          height: 16,
-                          paddingHorizontal: 4,
-                          borderRadius: 8,
-                          backgroundColor: colors.danger,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderWidth: 1.5,
-                          borderColor: colors.bg,
-                        }}
-                      >
-                        <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                          {unreadNotifs > 99 ? '99+' : unreadNotifs}
-                        </Text>
-                      </View>
-                    )}
+            <Pressable
+              onPress={() => router.push('/(tabs)/notifications')}
+              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.6 : 1 })}
+              accessibilityRole="button"
+              accessibilityLabel={unreadNotifs > 0 ? `Notifications — ${unreadNotifs} unread` : 'Notifications'}
+            >
+              <View>
+                <Bell color={colors.text} size={24} />
+                {unreadNotifs > 0 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -3,
+                      right: -3,
+                      minWidth: 16,
+                      height: 16,
+                      paddingHorizontal: 4,
+                      borderRadius: 8,
+                      backgroundColor: colors.danger,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1.5,
+                      borderColor: colors.bg,
+                    }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                      {unreadNotifs > 99 ? '99+' : unreadNotifs}
+                    </Text>
                   </View>
-                </Pressable>
+                )}
               </View>
-            </View>
+            </Pressable>
+          </View>
+        </View>
 
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: StyleSheet.hairlineWidth,
-              backgroundColor: colors.glassBorder,
-            },
-            headerBorderStyle,
-          ]}
-        />
-      </View>
+      </EdgeGlass>
 
       <ComposeFAB />
     </View>

@@ -2,7 +2,18 @@ import { useAppStore } from '../../../store/useAppStore';
 import { getDeviceTier, type DeviceTier } from '../../../lib/deviceTier';
 import { useA11ySignals } from '../../../lib/a11ySignals';
 
-export type PerformanceMode = 'default' | 'hot' | 'overlay' | 'hero';
+/**
+ * `control` sits between `default` and `hot`, and exists for one specific case:
+ * a small, fixed-size control that lives *inside* scrolling content — the action
+ * buttons on a feed card.
+ *
+ * `hot` bans the shader outright because a card-sized surface re-shaded every
+ * frame of a scroll is ruinous. A 42pt button is not that: it is a few hundred
+ * square points, and six of them cost less fill than one card. So the ban is
+ * relaxed for the top device tier only, and nowhere else — mid, low, reduced
+ * motion, reduced transparency and data saver all still get the blur.
+ */
+export type PerformanceMode = 'default' | 'hot' | 'overlay' | 'hero' | 'control';
 
 /**
  * How much a translucent surface is allowed to cost.
