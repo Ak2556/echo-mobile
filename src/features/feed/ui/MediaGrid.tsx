@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import { MagnifyingGlassPlus } from 'phosphor-react-native';
 import { useTheme } from '../../../shared/lib/theme';
 import { ZoomableImageViewer } from '../../../../components/ui/ZoomableImageViewer';
+import { MEDIA_FADE_MS, mediaPlaceholderTint } from './mediaPlaceholder';
 
 interface MediaGridProps {
   uris: string[];
@@ -16,6 +17,32 @@ interface MediaGridProps {
   allowDownloads?: boolean;
 }
 
+/**
+ * Every image in the grid, so the loading props are declared once.
+ *
+ * They were repeated across six call sites, which is how `recyclingKey` came to
+ * be missing from all of them: a prop added to one branch is not added to the
+ * other five. The three that matter are invisible until they are wrong —
+ * without `recyclingKey` a recycled row shows the previous post's photo until
+ * the new one decodes, and without a tint and a `transition` the image pops in
+ * against grey.
+ */
+function GridImage({ uri }: { uri: string }) {
+  return (
+    <Image
+      source={{ uri }}
+      style={{ width: '100%', height: '100%', backgroundColor: mediaPlaceholderTint(uri) }}
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      // Ties the decoded bitmap to this URI rather than to the recycled view,
+      // so a cell that scrolls back into place cannot briefly show its
+      // predecessor.
+      recyclingKey={uri}
+      transition={MEDIA_FADE_MS}
+    />
+  );
+}
+
 export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridProps) {
   const { radius } = useTheme();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
@@ -24,7 +51,6 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
   const open = (idx: number) => setViewerIndex(idx);
   const close = () => setViewerIndex(null);
 
-  const imgStyle = { width: '100%', height: '100%' } as const;
   const r = radius.md;
   // When a fixed height is requested, drop the per-image border radius so the
   // media reads as one full-bleed surface (the card supplies the rounding).
@@ -36,7 +62,7 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
       {/* 1 image */}
       {count === 1 && (
         <Pressable onPress={() => open(0)} style={{ borderRadius: height ? 0 : radius.card, overflow: 'hidden', height: height ?? 240 }}>
-          <Image source={{ uri: uris[0] }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
+          <GridImage uri={uris[0]} />
           <ZoomHint />
         </Pressable>
       )}
@@ -46,7 +72,7 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
         <View style={{ flexDirection: 'row', gap: 3, height: height ?? 200 }}>
           {uris.map((uri, i) => (
             <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
-              <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
+              <GridImage uri={uri} />
             </Pressable>
           ))}
         </View>
@@ -56,12 +82,12 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
       {count === 3 && (
         <View style={{ flexDirection: 'row', gap: 3, height: height ?? 220 }}>
           <Pressable onPress={() => open(0)} style={{ flex: 1.4, borderRadius: rowRadius, overflow: 'hidden' }}>
-            <Image source={{ uri: uris[0] }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
+            <GridImage uri={uris[0]} />
           </Pressable>
           <View style={{ flex: 1, gap: 3 }}>
             {uris.slice(1).map((uri, i) => (
               <Pressable key={i} onPress={() => open(i + 1)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
-                <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
+                <GridImage uri={uri} />
               </Pressable>
             ))}
           </View>
@@ -74,14 +100,14 @@ export function MediaGrid({ uris, height, allowDownloads = false }: MediaGridPro
           <View style={{ flexDirection: 'row', gap: 3, height: rowH2 }}>
             {uris.slice(0, 2).map((uri, i) => (
               <Pressable key={i} onPress={() => open(i)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
-                <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
+                <GridImage uri={uri} />
               </Pressable>
             ))}
           </View>
           <View style={{ flexDirection: 'row', gap: 3, height: rowH2 }}>
             {uris.slice(2, 4).map((uri, i) => (
               <Pressable key={i} onPress={() => open(i + 2)} style={{ flex: 1, borderRadius: rowRadius, overflow: 'hidden' }}>
-                <Image source={{ uri }} style={imgStyle} contentFit="cover" cachePolicy="memory-disk" />
+                <GridImage uri={uri} />
                 {i === 1 && count > 4 && (
                   <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>+{count - 4}</Text>

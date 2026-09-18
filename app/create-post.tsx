@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import { MAX_VIDEO_DURATION_MS, videoUploadVerdict } from '../lib/videoUploadGuard';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -53,14 +55,6 @@ const POLL_DURATIONS = [
   { label: '7d', hours: 168 },
 ];
 
-const MAX_VIDEO_DURATION_MS = 60_000;
-const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
-  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${bytes} B`;
-}
 
 export default function CreatePostScreen() {
   const router = useRouter();
@@ -136,15 +130,36 @@ export default function CreatePostScreen() {
   const [video, setVideo] = useState<LocalVideoUpload | null>(null);
   const videoUri = video?.uri ?? '';
 
-  const setPickedVideo = (asset: ImagePicker.ImagePickerAsset) => {
-    if (asset.duration && asset.duration > MAX_VIDEO_DURATION_MS) {
-      Alert.alert('Video too long', 'Echo supports videos up to 60 seconds for reliable upload and playback.');
+  const setPickedVideo = async (asset: ImagePicker.ImagePickerAsset) => {
+    // expo-image-picker omits fileSize on some Android providers, and the old
+    // check was `asset.fileSize && ...` — so a missing size skipped the limit
+    // entirely and the file failed at the end of the upload instead.
+    let bytes = asset.fileSize ?? null;
+    if (!bytes) {
+      try {
+        const info = await FileSystem.getInfoAsync(asset.uri);
+        if (info.exists && 'size' in info) bytes = Number(info.size ?? 0) || null;
+      } catch {
+        // Unknowable size is not a reason to block a post; let the upload try.
+      }
+    }
+
+    const verdict = videoUploadVerdict({ bytes, durationMs: asset.duration });
+    if (!verdict.ok) {
+      Alert.alert(verdict.code === 'too-long' ? 'Video too long' : 'Video too large', verdict.message);
       return;
     }
-    if (asset.fileSize && asset.fileSize > MAX_VIDEO_UPLOAD_BYTES) {
-      Alert.alert('Video too large', `This video is ${formatBytes(asset.fileSize)}. Pick a video under ${formatBytes(MAX_VIDEO_UPLOAD_BYTES)}.`);
-      return;
+    if (verdict.highBitrate) {
+      // Under every hard limit but recorded at camera bitrate, which is most of
+      // what Android sends: expo-image-picker's videoExportPreset is iOS-only,
+      // so nothing re-encodes it. Worth saying once, not worth blocking.
+      Alert.alert(
+        'This will be a slow upload',
+        'That clip is recorded at a very high quality, so it is much larger than it needs to be. It will still post — it will just take a while, and use more of your data.',
+        [{ text: 'Post anyway' }],
+      );
     }
+
     setVideo({
       uri: asset.uri,
       mimeType: asset.mimeType,
@@ -274,7 +289,7 @@ export default function CreatePostScreen() {
         : undefined,
     });
     if (!result.canceled) {
-      setPickedVideo(result.assets[0]);
+      void setPickedVideo(result.assets[0]);
     }
   };
 
@@ -295,7 +310,7 @@ export default function CreatePostScreen() {
         : undefined,
     });
     if (!result.canceled) {
-      setPickedVideo(result.assets[0]);
+      void setPickedVideo(result.assets[0]);
     }
   };
 
