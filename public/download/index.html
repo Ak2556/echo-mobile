@@ -2691,6 +2691,12 @@
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var lang = 'en-IN';
   var rec = null, held = false, finalText = '', sawResult = false;
+  // Why the recogniser produced nothing, so the fallback can say something
+  // true. Without these, every failure — a blocked mic, no network, a language
+  // this browser cannot do — came out as "hold the button down while you
+  // speak", which blames the visitor for the one case that is usually not
+  // their fault.
+  var lastError = '', sawStart = false, sawAudio = false;
 
   // A sentence to borrow, in the language of the pill you picked. The Hindi
   // one is the same thought the typing beat below asks you to type, so the
@@ -2800,6 +2806,7 @@
     held = true;
     token++;
     resetOutput();
+    lastError = ''; sawStart = false; sawAudio = false;
     mic.setAttribute('data-state', 'listening');
     label.textContent = 'Listening\u2026';
     hint.textContent = 'let go when you are done';
@@ -2822,9 +2829,15 @@
       textEl.textContent = (finalText + interim).trim();
       textEl.classList.toggle('interim', !finalText && !!interim);
     };
+    // Whether the engine ever got as far as opening the microphone. A browser
+    // that fires no events at all — which is what happens when the language is
+    // one it cannot load — is a different failure from one that listened and
+    // heard silence, and the two need different words.
+    rec.onstart = function () { sawStart = true; };
+    rec.onaudiostart = function () { sawAudio = true; };
+
     rec.onerror = function (e) {
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') denied();
-      else if (e.error === 'no-speech') nothingHeard();
+      lastError = (e && e.error) || '';
       finish();
     };
     var mine = token;
@@ -2856,7 +2869,7 @@
   function finish() {
     closeLevels();
     var said = (finalText || textEl.textContent || '').trim();
-    if (!said) { if (!fallback.hidden) return; nothingHeard(); return; }
+    if (!said) { if (!fallback.hidden) return; explain(); return; }
     textEl.classList.remove('interim');
     textEl.textContent = said;
     mic.classList.add('said');
@@ -2869,9 +2882,78 @@
     document.dispatchEvent(new CustomEvent('echo:said', { detail: { text: said } }));
   }
 
+  /* Say what actually went wrong.
+   *
+   * Every failure used to arrive as "hold the button down while you speak",
+   * which is the right advice for exactly one of them and blames the visitor
+   * for the rest. Two of those rest matter a great deal on this page:
+   *
+   *   language-not-supported \u2014 the pills offer fifteen languages because the
+   *     app handles fifteen. Chrome's recogniser does not: Odia and Assamese
+   *     in particular are not among them, and Safari's list is shorter again.
+   *     A visitor who picks their own language and is told to hold the button
+   *     down concludes the product cannot hear them, which is the opposite of
+   *     what this section exists to prove. The app does not use the browser's
+   *     engine, so the honest answer names the browser and moves the claim
+   *     back to the phone.
+   *
+   *   network \u2014 Chrome streams the audio to Google's servers to transcribe it.
+   *     The comment above is right that this costs Echo no quota, but it is
+   *     not offline, and on a flaky connection the engine fails with this and
+   *     nothing else. Telling someone to speak louder will not fix their wifi.
+   *
+   * A recogniser that fired no events at all never opened the microphone, so
+   * it is reported as the browser declining rather than as silence.
+   */
+  var ERRORS = {
+    'not-allowed':           denied,
+    'service-not-allowed':   denied,
+    'no-speech':             nothingHeard,
+    'audio-capture':         function () {
+      say('No microphone reached the browser \u2014 it may be in use by another app, or there may not be one. The app records on the phone, which is the only place it matters.');
+    },
+    'network':               function () {
+      say('This browser sends speech to its own servers to transcribe it, and could not reach them just now. That is the browser, not Echo \u2014 the app does this on the phone.');
+    },
+    'language-not-supported': langUnsupported,
+    'aborted':               nothingHeard,
+  };
+
+  function say(msg) { fallback.hidden = false; fallback.textContent = msg; }
+
+  function explain() {
+    var fn = ERRORS[lastError];
+    if (fn) { fn(); return; }
+    // The engine reported nothing and never opened the microphone. Two causes
+    // produce that identically \u2014 a permission the browser never resolved, and a
+    // language it has no model for \u2014 and there is no way from here to tell
+    // which. So name both rather than pick one: asserting "no model for
+    // English" to a Chrome user would be plainly false, and this page cannot
+    // afford to be wrong about the thing it is demonstrating.
+    if (!sawStart && !sawAudio) { neverOpened(); return; }
+    nothingHeard();
+  }
+
+  /** Chrome says so explicitly; Safari tends to fail silently instead. */
+  function langUnsupported() {
+    say('This browser has no speech model for ' + currentLangName() + ' \u2014 its list is much shorter than Echo\u2019s. Try English here to see the mechanism; the app does ' + currentLangName() + ' on the phone.');
+  }
+
+  function neverOpened() {
+    var name = currentLangName();
+    var tail = name === 'English'
+      ? 'Check the microphone permission in the address bar.'
+      : 'Either the microphone permission did not come through, or this browser has no speech model for ' + name + ' \u2014 trying English will tell you which.';
+    say('The browser never opened the microphone, so there was nothing to transcribe. ' + tail);
+  }
+
+  function currentLangName() {
+    var pill = mic.querySelector('.mic-langs button.on');
+    return pill ? pill.textContent.trim() : 'that language';
+  }
+
   function nothingHeard() {
-    fallback.hidden = false;
-    fallback.textContent = 'Nothing came through. Hold the button down while you speak \u2014 let go when you have finished the sentence.';
+    say('Nothing came through. Hold the button down while you speak \u2014 let go when you have finished the sentence.');
   }
   function denied() {
     fallback.hidden = false;
