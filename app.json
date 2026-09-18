@@ -156,6 +156,7 @@
         }
       ],
       "./plugins/withAndroidEntryPoints",
+      "./plugins/withAndroidReleaseSigning",
       "./plugins/withEchoContactCard",
       "expo-apple-authentication"
     ],

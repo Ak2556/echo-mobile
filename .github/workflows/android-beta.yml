@@ -34,6 +34,34 @@ jobs:
       - name: Expo Prebuild
         run: npx expo prebuild --platform android
 
+      # After prebuild, so nothing regenerating android/ can clobber the file.
+      # It must exist before Gradle *configures*, because
+      # plugins/withAndroidReleaseSigning.js resolves ECHO_UPLOAD_STORE_FILE at
+      # configure time and throws if the path is missing.
+      #
+      # Fails closed on purpose. Without this secret the build would still
+      # succeed and produce an APK signed with Expo's shared debug key — the
+      # exact artifact that shipped on downloadecho.com, which anyone holding a
+      # stock Expo checkout can forge an update over. A red build is cheaper.
+      - name: Decode the upload keystore
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_UPLOAD_KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_UPLOAD_KEYSTORE_BASE64 is not set. Refusing to build a release APK that would be signed with the shared Android debug key."
+            exit 1
+          fi
+          mkdir -p android/app
+          printf '%s' "$ANDROID_UPLOAD_KEYSTORE_BASE64" | base64 -d > android/app/upload.keystore
+          # A truncated or mis-pasted secret decodes to bytes keytool cannot
+          # open, which Gradle would otherwise report as a generic signing error.
+          if ! keytool -list -keystore android/app/upload.keystore -storepass "$ANDROID_UPLOAD_STORE_PASSWORD" >/dev/null 2>&1; then
+            echo "::error::The decoded keystore could not be opened. Check ANDROID_UPLOAD_KEYSTORE_BASE64 and ANDROID_UPLOAD_STORE_PASSWORD."
+            exit 1
+          fi
+          echo "Upload keystore decoded and opened."
+
       - name: Inject Fastlane Scripts
         run: |
           mv fastlane_android android/fastlane
@@ -49,22 +77,48 @@ jobs:
       - name: Install Fastlane
         run: bundle install
 
-      - name: Build and Distribute via Fastlane
+      # Build only. Distribution is a separate step below, because the signature
+      # has to be judged before the APK reaches anybody — the previous single
+      # step uploaded to Firebase and only then would have been checked.
+      - name: Build the release APK
+        working-directory: android
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_CLOUDFLARE_WORKER_URL: ${{ secrets.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL }}
+          # Gradle picks ORG_GRADLE_PROJECT_<name> up as a project property, so
+          # the passwords never land in gradle.properties where a stray commit
+          # or an uploaded build log would expose them.
+          ORG_GRADLE_PROJECT_ECHO_UPLOAD_STORE_FILE: app/upload.keystore
+          ORG_GRADLE_PROJECT_ECHO_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_ECHO_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_ECHO_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: bundle exec fastlane build
+
+      # The gate. Everything above is configuration, which can silently regress:
+      # prebuild regenerates build.gradle from an Expo template that hardcodes
+      # `release { signingConfig signingConfigs.debug }`, so the only durable
+      # check is on the finished artifact.
+      #
+      # Runs before Firebase and before the artifact upload, so a debug-signed
+      # APK reaches neither testers nor the downloads bucket. The reasoning and
+      # the fingerprint live in the script.
+      - name: Refuse to publish a debug-signed APK
+        run: ./scripts/verify-apk-signer.sh android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Distribute to Firebase
         working-directory: android
         env:
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
-          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
-          EXPO_PUBLIC_CLOUDFLARE_WORKER_URL: ${{ secrets.EXPO_PUBLIC_CLOUDFLARE_WORKER_URL }}
         run: |
           if [ -n "$FIREBASE_CREDENTIALS" ]; then
             echo "$FIREBASE_CREDENTIALS" > firebase_credentials.json
             export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/firebase_credentials.json
           fi
-          bundle exec fastlane firebase || echo "Fastlane failed, but APK is built!"
+          bundle exec fastlane distribute || echo "Firebase distribution failed; the verified APK is still uploaded as an artifact."
 
       - name: Upload APK to GitHub Artifacts
         uses: actions/upload-artifact@v4

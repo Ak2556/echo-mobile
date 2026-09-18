@@ -9,10 +9,22 @@ platform :android do
   desc "Build and submit an APK to Firebase App Distribution"
   lane :firebase do
     gradle(task: "assemble", build_type: "Release")
-    
+    distribute
+  end
+
+  # Upload only, with no gradle task. CI builds, then checks the signer, then
+  # calls this — so the bytes that were verified are exactly the bytes that go
+  # out. Re-running `assemble` here would re-sign after the check, and it would
+  # do it with whatever signing properties this step happened to have, which is
+  # how a debug-signed APK could sail past a green verification step.
+  desc "Upload an already-built APK to Firebase App Distribution"
+  lane :distribute do
+    apk = "app/build/outputs/apk/release/app-release.apk"
+    UI.user_error!("No APK at #{apk} — run the build lane first.") unless File.exist?(apk)
+
     firebase_app_distribution(
       app: ENV["FIREBASE_APP_ID"],
-      apk_path: "app/build/outputs/apk/release/app-release.apk",
+      apk_path: apk,
       release_notes: "Automated build from GitHub Actions",
       groups: "testers"
     )
