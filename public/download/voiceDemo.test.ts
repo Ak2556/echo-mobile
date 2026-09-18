@@ -13,12 +13,16 @@ import { join } from 'node:path';
  *
  * Two of the unhandled cases matter more than the rest on this page:
  *
- *   language-not-supported — the pills offer fifteen languages because the app
- *     handles fifteen. Chrome's recogniser does not; Odia (or-IN) and Assamese
- *     (as-IN) are not among them and Safari's list is shorter again. A visitor
- *     who picks their own language and is told to hold the button down
- *     concludes the product cannot hear them, on the page whose entire pitch is
- *     that it can.
+ *   an unsupported language — the pills offer fifteen because the app handles
+ *     fifteen. The browser's engine does not, and crucially it does not say so.
+ *     Probed in a real Chrome against the deployed page: `or-IN`, `as-IN` and
+ *     even a nonsense `zz-ZZ` all fire start, audiostart and end exactly as
+ *     `en-IN` does, then return no result. There is no `language-not-supported`
+ *     to catch — Chrome never emits it, though Safari does — so this case can
+ *     only be handled where an empty result is handled, in nothingHeard.
+ *     A visitor who picks their own language and is told to hold the button
+ *     down concludes the product cannot hear them, on the page whose entire
+ *     pitch is that it can.
  *
  *   network — Chrome streams audio to its own servers to transcribe it. Echo's
  *     quota is untouched, but it is not offline, and telling someone to speak
@@ -84,19 +88,35 @@ describe('the voice demo explains why it heard nothing', () => {
     expect(body, 'must not assert a cause it cannot know').toMatch(/Either|or this browser/i);
   });
 
-  it('only tells the visitor to hold the button down when that is the problem', () => {
-    // The "hold the button down" wording belongs to no-speech and nothing else.
-    const holdAdvice = /Hold the button down while you speak/;
-    const nothingHeard = DEMO.slice(DEMO.indexOf('function nothingHeard()'));
-    expect(nothingHeard.slice(0, 200)).toMatch(holdAdvice);
+  const holdAdvice = /Hold the button down while you speak/;
+  const bodyOf = (fn: string) => {
+    const at = DEMO.indexOf(fn);
+    expect(at, `${fn} must exist`).toBeGreaterThan(-1);
+    return DEMO.slice(at, DEMO.indexOf('\n  }', at));
+  };
 
-    // It must not be the fallback for the network or language failures.
+  it('never blames the visitor for a network or microphone failure', () => {
     for (const fn of ['function neverOpened()', 'function langUnsupported()']) {
-      const at = DEMO.indexOf(fn);
-      expect(at, `${fn} must exist`).toBeGreaterThan(-1);
-      const body = DEMO.slice(at, DEMO.indexOf('\n  }', at));
-      expect(body, `${fn} must not blame the visitor`).not.toMatch(holdAdvice);
+      expect(bodyOf(fn), `${fn} must not blame the visitor`).not.toMatch(holdAdvice);
     }
+    // The network branch must name the browser, not the user's voice.
+    expect(DEMO).toMatch(/sends speech to its own servers/);
+  });
+
+  it('only says "hold the button down" for a language the engine can do', () => {
+    // An empty result means either silence or an unsupported language, and the
+    // browser gives no way to tell — Chrome returns no error at all for a
+    // language it cannot handle. So the confident wording is gated on English,
+    // the one pill a visitor can use to discriminate.
+    const body = bodyOf('function nothingHeard()');
+    expect(body, 'must branch on the selected language').toMatch(/currentLangName\(\)/);
+    expect(body, "English keeps the direct advice").toMatch(holdAdvice);
+
+    const [english, other] = body.split(holdAdvice);
+    expect(english, 'the hold advice must sit inside the English branch').toMatch(
+      /name === 'English'/);
+    expect(other, 'a non-English language must offer the other cause').toMatch(
+      /no model for|try English/i);
   });
 
   it('every language pill has a recogniser code', () => {

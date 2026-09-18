@@ -2888,14 +2888,14 @@
    * which is the right advice for exactly one of them and blames the visitor
    * for the rest. Two of those rest matter a great deal on this page:
    *
-   *   language-not-supported \u2014 the pills offer fifteen languages because the
-   *     app handles fifteen. Chrome's recogniser does not: Odia and Assamese
-   *     in particular are not among them, and Safari's list is shorter again.
-   *     A visitor who picks their own language and is told to hold the button
-   *     down concludes the product cannot hear them, which is the opposite of
-   *     what this section exists to prove. The app does not use the browser's
-   *     engine, so the honest answer names the browser and moves the claim
-   *     back to the phone.
+   *   an unsupported language \u2014 the pills offer fifteen because the app handles
+   *     fifteen. The browser's engine does not, and it does not say so: probed
+   *     in Chrome, `or-IN`, `as-IN` and even a nonsense `zz-ZZ` all fire
+   *     start, audiostart and end exactly as `en-IN` does, then return no
+   *     result. There is no error code to catch, which is why this case has to
+   *     be handled in nothingHeard rather than here. `language-not-supported`
+   *     stays in the table below because Safari does report it, but Chrome
+   *     never will.
    *
    *   network \u2014 Chrome streams the audio to Google's servers to transcribe it.
    *     The comment above is right that this costs Echo no quota, but it is
@@ -2952,8 +2952,27 @@
     return pill ? pill.textContent.trim() : 'that language';
   }
 
+  /* The engine ran, took audio, and returned nothing.
+   *
+   * Two causes, and the browser does not distinguish them: the visitor really
+   * said nothing, or its recogniser has no model for the language they picked
+   * and returns an empty result rather than an error. So "hold the button down"
+   * is only safe to say when the language is one the engine is known to handle;
+   * for anything else it blames the visitor for the likelier cause, on the page
+   * whose whole argument is that Echo hears them.
+   *
+   * English is the only pill assumed supported, because it is the one the
+   * suggestion defaults to and the one a visitor can use to tell the two cases
+   * apart. Claiming more than that would need a list of the engine's languages,
+   * which is not feature-detectable and differs per browser and per platform.
+   */
   function nothingHeard() {
-    say('Nothing came through. Hold the button down while you speak \u2014 let go when you have finished the sentence.');
+    var name = currentLangName();
+    if (name === 'English') {
+      say('Nothing came through. Hold the button down while you speak \u2014 let go when you have finished the sentence.');
+      return;
+    }
+    say('Nothing came through. Either the sentence did not land, or this browser\u2019s speech engine has no model for ' + name + ' and returns nothing rather than saying so \u2014 try English to tell which. The app does not use the browser\u2019s engine; it listens on the phone.');
   }
   function denied() {
     fallback.hidden = false;
