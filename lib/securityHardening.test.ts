@@ -388,3 +388,158 @@ describe('signup cannot be aborted by the profile trigger', () => {
     expect(body, 'the probe must be bounded so it cannot spin').toMatch(/loop/i);
   });
 });
+
+/**
+ * Storage buckets were created with file_size_limit and allowed_mime_types
+ * null, which Storage reads as "any size, any type". Object RLS was already
+ * correct (a writer is confined to a folder named after their own auth.uid()),
+ * but marketplace-photos is also `public = true`, and Storage serves an object
+ * with the content-type it was stored with. An unbounded `text/html` upload
+ * therefore got a stable public HTTPS URL on a Supabase domain — a phishing
+ * page hosted by us — and SVG carries script the same way.
+ */
+describe('storage buckets are bounded', () => {
+  const CONSTRAINED = ['marketplace-photos', 'dm-media', 'mini-app-media', 'verification'];
+  const sql = sources.map(s => s.sql).join('\n');
+
+  it.each(CONSTRAINED)('%s has a size limit and a mime allowlist', bucket => {
+    // The statement that constrains this bucket, whichever migration it is in.
+    // Several migrations UPDATE a bucket (one flips `public`), so pick the
+    // statement that actually sets the limits rather than the first match.
+    const stmt = statements(sql).findLast(s =>
+      /update storage\.buckets set/i.test(s)
+      && s.includes(`'${bucket}'`)
+      && /file_size_limit/i.test(s));
+    expect(stmt, `no migration constrains ${bucket}`).toBeTruthy();
+    expect(stmt!, `${bucket} needs a file_size_limit`).toMatch(/file_size_limit = \d+/i);
+    expect(stmt!, `${bucket} needs an allowed_mime_types allowlist`).toMatch(/allowed_mime_types = array\[/i);
+  });
+
+  it('no bucket allows html or svg, which are script-bearing when served inline', () => {
+    for (const stmt of statements(sql).filter(s =>
+      /update storage\.buckets set/i.test(s) && /allowed_mime_types/i.test(s))) {
+      expect(stmt, 'text/html must never be an allowed upload type').not.toMatch(/text\/html/i);
+      expect(stmt, 'image/svg+xml carries script; it is not a photo').not.toMatch(/svg/i);
+    }
+  });
+
+  it('the public marketplace bucket takes images only', () => {
+    const stmt = statements(sql).findLast(s =>
+      /update storage\.buckets set/i.test(s)
+      && s.includes("'marketplace-photos'")
+      && /allowed_mime_types/i.test(s));
+    const types = [...stmt!.matchAll(/'([a-z]+\/[a-z0-9.+-]+)'/gi)].map(m => m[1]);
+    expect(types.length).toBeGreaterThan(0);
+    expect(types.every(t => t.startsWith('image/')), `got ${types.join(', ')}`).toBe(true);
+  });
+});
+
+/**
+ * is_moderator is read server-side by verify-identity's `list`/`decide` actions,
+ * which flip profiles.is_verified, and by the DSA Art. 20 appeals path. A user
+ * who could set that bit could verify themselves and then anyone — an
+ * impersonation primitive, not a privilege bump.
+ *
+ * It was protected only by the column-level UPDATE grant. 20260705000000 exists
+ * precisely because profiles column grants are easy to get wrong, so the policy
+ * pins the value too.
+ */
+describe('a client cannot promote itself to moderator', () => {
+  function latestUpdatePolicy() {
+    let text: string | undefined;
+    for (const { text: s } of allStatements) {
+      if (/^drop policy (?:if exists )?"users can update own profile" on (?:public\.)?profiles$/i.test(s)) {
+        text = undefined;
+      }
+      const m = /^create policy "users can update own profile" on (?:public\.)?profiles (.*)$/i.exec(s);
+      if (m) text = m[1];
+    }
+    return text;
+  }
+
+  it('the profiles update policy pins the server-owned flags', () => {
+    const policy = latestUpdatePolicy();
+    expect(policy, 'the update policy must exist').toBeTruthy();
+    for (const col of ['is_moderator', 'is_verified', 'follower_count']) {
+      expect(policy!, `${col} must be pinned to its current value`).toMatch(
+        new RegExp(`${col} is not distinct from \\(\\s*select ${col} from public\\.profiles`, 'i'));
+    }
+  });
+
+  it('is_moderator is never granted as an updatable column', () => {
+    // Column grants are the first layer; this asserts nobody widens them.
+    for (const { text } of allStatements) {
+      const m = /^grant update \(([^)]*)\) on public\.profiles/i.exec(text);
+      if (m) {
+        expect(m[1].toLowerCase(), 'is_moderator must not be client-writable').not.toMatch(/\bis_moderator\b/);
+        expect(m[1].toLowerCase(), 'is_verified must not be client-writable').not.toMatch(/\bis_verified\b/);
+      }
+      // A table-wide grant would restore write access to every column at once.
+      expect(text, 'never grant UPDATE on all of profiles').not.toMatch(
+        /^grant (all|update) on (table )?public\.profiles to/i);
+    }
+  });
+});
+
+/**
+ * public_echoes.media_urls and .hls_url were a bare text[] / text that
+ * `authenticated` may INSERT and UPDATE, unvalidated anywhere. Three
+ * consequences, and the first undoes the moderation gate:
+ *
+ *   1. check_content is decided once, against bytes on a host the poster
+ *      controls. Afterwards they change what the URL serves and the post stays
+ *      "moderated" while showing something else.
+ *   2. og-redirect puts media_urls[0] into <meta og:image>, so an
+ *      attacker-chosen, mutable image is unfurled under our own OG tags.
+ *   3. Every viewer's IP goes to a third-party host of the author's choosing.
+ *
+ * Enforced as an allowlist table plus a trigger rather than a CHECK with a
+ * literal domain, because the media host is deployment configuration.
+ */
+describe('echo media must come from an Echo-controlled host', () => {
+  const guard = fns.get('public.guard_media_provenance');
+  const allowed = fns.get('public.media_url_allowed');
+
+  it('the allowlist table exists and is unreachable from a client', () => {
+    const created = allStatements.some(s =>
+      /^create table (if not exists )?public\.media_url_hosts/i.test(s.text));
+    expect(created).toBe(true);
+    expect(allStatements.some(s =>
+      /^alter table public\.media_url_hosts enable row level security$/i.test(s.text))).toBe(true);
+    // No grants, so it cannot be tampered with or used to enumerate our hosts.
+    expect(allStatements.some(s =>
+      /^revoke all on public\.media_url_hosts from anon, authenticated$/i.test(s.text))).toBe(true);
+    expect(allStatements.some(s =>
+      /^grant (select|all|insert|update) on (table )?public\.media_url_hosts to/i.test(s.text))).toBe(false);
+  });
+
+  it('only https is accepted, which is what excludes javascript: and data:', () => {
+    expect(allowed, 'media_url_allowed must exist').toBeTruthy();
+    expect(allowed!.body).toMatch(/\^https:\/\//);
+    // Anchored, so a scheme cannot be smuggled in later in the string.
+    expect(allowed!.body).toMatch(/from '\^https/);
+    // Null stays legal; the column is optional.
+    expect(allowed!.body).toMatch(/p_url is null/);
+  });
+
+  it('the trigger checks every element and both columns, and rejects', () => {
+    expect(guard, 'guard_media_provenance must exist').toBeTruthy();
+    const body = guard!.body;
+    // An array whose second element is off-site must not slip through.
+    expect(body).toMatch(/foreach .* in array new\.media_urls/i);
+    expect(body).toMatch(/new\.hls_url/);
+    // Rejected, not silently corrected: the client is meant to supply this
+    // value, so a bad one is a mistake the caller needs told about.
+    expect(body).toMatch(/raise exception/i);
+    expect(body).toMatch(/42501/);
+  });
+
+  it('the trigger is attached to public_echoes for insert and update', () => {
+    const created = allStatements.findLastIndex(s =>
+      /^create trigger b_guard_media_provenance before insert or update on public\.public_echoes /i.test(s.text));
+    const dropped = allStatements.findLastIndex(s =>
+      /^drop trigger (if exists )?b_guard_media_provenance on public\.public_echoes$/i.test(s.text));
+    expect(created, 'the trigger must be attached').toBeGreaterThan(-1);
+    expect(created, 'and must not be left dropped').toBeGreaterThan(dropped);
+  });
+});
