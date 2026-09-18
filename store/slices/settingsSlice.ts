@@ -211,7 +211,13 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     setFontStyle: (v) => { persistSet('fontStyle', v); set({ fontStyle: v }); },
     fontSize: persistGet<'small' | 'medium' | 'large'>('fontSize', 'medium'),
     setFontSize: (v) => { persistSet('fontSize', v); set({ fontSize: v }); },
-    compactFeed: b('compactFeed', false), setCompactFeed: s(set, 'compactFeed'),
+    // Default on. This is not only card padding: FeedCard gates the full-bleed
+    // hero card on `!compactFeed`, hides the @username line and cuts the body
+    // from ten lines to four, so it decides how much of the feed a screen holds.
+    // `b()` falls back only when the key is absent, so anyone who has already
+    // chosen — in either direction — keeps their choice; this moves the people
+    // who never opened the setting. Pinned in settingsSlice.test.ts.
+    compactFeed: b('compactFeed', true), setCompactFeed: s(set, 'compactFeed'),
     dismissedFirstEchoCoach: b('dismissedFirstEchoCoach', false), setDismissedFirstEchoCoach: s(set, 'dismissedFirstEchoCoach'),
     reduceAnimations: b('reduceAnimations', false), setReduceAnimations: s(set, 'reduceAnimations'),
     glassTheme: b('glassTheme', false), setGlassTheme: s(set, 'glassTheme'),
