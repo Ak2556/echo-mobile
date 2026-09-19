@@ -75,3 +75,28 @@ export function buildRamp(
     intensity: Math.max(1, Math.round(maxIntensity * weight)),
   }));
 }
+
+/**
+ * How opaque the tint over the bar is.
+ *
+ * 'regular' suits a header: content arrives from one side only, the bar sits
+ * under the status area, and the title has the whole width to itself.
+ *
+ * 'strong' is for the tab bar, which is a harder problem. It sits at the bottom
+ * of a feed, so whatever the user last scrolled to is directly behind it — and
+ * that is frequently a photo. At the header's value, six small labels over a
+ * bright image were not reliably legible; Flow, Chat and Tools in particular
+ * disappeared into a sunlit wall.
+ *
+ * Not simply "more opaque everywhere": raising it for headers too would dull
+ * the one surface where the effect currently works, and the point of the edge
+ * treatment is that content stays visible as it passes beneath.
+ */
+export type WashStrength = 'regular' | 'strong';
+
+export function washOpacity(isDark: boolean, strength: WashStrength = 'regular'): number {
+  const base = isDark ? 0.55 : 0.6;
+  // Enough to hold small text against a bright photo, short of the flat scrim
+  // that would make the glass pointless.
+  return strength === 'strong' ? Math.min(base + 0.17, 0.95) : base;
+}

@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeGlassView, isNativeGlassAvailable } from './nativeGlass';
-import { buildRamp, type RampLayer } from './edgeGlassRamp';
+import { buildRamp, washOpacity, type RampLayer, type WashStrength } from './edgeGlassRamp';
 import { useTheme } from '../../src/shared/lib/theme';
 import { usePerformanceProfile, type PerformanceMode } from '../../src/shared/lib/performance';
 
@@ -69,6 +69,11 @@ export interface EdgeGlassProps {
   backdropStyle?: StyleProp<ViewStyle>;
   style?: ViewStyle;
   performanceMode?: PerformanceMode;
+  /**
+   * How opaque the tint over the bar is. Headers keep 'regular'; the tab bar
+   * uses 'strong' because it sits over whatever the feed last scrolled to.
+   */
+  wash?: WashStrength;
 }
 
 export function EdgeGlass({
@@ -81,6 +86,7 @@ export function EdgeGlass({
   backdropStyle,
   style,
   performanceMode = 'default',
+  wash: washStrength = 'regular',
 }: EdgeGlassProps) {
   const { colors } = useTheme();
   const profile = usePerformanceProfile(performanceMode);
@@ -133,7 +139,7 @@ export function EdgeGlass({
   // of it is — that line was clearly there on Android. So the hold releases just
   // inside the bar and the falloff is stepped to approximate an ease rather than a
   // straight ramp; the eye finds a slope change far harder to see than a kink.
-  const wash = colors.isDark ? 0.55 : 0.6;
+  const wash = washOpacity(colors.isDark, washStrength);
   const tailFraction = 1 - barFraction;
   const washColors = [
     withAlpha(base, wash),
