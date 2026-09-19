@@ -5,7 +5,7 @@ import { FlashList as _FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Bell, Checks } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { GlassPanel } from '../../components/ui/GlassPanel';
+import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { destinationFor, summaryTextFor } from '../../lib/notifications/presentation';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -15,7 +15,6 @@ import { useTheme } from '../../src/shared/lib/theme';
 import { useI18n } from '../../src/shared/lib/i18n';
 import { setReadableNotifications } from '../../lib/voice/readNotifications';
 import { Notification } from '../../types';
-import { usePerformanceProfile } from '../../src/shared/lib/performance';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import {
@@ -77,7 +76,6 @@ export default function NotificationsScreen() {
   const { colors, animation, font } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
-  const performance = usePerformanceProfile('hot');
   const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'reactions' | 'saves' | 'quotes' | 'follows' | 'reposts'>('all');
 
   const remote = isSupabaseRemote();
@@ -155,9 +153,6 @@ export default function NotificationsScreen() {
   const unreadCount = remote
     ? notifications.filter(n => !n.isRead).length
     : unreadNotificationCount();
-
-  const useBlur = performance.useBlur;
-  const tint = colors.isDark ? 'dark' : 'extraLight';
 
   // Header: title row + filter tabs
   const NAV_BAR_HEIGHT = 56;
@@ -285,19 +280,16 @@ export default function NotificationsScreen() {
         />
       )}
 
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: headerHeight,
-          overflow: 'hidden',
-          zIndex: 10,
-        }}
-      >
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlur ? 0.28 : 0.97 }]}>
-          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}>
+      {/* Screen chrome, not an object.
+       *
+       * This was a GlassPanel at borderRadius 0 filling an absolute bar, which
+       * is the one thing GlassPanel is not for: it draws a border, a rim light
+       * and a bevel, and three of this bar's four sides are off-screen. The
+       * result read as a slab laid over the list, with a hard horizontal line
+       * where it ended. EdgeGlass draws a gradient in depth instead, so the
+       * list goes out of focus on its way under the header rather than being
+       * cut by it — the same treatment the tab bar and the home header use. */}
+      <EdgeGlass edge="top" height={headerHeight} style={{ zIndex: 10 }}>
             <View style={[layout.contentStyle, { paddingTop: insets.top + (layout.isDesktop ? 10 : 0) }]}>
             {/* Title row */}
             <View
@@ -382,20 +374,7 @@ export default function NotificationsScreen() {
             </Animated.ScrollView>
             </View>
     
-            {/* Bottom border */}
-            <View
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: StyleSheet.hairlineWidth,
-                backgroundColor: 'transparent',
-              }}
-            />
-          </GlassPanel>
-        </Animated.View>
-      </View>
+      </EdgeGlass>
     </View>
   );
 }
