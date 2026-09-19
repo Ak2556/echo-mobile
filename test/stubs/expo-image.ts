@@ -22,6 +22,7 @@ export interface ImageProps extends ViewProps {
   placeholder?: unknown;
   cachePolicy?: string;
   recyclingKey?: string;
+  tintColor?: string;
 }
 
 function sourceUri(source: unknown): string | undefined {
@@ -51,7 +52,7 @@ function placeholderLabel(placeholder: unknown): string | undefined {
  * channel it does forward — {imageSource: 'x'} arrives as data-image-source="x".
  */
 export const Image = React.forwardRef<unknown, ImageProps>(
-  ({ source, contentFit, transition, placeholder, cachePolicy, recyclingKey, children, ...rest }, ref) =>
+  ({ source, contentFit, transition, placeholder, cachePolicy, recyclingKey, tintColor, children, ...rest }, ref) =>
     React.createElement(
       View,
       {
@@ -64,6 +65,7 @@ export const Image = React.forwardRef<unknown, ImageProps>(
           placeholder: placeholderLabel(placeholder),
           cachePolicy,
           recyclingKey,
+          tintColor,
         },
       } as never,
       children,
