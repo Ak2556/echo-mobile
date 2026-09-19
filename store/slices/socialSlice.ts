@@ -56,6 +56,8 @@ export interface SocialSlice {
   notifications: Notification[];
   addNotification: (n: Notification) => void;
   markNotificationRead: (id: string) => void;
+  /** Remove one notification locally. The remote path soft-deletes instead. */
+  dismissNotification: (id: string) => void;
   markAllNotificationsRead: () => void;
   unreadNotificationCount: () => number;
 
@@ -253,6 +255,11 @@ export function createSocialSlice(
     },
     markNotificationRead: (id) => {
       const notifications = get().notifications.map(n => n.id === id ? { ...n, isRead: true } : n);
+      persistSet('notifications', notifications);
+      set({ notifications });
+    },
+    dismissNotification: (id) => {
+      const notifications = get().notifications.filter(n => n.id !== id);
       persistSet('notifications', notifications);
       set({ notifications });
     },

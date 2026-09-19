@@ -1,13 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, RefreshControl, Pressable } from 'react-native';
+import { View, Text, StyleSheet, RefreshControl, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
+import { Swipeable } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
-import { Bell, Checks } from 'phosphor-react-native';
+import { Bell, Checks, Trash } from 'phosphor-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { NotificationCard } from '../../components/notifications/NotificationCard';
 import { destinationFor, summaryTextFor } from '../../lib/notifications/presentation';
+import { NOTIFICATION_FILTERS, matchesFilter, type NotificationFilter } from '../../lib/notifications/filters';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { useAppStore } from '../../store/useAppStore';
@@ -21,6 +23,7 @@ import {
   useRemoteNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
+  useDismissNotification,
 } from '../../hooks/queries/useNotifications';
 const FlashList = _FlashList as React.ComponentType<any>;
 
@@ -76,12 +79,22 @@ export default function NotificationsScreen() {
   const { colors, animation, font } = useTheme();
   const { t } = useI18n();
   const layout = useResponsiveLayout();
-  const [filter, setFilter] = useState<'all' | 'unread' | 'mentions' | 'replies' | 'likes' | 'reactions' | 'saves' | 'quotes' | 'follows' | 'reposts'>('all');
+  const [filter, setFilter] = useState<NotificationFilter>('all');
 
   const remote = isSupabaseRemote();
-  const { data: remoteNotifications, refetch, isRefetching } = useRemoteNotifications();
+  const {
+    data: remotePages,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useRemoteNotifications();
+  // The cache is paged; the screen wants one list.
+  const remoteNotifications = useMemo(() => remotePages?.pages.flat(), [remotePages]);
   const markAllRemote = useMarkAllNotificationsRead();
   const markOneRemote = useMarkNotificationRead();
+  const dismissOne = useDismissNotification();
 
   // Resolve notification source: real DB data when remote, seed data otherwise
   const notifications = (remote && remoteNotifications) ? remoteNotifications : storeNotifications;
@@ -91,28 +104,13 @@ export default function NotificationsScreen() {
     setReadableNotifications(notifications.map(n => `${n.fromDisplayName || n.fromUsername || ''} ${summaryTextFor(n.type, n.targetPreview)}`.trim()));
   }, [notifications]);
 
-  // Type filter: each chip narrows by Notification['type'].
-  const typeFilter = (n: Notification) => {
-    switch (filter) {
-      case 'unread': return !n.isRead;
-      case 'mentions': return n.type === 'mention';
-      case 'replies': return n.type === 'comment';
-      case 'likes': return n.type === 'like';
-      case 'reactions': return n.type === 'reaction';
-      case 'saves': return n.type === 'bookmark';
-      case 'quotes': return n.type === 'quote';
-      case 'follows': return n.type === 'follow';
-      case 'reposts': return n.type === 'repost';
-      default: return true;
-    }
-  };
 
   // Group by (type, targetId) to collapse repeated actions ("Alice and 11 others liked").
   const groupedFlat = useMemo(() => {
     const visible = notifications
       .filter(n => n.type !== 'dm')
       .filter(n => !mutedIds.includes(n.fromUserId))
-      .filter(typeFilter);
+      .filter(n => matchesFilter(n, filter));
     type Bucket = { key: string; notifications: Notification[] };
     const buckets = new Map<string, Bucket>();
     for (const n of visible) {
@@ -141,8 +139,7 @@ export default function NotificationsScreen() {
           targetPreview: `${sample.fromDisplayName || sample.fromUsername} and ${others} other${others > 1 ? 's' : ''} ${summaryTextFor(sample.type, sample.targetPreview)}`,
         }];
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notifications, mutedIds, filter]); // typeFilter is recreated from `filter` which is already in deps
+  }, [notifications, mutedIds, filter]);
 
   // Wide layouts (tablet/desktop) lay notifications out in a 2-column grid at
   // the wider content width, matching the home feed; phones stay single-column.
@@ -199,13 +196,42 @@ export default function NotificationsScreen() {
     }
     return (
       <View style={listContentStyle}>
-        <NotificationCard
-          notification={item.data}
-          onPress={() => handlePress(item.data)}
-          onLongPress={() => useAppStore.getState().toggleMute(item.data.fromUserId)}
-        />
+        {/* Single column only. The wide grid above puts two cards side by side,
+            and a horizontal swipe there would be ambiguous about which one it
+            meant — and would fight the row's own horizontal layout. */}
+        <Swipeable
+          overshootRight={false}
+          rightThreshold={44}
+          renderRightActions={() => (
+            <Pressable
+              onPress={() => handleDismiss(item.data)}
+              style={{ width: 88, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.border }}
+            >
+              <Trash color={colors.textSecondary} size={19} />
+              <Text style={{ ...font.bodySemibold, fontSize: 11, color: colors.textSecondary, marginTop: 4 }}>
+                {t('notif.dismiss')}
+              </Text>
+            </Pressable>
+          )}
+        >
+          <NotificationCard
+            notification={item.data}
+            onPress={() => handlePress(item.data)}
+            onLongPress={() => useAppStore.getState().toggleMute(item.data.fromUserId)}
+          />
+        </Swipeable>
       </View>
     );
+  };
+
+  /**
+   * Remote dismissal is a soft delete the server owns; locally there is no
+   * server, so the store's own removal stands in. Either way the row leaves
+   * immediately — the mutation is optimistic.
+   */
+  const handleDismiss = (n: Notification) => {
+    if (remote) dismissOne.mutate(n.id);
+    else useAppStore.getState().dismissNotification(n.id);
   };
 
   const handlePress = (n: Notification) => {
@@ -269,6 +295,18 @@ export default function NotificationsScreen() {
           getItemType={(item: ListItem) => item.type}
             renderItem={renderItem}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
+          // Older notifications are fetched a page at a time. Half a screen of
+          // lead is enough for the next page to land before the user reaches
+          // the end, without prefetching history nobody scrolls to.
+          onEndReachedThreshold={0.5}
+          onEndReached={() => {
+            if (remote && hasNextPage && !isFetchingNextPage) void fetchNextPage();
+          }}
+          ListFooterComponent={
+            isFetchingNextPage
+              ? <View style={{ paddingVertical: 20, alignItems: 'center' }}><ActivityIndicator color={colors.textMuted} /></View>
+              : null
+          }
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -343,7 +381,7 @@ export default function NotificationsScreen() {
     
             {/* Filter tabs */}
             <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: layout.gutter, gap: 8, paddingBottom: 10, paddingTop: 4 }}>
-              {(['all', 'unread', 'mentions', 'replies', 'follows'] as const).map(tab => (
+              {NOTIFICATION_FILTERS.map(({ id: tab, labelKey }) => (
                 <Pressable
                   key={tab}
                   onPress={() => setFilter(tab)}
@@ -367,7 +405,7 @@ export default function NotificationsScreen() {
                       }
                     ]}
                   >
-                    {tab === 'all' ? t('notif.filterAll') : tab === 'unread' ? t('notif.filterUnread') : tab === 'mentions' ? t('notif.filterMentions') : tab === 'replies' ? t('notif.filterReplies') : t('notif.filterFollows')}
+                    {t(labelKey)}
                   </Text>
                 </Pressable>
               ))}

@@ -81,6 +81,7 @@ const ALLOWED_IMAGE_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/w
 const ALLOWED_VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'm4v', 'webm']);
 const ALLOWED_VIDEO_CONTENT_TYPES = new Set(['video/mp4', 'video/quicktime', 'video/x-m4v', 'video/webm']);
 const DM_MEDIA_BUCKET = 'dm-media';
+import { NOTIFICATIONS_PAGE_SIZE } from './notifications/paging';
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -2988,15 +2989,25 @@ export async function upsertRemoteProfileOnSignIn(username: string, displayName:
 }
 
 // Notifications
-export async function fetchRemoteNotifications(): Promise<import('../types').Notification[]> {
+/**
+ * One page of notifications, newest first.
+ *
+ * Was a bare `.limit(50)` with no offset, so anything older than the fiftieth
+ * was unreachable — not empty, not paged, simply absent. `range` is inclusive
+ * at both ends, hence the -1.
+ */
+export async function fetchRemoteNotifications(
+  { offset = 0, limit = NOTIFICATIONS_PAGE_SIZE }: { offset?: number; limit?: number } = {},
+): Promise<import('../types').Notification[]> {
   const uid = await getSessionUserId();
   if (!uid) return [];
   const { data, error } = await supabase
     .from('notifications')
     .select('id, type, actor_id, target_kind, target_id, preview, read_at, created_at')
     .eq('user_id', uid)
+    .is('dismissed_at', null)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .range(offset, offset + limit - 1);
   if (error) throw error;
   const rows = data ?? [];
   if (rows.length === 0) return [];
@@ -3056,6 +3067,25 @@ export async function markRemoteNotificationRead(notificationId: string): Promis
     .eq('user_id', uid);
   // Background op — log rather than throw (a refetch reconciles the badge).
   if (error) captureException(error, { tags: { fn: 'markRemoteNotificationRead' } });
+}
+
+/**
+ * Hide one notification from the list.
+ *
+ * Soft: the row stays and `dismissed_at` is set, because the table has no
+ * DELETE policy and push-fanout reads it as history. The user_id filter is not
+ * redundant with RLS — it keeps a mistyped id from being a silent no-op that
+ * looks like success.
+ */
+export async function dismissRemoteNotification(notificationId: string): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const { error } = await supabase
+    .from('notifications')
+    .update({ dismissed_at: new Date().toISOString() })
+    .eq('id', notificationId)
+    .eq('user_id', uid);
+  if (error) throw error;
 }
 
 export async function markAllRemoteNotificationsRead(): Promise<void> {
