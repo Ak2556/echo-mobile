@@ -13,6 +13,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { EdgeGlass } from '../../components/ui/EdgeGlass';
+import { EchoWordmark } from '../../components/ui/EchoWordmark';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowUpRight, Bell, Waveform, TrendUp, PencilSimpleLine, GitBranch, ChatCircleText, X, Envelope } from 'phosphor-react-native';
 import { AdCard } from "../../src/features/feed/ui/AdCard";
@@ -732,9 +733,14 @@ export default function DiscoverScreen() {
             paddingBottom: 6,
           }}
         >
-          <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5, marginTop: 2 }]}>
-            Echo
-          </Text>
+          {/* The mark, then the name. The header is the one place the brand is
+              always on screen, and it used to be the word alone. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 2 }}>
+            <EchoWordmark height={22} />
+            <Text style={[font.displayBlack, { color: colors.text, fontSize: 28, letterSpacing: -0.5 }]}>
+              Echo
+            </Text>
+          </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pressable
