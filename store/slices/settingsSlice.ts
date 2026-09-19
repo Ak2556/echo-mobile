@@ -220,7 +220,13 @@ export function createSettingsSlice(set: (partial: object) => void, _get: () => 
     compactFeed: b('compactFeed', true), setCompactFeed: s(set, 'compactFeed'),
     dismissedFirstEchoCoach: b('dismissedFirstEchoCoach', false), setDismissedFirstEchoCoach: s(set, 'dismissedFirstEchoCoach'),
     reduceAnimations: b('reduceAnimations', false), setReduceAnimations: s(set, 'reduceAnimations'),
-    glassTheme: b('glassTheme', false), setGlassTheme: s(set, 'glassTheme'),
+    // Default on. Off meant the solid tier, and solid renders no blur layers at
+    // all — EdgeGlass paints its wash and nothing else, so chrome sat as a flat
+    // scrim over a sharp feed. The guards that protect weak hardware are
+    // separate and still apply: deviceTier 'low', Data Saver and the OS
+    // reduce-transparency setting each force solid on their own. Pinned in
+    // settingsSlice.test.ts.
+    glassTheme: b('glassTheme', true), setGlassTheme: s(set, 'glassTheme'),
     accentColor: getAccentColor(),
     setAccentColor: (v) => { persistSet('accentColor', v); set({ accentColor: v }); },
     showAvatars: b('showAvatars', true), setShowAvatars: s(set, 'showAvatars'),
