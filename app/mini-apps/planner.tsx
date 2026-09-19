@@ -98,7 +98,7 @@ export default function PlannerScreen() {
           </Pressable>
           <Pressable onPress={() => setDate(plannerToday())}>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold' }}>{dayLabel}</Text>
+              <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack }}>{dayLabel}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{date}</Text>
             </View>
           </Pressable>

@@ -62,7 +62,7 @@ function convertTemp(val: number, from: string, to: string): number {
 }
 
 function ConversionPulse({ accent, category, from, to, input, result }: { accent: string; category: string; from: string; to: string; input: string; result: string }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const valid = result !== '-';
   return (
     <GlassPanel variant="light" borderRadius={radius.card} contentStyle={{ padding: 16, gap: 13 }} style={{ marginBottom: 14, borderColor: `${accent}38` }}>
@@ -80,7 +80,7 @@ function ConversionPulse({ accent, category, from, to, input, result }: { accent
         <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>
           {input || '0'} {from}
         </Text>
-        <Text style={{ color: accent, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 4 }} numberOfLines={1} adjustsFontSizeToFit>
+        <Text style={{ color: accent, fontSize: 24, ...font.displayBlack, marginTop: 4 }} numberOfLines={1} adjustsFontSizeToFit>
           {result} {to}
         </Text>
       </View>
@@ -89,7 +89,7 @@ function ConversionPulse({ accent, category, from, to, input, result }: { accent
 }
 
 export default function ConverterScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const [catIdx, setCatIdx] = useState(0);
   const [fromIdx, setFromIdx] = useState(0);
   const [toIdx, setToIdx] = useState(1);
@@ -157,7 +157,7 @@ export default function ConverterScreen() {
             value={input}
             onChangeText={setInput}
             keyboardType="decimal-pad"
-            style={{ color: colors.text, fontSize: 42, fontFamily: 'Fraunces_500Medium', letterSpacing: -1, marginBottom: 14 }}
+            style={{ color: colors.text, fontSize: 42, ...font.display, letterSpacing: -1, marginBottom: 14 }}
             placeholderTextColor={colors.textMuted}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -195,7 +195,7 @@ export default function ConverterScreen() {
         {/* TO */}
         <GlassPanel variant="medium" borderRadius={radius.card} contentStyle={{ padding: 20 }}>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>{ttx("TO")}</Text>
-          <Text style={{ color: accent, fontSize: 42, fontFamily: 'Fraunces_500Medium', letterSpacing: -1, marginBottom: 14 }} numberOfLines={1} adjustsFontSizeToFit>{result}</Text>
+          <Text style={{ color: accent, fontSize: 42, ...font.display, letterSpacing: -1, marginBottom: 14 }} numberOfLines={1} adjustsFontSizeToFit>{result}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {cat.units.map((u, i) => (

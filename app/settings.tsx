@@ -830,7 +830,7 @@ export default function SettingsScreen() {
   const sectionHeaderStyle = {
     color: colors.textMuted,
     fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
+    ...theme.font.bodySemibold,
     letterSpacing: 1.4,
     textTransform: 'uppercase' as const,
     marginBottom: 10,
@@ -910,7 +910,7 @@ export default function SettingsScreen() {
           <AnimatedPressable onPress={() => router.back()} style={{ padding: 4 }} scaleValue={0.88} haptic="light">
             <ArrowLeft color={colors.text} size={28} />
           </AnimatedPressable>
-          <Text style={{ color: colors.text, fontSize: layout.isPhone ? 32 : 36, fontFamily: 'Fraunces_900Black', letterSpacing: -0.5 }}>{t('settings.title')}</Text>
+          <Text style={{ color: colors.text, fontSize: layout.isPhone ? 32 : 36, ...theme.font.displayBlack, letterSpacing: -0.5 }}>{t('settings.title')}</Text>
         </View>
       </View>
 

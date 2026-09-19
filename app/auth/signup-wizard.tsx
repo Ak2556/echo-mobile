@@ -21,6 +21,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { showToast } from '../../components/ui/Toast';
 import { track, identify } from '../../src/shared/lib/analytics';
+import { useTheme } from '../../src/shared/lib/theme';
 import { useResponsiveLayout } from '../../src/shared/lib/responsive';
 import { WARM_AVATAR_COLORS } from '../../lib/avatarPalette';
 import { MINIMUM_AGE, checkDateOfBirth, ageRejectionMessage } from '../../constants/legal/ageGate';
@@ -240,6 +241,9 @@ function ConfettiPiece({ startX, color, velocity, xDrift, rotDeg, w, h }: {
 
 export default function SignupWizard() {
   const router = useRouter();
+  // Colours here are deliberately fixed to the branded backdrop, but the
+  // typography must still follow the Font Style setting like everywhere else.
+  const { font } = useTheme();
   const { session } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
   const layout = useResponsiveLayout();
@@ -641,7 +645,7 @@ export default function SignupWizard() {
             {/* STEP 0: EMAIL */}
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
-                <Text style={{ color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
                   {ttx("What's your email?")}
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 28 }}>
@@ -674,7 +678,7 @@ export default function SignupWizard() {
             {/* STEP 1: OTP */}
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
-                <Text style={{ color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
                   {ttx("Enter the code")}
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 15, marginBottom: 28 }}>
@@ -708,7 +712,7 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5,
+                  color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
                   marginBottom: 6,
                 }}>
                   {ttx("Welcome to Echo")}
@@ -880,7 +884,7 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold',
+                  color: '#fff', fontSize: 28, ...font.displayBlack,
                   letterSpacing: -0.5, marginBottom: 6,
                 }}>
                   {ttx("When were you born?")}
@@ -960,7 +964,7 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5,
+                  color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
                   marginBottom: 6,
                 }}>
                   {ttx("Make it yours")}
@@ -1056,7 +1060,7 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%', paddingHorizontal: 24 }}>
               <View style={{ flex: 1, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5,
+                  color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
                   marginBottom: 6,
                 }}>
                   {ttx("Your story")}
@@ -1120,7 +1124,7 @@ export default function SignupWizard() {
             <View style={{ width: stepWidth, height: '100%' }}>
               <View style={{ paddingHorizontal: 24, paddingTop: 8 }}>
                 <Text style={{
-                  color: '#fff', fontSize: 28, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5,
+                  color: '#fff', fontSize: 28, ...font.displayBlack, letterSpacing: -0.5,
                   marginBottom: 6,
                 }}>
                   {ttx("What lights you up?")}
@@ -1200,7 +1204,7 @@ export default function SignupWizard() {
                   <Brain color={ACCENT} size={22} weight="fill" />
                   <Text style={{ color: ACCENT, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>{ttx("THINKING ARCHETYPE")}</Text>
                 </View>
-                <Text style={{ color: '#fff', fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: '#fff', fontSize: 26, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
                   {ttx("How do you think?")}
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
@@ -1290,7 +1294,7 @@ export default function SignupWizard() {
                   <UsersThree color={ACCENT} size={22} weight="fill" />
                   <Text style={{ color: ACCENT, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>{ttx("FILL YOUR FEED")}</Text>
                 </View>
-                <Text style={{ color: '#fff', fontSize: 26, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5, marginBottom: 6 }}>
+                <Text style={{ color: '#fff', fontSize: 26, ...font.displayBlack, letterSpacing: -0.5, marginBottom: 6 }}>
                   {ttx("Follow a few people")}
                 </Text>
                 <Text style={{ color: '#52525B', fontSize: 14, marginBottom: 16, lineHeight: 20 }}>

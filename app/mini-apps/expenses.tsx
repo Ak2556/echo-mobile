@@ -415,7 +415,7 @@ function ProfileModal({ value, onSelect, onClose }: { value: KhataProfile; onSel
 }
 
 export default function ExpensesApp() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const { tt } = useI18n();
     const [doc, setDoc] = useState<ExpensesDoc>({ txs: [], parties: [], budget: null, currency: DEFAULT_EXPENSE_CURRENCY });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'parties' | 'table'>('dashboard');
@@ -678,7 +678,7 @@ export default function ExpensesApp() {
               <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>
                 {searching ? tt('Matching P&L') : `${tt('Net')} ${balance >= 0 ? tt('Profit') : tt('Loss')} · ${doc.currency}`}
               </Text>
-              <Text style={{ color: colors.bgPure, fontSize: 48, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1.5 }}>
+              <Text style={{ color: colors.bgPure, fontSize: 48, ...font.displayBlack, letterSpacing: -1.5 }}>
                 {balance < 0 ? '-' : ''}{money(Math.abs(balance))}
               </Text>
               

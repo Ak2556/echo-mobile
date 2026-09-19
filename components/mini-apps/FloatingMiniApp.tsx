@@ -145,7 +145,7 @@ function Bubble() {
 }
 
 function Panel() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
@@ -198,7 +198,7 @@ function Panel() {
             {meta
               ? <MiniAppIcon id={meta.id} color={brand} size={28} />
               : <Waveform color={colors.accent} size={20} weight="fill" />}
-            <Text style={{ flex: 1, color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }} numberOfLines={1}>
+            <Text style={{ flex: 1, color: colors.text, fontSize: 18, ...font.displayBlack, letterSpacing: -0.3 }} numberOfLines={1}>
               {meta ? meta.name : t('mini.pickerTitle')}
             </Text>
             {meta ? (

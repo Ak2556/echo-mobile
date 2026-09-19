@@ -170,7 +170,7 @@ export default function NotificationsScreen() {
       return (
         <View style={listContentStyle}>
           <View style={{ paddingHorizontal: 16, paddingTop: 22, paddingBottom: 10 }}>
-            <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
+            <Text style={{ fontSize: 12, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
               {item.label === 'Today' ? t('notif.today') : item.label === 'This Week' ? t('notif.thisWeek') : t('notif.earlier')}
             </Text>
           </View>

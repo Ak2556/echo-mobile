@@ -88,7 +88,7 @@ interface NotificationCardProps {
 }
 
 export const NotificationCard = React.memo(function NotificationCard({ notification, onPress, onLongPress, flush = false }: NotificationCardProps) {
-  const { colors, fontSizes } = useTheme();
+  const { colors, fontSizes, font } = useTheme();
   const n = notification;
   const unread = !n.isRead;
   const color = TYPE_COLOR[n.type] ?? colors.accent;
@@ -119,7 +119,7 @@ export const NotificationCard = React.memo(function NotificationCard({ notificat
         {/* Name line + timestamp */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Text style={{ color: colors.text, fontSize: 15, lineHeight: 21, flex: 1, paddingRight: 12 }} numberOfLines={2}>
-            {!isSystem && <Text style={{ fontFamily: 'Inter_700Bold' }}>{n.fromDisplayName || n.fromUsername}</Text>}
+            {!isSystem && <Text style={{ ...font.bodyBold }}>{n.fromDisplayName || n.fromUsername}</Text>}
             {!isSystem ? ' ' : ''}
             <Text style={{ color: colors.textSecondary }}>{actionTextFor(n.type, n.targetPreview)}</Text>
           </Text>
@@ -147,7 +147,7 @@ export const NotificationCard = React.memo(function NotificationCard({ notificat
 
         {grouped && (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: 'Inter_500Medium' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, ...font.bodyMedium }}>
               and {(n.groupCount ?? 1) - 1} other{(n.groupCount ?? 1) - 1 === 1 ? '' : 's'}
             </Text>
           </View>

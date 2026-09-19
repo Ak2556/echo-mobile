@@ -16,7 +16,7 @@ import { ttx } from '../src/shared/lib/i18n';
 type Phase = 'loading' | 'intro' | 'preview' | 'submitting' | 'approved' | 'pending' | 'rejected';
 
 export default function GetVerifiedScreen() {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const { profile } = useAuth();
 
   const [phase, setPhase] = useState<Phase>('loading');
@@ -91,7 +91,7 @@ export default function GetVerifiedScreen() {
       {phase === 'approved' && (
         <Center>
           <SealCheck color={colors.accent} size={72} weight="fill" />
-          <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("You’re verified")}</Text>
+          <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack }}>{ttx("You’re verified")}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' }}>
             {ttx("The badge now shows next to your name across Echo.")}
           </Text>
@@ -101,7 +101,7 @@ export default function GetVerifiedScreen() {
       {phase === 'pending' && (
         <Center>
           <Timer color={colors.accent} size={64} weight="fill" />
-          <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("In review")}</Text>
+          <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack }}>{ttx("In review")}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' }}>
             {ttx("A reviewer is taking a look at your selfie. This usually takes less than a day.")}
           </Text>
@@ -118,7 +118,7 @@ export default function GetVerifiedScreen() {
       {phase === 'rejected' && (
         <Center>
           <XCircle color="#EF4444" size={64} weight="fill" />
-          <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Not this time")}</Text>
+          <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack }}>{ttx("Not this time")}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' }}>
             {rejectReason ?? 'The selfie couldn’t be confirmed.'}
           </Text>
@@ -150,7 +150,7 @@ export default function GetVerifiedScreen() {
           <View style={{ alignItems: 'center', paddingVertical: 12 }}>
             <SealCheck color={colors.accent} size={56} weight="fill" />
           </View>
-          <Text style={{ color: colors.text, fontSize: 17, lineHeight: 25, fontFamily: 'Fraunces_500Medium', textAlign: 'center' }}>
+          <Text style={{ color: colors.text, fontSize: 17, lineHeight: 25, ...font.display, textAlign: 'center' }}>
             {ttx("Prove you’re the real person behind your profile and get the verified badge.")}
           </Text>
 
@@ -183,7 +183,7 @@ export default function GetVerifiedScreen() {
             <>
               <View style={{ backgroundColor: colors.accent + '12', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.accent + '33' }}>
                 <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>{ttx("YOUR POSE")}</Text>
-                <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold' }}>{pose}</Text>
+                <Text style={{ color: colors.text, fontSize: 17, ...font.displayBlack }}>{pose}</Text>
               </View>
               <AnimatedPressable onPress={takeSelfie} scaleValue={0.96} haptic="medium" style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
                 <Camera color="#fff" size={18} weight="fill" />

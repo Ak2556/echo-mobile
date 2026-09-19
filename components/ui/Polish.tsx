@@ -3,11 +3,12 @@ import { Pressable, Text, View, ViewStyle } from 'react-native';
 import { useTheme } from '../../src/shared/lib/theme';
 
 export function SectionTitle({ title, caption, right }: { title: string; caption?: string; right?: React.ReactNode }) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   return (
     <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }}>
       <View style={{ flex: 1 }}>
-        <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase' }}>{title}</Text>
+        {/* The canonical eyebrow: the preset owns size, tracking and casing. */}
+        <Text style={{ color: colors.textMuted, ...font.eyebrow }}>{title}</Text>
         {caption ? <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }}>{caption}</Text> : null}
       </View>
       {right}
@@ -28,7 +29,7 @@ export function Pill({
   icon?: React.ReactNode;
   style?: ViewStyle;
 }) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   // Layout lives on the inner View — pressable wrappers drop layout props
   // through the NativeWind interop.
   return (
@@ -48,7 +49,7 @@ export function Pill({
         ]}
       >
         {icon}
-        <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+        <Text style={{ color: active ? '#fff' : colors.textSecondary, fontSize: 13, ...font.bodySemibold }}>
           {label}
         </Text>
       </View>

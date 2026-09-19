@@ -268,7 +268,7 @@ function CityCard({ city, weather, onRemove }: { city: WorldClockCity; weather?:
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
             <Text style={[font.bodyBold, { color: colors.text, fontSize: 16, flexShrink: 1 }]} numberOfLines={1}>{city.name}</Text>
             <View style={{ borderRadius: radius.full, paddingHorizontal: 7, paddingVertical: 3, backgroundColor: `${tone}18` }}>
-              <Text style={{ color: tone, fontSize: 10.2, fontFamily: 'Inter_700Bold' }}>{timeOfDay(clock.hour)}</Text>
+              <Text style={{ color: tone, fontSize: 10.2, ...font.bodyBold }}>{timeOfDay(clock.hour)}</Text>
             </View>
           </View>
           <Text style={[font.body, { color: colors.textMuted, fontSize: 12, marginTop: 2 }]} numberOfLines={1}>{clock.date} · {city.region}</Text>

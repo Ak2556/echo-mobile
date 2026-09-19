@@ -21,7 +21,7 @@ import { ttx } from '../src/shared/lib/i18n';
  */
 export default function UpgradeScreen() {
   const router = useRouter();
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const visiblePlans = [PLANS.plus, PLANS.pro, PLANS.founder];
 
   const handleUpgrade = () => {
@@ -59,10 +59,10 @@ export default function UpgradeScreen() {
                   <Medal color={colors.accent} size={20} weight="fill" />
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{plan.name}</Text>
+                  <Text style={{ color: colors.text, fontSize: 19, ...font.displayBlack, letterSpacing: -0.4 }}>{plan.name}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>{plan.tagline}</Text>
                 </View>
-                <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold' }}>
+                <Text style={{ color: colors.text, fontSize: 17, ...font.displayBlack }}>
                   {plan.price === 0 ? 'Invite' : `$${plan.price.toFixed(2)}`}
                 </Text>
               </View>
@@ -82,9 +82,9 @@ export default function UpgradeScreen() {
         </View>
 
         <View style={{ alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: colors.text, fontSize: 34, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.6 }}>
+          <Text style={{ color: colors.text, fontSize: 34, ...font.displayBlack, letterSpacing: -0.6 }}>
             {ttx("From $")}{PLANS.plus.price.toFixed(2)}
-            <Text style={{ color: colors.textMuted, fontSize: 16, fontFamily: 'Inter_500Medium' }}>{ttx("/month")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 16, ...font.bodyMedium }}>{ttx("/month")}</Text>
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 12 }}>{ttx("Founder access is invite-only.")}</Text>
         </View>

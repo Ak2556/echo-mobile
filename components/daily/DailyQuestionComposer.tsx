@@ -48,7 +48,7 @@ export function DailyQuestionComposer({
   submitFirstLabel,
   submitUpdateLabel,
 }: DailyQuestionComposerProps) {
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius, fontSizes, font } = useTheme();
   const { t, tt } = useI18n();
   const [draft, setDraft] = useState(initialAnswer ?? '');
   const [submitting, setSubmitting] = useState(false);
@@ -99,7 +99,7 @@ export function DailyQuestionComposer({
           style={{ padding: 20 }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1.2, fontFamily: 'Inter_600SemiBold' }}>
+            <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: fontSizes.caption, fontWeight: '700', letterSpacing: 1.2, ...font.bodySemibold }}>
               {t('daily.today')} · {new Date(question.active_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -114,7 +114,7 @@ export function DailyQuestionComposer({
               )}
             </View>
           </View>
-          <Text style={{ color: '#fff', fontSize: 24, lineHeight: 32, fontFamily: 'Fraunces_500Medium', letterSpacing: -0.3 }}>
+          <Text style={{ color: '#fff', fontSize: 24, lineHeight: 32, ...font.display, letterSpacing: -0.3 }}>
             {tt(question.question)}
           </Text>
         </LinearGradient>

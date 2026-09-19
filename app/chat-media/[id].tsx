@@ -11,7 +11,7 @@ import { ttx } from '../../src/shared/lib/i18n';
 export default function ChatMediaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const { width } = useWindowDimensions();
   const [tab, setTab] = useState<'photos' | 'links'>('photos');
   const [media, setMedia] = useState<ConversationMedia>({ images: [], links: [] });
@@ -37,7 +37,7 @@ export default function ChatMediaScreen() {
         <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Back")} style={{ padding: 4, marginRight: 8 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Shared media")}</Text>
+        <Text style={{ color: colors.text, fontSize: 18, ...font.displayBlack }}>{ttx("Shared media")}</Text>
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8, padding: 12 }}>

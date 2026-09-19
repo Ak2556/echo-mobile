@@ -381,7 +381,7 @@ function SearchResults({
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: selected ? '#fff' : colors.textSecondary, fontSize: 13, fontFamily: 'Inter_600SemiBold', textTransform: 'capitalize' }}>
+              <Text style={{ color: selected ? '#fff' : colors.textSecondary, fontSize: 13, ...font.bodySemibold, textTransform: 'capitalize' }}>
                 {(tab === 'all' ? t('notif.filterAll') : tab === 'people' ? t('explore.people') : tab === 'echoes' ? t('explore.echoes') : tab === 'topics' ? t('explore.topics') : t('explore.tools'))}{tabCount[tab] !== undefined ? ` ${tabCount[tab]}` : ''}
               </Text>
             </AnimatedPressable>

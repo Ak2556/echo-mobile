@@ -33,7 +33,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
   onDayPress: (date: string) => void;
   onClose: () => void;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const insets = useSafeAreaInsets();
   const now = new Date();
   const [view, setView] = useState({ year: now.getFullYear(), month: now.getMonth() });
@@ -72,7 +72,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
             <Text style={{ color: habit.color, fontSize: 12, fontWeight: '800' }}>{habit.marker}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold' }} numberOfLines={1}>{habit.name}</Text>
+            <Text style={{ color: colors.text, fontSize: 19, ...font.displayBlack }} numberOfLines={1}>{habit.name}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
               {habit.dailyTarget && habit.dailyTarget > 1 ? `${habit.dailyTarget}× a day` : 'Daily check'}
               {habit.scheduledDays?.length && habit.scheduledDays.length < 7
@@ -109,7 +109,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
               >
                 <CaretLeft color={colors.text} size={16} weight="bold" />
               </AnimatedPressable>
-              <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 15, fontFamily: 'Fraunces_600SemiBold' }}>
+              <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 15, ...font.displayBlack }}>
                 {monthLabel}
               </Text>
               <AnimatedPressable
@@ -165,7 +165,7 @@ export function HabitDetail({ habit, onEdit, onToggleArchive, onDelete, onDayPre
           {/* Check-in log */}
           {recentLog.length > 0 && (
             <View>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 12, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8 }}>
                 {ttx("Notes & proof")}
               </Text>
               {recentLog.map(entry => (

@@ -469,7 +469,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
             style={{
               color: active ? color : colors.textSecondary,
               fontSize: 12.5,
-              fontFamily: 'Inter_600SemiBold',
+              ...font.bodySemibold,
               fontVariant: ['tabular-nums'],
             }}
             numberOfLines={1}
@@ -753,7 +753,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
               style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 8 }}
             >
               <View style={{ width: 2.5, height: 14, borderRadius: 2, backgroundColor: chipColor }} />
-              <Text style={{ color: chipColor, fontSize: fontSizes.caption, fontFamily: 'Inter_500Medium' }}>
+              <Text style={{ color: chipColor, fontSize: fontSizes.caption, ...font.bodyMedium }}>
                 {verb}{item.parentAuthorUsername ? ` @${item.parentAuthorUsername}` : ''}
               </Text>
             </Pressable>
@@ -764,7 +764,7 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
             onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/evolution/[rootId]', params: { rootId: item.remixRootId ?? item.id } }); }}
             style={{ marginBottom: 10 }}
           >
-            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular' }}>
+            <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.body }}>
               {item.remixCount} perspectives →
             </Text>
           </Pressable>
@@ -972,14 +972,14 @@ export const FeedCard = React.memo(function FeedCard({ item, index, onPress, pin
                 onPress={(e) => { e.stopPropagation?.(); router.push({ pathname: '/(tabs)/explore', params: { q: `#${tag}` } }); }}
                 style={{ borderRadius: 999, backgroundColor: `${colors.accent}16`, paddingHorizontal: 9, paddingVertical: 5 }}
               >
-                <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontFamily: 'Inter_600SemiBold' }}>#{tag}</Text>
+                <Text style={{ color: colors.accent, fontSize: fontSizes.caption, ...font.bodySemibold }}>#{tag}</Text>
               </Pressable>
             ))}
           </View>
         )}
 
         {!compactFeed && (item.viewCount ?? 0) > 0 && (
-          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginBottom: 8, fontFamily: 'Inter_500Medium' }}>{item.viewCount?.toLocaleString()} views</Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, marginBottom: 8, ...font.bodyMedium }}>{item.viewCount?.toLocaleString()} views</Text>
         )}
 
         {ActionsRow}

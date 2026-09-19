@@ -320,7 +320,7 @@ export default function ChatScreen() {
   const voiceParams = useLocalSearchParams<{ prompt?: string }>();
   const sentVoicePromptRef = useRef<string | null>(null);
   const pathname = usePathname();
-  const { colors, animation, reduceAnimations } = useTheme();
+  const { colors, animation, reduceAnimations, font } = useTheme();
   const { t } = useI18n();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
@@ -1041,7 +1041,7 @@ export default function ChatScreen() {
                   >
                     <Lightning color={colors.accent} size={14} weight="fill" />
                     {!layout.isPhone ? (
-                      <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{modelLabel(aiModel)}</Text>
+                      <Text style={{ color: colors.textSecondary, ...font.bodyBold, fontSize: 12 }}>{modelLabel(aiModel)}</Text>
                     ) : null}
                   </Pressable>
               </View>

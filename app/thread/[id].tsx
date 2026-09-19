@@ -151,7 +151,7 @@ export default function ThreadDetailScreen() {
         <Pressable onPress={() => safeBack()} style={{ padding: 4 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>{ttx("Echo Thread")}</Text>
+        <Text style={{ color: colors.text, fontSize: 19, ...font.displayBlack, letterSpacing: -0.4 }}>{ttx("Echo Thread")}</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           {/* Bookmark stays only in the action row below the post body.
               The header version was duplicate weight for the same action. */}
@@ -278,7 +278,7 @@ export default function ThreadDetailScreen() {
               </View>
             ) : null}
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small, fontFamily: 'Inter_600SemiBold' }}>{item.displayName || item.username}</Text>
+              <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSizes.small, ...font.bodySemibold }}>{item.displayName || item.username}</Text>
               <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>@{item.username}</Text>
             </View>
             <SpeakButton
@@ -291,13 +291,13 @@ export default function ThreadDetailScreen() {
 
         <Animated.View entering={FadeInDown.delay(170).duration(320).springify().damping(18)}>
         {item.authorNote ? (
-          <Text style={{ color: colors.text, fontSize: fontSizes.body + 1, lineHeight: Math.round((fontSizes.body + 1) * 1.6), marginBottom: 20, fontFamily: 'Inter_400Regular' }}>
+          <Text style={{ color: colors.text, fontSize: fontSizes.body + 1, lineHeight: Math.round((fontSizes.body + 1) * 1.6), marginBottom: 20, ...font.body }}>
             {item.authorNote}
           </Text>
         ) : null}
         {item.editorialTitle && item.editorialTitle !== item.prompt ? (
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Inter_600SemiBold' }}>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8, ...font.bodySemibold }}>
               {item.postType === 'poll' ? 'Poll prompt' : 'Prompt'}
             </Text>
             <Text style={[font.quote, { color: colors.textSecondary, fontSize: fontSizes.body + 1, lineHeight: Math.round((fontSizes.body + 1) * 1.6) }]}>{item.prompt}</Text>
@@ -330,7 +330,7 @@ export default function ThreadDetailScreen() {
 
         {(item.postType === 'text' || !item.postType) && !!item.response ? (
           <View style={{ marginTop: 4, marginBottom: 22, paddingLeft: 16, borderLeftWidth: 2, borderLeftColor: colors.accent }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Inter_600SemiBold' }}>{ttx("Takeaway")}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8, ...font.bodySemibold }}>{ttx("Takeaway")}</Text>
             <Text style={{ color: colors.text, fontSize: fontSizes.body, lineHeight: fontSizes.body * 1.6 }}>{item.response}</Text>
           </View>
         ) : null}
