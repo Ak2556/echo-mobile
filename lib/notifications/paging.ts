@@ -27,9 +27,28 @@ export const NOTIFICATIONS_PAGE_SIZE = 30;
  * not leave the next offset pointing past the rows it skipped.
  */
 export function nextNotificationOffset(
-  lastPage: Notification[],
-  allPages: Notification[][],
+  lastPage: Notification[] | undefined,
+  allPages: Notification[][] | undefined,
 ): number | undefined {
-  if (lastPage.length < NOTIFICATIONS_PAGE_SIZE) return undefined;
-  return allPages.reduce((n, page) => n + page.length, 0);
+  // Defensive because this runs against restored cache. The persisted entry
+  // survives an app upgrade, so a build that changes the cache shape can hand
+  // this a page that is not one — and throwing here takes the whole screen into
+  // the error boundary rather than degrading. NOTIFICATIONS_QUERY_KEY moving is
+  // what actually prevents that; this is the floor under it.
+  if (!lastPage || lastPage.length < NOTIFICATIONS_PAGE_SIZE) return undefined;
+  return (allPages ?? []).reduce((n, page) => n + page.length, 0);
 }
+
+/**
+ * The cache key, versioned.
+ *
+ * Bumped when this screen moved from useQuery to useInfiniteQuery. The query
+ * cache is persisted to MMKV for seven days with no buster, so the old flat
+ * Notification[] was being restored into a hook that expected
+ * { pages, pageParams } — TanStack read data.pages, got undefined, and the
+ * screen crashed on first open after the update. A stale entry under the old
+ * key is now simply never read.
+ *
+ * Change this whenever the shape of a notifications page changes.
+ */
+export const NOTIFICATIONS_QUERY_KEY = ['notifications', 'v2'] as const;

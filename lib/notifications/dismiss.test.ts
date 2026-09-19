@@ -95,7 +95,36 @@ describe('notification dismissal', () => {
     const body = hook.slice(hook.indexOf('export function useDismissNotification'));
     expect(body).toMatch(/pages: old\.pages\.map\(page => page\.filter\(n => n\.id !== id\)\)/);
     expect(body, 'a failed dismissal must roll back, or the row reappears on refetch').toMatch(
-      /onError[\s\S]*setQueryData\(\['notifications'\], ctx\.prev\)/,
+      /onError[\s\S]*setQueryData\(NOTIFICATIONS_QUERY_KEY, ctx\.prev\)/,
     );
+  });
+});
+
+/**
+ * Every consumer must agree on the cache key.
+ *
+ * Versioning it fixed the upgrade crash, but a key change is exactly the sort
+ * of edit that half-lands: useBlockMute still invalidated ['notifications']
+ * afterwards, which is not an error — it is a silent no-op, so muting someone
+ * would quietly stop refreshing the list.
+ */
+describe('the notifications cache key is used consistently', () => {
+  it('nobody references the unversioned key', () => {
+    const files = [
+      'hooks/queries/useNotifications.ts',
+      'hooks/queries/useBlockMute.ts',
+      'app/(tabs)/notifications.tsx',
+    ];
+    for (const f of files) {
+      const src = readFileSync(join(ROOT, f), 'utf8');
+      expect(src, `${f} still targets the old key, which now matches nothing`).not.toMatch(
+        /queryKey: \['notifications'\]/,
+      );
+    }
+  });
+
+  it('the key carries a version so a shape change can invalidate it', () => {
+    const paging = readFileSync(join(ROOT, 'lib/notifications/paging.ts'), 'utf8');
+    expect(paging).toMatch(/NOTIFICATIONS_QUERY_KEY = \['notifications', 'v\d+'\]/);
   });
 });

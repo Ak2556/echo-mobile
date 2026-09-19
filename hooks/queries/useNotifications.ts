@@ -10,7 +10,7 @@ import {
 } from '../../lib/supabaseEchoApi';
 import { supabase } from '../../lib/supabase';
 import { Notification } from '../../types';
-import { NOTIFICATIONS_PAGE_SIZE, nextNotificationOffset } from '../../lib/notifications/paging';
+import { NOTIFICATIONS_PAGE_SIZE, NOTIFICATIONS_QUERY_KEY, nextNotificationOffset } from '../../lib/notifications/paging';
 
 export function useRemoteNotifications() {
   const qc = useQueryClient();
@@ -36,7 +36,7 @@ export function useRemoteNotifications() {
             filter: `user_id=eq.${uid}`,
           },
           () => {
-            qc.invalidateQueries({ queryKey: ['notifications'] });
+            qc.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
           },
         )
         .subscribe();
@@ -49,7 +49,7 @@ export function useRemoteNotifications() {
   }, [remote, qc]);
 
   return useInfiniteQuery({
-    queryKey: ['notifications'],
+    queryKey: NOTIFICATIONS_QUERY_KEY,
     enabled: remote,
     staleTime: 1000 * 30,
     initialPageParam: 0,
@@ -81,17 +81,17 @@ export function useMarkNotificationRead() {
   return useMutation({
     mutationFn: (id: string) => markRemoteNotificationRead(id),
     onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: ['notifications'] });
-      const prev = qc.getQueryData<InfiniteData<Notification[]>>(['notifications']);
-      qc.setQueryData<InfiniteData<Notification[]>>(['notifications'], old =>
+      await qc.cancelQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      const prev = qc.getQueryData<InfiniteData<Notification[]>>(NOTIFICATIONS_QUERY_KEY);
+      qc.setQueryData<InfiniteData<Notification[]>>(NOTIFICATIONS_QUERY_KEY, old =>
         mapCachedNotifications(old, n => (n.id === id ? { ...n, isRead: true } : n)),
       );
       return { prev };
     },
     onError: (_e, _id, ctx) => {
-      if (ctx?.prev) qc.setQueryData(['notifications'], ctx.prev);
+      if (ctx?.prev) qc.setQueryData(NOTIFICATIONS_QUERY_KEY, ctx.prev);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSettled: () => qc.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY }),
   });
 }
 
@@ -100,17 +100,17 @@ export function useMarkAllNotificationsRead() {
   return useMutation({
     mutationFn: markAllRemoteNotificationsRead,
     onMutate: async () => {
-      await qc.cancelQueries({ queryKey: ['notifications'] });
-      const prev = qc.getQueryData<InfiniteData<Notification[]>>(['notifications']);
-      qc.setQueryData<InfiniteData<Notification[]>>(['notifications'], old =>
+      await qc.cancelQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      const prev = qc.getQueryData<InfiniteData<Notification[]>>(NOTIFICATIONS_QUERY_KEY);
+      qc.setQueryData<InfiniteData<Notification[]>>(NOTIFICATIONS_QUERY_KEY, old =>
         mapCachedNotifications(old, n => ({ ...n, isRead: true })),
       );
       return { prev };
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.prev) qc.setQueryData(['notifications'], ctx.prev);
+      if (ctx?.prev) qc.setQueryData(NOTIFICATIONS_QUERY_KEY, ctx.prev);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSettled: () => qc.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY }),
   });
 }
 
@@ -127,16 +127,16 @@ export function useDismissNotification() {
   return useMutation({
     mutationFn: (id: string) => dismissRemoteNotification(id),
     onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: ['notifications'] });
-      const prev = qc.getQueryData<InfiniteData<Notification[]>>(['notifications']);
-      qc.setQueryData<InfiniteData<Notification[]>>(['notifications'], old =>
+      await qc.cancelQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      const prev = qc.getQueryData<InfiniteData<Notification[]>>(NOTIFICATIONS_QUERY_KEY);
+      qc.setQueryData<InfiniteData<Notification[]>>(NOTIFICATIONS_QUERY_KEY, old =>
         old ? { ...old, pages: old.pages.map(page => page.filter(n => n.id !== id)) } : old,
       );
       return { prev };
     },
     onError: (_e, _id, ctx) => {
-      if (ctx?.prev) qc.setQueryData(['notifications'], ctx.prev);
+      if (ctx?.prev) qc.setQueryData(NOTIFICATIONS_QUERY_KEY, ctx.prev);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSettled: () => qc.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY }),
   });
 }
