@@ -399,9 +399,6 @@ function FloatingTabBar(props: BottomTabBarProps) {
     <EdgeGlass
       edge="bottom"
       height={tabHeight + insets.bottom}
-      // Stronger than a header's: the feed scrolls directly behind this, so the
-      // six labels are regularly sitting on top of a photo.
-      wash="strong"
       style={{ zIndex: 100 }}
       contentStyle={{ paddingBottom: insets.bottom }}
     >
