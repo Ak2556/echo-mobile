@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, Play, WifiSlash } from 'phosphor-react-native';
 import { probePlayerCreated, probePlayerReleased, probeTrace } from '../../../../lib/devVideoProbe';
 import { useVideoMountPolicy } from '../lib/videoMountPolicy';
+import { FIRST_FRAME_GRACE_MS, useFirstFrameWatchdog } from '../lib/firstFrameWatchdog';
 import { videoSourceForUri } from '../../../../lib/videoMedia';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useActiveVideoStore } from '../../../../store/useActiveVideoStore';
@@ -159,7 +160,12 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
   // and they point at opposite fixes, so record which one happened.
   const [failReason, setFailReason] = useState('');
 
-  useEffect(() => { setLoadState('loading'); setFailReason(''); }, [uri]);
+  // Whether anything has actually been drawn. `readyToPlay` only says the
+  // player believes it can play; a decoder can report that and then produce no
+  // frames, which is how a black card with no spinner and no fallback happened.
+  const [sawFirstFrame, setSawFirstFrame] = useState(false);
+
+  useEffect(() => { setLoadState('loading'); setFailReason(''); setSawFirstFrame(false); }, [uri]);
 
   useEffect(() => {
     player.muted = isGlobalMuted || !isActive;
@@ -227,6 +233,20 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
     return () => clearTimeout(t);
   }, [loadState, uri]);
 
+  // The watchdog above only runs while 'loading', so reaching 'ready' used to
+  // cancel it for good. A player that says readyToPlay and then draws nothing
+  // hit no timeout, no error and no fallback — just black, permanently. This
+  // covers that case and routes it to the same WebView fallback, which decodes
+  // through the system WebView and often succeeds where the native player did
+  // not. See firstFrameWatchdog.ts for how this was found.
+  const frameStalled = useFirstFrameWatchdog(loadState === 'ready', sawFirstFrame);
+  useEffect(() => {
+    if (!frameStalled) return;
+    setFailReason(`no frame ${FIRST_FRAME_GRACE_MS / 1000}s after ready`);
+    if (__DEV__) console.warn('[video-preview] ready but nothing rendered', uri);
+    setLoadState('error');
+  }, [frameStalled, uri]);
+
   const webRef = useRef<any>(null);
 
   /**
@@ -286,7 +306,7 @@ function VideoPlayer({ uri, height = 260, borderRadius = 16, onPress, viewCount,
         style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
         contentFit="cover"
         nativeControls={false}
-        onFirstFrameRender={() => setLoadState('ready')}
+        onFirstFrameRender={() => { setSawFirstFrame(true); setLoadState('ready'); }}
       />
 
       {loadState === 'loading' && (
