@@ -601,7 +601,7 @@ function FocusMomentumStrip({
 }
 
 export default function PomodoroScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const { tt } = useI18n();
   const layout = useResponsiveLayout();
 
@@ -1118,7 +1118,7 @@ export default function PomodoroScreen() {
           </Svg>
         </Animated.View>
         <View style={{ position: 'absolute', alignItems: 'center' }}>
-          <Text style={{ color: colors.text, fontSize: ring * 0.24, fontFamily: 'Fraunces_500Medium', letterSpacing: 0, lineHeight: ring * 0.28 }}>
+          <Text style={{ color: colors.text, fontSize: ring * 0.24, ...font.display, letterSpacing: 0, lineHeight: ring * 0.28 }}>
             {mins}:{secs}
           </Text>
           <View style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: accent + '22', borderRadius: 20, borderWidth: 1, borderColor: accent + '44', marginTop: 8 }}>

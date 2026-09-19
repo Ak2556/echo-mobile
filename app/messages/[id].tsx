@@ -1248,7 +1248,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
   onSelect: (sticker: string) => void;
   onClose: () => void;
 }) {
-  const { colors, reduceAnimations } = useTheme();
+  const { colors, reduceAnimations, font } = useTheme();
   const insets = useSafeAreaInsets();
   const [category, setCategory] = useState('recents');
   const [query, setQuery] = useState('');
@@ -1293,7 +1293,7 @@ function StickerSheet({ visible, onSelect, onClose }: {
         <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
             <Waveform color={colors.accent} size={16} weight="fill" />
-            <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Emoji & Stickers")}</Text>
+            <Text style={{ color: colors.text, fontSize: 16, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Emoji & Stickers")}</Text>
             <Pressable onPress={onClose} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
           </View>
 
@@ -1870,7 +1870,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const readReceipts = useAppStore(s => s.readReceipts);
   const autoReadMessages = useAppStore(s => s.autoReadMessages);
-  const { colors, radius, isUserOnline, reduceAnimations } = useTheme();
+  const { colors, radius, isUserOnline, reduceAnimations, font } = useTheme();
 
   const [text, setText] = useState(() => id ? persistGet<string>('chat:draft:' + id, '') : '');
   const [sharedPending, setSharedPending] = useState(Boolean(echoId));
@@ -2784,7 +2784,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             >
               {conversation.isGroup ? <Users color="#fff" size={30} weight="fill" /> : undefined}
             </Avatar>
-            <Text style={{ color: colors.text, fontFamily: 'Fraunces_600SemiBold', fontSize: 23, textAlign: 'center', letterSpacing: -0.3 }}>
+            <Text style={{ color: colors.text, ...font.displayBlack, fontSize: 23, textAlign: 'center', letterSpacing: -0.3 }}>
               {conversation.isGroup ? conversation.displayName : `Say hi to ${conversation.displayName}`}
             </Text>
             <Text style={{ color: colors.textMuted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 300 }}>
@@ -3482,7 +3482,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 14, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 14 }}>
               <PaintBrush color={colors.accent} size={16} weight="bold" />
-              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Chat wallpaper")}</Text>
+              <Text style={{ color: colors.text, fontSize: 16, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Chat wallpaper")}</Text>
               <Pressable onPress={() => setShowWallpaper(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 }}>
@@ -3525,7 +3525,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 14, paddingBottom: insets.bottom + 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, maxHeight: '70%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, marginBottom: 10 }}>
               <BookmarkSimple color={colors.accent} size={16} weight="fill" />
-              <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Fraunces_600SemiBold', marginLeft: 7, flex: 1 }}>{ttx("Saved messages")}</Text>
+              <Text style={{ color: colors.text, fontSize: 16, ...font.displayBlack, marginLeft: 7, flex: 1 }}>{ttx("Saved messages")}</Text>
               <Pressable onPress={() => setShowSaved(false)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             <FlashList 
@@ -3566,7 +3566,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           <View style={{ borderRadius: 22, backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: `${colors.accent}44`, padding: 20 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <Waveform color={colors.accent} size={18} weight="fill" />
-              <Text style={{ color: colors.text, fontSize: 17, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Caught up")}</Text>
+              <Text style={{ color: colors.text, fontSize: 17, ...font.displayBlack }}>{ttx("Caught up")}</Text>
               <View style={{ flex: 1 }} />
               <Pressable onPress={() => setCatchup(null)} hitSlop={10}><X color={colors.textMuted} size={20} /></Pressable>
             </View>

@@ -28,7 +28,7 @@ function selfify(summary: string): string {
 }
 
 export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; isSelf?: boolean }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const { data, isLoading } = useThinkingFingerprint(userId);
 
   // Fire once per user when the fingerprint actually renders (not while loading
@@ -74,7 +74,7 @@ export function ThinkingFingerprintCard({ userId, isSelf }: { userId: string; is
       </View>
 
       {/* Archetype */}
-      <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4, marginBottom: 8 }}>
+      <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack, letterSpacing: -0.4, marginBottom: 8 }}>
         {data.archetype}
       </Text>
 

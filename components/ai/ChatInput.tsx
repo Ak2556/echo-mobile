@@ -21,7 +21,7 @@ interface ChatInputProps {
 export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: ChatInputProps) {
   const [text, setText] = useState('');
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
-  const { colors, reduceAnimations } = useTheme();
+  const { colors, reduceAnimations, font } = useTheme();
   const sendScale = useSharedValue(1);
   const focus = useSharedValue(0);
 
@@ -128,7 +128,7 @@ export function ChatInput({ onSend, isLoading, onStop, draft, onDraftChange }: C
               maxHeight: 120,
               paddingTop: 0,
               paddingBottom: 0,
-              fontFamily: 'Inter_400Regular',
+              ...font.body,
             }}
           />
         </Animated.View>

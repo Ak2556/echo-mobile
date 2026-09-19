@@ -206,13 +206,13 @@ function ListingCard({ item, width, featured = false }: { item: ListingWithSelle
 
         <View style={{ position: 'absolute', left: 9, right: 9, bottom: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <View style={{ borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4, maxWidth: '72%' }}>
-            <Text style={{ color: '#fff', fontSize: 11, fontFamily: 'Inter_700Bold' }} numberOfLines={1}>
+            <Text style={{ color: '#fff', fontSize: 11, ...font.bodyBold }} numberOfLines={1}>
               {item.condition}
             </Text>
           </View>
           {item.photoUrls.length > 1 ? (
             <View style={{ borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.56)', paddingHorizontal: 8, paddingVertical: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 11, fontFamily: 'Inter_700Bold' }}>
+              <Text style={{ color: '#fff', fontSize: 11, ...font.bodyBold }}>
                 1/{item.photoUrls.length}
               </Text>
             </View>
@@ -333,7 +333,7 @@ function RecentListingChip({ item }: { item: RecentListing }) {
           </LinearGradient>
         )}
         <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 46 }} pointerEvents="none" />
-        <Text style={{ position: 'absolute', left: 8, bottom: 7, color: '#fff', fontSize: 12.5, fontFamily: 'Inter_700Bold' }} numberOfLines={1}>
+        <Text style={{ position: 'absolute', left: 8, bottom: 7, color: '#fff', fontSize: 12.5, ...font.bodyBold }} numberOfLines={1}>
           {formatPrice(item.price, item.currency as CurrencyCode)}
         </Text>
       </View>
@@ -486,7 +486,7 @@ export default function MarketplaceScreen() {
             color: colors.text,
             fontSize: fontSizes.body,
             paddingVertical: 13,
-            fontFamily: 'Inter_400Regular',
+            ...font.body,
           }}
         />
         {/* The sliders icon was a dead affordance — it now opens the Filters

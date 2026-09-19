@@ -40,7 +40,7 @@ function timeAgo(iso: string): string {
 export default function AppealScreen() {
   const { reportId, decisionId } = useLocalSearchParams<{ reportId?: string; decisionId?: string }>();
   const insets = useSafeAreaInsets();
-  const { colors, fontSizes, radius } = useTheme();
+  const { colors, fontSizes, radius, font } = useTheme();
 
   // 'new' when appealing a specific report (reporter) or moderation decision (author).
   const isNew = !!reportId || !!decisionId;
@@ -111,10 +111,10 @@ export default function AppealScreen() {
             {submitted ? (
               <Animated.View entering={FadeInDown.springify()} style={{ alignItems: 'center', paddingTop: 48, gap: 16 }}>
                 <CheckCircle color={colors.success} size={56} weight="fill" />
-                <Text style={{ color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold', textAlign: 'center' }}>
+                <Text style={{ color: colors.text, fontSize: fontSizes.title, ...font.bodyBold, textAlign: 'center' }}>
                   {ttx("Appeal submitted")}
                 </Text>
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 }}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, ...font.body, textAlign: 'center', lineHeight: 22 }}>
                   {"We'll review your appeal and notify you of the outcome within 14 days, as required by the Digital Services Act."}
                 </Text>
                 <AnimatedPressable
@@ -128,7 +128,7 @@ export default function AppealScreen() {
                     marginTop: 8,
                   }}
                 >
-                  <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: fontSizes.body }}>{ttx("Done")}</Text>
+                  <Text style={{ color: '#fff', ...font.bodySemibold, fontSize: fontSizes.body }}>{ttx("Done")}</Text>
                 </AnimatedPressable>
               </Animated.View>
             ) : (
@@ -136,20 +136,20 @@ export default function AppealScreen() {
                 {/* Statement of reasons (DSA Art. 17) — what is being appealed */}
                 {decision && (
                   <GlassPanel style={{ padding: 16, gap: 8 }}>
-                    <Text style={{ color: colors.danger, fontSize: fontSizes.caption - 1, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3 }}>
+                    <Text style={{ color: colors.danger, fontSize: fontSizes.caption - 1, ...font.bodySemibold, letterSpacing: 0.3 }}>
                       {ttx("STATEMENT OF REASONS")}
                     </Text>
-                    <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_600SemiBold' }}>
+                    <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.bodySemibold }}>
                       {decision.decisionType === 'content_removed'
                         ? 'Your content was removed'
                         : decision.decisionType === 'content_restricted'
                           ? 'Your content was restricted'
                           : 'Your account was suspended'}
                     </Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', lineHeight: 20 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: fontSizes.caption, ...font.body, lineHeight: 20 }}>
                       {decision.reason}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 16 }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, ...font.body, lineHeight: 16 }}>
                       {ttx("Basis:")} {decision.ground}{decision.automated ? ' · automated decision' : ''}
                       {'\n'}{ttx("You can appeal until")} {new Date(decision.appealDeadline).toLocaleDateString()}.
                     </Text>
@@ -158,10 +158,10 @@ export default function AppealScreen() {
 
                 {/* Context card */}
                 <GlassPanel style={{ padding: 16, gap: 10 }}>
-                  <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_600SemiBold' }}>
+                  <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.bodySemibold }}>
                     {ttx("Your right to appeal")}
                   </Text>
-                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', lineHeight: 20 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.body, lineHeight: 20 }}>
                     {ttx("Under Article 20 of the EU Digital Services Act, you have the right to challenge any content moderation decision. Appeals are reviewed by a human moderator within 14 days.")}
                   </Text>
                 </GlassPanel>
@@ -170,7 +170,7 @@ export default function AppealScreen() {
                 <View>
                   <Text style={{
                     color: colors.textMuted, fontSize: fontSizes.caption - 1,
-                    fontFamily: 'Inter_500Medium', marginBottom: 8,
+                    ...font.bodyMedium, marginBottom: 8,
                   }}>
                     {ttx("Why should this decision be reconsidered? *")}
                   </Text>
@@ -182,7 +182,7 @@ export default function AppealScreen() {
                       borderColor: colors.border,
                       color: colors.text,
                       fontSize: fontSizes.body,
-                      fontFamily: 'Inter_400Regular',
+                      ...font.body,
                       padding: 14,
                       minHeight: 140,
                       textAlignVertical: 'top',
@@ -194,7 +194,7 @@ export default function AppealScreen() {
                     onChangeText={t => setReason(t.slice(0, MAX_CHARS))}
                     returnKeyType="default"
                   />
-                  <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 4, textAlign: 'right' }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, ...font.body, marginTop: 4, textAlign: 'right' }}>
                     {reason.length}/{MAX_CHARS}
                     {reason.length < MIN_CHARS && reason.length > 0 && (
                       <Text style={{ color: colors.danger }}>{` · ${MIN_CHARS - reason.length} more chars needed`}</Text>
@@ -217,12 +217,12 @@ export default function AppealScreen() {
                 >
                   {submitting
                     ? <ActivityIndicator size="small" color="#fff" />
-                    : <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: fontSizes.body }}>{ttx("Submit appeal")}</Text>
+                    : <Text style={{ color: '#fff', ...font.bodyBold, fontSize: fontSizes.body }}>{ttx("Submit appeal")}</Text>
                   }
                 </AnimatedPressable>
 
                 <Text style={{
-                  color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_400Regular',
+                  color: colors.textMuted, fontSize: 11, ...font.body,
                   textAlign: 'center', lineHeight: 16,
                 }}>
                   {ttx("This appeal is subject to our Terms of Service. Frivolous appeals may affect your standing on the platform.")}
@@ -249,7 +249,7 @@ export default function AppealScreen() {
             {appeals.length === 0 ? (
               <View style={{ paddingTop: 48, alignItems: 'center', gap: 12 }}>
                 <Scales color={colors.border} size={40} weight="duotone" />
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular', textAlign: 'center' }}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.body, ...font.body, textAlign: 'center' }}>
                   {"You haven't filed any appeals yet."}{'\n'}{ttx("Appeals appear here when you contest a moderation decision.")}
                 </Text>
               </View>
@@ -263,7 +263,7 @@ export default function AppealScreen() {
                       {/* Status row */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <cfg.Icon color={statusColor} size={16} weight="fill" />
-                        <Text style={{ color: statusColor, fontSize: 13, fontFamily: 'Inter_600SemiBold', flex: 1 }}>
+                        <Text style={{ color: statusColor, fontSize: 13, ...font.bodySemibold, flex: 1 }}>
                           {cfg.label}
                         </Text>
                         <Text style={{ color: colors.textMuted, fontSize: 11 }}>
@@ -272,7 +272,7 @@ export default function AppealScreen() {
                       </View>
 
                       {/* Reason excerpt */}
-                      <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular', lineHeight: 20 }} numberOfLines={3}>
+                      <Text style={{ color: colors.textSecondary, fontSize: fontSizes.body, ...font.body, lineHeight: 20 }} numberOfLines={3}>
                         {a.reason}
                       </Text>
 
@@ -285,10 +285,10 @@ export default function AppealScreen() {
                           borderLeftWidth: 3,
                           borderLeftColor: statusColor,
                         }}>
-                          <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 10, ...font.bodySemibold, marginBottom: 4 }}>
                             {ttx("Moderator note")}
                           </Text>
-                          <Text style={{ color: colors.text, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular', lineHeight: 18 }}>
+                          <Text style={{ color: colors.text, fontSize: fontSizes.caption, ...font.body, lineHeight: 18 }}>
                             {a.moderatorNote}
                           </Text>
                         </View>
@@ -296,7 +296,7 @@ export default function AppealScreen() {
 
                       {/* Resolved date */}
                       {a.resolvedAt && (
-                        <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+                        <Text style={{ color: colors.textMuted, fontSize: 11, ...font.body }}>
                           {ttx("Resolved")} {timeAgo(a.resolvedAt)}
                         </Text>
                       )}

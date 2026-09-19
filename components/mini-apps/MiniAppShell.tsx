@@ -36,7 +36,7 @@ export function MiniAppShell({
   headerRight,
   bottomPad = 32,
 }: MiniAppShellProps) {
-  const { colors, radius, glass, reduceAnimations } = useTheme();
+  const { colors, radius, glass, reduceAnimations, font } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -157,7 +157,7 @@ export function MiniAppShell({
           >
             <ArrowLeft color={colors.text} size={18} weight="bold" />
             {!layout.isPhone && (
-              <Text style={{ color: colors.text, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+              <Text style={{ color: colors.text, fontSize: 13, ...font.bodySemibold }}>
                 {t('mini.tools')}
               </Text>
             )}
@@ -170,7 +170,7 @@ export function MiniAppShell({
                 <Text
                   style={{
                     color: colors.text,
-                    fontFamily: 'Fraunces_900Black',
+                    ...font.displayBlack,
                     fontSize: 28,
                     letterSpacing: -0.5,
                     lineHeight: 33,

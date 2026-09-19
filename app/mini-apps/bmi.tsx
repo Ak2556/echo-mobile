@@ -98,7 +98,7 @@ function HealthPulse({ accent, bmi, category, idealRange, calories, unit }: {
 }
 
 export default function BmiScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const accent = colors.accent;
 
   const [unit, setUnit] = useState<Unit>('metric');
@@ -259,7 +259,7 @@ export default function BmiScreen() {
           {/* BMI result */}
           <View style={{ backgroundColor: colors.surfaceHover, borderRadius: radius.xl, borderWidth: 1.5, borderColor: catColor, padding: 28, alignItems: 'center', marginBottom: 14 }}>
             <Text style={{ color: catColor, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>{cat.marker}</Text>
-            <Text style={{ color: catColor, fontSize: 76, fontFamily: 'Fraunces_500Medium', letterSpacing: -2, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
+            <Text style={{ color: catColor, fontSize: 76, ...font.display, letterSpacing: -2, lineHeight: 84 }}>{bmi.toFixed(1)}</Text>
             <Text style={{ color: catColor, fontSize: 22, fontWeight: '800', marginBottom: 4 }}>{cat.label}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 13 }}>{ttx("BMI range:")} {cat.range}</Text>
           </View>
@@ -311,12 +311,12 @@ export default function BmiScreen() {
                 <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                   <View style={{ flex: 1, backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 14, borderWidth: 1, borderColor: colors.glassBorder }}>
                     <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("BMR (AT REST)")}</Text>
-                    <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }}>{e.bmr}</Text>
+                    <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, marginTop: 3 }}>{e.bmr}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ttx("kcal / day")}</Text>
                   </View>
                   <View style={{ flex: 1, backgroundColor: colors.surfaceHover, borderRadius: radius.card, padding: 14, borderWidth: 1, borderColor: colors.glassBorder }}>
                     <Text style={{ color: accent, fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6 }}>{ttx("TDEE (MAINTAIN)")}</Text>
-                    <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', marginTop: 3 }}>{e.tdee}</Text>
+                    <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, marginTop: 3 }}>{e.tdee}</Text>
                     <Text style={{ color: colors.textMuted, fontSize: 11 }}>{ttx("kcal / day")}</Text>
                   </View>
                 </View>

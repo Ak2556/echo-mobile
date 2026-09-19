@@ -573,7 +573,7 @@ export default function DiscoverScreen() {
                 <Text style={[font.display, { color: '#fff', fontSize: 18, lineHeight: 24 }]}>
                   {t('home.todayQuestion')}
                 </Text>
-                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, fontFamily: 'Inter_500Medium' }}>
+                <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, ...font.bodyMedium }}>
                   {t('home.tapToAnswer')}
                 </Text>
               </View>

@@ -35,12 +35,12 @@ import { ttx } from '../src/shared/lib/i18n';
 const MAX_PHOTOS = 6;
 
 function Eyebrow({ children, style }: { children: React.ReactNode; style?: object }) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   return (
     <Text style={[{
       color: colors.textMuted,
       fontSize: 12,
-      fontFamily: 'Inter_600SemiBold',
+      ...font.bodySemibold,
       letterSpacing: 1.4,
       textTransform: 'uppercase',
     }, style]}>
@@ -74,7 +74,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 }
 
 export default function CreateListingScreen() {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [photos, setPhotos] = useState<string[]>([]);
@@ -187,7 +187,7 @@ export default function CreateListingScreen() {
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    fontFamily: 'Inter_400Regular',
+    ...font.body,
   };
 
   const hairline = {
@@ -211,7 +211,7 @@ export default function CreateListingScreen() {
             }}>
               {saving
                 ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={{ color: canSubmit ? '#fff' : colors.textMuted, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>{ttx("Post")}</Text>
+                : <Text style={{ color: canSubmit ? '#fff' : colors.textMuted, ...font.bodySemibold, fontSize: 14 }}>{ttx("Post")}</Text>
               }
             </View>
           </AnimatedPressable>
@@ -239,7 +239,7 @@ export default function CreateListingScreen() {
                 />
                 <View style={{ alignItems: 'center', paddingVertical: 44, gap: 10 }}>
                   <Camera color={colors.accent} size={30} weight="fill" />
-                  <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>{ttx("Add photos")}</Text>
+                  <Text style={{ color: colors.text, fontSize: 15, ...font.bodySemibold }}>{ttx("Add photos")}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 12.5 }}>
                     {ttx("Listings with photos sell faster · up to")} {MAX_PHOTOS}
                   </Text>
@@ -268,7 +268,7 @@ export default function CreateListingScreen() {
                         borderRadius: 7,
                         paddingHorizontal: 7, paddingVertical: 3,
                       }}>
-                        <Text style={{ color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.4 }}>{ttx("COVER")}</Text>
+                        <Text style={{ color: '#fff', fontSize: 10, ...font.bodySemibold, letterSpacing: 0.4 }}>{ttx("COVER")}</Text>
                       </View>
                     )}
                     <Pressable
@@ -299,7 +299,7 @@ export default function CreateListingScreen() {
                       backgroundColor: colors.accent + '0A',
                     }}>
                       <Plus color={colors.accent} size={20} weight="bold" />
-                      <Text style={{ color: colors.accent, fontSize: 11.5, fontFamily: 'Inter_600SemiBold' }}>{ttx("Add more")}</Text>
+                      <Text style={{ color: colors.accent, fontSize: 11.5, ...font.bodySemibold }}>{ttx("Add more")}</Text>
                     </View>
                   </Pressable>
                 )}
@@ -315,7 +315,7 @@ export default function CreateListingScreen() {
             style={{
               color: colors.text,
               fontSize: 22,
-              fontFamily: 'Inter_600SemiBold',
+              ...font.bodySemibold,
               letterSpacing: -0.3,
               paddingVertical: 6,
             }}
@@ -331,7 +331,7 @@ export default function CreateListingScreen() {
               color: colors.textSecondary,
               fontSize: 15,
               lineHeight: 22,
-              fontFamily: 'Inter_400Regular',
+              ...font.body,
               minHeight: 66,
               textAlignVertical: 'top',
               paddingVertical: 6,
@@ -349,7 +349,7 @@ export default function CreateListingScreen() {
           <View style={hairline} />
           <Eyebrow style={{ marginBottom: 14 }}>{ttx("Price")}</Eyebrow>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-            <Text style={{ color: colors.accent, fontSize: 32, fontFamily: 'Fraunces_600SemiBold', marginRight: 6, marginBottom: 2 }}>
+            <Text style={{ color: colors.accent, fontSize: 32, ...font.displayBlack, marginRight: 6, marginBottom: 2 }}>
               {getCurrencySymbol(currency)}
             </Text>
             <TextInput
@@ -357,7 +357,7 @@ export default function CreateListingScreen() {
                 flex: 1,
                 color: colors.text,
                 fontSize: 40,
-                fontFamily: 'Fraunces_600SemiBold',
+                ...font.displayBlack,
                 letterSpacing: -1,
                 paddingVertical: 0,
               }}

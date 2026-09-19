@@ -1036,7 +1036,7 @@ export default function FitnessApp() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("Today")}</Text>
-                <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+                <Text style={{ color: colors.text, fontSize: 38, ...font.displayBlack, letterSpacing: -1 }}>
                   {Math.round(totals.calories)}
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> / {doc.goals.calories} {ttx("kcal")}</Text>
                 </Text>
@@ -1142,7 +1142,7 @@ export default function FitnessApp() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("This week")}</Text>
-                <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+                <Text style={{ color: colors.text, fontSize: 38, ...font.displayBlack, letterSpacing: -1 }}>
                   {weekCount}
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> {ttx("of")} {doc.goals.workoutsPerWeek} {ttx("workouts")}</Text>
                 </Text>
@@ -1174,7 +1174,7 @@ export default function FitnessApp() {
               {ttx("Routines")}
             </Text>
             <Pressable onPress={() => setRoutineEditor('new')} hitSlop={10}>
-              <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{ttx("+ New routine")}</Text>
+              <Text style={{ color: colors.accent, fontSize: 13, ...font.bodySemibold }}>{ttx("+ New routine")}</Text>
             </Pressable>
           </View>
           {doc.routines.length === 0 ? (
@@ -1266,7 +1266,7 @@ export default function FitnessApp() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600' }}>{ttx("Body weight")}</Text>
-                <Text style={{ color: colors.text, fontSize: 38, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+                <Text style={{ color: colors.text, fontSize: 38, ...font.displayBlack, letterSpacing: -1 }}>
                   {latestWeight ? latestWeight.kg.toFixed(1) : '-'}
                   <Text style={{ color: colors.textMuted, fontSize: 17 }}> {ttx("kg")}</Text>
                 </Text>

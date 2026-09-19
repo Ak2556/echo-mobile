@@ -30,7 +30,7 @@ type DieItem = ReturnType<typeof getDice>[number];
 interface HistoryEntry { die: string; result: number; color: string; ts: number }
 
 function DieFace({ value, sides, color }: { value: number; sides: number; color: string }) {
-  const { radius } = useTheme();
+  const { radius, font } = useTheme();
   const layouts: Record<number, [number, number][]> = {
     1: [[50, 50]],
     2: [[25, 50], [75, 50]],
@@ -52,7 +52,7 @@ function DieFace({ value, sides, color }: { value: number; sides: number; color:
   }
   return (
     <View style={{ width: 100, height: 100, borderRadius: radius.card, backgroundColor: color + '18', borderWidth: 2.5, borderColor: color + '55', alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color, fontSize: 36, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>{value}</Text>
+      <Text style={{ color, fontSize: 36, ...font.displayBlack, letterSpacing: -1 }}>{value}</Text>
     </View>
   );
 }
@@ -92,7 +92,7 @@ function ChancePulse({ accent, selectedDie, diceCount, history }: { accent: stri
 }
 
 export default function DiceApp() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const dice = getDice(colors);
   const headsColor = colors.warning;
   const tailsColor = colors.textMuted;
@@ -213,7 +213,7 @@ export default function DiceApp() {
 
         {result !== null && (
           <Animated.View entering={FadeInDown.duration(220)} style={{ alignItems: 'center' }}>
-            <Text style={{ color: selectedDie.color, fontSize: 52, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1.5 }}>{result}</Text>
+            <Text style={{ color: selectedDie.color, fontSize: 52, ...font.displayBlack, letterSpacing: -1.5 }}>{result}</Text>
             {diceCount > 1 && <Text style={{ color: colors.textMuted, fontSize: 14 }}>{diceCount}× {selectedDie.label} {ttx("· total")}</Text>}
           </Animated.View>
         )}

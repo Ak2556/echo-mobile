@@ -38,7 +38,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
   onFinish: (workout: Workout, prs: { name: string; weight: number; reps: number }[]) => void;
   onClose: () => void;
 }) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const TEAL = colors.accent;
   const insets = useSafeAreaInsets();
 
@@ -169,10 +169,10 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
       <Modal animationType="fade" onRequestClose={() => onFinish(summary.workout, summary.prs)}>
         <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
           <ScrollView contentContainerStyle={{ padding: 28, paddingTop: 48, gap: 18 }}>
-            <Text style={{ color: colors.text, fontSize: 34, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -1 }}>
+            <Text style={{ color: colors.text, fontSize: 34, ...font.displayBlack, letterSpacing: -1 }}>
               {ttx("Done.")}
             </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 16, lineHeight: 23, fontFamily: 'Fraunces_400Regular_Italic' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 16, lineHeight: 23, ...font.quote }}>
               {summary.prs.length
                 ? `${summary.prs.length} personal ${summary.prs.length === 1 ? 'record' : 'records'} today.`
                 : 'Showing up is the whole game.'}
@@ -221,7 +221,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 12 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontSize: 19, fontFamily: 'Fraunces_600SemiBold' }}>{routine.title}</Text>
+            <Text style={{ color: colors.text, fontSize: 19, ...font.displayBlack }}>{routine.title}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 1 }}>
               {ttx("Exercise")} {exIndex + 1} {ttx("of")} {routine.exercises.length} · {fmtClock(elapsed)}
             </Text>
@@ -234,7 +234,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
         <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: insets.bottom + 28, gap: 16 }} keyboardShouldPersistTaps="handled">
           {/* Current exercise */}
           <View style={{ borderRadius: radius.card, backgroundColor: colors.surface, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: TEAL + '44' }}>
-            <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.5 }}>
+            <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, letterSpacing: -0.5 }}>
               {exercise.name}
             </Text>
             {catalogEntry ? (
@@ -301,7 +301,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
           {restLeft !== null ? (
             <View style={{ borderRadius: radius.card, backgroundColor: TEAL + '14', borderWidth: 1, borderColor: TEAL + '33', padding: 18, alignItems: 'center', gap: 6 }}>
               <Text style={{ color: TEAL, fontSize: 11, fontWeight: '700', letterSpacing: 1.2 }}>{ttx("REST")}</Text>
-              <Text style={{ color: colors.text, fontSize: 44, fontFamily: 'Fraunces_600SemiBold', fontVariant: ['tabular-nums'] }}>
+              <Text style={{ color: colors.text, fontSize: 44, ...font.displayBlack, fontVariant: ['tabular-nums'] }}>
                 {fmtClock(restLeft)}
               </Text>
               <Pressable onPress={stopRest} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 }}>
@@ -327,7 +327,7 @@ export function WorkoutSession({ routine, history, onFinish, onClose }: {
           {!isLastExercise && (
             <Pressable onPress={nextExercise} hitSlop={6}>
               <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.2, textTransform: 'uppercase', flex: 1 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 12, ...font.bodySemibold, letterSpacing: 1.2, textTransform: 'uppercase', flex: 1 }}>
                   {ttx("Next up")}
                 </Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 13.5 }}>

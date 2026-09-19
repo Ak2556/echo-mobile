@@ -3,7 +3,7 @@ import { View, Text, KeyboardAvoidingView, Platform, Alert, StyleSheet, Pressabl
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { GlassPanel } from '../../components/ui/GlassPanel';
+import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
@@ -320,7 +320,7 @@ export default function ChatScreen() {
   const voiceParams = useLocalSearchParams<{ prompt?: string }>();
   const sentVoicePromptRef = useRef<string | null>(null);
   const pathname = usePathname();
-  const { colors, animation, reduceAnimations } = useTheme();
+  const { colors, animation, reduceAnimations, font } = useTheme();
   const { t } = useI18n();
   const showTyping = useAppStore(s => s.showTypingIndicator);
   const aiModel = useAppStore(s => s.aiModel);
@@ -356,8 +356,6 @@ export default function ChatScreen() {
   const targetMiniApps = useAppStore(s => s.targetMiniApps);
   const insets = useSafeAreaInsets();
   const layout = useResponsiveLayout();
-  const useBlurHeader = Platform.OS === 'ios' && !reduceAnimations;
-  const tint = colors.isDark ? 'dark' : 'extraLight';
 
   // Proactive opener: Echo greets first with a message tied to the user's real
   // day (streak at risk, habits due, target, time). Recomputed each time the
@@ -983,14 +981,11 @@ export default function ChatScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      <View
-        style={{
-          position: 'absolute', top: 0, left: 0, right: 0,
-          height: headerHeight, overflow: 'hidden', zIndex: 10,
-        }}
-      >
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: useBlurHeader ? 0.55 : 0.98 }]}>
-          <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}>
+      {/* Screen chrome, not an object: a GlassPanel at borderRadius 0 draws a
+       * border and a bevel on a bar whose other three sides are off-screen, so
+       * it read as a slab with a hard line under it. EdgeGlass fades the blur
+       * out into the content instead — the tab bar and home header do the same. */}
+      <EdgeGlass edge="top" height={headerHeight} style={{ zIndex: 10 }}>
             <Animated.View
               entering={animation(FadeIn.duration(80))}
               style={{
@@ -1041,16 +1036,13 @@ export default function ChatScreen() {
                   >
                     <Lightning color={colors.accent} size={14} weight="fill" />
                     {!layout.isPhone ? (
-                      <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{modelLabel(aiModel)}</Text>
+                      <Text style={{ color: colors.textSecondary, ...font.bodyBold, fontSize: 12 }}>{modelLabel(aiModel)}</Text>
                     ) : null}
                   </Pressable>
               </View>
             </Animated.View>
     
-            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.glassBorder }} />
-          </GlassPanel>
-        </Animated.View>
-      </View>
+      </EdgeGlass>
 
       {/* First-run command palette tooltip */}
       {showHint && (

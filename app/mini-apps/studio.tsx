@@ -85,7 +85,7 @@ function CaptureIntentRail({ value, accent, onChange }: { value: CaptureIntent; 
 }
 
 export default function StudioApp() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const accent = colors.accent;
   const [intent, setIntent] = useState<CaptureIntent>('proof');
   const [captured, setCaptured] = useState<CameraCapture[]>([]);
@@ -304,7 +304,7 @@ export default function StudioApp() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: 60 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 20 }}>
-          <Text style={{ color: colors.text, fontSize: 32, fontFamily: 'Fraunces_900Black', letterSpacing: -0.5 }}>Review</Text>
+          <Text style={{ color: colors.text, fontSize: 32, ...font.displayBlack, letterSpacing: -0.5 }}>Review</Text>
           <Pressable onPress={() => { setRawVideoUri(null); player.pause(); }}>
             <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '700' }}>Cancel</Text>
           </Pressable>

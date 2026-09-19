@@ -77,7 +77,7 @@ function SplitPulse({
 }
 
 export default function BillSplitterScreen() {
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const accent = colors.accent;
 
   const [bill, setBill] = useState('');
@@ -324,7 +324,7 @@ export default function BillSplitterScreen() {
       {mode === 'even' ? (
         <View style={{ backgroundColor: accent, borderRadius: radius.xl, padding: 28, alignItems: 'center', marginBottom: 14, shadowColor: accent, shadowOpacity: 0.4, shadowRadius: 28, shadowOffset: { width: 0, height: 8 } }}>
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{ttx("Each person pays")}</Text>
-          <Text style={{ color: colors.text, fontSize: 60, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -2, lineHeight: 66 }}>${fmt(total / people.length)}</Text>
+          <Text style={{ color: colors.text, fontSize: 60, ...font.displayBlack, letterSpacing: -2, lineHeight: 66 }}>${fmt(total / people.length)}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 6 }}>
             {ttx("Incl. $")}{fmt(tipAmount / people.length)} {ttx("tip")}{taxNum > 0 ? ` · $${fmt(taxNum / people.length)} tax` : ''}
           </Text>

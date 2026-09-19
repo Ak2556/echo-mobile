@@ -42,7 +42,7 @@ async function suggestGroupName(memberNames: string[]): Promise<string | null> {
 export default function GroupInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors, isUserOnline } = useTheme();
+  const { colors, isUserOnline, font } = useTheme();
   const myId = useAppStore(s => s.userId);
 
   const [conv, setConv] = useState<RemoteConversation | null>(null);
@@ -155,7 +155,7 @@ export default function GroupInfoScreen() {
     ]);
   };
 
-  const eyebrow = { color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.4, textTransform: 'uppercase' as const };
+  const eyebrow = { color: colors.textMuted, fontSize: 12, ...font.bodySemibold, letterSpacing: 1.4, textTransform: 'uppercase' as const };
 
   return (
     <ResponsiveScreen>
@@ -181,10 +181,10 @@ export default function GroupInfoScreen() {
                 onBlur={saveName}
                 placeholder={ttx("Group name")}
                 placeholderTextColor={colors.textMuted}
-                style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center', letterSpacing: -0.5, minWidth: 200, paddingVertical: 2 }}
+                style={{ color: colors.text, fontSize: 24, ...font.displayBlack, textAlign: 'center', letterSpacing: -0.5, minWidth: 200, paddingVertical: 2 }}
               />
             ) : (
-              <Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Fraunces_600SemiBold', textAlign: 'center', letterSpacing: -0.5 }}>{name}</Text>
+              <Text style={{ color: colors.text, fontSize: 24, ...font.displayBlack, textAlign: 'center', letterSpacing: -0.5 }}>{name}</Text>
             )}
             <Text style={{ color: colors.textMuted, fontSize: 13 }}>{members.length} {ttx("member")}{members.length === 1 ? '' : 's'}</Text>
 
@@ -196,7 +196,7 @@ export default function GroupInfoScreen() {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.accent + '66', paddingHorizontal: 14, paddingVertical: 8, opacity: suggesting ? 0.6 : 1 }}
               >
                 {suggesting ? <ActivityIndicator size="small" color={colors.accent} /> : <Waveform color={colors.accent} size={15} weight="fill" />}
-                <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{ttx("Ask Echo to name it")}</Text>
+                <Text style={{ color: colors.accent, fontSize: 13, ...font.bodySemibold }}>{ttx("Ask Echo to name it")}</Text>
               </AnimatedPressable>
             )}
           </View>
@@ -222,7 +222,7 @@ export default function GroupInfoScreen() {
               <Pressable onPress={() => setAdding(a => !a)} hitSlop={8}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <UserPlus color={colors.accent} size={15} weight="bold" />
-                  <Text style={{ color: colors.accent, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{ttx("Add")}</Text>
+                  <Text style={{ color: colors.accent, fontSize: 13, ...font.bodySemibold }}>{ttx("Add")}</Text>
                 </View>
               </Pressable>
             )}
@@ -265,7 +265,7 @@ export default function GroupInfoScreen() {
                       {m.role === 'admin' && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: colors.accent + '18', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 }}>
                           <Crown color={colors.accent} size={10} weight="fill" />
-                          <Text style={{ color: colors.accent, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>{ttx("Admin")}</Text>
+                          <Text style={{ color: colors.accent, fontSize: 10, ...font.bodySemibold }}>{ttx("Admin")}</Text>
                         </View>
                       )}
                     </View>

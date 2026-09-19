@@ -112,7 +112,7 @@ function AppealCard({
           padding: 10,
           color: colors.text,
           fontSize: fontSizes.caption,
-          fontFamily: 'Inter_400Regular',
+          ...font.body,
           minHeight: 60,
           textAlignVertical: 'top',
         }}

@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { BookOpen, Brain, Camera, CaretRight, ChartLineUp, Code, Cpu, GameController, MusicNote, PaintBrush, Play, RocketLaunch, Sparkle, UsersThree, VideoCamera } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassPanel } from '../../components/ui/GlassPanel';
+import { EdgeGlass } from '../../components/ui/EdgeGlass';
 import { SearchBar } from '../../src/features/feed/ui/SearchBar';
 import { Avatar } from '../../components/ui/Avatar';
 import { UserRow } from '../../src/features/feed/ui/UserRow';
@@ -289,8 +289,11 @@ export default function SearchScreen() {
         </ScrollView>
       )}
 
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, zIndex: 10, overflow: 'hidden' }}>
-        <GlassPanel borderRadius={0} style={StyleSheet.absoluteFill as any}>
+      {/* Screen chrome, not an object: a GlassPanel at borderRadius 0 draws a
+       * border and a bevel on a bar whose other three sides are off-screen, so
+       * it read as a slab with a hard line under it. EdgeGlass fades the blur
+       * out into the content instead — the tab bar and home header do the same. */}
+      <EdgeGlass edge="top" height={headerHeight} style={{ zIndex: 10 }}>
           <View
             onLayout={event => {
               const next = Math.ceil(event.nativeEvent.layout.height);
@@ -305,9 +308,7 @@ export default function SearchScreen() {
           </View>
           {/* Was backgroundColor:'transparent' — an invisible divider, so the
               glass simply stopped dead against the page and read as a seam. */}
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
-        </GlassPanel>
-      </View>
+      </EdgeGlass>
     </View>
   );
 }
@@ -381,7 +382,7 @@ function SearchResults({
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: selected ? '#fff' : colors.textSecondary, fontSize: 13, fontFamily: 'Inter_600SemiBold', textTransform: 'capitalize' }}>
+              <Text style={{ color: selected ? '#fff' : colors.textSecondary, fontSize: 13, ...font.bodySemibold, textTransform: 'capitalize' }}>
                 {(tab === 'all' ? t('notif.filterAll') : tab === 'people' ? t('explore.people') : tab === 'echoes' ? t('explore.echoes') : tab === 'topics' ? t('explore.topics') : t('explore.tools'))}{tabCount[tab] !== undefined ? ` ${tabCount[tab]}` : ''}
               </Text>
             </AnimatedPressable>

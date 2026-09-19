@@ -38,7 +38,7 @@ const CONDITION_COLOR: Record<string, string> = {
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors, fontSizes, radius } = useTheme();
+  const { colors, fontSizes, radius, font } = useTheme();
   const insets = useSafeAreaInsets();
   const currentUserId = useAppStore(s => s.userId);
   const getOrCreateConversation = useAppStore(s => s.getOrCreateConversation);
@@ -202,7 +202,7 @@ export default function ListingDetailScreen() {
           {/* Price + status */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <View style={{ flex: 1, gap: 4 }}>
-              <Text style={{ color: colors.text, fontSize: 28, fontFamily: 'Inter_700Bold', lineHeight: 34 }}>
+              <Text style={{ color: colors.text, fontSize: 28, ...font.bodyBold, lineHeight: 34 }}>
                 {formatPrice(listing.price, listing.currency)}
               </Text>
               {listing.status === 'sold' && (
@@ -213,7 +213,7 @@ export default function ListingDetailScreen() {
                   paddingHorizontal: 8,
                   paddingVertical: 3,
                 }}>
-                  <Text style={{ color: '#EF4444', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>{ttx("SOLD")}</Text>
+                  <Text style={{ color: '#EF4444', fontSize: 12, ...font.bodySemibold }}>{ttx("SOLD")}</Text>
                 </View>
               )}
             </View>
@@ -224,7 +224,7 @@ export default function ListingDetailScreen() {
               paddingHorizontal: 10,
               paddingVertical: 5,
             }}>
-              <Text style={{ color: condColor, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+              <Text style={{ color: condColor, fontSize: 13, ...font.bodySemibold }}>
                 {listing.condition}
               </Text>
             </View>
@@ -232,7 +232,7 @@ export default function ListingDetailScreen() {
 
           {/* Title */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-            <Text style={{ color: colors.text, fontSize: fontSizes.title, fontFamily: 'Inter_700Bold', lineHeight: 26, flex: 1 }}>
+            <Text style={{ color: colors.text, fontSize: fontSizes.title, ...font.bodyBold, lineHeight: 26, flex: 1 }}>
               {listing.title}
             </Text>
             <SpeakButton text={[listing.title, listing.description].filter(Boolean).join('. ')} id={`listing:${listing.id}`} size={18} />
@@ -241,20 +241,20 @@ export default function ListingDetailScreen() {
           {/* Category + location */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <View style={{ backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_500Medium' }}>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.bodyMedium }}>
                 {listing.category}
               </Text>
             </View>
             {listing.locationLabel ? (
               <View style={{ backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_500Medium' }}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.bodyMedium }}>
                   {listing.locationLabel}
                 </Text>
               </View>
             ) : null}
             {listing.fulfillment ? (
               <View style={{ backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
-                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_500Medium' }}>
+                <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.bodyMedium }}>
                   {listing.fulfillment}
                 </Text>
               </View>
@@ -264,7 +264,7 @@ export default function ListingDetailScreen() {
           {/* Description */}
           {listing.description ? (
             <View style={{ backgroundColor: colors.surface, borderRadius: radius.card, padding: 16 }}>
-              <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_400Regular', lineHeight: 22 }}>
+              <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.body, lineHeight: 22 }}>
                 {listing.description}
               </Text>
             </View>
@@ -283,7 +283,7 @@ export default function ListingDetailScreen() {
                     paddingVertical: 4,
                   }}
                 >
-                  <Text style={{ color: colors.accent, fontSize: fontSizes.caption, fontFamily: 'Inter_500Medium' }}>
+                  <Text style={{ color: colors.accent, fontSize: fontSizes.caption, ...font.bodyMedium }}>
                     #{tag}
                   </Text>
                 </View>
@@ -302,10 +302,10 @@ export default function ListingDetailScreen() {
               isVerified={listing.sellerIsVerified}
             />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: fontSizes.body, fontFamily: 'Inter_600SemiBold' }}>
+              <Text style={{ color: colors.text, fontSize: fontSizes.body, ...font.bodySemibold }}>
                 {listing.sellerName}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, fontFamily: 'Inter_400Regular' }}>
+              <Text style={{ color: colors.textMuted, fontSize: fontSizes.caption, ...font.body }}>
                 @{listing.sellerUsername}
               </Text>
             </View>
@@ -328,7 +328,7 @@ export default function ListingDetailScreen() {
               >
                 <Text style={{
                   color: listing.status === 'sold' ? colors.textMuted : '#10B981',
-                  fontFamily: 'Inter_600SemiBold',
+                  ...font.bodySemibold,
                   fontSize: fontSizes.body,
                 }}>
                   {listing.status === 'sold' ? 'Already sold' : 'Mark as sold'}
@@ -346,7 +346,7 @@ export default function ListingDetailScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: '#EF4444', fontFamily: 'Inter_600SemiBold', fontSize: fontSizes.body }}>
+                <Text style={{ color: '#EF4444', ...font.bodySemibold, fontSize: fontSizes.body }}>
                   {ttx("Remove listing")}
                 </Text>
               </AnimatedPressable>
@@ -384,7 +384,7 @@ export default function ListingDetailScreen() {
             }}
           >
             <ChatCircle color="#fff" size={20} weight="fill" />
-            <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: fontSizes.body }}>
+            <Text style={{ color: '#fff', ...font.bodyBold, fontSize: fontSizes.body }}>
               {startConvMut.isPending ? 'Opening chat...' : 'Message seller'}
             </Text>
           </AnimatedPressable>

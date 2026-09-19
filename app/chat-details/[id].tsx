@@ -46,7 +46,7 @@ const EMPTY_PREFS: ConversationPrefs = {
 export default function ChatDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors, radius } = useTheme();
+  const { colors, radius, font } = useTheme();
   const toggleBlock = useAppStore(s => s.toggleBlock);
   const isBlocked = useAppStore(s => s.isBlocked);
 
@@ -124,7 +124,7 @@ export default function ChatDetailsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx("Back")} style={{ padding: 4, marginRight: 8 }}>
           <ArrowLeft color={colors.text} size={24} />
         </Pressable>
-        <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Details")}</Text>
+        <Text style={{ color: colors.text, fontSize: 18, ...font.displayBlack }}>{ttx("Details")}</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -133,7 +133,7 @@ export default function ChatDetailsScreen() {
           <Avatar name={name} color={conv?.otherAvatarColor} url={isGroup ? undefined : conv?.otherAvatarUrl ?? undefined} size={84}>
             {isGroup ? <Users color="#fff" size={32} weight="fill" /> : undefined}
           </Avatar>
-          <Text style={{ color: colors.text, fontSize: 22, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.3 }}>{name}</Text>
+          <Text style={{ color: colors.text, fontSize: 22, ...font.displayBlack, letterSpacing: -0.3 }}>{name}</Text>
           {!isGroup && conv?.otherUsername ? (
             <Text style={{ color: colors.textMuted, fontSize: 13 }}>@{conv.otherUsername}</Text>
           ) : isGroup ? (
@@ -222,7 +222,7 @@ export default function ChatDetailsScreen() {
         <Pressable onPress={() => setMuteOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 18, paddingBottom: 34 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ color: colors.text, fontSize: 18, fontFamily: 'Fraunces_600SemiBold' }}>{ttx("Mute for…")}</Text>
+              <Text style={{ color: colors.text, fontSize: 18, ...font.displayBlack }}>{ttx("Mute for…")}</Text>
               <Pressable onPress={() => setMuteOpen(false)} hitSlop={8}><X color={colors.textMuted} size={20} /></Pressable>
             </View>
             {MUTE_OPTIONS.map(o => (

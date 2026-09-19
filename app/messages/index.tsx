@@ -71,7 +71,7 @@ function CreateGroupModal({
   onClose: () => void;
   onCreated: (conversationId: string) => void;
 }) {
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius, fontSizes, font } = useTheme();
   const createGroup = useCreateGroupConversation();
   const [title, setTitle] = useState('');
   const [query, setQuery] = useState('');
@@ -132,7 +132,7 @@ function CreateGroupModal({
           <Pressable onPress={onClose} hitSlop={10}>
             <X color={colors.text} size={22} />
           </Pressable>
-          <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold' }}>
+          <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 20, ...font.displayBlack }}>
             {ttx("New Group")}
           </Text>
           <Pressable
@@ -358,7 +358,7 @@ function InboxHero({
   onNewGroup: () => void;
   onFindPeople: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, font } = useTheme();
   const stats = [
     { label: 'Unread', value: unread },
     { label: 'Groups', value: groups },
@@ -379,7 +379,7 @@ function InboxHero({
             <ChatCircleText color="#fff" size={27} weight="fill" />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ color: colors.text, fontSize: 26, lineHeight: 31, fontFamily: 'Fraunces_600SemiBold', letterSpacing: -0.4 }}>
+            <Text style={{ color: colors.text, fontSize: 26, lineHeight: 31, ...font.displayBlack, letterSpacing: -0.4 }}>
               {total ? 'Pick up where you left off.' : 'Start a conversation.'}
             </Text>
             <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
@@ -551,7 +551,7 @@ export function StatusAvatar({ name, color, url, isMe, aura, onPress }: any) {
 }
 
 export function AurasRow() {
-  const { colors, radius, fontSizes } = useTheme();
+  const { colors, radius, fontSizes, font } = useTheme();
   const remote = isSupabaseRemote();
   const qc = useQueryClient();
   
@@ -646,7 +646,7 @@ export function AurasRow() {
       <Modal visible={modalOpen} animationType="fade" transparent onRequestClose={() => setModalOpen(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: colors.surface, borderRadius: radius.card, padding: 20, borderWidth: 1, borderColor: colors.border }}>
-            <Text style={{ color: colors.text, fontSize: 20, fontFamily: 'Fraunces_600SemiBold', marginBottom: 16 }}>Set your Aura</Text>
+            <Text style={{ color: colors.text, fontSize: 20, ...font.displayBlack, marginBottom: 16 }}>Set your Aura</Text>
             <TextInput
               value={auraText}
               onChangeText={setAuraText}
