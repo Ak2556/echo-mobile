@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { setRemoteBlock, setRemoteMute } from '../../lib/supabaseEchoApi';
 import { useAppStore } from '../../store/useAppStore';
+import { NOTIFICATIONS_QUERY_KEY } from '../../lib/notifications/paging';
 
 /**
  * Remote block mutation.
@@ -68,7 +69,7 @@ export function useToggleRemoteMute() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
-      qc.invalidateQueries({ queryKey: ['notifications'] });
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
     },
   });
 }

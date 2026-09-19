@@ -49,3 +49,27 @@ describe('nextNotificationOffset', () => {
     expect(NOTIFICATIONS_PAGE_SIZE).toBeLessThanOrEqual(50);
   });
 });
+
+/**
+ * The upgrade crash.
+ *
+ * The cache is persisted to MMKV for seven days with no buster, so after this
+ * screen moved from useQuery to useInfiniteQuery the restored entry for
+ * ['notifications'] was still the OLD shape — a flat Notification[]. TanStack
+ * read `data.pages`, got undefined, and handed `undefined` to getNextPageParam,
+ * which crashed the whole screen into the error boundary on first open.
+ *
+ * Two defences, because either alone is thin: the key moves so a stale entry
+ * cannot be restored into the new shape at all, and this function stops
+ * assuming it was handed a page.
+ */
+describe('nextNotificationOffset survives a stale cache', () => {
+  it('does not crash when handed nothing', () => {
+    expect(() => nextNotificationOffset(undefined as never, [])).not.toThrow();
+    expect(nextNotificationOffset(undefined as never, [])).toBeUndefined();
+  });
+
+  it('does not crash when the page list is missing', () => {
+    expect(nextNotificationOffset([], undefined as never)).toBeUndefined();
+  });
+});
