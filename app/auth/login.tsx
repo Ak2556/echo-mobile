@@ -20,13 +20,14 @@ import {
   CANCELLED,
   isAppleSignInAvailable,
   refreshAuthSession,
-  signInAsDemo,
+  signInWithReviewerPassword,
   signInWithApple,
   signInWithGoogle,
 } from '../../lib/auth';
 import { GetTheAppBanner } from '../../components/pwa/GetTheAppBanner';
 import { WebLandingPanel } from '../../components/pwa/WebLandingPanel';
 import { showToast } from '../../components/ui/Toast';
+import { ReviewerSignInSheet } from '../../components/auth/ReviewerSignInSheet';
 import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
 
 const ROTATING_PROMPT_KEYS: TranslationKey[] = [
@@ -37,8 +38,6 @@ const ROTATING_PROMPT_KEYS: TranslationKey[] = [
   'auth.prompt.ritual',
   'auth.prompt.idea',
 ];
-
-const DEMO_ENABLED = !!(process.env.EXPO_PUBLIC_DEMO_EMAIL && process.env.EXPO_PUBLIC_DEMO_PASSWORD);
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -51,7 +50,7 @@ export default function LoginScreen() {
   const { t, textDirection } = useI18n();
   const isDark = colors.isDark;
 
-  const [demoLoading, setDemoLoading] = useState(false);
+  const [reviewerOpen, setReviewerOpen] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   // Asked rather than assumed: the sheet exists on iOS 13+ only, and the
@@ -110,19 +109,14 @@ export default function LoginScreen() {
     else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
   };
 
-  const handleDemo = async () => {
-    if (demoLoading) return;
-    setDemoLoading(true);
-    const { error } = await signInAsDemo();
-    if (error) {
-      setDemoLoading(false);
-      showToast(t('auth.demoUnavailable'), t('auth.error'));
-      return;
-    }
+  const handleReviewer = async (email: string, password: string): Promise<string | null> => {
+    const { error } = await signInWithReviewerPassword(email, password);
+    if (error) return error;
     const status = await refreshAuthSession();
-    setDemoLoading(false);
+    setReviewerOpen(false);
     if (status === 'ready') router.replace('/(tabs)/home');
     else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
+    return null;
   };
 
   useEffect(() => {
@@ -197,6 +191,8 @@ export default function LoginScreen() {
         >
 
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            {/* Long press opens the reviewers' password sign-in (see ReviewerSignInSheet). */}
+            <Pressable onLongPress={() => setReviewerOpen(true)} delayLongPress={1500} accessible={false}>
             <Animated.View entering={FadeInDown.duration(400).springify().mass(0.6).damping(16)} style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
               <Text style={[font.displayBlack, { color: colors.text, fontSize: showLanding ? 64 : 104, lineHeight: showLanding ? 68 : 110, letterSpacing: -2 }]}>
                 echo
@@ -212,6 +208,7 @@ export default function LoginScreen() {
                 }} />
               </Animated.View>
             </Animated.View>
+            </Pressable>
 
             <View style={{ height: 88, marginTop: 32, justifyContent: 'flex-start', alignItems: 'center', paddingHorizontal: 4 }}>
               <Animated.Text
@@ -328,24 +325,11 @@ export default function LoginScreen() {
               </Text>
             </Animated.View>
 
-            {DEMO_ENABLED && (
-              <Animated.View entering={FadeInDown.delay(320).duration(360)} style={{ alignItems: 'center' }}>
-                <Pressable
-                  onPress={handleDemo}
-                  disabled={demoLoading}
-                  hitSlop={12}
-                  style={{ paddingVertical: 8, paddingHorizontal: 16, opacity: demoLoading ? 0.5 : 1 }}
-                >
-                  <Text style={[font.body, { color: colors.textMuted, fontSize: 12 }]}>
-                    {t('auth.appReview')} · <Text style={{ color: colors.textSecondary }}>{t('auth.openDemo')}</Text>
-                  </Text>
-                </Pressable>
-              </Animated.View>
-            )}
           </View>
         </View>
         </View>
       </SafeAreaView>
+      <ReviewerSignInSheet visible={reviewerOpen} onClose={() => setReviewerOpen(false)} onSubmit={handleReviewer} />
     </View>
   );
 }

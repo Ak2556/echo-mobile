@@ -7,6 +7,7 @@ import { captureException } from './monitoring';
 import { persistGet, persistSet } from '../store/persist';
 import { registerNotificationChannels } from './notifications/channels';
 import { registerNotificationCategories } from './notifications/categories';
+import { recordPushOffer, shouldOfferPush, type PushOfferHistory } from './pushPromptPolicy';
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
@@ -99,6 +100,24 @@ export async function clearPushToken(): Promise<void> {
     await supabase.from('profiles').update({ push_token: null }).eq('id', session.user.id);
   } catch {
   }
+}
+
+const OFFER_KEY = 'push:prePromptOffers';
+
+/**
+ * Whether the push pre-prompt may be shown right now on this install. Every
+ * call site asks here, so a user who declined after their first Echo is not
+ * asked again on the home screen the same afternoon.
+ */
+export async function mayOfferPush(): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  const status = await getPushPermissionStatus();
+  return shouldOfferPush(status, persistGet<PushOfferHistory>(OFFER_KEY, { count: 0, lastAt: 0 }), Date.now());
+}
+
+/** Count a showing when the sheet appears, not when it is answered — a user who kills the app mid-sheet was still asked. */
+export function notePushOffered(): void {
+  persistSet(OFFER_KEY, recordPushOffer(persistGet<PushOfferHistory>(OFFER_KEY, { count: 0, lastAt: 0 }), Date.now()));
 }
 
 /** Remembered across restarts so sign-out can identify this device. */

@@ -34,7 +34,7 @@ import { prependEchoToFeedCache, removeEchoFromFeedCache } from '../lib/queryCac
 import * as Crypto from 'expo-crypto';
 import { playSoundEffect } from '../lib/sound';
 import { track } from '../src/shared/lib/analytics';
-import { getPushPermissionStatus, registerForPush } from '../lib/push';
+import { mayOfferPush, notePushOffered, registerForPush } from '../lib/push';
 import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
@@ -502,13 +502,12 @@ export default function CreatePostScreen() {
       setPublishedEchoPreview({ title: previewTitle });
       if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current);
       ceremonyTimer.current = setTimeout(async () => {
-        // After the first publish, ask once whether to enable push (pre-prompt
-        // before the OS prompt). If permission is already granted/denied we
-        // skip straight to the feed.
+        // After the first publish, offer push (pre-prompt before the OS prompt)
+        // if the shared offer policy allows it; otherwise straight to the feed.
         if (isFirst) {
           try {
-            const status = await getPushPermissionStatus();
-            if (status === 'undetermined') {
+            if (await mayOfferPush()) {
+              notePushOffered();
               setPublishedEchoPreview(null);
               setShowPushPrePrompt(true);
               return;

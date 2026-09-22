@@ -17,7 +17,7 @@
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSMicrophoneUsageDescription": "Echo uses your microphone to record voice memos in the mini-apps section.",
+        "NSMicrophoneUsageDescription": "Echo uses your microphone when you give a voice command, send a voice message, or record a voice memo.",
         "NSCameraUsageDescription": "Echo uses your camera to take photos for your profile and marketplace listings.",
         "NSPhotoLibraryUsageDescription": "Echo accesses your photo library so you can upload photos to your profile, marketplace listings, and send images in direct messages.",
         "NSPhotoLibraryAddUsageDescription": "Echo saves images to your photo library.",
@@ -102,13 +102,13 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow Echo to access your microphone to record voice memos."
+          "microphonePermission": "Echo uses your microphone when you give a voice command, send a voice message, or record a voice memo."
         }
       ],
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Allow Echo to access your microphone so you can speak commands.",
+          "microphonePermission": "Echo uses your microphone when you give a voice command, send a voice message, or record a voice memo.",
           "speechRecognitionPermission": "Allow Echo to recognise your speech so commands run instantly on your device.",
           "androidSpeechServicePackages": [
             "com.google.android.googlequicksearchbox"
