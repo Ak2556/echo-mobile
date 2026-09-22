@@ -140,7 +140,8 @@
     },
     "react-native-markdown-display": {
       "markdown-it": "15.0.2"
-    }
+    },
+    "@babel/runtime": "^7.26.10"
   },
   "private": true
 }
