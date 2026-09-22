@@ -25,7 +25,7 @@ export const NOTIFICATION_TYPES = [
   'like', 'comment', 'follow', 'repost', 'mention', 'dm', 'reaction',
   'bookmark', 'quote', 'report_resolved', 'content_removed',
   'appeal_resolved', 'daily_react', 'personal_nudge', 'friend_post',
-  'social_task_update', 'friend_answer', 'report_urgent',
+  'social_task_update', 'friend_answer', 'report_urgent', 'rules_reminder',
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -40,7 +40,7 @@ export const REACTION_LABEL: Record<string, string> = {
 /** Notifications with no real actor — they show a type icon, not a face. */
 export const SYSTEM_TYPES = new Set<string>([
   'report_resolved', 'content_removed', 'appeal_resolved', 'personal_nudge',
-  'report_urgent',
+  'report_urgent', 'rules_reminder',
 ]);
 
 /** Warm editorial palette (lib/avatarPalette.ts) — one hue per type. */
@@ -63,6 +63,7 @@ export const TYPE_COLOR: Record<string, string> = {
   personal_nudge: '#8B6F4E',
   social_task_update: '#7A8B4E',
   report_urgent: '#A04E4E',
+  rules_reminder: '#5E748B',
 };
 
 function reactionText(preview?: string | null): string {
@@ -86,6 +87,7 @@ export function actionTextFor(type: string, preview?: string | null): string {
     case 'content_removed': return preview ?? 'Content was removed';
     case 'appeal_resolved': return preview ?? 'Your appeal has been reviewed';
     case 'report_urgent': return `Urgent report: ${preview ?? 'review within 2 hours'}`;
+    case 'rules_reminder': return "A reminder of Echo's rules, and what happens when they're broken";
     case 'friend_post': return 'published a new echo';
     case 'friend_answer': return "answered today's question";
     case 'daily_react': return 'reacted to your answer';
@@ -113,7 +115,7 @@ export function summaryTextFor(type: string, preview?: string | null): string {
 
 /** Where tapping a notification should land. */
 export type NotificationDestination =
-  | 'profile' | 'thread' | 'dm' | 'daily' | 'appeal' | 'appeal-decision' | 'reports' | 'none';
+  | 'profile' | 'thread' | 'dm' | 'daily' | 'appeal' | 'appeal-decision' | 'reports' | 'rules' | 'none';
 
 export function destinationFor(type: string): NotificationDestination {
   switch (type) {
@@ -129,6 +131,7 @@ export function destinationFor(type: string): NotificationDestination {
     case 'personal_nudge': return 'none';
     // Reviewed in the dashboard; a hidden echo would not open in a thread.
     case 'report_urgent': return 'none';
+    case 'rules_reminder': return 'rules';
     default: return 'thread';
   }
 }

@@ -254,6 +254,9 @@ export default function NotificationsScreen() {
       case 'reports':
         router.push('/my-reports');
         break;
+      case 'rules':
+        router.push('/legal/rules' as never);
+        break;
       case 'dm':
         if (n.targetId) router.push(`/messages/${n.targetId}`);
         break;

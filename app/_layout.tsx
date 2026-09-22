@@ -339,7 +339,7 @@ function RootLayout() {
     void initNotificationSurface();
 
     let cancelled = false;
-    const VALID_KINDS = new Set(['daily_question', 'daily_react', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin', 'personal_nudge']);
+    const VALID_KINDS = new Set(['daily_question', 'daily_react', 'follow', 'like', 'comment', 'reaction', 'mention', 'repost', 'bookmark', 'quote', 'dm', 'appeal_resolved', 'echo_checkin', 'personal_nudge', 'rules_reminder']);
     const route = (data: Record<string, unknown> | null | undefined) => {
       if (!data) return;
       const kind = String(data.kind ?? '');
@@ -347,6 +347,11 @@ function RootLayout() {
       if (kind === 'echo_checkin') {
         track('notification_tapped', { kind });
         router.push('/(tabs)/chat');
+        return;
+      }
+      if (kind === 'rules_reminder') {
+        track('notification_tapped', { kind });
+        router.push('/legal/rules' as never);
         return;
       }
       if (kind === 'personal_nudge') {
