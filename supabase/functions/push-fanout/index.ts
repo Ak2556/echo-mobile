@@ -316,6 +316,7 @@ function titleFor(t: string, actorName: string, preview?: string): string {
       `psst... 🤫`,
     ]);
     case 'report_urgent': return 'Urgent report: act within 2 hours';
+    case 'rules_reminder': return "A reminder of Echo's rules";
     default: return 'Echo';
   }
 }
@@ -337,6 +338,8 @@ function messageFor(t: string, actorName: string, preview?: string): string {
     case 'personal_nudge':
     case 'report_urgent':
       return (preview ?? '').slice(0, 140);
+    case 'rules_reminder':
+      return "What's not allowed, and what happens when the rules are broken. Tap to read.";
     // Title-only social pings get a little day-making flavor in the body.
     case 'like': return pick(['Good echo, apparently.', 'You cooked.', 'Certified good post.', 'The people have spoken.', '']);
     case 'follow': return pick(['Tap to see who.', 'Somebody has taste.', 'Go say hi.', 'Your reach is reaching.', '']);

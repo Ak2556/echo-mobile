@@ -47,6 +47,7 @@ export function channelForKind(kind: string | null | undefined): string {
     case 'appeal_resolved':
     case 'content_removed':
     case 'report_urgent':
+    case 'rules_reminder':
       return CHANNEL_SYSTEM;
 
     default:
@@ -84,7 +85,8 @@ export function priorityForKind(kind: string | null | undefined): 'high' | 'norm
  */
 export function bypassesDailyCap(kind: string | null | undefined): boolean {
   // report_urgent goes to moderators only, and has a 2-hour legal clock on it.
-  return kind === 'dm' || kind === 'appeal_resolved' || kind === 'content_removed' || kind === 'report_urgent';
+  // rules_reminder is a legal notice (IT Rules 3(1)(c)); a busy day must not swallow it.
+  return kind === 'dm' || kind === 'appeal_resolved' || kind === 'content_removed' || kind === 'report_urgent' || kind === 'rules_reminder';
 }
 
 /**
