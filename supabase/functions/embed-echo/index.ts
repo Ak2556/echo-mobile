@@ -20,6 +20,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { moderateContent, moderateImages } from "./moderation.ts";
 import { splitMediaForModeration } from "./mediaKinds.ts";
+import { isServiceCaller } from "./serviceCaller.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -135,12 +136,22 @@ Deno.serve(async (req: Request) => {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }
-  const { data: authData, error: authErr } = await supabase.auth.getUser(token);
-  if (authErr || !authData.user) {
-    return new Response(JSON.stringify({ error: "invalid authorization" }), {
-      status: 401,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
+  // Two callers: the author's app (user JWT, must own the post, rate-limited),
+  // and the moderate_new_echo trigger / resweep cron, which send the shared
+  // x-embed-echo-secret (see serviceCaller.ts). The server path had been
+  // rejected on every call, so a post was revealed only if its author's app
+  // stayed open long enough to run the client fallback.
+  const fromService = await isServiceCaller(req.headers.get("x-embed-echo-secret"));
+  let callerId: string | null = null;
+  if (!fromService) {
+    const { data: authData, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !authData.user) {
+      return new Response(JSON.stringify({ error: "invalid authorization" }), {
+        status: 401,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+    callerId = authData.user.id;
   }
 
   const { data: row, error: fetchErr } = await supabase
@@ -154,19 +165,21 @@ Deno.serve(async (req: Request) => {
       { status: 404, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   }
-  if ((row as EchoRow).author_id !== authData.user.id) {
+  if (!fromService && (row as EchoRow).author_id !== callerId) {
     return new Response(JSON.stringify({ error: "forbidden" }), {
       status: 403,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }
 
-  const { error: embedLimitError } = await supabase.rpc("check_app_rate_limit", {
-    p_action: "embed_echo_hour",
-    p_limit: 40,
-    p_window_seconds: 3600,
-    p_user_id: authData.user.id,
-  });
+  const { error: embedLimitError } = fromService
+    ? { error: null }
+    : await supabase.rpc("check_app_rate_limit", {
+      p_action: "embed_echo_hour",
+      p_limit: 40,
+      p_window_seconds: 3600,
+      p_user_id: callerId,
+    });
   if (embedLimitError) {
     return new Response(JSON.stringify({ error: "Rate limit reached. Try again later." }), {
       status: 429,

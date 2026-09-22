@@ -5,14 +5,14 @@
 // up — is run through a moderation classifier first. If it flags, we refuse to
 // surface the row and let the caller present a neutral error to the user.
 //
-// We route moderation through OpenRouter (the same provider Echo already uses
-// for chat) so the deployment only needs ONE secret: OPENROUTER_API_KEY. There
-// is no dedicated /v1/moderations endpoint on OpenRouter, so we use a small,
-// cheap chat model (Gemini Flash-Lite via google-ai-studio) as a zero-shot
-// classifier that returns a strict JSON verdict.
+// Text moderation goes through _shared/aiChat.ts (Gemini direct, OpenRouter
+// fallback), using a small, cheap chat model (Gemini Flash-Lite) as a
+// zero-shot classifier that returns a strict JSON verdict.
 //
-// OPENROUTER_API_KEY must be set in Supabase Edge Function Secrets — never
-// shipped in the mobile bundle.
+// Keys (GEMINI_API_KEY, OPENROUTER_API_KEY) live in Supabase Edge Function
+// Secrets — never shipped in the mobile bundle.
+
+import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
 
 export interface ModerationResult {
   /** True when the content is safe to publish. */
@@ -64,9 +64,8 @@ const SYSTEM_PROMPT =
  * until the user retries or an operator reviews the incident.
  */
 export async function moderateContent(text: string): Promise<ModerationResult> {
-  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
-  if (!apiKey) {
-    return { ok: false, categories: ["moderation_unavailable"], error: "OPENROUTER_API_KEY unset" };
+  if (!hasChatProvider()) {
+    return { ok: false, categories: ["moderation_unavailable"], error: "no AI provider key set" };
   }
   const trimmed = (text ?? "").trim();
   if (!trimmed) {
@@ -76,34 +75,18 @@ export async function moderateContent(text: string): Promise<ModerationResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), MODERATION_TIMEOUT_MS);
   try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-        "X-Title": "Echo Moderation",
-      },
-      body: JSON.stringify({
-        model: MODERATION_MODEL,
-        provider: { only: ["google-ai-studio"] },
-        temperature: 0,
-        max_tokens: 200,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: trimmed.slice(0, 4000) },
-        ],
-      }),
+    const { content } = await chatCompletion({
+      model: MODERATION_MODEL,
+      temperature: 0,
+      max_tokens: 200,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: trimmed.slice(0, 4000) },
+      ],
       signal: controller.signal,
+      title: "Echo Moderation",
     });
-
-    if (!res.ok) {
-      return { ok: false, categories: ["moderation_unavailable"], error: `moderation http ${res.status}` };
-    }
-
-    const data = await res.json();
-    const content: string = data?.choices?.[0]?.message?.content ?? "";
     const verdict = parseVerdict(content);
     if (!verdict) {
       return { ok: false, categories: ["moderation_unavailable"], error: "moderation: unparseable verdict" };
