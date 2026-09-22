@@ -1,4 +1,4 @@
-// Echo AI — OpenRouter tool-use loop with SSE streaming.
+// Echo AI — tool-use loop with SSE streaming. Gemini direct, OpenRouter fallback (see _shared/aiChat.ts).
 // Runs as a Supabase Edge Function. All API keys are read from Deno env at request time;
 // the mobile app never sees them.
 //
@@ -8,8 +8,8 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 import { normalizeAiMode, toolsForMode } from "./mode.ts";
 import { moderateContent } from "./moderation.ts";
 import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
+import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const DEFAULT_ECHO_AI_MODEL = "google/gemini-2.5-flash";
 const CONFIGURED_ECHO_AI_MODEL = Deno.env.get("ECHO_AI_MODEL") ?? DEFAULT_ECHO_AI_MODEL;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -36,7 +36,7 @@ function sseEncode(event: SSEEvent): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`);
 }
 
-// OpenRouter
+// OpenAI-shaped chat types (both providers speak this format)
 interface ORToolCall {
   id: string;
   type: "function";
@@ -76,11 +76,7 @@ function resolveEchoAIModel(modelOverride?: string, planId: string = "free"): st
   return DEFAULT_ECHO_AI_MODEL;
 }
 
-function providerForModel(_model: string): { only: string[] } {
-  return { only: ["google-ai-studio"] };
-}
-
-async function openRouterChat(
+async function modelChat(
   messages: ORMessage[],
   tools: ORTool[],
   modelOverride?: string,
@@ -88,34 +84,9 @@ async function openRouterChat(
   const model = modelOverride && GOOGLE_AI_STUDIO_MODELS.has(modelOverride)
     ? modelOverride
     : resolveEchoAIModel();
-  const provider = providerForModel(model);
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-      "X-Title": "Echo AI",
-    },
-    body: JSON.stringify({
-      model,
-      provider,
-      messages,
-      tools: tools.length ? tools : undefined,
-      tool_choice: tools.length ? "auto" : undefined,
-      stream: false, // we re-stream the final text deltas ourselves; tool loops aren't streamable cleanly
-    }),
-  });
-  if (!res.ok) {
-    throw new Error(`OpenRouter ${res.status}: ${await res.text()}`);
-  }
-  const json = await res.json();
-  const choice = json.choices?.[0]?.message;
-  if (!choice) throw new Error("OpenRouter returned no message");
-  return {
-    content: choice.content ?? "",
-    tool_calls: choice.tool_calls,
-  };
+  // Non-streaming on purpose: we re-stream the final text deltas ourselves;
+  // tool loops aren't streamable cleanly.
+  return await chatCompletion({ model, messages, tools, title: "Echo AI" });
 }
 
 // Tool definitions
@@ -1073,9 +1044,9 @@ async function handleRequest(req: Request): Promise<Response> {
 
   // Fail fast with an actionable error if the upstream model key is unset,
   // rather than sending an empty Bearer token and surfacing an opaque 401.
-  if (!OPENROUTER_API_KEY) {
+  if (!hasChatProvider()) {
     return new Response(
-      JSON.stringify({ error: "OPENROUTER_API_KEY not configured" }),
+      JSON.stringify({ error: "GEMINI_API_KEY / OPENROUTER_API_KEY not configured" }),
       { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   }
@@ -1178,8 +1149,8 @@ async function handleRequest(req: Request): Promise<Response> {
           );
         } else if (body.message) {
           // Fresh user turn
-          // Rate-limit BEFORE we persist or call OpenRouter — bouncing the
-          // request here means no Postgres write, no OpenRouter spend, and
+          // Rate-limit BEFORE we persist or call the model — bouncing the
+          // request here means no Postgres write, no model spend, and
           // the client gets a clean 429-shaped error event.
           try {
             await checkAndIncrementRateLimit(adminSupabase, userId, tier);
@@ -1240,7 +1211,7 @@ async function runAgentLoop(
       ...history,
     ];
 
-    const { content, tool_calls } = await openRouterChat(
+    const { content, tool_calls } = await modelChat(
       messages,
       // ask mode sends no tools at all, so the model has nothing to call
       // and the request carries 34 fewer schemas.
@@ -1257,7 +1228,7 @@ async function runAgentLoop(
 
     if (!tool_calls || tool_calls.length === 0) {
       // Stream the final text out as one delta. (Real token streaming would
-      // require a streaming OpenRouter call; v1 keeps the loop simple.)
+      // require a streaming model call; v1 keeps the loop simple.)
       if (content) send({ type: "text_delta", delta: content });
       return;
     }
