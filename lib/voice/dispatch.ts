@@ -82,7 +82,6 @@ const DESTINATIONS: Record<string, string> = {
   verify: '/get-verified', verification: '/get-verified', verified: '/get-verified',
   badges: '/badges', quests: '/quests',
   salons: '/salons',
-  upgrade: '/upgrade', tiers: '/upgrade', premium: '/upgrade',
   // Singular / common variants so "notification", "message", "setting" resolve too.
   notification: '/(tabs)/notifications', message: '/messages', dm: '/messages',
   setting: '/settings', bookmark: '/bookmarks', follower: '/followers',

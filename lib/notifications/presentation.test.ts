@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -62,12 +62,18 @@ describe('the type list matches the database constraint', () => {
     // A type present here but absent from the constraint fails its INSERT, and
     // every notification trigger swallows exceptions — so the feature goes
     // silently inert. That is exactly how friend_answer shipped dead.
-    const sql = readFileSync(
-      join(import.meta.dirname!, '..', '..', 'supabase', 'migrations',
-           '20260828090000_allow_friend_answer_notification.sql'),
-      'utf8',
-    );
-    const allowed = [...sql.matchAll(/'([a-z_]+)'/g)].map(m => m[1]);
+    // The constraint as the most recent migration that re-creates it defines
+    // it, parsed from its own clause so other quoted strings in the file do
+    // not leak in.
+    const dir = join(import.meta.dirname!, '..', '..', 'supabase', 'migrations');
+    let clause: string | null = null;
+    for (const f of readdirSync(dir).filter(n => n.endsWith('.sql')).sort()) {
+      const m = readFileSync(join(dir, f), 'utf8')
+        .match(/add constraint notifications_type_check\s+check\s*\(([\s\S]*?)\)\s*\)?\s*;/i);
+      if (m) clause = m[1];
+    }
+    expect(clause, 'a migration must define notifications_type_check').not.toBeNull();
+    const allowed = [...clause!.matchAll(/'([a-z_]+)'/g)].map(m => m[1]);
     expect([...NOTIFICATION_TYPES].sort()).toEqual([...new Set(allowed)].sort());
   });
 });

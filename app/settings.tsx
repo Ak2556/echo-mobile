@@ -13,7 +13,7 @@ import {
   Palette, TextT, SquaresFour, Star, Robot, FloppyDisk,
   ChatCircle, Broadcast, Database, Eraser, BookmarkSimple,
   BellSlash, Rectangle, FileText,
-  Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain,
+  Check, DeviceMobile, Users, Envelope, SunHorizon, UserCircle, Brain, Heartbeat,
   Warning, ListChecks, Globe, Gavel, PencilSimple, Target, SlidersHorizontal,
   BellRinging, Drop, MapTrifold, Microphone,
   AddressBook, DownloadSimple,
@@ -43,6 +43,9 @@ import { FONT_STYLE_OPTIONS, fontStyleLabel } from '../lib/fontPresets';
 import { APP_LANGUAGES, CONTENT_LANGUAGE_OPTIONS, languageLabel, type AppLanguageCode } from '../lib/languages';
 import { useI18n , ttx } from '../src/shared/lib/i18n';
 import { speak } from '../lib/tts';
+import { useAiConsent } from '../lib/aiConsent';
+import { useHealthConsent } from '../lib/healthConsent';
+import { deleteRemoteFitness } from '../lib/fitnessRemote';
 
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@downloadecho.com';
 const DSA_EMAIL = process.env.EXPO_PUBLIC_DSA_EMAIL || 'dsa@downloadecho.com';
@@ -724,6 +727,35 @@ export default function SettingsScreen() {
     }
   };
 
+  const aiConsentGranted = useAiConsent(c => c.answer === 'granted');
+  const setAiConsent = useAiConsent(c => c.set);
+  const setAiConsentGranted = (on: boolean) => setAiConsent(on ? 'granted' : 'declined');
+  const healthConsentGranted = useHealthConsent(c => c.answer === 'granted');
+  const setHealthConsent = useHealthConsent(c => c.set);
+  const handleHealthConsent = (on: boolean) => {
+    if (on) { setHealthConsent('granted'); return; }
+    Alert.alert(
+      ttx('Stop backing up health data?'),
+      ttx('Your fitness data stays on this device. The copy on our servers is deleted, and other devices stop syncing it.'),
+      [
+        { text: ttx('Cancel'), style: 'cancel' },
+        {
+          text: ttx('Delete server copy'),
+          style: 'destructive',
+          onPress: async () => {
+            const ok = await deleteRemoteFitness();
+            if (ok) {
+              setHealthConsent('declined');
+              showToast(ttx('Health data removed from our servers'), '');
+            } else {
+              showToast(ttx('Could not delete. Check your connection and try again.'), '');
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handlePersonalizedNotifications = async (enabled: boolean) => {
     const prev = s.personalizedNotifications;
     s.setPersonalizedNotifications(enabled);
@@ -995,6 +1027,10 @@ export default function SettingsScreen() {
             {divider}
             <SettingsRow theme={theme} icon={BellRinging} iconColor={colors.accent} label={ttx("Personalized Notifications")} subtitle={ttx("Let Echo learn your best times and interests to time reminders. Off by default; no profiling until you turn it on.")} right={SwitchEl(s.personalizedNotifications, handlePersonalizedNotifications)} />
             {divider}
+            <SettingsRow theme={theme} icon={Heartbeat} iconColor={colors.accent} label={ttx("Back up health data")} subtitle={ttx("Store Fitness data (weight, meals, water, workouts) on Echo's servers for sync and coaching. Off keeps it on this device only.")} right={SwitchEl(healthConsentGranted, handleHealthConsent)} />
+            {divider}
+            <SettingsRow theme={theme} icon={Robot} iconColor={colors.accent} label={ttx("AI features")} subtitle={ttx("Chat, voice commands, rewrites and coaching send what you give them to Google Gemini. Off means none of it leaves your device.")} right={SwitchEl(aiConsentGranted, setAiConsentGranted)} />
+            {divider}
             <SettingsRow theme={theme} icon={Envelope} label={ttx("Who Can Message You")} subtitle={dmLabel} onPress={() => setShowDmPicker(true)} right={chevronValue(dmLabel)} />
             {divider}
             <SettingsRow theme={theme} icon={Users} label={`Blocked Users (${s.blockedIds.length})`} subtitle={ttx("Manage users you've blocked")} onPress={() => router.push('/blocked-users')} />
@@ -1170,6 +1206,8 @@ export default function SettingsScreen() {
           <Text style={sectionHeaderStyle}>{ttx("About")}</Text>
           <GlassPanel borderRadius={radius.card} style={{ marginBottom: 20 }} contentStyle={{ paddingHorizontal: 16 }}>
             <SettingsRow theme={theme} icon={Shield} label={ttx("Privacy Policy")} onPress={() => router.push('/privacy')} />
+            {divider}
+            <SettingsRow theme={theme} icon={Shield} label={ttx("Child Safety Standards")} onPress={() => router.push('/legal/child-safety' as never)} />
             {divider}
             <SettingsRow theme={theme} icon={FileText} label={ttx("Terms of Service")} onPress={() => router.push('/terms')} />
             {divider}

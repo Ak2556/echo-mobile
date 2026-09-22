@@ -1,4 +1,5 @@
 import EventSource from 'react-native-sse';
+import { requireAiConsent } from './aiConsent';
 import { supabase } from './supabase';
 import type { AiMode } from '../supabase/functions/echo-ai/mode';
 
@@ -268,6 +269,9 @@ export async function streamEchoAI({
   onAbortHandle,
   onEvent,
 }: StreamArgs): Promise<void> {
+  // Nothing leaves the device for Gemini without the user's permission.
+  await requireAiConsent();
+
   // Get current cached session.
   const {
     data: { session },

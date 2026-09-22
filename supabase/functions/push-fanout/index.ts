@@ -315,6 +315,7 @@ function titleFor(t: string, actorName: string, preview?: string): string {
       `Don't make us beg. Open the app.`,
       `psst... 🤫`,
     ]);
+    case 'report_urgent': return 'Urgent report: act within 2 hours';
     default: return 'Echo';
   }
 }
@@ -334,6 +335,7 @@ function messageFor(t: string, actorName: string, preview?: string): string {
       return parts.slice(1).join(' ').slice(0, 140);
     }
     case 'personal_nudge':
+    case 'report_urgent':
       return (preview ?? '').slice(0, 140);
     // Title-only social pings get a little day-making flavor in the body.
     case 'like': return pick(['Good echo, apparently.', 'You cooked.', 'Certified good post.', 'The people have spoken.', '']);

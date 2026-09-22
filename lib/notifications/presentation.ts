@@ -25,7 +25,7 @@ export const NOTIFICATION_TYPES = [
   'like', 'comment', 'follow', 'repost', 'mention', 'dm', 'reaction',
   'bookmark', 'quote', 'report_resolved', 'content_removed',
   'appeal_resolved', 'daily_react', 'personal_nudge', 'friend_post',
-  'social_task_update', 'friend_answer',
+  'social_task_update', 'friend_answer', 'report_urgent',
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -40,6 +40,7 @@ export const REACTION_LABEL: Record<string, string> = {
 /** Notifications with no real actor — they show a type icon, not a face. */
 export const SYSTEM_TYPES = new Set<string>([
   'report_resolved', 'content_removed', 'appeal_resolved', 'personal_nudge',
+  'report_urgent',
 ]);
 
 /** Warm editorial palette (lib/avatarPalette.ts) — one hue per type. */
@@ -61,6 +62,7 @@ export const TYPE_COLOR: Record<string, string> = {
   friend_answer: '#B08536',
   personal_nudge: '#8B6F4E',
   social_task_update: '#7A8B4E',
+  report_urgent: '#A04E4E',
 };
 
 function reactionText(preview?: string | null): string {
@@ -83,6 +85,7 @@ export function actionTextFor(type: string, preview?: string | null): string {
     case 'report_resolved': return preview ?? 'Your report has been reviewed';
     case 'content_removed': return preview ?? 'Content was removed';
     case 'appeal_resolved': return preview ?? 'Your appeal has been reviewed';
+    case 'report_urgent': return `Urgent report: ${preview ?? 'review within 2 hours'}`;
     case 'friend_post': return 'published a new echo';
     case 'friend_answer': return "answered today's question";
     case 'daily_react': return 'reacted to your answer';
@@ -124,6 +127,8 @@ export function destinationFor(type: string): NotificationDestination {
     case 'daily_react':
     case 'friend_answer': return 'daily';
     case 'personal_nudge': return 'none';
+    // Reviewed in the dashboard; a hidden echo would not open in a thread.
+    case 'report_urgent': return 'none';
     default: return 'thread';
   }
 }

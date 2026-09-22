@@ -15,6 +15,9 @@
 // all, the original record-and-upload path still runs unchanged.
 
 import { useCallback, useRef, useState } from 'react';
+import { AI_CONSENT_DECLINED_MESSAGE, ensureAiConsent } from '../lib/aiConsent';
+import { showToast } from '../components/ui/Toast';
+import { ttx } from '../src/shared/lib/i18n';
 import { Platform } from 'react-native';
 import {
   useAudioRecorder,
@@ -224,6 +227,12 @@ export function useVoiceCommand() {
 
   const start = useCallback(async () => {
     if (busyRef.current) return;
+    // Asked before recording, not after: a command should never be captured
+    // and then held hostage to a question about where it may go.
+    if (!(await ensureAiConsent())) {
+      showToast(ttx(AI_CONSENT_DECLINED_MESSAGE), '');
+      return;
+    }
     stopSpeaking(); // don't record our own read-back
 
     // Fast path. Recognition on the device means the transcript exists the

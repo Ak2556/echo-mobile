@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ensureHealthConsent, hasHealthConsent } from './healthConsent';
 import { pullMiniAppIfNewer, pushMiniApp } from './miniAppSync';
 import { pushFitnessStructured } from './fitnessRemote';
 import { celebrateFitnessMilestones } from './milestones';
@@ -240,7 +241,9 @@ export async function loadFitness(): Promise<FitnessDoc> {
   }
   try {
     const doc = normalizeDoc(JSON.parse((await AsyncStorage.getItem(FITNESS_KEY)) ?? 'null'));
-    pushFitnessStructured(doc); // backfill structured tables for existing users
+    // Backfill structured tables for existing users, but never without consent,
+    // and never by asking from a read.
+    if (hasHealthConsent()) pushFitnessStructured(doc);
     return doc;
   } catch {
     return { ...EMPTY };
@@ -249,9 +252,14 @@ export async function loadFitness(): Promise<FitnessDoc> {
 
 export async function saveFitness(doc: FitnessDoc): Promise<void> {
   await AsyncStorage.setItem(FITNESS_KEY, JSON.stringify(doc));
-  pushMiniApp('fitness', doc);
-  pushFitnessStructured(doc);
   celebrateFitnessMilestones(doc);
+  // Health data leaves the device only with explicit consent (lib/healthConsent.ts).
+  // Not awaited: the save is done; the question must not hold up the UI.
+  void ensureHealthConsent().then(ok => {
+    if (!ok) return;
+    pushMiniApp('fitness', doc);
+    pushFitnessStructured(doc);
+  });
 }
 
 export function isSameDay(iso: string, ref = new Date()): boolean {

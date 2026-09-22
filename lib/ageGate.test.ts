@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   ADULT_AGE,
@@ -39,25 +41,22 @@ describe('checkDateOfBirth', () => {
     }
   });
 
-  it('accepts a 16-17 year old but does NOT mark them adult', () => {
-    // This is the bracket DPDP still treats as a child: allowed an account,
-    // but no profiling and no targeted advertising.
+  it('rejects a 17 year old', () => {
+    // DPDP treats under-18s as children needing parental consent, which Echo
+    // does not collect, so they cannot hold an account.
     const r = checkDateOfBirth(dob('2009-01-01'), TODAY);
-    expect(r.ok).toBe(true);
-    if (r.ok) {
-      expect(r.age).toBe(17);
-      expect(r.isAdult).toBe(false);
-    }
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('too-young');
   });
 
   it('accepts exactly the minimum age', () => {
-    const r = checkDateOfBirth(dob('2010-08-22'), TODAY);
+    const r = checkDateOfBirth(dob('2008-08-22'), TODAY);
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.age).toBe(MINIMUM_AGE);
   });
 
   it('rejects one day under the minimum age', () => {
-    const r = checkDateOfBirth(dob('2010-08-23'), TODAY);
+    const r = checkDateOfBirth(dob('2008-08-23'), TODAY);
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.reason).toBe('too-young');
@@ -85,9 +84,21 @@ describe('checkDateOfBirth', () => {
 });
 
 describe('thresholds', () => {
-  it('keeps the account minimum below the profiling threshold', () => {
-    // If these ever equal each other the 16-17 bracket disappears, which
-    // changes the parental-consent story. Fail loudly if someone edits one.
+  it('never admits anyone below the profiling threshold', () => {
     expect(MINIMUM_AGE).toBeLessThanOrEqual(ADULT_AGE);
+  });
+
+  it('matches the minimum enforced in Postgres', () => {
+    // The client check is only a courtesy; the trigger is the gate. If they
+    // disagree, users see one rule and get the other.
+    const dir = join(__dirname, '..', 'supabase', 'migrations');
+    const files = readdirSync(dir).filter(f => f.endsWith('.sql')).sort();
+    let sqlMinimum: number | null = null;
+    for (const f of files) {
+      const m = readFileSync(join(dir, f), 'utf8')
+        .match(/function public\.minimum_age_years\(\)[\s\S]*?select (\d+)/);
+      if (m) sqlMinimum = Number(m[1]);
+    }
+    expect(sqlMinimum).toBe(MINIMUM_AGE);
   });
 });
