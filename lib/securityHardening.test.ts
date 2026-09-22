@@ -534,6 +534,16 @@ describe('echo media must come from an Echo-controlled host', () => {
     expect(body).toMatch(/42501/);
   });
 
+  it('the trigger can call the check it depends on', () => {
+    // media_url_allowed is revoked from authenticated on purpose. A security
+    // invoker trigger calls it AS the posting user, so every insert and update
+    // failed with "permission denied for function media_url_allowed", even for
+    // posts with no media, because hls_url is always checked. Confirmed on
+    // prod in a rolled-back transaction before this was applied.
+    expect(guard!.head).toMatch(/security\s+definer/i);
+    expect(guard!.head).toMatch(/set\s+search_path/i);
+  });
+
   it('the trigger is attached to public_echoes for insert and update', () => {
     const created = allStatements.findLastIndex(s =>
       /^create trigger b_guard_media_provenance before insert or update on public\.public_echoes /i.test(s.text));

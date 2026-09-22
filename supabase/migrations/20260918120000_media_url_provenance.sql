@@ -26,6 +26,9 @@
 -- main): adding a host must be an INSERT, not a schema migration, or the day
 -- the domain changes is the day posting breaks and nobody knows why.
 --
+-- Rechecked 2026-09-22: all 77 media_urls in production are on the worker
+-- host, and no row has an hls_url.
+--
 -- Seeded with the hosts that are actually in use. All 71 non-null media_urls
 -- rows in production on 2026-09-18 point at the worker, so no existing row is
 -- invalidated by this.
@@ -74,10 +77,15 @@ comment on function public.media_url_allowed(text) is
 
 revoke all on function public.media_url_allowed(text) from public, anon, authenticated;
 
+-- Security definer, because it calls media_url_allowed(), which clients may
+-- not execute. As security invoker it ran as the posting user and every
+-- insert and update on public_echoes failed with "permission denied for
+-- function media_url_allowed", media or not. It reads only NEW, so running as
+-- the owner grants the caller nothing.
 create or replace function public.guard_media_provenance()
 returns trigger
 language plpgsql
-security invoker
+security definer
 set search_path = public
 as $fn$
 declare
