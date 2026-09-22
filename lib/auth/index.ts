@@ -20,7 +20,7 @@ export {
   hasAuthCallbackPayload,
   parseAuthCallbackUrl,
 } from './callback';
-export { sendEmailOtp, verifyEmailOtp, signInAsDemo } from './providers/email';
+export { sendEmailOtp, verifyEmailOtp, signInWithReviewerPassword } from './providers/email';
 export { sendPhoneOtp, verifyPhoneOtp } from './providers/phone';
 export { signInWithGoogle } from './providers/google';
 export { signInWithApple, isAppleSignInAvailable } from './providers/apple';

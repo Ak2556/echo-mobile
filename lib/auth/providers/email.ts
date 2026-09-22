@@ -59,22 +59,19 @@ export async function verifyEmailOtp(email: string, code: string): Promise<Provi
 }
 
 /**
- * App Store reviewer bypass.
- * Signs in with a pre-created demo account using password auth.
- * The demo account must be created in Supabase with email+password enabled.
+ * Password sign-in for the store reviewers' account.
  *
- * Credentials are intentionally in the client bundle — this is a demo account
- * with no real user data. Set EXPO_PUBLIC_DEMO_EMAIL + EXPO_PUBLIC_DEMO_PASSWORD
- * as EAS secrets before the production build.
+ * Every public login path is a one-time code, which a reviewer cannot receive,
+ * so App Review and Play review need one password account. The credentials
+ * live only in the review notes in App Store Connect and Play Console. They
+ * used to be EXPO_PUBLIC_ build vars behind a visible "App Review" button,
+ * which baked the password into every bundle and let any user sign in to one
+ * shared public account and post as it.
  */
-export async function signInAsDemo(): Promise<ProviderResult> {
-  const email = process.env.EXPO_PUBLIC_DEMO_EMAIL ?? '';
-  const password = process.env.EXPO_PUBLIC_DEMO_PASSWORD ?? '';
-  if (!email || !password) {
-    return { error: 'Demo account not configured.' };
-  }
+export async function signInWithReviewerPassword(email: string, password: string): Promise<ProviderResult> {
+  if (!email.trim() || !password) return { error: 'Enter the email and password.' };
   const { error } = await withAuthTimeout(
-    supabase.auth.signInWithPassword({ email, password }),
+    supabase.auth.signInWithPassword({ email: email.trim(), password }),
   );
   return { error: friendlyAuthError(error?.message) };
 }
