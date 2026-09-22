@@ -137,12 +137,11 @@ Deno.serve(async (req: Request) => {
     });
   }
   // Two callers: the author's app (user JWT, must own the post, rate-limited),
-  // and the moderate_new_echo trigger / resweep cron, which send the service
-  // key. Until this existed the server path was rejected with 401 on every
-  // call — getUser() on a service key finds no user — so a post was revealed
-  // only if its author's app stayed open long enough to run the client
-  // fallback. Close the app inside ten seconds and the post stayed hidden.
-  const fromService = await isServiceCaller(token);
+  // and the moderate_new_echo trigger / resweep cron, which send the shared
+  // x-embed-echo-secret (see serviceCaller.ts). The server path had been
+  // rejected on every call, so a post was revealed only if its author's app
+  // stayed open long enough to run the client fallback.
+  const fromService = await isServiceCaller(req.headers.get("x-embed-echo-secret"));
   let callerId: string | null = null;
   if (!fromService) {
     const { data: authData, error: authErr } = await supabase.auth.getUser(token);
