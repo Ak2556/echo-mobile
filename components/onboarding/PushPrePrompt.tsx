@@ -18,7 +18,7 @@ interface PushPrePromptProps {
  * Apple HIG recommends a pre-prompt so users have context — once they tap
  * "Don't allow" on the native dialog there's no second chance. The flow:
  *
- *   1. User publishes their first Echo
+ *   1. PushPromptGate (tab layout) or a first publish decides to offer
  *   2. This sheet appears with the value prop
  *   3. They tap "Turn on notifications" → caller calls Notifications.
  *      requestPermissionsAsync()
@@ -61,7 +61,7 @@ export function PushPrePrompt({ visible, onAccept, onDecline }: PushPrePromptPro
                 maxWidth: 320,
               }}
             >
-              {ttx("We'll ping you when someone reacts, comments, or quotes your Echoes. Not for anything else.")}
+              {ttx("Get today's question, new messages, and replies to your Echoes. Choose exactly which ones in Settings.")}
             </Text>
 
             {/* Wrapper View owns the accent fill; the Pressable stays bare so

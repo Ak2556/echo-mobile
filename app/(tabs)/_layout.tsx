@@ -20,6 +20,7 @@ import { getRecentTools, recordToolOpen } from '../../lib/miniAppRecents';
 import { miniAppById } from '../../lib/miniAppCatalog';
 import { rememberPrimaryTab } from '../../lib/navigationMemory';
 import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
+import { PushPromptGate } from '../../components/onboarding/PushPromptGate';
 
 const HIDDEN_ROUTES = new Set(['notifications']);
 const DESKTOP_ROUTES = new Set(['home', 'explore', 'watch', 'chat', 'you', 'notifications', 'apps']);
@@ -501,6 +502,7 @@ export default function TabLayout() {
   const { t } = useI18n();
 
   return (
+    <>
     <Tabs
       tabBar={props => <FloatingTabBar {...props} />}
       screenOptions={{
@@ -519,5 +521,7 @@ export default function TabLayout() {
       <Tabs.Screen name="notifications" options={{ title: t('nav.alerts'), href: null }} />
       <Tabs.Screen name="you" options={{ title: t('nav.you') }} />
     </Tabs>
+    <PushPromptGate />
+    </>
   );
 }
