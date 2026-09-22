@@ -46,6 +46,7 @@ export function channelForKind(kind: string | null | undefined): string {
 
     case 'appeal_resolved':
     case 'content_removed':
+    case 'report_urgent':
       return CHANNEL_SYSTEM;
 
     default:
@@ -68,7 +69,7 @@ export function categoryForKind(kind: string | null | undefined): string | null 
  * battery-drain warning.
  */
 export function priorityForKind(kind: string | null | undefined): 'high' | 'normal' {
-  return kind === 'dm' || kind === 'appeal_resolved' || kind === 'content_removed'
+  return kind === 'dm' || kind === 'appeal_resolved' || kind === 'content_removed' || kind === 'report_urgent'
     ? 'high'
     : 'normal';
 }
@@ -82,7 +83,8 @@ export function priorityForKind(kind: string | null | undefined): 'high' | 'norm
  * their account — those are not engagement, they are the product working.
  */
 export function bypassesDailyCap(kind: string | null | undefined): boolean {
-  return kind === 'dm' || kind === 'appeal_resolved' || kind === 'content_removed';
+  // report_urgent goes to moderators only, and has a 2-hour legal clock on it.
+  return kind === 'dm' || kind === 'appeal_resolved' || kind === 'content_removed' || kind === 'report_urgent';
 }
 
 /**

@@ -24,6 +24,7 @@ vi.mock('./supabase', () => ({
 
 import { isRateLimitError, normalizeEchoAIError, parseEchoAISSEPayload, streamEchoAI } from './api';
 import { supabase } from './supabase';
+import { answerAiConsent, useAiConsent } from './aiConsent';
 
 const getSession = supabase.auth.getSession as unknown as Mock;
 const refreshSession = supabase.auth.refreshSession as unknown as Mock;
@@ -99,6 +100,16 @@ describe('streamEchoAI', () => {
   beforeEach(() => {
     getSession.mockReset();
     refreshSession.mockReset();
+    useAiConsent.setState({ answer: 'granted', pending: null });
+  });
+
+  it('asks before sending anything, and sends nothing when refused', async () => {
+    useAiConsent.setState({ answer: 'undecided', pending: null });
+    const run = streamEchoAI({ message: 'hi', onEvent: () => {} });
+    expect(useAiConsent.getState().pending).not.toBeNull();
+    answerAiConsent(false);
+    await expect(run).rejects.toThrow(/Settings → Privacy/);
+    expect(getSession).not.toHaveBeenCalled();
   });
 
   it('throws a clear error when there is no session', async () => {

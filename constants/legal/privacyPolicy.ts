@@ -2,7 +2,9 @@
  * Canonical Privacy Policy content (rendered by app/privacy.tsx).
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * STATUS: DRAFT v3.0 — PREPARED FOR EXTERNAL COUNSEL REVIEW. NOT YET IN FORCE.
+ * STATUS: v3.1 — IN FORCE FROM 2026-09-22. Reviewed against the IT Amendment
+ * Rules 2026, SPDI Rules 2011 and App Store 5.1.2(i); counsel sign-off still
+ * recommended.
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * v2.0 described a system Echo does not run. Every correction below was
@@ -35,9 +37,11 @@
  * OPEN ITEMS FOR COUNSEL
  *   1. ENTITY. All placeholders live in constants/legal/entity.ts.
  *      grep -rn "\[\[" constants/legal/
- *   2. MINIMUM AGE. §11 states 16 with no profiling under 18, matching the age
- *      gate in 20260822140000_age_gate.sql. If counsel requires 18+ in India,
- *      change MINIMUM_AGE in constants/legal/ageGate.ts and the SQL together.
+ *   2. MINIMUM AGE. DECIDED 2026-09-22: 18+ (ageGate.ts + 20260922130000).
+ *   5. GOOGLE PAID TERMS. §4 says Google does not use inputs to improve its
+ *      products. That is true only while the Gemini API project has billing
+ *      linked; on the unpaid tier Google may use inputs and human reviewers
+ *      may read them. Keep billing linked or rewrite §4.
  *   3. CROSS-BORDER. Data sits in Japan; AI, analytics and crash reporting are
  *      in the US. Confirm the DPDP transfer position and whether an EU/UK
  *      transfer mechanism is needed for the storefronts Echo will list in.
@@ -55,8 +59,8 @@ import {
 } from './entity';
 import { MINIMUM_AGE, ADULT_AGE } from './ageGate';
 
-export const PRIVACY_UPDATED = 'September 6, 2026';
-export const PRIVACY_VERSION = '3.0-draft';
+export const PRIVACY_UPDATED = 'September 22, 2026';
+export const PRIVACY_VERSION = '3.1';
 
 export const PRIVACY_POLICY_MD = `# Privacy Policy
 
@@ -77,7 +81,8 @@ It is written to be read, not to be survived. If anything here is unclear, ask u
 - **Content** — echoes (posts), comments, reactions, bookmarks, direct messages, and any images or video you upload.
 - **Voice** — when you use a voice command, the audio you record.
 - **Facial images** — only if you apply for a verified badge: a pose-challenge selfie, compared against your profile photo.
-- **Mini-app data** — whatever you put into the tools: habits, tasks, notes, expenses, and **body and health data** such as weight, measurements, meals, water and workouts.
+- **Mini-app data** — whatever you put into the tools: habits, tasks, notes and expenses.
+- **Body and health data** — weight, measurements, meals, water and workouts from the Fitness tool. This is kept **on your device only** unless you allow us to back it up; we ask the first time you save it.
 - **Marketplace listings** — items you list, their prices and photos.
 - **iOS waiting list** — if you ask us on downloadecho.com to tell you when the iPhone app is ready, your email address, and nothing else. It is used for that one message and is not linked to any account, not used for any other mailing, and not shared. Tell us at **${SUPPORT_EMAIL}** and we delete it; we delete it ourselves once the iPhone app has shipped.
 
@@ -109,8 +114,9 @@ We do not collect precise GPS location, calendar, health data from Apple Health 
 | Account, content, messaging | To provide the service you asked for | Contract |
 | Date of birth | Age assurance and child protection | Legal obligation; legitimate interests |
 | Feed ranking and recommendations | To show you relevant content | Legitimate interests — you can switch to the Latest feed |
-| AI features | To answer you and act on your instruction | Contract |
+| AI features | To answer you and act on your instruction | Consent — asked before first use |
 | Face verification | To confirm a verified badge is a real person | Consent — you choose to apply |
+| Health data backup | Sync across your devices, and coaching | Explicit consent — asked before anything is uploaded |
 | Voice commands | To carry out what you said | Consent — you choose to speak |
 | Advertising | To fund a free tier | Legitimate interests; never for under-${ADULT_AGE}s |
 | Crash diagnostics | To keep the app working | Legitimate interests |
@@ -123,7 +129,11 @@ Where we rely on consent you can withdraw it at any time; that does not affect p
 
 ## 4. AI features, and what leaves the app
 
-Echo's assistant, voice commands, interface translation, content-moderation classification and recommendations are powered by **Google Gemini**, reached through **OpenRouter**. When you use these features the relevant input leaves Echo's systems:
+Echo's assistant, voice commands, interface translation, content-moderation classification and recommendations are powered by **Google Gemini**. Requests go to Google directly; **OpenRouter** carries them only if Google's service is unavailable.
+
+**We ask before the first time.** The first time you use the assistant, a voice command, a rewrite or coaching, Echo tells you your input will go to Google and asks your permission. Nothing is sent if you decline, and you can change your answer in **Settings → Privacy**.
+
+When you use these features the relevant input leaves Echo's systems:
 
 | Feature | What is sent |
 |---|---|
@@ -133,8 +143,10 @@ Echo's assistant, voice commands, interface translation, content-moderation clas
 | Moderation | Text you are about to publish |
 | Verified badge | Your profile photo and your pose-challenge selfie |
 | Recommendations | Your content, to produce embeddings |
+| Rewrites and coaching | The text you ask to rewrite; your mini-app entries for coaching |
+| Thinking profile | Your public posts, to summarise how you write |
 
-**We do not sell your data and we do not use your content to train third-party foundation models.** Providers may retain inputs briefly for abuse monitoring under their own terms.
+**We do not sell your data.** We use Google's **paid** Gemini API, under which Google does not use your inputs or its responses to improve its products. Providers may retain inputs briefly for abuse monitoring under their own terms.
 
 **Please do not put passwords, payment details or government identifiers into AI prompts.**
 
@@ -162,8 +174,8 @@ Echo shows advertising in the feed. It is **first-party**: we sell placements ou
 |---|---|---|
 | Supabase | Database, authentication, realtime | Japan (ap-northeast-1) |
 | Cloudflare | Media storage (R2) and the upload edge | Global network |
-| OpenRouter | Routes AI requests to the model provider | United States |
-| Google (Gemini) | The model that generates AI output | United States |
+| Google (Gemini) | Generates AI output; receives AI inputs directly | United States |
+| OpenRouter | Fallback route for AI requests when Google is unavailable | United States |
 | Razorpay | Payments for advertising purchases | India |
 | RevenueCat | Subscription entitlements | United States |
 | Apple · Google | App distribution, in-app purchases, push delivery | United States |
@@ -213,17 +225,15 @@ We keep only what we are legally required to keep, and content others have alrea
 
 ## 11. Children
 
-You must be at least **${MINIMUM_AGE}** to use Echo. We ask for your date of birth at sign-up and verify it against that minimum.
+Echo is for adults. You must be at least **${MINIMUM_AGE}** to use it. We ask for your date of birth at sign-up and enforce the minimum on our servers. India's Digital Personal Data Protection Act, 2023 treats anyone under ${ADULT_AGE} as a child whose data may be processed only with verifiable parental consent; we do not collect that consent, so we do not admit anyone under ${ADULT_AGE}.
 
-**If you are under ${ADULT_AGE}**, we treat you as a child: we show you **no advertising**, we do **not** profile your behaviour, and personalised notifications stay off. In **India**, the Digital Personal Data Protection Act, 2023 requires verifiable consent from a parent or guardian before a child's data is processed.
-
-If you believe a child has an account without the required consent, tell us at **${SUPPORT_EMAIL}** and we will act.
+If you believe someone under ${MINIMUM_AGE} has an account, tell us at **${SUPPORT_EMAIL}** and we will close it and delete its data. Our **Child Safety Standards** (Settings → About) explain how we handle child sexual abuse and exploitation.
 
 ---
 
 ## 12. Your rights
 
-Wherever you live you can, in the app: edit your profile, delete any post, comment or message, clear your AI history, turn analytics off, turn personalised notifications off, and delete your account.
+Wherever you live you can, in the app: edit your profile, delete any post, comment or message, clear your AI history, turn analytics off, turn personalised notifications off, withdraw AI consent, stop backing up health data (which deletes our copy), and delete your account.
 
 Depending on your jurisdiction you also have rights to **access, correct, erase, restrict, port or object to** processing, and to **withdraw consent**. Under India's DPDP Act you additionally have the right to **nominate** someone to exercise your rights if you die or become incapacitated, and the right to a **grievance redressal** process.
 
@@ -239,7 +249,7 @@ To exercise a right, email **${DPO_EMAIL}** with "Privacy request" in the subjec
 > **Email:** ${GRIEVANCE_OFFICER_EMAIL}
 > **Address:** ${ENTITY_ADDRESS}
 
-We acknowledge complaints within **24 hours** and resolve them within **15 days**.
+We acknowledge complaints within **24 hours** and resolve them within **7 days**. Complaints asking us to remove unlawful content are resolved within **36 hours**. Where content shows you nude or in a sexual act, impersonates you, or is an altered or morphed image of you, we act within **2 hours** of your complaint: report it in the app as **Intimate images of me shared without consent** or **Impersonation**, and the post is hidden immediately while we review it. Lawful orders from a court or the appropriate Government are acted on within **3 hours**.
 
 ---
 

@@ -3,6 +3,7 @@
 // tasks). The function reads the user's own stats under RLS server-side.
 
 import { supabase } from './supabase';
+import { requireAiConsent } from './aiConsent';
 
 export type CoachApp = 'habits' | 'fitness' | 'expenses' | 'tasks';
 export const COACH_APPS: CoachApp[] = ['habits', 'fitness', 'expenses', 'tasks'];
@@ -20,6 +21,7 @@ export function coachAppFor(idOrName: string): CoachApp | null {
 }
 
 export async function askMiniAppCoach(app: CoachApp): Promise<CoachResult> {
+  await requireAiConsent();
   const { data, error } = await supabase.functions.invoke('mini-app-coach', { body: { app } });
   if (error) throw error;
   if (!data || typeof data.coaching !== 'string' || !data.coaching) {

@@ -7,23 +7,18 @@
  * constants exist so the UI can validate before a round trip and explain the
  * rule to the user; they must be kept in step with the SQL.
  *
- * ⚠ OPEN COUNSEL DECISION
- * MINIMUM_AGE is 16, matching the Terms. India's DPDP Act 2023 treats everyone
- * under 18 as a child requiring verifiable parental consent, so counsel may
- * decide Echo should require 18+ in India rather than 16+ with a consent flow.
+ * DECIDED 2026-09-22: 18+. India's DPDP Act 2023 treats everyone under 18 as
+ * a child requiring verifiable parental consent. Echo launches India-first and
+ * does not build a parental-consent flow, so it does not admit under-18s. The
+ * SQL side is 20260922130000_launch_legal_gaps.sql; lib/ageGate.test.ts fails
+ * if the two ever disagree.
  *
- * If the answer is "18+ in India":
- *   1. change MINIMUM_AGE below to 18
- *   2. change `minimum_age_years()` in SQL to match
- * Nothing else moves — enforcement already keys off these two functions.
- *
- * If the answer is "16+ with parental consent", the remaining work is a
- * verifiable parental-consent flow for 16–17s. Restricting profiling for that
- * bracket is already implemented either way.
+ * To admit 16-17s later: build verifiable parental consent first, then lower
+ * both. Profiling and ads stay off under ADULT_AGE either way.
  */
 
 /** Minimum age to hold an Echo account at all (Terms of Service §2). */
-export const MINIMUM_AGE = 16;
+export const MINIMUM_AGE = 18;
 
 /**
  * The age at which DPDP stops treating a user as a child. Below this, Echo

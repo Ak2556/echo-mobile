@@ -4,7 +4,8 @@
  * (react-native-markdown-display) and on web.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * STATUS: DRAFT v3.0 — PREPARED FOR EXTERNAL COUNSEL REVIEW. NOT YET IN FORCE.
+ * STATUS: v3.2 — IN FORCE FROM 2026-09-22. Reviewed against the IT Amendment
+ * Rules 2026 and store policy; external counsel sign-off still recommended.
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * This is a substantially deeper rewrite of v2.0. It adds the sections a
@@ -22,7 +23,7 @@
  *   1. ENTITY + GOVERNING LAW. All placeholders live in constants/legal/entity.ts.
  *      `grep -rn "\[\[" constants/legal/` lists every unresolved value.
  *
- *   2. MINIMUM AGE. §2 sets 16 globally, with a higher bar where local law
+ *   2. MINIMUM AGE. DECIDED 2026-09-22: 18+ (below is the history). §2 set 16 globally, with a higher bar where local law
  *      requires it. India's DPDP Act 2023 treats under-18s as children needing
  *      verifiable parental consent and restricts tracking and targeted ads for
  *      them.
@@ -58,9 +59,10 @@ import {
   SUPPORT_EMAIL,
   DSA_EMAIL,
 } from './entity';
+import { MINIMUM_AGE } from './ageGate';
 
-export const TERMS_UPDATED = 'August 24, 2026';
-export const TERMS_VERSION = '3.1-draft';
+export const TERMS_UPDATED = 'September 22, 2026';
+export const TERMS_VERSION = '3.2';
 
 /** Language the Terms are authoritative in. See §25. */
 export const TERMS_AUTHORITATIVE_LANGUAGE = 'en';
@@ -89,13 +91,13 @@ Please read §18 (Disclaimers), §19 (Limitation of liability), §20 (Indemnity)
 
 ## 2. Eligibility and age
 
-You must be at least **16 years old** to use the Service.
+You must be at least **${MINIMUM_AGE} years old** to use the Service. We ask for your date of birth at sign-up and enforce the minimum on our servers.
 
-Where the law that applies to you sets a higher age for consent to the processing of personal data, that higher age applies instead. In **India**, the Digital Personal Data Protection Act, 2023 treats anyone under **18** as a child: if you are under 18 and in India, a parent or legal guardian must provide verifiable consent before you use the Service, and we will not use your data for tracking, behavioural monitoring or targeted advertising.
+Echo is for adults. India's Digital Personal Data Protection Act, 2023 treats anyone under 18 as a child whose data may be processed only with verifiable parental consent; Echo does not collect that consent, so it does not admit anyone under 18.
 
 You confirm that you are not barred from using the Service under any applicable law, and that you are not subject to sanctions that would prohibit us from providing it to you.
 
-If we learn that an Account belongs to someone below the applicable minimum age without the required consent, we will suspend it and delete the associated personal data.
+If we learn that an Account belongs to someone under ${MINIMUM_AGE}, we will close it and delete the associated personal data.
 
 ---
 
@@ -137,8 +139,9 @@ The licence ends when you delete the Content or your Account, except that (a) we
 Do not use the Service to:
 
 - Harass, threaten, bully, stalk, dox or impersonate anyone.
-- Post sexual content involving minors. We remove it, terminate the Account and report to the relevant authorities, including the National Center for Missing & Exploited Children.
-- Post non-consensual intimate imagery.
+- Post sexual content involving minors, or groom, sexualise or exploit a child in any way. We remove it, terminate the Account and report to the relevant authorities, including through India's National Cyber Crime Reporting Portal and to the National Center for Missing & Exploited Children. See our **Child Safety Standards** (Settings → About).
+- Post non-consensual intimate imagery, or sexual or nude imagery of any real person, including images created or altered with AI.
+- Post audio, images or video created or altered with AI or other tools that falsely show a real person saying or doing something, forge a document or record, or deceive people about a real event.
 - Incite violence, terrorism, or self-harm, or glorify those who commit them.
 - Promote hatred against people based on religion, caste, ethnicity, national origin, sex, gender identity, sexual orientation, disability or serious disease.
 - Infringe copyright, trademark or other intellectual-property rights.
@@ -149,6 +152,8 @@ Do not use the Service to:
 - Circumvent rate limits, moderation systems, age restrictions or bans.
 - Upload malware, or anything designed to disrupt the Service or other users' devices.
 - Use the Service in a way that breaks any law that applies to you.
+
+**Synthetic and AI-generated media.** If you post audio, images or video that were generated or altered with AI or similar tools so that they appear real, you must say so when you post, and you must not remove or hide any label or marker that identifies them as synthetic. Posting unlawful synthetically generated information can lead to its removal, suspension or termination of your Account, disclosure of your identity to a victim or to authorities where the law requires it, and liability under the Information Technology Act, 2000, the Bharatiya Nyaya Sanhita, 2023 and other laws. We are required to remind you of these rules, and will do so periodically.
 
 ---
 
@@ -181,7 +186,7 @@ If you see something that breaks these Terms, use the report action on the post,
 
 Echo includes an AI assistant, voice commands, automatic translation, content-moderation classification and recommendations.
 
-**How your data is used.** When you use AI Features, the relevant input — your text, and for voice commands your audio recording — is sent to a third-party model provider (currently Google Gemini, routed via OpenRouter) to produce a response. Details are in the Privacy Policy. **We do not sell your Content, and we do not use it to train third-party foundation models.**
+**How your data is used.** When you use AI Features, the relevant input — your text, and for voice commands your audio recording — is sent to a third-party model provider (currently **Google Gemini**, reached directly, with OpenRouter as a fallback route) to produce a response. We ask your permission before the first time, and you can withdraw it in **Settings → Privacy**. Details are in the Privacy Policy. **We do not sell your Content, and it is not used to train third-party foundation models.**
 
 **Accuracy.** AI output can be wrong, incomplete, out of date or biased, and can state falsehoods confidently. Do not rely on it as a substitute for a qualified professional. **The assistant is not a doctor, lawyer, accountant, financial adviser or therapist.** If you are in crisis, contact your local emergency service.
 
@@ -216,7 +221,7 @@ We may remove a listing at any time. Disputes between buyers and sellers must be
 
 ## 11. Subscriptions and payments
 
-Some features require a paid subscription.
+Echo does not currently sell subscriptions or other in-app purchases. If it does in future, these terms apply to them.
 
 - **Billing.** Subscriptions bought inside the mobile app are processed by **Apple** or **Google** under their terms, not by us. We do not receive or store your payment card details.
 - **Auto-renewal.** Subscriptions renew automatically for the same period unless you cancel at least 24 hours before the current period ends.
@@ -363,7 +368,7 @@ Under the Information Technology (Intermediary Guidelines and Digital Media Ethi
 > **Email:** ${GRIEVANCE_OFFICER_EMAIL}
 > **Address:** ${ENTITY_ADDRESS}
 
-We acknowledge complaints within **24 hours** and resolve them within **15 days** of receipt. Complaints about the removal of Content, or about non-consensual intimate imagery, are handled on the shorter timelines the Rules require.
+We acknowledge complaints within **24 hours** and resolve them within **7 days**. Complaints asking us to remove unlawful content are resolved within **36 hours**. Where content shows you nude or in a sexual act, impersonates you, or is an altered or morphed image of you, we act within **2 hours** of your complaint: report it in the app as **Intimate images of me shared without consent** or **Impersonation**, and the post is hidden immediately while we review it. Lawful orders from a court or the appropriate Government are acted on within **3 hours**.
 
 ---
 

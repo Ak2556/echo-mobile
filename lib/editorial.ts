@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { requireAiConsent } from './aiConsent';
 
 export type EditorialAction = 'clarify' | 'shorten' | 'insight' | 'hook' | 'privacy';
 
@@ -47,6 +48,7 @@ export async function rewriteEditorial(
   text: string,
   prompt: string,
 ): Promise<string> {
+  await requireAiConsent();
   const invocation = supabase.functions.invoke<{ text?: string; error?: string }>(
     'editorial-rewrite',
     { body: { action, text, prompt } },

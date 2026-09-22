@@ -94,3 +94,25 @@ export async function fetchFitnessStats(): Promise<FitnessStat | null> {
     return null;
   }
 }
+
+const FITNESS_TABLES = [
+  'fitness_meal', 'fitness_workout', 'fitness_water', 'fitness_weight',
+  'fitness_measurement', 'fitness_goals',
+];
+
+/**
+ * Delete every server copy of this user's health data: the synced document and
+ * the structured tables. Used when health-data consent is withdrawn. The copy
+ * on the device is untouched. Resolves false if any delete failed.
+ */
+export async function deleteRemoteFitness(): Promise<boolean> {
+  if (!isSupabaseRemote()) return true;
+  const { data: session } = await supabase.auth.getSession();
+  const uid = session?.session?.user?.id;
+  if (!uid) return false;
+  const results = await Promise.all([
+    supabase.from('mini_app_data').delete().eq('user_id', uid).eq('app', 'fitness'),
+    ...FITNESS_TABLES.map(t => supabase.from(t).delete().eq('user_id', uid)),
+  ]);
+  return results.every(r => !r.error);
+}

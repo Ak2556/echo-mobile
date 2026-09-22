@@ -15,6 +15,8 @@ import { startOutbox } from '../lib/outboxProcessor';
 import { drainMiniLink } from '../lib/minilink/drain';
 import { getAnalyticsConsent } from '../lib/consent';
 import { ConsentBanner } from '../components/ConsentBanner';
+import { AiConsentSheet } from '../components/ai/AiConsentSheet';
+import { HealthConsentSheet } from '../components/consent/HealthConsentSheet';
 import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
 import * as Notifications from 'expo-notifications';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
@@ -467,7 +469,6 @@ function RootLayout() {
           <Stack.Screen name="blocked-users" options={{ presentation: 'card' }} />
           <Stack.Screen name="notification-prefs" options={{ presentation: 'card' }} />
           <Stack.Screen name="delete-account" options={{ presentation: 'card' }} />
-          <Stack.Screen name="upgrade" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="story" options={{ presentation: 'transparentModal', animation: 'fade' }} />
           <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'fade' }} />
           <Stack.Screen name="create-story" options={{ presentation: 'modal', animation: 'fade' }} />
@@ -498,6 +499,8 @@ function RootLayout() {
         <TutorialOverlay />
         <ToastProvider />
         <ConsentBanner />
+        <AiConsentSheet />
+        <HealthConsentSheet />
         {commandPaletteOpen ? <CommandPalette /> : null}
       </GestureHandlerRootView>
     </PersistQueryClientProvider>

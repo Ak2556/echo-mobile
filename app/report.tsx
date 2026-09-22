@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Alert, TextInput as RNTextInput } from 'react-native';
+import { View, Text, Alert, ScrollView, TextInput as RNTextInput } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -7,20 +7,12 @@ import { Warning } from 'phosphor-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
+import { REPORT_REASONS as REASONS, URGENT_REPORT_REASONS } from '../lib/reportReasons';
 import { submitRemoteReport } from '../lib/supabaseEchoApi';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useTheme } from '../src/shared/lib/theme';
 import { ttx } from '../src/shared/lib/i18n';
 
-const REASONS = [
-  'Spam or misleading',
-  'Harassment or bullying',
-  'Hate speech',
-  'Violence or threats',
-  'Inappropriate content',
-  'Impersonation',
-  'Other',
-];
 
 export default function ReportScreen() {
   const router = useRouter();
@@ -47,7 +39,13 @@ export default function ReportScreen() {
           details: details.trim() || undefined,
         });
       }
-      showToast('Report submitted. Thank you.', 'Submitted');
+      const urgent = URGENT_REPORT_REASONS.includes(selectedReason);
+      showToast(
+        urgent && targetType === 'echo'
+          ? ttx('Reported. The post is hidden while we review it.')
+          : ttx('Report submitted. Thank you.'),
+        'Submitted',
+      );
       router.back();
     } catch (e) {
       Alert.alert('Could not submit', (e as Error).message);
@@ -60,7 +58,7 @@ export default function ReportScreen() {
     <ResponsiveScreen>
       <ScreenHeader title={ttx("Report")} />
 
-      <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <Animated.View entering={FadeInDown.delay(50).duration(220)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <Warning color="#F59E0B" size={20} />
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginLeft: 8 }}>
@@ -100,7 +98,7 @@ export default function ReportScreen() {
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
                 )}
               </View>
-              <Text style={{ color: colors.text, fontSize: fontSizes.body }}>{reason}</Text>
+              <Text style={{ color: colors.text, fontSize: fontSizes.body, flexShrink: 1 }}>{ttx(reason)}</Text>
             </AnimatedPressable>
           </Animated.View>
         ))}
@@ -138,7 +136,7 @@ export default function ReportScreen() {
             </Text>
           </AnimatedPressable>
         </Animated.View>
-      </View>
+      </ScrollView>
     </ResponsiveScreen>
   );
 }
