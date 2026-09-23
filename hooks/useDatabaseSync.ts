@@ -3,6 +3,23 @@ import { AppState } from 'react-native';
 import { syncDatabase } from '../src/shared/database/sync';
 import { useAppStore } from '../store/useAppStore';
 
+/**
+ * How often to sync while the app sits open.
+ *
+ * This was 15 seconds, which is 240 full syncs an hour per open app — 2.4
+ * million an hour at ten thousand concurrent — almost all of them discovering
+ * that nothing changed. It was that tight because live updates never arrived:
+ * the app subscribes to direct_messages with postgres_changes, but the table
+ * was not in the realtime publication, so the subscription was silently dead
+ * (fixed in 20260923180000_realtime_publication.sql).
+ *
+ * With messages arriving live, this poll is the safety net for a dropped
+ * socket rather than the delivery mechanism, so a minute is plenty. Coming
+ * back to the foreground still syncs immediately, which is when staleness is
+ * actually visible.
+ */
+const POLL_INTERVAL_MS = 60_000;
+
 export function useDatabaseSync() {
   const userId = useAppStore(s => s.userId);
 
@@ -19,10 +36,10 @@ export function useDatabaseSync() {
       }
     });
 
-    // Poll every 15 seconds
+    // Safety net for a dropped realtime socket, not the delivery path.
     const interval = setInterval(() => {
       syncDatabase().catch(err => console.warn('Polling DB sync failed:', err));
-    }, 15000);
+    }, POLL_INTERVAL_MS);
 
     return () => {
       subscription.remove();
