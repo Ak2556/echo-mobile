@@ -21,6 +21,7 @@ import { miniAppById } from '../../lib/miniAppCatalog';
 import { rememberPrimaryTab } from '../../lib/navigationMemory';
 import { useI18n, type TranslationKey } from '../../src/shared/lib/i18n';
 import { PushPromptGate } from '../../components/onboarding/PushPromptGate';
+import { DateOfBirthGate } from '../../components/onboarding/DateOfBirthGate';
 
 const HIDDEN_ROUTES = new Set(['notifications']);
 const DESKTOP_ROUTES = new Set(['home', 'explore', 'watch', 'chat', 'you', 'notifications', 'apps']);
@@ -522,6 +523,7 @@ export default function TabLayout() {
       <Tabs.Screen name="you" options={{ title: t('nav.you') }} />
     </Tabs>
     <PushPromptGate />
+    <DateOfBirthGate />
     </>
   );
 }
