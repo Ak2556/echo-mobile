@@ -251,9 +251,12 @@ Deno.serve(async (req: Request) => {
     // the gap is visible in function logs rather than implied by silence.
     console.warn(`[embed-echo] ${unchecked.length} media item(s) on ${echoId} not visually checked`);
   }
+  // moderated_at records that a verdict was reached, whatever it was. Without
+  // it a flagged post is indistinguishable from one still waiting, and the ops
+  // probe cannot tell a stuck publish path from ordinary moderation.
   const { error: gateErr } = await supabase
     .from("public_echoes")
-    .update({ check_content: verdict.ok })
+    .update({ check_content: verdict.ok, moderated_at: new Date().toISOString() })
     .eq("id", echoId);
   if (gateErr) {
     // Keep embedding available even if moderation persistence fails.
