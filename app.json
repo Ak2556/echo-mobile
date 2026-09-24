@@ -158,6 +158,8 @@
       "./plugins/withAndroidEntryPoints",
       "./plugins/withAndroidReleaseSigning",
       "./plugins/withEchoContactCard",
+      "./plugins/withIosSceneLifecycle",
+      "./plugins/withIosPodDeploymentTarget",
       "expo-apple-authentication"
     ],
     "experiments": {
