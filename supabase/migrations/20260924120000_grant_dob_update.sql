@@ -1,0 +1,21 @@
+-- Let a signed-in user write their own date of birth.
+--
+-- 20260622100000_identity_surface_hardening revoked table-level
+-- select/insert/update on public.profiles, so every column authenticated may
+-- touch needs an explicit column grant. 20260822140000_age_gate then added
+-- date_of_birth, revoked SELECT on it and granted SELECT to service_role — but
+-- never granted UPDATE to authenticated.
+--
+-- The result: `update public.profiles set date_of_birth = ...` from the app has
+-- always failed with "permission denied for table profiles", so the
+-- non-dismissible DOB gate could never be satisfied and no user has ever had a
+-- date of birth on file. That is also why feed personalisation was off for
+-- everyone — it keys off an age nobody could supply.
+--
+-- Granting the column is safe: trg_validate_date_of_birth still runs BEFORE
+-- INSERT OR UPDATE and rejects future, implausible and under-age dates, forces
+-- personalized_notifications off below the DPDP adult threshold, and stamps
+-- age_collected_at. SELECT stays revoked, so the value remains unreadable by
+-- clients; user_age_years() is still the only way to ask.
+
+grant update (date_of_birth) on public.profiles to authenticated;
