@@ -417,3 +417,28 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# Endpoints that are reached without a user session.
+#
+# These four already run this way in production — this only records the live
+# setting in source. Without these blocks `supabase functions deploy` applies its
+# own default and flips them, which breaks each one: learn-guest-booking is called
+# by guests who have no session at all, and daily-question-push and
+# personalized-fanout are invoked by pg_cron through pg_net, which sends no user
+# JWT. Each still authorises its own callers inside the handler.
+#
+# Not hypothetical: the echo-mumbai project was deployed from this repo while
+# these blocks were missing, and all 23 of its functions came out requiring a JWT.
+# Keeping the setting in source is what stops a routine redeploy from turning
+# three working endpoints into 401s.
+[functions.learn-guest-booking]
+verify_jwt = false
+
+[functions.daily-question-push]
+verify_jwt = false
+
+[functions.personalized-fanout]
+verify_jwt = false
+
+[functions.voice-command]
+verify_jwt = false
