@@ -523,7 +523,7 @@ Stated plainly, because each is easy to assume the other way.
 
 | Limitation | Detail |
 |---|---|
-| **No end-to-end encrypted messaging** | The DM path writes plaintext. A half-finished keypair module was removed in `b0943da` precisely so nobody would mistake it for a working feature. Please do not describe Echo as end-to-end encrypted — the *session* is encrypted at rest, which is a different claim. |
+| **End-to-end encryption is 1:1 text only, and ships off** | One-to-one text, link, contact and shared-Echo DMs are sealed on the device (`lib/e2ee/`) when the remote flag `e2eeSend` is on and the recipient has a published device key. Photos, voice, groups and older messages are not. The flag ships off; until it is flipped, the DM path writes plaintext. What may and may not be claimed publicly is in `docs/runbook/e2ee-rollout.md`. |
 | **Video is not visually moderated** | Text and still images pass an LLM gate before reaching the feed. A still-image model cannot read an mp4, and no frame is extracted during transcode. |
 | **Subscriptions are not wired** | The RevenueCat webhook and entitlements table exist server-side, but the client ships no purchase SDK and `getCurrentPlan()` returns `free` for everyone. |
 | **Translation data is being regenerated** | The interface localisation works; the strings do not yet. A generator seeded every language from the Bengali block rather than English and dropped the last character of each value — 228 shipped strings end in a bare virama, impossible in every Indic script involved. The pipeline is fixed and validated; the re-run from English is pending. |
@@ -547,7 +547,7 @@ Coverage tests will fail the build if a new screen has no voice phrase, a new mu
 
 Found a vulnerability? Please report it privately rather than opening a public issue. Reach the maintainer through [downloadecho.com](https://downloadecho.com) or `security@downloadecho.com`.
 
-Row-level security, session encryption and the PKCE configuration are described under [Security posture](#security-posture). Note the two claims Echo does **not** make: end-to-end encrypted messaging, and visual moderation of video.
+Row-level security, session encryption and the PKCE configuration are described under [Security posture](#security-posture). Note the two claims Echo does **not** make: end-to-end encryption beyond one-to-one text messages (see `docs/runbook/e2ee-rollout.md`), and visual moderation of video.
 
 ---
 
