@@ -11,6 +11,7 @@ import {
 import { selectWithDiversity, type SelectableItem } from './feedSelection';
 import { interestRows } from './interestsSync';
 import { captureException } from './monitoring';
+import { insertDirectMessage, type DMKind } from './e2ee/messages';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
 import { APP_LANGUAGES } from './languages';
@@ -3382,7 +3383,7 @@ export async function leaveGroup(conversationId: string): Promise<void> {
 async function insertRemoteDMInConversation(
   conversationId: string,
   fields: {
-    kind: RemoteDirectMessage['kind'];
+    kind: DMKind;
     text?: string | null;
     mediaUrl?: string | null;
     sharedEchoId?: string | null;
@@ -3392,18 +3393,15 @@ async function insertRemoteDMInConversation(
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
 
-  const { error } = await supabase
-    .from('direct_messages')
-    .insert({
-      conversation_id: conversationId,
-      sender_id: uid,
-      kind: fields.kind,
-      text: fields.text ?? null,
-      media_url: fields.mediaUrl ?? null,
-      shared_echo_id: fields.sharedEchoId ?? null,
-      ...(fields.replyToId ? { reply_to_id: fields.replyToId } : {}),
-    });
-  if (error) throw error;
+  await insertDirectMessage({
+    conversationId,
+    senderId: uid,
+    kind: fields.kind,
+    text: fields.text ?? null,
+    mediaUrl: fields.mediaUrl ?? null,
+    sharedEchoId: fields.sharedEchoId ?? null,
+    replyToId: fields.replyToId ?? null,
+  });
 
   return { conversationId };
 }
@@ -3427,23 +3425,8 @@ export async function sendRemoteDM(
   content: string,
   replyToId?: string,
 ): Promise<{ conversationId: string }> {
-  const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
-
   const conversationId = await getOrCreateRemoteConversation(recipientId);
-
-  const { error: msgErr } = await supabase
-    .from('direct_messages')
-    .insert({
-      conversation_id: conversationId,
-      sender_id: uid,
-      kind: 'text',
-      text: content,
-      ...(replyToId ? { reply_to_id: replyToId } : {}),
-    });
-  if (msgErr) throw msgErr;
-
-  return { conversationId };
+  return insertRemoteDMInConversation(conversationId, { kind: 'text', text: content, replyToId });
 }
 
 export async function sendRemoteDMLink(
@@ -3453,23 +3436,8 @@ export async function sendRemoteDMLink(
   subtitle?: string,
   replyToId?: string,
 ): Promise<{ conversationId: string }> {
-  const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
-
   const conversationId = await getOrCreateRemoteConversation(recipientId);
-
-  const { error: msgErr } = await supabase
-    .from('direct_messages')
-    .insert({
-      conversation_id: conversationId,
-      sender_id: uid,
-      kind: 'link',
-      text: JSON.stringify({ url, title: title ?? url, subtitle }),
-      ...(replyToId ? { reply_to_id: replyToId } : {}),
-    });
-  if (msgErr) throw msgErr;
-
-  return { conversationId };
+  return sendRemoteDMLinkToConversation(conversationId, url, title, subtitle, replyToId);
 }
 
 export async function sendRemoteDMLinkToConversation(
@@ -3491,23 +3459,8 @@ export async function sendRemoteDMContact(
   contact: { userId: string; username: string; displayName: string; avatarColor: string; avatarUrl?: string | null },
   replyToId?: string,
 ): Promise<{ conversationId: string }> {
-  const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
-
   const conversationId = await getOrCreateRemoteConversation(recipientId);
-
-  const { error: msgErr } = await supabase
-    .from('direct_messages')
-    .insert({
-      conversation_id: conversationId,
-      sender_id: uid,
-      kind: 'link',
-      text: JSON.stringify({ type: 'contact', ...contact }),
-      ...(replyToId ? { reply_to_id: replyToId } : {}),
-    });
-  if (msgErr) throw msgErr;
-
-  return { conversationId };
+  return sendRemoteDMContactToConversation(conversationId, contact, replyToId);
 }
 
 export async function sendRemoteDMContactToConversation(
@@ -3528,24 +3481,8 @@ export async function sendRemoteDMEcho(
   intro?: string,
   replyToId?: string,
 ): Promise<{ conversationId: string }> {
-  const uid = await getSessionUserId();
-  if (!uid) throw new Error('Not signed in');
-
   const conversationId = await getOrCreateRemoteConversation(recipientId);
-
-  const { error: msgErr } = await supabase
-    .from('direct_messages')
-    .insert({
-      conversation_id: conversationId,
-      sender_id: uid,
-      kind: 'echo',
-      shared_echo_id: echo.id,
-      text: JSON.stringify({ title: echo.title, preview: echo.preview, author: echo.author, intro }),
-      ...(replyToId ? { reply_to_id: replyToId } : {}),
-    });
-  if (msgErr) throw msgErr;
-
-  return { conversationId };
+  return sendRemoteDMEchoToConversation(conversationId, echo, intro, replyToId);
 }
 
 export async function sendRemoteDMEchoToConversation(
