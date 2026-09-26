@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
@@ -28,6 +30,13 @@ export default function ThinkingPartnersScreen() {
   const hapticEnabled = useAppStore(s => s.hapticEnabled);
   const [mode, setMode] = useState<ThinkingPartnerMode>('similar');
   const { data, isLoading, isError, error, refetch } = useThinkingPartners(mode);
+
+  // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+    refresh: () => { void refetch(); },
+  });
   const partners = (data ?? []) as Partner[];
 
   // One view event per screen open — lets retention be sliced by exposure.
@@ -90,7 +99,11 @@ export default function ThinkingPartnersScreen() {
           </Text>
         </View>
       ) : (
-        <FlashList 
+        <FlashList
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64} 
           data={partners}
           keyExtractor={(p) => p.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}

@@ -1,4 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -120,6 +122,13 @@ export default function ProfileScreen() {
   const handle = username || 'user';
   const resolvedProfileUserId = profileUserId || userId;
   const { data: remoteBundle, refetch: refetchRemoteProfile } = useRemoteProfileBundle(resolvedProfileUserId);
+
+  // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+    refresh: () => { void refetchRemoteProfile(); },
+  });
   const profileEchoes = remoteBundle?.echoes ?? publishedEchoes;
   // The Re-echoes tab rendered a hardcoded "No Re-echoes yet" no matter what:
   // there was no query behind it at all. Reposts live in echo_reposts as
@@ -193,6 +202,10 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{

@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -43,6 +45,12 @@ import { recordAppOpen } from '../lib/personalNudges';
 
 function DailyQuestionScreenInner() {
   const { colors, radius, fontSizes } = useTheme();
+
+  // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+  });
   const { t } = useI18n();
 
   const [question, setQuestion] = useState<DailyQuestion | null>(null);
@@ -176,6 +184,10 @@ function DailyQuestionScreenInner() {
         style={{ flex: 1 }}
       >
         <ScrollView
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64}
           contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
           keyboardShouldPersistTaps="handled"
           refreshControl={

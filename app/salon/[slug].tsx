@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -14,6 +16,12 @@ import { V2FeatureGuard } from '../../components/common/V2FeatureGuard';
 
 function SalonDetailScreenInner() {
   const router = useRouter();
+
+  // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+  });
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { colors, radius } = useTheme();
 
@@ -114,6 +122,10 @@ function SalonDetailScreenInner() {
       </View>
 
       <ScrollView
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.accent} />}
       >
         {/* Salon header card */}
