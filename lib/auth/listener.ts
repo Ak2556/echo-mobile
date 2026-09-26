@@ -17,6 +17,8 @@ import { clearLocalUserData } from '../localDataReset';
 import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
 import { withAuthTimeout } from './timeout';
+import { ensureDeviceRegistered } from '../e2ee/deviceKeys';
+import { clearMessageCache } from '../e2ee/cache';
 import { makeAuthStateCallback } from './authStateCallback';
 import { TRUSTED_WEB_HOSTS } from '../publicHost';
 
@@ -76,6 +78,14 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
   // still reads from it — stays consistent. New code should read from
   // useAuth(); this mirroring is the migration bridge.
   app.setUserId(session.user.id);
+  // Publish this device's E2EE key. Not awaited: hydrate runs inside the auth
+  // callback, and a failure here must never block sign-in. A later send retries
+  // registration and fails the send if it still cannot register.
+  if (isSupabaseRemote()) {
+    void ensureDeviceRegistered(session.user.id).catch(error =>
+      captureException(error, { tags: { source: 'e2ee_register' } }),
+    );
+  }
   app.setPersonaLearningEnabled(loadPersonaProfile(session.user.id).enabled);
   if (profile?.username) {
     app.setUsername(profile.username);
@@ -267,6 +277,9 @@ export function AuthListenerProvider(): null {
         // cache and the offline message database outlive them, unencrypted,
         // and held the previous account's DMs until this was added.
         void clearLocalUserData();
+        // Decrypted E2EE messages live only in memory. signOut() clears them
+        // too, but forced sign-outs and account deletion skip that path.
+        clearMessageCache();
       }
       }),
     );

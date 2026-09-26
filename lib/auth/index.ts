@@ -12,6 +12,8 @@
  */
 
 import { supabase } from '../supabase';
+import { revokeLocalDevice } from '../e2ee/deviceKeys';
+import { clearMessageCache } from '../e2ee/cache';
 
 export { useAuth, useAuthStore } from './store';
 export { AuthListenerProvider, refreshAuthSession } from './listener';
@@ -32,5 +34,16 @@ export { CANCELLED } from './types';
  * which the listener uses to clear local stores and route to /auth/login.
  */
 export async function signOut(): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user.id) {
+    // Best-effort, and bounded: signing out must work offline. A device that
+    // fails to revoke here keeps receiving key rows it can no longer read,
+    // which wastes storage but leaks nothing.
+    await Promise.race([
+      revokeLocalDevice(session.user.id).catch(() => {}),
+      new Promise(resolve => setTimeout(resolve, 4000)),
+    ]);
+  }
+  clearMessageCache();
   await supabase.auth.signOut();
 }
