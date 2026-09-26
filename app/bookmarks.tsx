@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, Alert, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import { EditMessageModal } from '../components/ai/EditMessageModal';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
@@ -22,6 +24,13 @@ export default function BookmarksScreen() {
   const { bookmarkedIds, bookmarkCollections, bookmarkCollectionByEchoId, createBookmarkCollection, setBookmarkCollection } = useAppStore();
   const { data: feed } = useFeed();
   const remoteQ = useRemoteBookmarks();
+
+  // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+    refresh: () => { void remoteQ.refetch(); },
+  });
   const { colors } = useTheme();
   const [activeCol, setActiveCol] = useState<string | 'all'>('all');
 
@@ -107,7 +116,11 @@ export default function BookmarksScreen() {
           onAction={() => router.push('/(tabs)/home')}
         />
       ) : (
-        <FlashList 
+        <FlashList
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64} 
           data={bookmarked}
             renderItem={({ item, index }) => (
             <Pressable onLongPress={() => handleAssignCollection(item.id)}>

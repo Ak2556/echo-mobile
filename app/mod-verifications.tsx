@@ -1,4 +1,6 @@
 import React, { useCallback, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text, ScrollView, ActivityIndicator, Alert, Image, RefreshControl } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useFocusEffect } from 'expo-router';
@@ -104,6 +106,12 @@ function VerificationCard({ item, onDecide }: {
 
 export default function ModVerificationsScreen() {
   const { colors, font, fontSizes } = useTheme();
+
+  // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+  });
   const [items, setItems] = useState<VerificationQueueItem[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -141,6 +149,10 @@ export default function ModVerificationsScreen() {
         </View>
       ) : (
         <ScrollView
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64}
           contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 48 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={colors.accent} />}
         >

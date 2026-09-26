@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../lib/voice/useVoiceScrollTarget';
 import { View, Text } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -18,6 +20,13 @@ import { ttx } from '../src/shared/lib/i18n';
 
 export default function FollowersScreen() {
   const router = useRouter();
+
+  // Voice can move this list a page at a time; see lib/voice/useVoiceScrollTarget.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+    refresh: () => { void activeQuery.refetch(); },
+  });
   const { tab: initialTab, userId: paramUserId } = useLocalSearchParams<{ userId?: string; tab?: string }>();
   const storeUserId = useAppStore(s => s.userId);
   const targetUserId = paramUserId || storeUserId;
@@ -97,7 +106,11 @@ export default function FollowersScreen() {
             : 'Explore and follow people whose echoes inspire you.'}
         />
       ) : (
-        <FlashList 
+        <FlashList
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64} 
           data={data}
             renderItem={({ item }) => {
             const isSelf = item.id === storeUserId;
