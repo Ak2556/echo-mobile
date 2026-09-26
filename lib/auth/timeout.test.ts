@@ -45,6 +45,30 @@ describe('withAuthTimeout', () => {
     }
   });
 
+  it('converts a rejection from the operation into a result too', async () => {
+    // supabase-js throws rather than returning when it cannot acquire the auth
+    // lock within lockAcquireTimeout, and fetch faults surface the same way.
+    // Either one escaping reaches login.tsx, which has no try/catch, and
+    // strands the loading flag exactly as the timeout used to.
+    const settled = (await withAuthTimeout(
+      Promise.reject(new Error('Acquiring an exclusive Navigator LockManager lock timed out')),
+    )) as { error: { message: string }; data: { session: unknown } };
+
+    expect(settled.error.message).toMatch(/lock/i);
+    expect(settled.data.session).toBeNull();
+  });
+
+  it('survives a non-Error rejection', async () => {
+    const settled = (await withAuthTimeout(Promise.reject('plain string'))) as {
+      error: { message: string };
+    };
+    expect(settled.error.message).toBe('plain string');
+  });
+
+  it('never rejects, whatever it is handed', async () => {
+    await expect(withAuthTimeout(Promise.reject(new Error('boom')))).resolves.toBeDefined();
+  });
+
   it('produces a message friendlyAuthError turns into advice', () => {
     expect(friendlyAuthError(AUTH_TIMEOUT_MESSAGE)).toBe(
       'That took too long. Check your connection and try again.',

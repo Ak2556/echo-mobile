@@ -116,7 +116,23 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
 }
 
 export async function refreshAuthSession(): Promise<AuthStatus> {
-  const { data: { session } } = await withAuthTimeout(supabase.auth.getSession());
+  const { data: { session }, error } = await withAuthTimeout(supabase.auth.getSession());
+
+  // A timeout is not a logout.
+  //
+  // withAuthTimeout resolves with { session: null, error } rather than
+  // rejecting, so that a stalled call cannot strand a loading flag. But null is
+  // also how "no session" is spelled, and hydrateFromSession treats it as
+  // signed-out — which would throw an established user back to the login screen
+  // because one request took longer than fifteen seconds. The session is still
+  // valid and still on disk; nothing about it changed.
+  //
+  // So leave the store alone and hand back the status we already had. Callers
+  // see neither 'ready' nor 'needs-onboarding' and show their own error, which
+  // is the honest outcome: we do not know, and saying "signed out" would be a
+  // guess that costs the user their session.
+  if (error) return useAuthStore.getState().status;
+
   await hydrateFromSession(session);
   return useAuthStore.getState().status;
 }
