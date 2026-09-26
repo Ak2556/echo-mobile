@@ -553,3 +553,37 @@ describe('echo media must come from an Echo-controlled host', () => {
     expect(created, 'and must not be left dropped').toBeGreaterThan(dropped);
   });
 });
+
+describe('trigger functions are not exposed as RPCs', () => {
+  const lastFile = (pattern: RegExp) =>
+    allStatements.filter(s => pattern.test(s.text.trim())).at(-1)?.file ?? '';
+  const triggerFns = [...fns.entries()]
+    .filter(([, f]) => /returns\s+trigger\b/i.test(f.head) && /security\s+definer/i.test(f.head))
+    // A function dropped after its last definition no longer exists.
+    .filter(([name, f]) => {
+      const bare = name.replace(/^public\./, '');
+      return lastFile(new RegExp(`^drop\\s+function\\s+(if\\s+exists\\s+)?(public\\.)?${bare}\\s*\\(`, 'i')) <= f.file;
+    })
+    .map(([name]) => name);
+  const revoked = new Set(
+    allStatements.flatMap(({ text }) => {
+      const m = /^revoke\s+(?:all|execute)\s+on\s+function\s+([\w.]+)\s*\([^)]*\)\s+from\s+([\w\s,]+)$/i.exec(text.trim());
+      if (!m) return [];
+      const roles = m[2].toLowerCase().split(/\s*,\s*/).map(r => r.trim());
+      return roles.includes('anon') && roles.includes('authenticated')
+        ? [m[1].toLowerCase().replace(/^(?!public\.)/, 'public.')]
+        : [];
+    }),
+  );
+
+  it('finds the SECURITY DEFINER trigger functions', () => {
+    expect(triggerFns.length).toBeGreaterThan(30);
+  });
+
+  it('each one has EXECUTE revoked from anon and authenticated', () => {
+    // Firing a trigger does not check EXECUTE, so the revoke costs nothing. A
+    // SECURITY DEFINER function left granted sits in /rest/v1/rpc and the
+    // Supabase linter reports it (0028/0029).
+    expect(triggerFns.filter(name => !revoked.has(name))).toEqual([]);
+  });
+});
