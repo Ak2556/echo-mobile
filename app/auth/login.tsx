@@ -105,8 +105,14 @@ export default function LoginScreen() {
     }
     const status = await refreshAuthSession();
     setGoogleLoading(false);
-    if (status === 'ready') router.replace('/(tabs)/home');
-    else if (status === 'needs-onboarding') router.replace('/auth/signup-wizard');
+    if (status === 'ready') { router.replace('/(tabs)/home'); return; }
+    if (status === 'needs-onboarding') { router.replace('/auth/signup-wizard'); return; }
+    // Same dead end handleApple already guards against, and now reachable the
+    // same way: refreshAuthSession() resolves with a null session when the call
+    // times out, so status lands on 'signed-out' and this fell off the end —
+    // spinner cleared, nothing said, nothing logged.
+    console.error('[auth/google] signed in but session did not settle, status =', status);
+    showToast('Google sign-in did not complete. Please try again.', t('auth.error'));
   };
 
   const handleReviewer = async (email: string, password: string): Promise<string | null> => {
