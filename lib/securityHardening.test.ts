@@ -276,6 +276,7 @@ describe('no table is left open to everyone', () => {
     ['feature_flags', 'read before sign-in, by design'],
     ['salons', 'public directory; membership is gated on salon_members'],
     ['profiles', 'row-hiding breaks every screen; protected by column grants — is_private and the settings columns are granted to authenticated only'],
+    ['user_devices', 'E2EE public keys: a sender must read the recipient\'s keys to seal to them; authenticated only, and label is a platform name, never a user-chosen one'],
   ]);
 
   /** Final policy set per table, replaying drop/create/alter in migration order. */
@@ -654,7 +655,8 @@ describe('client writes are limited to the columns the app writes', () => {
   it('a DM sender can edit and unsend, and cannot move, re-attribute or retype a message', () => {
     expect(effectiveGrant('update', 'direct_messages', 'authenticated')).toEqual({
       tableWide: false,
-      columns: ['deleted_at', 'edited_at', 'text'],
+      // ciphertext and nonce: re-sealing an edit (20260926160000).
+      columns: ['ciphertext', 'deleted_at', 'edited_at', 'nonce', 'text'],
     });
   });
 
