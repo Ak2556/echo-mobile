@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
   Platform, TouchableOpacity, Pressable, Alert, Modal, StyleSheet,
@@ -96,6 +97,16 @@ export default function CreatePostScreen() {
   // Cancel the ceremony timer if the user navigates away before it fires
   React.useEffect(() => () => { if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current); }, []);
   const [response, setResponse] = useState(typeof params.prefillBody === 'string' ? params.prefillBody : '');
+
+  // Dictation appends to the body rather than replacing it, so a thought can be
+  // spoken in pieces. create_post already prefills this field when the command
+  // carried its text; this is the same idea once the composer is open.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setResponse((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [responseCaret, setResponseCaret] = useState(0);
   const [responseFocused, setResponseFocused] = useState(false);
   const [tagsRaw, setTagsRaw] = useState('');
