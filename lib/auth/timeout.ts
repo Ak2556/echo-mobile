@@ -32,6 +32,16 @@ export const AUTH_TIMEOUT_MESSAGE =
  * one generically. Callers only ever read `data.session`, `data`, or `error`,
  * and all three are present.
  */
+function failure<T>(message: string): T {
+  return {
+    data: { session: null, user: null, url: null, provider: null },
+    // Shaped like an AuthError rather than constructed as one: importing the
+    // class here would pull @supabase/auth-js into the launch path, and every
+    // consumer reads `.message` only.
+    error: { name: 'AuthRetryableFetchError', message, status: 0 },
+  } as unknown as T;
+}
+
 export function withAuthTimeout<T>(
   operation: Promise<T>,
   message = AUTH_TIMEOUT_MESSAGE,
@@ -39,18 +49,24 @@ export function withAuthTimeout<T>(
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const timeout = new Promise<T>((resolve) => {
-    timer = setTimeout(() => {
-      resolve({
-        data: { session: null, user: null, url: null, provider: null },
-        // Shaped like an AuthError rather than constructed as one: importing
-        // the class here would pull @supabase/auth-js into the launch path,
-        // and every consumer reads `.message` only.
-        error: { name: 'AuthRetryableFetchError', message, status: 0 },
-      } as unknown as T);
-    }, AUTH_TIMEOUT_MS);
+    timer = setTimeout(() => resolve(failure<T>(message)), AUTH_TIMEOUT_MS);
   });
 
-  return Promise.race([operation, timeout]).finally(() => {
+  // The operation can reject on its own, and converting only OUR timeout would
+  // have left the original bug intact through a second door. supabase-js throws
+  // rather than returning when it cannot acquire the auth lock inside
+  // lockAcquireTimeout, and fetch-layer faults surface the same way. Either one
+  // escaping into app/auth/login.tsx — which still has no try/catch — strands
+  // the loading flag exactly as the timeout used to.
+  //
+  // So this wrapper never rejects. Everything it is given comes back as a
+  // result, and the reason travels in `error.message` where friendlyAuthError
+  // can turn it into something a person can act on.
+  const guarded = operation.catch((err: unknown) =>
+    failure<T>(err instanceof Error ? err.message : String(err)),
+  );
+
+  return Promise.race([guarded, timeout]).finally(() => {
     if (timer) clearTimeout(timer);
   });
 }
