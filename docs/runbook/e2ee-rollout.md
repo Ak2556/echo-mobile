@@ -16,7 +16,9 @@ The client selects the new `direct_messages` columns on every thread fetch, so t
    A remote `false` overrides the compiled default, so without this the app seals only until its first flag fetch.
 3. Ship the build. OTA does not reach installed builds (runtime mismatch), so it rides a store build.
 
-Sealing only happens when the recipient has a registered device, and only this build registers one, so older builds keep receiving plaintext. The exception: a person with an old build on one device and this build on another sees empty bubbles on the old one.
+**1:1 text fails closed.** With the flag on, a text, link, contact or shared-Echo message to someone with no registered device is refused ("They need to update Echo…"), never sent in plaintext. A person registers a device the next time they sign in on a current build, so during beta, push everyone onto it. Plaintext remains only where E2EE does not reach: the kill switch (flag off), group chats, and photos and voice messages. Media is protected by access control until its own E2EE plan ships.
+
+Older builds do not know about any of this: they still send 1:1 text in plaintext, and a person with an old build on one device and this build on another sees empty bubbles on the old one. Retire old beta builds before claiming E2EE.
 
 ## Turning it off
 Set `e2eeSend` to `false`. New messages go out as before (no lock). Every sealed message stays readable, because reading is never gated. Nothing is lost.

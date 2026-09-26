@@ -42,13 +42,21 @@ export type SealedMessage = {
   messageKey: Uint8Array;
 };
 
-export type E2EEErrorCode = 'no_target_devices' | 'decrypt_failed' | 'no_key' | 'key_storage_unavailable';
+export type E2EEErrorCode = 'no_target_devices' | 'decrypt_failed' | 'no_key' | 'key_storage_unavailable' | 'recipient_not_ready';
 
 export class E2EEError extends Error {
   constructor(public readonly code: E2EEErrorCode) {
     super(`e2ee:${code}`);
     this.name = 'E2EEError';
   }
+}
+
+/**
+ * A 1:1 send refused because the recipient has no registered device to seal
+ * to. Duck-typed on `code` so it survives any wrapper that re-throws.
+ */
+export function isRecipientNotReady(err: unknown): boolean {
+  return (err as { code?: unknown } | null)?.code === 'recipient_not_ready';
 }
 
 const INFO = utf8ToBytes('echo-dm-v1');

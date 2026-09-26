@@ -2,10 +2,12 @@
  * The only code that writes direct-message rows (lib/dmWriters.test.ts
  * enforces it).
  *
- * A message is sealed when all of these hold: it is text/link/contact/echo,
- * e2eeSend is on, the conversation is 1:1, and the recipient has published at
- * least one device key. Otherwise it goes out as before, and it renders
- * without a lock, which is how a user can see the difference.
+ * With e2eeSend on, every text/link/contact/echo message in a 1:1 chat is
+ * sealed. If the recipient has no registered device the send fails
+ * (E2EEError 'recipient_not_ready'): there is no plaintext fallback for 1:1
+ * text. Plaintext remains only where E2EE does not reach: e2eeSend off (the kill
+ * switch), group chats, and image/voice messages (media is a separate plan).
+ * Those render without a lock, which is how a user can see the difference.
  *
  * Once a message is going to be sealed, every failure throws. There is no path
  * that writes plaintext because encryption did not work.
@@ -47,8 +49,10 @@ async function sealTargets(msg: OutgoingDirectMessage): Promise<TargetDevice[] |
 
   const recipientId = c.user_a === msg.senderId ? c.user_b : c.user_a;
   const devices = await fetchTargetDevices([recipientId, msg.senderId]);
-  // Phase-2 fallback: the recipient cannot decrypt yet. Sent without a lock.
-  if (!devices.some(d => d.userId === recipientId)) return null;
+  // Fail closed: the recipient cannot decrypt yet, and 1:1 text is never sent
+  // in plaintext while e2eeSend is on. They register on their next sign-in to a
+  // current build.
+  if (!devices.some(d => d.userId === recipientId)) throw new E2EEError('recipient_not_ready');
 
   // From here on, failure fails the send.
   const self = await ensureDeviceRegistered(msg.senderId);

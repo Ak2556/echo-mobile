@@ -1,4 +1,5 @@
 import { classifyError } from '../components/common/ErrorState';
+import { isRecipientNotReady } from './e2ee/crypto';
 
 /**
  * Classifies write errors and turns raw Supabase/PostgREST/network failures
@@ -62,7 +63,11 @@ export function isDuplicateError(err: unknown): boolean {
 }
 
 /** A short, honest message to show when a write fails. */
+export const RECIPIENT_NOT_READY_MESSAGE =
+  'They need to update Echo before you can message them. One-to-one chats are end-to-end encrypted.';
+
 export function friendlyWriteError(err: unknown): string {
+  if (isRecipientNotReady(err)) return RECIPIENT_NOT_READY_MESSAGE;
   if (isAuthSessionError(err)) return 'Your session expired — please sign in again.';
   const kind = classifyError(err);
   if (kind === 'offline') return 'You’re offline — we’ll sync this when you’re back.';
