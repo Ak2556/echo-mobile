@@ -1,4 +1,5 @@
 import type { VoiceResult } from './types';
+import { DESTINATIONS } from './destinations';
 
 /**
  * Matching a spoken command on the device, without asking a server.
@@ -138,13 +139,45 @@ export function matchLocalIntent(transcript: string, locale = ''): VoiceResult |
       if (!best || length > best.length) best = { rule, length };
     }
   }
-  if (!best) return null;
+  if (best) {
+    return {
+      transcript,
+      locale,
+      intent: best.rule.intent,
+      args: best.rule.args ?? {},
+      reply: best.rule.reply,
+    };
+  }
 
-  return {
-    transcript,
-    locale,
-    intent: best.rule.intent,
-    args: best.rule.args ?? {},
-    reply: best.rule.reply,
-  };
+  // Every remaining destination, on the same terms.
+  //
+  // The rules above are hand-written for the commands people repeat, but the
+  // app has far more screens than rules, and each one that misses here costs a
+  // network round trip and a model call to reach a table the device already
+  // holds. Navigation is the one intent that never needs a model: the mapping
+  // is finite, local and exact.
+  //
+  // Matched by equality after filler, exactly like isPhrase — not containment.
+  // The table carries ordinary words like "report" and "share", and containment
+  // would hand them every sentence that happens to use one.
+  const stripped = text.split(' ').filter(w => !FILLER.has(w)).join(' ');
+  const key = DESTINATIONS[text] ? text : DESTINATIONS[stripped] ? stripped : null;
+  if (key) {
+    return {
+      transcript,
+      locale,
+      intent: 'navigate',
+      args: { destination: key },
+      reply: routeLabel(DESTINATIONS[key]),
+    };
+  }
+
+  return null;
+}
+
+/** "/notification-prefs" -> "Notification prefs". Spoken back as confirmation. */
+function routeLabel(route: string): string {
+  const slug = route.replace(/^.*\//, '').replace(/[()]/g, '');
+  const words = slug.replace(/-/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : 'Done';
 }

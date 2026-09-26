@@ -57,6 +57,96 @@ const FILLER = new Set([
   'खोलो', 'खोल', 'दिखाओ', 'दिखा', 'जाओ', 'चलो', 'मुझे',
 ]);
 
+const DESTINATIONS = {
+  home: '/(tabs)/home', feed: '/(tabs)/home', timeline: '/(tabs)/home',
+  explore: '/(tabs)/explore', discover: '/(tabs)/explore', search: '/(tabs)/explore',
+  market: '/mini-apps/marketplace', marketplace: '/mini-apps/marketplace', shop: '/mini-apps/marketplace', store: '/mini-apps/marketplace',
+  chat: '/(tabs)/chat', ai: '/(tabs)/chat', assistant: '/(tabs)/chat',
+  messages: '/messages', dms: '/messages', inbox: '/messages',
+  you: '/(tabs)/you', profile: '/(tabs)/you', me: '/(tabs)/you', account: '/(tabs)/you',
+  alerts: '/(tabs)/notifications', notifications: '/(tabs)/notifications', activity: '/(tabs)/notifications',
+  settings: '/settings', preferences: '/settings', options: '/settings',
+  create: '/create-post', post: '/create-post', compose: '/create-post', write: '/create-post',
+  story: '/create-story',
+  bookmarks: '/bookmarks', saved: '/bookmarks',
+  followers: '/followers', following: '/followers',
+  tools: '/(tabs)/apps', apps: '/(tabs)/apps',
+  // The Flow tab. lib/voice/localIntent.ts already emits destination 'watch'
+  // for "video"/"flow", and without these keys that fast path dead-ended.
+  watch: '/(tabs)/watch', flow: '/(tabs)/watch', video: '/(tabs)/watch', videos: '/(tabs)/watch', reels: '/(tabs)/watch',
+  verify: '/get-verified', verification: '/get-verified', verified: '/get-verified',
+  badges: '/badges', quests: '/quests',
+  salons: '/salons',
+  // Every remaining screen a person can reach by tapping. Voice control is the
+  // app's central promise, so a screen with no phrase is a hole in it — the test
+  // below fails when one ships without an entry here.
+  'edit profile': '/edit-profile', 'change profile': '/edit-profile', 'update profile': '/edit-profile',
+  'edit post': '/edit-post',
+  'notification settings': '/notification-prefs', 'notification preferences': '/notification-prefs',
+  'blocked': '/blocked-users', 'blocked users': '/blocked-users', 'blocked people': '/blocked-users',
+  'muted': '/muted-users', 'muted users': '/muted-users', 'muted people': '/muted-users',
+  'my reports': '/my-reports', 'reports': '/my-reports',
+  'report': '/report',
+  'appeal': '/appeal',
+  'moderation appeals': '/mod-appeals', 'mod appeals': '/mod-appeals',
+  'moderation verifications': '/mod-verifications', 'mod verifications': '/mod-verifications',
+  'sell': '/create-listing', 'create listing': '/create-listing', 'new listing': '/create-listing', 'list an item': '/create-listing',
+  'create salon': '/create-salon', 'new salon': '/create-salon',
+  'office hours': '/office-hours', 'office hour': '/office-hours',
+  'create office hour': '/create-office-hour', 'new office hour': '/create-office-hour',
+  'thinking partners': '/thinking-partners', 'partners': '/thinking-partners',
+  'persona': '/persona',
+  'ai memory': '/ai-memory', 'memories': '/ai-memory',
+  'target': '/target-progress', 'progress': '/target-progress', 'goal': '/target-progress', 'my goal': '/target-progress',
+  'year in echo': '/year-in-echo', 'my year': '/year-in-echo', 'recap': '/year-in-echo',
+  'stories': '/story', 'my stories': '/story',
+  'share': '/share',
+  'delete account': '/delete-account', 'close account': '/delete-account',
+  'welcome': '/welcome', 'onboarding': '/onboarding',
+  'privacy': '/privacy', 'privacy policy': '/privacy',
+  'terms': '/terms', 'terms of service': '/terms',
+  'rules': '/legal/rules', 'community rules': '/legal/rules',
+  'child safety': '/legal/child-safety',
+  'eu representative': '/legal/eu-rep',
+  // Hindi for the ones people will actually ask for by voice.
+  'प्रोफाइल एडिट': '/edit-profile', 'प्रोफ़ाइल बदलो': '/edit-profile',
+  'बेचें': '/create-listing', 'बेचो': '/create-listing', 'लिस्टिंग': '/create-listing',
+  'ब्लॉक': '/blocked-users', 'म्यूट': '/muted-users',
+  'रिपोर्ट': '/report', 'मेरी रिपोर्ट': '/my-reports',
+  'नियम': '/legal/rules', 'गोपनीयता': '/privacy', 'शर्तें': '/terms',
+  'लक्ष्य': '/target-progress', 'सैलून बनाओ': '/create-salon',
+  // Singular / common variants so "notification", "message", "setting" resolve too.
+  notification: '/(tabs)/notifications', message: '/messages', dm: '/messages',
+  setting: '/settings', bookmark: '/bookmarks', follower: '/followers',
+  homepage: '/(tabs)/home', 'home page': '/(tabs)/home', 'my profile': '/(tabs)/you',
+  // Hindi (Devanagari) fallbacks in case the model passes the word through.
+  'होम': '/(tabs)/home', 'घर': '/(tabs)/home', 'फ़ीड': '/(tabs)/home', 'फीड': '/(tabs)/home',
+  'खोज': '/(tabs)/explore', 'खोजें': '/(tabs)/explore', 'एक्सप्लोर': '/(tabs)/explore',
+  'मार्केट': '/mini-apps/marketplace', 'बाज़ार': '/mini-apps/marketplace', 'बाजार': '/mini-apps/marketplace',
+  'चैट': '/(tabs)/chat', 'मैसेज': '/messages', 'संदेश': '/messages', 'मैसेजेस': '/messages',
+  'प्रोफाइल': '/(tabs)/you', 'प्रोफ़ाइल': '/(tabs)/you',
+  'नोटिफिकेशन': '/(tabs)/notifications', 'सूचना': '/(tabs)/notifications', 'सूचनाएं': '/(tabs)/notifications', 'अलर्ट': '/(tabs)/notifications',
+  'सेटिंग': '/settings', 'सेटिंग्स': '/settings',
+  'बुकमार्क': '/bookmarks', 'सेव': '/bookmarks',
+  'फॉलोअर': '/followers', 'फॉलोअर्स': '/followers',
+  'टूल': '/(tabs)/apps', 'टूल्स': '/(tabs)/apps', 'औजार': '/(tabs)/apps',
+  'वीडियो': '/(tabs)/watch', 'वीडियोज़': '/(tabs)/watch',
+  'ਵੀਡੀਓ': '/(tabs)/watch',
+  'स्टोरी': '/create-story', 'बैज': '/badges', 'क्वेस्ट': '/quests',
+  'बातचीत': '/(tabs)/chat', 'दुकान': '/mini-apps/marketplace', 'खाता': '/(tabs)/you', 'अकाउंट': '/(tabs)/you',
+  // Romanized Hindi
+  ghar: '/(tabs)/home', khoj: '/(tabs)/explore', sandesh: '/messages', dukan: '/mini-apps/marketplace',
+  suchna: '/(tabs)/notifications', khata: '/(tabs)/you',
+  // Punjabi (Gurmukhi)
+  'ਹੋਮ': '/(tabs)/home', 'ਘਰ': '/(tabs)/home', 'ਫੀਡ': '/(tabs)/home',
+  'ਖੋਜ': '/(tabs)/explore', 'ਐਕਸਪਲੋਰ': '/(tabs)/explore',
+  'ਮਾਰਕੀਟ': '/mini-apps/marketplace', 'ਬਾਜ਼ਾਰ': '/mini-apps/marketplace',
+  'ਚੈਟ': '/(tabs)/chat', 'ਮੈਸੇਜ': '/messages', 'ਸੁਨੇਹਾ': '/messages',
+  'ਪ੍ਰੋਫਾਈਲ': '/(tabs)/you', 'ਖਾਤਾ': '/(tabs)/you',
+  'ਨੋਟੀਫਿਕੇਸ਼ਨ': '/(tabs)/notifications', 'ਸੈਟਿੰਗ': '/settings',
+  'ਟੂਲ': '/(tabs)/apps', 'ਔਜ਼ਾਰ': '/(tabs)/apps', 'ਗੱਲਬਾਤ': '/(tabs)/chat',
+};
+
 /** Strip punctuation and collapse whitespace, preserving Devanagari. */
 export function normalise(input) {
   return input
@@ -87,13 +177,29 @@ export function matchLocalIntent(transcript, locale = '') {
       if (!best || phrase.length > best.length) best = { rule, length: phrase.length };
     }
   }
-  if (!best) return null;
+  if (best) {
+    return {
+      transcript,
+      locale,
+      intent: best.rule.intent,
+      args: best.rule.args ?? {},
+      reply: best.rule.reply,
+    };
+  }
 
-  return {
-    transcript,
-    locale,
-    intent: best.rule.intent,
-    args: best.rule.args ?? {},
-    reply: best.rule.reply,
-  };
+  // Every remaining destination, matched by equality after filler exactly as
+  // above — never containment, because the table holds ordinary words.
+  const stripped = text.split(' ').filter(w => !FILLER.has(w)).join(' ');
+  const key = DESTINATIONS[text] ? text : DESTINATIONS[stripped] ? stripped : null;
+  if (key) {
+    return { transcript, locale, intent: 'navigate', args: { destination: key }, reply: routeLabel(DESTINATIONS[key]) };
+  }
+
+  return null;
+}
+
+function routeLabel(route) {
+  const slug = route.replace(/^.*\//, '').replace(/[()]/g, '');
+  const words = slug.replace(/-/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : 'Done';
 }
