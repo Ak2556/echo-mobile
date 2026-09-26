@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
@@ -89,6 +91,15 @@ export default function SearchScreen() {
   const { t } = useI18n();
   const layout = useResponsiveLayout();
   const { data: feed = [], refetch: refetchFeed, isRefetching: isRefetchingFeed } = useFeed();
+
+  // Scroll and refresh by voice. postAction is deliberately absent: this is a
+  // results list, not a pager, so "this post" has no single answer here and
+  // guessing one is how you act on something the user cannot see.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+    refresh: () => { void refetchFeed(); },
+  });
   const remote = isSupabaseRemote();
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
@@ -199,6 +210,10 @@ export default function SearchScreen() {
         />
       ) : (
         <ScrollView
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
           refreshControl={

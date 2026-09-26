@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import {
   View, Text, KeyboardAvoidingView, Platform, ScrollView,
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
@@ -2009,6 +2010,17 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     if (!id || editingMessage) return;
     persistSet('chat:draft:' + id, text);
   }, [id, text, editingMessage]);
+
+  // Dictation goes into the draft, never straight out to the other person. A
+  // reply is the case where sending on a mis-transcription is least
+  // recoverable, and the draft is already persisted by the effect above, so a
+  // dictated message survives a backgrounded app the same way a typed one does.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setText((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
 
   // Conversation resolution
   const localConversation = conversations.find(c => c.id === id);
