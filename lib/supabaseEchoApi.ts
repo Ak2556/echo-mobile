@@ -3609,7 +3609,9 @@ export async function sendDMVoiceToConversation(
 /**
  * Forward a message to another user: copy kind/text/media/echo reference into
  * a new message in the target conversation. Media is referenced by path, not
- * re-uploaded — the dm-media read policy covers any authenticated user.
+ * re-uploaded. The worker serves a dm-media key only to members of the
+ * conversation named in the key, so a forwarded photo or voice note does not
+ * load for the new recipient (it is not readable by them, by design).
  */
 export async function forwardDMMessage(
   messageId: string,

@@ -687,3 +687,38 @@ describe('client writes are limited to the columns the app writes', () => {
     expect(ungranted(effectiveGrant('insert', 'reports', 'authenticated'), reportInserts.keys)).toEqual([]);
   });
 });
+
+/**
+ * DM photos and voice are not end-to-end encrypted yet, so access control is
+ * their only protection. The legacy Supabase bucket's read policy used to grant
+ * a file to anyone whose conversation held a message whose media_url ENDED WITH
+ * the file's name. media_url is written by the sender, so anyone who learned a
+ * path could plant it in their own chat and read the file. 20260926180000 binds
+ * the vouching message to the file's owner, matches exactly, and checks
+ * membership of that message's conversation.
+ */
+describe('legacy DM media is readable only through its own conversation', () => {
+  function latestDmMediaRead() {
+    let text: string | undefined;
+    for (const { text: s } of allStatements) {
+      if (/^drop policy (?:if exists )?"?dm_media_read"? on storage\.objects$/i.test(s)) text = undefined;
+      const m = /^create policy "?dm_media_read"? on storage\.objects (.*)$/i.exec(s);
+      if (m) text = m[1];
+    }
+    return text;
+  }
+
+  it('a message vouches for a file only if its sender owns the file', () => {
+    const policy = latestDmMediaRead();
+    expect(policy, 'dm_media_read must exist').toBeTruthy();
+    expect(policy!).toMatch(/dm\.sender_id::text = \(storage\.foldername\(objects\.name\)\)\[1\]/i);
+  });
+
+  it('matches exactly, never as a LIKE pattern', () => {
+    expect(latestDmMediaRead()!).not.toMatch(/\blike\b/i);
+  });
+
+  it('checks membership of the vouching message\'s conversation, groups included', () => {
+    expect(latestDmMediaRead()!).toMatch(/is_dm_conversation_member\(dm\.conversation_id/i);
+  });
+});

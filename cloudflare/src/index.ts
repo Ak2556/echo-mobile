@@ -509,57 +509,37 @@ app.get('/dm-media/:userId/:key{.+}', async (c) => {
     return c.text('Bad Request', 400);
   }
 
-  // Authorization is delegated to Postgres RLS rather than reimplemented here.
-  // `dm_conversation_members` is SELECT-able only for conversations the caller
-  // belongs to, so asking — with the CALLER's own token — whether the owner is
-  // a member of anything visible answers "do we share a conversation?".
+  // Authorization is delegated to Postgres RLS rather than reimplemented here:
+  // the owner reads their own files, and anyone else must be able to see the
+  // conversation the key names, asked with their own token.
   if (currentUserId !== pathUserId) {
     const token = c.get('access_token');
     const base = c.env.SUPABASE_URL;
     const headers = { Authorization: `Bearer ${token}`, apikey: c.env.SUPABASE_ANON_KEY };
 
-    let shared = false;
+    // The key must name its conversation, and the caller must be a member of
+    // THAT conversation. dm_conversations is readable only by its members
+    // (RLS, via is_dm_conversation_member, which covers groups), and the
+    // caller's own token is what gets sent. Uploads are confined to the
+    // uploader's own folder, so the owner segment cannot be forged; naming a
+    // conversation can only expose the uploader's own file to its members.
+    //
+    // Keys without a conversation (`owner/file`) used to fall back to "do these
+    // two people share any conversation?", which let any contact read media the
+    // sender posted in other threads. No message references such a key any
+    // more, so they are refused rather than served on the looser rule.
     const conversationId = dmConversationFromKey(filename);
+    if (!conversationId) return c.text('Forbidden', 403);
     try {
-      if (conversationId) {
-        // The key names its conversation, so ask about that conversation.
-        // Sharing SOME thread with the sender used to be enough, which let any
-        // contact read media the sender posted in other threads.
-        // dm_conversations is readable only by its members (RLS), and the
-        // caller's own token is what gets sent.
-        const convRes = await fetch(
-          `${base}/rest/v1/dm_conversations?id=eq.${conversationId}&select=id&limit=1`,
-          { headers },
-        );
-        const member = convRes.ok && ((await convRes.json<unknown[]>())?.length ?? 0) > 0;
-        if (!member) return c.text('Forbidden', 403);
-        shared = true;
-      } else {
-        // Legacy two-segment keys carry no conversation, so they keep the older
-        // question: do these two people share any conversation at all?
-        // Group conversations first.
-        const memberRes = await fetch(
-          `${base}/rest/v1/dm_conversation_members?user_id=eq.${pathUserId}&select=conversation_id&limit=1`,
-          { headers },
-        );
-        shared = memberRes.ok && ((await memberRes.json<unknown[]>())?.length ?? 0) > 0;
-      }
-
-      // One-to-one conversations, which predate the members table.
-      if (!shared) {
-        const pairRes = await fetch(
-          `${base}/rest/v1/dm_conversations?select=id&limit=1&or=` +
-            `(and(user_a.eq.${currentUserId},user_b.eq.${pathUserId}),` +
-            `and(user_a.eq.${pathUserId},user_b.eq.${currentUserId}))`,
-          { headers },
-        );
-        shared = pairRes.ok && ((await pairRes.json<unknown[]>())?.length ?? 0) > 0;
-      }
+      const convRes = await fetch(
+        `${base}/rest/v1/dm_conversations?id=eq.${conversationId}&select=id&limit=1`,
+        { headers },
+      );
+      const member = convRes.ok && ((await convRes.json<unknown[]>())?.length ?? 0) > 0;
+      if (!member) return c.text('Forbidden', 403);
     } catch {
       return c.text('Forbidden', 403);
     }
-
-    if (!shared) return c.text('Forbidden', 403);
   }
 
   const object = await c.env.DM_MEDIA_BUCKET.get(`${pathUserId}/${filename}`);
