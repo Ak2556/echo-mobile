@@ -44,9 +44,9 @@ Echo starts from the other end. **You speak, and the app does the rest.**
 
 ### 🎙️ Voice-first, not voice-added
 
-One recording becomes a transcript, a structured intent and a spoken reply in a **single model call**. Echo *acts* on what you said — posts it, searches it, opens the tool you asked for — instead of dictating into a text box.
+One recording becomes a transcript, a structured intent and a spoken reply in a **single model call**. Echo *acts* on what you said — posts it, searches it, opens the tool you asked for — and when you are looking at a text box, dictates into it.
 
-18 in-app actions are reachable by voice.
+19 intents. Every screen is reachable by voice, and a test fails the build if a new one is not. Navigation never calls the model: the map is finite and resolved on the device.
 
 </td>
 <td width="33%" valign="top">
@@ -56,6 +56,8 @@ One recording becomes a transcript, a structured intent and a spoken reply in a 
 Greeting, filter tabs, navigation, prompts and layout direction all follow the reader. The same build renders left-to-right in Hindi and right-to-left in Arabic.
 
 26 languages — 13 Indian, 13 global.
+
+The plumbing is sound; the strings are not yet. A generator that seeded every language from the Bengali block rather than English, and dropped the last character of each value, is being re-run from English.
 
 </td>
 <td width="33%" valign="top">
@@ -99,22 +101,22 @@ Plus a shelf of everyday tools, for the days you have nothing to post.
 
 | | |
 |---|---|
-| Screens | 87 |
+| Screens | 92 — every one reachable by voice, enforced by a test |
 | Database tables | 68 — row-level security on all 68, across 201 policies |
-| Edge functions | 19 |
-| Migrations | 124 |
-| Mini-apps | 16 in the catalog, 23 routes in the tree |
+| Edge functions | 23 |
+| Migrations | 187 |
+| Mini-apps | 22 in the catalog, 23 routes in the tree |
 | Languages | 26 — 13 Indian, 13 global |
-| First-party TypeScript | ~98,900 lines |
-| Unit tests | 315, Vitest |
+| First-party TypeScript | ~111,100 lines |
+| Unit tests | 1,267 across 124 files, Vitest |
 
-Counts are derived from the tree and the live database rather than maintained by hand. Re-derive them before quoting them anywhere.
+Counts are derived from the tree and the live database rather than maintained by hand. Re-derive them before quoting them anywhere — the table numbers and policy count are the two that still need a live database to check.
 
 ### Feature surface
 
 - **Social** — posts with image and video, comments, reactions, reposts, follows, bookmarks, blocks, mutes, notifications
 - **Messaging** — one-to-one and group DMs with media, reactions, read state and presence
-- **Voice** — hold to talk; speech, intent and reply resolved in one model round trip, mapped onto 18 in-app actions
+- **Voice** — hold to talk; speech, intent and reply resolved in one model round trip, mapped onto 19 intents. Every screen is reachable, 17 long-form fields accept dictation, and lists scroll a page at a time. Coverage is enforced by tests rather than remembered, and navigation resolves on-device with no network call. Dictation fills the field and never submits — a mis-transcription should not be able to publish, or reply to someone, on its own
 - **AI** — assistant chat with tool-calling, plus runtime interface translation and embeddings-based recommendation
 - **Daily Question** — a seeded, self-healing question bank with reactions and divergent-view discovery
 - **Mini-apps** — habits, tasks, notes, planner, expenses, fitness, pomodoro and more, syncing across devices
@@ -204,7 +206,7 @@ npm run i18n:generate     # fill machine translations for UI strings
 
 ## Testing
 
-**Unit — 315 tests, Vitest.** Covers feed filtering and scoring, the engagement model, publish validation, marketplace logic, URL safety, the age gate boundaries, i18n date handling and the voice intent dispatcher. Several exist to pin bugs that were invisible in review rather than to describe behaviour: that the auth lock actually serializes, that the session on disk is unreadable, that every `profiles` column the client selects is granted, that the DM thread renders through the real bubble renderer.
+**Unit — 1,267 tests across 124 files, Vitest.** Covers feed filtering and scoring, the engagement model, publish validation, marketplace logic, URL safety, the age gate boundaries, i18n date handling and the voice intent dispatcher. Several exist to pin bugs that were invisible in review rather than to describe behaviour: that the auth lock actually serializes, that the session on disk is unreadable, that every `profiles` column the client selects is granted, that the DM thread renders through the real bubble renderer.
 
 **End-to-end — Maestro.** A cold-launch flow runs on every pull request against an Android emulator: first paint, and the Terms and Privacy routes. It first got as far as running the flow on 24 August 2026 — before that it had never built an APK at all, dying in six seconds on a device error, then on Gradle heap during packaging. That first real run failed, and usefully: it caught a bug no unit test could, in that the legal routes were unreachable without an account. The fix landed the same day, so the first fully green run is still ahead of us. Budget ~40 minutes for the job; the release build alone is around 31.
 
@@ -244,6 +246,9 @@ These are real, current, and would otherwise cost you an afternoon.
 - **The feed is ranked**, not chronological — follows, engagement and content embeddings. A chronological **Latest** tab is the alternative.
 - **Account deletion goes through the `delete-account` edge function**, not the `delete_account()` RPC. The RPC only reaches Postgres; media lives in R2 and has to be purged first.
 - **The mini-app catalog is the source of truth** for what ships. `lib/miniAppCatalog.ts`.
+- **Do not run `npm audit fix --force`.** It "fixes" four advisories by downgrading `expo-router` from 6.x to 5.1.11, which is a different framework. Of the four, `image-size` reaches the tree only through metro and never ships; the `decode-uri-component` patch is ESM-only while `query-string` requires it as CommonJS, so forcing it breaks deep-link parsing. There is currently no safe upgrade, and the audit will keep saying otherwise.
+- **Never translate from anything but English, and never write a translation without checking it.** `scripts/translate_i18n.py` seeded every language from the *Bengali* block and truncated each value; 228 shipped strings end in a bare virama, which is impossible in every Indic script involved. It now refuses to run. `npm run i18n:generate` is the supported path, and `src/shared/lib/i18nIntegrity.test.ts` fails the build on those signatures.
+- **Anything you can tap, you should be able to say.** A test walks `app/` and fails if a screen has no voice phrase, or a multiline field no dictation handler. Exclusions live in the test with a written reason each.
 - **Unresolved legal facts are greppable:** `grep -rn "\[\[" constants/legal/`
 
 ---
