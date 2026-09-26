@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { FLAGS } from './featureFlags';
 
 /**
  * Pins the E2EE schema. Reads the migration text, like securityHardening.test,
@@ -80,7 +81,10 @@ describe('server-side previews', () => {
 });
 
 describe('kill switch', () => {
-  it('ships with encrypted sending off', () => {
+  it('the app seals by default: 1:1 E2EE is a launch requirement', () => {
+    expect(FLAGS.e2eeSend).toBe(true);
+  });
+  it('the migration seeds the row off; production is flipped on before release (docs/runbook/e2ee-rollout.md)', () => {
     has(/insert into public\.feature_flags \(key, enabled, note\)\s+values \('e2eeSend', false,/i);
   });
 });

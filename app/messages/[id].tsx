@@ -44,6 +44,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable';
 import { FeedCardSkeleton } from '../../components/ui/Skeleton';
 import { showToast } from '../../components/ui/Toast';
+import { isRecipientNotReady } from '../../lib/e2ee/crypto';
+import { RECIPIENT_NOT_READY_MESSAGE } from '../../lib/mutationErrors';
 import { streamEchoAI } from '../../lib/api';
 import { EMOJI_CATEGORIES, searchEmoji } from '../../lib/emojiData';
 import { persistGet, persistSet } from '../../store/persist';
@@ -78,6 +80,18 @@ import { usePresenceTracking } from '../../lib/presence';
 import type { Conversation, DirectMessage } from '../../types';
 import { userUrl } from '../../lib/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
+
+/**
+ * A failed 1:1 send. "Try again" is wrong when the recipient has no device to
+ * seal to (E2EE fails closed), so that case says what is actually needed.
+ */
+function alertSendFailed(error: unknown, fallback: string) {
+  if (isRecipientNotReady(error)) {
+    Alert.alert(ttx('Can’t send yet'), ttx(RECIPIENT_NOT_READY_MESSAGE));
+    return;
+  }
+  Alert.alert('Error', fallback);
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -2319,7 +2333,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
       },
       intro: `Thought you'd like this Echo from ${echoAuthor ?? conversation.displayName}.`,
     }, {
-      onError: () => Alert.alert('Error', 'Failed to share Echo. Please try again.'),
+      onError: error => alertSendFailed(error, 'Failed to share Echo. Please try again.'),
     });
     setSharedPending(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2380,9 +2394,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
       const title = urlHost(link);
       if (remote) {
         sendLinkDM.mutate({ url: link, title, replyToId }, {
-          onError: () => {
+          onError: error => {
             setText(content);
-            Alert.alert('Error', 'Link failed to send. Please try again.');
+            alertSendFailed(error, 'Link failed to send. Please try again.');
           },
         });
       } else {
@@ -2390,9 +2404,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
       }
     } else if (remote) {
       sendRemote.mutate({ content, replyToId }, {
-        onError: () => {
+        onError: error => {
           setText(content);
-          Alert.alert('Error', 'Message failed to send. Please try again.');
+          alertSendFailed(error, 'Message failed to send. Please try again.');
         },
       });
     } else {
@@ -2407,7 +2421,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     const fx = detectEffect(sticker);
     if (fx) setEffect(fx);
     if (remote) {
-      sendRemote.mutate({ content: sticker }, { onError: () => Alert.alert('Error', 'Failed to send sticker. Please try again.') });
+      sendRemote.mutate({ content: sticker }, { onError: error => alertSendFailed(error, 'Failed to send sticker. Please try again.') });
     } else {
       sendDM(id, sticker);
     }
@@ -2491,7 +2505,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     setReplyingTo(null);
     if (remote) {
       sendContactDM.mutate({ contact, replyToId }, {
-        onError: () => Alert.alert('Error', 'Contact failed to send. Please try again.'),
+        onError: error => alertSendFailed(error, 'Contact failed to send. Please try again.'),
       });
     } else {
       shareContactInDM(id, conversation);
@@ -2513,9 +2527,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     const title = urlHost(link);
     if (remote) {
       sendLinkDM.mutate({ url: link, title, replyToId }, {
-        onError: () => {
+        onError: error => {
           setText(link);
-          Alert.alert('Error', 'Link failed to send. Please try again.');
+          alertSendFailed(error, 'Link failed to send. Please try again.');
         },
       });
     } else {
@@ -3643,7 +3657,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
             { messageId: forwardTarget.id, recipientId },
             {
               onSuccess: () => showToast(`Forwarded to ${displayName}`, 'CheckCircle'),
-              onError: e => showToast(e instanceof Error ? e.message : 'Forward failed', 'Error'),
+              onError: e => showToast(isRecipientNotReady(e) ? ttx(RECIPIENT_NOT_READY_MESSAGE) : e instanceof Error ? e.message : 'Forward failed', 'Error'),
             },
           );
         }}

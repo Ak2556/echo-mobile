@@ -38,8 +38,13 @@ export const FLAGS = {
    * Seal 1:1 text/link/contact/echo DMs end-to-end when the recipient has a
    * published device key. Off: send as before, with no lock. Reading sealed
    * messages is never gated, so turning this off never hides a message.
+   *
+   * On by default: E2EE for 1:1 chats is a launch requirement, and a fresh
+   * install must seal before its first remote-flag fetch. The feature_flags row
+   * is the kill switch, and must be true in production before this ships, or
+   * the fetched `false` turns sealing back off.
    */
-  e2eeSend: false,
+  e2eeSend: true,
 } as const;
 
 export type FeatureFlag = keyof typeof FLAGS;

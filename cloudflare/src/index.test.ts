@@ -256,10 +256,13 @@ describe('/dm-media', () => {
     expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
   });
 
-  it('keeps the old any-shared-thread rule for legacy keys with no conversation', async () => {
+  it('refuses a key that does not name its conversation, even between contacts', async () => {
+    // Legacy two-segment keys used to be served to anyone sharing any thread
+    // with the owner. No message references one now; they are not served.
     memberOf = [CONV];
     const res = await call(`/dm-media/${OTHER}/legacy.jpg`, authed());
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(403);
+    expect(dmMedia.get).not.toHaveBeenCalled();
   });
 });
 

@@ -7,12 +7,17 @@ import { ArrowLeft, LinkSimple, Images as ImagesIcon } from 'phosphor-react-nati
 import { useTheme } from '../../src/shared/lib/theme';
 import { fetchConversationMedia, type ConversationMedia } from '../../lib/supabaseEchoApi';
 import { ttx } from '../../src/shared/lib/i18n';
+import { useAuth } from '../../lib/auth';
 
 export default function ChatMediaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors, font } = useTheme();
   const { width } = useWindowDimensions();
+  // DM photos are served by the worker's /dm-media route, which checks the
+  // caller's session and conversation membership. Without the header every
+  // tile is a 401, which an <Image> shows as nothing.
+  const accessToken = useAuth().session?.access_token;
   const [tab, setTab] = useState<'photos' | 'links'>('photos');
   const [media, setMedia] = useState<ConversationMedia>({ images: [], links: [] });
   const [loading, setLoading] = useState(true);
@@ -57,7 +62,7 @@ export default function ChatMediaScreen() {
         ) : (
           <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap }}>
             {media.images.map(img => (
-              <Image key={img.id} source={{ uri: img.url }} style={{ width: size, height: size }} contentFit="cover" transition={120} />
+              <Image key={img.id} source={accessToken ? { uri: img.url, headers: { Authorization: `Bearer ${accessToken}` } } : { uri: img.url }} style={{ width: size, height: size }} contentFit="cover" transition={120} />
             ))}
           </ScrollView>
         )

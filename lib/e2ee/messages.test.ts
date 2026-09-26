@@ -53,6 +53,7 @@ vi.mock('../supabase', () => ({
 }));
 
 import { editDirectMessage, insertDirectMessage, readDirectMessages } from './messages';
+import { isRecipientNotReady } from './crypto';
 
 beforeEach(() => {
   outgoing.length = 0;
@@ -109,13 +110,24 @@ describe('sealed send', () => {
   });
 });
 
-describe('visible plaintext fallbacks', () => {
-  it('sends plaintext when the recipient has no device yet', async () => {
+describe('fail closed: no plaintext 1:1 text while e2eeSend is on', () => {
+  it('refuses, and writes nothing, when the recipient has no device yet', async () => {
     bobHasDevice = false;
-    const sent = await send();
-    expect(sent.encrypted).toBe(false);
-    expect(outgoing[0]).toMatchObject({ kind: 'insert', table: 'direct_messages' });
+    for (const kind of ['text', 'link', 'contact', 'echo'] as const) {
+      const err = await send({ kind }).catch(e => e);
+      expect(isRecipientNotReady(err), kind).toBe(true);
+    }
+    expect(outgoing).toHaveLength(0);
   });
+
+  it('still sends what E2EE does not cover yet: media, with no device on the other side', async () => {
+    bobHasDevice = false;
+    expect((await send({ kind: 'image', text: null, mediaUrl: 'k' })).encrypted).toBe(false);
+    expect((await send({ kind: 'voice', text: '3', mediaUrl: 'k' })).encrypted).toBe(false);
+  });
+});
+
+describe('visible plaintext fallbacks', () => {
 
   it('sends plaintext when e2eeSend is off', async () => {
     flagOn = false;
