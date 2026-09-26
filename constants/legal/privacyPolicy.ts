@@ -59,8 +59,8 @@ import {
 } from './entity';
 import { MINIMUM_AGE, ADULT_AGE } from './ageGate';
 
-export const PRIVACY_UPDATED = 'September 22, 2026';
-export const PRIVACY_VERSION = '3.1';
+export const PRIVACY_UPDATED = 'September 26, 2026';
+export const PRIVACY_VERSION = '3.2';
 
 export const PRIVACY_POLICY_MD = `# Privacy Policy
 
