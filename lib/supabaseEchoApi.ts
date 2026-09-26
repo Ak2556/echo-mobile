@@ -3914,7 +3914,7 @@ export async function fetchRemoteMessages(
       created_at, read_at, deleted_at, edited_at,
       shared_echo_id, media_url,
       reply_to_id,
-      reply_msg:reply_to_id (id, conversation_id, sender_id, text, kind, deleted_at, ${SEALED_COLUMNS}),
+      reply_msg:reply_to_id (id, conversation_id, sender_id, created_at, text, kind, deleted_at, ${SEALED_COLUMNS}),
       reactions:message_reactions(id, user_id, emoji)
     `)
     .eq('conversation_id', conversationId)
