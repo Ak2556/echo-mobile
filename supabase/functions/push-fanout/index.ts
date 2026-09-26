@@ -11,6 +11,7 @@
 // "Alice reacted with 🤯" instead of just "New reaction".
 
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
+import { dmPushBody } from './copy.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Shared with the app so the channel/category ids can never drift apart: the
 // client registers exactly what this stamps. See lib/notifications/routing.ts.
@@ -323,9 +324,11 @@ function titleFor(t: string, actorName: string, preview?: string): string {
 
 function messageFor(t: string, actorName: string, preview?: string): string {
   switch (t) {
+    // A sealed DM arrives with no preview (fn_dm_push_notify); never a blank push.
+    case 'dm':
+      return dmPushBody(preview);
     // Content-carrying: show the real text.
     case 'comment':
-    case 'dm':
     case 'mention':
     case 'quote':
     case 'friend_post':

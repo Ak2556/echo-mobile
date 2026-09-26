@@ -34,6 +34,12 @@ export const FLAGS = {
   miniApps: true,
   /** LiveKit-based audio rooms. */
   liveAudio: false,
+  /**
+   * Seal 1:1 text/link/contact/echo DMs end-to-end when the recipient has a
+   * published device key. Off: send as before, with no lock. Reading sealed
+   * messages is never gated, so turning this off never hides a message.
+   */
+  e2eeSend: false,
 } as const;
 
 export type FeatureFlag = keyof typeof FLAGS;

@@ -88,31 +88,9 @@ async function runSync() {
         timestamp: Date.now(),
       };
     },
-    pushChanges: async ({ changes }) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user.id;
-      if (!userId) return;
-
-      if ((changes as any).messages.created.length > 0) {
-        // E2EE Encryption for outgoing messages
-        const inserts = [];
-        for (const m of (changes as any).messages.created as any[]) {
-          // We need the recipient ID to encrypt it.
-          // Since we only have thread_id (conversation_id) in the model, we fetch the conversation to find the recipient
-          inserts.push({
-            id: m.id,
-            conversation_id: m.thread_id,
-            sender_id: m.sender_id,
-            text: m.content,
-            kind: 'text',
-          });
-        }
-
-        const { error } = await supabase.from('direct_messages').insert(inserts);
-        // Surface the failure instead of swallowing it: a silent loss here
-        // means a message the user watched send never actually left the device.
-        if (error) throw error;
-      }
-    },
+    // Nothing creates messages in the local database, and a DM must never be
+    // written except through lib/e2ee/messages.ts (see lib/dmWriters.test.ts).
+    // This push used to insert whatever the local DB held as plaintext.
+    pushChanges: async () => {},
   });
 }

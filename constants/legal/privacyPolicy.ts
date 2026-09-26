@@ -257,7 +257,9 @@ We acknowledge complaints within **24 hours** and resolve them within **7 days**
 
 All traffic uses HTTPS. Row-level security in the database restricts every query to the rows you are allowed to see, and private message attachments are served only to participants in that conversation. Sign-in is passwordless by default — a one-time code sent to your verified email or phone.
 
-**Echo does not currently offer end-to-end encrypted messaging.** Direct messages are encrypted in transit and at rest, and access is restricted, but Echo can technically access message content — for example to respond to a lawful request or a safety report. We would rather say so than imply otherwise.
+**One-to-one messages can be end-to-end encrypted.** When you and the person you are talking to both use a current version of Echo, text messages, shared links, contacts and shared Echoes are encrypted on your device with keys that never leave it. Echo cannot read them, and cannot hand them to anyone. A lock appears on every message that is end-to-end encrypted, and in the conversation header.
+
+This does not cover: photos and voice messages, group chats, messages sent before this feature, or messages to someone on an older version of the app. Those are encrypted in transit and at rest with keys Echo holds, so Echo can technically access them. Who you message, when, and how often is also visible to Echo. If you report an end-to-end encrypted message, your device sends that message and up to five messages before it to our moderators; nothing else in the conversation is disclosed.
 
 No system is perfectly secure. If you think your account is compromised, email **${SUPPORT_EMAIL}** and we will revoke active sessions.
 

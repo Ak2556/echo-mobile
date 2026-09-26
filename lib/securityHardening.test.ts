@@ -276,6 +276,7 @@ describe('no table is left open to everyone', () => {
     ['feature_flags', 'read before sign-in, by design'],
     ['salons', 'public directory; membership is gated on salon_members'],
     ['profiles', 'row-hiding breaks every screen; protected by column grants — is_private and the settings columns are granted to authenticated only'],
+    ['user_devices', 'E2EE public keys: a sender must read the recipient\'s keys to seal to them; authenticated only, and label is a platform name, never a user-chosen one'],
   ]);
 
   /** Final policy set per table, replaying drop/create/alter in migration order. */
@@ -654,14 +655,17 @@ describe('client writes are limited to the columns the app writes', () => {
   it('a DM sender can edit and unsend, and cannot move, re-attribute or retype a message', () => {
     expect(effectiveGrant('update', 'direct_messages', 'authenticated')).toEqual({
       tableWide: false,
-      columns: ['deleted_at', 'edited_at', 'text'],
+      // ciphertext and nonce: re-sealing an edit (20260926160000).
+      columns: ['ciphertext', 'deleted_at', 'edited_at', 'nonce', 'text'],
     });
   });
 
   it('a report is filed with its content only; review fields stay server-owned', () => {
     expect(effectiveGrant('insert', 'reports', 'authenticated')).toEqual({
       tableWide: false,
-      columns: ['details', 'reason', 'reporter_id', 'target_id', 'target_type'],
+      // disclosed_*: a sealed-message report's disclosure (20260926170000).
+      // disclosed_at is server-owned, stamped by b_validate_message_report.
+      columns: ['details', 'disclosed_content', 'disclosed_context', 'disclosed_message_key', 'reason', 'reporter_id', 'target_id', 'target_type'],
     });
   });
 

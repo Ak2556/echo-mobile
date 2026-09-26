@@ -23,7 +23,7 @@ import {
   PushPin, X, ArrowFatLinesUp,
   Camera, Plus, LinkSimple, UserCircle, Images, MagnifyingGlass,
   Microphone, Play, Pause, ShareFat, WarningCircle, Users, Heart, Translate, BookmarkSimple, PaintBrush, Checks, CheckCircle, Check,
-  ChatCircleText, Smiley, Hourglass, Calendar, Flame,
+  ChatCircleText, Smiley, Hourglass, Calendar, Flame, LockSimple,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -140,6 +140,8 @@ interface NormalizedMessage {
   replyToKind: string | null;
   replyToDeleted: boolean;
   reactions: RemoteMessageReaction[];
+  encrypted: boolean;
+  unreadable: 'no_key' | 'failed' | null;
 }
 
 type ChatConversation = Conversation & {
@@ -1187,6 +1189,11 @@ function DMBubble({
           {message.editedAt && !isDeleted && (
             <Text style={{ color: colors.textMuted, fontSize: 10, fontStyle: 'italic' }}>{ttx("Edited")}</Text>
           )}
+          {message.encrypted && !isDeleted && !message.unreadable && (
+            <View accessible accessibilityLabel={ttx('End-to-end encrypted')}>
+              <LockSimple color={colors.textMuted} size={10} weight="fill" />
+            </View>
+          )}
           {/* Delivery ticks: sending → delivered (grey ✓✓) → read (accent ✓✓). */}
           {isMe && !isDeleted && (
             message.id.startsWith('pending-')
@@ -2089,11 +2096,17 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         return {
           id: m.id,
           senderId: m.senderId,
-          content: payload ? null : m.content,
+          content: m.unreadable
+            ? ttx(m.unreadable === 'no_key'
+                ? 'Sent before you signed in on this device'
+                : 'This message couldn’t be decrypted')
+            : payload ? null : m.content,
           createdAt: m.createdAt,
           isRead: !!m.readAt,
           deletedAt: m.deletedAt,
           editedAt: m.editedAt,
+          encrypted: m.encrypted ?? false,
+          unreadable: m.unreadable ?? null,
           kind: payload?.type === 'capsule' ? 'capsule' : (contact ? 'contact' : m.kind),
           capsuleUnlockAt: payload?.type === 'capsule' ? payload.unlockAt : null,
           sharedEchoId: m.sharedEchoId,
@@ -2149,8 +2162,24 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
           replyToKind: null,
           replyToDeleted: false,
           reactions: [],
+          encrypted: false,
+          unreadable: null,
         };
       });
+
+  // Derived from the newest sealable message, not from a setting: if sending
+  // stops sealing, the lock disappears for everyone at once.
+  const conversationSealed = useMemo(() => {
+    const newest = [...messages].reverse().find(m => !m.deletedAt && ['text', 'link', 'contact', 'echo', 'capsule'].includes(m.kind));
+    return !!newest?.encrypted;
+  }, [messages]);
+
+  const explainEncryption = useCallback(() => {
+    Alert.alert(
+      ttx('End-to-end encrypted'),
+      ttx('Messages with a lock can be read only by you and the person you’re talking to, not by Echo. Photos, voice messages, group chats and older messages are not end-to-end encrypted.'),
+    );
+  }, []);
 
   const online = conversation && !conversation.isGroup && conversation.userId ? isUserOnline(conversation.userId) : false;
   const streak = useMemo(
@@ -2600,7 +2629,10 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     setReplyLoading(intent);
     if (hapticEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const them = conversation?.displayName ?? 'them';
-    const recent = messages.filter(m => !m.deletedAt && m.content).slice(-8);
+    // Sealed messages never go to the model: the prompt is sent to echo-ai on
+    // the server, which would put their plaintext exactly where E2EE says it
+    // cannot be. Same rule as handleTranslate.
+    const recent = messages.filter(m => !m.deletedAt && m.content && !m.encrypted).slice(-8);
     const transcript = recent
       .map(m => `${m.senderId === myId ? 'Me' : them}: ${m.content}`)
       .join('\n');
@@ -2640,7 +2672,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     if (!firstId) return [] as NormalizedMessage[];
     const idx = messages.findIndex(m => m.id === firstId);
     if (idx < 0) return [] as NormalizedMessage[];
-    return messages.slice(idx).filter(m => m.senderId !== myId && !m.deletedAt && m.content);
+    // Plaintext only; see generateSmartReply.
+    return messages.slice(idx).filter(m => m.senderId !== myId && !m.deletedAt && m.content && !m.encrypted);
   }, [messages, myId]);
 
   const handleCatchUp = useCallback(async () => {
@@ -2698,7 +2731,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   // Inline AI translation — tap Translate on a message; the result streams in
   // and renders under the bubble. Tap again to hide.
   const handleTranslate = useCallback(async (msg: NormalizedMessage) => {
-    if (!msg.content) return;
+    // A sealed message stays on the device; translation runs on the server.
+    if (!msg.content || msg.encrypted) return;
     if (translations[msg.id]) {
       setTranslations(prev => { const next = { ...prev }; delete next[msg.id]; return next; });
       return;
@@ -2927,6 +2961,11 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                 {(convPrefs && conversation.userId ? convPrefs.nicknames[conversation.userId] : undefined) || conversation.displayName}
               </Text>
               {conversation.isVerified && <SealCheck color={colors.accent} size={14} weight="fill" />}
+              {conversationSealed && !conversation.isGroup && (
+                <Pressable onPress={explainEncryption} hitSlop={8} accessibilityRole="button" accessibilityLabel={ttx('End-to-end encrypted')}>
+                  <LockSimple color={colors.textMuted} size={13} weight="fill" />
+                </Pressable>
+              )}
               {streak >= 2 && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 1, backgroundColor: colors.accentMuted, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 }}>
                   <Flame color={colors.accent} size={11} weight="fill" />
