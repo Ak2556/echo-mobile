@@ -84,3 +84,23 @@ describe('kill switch', () => {
     has(/insert into public\.feature_flags \(key, enabled, note\)\s+values \('e2eeSend', false,/i);
   });
 });
+
+describe('report disclosure', () => {
+  const report = readFileSync(
+    join(resolve(__dirname, '..'), 'supabase/migrations/20260926170000_dm_report_disclosure.sql'),
+    'utf8',
+  ).replace(/--[^\n]*/g, '');
+  it('keeps the existing target types', () => {
+    expect(report).not.toMatch(/reports_target_type_check/i);
+  });
+  it('bounds and scopes what a reporter can disclose', () => {
+    expect(report).toMatch(/constraint reports_disclosure_coherent/i);
+    expect(report).toMatch(/jsonb_array_length\(disclosed_context\) <= 10/i);
+    expect(report).toMatch(/disclosed_message_key ~ '\^\[0-9a-f\]\{64\}\$'/i);
+    expect(report).toMatch(/Only a participant in that conversation can report its messages/i);
+  });
+  it('the reporter cannot set when it was disclosed', () => {
+    expect(report).toMatch(/grant insert \(disclosed_content, disclosed_context, disclosed_message_key\) on public\.reports to authenticated/i);
+    expect(report).not.toMatch(/grant insert \([^)]*disclosed_at/i);
+  });
+});

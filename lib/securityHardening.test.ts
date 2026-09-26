@@ -663,7 +663,9 @@ describe('client writes are limited to the columns the app writes', () => {
   it('a report is filed with its content only; review fields stay server-owned', () => {
     expect(effectiveGrant('insert', 'reports', 'authenticated')).toEqual({
       tableWide: false,
-      columns: ['details', 'reason', 'reporter_id', 'target_id', 'target_type'],
+      // disclosed_*: a sealed-message report's disclosure (20260926170000).
+      // disclosed_at is server-owned, stamped by b_validate_message_report.
+      columns: ['details', 'disclosed_content', 'disclosed_context', 'disclosed_message_key', 'reason', 'reporter_id', 'target_id', 'target_type'],
     });
   });
 

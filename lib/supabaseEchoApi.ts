@@ -12,6 +12,7 @@ import { selectWithDiversity, type SelectableItem } from './feedSelection';
 import { interestRows } from './interestsSync';
 import { captureException } from './monitoring';
 import { editDirectMessage, insertDirectMessage, readDirectMessages, SEALED_COLUMNS, type DMKind, type SealedRow } from './e2ee/messages';
+import type { Disclosure } from './e2ee/report';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
 import { APP_LANGUAGES } from './languages';
@@ -1448,6 +1449,7 @@ export async function submitRemoteReport(params: {
   targetId: string;
   reason: string;
   details?: string;
+  disclosure?: Disclosure;
 }): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
@@ -1457,6 +1459,11 @@ export async function submitRemoteReport(params: {
     target_id: params.targetId,
     reason: params.reason,
     details: params.details ?? null,
+    ...(params.disclosure ? {
+      disclosed_content: params.disclosure.content,
+      disclosed_context: params.disclosure.context,
+      disclosed_message_key: params.disclosure.messageKey,
+    } : {}),
   });
   if (error) throw error;
 }

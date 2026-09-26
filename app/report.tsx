@@ -10,6 +10,7 @@ import { AnimatedPressable } from '../components/ui/AnimatedPressable';
 import { showToast } from '../components/ui/Toast';
 import { REPORT_REASONS as REASONS, URGENT_REPORT_REASONS } from '../lib/reportReasons';
 import { submitRemoteReport } from '../lib/supabaseEchoApi';
+import { buildDisclosure } from '../lib/e2ee/report';
 import { isSupabaseRemote } from '../lib/remoteConfig';
 import { useTheme } from '../src/shared/lib/theme';
 import { ttx } from '../src/shared/lib/i18n';
@@ -21,6 +22,9 @@ export default function ReportScreen() {
   const { targetType, targetId, targetName } = useLocalSearchParams<{
     targetType: string; targetId: string; targetName: string;
   }>();
+  // Only a sealed message this device has opened has a disclosure; for
+  // anything else Echo can already see the content and nothing extra is sent.
+  const disclosure = targetType === 'message' && targetId ? buildDisclosure(targetId) : null;
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [details, setDetails] = useState('');
 
@@ -48,6 +52,7 @@ export default function ReportScreen() {
           targetId,
           reason: selectedReason,
           details: details.trim() || undefined,
+          disclosure: disclosure ?? undefined,
         });
       }
       const urgent = URGENT_REPORT_REASONS.includes(selectedReason);
@@ -113,6 +118,12 @@ export default function ReportScreen() {
             </AnimatedPressable>
           </Animated.View>
         ))}
+
+        {disclosure && (
+          <Text style={{ color: colors.textMuted, fontSize: fontSizes.small, marginTop: 12, lineHeight: 18 }}>
+            {ttx('This chat is end-to-end encrypted, so Echo can’t see it. Reporting sends this message and up to 5 messages before it to Echo’s moderators, and nothing else.')}
+          </Text>
+        )}
 
         {selectedReason === 'Other' && (
           <Animated.View entering={FadeInDown.duration(220)} style={{ marginTop: 8, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 12 }}>
