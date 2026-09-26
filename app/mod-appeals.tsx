@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
@@ -34,6 +35,16 @@ function AppealCard({
 }) {
   const { colors, font, fontSizes, radius } = useTheme();
   const [note, setNote] = useState('');
+
+  // Voice dictation appends to the note, so a moderator note can be spoken in
+  // pieces. It fills the field and never submits: the user reads back what
+  // was heard before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setNote((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [resolving, setResolving] = useState(false);
 
   const handleResolve = async (resolution: 'upheld' | 'overturned') => {

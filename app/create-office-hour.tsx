@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
@@ -48,6 +49,16 @@ function CreateOfficeHourScreenInner() {
   const { colors, radius, fontSizes, animation } = useTheme();
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
+
+  // Voice dictation appends to the description, so a long one can be spoken in
+  // pieces. It fills the field and never submits: the user reads back what
+  // was heard before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setDescription((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [duration, setDuration] = useState(60);
   const [startOffset, setStartOffset] = useState(START_OFFSETS[0]);
   const [submitting, setSubmitting] = useState(false);

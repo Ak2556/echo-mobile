@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -47,6 +48,16 @@ export default function AppealScreen() {
 
   const [decision, setDecision] = useState<ModerationDecision | null>(null);
   const [reason, setReason] = useState('');
+
+  // Voice dictation appends here, so your appeal can be spoken in pieces. It
+  // fills the field and never submits: the user reads back what was heard
+  // before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setReason((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 

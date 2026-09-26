@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -25,6 +26,16 @@ export default function CreateStoryScreen() {
   // Hooks must always be called unconditionally
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
+
+  // Voice dictation appends to the response, so a story can be spoken in
+  // pieces. It fills the field and never submits: the user reads back what
+  // was heard before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setResponse((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [publishing, setPublishing] = useState(false);
 
   if (isSupabaseRemote()) {

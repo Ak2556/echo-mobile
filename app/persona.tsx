@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -60,6 +61,16 @@ export default function PersonaScreen() {
   const accountUserId = useAppStore(s => s.userId);
   const [profile, setProfile] = useState<PersonaProfile>(() => loadPersonaProfile(accountUserId));
   const [note, setNote] = useState(profile.userNote);
+
+  // Voice dictation appends to the note, so a note about yourself can be spoken in
+  // pieces. It fills the field and never submits: the user reads back what
+  // was heard before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setNote((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
 
   const refresh = useCallback(() => {
     const next = loadPersonaProfile(accountUserId);

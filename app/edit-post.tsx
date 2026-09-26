@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import {
   View, Text, TextInput, ScrollView, KeyboardAvoidingView,
   Platform, Alert, TouchableOpacity, Pressable,
@@ -52,6 +53,16 @@ export default function EditPostScreen() {
   const [postType, setPostType] = useState<PostType>((echo?.postType as PostType) ?? 'text');
   const [prompt, setPrompt] = useState(echo?.prompt ?? '');
   const [response, setResponse] = useState(echo?.response ?? '');
+
+  // Voice dictation appends to the response, so an edit can be spoken in
+  // pieces. It fills the field and never submits: the user reads back what
+  // was heard before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setResponse((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [caption, setCaption] = useState((echo?.postType === 'photo' || echo?.postType === 'video') ? (echo?.prompt ?? '') : '');
   const [tagsRaw, setTagsRaw] = useState((echo?.hashtags ?? []).join(', '));
   const [saving, setSaving] = useState(false);
