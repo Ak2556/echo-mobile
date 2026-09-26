@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomBytes } from 'node:crypto';
-import { generateDeviceKeyPair, openBody, openMessageKey } from './crypto';
+import { generateDeviceKeyPair, openBody, openMessageKey, sealMessage } from './crypto';
+import { clearMessageCache } from './cache';
 
 const random = (n: number) => new Uint8Array(randomBytes(n));
 const SECRET = 'SECRET-PLAINTEXT-7f3a';
@@ -14,6 +15,7 @@ let bobHasDevice = true;
 let flagOn = true;
 let registration: Promise<typeof alice> = Promise.resolve(alice);
 
+vi.mock('../monitoring', () => ({ captureException: vi.fn() }));
 vi.mock('../remoteFlags', () => ({ isFeatureEnabled: (flag: string) => flag === 'e2eeSend' && flagOn }));
 vi.mock('./deviceKeys', () => ({
   ensureDeviceRegistered: () => registration,
@@ -23,17 +25,34 @@ vi.mock('./deviceKeys', () => ({
   ],
   getLocalDevice: async () => alice,
 }));
+// device_id lets the fixture answer like the server does: only this device's rows.
+let keyRows: { message_id: string; device_id: string; wrapped_key: string; nonce: string }[] = [];
+let messageRow: Record<string, unknown> | null = null;
+const updates: unknown[] = [];
+
 vi.mock('../supabase', () => ({
   supabase: {
     from: (table: string) => ({
       insert: (payload: unknown) => { outgoing.push({ kind: 'insert', table, payload }); return Promise.resolve({ error: null }); },
-      select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: conversation, error: null }) }) }),
+      update: (payload: unknown) => {
+        outgoing.push({ kind: 'update', table, payload });
+        updates.push(payload);
+        const chain = { eq: () => chain, then: (r: (v: { error: null }) => unknown) => Promise.resolve({ error: null }).then(r) };
+        return chain;
+      },
+      select: () => ({
+        eq: (_col: string, value: string) => ({
+          single: () => Promise.resolve({ data: table === 'dm_conversations' ? conversation : messageRow, error: null }),
+          in: (_c: string, ids: string[]) =>
+            Promise.resolve({ data: keyRows.filter(k => ids.includes(k.message_id) && k.device_id === value), error: null }),
+        }),
+      }),
     }),
     rpc: (name: string, payload: unknown) => { outgoing.push({ kind: 'rpc', name, payload }); return Promise.resolve({ data: null, error: null }); },
   },
 }));
 
-import { insertDirectMessage } from './messages';
+import { editDirectMessage, insertDirectMessage, readDirectMessages } from './messages';
 
 beforeEach(() => {
   outgoing.length = 0;
@@ -41,6 +60,10 @@ beforeEach(() => {
   bobHasDevice = true;
   flagOn = true;
   registration = Promise.resolve(alice);
+  keyRows = [];
+  messageRow = null;
+  updates.length = 0;
+  clearMessageCache();
 });
 
 const send = (over: Partial<Parameters<typeof insertDirectMessage>[0]> = {}) =>
@@ -113,5 +136,58 @@ describe('visible plaintext fallbacks', () => {
     flagOn = false;
     const sent = await send();
     expect((outgoing[0].payload as { id: string }).id).toBe(sent.id);
+  });
+});
+
+function sealedRowFor(text: string, id: string, deviceIds: string[] = [alice.deviceId]) {
+  const ctx = { messageId: id, conversationId: 'c-1', senderId: 'u-bob' };
+  const devices = [alice, bob].filter(d => deviceIds.includes(d.deviceId));
+  const sealed = sealMessage(text, ctx, devices.map(d => ({ deviceId: d.deviceId, publicKey: d.keyPair.publicKey })), random);
+  for (const k of sealed.keys) keyRows.push({ message_id: id, device_id: k.deviceId, wrapped_key: k.wrappedKey, nonce: k.nonce });
+  return {
+    id, conversation_id: 'c-1', sender_id: 'u-bob', created_at: '2026-09-26T10:00:00Z', text: null,
+    ciphertext: sealed.ciphertext, nonce: sealed.nonce, ephemeral_public_key: sealed.ephemeralPublicKey,
+  };
+}
+
+describe('readDirectMessages', () => {
+  it('decrypts rows sealed to this device and passes plaintext rows through', async () => {
+    const sealed = sealedRowFor('for alice', 'm-1');
+    const plain = { id: 'm-0', conversation_id: 'c-1', sender_id: 'u-bob', text: 'old plaintext', ciphertext: null, nonce: null, ephemeral_public_key: null };
+    const out = await readDirectMessages([plain, sealed], 'u-alice');
+    expect(out.get('m-0')).toEqual({ text: 'old plaintext', encrypted: false, unreadable: null });
+    expect(out.get('m-1')).toEqual({ text: 'for alice', encrypted: true, unreadable: null });
+  });
+
+  it('says no_key, not an empty message, for a message sent before this device existed', async () => {
+    const sealed = sealedRowFor('before my time', 'm-2', [bob.deviceId]);
+    expect((await readDirectMessages([sealed], 'u-alice')).get('m-2')).toEqual({ text: null, encrypted: true, unreadable: 'no_key' });
+  });
+
+  it('says failed for a tampered message', async () => {
+    const sealed = sealedRowFor('intact', 'm-3');
+    const flipped = { ...sealed, ciphertext: (sealed.ciphertext[0] === '0' ? '1' : '0') + sealed.ciphertext.slice(1) };
+    expect((await readDirectMessages([flipped], 'u-alice')).get('m-3')).toEqual({ text: null, encrypted: true, unreadable: 'failed' });
+  });
+});
+
+describe('editDirectMessage', () => {
+  it('re-seals an edit under the same key and sends no plaintext', async () => {
+    const sent = await send();
+    const rpc = outgoing.find(o => o.kind === 'rpc')!.payload as { p_message: { ciphertext: string; nonce: string; ephemeral_public_key: string } };
+    messageRow = { id: sent.id, conversation_id: 'c-1', sender_id: 'u-alice', text: null, ...rpc.p_message };
+    outgoing.length = 0;
+    await editDirectMessage(sent.id, 'EDITED-SECRET-91c2', 'u-alice');
+    const wire = JSON.stringify(outgoing);
+    expect(wire).not.toContain('EDITED-SECRET-91c2');
+    const patch = updates[0] as { ciphertext: string; nonce: string; edited_at: string };
+    expect(patch.nonce).not.toBe(rpc.p_message.nonce);
+    expect(patch).not.toHaveProperty('text');
+  });
+
+  it('edits a plaintext message as before', async () => {
+    messageRow = { id: 'm-9', conversation_id: 'c-1', sender_id: 'u-alice', text: 'old', ciphertext: null, nonce: null, ephemeral_public_key: null };
+    await editDirectMessage('m-9', 'new', 'u-alice');
+    expect(updates[0]).toMatchObject({ text: 'new' });
   });
 });

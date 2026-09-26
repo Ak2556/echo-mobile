@@ -11,7 +11,7 @@ import {
 import { selectWithDiversity, type SelectableItem } from './feedSelection';
 import { interestRows } from './interestsSync';
 import { captureException } from './monitoring';
-import { insertDirectMessage, type DMKind } from './e2ee/messages';
+import { editDirectMessage, insertDirectMessage, readDirectMessages, SEALED_COLUMNS, type DMKind, type SealedRow } from './e2ee/messages';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
 import { APP_LANGUAGES } from './languages';
@@ -3275,6 +3275,10 @@ export interface RemoteDirectMessage {
   replyToKind: string | null;
   replyToDeleted: boolean;
   reactions: RemoteMessageReaction[];
+  /** Sealed end-to-end. The UI shows a lock; this comes from the row, not from intent. */
+  encrypted?: boolean;
+  /** Sealed but unreadable here: no_key = sent before this device existed; failed = did not authenticate. */
+  unreadable?: 'no_key' | 'failed' | null;
 }
 
 function dmPreviewText(kind: string | null | undefined, text: string | null | undefined): string | null {
@@ -3290,7 +3294,9 @@ function dmPreviewText(kind: string | null | undefined, text: string | null | un
       return text ?? 'Link';
     }
   }
-  return text ?? null;
+  // A sealed message's preview is null on the server by design (see
+  // fn_sync_conv_last_message); say so rather than show an empty row.
+  return text ?? (kind === 'text' ? '🔒 Message' : null);
 }
 
 /** Upsert a dm_conversation row and return its UUID. Does NOT send a message. */
@@ -3503,12 +3509,7 @@ export async function sendRemoteDMEchoToConversation(
 export async function editRemoteMessage(messageId: string, content: string): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
-  const { error } = await supabase
-    .from('direct_messages')
-    .update({ text: content, edited_at: new Date().toISOString() })
-    .eq('id', messageId)
-    .eq('sender_id', uid);
-  if (error) throw error;
+  await editDirectMessage(messageId, content, uid);
 }
 
 /** Send a photo DM. Uploads to dm-media bucket then inserts an image-kind message. */
@@ -3612,26 +3613,26 @@ export async function forwardDMMessage(
 
   const { data: src, error: srcErr } = await supabase
     .from('direct_messages')
-    .select('kind, text, media_url, shared_echo_id, deleted_at')
+    .select(`id, conversation_id, sender_id, kind, text, media_url, shared_echo_id, deleted_at, ${SEALED_COLUMNS}`)
     .eq('id', messageId)
     .single();
   if (srcErr || !src) throw new Error('Message not found');
   if (src.deleted_at) throw new Error('Message was deleted');
 
+  // A sealed message is opened here and re-sealed for the new recipient; it is
+  // never copied as ciphertext, which only its original devices could read.
+  const readable = (await readDirectMessages([src as SealedRow], uid)).get(src.id as string);
+  if (readable?.unreadable) throw new Error('This message can’t be forwarded from this device');
+
   const conversationId = await getOrCreateRemoteConversation(recipientId);
-
-  const { error: msgErr } = await supabase
-    .from('direct_messages')
-    .insert({
-      conversation_id: conversationId,
-      sender_id: uid,
-      kind: src.kind,
-      text: src.text,
-      media_url: src.media_url,
-      shared_echo_id: src.shared_echo_id,
-    });
-  if (msgErr) throw new Error(`Forward failed: ${msgErr.message}`);
-
+  await insertDirectMessage({
+    conversationId,
+    senderId: uid,
+    kind: src.kind as DMKind,
+    text: readable?.text ?? null,
+    mediaUrl: (src.media_url as string | null) ?? null,
+    sharedEchoId: (src.shared_echo_id as string | null) ?? null,
+  });
   return { conversationId };
 }
 
@@ -3902,11 +3903,11 @@ export async function fetchRemoteMessages(
   let q = supabase
     .from('direct_messages')
     .select(`
-      id, conversation_id, sender_id, text, kind,
+      id, conversation_id, sender_id, text, kind, ${SEALED_COLUMNS},
       created_at, read_at, deleted_at, edited_at,
       shared_echo_id, media_url,
       reply_to_id,
-      reply_msg:reply_to_id (id, text, kind, sender_id, deleted_at),
+      reply_msg:reply_to_id (id, conversation_id, sender_id, text, kind, deleted_at, ${SEALED_COLUMNS}),
       reactions:message_reactions(id, user_id, emoji)
     `)
     .eq('conversation_id', conversationId)
@@ -3918,7 +3919,16 @@ export async function fetchRemoteMessages(
   const { data, error } = await q;
   if (error) throw error;
 
-  const messages = await Promise.all(((data ?? []) as Record<string, unknown>[]).reverse().map(async m => {
+  const uid = await getSessionUserId();
+  const pageRows = (data ?? []) as Record<string, unknown>[];
+  const sealedRows: SealedRow[] = [];
+  for (const m of pageRows) {
+    sealedRows.push(m as unknown as SealedRow);
+    if (m.reply_msg) sealedRows.push(m.reply_msg as unknown as SealedRow);
+  }
+  const readable = uid ? await readDirectMessages(sealedRows, uid) : new Map();
+
+  const messages = await Promise.all([...pageRows].reverse().map(async m => {
     const rm = (m.reply_msg as Record<string, unknown> | null);
     const kind = (m.kind as RemoteDirectMessage['kind']) ?? 'text';
     const storedMediaUrl = (m.media_url as string | null) ?? null;
@@ -3926,7 +3936,7 @@ export async function fetchRemoteMessages(
       id: m.id as string,
       conversationId: m.conversation_id as string,
       senderId: m.sender_id as string,
-      content: (m.text as string | null) ?? null,
+      content: readable.get(m.id as string)?.text ?? ((m.text as string | null) ?? null),
       kind,
       createdAt: m.created_at as string,
       readAt: (m.read_at as string | null) ?? null,
@@ -3937,7 +3947,7 @@ export async function fetchRemoteMessages(
         ? await signedDmMediaUrl(storedMediaUrl)
         : storedMediaUrl,
       replyToId: (m.reply_to_id as string | null) ?? null,
-      replyToContent: rm ? ((rm.text as string | null) ?? null) : null,
+      replyToContent: rm ? (readable.get(rm.id as string)?.text ?? ((rm.text as string | null) ?? null)) : null,
       replyToSenderId: rm ? ((rm.sender_id as string | null) ?? null) : null,
       replyToKind: rm ? ((rm.kind as string | null) ?? null) : null,
       replyToDeleted: rm ? !!(rm.deleted_at) : false,
@@ -3947,6 +3957,8 @@ export async function fetchRemoteMessages(
         userId: r.user_id as string,
         value: r.emoji as string,
       })),
+      encrypted: readable.get(m.id as string)?.encrypted ?? false,
+      unreadable: readable.get(m.id as string)?.unreadable ?? null,
     };
   }));
 
@@ -3962,13 +3974,15 @@ export interface ConversationMedia {
 export async function fetchConversationMedia(conversationId: string): Promise<ConversationMedia> {
   const { data, error } = await supabase
     .from('direct_messages')
-    .select('id, text, kind, media_url, created_at')
+    .select(`id, conversation_id, sender_id, text, kind, media_url, created_at, ${SEALED_COLUMNS}`)
     .eq('conversation_id', conversationId)
     .in('kind', ['image', 'link'])
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(200);
   if (error || !data) return { images: [], links: [] };
+  const uid = await getSessionUserId();
+  const readable = uid ? await readDirectMessages(data as unknown as SealedRow[], uid) : new Map();
 
   const images: ConversationMedia['images'] = [];
   const links: ConversationMedia['links'] = [];
@@ -3979,7 +3993,7 @@ export async function fetchConversationMedia(conversationId: string): Promise<Co
       const url = await signedDmMediaUrl((m.media_url as string | null) ?? null);
       if (url) images.push({ id, url, createdAt });
     } else if (m.kind === 'link') {
-      const raw = (m.text as string | null) ?? '';
+      const raw = readable.get(id)?.text ?? (m.text as string | null) ?? '';
       const url = (raw.match(/https?:\/\/[^\s]+/i)?.[0]) ?? raw.trim();
       if (url) links.push({ id, url, createdAt });
     }

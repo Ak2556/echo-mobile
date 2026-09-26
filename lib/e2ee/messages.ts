@@ -13,9 +13,10 @@
 import { getRandomBytes, randomUUID } from 'expo-crypto';
 import { supabase } from '../supabase';
 import { isFeatureEnabled } from '../remoteFlags';
-import { sealMessage, type TargetDevice } from './crypto';
-import { ensureDeviceRegistered, fetchTargetDevices } from './deviceKeys';
-import { rememberMessage } from './cache';
+import { E2EEError, openBody, openMessageKey, resealBody, sealMessage, type TargetDevice } from './crypto';
+import { ensureDeviceRegistered, fetchTargetDevices, getLocalDevice } from './deviceKeys';
+import { recallMessage, rememberMessage } from './cache';
+import { captureException } from '../monitoring';
 
 export type DMKind = 'text' | 'link' | 'contact' | 'echo' | 'image' | 'voice';
 
@@ -102,4 +103,108 @@ export async function insertDirectMessage(msg: OutgoingDirectMessage): Promise<{
     messageKey: sealed.messageKey,
   });
   return { id, encrypted: true };
+}
+
+export const SEALED_COLUMNS = 'ciphertext, nonce, ephemeral_public_key';
+
+export type SealedRow = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  created_at?: string;
+  text: string | null;
+  ciphertext: string | null;
+  nonce: string | null;
+  ephemeral_public_key: string | null;
+};
+
+export type Readable = { text: string | null; encrypted: boolean; unreadable: 'no_key' | 'failed' | null };
+
+const KEY_LOOKUP_CHUNK = 100;
+
+export async function readDirectMessages(rows: SealedRow[], userId: string): Promise<Map<string, Readable>> {
+  const out = new Map<string, Readable>();
+  const pending: SealedRow[] = [];
+
+  for (const r of rows) {
+    if (!r.ciphertext) { out.set(r.id, { text: r.text, encrypted: false, unreadable: null }); continue; }
+    const hit = recallMessage(r.id, r.nonce ?? undefined);
+    if (hit) { out.set(r.id, { text: hit.text, encrypted: true, unreadable: null }); continue; }
+    pending.push(r);
+  }
+  if (pending.length === 0) return out;
+
+  const device = await getLocalDevice(userId);
+  if (!device) {
+    for (const r of pending) out.set(r.id, { text: null, encrypted: true, unreadable: 'no_key' });
+    return out;
+  }
+
+  const keys = new Map<string, { wrapped_key: string; nonce: string }>();
+  for (let i = 0; i < pending.length; i += KEY_LOOKUP_CHUNK) {
+    const ids = pending.slice(i, i + KEY_LOOKUP_CHUNK).map(r => r.id);
+    const { data, error } = await supabase
+      .from('direct_message_keys')
+      .select('message_id, wrapped_key, nonce')
+      .eq('device_id', device.deviceId)
+      .in('message_id', ids);
+    if (error) throw error;
+    for (const k of (data ?? []) as { message_id: string; wrapped_key: string; nonce: string }[]) keys.set(k.message_id, k);
+  }
+
+  for (const r of pending) {
+    const k = keys.get(r.id);
+    if (!k) { out.set(r.id, { text: null, encrypted: true, unreadable: 'no_key' }); continue; }
+    const ctx = { messageId: r.id, conversationId: r.conversation_id, senderId: r.sender_id };
+    try {
+      const messageKey = openMessageKey({ wrappedKey: k.wrapped_key, nonce: k.nonce }, r.ephemeral_public_key!, device, r.id);
+      const text = openBody(r.ciphertext!, r.nonce!, messageKey, ctx);
+      rememberMessage({ id: r.id, text, conversationId: r.conversation_id, senderId: r.sender_id, createdAt: r.created_at ?? '', nonce: r.nonce!, messageKey });
+      out.set(r.id, { text, encrypted: true, unreadable: null });
+    } catch (error) {
+      // The error carries no content: E2EEError('decrypt_failed') only.
+      captureException(error, { tags: { source: 'e2ee_decrypt' } });
+      out.set(r.id, { text: null, encrypted: true, unreadable: 'failed' });
+    }
+  }
+  return out;
+}
+
+export async function editDirectMessage(messageId: string, newText: string, userId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from('direct_messages')
+    .select(`id, conversation_id, sender_id, created_at, text, ${SEALED_COLUMNS}`)
+    .eq('id', messageId)
+    .single();
+  if (error) throw error;
+  const row = data as SealedRow;
+  if (row.sender_id !== userId) throw new Error('Only the sender can edit a message');
+
+  const editedAt = new Date().toISOString();
+  if (!row.ciphertext) {
+    const { error: updateError } = await supabase
+      .from('direct_messages')
+      .update({ text: newText, edited_at: editedAt })
+      .eq('id', messageId)
+      .eq('sender_id', userId);
+    if (updateError) throw updateError;
+    return;
+  }
+
+  let entry = recallMessage(messageId, row.nonce ?? undefined);
+  if (!entry) {
+    await readDirectMessages([row], userId);
+    entry = recallMessage(messageId, row.nonce ?? undefined);
+  }
+  if (!entry) throw new E2EEError('no_key');
+
+  const ctx = { messageId, conversationId: row.conversation_id, senderId: row.sender_id };
+  const resealed = resealBody(newText, entry.messageKey, ctx, getRandomBytes);
+  const { error: updateError } = await supabase
+    .from('direct_messages')
+    .update({ ciphertext: resealed.ciphertext, nonce: resealed.nonce, edited_at: editedAt })
+    .eq('id', messageId)
+    .eq('sender_id', userId);
+  if (updateError) throw updateError;
+  rememberMessage({ ...entry, text: newText, nonce: resealed.nonce });
 }
