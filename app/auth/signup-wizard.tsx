@@ -245,8 +245,25 @@ export default function SignupWizard() {
   // Colours here are deliberately fixed to the branded backdrop, but the
   // typography must still follow the Font Style setting like everywhere else.
   const { font } = useTheme();
-  const { session } = useAuth();
+  const { session, status } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
+
+  // Leave immediately if this account has already onboarded.
+  //
+  // Nothing used to stop an established user walking in here — "Sign up with
+  // Email" routes to this screen directly, without consulting auth status — and
+  // step 3 asks for a display name and username, then upserts them over the
+  // ones the account already has. Signing in through a signup entry point
+  // should not be able to rename you.
+  //
+  // The ref is what keeps this from fighting the finish handler: completing the
+  // wizard flips status to 'ready' on purpose, and without it this effect would
+  // race /welcome and win.
+  const finishing = useRef(false);
+  useEffect(() => {
+    if (finishing.current) return;
+    if (status === 'ready') router.replace('/(tabs)/home');
+  }, [status, router]);
   const layout = useResponsiveLayout();
   const stepWidth = Math.min(screenWidth, layout.contentMaxWidth);
   const confettiData = useMemo(() => Array.from({ length: 40 }, (_, i) => ({
@@ -543,6 +560,9 @@ export default function SignupWizard() {
       return;
     }
     setSaving(true);
+    // From here on, a status change to 'ready' is this handler's own doing —
+    // don't let the guard above bounce us to the feed instead of /welcome.
+    finishing.current = true;
 
     const { error } = await supabase.from('profiles').upsert({
       ...(dobIso ? { date_of_birth: dobIso } : {}),
@@ -552,6 +572,10 @@ export default function SignupWizard() {
       avatar_color: avatarColor,
       avatar_url: avatarUrl || null,
       bio: bioText.trim() || null,
+      // What makes lib/auth/listener.ts stop routing here. Written in the same
+      // statement as the rest, so onboarding is only ever marked complete if
+      // the profile it describes actually landed.
+      onboarded_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
 

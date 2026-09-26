@@ -10,6 +10,7 @@ import { isSupabaseRemote } from '../remoteConfig';
 import { fetchRemoteBlocks, fetchRemoteMutes, fetchAndApplyRemoteSettings } from '../supabaseEchoApi';
 import { loadPersonaProfile } from '../persona';
 import { syncNotificationProfile } from '../personalNudges';
+import { statusForProfile } from './onboardingStatus';
 import { useAuthStore } from './store';
 import { destinationFor } from './destination';
 import { clearLocalUserData } from '../localDataReset';
@@ -42,7 +43,7 @@ async function fetchProfile(userId: string): Promise<AuthProfile | null> {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, username, display_name, bio, avatar_color, avatar_url, is_private, dm_privacy, activity_status, online_status, read_receipts, sensitive_content_filter, personalized_notifications')
+      .select('id, username, onboarded_at, display_name, bio, avatar_color, avatar_url, is_private, dm_privacy, activity_status, online_status, read_receipts, sensitive_content_filter, personalized_notifications')
       .eq('id', userId)
       .maybeSingle();
     if (error) return null;
@@ -62,10 +63,11 @@ async function hydrateFromSession(session: Session | null): Promise<void> {
   }
 
   const profile = await fetchProfile(session.user.id);
-  const hasUsername = Boolean(profile?.username);
 
   auth.setAuth({
-    status: hasUsername ? 'ready' : 'needs-onboarding',
+    // See lib/auth/onboardingStatus.ts — this used to be
+    // `Boolean(profile?.username)`, which handle_new_user() makes always true.
+    status: statusForProfile(profile),
     session,
     profile,
   });
