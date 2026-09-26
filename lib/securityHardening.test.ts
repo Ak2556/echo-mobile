@@ -43,6 +43,16 @@ function statements(sql: string): string[] {
     .filter(Boolean);
 }
 
+/** App source files (not tests), relative to the repo root. */
+function sourceFiles(dir: string): string[] {
+  return readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap(entry => {
+    if (entry.name === 'node_modules') return [];
+    const rel = join(dir, entry.name);
+    if (entry.isDirectory()) return sourceFiles(rel);
+    return /\.(ts|tsx)$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [rel] : [];
+  });
+}
+
 const allStatements = sources.flatMap(({ file, sql }) => statements(sql).map(text => ({ file, text })));
 const fns = latestFunctions();
 
@@ -141,15 +151,6 @@ describe('server-owned columns', () => {
 describe('rate limits', () => {
   const fn = fns.get('public.check_app_rate_limit')!;
   const allowlist = [...(/p_action not in \(([\s\S]*?)\)/.exec(fn.body)?.[1] ?? '').matchAll(/'([\w-]+)'/g)].map(m => m[1]);
-
-  function sourceFiles(dir: string): string[] {
-    return readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap(entry => {
-      if (entry.name === 'node_modules') return [];
-      const rel = join(dir, entry.name);
-      if (entry.isDirectory()) return sourceFiles(rel);
-      return /\.(ts|tsx)$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [rel] : [];
-    });
-  }
 
   it('direct client calls are gated to an allowlist', () => {
     expect(fn.body).toMatch(/pg_trigger_depth\(\) = 0/);
@@ -585,5 +586,100 @@ describe('trigger functions are not exposed as RPCs', () => {
     // SECURITY DEFINER function left granted sits in /rest/v1/rpc and the
     // Supabase linter reports it (0028/0029).
     expect(triggerFns.filter(name => !revoked.has(name))).toEqual([]);
+  });
+});
+
+/**
+ * direct_messages and reports were created without a grant, so both kept
+ * Supabase's default GRANT ALL. RLS picks the rows, not the columns: a sender
+ * could move their own message into any conversation by rewriting
+ * conversation_id, and a reporter could file a report that arrived already
+ * 'resolved', with invented moderator notes and reviewer. 20260926155000
+ * narrowed each grant to the columns the app writes.
+ *
+ * The grants are replayed from every migration in order, starting from the
+ * default table-wide grant. Widening one is a deliberate edit to the expected
+ * list here: a new column (the DM E2EE work adds ciphertext and nonce) gets
+ * granted by its own migration and added below in the same change.
+ */
+describe('client writes are limited to the columns the app writes', () => {
+  const PRIVILEGE = /\b(all(?: privileges)?|select|insert|update|delete|truncate|references|trigger)\b(?:\s*\(([^)]*)\))?/gi;
+
+  /** Effective `privilege` of `role` on public.`table` after every migration. */
+  function effectiveGrant(privilege: string, table: string, role: string) {
+    let tableWide = true;
+    const columns = new Set<string>();
+    const target = new RegExp(`^(grant|revoke) (.+?) on (?:table )?public\\.${table} (?:to|from) ([\\w\\s,]+?)(?: with grant option)?$`, 'i');
+    for (const { text } of allStatements) {
+      const m = target.exec(text);
+      if (!m) continue;
+      const grant = m[1].toLowerCase() === 'grant';
+      const roles = m[3].toLowerCase().split(',').map(r => r.trim());
+      // A grant to PUBLIC reaches every role; a revoke from PUBLIC leaves direct grants alone.
+      if (!roles.includes(role) && !(grant && roles.includes('public'))) continue;
+      for (const [, priv, cols] of m[2].matchAll(PRIVILEGE)) {
+        if (!priv.toLowerCase().startsWith('all') && priv.toLowerCase() !== privilege) continue;
+        if (cols === undefined) {
+          // Revoking a table privilege revokes it on every column too.
+          tableWide = grant;
+          if (!grant) columns.clear();
+          continue;
+        }
+        for (const col of cols.split(',').map(c => c.trim().toLowerCase())) {
+          if (grant) columns.add(col);
+          else columns.delete(col);
+        }
+      }
+    }
+    return { tableWide, columns: [...columns].sort() };
+  }
+
+  /** Object keys the app passes to `.from('<table>').<method>({ ... })`. */
+  function clientWrites(table: string, method: 'insert' | 'update') {
+    const call = new RegExp(`\\.from\\(\\s*'${table}'\\s*\\)\\s*\\.${method}\\(\\s*\\{([^}]*)\\}`, 'g');
+    const keys = new Set<string>();
+    let calls = 0;
+    for (const file of ['lib', 'src', 'app', 'hooks', 'components', 'store'].flatMap(sourceFiles)) {
+      for (const m of readFileSync(join(ROOT, file), 'utf8').matchAll(call)) {
+        calls++;
+        for (const k of m[1].matchAll(/(\w+)\s*:/g)) keys.add(k[1]);
+      }
+    }
+    return { calls, keys: [...keys].sort() };
+  }
+
+  const ungranted = (g: ReturnType<typeof effectiveGrant>, keys: string[]) =>
+    g.tableWide ? [] : keys.filter(k => !g.columns.includes(k));
+
+  it('a DM sender can edit and unsend, and cannot move, re-attribute or retype a message', () => {
+    expect(effectiveGrant('update', 'direct_messages', 'authenticated')).toEqual({
+      tableWide: false,
+      columns: ['deleted_at', 'edited_at', 'text'],
+    });
+  });
+
+  it('a report is filed with its content only; review fields stay server-owned', () => {
+    expect(effectiveGrant('insert', 'reports', 'authenticated')).toEqual({
+      tableWide: false,
+      columns: ['details', 'reason', 'reporter_id', 'target_id', 'target_type'],
+    });
+  });
+
+  it('anon holds nothing on either table', () => {
+    for (const table of ['direct_messages', 'reports']) {
+      for (const privilege of ['select', 'insert', 'update', 'delete']) {
+        expect(effectiveGrant(privilege, table, 'anon'), `${privilege} on ${table}`).toEqual({ tableWide: false, columns: [] });
+      }
+    }
+  });
+
+  it('every column the app writes is granted, so the narrowing breaks no flow', () => {
+    const dmUpdates = clientWrites('direct_messages', 'update');
+    expect(dmUpdates.calls, 'editRemoteMessage and deleteRemoteMessage').toBeGreaterThanOrEqual(2);
+    expect(ungranted(effectiveGrant('update', 'direct_messages', 'authenticated'), dmUpdates.keys)).toEqual([]);
+
+    const reportInserts = clientWrites('reports', 'insert');
+    expect(reportInserts.calls, 'submitRemoteReport').toBeGreaterThanOrEqual(1);
+    expect(ungranted(effectiveGrant('insert', 'reports', 'authenticated'), reportInserts.keys)).toEqual([]);
   });
 });
