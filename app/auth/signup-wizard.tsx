@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { syncInterests } from '../../lib/supabaseEchoApi';
 import {
   View, Text, TextInput, ScrollView, Platform, useWindowDimensions,
@@ -371,6 +372,16 @@ export default function SignupWizard() {
   const [avatarUrl, setAvatarUrlLocal] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [bioText, setBioText] = useState('');
+
+  // Voice dictation appends here, so a bio can be spoken in pieces. It fills
+  // the field and never submits: the user reads back what was heard before it
+  // goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setBioText((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
 
   // Optional profile photo. Mirrors edit-profile: pick → (remote) upload to
   // Supabase storage → keep the public URL; offline just previews the local URI.

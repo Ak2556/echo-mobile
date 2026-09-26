@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useFocusEffect } from 'expo-router';
@@ -20,6 +21,16 @@ export default function AIMemoryScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editKey, setEditKey] = useState('');
   const [editValue, setEditValue] = useState('');
+
+  // Voice dictation appends here, so a memory can be spoken in pieces. It
+  // fills the field and never submits: the user reads back what was heard
+  // before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setEditValue((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
 
   const refresh = useCallback(async () => {
     setLoading(true);

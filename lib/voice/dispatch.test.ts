@@ -376,3 +376,46 @@ describe('voice reaches every screen', () => {
     expect(missing, `screens with no way to reach them by voice: ${missing.join(', ')}`).toEqual([]);
   });
 });
+
+/**
+ * Dictation coverage, enforced the same way navigation coverage is.
+ *
+ * The app's claim is that you say a thought instead of typing it. Forty-one
+ * screens had a text input and voice could type into none of them, and nothing
+ * anywhere said so. `multiline` is the signal: a single-line box is a search
+ * field or a name, a multiline one is somewhere a person writes.
+ */
+describe('voice reaches every composer', () => {
+  it('every long-form field accepts dictation', async () => {
+    const { readdirSync, statSync, readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+
+    const walk = (dir: string, base = ''): string[] =>
+      readdirSync(join(process.cwd(), dir)).flatMap((f) => {
+        const abs = join(process.cwd(), dir, f);
+        if (statSync(abs).isDirectory()) return walk(join(dir, f), `${base}/${f}`);
+        return f.endsWith('.tsx') ? [`${base}/${f}`] : [];
+      });
+
+    // Each exclusion states why, so widening the list is a decision someone has
+    // to write down rather than something that quietly happens.
+    const excluded: Record<string, string> = {
+      '/mini-apps/json-formatter.tsx': 'the field holds JSON — dictating punctuation-heavy syntax is not a feature',
+      '/mini-apps/notes.tsx': 'already voice-writable through open_mini_app action=add',
+      '/mini-apps/tasks.tsx': 'already voice-writable through open_mini_app action=add',
+      '/mini-apps/habits.tsx': 'already voice-writable through open_mini_app action=add',
+      '/mini-apps/learn.tsx': 'already voice-writable through open_mini_app action=add',
+      '/share.tsx': 'two comparable long-form fields, so dictation has no single target',
+    };
+
+    const missing = walk('app')
+      .filter((rel) => {
+        const src = readFileSync(join(process.cwd(), 'app', rel), 'utf8');
+        return /multiline/.test(src) && !/composeText/.test(src);
+      })
+      .filter((rel) => !(rel in excluded))
+      .sort();
+
+    expect(missing, `long-form fields voice cannot dictate into: ${missing.join(', ')}`).toEqual([]);
+  });
+});

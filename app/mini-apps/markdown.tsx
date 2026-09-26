@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Trash } from 'phosphor-react-native';
 import { GlassPanel } from '../../components/ui/GlassPanel';
@@ -110,6 +111,16 @@ function renderMarkdown(md: string, colors: any, radius?: any) {
 export default function MarkdownScreen() {
   const { colors, radius } = useTheme();
   const [text, setText] = useState(SAMPLE);
+
+  // Voice dictation appends here, so a document can be spoken in pieces. It
+  // fills the field and never submits: the user reads back what was heard
+  // before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setText((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
 
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, Alert, ScrollView, TextInput as RNTextInput } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -22,6 +23,16 @@ export default function ReportScreen() {
   }>();
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [details, setDetails] = useState('');
+
+  // Voice dictation appends here, so what happened can be spoken in pieces. It
+  // fills the field and never submits: the user reads back what was heard
+  // before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setDetails((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {

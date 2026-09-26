@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,6 +30,16 @@ function OfficeHourDetailScreenInner() {
   const [oh, setOh] = useState<OfficeHour | null>(null);
   const [questions, setQuestions] = useState<OfficeHourQuestion[]>([]);
   const [draft, setDraft] = useState('');
+
+  // Voice dictation appends to the draft, so a question for the host can be spoken in
+  // pieces. It fills the field and never submits: the user reads back what
+  // was heard before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setDraft((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const mounted = useRef(true);

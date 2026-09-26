@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { ResponsiveScreen } from '../components/ui/ResponsiveScreen';
 import { useRouter } from 'expo-router';
@@ -27,6 +28,16 @@ function CreateSalonScreenInner() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+
+  // Voice dictation appends to the description, so a long one can be spoken in
+  // pieces. It fills the field and never submits: the user reads back what
+  // was heard before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setDescription((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [topicTags, setTopicTags] = useState('');
   const [coverColor, setCoverColor] = useState(COVER_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);

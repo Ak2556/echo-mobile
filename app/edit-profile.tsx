@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useVoiceScreenActions } from '../lib/voice/useVoiceScreenActions';
 import { View, Text, ScrollView, Alert, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -40,6 +41,16 @@ export default function EditProfileScreen() {
   const [newUsername, setNewUsername] = useState(username);
   const [newDisplayName, setNewDisplayName] = useState(displayName || username);
   const [newBio, setNewBio] = useState(bio);
+
+  // Voice dictation appends here, so your bio can be spoken in pieces. It
+  // fills the field and never submits: the user reads back what was heard
+  // before it goes anywhere.
+  useVoiceScreenActions({
+    composeText: (spoken) => {
+      setNewBio((prev) => (prev ? `${prev} ${spoken}` : spoken));
+      return true;
+    },
+  });
   const [newColor, setNewColor] = useState(avatarColor);
   const [newAvatarUrl, setNewAvatarUrl] = useState(avatarUrl || '');
   const [editingUri, setEditingUri] = useState<string | null>(null);
