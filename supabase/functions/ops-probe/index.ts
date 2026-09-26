@@ -27,23 +27,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { timingSafeEqual } from "../_shared/timingSafeEqual.ts";
 import { moderateContent } from "../embed-echo/moderation.ts";
+import {
+  alertBody,
+  interpretModeration,
+  interpretStuck,
+  overallStatus,
+  shouldAlert as shouldAlertFrom,
+  stuckWindow,
+  type CheckResult,
+  type ProbeRunRow,
+} from "./policy.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const PROBE_SECRET = Deno.env.get("OPS_PROBE_SECRET") ?? "";
-
-/** A post with no verdict this long after it was written is stuck, not pending. */
-const STUCK_AFTER_MINUTES = 20;
-/** Older than this and the sweep has given up anyway; counting it twice adds nothing. */
-const STUCK_WINDOW_HOURS = 24;
-/** Keep a failing check from pushing every half hour once it is known. */
-const REALERT_AFTER_MINUTES = 180;
-
-interface CheckResult {
-  check: string;
-  ok: boolean;
-  detail: string;
-}
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -67,13 +64,7 @@ async function checkModeration(): Promise<CheckResult> {
   const started = Date.now();
   try {
     const verdict = await moderateContent("A quiet walk after lunch, and the day felt lighter.");
-    const ms = Date.now() - started;
-    if (verdict.ok) return { check: "moderation", ok: true, detail: `verdict in ${ms} ms` };
-    if (verdict.categories.includes("moderation_unavailable")) {
-      return { check: "moderation", ok: false, detail: `unavailable after ${ms} ms: ${verdict.error ?? "no detail"}` };
-    }
-    // A flag on this sentence means the classifier is not behaving as configured.
-    return { check: "moderation", ok: false, detail: `benign text flagged as ${verdict.categories.join(", ")}` };
+    return interpretModeration(verdict, Date.now() - started);
   } catch (e) {
     return { check: "moderation", ok: false, detail: e instanceof Error ? e.message : String(e) };
   }
@@ -81,22 +72,15 @@ async function checkModeration(): Promise<CheckResult> {
 
 // deno-lint-ignore no-explicit-any
 async function checkStuckPosts(supabase: any): Promise<CheckResult> {
-  const since = new Date(Date.now() - STUCK_WINDOW_HOURS * 3600_000).toISOString();
-  const before = new Date(Date.now() - STUCK_AFTER_MINUTES * 60_000).toISOString();
+  const window = stuckWindow(Date.now());
   const { count, error } = await supabase
     .from("public_echoes")
     .select("id", { count: "exact", head: true })
     .eq("check_content", false)
     .is("moderated_at", null)
-    .gt("created_at", since)
-    .lt("created_at", before);
-  if (error) return { check: "stuck_posts", ok: false, detail: `query failed: ${error.message}` };
-  const n = count ?? 0;
-  return {
-    check: "stuck_posts",
-    ok: n === 0,
-    detail: n === 0 ? "no post waiting on a verdict" : `${n} post(s) hidden with no verdict for over ${STUCK_AFTER_MINUTES} min`,
-  };
+    .gt("created_at", window.since)
+    .lt("created_at", window.before);
+  return interpretStuck(count ?? null, error ? error.message : null);
 }
 
 /**
@@ -114,7 +98,7 @@ async function alertModerators(supabase: any, failures: CheckResult[]): Promise<
   const list = (tokens ?? []).map((t: { token: string }) => t.token).filter(Boolean);
   if (!list.length) return 0;
 
-  const body = failures.map((f) => `${f.check}: ${f.detail}`).join(" · ").slice(0, 170);
+  const body = alertBody(failures);
   const payload = list.map((to: string) => ({
     to,
     title: "Echo probe failed",
@@ -136,7 +120,7 @@ async function alertModerators(supabase: any, failures: CheckResult[]): Promise<
   return list.length;
 }
 
-/** Alert on the transition into failure, and again only after a long silence. */
+/** This check's recent history, newest first, for the alert decision in policy.ts. */
 // deno-lint-ignore no-explicit-any
 async function shouldAlert(supabase: any, check: string): Promise<boolean> {
   const { data } = await supabase
@@ -145,12 +129,7 @@ async function shouldAlert(supabase: any, check: string): Promise<boolean> {
     .eq("check_name", check)
     .order("ran_at", { ascending: false })
     .limit(20);
-  const rows = (data ?? []) as { ok: boolean; alerted: boolean; ran_at: string }[];
-  const previous = rows[0];
-  if (!previous || previous.ok) return true;
-  const lastAlert = rows.find((r) => r.alerted);
-  if (!lastAlert) return true;
-  return Date.now() - new Date(lastAlert.ran_at).getTime() > REALERT_AFTER_MINUTES * 60_000;
+  return shouldAlertFrom((data ?? []) as ProbeRunRow[], Date.now());
 }
 
 Deno.serve(async (req: Request) => {
@@ -169,7 +148,8 @@ Deno.serve(async (req: Request) => {
   results.push(await checkStuckPosts(supabase));
   results.push(await checkModeration());
 
-  const failures = results.filter((r) => !r.ok);
+  const outcome = overallStatus(results);
+  const failures = outcome.failures;
   let alerted = false;
   let pushed = 0;
   if (failures.length) {
@@ -187,9 +167,9 @@ Deno.serve(async (req: Request) => {
   if (writeError) console.error("[ops-probe] could not record run:", writeError.message);
 
   return json({
-    ok: failures.length === 0,
+    ok: outcome.ok,
     checks: results,
     alerted,
     devices_notified: pushed,
-  }, failures.length ? 503 : 200);
+  }, outcome.status);
 });

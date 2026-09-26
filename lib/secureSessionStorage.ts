@@ -103,11 +103,39 @@ function decrypt(key: Uint8Array, envelope: string): string | null {
   return bytesToUtf8(gcm(key, hexToBytes(ivHex)).decrypt(hexToBytes(cipherHex)));
 }
 
+/**
+ * Keys that must never cost a sign-in when the Keychain is unavailable.
+ *
+ * supabase-js routes more than the session through `auth.storage`. The PKCE
+ * code verifier is written to `${storageKey}-code-verifier` before the
+ * authorization request and read back to complete it, through this same
+ * adapter. `setItem` below deliberately refuses to write when it has no
+ * encryption key — the right call for a long-lived session, and the wrong one
+ * here: without the verifier, `verifyOtp` and `exchangeCodeForSession` cannot
+ * finish at all, so a Keychain that is merely unavailable turns into sign-in
+ * that is impossible, reported as a generic failure.
+ *
+ * A verifier is single-use, lives for one exchange and is worthless to anyone
+ * once spent, so holding it in memory is both sufficient and stricter than
+ * disk. Persisting it still happens normally whenever a key exists, because an
+ * OAuth round trip through the browser can outlive the process.
+ */
+function isEphemeralAuthKey(key: string): boolean {
+  return key.endsWith('-code-verifier');
+}
+
+/** Process-lifetime fallback for the keys above. Never written to disk. */
+const ephemeralStore = new Map<string, string>();
+
 /** Storage adapter for the `auth.storage` option on the Supabase client. */
 export const secureSessionStorage = {
   async getItem(key: string): Promise<string | null> {
     const raw = await AsyncStorage.getItem(key);
-    if (raw === null) return null;
+    if (raw === null) {
+      // Nothing on disk. For a verifier that is the expected path when the
+      // Keychain was unavailable at write time — fall through to memory.
+      return isEphemeralAuthKey(key) ? ephemeralStore.get(key) ?? null : null;
+    }
 
     // Written before this shipped. Return it, then re-write it encrypted —
     // rejecting it would sign out every existing user on upgrade.
@@ -134,6 +162,15 @@ export const secureSessionStorage = {
 
   async setItem(key: string, value: string): Promise<void> {
     const aesKey = await getKey();
+    if (!aesKey && isEphemeralAuthKey(key)) {
+      // Hold it in memory instead of refusing. Declining here does not protect
+      // anything — the verifier is single-use and spent within the same flow —
+      // it only guarantees the sign-in fails. Drop any stale envelope so a
+      // later read cannot resurrect a verifier from a previous attempt.
+      ephemeralStore.set(key, value);
+      await AsyncStorage.removeItem(key);
+      return;
+    }
     if (!aesKey) {
       // Refuse rather than downgrade. Writing the session unencrypted is the
       // exact thing this module exists to prevent, and the old fallback did it
@@ -151,6 +188,10 @@ export const secureSessionStorage = {
     }
     try {
       await AsyncStorage.setItem(key, encrypt(aesKey, value));
+      // The encrypted copy is now authoritative; a memory copy from an earlier
+      // attempt, made while the Keychain was down, would otherwise win the next
+      // read and replay a spent verifier.
+      ephemeralStore.delete(key);
     } catch (error) {
       report(error, 'encrypt');
       await AsyncStorage.removeItem(key);
@@ -158,6 +199,9 @@ export const secureSessionStorage = {
   },
 
   async removeItem(key: string): Promise<void> {
+    // supabase-js clears the verifier as soon as it is exchanged. Honouring
+    // that here is what keeps it single-use in the memory path too.
+    ephemeralStore.delete(key);
     await AsyncStorage.removeItem(key);
   },
 };

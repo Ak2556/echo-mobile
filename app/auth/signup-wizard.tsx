@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { syncInterests } from '../../lib/supabaseEchoApi';
 import {
   View, Text, TextInput, ScrollView, Platform, useWindowDimensions,
   KeyboardAvoidingView, ActivityIndicator, Image, Alert,
@@ -574,6 +575,8 @@ export default function SignupWizard() {
     if (avatarUrl) setAvatarUrl(avatarUrl);
     storeSetBio(bioText.trim());
     setInterests(selectedInterests);
+    // Interests are ranking input: they seed the taste vector server-side.
+    void syncInterests(selectedInterests);
     if (Object.keys(archetypeAnswers).length > 0) {
       setThinkingStyle(scoreArchetype(archetypeAnswers));
     }

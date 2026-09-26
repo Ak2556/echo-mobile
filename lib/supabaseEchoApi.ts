@@ -9,6 +9,7 @@ import {
   SupabaseProfileRow,
 } from './mapSupabaseEcho';
 import { selectWithDiversity, type SelectableItem } from './feedSelection';
+import { interestRows } from './interestsSync';
 import { captureException } from './monitoring';
 import { computeDayStreak } from './dailyStreak';
 import { useAppStore } from '../store/useAppStore';
@@ -1950,11 +1951,47 @@ export async function updateRemoteProfile(updates: {
   auto_save_chats?: boolean;
   /** Per-kind push switches; see lib/notifications/routing.ts. */
   notification_prefs?: Record<string, boolean>;
+  /** ISO date. The server enforces the minimum age; the client only asks. */
+  date_of_birth?: string;
 }): Promise<void> {
   const uid = await getSessionUserId();
   if (!uid) throw new Error('Not signed in');
   const { error } = await supabase.from('profiles').update(updates).eq('id', uid);
   if (error) throw error;
+}
+
+/**
+ * The signed-in user's age in whole years, or null when no date of birth is on
+ * file. The column itself is unreadable by clients on purpose — this RPC is
+ * the only way to ask, and it answers only about the caller.
+ */
+export async function fetchMyAgeYears(): Promise<number | null> {
+  const uid = await getSessionUserId();
+  if (!uid) return null;
+  const { data, error } = await supabase.rpc('user_age_years', { p_uid: uid });
+  if (error) throw error;
+  return typeof data === 'number' ? data : null;
+}
+
+/**
+ * Store the interests someone picked, replacing whatever was there, then
+ * rebuild their taste vector so the next feed already reflects the change.
+ * Best effort: a failure here must never block the flow that called it.
+ */
+export async function syncInterests(labels: readonly string[]): Promise<void> {
+  const uid = await getSessionUserId();
+  if (!uid) return;
+  const rows = interestRows(uid, labels);
+  try {
+    await supabase.from('user_interests').delete().eq('user_id', uid);
+    if (rows.length) {
+      const { error } = await supabase.from('user_interests').insert(rows);
+      if (error) throw error;
+    }
+    await supabase.rpc('refresh_user_taste', { p_user_id: uid });
+  } catch (e) {
+    captureException(e, { tags: { source: 'interests_sync' } });
+  }
 }
 
 /** Pull content + AI settings from the server and apply to local store. */
