@@ -147,6 +147,26 @@ const DESTINATIONS = {
   'ਟੂਲ': '/(tabs)/apps', 'ਔਜ਼ਾਰ': '/(tabs)/apps', 'ਗੱਲਬਾਤ': '/(tabs)/chat',
 };
 
+const DICTATION_PREFIXES = [
+  'type', 'write', 'reply', 'dictate',
+  'लिखो', 'लिख', 'टाइप करो', 'जवाब दो', 'उत्तर दो',
+  'likho', 'jawab do',
+];
+
+/** Dictation, matched by an explicit imperative prefix, before the length gate. */
+function matchDictation(transcript) {
+  const raw = transcript.trim();
+  const lower = raw.toLowerCase();
+  for (const prefix of DICTATION_PREFIXES) {
+    if (!lower.startsWith(prefix)) continue;
+    const rest = raw.slice(prefix.length);
+    if (rest && !/^[\s:,-]/.test(rest)) continue;
+    const text = rest.replace(/^[\s:,-]+/, '').trim();
+    if (text) return { text };
+  }
+  return null;
+}
+
 /** Strip punctuation and collapse whitespace, preserving Devanagari. */
 export function normalise(input) {
   return input
@@ -165,6 +185,11 @@ function isPhrase(text, phrase) {
 }
 
 export function matchLocalIntent(transcript, locale = '') {
+  const dictated = matchDictation(transcript);
+  if (dictated) {
+    return { transcript, locale, intent: 'dictate', args: { text: dictated.text }, reply: 'Ready to send' };
+  }
+
   const text = normalise(transcript);
   if (!text) return null;
   if (text.split(' ').length > MAX_WORDS) return null;

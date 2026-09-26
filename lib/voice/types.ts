@@ -4,6 +4,7 @@
 export const VOICE_INTENTS = [
   'navigate',          // args.destination
   'open_mini_app',     // args.app — open a tool (pomodoro, habits, notes…)
+  'dictate',           // args.text — put spoken text into the composer on screen
   'create_post',       // args.text
   'open_daily_question',
   'search',            // args.query

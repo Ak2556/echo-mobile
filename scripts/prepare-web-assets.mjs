@@ -227,6 +227,14 @@ function writeIntentModule() {
   }
   const destinations = destSrc.slice(dOpen + 2, dEnd + 2);
 
+  const pStart = src.indexOf('const DICTATION_PREFIXES = [');
+  const pEnd = src.indexOf('];', pStart);
+  if (pStart < 0 || pEnd < 0) {
+    console.error('prepare-web-assets: could not find DICTATION_PREFIXES in lib/voice/localIntent.ts');
+    process.exit(1);
+  }
+  const prefixes = src.slice(src.indexOf('[', pStart), pEnd + 1);
+
   const maxWords = /const MAX_WORDS = (\d+);/.exec(src)?.[1];
   if (!maxWords) {
     console.error('prepare-web-assets: could not find MAX_WORDS in lib/voice/localIntent.ts');
@@ -247,6 +255,22 @@ const FILLER = new Set(${filler});
 
 const DESTINATIONS = ${destinations};
 
+const DICTATION_PREFIXES = ${prefixes};
+
+/** Dictation, matched by an explicit imperative prefix, before the length gate. */
+function matchDictation(transcript) {
+  const raw = transcript.trim();
+  const lower = raw.toLowerCase();
+  for (const prefix of DICTATION_PREFIXES) {
+    if (!lower.startsWith(prefix)) continue;
+    const rest = raw.slice(prefix.length);
+    if (rest && !/^[\\s:,-]/.test(rest)) continue;
+    const text = rest.replace(/^[\\s:,-]+/, '').trim();
+    if (text) return { text };
+  }
+  return null;
+}
+
 /** Strip punctuation and collapse whitespace, preserving Devanagari. */
 export function normalise(input) {
   return input
@@ -265,6 +289,11 @@ function isPhrase(text, phrase) {
 }
 
 export function matchLocalIntent(transcript, locale = '') {
+  const dictated = matchDictation(transcript);
+  if (dictated) {
+    return { transcript, locale, intent: 'dictate', args: { text: dictated.text }, reply: 'Ready to send' };
+  }
+
   const text = normalise(transcript);
   if (!text) return null;
   if (text.split(' ').length > MAX_WORDS) return null;
