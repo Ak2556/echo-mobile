@@ -7609,12 +7609,26 @@ const TRANSLATIONS: Record<AppLanguageCode, TranslationMap> = {
 
 export function translate(key: TranslationKey, language: AppLanguageCode): string {
   if (language === 'en') return BASE_TRANSLATIONS[key] ?? key;
-  // Hand-authored translation wins (highest quality).
-  const authored = TRANSLATIONS[language]?.[key];
-  if (authored !== undefined) return authored;
-  // Then a build-time generated translation (offline, no cost).
+  // Generated wins over the static tables, which is the opposite of what the
+  // comment here used to say, because "hand-authored" was never true of them.
+  //
+  // COMMON_TRANSLATIONS and AUTH_TRANSLATIONS were written by
+  // scripts/translate_i18n.py, which seeded every language from the BENGALI
+  // block rather than English — translating Bengali into Spanish, Bengali into
+  // Japanese — and dropped the final character of each value. The damage is
+  // measurable: 228 values end in a bare virama, which is orthographically
+  // impossible in every Indic script here and so cannot be a translation
+  // choice, and 617 mixed-script values are cut mid-Latin-word ("नया Ech",
+  // "En líne", "No leíd"). Those are only the truncations that leave a
+  // detectable signature; the provenance problem covers all of it.
+  //
+  // So they are a fallback now, not the authority. GENERATED comes from the
+  // English base through the app's own model and is checked by the generator
+  // before it is written.
   const generated = GENERATED[language]?.[key];
   if (generated !== undefined) return generated;
+  const authored = TRANSLATIONS[language]?.[key];
+  if (authored !== undefined) return authored;
   // Then a runtime-translated + cached string.
   const runtime = getRuntime(language, key);
   if (runtime !== undefined) return runtime;

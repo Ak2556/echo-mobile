@@ -213,6 +213,20 @@ function writeIntentModule() {
   }
   const filler = src.slice(src.indexOf('[', fStart), fEnd + 1);
 
+  // The destinations table too. The app resolves every screen on-device from
+  // it, and a page that only carried RULES would demo a parser markedly weaker
+  // than the one on the phone — which is the one thing this file promises not
+  // to be.
+  const destSrc = readFileSync(join(repoRoot, 'lib', 'voice', 'destinations.ts'), 'utf8');
+  const dStart = destSrc.indexOf('export const DESTINATIONS');
+  const dOpen = destSrc.indexOf('= {', dStart);
+  const dEnd = destSrc.indexOf('\n};', dOpen);
+  if (dStart < 0 || dOpen < 0 || dEnd < 0) {
+    console.error('prepare-web-assets: could not find DESTINATIONS in lib/voice/destinations.ts');
+    process.exit(1);
+  }
+  const destinations = destSrc.slice(dOpen + 2, dEnd + 2);
+
   const maxWords = /const MAX_WORDS = (\d+);/.exec(src)?.[1];
   if (!maxWords) {
     console.error('prepare-web-assets: could not find MAX_WORDS in lib/voice/localIntent.ts');
@@ -230,6 +244,8 @@ const MAX_WORDS = ${maxWords};
 const RULES = ${rules};
 
 const FILLER = new Set(${filler});
+
+const DESTINATIONS = ${destinations};
 
 /** Strip punctuation and collapse whitespace, preserving Devanagari. */
 export function normalise(input) {
@@ -261,15 +277,31 @@ export function matchLocalIntent(transcript, locale = '') {
       if (!best || phrase.length > best.length) best = { rule, length: phrase.length };
     }
   }
-  if (!best) return null;
+  if (best) {
+    return {
+      transcript,
+      locale,
+      intent: best.rule.intent,
+      args: best.rule.args ?? {},
+      reply: best.rule.reply,
+    };
+  }
 
-  return {
-    transcript,
-    locale,
-    intent: best.rule.intent,
-    args: best.rule.args ?? {},
-    reply: best.rule.reply,
-  };
+  // Every remaining destination, matched by equality after filler exactly as
+  // above — never containment, because the table holds ordinary words.
+  const stripped = text.split(' ').filter(w => !FILLER.has(w)).join(' ');
+  const key = DESTINATIONS[text] ? text : DESTINATIONS[stripped] ? stripped : null;
+  if (key) {
+    return { transcript, locale, intent: 'navigate', args: { destination: key }, reply: routeLabel(DESTINATIONS[key]) };
+  }
+
+  return null;
+}
+
+function routeLabel(route) {
+  const slug = route.replace(/^.*\\//, '').replace(/[()]/g, '');
+  const words = slug.replace(/-/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : 'Done';
 }
 `;
 

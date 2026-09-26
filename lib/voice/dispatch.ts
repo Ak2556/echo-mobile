@@ -11,6 +11,10 @@ import { readFeedAloud } from './readFeed';
 import { readNotificationsAloud } from './readNotifications';
 import { getVoiceActions, type PostAction } from './actions';
 import type { VoiceResult } from './types';
+import { DESTINATIONS, matchDestination, fuzzyLatinKey } from './destinations';
+
+/** Re-exported so existing callers and tests keep their import path. */
+export { DESTINATIONS };
 
 // Spoken setting name → its boolean store setter. Covers the toggles users are
 // most likely to voice; the value is parsed on/off (or toggled if unspecified).
@@ -64,102 +68,18 @@ function matchSetting(spoken: string): string | null {
 
 type FeedScope = 'semantic' | 'forYou' | 'following' | 'latest';
 
-// Spoken destination → route. Accepts a wide range of synonyms the model emits.
-const DESTINATIONS: Record<string, string> = {
-  home: '/(tabs)/home', feed: '/(tabs)/home', timeline: '/(tabs)/home',
-  explore: '/(tabs)/explore', discover: '/(tabs)/explore', search: '/(tabs)/explore',
-  market: '/(tabs)/marketplace', marketplace: '/(tabs)/marketplace', shop: '/(tabs)/marketplace', store: '/(tabs)/marketplace',
-  chat: '/(tabs)/chat', ai: '/(tabs)/chat', assistant: '/(tabs)/chat',
-  messages: '/messages', dms: '/messages', inbox: '/messages',
-  you: '/(tabs)/you', profile: '/(tabs)/you', me: '/(tabs)/you', account: '/(tabs)/you',
-  alerts: '/(tabs)/notifications', notifications: '/(tabs)/notifications', activity: '/(tabs)/notifications',
-  settings: '/settings', preferences: '/settings', options: '/settings',
-  create: '/create-post', post: '/create-post', compose: '/create-post', write: '/create-post',
-  story: '/create-story',
-  bookmarks: '/bookmarks', saved: '/bookmarks',
-  followers: '/followers', following: '/followers',
-  tools: '/(tabs)/apps', apps: '/(tabs)/apps',
-  verify: '/get-verified', verification: '/get-verified', verified: '/get-verified',
-  badges: '/badges', quests: '/quests',
-  salons: '/salons',
-  // Singular / common variants so "notification", "message", "setting" resolve too.
-  notification: '/(tabs)/notifications', message: '/messages', dm: '/messages',
-  setting: '/settings', bookmark: '/bookmarks', follower: '/followers',
-  homepage: '/(tabs)/home', 'home page': '/(tabs)/home', 'my profile': '/(tabs)/you',
-  // Hindi (Devanagari) fallbacks in case the model passes the word through.
-  'होम': '/(tabs)/home', 'घर': '/(tabs)/home', 'फ़ीड': '/(tabs)/home', 'फीड': '/(tabs)/home',
-  'खोज': '/(tabs)/explore', 'खोजें': '/(tabs)/explore', 'एक्सप्लोर': '/(tabs)/explore',
-  'मार्केट': '/(tabs)/marketplace', 'बाज़ार': '/(tabs)/marketplace', 'बाजार': '/(tabs)/marketplace',
-  'चैट': '/(tabs)/chat', 'मैसेज': '/messages', 'संदेश': '/messages', 'मैसेजेस': '/messages',
-  'प्रोफाइल': '/(tabs)/you', 'प्रोफ़ाइल': '/(tabs)/you',
-  'नोटिफिकेशन': '/(tabs)/notifications', 'सूचना': '/(tabs)/notifications', 'सूचनाएं': '/(tabs)/notifications', 'अलर्ट': '/(tabs)/notifications',
-  'सेटिंग': '/settings', 'सेटिंग्स': '/settings',
-  'बुकमार्क': '/bookmarks', 'सेव': '/bookmarks',
-  'फॉलोअर': '/followers', 'फॉलोअर्स': '/followers',
-  'टूल': '/(tabs)/apps', 'टूल्स': '/(tabs)/apps', 'औजार': '/(tabs)/apps',
-  'स्टोरी': '/create-story', 'बैज': '/badges', 'क्वेस्ट': '/quests',
-  'बातचीत': '/(tabs)/chat', 'दुकान': '/(tabs)/marketplace', 'खाता': '/(tabs)/you', 'अकाउंट': '/(tabs)/you',
-  // Romanized Hindi
-  ghar: '/(tabs)/home', khoj: '/(tabs)/explore', sandesh: '/messages', dukan: '/(tabs)/marketplace',
-  suchna: '/(tabs)/notifications', khata: '/(tabs)/you',
-  // Punjabi (Gurmukhi)
-  'ਹੋਮ': '/(tabs)/home', 'ਘਰ': '/(tabs)/home', 'ਫੀਡ': '/(tabs)/home',
-  'ਖੋਜ': '/(tabs)/explore', 'ਐਕਸਪਲੋਰ': '/(tabs)/explore',
-  'ਮਾਰਕੀਟ': '/(tabs)/marketplace', 'ਬਾਜ਼ਾਰ': '/(tabs)/marketplace',
-  'ਚੈਟ': '/(tabs)/chat', 'ਮੈਸੇਜ': '/messages', 'ਸੁਨੇਹਾ': '/messages',
-  'ਪ੍ਰੋਫਾਈਲ': '/(tabs)/you', 'ਖਾਤਾ': '/(tabs)/you',
-  'ਨੋਟੀਫਿਕੇਸ਼ਨ': '/(tabs)/notifications', 'ਸੈਟਿੰਗ': '/settings',
-  'ਟੂਲ': '/(tabs)/apps', 'ਔਜ਼ਾਰ': '/(tabs)/apps', 'ਗੱਲਬਾਤ': '/(tabs)/chat',
-};
-
 // ---- Fuzzy word matching: tolerate ASR slips / accents ("setings"→settings,
 // "pomodro"→pomodoro). Conservative — only Latin words ≥5 chars, edit distance
 // ≤1 (≤2 for ≥8 chars) — so short words still require an exact match, avoiding
 // false positives.
-function editDistance(a: string, b: string): number {
-  const m = a.length, n = b.length;
-  if (Math.abs(m - n) > 2) return 3;
-  const dp = Array.from({ length: m + 1 }, (_, i) => i);
-  for (let j = 1; j <= n; j++) {
-    let prev = dp[0];
-    dp[0] = j;
-    for (let i = 1; i <= m; i++) {
-      const tmp = dp[i];
-      dp[i] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[i], dp[i - 1]);
-      prev = tmp;
-    }
-  }
-  return dp[m];
-}
 
-function wordTokens(s: string): string[] {
-  return s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').split(' ').filter(Boolean);
-}
 
 // The dictionary key a transcript token fuzzily matches (single Latin words only).
-function fuzzyLatinKey(query: string, keys: string[]): string | null {
-  const toks = wordTokens(query).filter((t) => t.length >= 5 && /^[a-z]+$/.test(t));
-  for (const t of toks) {
-    for (const k of keys) {
-      if (k.length < 5 || k.includes(' ') || !/^[a-z]+$/.test(k)) continue;
-      const tol = Math.max(k.length, t.length) >= 8 ? 2 : 1;
-      if (Math.abs(t.length - k.length) <= tol && editDistance(t, k) <= tol) return k;
-    }
-  }
-  return null;
-}
 
 // Exact match first, then "contains" so phrases like "home par jao" or a Hindi
 // word inside a sentence still resolve, then a fuzzy pass for ASR slips.
-function matchDestination(spoken: string): string | null {
-  const q = spoken.trim().toLowerCase();
-  if (!q) return null;
-  if (DESTINATIONS[q]) return DESTINATIONS[q];
-  for (const key of Object.keys(DESTINATIONS)) if (q.includes(key)) return DESTINATIONS[key];
-  const fk = fuzzyLatinKey(q, Object.keys(DESTINATIONS));
-  if (fk) return DESTINATIONS[fk];
-  return null;
-}
+// Longest first, so "marketplace" beats "market" and "messages" beats "me"
+// instead of whichever key happened to be declared earlier.
 
 function str(v: unknown): string {
   return typeof v === 'string' ? v.trim() : '';

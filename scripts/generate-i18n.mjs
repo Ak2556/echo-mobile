@@ -29,7 +29,10 @@ import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const I18N = join(ROOT, 'lib', 'i18n.ts');
+// The live file the app imports. This pointed at lib/i18n.ts, which has not
+// existed since the shared/ move, so every run died on the first read and the
+// generated table stayed empty.
+const I18N = join(ROOT, 'src', 'shared', 'lib', 'i18n.ts');
 const LANGS = join(ROOT, 'lib', 'languages.ts');
 const OUT = join(ROOT, 'lib', 'i18nGenerated.ts');
 
@@ -51,6 +54,30 @@ if (!API_KEY && !GEN_SECRET && !DRY) {
 
 const onlyArg = process.argv.find((a) => a.startsWith('--only='));
 const only = onlyArg ? onlyArg.slice('--only='.length).split(',').map((s) => s.trim()) : null;
+
+/**
+ * Reject a translation that looks truncated rather than writing it.
+ *
+ * The table this replaces was produced by scripts/translate_i18n.py, which
+ * seeded every language from the BENGALI block rather than English and dropped
+ * the final character of each value. It shipped 228 strings ending in a bare
+ * virama — orthographically impossible in Devanagari, Bengali, Gurmukhi, Telugu,
+ * Kannada, Odia and Malayalam, so it cannot be a translation choice — plus 617
+ * mixed-script values cut mid-Latin-word ("नया Ech", "En líne", "No leíd").
+ *
+ * None of that failed anything. A generator that can write a broken string
+ * silently will eventually write one again, so it checks its own output.
+ */
+const TRAILING_VIRAMA = /[\u094D\u09CD\u0A4D\u0ACD\u0B4D\u0BCD\u0C4D\u0CCD\u0D4D]$/;
+
+function isSane(english, value) {
+  if (typeof value !== 'string' || value.trim() === '') return false;
+  if (TRAILING_VIRAMA.test(value)) return false;
+  // The English string with its last character removed is the exact signature
+  // of the old bug, and never a legitimate translation.
+  if (typeof english === 'string' && english.length > 1 && value === english.slice(0, -1)) return false;
+  return true;
+}
 
 // --- extract the English base ---
 function extractBase() {
@@ -187,7 +214,9 @@ async function main() {
       for (let attempt = 0; attempt < 3 && !ok; attempt++) {
         try {
           const part = await translate(name, code, items);
-          const got = chunks[i].filter((k) => typeof part[k] === 'string');
+          const got = chunks[i].filter((k) => typeof part[k] === 'string' && isSane(base[k], part[k]));
+          const rejected = chunks[i].filter((k) => typeof part[k] === 'string' && !isSane(base[k], part[k]));
+          if (rejected.length) console.warn(`\n  ${code}: rejected ${rejected.length} malformed value(s): ${rejected.slice(0, 3).join(', ')}`);
           if (got.length === 0) throw new Error('empty');
           for (const k of got) map[k] = part[k];
           ok = true;

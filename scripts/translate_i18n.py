@@ -1,3 +1,35 @@
+"""
+DISABLED. Do not run this script.
+
+It produced the translation corruption in src/shared/lib/i18n.ts and is kept
+only so the damage it did is traceable.
+
+Two faults, either of which is disqualifying:
+
+  1. It seeds every language from the BENGALI block, not English --- see the
+     `bn: {` lookups below. It translated Bengali into Spanish, Bengali into
+     Japanese, and so on, compounding whatever was already wrong in Bengali.
+  2. Its output dropped the final character of each value. 228 shipped strings
+     end in a bare virama, which is orthographically impossible in every Indic
+     script involved, and 617 mixed-script strings are cut mid-Latin word
+     ("नया Ech", "En líne", "No leíd").
+
+It also still targets lib/i18n.ts, which has not existed since the shared/ move.
+
+The supported path is:
+
+    OPENROUTER_API_KEY=... npm run i18n:generate
+
+which reads the English base from src/shared/lib/i18n.ts, translates from
+English, validates each value before writing it, and is covered by
+src/shared/lib/i18nIntegrity.test.ts.
+"""
+
+import sys
+
+print(__doc__, file=sys.stderr)
+sys.exit(1)
+
 import os
 import sys
 import re

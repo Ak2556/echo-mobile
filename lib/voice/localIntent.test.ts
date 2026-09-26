@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DESTINATIONS } from './destinations';
 import { matchLocalIntent, normalise } from './localIntent';
 
 describe('normalise', () => {
@@ -170,5 +171,42 @@ describe('real commands still resolve', () => {
     ['post karo', 'New echo'],
   ])('%j still means %s', (said, reply) => {
     expect(matchLocalIntent(said)?.reply).toBe(reply);
+  });
+});
+
+describe('on-device navigation covers the whole app', () => {
+  it('resolves screens that have no hand-written rule, with no network', () => {
+    // Before this, only nine navigations were local; everything else — selling
+    // an item, editing a profile, blocked users — cost a round trip and a model
+    // call to reach a table the device already had.
+    // Asserted on the resolved ROUTE, not the matched key: "show me my reports"
+    // strips "my" as filler and matches the "reports" key, which is correct and
+    // is the sort of detail a key-level assertion would fight for no reason.
+    const cases: Array<[string, string]> = [
+      ['open my blocked users', '/blocked-users'],
+      ['sell', '/create-listing'],
+      ['edit profile', '/edit-profile'],
+      ['go to office hours', '/office-hours'],
+      ['show me my reports', '/my-reports'],
+      ['take me to privacy policy', '/privacy'],
+    ];
+    for (const [said, route] of cases) {
+      const r = matchLocalIntent(said);
+      expect(r, `"${said}" should resolve on device`).not.toBeNull();
+      expect(r!.intent).toBe('navigate');
+      expect(DESTINATIONS[String(r!.args.destination)]).toBe(route);
+    }
+  });
+
+  it('speaks a readable confirmation back', () => {
+    expect(matchLocalIntent('notification settings')!.reply).toBe('Notification prefs');
+  });
+
+  it('still refuses a sentence that merely mentions a screen word', () => {
+    // The table holds ordinary words. Containment would hand "report" every
+    // sentence that uses it; equality-after-filler does not.
+    for (const said of ['i should report that later', 'can you share this with them', 'that story was good']) {
+      expect(matchLocalIntent(said), `"${said}" must fall through to the model`).toBeNull();
+    }
   });
 });
