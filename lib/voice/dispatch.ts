@@ -308,6 +308,20 @@ export function dispatchVoiceIntent(result: VoiceResult): DispatchOutcome {
       return { handled: true, reply };
     }
 
+    case 'dictate': {
+      // Only ever fills the composer on screen. Nothing is sent: a wrong
+      // transcription that replies to someone is not recoverable the way an
+      // unsent draft is.
+      //
+      // Context-gated by construction — with no composer focused there is no
+      // handler, so this reports not-handled and the voice UI says so rather
+      // than silently swallowing what the user dictated.
+      const text = str(args.text);
+      if (!text) return { handled: false, reply };
+      const did = getVoiceActions().composeText?.(text);
+      return { handled: !!did, reply };
+    }
+
     case 'create_post': {
       const text = str(args.text);
       // Prefill the composer and let the user confirm before it goes public —

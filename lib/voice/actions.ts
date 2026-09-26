@@ -8,6 +8,14 @@ export type PostAction = 'like' | 'bookmark' | 'repost' | 'follow' | 'open';
 export interface VoiceActionHandlers {
   /** Act on the post currently in view. Returns true if it acted. */
   postAction?: (action: PostAction) => boolean;
+  /**
+   * Put spoken text into this screen's composer. Returns true if it landed.
+   *
+   * Deliberately fills the field rather than sending. create_post already
+   * settled this: a mis-transcription must not be able to publish, or reply to
+   * someone, on its own. The user sees the words and presses send.
+   */
+  composeText?: (text: string) => boolean;
   scroll?: (dir: 'up' | 'down') => void;
   refresh?: () => void;
 }

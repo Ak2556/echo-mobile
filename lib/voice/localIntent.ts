@@ -123,7 +123,52 @@ function isPhrase(text: string, phrase: string): boolean {
   return stripped === phrase;
 }
 
+
+/**
+ * Dictation, matched by an explicit imperative prefix.
+ *
+ * This runs BEFORE the MAX_WORDS gate, which everything else obeys. That gate
+ * exists because a long utterance is usually a sentence rather than a command,
+ * and dictation is the one case where the opposite holds — "reply I will be
+ * there in ten minutes" is long precisely because it is a command carrying its
+ * payload.
+ *
+ * What makes that safe is not the length but the prefix: an explicit imperative
+ * plus a non-empty remainder, never a bare word. And the intent is
+ * context-gated anyway — with no composer on screen the dispatcher finds no
+ * handler and reports not-handled, so a false match fills nothing.
+ *
+ * The remainder is taken from the RAW transcript, not the normalised text.
+ * normalise() strips punctuation, which is right for matching a command and
+ * wrong for the words a person is about to send to someone.
+ */
+const DICTATION_PREFIXES = [
+  'type', 'write', 'reply', 'dictate',
+  'लिखो', 'लिख', 'टाइप करो', 'जवाब दो', 'उत्तर दो',
+  'likho', 'jawab do',
+];
+
+export function matchDictation(transcript: string): { text: string } | null {
+  const raw = transcript.trim();
+  const lower = raw.toLowerCase();
+  for (const prefix of DICTATION_PREFIXES) {
+    if (!lower.startsWith(prefix)) continue;
+    const rest = raw.slice(prefix.length);
+    // A separator is required, so "writer" is not "write" + "r".
+    if (rest && !/^[\s:,-]/.test(rest)) continue;
+    const text = rest.replace(/^[\s:,-]+/, '').trim();
+    if (text) return { text };
+  }
+  return null;
+}
+
 export function matchLocalIntent(transcript: string, locale = ''): VoiceResult | null {
+  // Before the length gate: see matchDictation.
+  const dictated = matchDictation(transcript);
+  if (dictated) {
+    return { transcript, locale, intent: 'dictate', args: { text: dictated.text }, reply: 'Ready to send' };
+  }
+
   const text = normalise(transcript);
   if (!text) return null;
   if (text.split(' ').length > MAX_WORDS) return null;

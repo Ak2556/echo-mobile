@@ -69,3 +69,19 @@ describe('voice action registry', () => {
     expect(explore).toHaveBeenCalledOnce();
   });
 });
+
+describe('dictation is context-gated', () => {
+  beforeEach(() => clearVoiceActions());
+
+  it('has nowhere to put text when no screen offers a composer', () => {
+    registerVoiceActions('feed', { postAction: () => true });
+    expect(getVoiceActions().composeText).toBeUndefined();
+  });
+
+  it('delivers to the composer of the focused screen', () => {
+    const compose = vi.fn(() => true);
+    registerVoiceActions('chat', { composeText: compose });
+    expect(getVoiceActions().composeText?.('hello there')).toBe(true);
+    expect(compose).toHaveBeenCalledWith('hello there');
+  });
+});

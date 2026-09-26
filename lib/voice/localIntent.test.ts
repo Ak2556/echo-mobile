@@ -210,3 +210,41 @@ describe('on-device navigation covers the whole app', () => {
     }
   });
 });
+
+describe('dictation', () => {
+  it('extracts the payload after an explicit prefix', () => {
+    const r = matchLocalIntent('reply I will be there in ten minutes');
+    expect(r?.intent).toBe('dictate');
+    expect(r?.args.text).toBe('I will be there in ten minutes');
+  });
+
+  it('runs before the length gate, because dictation is long by nature', () => {
+    // Every other rule refuses more than MAX_WORDS words. The prefix, not the
+    // length, is what carries the evidence here.
+    const long = 'type ' + 'one two three four five six seven eight nine ten';
+    expect(matchLocalIntent(long)?.intent).toBe('dictate');
+  });
+
+  it('keeps the words exactly as spoken', () => {
+    // normalise() strips punctuation and case, which is right for matching a
+    // command and wrong for words a person is about to send to someone.
+    const r = matchLocalIntent("write Sorry, I'm late — see you at 6!");
+    expect(r?.args.text).toBe("Sorry, I'm late — see you at 6!");
+  });
+
+  it('works in Hindi', () => {
+    const r = matchLocalIntent('लिखो आज नहीं आ पाऊंगा');
+    expect(r?.intent).toBe('dictate');
+    expect(r?.args.text).toBe('आज नहीं आ पाऊंगा');
+  });
+
+  it('needs a separator, so "writer" is not "write" plus "r"', () => {
+    expect(matchLocalIntent('writer')?.intent).not.toBe('dictate');
+  });
+
+  it('needs a payload — a bare prefix is not dictation', () => {
+    // "write" alone is the composer destination, and must stay that.
+    expect(matchLocalIntent('write')?.intent).toBe('navigate');
+    expect(matchLocalIntent('type')).toBeNull();
+  });
+});

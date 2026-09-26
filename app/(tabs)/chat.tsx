@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MessageBubble, Message } from '../../components/ai/MessageBubble';
 import { ChatInput } from '../../components/ai/ChatInput';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { ActionCenter } from '../../components/ai/ActionCenter';
 import { ToolCallCard, ToolCallItem } from '../../components/ai/ToolCallCard';
 import { TypingIndicator } from '../../components/ui/TypingIndicator';
@@ -409,6 +410,16 @@ export default function ChatScreen() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [draft, setDraft] = useState('');
+
+  // Voice dictation lands in the box, not in the thread. A mis-transcription
+  // that sends itself is not recoverable; an unsent draft is. The user reads
+  // what was heard and presses send.
+  useVoiceScreenActions({
+    composeText: (text) => {
+      setDraft((prev) => (prev ? `${prev} ${text}` : text));
+      return true;
+    },
+  });
   const [aiMode, setAiMode] = useState<AiMode>('ask');
   const [showHint, setShowHint] = useState(false);
   const [editTarget, setEditTarget] = useState<Message | null>(null);

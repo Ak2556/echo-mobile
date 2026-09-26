@@ -27,6 +27,7 @@ export function useVoiceScreenActions(handlers: VoiceActionHandlers): void {
     useCallback(() => {
       registerVoiceActions(owner, {
         postAction: (action) => latest.current.postAction?.(action) ?? false,
+        composeText: (text) => latest.current.composeText?.(text) ?? false,
         scroll: (dir) => latest.current.scroll?.(dir),
         refresh: () => latest.current.refresh?.(),
       });
