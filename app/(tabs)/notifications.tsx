@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
+import { useVoiceScrollTarget } from '../../lib/voice/useVoiceScrollTarget';
 import { View, Text, StyleSheet, RefreshControl, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList as _FlashList } from '@shopify/flash-list';
@@ -80,6 +82,15 @@ export default function NotificationsScreen() {
   const { t } = useI18n();
   const layout = useResponsiveLayout();
   const [filter, setFilter] = useState<NotificationFilter>('all');
+
+  // Voice can move and reload this list. It is the screen people most often
+  // want read to them, and "scroll down" advances a page rather than dropping
+  // them at the end — see lib/voice/useVoiceScrollTarget.
+  const voiceList = useVoiceScrollTarget();
+  useVoiceScreenActions({
+    scroll: voiceList.scroll,
+    refresh: () => { void refetch(); },
+  });
 
   const remote = isSupabaseRemote();
   const {
@@ -289,6 +300,10 @@ export default function NotificationsScreen() {
         </Animated.View>
       ) : (
         <FlashList 
+          ref={voiceList.ref as never}
+          onScroll={voiceList.onScroll}
+          onLayout={voiceList.onLayout}
+          scrollEventThrottle={64}
           data={listData}
           keyExtractor={(item: ListItem) => {
             if (item.type === 'header') return `header-${item.label}`;
