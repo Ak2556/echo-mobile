@@ -12,14 +12,45 @@ export interface VoiceActionHandlers {
   refresh?: () => void;
 }
 
-let handlers: VoiceActionHandlers = {};
+/**
+ * Handlers are owned by a screen and only live while that screen is focused.
+ *
+ * This used to be a single mutable object that `registerVoiceActions` merged
+ * into, with screens registering in `useEffect(..., [])` — on mount. Tab
+ * screens do not unmount when you leave them, so home's handlers stayed live
+ * the whole time you were on Explore: "like this" acted on the home feed's
+ * current post, silently, while you were looking at something else. A second
+ * screen registering would not have replaced them either, it would have merged
+ * with them, and whichever key each screen happened to set would win.
+ *
+ * Keyed by owner instead, with the focused owner the only one the dispatcher
+ * can see. Registration is per-screen and revoked on blur, so "the post in
+ * view" means the view you are actually looking at.
+ */
+const registry = new Map<string, VoiceActionHandlers>();
+let focusedOwner: string | null = null;
 
-export function registerVoiceActions(h: Partial<VoiceActionHandlers>) {
-  handlers = { ...handlers, ...h };
+/** Register for `owner` and make it the active screen. Exported for tests. */
+export function registerVoiceActions(owner: string, handlers: VoiceActionHandlers): void {
+  registry.set(owner, handlers);
+  focusedOwner = owner;
 }
-export function clearVoiceActions() {
-  handlers = {};
+
+/**
+ * Drop `owner`. If it was focused, the dispatcher sees nothing rather than
+ * falling back to some other screen's handlers — a stale action is worse than
+ * no action, because the user cannot see what it acted on.
+ */
+export function clearVoiceActions(owner?: string): void {
+  if (owner === undefined) {
+    registry.clear();
+    focusedOwner = null;
+    return;
+  }
+  registry.delete(owner);
+  if (focusedOwner === owner) focusedOwner = null;
 }
+
 export function getVoiceActions(): VoiceActionHandlers {
-  return handlers;
+  return (focusedOwner && registry.get(focusedOwner)) || {};
 }

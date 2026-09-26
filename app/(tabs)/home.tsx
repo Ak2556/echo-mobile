@@ -25,7 +25,7 @@ import { Avatar } from '../../components/ui/Avatar';
 import { useActiveVideoStore } from '../../store/useActiveVideoStore';
 import { useInfiniteFeed, useTrendingEvolutions } from '../../src/features/feed/api/useFeed';
 import { setReadableFeed } from '../../lib/voice/readFeed';
-import { registerVoiceActions, clearVoiceActions } from '../../lib/voice/actions';
+import { useVoiceScreenActions } from '../../lib/voice/useVoiceScreenActions';
 import { useToggleRemoteBookmark, useToggleRemoteLike, useToggleRemoteRepost, useToggleRemoteFollow } from '../../src/features/feed/api/useSupabaseSocial';
 import { useFollow } from '../../hooks/queries/useFollow';
 import { EvolutionGroup, FeedItem } from '../../types';
@@ -505,26 +505,26 @@ export default function DiscoverScreen() {
     }, [setActiveEchoId])
   );
 
-  useEffect(() => {
-    registerVoiceActions({
-      postAction: (action) => {
-        const e = currentEchoRef.current ?? popularItemsRef.current[0];
-        if (!e?.id) return false;
-        switch (action) {
-          case 'like': remoteLike.mutate({ echoId: e.id, like: !e.isLiked }); return true;
-          case 'bookmark': remoteBm.mutate({ echoId: e.id, bookmark: !e.isBookmarked }); return true;
-          case 'repost': remoteRp.mutate({ echoId: e.id, repost: !e.isReposted }); return true;
-          case 'follow': if (e.userId) { follow.toggle(e.userId); return true; } return false;
-          case 'open': router.push(`/thread/${e.id}`); return true;
-          default: return false;
-        }
-      },
-      refresh: () => { void refetch(); },
-      scroll: (dir) => { try { listRef.current?.scrollToOffset?.({ offset: dir === 'up' ? 0 : 100000, animated: true }); } catch { /* ignore */ } },
-    });
-    return () => clearVoiceActions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Focus-scoped, not mount-scoped. This screen stays mounted behind the other
+  // tabs, so registering in useEffect(..., []) left these handlers live while
+  // the user was on Explore — "like this" quietly acted on the home feed's
+  // current post instead of whatever was on screen.
+  useVoiceScreenActions({
+    postAction: (action) => {
+      const e = currentEchoRef.current ?? popularItemsRef.current[0];
+      if (!e?.id) return false;
+      switch (action) {
+        case 'like': remoteLike.mutate({ echoId: e.id, like: !e.isLiked }); return true;
+        case 'bookmark': remoteBm.mutate({ echoId: e.id, bookmark: !e.isBookmarked }); return true;
+        case 'repost': remoteRp.mutate({ echoId: e.id, repost: !e.isReposted }); return true;
+        case 'follow': if (e.userId) { follow.toggle(e.userId); return true; } return false;
+        case 'open': router.push(`/thread/${e.id}`); return true;
+        default: return false;
+      }
+    },
+    refresh: () => { void refetch(); },
+    scroll: (dir) => { try { listRef.current?.scrollToOffset?.({ offset: dir === 'up' ? 0 : 100000, animated: true }); } catch { /* ignore */ } },
+  });
 
   // Tablet/desktop: the feed becomes a two-column masonry inside a wider
   // centred container; the header shares that same width so it aligns.
