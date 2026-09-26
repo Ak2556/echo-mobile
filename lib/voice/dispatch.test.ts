@@ -38,7 +38,7 @@ describe('voice dispatch — navigate (English · Devanagari · Romanized)', () 
     ['messages', '/messages'], ['मैसेज', '/messages'], ['sandesh', '/messages'],
     ['settings', '/settings'], ['सेटिंग', '/settings'], ['सेटिंग्स', '/settings'],
     ['profile', '/(tabs)/you'], ['प्रोफ़ाइल', '/(tabs)/you'], ['खाता', '/(tabs)/you'],
-    ['market', '/(tabs)/marketplace'], ['बाज़ार', '/(tabs)/marketplace'], ['dukan', '/(tabs)/marketplace'],
+    ['market', '/mini-apps/marketplace'], ['बाज़ार', '/mini-apps/marketplace'], ['dukan', '/mini-apps/marketplace'],
     ['notifications', '/(tabs)/notifications'], ['सूचनाएं', '/(tabs)/notifications'],
     ['bookmarks', '/bookmarks'], ['बुकमार्क', '/bookmarks'],
     ['tools', '/(tabs)/apps'], ['टूल्स', '/(tabs)/apps'],
@@ -257,5 +257,75 @@ describe('mini-app catalog covers every shipped route', () => {
       .filter(id => !existsSync(join(process.cwd(), `app/mini-apps/${id}.tsx`)));
 
     expect(dangling, `catalog entries with no screen: ${dangling.join(', ')}`).toEqual([]);
+  });
+});
+
+/**
+ * Voice coverage is a promise, so it is enforced rather than remembered.
+ *
+ * Two failures this catches, both of which shipped:
+ *
+ *   - DESTINATIONS pointed "market"/"marketplace"/"shop"/"store" and their
+ *     Hindi and Punjabi equivalents at /(tabs)/marketplace, a screen that does
+ *     not exist — there is no marketplace tab, only app/mini-apps/marketplace.
+ *     Eleven phrases across three languages pushed a dead route, and the old
+ *     tests asserted that dead route, so the suite defended the bug.
+ *   - The Flow tab (app/(tabs)/watch.tsx) had no entry at all, while
+ *     lib/voice/localIntent.ts emits destination 'watch' for "video" and
+ *     "flow". The on-device fast path produced a destination the dispatcher
+ *     could not resolve.
+ */
+describe('voice destinations', () => {
+  it('every destination points at a screen that exists', async () => {
+    const { existsSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { DESTINATIONS } = await import('./dispatch');
+
+    const root = process.cwd();
+    const dangling = [...new Set(Object.values(DESTINATIONS))].filter((route) => {
+      const rel = String(route).replace(/^\//, '').replace(/[()]/g, m => m);
+      return !existsSync(join(root, 'app', `${rel}.tsx`))
+          && !existsSync(join(root, 'app', rel, 'index.tsx'));
+    });
+
+    expect(dangling, `voice destinations with no screen behind them: ${dangling.join(', ')}`).toEqual([]);
+  });
+
+  it('reaches the Flow tab, which localIntent already asks for', async () => {
+    const { DESTINATIONS } = await import('./dispatch');
+    for (const word of ['watch', 'flow', 'video', 'videos']) {
+      expect(DESTINATIONS[word], `no voice phrase for "${word}"`).toBe('/(tabs)/watch');
+    }
+  });
+
+  it('does not navigate on ordinary words that merely contain a key', () => {
+    // Plain substring matching sent "explain" to chat via "ai", "your" to the
+    // profile via "you", and "postpone" to the composer via "post". The matcher
+    // also runs over the whole transcript, so these were live hazards.
+    for (const phrase of ['can you explain this', 'that is your choice', 'let me postpone it', 'sometimes i wonder']) {
+      const o = dispatchVoiceIntent(res('navigate', { destination: phrase }));
+      expect(o.handled, `"${phrase}" should not navigate anywhere`).toBe(false);
+    }
+  });
+
+  it('still resolves a real destination inside a sentence', () => {
+    expect(dispatchVoiceIntent(res('navigate', { destination: 'open my bookmarks please' })).navigatedTo)
+      .toBe('/bookmarks');
+    expect(dispatchVoiceIntent(res('navigate', { destination: 'go to marketplace' })).navigatedTo)
+      .toBe('/mini-apps/marketplace');
+  });
+});
+
+describe('voice destinations — ambiguous single words', () => {
+  it('resolves when spoken alone', () => {
+    expect(dispatchVoiceIntent(res('navigate', { destination: 'you' })).navigatedTo).toBe('/(tabs)/you');
+    expect(dispatchVoiceIntent(res('navigate', { destination: 'me' })).navigatedTo).toBe('/(tabs)/you');
+  });
+
+  it('is ignored inside a sentence', () => {
+    for (const phrase of ['can you explain this', 'let me postpone it', 'tell me a story about ai']) {
+      expect(dispatchVoiceIntent(res('navigate', { destination: phrase })).handled,
+        `"${phrase}" should not navigate`).toBe(false);
+    }
   });
 });

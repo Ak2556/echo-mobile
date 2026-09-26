@@ -65,10 +65,10 @@ function matchSetting(spoken: string): string | null {
 type FeedScope = 'semantic' | 'forYou' | 'following' | 'latest';
 
 // Spoken destination → route. Accepts a wide range of synonyms the model emits.
-const DESTINATIONS: Record<string, string> = {
+export const DESTINATIONS: Record<string, string> = {
   home: '/(tabs)/home', feed: '/(tabs)/home', timeline: '/(tabs)/home',
   explore: '/(tabs)/explore', discover: '/(tabs)/explore', search: '/(tabs)/explore',
-  market: '/(tabs)/marketplace', marketplace: '/(tabs)/marketplace', shop: '/(tabs)/marketplace', store: '/(tabs)/marketplace',
+  market: '/mini-apps/marketplace', marketplace: '/mini-apps/marketplace', shop: '/mini-apps/marketplace', store: '/mini-apps/marketplace',
   chat: '/(tabs)/chat', ai: '/(tabs)/chat', assistant: '/(tabs)/chat',
   messages: '/messages', dms: '/messages', inbox: '/messages',
   you: '/(tabs)/you', profile: '/(tabs)/you', me: '/(tabs)/you', account: '/(tabs)/you',
@@ -79,6 +79,9 @@ const DESTINATIONS: Record<string, string> = {
   bookmarks: '/bookmarks', saved: '/bookmarks',
   followers: '/followers', following: '/followers',
   tools: '/(tabs)/apps', apps: '/(tabs)/apps',
+  // The Flow tab. lib/voice/localIntent.ts already emits destination 'watch'
+  // for "video"/"flow", and without these keys that fast path dead-ended.
+  watch: '/(tabs)/watch', flow: '/(tabs)/watch', video: '/(tabs)/watch', videos: '/(tabs)/watch', reels: '/(tabs)/watch',
   verify: '/get-verified', verification: '/get-verified', verified: '/get-verified',
   badges: '/badges', quests: '/quests',
   salons: '/salons',
@@ -89,7 +92,7 @@ const DESTINATIONS: Record<string, string> = {
   // Hindi (Devanagari) fallbacks in case the model passes the word through.
   'होम': '/(tabs)/home', 'घर': '/(tabs)/home', 'फ़ीड': '/(tabs)/home', 'फीड': '/(tabs)/home',
   'खोज': '/(tabs)/explore', 'खोजें': '/(tabs)/explore', 'एक्सप्लोर': '/(tabs)/explore',
-  'मार्केट': '/(tabs)/marketplace', 'बाज़ार': '/(tabs)/marketplace', 'बाजार': '/(tabs)/marketplace',
+  'मार्केट': '/mini-apps/marketplace', 'बाज़ार': '/mini-apps/marketplace', 'बाजार': '/mini-apps/marketplace',
   'चैट': '/(tabs)/chat', 'मैसेज': '/messages', 'संदेश': '/messages', 'मैसेजेस': '/messages',
   'प्रोफाइल': '/(tabs)/you', 'प्रोफ़ाइल': '/(tabs)/you',
   'नोटिफिकेशन': '/(tabs)/notifications', 'सूचना': '/(tabs)/notifications', 'सूचनाएं': '/(tabs)/notifications', 'अलर्ट': '/(tabs)/notifications',
@@ -97,15 +100,17 @@ const DESTINATIONS: Record<string, string> = {
   'बुकमार्क': '/bookmarks', 'सेव': '/bookmarks',
   'फॉलोअर': '/followers', 'फॉलोअर्स': '/followers',
   'टूल': '/(tabs)/apps', 'टूल्स': '/(tabs)/apps', 'औजार': '/(tabs)/apps',
+  'वीडियो': '/(tabs)/watch', 'वीडियोज़': '/(tabs)/watch',
+  'ਵੀਡੀਓ': '/(tabs)/watch',
   'स्टोरी': '/create-story', 'बैज': '/badges', 'क्वेस्ट': '/quests',
-  'बातचीत': '/(tabs)/chat', 'दुकान': '/(tabs)/marketplace', 'खाता': '/(tabs)/you', 'अकाउंट': '/(tabs)/you',
+  'बातचीत': '/(tabs)/chat', 'दुकान': '/mini-apps/marketplace', 'खाता': '/(tabs)/you', 'अकाउंट': '/(tabs)/you',
   // Romanized Hindi
-  ghar: '/(tabs)/home', khoj: '/(tabs)/explore', sandesh: '/messages', dukan: '/(tabs)/marketplace',
+  ghar: '/(tabs)/home', khoj: '/(tabs)/explore', sandesh: '/messages', dukan: '/mini-apps/marketplace',
   suchna: '/(tabs)/notifications', khata: '/(tabs)/you',
   // Punjabi (Gurmukhi)
   'ਹੋਮ': '/(tabs)/home', 'ਘਰ': '/(tabs)/home', 'ਫੀਡ': '/(tabs)/home',
   'ਖੋਜ': '/(tabs)/explore', 'ਐਕਸਪਲੋਰ': '/(tabs)/explore',
-  'ਮਾਰਕੀਟ': '/(tabs)/marketplace', 'ਬਾਜ਼ਾਰ': '/(tabs)/marketplace',
+  'ਮਾਰਕੀਟ': '/mini-apps/marketplace', 'ਬਾਜ਼ਾਰ': '/mini-apps/marketplace',
   'ਚੈਟ': '/(tabs)/chat', 'ਮੈਸੇਜ': '/messages', 'ਸੁਨੇਹਾ': '/messages',
   'ਪ੍ਰੋਫਾਈਲ': '/(tabs)/you', 'ਖਾਤਾ': '/(tabs)/you',
   'ਨੋਟੀਫਿਕੇਸ਼ਨ': '/(tabs)/notifications', 'ਸੈਟਿੰਗ': '/settings',
@@ -151,13 +156,63 @@ function fuzzyLatinKey(query: string, keys: string[]): string | null {
 
 // Exact match first, then "contains" so phrases like "home par jao" or a Hindi
 // word inside a sentence still resolve, then a fuzzy pass for ASR slips.
+// Longest first, so "marketplace" beats "market" and "messages" beats "me"
+// instead of whichever key happened to be declared earlier.
+const DESTINATION_KEYS = Object.keys(DESTINATIONS).sort((a, b) => b.length - a.length);
+
+const LATIN_KEY = /^[a-z0-9 ]+$/;
+
+/**
+ * Keys that only ever match on their own.
+ *
+ * A word boundary fixes "explain" -> "ai" and "postpone" -> "post", but it
+ * cannot fix a key that IS an ordinary word: "can you explain this" contains
+ * "you" as a genuine word, and matchDestination runs over the whole transcript
+ * whenever the model's destination argument does not resolve. Saying "you"
+ * should still open the profile, so these stay in the table and stay available
+ * to the exact-match pass — they are just barred from being fished out of a
+ * sentence.
+ */
+const EXACT_ONLY = new Set([
+  'me', 'you', 'ai', 'post', 'create', 'write', 'search', 'activity', 'options', 'store', 'shop',
+  // "tell me a story" is not a request to open the story composer.
+  'story', 'message', 'chat', 'account',
+]);
+
+/**
+ * Contains-match, but a Latin key has to land on a word boundary.
+ *
+ * Plain `includes` meant "explain" navigated to chat through "ai", "your" went
+ * to the profile through "you", and "postpone" opened the composer through
+ * "post". That matters more than it looks: matchDestination is also run over
+ * the WHOLE transcript as a fallback when the model's destination argument does
+ * not resolve, so every ordinary sentence was a candidate for an accidental
+ * navigation. Devanagari and Gurmukhi keys keep substring matching, since those
+ * scripts do not space-delimit the way the boundary class assumes.
+ */
+function containsKey(haystack: string, key: string): boolean {
+  if (!LATIN_KEY.test(key)) return haystack.includes(key);
+  const safe = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|[^a-z0-9])${safe}(?:[^a-z0-9]|$)`).test(haystack);
+}
+
 function matchDestination(spoken: string): string | null {
   const q = spoken.trim().toLowerCase();
   if (!q) return null;
   if (DESTINATIONS[q]) return DESTINATIONS[q];
-  for (const key of Object.keys(DESTINATIONS)) if (q.includes(key)) return DESTINATIONS[key];
-  const fk = fuzzyLatinKey(q, Object.keys(DESTINATIONS));
-  if (fk) return DESTINATIONS[fk];
+  for (const key of DESTINATION_KEYS) {
+    if (EXACT_ONLY.has(key)) continue;
+    if (containsKey(q, key)) return DESTINATIONS[key];
+  }
+  // Fuzzy is for an ASR slip on a destination word ("bookmarkz"), not for
+  // fishing through a sentence: run over "tell me a story about ai" it returned
+  // a match on edit distance alone, which is how an ordinary remark became a
+  // navigation. Bound it to short input, and keep the ambiguous words out of it
+  // for the same reason they are barred from the contains pass.
+  if (q.split(/\s+/).length <= 3) {
+    const fk = fuzzyLatinKey(q, DESTINATION_KEYS.filter(k => !EXACT_ONLY.has(k)));
+    if (fk) return DESTINATIONS[fk];
+  }
   return null;
 }
 
