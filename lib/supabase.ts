@@ -1,4 +1,10 @@
 import 'react-native-url-polyfill/auto';
+// Before createClient: auth-js decides 'plain' vs 's256' the first time it
+// builds a PKCE challenge, from whatever crypto.subtle exists at that moment.
+// See lib/auth/webcrypto.ts — it declines to install unless the full S256 path
+// can complete, so importing it can only restore the stronger method or leave
+// today's behaviour untouched.
+import './auth/webcrypto';
 import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 import { authLock } from './authLock';
