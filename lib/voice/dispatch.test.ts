@@ -329,3 +329,50 @@ describe('voice destinations — ambiguous single words', () => {
     }
   });
 });
+
+/**
+ * The app's central promise is that anything you can tap, you can say. That is
+ * only true if it is checked, so this fails the build when a screen ships
+ * without a voice phrase — the same way the mini-app test above already does.
+ *
+ * Exclusions are listed one by one with a reason, so widening them is a visible
+ * decision rather than a quiet regression.
+ */
+describe('voice reaches every screen', () => {
+  it('has a phrase for each core screen', async () => {
+    const { readdirSync, statSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { DESTINATIONS } = await import('./dispatch');
+    const { MINI_APP_CATALOG } = await import('../miniAppCatalog');
+
+    const walk = (dir: string, base = ''): string[] =>
+      readdirSync(join(process.cwd(), dir)).flatMap((f) => {
+        const abs = join(process.cwd(), dir, f);
+        if (statSync(abs).isDirectory()) return walk(join(dir, f), `${base}/${f}`);
+        if (!f.endsWith('.tsx')) return [];
+        const n = f.replace(/\.tsx$/, '');
+        if (['_layout', '+html', '+not-found', 'index'].includes(n)) return [];
+        return [`${base}/${n}`];
+      });
+
+    const reachable = new Set<string>([
+      ...Object.values(DESTINATIONS),
+      ...MINI_APP_CATALOG.map(a => String(a.route)),
+      // Screens with a dedicated intent rather than a destination phrase.
+      '/daily-question', '/create-post', '/voice',
+    ]);
+
+    const excluded = (r: string) =>
+      // Entity screens: reached by naming a person or a post, not by a fixed
+      // phrase. Covered by post_action/pickPerson, tracked separately.
+      /\[/.test(r)
+      // Pre-login: there is no voice session before sign-in.
+      || r.startsWith('/auth/')
+      // The OS share target. Entered from another app, never from inside Echo.
+      || r === '/share-intent';
+
+    const missing = walk('app').filter(r => !excluded(r) && !reachable.has(r)).sort();
+
+    expect(missing, `screens with no way to reach them by voice: ${missing.join(', ')}`).toEqual([]);
+  });
+});
