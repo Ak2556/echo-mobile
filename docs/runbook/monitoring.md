@@ -43,7 +43,9 @@ of this check is worthless.
 ## What is NOT monitored, and what to do about it
 
 - **Crons.** `personalized-fanout` was silently dead for weeks (missing Vault
-  secret, missing FK) while reporting healthy. Nothing watches them now.
+  secret, missing FK) while reporting healthy. `cron_health()` now checks each
+  job's last success and the job queues (below), and the healthcheck reports
+  it, but a job that succeeds while doing nothing still looks healthy.
 - **Quota.** The AI account is free tier. Voice, chat and translation fail with
   errors that look like bugs when they are budget.
 - **Push delivery.** Only a fraction of users have tokens.
@@ -51,6 +53,36 @@ of this check is worthless.
 Until these are covered, `npm run audit:backend` is the manual substitute. Run
 it before every release. It calls each RPC for real rather than trusting that a
 green deploy means a working one.
+
+## Background jobs (push, moderation)
+
+Pushes and post moderation are pgmq jobs (`20260928110000_job_layer.sql`). A
+trigger enqueues one in the same transaction as its row; the `worker` edge
+function drains it, retrying with backoff (30s, 60s, 120s ...) and moving a job
+that fails six times to the `dlq` queue. The `jobs-sweeper` cron re-kicks any
+queue with a claimable job once a minute, so a crashed worker delays work but
+never loses it.
+
+`cron_health()` fails, and the healthcheck opens its incident, when:
+
+| Message | Meaning | First thing to check |
+|---|---|---|
+| `N job(s) in the dead-letter queue` | A job failed six times, or delivered partially. | Read the letters (below). |
+| `<queue>: N job(s) unclaimed for 15 minutes` | Nothing is draining. | `WORKER_SECRET` set, `worker` deployed, Vault `worker_secret` equal to it. |
+
+```sql
+-- what failed, and why
+select msg_id, message->>'queue' q, message->>'kind' kind, message->>'error' err, enqueued_at
+  from pgmq.q_dlq order by msg_id;
+-- after fixing the cause: send failed jobs back to their queue, then clear the letters
+select public.jobs_enqueue(message->>'queue', message->'msg')
+  from pgmq.q_dlq where message->>'kind' = 'failed';
+select pgmq.purge_queue('dlq');
+```
+
+`kind = 'report'` letters are informational (for example a push some devices
+received and others refused); read them, then purge. Pushes older than six
+hours are dropped rather than re-sent: the in-app inbox already has them.
 
 ---
 

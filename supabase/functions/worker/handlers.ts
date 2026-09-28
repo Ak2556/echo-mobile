@@ -1,0 +1,77 @@
+// One handler per queue. A handler returns when the job is done (or decided not
+// to act), throws when the job should be tried again, and calls ctx.report for
+// an outcome worth an operator's attention that retrying cannot improve.
+
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { deliverNotification } from '../push-fanout/deliver.ts';
+import { judgeEcho } from '../embed-echo/judge.ts';
+import { MAX_PUSH_AGE_MS, isStale } from './policy.ts';
+
+export interface JobContext {
+  // deno-lint-ignore no-explicit-any
+  db: SupabaseClient<any, any, any>;
+  enqueuedAt: string;
+  /** Record in the dead-letter queue without failing this job. */
+  report(error: string): Promise<void>;
+}
+
+export type Handler = (msg: Record<string, unknown>, ctx: JobContext) => Promise<void>;
+
+/** A notifications row, delivered to every device its recipient is signed in on. */
+const push: Handler = async (msg, ctx) => {
+  if (isStale(ctx.enqueuedAt, Date.now(), MAX_PUSH_AGE_MS)) {
+    console.warn('[worker:push] dropping a push older than the age limit', msg.notification_id);
+    return;
+  }
+  const { data: n, error } = await ctx.db
+    .from('notifications')
+    .select('user_id, type, target_id, target_kind, actor_id, preview')
+    .eq('id', String(msg.notification_id))
+    .maybeSingle();
+  if (error) throw error;
+  if (!n) return; // the row is gone; there is nothing to deliver
+
+  const result = await deliverNotification(ctx.db, n);
+  if ('skipped' in result) return;
+
+  const { outcome } = result;
+  if (outcome.fatal.length === 0) return;
+  const detail = outcome.fatal.map((f) => f.error).join('; ');
+  // Nothing reached any device, so a retry cannot duplicate anything.
+  if (outcome.accepted.length === 0) throw new Error(`expo rejected every device: ${detail}`);
+  // Some devices have it. Retrying would buzz those twice, so record the rest.
+  await ctx.report(`partial delivery to ${n.user_id}: ${detail}`);
+};
+
+/** A new or edited echo: judge it, record the verdict, embed it if it passed. */
+const moderation: Handler = async (msg, ctx) => {
+  const echoId = String(msg.echo_id);
+  // Edits clear moderated_at (d_bump_echo_content_version), so a value here
+  // means the current text already has a verdict: a duplicate job, not work.
+  const { data: row, error } = await ctx.db
+    .from('public_echoes')
+    .select('moderated_at')
+    .eq('id', echoId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!row || row.moderated_at) return;
+
+  const r = await judgeEcho(ctx.db, echoId, { inlineRetries: 0 });
+  switch (r.kind) {
+    case 'unavailable':
+      throw new Error('moderation unavailable');
+    case 'verdict_not_saved':
+      throw new Error(`verdict not saved: ${r.error}`);
+    case 'embed_failed':
+    case 'embedding_not_saved':
+      // The verdict is recorded, so visibility is right; only ranking lacks
+      // the vector. Re-judging to retry the embedding would spend moderation
+      // quota on a post that is already decided.
+      await ctx.report(`${r.kind} for ${echoId}: ${r.error}`);
+      return;
+    default:
+      return;
+  }
+};
+
+export const HANDLERS: Record<string, Handler> = { push, moderation };
