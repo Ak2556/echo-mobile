@@ -112,6 +112,34 @@ app.post('/purge-user', async (c) => {
   return c.json({ user_id: userId, deleted: result }, failed ? 207 : 200);
 });
 
+// ── service-to-service single-object delete ─────────────────────────────────
+// The job worker deleting the media of a deleted DM. The database decides the
+// key (it must lie in the message sender's own folder; see
+// supabase/functions/_shared/dmMediaKey.ts); this only checks it is a
+// well-formed key under a user folder, and only in dm-media. Deleting a key
+// that is already gone succeeds, so a retried job is harmless.
+app.post('/purge-object', async (c) => {
+  const provided = c.req.header('X-Purge-Secret');
+  const expected = c.env.PURGE_SECRET;
+  if (!expected) return c.json({ error: 'Purge is not configured' }, 503);
+  if (!provided || !(await timingSafeEqual(provided, expected))) {
+    return c.json({ error: 'Forbidden' }, 403);
+  }
+
+  const body = await c.req
+    .json<{ bucket?: string; key?: string }>()
+    .catch(() => ({}) as { bucket?: string; key?: string });
+  if (body.bucket !== 'dm-media') return c.json({ error: 'Only dm-media objects can be purged here' }, 400);
+  const key = body.key ?? '';
+  const [owner, ...rest] = key.split('/');
+  if (!UUID_PATTERN.test(owner ?? '') || rest.length === 0 || !rest.join('/') || key.includes('..')) {
+    return c.json({ error: 'A key under a user folder is required' }, 400);
+  }
+
+  await c.env.DM_MEDIA_BUCKET.delete(key);
+  return c.json({ deleted: key });
+});
+
 // ── public media read ───────────────────────────────────────────────────────
 // Registered BEFORE the user-auth middleware, and deliberately so: feed images
 // and avatars are rendered by <Image source={{ uri }} />, which has no way to

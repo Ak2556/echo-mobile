@@ -11,10 +11,16 @@
 -- Deletion is final: once set, deleted_at cannot be cleared, and a deleted
 -- message cannot be edited back into having content.
 --
--- The media objects themselves are left for the unreferenced-media collector:
--- after this, nothing points at them.
+-- The media objects go to a 'media_gc' job, with the sender's id: the worker
+-- deletes a key only if it lies in the sender's own folder, because media_url
+-- is written by the client and could name someone else's file
+-- (supabase/functions/_shared/dmMediaKey.ts).
+--
+-- Depends on 20260928110000 (job layer).
 
 begin;
+
+select pgmq.create('media_gc');
 
 create or replace function public.scrub_deleted_dm()
 returns trigger
@@ -43,6 +49,12 @@ begin
   new.shared_echo_id       := null;
 
   if old.deleted_at is null then
+    if coalesce(old.media_url, old.voice_url) is not null then
+      perform public.jobs_enqueue('media_gc', jsonb_build_object(
+        'bucket', 'dm-media',
+        'sender_id', old.sender_id,
+        'values', jsonb_strip_nulls(jsonb_build_object('media', old.media_url, 'voice', old.voice_url))));
+    end if;
     delete from public.direct_message_keys where message_id = new.id;
 
     update public.dm_conversations
@@ -74,7 +86,17 @@ create trigger z_scrub_deleted_dm
   before update on public.direct_messages
   for each row execute function public.scrub_deleted_dm();
 
--- Messages deleted before this migration.
+-- Messages deleted before this migration: their media first, while the
+-- paths are still on the rows.
+select pgmq.send('media_gc', jsonb_build_object(
+         'bucket', 'dm-media',
+         'sender_id', sender_id,
+         'values', jsonb_strip_nulls(jsonb_build_object('media', media_url, 'voice', voice_url))))
+  from public.direct_messages
+ where deleted_at is not null
+   and coalesce(media_url, voice_url) is not null;
+select public.jobs_kick('media_gc');
+
 delete from public.direct_message_keys k
  using public.direct_messages m
  where m.id = k.message_id

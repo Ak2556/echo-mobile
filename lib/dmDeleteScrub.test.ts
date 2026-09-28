@@ -27,6 +27,12 @@ describe('DM deletion scrubs content', () => {
     expect(sql).toMatch(/update public\.notifications\s+set preview = null/);
   });
 
+  it('hands the media to the collector with the sender, before nulling the paths', () => {
+    expect(sql).toMatch(/perform public\.jobs_enqueue\('media_gc', jsonb_build_object\(\s*'bucket', 'dm-media',\s*'sender_id', old\.sender_id,/);
+    // The paths are read from OLD: by then NEW's are already null.
+    expect(sql).toMatch(/jsonb_build_object\('media', old\.media_url, 'voice', old\.voice_url\)/);
+  });
+
   it('makes deletion final and runs on every update path', () => {
     expect(sql).toMatch(/if old\.deleted_at is not null then\s+new\.deleted_at := old\.deleted_at;/);
     expect(sql).toMatch(/create trigger z_scrub_deleted_dm\s+before update on public\.direct_messages/);

@@ -8,6 +8,7 @@ import { judgeEcho } from '../embed-echo/judge.ts';
 import { entitlementFor, type RcSubscriber } from '../revenuecat-webhook/entitlements.ts';
 import { judgeRequest } from '../verify-identity/judge.ts';
 import { runErasure } from '../delete-account/erasure.ts';
+import { dmMediaKey } from '../_shared/dmMediaKey.ts';
 import { MAX_PUSH_AGE_MS, isStale } from './policy.ts';
 import { pruneDeadTokens, sendToExpo, tokensByUser } from '../_shared/expoPush.ts';
 import { pickTitle, truncate } from '../daily-question-push/copy.ts';
@@ -157,4 +158,41 @@ const erasure: Handler = async (msg, ctx) => {
   await runErasure(ctx.db, String(msg.user_id));
 };
 
-export const HANDLERS: Record<string, Handler> = { push, moderation, entitlements, broadcast, verification, erasure };
+/**
+ * The photo or voice note of a deleted DM, from R2 and from the legacy
+ * Storage bucket. Only keys in the sender's own folder are touched: media_url
+ * is client-written and could name someone else's file (dmMediaKey).
+ */
+const mediaGc: Handler = async (msg, ctx) => {
+  if (msg.bucket !== 'dm-media') return;
+  const values = Object.values((msg.values ?? {}) as Record<string, unknown>);
+  const keys = [...new Set(values.map((v) => dmMediaKey(v, msg.sender_id)).filter((k): k is string => !!k))];
+  if (keys.length < values.length) {
+    // Not an error to retry: a value outside the sender's folder is never ours
+    // to delete, whether it is an old URL shape or a pointer at another file.
+    console.warn('[worker:media_gc] left alone: value outside the sender folder', msg.sender_id);
+  }
+  const workerUrl = (Deno.env.get('CLOUDFLARE_WORKER_URL') ?? '').replace(/\/$/, '');
+  const secret = Deno.env.get('PURGE_SECRET') ?? '';
+  if (keys.length && (!workerUrl || !secret)) throw new Error('media purge is not configured (CLOUDFLARE_WORKER_URL, PURGE_SECRET)');
+  for (const key of keys) {
+    const res = await fetch(`${workerUrl}/purge-object`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Purge-Secret': secret },
+      body: JSON.stringify({ bucket: 'dm-media', key }),
+    });
+    if (!res.ok) throw new Error(`R2 purge-object answered ${res.status}`);
+    const { error } = await ctx.db.storage.from('dm-media').remove([key]);
+    if (error && !/not.?found/i.test(error.message)) throw error;
+  }
+};
+
+export const HANDLERS: Record<string, Handler> = {
+  push,
+  moderation,
+  entitlements,
+  broadcast,
+  verification,
+  erasure,
+  media_gc: mediaGc,
+};

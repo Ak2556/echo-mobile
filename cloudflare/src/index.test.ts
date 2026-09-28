@@ -266,6 +266,35 @@ describe('/dm-media', () => {
   });
 });
 
+describe('/purge-object', () => {
+  const purge = (body: unknown, secret = 'purge') =>
+    call('/purge-object', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Purge-Secret': secret },
+      body: JSON.stringify(body),
+    });
+
+  it('deletes one dm-media object for the service caller', async () => {
+    const res = await purge({ bucket: 'dm-media', key: `${OTHER}/${CONV}/1.jpg` });
+    expect(res.status).toBe(200);
+    expect(dmMedia.delete).toHaveBeenCalledWith(`${OTHER}/${CONV}/1.jpg`);
+  });
+
+  it('refuses a wrong secret, another bucket, a bare folder and traversal', async () => {
+    expect((await purge({ bucket: 'dm-media', key: `${OTHER}/1.jpg` }, 'wrong')).status).toBe(403);
+    expect((await purge({ bucket: 'echo-media', key: `${ME}/a.jpg` })).status).toBe(400);
+    expect((await purge({ bucket: 'dm-media', key: `${OTHER}/` })).status).toBe(400);
+    expect((await purge({ bucket: 'dm-media', key: `${OTHER}/../${ME}/a.jpg` })).status).toBe(400);
+    expect((await purge({ bucket: 'dm-media', key: 'not-a-user/1.jpg' })).status).toBe(400);
+    expect(dmMedia.delete).not.toHaveBeenCalled();
+  });
+
+  it('needs no user session (the caller is the job worker)', async () => {
+    await purge({ bucket: 'dm-media', key: `${OTHER}/${CONV}/1.jpg` });
+    expect(fetchCalls.some(u => u.includes('/auth/v1/user'))).toBe(false);
+  });
+});
+
 /**
  * The landing page claims "one question a day, the same for everyone". Showing
  * the real one turns that from a claim into something a visitor can verify by
