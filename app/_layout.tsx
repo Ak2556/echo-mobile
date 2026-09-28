@@ -1,10 +1,9 @@
-import { registerQueryClient } from '../lib/localDataReset';
+import { purgeLegacyMessageStore, registerQueryClient } from '../lib/localDataReset';
 import { useEffect } from 'react';
 import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
 import type { ErrorBoundaryProps, Href } from 'expo-router';
 import { AppState, Linking, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useDatabaseSync } from "../hooks/useDatabaseSync";
 import { AppErrorBoundary } from '../components/common/AppErrorBoundary';
 import { track, initAnalytics } from '../src/shared/lib/analytics';
 import { recordAppOpen, noteNudgeOpened, ensureNudgesScheduled } from '../lib/personalNudges';
@@ -92,6 +91,7 @@ if (typeof ErrorUtils !== 'undefined') {
 
 initMonitoring();
 startOutbox(); // connectivity + replay any queued writes
+void purgeLegacyMessageStore(); // once: DMs the retired local sync copied to disk
 if (getAnalyticsConsent() === 'accepted') {
   initAnalytics();
 }
@@ -263,7 +263,6 @@ function UniversalLinkRouter(): null {
 }
 
 function RootLayout() {
-  useDatabaseSync();
   const userId = useAppStore(s => s.userId);
   usePresenceTracking(userId ?? undefined);
   const commandPaletteOpen = useCommandPalette(s => s.isOpen);

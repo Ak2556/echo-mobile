@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { mmkvPersister } from './queryPersister';
+import { persistGet, persistSet } from '../store/persist';
 
 /**
  * Wiping the previous user's data off the device at sign-out.
@@ -38,10 +39,30 @@ export async function clearLocalUserData(): Promise<void> {
     // Required lazily: WatermelonDB pulls a native adapter that throws on
     // import under node, which would take every test in this file's import
     // graph down with it.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { database } = require('../src/shared/database');
-    await database.write(async () => {
-      await database.unsafeResetDatabase();
-    });
+    await resetLocalDatabase();
   } catch { /* no local DB on this platform, or nothing to reset */ }
+}
+
+async function resetLocalDatabase(): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { database } = require('../src/shared/database');
+  await database.write(async () => {
+    await database.unsafeResetDatabase();
+  });
+}
+
+const LEGACY_DM_STORE_PURGED = 'db:legacyDmStorePurged_v1';
+
+/**
+ * Remove the direct messages the retired WatermelonDB sync copied onto this
+ * device. That sync polled every minute and wrote each DM, unencrypted, into a
+ * local table nothing read; it is gone, but installs that ran it still hold
+ * the rows. Runs once per install; a failure is retried on the next launch.
+ */
+export async function purgeLegacyMessageStore(): Promise<void> {
+  if (persistGet<boolean>(LEGACY_DM_STORE_PURGED, false)) return;
+  try {
+    await resetLocalDatabase();
+    persistSet(LEGACY_DM_STORE_PURGED, true);
+  } catch { /* no local DB on this platform yet; try again next launch */ }
 }

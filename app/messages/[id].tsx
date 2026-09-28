@@ -5,11 +5,6 @@ import {
   TextInput as RNTextInput, Pressable, StyleSheet, Modal,
   ActivityIndicator, Alert, Linking, Dimensions,
 } from 'react-native';
-import withObservables from '@nozbe/with-observables';
-import { of } from 'rxjs';
-import { database } from '../../src/shared/database';
-import MessageModel from '../../src/shared/database/models/Message';
-import { Q } from '@nozbe/watermelondb';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -3737,19 +3732,8 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   );
 }
 
-
-const enhance = withObservables(['id'], ({ id }: DMViewProps) => {
-  const coll = database.collections.get<MessageModel>('messages');
-  if (!coll) {
-    console.warn("WatermelonDB collection 'messages' is null or undefined! Bailing out.");
-    return { wmMessages: of([]) };
-  }
-  return {
-    wmMessages: coll.query(
-      Q.where('thread_id', id || ''),
-      Q.sortBy('created_at', Q.asc)
-    ).observe()
-  };
-});
-
-export const DMView = enhance(DMViewInner);
+// Messages come from TanStack Query and the realtime channels in
+// hooks/queries/useDMs. This used to be wrapped in a WatermelonDB observable
+// whose result the view never read, fed by a poll that stored every DM on the
+// device a second time.
+export const DMView = DMViewInner;
