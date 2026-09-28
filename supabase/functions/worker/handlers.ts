@@ -5,6 +5,7 @@
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { deliverNotification } from '../push-fanout/deliver.ts';
 import { judgeEcho } from '../embed-echo/judge.ts';
+import { entitlementFor, type RcSubscriber } from '../revenuecat-webhook/entitlements.ts';
 import { MAX_PUSH_AGE_MS, isStale } from './policy.ts';
 
 export interface JobContext {
@@ -74,4 +75,24 @@ const moderation: Handler = async (msg, ctx) => {
   }
 };
 
-export const HANDLERS: Record<string, Handler> = { push, moderation };
+/**
+ * One user's subscription, read from RevenueCat's resolved state and written
+ * to user_entitlements. Safe to run any number of times, in any order.
+ */
+const entitlements: Handler = async (msg, ctx) => {
+  const userId = String(msg.user_id);
+  const key = Deno.env.get('REVENUECAT_SECRET_KEY');
+  if (!key) throw new Error('REVENUECAT_SECRET_KEY is not set');
+  const r = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}`, {
+    headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
+  });
+  if (!r.ok) throw new Error(`RevenueCat ${r.status}`);
+  const body = (await r.json()) as { subscriber?: RcSubscriber };
+  const { error } = await ctx.db.rpc('apply_store_entitlement', {
+    p_user: userId,
+    p_row: entitlementFor(body.subscriber ?? {}, Date.now()),
+  });
+  if (error) throw error;
+};
+
+export const HANDLERS: Record<string, Handler> = { push, moderation, entitlements };

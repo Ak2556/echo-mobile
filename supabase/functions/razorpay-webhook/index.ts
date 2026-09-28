@@ -1,59 +1,54 @@
+// Razorpay webhook: verify it and settle the ad it pays for.
+//
+// Settlement is one guarded transition in settle_ad_payment: the ad must be
+// pending, bound to this order, and priced at exactly the amount captured.
+// Each Razorpay event id is recorded once, so a redelivery does nothing, and
+// a replay can no longer re-activate an ad after a refund or a takedown.
+//
+// A payment that matches no pending ad (money taken, nothing to activate) is
+// written to the dead-letter queue, where cron_health reports it. It used to
+// update zero rows and answer 200: the customer paid and nobody knew.
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { hmacSha256Hex } from '../_shared/hmac.ts';
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { hmac } from "https://deno.land/x/crypto@v0.3.0/mod.ts";
 
-serve(async (req) => {
-  try {
-    const signature = req.headers.get('X-Razorpay-Signature')
-    const secret = Deno.env.get('RAZORPAY_WEBHOOK_SECRET')
-    
-    if (!signature || !secret) {
-      return new Response('Missing signature or secret', { status: 400 })
-    }
+const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', {
+  auth: { persistSession: false },
+});
+const SECRET = Deno.env.get('RAZORPAY_WEBHOOK_SECRET') ?? '';
 
-    const payload = await req.text()
-    
-    // Verify signature
-    const expectedSignature = await hmac(
-      "sha256",
-      new TextEncoder().encode(secret),
-      new TextEncoder().encode(payload),
-      "hex"
-    );
+const SETTLING_EVENTS = new Set(['payment.captured', 'order.paid']);
 
-    if (!(await timingSafeEqual(expectedSignature, signature))) {
-      return new Response('Invalid signature', { status: 400 })
-    }
+Deno.serve(async (req: Request) => {
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-    const event = JSON.parse(payload)
+  const signature = req.headers.get('x-razorpay-signature');
+  if (!signature || !SECRET) return new Response('Unauthorized', { status: 401 });
 
-    // We need service role to bypass RLS and update the ad status
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    if (event.event === 'payment.captured' || event.event === 'order.paid') {
-      // payment entity
-      const payment = event.payload.payment.entity
-      const order_id = payment.order_id
-
-      // Activate the ad!
-      const { error } = await supabaseAdmin
-        .from('ads')
-        .update({ payment_status: 'paid', is_active: true })
-        .eq('razorpay_order_id', order_id)
-
-      if (error) {
-        console.error('Failed to update ad:', error)
-        return new Response('Database error', { status: 500 })
-      }
-    }
-
-    return new Response('OK', { status: 200 })
-  } catch (error) {
-    console.error(error)
-    return new Response('Error handling webhook', { status: 400 })
+  const raw = await req.text();
+  if (!(await timingSafeEqual(await hmacSha256Hex(SECRET, raw), signature))) {
+    return new Response('Unauthorized', { status: 401 });
   }
-})
+
+  let event: { event?: string; payload?: { payment?: { entity?: { id?: string } } } };
+  try {
+    event = JSON.parse(raw);
+  } catch {
+    return new Response('Bad JSON', { status: 400 });
+  }
+  if (!event.event || !SETTLING_EVENTS.has(event.event)) return new Response('Ignored', { status: 200 });
+
+  // Razorpay's id for this delivery; the payment id stands in if it is absent.
+  const eventId = req.headers.get('x-razorpay-event-id')
+    ?? `${event.event}:${event.payload?.payment?.entity?.id ?? ''}`;
+
+  const { data, error } = await admin.rpc('settle_ad_payment', { p_event_id: eventId, p_payload: event });
+  if (error) {
+    // Nothing was recorded (one transaction), so Razorpay's retry starts clean.
+    console.error('[razorpay-webhook] settle failed:', error.message);
+    return new Response('Retry', { status: 500 });
+  }
+  if (data === 'unmatched') console.error('[razorpay-webhook] payment matched no pending ad; see the dlq', eventId);
+  return new Response(String(data), { status: 200 });
+});
