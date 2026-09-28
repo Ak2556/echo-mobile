@@ -6,6 +6,7 @@ import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4
 import { deliverNotification } from '../push-fanout/deliver.ts';
 import { judgeEcho } from '../embed-echo/judge.ts';
 import { entitlementFor, type RcSubscriber } from '../revenuecat-webhook/entitlements.ts';
+import { judgeRequest } from '../verify-identity/judge.ts';
 import { MAX_PUSH_AGE_MS, isStale } from './policy.ts';
 import { pruneDeadTokens, sendToExpo, tokensByUser } from '../_shared/expoPush.ts';
 import { pickTitle, truncate } from '../daily-question-push/copy.ts';
@@ -140,4 +141,14 @@ const broadcast: Handler = async (msg, ctx) => {
   await ctx.report(`daily question reached ${outcome.accepted.length} of ${messages.length} devices: ${detail}`);
 };
 
-export const HANDLERS: Record<string, Handler> = { push, moderation, entitlements, broadcast };
+/**
+ * A verification request the model could not judge at submit time. Retried
+ * with backoff; after the last attempt it is dead-lettered and stays in the
+ * moderators' pending list, where it always was.
+ */
+const verification: Handler = async (msg, ctx) => {
+  const outcome = await judgeRequest(ctx.db, String(msg.request_id));
+  if (outcome.status === 'unavailable') throw new Error('vision model unavailable');
+};
+
+export const HANDLERS: Record<string, Handler> = { push, moderation, entitlements, broadcast, verification };
