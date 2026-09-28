@@ -54,6 +54,19 @@ Until these are covered, `npm run audit:backend` is the manual substitute. Run
 it before every release. It calls each RPC for real rather than trusting that a
 green deploy means a working one.
 
+## Heartbeat (dead-man's switch)
+
+Every five minutes, if `cron_health()` is clean, the database pings the URL in
+Vault as `heartbeat_url` (`20260928190000_heartbeat.sql`). Point it at a monitor
+that alerts when pings stop, such as healthchecks.io (open source; hosted or
+self-hosted). Silence then means something is wrong, including the cases the
+GitHub healthcheck cannot see: the database is down, the project is paused, or
+GitHub stopped running the schedule after 60 quiet days.
+
+```sql
+select vault.create_secret('https://hc-ping.com/<your-check-uuid>', 'heartbeat_url');
+```
+
 ## Background jobs (push, moderation, daily broadcast, entitlements)
 
 Pushes, post moderation, the daily-question broadcast and subscription syncs
