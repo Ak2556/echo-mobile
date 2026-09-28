@@ -772,14 +772,10 @@ export async function insertRemoteEcho(params: {
   } else {
     row = data as SupabaseEchoRow;
   }
-  // Moderation + embedding run server-side: the moderate_new_echo AFTER INSERT
-  // trigger enqueues embed-echo via pg_net (resweep cron as backup). Calling
-  // embed-echo from the client up-front too fired it TWICE per post (double
-  // moderation + embedding = wasted AI credits). Instead, a delayed fallback only
-  // nudges embed-echo if the server path hasn't revealed the post in time — so the
-  // normal case costs one cheap read (no duplicate AI call), while a stuck post
-  // still recovers, keeping visibility UX identical.
-  void moderationFallback(row.id);
+  // Moderation and embedding run server-side: moderate_new_echo enqueues a
+  // durable job for this row in the insert's own transaction, and the worker
+  // retries it until it has a verdict (supabase/functions/worker). The client
+  // used to re-drive it ten seconds later, which only spent the AI quota twice.
   // Insert any @-mentions found in prompt + response. Best-effort; doesn't block.
   const usernames = parseMentions(`${params.prompt} ${params.response}`);
   if (usernames.length) {
@@ -793,56 +789,6 @@ export async function insertRemoteEcho(params: {
   // First-echo badge — award once; idempotent via PK on (user_id, badge_id).
   awardBadge('first_echo').catch(() => undefined);
   return row;
-}
-
-/**
- * Safety net for server-side moderation without double-moderating. Waits briefly,
- * then only asks embed-echo to run if the server trigger hasn't revealed the post
- * yet. Normal case: the trigger has already set check_content=true within seconds,
- * so this costs a single cheap read and no AI call. Stuck case (trigger's pg_net
- * failed, or Vault secrets missing): the post is still hidden, so we nudge
- * embed-echo — preserving the exact publish-visibility UX the client used to
- * guarantee, at ~half the moderation cost.
- */
-async function moderationFallback(echoId: string): Promise<void> {
-  await new Promise((r) => setTimeout(r, 10000));
-  try {
-    const { data } = await supabase.from('public_echoes').select('check_content').eq('id', echoId).maybeSingle();
-    // Row visible with check_content=true → server path already handled it; done.
-    if (data && (data as { check_content?: boolean }).check_content === true) return;
-  } catch {
-    // Couldn't confirm — fall through and nudge, to stay fail-safe on visibility.
-  }
-  triggerEmbedEcho(echoId).catch(() => undefined);
-}
-
-/**
- * Asks the embed-echo edge function to compute and persist the embedding +
- * thoughtfulness score for a published echo. Non-blocking; errors are swallowed
- * so the publish UX is never gated on embedding success.
- */
-export async function triggerEmbedEcho(echoId: string): Promise<void> {
-  // Up to 3 attempts with backoff: embed-echo returns 503 when the moderation
-  // gate itself is unreachable, leaving the row hidden-pending — a retry here
-  // is what un-sticks a freshly published post after a transient provider
-  // hiccup. Still best-effort overall; the publish UX is never gated on this.
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const { error } = await supabase.functions.invoke('embed-echo', { body: { echo_id: echoId } });
-      if (!error) return;
-      lastError = error;
-    } catch (e) {
-      lastError = e;
-    }
-    await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-  }
-  // All retries exhausted — the echo may be stuck hidden-pending. Best-effort
-  // overall, but report so a stuck post isn't invisible to us too.
-  captureException(lastError ?? new Error('embed-echo failed after 3 attempts'), {
-    tags: { module: 'supabaseEchoApi', fn: 'triggerEmbedEcho' },
-    extra: { echoId },
-  });
 }
 
 export async function fetchRemoteEchoById(echoId: string): Promise<FeedItem | null> {
