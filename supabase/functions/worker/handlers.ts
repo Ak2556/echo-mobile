@@ -7,6 +7,7 @@ import { deliverNotification } from '../push-fanout/deliver.ts';
 import { judgeEcho } from '../embed-echo/judge.ts';
 import { entitlementFor, type RcSubscriber } from '../revenuecat-webhook/entitlements.ts';
 import { judgeRequest } from '../verify-identity/judge.ts';
+import { runErasure } from '../delete-account/erasure.ts';
 import { MAX_PUSH_AGE_MS, isStale } from './policy.ts';
 import { pruneDeadTokens, sendToExpo, tokensByUser } from '../_shared/expoPush.ts';
 import { pickTitle, truncate } from '../daily-question-push/copy.ts';
@@ -151,4 +152,9 @@ const verification: Handler = async (msg, ctx) => {
   if (outcome.status === 'unavailable') throw new Error('vision model unavailable');
 };
 
-export const HANDLERS: Record<string, Handler> = { push, moderation, entitlements, broadcast, verification };
+/** An account erasure, resumed from the step it reached. */
+const erasure: Handler = async (msg, ctx) => {
+  await runErasure(ctx.db, String(msg.user_id));
+};
+
+export const HANDLERS: Record<string, Handler> = { push, moderation, entitlements, broadcast, verification, erasure };
