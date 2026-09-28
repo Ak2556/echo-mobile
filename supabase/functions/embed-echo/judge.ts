@@ -15,6 +15,7 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { moderateContent, moderateImages } from "./moderation.ts";
 import { splitMediaForModeration } from "./mediaKinds.ts";
+import { guardedFetch } from "../_shared/breaker.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 
@@ -85,7 +86,7 @@ function computeThoughtfulnessScore(row: EchoRow): number {
 
 async function generateEmbedding(text: string): Promise<number[]> {
   if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not configured");
-  const res = await fetch(EMBEDDING_URL, {
+  const res = await guardedFetch("openrouter", EMBEDDING_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

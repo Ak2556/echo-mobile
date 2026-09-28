@@ -11,6 +11,7 @@
 
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { guardedFetch } from "../_shared/breaker.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -57,7 +58,7 @@ function computeThoughtfulness(row: EchoRow): number {
 async function generateEmbedding(text: string, model: string, dims: number | null): Promise<number[]> {
   const body: Record<string, unknown> = { model, input: text };
   if (dims != null) body.dimensions = dims;
-  const res = await fetch(EMBEDDING_URL, {
+  const res = await guardedFetch("openrouter", EMBEDDING_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

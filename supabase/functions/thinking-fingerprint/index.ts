@@ -15,6 +15,7 @@
 // OPENROUTER_API_KEY — the same key used by chat, moderation, and embeddings.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { guardedFetch } from "../_shared/breaker.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -153,7 +154,7 @@ async function synthesize(digest: string, range: number): Promise<Fingerprint | 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SYNTH_TIMEOUT_MS);
   try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENROUTER_API_KEY}`,

@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatCompletion, geminiModelId } from './aiChat';
 
+// The breaker keeps its state in Postgres through supabase-js (an esm.sh
+// import vitest cannot load). Here it is a pass-through, so these tests see
+// the provider calls exactly as made; breakerPolicy.test covers the breaker.
+vi.mock('./breaker.ts', () => ({
+  guardedFetch: (_provider: string, input: string, init?: RequestInit) => fetch(input, init),
+}));
+
 const env: Record<string, string> = {};
 const ok = (message: unknown) => new Response(JSON.stringify({ choices: [{ message }] }), { status: 200 });
 

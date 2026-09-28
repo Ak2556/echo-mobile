@@ -15,6 +15,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { timingSafeEqual } from "../_shared/timingSafeEqual.ts";
+import { guardedFetch } from "../_shared/breaker.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -49,7 +50,7 @@ function labelToText(label: string): string {
 }
 
 async function embed(text: string): Promise<number[]> {
-  const res = await fetch(EMBEDDING_URL, {
+  const res = await guardedFetch("openrouter", EMBEDDING_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

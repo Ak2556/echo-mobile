@@ -11,6 +11,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { spendActionBudget } from "../_shared/actionLimit.ts";
+import { guardedFetch } from "../_shared/breaker.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 // Prefer a fast multimodal model. gemini-2.5-flash-lite handles Hindi audio well.
@@ -220,7 +221,7 @@ Deno.serve(async (req) => {
       // Retry transient rate-limit / server errors (common on the free tier) with backoff.
       let res: Response | null = null;
       for (let attempt = 0; attempt < 3; attempt++) {
-        res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
+        res = await guardedFetch("gemini", url, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
         if (res.ok || !(res.status === 429 || res.status >= 500)) break;
         await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
       }
@@ -228,7 +229,7 @@ Deno.serve(async (req) => {
       const out = await res.json();
       content = out.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
     } else {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${OPENROUTER_API_KEY}`,

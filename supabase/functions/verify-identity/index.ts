@@ -18,6 +18,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { spendActionBudget } from "../_shared/actionLimit.ts";
+import { guardedFetch } from "../_shared/breaker.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -58,7 +59,7 @@ async function judgeSelfie(avatarUrl: string, selfieUrl: string, pose: string): 
     `"reason": string (one short sentence)}. Be strict about live_selfie and same_person; ` +
     `be lenient about pose_matches (roughly is fine).`;
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${OPENROUTER_API_KEY}`,
