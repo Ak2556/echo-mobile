@@ -1,150 +1,43 @@
 // Daily-question push — the retention loop's trigger.
 //
-// Unlike push-fanout (one recipient, fired by a notifications-insert trigger),
-// this enumerates EVERY profile with a push token and sends today's daily
-// question in batches via Expo's Push API (max 100 messages/request).
+// The pg_cron job now claims the day's broadcast directly in SQL
+// (claim_daily_broadcast, 20260928140000), which records that today's
+// question was sent and enqueues 'broadcast' jobs of up to 100 users each for
+// the worker. This endpoint remains for a manual send and calls the same
+// claim, so however it is triggered, and however often, a question goes out
+// once.
 //
-// Invoked once a day by pg_cron (see migration
-// 20260529040000_daily_question_push_cron.sql), which POSTs here with the
-// shared secret in the `x-cron-secret` header. Deploy with --no-verify-jwt so
-// the scheduler can reach it without a user JWT; the secret is the gate.
+// It used to page every token and POST to Expo here, with nothing recording
+// that the day had been sent: a re-run pushed everyone twice. It also counted
+// a chunk as sent on HTTP 200, the same misreading push-fanout once had, when
+// each ticket carries its own error.
 //
-//   supabase functions deploy daily-question-push --no-verify-jwt
+//   supabase functions deploy daily-question-push   (verify_jwt = false, config.toml)
 //   supabase secrets set DAILY_PUSH_SECRET=<random-string>
-//
-// The same secret must also live in Vault as `daily_push_secret` so the cron
-// SQL can read it (the migration explains this).
 
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const db = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', {
+  auth: { persistSession: false },
+});
 const CRON_SECRET = Deno.env.get('DAILY_PUSH_SECRET') ?? '';
 
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
-
-const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
-const PAGE_SIZE = 1000; // profile rows per fetch
-const PUSH_CHUNK = 100; // Expo's documented max messages per request
-
-interface ExpoMessage {
-  to: string;
-  title: string;
-  body: string;
-  sound: 'default';
-  data: { kind: 'daily_question'; target_id: string | null };
-}
+const json = (payload: unknown, status: number) =>
+  new Response(JSON.stringify(payload), { status, headers: { 'content-type': 'application/json' } });
 
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
 
-  // Gate: constant header check. Refuse if no secret is configured at all so a
-  // misconfigured deploy can't be triggered anonymously.
+  // Refuse if no secret is configured at all, so a misconfigured deploy can't
+  // be triggered anonymously.
   const provided = req.headers.get('x-cron-secret') ?? '';
   if (!CRON_SECRET || !(await timingSafeEqual(provided, CRON_SECRET))) {
     return json({ error: 'unauthorized' }, 401);
   }
 
-  // Today's question — same selection the app uses (active_date = today, UTC).
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: question, error: qErr } = await supabase
-    .from('daily_questions')
-    .select('id, question')
-    .eq('active_date', today)
-    .maybeSingle();
-
-  if (qErr) return json({ error: `question lookup failed: ${qErr.message}` }, 500);
-  if (!question) return json({ skipped: 'no question scheduled for today', today }, 200);
-
-  // Page through every profile that has a push token.
-  const tokens = new Set<string>();
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('push_token')
-      .not('push_token', 'is', null)
-      .range(from, from + PAGE_SIZE - 1);
-    if (error) return json({ error: `token fetch failed: ${error.message}` }, 500);
-    if (!data || data.length === 0) break;
-    for (const row of data) {
-      const t = (row as { push_token: string | null }).push_token;
-      // Expo tokens look like ExponentPushToken[...] or ExpoPushToken[...].
-      if (t && /^Expo(nent)?PushToken\[.+\]$/.test(t)) tokens.add(t);
-    }
-    if (data.length < PAGE_SIZE) break;
-  }
-
-  if (tokens.size === 0) return json({ skipped: 'no push tokens', today }, 200);
-
-  // The question itself is the hook, so it stays the body; the title carries
-  // the personality. Picked per-message so it varies across people too.
-  const body = truncate(question.question, 150);
-  const messages: ExpoMessage[] = [...tokens].map((to) => ({
-    to,
-    title: pick(DAILY_TITLES),
-    body,
-    sound: 'default',
-    data: { kind: 'daily_question', target_id: question.id },
-  }));
-
-  // Fan out in chunks; tolerate partial failures so one bad chunk doesn't sink
-  // the whole run.
-  let sent = 0;
-  const errors: string[] = [];
-  for (const chunk of chunked(messages, PUSH_CHUNK)) {
-    try {
-      const r = await fetch(EXPO_PUSH_URL, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify(chunk),
-      });
-      if (r.ok) sent += chunk.length;
-      else errors.push(`chunk ${r.status}: ${(await r.text()).slice(0, 200)}`);
-    } catch (e) {
-      errors.push(`chunk threw: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }
-
-  return json({ ok: true, today, question_id: question.id, tokens: tokens.size, sent, errors }, 200);
+  const { data, error } = await db.rpc('claim_daily_broadcast');
+  if (error) return json({ error: error.message }, 500);
+  // 0 batches: already sent today, or nobody has a device registered.
+  return json({ batches: data }, 200);
 });
-
-// Playful title variants for the daily question — one gets picked per push so
-// the ritual never feels like the same alarm going off.
-const DAILY_TITLES = [
-  "Today's question just dropped 👀",
-  'Brain, meet today’s question',
-  'Two minutes, one honest take',
-  'Today’s question is a good one',
-  'Everyone’s answering — where you at?',
-  'Warning: mildly provocative question inside',
-  'Your daily excuse to have an opinion',
-  'Quick — before you overthink it',
-  'Plot twist: today’s question is about you',
-  'Hot take incubator, now open',
-  'Answer this before your coffee gets cold',
-  'The group chat is arguing. Join in.',
-  'Small question, big feelings',
-  'Say something true. We dare you.',
-  'Today’s question would like a word',
-  'Opinions wanted. Yours specifically.',
-];
-
-function pick(arr: string[]): string {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function truncate(s: string, n: number): string {
-  return s.length <= n ? s : s.slice(0, n - 1).trimEnd() + '…';
-}
-
-function* chunked<T>(arr: T[], size: number): Generator<T[]> {
-  for (let i = 0; i < arr.length; i += size) yield arr.slice(i, i + size);
-}
-
-function json(payload: unknown, status: number): Response {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
-}

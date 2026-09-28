@@ -54,10 +54,11 @@ Until these are covered, `npm run audit:backend` is the manual substitute. Run
 it before every release. It calls each RPC for real rather than trusting that a
 green deploy means a working one.
 
-## Background jobs (push, moderation)
+## Background jobs (push, moderation, daily broadcast, entitlements)
 
-Pushes and post moderation are pgmq jobs (`20260928110000_job_layer.sql`). A
-trigger enqueues one in the same transaction as its row; the `worker` edge
+Pushes, post moderation, the daily-question broadcast and subscription syncs
+are pgmq jobs (`20260928110000_job_layer.sql` and later). A trigger or claim
+enqueues one in the same transaction as its row; the `worker` edge
 function drains it, retrying with backoff (30s, 60s, 120s ...) and moving a job
 that fails six times to the `dlq` queue. The `jobs-sweeper` cron re-kicks any
 queue with a claimable job once a minute, so a crashed worker delays work but

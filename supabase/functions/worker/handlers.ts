@@ -7,6 +7,9 @@ import { deliverNotification } from '../push-fanout/deliver.ts';
 import { judgeEcho } from '../embed-echo/judge.ts';
 import { entitlementFor, type RcSubscriber } from '../revenuecat-webhook/entitlements.ts';
 import { MAX_PUSH_AGE_MS, isStale } from './policy.ts';
+import { pruneDeadTokens, sendToExpo, tokensByUser } from '../_shared/expoPush.ts';
+import { pickTitle, truncate } from '../daily-question-push/copy.ts';
+import { channelForKind, priorityForKind } from '../../../lib/notifications/routing.ts';
 
 export interface JobContext {
   // deno-lint-ignore no-explicit-any
@@ -95,4 +98,46 @@ const entitlements: Handler = async (msg, ctx) => {
   if (error) throw error;
 };
 
-export const HANDLERS: Record<string, Handler> = { push, moderation, entitlements };
+/**
+ * Today's question to a batch of up to 100 users, on every device each is
+ * signed in on. claim_daily_broadcast enqueues these once per day.
+ */
+const broadcast: Handler = async (msg, ctx) => {
+  const userIds = Array.isArray(msg.user_ids) ? (msg.user_ids as string[]) : [];
+  if (userIds.length === 0) return;
+  // "Today's question" hours late is yesterday's question.
+  if (isStale(ctx.enqueuedAt, Date.now(), MAX_PUSH_AGE_MS)) {
+    console.warn('[worker:broadcast] dropping a batch older than the age limit', msg.question_id);
+    return;
+  }
+  const { data: q, error } = await ctx.db
+    .from('daily_questions')
+    .select('id, question')
+    .eq('id', String(msg.question_id))
+    .maybeSingle();
+  if (error) throw error;
+  if (!q) return;
+
+  const byUser = await tokensByUser(ctx.db, userIds);
+  const body = truncate(q.question, 150);
+  const messages = [...byUser.values()].flat().map((to) => ({
+    to,
+    title: pickTitle(),
+    body,
+    sound: 'default',
+    channelId: channelForKind('daily_question'),
+    priority: priorityForKind('daily_question'),
+    data: { kind: 'daily_question', target_id: q.id },
+  }));
+  if (messages.length === 0) return;
+
+  const outcome = await sendToExpo(messages);
+  await pruneDeadTokens(ctx.db, outcome.dead);
+  if (outcome.fatal.length === 0) return;
+  const detail = [...new Set(outcome.fatal.map((f) => f.error))].join('; ');
+  // Nothing reached any device, so a retry cannot duplicate anything.
+  if (outcome.accepted.length === 0) throw new Error(`expo rejected the whole batch: ${detail}`);
+  await ctx.report(`daily question reached ${outcome.accepted.length} of ${messages.length} devices: ${detail}`);
+};
+
+export const HANDLERS: Record<string, Handler> = { push, moderation, entitlements, broadcast };
