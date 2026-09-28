@@ -1,5 +1,5 @@
-// On notifications insert, look up the recipient's push_token and send via
-// Expo's Push API. Wired by a Postgres trigger (see migration
+// On notifications insert, look up every device the recipient is signed in on
+// and send via Expo's Push API. Wired by a Postgres trigger (see migration
 // 20260524120000_notifications_push_fanout.sql) that POSTs the notification
 // row to this function.
 //
@@ -12,6 +12,7 @@
 
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
 import { dmPushBody } from './copy.ts';
+import { pruneDeadTokens, sendToExpo, tokensByUser } from '../_shared/expoPush.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Shared with the app so the channel/category ids can never drift apart: the
 // client registers exactly what this stamps. See lib/notifications/routing.ts.
@@ -59,10 +60,14 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
   if (!body.user_id) return new Response('user_id required', { status: 400 });
 
-  // Load recipient token + actor name in parallel. allSettled so a failed
-  // actor lookup doesn't abort the notification entirely.
-  const [recipientResult, actorResult, unreadResult] = await Promise.allSettled([
-    supabase.from('profiles').select('push_token, notification_prefs').eq('id', body.user_id).maybeSingle(),
+  // Load the recipient's devices, prefs and the actor name in parallel.
+  // allSettled so a failed actor lookup doesn't abort the notification.
+  const [recipientResult, tokensResult, actorResult, unreadResult] = await Promise.allSettled([
+    supabase.from('profiles').select('notification_prefs').eq('id', body.user_id).maybeSingle(),
+    // Every device the account is signed in on. This read only
+    // profiles.push_token, one column per account, so each new sign-in
+    // silenced every other device.
+    tokensByUser(supabase, [body.user_id]),
     body.actor_id
       ? supabase.from('profiles').select('display_name, username').eq('id', body.actor_id).maybeSingle()
       : Promise.resolve({ data: null as { display_name?: string; username?: string } | null }),
@@ -77,13 +82,15 @@ Deno.serve(async (req: Request) => {
       .is('read_at', null),
   ]);
 
-  if (recipientResult.status === 'rejected') {
-    console.error('[push-fanout] recipient lookup failed:', recipientResult.reason);
+  if (recipientResult.status === 'rejected' || tokensResult.status === 'rejected') {
+    const reason = recipientResult.status === 'rejected' ? recipientResult.reason : (tokensResult as PromiseRejectedResult).reason;
+    console.error('[push-fanout] recipient lookup failed:', reason);
     return new Response(JSON.stringify({ error: 'recipient lookup failed' }), { status: 500 });
   }
 
   const recipient = recipientResult.value.data;
-  if (!recipient?.push_token) {
+  const tokens = tokensResult.value.get(body.user_id) ?? [];
+  if (!recipient || tokens.length === 0) {
     return new Response(JSON.stringify({ skipped: 'no token' }), { status: 200 });
   }
 
@@ -128,8 +135,8 @@ Deno.serve(async (req: Request) => {
   const category = categoryForKind(body.type);
   const unread = unreadResult.status === 'fulfilled' ? (unreadResult.value.count ?? null) : null;
 
-  const expoPayload = [{
-    to: recipient.push_token,
+  const expoPayload = tokens.map((to) => ({
+    to,
     title,
     body: message,
     sound: 'default',
@@ -154,63 +161,30 @@ Deno.serve(async (req: Request) => {
       // — the tap should open the follower's profile).
       actor_id: body.actor_id ?? null,
     },
-  }];
+  }));
 
-  const r = await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', accept: 'application/json' },
-    body: JSON.stringify(expoPayload),
-  });
-  const j = await r.json().catch(() => ({}));
+  // One ticket per device, each with its own status: HTTP 200 from Expo says
+  // only that the request was accepted. From 2026-08-11 no FCM credential was
+  // assigned, every ticket said InvalidCredentials inside a 200, and the push
+  // stack was dead for weeks while reporting success. See _shared/expoTickets.
+  const outcome = await sendToExpo(expoPayload);
 
-  // Read the tickets. Expo answers a send with HTTP 200 and one ticket per
-  // token, and a ticket carries its OWN status — so `r.ok` says only that Expo
-  // accepted the request, never that the push was accepted for delivery.
-  //
-  // This mattered: from 2026-08-11 no FCM credential was assigned to the Expo
-  // project, so every send came back `status: "error"` /
-  // `details.error: "InvalidCredentials"` inside an HTTP 200. Only
-  // DeviceNotRegistered was ever inspected, so a completely dead push stack
-  // reported success on every call for weeks and nothing in the logs disagreed.
-  const tickets = (j as {
-    data?: { status?: string; message?: string; details?: { error?: string } }[];
-  }).data ?? [];
-  const errors = tickets.filter(t => t?.status === 'error');
+  // Uninstalled apps and rotated installs. Without pruning, dead tokens stay on
+  // file for ever and every later notification pays to deliver nothing.
+  await pruneDeadTokens(supabase, outcome.dead);
 
-  // A token belonging to an uninstalled app or a rotated install comes back as
-  // DeviceNotRegistered. Prune it: otherwise dead tokens stay on file forever,
-  // every later notification pays a round trip to deliver nothing, and the count
-  // of "reachable users" drifts further from the truth with every uninstall.
-  const deviceGone = errors.some(t => t?.details?.error === 'DeviceNotRegistered');
-  if (deviceGone) {
-    try {
-      await Promise.all([
-        supabase.from('push_tokens').delete().eq('token', recipient.push_token),
-        // The legacy column holds one token for the whole account; clear it
-        // only when it is this same dead token.
-        supabase.from('profiles').update({ push_token: null })
-          .eq('id', body.user_id).eq('push_token', recipient.push_token),
-      ]);
-      console.log('[push-fanout] pruned unregistered token for', body.user_id);
-    } catch (e) {
-      // Pruning is housekeeping; never fail the send over it.
-      console.error('[push-fanout] token prune failed:', e);
-    }
-  }
-
-  // Anything else is a real failure — a missing/expired FCM credential, a
-  // payload Expo rejected, a sender-id mismatch. Log it loudly and answer 502
-  // so it shows up as a non-200 in the edge logs instead of hiding inside a 200.
-  const fatal = errors.filter(t => t?.details?.error !== 'DeviceNotRegistered');
-  if (fatal.length > 0) {
+  // Anything else is a real failure: a missing or expired FCM credential, a
+  // payload Expo rejected, a sender-id mismatch. Answer 502 so it shows up in
+  // the edge logs instead of hiding inside a 200.
+  if (outcome.fatal.length > 0) {
     console.error(
       '[push-fanout] Expo rejected the push for', body.user_id, '—',
-      fatal.map(t => `${t?.details?.error ?? 'unknown'}: ${t?.message ?? ''}`).join('; '),
+      outcome.fatal.map((f) => f.error).join('; '),
     );
-    return new Response(JSON.stringify(j), { status: 502, headers: { 'content-type': 'application/json' } });
+    return new Response(JSON.stringify(outcome), { status: 502, headers: { 'content-type': 'application/json' } });
   }
 
-  return new Response(JSON.stringify(j), { status: r.ok ? 200 : 502, headers: { 'content-type': 'application/json' } });
+  return new Response(JSON.stringify(outcome), { status: 200, headers: { 'content-type': 'application/json' } });
 });
 
 // Pick a random variant so the same event never reads the same twice.
