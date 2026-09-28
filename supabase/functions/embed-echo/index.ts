@@ -48,6 +48,7 @@ interface EchoRow {
   response: string;
   conversation_snapshot: { role: string; content: string }[] | null;
   media_urls: string[] | null;
+  content_version: number;
 }
 
 function buildEmbeddingText(row: EchoRow): string {
@@ -156,7 +157,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: row, error: fetchErr } = await supabase
     .from("public_echoes")
-    .select("id, author_id, title, prompt, response, conversation_snapshot, media_urls")
+    .select("id, author_id, title, prompt, response, conversation_snapshot, media_urls, content_version")
     .eq("id", echoId)
     .single();
   if (fetchErr || !row) {
@@ -254,13 +255,25 @@ Deno.serve(async (req: Request) => {
   // moderated_at records that a verdict was reached, whatever it was. Without
   // it a flagged post is indistinguishable from one still waiting, and the ops
   // probe cannot tell a stuck publish path from ordinary moderation.
-  const { error: gateErr } = await supabase
+  //
+  // The verdict is for the version read above. If the post was edited while the
+  // model was thinking, content_version has moved on, this matches no row, and
+  // the run for the newer text decides instead. Writing by id alone let a slow
+  // run publish an edit it never saw.
+  const { data: judged, error: gateErr } = await supabase
     .from("public_echoes")
     .update({ check_content: verdict.ok, moderated_at: new Date().toISOString() })
-    .eq("id", echoId);
+    .eq("id", echoId)
+    .eq("content_version", echoRow.content_version)
+    .select("id");
   if (gateErr) {
     // Keep embedding available even if moderation persistence fails.
     console.warn("[embed-echo] failed to set check_content:", gateErr.message);
+  } else if (!judged?.length) {
+    return new Response(
+      JSON.stringify({ ok: false, reason: "superseded" }),
+      { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
   }
   if (!verdict.ok) {
     console.warn(`[embed-echo] echo ${echoId} flagged:`, verdict.categories.join(", "));
@@ -299,7 +312,9 @@ Deno.serve(async (req: Request) => {
       embedding: vectorLiteral,
       thoughtfulness_score: thoughtfulness,
     })
-    .eq("id", echoId);
+    .eq("id", echoId)
+    // An embedding of text the post no longer has would rank it by the old words.
+    .eq("content_version", echoRow.content_version);
   if (updateErr) {
     return new Response(JSON.stringify({ error: updateErr.message }), {
       status: 500,
