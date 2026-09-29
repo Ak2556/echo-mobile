@@ -36,6 +36,7 @@ import {
 } from '../../lib/supabaseEchoApi';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { supabase } from '../../lib/supabase';
+import { catchUpOnJoin, useCatchUpOnResume } from '../../lib/realtimeCatchUp';
 import { clientIdOfFailedDM, failedDMId, failedDMMatching, newDMClientId, pendingDMId } from '../../lib/dmLocalIds';
 
 // Conversations list
@@ -43,6 +44,11 @@ import { clientIdOfFailedDM, failedDMId, failedDMMatching, newDMClientId, pendin
 export function useRemoteConversations() {
   const remote = isSupabaseRemote();
   const qc = useQueryClient();
+
+  const catchUpList = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ['conversations'] });
+  }, [qc]);
+  useCatchUpOnResume(catchUpList, remote);
 
   // Real-time: invalidate on any DM INSERT (covers new conversations too)
   useEffect(() => {
@@ -61,14 +67,15 @@ export function useRemoteConversations() {
           // Covers read_at updates → re-compute unread counts
           qc.invalidateQueries({ queryKey: ['conversations'] });
         })
-        .subscribe();
+        // Nothing is replayed after a reconnect: catch up on every (re)join.
+        .subscribe(catchUpOnJoin(catchUpList));
     });
 
     return () => {
       mounted = false;
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [remote, qc]);
+  }, [remote, qc, catchUpList]);
 
   return useQuery<RemoteConversation[]>({
     queryKey: ['conversations'],
@@ -94,6 +101,11 @@ export function useRemoteConversation(conversationId: string | undefined) {
 export function useRemoteMessages(conversationId: string | undefined) {
   const remote = isSupabaseRemote();
   const qc = useQueryClient();
+
+  const catchUpThread = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ['messages', conversationId] });
+  }, [qc, conversationId]);
+  useCatchUpOnResume(catchUpThread, remote && !!conversationId);
 
   // Real-time: new messages + reaction/delete updates
   useEffect(() => {
@@ -121,10 +133,13 @@ export function useRemoteMessages(conversationId: string | undefined) {
         { event: 'DELETE', schema: 'public', table: 'message_reactions' },
         () => qc.invalidateQueries({ queryKey: ['messages', conversationId] }),
       )
-      .subscribe();
+      // Messages sent while the channel was down (phone locked, socket
+      // dropped, or before the first join) are never replayed: refetch on
+      // every (re)join so they appear.
+      .subscribe(catchUpOnJoin(catchUpThread));
 
     return () => { void supabase.removeChannel(channel); };
-  }, [remote, conversationId, qc]);
+  }, [remote, conversationId, qc, catchUpThread]);
 
   return useInfiniteQuery<
     RemoteDirectMessage[],
