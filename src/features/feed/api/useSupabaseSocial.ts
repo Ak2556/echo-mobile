@@ -15,28 +15,36 @@ import { isAppOnline } from '../../../../lib/net';
 import { outbox } from '../../../../store/outbox';
 import { isTransientError } from '../../../../lib/mutationErrors';
 import { publishOrQueue } from '../../../../lib/publishEcho';
+import { createLatestIntent } from '../../../../lib/latestIntent';
 
-// Toggles are idempotent (DB unique keys + duplicate-swallow) so they can
-// safely auto-retry a transient online failure without risking a duplicate.
-const idempotentRetry = (count: number, error: unknown) => isTransientError(error) && count < 3;
+// Toggles send the user's LATEST tap, one request at a time per item, and
+// retry transient failures inside that turn (lib/latestIntent). No TanStack
+// `retry` here: it would re-run an old tap with its original value and could
+// override a newer one. A failure reverts the UI, and a settle refetches, only
+// once nothing newer is in flight for that item.
+const TOGGLE_RETRY = { retries: 3, shouldRetry: isTransientError };
+const likeIntent = createLatestIntent<boolean>();
+const bookmarkIntent = createLatestIntent<boolean>();
+const repostIntent = createLatestIntent<boolean>();
+const followIntent = createLatestIntent<boolean>();
 
 export function useToggleRemoteLike() {
   const qc = useQueryClient();
   return useMutation({
-    retry: idempotentRetry,
     mutationFn: async ({ echoId, like }: { echoId: string; like: boolean }) => {
       // Offline → queue for replay (idempotent) and keep the optimistic UI.
       if (!isAppOnline()) { outbox.enqueue('like', { echoId, like }); return; }
-      await setRemoteLike(echoId, like);
+      await likeIntent.send(echoId, like, v => setRemoteLike(echoId, v), TOGGLE_RETRY);
     },
     onMutate: async ({ echoId, like }) => {
       patchLikeCaches(qc, echoId, like);
       return { echoId };
     },
     onError: (_e, { echoId, like }) => {
-      patchLikeCaches(qc, echoId, !like); // revert the optimistic toggle
+      if (likeIntent.isIdle(echoId)) patchLikeCaches(qc, echoId, !like); // revert the optimistic toggle
     },
     onSettled: (_, __, vars) => {
+      if (vars && !likeIntent.isIdle(vars.echoId)) return;
       qc.invalidateQueries({ queryKey: ['feed'] });
       if (vars?.echoId) qc.invalidateQueries({ queryKey: ['comments', vars.echoId] });
     },
@@ -46,19 +54,19 @@ export function useToggleRemoteLike() {
 export function useToggleRemoteBookmark() {
   const qc = useQueryClient();
   return useMutation({
-    retry: idempotentRetry,
     mutationFn: async ({ echoId, bookmark }: { echoId: string; bookmark: boolean }) => {
       if (!isAppOnline()) { outbox.enqueue('bookmark', { echoId, bookmark }); return; }
-      await setRemoteBookmark(echoId, bookmark);
+      await bookmarkIntent.send(echoId, bookmark, v => setRemoteBookmark(echoId, v), TOGGLE_RETRY);
     },
     onMutate: async ({ echoId, bookmark }) => {
       patchBookmarkCaches(qc, echoId, bookmark);
       return { echoId };
     },
     onError: (_e, { echoId, bookmark }) => {
-      patchBookmarkCaches(qc, echoId, !bookmark);
+      if (bookmarkIntent.isIdle(echoId)) patchBookmarkCaches(qc, echoId, !bookmark);
     },
-    onSettled: () => {
+    onSettled: (_, __, vars) => {
+      if (vars && !bookmarkIntent.isIdle(vars.echoId)) return;
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['bookmarks'] });
     },
@@ -68,19 +76,19 @@ export function useToggleRemoteBookmark() {
 export function useToggleRemoteRepost() {
   const qc = useQueryClient();
   return useMutation({
-    retry: idempotentRetry,
     mutationFn: async ({ echoId, repost }: { echoId: string; repost: boolean }) => {
       if (!isAppOnline()) { outbox.enqueue('repost', { echoId, repost }); return; }
-      await setRemoteRepost(echoId, repost);
+      await repostIntent.send(echoId, repost, v => setRemoteRepost(echoId, v), TOGGLE_RETRY);
     },
     onMutate: async ({ echoId, repost }) => {
       patchRepostCaches(qc, echoId, repost);
       return { echoId };
     },
     onError: (_e, { echoId, repost }) => {
-      patchRepostCaches(qc, echoId, !repost);
+      if (repostIntent.isIdle(echoId)) patchRepostCaches(qc, echoId, !repost);
     },
-    onSettled: () => {
+    onSettled: (_, __, vars) => {
+      if (vars && !repostIntent.isIdle(vars.echoId)) return;
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['bookmarks'] });
       qc.invalidateQueries({ queryKey: ['profile'] });
@@ -118,19 +126,19 @@ export function useToggleCommentReaction() {
 export function useToggleRemoteFollow() {
   const qc = useQueryClient();
   return useMutation({
-    retry: idempotentRetry,
     mutationFn: async ({ userId, follow }: { userId: string; follow: boolean }) => {
       if (!isAppOnline()) { outbox.enqueue('follow', { userId, follow }); return; }
-      await setRemoteFollow(userId, follow);
+      await followIntent.send(userId, follow, v => setRemoteFollow(userId, v), TOGGLE_RETRY);
     },
     onMutate: async ({ userId, follow }) => {
       patchFollowCaches(qc, userId, follow);
       return { userId };
     },
     onError: (_e, { userId, follow }) => {
-      patchFollowCaches(qc, userId, !follow);
+      if (followIntent.isIdle(userId)) patchFollowCaches(qc, userId, !follow);
     },
     onSettled: (_, __, vars) => {
+      if (vars && !followIntent.isIdle(vars.userId)) return;
       qc.invalidateQueries({ queryKey: ['feed'] });
       if (vars?.userId) qc.invalidateQueries({ queryKey: ['profile', vars.userId] });
       qc.invalidateQueries({ queryKey: ['followers'] });
