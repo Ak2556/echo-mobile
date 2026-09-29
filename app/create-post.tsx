@@ -38,7 +38,8 @@ import { track } from '../src/shared/lib/analytics';
 import { mayOfferPush, notePushOffered, registerForPush } from '../lib/push';
 import { PushPrePrompt } from '../components/onboarding/PushPrePrompt';
 import { isSupabaseRemote } from '../lib/remoteConfig';
-import { getSessionUserId, uploadEchoImages, uploadEchoVideo, insertRemoteEcho, searchRemoteUsers } from '../lib/supabaseEchoApi';
+import { getSessionUserId, uploadEchoImages, uploadEchoVideo, searchRemoteUsers } from '../lib/supabaseEchoApi';
+import { publishOrQueue } from '../lib/publishEcho';
 import { PhotoEditor } from '../src/features/feed/ui/PhotoEditor';
 import { isAppOnline } from '../lib/net';
 import { outbox } from '../store/outbox';
@@ -94,6 +95,11 @@ export default function CreatePostScreen() {
   // Synchronous double-submit guard: `publishing` state updates async, so rapid
   // taps can slip through before the button disables. This closes that window.
   const publishingRef = useRef(false);
+  // One id per draft, kept across retries of it. A retry after "Publish failed"
+  // must reuse it: the failed attempt may have landed after its timeout, and a
+  // reused id makes the retry find that post instead of creating a second one.
+  // Cleared once the post is published or queued.
+  const draftEchoIdRef = useRef<string | null>(null);
   // Cancel the ceremony timer if the user navigates away before it fires
   React.useEffect(() => () => { if (ceremonyTimer.current) clearTimeout(ceremonyTimer.current); }, []);
   const [response, setResponse] = useState(typeof params.prefillBody === 'string' ? params.prefillBody : '');
@@ -361,7 +367,7 @@ export default function CreatePostScreen() {
 
       // Client-generated id → the publish insert is idempotent (safe retry) and
       // the optimistic feed card shares the real row's id.
-      const echoId = remoteAuthorId ? Crypto.randomUUID() : Date.now().toString();
+      const echoId = remoteAuthorId ? (draftEchoIdRef.current ??= Crypto.randomUUID()) : Date.now().toString();
       const base = {
         id: echoId,
         userId: remoteAuthorId ?? userId, username: username || 'anonymous',
@@ -407,7 +413,10 @@ export default function CreatePostScreen() {
               echo.isPending = true;
               outbox.enqueue('publish', publishPayload);
             } else {
-              insertRemoteEcho(publishPayload).catch((err: unknown) => {
+              // Runs after the composer closes. A network failure queues the
+              // post (same id) rather than dropping it; only a permanent
+              // rejection takes it back out of the feed.
+              publishOrQueue(publishPayload).catch((err: unknown) => {
                 qc.setQueriesData({ queryKey: ['feed'] }, (old: unknown) => removeEchoFromFeedCache(old, echoId));
                 Alert.alert('Post didn’t go through', (err as Error)?.message ?? 'Please check your connection and try again.');
               });
@@ -428,8 +437,9 @@ export default function CreatePostScreen() {
               outbox.enqueue('publish', publishPayload);
               remoteEchoId = echoId;
             } else {
-              const row = await insertRemoteEcho(publishPayload);
-              remoteEchoId = row.id;
+              const res = await publishOrQueue(publishPayload);
+              remoteEchoId = res.id;
+              if (res.status === 'queued') echo.isPending = true;
             }
           }
           break;
@@ -445,8 +455,9 @@ export default function CreatePostScreen() {
               outbox.enqueue('publish', publishPayload);
               remoteEchoId = echoId;
             } else {
-              const row = await insertRemoteEcho(publishPayload);
-              remoteEchoId = row.id;
+              const res = await publishOrQueue(publishPayload);
+              remoteEchoId = res.id;
+              if (res.status === 'queued') echo.isPending = true;
             }
           }
           break;
@@ -470,14 +481,17 @@ export default function CreatePostScreen() {
               outbox.enqueue('publish', publishPayload);
               remoteEchoId = echoId;
             } else {
-              const row = await insertRemoteEcho(publishPayload);
-              remoteEchoId = row.id;
+              const res = await publishOrQueue(publishPayload);
+              remoteEchoId = res.id;
+              if (res.status === 'queued') echo.isPending = true;
             }
           }
           break;
         }
       }
 
+      // Published or queued: the next draft gets a new id.
+      draftEchoIdRef.current = null;
       const publishedEcho = remoteEchoId ? { ...echo!, id: remoteEchoId } : echo!;
       const isFirst = (publishedEchoes?.length ?? 0) === 0;
       publishEcho(publishedEcho);

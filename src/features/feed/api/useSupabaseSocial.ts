@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  insertRemoteEcho,
   setRemoteBookmark,
   setRemoteCommentReaction,
   setRemoteEchoReaction,
@@ -15,6 +14,7 @@ import type { EchoReaction } from '../../../../types/index';
 import { isAppOnline } from '../../../../lib/net';
 import { outbox } from '../../../../store/outbox';
 import { isTransientError } from '../../../../lib/mutationErrors';
+import { publishOrQueue } from '../../../../lib/publishEcho';
 
 // Toggles are idempotent (DB unique keys + duplicate-swallow) so they can
 // safely auto-retry a transient online failure without risking a duplicate.
@@ -142,7 +142,11 @@ export function useToggleRemoteFollow() {
 export function usePublishRemoteEcho() {
   const qc = useQueryClient();
   return useMutation({
+    // `id` is the draft's post id, kept across retries so a publish that
+    // outlived its timeout is found rather than duplicated; a network failure
+    // is queued under it (lib/publishEcho).
     mutationFn: async (params: {
+      id: string;
       authorId: string;
       prompt: string;
       response: string;
@@ -154,7 +158,7 @@ export function usePublishRemoteEcho() {
       sourceUrl?: string;
       sourceConversationId?: string;
       conversationSnapshot?: { role: 'user' | 'assistant'; content: string }[];
-    }) => insertRemoteEcho(params),
+    }) => publishOrQueue(params),
     onSuccess: (_, vars) => {
       awardXp(vars.parentEchoId ? 'publishRemix' : 'publishEcho');
     },

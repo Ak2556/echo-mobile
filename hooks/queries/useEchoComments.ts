@@ -5,6 +5,12 @@ import { withTimeout, isAppOnline } from '../../lib/net';
 import { outbox } from '../../store/outbox';
 import { Comment } from '../../types';
 import { appendCommentCache } from '../../lib/queryCache';
+import { commentRetryKey, createRetryIds } from '../../lib/retryIds';
+import { randomUUID } from 'expo-crypto';
+
+// Ids held across a failed attempt so the resend (the compose screen keeps the
+// draft on failure) reuses it; see lib/retryIds.
+const commentIds = createRetryIds(randomUUID);
 
 export function useEchoComments(echoId: string | undefined) {
   const remote = isSupabaseRemote();
@@ -27,14 +33,21 @@ export function useAddRemoteComment(echoId: string | undefined) {
     mutationFn: async (input: { content: string; parentId?: string } | string) => {
       if (!echoId) throw new Error('No echo');
       const arg = typeof input === 'string' ? { content: input } : input;
-      // Offline: queue it. The optimistic comment below stays on screen and the
-      // outbox replays on reconnect, keyed by its op id so a retry cannot
-      // post the same comment twice.
+      const key = commentRetryKey(echoId, arg.content, arg.parentId);
+      const clientId = commentIds.claim(key);
+      // Offline: queue it under the same id. The optimistic comment below
+      // stays on screen and the outbox replays on reconnect; a duplicate id
+      // there counts as sent, so a retry cannot post it twice.
       if (!isAppOnline()) {
-        outbox.enqueue('comment', { echoId, content: arg.content, parentId: arg.parentId });
+        outbox.enqueue('comment', { echoId, content: arg.content, parentId: arg.parentId, clientId });
+        commentIds.settle(key);
         return;
       }
-      await withTimeout(insertRemoteComment(echoId, arg.content, arg.parentId), 20000, 'comment');
+      // The timeout abandons the wait, not the insert. On failure the id stays
+      // held, so the resend finds a comment that landed late instead of
+      // posting a second copy.
+      await withTimeout(insertRemoteComment(echoId, arg.content, arg.parentId, clientId), 20000, 'comment');
+      commentIds.settle(key);
     },
     onMutate: async (input) => {
       if (!echoId) return;

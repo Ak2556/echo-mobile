@@ -1643,7 +1643,13 @@ export async function insertRemoteComment(
     })
     .select('id')
     .single();
-  if (error) throw error;
+  if (error) {
+    // Only a reused client id proves this is the same comment: an earlier
+    // attempt landed and just outlived its timeout. That attempt wires its
+    // own mentions, so there is nothing left to do.
+    if (clientId && (error as { code?: string }).code === '23505') return;
+    throw error;
+  }
 
   // Parse + wire @-mentions. Best-effort; never blocks comment insert.
   const usernames = parseMentions(content);

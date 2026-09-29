@@ -13,6 +13,7 @@ import { getSessionUserId } from '../lib/supabaseEchoApi';
 import { usePublishRemoteEcho } from '../src/features/feed/api/useSupabaseSocial';
 import { coerceFeedItem } from '../lib/localFeedSeed';
 import { consumePendingPublishContext, peekPendingPublishContext } from '../lib/publishContext';
+import { randomUUID } from 'expo-crypto';
 import { CelebrationOverlay } from '../components/ui/CelebrationOverlay';
 import { TextInput } from '../components/ui/TextInput';
 import { XP_REWARDS } from '../lib/retention';
@@ -64,6 +65,8 @@ export default function ShareScreen() {
   }).join(', '));
   const [visibility, setVisibility] = useState<'public' | 'followers'>('public');
   const remotePublish = usePublishRemoteEcho();
+  // One post id per draft, reused by a retry; see lib/publishEcho.
+  const draftEchoIdRef = useRef<string | null>(null);
   const remote = isSupabaseRemote();
   const isRemix = !!pendingCtx?.parentEchoId;
   const perspectiveLabel = getPerspectiveLabel(pendingCtx?.perspectiveType);
@@ -152,9 +155,12 @@ export default function ShareScreen() {
       }
       setPublishing(true);
       try {
-        const ctx = consumePendingPublishContext();
+        // Peek, not consume: a failed attempt must leave the remix/source
+        // context in place, or the retry publishes it as a plain post.
+        const ctx = peekPendingPublishContext();
         const isRemixPublish = !!ctx?.parentEchoId;
         await remotePublish.mutateAsync({
+          id: (draftEchoIdRef.current ??= randomUUID()),
           authorId: uid,
           prompt: String(prompt),
           response: editedResponse.trim(),
@@ -166,6 +172,8 @@ export default function ShareScreen() {
           sourceConversationId: ctx?.sourceConversationId,
           conversationSnapshot: ctx?.conversationSnapshot,
         });
+        consumePendingPublishContext();
+        draftEchoIdRef.current = null;
         if (isRemixPublish) {
           track('perspective_published', { perspective_type: ctx?.perspectiveType ?? 'reframe' });
         }
