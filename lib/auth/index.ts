@@ -12,7 +12,6 @@
  */
 
 import { supabase } from '../supabase';
-import { revokeLocalDevice } from '../e2ee/deviceKeys';
 import { clearMessageCache } from '../e2ee/cache';
 
 export { useAuth, useAuthStore } from './store';
@@ -32,18 +31,16 @@ export { CANCELLED } from './types';
 /**
  * Sign out — clears server session AND triggers the SIGNED_OUT event,
  * which the listener uses to clear local stores and route to /auth/login.
+ *
+ * The device's E2EE key is deliberately left alone. Sealed messages are
+ * readable only through that key, so destroying it here made every earlier
+ * message permanently unreadable on this phone the next time the same person
+ * signed in, and a forced sign-out after a session error did it without the
+ * user choosing anything. Leaving it is safe: it is stored per user id, and
+ * the wrapped keys it opens are readable only with that user's session
+ * (dm_keys_select_own_device). Account deletion is what removes it.
  */
 export async function signOut(): Promise<void> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user.id) {
-    // Best-effort, and bounded: signing out must work offline. A device that
-    // fails to revoke here keeps receiving key rows it can no longer read,
-    // which wastes storage but leaks nothing.
-    await Promise.race([
-      revokeLocalDevice(session.user.id).catch(() => {}),
-      new Promise(resolve => setTimeout(resolve, 4000)),
-    ]);
-  }
   clearMessageCache();
   // 'local', not supabase-js's default 'global': signing out here must not
   // revoke the user's sessions on their other devices. The forced sign-out on

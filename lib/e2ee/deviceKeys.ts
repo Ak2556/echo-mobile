@@ -10,6 +10,9 @@
  *
  * The local key is written BEFORE the row is published, so a published key
  * whose private half was lost cannot exist.
+ *
+ * The key outlives sign-out, so signing back in on the same device reuses it
+ * and earlier messages stay readable. Only account deletion forgets it.
  */
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -110,11 +113,13 @@ export function ensureDeviceRegistered(userId: string): Promise<LocalDevice> {
   return run;
 }
 
-export async function revokeLocalDevice(userId: string): Promise<void> {
-  const stored = await getLocalDevice(userId);
-  if (stored) {
-    await supabase.from('user_devices').update({ revoked_at: new Date().toISOString() }).eq('id', stored.deviceId);
-  }
+/**
+ * Account deletion only. The user_devices row goes with the account (on
+ * delete cascade); this removes the private half, which would otherwise sit
+ * in the keychain for an account that no longer exists. Sign-out does not
+ * call this — see signOut() in lib/auth.
+ */
+export async function forgetLocalDevice(userId: string): Promise<void> {
   await deleteRaw(userId);
 }
 

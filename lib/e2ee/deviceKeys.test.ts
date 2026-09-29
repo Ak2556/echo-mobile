@@ -50,7 +50,7 @@ vi.mock('../supabase', () => {
 });
 
 import * as SecureStore from 'expo-secure-store';
-import { ensureDeviceRegistered, fetchTargetDevices, getLocalDevice, revokeLocalDevice } from './deviceKeys';
+import { ensureDeviceRegistered, fetchTargetDevices, getLocalDevice, forgetLocalDevice } from './deviceKeys';
 
 beforeEach(async () => {
   table.length = 0;
@@ -109,12 +109,26 @@ describe('ensureDeviceRegistered', () => {
   });
 });
 
-describe('revokeLocalDevice', () => {
-  it('marks the row revoked and forgets the key', async () => {
+describe('signing out and back in', () => {
+  it('reuses the same device, so messages sealed to it stay readable', async () => {
+    // Sign-out touches neither the keychain nor user_devices; the next
+    // sign-in runs registration again.
+    const before = await ensureDeviceRegistered('u-1');
+    const after = await ensureDeviceRegistered('u-1');
+    expect(after.deviceId).toBe(before.deviceId);
+    expect(after.keyPair.privateKey).toBe(before.keyPair.privateKey);
+    expect(table.filter(r => r.user_id === 'u-1')).toHaveLength(1);
+  });
+});
+
+describe('forgetLocalDevice', () => {
+  it('removes the private key without writing to the server', async () => {
     const d = await ensureDeviceRegistered('u-1');
-    await revokeLocalDevice('u-1');
-    expect(table.find(r => r.id === d.deviceId)?.revoked_at).toBeTruthy();
+    const rowBefore = { ...table.find(r => r.id === d.deviceId) };
+    await forgetLocalDevice('u-1');
     expect(await getLocalDevice('u-1')).toBeNull();
+    // The row is removed by the account's cascade, not by this call.
+    expect(table.find(r => r.id === d.deviceId)).toEqual(rowBefore);
   });
 });
 
