@@ -37,6 +37,7 @@ import {
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { supabase } from '../../lib/supabase';
 import { catchUpOnJoin, useCatchUpOnResume } from '../../lib/realtimeCatchUp';
+import { freshChannel } from '../../lib/realtimeTopic';
 import { clientIdOfFailedDM, failedDMId, failedDMMatching, newDMClientId, pendingDMId } from '../../lib/dmLocalIds';
 
 // Conversations list
@@ -742,30 +743,39 @@ export function useTypingIndicator(
 
     // The topic must be IDENTICAL for both participants — broadcasts only
     // reach subscribers of the same channel name. (A per-client random
-    // suffix here silently isolated each user on their own topic.)
-    const channel = supabase.channel(`typing:${conversationId}`, {
-      config: { broadcast: { self: false } },
-    });
-    channelRef.current = channel;
+    // suffix here silently isolated each user on their own topic.) A fixed
+    // topic means a quick leave-and-return would be handed the previous
+    // visit's channel while it is still closing; freshChannel waits it out.
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    channel
-      .on(
-        'broadcast',
-        { event: 'typing' },
-        ({ payload }: { payload: Record<string, unknown> }) => {
-          if (payload?.userId === myUserId) return;
-          setPartnerIsTyping(true);
-          if (timerRef.current) clearTimeout(timerRef.current);
-          timerRef.current = setTimeout(() => setPartnerIsTyping(false), 3000);
-        },
-      )
-      .subscribe();
+    void freshChannel(supabase, `typing:${conversationId}`, {
+      config: { broadcast: { self: false } },
+    }).then(ch => {
+      // Unmounted while the old channel was leaving: never subscribe.
+      if (cancelled) { void supabase.removeChannel(ch); return; }
+      channel = ch;
+      channelRef.current = ch;
+      ch
+        .on(
+          'broadcast',
+          { event: 'typing' },
+          ({ payload }: { payload: Record<string, unknown> }) => {
+            if (payload?.userId === myUserId) return;
+            setPartnerIsTyping(true);
+            if (timerRef.current) clearTimeout(timerRef.current);
+            timerRef.current = setTimeout(() => setPartnerIsTyping(false), 3000);
+          },
+        )
+        .subscribe();
+    });
 
     return () => {
+      cancelled = true;
       if (timerRef.current) clearTimeout(timerRef.current);
       if (cooldownRef.current) clearTimeout(cooldownRef.current);
       channelRef.current = null;
-      void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [conversationId, myUserId]);
 
