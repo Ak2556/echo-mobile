@@ -98,6 +98,9 @@ export async function drainOutbox(): Promise<void> {
     for (const op of outbox.pending()) {
       if (!isAppOnline()) break; // went offline mid-drain
       if (!isDue(op, Date.now())) continue; // still backing off
+      // pending() is a snapshot. A sign-out mid-drain clears the queue, and the
+      // rest of the snapshot must not be sent under the next session.
+      if (!outbox.all().some(o => o.id === op.id)) continue;
       const handler = REGISTRY[op.type];
       if (!handler) {
         outbox.update(op.id, { status: 'failed', lastError: `unknown op type: ${op.type}` });

@@ -45,5 +45,8 @@ export async function signOut(): Promise<void> {
     ]);
   }
   clearMessageCache();
-  await supabase.auth.signOut();
+  // 'local', not supabase-js's default 'global': signing out here must not
+  // revoke the user's sessions on their other devices. The forced sign-out on
+  // a broken session (app/_layout.tsx) comes through here too.
+  await supabase.auth.signOut({ scope: 'local' });
 }

@@ -206,7 +206,10 @@ Deno.serve(async (req) => {
     if (GEMINI_API_KEY) {
       // Google AI Studio (Gemini) direct — free tier, no OpenRouter balance needed.
       const mime = AUDIO_MIME[format] ?? "audio/mp4";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+      // The key goes in a header, never the query string: Deno's fetch errors
+      // quote the full request URL, so a key in the URL leaks into any error
+      // message that reaches a log or a response.
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
       const geminiBody = JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [{
@@ -221,11 +224,18 @@ Deno.serve(async (req) => {
       // Retry transient rate-limit / server errors (common on the free tier) with backoff.
       let res: Response | null = null;
       for (let attempt = 0; attempt < 3; attempt++) {
-        res = await guardedFetch("gemini", url, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
+        res = await guardedFetch("gemini", url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+          body: geminiBody,
+        });
         if (res.ok || !(res.status === 429 || res.status >= 500)) break;
         await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
       }
-      if (!res || !res.ok) return json({ error: "Voice model unavailable", detail: res ? await res.text() : "no response" }, 502);
+      if (!res || !res.ok) {
+        console.error("[voice-command] Gemini", res?.status, res ? (await res.text()).slice(0, 500) : "no response");
+        return json({ error: "Voice model unavailable" }, 502);
+      }
       const out = await res.json();
       content = out.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
     } else {
@@ -258,7 +268,10 @@ Deno.serve(async (req) => {
           stream: false,
         }),
       });
-      if (!res.ok) return json({ error: "Voice model unavailable", detail: await res.text() }, 502);
+      if (!res.ok) {
+        console.error("[voice-command] OpenRouter", res.status, (await res.text()).slice(0, 500));
+        return json({ error: "Voice model unavailable" }, 502);
+      }
       const out = await res.json();
       content = out.choices?.[0]?.message?.content ?? "";
     }
@@ -268,6 +281,8 @@ Deno.serve(async (req) => {
     }
     return json(parsed);
   } catch (e) {
-    return json({ error: "Voice request failed", detail: String(e) }, 502);
+    // Logged, not returned: a raw fetch error is not safe to hand to a client.
+    console.error("[voice-command] request failed", e);
+    return json({ error: "Voice request failed" }, 502);
   }
 });
