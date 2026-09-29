@@ -11,9 +11,7 @@ The client selects the new `direct_messages` columns on every thread fetch, so t
 ## Turning it on (launch default)
 1:1 E2EE is a launch requirement, so the build ships with `e2eeSend: true` compiled in (`lib/featureFlags.ts`). Group chats are out of scope.
 1. Run the two-device check (plan Task 9 Step 3) on the release candidate.
-2. Before the build reaches users, set the production row to match:
-   `update public.feature_flags set enabled = true, updated_at = now() where key = 'e2eeSend';`
-   A remote `false` overrides the compiled default, so without this the app seals only until its first flag fetch.
+2. The production row is set to `true` by migration `20260929100000_e2ee_send_on.sql` (applied on merge). A remote `false` overrides the compiled default, so without it the app seals only until its first flag fetch. `lib/featureFlagParity.test.ts` fails if the migrated rows and the compiled defaults drift apart again.
 3. Ship the build. OTA does not reach installed builds (runtime mismatch), so it rides a store build.
 
 **1:1 text fails closed.** With the flag on, a text, link, contact or shared-Echo message to someone with no registered device is refused ("They need to update Echo…"), never sent in plaintext. A person registers a device the next time they sign in on a current build, so during beta, push everyone onto it. Plaintext remains only where E2EE does not reach: the kill switch (flag off), group chats, and photos and voice messages. Media is protected by access control until its own E2EE plan ships.
