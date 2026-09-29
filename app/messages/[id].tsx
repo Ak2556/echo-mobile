@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '../../lib/safeBack';
+import { clientIdOfFailedDM } from '../../lib/dmLocalIds';
 import { speak, isTtsAvailable } from '../../lib/tts';
 import {
   CaretLeft, PaperPlaneTilt, Quotes, SealCheck, Flag,
@@ -66,6 +67,7 @@ import {
   useToggleReaction,
   useTypingIndicator,
   useDiscardLocalMessage,
+  useClaimDMClientId,
   useForwardMessage,
   useRemoteConversations,
 } from '../../hooks/queries/useDMs';
@@ -2088,6 +2090,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
   const toggleReaction = useToggleReaction(id);
   const forwardMessage = useForwardMessage();
   const discardLocal = useDiscardLocalMessage(id);
+  const claimClientId = useClaimDMClientId(id);
   const [forwardTarget, setForwardTarget] = useState<NormalizedMessage | null>(null);
   const { partnerIsTyping, sendTypingEvent } = useTypingIndicator(
     remote ? id : undefined,
@@ -2398,7 +2401,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
         sendLocalLink(id, link, title);
       }
     } else if (remote) {
-      sendRemote.mutate({ content, replyToId }, {
+      sendRemote.mutate({ content, replyToId, clientId: claimClientId(content, replyToId) }, {
         onError: error => {
           setText(content);
           alertSendFailed(error, 'Message failed to send. Please try again.');
@@ -2408,7 +2411,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
       sendDM(id, content);
     }
     scrollToBottom();
-  }, [text, id, hapticEnabled, remote, sendRemote, sendDM, editingMessage, editMessage, replyingTo, sendLinkDM, sendLocalLink, scrollToBottom]);
+  }, [text, id, hapticEnabled, remote, sendRemote, claimClientId, sendDM, editingMessage, editMessage, replyingTo, sendLinkDM, sendLocalLink, scrollToBottom]);
 
   const sendSticker = useCallback((sticker: string) => {
     if (!id) return;
@@ -2416,12 +2419,12 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
     const fx = detectEffect(sticker);
     if (fx) setEffect(fx);
     if (remote) {
-      sendRemote.mutate({ content: sticker }, { onError: error => alertSendFailed(error, 'Failed to send sticker. Please try again.') });
+      sendRemote.mutate({ content: sticker, clientId: claimClientId(sticker) }, { onError: error => alertSendFailed(error, 'Failed to send sticker. Please try again.') });
     } else {
       sendDM(id, sticker);
     }
     scrollToBottom();
-  }, [id, hapticEnabled, remote, sendRemote, sendDM, scrollToBottom]);
+  }, [id, hapticEnabled, remote, sendRemote, claimClientId, sendDM, scrollToBottom]);
 
   const sendPickedImage = useCallback((asset: ImagePicker.ImagePickerAsset) => {
     setAttachmentMenuOpen(false);
@@ -2886,7 +2889,9 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
               onSwipeReply={remote ? () => { setEditingMessage(null); setReplyingTo(msg); } : undefined}
               onRetry={remote && msg.id.startsWith('failed-') && msg.kind === 'text' && msg.content ? () => {
                 discardLocal(msg.id);
-                sendRemote.mutate({ content: msg.content!, replyToId: msg.replyToId ?? undefined });
+                // Same id as the failed attempt: if that one landed late, this
+                // counts as sent instead of delivering the message twice.
+                sendRemote.mutate({ content: msg.content!, replyToId: msg.replyToId ?? undefined, clientId: clientIdOfFailedDM(msg.id)! });
               } : undefined}
             />
           );
@@ -3714,7 +3719,7 @@ function DMViewInner({ id, echoId, echoTitle, echoPreview, echoAuthor }: DMViewP
                   // never have delivered, and had that domain ever been registered
                   // it would have received private messages.
                   try {
-                    await sendRemote.mutateAsync({ content });
+                    await sendRemote.mutateAsync({ content, clientId: claimClientId(content) });
                     setCapsuleModalOpen(false);
                     setCapsuleText('');
                   } catch {

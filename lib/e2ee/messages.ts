@@ -23,6 +23,13 @@ import { captureException } from '../monitoring';
 export type DMKind = 'text' | 'link' | 'contact' | 'echo' | 'image' | 'voice';
 
 export type OutgoingDirectMessage = {
+  /**
+   * The row id, minted once when the user presses send and reused by every
+   * retry of that message. A retry whose first attempt already landed then
+   * hits the primary key instead of posting a second copy. Omitted only by
+   * one-shot callers that never retry.
+   */
+  id?: string;
   conversationId: string;
   senderId: string;
   kind: DMKind;
@@ -61,8 +68,18 @@ async function sealTargets(msg: OutgoingDirectMessage): Promise<TargetDevice[] |
   return [...targets.values()];
 }
 
+/**
+ * A unique violation on a caller-supplied id means an earlier attempt at this
+ * same message reached the server and only its response was lost (or it
+ * outlived the client's timeout). The message is sent; saying otherwise would
+ * invite a third attempt.
+ */
+function isAlreadySent(error: { code?: string } | null, msg: OutgoingDirectMessage): boolean {
+  return Boolean(msg.id) && error?.code === '23505';
+}
+
 export async function insertDirectMessage(msg: OutgoingDirectMessage): Promise<{ id: string; encrypted: boolean }> {
-  const id = randomUUID();
+  const id = msg.id ?? randomUUID();
   const targets = await sealTargets(msg);
 
   if (!targets) {
@@ -76,7 +93,7 @@ export async function insertDirectMessage(msg: OutgoingDirectMessage): Promise<{
       shared_echo_id: msg.sharedEchoId ?? null,
       ...(msg.replyToId ? { reply_to_id: msg.replyToId } : {}),
     });
-    if (error) throw error;
+    if (error && !isAlreadySent(error, msg)) throw error;
     return { id, encrypted: false };
   }
 
@@ -95,6 +112,9 @@ export async function insertDirectMessage(msg: OutgoingDirectMessage): Promise<{
     },
     p_keys: sealed.keys.map(k => ({ device_id: k.deviceId, wrapped_key: k.wrappedKey, nonce: k.nonce })),
   });
+  // The row that landed was sealed by the earlier attempt, under its own key.
+  // This attempt's key opens nothing on the server, so it is not cached.
+  if (isAlreadySent(error, msg)) return { id, encrypted: true };
   if (error) throw error;
 
   rememberMessage({

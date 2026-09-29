@@ -3342,6 +3342,8 @@ export async function leaveGroup(conversationId: string): Promise<void> {
 async function insertRemoteDMInConversation(
   conversationId: string,
   fields: {
+    /** Client-minted row id; retries reuse it (see insertDirectMessage). */
+    id?: string;
     kind: DMKind;
     text?: string | null;
     mediaUrl?: string | null;
@@ -3353,6 +3355,7 @@ async function insertRemoteDMInConversation(
   if (!uid) throw new Error('Not signed in');
 
   await insertDirectMessage({
+    id: fields.id,
     conversationId,
     senderId: uid,
     kind: fields.kind,
@@ -3369,8 +3372,10 @@ export async function sendRemoteDMToConversation(
   conversationId: string,
   content: string,
   replyToId?: string,
+  clientId?: string,
 ): Promise<{ conversationId: string }> {
   return insertRemoteDMInConversation(conversationId, {
+    id: clientId,
     kind: 'text',
     text: content,
     replyToId,
@@ -3383,9 +3388,10 @@ export async function sendRemoteDM(
   recipientId: string,
   content: string,
   replyToId?: string,
+  clientId?: string,
 ): Promise<{ conversationId: string }> {
   const conversationId = await getOrCreateRemoteConversation(recipientId);
-  return insertRemoteDMInConversation(conversationId, { kind: 'text', text: content, replyToId });
+  return insertRemoteDMInConversation(conversationId, { id: clientId, kind: 'text', text: content, replyToId });
 }
 
 export async function sendRemoteDMLink(
