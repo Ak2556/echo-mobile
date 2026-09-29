@@ -107,7 +107,12 @@ export function useRemoteMessages(conversationId: string | undefined) {
   }, [qc, conversationId]);
   useCatchUpOnResume(catchUpThread, remote && !!conversationId);
 
-  // Real-time: new messages + reaction/delete updates
+  // Real-time: new messages, edits, deletes, read receipts and reactions.
+  // Reactions arrive as an UPDATE of their message: a trigger on
+  // message_reactions bumps direct_messages.reactions_changed_at
+  // (20260929110000). message_reactions itself is deliberately not published:
+  // it has no conversation_id to filter on, so listening to it would deliver
+  // every reaction in the app to every open thread.
   useEffect(() => {
     if (!remote || !conversationId || !process.env.EXPO_PUBLIC_SUPABASE_URL) return;
 
@@ -121,16 +126,6 @@ export function useRemoteMessages(conversationId: string | undefined) {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `conversation_id=eq.${conversationId}` },
-        () => qc.invalidateQueries({ queryKey: ['messages', conversationId] }),
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'message_reactions' },
-        () => qc.invalidateQueries({ queryKey: ['messages', conversationId] }),
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'message_reactions' },
         () => qc.invalidateQueries({ queryKey: ['messages', conversationId] }),
       )
       // Messages sent while the channel was down (phone locked, socket
