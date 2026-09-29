@@ -330,8 +330,10 @@ export async function streamEchoAI({
         }
         return;
       }
-      // Refresh failed — sign the user out so they hit the login screen.
-      await supabase.auth.signOut();
+      // Refresh failed — sign the user out so they hit the login screen. Local
+      // scope: a refresh can fail on this device alone, and must not end the
+      // user's sessions everywhere else.
+      await supabase.auth.signOut({ scope: 'local' });
       throw new Error('Your session expired — please sign in again');
     }
     throw err;

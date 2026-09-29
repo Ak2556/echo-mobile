@@ -14,6 +14,7 @@ import { statusForProfile } from './onboardingStatus';
 import { useAuthStore } from './store';
 import { destinationFor } from './destination';
 import { clearLocalUserData } from '../localDataReset';
+import { outbox } from '../../store/outbox';
 import type { AuthProfile, AuthStatus } from './types';
 import { consumeAuthCallbackUrl, hasAuthCallbackPayload, parseAuthCallbackUrl } from './callback';
 import { withAuthTimeout } from './timeout';
@@ -277,6 +278,9 @@ export function AuthListenerProvider(): null {
         // cache and the offline message database outlive them, unencrypted,
         // and held the previous account's DMs until this was added.
         void clearLocalUserData();
+        // Queued offline writes are the previous account's too. Left in place,
+        // the next drain replays them with whoever signs in next.
+        outbox.clearAll();
         // Decrypted E2EE messages live only in memory. signOut() clears them
         // too, but forced sign-outs and account deletion skip that path.
         clearMessageCache();

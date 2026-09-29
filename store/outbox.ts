@@ -38,6 +38,7 @@ interface OutboxStore {
   remove: (id: string) => void;
   update: (id: string, patch: Partial<OutboxOp>) => void;
   clearFailed: () => void;
+  clearAll: () => void;
 }
 
 const KEY = 'outbox_ops_v1';
@@ -77,6 +78,10 @@ export const useOutbox = create<OutboxStore>((set, get) => ({
     save(ops);
     set({ ops });
   },
+  clearAll: () => {
+    save([]);
+    set({ ops: [] });
+  },
 }));
 
 /** Non-hook accessors for use outside React (processor, mutationFns). */
@@ -86,4 +91,7 @@ export const outbox = {
   all: () => useOutbox.getState().ops,
   remove: (id: string) => useOutbox.getState().remove(id),
   update: (id: string, patch: Partial<OutboxOp>) => useOutbox.getState().update(id, patch),
+  /** Sign-out: queued writes belong to the account that made them. Replaying
+   *  them after another account signs in would post as that account. */
+  clearAll: () => useOutbox.getState().clearAll(),
 };
