@@ -70,8 +70,11 @@ create table public.user_devices (
   label         text,                       -- "iPhone", for the user's own audit UI
   created_at    timestamptz not null default now(),
   last_seen_at  timestamptz,
-  revoked_at    timestamptz                 -- set on sign-out; never deleted,
-                                            -- or old rows lose their key reference
+  revoked_at    timestamptz                 -- never deleted, or old rows lose their key reference.
+                                            -- NOT set on sign-out (changed 2026-09-29): revoking there
+                                            -- destroyed the key and made all earlier history unreadable
+                                            -- on the next sign-in. The key survives sign-out; account
+                                            -- deletion removes it (row by cascade, key locally).
 );
 
 create table public.direct_message_keys (

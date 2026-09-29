@@ -8,6 +8,7 @@ import { TextInput } from '../components/ui/TextInput';
 import { useTheme } from '../src/shared/lib/theme';
 import { deleteAccount } from '../lib/supabaseEchoApi';
 import { supabase } from '../lib/supabase';
+import { forgetLocalDevice } from '../lib/e2ee/deviceKeys';
 import { useAppStore } from '../store/useAppStore';
 import { showToast } from '../components/ui/Toast';
 import { track } from '../src/shared/lib/analytics';
@@ -34,9 +35,14 @@ export default function DeleteAccountScreen() {
   const handleDelete = async () => {
     if (!canDelete) return;
     setDeleting(true);
+    // Read before the account goes: afterwards there is no session to ask.
+    const userId = useAppStore.getState().userId;
     try {
       await deleteAccount();
       track('account_deleted');
+      // Sign-out keeps the E2EE key (so history survives a re-sign-in);
+      // deletion is the one path that removes it.
+      if (userId) await forgetLocalDevice(userId).catch(() => undefined);
       // Best-effort: revoke session locally even though the auth.users row is
       // gone server-side. signOut() drops the AsyncStorage session entry.
       await supabase.auth.signOut().catch(() => undefined);

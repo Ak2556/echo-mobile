@@ -113,6 +113,26 @@ describe('sign-out scope', () => {
   });
 });
 
+describe('the E2EE device key outlives sign-out', () => {
+  it('signOut() does not touch the device key', () => {
+    const src = readFileSync(resolve(root, 'lib/auth/index.ts'), 'utf8');
+    expect(src).not.toMatch(/e2ee\/deviceKeys/);
+    expect(src).not.toMatch(/revokeLocalDevice|forgetLocalDevice/);
+  });
+
+  it('only account deletion forgets it', () => {
+    const users: string[] = [];
+    for (const dir of ['lib', 'app', 'src', 'components', 'hooks', 'store']) {
+      for (const e of readdirSync(resolve(root, dir), { withFileTypes: true, recursive: true })) {
+        if (!e.isFile() || !/\.(ts|tsx)$/.test(e.name) || /\.test\.tsx?$/.test(e.name)) continue;
+        const file = resolve(e.parentPath, e.name);
+        if (/forgetLocalDevice\(/.test(readFileSync(file, 'utf8'))) users.push(file.slice(root.length + 1));
+      }
+    }
+    expect(users.sort()).toEqual(['app/delete-account.tsx', 'lib/e2ee/deviceKeys.ts']);
+  });
+});
+
 describe('edge functions keep provider keys out of URLs and responses', () => {
   const fnDir = resolve(root, 'supabase/functions');
   const files = readdirSync(fnDir, { withFileTypes: true, recursive: true })
