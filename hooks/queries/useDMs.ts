@@ -36,6 +36,7 @@ import {
 } from '../../lib/supabaseEchoApi';
 import { isSupabaseRemote } from '../../lib/remoteConfig';
 import { supabase } from '../../lib/supabase';
+import { clientIdOfFailedDM, failedDMId, failedDMMatching, newDMClientId, pendingDMId } from '../../lib/dmLocalIds';
 
 // Conversations list
 /** All conversations for the current user, with real unread counts. */
@@ -175,20 +176,24 @@ export function useSendRemoteDM(
     // Bespoke failure UX: the bubble flips to a "failed — tap to retry" state,
     // so skip the global error toast.
     meta: { bespoke: true },
-    mutationFn: ({ content, replyToId }: { content: string; replyToId?: string }) => {
+    // clientId is the message's row id, minted once per message (newDMClientId)
+    // and passed again by a retry. The 20s timeout below abandons the wait, not
+    // the request: a send can still land after its bubble shows "failed", and
+    // only a reused id keeps the retry from delivering it twice.
+    mutationFn: ({ content, replyToId, clientId }: { content: string; replyToId?: string; clientId: string }) => {
       if (isGroup) {
         if (!conversationId) throw new Error('No conversation');
-        return withTimeout(sendRemoteDMToConversation(conversationId, content, replyToId), 20000, 'dm');
+        return withTimeout(sendRemoteDMToConversation(conversationId, content, replyToId, clientId), 20000, 'dm');
       }
       if (!recipientId) throw new Error('No recipient');
-      return withTimeout(sendRemoteDM(recipientId, content, replyToId), 20000, 'dm');
+      return withTimeout(sendRemoteDM(recipientId, content, replyToId, clientId), 20000, 'dm');
     },
-    onMutate: async ({ content, replyToId }) => {
+    onMutate: async ({ content, replyToId, clientId }) => {
       await qc.cancelQueries({ queryKey: ['messages', conversationId] });
       const snapshot = qc.getQueryData(['messages', conversationId]);
 
       const uid = await getSessionUserId();
-      const optimisticId = `pending-${Date.now()}`;
+      const optimisticId = pendingDMId(clientId);
       const optimistic: RemoteDirectMessage = {
         id: optimisticId,
         conversationId: conversationId ?? '',
@@ -229,7 +234,7 @@ export function useSendRemoteDM(
               pages: old.pages.map(page =>
                 page.map(msg =>
                   msg.id === ctx.optimisticId
-                    ? { ...msg, id: ctx.optimisticId.replace('pending-', 'failed-') }
+                    ? { ...msg, id: failedDMId(ctx.optimisticId) }
                     : msg,
                 ),
               ),
@@ -259,6 +264,24 @@ export function useDiscardLocalMessage(conversationId: string | undefined) {
         : old,
     );
   }, [qc, conversationId]);
+}
+
+/**
+ * The id for a text DM about to be sent. If the thread holds a failed bubble
+ * with the same text and reply target, this send is its retry: the bubble is
+ * dropped (the new send redraws it) and its id reused, so a first attempt that
+ * landed late is not delivered twice. Otherwise a fresh id.
+ */
+export function useClaimDMClientId(conversationId: string | undefined) {
+  const qc = useQueryClient();
+  const discard = useDiscardLocalMessage(conversationId);
+  return useCallback((content: string, replyToId?: string | null): string => {
+    const data = qc.getQueryData<InfiniteData<RemoteDirectMessage[]>>(['messages', conversationId]);
+    const failed = failedDMMatching(data?.pages.flat() ?? [], content, replyToId);
+    if (!failed) return newDMClientId();
+    discard(failed);
+    return clientIdOfFailedDM(failed)!;
+  }, [qc, conversationId, discard]);
 }
 
 // Forward

@@ -29,11 +29,23 @@ vi.mock('./deviceKeys', () => ({
 let keyRows: { message_id: string; device_id: string; wrapped_key: string; nonce: string }[] = [];
 let messageRow: Record<string, unknown> | null = null;
 const updates: unknown[] = [];
+// direct_messages' primary key: an id that already landed is refused with 23505,
+// and send_encrypted_dm rolls back whole (no key rows either).
+const landed = new Set<string>();
+let nextError: { code: string; message: string } | null = null;
+function write(id: string | undefined) {
+  if (nextError) { const error = nextError; nextError = null; return Promise.resolve({ data: null, error }); }
+  if (id && landed.has(id)) {
+    return Promise.resolve({ data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "direct_messages_pkey"' } });
+  }
+  if (id) landed.add(id);
+  return Promise.resolve({ data: null, error: null });
+}
 
 vi.mock('../supabase', () => ({
   supabase: {
     from: (table: string) => ({
-      insert: (payload: unknown) => { outgoing.push({ kind: 'insert', table, payload }); return Promise.resolve({ error: null }); },
+      insert: (payload: unknown) => { outgoing.push({ kind: 'insert', table, payload }); return write((payload as { id?: string }).id); },
       update: (payload: unknown) => {
         outgoing.push({ kind: 'update', table, payload });
         updates.push(payload);
@@ -48,7 +60,10 @@ vi.mock('../supabase', () => ({
         }),
       }),
     }),
-    rpc: (name: string, payload: unknown) => { outgoing.push({ kind: 'rpc', name, payload }); return Promise.resolve({ data: null, error: null }); },
+    rpc: (name: string, payload: unknown) => {
+      outgoing.push({ kind: 'rpc', name, payload });
+      return write((payload as { p_message?: { id?: string } }).p_message?.id);
+    },
   },
 }));
 
@@ -64,6 +79,8 @@ beforeEach(() => {
   keyRows = [];
   messageRow = null;
   updates.length = 0;
+  landed.clear();
+  nextError = null;
   clearMessageCache();
 });
 
@@ -203,3 +220,53 @@ describe('editDirectMessage', () => {
     expect(updates[0]).toMatchObject({ text: 'new' });
   });
 });
+
+describe('a retry reuses the message id', () => {
+  const ID = '11111111-2222-4333-8444-555555555555';
+
+  it('the row takes the id the caller minted, sealed or not', async () => {
+    expect((await send({ id: ID })).id).toBe(ID);
+    expect((outgoing[0].payload as { p_message: { id: string } }).p_message.id).toBe(ID);
+
+    flagOn = false;
+    const other = '66666666-7777-4888-8999-000000000000';
+    expect((await send({ id: other })).id).toBe(other);
+    expect((outgoing[1].payload as { id: string }).id).toBe(other);
+  });
+
+  it('a sealed retry after the first attempt landed counts as sent, not a second message', async () => {
+    await send({ id: ID }); // landed; the client never heard back
+    const retry = await send({ id: ID });
+    expect(retry).toEqual({ id: ID, encrypted: true });
+    expect(landed.size).toBe(1);
+  });
+
+  it('a plaintext retry after the first attempt landed counts as sent', async () => {
+    flagOn = false;
+    await send({ id: ID });
+    await expect(send({ id: ID })).resolves.toEqual({ id: ID, encrypted: false });
+    expect(landed.size).toBe(1);
+  });
+
+  it('the late retry does not replace the landed message in the cache', async () => {
+    await send({ id: ID }); // cached under the key the server row was sealed with
+    const { p_message: first } = outgoing[0].payload as { p_message: SealedRowish };
+    await send({ id: ID }); // a fresh key and nonce, refused by the server
+    const row = { id: ID, conversation_id: 'c-1', sender_id: 'u-alice', text: null, ciphertext: first.ciphertext, nonce: first.nonce, ephemeral_public_key: first.ephemeral_public_key };
+    const read = await readDirectMessages([row], 'u-alice');
+    expect(read.get(ID)).toEqual({ text: SECRET, encrypted: true, unreadable: null });
+  });
+
+  it('a duplicate without a caller id is still an error', async () => {
+    // Only a reused id proves it is the same message.
+    nextError = { code: '23505', message: 'duplicate key value violates unique constraint' };
+    await expect(send()).rejects.toMatchObject({ code: '23505' });
+  });
+
+  it('any other failure still fails the send', async () => {
+    nextError = { code: '42501', message: 'new row violates row-level security policy' };
+    await expect(send({ id: ID })).rejects.toMatchObject({ code: '42501' });
+  });
+});
+
+type SealedRowish = { ciphertext: string; nonce: string; ephemeral_public_key: string };
