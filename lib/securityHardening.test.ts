@@ -344,6 +344,17 @@ describe('no table is left open to everyone', () => {
     expect(selects[0][1]).toMatch(/can_view_echo_author\(\s*follows\.follower_id\s*\)/i);
     expect(selects[0][1]).toMatch(/can_view_echo_author\(\s*follows\.following_id\s*\)/i);
   });
+
+  it('a DM reaction can be added only by a member of the conversation', () => {
+    // react_insert once checked only user_id, so anyone holding a message id
+    // could react inside someone else's DM (and, since 20260929110000, have it
+    // pushed to them live). Exactly one INSERT policy: permissive policies are
+    // OR-ed, so a looser second one would silently cancel this check.
+    const inserts = [...(finalPolicies().get('message_reactions') ?? [])].filter(([, t]) => /for insert/i.test(t));
+    expect(inserts.length).toBe(1);
+    expect(inserts[0][1]).toMatch(/user_id = \(\s*select auth\.uid\(\)\s*\)/i);
+    expect(inserts[0][1]).toMatch(/is_dm_conversation_member\(\s*dm\.conversation_id\s*,\s*\(\s*select auth\.uid\(\)\s*\)\s*\)/i);
+  });
 });
 
 /**
