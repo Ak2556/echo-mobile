@@ -1,4 +1,4 @@
-import { CryptoDigestAlgorithm, digest } from 'expo-crypto';
+import { CryptoDigestAlgorithm, digest, getRandomValues } from 'expo-crypto';
 
 /**
  * Restore SHA-256 PKCE challenges on native.
@@ -32,7 +32,20 @@ import { CryptoDigestAlgorithm, digest } from 'expo-crypto';
  * into a broken sign-in for everyone. So both prerequisites are verified first
  * and the shim declines to install unless the whole S256 path can complete.
  * Declining leaves behaviour exactly as it is today.
+ *
+ * ## Never create a `crypto` without `getRandomValues`
+ *
+ * auth-js's generatePKCEVerifier() tests `typeof crypto === 'undefined'` and,
+ * when a `crypto` exists, calls `crypto.getRandomValues` unguarded. Hermes has
+ * no global `crypto`, so auth-js used its Math.random fallback. The first
+ * version of this shim created `globalThis.crypto = { subtle }` — a `crypto`
+ * with no getRandomValues — and every "Send code" then threw "undefined is not
+ * a function" before any request went out (shipped in the 2026-09-29 APK).
+ * So whenever this installs, it also makes sure getRandomValues exists, backed
+ * by expo-crypto's native CSPRNG (stronger than the Math.random it replaces).
  */
+
+export type RandomValuesFn = <T extends Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array>(array: T) => T;
 
 export type DigestFn = (algorithm: string, data: BufferSource) => Promise<ArrayBuffer>;
 
@@ -43,7 +56,7 @@ export type InstallOutcome =
   | 'missing-btoa';
 
 type CryptoHost = {
-  crypto?: { subtle?: { digest?: unknown } };
+  crypto?: { subtle?: { digest?: unknown }; getRandomValues?: unknown };
   TextEncoder?: unknown;
   btoa?: unknown;
 };
@@ -53,7 +66,7 @@ type CryptoHost = {
  * makes the full challenge path work. Exported with its dependencies injected
  * so the decision table is testable without a native runtime.
  */
-export function installSha256Digest(host: CryptoHost, digestImpl: DigestFn): InstallOutcome {
+export function installSha256Digest(host: CryptoHost, digestImpl: DigestFn, randomValuesImpl: RandomValuesFn): InstallOutcome {
   if (typeof host.crypto?.subtle?.digest === 'function') return 'already-supported';
   if (typeof host.TextEncoder === 'undefined') return 'missing-text-encoder';
   if (typeof host.btoa !== 'function') return 'missing-btoa';
@@ -74,6 +87,10 @@ export function installSha256Digest(host: CryptoHost, digestImpl: DigestFn): Ins
   const existing = host.crypto;
   if (existing) (existing as { subtle?: unknown }).subtle = subtle;
   else host.crypto = { subtle };
+  // Creating (or completing) `crypto` commits auth-js to calling
+  // crypto.getRandomValues; it must exist. See the header note.
+  const target = host.crypto as { getRandomValues?: unknown };
+  if (typeof target.getRandomValues !== 'function') target.getRandomValues = randomValuesImpl;
 
   return 'installed';
 }
@@ -82,4 +99,5 @@ export function installSha256Digest(host: CryptoHost, digestImpl: DigestFn): Ins
 export const webCryptoOutcome: InstallOutcome = installSha256Digest(
   globalThis as unknown as CryptoHost,
   (algorithm, data) => digest(algorithm as CryptoDigestAlgorithm, data),
+  (array) => getRandomValues(array),
 );
