@@ -4,10 +4,13 @@ name: Database Backup
 # account. This one is ours: if the account is lost or suspended, or a migration
 # destroys data, this file is the recovery path. See docs/runbook/monitoring.md.
 #
-# Inert until configured. Without the secrets it warns and exits 0 rather than
-# failing — a workflow that fails every night until someone does manual setup
-# just teaches you to ignore the notifications, which is the exact failure the
-# healthcheck already had.
+# Without the secrets it does not fail (a workflow that fails every night
+# until someone does manual setup teaches you to ignore the notifications),
+# but it keeps one "Database backups are not configured" issue open, so
+# having no backups is never silent. A warning in a run log nobody opens was.
+#
+# Every dump is restored into a throwaway Postgres and checked before it is
+# uploaded. A backup that has never been restored is a hope, not a backup.
 #
 # Required repository secrets:
 #   SUPABASE_DB_URL        Project Settings > Database > Connection string (URI)
@@ -32,6 +35,16 @@ permissions:
 jobs:
   dump:
     runs-on: ubuntu-latest
+    services:
+      restore:
+        # pgvector: public_echoes.embedding is vector(768), and a table that fails
+        # to create restores no rows.
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_PASSWORD: restore
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - name: Check configuration
         id: config
@@ -82,6 +95,25 @@ jobs:
           fi
           echo "NAME=$name" >> "$GITHUB_ENV"
 
+      # Supabase-only extensions and roles do not exist in plain Postgres, so
+      # those statements are allowed to fail; the check is that the data came
+      # back. Row counts, not table counts: an empty schema restores cleanly.
+      - name: Prove the dump restores
+        if: steps.config.outputs.ready == 'true'
+        env:
+          RESTORE_URL: postgresql://postgres:restore@localhost:5432/postgres
+        run: |
+          set -euo pipefail
+          gunzip -c "$NAME" | psql "$RESTORE_URL" -q -v ON_ERROR_STOP=0 >/dev/null 2>restore.err || true
+          profiles=$(psql "$RESTORE_URL" -tA -c "select count(*) from public.profiles" 2>/dev/null || echo 0)
+          echoes=$(psql "$RESTORE_URL" -tA -c "select count(*) from public.public_echoes" 2>/dev/null || echo 0)
+          echo "restored: profiles=$profiles public_echoes=$echoes"
+          if [ "$profiles" -lt 1 ] || [ "$echoes" -lt 1 ]; then
+            echo "::error::the dump did not restore: profiles=$profiles public_echoes=$echoes"
+            tail -20 restore.err
+            exit 1
+          fi
+
       - name: Upload to R2 and prune past 30 days
         if: steps.config.outputs.ready == 'true'
         env:
@@ -102,6 +134,46 @@ jobs:
               aws s3 rm "s3://echo-backups/db/$f" --endpoint-url "$endpoint"
             fi
           done
+
+      - name: Keep one issue open while backups are not configured
+        if: steps.config.outputs.ready != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Database backups are not configured';
+            const body =
+              `The nightly backup is not running: its secrets are missing.\n\n` +
+              `Last checked: ${new Date().toISOString()}\n\n` +
+              `Set SUPABASE_DB_URL, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY ` +
+              `(see the header of .github/workflows/db-backup.yml). This issue closes itself ` +
+              `after the first successful backup.`;
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'backup,unconfigured', per_page: 5,
+            });
+            if (open.length > 0) {
+              await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: open[0].number, body });
+            } else {
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['backup', 'unconfigured'] });
+            }
+
+      - name: Close backup issues after a successful backup
+        if: success() && steps.config.outputs.ready == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            for (const labels of ['backup,unconfigured', 'incident,backup']) {
+              const { data: open } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels, per_page: 10,
+              });
+              for (const issue of open) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number,
+                  body: `Backed up and restore-checked at ${new Date().toISOString()}. Closing automatically.`,
+                });
+                await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number, state: 'closed' });
+              }
+            }
 
       - name: Report a backup failure
         if: failure() && steps.config.outputs.ready == 'true'

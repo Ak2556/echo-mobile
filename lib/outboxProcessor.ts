@@ -1,8 +1,10 @@
 import { onlineManager } from '@tanstack/react-query';
+import { AppState } from 'react-native';
 import { outbox } from '../store/outbox';
 import { isAppOnline, initOnlineManager } from './net';
 import { isDuplicateError, isTransientError } from './mutationErrors';
 import { captureException } from './monitoring';
+import { backoffMs, isDue, isExpiredFailure, nextWake } from './outboxPolicy';
 import {
   setRemoteLike,
   setRemoteBookmark,
@@ -51,12 +53,18 @@ const REGISTRY: Record<string, Handler> = {
   commentLike: (p) => setRemoteCommentLike(p.commentId, p.like),
   echoReaction: (p) => setRemoteEchoReaction(p.echoId, p.reaction, p.on),
   dailyAnswer: (p) => submitDailyAnswer(p.questionId, p.answer),
-  publish: async (p) => {
-    if (p.postType === 'photo' && p.mediaUrls && p.mediaUrls.length > 0 && p.mediaUrls[0].startsWith('file://')) {
-      p.mediaUrls = await uploadEchoImages(p.mediaUrls);
-    }
-    if (p.postType === 'video' && p.mediaUrls && p.mediaUrls.length > 0 && p.mediaUrls[0].startsWith('file://')) {
-      p.mediaUrls = [(await uploadEchoVideo(p.mediaUrls[0]))];
+  publish: async (p, opId) => {
+    const local = p.mediaUrls && p.mediaUrls.length > 0 && p.mediaUrls[0].startsWith('file://');
+    if (local && (p.postType === 'photo' || p.postType === 'video')) {
+      const mediaUrls = p.postType === 'photo'
+        ? await uploadEchoImages(p.mediaUrls)
+        : [(await uploadEchoVideo(p.mediaUrls[0]))];
+      p = { ...p, mediaUrls };
+      // Checkpoint before the next step. Without it a failed insert left the
+      // stored op pointing at the local files, so every retry uploaded the
+      // media again (orphaning the last copy), and failed for good once the OS
+      // had cleared the cached file.
+      outbox.update(opId, { payload: p });
     }
     return insertRemoteEcho(p);
   },
@@ -64,14 +72,32 @@ const REGISTRY: Record<string, Handler> = {
 
 const MAX_ATTEMPTS = 8;
 let draining = false;
+let wake: ReturnType<typeof setTimeout> | null = null;
 
-/** Attempt every pending op once. Safe to call repeatedly; single-flight. */
+/**
+ * One timer, set for the earliest op that is waiting out its backoff. A
+ * deadline, not a poll: nothing is scheduled while no op is waiting.
+ *
+ * Transient failures used to bump a counter and wait for the next
+ * offline-to-online transition or cold start, so a 5xx on a steady connection
+ * sat in the outbox until the app was restarted.
+ */
+function scheduleWake(): void {
+  if (wake) clearTimeout(wake);
+  wake = null;
+  const now = Date.now();
+  const at = nextWake(outbox.pending(), now);
+  if (at !== null) wake = setTimeout(() => { wake = null; void drainOutbox(); }, at - now);
+}
+
+/** Attempt every op that is due. Safe to call repeatedly; single-flight. */
 export async function drainOutbox(): Promise<void> {
   if (draining || !isAppOnline()) return;
   draining = true;
   try {
     for (const op of outbox.pending()) {
       if (!isAppOnline()) break; // went offline mid-drain
+      if (!isDue(op, Date.now())) continue; // still backing off
       const handler = REGISTRY[op.type];
       if (!handler) {
         outbox.update(op.id, { status: 'failed', lastError: `unknown op type: ${op.type}` });
@@ -95,7 +121,7 @@ export async function drainOutbox(): Promise<void> {
             outbox.update(op.id, { status: 'failed', attempts, lastError: message });
             captureException(e, { tags: { outbox: op.type, terminal: 'max_attempts' } });
           } else {
-            outbox.update(op.id, { attempts, lastError: message });
+            outbox.update(op.id, { attempts, lastError: message, nextAttemptAt: Date.now() + backoffMs(attempts) });
           }
         } else {
           // Permanent (4xx/RLS/constraint) — don't hammer; surface as failed.
@@ -106,14 +132,32 @@ export async function drainOutbox(): Promise<void> {
     }
   } finally {
     draining = false;
+    scheduleWake();
+  }
+}
+
+/**
+ * Drop writes that failed for good more than a week ago. Each was reported
+ * when it failed; kept for ever they only grow the persisted store.
+ */
+function expireFailed(): void {
+  const now = Date.now();
+  for (const op of outbox.all()) {
+    if (isExpiredFailure(op, now)) outbox.remove(op.id);
   }
 }
 
 /** Wire connectivity + drain triggers. Call once at app start. */
 export function startOutbox(): void {
   initOnlineManager();
+  expireFailed();
   onlineManager.subscribe(() => {
     if (onlineManager.isOnline()) void drainOutbox();
+  });
+  // Returning to the app is when a user expects pending posts to go out, and
+  // timers do not run while it is suspended.
+  AppState.addEventListener('change', (state) => {
+    if (state === 'active') void drainOutbox();
   });
   void drainOutbox();
 }

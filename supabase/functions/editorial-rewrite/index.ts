@@ -11,6 +11,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { checkAndIncrementRateLimit, resolveLimitForUser, AIRateLimitError } from "../_shared/rateLimit.ts";
+import { guardedFetch } from "../_shared/breaker.ts";
 
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const MODEL = Deno.env.get("EDITORIAL_REWRITE_MODEL") ?? "google/gemini-2.5-flash";
@@ -74,7 +75,7 @@ async function rewrite(action: Action, text: string, prompt: string): Promise<st
   const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
   let res: Response;
   try {
-    res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENROUTER_API_KEY}`,

@@ -11,6 +11,8 @@
 // ids drop OpenRouter's "google/" prefix. Google's quota is per project, so
 // every function using GEMINI_API_KEY draws from one bucket.
 
+import { guardedFetch } from "./breaker.ts";
+
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -64,7 +66,7 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> 
   let geminiError: string | null = null;
   if (geminiKey) {
     try {
-      const res = await fetch(GEMINI_URL, {
+      const res = await guardedFetch("gemini", GEMINI_URL, {
         method: "POST",
         headers: { Authorization: `Bearer ${geminiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({ ...common, model: geminiModelId(req.model) }),
@@ -80,7 +82,7 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatMessageOut> 
     console.warn(`[aiChat] ${req.title}: falling back to OpenRouter after ${geminiError}`);
   }
 
-  const res = await fetch(OPENROUTER_URL, {
+  const res = await guardedFetch("openrouter", OPENROUTER_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${openRouterKey}`,

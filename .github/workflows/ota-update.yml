@@ -5,12 +5,24 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'app/**'
-      - 'src/**'
-      - 'components/**'
-      - 'package.json'
-      - 'app.json'
+    # What does NOT go into the JS bundle, rather than a list of what does. The
+    # list this replaced named app/, src/, components/, package.json and
+    # app.json only, so a fix in lib/, hooks/, store/, constants/ or assets/
+    # (most of the app's logic) never shipped over the air. A new directory is
+    # now included by default; forgetting to exclude one costs an update, while
+    # forgetting to include one cost the fix.
+    paths-ignore:
+      - 'supabase/**'
+      - 'cloudflare/**'
+      - 'docs/**'
+      - 'e2e/**'
+      - 'loadtest/**'
+      - 'test/**'
+      - '.github/**'
+      - '.eas/**'
+      - '**/*.md'
+      - '**/*.test.ts'
+      - '**/*.test.tsx'
 
 jobs:
   update:

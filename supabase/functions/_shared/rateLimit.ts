@@ -1,14 +1,18 @@
 // Shared per-user hourly rate limiter for AI edge functions.
 //
-// Backed by the `ai_rate_limits` table. A single row per user tracks the
-// start of the current rolling-hour window and the request count inside it.
-// The window rotates on the first request after expiry.
+// Counted by public.check_app_rate_limit (action 'ai_chat_hour', one row per
+// user in app_rate_limits), which locks the user's row while it counts. The
+// counter used to be read and then upserted from here, so N concurrent
+// requests all read the same count and all wrote count + 1: a burst of fifty
+// spent fifty calls against a counter of one, on the quota whose exhaustion
+// also stops moderation.
 //
 // Used by: echo-ai, editorial-rewrite, and other AI functions.
 // Counter-storage errors fail closed so rate limits cannot be bypassed by a
 // broken RLS policy, missing migration, or unavailable write path.
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { spendActionBudget } from "./actionLimit.ts";
 
 export type PlanId = "free" | "plus" | "pro" | "founder";
 
@@ -90,61 +94,22 @@ export class AIRateLimitError extends Error {
 }
 
 /**
- * Check the user's rate limit and increment the counter.
+ * Check the user's rate limit and increment the counter, atomically.
  * Throws `AIRateLimitError` when the user is over budget.
+ *
+ * `_supabase` is unused: the counter runs through the shared service-role
+ * client in actionLimit.ts. Kept so callers need no change.
  */
 export async function checkAndIncrementRateLimit(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   userId: string,
   tier: RateLimitTier = RATE_LIMIT_TIERS.free,
 ): Promise<void> {
   const limit = tier.limitPerHour;
   if (limit < 0) return;
-
-  let windowStartIso: string;
-  let count: number;
-
-  try {
-    const { data: row, error } = await supabase
-      .from("ai_rate_limits")
-      .select("window_start, request_count")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (error) {
-      throw error;
-    }
-
-    const now = Date.now();
-    const previousStart = row ? new Date(row.window_start).getTime() : now;
-    const inWindow = row ? now - previousStart < WINDOW_MS : false;
-    count = inWindow ? (row?.request_count ?? 0) : 0;
-    windowStartIso = inWindow
-      ? (row!.window_start as string)
-      : new Date(now).toISOString();
-
-    if (inWindow && count >= limit) {
-      const retryAfter = Math.ceil((WINDOW_MS - (now - previousStart)) / 1000);
-      throw new AIRateLimitError(retryAfter, tier);
-    }
-
-    const { error: upErr } = await supabase
-      .from("ai_rate_limits")
-      .upsert(
-        {
-          user_id: userId,
-          window_start: windowStartIso,
-          request_count: count + 1,
-          plan_id: tier.planId,
-          limit_per_hour: limit,
-          updated_at: new Date(now).toISOString(),
-        },
-        { onConflict: "user_id" },
-      );
-    if (upErr) {
-      throw upErr;
-    }
-  } catch (e) {
-    if (e instanceof AIRateLimitError) throw e;
-    throw new Error(`Rate limit unavailable: ${e instanceof Error ? e.message : String(e)}`);
-  }
+  const r = await spendActionBudget(userId, [{ action: "ai_chat_hour", limit, windowSeconds: WINDOW_MS / 1000 }]);
+  if (r.ok) return;
+  if (r.status === 429) throw new AIRateLimitError(r.retryAfterSeconds ?? 60, tier);
+  // Fails closed: an unavailable counter must not become an unlimited one.
+  throw new Error("Rate limit unavailable");
 }

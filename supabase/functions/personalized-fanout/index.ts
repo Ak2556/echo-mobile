@@ -5,14 +5,14 @@
 // (profiles.personalized_notifications = true) whose learned best_hours include
 // the current UTC hour — and who hasn't been nudged in ~a day — it inserts a
 // notifications row whose content is matched to their top interest surface. The
-// insert fires trg_notifications_push_fanout → push-fanout → the actual push.
+// insert fires trg_notifications_push_fanout, which enqueues the push job.
 //
 //   supabase functions deploy personalized-fanout --no-verify-jwt
 //   supabase secrets set PERSONALIZED_PUSH_SECRET=<random-string>
 //   (+ the same value in Vault as personalized_push_secret — see the migration)
 
 import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 // Occasion copy (birthday, Indian festivals) lives beside the routing table the
 // push path already shares. See lib/notifications/triggerCopy.ts.
 import { selectTrigger, copyForTrigger, istDateString } from '../../../lib/notifications/triggerCopy.ts';
@@ -70,28 +70,15 @@ const SURFACE_COPY: Record<string, () => string> = {
   ]),
 };
 
-interface ProfileRow {
+/** A user claimed for a nudge this hour (claim_due_nudges). */
+interface ClaimedRow {
   user_id: string;
-  best_hours: number[] | null;
   top_surface: string | null;
-  last_nudged_at: string | null;
-  // PostgREST returns an embedded to-one relation as an object, but types it
-  // loosely enough that an array shows up in some client versions. Normalised
-  // by profileOf() rather than trusted either way.
-  profiles?: EmbeddedProfile | EmbeddedProfile[] | null;
+  date_of_birth: string | null;
 }
 
-interface EmbeddedProfile {
-  personalized_notifications?: boolean | null;
-  push_token?: string | null;
-  date_of_birth?: string | null;
-}
-
-function profileOf(row: ProfileRow): EmbeddedProfile | null {
-  const p = row.profiles;
-  if (!p) return null;
-  return Array.isArray(p) ? (p[0] ?? null) : p;
-}
+/** At most this many users per run; the rest are due again next hour. */
+const CLAIM_LIMIT = 500;
 
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
@@ -100,21 +87,24 @@ Deno.serve(async (req: Request) => {
   if (!CRON_SECRET || !(await timingSafeEqual(provided, CRON_SECRET))) return json({ error: 'unauthorized' }, 401);
 
   const nowHour = new Date().getUTCHours();
-  const cutoff = new Date(Date.now() - MIN_HOURS_BETWEEN * 3_600_000).toISOString();
 
-  // Consented users due at this hour and outside the frequency cap. The join to
-  // profiles enforces consent (personalized_notifications = true) and a token.
-  const { data, error } = await supabase
-    .from('notification_profiles')
-    .select('user_id, best_hours, top_surface, last_nudged_at, profiles!inner(personalized_notifications, push_token, date_of_birth)')
-    .contains('best_hours', [nowHour])
-    .or(`last_nudged_at.is.null,last_nudged_at.lt.${cutoff}`)
-    .eq('profiles.personalized_notifications', true)
-    .not('profiles.push_token', 'is', null);
+  // Claim, don't just select. claim_due_nudges stamps last_nudged_at on the
+  // users it returns in one statement (skipping rows another run holds), so
+  // overlapping runs partition the users between them instead of both nudging
+  // them. This used to select, insert, then stamp each user separately: two
+  // runs, or a crash between the steps, meant a second nudge. A claimed user
+  // whose insert then fails misses one nudge, the right failure for a
+  // marketing push. The query was also unbounded, so PostgREST's row cap
+  // silently truncated it; the claim is bounded and ordered by who waited
+  // longest.
+  const { data, error } = await supabase.rpc('claim_due_nudges', {
+    p_hour: nowHour,
+    p_limit: CLAIM_LIMIT,
+    p_min_gap_hours: MIN_HOURS_BETWEEN,
+  });
+  if (error) return json({ error: `claim failed: ${error.message}` }, 500);
 
-  if (error) return json({ error: `lookup failed: ${error.message}` }, 500);
-
-  const rows = (data ?? []) as unknown as ProfileRow[];
+  const rows = (data ?? []) as ClaimedRow[];
   if (rows.length === 0) return json({ sent: 0, hour: nowHour }, 200);
 
   // Which of these users already answered today's daily question — so a
@@ -136,8 +126,7 @@ Deno.serve(async (req: Request) => {
     for (const a of (ans ?? []) as { user_id: string }[]) answered.add(a.user_id);
   }
 
-  let sent = 0;
-  for (const row of rows) {
+  const notifications = rows.map((row) => {
     let surface = row.top_surface && SURFACE_COPY[row.top_surface] ? row.top_surface : 'chat';
     // If their interest is the daily question but they already answered, pivot.
     if (surface === 'daily' && answered.has(row.user_id)) surface = 'feed';
@@ -146,32 +135,24 @@ Deno.serve(async (req: Request) => {
     // rare enough to be worth the one notification this user will tolerate
     // today. On an ordinary day selectTrigger returns the surface and
     // copyForTrigger returns null, so the existing path runs untouched.
-    const trigger = selectTrigger({
-      dateOfBirth: profileOf(row)?.date_of_birth ?? null,
-      today: occasionToday,
-      surface,
-    });
+    const trigger = selectTrigger({ dateOfBirth: row.date_of_birth, today: occasionToday, surface });
     const occasionBody = copyForTrigger(trigger, pick);
-    const body = occasionBody ?? (SURFACE_COPY[surface] ?? SURFACE_COPY.chat)();
-
-    const { error: insErr } = await supabase.from('notifications').insert({
+    return {
       user_id: row.user_id,
       type: 'personal_nudge',
-      actor_id: null,          // system-generated (actor_id is nullable since the DSA migration)
+      actor_id: null, // system-generated (actor_id is nullable since the DSA migration)
       // Occasion nudges have no surface of their own; route them to the feed so
       // the tap still lands somewhere sensible.
       target_kind: trigger.kind === 'surface' ? surface : 'feed',
-      preview: body,
-    });
-    if (insErr) continue;
+      preview: occasionBody ?? (SURFACE_COPY[surface] ?? SURFACE_COPY.chat)(),
+    };
+  });
 
-    await supabase.from('notification_profiles')
-      .update({ last_nudged_at: new Date().toISOString() })
-      .eq('user_id', row.user_id);
-    sent += 1;
-  }
+  // One insert for the batch; each row's trigger enqueues its push job.
+  const { error: insErr } = await supabase.from('notifications').insert(notifications);
+  if (insErr) return json({ error: `insert failed: ${insErr.message}`, claimed: rows.length }, 500);
 
-  return json({ sent, considered: rows.length, hour: nowHour }, 200);
+  return json({ sent: notifications.length, hour: nowHour }, 200);
 });
 
 function json(payload: unknown, status: number): Response {

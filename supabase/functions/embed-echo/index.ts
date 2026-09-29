@@ -1,38 +1,18 @@
-// embed-echo — moderate a freshly-published echo, then generate a 768-d
-// embedding + thoughtfulness score, and persist all of it on public_echoes.
+// embed-echo — moderate a published echo, then generate a 768-d embedding and
+// thoughtfulness score, and persist all of it on public_echoes.
 //
-// Invoked fire-and-forget from the client after insertRemoteEcho returns
-// (see lib/supabaseEchoApi.ts -> triggerEmbedEcho). Backfills use the separate
-// backfill-embeddings function.
-//
-// Embeddings come from OpenRouter's embeddings endpoint (Google
-// gemini-embedding-001 reduced to 768-dim), so the only secret needed is
-// OPENROUTER_API_KEY — the same key used by chat and moderation. The account is
-// restricted to the google-ai-studio provider, so the model must be Google's.
-//
-// MODERATION GATE: rows are only shown in the public feed when
-// check_content = true (enforced in get_ranked_feed / get_semantic_feed and
-// the chronological fallback query). New rows default to false, so this
-// function flips them true once the content passes moderation. If moderation is
-// unavailable, the row remains hidden until the user retries or operators review
-// the incident.
+// Since 20260928110000 the server path is the job worker: moderate_new_echo
+// enqueues a 'moderation' job and the worker calls judgeEcho directly, with
+// queue retries and a dead-letter queue. This endpoint remains for the author's
+// app (lib/supabaseEchoApi.ts -> triggerEmbedEcho) and for a database still on
+// the old trigger during rollout. The judging itself lives in judge.ts.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { moderateContent, moderateImages } from "./moderation.ts";
-import { splitMediaForModeration } from "./mediaKinds.ts";
 import { isServiceCaller } from "./serviceCaller.ts";
+import { judgeEcho, type JudgeResult } from "./judge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-
-// Embeddings are routed through OpenRouter (same key as chat + moderation) so
-// the deployment needs only OPENROUTER_API_KEY. gemini-embedding-001 supports
-// dimension reduction, so we request 768 dims to match the vector(768) column
-// and the <=> operators used by get_semantic_feed / get_thinking_partners.
-const EMBEDDING_MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "google/gemini-embedding-001";
-const EMBEDDING_DIM = 768;
-const EMBEDDING_URL = "https://openrouter.ai/api/v1/embeddings";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -40,69 +20,25 @@ const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface EchoRow {
-  id: string;
-  author_id: string;
-  title: string | null;
-  prompt: string;
-  response: string;
-  conversation_snapshot: { role: string; content: string }[] | null;
-  media_urls: string[] | null;
-}
-
-function buildEmbeddingText(row: EchoRow): string {
-  const parts: string[] = [];
-  if (row.title) parts.push(row.title);
-  parts.push(row.prompt, row.response);
-  if (Array.isArray(row.conversation_snapshot)) {
-    for (const m of row.conversation_snapshot) {
-      if (m?.content) parts.push(m.content);
-    }
-  }
-  // Cap at ~6k chars to stay well under the embedContent token limit.
-  return parts.join("\n\n").slice(0, 6000);
-}
-
-function computeThoughtfulnessScore(row: EchoRow): number {
-  const snapshotLen = Array.isArray(row.conversation_snapshot)
-    ? row.conversation_snapshot.length
-    : 0;
-  // Depth signal: longer multi-turn conversations score higher (saturates at ~12 turns).
-  const depth = Math.min(1, Math.log10(snapshotLen + 1) / 1.1);
-  // Substance signal: meaningful response length (saturates at ~1500 chars).
-  const responseLen = (row.response || "").length;
-  const substance = Math.min(1, responseLen / 1500);
-  // Weighted average — depth matters slightly more than length.
-  return Number((depth * 0.55 + substance * 0.45).toFixed(4));
-}
-
-async function generateEmbedding(text: string): Promise<number[]> {
-  if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not configured");
-  const res = await fetch(EMBEDDING_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://github.com/Ak2556/echo-mobile",
-      "X-Title": "Echo Embeddings",
-    },
-    body: JSON.stringify({
-      model: EMBEDDING_MODEL,
-      input: text,
-      dimensions: EMBEDDING_DIM, // text-embedding-3 supports dimension reduction
-    }),
+const json = (payload: unknown, status: number) =>
+  new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Embedding API ${res.status}: ${body.slice(0, 200)}`);
+
+/** The HTTP contract the app has always seen, one status per outcome. */
+function toResponse(r: JudgeResult): Response {
+  switch (r.kind) {
+    case "not_found": return json({ error: r.error }, 404);
+    case "unavailable": return json({ ok: false, reason: "moderation_unavailable" }, 503);
+    case "verdict_not_saved": return json({ error: r.error }, 500);
+    case "superseded": return json({ ok: false, reason: "superseded" }, 200);
+    case "flagged": return json({ ok: false, reason: "flagged", categories: r.categories }, 200);
+    case "empty": return json({ ok: false, reason: "empty text" }, 200);
+    case "embed_failed": return json({ error: r.error }, 502);
+    case "embedding_not_saved": return json({ error: r.error }, 500);
+    case "embedded": return json({ ok: true, dim: r.dim, thoughtfulness: r.thoughtfulness }, 200);
   }
-  const json = await res.json();
-  // OpenAI-compatible shape: { data: [{ embedding: number[] }] }
-  const values = json?.data?.[0]?.embedding;
-  if (!Array.isArray(values) || values.length !== EMBEDDING_DIM) {
-    throw new Error(`Unexpected embedding shape (len=${values?.length ?? 'n/a'})`);
-  }
-  return values;
 }
 
 Deno.serve(async (req: Request) => {
@@ -119,10 +55,7 @@ Deno.serve(async (req: Request) => {
     echoId = String(body?.echo_id ?? "");
     if (!echoId) throw new Error("echo_id required");
   } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 400,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
+    return json({ error: (err as Error).message }, 400);
   }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -130,185 +63,33 @@ Deno.serve(async (req: Request) => {
   });
 
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) {
-    return new Response(JSON.stringify({ error: "authorization required" }), {
-      status: 401,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
-  }
+  if (!token) return json({ error: "authorization required" }, 401);
+
   // Two callers: the author's app (user JWT, must own the post, rate-limited),
-  // and the moderate_new_echo trigger / resweep cron, which send the shared
-  // x-embed-echo-secret (see serviceCaller.ts). The server path had been
-  // rejected on every call, so a post was revealed only if its author's app
-  // stayed open long enough to run the client fallback.
+  // and the database, which sends the shared x-embed-echo-secret (see
+  // serviceCaller.ts).
   const fromService = await isServiceCaller(req.headers.get("x-embed-echo-secret"));
-  let callerId: string | null = null;
   if (!fromService) {
     const { data: authData, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !authData.user) {
-      return new Response(JSON.stringify({ error: "invalid authorization" }), {
-        status: 401,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
-    }
-    callerId = authData.user.id;
-  }
+    if (authErr || !authData.user) return json({ error: "invalid authorization" }, 401);
+    const callerId = authData.user.id;
 
-  const { data: row, error: fetchErr } = await supabase
-    .from("public_echoes")
-    .select("id, author_id, title, prompt, response, conversation_snapshot, media_urls")
-    .eq("id", echoId)
-    .single();
-  if (fetchErr || !row) {
-    return new Response(
-      JSON.stringify({ error: fetchErr?.message ?? "echo not found" }),
-      { status: 404, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
-    );
-  }
-  if (!fromService && (row as EchoRow).author_id !== callerId) {
-    return new Response(JSON.stringify({ error: "forbidden" }), {
-      status: 403,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
-  }
+    const { data: owner, error: ownerErr } = await supabase
+      .from("public_echoes")
+      .select("author_id")
+      .eq("id", echoId)
+      .single();
+    if (ownerErr || !owner) return json({ error: ownerErr?.message ?? "echo not found" }, 404);
+    if ((owner as { author_id: string }).author_id !== callerId) return json({ error: "forbidden" }, 403);
 
-  const { error: embedLimitError } = fromService
-    ? { error: null }
-    : await supabase.rpc("check_app_rate_limit", {
+    const { error: embedLimitError } = await supabase.rpc("check_app_rate_limit", {
       p_action: "embed_echo_hour",
       p_limit: 40,
       p_window_seconds: 3600,
       p_user_id: callerId,
     });
-  if (embedLimitError) {
-    return new Response(JSON.stringify({ error: "Rate limit reached. Try again later." }), {
-      status: 429,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
+    if (embedLimitError) return json({ error: "Rate limit reached. Try again later." }, 429);
   }
 
-  // Moderation gate (runs FIRST, independent of embedding)
-  // Decide visibility and persist it before doing anything that can fail. The
-  // feed only surfaces rows with check_content = true.
-  const echoRow = row as EchoRow;
-  const moderationText = [echoRow.title, echoRow.prompt, echoRow.response]
-    .filter(Boolean)
-    .join("\n\n");
-  let verdict = await moderateContent(moderationText);
-  // Infra failure is not a verdict. Retry a couple of times; if the gate is
-  // still unreachable, leave the row PENDING (check_content stays at its
-  // default false, but no explicit verdict is written) and tell the caller,
-  // so the client can re-trigger. Writing false here used to hide freshly
-  // published posts forever after a transient OpenRouter hiccup.
-  for (
-    let attempt = 0;
-    attempt < 2 && !verdict.ok && verdict.categories.includes("moderation_unavailable");
-    attempt++
-  ) {
-    await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
-    verdict = await moderateContent(moderationText);
-  }
-  if (!verdict.ok && verdict.categories.includes("moderation_unavailable")) {
-    console.error(`[embed-echo] moderation unavailable for ${echoId}; leaving pending:`, verdict.error);
-    return new Response(
-      JSON.stringify({ ok: false, reason: "moderation_unavailable" }),
-      { status: 503, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
-    );
-  }
-
-  // Uploaded images go through the same gate. Text-only moderation used to let
-  // any photo reach the feed unexamined, which is exactly what App Store
-  // guideline 1.2 asks a UGC app to filter.
-  //
-  // Only run it when the text passed: a post already destined to stay hidden
-  // does not need a second billed call.
-  const { images, unchecked } = splitMediaForModeration(echoRow.media_urls);
-  if (verdict.ok && images.length > 0) {
-    let imageVerdict = await moderateImages(images);
-    for (
-      let attempt = 0;
-      attempt < 2 && !imageVerdict.ok && imageVerdict.categories.includes("moderation_unavailable");
-      attempt++
-    ) {
-      await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
-      imageVerdict = await moderateImages(images);
-    }
-    if (!imageVerdict.ok && imageVerdict.categories.includes("moderation_unavailable")) {
-      console.error(`[embed-echo] image moderation unavailable for ${echoId}; leaving pending:`, imageVerdict.error);
-      return new Response(
-        JSON.stringify({ ok: false, reason: "moderation_unavailable" }),
-        { status: 503, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
-      );
-    }
-    verdict = imageVerdict.ok
-      ? verdict
-      : { ok: false, categories: imageVerdict.categories.map((c) => `image:${c}`) };
-  }
-  if (unchecked.length > 0) {
-    // Video is the case this covers. A still-image model cannot read an mp4 or
-    // an HLS manifest, and no frame is extracted anywhere in the pipeline yet,
-    // so these reach the feed on the strength of their text alone. Logged so
-    // the gap is visible in function logs rather than implied by silence.
-    console.warn(`[embed-echo] ${unchecked.length} media item(s) on ${echoId} not visually checked`);
-  }
-  // moderated_at records that a verdict was reached, whatever it was. Without
-  // it a flagged post is indistinguishable from one still waiting, and the ops
-  // probe cannot tell a stuck publish path from ordinary moderation.
-  const { error: gateErr } = await supabase
-    .from("public_echoes")
-    .update({ check_content: verdict.ok, moderated_at: new Date().toISOString() })
-    .eq("id", echoId);
-  if (gateErr) {
-    // Keep embedding available even if moderation persistence fails.
-    console.warn("[embed-echo] failed to set check_content:", gateErr.message);
-  }
-  if (!verdict.ok) {
-    console.warn(`[embed-echo] echo ${echoId} flagged:`, verdict.categories.join(", "));
-    // Flagged content stays hidden (check_content=false). No point embedding it.
-    return new Response(
-      JSON.stringify({ ok: false, reason: "flagged", categories: verdict.categories }),
-      { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
-    );
-  }
-
-  const text = buildEmbeddingText(echoRow);
-  if (!text.trim()) {
-    return new Response(JSON.stringify({ ok: false, reason: "empty text" }), {
-      status: 200,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
-  }
-
-  let embedding: number[];
-  try {
-    embedding = await generateEmbedding(text);
-  } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 502,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
-  }
-
-  const thoughtfulness = computeThoughtfulnessScore(row as EchoRow);
-
-  // pgvector accepts the textual form '[v1,v2,...]'.
-  const vectorLiteral = `[${embedding.join(",")}]`;
-  const { error: updateErr } = await supabase
-    .from("public_echoes")
-    .update({
-      embedding: vectorLiteral,
-      thoughtfulness_score: thoughtfulness,
-    })
-    .eq("id", echoId);
-  if (updateErr) {
-    return new Response(JSON.stringify({ error: updateErr.message }), {
-      status: 500,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
-  }
-
-  return new Response(
-    JSON.stringify({ ok: true, dim: embedding.length, thoughtfulness }),
-    { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
-  );
+  return toResponse(await judgeEcho(supabase, echoId, { inlineRetries: 2 }));
 });

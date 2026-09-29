@@ -1,6 +1,6 @@
 /**
  * Small resilience helpers shared by the write layer and the offline outbox.
- * Generalizes the ad-hoc 3×/2-4-6s backoff that lived inside triggerEmbedEcho.
+ * Generalizes the ad-hoc 3×/2-4-6s backoff that used to live in the client's embed-echo retry.
  */
 
 export interface RetryOptions {

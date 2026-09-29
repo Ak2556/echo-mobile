@@ -86,58 +86,61 @@ export async function trackAdClick(adId: string) {
 // NOTE: You must install react-native-razorpay (e.g. npm install react-native-razorpay)
 // and run npx expo prebuild for this to work natively.
 
-
+/**
+ * Save the ad, have the server bind a Razorpay order to it, then open checkout.
+ *
+ * The order is created server-side for an ad that already exists, because the
+ * server has to own both the price and the order id: guard_client_writes
+ * discards a client-supplied budget_amount or razorpay_order_id (otherwise one
+ * rupee could buy any ad). The old flow created the order first and wrote its
+ * id from the client, the guard dropped it, and the webhook could never find
+ * the ad a payment was for. The webhook activates the ad once Razorpay
+ * confirms the capture; nothing here marks it paid.
+ */
 export async function createAndPayAd(adData: Partial<AdItem>, amountInINR: number) {
   if (!isSupabaseRemote()) throw new Error('Supabase not connected');
-  
+
   const { data: session } = await supabase.auth.getSession();
   if (!session.session) throw new Error('Not logged in');
 
-  // 1. Ask Edge Function to create Razorpay Order
-  const { data: orderData, error: orderError } = await supabase.functions.invoke('razorpay-create-order', {
-    body: { amount: amountInINR * 100, currency: 'INR' }, // amount in paise
+  // 1. Save the ad. It is pending and inactive until the webhook settles it.
+  const { data: adRecord, error: adError } = await supabase
+    .from('ads')
+    .insert({ ...adData, advertiser_id: session.session.user.id })
+    .select('id')
+    .single();
+  if (adError || !adRecord) throw new Error('Failed to save ad details');
+
+  // 2. The server prices the ad and binds an order to it (idempotent per ad).
+  const { data: order, error: orderError } = await supabase.functions.invoke('razorpay-create-order', {
+    body: { ad_id: adRecord.id, budget_inr: amountInINR },
   });
+  if (orderError || !order?.id) throw new Error('Failed to create payment order');
 
-  if (orderError || !orderData?.id) {
-    throw new Error('Failed to create payment order');
-  }
-
-  // 2. Insert the Ad in 'pending' status with the order_id
-  const { data: adRecord, error: adError } = await supabase.from('ads').insert({
-    ...adData,
-    budget_amount: amountInINR,
-    razorpay_order_id: orderData.id,
-    payment_status: 'pending',
-    is_active: false // Explicitly false until paid
-  }).select().single();
-
-  if (adError) throw new Error('Failed to save ad details');
-
-  
-  // 3. Open Razorpay Checkout (Uncomment once react-native-razorpay is installed)
+  // 3. Checkout.
   const options = {
     description: 'Echo Ad Campaign',
-    image: 'https://your-app-logo-url.png',
-    currency: 'INR',
-    key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID, // Your Razorpay Key
-    amount: orderData.amount,
+    currency: order.currency ?? 'INR',
+    key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID,
+    amount: order.amount,
     name: 'Echo Ads',
-    order_id: orderData.id,
-    theme: { color: '#000000' }
+    order_id: order.id,
+    theme: { color: '#000000' },
   };
 
+  let RazorpayCheckout: { open: (o: typeof options) => Promise<{ razorpay_payment_id: string }> } | undefined;
   try {
-    // Dynamically require to prevent native module missing crash on app startup
-    const RazorpayCheckout = require('react-native-razorpay').default;
-    if (!RazorpayCheckout) throw new Error("Razorpay not linked natively. Run npx expo prebuild and rebuild.");
-    
+    // Required lazily so a build without the native module still starts.
+    RazorpayCheckout = require('react-native-razorpay').default;
+  } catch {
+    RazorpayCheckout = undefined;
+  }
+  if (!RazorpayCheckout) throw new Error('Razorpay is not linked natively. Run npx expo prebuild and rebuild.');
+
+  try {
     const data = await RazorpayCheckout.open(options);
-    // On success, the webhook will automatically flip `is_active` to true
     return { success: true, paymentId: data.razorpay_payment_id, adId: adRecord.id };
-  } catch (error) {
+  } catch {
     throw new Error('Payment cancelled or failed');
   }
- 
-  
-  return { success: true, orderId: orderData.id, adId: adRecord.id, status: 'awaiting_payment' };
 }

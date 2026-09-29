@@ -19,6 +19,7 @@
 // Secrets — never shipped in the mobile bundle.
 
 import { chatCompletion, hasChatProvider } from "../_shared/aiChat.ts";
+import { guardedFetch } from "../_shared/breaker.ts";
 
 export interface ModerationResult {
   /** True when the content is safe to publish. */
@@ -177,7 +178,7 @@ export async function moderateImages(urls: string[]): Promise<ModerationResult> 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), VISION_TIMEOUT_MS);
   try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const res = await guardedFetch("openrouter", "https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,

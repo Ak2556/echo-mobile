@@ -1,0 +1,87 @@
+# Release: one tag, and the right thing ships to both stores.
+#
+#   git tag v1.2.3 && git push origin v1.2.3
+#
+# runtimeVersion uses the fingerprint policy (app.json), so the fingerprint
+# says whether the native layer changed since the last production build:
+#
+#   a build with this fingerprint exists  -> publish an OTA update to it
+#                                            (minutes, no build quota spent)
+#   no such build                          -> build, then submit to the store
+#
+# Tag-triggered on purpose. A push to main must not spend EAS build quota or
+# reach users during a store review; tagging is the release decision, and
+# everything after it is automatic.
+#
+# Prerequisites (once, outside this repo):
+#   - link the GitHub repository to the EAS project (expo.dev > project >
+#     GitHub), which is what lets EAS run this file
+#   - production EAS environment variables (EXPO_PUBLIC_*), as the OTA
+#     workflow already relies on
+#   - store credentials in EAS: the Play service account key (eas.json points
+#     submit at a local file that is not in the repo) and App Store Connect
+#     API credentials; until then the submit jobs fail and the builds remain
+#     available to submit by hand
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  fingerprint:
+    type: fingerprint
+    environment: production
+  get_android_build:
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
+      profile: production
+  get_ios_build:
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.ios_fingerprint_hash }}
+      profile: production
+  build_android:
+    needs: [get_android_build]
+    if: ${{ !needs.get_android_build.outputs.build_id }}
+    type: build
+    params:
+      platform: android
+      profile: production
+  build_ios:
+    needs: [get_ios_build]
+    if: ${{ !needs.get_ios_build.outputs.build_id }}
+    type: build
+    params:
+      platform: ios
+      profile: production
+  submit_android:
+    needs: [build_android]
+    type: submit
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+  submit_ios:
+    needs: [build_ios]
+    type: submit
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+  update_android:
+    needs: [get_android_build]
+    if: ${{ needs.get_android_build.outputs.build_id }}
+    type: update
+    environment: production
+    params:
+      channel: production
+      platform: android
+  update_ios:
+    needs: [get_ios_build]
+    if: ${{ needs.get_ios_build.outputs.build_id }}
+    type: update
+    environment: production
+    params:
+      channel: production
+      platform: ios

@@ -94,6 +94,7 @@ i18n_extracted.json
 
 # Multi-agent session artefacts and scratch copies — process noise, not source
 .agents/
+.gemini/
 scratch/
 
 # Cloudflare worker build cache and generated downloads

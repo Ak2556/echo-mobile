@@ -1,102 +1,56 @@
-import { timingSafeEqual } from '../_shared/timingSafeEqual.ts';
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { hmac } from "https://deno.land/x/crypto@v0.3.0/mod.ts";
+// RevenueCat webhook: verify it, record it, and queue an entitlement sync.
+//
+// The event is treated as a nudge, not as state. ingest_revenuecat_event
+// records it (a redelivery is a no-op) and enqueues an 'entitlements' job per
+// Echo user it names, in one transaction. The worker then reads the resolved
+// subscriber from RevenueCat and writes user_entitlements, the table the rate
+// limiter reads (see entitlements.ts for why not the event itself).
+//
+// The previous version wrote profiles.premium_entitlement, which nothing read,
+// and inserted its dedupe row before processing, so a failed update was
+// acknowledged as a duplicate on RevenueCat's retry and lost.
+//
+// Secrets: REVENUECAT_WEBHOOK_SECRET is the HMAC signing secret (enable HMAC
+// signing on the webhook integration); REVENUECAT_SECRET_KEY is a v1 secret
+// API key, read by the worker for the sync.
 
-serve(async (req) => {
-  try {
-    const signature = req.headers.get('x-revenuecat-signature')
-    const secret = Deno.env.get('REVENUECAT_WEBHOOK_SECRET')
-    
-    if (!signature || !secret) {
-      return new Response('Missing signature or secret', { status: 401 })
-    }
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { verifyRevenueCatSignature } from './signature.ts';
+import { usersInEvent } from './entitlements.ts';
 
-    const payloadText = await req.text()
-    
-    // RevenueCat SHA512 signature validation
-    const expectedSignature = await hmac(
-      "sha512",
-      new TextEncoder().encode(secret),
-      new TextEncoder().encode(payloadText),
-      "hex"
-    );
+const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', {
+  auth: { persistSession: false },
+});
+const SECRET = Deno.env.get('REVENUECAT_WEBHOOK_SECRET') ?? '';
 
-    if (!(await timingSafeEqual(expectedSignature, signature))) {
-      return new Response('Invalid signature', { status: 403 })
-    }
+Deno.serve(async (req: Request) => {
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-    const payload = JSON.parse(payloadText)
-    const event = payload.event
-
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // 1. Durably insert the event to prevent duplicate processing via UNIQUE event_id
-    const { error: insertError } = await supabaseAdmin
-      .from('subscription_webhook_events')
-      .insert({
-        event_id: event.id,
-        event_type: event.type,
-        app_user_id: event.app_user_id,
-        event_timestamp: event.event_timestamp_ms,
-        payload: payload,
-      })
-
-    if (insertError) {
-      if (insertError.code === '23505') { // Unique violation
-        // Already processed / duplicate event, acknowledge safely
-        return new Response('Duplicate event acknowledged', { status: 200 })
-      }
-      throw new Error(`DB Insert Error: ${insertError.message}`)
-    }
-
-    // 2. Fetch the user's current premium state
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('premium_updated_at')
-      .eq('id', event.app_user_id)
-      .single()
-
-    // 3. Ordering check: If this event is older than our latest known state, drop it safely
-    if (profile && profile.premium_updated_at >= event.event_timestamp_ms) {
-       await supabaseAdmin.from('subscription_webhook_events').update({
-           processing_status: 'skipped_stale',
-           processed_at: new Date().toISOString()
-       }).eq('event_id', event.id)
-       return new Response('Stale event skipped', { status: 200 })
-    }
-
-    // 4. Determine new entitlement
-    let newEntitlement = 'free';
-    if (event.type === 'INITIAL_PURCHASE' || event.type === 'RENEWAL') {
-      newEntitlement = event.product_id.includes('pro') ? 'pro' : 'plus';
-    }
-
-    // 5. Transactional Update (Update Profile & mark event processed)
-    const { error: updateError } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        premium_entitlement: newEntitlement,
-        premium_updated_at: event.event_timestamp_ms
-      })
-      .eq('id', event.app_user_id)
-
-    if (!updateError) {
-       await supabaseAdmin.from('subscription_webhook_events').update({
-           processing_status: 'processed',
-           processed_at: new Date().toISOString()
-       }).eq('event_id', event.id)
-    } else {
-        throw new Error('Failed to update profile entitlement')
-    }
-
-    return new Response('OK', { status: 200 })
-  } catch (error) {
-    console.error(error)
-    // Return 500 so RevenueCat retries later
-    return new Response('Internal Server Error', { status: 500 })
+  const raw = await req.text();
+  const check = await verifyRevenueCatSignature(
+    req.headers.get('x-revenuecat-webhook-signature'),
+    raw,
+    SECRET,
+    Math.floor(Date.now() / 1000),
+  );
+  if (!check.ok) {
+    console.warn('[revenuecat-webhook] rejected:', check.reason);
+    return new Response('Unauthorized', { status: 401 });
   }
-})
+
+  let event: Record<string, unknown> | undefined;
+  try {
+    event = JSON.parse(raw)?.event;
+  } catch {
+    return new Response('Bad JSON', { status: 400 });
+  }
+  if (!event || typeof event.id !== 'string') return new Response('No event', { status: 400 });
+
+  const { error } = await admin.rpc('ingest_revenuecat_event', { p_event: event, p_users: usersInEvent(event) });
+  if (error) {
+    // Nothing was recorded (one transaction), so RevenueCat's retry starts clean.
+    console.error('[revenuecat-webhook] ingest failed:', error.message);
+    return new Response('Retry', { status: 500 });
+  }
+  return new Response('OK', { status: 200 });
+});

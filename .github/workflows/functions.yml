@@ -1,0 +1,82 @@
+name: Edge Functions
+
+# Edge functions were deployed by hand, so production could drift from main
+# unnoticed, and each function's gateway setting (verify_jwt) depended on
+# remembering a CLI flag. This checks every function on each PR and, on main,
+# applies pending migrations and then deploys every function, in that order:
+# a function that selects a new column must never go live before the column.
+# Gateway settings come from supabase/config.toml.
+#
+# The deploy job stays skipped (grey, not red) until it is configured:
+#   variable  SUPABASE_PROJECT_REF   the production project ref
+#   secret    SUPABASE_ACCESS_TOKEN  a personal access token (Account > Access Tokens)
+#   secret    SUPABASE_DB_PASSWORD   Project Settings > Database
+#
+# The Supabase GitHub integration also applies migrations on merge. Both paths
+# are idempotent, and `db push` is a no-op once the integration has run; if
+# the two collide mid-apply, the push waits and tries once more. Turning the
+# integration's production deploy off makes this the single path.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+      - 'lib/notifications/**'
+      - '.github/workflows/functions.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - 'lib/notifications/**'
+      - '.github/workflows/functions.yml'
+  workflow_dispatch: {}
+
+concurrency:
+  group: functions-${{ github.ref }}
+  # Never cancel a deploy halfway; superseded PR checks can go.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # tsconfig.json excludes supabase/functions, so `npm run typecheck`
+      # never sees this code. This is its only compiler.
+      - name: Type-check every function
+        run: deno check --config supabase/functions/deno.json supabase/functions/*/index.ts
+
+  deploy:
+    needs: check
+    if: github.event_name != 'pull_request' && vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link the production project
+        run: supabase link --project-ref "$PROJECT_REF"
+
+      - name: Apply pending migrations
+        run: supabase db push --linked --yes || { sleep 60; supabase db push --linked --yes; }
+
+      - name: Deploy every function
+        run: supabase functions deploy --project-ref "$PROJECT_REF"

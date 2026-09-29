@@ -442,3 +442,25 @@ verify_jwt = false
 
 [functions.voice-command]
 verify_jwt = false
+
+# Reached by callers that cannot hold a Supabase JWT. Each authenticates inside
+# its handler, which is the only check that means anything for these callers.
+# Unlike the four above, whether production currently matches was not verified
+# when these were added; the functions workflow deploys from this file, so it
+# is the value production gets from now on.
+#
+#   worker              pg_net kick from the database, x-worker-secret
+#   revenuecat-webhook  RevenueCat, HMAC signature over the body
+#   razorpay-webhook    Razorpay, HMAC signature over the body
+#   og-redirect         link-preview crawlers, public data only
+[functions.worker]
+verify_jwt = false
+
+[functions.revenuecat-webhook]
+verify_jwt = false
+
+[functions.razorpay-webhook]
+verify_jwt = false
+
+[functions.og-redirect]
+verify_jwt = false

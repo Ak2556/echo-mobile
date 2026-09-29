@@ -19,6 +19,8 @@ export interface OutboxOp {
   attempts: number;
   status: OutboxStatus;
   lastError?: string;
+  /** Not before this time (epoch ms). Absent means now. */
+  nextAttemptAt?: number;
 }
 
 /** RFC4122-ish v4 — good enough for idempotency keys / client-supplied PKs. */

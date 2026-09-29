@@ -4,8 +4,9 @@
 //   submit  { selfie_path, pose }  — user submitted a pose-challenge selfie.
 //             Gemini compares it with the profile photo: liveness, same
 //             person, pose. Confident verdicts auto-approve/reject; anything
-//             ambiguous stays pending for a moderator. Decided selfies are
-//             deleted immediately (privacy: the selfie exists only to verify).
+//             ambiguous stays pending for a moderator. If the model is
+//             unavailable the request is retried from the job queue. Decided
+//             selfies are deleted immediately (the selfie exists only to verify).
 //   status  {}                     — latest request for the caller.
 //   list    {}                     — moderator: pending queue with signed
 //                                    selfie URLs for review.
@@ -18,12 +19,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { spendActionBudget } from "../_shared/actionLimit.ts";
+import { judgeRequest, removeSelfie as removeSelfieFrom } from "./judge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-const VISION_MODEL = Deno.env.get("VERIFY_VISION_MODEL") ?? "google/gemini-2.5-flash";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -39,62 +39,7 @@ const json = (body: unknown, status = 200) =>
 
 const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-interface Verdict {
-  live_selfie: boolean;
-  same_person: boolean;
-  pose_matches: boolean;
-  confidence: number;
-  reason: string;
-}
-
-async function judgeSelfie(avatarUrl: string, selfieUrl: string, pose: string): Promise<Verdict> {
-  const prompt =
-    `You are a photo-verification reviewer for a social app. Image 1 is the user's profile photo. ` +
-    `Image 2 is a selfie they just took; they were asked to pose: "${pose}". ` +
-    `Answer STRICT JSON only, no markdown: {"live_selfie": boolean (image 2 is a real live selfie of a human, ` +
-    `not a photo of a screen/photo/AI render), "same_person": boolean (the same person appears in both images), ` +
-    `"pose_matches": boolean (the selfie roughly performs the requested pose), ` +
-    `"confidence": number 0-1 (your overall confidence in these answers), ` +
-    `"reason": string (one short sentence)}. Be strict about live_selfie and same_person; ` +
-    `be lenient about pose_matches (roughly is fine).`;
-
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: VISION_MODEL,
-      temperature: 0,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: avatarUrl } },
-          { type: "image_url", image_url: { url: selfieUrl } },
-        ],
-      }],
-    }),
-  });
-  if (!res.ok) throw new Error(`vision model ${res.status}`);
-  const data = await res.json();
-  const raw = data?.choices?.[0]?.message?.content ?? "";
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("unparseable verdict");
-  const v = JSON.parse(match[0]);
-  return {
-    live_selfie: !!v.live_selfie,
-    same_person: !!v.same_person,
-    pose_matches: !!v.pose_matches,
-    confidence: Math.max(0, Math.min(1, Number(v.confidence) || 0)),
-    reason: String(v.reason ?? "").slice(0, 300),
-  };
-}
-
-async function removeSelfie(path: string): Promise<void> {
-  await service.storage.from("verification").remove([path]).catch(() => {});
-}
+const removeSelfie = (path: string) => removeSelfieFrom(service, path);
 
 async function setVerified(userId: string, verified: boolean): Promise<void> {
   await service.from("profiles").update({ is_verified: verified }).eq("id", userId);
@@ -173,42 +118,20 @@ Deno.serve(async (req) => {
       .single();
     if (insErr || !reqRow) return json({ error: "Could not create request" }, 500);
 
-    const { data: signed } = await service.storage
-      .from("verification")
-      .createSignedUrl(selfiePath, 300);
-    if (!signed?.signedUrl) return json({ error: "Selfie not found" }, 400);
-
-    let verdict: Verdict;
-    try {
-      verdict = await judgeSelfie(me.avatar_url, signed.signedUrl, pose);
-    } catch {
-      // Vision unavailable — leave the request pending for a moderator rather
-      // than failing the user or writing a false verdict.
+    const outcome = await judgeRequest(service, reqRow.id);
+    if (outcome.status === "unavailable") {
+      // The model could not judge it now. Queue a retry (with backoff, then
+      // the dead-letter queue) rather than leaving it for a moderator who may
+      // never look; the user sees "pending" either way.
+      const { error: qErr } = await service.rpc("jobs_enqueue", {
+        p_queue: "verification",
+        p_msg: { request_id: reqRow.id },
+      });
+      if (qErr) console.error("[verify-identity] could not queue a retry:", qErr.message);
       return json({ status: "pending", reason: "Queued for human review." });
     }
-
-    const confident = verdict.confidence >= 0.75;
-    if (confident && verdict.live_selfie && verdict.same_person && verdict.pose_matches) {
-      await service.from("verification_requests").update({
-        status: "approved", ai_verdict: verdict, decided_at: new Date().toISOString(),
-      }).eq("id", reqRow.id);
-      await setVerified(user.id, true);
-      await removeSelfie(selfiePath);
-      return json({ status: "approved" });
-    }
-    if (confident && (!verdict.live_selfie || !verdict.same_person)) {
-      const reason = !verdict.live_selfie
-        ? "The photo doesn't look like a live selfie."
-        : "The selfie doesn't appear to match your profile photo.";
-      await service.from("verification_requests").update({
-        status: "rejected", ai_verdict: verdict, reject_reason: reason,
-        decided_at: new Date().toISOString(),
-      }).eq("id", reqRow.id);
-      await removeSelfie(selfiePath);
-      return json({ status: "rejected", reason });
-    }
-    await service.from("verification_requests").update({ ai_verdict: verdict }).eq("id", reqRow.id);
-    return json({ status: "pending", reason: "Queued for human review." });
+    if (outcome.status === "superseded") return json({ status: "pending", reason: "Queued for human review." });
+    return json(outcome);
   }
 
   // ── moderator actions ─────────────────────────────────────────────────────
@@ -242,12 +165,15 @@ Deno.serve(async (req) => {
     if (!reqRow) return json({ error: "Request not found" }, 404);
     if (reqRow.status !== "pending") return json({ error: "Already decided" }, 409);
 
-    await service.from("verification_requests").update({
+    // Pending-only, like the model's decisions, so two reviewers (or a
+    // reviewer and a queued retry) cannot both decide it.
+    const { data: decided } = await service.from("verification_requests").update({
       status: approve ? "approved" : "rejected",
       reviewed_by: user.id,
       reject_reason: approve ? null : "A reviewer couldn't confirm the selfie matches your profile.",
       decided_at: new Date().toISOString(),
-    }).eq("id", requestId);
+    }).eq("id", requestId).eq("status", "pending").select("id");
+    if (!decided?.length) return json({ error: "Already decided" }, 409);
     if (approve) await setVerified(reqRow.user_id, true);
     await removeSelfie(reqRow.selfie_path);
     return json({ ok: true });

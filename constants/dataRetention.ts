@@ -41,7 +41,7 @@ export const DATA_RETENTION_POLICY: readonly RetentionEntry[] = [
   {
     category: 'AI rate-limit window',
     storage: 'supabase_postgres',
-    what: 'ai_rate_limits — one row per user, tracking the current hour\'s request count',
+    what: 'app_rate_limits (action ai_chat_hour) — one row per user, tracking the current hour\'s request count',
     retention: 'Updated continuously; deleted when the account is deleted.',
   },
   {
