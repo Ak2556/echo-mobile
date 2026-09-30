@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
-import { usePathname, useRouter, useRootNavigationState } from 'expo-router';
+import { useNavigationContainerRef, usePathname, useRouter } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { useAppStore } from '../../store/useAppStore';
@@ -21,6 +21,7 @@ import { withAuthTimeout } from './timeout';
 import { ensureDeviceRegistered } from '../e2ee/deviceKeys';
 import { clearMessageCache } from '../e2ee/cache';
 import { makeAuthStateCallback } from './authStateCallback';
+import { useNavigationReady } from './useNavigationReady';
 import { TRUSTED_WEB_HOSTS } from '../publicHost';
 
 /**
@@ -182,7 +183,16 @@ function routeFor(
   status: AuthStatus,
 ): void {
   const destination = destinationFor(pathname, status);
-  if (destination) router.replace(destination);
+  if (!destination) return;
+  try {
+    router.replace(destination);
+  } catch (error) {
+    // Readiness is checked first, so this should be unreachable. If a new
+    // way to navigate too early appears, report it rather than throw into
+    // the tree: an uncaught error here lands the user on the error screen,
+    // and the effect retries when the route or status next moves.
+    captureException(error, { tags: { source: 'auth_route' } });
+  }
 }
 
 /**
@@ -209,12 +219,18 @@ export function AuthListenerProvider(): null {
   // navigate before mounting the Root Layout component" and strands the user on
   // the error screen — reproduced by cold-starting from a launcher shortcut,
   // where the deep link delays the navigator while GoTrue's INITIAL_SESSION
-  // still fires on time. Waiting for the key costs one extra render and makes
-  // the level-triggered behaviour below correct rather than racy.
-  const navKey = useRootNavigationState()?.key;
+  // still fires on time.
+  //
+  // It waits on the container itself, not useRootNavigationState()?.key: that
+  // key lives in expo-router's module-level store and survives Android
+  // recreating the activity in a live process, so it passed before the new
+  // navigator existed (the same throw, seen on the release APK 2026-09-30).
+  // See ./useNavigationReady.
+  const navigationRef = useNavigationContainerRef();
+  const navReady = useNavigationReady(navigationRef);
 
   useEffect(() => {
-    if (!navKey) return;
+    if (!navReady || !navigationRef.isReady()) return;
     // Level-triggered, deliberately. This used to subscribe to the store and
     // act only when the status differed from the previous one, which loses
     // every case where the status settled before the screen asking about it
@@ -222,7 +238,7 @@ export function AuthListenerProvider(): null {
     // current status as a hook re-runs this on arrival as well as on change,
     // so the question is answered whenever either side moves.
     routeFor(router, pathname, status);
-  }, [navKey, router, pathname, status]);
+  }, [navReady, navigationRef, router, pathname, status]);
 
   useEffect(() => {
     if (started) return;
