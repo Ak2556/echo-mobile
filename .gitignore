@@ -104,3 +104,7 @@ play-service-account.json
 
 # Local Netlify folder
 .netlify
+
+# EAS signing credentials (holds the keystore password in plain text). Never commit.
+credentials.json
+credentials/
