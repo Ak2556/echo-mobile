@@ -97,3 +97,33 @@ export function formatPrice(amount: number, currency: CurrencyCode): string {
 export function getCurrencySymbol(currency: CurrencyCode): string {
   return CURRENCY_MAP.get(currency)?.symbol ?? currency;
 }
+
+/**
+ * Region → currency, for the currencies above. Eurozone members map to EUR.
+ */
+const EUROZONE = ['AT','BE','CY','DE','EE','ES','FI','FR','GR','HR','IE','IT','LT','LU','LV','MT','NL','PT','SI','SK'];
+const REGION_CURRENCY: Record<string, CurrencyCode> = {
+  IN: 'INR', US: 'USD', GB: 'GBP', AE: 'AED', AU: 'AUD', CA: 'CAD', SG: 'SGD', JP: 'JPY', CN: 'CNY',
+  HK: 'HKD', NZ: 'NZD', CH: 'CHF', SE: 'SEK', NO: 'NOK', DK: 'DKK', ZA: 'ZAR', BR: 'BRL', MX: 'MXN',
+  KR: 'KRW', TH: 'THB', MY: 'MYR', ID: 'IDR', PH: 'PHP', VN: 'VND', TR: 'TRY', SA: 'SAR', QA: 'QAR',
+  KW: 'KWD', BH: 'BHD', OM: 'OMR', IL: 'ILS', EG: 'EGP', PL: 'PLN', CZ: 'CZK', HU: 'HUF', RO: 'RON',
+  RU: 'RUB', NG: 'NGN', KE: 'KES', GH: 'GHS', PK: 'PKR', BD: 'BDT', LK: 'LKR', NP: 'NPR', TW: 'TWD',
+  AR: 'ARS', CL: 'CLP', CO: 'COP', PE: 'PEN', UY: 'UYU', MA: 'MAD', DZ: 'DZD', TN: 'TND', UA: 'UAH',
+  BG: 'BGN', RS: 'RSD', IS: 'ISK', KZ: 'KZT', GE: 'GEL', JO: 'JOD', MU: 'MUR', MO: 'MOP', CR: 'CRC',
+  ...Object.fromEntries(EUROZONE.map(r => [r, 'EUR' as CurrencyCode])),
+};
+
+/**
+ * The currency a new user most likely thinks in: their device region's, or
+ * INR when the region is missing or unmapped (Echo launches India-first).
+ * Every money-handling mini-app defaulted to USD, so an Indian user saw "$"
+ * on bill splits and shopping totals (2026-09-30 release audit).
+ */
+export function defaultCurrency(locale?: string): CurrencyCode {
+  let tag = locale;
+  if (!tag) {
+    try { tag = Intl.DateTimeFormat().resolvedOptions().locale; } catch { tag = undefined; }
+  }
+  const region = tag?.match(/[-_]([A-Z]{2})(?:[-_]|$)/)?.[1];
+  return (region && REGION_CURRENCY[region]) || 'INR';
+}
