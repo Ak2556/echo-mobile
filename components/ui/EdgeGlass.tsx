@@ -32,6 +32,9 @@ import { usePerformanceProfile, type PerformanceMode } from '../../src/shared/li
  */
 
 const DEFAULT_FADE = 36;
+/** How far the default fade reaches past the bar. Content that must be legible
+ *  at rest has to start below it, or it renders inside the blur. */
+export const EDGE_GLASS_FADE = DEFAULT_FADE;
 
 /**
  * Android's cap.

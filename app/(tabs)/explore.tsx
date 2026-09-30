@@ -7,7 +7,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { BookOpen, Brain, Camera, CaretRight, ChartLineUp, Code, Cpu, GameController, MusicNote, PaintBrush, Play, RocketLaunch, Sparkle, UsersThree, VideoCamera } from 'phosphor-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { EdgeGlass } from '../../components/ui/EdgeGlass';
+import { EdgeGlass, EDGE_GLASS_FADE } from '../../components/ui/EdgeGlass';
 import { SearchBar } from '../../src/features/feed/ui/SearchBar';
 import { Avatar } from '../../components/ui/Avatar';
 import { UserRow } from '../../src/features/feed/ui/UserRow';
@@ -215,7 +215,9 @@ export default function SearchScreen() {
           onLayout={voiceList.onLayout}
           scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: layout.bottomChromePadding }}
+          // Start below the glass header's fade, not inside it: content at rest
+          // under the fade renders blurred (2026-09-30 audit).
+          contentContainerStyle={{ paddingTop: headerHeight + EDGE_GLASS_FADE, paddingBottom: layout.bottomChromePadding }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetchingFeed}
@@ -373,8 +375,14 @@ function SearchResults({
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
+      // Without this the first tap on a result only dismissed the keyboard, so
+      // every result needed two taps while typing (2026-09-30 audit).
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       contentContainerStyle={[layout.wideContentStyle, {
-        paddingTop: headerHeight + 12,
+        // Below the glass header's fade: the result chips used to sit inside it
+        // and render as unreadable smudges.
+        paddingTop: headerHeight + EDGE_GLASS_FADE + 4,
         paddingHorizontal: layout.gutter,
         paddingBottom: layout.bottomChromePadding,
       }]}

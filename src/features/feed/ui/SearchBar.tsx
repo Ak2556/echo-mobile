@@ -44,6 +44,9 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search echoes...
           paddingVertical: 0,
         }}
         placeholder={placeholder}
+        // Android does not reliably expose a placeholder to TalkBack or to
+        // automation; the label does.
+        accessibilityLabel={placeholder}
         placeholderTextColor={colors.textMuted}
         value={value}
         onChangeText={onChangeText}
