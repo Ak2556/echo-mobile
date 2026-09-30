@@ -6,15 +6,16 @@ import { useTheme } from '../../../shared/lib/theme';
 const COMPACT_TEXT_SCALE = 1.15;
 
 export function StreakXPBadge() {
-  const { xp, level, streakDays } = useRetention();
+  const { streakDays } = useRetention();
   const { colors, font } = useTheme();
 
-  if (xp === 0 && streakDays === 0) return null;
+  // Level and XP are no longer shown: ranks (RankCard) replaced them. XP was
+  // counted on the device only, so it reset on reinstall, differed between
+  // phones and nobody else could see it; two progressions side by side
+  // ("Level 3" and "Contributor") would only confuse. The streak stays.
+  if (streakDays === 0) return null;
 
-  const parts: string[] = [];
-  if (streakDays > 0) parts.push(`🔥 ${streakDays} day streak`);
-  parts.push(`Level ${level}`);
-  if (xp > 0) parts.push(`${xp} XP`);
+  const parts: string[] = [`🔥 ${streakDays} day streak`];
 
   return (
     <Text

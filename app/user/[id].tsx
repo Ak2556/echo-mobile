@@ -37,6 +37,7 @@ import { buildCreatorProfile } from '../../lib/echoUX';
 import { userUrl } from '../../lib/echoUrl';
 import { ttx } from '../../src/shared/lib/i18n';
 import { countLabel } from '../../lib/a11yCount';
+import { ProfileRank } from '../../src/features/ranks/ui/ProfileRank';
 import { personName } from '../../lib/personName';
 
 // FlashList still owns the header and scrolling; the grid is the footer.
@@ -217,6 +218,9 @@ function ProfileHeader({ user, echoeCount, following, blocked, muted, onFollow, 
           {user.isVerified && <SealCheck color={colors.accent} size={20} weight="fill" />}
         </View>
         <Text style={{ color: colors.textMuted, fontSize: 14, marginBottom: 8 }}>@{user.username}</Text>
+        <View style={{ marginTop: -4, marginBottom: 8 }}>
+          <ProfileRank userId={user.id} />
+        </View>
         {online && <Text style={{ color: colors.success, fontSize: 12, marginBottom: 8 }}>{ttx("Active now")}</Text>}
         {user.bio ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16, paddingHorizontal: 20 }}>
